@@ -282,7 +282,7 @@ CDeviceFont* CDeviceFont::getInstance() {
 
 // Getter for the device's current font id (used as the default lookup key by
 // the layer-search wrappers below).
-u32 CDeviceFont::func_804525D4() {
+u32 CDeviceFont::getFontId() {
     CDeviceFont* font = lbl_eu_80665678;
     if (font == 0) {
         return 0;
@@ -296,16 +296,16 @@ extern "C" {
 // names even though the calls pass trailing arguments through in r4+.
 void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
                                          u32 a2, u32 a3);
-void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
-void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
-void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 
 // Find the font layer for `fontId` (0 selects the device's current font id)
 // and tail-call the layer's func_80453BB4 with the passed-through args.
-// Loop locals declared first (see func_804529D4): MWCC allocates in
+// Loop locals declared first (see dispatchLayer4508): MWCC allocates in
 // declaration order, and retail keeps child/candidate in r7, the walk node
 // in r8 and the start sentinel in r9 (r4-r6 hold the passed-through args).
-void func_8045271C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
+void dispatchLayerBB4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -344,10 +344,10 @@ found:
     func_80453BB4__16CDeviceFontLayerFv(layer, a1, a2, a3);
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_80453FF0.
+// Same lookup as dispatchLayerBB4, dispatching to the layer's setBackgroundColor.
 // The single trailing argument rides along to the layer method in r4 (which
 // is why the walk colors child/candidate r5, node r6, sentinel r7).
-void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1) {
+void dispatchLayer3FF0__11CDeviceFontFv(u32 fontId, u32 a1) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -357,7 +357,7 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    // Volatile re-read (see func_8045271C); separate variables keep the
+    // Volatile re-read (see dispatchLayerBB4); separate variables keep the
     // null-check load out of the walk pointer's register.
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
@@ -382,13 +382,13 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1) {
     layer = 0;
 found:
     if (layer == 0) return;
-    func_80453FF0__16CDeviceFontLayerFv(layer, a1);
+    setBackgroundColor__16CDeviceFontLayerFv(layer, a1);
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_804541F8
+// Same lookup as dispatchLayerBB4, dispatching to the layer's setFontScale
 // (no trailing arguments: retail colors child/candidate r4, node r5,
 // sentinel r6).
-void func_804528C4__11CDeviceFontFv(u32 fontId) {
+void dispatchLayer41F8__11CDeviceFontFv(u32 fontId) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -398,7 +398,7 @@ void func_804528C4__11CDeviceFontFv(u32 fontId) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    // Volatile re-read (see func_8045271C).
+    // Volatile re-read (see dispatchLayerBB4).
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
     startNode = font->mChildren.mStartNodePtr;
@@ -422,12 +422,12 @@ void func_804528C4__11CDeviceFontFv(u32 fontId) {
     layer = 0;
 found:
     if (layer == 0) return;
-    layer->func_804541F8();
+    layer->setFontScale();
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_8045438C
+// Same lookup as dispatchLayerBB4, dispatching to the layer's setFontId
 // with one trailing argument passed through in r4.
-void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1) {
+void dispatchLayer438C__11CDeviceFontFv(u32 fontId, u32 a1) {
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -437,7 +437,7 @@ void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    // Volatile re-read (see func_8045271C).
+    // Volatile re-read (see dispatchLayerBB4).
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
     startNode = font->mChildren.mStartNodePtr;
@@ -461,7 +461,7 @@ void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1) {
     layer = 0;
 found:
     if (layer == 0) return;
-    func_8045438C__16CDeviceFontLayerFv(layer, a1);
+    setFontId__16CDeviceFontLayerFv(layer, a1);
 }
 
 // ---------------------------------------------------------------------------
@@ -472,8 +472,8 @@ found:
 // ---------------------------------------------------------------------------
 void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
 void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 flag);
-u32 func_80453F78__16CDeviceFontLayerFv(CDeviceFontLayer* layer);
-u32 func_80454684__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 index);
+u32 getScaledTextHeight__16CDeviceFontLayerFv(CDeviceFontLayer* layer);
+u32 getFontSlotData__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 index);
 
 // The retail layer ctor is emitted under an unmangled (C-linkage) name, so
 // it cannot be expressed as a C++ member ctor; declare it extern "C" and
@@ -488,8 +488,8 @@ extern "C" CDeviceFontLayer* __ct__CDeviceFontLayer(CDeviceFontLayer* self,
 // call it directly after the raw 4-byte allocation (placement-new style).
 extern "C" CFontLayer* __ct__CFontLayer(CFontLayer* self);
 
-// Same lookup as func_8045271C, dispatching to the layer's func_80454508.
-void func_804529D4__11CDeviceFontFv(u32 fontId, u32 a1) {
+// Same lookup as dispatchLayerBB4, dispatching to the layer's func_80454508.
+void dispatchLayer4508__11CDeviceFontFv(u32 fontId, u32 a1) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
@@ -531,9 +531,9 @@ found:
     func_80454508__16CDeviceFontLayerFv(layer, a1);
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_80454B70
+// Same lookup as dispatchLayerBB4, dispatching to the layer's func_80454B70
 // with the passed-through flag.
-void func_80452CF8__11CDeviceFontFv(u32 fontId, u32 flag) {
+void dispatchLayer4B70__11CDeviceFontFv(u32 fontId, u32 flag) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
@@ -571,14 +571,14 @@ found:
     func_80454B70__16CDeviceFontLayerFv(layer, flag);
 }
 
-// Same lookup as func_8045271C, but without the fontId-defaulting or the
+// Same lookup as dispatchLayerBB4, but without the fontId-defaulting or the
 // singleton reload: mark the bound layer's 0x2F0 flag and report success.
 // (Called from CFontLayer's destructor with the object pointer as the key.)
-u32 func_80452690__11CDeviceFontFv(u32 key) {
+u32 notifyLayerDestroy__11CDeviceFontFv(u32 key) {
     CDeviceFont* font = lbl_eu_80665678;
     if (font == 0) return 0;
 
-    // Declare loop locals first (see func_804529D4): retail keeps the
+    // Declare loop locals first (see dispatchLayer4508): retail keeps the
     // child/layer value in r4, the walk node in r5, the sentinel in r6.
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
@@ -610,14 +610,14 @@ found:
     return 1;
 }
 
-// Same lookup as func_8045271C, tail-calling the layer's func_80453F78.
-u32 func_804527A4__11CDeviceFontFv(u32 fontId) {
+// Same lookup as dispatchLayerBB4, tail-calling the layer's getScaledTextHeight.
+u32 getLayerStatus__11CDeviceFontFv(u32 fontId) {
     if (lbl_eu_80665678 == 0) return 0;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
-    // Declare loop locals first (see func_804529D4).
+    // Declare loop locals first (see dispatchLayer4508).
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -644,18 +644,18 @@ u32 func_804527A4__11CDeviceFontFv(u32 fontId) {
     layer = 0;
 found:
     if (layer == 0) return 0;
-    return func_80453F78__16CDeviceFontLayerFv(layer);
+    return getScaledTextHeight__16CDeviceFontLayerFv(layer);
 }
 
-// Same lookup as func_8045271C, tail-calling the layer's func_80454684 with
+// Same lookup as dispatchLayerBB4, tail-calling the layer's getFontSlotData with
 // the passed-through index and returning its result.
-u32 func_80452B78__11CDeviceFontFv(u32 fontId, u32 index) {
+u32 getLayerData__11CDeviceFontFv(u32 fontId, u32 index) {
     if (lbl_eu_80665678 == 0) return 0;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
-    // Declare loop locals first (see func_804529D4).
+    // Declare loop locals first (see dispatchLayer4508).
     CDeviceFontLayer* layer;
     CDeviceFontLayer* child;
     CDeviceFontLayer* candidate;
@@ -682,7 +682,7 @@ u32 func_80452B78__11CDeviceFontFv(u32 fontId, u32 index) {
     layer = 0;
 found:
     if (layer == 0) return 0;
-    return func_80454684__16CDeviceFontLayerFv(layer, index);
+    return getFontSlotData__16CDeviceFontLayerFv(layer, index);
 }
 
 }
@@ -706,28 +706,28 @@ u32 CDeviceFont::func_804525F0() {
     return 1;
 }
 
-// ---- func_80452C10 (0x8045580C) ----
+// ---- getFontInfo (0x8045580C) ----
 // Find the font-info provider for this device: first pass looks for the info
 // whose identity query (0xC slot) matches this device and that is available
 // (0x34 slot returns 0); second pass falls back to the first available info
 // regardless of identity. Returns the matching provider or null. (The fontId
 // and layout parameters are unused in the body, as in retail.)
-IDeviceFontInfo* CDeviceFont::func_80452C10(u32 fontId,
+IDeviceFontInfo* CDeviceFont::getFontInfo(u32 fontId,
                                             nw4r::lyt::Layout* layout) {
     CDeviceFont* font = lbl_eu_80665678;
     if (font == 0) return 0;
 
     CDeviceFontInfoListNode* node = font->mInfoList.mStartNodePtr->mNext;
     while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
-        if (node->mItem->func_804535F4() == 0 &&
-            node->mItem->func_80453654() == (s32)this) {
+        if (node->mItem->isStateNonZero() == 0 &&
+            node->mItem->getFlags() == (s32)this) {
             return node->mItem;
         }
         node = node->mNext;
     }
     node = lbl_eu_80665678->mInfoList.mStartNodePtr->mNext;
     while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
-        if (node->mItem->func_804535F4() == 0) {
+        if (node->mItem->isStateNonZero() == 0) {
             return node->mItem;
         }
         node = node->mNext;
@@ -746,8 +746,8 @@ IDeviceFontInfo* CDeviceFont::func_eu_804558F4() {
 
     CDeviceFontInfoListNode* node = font->mInfoList.mStartNodePtr->mNext;
     while (node != lbl_eu_80665678->mInfoList.mStartNodePtr) {
-        if (node->mItem->func_804535F4() == 0 &&
-            node->mItem->func_80453654() == (s32)this) {
+        if (node->mItem->isStateNonZero() == 0 &&
+            node->mItem->getFlags() == (s32)this) {
             return node->mItem;
         }
         node = node->mNext;
@@ -755,7 +755,7 @@ IDeviceFontInfo* CDeviceFont::func_eu_804558F4() {
     return 0;
 }
 
-// Create a font-info provider, push it onto the device's info list (first
+// Create a font-info provider
 // free slot; setItem is guarded by the retail null check + try/catch frame
 // marker), and flag the list dirty (field_0x1EC = 2).
 u32 CDeviceFont::func_80452D80() {
@@ -809,7 +809,7 @@ void CDeviceFont::wkUpdate() {
     // otherwise keeps the sentinel in a callee-saved register across the
     // second loop, dropping the reload (one instruction short of retail).
     while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
-        node->mItem->func_804535C0();
+        node->mItem->advanceState();
         node = node->mNext;
     }
 
@@ -818,7 +818,7 @@ void CDeviceFont::wkUpdate() {
     // double null-check around the virtual dtor call.
     node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
     while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
-        if (node->mItem->func_80453608() != 0) {
+        if (node->mItem->isStateReady() != 0) {
             IDeviceFontInfo* item = node->mItem;
             if (item != 0) {
                 delete item;
@@ -854,10 +854,10 @@ void CDeviceFont::wkUpdate() {
                 CWorkUtil::entryWork((CWorkThread*)loader, (CWorkThread*)this,
                                      false);
                 if (func_eu_8044A600()) {
-                    func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
+                    setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
                                                           lbl_eu_806636FC);
                 } else {
-                    func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
+                    setFontPath__17CDeviceFontLoaderFv(loader, (void*)1,
                                                           lbl_eu_806636F8);
                 }
                 field_0x1EC = 1;
@@ -872,8 +872,8 @@ void CDeviceFont::wkUpdate() {
             CDeviceFontInfoListNode* infoNode =
                 lbl_eu_80665678->mInfoList.mStartNodePtr->mNext;
             while (infoNode != lbl_eu_80665678->mInfoList.mStartNodePtr) {
-                if (infoNode->mItem->func_80453654() == 0) {
-                    infoNode->mItem->func_804535DC();
+                if (infoNode->mItem->getFlags() == 0) {
+                    infoNode->mItem->initState();
                     break;
                 }
                 infoNode = infoNode->mNext;
@@ -1011,11 +1011,11 @@ void CDeviceFont::wkRender() {
 
     // Fetch the bound font twice like retail (null check + use).
     nw4r::lyt::Layout* layout;  // unused second argument, uninitialized in retail
-    if (func_80452C10(0, layout)->func_80453624() == NULL) {
+    if (getFontInfo(0, layout)->getFont() == NULL) {
         return;
     }
     const nw4r::ut::Font* font = static_cast<const nw4r::ut::Font*>(
-        func_80452C10(0, layout)->func_80453624());
+        getFontInfo(0, layout)->getFont());
 
     VALIDATE_NW4R_POINTER(&writer, lbl_eu_8053785C, 65, lbl_eu_80537828);
     VALIDATE_NW4R_POINTER(font, lbl_eu_80537818, 66, lbl_eu_805377E0);
@@ -1118,7 +1118,7 @@ void CDeviceFont::wkRender() {
 // ---- wkStandbyLogin (0x804570FC) ----
 bool CDeviceFont::wkStandbyLogin() {
     if (CDevice::isColdStartReady()) {
-        CDeviceFontLayer::func_80454DE4();
+        CDeviceFontLayer::allocFontHeap();
 
         // Register a fresh ROM font-info provider in the first free list
         // slot (reslist::push_back with the retail setItem try/catch frame).
@@ -1178,7 +1178,7 @@ bool CDeviceFont::wkStandbyLogout() {
     if (CWorkSystem::getInstance() != 0) goto logout_fail;
     if (CLib::getInstance() != 0) goto logout_fail;
 
-    CDeviceFontLayer::func_80454E2C();
+    CDeviceFontLayer::freeFontHeap();
 
     // Delete every font-info provider still in the list, then clear the ring.
     CDeviceFontInfoListNode* node = mInfoList.mStartNodePtr->mNext;

@@ -13,27 +13,27 @@ extern "C" {
 extern const char lbl_8066DCF8[4] = {0, 0, 0, 0};
 }
 
-extern "C" void* func_80453624__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
-extern "C" void* func_8045362C__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
-extern "C" u16 func_80453634__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_5C; }
-extern "C" u32 func_8045363C__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_58; }
-extern "C" u16 func_80453644__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mMode; }
-extern "C" u16 func_8045364C__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mState; }
-extern "C" u32 func_80453654__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_04; }
+extern "C" void* getFont__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
+extern "C" void* getFontConst__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
+extern "C" u16 getLineHeight__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_5C; }
+extern "C" u32 getBufferSize__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_58; }
+extern "C" u16 getMode__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mMode; }
+extern "C" u16 getState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->mState; }
+extern "C" u32 getFlags__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_04; }
 
-extern "C" void func_804535C0__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
+extern "C" void advanceState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
     u32 v = self->field_60;
     if (v - 1 <= 1) self->field_60 = v + 1;
 }
-extern "C" void func_804535DC__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
+extern "C" void initState__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
     u32 v = self->field_60;
     if (v == 0) self->field_60 = v + 1;
 }
-extern "C" u32 func_804535F4__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
+extern "C" u32 isStateNonZero__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
     u32 v = self->field_60;
     return ((u32)(-(s32)v | (s32)v)) >> 31;
 }
-extern "C" u32 func_80453608__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
+extern "C" u32 isStateReady__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
     s32 v = (s32)self->field_60;
     return v >= 3;
 }
@@ -163,18 +163,18 @@ extern "C" u32 lbl_eu_8056C77C[0x3];
 extern "C" u32 lbl_eu_8056C740[0xF] = {
     (u32)&lbl_eu_80663718[0], 0x00000000,
     (u32)&D2Blob::__dt__18CDeviceFontInfoExtFv,
-    (u32)func_80453654__18CDeviceFontInfoExtFv,
-    (u32)func_8045364C__18CDeviceFontInfoExtFv,
-    (u32)func_80453644__18CDeviceFontInfoExtFv,
-    (u32)func_8045363C__18CDeviceFontInfoExtFv,
-    (u32)func_80453634__18CDeviceFontInfoExtFv,
+    (u32)getFlags__18CDeviceFontInfoExtFv,
+    (u32)getState__18CDeviceFontInfoExtFv,
+    (u32)getMode__18CDeviceFontInfoExtFv,
+    (u32)getBufferSize__18CDeviceFontInfoExtFv,
+    (u32)getLineHeight__18CDeviceFontInfoExtFv,
     (u32)func_80453468__18CDeviceFontInfoExtFv,
-    (u32)func_80453624__18CDeviceFontInfoExtFv,
-    (u32)func_8045362C__18CDeviceFontInfoExtFv,
-    (u32)func_804535C0__18CDeviceFontInfoExtFv,
-    (u32)func_804535DC__18CDeviceFontInfoExtFv,
-    (u32)func_804535F4__18CDeviceFontInfoExtFv,
-    (u32)func_80453608__18CDeviceFontInfoExtFv,
+    (u32)getFont__18CDeviceFontInfoExtFv,
+    (u32)getFontConst__18CDeviceFontInfoExtFv,
+    (u32)advanceState__18CDeviceFontInfoExtFv,
+    (u32)initState__18CDeviceFontInfoExtFv,
+    (u32)isStateNonZero__18CDeviceFontInfoExtFv,
+    (u32)isStateReady__18CDeviceFontInfoExtFv,
 };
 extern "C" u32 lbl_eu_8056C77C[0x3] = { (u32)&lbl_eu_80663720[0], 0x00000000, 0x00000000 };
 

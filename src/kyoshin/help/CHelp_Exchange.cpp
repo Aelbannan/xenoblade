@@ -1,7 +1,7 @@
 #include "kyoshin/help/CHelp_Exchange.hpp"
 
 namespace cf {
-void CHelp_Exchange::func_802B80F0() {
+void CHelp_Exchange::checkExchangeState() {
     func_801BEE5C();
 }
 } // namespace cf

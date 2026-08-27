@@ -1,6 +1,6 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#include "kyoshin/code_802B8A3C.hpp"  // func_800B708C imports
+#include "kyoshin/code_802B8A3C.hpp"  // findObjectById imports
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // LOCAL views of the battle-status helpers for this TU: the constructor call
@@ -145,7 +145,7 @@ extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObj
     CfObject_UnkVirtualFunc14__Q22cf12CfObjectMoveFf(move, value);
     u8* p = reinterpret_cast<cf::CfActorField45B8*>(self)->field_0x45B8;
     if (p != 0) {
-        cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(func_800B708C(reinterpret_cast<int>(p)));
+        cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(findObjectById(reinterpret_cast<int>(p)));
         // Merged condition: both false paths share one zeroing block; the
         // true arm is a static_cast downcast (emits MWCC's guarded subi).
         cf::CfObjectActor* actor;
@@ -220,7 +220,7 @@ extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv(cf::CfObje
 extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
     CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv((char*)self + 0x3e9c);
 }
-extern "C" void func_801725DC__Q22cf13CfObjectActorFv(void* self) {
+extern "C" void destroyActorParam__Q22cf13CfObjectActorFv(void* self) {
     __dt__Q22cf13CfObjectActorFv((char*)self - 0x3e9c);
 }
 extern "C" void CActorParam_UnkVirtualFunc167__Q22cf11CActorParamFv() {}
@@ -391,7 +391,7 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
     if ((lbl_eu_80663E28 & 0x800) != 0) return;
     int v27 = 0;
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x04000000) != 0) {
         cf::CfPtmf3 ptmf;
         ptmf.field_0 = lbl_eu_80531090[0];
         ptmf.field_4 = lbl_eu_80531090[1];

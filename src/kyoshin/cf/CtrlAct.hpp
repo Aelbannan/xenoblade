@@ -921,12 +921,12 @@ extern "C" void* getAtkParam(void* base, int index);
 // In-TU facing helper called by func_800D3D34 (retail plain C name).
 extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src);
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
-void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
+void* findObjectById(int id);
 
 // cf::CfGameManager singleton accessor (mangles to getInstance__Q22cf13CfGameManagerFv)
-// and the presentation/event flag probe func_8006EF04__Fi.
-bool func_8006EF04(int mask);
+// and the presentation/event flag probe isGlobalCamFlagSet__Fi.
+bool isGlobalCamFlagSet(int mask);
 
 // In-TU action-handler entry points: C linkage so the call relocs carry the
 // retail plain names (func_800D5F98 convention).

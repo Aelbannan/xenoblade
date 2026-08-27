@@ -174,7 +174,7 @@ extern float lbl_eu_806681D4;
 void func_801F92B0(u8* base, int idx1, int idx2, int idx3);
 
 // C-ABI imports (retail unmangled names - keep linkage/signatures verbatim).
-extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* func_80063080();
 extern "C" u8* func_80066E7C(ResInfoEntry* self, u32 id);
 extern "C" void* func_80062114(char* self, int index, void** out);

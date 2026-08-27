@@ -71,7 +71,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
 
         // Detach the loaded file buffer for the layout archive.
         u8* data = static_cast<u8*>(mFileHandle->getData());
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         // Build the arc resource accessor and attach the archive buffer.
         mArcResAcc = CLibLayout::createArcResourceAccessor();

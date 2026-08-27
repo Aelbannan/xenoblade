@@ -100,7 +100,7 @@ public:
 };
 
 // Partner objects at driver +0x6F8 / +0x6FC: slot 0xA8 returns the object
-// handed to func_800ACF78.
+// handed to bindPartnerO_.
 class CfMoveDriverSubObj {
 public:
     virtual void* f00(); virtual void* f01(); virtual void* f02(); virtual void* f03();
@@ -256,7 +256,7 @@ struct CfEmbeddedSubObj_3E9C {
     u32 field_71C;                // +0x71c (actor 0x45b8 partner-object link)
 };
 
-// Result of CfActorObj::vf298() (vtable 0x298): +0x4 feeds func_800B708C's
+// Result of CfActorObj::vf298() (vtable 0x298): +0x4 feeds findObjectById's
 // actor-id lookup (func_800CC638); +0x50 is a battle-state block pointer
 // (func_800CEA34 reads its kind/count bytes at +0x43/+0x44).
 struct CfMoveVf298Result {
@@ -828,11 +828,11 @@ struct CBattleManagerCcGate {
 
 extern const f32 lbl_eu_80666C60;       // float constant, SDA21 (r2)
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> source).
-extern void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> source).
+extern void* findObjectById(int id);
 
-// func_8006EF04__Fi: presentation/event flag-bit probe (mangled C++ match).
-extern bool func_8006EF04(int mask);
+// isGlobalCamFlagSet__Fi: presentation/event flag-bit probe (mangled C++ match).
+extern bool isGlobalCamFlagSet(int mask);
 
 // C-linkage imports (retail symbol names are unmangled - keep verbatim).
 extern "C" {
@@ -860,8 +860,8 @@ void __dt__80043E88(void* holder, int flags);
 void __dt__Q22cf16CfObjectImplMoveFv(void* self);
 int func_80148778(void* obj, int id);
 void func_8014AE00(void* buf);   // move-state buffer init (actor +0x3380)
-void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-void func_800ACFD8(void* obj, void* target);
+void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
+void setTargetObj_(void* obj, void* target);
 void func_804E3CDC(void* effect, f32 f1, f32 f2);
 void func_80482AD4(void* handler, void* source);
 void func_8015BD94(void* effect);
@@ -1000,12 +1000,12 @@ extern "C" void func_8014AC38(void* buf, void* req); // canonical void* form (CV
 // do not redeclare it here.
 // Single shared flat-name form (CfGimmickEne/CfGimmickObject/CVision/
 // CfMapMineManager/CPartsChange convention).
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
     u32 soundMan, u32 a, u32 b, u32 c, f32 e);
 // Same form as CfResPcImpl/CfResReloadImpl/CfResObjImpl (single shared
 // signature; retail function returns the sound id).
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
-extern "C" void func_800ACC64(void* a, void* b);
+extern "C" void setChildV40__(void* a, void* b);
 extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, f32 first,
     f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)

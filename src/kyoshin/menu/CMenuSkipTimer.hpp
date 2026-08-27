@@ -61,7 +61,7 @@ extern "C" int func_8029FF00(CSkipTimer* self);
 extern "C" void func_8029FE30(CSkipTimer* self);
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 
 // Shared singleton pointer for the active skip-timer widget.
@@ -127,4 +127,4 @@ extern char lbl_eu_80510540[];
 // `li r3, -1` materialisation that retail emits; cf::CfGameManager's inline s16
 // overload discards it). Declared extern "C" so the call binds the verbatim
 // retail symbol.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

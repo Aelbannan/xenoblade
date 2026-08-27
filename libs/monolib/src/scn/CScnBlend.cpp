@@ -32,10 +32,10 @@ struct RectRegion;
 extern "C" void func_80494F10(ml::CRect* rect, RectRegion* region,
                               ml::CCol4* col);
 extern "C" void func_80494D84(ml::CRect* rect, RectRegion* region);
-extern "C" void func_8044B5C0__8CGXCacheFv(CGXCache* cache);
+extern "C" void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
 extern "C" void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 a, u32 b,
                                            u32 c, u32 d, u32 e);
-extern "C" void func_8044ABAC__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
+extern "C" void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
 extern const f32 lbl_eu_8066AAEC;
 extern u32 lbl_eu_806639E8;    // CScnBlend RTTI locator (owned by CScnItemCamera TU)
 extern u32 lbl_eu_806639F0;    // CScnFilter RTTI locator (owned by CScnItemCamera TU)
@@ -180,10 +180,10 @@ extern "C" void func_80498DE8(CScnBlend* self, void* param) {
     if (self->mRect.h != lbl_eu_8066AAE8) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
-        func_8044B5C0__8CGXCacheFv(CDeviceGX::getCacheInstance());
-        CDeviceGX::getCacheInstance()->func_8044A94C(0, 0);
-        CDeviceGX::getCacheInstance()->func_8044AA7C(0, 0);
-        func_8044ABAC__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
+        updateOrthoGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
+        CDeviceGX::getCacheInstance()->setZCompareMD(0, 0);
+        CDeviceGX::getCacheInstance()->setZWriteMode(0, 0);
+        setAlphaBlend__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
 
         if (!(self->mFlags & 1)) {
             // Direct path: no texture, no texture matrix.
@@ -269,8 +269,8 @@ extern "C" void func_80498DE8(CScnBlend* self, void* param) {
             func_804902D8(texWork, tex);
         }
 
-        CDeviceGX::getCacheInstance()->func_8044A94C(1, 0);
-        CDeviceGX::getCacheInstance()->func_8044AA7C(1, 0);
-        func_8044ABAC__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 0);
+        CDeviceGX::getCacheInstance()->setZCompareMD(1, 0);
+        CDeviceGX::getCacheInstance()->setZWriteMode(1, 0);
+        setAlphaBlend__8CGXCacheFv(CDeviceGX::getCacheInstance(), 1, 0);
     }
 }

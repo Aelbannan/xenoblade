@@ -6,8 +6,8 @@
 namespace cf {
 class __declspec(novtable) CHelp_EtherMake : public CHelp {
 public:
-    bool func_802B80A4();
-    void func_802B80EC();
+    bool isEtherReady();
+    void notifyEther();
 };
 } // namespace cf
 

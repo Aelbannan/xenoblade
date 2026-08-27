@@ -1,7 +1,7 @@
 #include "kyoshin/help/CHelp_EtherMake.hpp"
 
 namespace cf {
-bool CHelp_EtherMake::func_802B80A4() {
+bool CHelp_EtherMake::isEtherReady() {
     u32 result = 0;
     if (func_80212480() != 0) {
         if (func_80212490() != 0) {
@@ -11,7 +11,7 @@ bool CHelp_EtherMake::func_802B80A4() {
     return result != 0;
 }
 
-void CHelp_EtherMake::func_802B80EC() {
+void CHelp_EtherMake::notifyEther() {
     func_80212490();
 }
 } // namespace cf

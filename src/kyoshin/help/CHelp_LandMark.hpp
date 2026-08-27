@@ -10,11 +10,11 @@ public:
     CHelp_LandMark();
     ~CHelp_LandMark();
 
-    void func_802B8280();
-    void func_802B8290(u32 param1, u32 param2);
-    u32 func_802B8328();
-    void func_802B8388(u32 param1, u32 param2);
-    void func_802B8390();
+    void resetState();
+    void tryActivate(u32 param1, u32 param2);
+    u32 tickUpdate();
+    void tryActivateThunk(u32 param1, u32 param2);
+    void destroyThunk();
 
     // CHelp at +0x00..+0x0B (mOwner, mParam, mVtbl)
     // Second base-class subobject (invisible in single-inheritance C++)

@@ -2,9 +2,9 @@
 #include "monolib/lib/UnkClass_80460C34.hpp"
 
 // ---------------------------------------------------------------------------
-// inflateReset  (retail func_80460C34__17UnkClass_80460C34Fv, 0x80)
+// inflateReset  (retail resetState__17UnkClass_80460C34Fv, 0x80)
 // ---------------------------------------------------------------------------
-extern "C" int inflateReset__17UnkClass_80460C34Fv(z_stream* strm) {
+extern "C" int resetState__17UnkClass_80460C34Fv(z_stream* strm) {
     z_inflate_state* state;
 
     if (strm == 0 || strm->state == 0) return Z_STREAM_ERROR;
@@ -56,21 +56,21 @@ extern "C" int func_80460CB4__17UnkClass_80460C34Fv(
     }
     state->wbits = (z_uint)windowBits;
     state->window = 0;
-    return inflateReset__17UnkClass_80460C34Fv(strm);
+    return resetState__17UnkClass_80460C34Fv(strm);
 }
 
 // ---------------------------------------------------------------------------
-// inflateInit_  (retail func_80460DCC__17UnkClass_80460C34Fv, 0x10)
+// inflateInit_  (retail isStateReady__17UnkClass_80460C34Fv, 0x10)
 // ---------------------------------------------------------------------------
-extern "C" int inflateInit___17UnkClass_80460C34Fv(
+extern "C" int isStateReady__17UnkClass_80460C34Fv(
         z_stream* strm, const char* version, int stream_size) {
     return func_80460CB4__17UnkClass_80460C34Fv(strm, 15, version, stream_size);
 }
 
 // ---------------------------------------------------------------------------
-// updatewindow  (retail local func_80460DDC__17UnkClass_80460C34Fv, 0x17C)
+// updatewindow  (retail local updateState__17UnkClass_80460C34Fv, 0x17C)
 // ---------------------------------------------------------------------------
-extern "C" int updateWindow__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
+extern "C" int updateState__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
     z_inflate_state* state;
     z_uint copy, dist;
 
@@ -111,9 +111,9 @@ extern "C" int updateWindow__17UnkClass_80460C34Fv(z_stream* strm, z_uint out) {
 }
 
 // ---------------------------------------------------------------------------
-// inflateEnd  (retail func_80461FE0__17UnkClass_80460C34Fv, 0x88)
+// inflateEnd  (retail cleanupState__17UnkClass_80460C34Fv, 0x88)
 // ---------------------------------------------------------------------------
-extern "C" int inflateEnd__17UnkClass_80460C34Fv(z_stream* strm) {
+extern "C" int cleanupState__17UnkClass_80460C34Fv(z_stream* strm) {
     if (strm == 0 || strm->state == 0 || strm->zfree == 0)
         return Z_STREAM_ERROR;
     if (strm->state->window != 0)
@@ -410,7 +410,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
             }
             state->dmax = 1U << len;
             strm->adler = state->check =
-                func_80460308__17UnkClass_80460308Fv(0, 0, 0);
+                processData__17UnkClass_80460308Fv(0, 0, 0);
             state->mode = (hold & 0x200) ? DICTID : TYPE;
             ZI_INITBITS();
             break;
@@ -427,7 +427,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
                 return Z_NEED_DICT;
             }
             strm->adler = state->check =
-                func_80460308__17UnkClass_80460308Fv(0, 0, 0);
+                processData__17UnkClass_80460308Fv(0, 0, 0);
             state->mode = TYPE;
             /* fall through */
         case TYPE:
@@ -733,7 +733,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
                 state->total += out;
                 if (out)
                     strm->adler = state->check =
-                        func_80460308__17UnkClass_80460308Fv(
+                        processData__17UnkClass_80460308Fv(
                             state->check, put - out, out);
                 out = left;
                 if (ZI_REVERSE(hold) != state->check) {
@@ -761,7 +761,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
 inflate_leave:
     ZI_RESTORE();
     if (state->wsize || (state->mode < CHECK && out != strm->avail_out)) {
-        if (updateWindow__17UnkClass_80460C34Fv(strm, out)) {
+        if (updateState__17UnkClass_80460C34Fv(strm, out)) {
             state->mode = MEM;
             return Z_MEM_ERROR;
         }
@@ -773,7 +773,7 @@ inflate_leave:
     state->total += out;
     if (state->wrap && out)
         strm->adler = state->check =
-            func_80460308__17UnkClass_80460308Fv(
+            processData__17UnkClass_80460308Fv(
                 state->check, strm->next_out - out, out);
     strm->data_type = state->bits + (state->last ? 64 : 0) +
         (state->mode == TYPE ? 128 : 0);

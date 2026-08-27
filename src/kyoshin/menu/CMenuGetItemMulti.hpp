@@ -229,17 +229,17 @@ extern void* lbl_eu_806640A8;
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Vtable-dispatch view of the embedded cursor (same scheme as CPartyStateCur):
 // MWCC puts two implicit dtor slots at the start of every polymorphic vtable,
-// so func_801D2180 (retail cursor slot 3) is declared as the SECOND virtual
+// so checkDeactivate (retail cursor slot 3) is declared as the SECOND virtual
 // to land at vtable offset 0xC. All-pure, never constructed directly.
 class CMenuGetItemMultiCur {
 public:
     virtual void vfn0() = 0;                             // MWCC vtable slot 2
-    virtual void func_801D2180() = 0;                    // MWCC vtable slot 3 (retail slot 3)
+    virtual void checkDeactivate() = 0;                    // MWCC vtable slot 3 (retail slot 3)
     virtual void vfn4(const nw4r::math::VEC3*) = 0;      // MWCC vtable slot 4 (+0x10) cursor move
 };
 
@@ -257,7 +257,7 @@ struct CfGameManagerTermFields {
 // interacts with are noted on the decl.
 extern "C" void func_8003AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
 extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, u8* data);
-extern "C" void func_8003AA8C__5CBdatFUl(u32 value);
+extern "C" void getEntry__5CBdatFUl(u32 value);
 extern "C" u8 func_8013B980();                      // flag reset alongside code80135FDC_getByte_64080
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void func_8022B7F4(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
@@ -305,9 +305,9 @@ void func_80136910(nw4r::lyt::Layout* layout, char* paneName, u8 value);
 extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 c,
                                        u32 d, u32 e, u32 f, u8 g);
 
-// C++-linkage import: retail symbol is the mangled func_800B708C__Fi
+// C++-linkage import: retail symbol is the mangled findObjectById__Fi
 // (actor id -> action source).
-int func_800B708C(int id);
+int findObjectById(int id);
 
 // Character-record lookup helpers (func_801B78B4's category-13 display):
 // func_8009EC9C fetches the manager object for a slot id, and

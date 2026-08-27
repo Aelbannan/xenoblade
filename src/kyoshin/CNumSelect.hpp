@@ -33,7 +33,7 @@ extern "C" char* func_80136190(char*, char*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, int);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, int);
 
-/* Vtable view of the font-info object returned by CDeviceFont::func_80452C10;
+/* Vtable view of the font-info object returned by CDeviceFont::getFontInfo;
  * virtual index 7 (+0x24) yields the pane data bound via func_8013676C. */
 class CNumSelectFontView {
 public:
@@ -82,7 +82,7 @@ void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
 void func_801368C0(nw4r::lyt::Layout*, char*, u32);
 
 // Retail-unmangled C-ABI imports used by OnFileEvent.
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 extern "C" char* func_801355BC();
@@ -90,7 +90,7 @@ extern "C" CNumSelectCurSrc* func_801355F4();
 extern "C" char* func_80138F78(u32);
 extern "C" u16 func_8013606C(const void*, const void*, u16);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // u32->float cast-magic constant shared with the retail sdata2 pool.
 extern const double lbl_eu_80668090;

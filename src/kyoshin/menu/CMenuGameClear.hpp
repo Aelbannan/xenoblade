@@ -79,11 +79,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv; same scheme as CSysWinSave.hpp).
+// isFlag01Set__9CTaskGameFv; same scheme as CSysWinSave.hpp).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Minimal cf::CfGameManager view for this TU (full header conflicts with
@@ -92,7 +92,7 @@ namespace cf {
 class CfGameManager {
 public:
     static u32* getCfPadData();                 // getCfPadData__Q22cf13CfGameManagerFv
-    static int func_80086F9C(int arg);          // func_80086F9C__Q22cf13CfGameManagerFv
+    static int isClassicController(int arg);          // isClassicController__Q22cf13CfGameManagerFv
     static void enablePadFlags(u32 flags, bool enable); // enablePadFlags__..FUlb
 };
 } // namespace cf
@@ -135,7 +135,7 @@ void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 int func_8013BE50();
-void func_8008294C__Q22cf13CfGameManagerFv(int enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(int enable);
 }
 
 // Global data imports (MWCC does not mangle global-scope data names).

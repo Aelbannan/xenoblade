@@ -77,8 +77,8 @@ extern const f32 lbl_eu_8066B478; // draw-epsilon
 
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern void* cacheInstance__9CDeviceGX;
-extern u32 func_8044BE24__8CGXCacheFv(void* cache);
-extern void* func_8044BE1C__8CGXCacheFv(void* cache);
+extern u32 getAdjustFlag__8CGXCacheFv(void* cache);
+extern void* getSubRectPtr__8CGXCacheFv(void* cache);
 void func_804F213C(s32 texMap, void* drawCtx, const ml::CVec3* pos, const f32* rgba,
                    s32 boundFlag, const void* mtxSrc, f32 alpha, f32 alphaMax);
 void func_804F3258(s32 texMap, void* drawCtx, const DrawQuad* quad, s16 mode,
@@ -1480,10 +1480,10 @@ void func_804F3B4C(Mtx mtx, const void* scene) {
 // GX cache has flushed, the shared texture-scale table is recomputed from the
 // cache view rectangle against the render mode dimensions.
 void func_804F3B60(Mtx44 mtx, s32 update, f32 bottom, f32 top) {
-    if (update != 0 && func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
+    if (update != 0 && getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
         if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
         const CGXCacheView* view = static_cast<const CGXCacheView*>(
-            func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX));
+            getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
         f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518);
         f32 scaleX = fbW / convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);
         f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B518);
@@ -1527,14 +1527,14 @@ ml::CMat34* func_804F42A0(int update, TexScaleParam* params) {
         *m = ml::CMat34::identity;
         return m;
     }
-    if (func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) == 0) {
+    if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) == 0) {
         ml::CMat34* m = reinterpret_cast<ml::CMat34*>(lbl_eu_80661810);
         *m = ml::CMat34::identity;
         return m;
     }
     if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
     const CGXCacheView* view =
-        static_cast<const CGXCacheView*>(func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX));
+        static_cast<const CGXCacheView*>(getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
 
     // Texture scale factors derived from the GX cache viewport rect.
     f32 scaleX = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518) /
@@ -1919,10 +1919,10 @@ void func_804F4628(s32 update, f32 bottom, f32 top) {
         C_MTXOrtho(m, lbl_eu_8066B508, top, lbl_eu_8066B508, bottom, lbl_eu_8066B508,
                    lbl_eu_8066B50C);
     } else {
-        if (func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
+        if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
             if (lbl_eu_80665A8A == 0) lbl_eu_80665A8A = 1;
             const CGXCacheView* view = static_cast<const CGXCacheView*>(
-                func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX));
+                getSubRectPtr__8CGXCacheFv(cacheInstance__9CDeviceGX));
             // Texture scale from the cache view rect vs the render mode size.
             f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B518);
             f32 scaleX = fbW / convS32ToF(view->field_0x4 - view->field_0x0, lbl_eu_8066B520);

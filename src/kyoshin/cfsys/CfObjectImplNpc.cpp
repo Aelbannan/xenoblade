@@ -63,7 +63,7 @@ void func_800CA854(cf::CfObjectImplNpc* self)
     u32 out8;
     func_800AA318(self->field_14->field_70, &out14, &out10, &outC, &out8);
     if (out14 == 2 && out10 == 8) {
-        if ((u32)cf::CfGameManager::func_800822F4() >= 0x167) {
+        if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x167) {
             self->field_14->field_98->vf28(lbl_eu_804FC7EC, 0);
         }
     }

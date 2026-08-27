@@ -544,7 +544,7 @@ extern "C" void func_802B74F4(CTitle* self) {
     reinterpret_cast<CCur18View*>(&self->mCur[0])->vf03();
     func_80139124(self->mAccessor);
     self->mAccessor = 0;
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
     lbl_eu_80664C38 = 0;
 }
 #pragma optimize_for_size off
@@ -706,7 +706,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
                                 &lbl_eu_80513628[0x145], 1);
         Class_8045F858 regionGuard(&mMemRegion);
         void* fileData = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(fileData, &lbl_eu_80513628[0x14c]);
         func_802B63A4(&mLogo, mAccessor);
@@ -727,7 +727,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
         reinterpret_cast<CCur18View*>(&mCur[0])->vf02();
         field_0x1C = 1;
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;

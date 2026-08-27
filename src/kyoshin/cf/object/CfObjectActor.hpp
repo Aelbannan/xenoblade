@@ -76,7 +76,7 @@ extern "C" void func_80109888(u8);
 
 extern "C" void func_80109874(u8);
 
-extern "C" bool func_8006EF04__Fi(int mask);
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
 
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
@@ -129,7 +129,7 @@ namespace cf {
     void CActorParam_UnkVirtualFunc4();
     void CActorParam_UnkVirtualFunc21();
     void CActorParam_UnkVirtualFunc23();
-    void func_801725DC();
+    void destroyActorParam();
     };
 
     // Vtable proxy for CfObjectActor's primary vtable (offset 0x00), slots
@@ -263,7 +263,7 @@ namespace cf {
     };
 
     // Same flag word viewed relative to the CfObjectMove subobject pointer
-    // (func_800B708C returns one; CfObjectActor_UnkVirtualFunc10 reads it).
+    // (findObjectById returns one; CfObjectActor_UnkVirtualFunc10 reads it).
     struct CfMoveFlags64 {
         u8 _pad[0x64];
         u32 field_0x64;  // 0x64
@@ -299,7 +299,7 @@ namespace cf {
         u32 vtMove;                       // 0x3E9C
     };
 
-    // Downcast of a func_800B708C result (a CfObjectMove-subobject pointer)
+    // Downcast of a findObjectById result (a CfObjectMove-subobject pointer)
     // back to the owning CfObjectActor. The retail's guarded `subi r3,r3,0x3e9c`
     // is exactly the C++ ternary null-guard, so the helper is written inline
     // as `m != 0 ? (CfObjectActor*)((u8*)m - 0x3E9C) : 0` at the call site.

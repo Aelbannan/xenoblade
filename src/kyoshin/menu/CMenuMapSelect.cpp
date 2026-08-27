@@ -41,7 +41,7 @@ extern const f32 lbl_eu_80668730; // timer cap
 
 // Callee helpers (retail-unmangled names).
 // Callee helpers (retail-unmangled names).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(s16 arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(s16 arg);
 int func_800FEDF8();
 void func_800FF914();
 int func_80244510(CFade* self);
@@ -192,7 +192,7 @@ void CMenuMapSelect::func_80242368() {
     u32 triggerBit1, triggerBit2, triggerBit3;
     u32 cancel, confirm, stickDir, menu;
     u32 turboFlags, pressedFlags, cancelVal, confirmVal, menuVal, stickVal;
-    int classic = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+    int classic = isClassicController__Q22cf13CfGameManagerFv(-1);
     if (classic != 0) {
         turboFlags = padData->mTurboPressButtonFlags;
         pressedFlags = padData->mPadPressedFlags;
@@ -288,7 +288,7 @@ void func_80242A28(CMenuMapSelect* self) {
         self->mTimer = lbl_eu_80668730;
     }
 
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
         if (func_8024F6E0(&self->mFloorMap) != 0) {
             if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {

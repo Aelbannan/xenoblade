@@ -137,7 +137,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
             func_800BC3D8(&battleObj->mSub, lbl_eu_80666CE8);
         }
         f32 f31 = battleObj->mSub.sg6C();
-        if (func_8006EF04(0x04000000) == 0 && f31 == lbl_eu_80666CEC &&
+        if (isGlobalCamFlagSet(0x04000000) == 0 && f31 == lbl_eu_80666CEC &&
             battleObj->mSub.sh10(2) == 0) {
             battleObj->field_3F04 |= 0x40;
         }
@@ -146,7 +146,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
 
     if (func_80174C98(battleObj, &idB, 0x1c) != 0) {
         // Player: drive the actor by its battle-cmd flags.
-        if (func_8006EF04(0x04000000) != 0) return;
+        if (isGlobalCamFlagSet(0x04000000) != 0) return;
         if (*(float*)battleObj->bh34() > lbl_eu_80666CEC) {
             if (func_80174C98(battleObj, &idC, 0x20000000) == 0) {
                 if (battleObj->bi44() != 0) {
@@ -207,7 +207,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
     // If a live vision target matches, run the removal sequence.
     cf::CfImplEneTarget* tgt =
         (cf::CfImplEneTarget*)cf::CBattleManager::getInstance()->func_800EA444();
-    if (!(func_8006EF04(0x04000000) != 0 && tgt != 0 &&
+    if (!(isGlobalCamFlagSet(0x04000000) != 0 && tgt != 0 &&
           (tgt->field_04 == battleObj->field_3F10 || tgt->field_00 == battleObj->field_3F10))) {
         func_800BE824(&battleObj->mSub, 0);
         self->vf100();
@@ -249,7 +249,7 @@ void func_800D0A60(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p
         func_801BFE8C(0, 0x1bb, 0);
         break;
     case 0x11:
-        cf::CfSoundMan::func_801BFC38(0, 0x1bb, 0, 0, lbl_eu_80666CEC);
+        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666CEC);
         break;
     }
 }
@@ -271,10 +271,10 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
     int count = 0;
     if (actor != 0 && (actor->field_A0 & 1) != 0) {
         void* v = ((cf::CfImplEneBattleObj*)self->field_18)->mSub.sf4C();
-        void* src = func_8016FE34(func_800B708C((int)v));
+        void* src = func_8016FE34(findObjectById((int)v));
         for (int i = 0; i < 0x10; i++) {
             cf::CfImplEneBattleObj* p =
-                (cf::CfImplEneBattleObj*)func_800AD860((void*)func_800B708C((int)func_801984E4(actor, i)));
+                (cf::CfImplEneBattleObj*)func_800AD860((void*)findObjectById((int)func_801984E4(actor, i)));
             if (p == 0) continue;
             if (p == (cf::CfImplEneBattleObj*)self->field_18) continue;
             if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)p) != 0) continue;
@@ -301,7 +301,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)battleObj) == 0) goto fail;
 
     cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)func_8016FE34(
-        func_800B708C((int)battleObj->mSub.sf4C()));
+        findObjectById((int)battleObj->mSub.sf4C()));
     if (enemy == 0) goto fail;
     if (enemy->field_3F34 == 0) goto fail;
     cf::CfObjectImplEne14* self14 = (cf::CfObjectImplEne14*)self->field_14;

@@ -6,7 +6,7 @@
 namespace cf {
 class __declspec(novtable) CHelp_Sp : public CHelp {
 public:
-    bool func_802B8654();
+    bool isSpThresholdMet();
 
     f32 mThreshold; // 0xC
 };

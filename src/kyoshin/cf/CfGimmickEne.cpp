@@ -360,8 +360,8 @@ void func_8026ECEC(CfGimmickEne* self) {
                 if (!(flags & (2 << r)) && (fe & 2)) {
                     for (int i = 0; i < 4; i++) {
                         if (p[i]) {
-                            func_80462DB4__8CTaskLODFv(p[i], 1);
-                            func_804BCC30(func_804BC9EC__Fv(), p[i]);
+                            setLODEnable__8CTaskLODFv(p[i], 1);
+                            func_804BCC30(getScnHandle__Fv(), p[i]);
                         }
                     }
                 }
@@ -374,8 +374,8 @@ void func_8026ECEC(CfGimmickEne* self) {
             }
             for (int i = 0; i < 4; i++) {
                 if (p[i]) {
-                    func_80462E3C__8CTaskLODFv(p[i], ratio);
-                    func_804BCC30(func_804BC9EC__Fv(), p[i]);
+                    refreshLOD__8CTaskLODFv(p[i], ratio);
+                    func_804BCC30(getScnHandle__Fv(), p[i]);
                 }
             }
 
@@ -384,17 +384,17 @@ void func_8026ECEC(CfGimmickEne* self) {
                 if (fe & 2) {
                     for (int i = 0; i < 4; i++) {
                         if (p[i]) {
-                            func_80462DB4__8CTaskLODFv(p[i], 1);
-                            func_80462E3C__8CTaskLODFv(p[i], lbl_eu_80668968);
-                            func_804BCC30(func_804BC9EC__Fv(), p[i]);
+                            setLODEnable__8CTaskLODFv(p[i], 1);
+                            refreshLOD__8CTaskLODFv(p[i], lbl_eu_80668968);
+                            func_804BCC30(getScnHandle__Fv(), p[i]);
                         }
                     }
                 } else if (fe & 4) {
                     for (int i = 0; i < 4; i++) {
                         if (p[i]) {
-                            func_80462DB4__8CTaskLODFv(p[i], 0);
-                            func_80462E3C__8CTaskLODFv(p[i], lbl_eu_80668968);
-                            func_804BCC3C(func_804BC9EC__Fv(), p[i]);
+                            setLODEnable__8CTaskLODFv(p[i], 0);
+                            refreshLOD__8CTaskLODFv(p[i], lbl_eu_80668968);
+                            func_804BCC3C(getScnHandle__Fv(), p[i]);
                         }
                     }
                 }
@@ -425,22 +425,22 @@ void func_8026ECEC(CfGimmickEne* self) {
                     u8 lod = p[i];
                     if (b2) {
                         if (b1) {
-                            func_80462EF4__8CTaskLODFv(lod, lbl_eu_8066896C);
+                            removeLODEntry__8CTaskLODFv(lod, lbl_eu_8066896C);
                         } else {
-                            func_80462F10__8CTaskLODFv(lod);
+                            clearLODEntry__8CTaskLODFv(lod);
                         }
-                        func_80462F4C__8CTaskLODFv(lod, 0);
+                        attachLODObject__8CTaskLODFv(lod, 0);
                     } else if (b0) {
-                        func_80462F70__8CTaskLODFv(lod, 0);
-                        func_80462F4C__8CTaskLODFv(lod, 1);
+                        detachLODObject__8CTaskLODFv(lod, 0);
+                        attachLODObject__8CTaskLODFv(lod, 1);
                     } else if (b1) {
-                        func_80462F70__8CTaskLODFv(lod, 1);
-                        func_80462F4C__8CTaskLODFv(lod, 1);
+                        detachLODObject__8CTaskLODFv(lod, 1);
+                        attachLODObject__8CTaskLODFv(lod, 1);
                     }
                     if (b3) {
-                        func_80462ED0__8CTaskLODFv(lod, 0);
+                        addLODEntry__8CTaskLODFv(lod, 0);
                     } else {
-                        func_80462ED0__8CTaskLODFv(lod, 1);
+                        addLODEntry__8CTaskLODFv(lod, 1);
                     }
                 }
             }
@@ -470,7 +470,7 @@ void func_8026ECEC(CfGimmickEne* self) {
                     if (lbl_eu_806646C0 != 0) {
                         func_801BFED0(1, lbl_eu_806646C0, 0xa);
                     }
-                    lbl_eu_806646C0 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+                    lbl_eu_806646C0 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                         1, self->field_94, 0, 0, lbl_eu_80668968);
                 }
             }

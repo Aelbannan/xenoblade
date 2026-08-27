@@ -504,7 +504,7 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                                   func_8004C5EC(&holder->actParam), 0, -1, 0);
                 }
                 if (actor->field_3F28 == 8) {
-                    if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x167) {
+                    if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
                         reinterpret_cast<CModelDispVt28*>(actor->field_3F34)->m28(&lbl_eu_80507FF8[0xC], 0);
                     }
                 }
@@ -653,7 +653,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
             fs->flag = 1;
             fs->data = (u8*)func_80062AD8(((CActParamHolderTail*)holder)->equipPtrs[i], &outType);
             if (outType == 0xFFFFFFFF) {
-                func_8007E038__Q22cf13CfGameManagerFv(charId, 0);
+                syncFieldData__Q22cf13CfGameManagerFv(charId, 0);
             }
         }
     }
@@ -761,7 +761,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 
     // Character 8 gets a special greeting at high progress.
     if (charId == 8) {
-        if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x167) {
+        if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
             reinterpret_cast<CModelDispVt28*>(holder->field_0x00)->m28(&lbl_eu_80507FF8[0xC], 0);
         }
     }
@@ -789,7 +789,7 @@ extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
     // Positive-condition nesting: retail branches OVER the body to the shared
     // li r3,0 tail (bne/blt), instead of early-returning from inside.
     if (self->modelFileHandle == 0) {
-        void* h = func_8007DE94__Q22cf13CfGameManagerFv(param, 5);
+        void* h = getBdatEntryColumn__Q22cf13CfGameManagerFv(param, 5);
         // false-init + explicit field stores keep MWCC from emitting the
         // out-of-line FixStr(bool) call - retail inlines the two zero stores.
         ml::FixStr<64> buf(false);

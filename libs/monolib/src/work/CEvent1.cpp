@@ -12,12 +12,12 @@ typedef struct {
 // extern "C" to produce the exact Fv mangling
 extern "C" {
 
-float func_8043B574__7CEvent1Fv(CEvent1* self, int index) {
+float getFloatParam__7CEvent1Fv(CEvent1* self, int index) {
     void* ptr = self->mPtrArray[index];
     return *(float*)ptr;
 }
 
-void* func_8043B588__7CEvent1Fv(CEvent1* self, int index) {
+void* getPtrParam__7CEvent1Fv(CEvent1* self, int index) {
     return self->mPtrArray[index];
 }
 

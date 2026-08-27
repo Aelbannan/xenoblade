@@ -980,7 +980,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
     if (d == 0x35) {
         // Pair-flag + unlock + turn-count gate chain.
-        void* obj = func_8016FE34(func_800B708C((int)out->unk00));
+        void* obj = func_8016FE34(findObjectById((int)out->unk00));
         if (obj != 0 && !(*(u32*)((u8*)obj + 0x3F00) & 2))
             return 0;
         if (!(*(u32*)((u8*)party + 0x3F00) & 2))
@@ -997,7 +997,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             return 0;
         if (d != 0x3B)
             return 1;
-        void* obj = func_8016FE34(func_800B708C((int)out->unk00));
+        void* obj = func_8016FE34(findObjectById((int)out->unk00));
         if (obj != 0) {
             u32 v;
             u32* p = ((CAIPartyObj*)obj)->unk04->vf30();
@@ -1074,7 +1074,7 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
         s16 which = tgt->unk5C;
         if (which == 1) {
             if (result != 0) {
-                void* obj = func_8016FE34(func_800B708C((int)(uintptr_t)result));
+                void* obj = func_8016FE34(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
@@ -1097,7 +1097,7 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
                 result = v;
         } else if (which == 3) {
             if (result != 0) {
-                void* obj = func_8016FE34(func_800B708C((int)(uintptr_t)result));
+                void* obj = func_8016FE34(findObjectById((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
@@ -1378,13 +1378,13 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             void* o = func_80149154((u8*)self->unkB14 + 8, 0x11);
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
-            void* v = func_8016FE34(func_800B708C((int)self->unkB18));
+            void* v = func_8016FE34(findObjectById((int)self->unkB18));
             if (v && ((CAIVtObj*)v)->v0AD() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
         } else {
-            void* v = func_8016FE34(func_800B708C((int)(uintptr_t)aiMoveBaseVt4C((u8*)self->unkB14)));
+            void* v = func_8016FE34(findObjectById((int)(uintptr_t)aiMoveBaseVt4C((u8*)self->unkB14)));
             if (v) {
                 u8* moveBase = (u8*)self->unkB14 + 0x3E9C;
                 u32 mf = *(u32*)(moveBase + 0x64);
@@ -1404,7 +1404,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         break;
 
     case 36: {
-        void* v = func_8016FE34(func_800B708C(*(u32*)((const u8*)c + 0x00)));
+        void* v = func_8016FE34(findObjectById(*(u32*)((const u8*)c + 0x00)));
         if (v)
             func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C((u8*)v));
         break;
@@ -1416,7 +1416,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             void* o = func_80149154((u8*)self->unkB14 + 8, 0x11);
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
-            void* v = func_8016FE34(func_800B708C((int)self->unkB18));
+            void* v = func_8016FE34(findObjectById((int)self->unkB18));
             if (v && ((CAIVtObj*)v)->v0AD() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
@@ -1534,14 +1534,14 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     case 19:
     case 20:
     case 21: {
-        void* node = func_800B76A4(func_800B07E8());
+        void* node = func_800B76A4(getInstance());
         s32 want = (s32)sel - 13;
         while (node) {
             if (want == (s32)(u16)*(u16*)((u8*)node + 0x8C)) {
                 func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)node + 0x74));
                 break;
             }
-            node = func_800B77E4(func_800B07E8(), node);
+            node = func_800B77E4(getInstance(), node);
         }
         break;
     }
@@ -1620,7 +1620,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             obj = ((CAIVtObj*)(u8*)self->unkB14)->v0B8();
             if (obj == 0) {
                 obj = aiMoveBaseVt4C((u8*)self->unkB14);
-                void* v = func_8016FE34(func_800B708C((int)(uintptr_t)obj));
+                void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback1;
                 if (((CAIVtObj*)v)->v0AD() != 0)
@@ -1644,7 +1644,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             obj = ((CAIVtObj*)(u8*)self->unkB14)->v0B9();
             if (obj == 0) {
                 obj = aiMoveBaseVt4C((u8*)self->unkB14);
-                void* v = func_8016FE34(func_800B708C((int)(uintptr_t)obj));
+                void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback2;
                 if (((CAIVtObj*)v)->v0AD() != 0)
@@ -2149,15 +2149,15 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
         __ct__800FD250(func_80043F18(&it));
     } else if (b6 >= 14 && b6 <= 21) {
         // +0x6178 : scan singleton node list (reslist at +0xB28) for tag b6-13
-        func_800B07E8();                       // singleton acquire (retail discards result)
-        void* node = func_800B76A4(func_800B07E8());          // &singleton->unkB28
+        getInstance();                       // singleton acquire (retail discards result)
+        void* node = func_800B76A4(getInstance());          // &singleton->unkB28
         while (node != 0) {
             if (*(u16*)((u8*)node + 0x8C) == (u16)(b6 - 13)) {
                 func_800F6D50(func_80043F18(&it), *(u32*)((u8*)node + 0x74));
                 break;
             }
-            func_800B07E8();
-            node = func_800B77E4(func_800B07E8(), node);
+            getInstance();
+            node = func_800B77E4(getInstance(), node);
         }
     } else if (b6 == 13) {
         // +0x61D0 : battle vision object's field +4
@@ -2189,7 +2189,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                     break;
                 }
                 if (self->unkB18 != 0) {
-                    void* obj = func_8016FE34(func_800B708C((int)self->unkB18));
+                    void* obj = func_8016FE34(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((CAIVtObj*)obj)->v0AD() == 0) {
                         func_800F6D50(func_80043F18(&it), self->unkB18);
                     } else {
@@ -2240,7 +2240,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                     break;
                 }
                 if (self->unkB18 != 0) {
-                    void* obj = func_8016FE34(func_800B708C((int)self->unkB18));
+                    void* obj = func_8016FE34(findObjectById((int)self->unkB18));
                     if (obj != 0 && ((CAIVtObj*)obj)->v0AD() == 0) {
                         func_800F6D50(func_80043F18(&it), self->unkB18);
                     } else {
@@ -2251,7 +2251,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 // +0x62F4 battle-object dance
                 {
                     u32 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
-                    CfObjBase* obj = (CfObjBase*)func_8016FE34(func_800B708C((int)id));
+                    CfObjBase* obj = (CfObjBase*)func_8016FE34(findObjectById((int)id));
                     if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
                         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
                         func_800F4A98(func_80043F18(&it), filter, 0x800);
@@ -2341,7 +2341,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
-                void* obj = func_8016FE34(func_800B708C((int)id));
+                void* obj = func_8016FE34(findObjectById((int)id));
                 if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -2364,7 +2364,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
-                void* obj = func_8016FE34(func_800B708C((int)id));
+                void* obj = func_8016FE34(findObjectById((int)id));
                 if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -2893,7 +2893,7 @@ extern "C" void func_801537F0(cf::CAIAction* self) {
     // active battle via vt slot 0x5C0, probed with the resolved object).
     CAIPartyObj* cur = (CAIPartyObj*)self->unkB14;
     void* src = ((CAIMoveSubVt*)&cur->move)->v11();
-    void* obj = func_8016FE34(func_800B708C((int)(intptr_t)src));
+    void* obj = func_8016FE34(findObjectById((int)(intptr_t)src));
     cur = (CAIPartyObj*)self->unkB14;
     if (obj == (void*)cur || ((CAIPartyObjVt*)cur)->vf5C0(obj) != 0) {
         ((CAIMoveSubVt*)&((CAIPartyObj*)self->unkB14)->move)->v12(0);

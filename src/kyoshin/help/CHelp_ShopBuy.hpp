@@ -11,6 +11,6 @@ extern "C" void func_8018C180();
 namespace cf {
 class __declspec(novtable) CHelp_ShopBuy : public CHelp {
 public:
-    void func_802B864C();
+    void checkHelpCondition();
 };
 } // namespace cf

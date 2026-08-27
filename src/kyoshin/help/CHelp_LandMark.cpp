@@ -55,11 +55,11 @@ extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkF
     return self;
 }
 
-// func_802B8290 - extern "C" to match the Fv retail symbol (takes params in registers)
+// tryActivate - extern "C" to match the Fv retail symbol (takes params in registers)
 // 100% matched
-extern "C" __declspec(noinline) void func_802B8290__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
+extern "C" __declspec(noinline) void tryActivate__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
     // Use bool to trigger MWCC's neg/or/rlwinm idiom for != 0 check
-    bool hasResult = func_8009CF8C(self->mOwner) != 0;
+    bool hasResult = func_8009CF8C((u32)(uintptr_t)self->mOwner) != 0;
     if (hasResult) return;
     if ((s32)(self->field_10 + 0x20c8) != (s32)param1) return;
     if (param2 == 0) return;
@@ -70,16 +70,16 @@ extern "C" __declspec(noinline) void func_802B8290__Q22cf14CHelp_LandMarkFv(cf::
     self->mTimer = 0x4B;
 }
 
-// func_802B8388 - thunk: adjusts this by -0xC and tail-calls func_802B8290
-// Retail is 0x8 bytes (subi r3, r3, 12; b func_802B8290); cannot be expressed in C++
-extern "C" __declspec(noinline) void func_802B8388__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
+// func_802B8388 - thunk: adjusts this by -0xC and tail-calls tryActivate
+// Retail is 0x8 bytes (subi r3, r3, 12; b tryActivate); cannot be expressed in C++
+extern "C" __declspec(noinline) void tryActivateThunk__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
     // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.
-    func_802B8290__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), param1, param2);
+    tryActivate__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), param1, param2);
 }
 
 // func_802B8390 - thunk: adjusts this by -0xC and tail-calls destructor
 // Retail is 0x8 bytes (subi r3, r3, 12; b __dt__); cannot be expressed in C++
-extern "C" __declspec(noinline) void func_802B8390__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
+extern "C" __declspec(noinline) void destroyThunk__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
     // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.
     // Retail passes r4 (deleteFlag) through unchanged - no literal is loaded.
     __dt__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), deleteFlag);
@@ -87,12 +87,12 @@ extern "C" __declspec(noinline) void func_802B8390__Q22cf14CHelp_LandMarkFv(cf::
 
 namespace cf {
 
-void CHelp_LandMark::func_802B8280() {
+void CHelp_LandMark::resetState() {
     mTimer = 0;
     mSavedFlags = 0;
 }
 
-u32 CHelp_LandMark::func_802B8328() {
+u32 CHelp_LandMark::tickUpdate() {
     if (mTimer <= 0) {
         return 0;
     }

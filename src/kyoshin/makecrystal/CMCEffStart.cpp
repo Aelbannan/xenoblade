@@ -17,7 +17,7 @@ extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 extern u32 func_801355BC();
 
 // Minimal abstract mirror of the font object returned by
-// CDeviceFont::func_80452C10. Its slot 9 sits at vtable offset 0x24 and
+// CDeviceFont::getFontInfo. Its slot 9 sits at vtable offset 0x24 and
 // returns the u32 bound into the crystal's font pane. Never instantiated (no
 // ctor), so no vtable is emitted; declaring the call as a genuine virtual
 // member makes MWCC emit retail's native r12 dispatch sequence.
@@ -398,7 +398,7 @@ void CMCEffCrystal::func_80224CE4(){
 
     nw4r::lyt::Pane* rootPane = mLayout18->GetRootPane();
     CFontPanel* fontObj =
-        static_cast<CFontPanel*>(CDeviceFont::func_80452C10(1, mLayout18));
+        static_cast<CFontPanel*>(CDeviceFont::getFontInfo(1, mLayout18));
     // Virtual slot 9 (offset 0x24) on the font object yields the u32 the
     // crystal's font pane is set from.
     u32 result = fontObj->sf9();

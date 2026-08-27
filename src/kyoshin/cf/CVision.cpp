@@ -58,7 +58,7 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 //
 // CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp);
 // the symbols this TU uses (lbl_eu_80663E24,
-// func_80496288, func_8006EF04__Fi, func_80260264) resolve to the
+// func_80496288, isGlobalCamFlagSet__Fi, func_80260264) resolve to the
 // chain-header / local declarations instead.
 //
 // func_8016FE34's single canonical extern "C" void*(void*) chain form comes
@@ -90,7 +90,7 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // Region line count preserved: MWCC -ipa file codegen in this TU is
 // sensitive to downstream source line numbers (CMenuPTGauge case).
 //
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void func_80043D90(void* list);
 extern "C" void* func_80043F18(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
@@ -175,7 +175,7 @@ struct CVisionRefObj {
 };
 // Kept inline (not moved to CVision.hpp): sibling TUs declare these.
 extern "C" void* func_800F477C(void* self); // canonical opaque owner form (code_800F42AC)
-extern "C" bool func_8006EF04__Fi(int mask);         // CfObjectActor.hpp/CChain.hpp declare bool(int); s32=long would clash
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);         // CfObjectActor.hpp/CChain.hpp declare bool(int); s32=long would clash
 
 // Object passed to func_801A6A7C / func_801A380C-family (battle object).
 struct CVisionObj {
@@ -743,7 +743,7 @@ void func_801A39D8(CVision* self) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x40000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x40000) != 0) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -807,7 +807,7 @@ void func_801A39D8(CVision* self) {
         CVisionPtmf chk = *(CVisionPtmf*)&lbl_eu_80533128[0];
         if (__ptmf_cmpr(&self->mPtmf, &chk) == 0) {
             if ((int)self->field_26198 != (int)self->field_26194) {
-                func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c1, 0, 0,
+                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c1, 0, 0,
                                                            lbl_eu_80667CE0);
             }
         }
@@ -844,8 +844,8 @@ void func_801A4194(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -887,7 +887,7 @@ void func_801A4194(CVision* self) {
     }
     if (w3) {
         self->vt_2C(0);
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
     }
     int w4;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CE8 &&
@@ -951,8 +951,8 @@ void func_801A4578(CVision* self) {
         sub = &self->sub;
     }
     if (sub->field_824 & 0x40000) {
-        p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-        p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+        p1 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+        p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
         if (p1 == 0 || p2 == 0) {
             self->vt_20(1);
             return;
@@ -1034,8 +1034,8 @@ void func_801A47D0(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-    p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    p1 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+    p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1076,8 +1076,8 @@ void func_801A47D0(CVision* self) {
     }
     if (w3) {
         self->vt_2C(0);
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
-        func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1be, 0, 0, lbl_eu_80667CE0);
+        lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
     }
     int w4;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CE8 &&
@@ -1156,7 +1156,7 @@ void func_801A4BC8(CVision* self) {
         w1 = 0;
     }
     if (w1) {
-        func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
+        lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
         func_8006E5D8();
     }
     int w2;
@@ -1177,8 +1177,8 @@ void func_801A4CF8(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     if (p1 == 0 || p2 == 0) {
         self->vt_20(1);
         return;
@@ -1193,9 +1193,9 @@ void func_801A4CF8(CVision* self) {
             sub->field_0C->field_7C = lbl_eu_80667CF4;
         }
         if (sub->field_824 & 0x20000) {
-            func_80081F90__Q22cf13CfGameManagerFv(0x26, 0);
+            updateBattleEffectState__Q22cf13CfGameManagerFv(0x26, 0);
         }
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1bf, 0, 0, lbl_eu_80667CE0);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1bf, 0, 0, lbl_eu_80667CE0);
     }
     // Materialized timer-window check (retail evaluates into r0).
     int w1;
@@ -1279,7 +1279,7 @@ void func_801A506C(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     if (p2->field_3F00 & 0x2) {
         bool cancel;
         if (p2 == 0 || p2->field_3F60 == 0) {
@@ -1421,7 +1421,7 @@ void func_801A5444(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* r5) {
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -1570,7 +1570,7 @@ void func_801A5BA8(CVision* self) {
     }
     // Retail dereferences the conditional sub pointer unconditionally
     // (field_00 != 0 guarantees it is valid in practice).
-    p = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    p = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
     cv = self;
     if (p == 0) {
         cv->vt_20(1);
@@ -1764,7 +1764,7 @@ void func_801A60B0(CVision* self) {
     if (w1) {
         self->vt_2C(2);
         func_801BFE8C(0, 0x1bf, 0);
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
     }
     f32 t2 = lbl_eu_80667D04;
     int w2;
@@ -1798,7 +1798,7 @@ void func_801A60B0(CVision* self) {
         }
         self->vt_18();
         self->vt_30(1);
-        func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
+        lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
         func_8006E5D8();
     }
     f32 t3 = lbl_eu_80667D44;
@@ -1826,8 +1826,8 @@ void func_801A60B0(CVision* self) {
 
 void func_801A6340(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 == 0) ? 0 : &self->sub;
-    CVisionFusion* fr = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-    CVisionFusion* fr2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    CVisionFusion* fr = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+    CVisionFusion* fr2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     // Retail materializes the equality test via mfcr/extrwi (value context).
     bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
     if (atBase) {
@@ -1871,7 +1871,7 @@ void func_801A6340(CVision* self) {
 void func_801A897C(CVision* self, void* slot, void* r28) {
     if (slot != 0) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04__Fi(0x4000000) != 0) {
+        if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
             return;
         }
         CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444(CBattleManager::getInstance());
@@ -1888,7 +1888,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
         if (bs->w_00 != x && bs->w_04 != x) {
             return;
         }
-        CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(bs->w_00));
+        CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(bs->w_00));
         if (fu == 0) {
             return;
         }
@@ -1952,9 +1952,9 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
 #define VISION_VT30(subPtr) (*(u32*)((void* (*)(void*))(*(void***)(void*)(subPtr))[0x30 / 4])((void*)(subPtr)))
         // Retail reuses the incoming argument registers for the per-slot
         // working values (slot -> object, r28 -> effect kind).
-        slot = func_8016FE34((void*)func_800B708C__Fi(p->w_00));
+        slot = func_8016FE34((void*)findObjectById__Fi(p->w_00));
         // Second id lookup result is discarded (presence check only).
-        func_8016FE34((void*)func_800B708C__Fi(p->w_04));
+        func_8016FE34((void*)findObjectById__Fi(p->w_04));
         if (slot == 0) {
             self->vt_20(1);
             continue;
@@ -2097,7 +2097,7 @@ void func_801A6540(CVision* self) {
         self->vt_20(1);
         return;
     }
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -2289,7 +2289,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x40000)) {
+    if (isGlobalCamFlagSet__Fi(0x40000)) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -2297,7 +2297,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x200) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x200) != 0) {
         return 0;
     }
     if (((CVisionBM28View*)CBattleManager::getInstance())->vt28(0x200) != 0) {
@@ -2342,7 +2342,7 @@ int func_801A6BCC(CVision* self, CVisionObjV* obj, CVisionObjV* r5) {
 
     // Target fusion from `r5` (+4 id, +0x50 actor requirement).
     CVisionActor50* actor = r5->field_50;
-    CVisionFusionV* target = (CVisionFusionV*)func_8016FE34((void*)func_800B708C__Fi(r5->field_04));
+    CVisionFusionV* target = (CVisionFusionV*)func_8016FE34((void*)findObjectById__Fi(r5->field_04));
     if (target == NULL || actor == NULL) {
         return 0;
     }
@@ -2665,8 +2665,8 @@ void func_801A7704(CVision* self) {
     } else {
         sub = &self->sub;
     }
-    CVisionBattleObj* p1 = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-    CVisionBattleObj* p2 = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+    CVisionBattleObj* p1 = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+    CVisionBattleObj* p2 = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
     if (p1 == 0) {
         self->vt_20(1);
         return;
@@ -2767,14 +2767,14 @@ void func_801A7D6C(CVision* self, void* r4) {
     }
     self->vt_30(1);
     if (r4 != 0) {
-        func_80081E90__Q22cf13CfGameManagerFv(1, 0, 0);
+        lookupEffectForResource__Q22cf13CfGameManagerFv(1, 0, 0);
         func_8006E5D8();
     }
     func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
     func_801AF934(0);
     if (sub != 0) {
-        CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_00));
-        CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)func_800B708C__Fi(sub->field_04));
+        CVisionFusion* p1 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_00));
+        CVisionFusion* p2 = (CVisionFusion*)func_8016FE34((void*)findObjectById__Fi(sub->field_04));
         if (p1 != 0) {
             p1->field_3388 &= 0xFFFD;
             p1->field_04->v20(0x4000);
@@ -2836,8 +2836,8 @@ void func_801A8138(CVision* self) {
 // many element-array pushes have happened so far; each push appends a
 // {tag, scaled stage, 0} entry to the ring at unk261C4.w60.
 void func_801A8244(CVision* self, void* r25, int r26, int r27, int r28) {
-    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_00));
-    func_8016FE34((void*)func_800B708C__Fi(((CVisionBtlSlot*)r25)->w_04));
+    CVisionBattleObj* fu = (CVisionBattleObj*)func_8016FE34((void*)findObjectById__Fi(((CVisionBtlSlot*)r25)->w_00));
+    func_8016FE34((void*)findObjectById__Fi(((CVisionBtlSlot*)r25)->w_04));
     if (fu == 0) {
         self->vt_20(1);
         return;
@@ -3126,11 +3126,11 @@ void func_801A924C(CVision* self, u32 value) {
     }
 }
 
-void cf::CVision::func_801A929C(u32 r4) {
+void cf::CVision::setEffectScale(u32 r4) {
     f32 scl = (r4 != 0) ? lbl_eu_80667CD4 : lbl_eu_80667CF0;
     for (int i = 0; i < 4; i++) {
         if (effectArray[i] != 0) {
-            func_800ACC50(effectArray[i], scl);
+            setChildF50G_(effectArray[i], scl);
             if (effectArray[i]->mSchedule != 0) {
                 func_804E36DC(effectArray[i]->mSchedule, lbl_eu_80667CF0);
             }

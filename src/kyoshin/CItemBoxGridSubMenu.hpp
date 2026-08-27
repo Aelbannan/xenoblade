@@ -53,6 +53,6 @@ extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
 extern "C" const double lbl_eu_806682F8;
 extern "C" u32 func_801355A0__Fv();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);

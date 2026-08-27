@@ -99,11 +99,11 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     u16 id = param->field_C;
     func_800CB21C(self, id);
     if (id == 0x111) {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c8, 0, 0,
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c8, 0, 0,
             lbl_eu_80666C64);
     }
     if (id == 0x112) {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c7, 0, 0,
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c7, 0, 0,
             lbl_eu_80666C64);
     }
     switch (id) {
@@ -129,7 +129,7 @@ void func_800CAB30(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         }
         break;
     case 0xf:
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x194, 0, 0,
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x194, 0, 0,
             lbl_eu_80666C64);
         // Reset driver state and re-init the move buffer (retail reloads
         // self->field_0x18 for each of these stores).
@@ -301,7 +301,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     case 0xc: {
         self->field_0x18->f43();
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04(0x04000000))
+        if (isGlobalCamFlagSet(0x04000000))
             break;
         CfMoveBMId* bmId =
             (CfMoveBMId*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
@@ -352,7 +352,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         self->field_0x18->f43();
         func_801BFE8C(0, 0x194, 0);
         getInstance__Q22cf13CfGameManagerFv();
-        if (!func_8006EF04(0x04000000)) {
+        if (!isGlobalCamFlagSet(0x04000000)) {
             CfMoveBMId* bmId = (CfMoveBMId*)func_800EA444(
                 getInstance__Q22cf14CBattleManagerFv());
             if (bmId != nullptr &&
@@ -430,7 +430,7 @@ void func_800CB9AC(void* selfV, u32 id) {
     // move dispatch. Otherwise map the incoming id to an embedded sub-object
     // command (vtable 0x20c). Case order is retail's body emission order.
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x04000000)) {
+    if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
     switch (id) {
@@ -487,7 +487,7 @@ void func_800CB9AC(void* selfV, u32 id) {
 // actor id 5 is registered and its float counter exceeds the threshold.
 void func_800CBBD8(CfObjectImplMoveObj* self) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (!func_8006EF04(0x400) && func_80496288(lbl_eu_80663E14) != lbl_eu_80666C60) {
+    if (!isGlobalCamFlagSet(0x400) && func_80496288(lbl_eu_80663E14) != lbl_eu_80666C60) {
         void* src = self->field_0x18->sub.vfn13();
         if (src == nullptr) {
             // No source bound: only reset when the probe stays empty.
@@ -496,7 +496,7 @@ void func_800CBBD8(CfObjectImplMoveObj* self) {
             }
         } else {
             CfActorObj* found = (CfActorObj*)func_8016FE34(
-                func_800B708C((int)self->field_0x18->sub.vfn13()));
+                findObjectById((int)self->field_0x18->sub.vfn13()));
             if (found == nullptr || found->f173() != 0 ||
                 func_80148778(found->field_08, 0xf8) != 0) {
                 self->vf70(nullptr);
@@ -603,7 +603,7 @@ void func_800CC020(CfObjectImplMoveObj* self) {
     vec.y = lbl_eu_80666C74 + t;
     if (self->field_0x1C == nullptr) {
         self->field_0x1C =
-            (CfMoveField1CObj*)func_8008187C__Q22cf13CfGameManagerFv(0x16);
+            (CfMoveField1CObj*)createNpcActor__Q22cf13CfGameManagerFv(0x16);
         if (self->field_0x1C != nullptr)
             self->field_0x1C->field_0xB0 = (u32)&self->field_0x0C;
     }
@@ -643,9 +643,9 @@ void func_800CC638(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
     type7 = param->field_0xE & 0x7f;   // low 7 bits: effect type
     bit7 = (param->field_0xE >> 7) & 1;  // bit 7: flag passed to vfn194
     if (mode == 0) {
-        obj = (CfMoveEffObj*)func_8008187C__Q22cf13CfGameManagerFv(param->field_0xC);
+        obj = (CfMoveEffObj*)createNpcActor__Q22cf13CfGameManagerFv(param->field_0xC);
     } else if (mode == 2) {
-        obj = (CfMoveEffObj*)func_800817BC__Q22cf13CfGameManagerFv(param->field_0xC, 0);
+        obj = (CfMoveEffObj*)createBattleActor__Q22cf13CfGameManagerFv(param->field_0xC, 0);
     } else if (mode == 1) {
         obj = (CfMoveEffObj*)self->mSubObj->vfn220(param->field_0xC);
     }
@@ -673,10 +673,10 @@ void func_800CC638(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
     }
     // Common path: attach to the driver, pass the flag, then dispatch by
     // effect type (bitmask {1,4,5,6} or {0x85,0x86} reaches the actor id).
-    func_800ACF78(obj, self->mSubObj, 0);
+    bindPartnerO_(obj, self->mSubObj, 0);
     obj->vfn194(bit7);
     if (self->mSubObj->field_0x98 != 0) {
-        func_800ACEF8(obj, (u8*)self->mSubObj->field_0x98 + 0x304);
+        setChild34Sc_(obj, (u8*)self->mSubObj->field_0x98 + 0x304);
     }
     u32 t = type7 + 0xff;
     int cond = 0;
@@ -688,16 +688,16 @@ void func_800CC638(CfObjectImplMoveObj* self, u32 id, CfMoveParam* param) {
         keep = 0;
     }
     if (keep != 0) {
-        func_800ACFD8(obj, func_800B708C((int)self->field_0x18->vf298()->field_0x4));
+        setTargetObj_(obj, findObjectById((int)self->field_0x18->vf298()->field_0x4));
     }
     if (type7 == 2 || type7 == 5 || type7 == 0x85) {
         if (self->mSubObj->field_0x6F8 != 0) {
-            func_800ACF78(obj, nullptr,
+            bindPartnerO_(obj, nullptr,
                 (u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6F8)->vfnA8());
         }
     } else if (type7 == 3 || type7 == 6 || type7 == 0x86) {
         if (self->mSubObj->field_0x6FC != 0) {
-            func_800ACF78(obj, nullptr,
+            bindPartnerO_(obj, nullptr,
                 (u32)((CfMoveDriverSubObj*)self->mSubObj->field_0x6FC)->vfnA8());
         }
     }
@@ -865,7 +865,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
     case 9: {
         // Actor-id request: resolve the actor through the vf298 block first,
         // then parse the digit argument.
-        u32 aid = (u32)func_800B708C((int)self->field_0x18->vf298()->field_0x4);
+        u32 aid = (u32)findObjectById((int)self->field_0x18->vf298()->field_0x4);
         int digit = -1;
         if ((u32)((u8)param->field_1C[0] - 0x30) <= 9) {
             digit = atoi(&param->field_1C[0]);
@@ -893,7 +893,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
         break;
     }
     case 0xc: {
-        u32 aid = (u32)func_800B708C((int)self->field_0x18->vf298()->field_0x4);
+        u32 aid = (u32)findObjectById((int)self->field_0x18->vf298()->field_0x4);
         int digit = -1;
         if ((u32)((u8)param->field_1C[0] - 0x30) <= 9) {
             digit = atoi(&param->field_1C[0]);
@@ -1071,12 +1071,12 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         actor->sub.vfn90(lbl_eu_80666C64);
         if (kind == 2 || kind == 0x11) {
             getInstance__Q22cf13CfGameManagerFv();
-            if (!func_8006EF04(0x400)) {
+            if (!isGlobalCamFlagSet(0x400)) {
                 actor->vf2AC();
             }
         } else {
             getInstance__Q22cf13CfGameManagerFv();
-            if (!func_8006EF04(0x400)) {
+            if (!isGlobalCamFlagSet(0x400)) {
                 if (kind == 0x2d) {
                     u32 prev = actor->vf2A4()->field_48;
                     if (actor->vf2A0()->field_48 == prev) {
@@ -1393,7 +1393,7 @@ tail:
         CfActorObj* aT2 = self->field_0x18;
         if (aT2->sub.field_71C != 0) {
             CfActorObj* other =
-                (CfActorObj*)func_8016FE34(func_800B708C((int)aT2->sub.field_71C));
+                (CfActorObj*)func_8016FE34(findObjectById((int)aT2->sub.field_71C));
             if (other != nullptr && other->sub.field_C4 != 0) {
                 void* moved = aT2->sub.vfn110()->field_0x18;
                 other->sub.vfn110()->field_0x18 = moved;
@@ -1486,8 +1486,8 @@ void func_800CE6A0(CfObjectImplMoveObj* self) {
 void func_800CE8AC(CfObjectImplMoveObj* self) {
     // Virtual dispatch on the sub-object embedded at +0x3e9c of the actor
     // object (vtable slot 0x4c), then chain the result through
-    // func_800B708C (actor id lookup) into func_8016FE34.
-    func_8016FE34(func_800B708C(
+    // findObjectById (actor id lookup) into func_8016FE34.
+    func_8016FE34(findObjectById(
         (int)self->field_0x18->sub.vfn13()));
 }
 
@@ -1508,7 +1508,7 @@ void func_800CE8E4(CfObjectImplMoveObj* self, void* param) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x04000000)) {
+    if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
     if (self->field_0x18->sub.vfn13() == param) {
@@ -1529,14 +1529,14 @@ void func_800CEA34(CfObjectImplMoveObj* self) {
     self->field_0x18->field_04->b20(0x400000);
     self->field_0x18->field_04->b20(0x800000);
     // The embedded handler probe result feeds straight into the actor-id lookup.
-    if (func_800B708C((int)self->field_0x18->sub.vfn13()) == 0) {
+    if (findObjectById((int)self->field_0x18->sub.vfn13()) == 0) {
         return;
     }
     void* bmRes = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
     if (bmRes == nullptr) {
         return;
     }
-    void* found = func_8016FE34(func_800B708C((int)((CfMoveBMId*)bmRes)->field_0));
+    void* found = func_8016FE34(findObjectById((int)((CfMoveBMId*)bmRes)->field_0));
     if (found != (void*)self->field_0x18) {
         return;
     }
@@ -1709,12 +1709,12 @@ void func_800CEE80(CfObjectImplMoveObj* self) {
         lbl_eu_80663EF0 = 0x3c;
     }
     CfMoveMgrEfView* mgr =
-        (CfMoveMgrEfView*)func_8008187C__Q22cf13CfGameManagerFv(kind);
+        (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(kind);
     mgr->vfn9C(&vec);
     CfMoveEvt98* evp = (CfMoveEvt98*)self->mSubObj->field_0x98;
     f32 epos[4] = {evp->field_760, evp->field_764, evp->field_768,
         lbl_eu_80666C64};
-    func_800ACC64(mgr, epos);
+    setChildV40__(mgr, epos);
     if (flag == 0) {
         f32 vol = ((f32*)func_8049603C((CScn*)lbl_eu_80663E14))[3];
         func_801BFDE8(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
@@ -1791,12 +1791,12 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         timer98 = lbl_eu_80666C74 +
                   ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
         CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)func_8008187C__Q22cf13CfGameManagerFv(0x15);
+            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x15);
         mgr->vfn9C((CfMoveVec3f*)&world);
         CfMoveEvt98* evt = (CfMoveEvt98*)self->mSubObj->field_0x98;
         f32 epos[4] = {evt->field_760, evt->field_764, evt->field_768,
             lbl_eu_80666C64};
-        func_800ACC64(mgr, epos);
+        setChildV40__(mgr, epos);
         if (lbl_eu_80663EF0 != 0) {
             return;
         }
@@ -1857,7 +1857,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         // from the move direction (quaternion toward the surface normal),
         // then decompose into the angle triple.
         CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)func_8008187C__Q22cf13CfGameManagerFv(effId);
+            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(effId);
         timer98 += lbl_eu_80666CB4;
         if (state == 5) {
             timer98 += lbl_eu_80666CB8;
@@ -1961,7 +1961,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         CfMoveEvt98* evt2 = (CfMoveEvt98*)self->mSubObj->field_0x98;
         f32 epos2[4] = {evt2->field_760, evt2->field_764, evt2->field_768,
             lbl_eu_80666C64};
-        func_800ACC64(mgr, epos2);
+        setChildV40__(mgr, epos2);
     }
 
     // Tail: tiered impact sound.
@@ -2034,7 +2034,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
         t = lbl_eu_80666C74 +
             ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_4FC;
         CfMoveMgrEfView* mgr =
-            (CfMoveMgrEfView*)func_8008187C__Q22cf13CfGameManagerFv(0x2d);
+            (CfMoveMgrEfView*)createNpcActor__Q22cf13CfGameManagerFv(0x2d);
         if (mgr == nullptr)
             return;
         mgr->vfn9C(&world);
@@ -2043,13 +2043,13 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
         epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;
         epos[2] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_768;
         epos[3] = lbl_eu_80666C64;
-        func_800ACC64(mgr, epos);
+        setChildV40__(mgr, epos);
         if ((self->mSubObj->field_0x64 & 0x10) != 0) {
             CfMoveVec3f sv;
             sv.x = lbl_eu_80666C6C * scale;
             sv.y = sv.x;
             sv.z = sv.x;
-            func_800ACEF8(mgr, &sv);
+            setChild34Sc_(mgr, &sv);
         }
         sndId = 0x19a;
         if (scale > lbl_eu_80666CD0)
@@ -2077,7 +2077,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
             if (state == 5)
                 t += lbl_eu_80666CB8;
             CfMoveMgrEfView* mgr = (CfMoveMgrEfView*)
-                func_8008187C__Q22cf13CfGameManagerFv(effId);
+                createNpcActor__Q22cf13CfGameManagerFv(effId);
             mgr->vfn9C(&world);
             f32 ang = lbl_eu_80666CBC *
                       ((CfMoveEvt60*)self->mSubObj->mSomeId)->field_444;
@@ -2178,13 +2178,13 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
             epos[1] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_764;
             epos[2] = ((CfMoveEvt98*)self->mSubObj->field_0x98)->field_768;
             epos[3] = lbl_eu_80666C64;
-            func_800ACC64(mgr, epos);
+            setChildV40__(mgr, epos);
             if ((self->mSubObj->field_0x64 & 0x10) != 0) {
                 CfMoveVec3f sv;
                 sv.x = lbl_eu_80666C6C * scale;
                 sv.y = sv.x;
                 sv.z = sv.x;
-                func_800ACEF8(mgr, &sv);
+                setChild34Sc_(mgr, &sv);
             }
         }
         sndId = 0x196;

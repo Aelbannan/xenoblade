@@ -1561,7 +1561,7 @@ void func_800A13C4(cf::CtrlObjectParamArtsView* self, u32 arg2) {
 extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
     volatile u8 learnFlag = 0;   // retail keeps this in a stack slot across all calls
     if (self->field_00 == 3) {
-        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) {   // retail cmpli
+        if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {   // retail cmpli
             return 0;
         }
     }
@@ -1788,7 +1788,7 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
     u32 argA = a;
     u32 argB = b;
     if (self->field_00 == 3) {
-        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+        if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
     void* actor = func_800B8B94(self->field_00);
     if (actor != 0) {
@@ -1858,11 +1858,11 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
         if (type < 9) {
             found = isPartySlotMatch(type);
         }
-        if (found == 0 && func_8008235C__Q22cf13CfGameManagerFv(type) == 0) {
+        if (found == 0 && isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) {
             // not a party member: skip the arts-change gate
         } else {
             if (self->field_00 == 3) {
-                if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) {
+                if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) {
                     // skip
                 } else {
                     func_8026187C(&self->big[0], 1);
@@ -1986,7 +1986,7 @@ extern "C" void func_800A1B08(u32 rowIndex, int* outA, int* outB,
     if (func_8026178C(lookup, 0x8D)) {
         *outB += func_8025FB10(lookup, 0x8D);
     }
-    u32 gameState = cf::CfGameManager::func_80086DBC();
+    u32 gameState = cf::CfGameManager::getCurrentSlotIndex();
     if (func_8026178C(lookup, 0x87) && gameState != 4) {
         *outA += func_8025FB10(lookup, 0x87);
     }
@@ -2118,11 +2118,11 @@ extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int a
         }
     probed:
         if (found == 0) {
-            if (func_8008235C__Q22cf13CfGameManagerFv(self->field_00) == 0) return;
+            if (isResourceFlagSet__Q22cf13CfGameManagerFv(self->field_00) == 0) return;
         }
         if (self->field_00 == 3) {
             // Unsigned compare (retail cmpli cr0,0,r3,0x1D).
-            if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+            if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
         }
         func_800B8B94(self->field_00);
         func_800A1E3C(self, &v[0], &v[1], &v[2], arg6, arg7, arg8);
@@ -2136,7 +2136,7 @@ extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int a
 
 extern "C" void func_800A282C(cf::CtrlObjectParamTypeView* self, int arg4) {
     // Arts-change gate (same shape as func_800A2974): valid row id < 9,
-    // nonzero delta, party member or func_8008235C pass, and for row 3 the
+    // nonzero delta, party member or isResourceFlagSet pass, and for row 3 the
     // frame counter below 0x1D - then bump the arts counter at +0x3534.
     u16 type = self->field_00;
     if (type >= 9 || arg4 == 0) return;
@@ -2156,10 +2156,10 @@ extern "C" void func_800A282C(cf::CtrlObjectParamTypeView* self, int arg4) {
     }
 probed:
     if (!found) {
-        if (func_8008235C__Q22cf13CfGameManagerFv(type) == 0) return;
+        if (isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) return;
     }
     if (self->field_00 == 3) {
-        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+        if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
     func_8026187C(self->big, arg4);
 }
@@ -2209,10 +2209,10 @@ extern "C" void func_800A2974(void* selfV, u16 arg2) {
     }
 probed:
     if (!found) {
-        if (func_8008235C__Q22cf13CfGameManagerFv(type) == 0) return;
+        if (isResourceFlagSet__Q22cf13CfGameManagerFv(type) == 0) return;
     }
     if (self->field_00 == 3) {
-        if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+        if ((u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return;
     }
     func_802618AC(self->big, arg2);
 }
@@ -2248,7 +2248,7 @@ extern "C" int func_800A2AF0(cf::CtrlObjectParamTypeView* selfV) {
         reinterpret_cast<cf::CtrlObjectParamArtsRankView*>(selfV);
     int learned = 0;
     if (view->field_00 >= 9) return 0;
-    if (view->field_00 == 3 && (u32)cf::CfGameManager::func_800822F4() >= 0x1D) return 0;
+    if (view->field_00 == 3 && (u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1D) return 0;
 
     // Lifetime/order mirror of the retail register map:
     //   row(r27) strBase(r22) table(r26) grpCursor(r31) cap(r28)

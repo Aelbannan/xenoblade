@@ -34,7 +34,7 @@ struct CParamSub4C {
     virtual void* vf4C(); // index 17 -> vtable 0x4C
 };
 
-// Actor object returned by func_800BF324(func_800B708C(...)): state id at
+// Actor object returned by func_800BF324(findObjectById(...)): state id at
 // vtable 0x228 (index 136) and a u16 id at +0x8C.
 struct CTalkActor : public CParamSub4C {
     // Filler slots 0x50-0x224 (indices 18-135) so vf228 sits at its retail offset.
@@ -105,7 +105,7 @@ struct CPlayerTalkRec {
 // CHelp_Talk inherits CHelpSwitch (mFlag at +0xC). Extra fields at +0x10..+0x16.
 class __declspec(novtable) CHelp_Talk : public CHelpSwitch {
 public:
-    void func_802B86BC();
+    void resetTalkHelp();
     bool func_802B86F0();
 
     s32 field_0x10;  // 0x10 - compared (signed cmp) against a u16 from another object

@@ -18,9 +18,9 @@
  *
  * Virtual methods (in vtable at runtime, not defined in this TU):
  *   vtable[0]: VUpdate() - pure virtual in base (slot = 0x00000000)
- *   vtable[1]: func_801D20DC()
- *   vtable[2]: func_801D2144()
- *   vtable[3]: func_801D2180()
+ *   vtable[1]: cleanup()
+ *   vtable[2]: setRootPaneTranslate()
+ *   vtable[3]: checkDeactivate()
  */
 
 #include <types.h>

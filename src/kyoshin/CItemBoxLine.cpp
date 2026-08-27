@@ -666,8 +666,8 @@ void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
 #pragma push
 #pragma optimize_for_size on
 void func_801ED618(CItemBoxLine* self) {
-    CBdat::func_8003AA8C(2);
-    CBdat::func_8003AA8C(5);
+    CBdat::getEntry(2);
+    CBdat::getEntry(5);
     func_801390E0(reinterpret_cast<CFileHandle**>(&self->field24));
     func_801390E0(reinterpret_cast<CFileHandle**>(&self->field28));
     func_801390E0(reinterpret_cast<CFileHandle**>(&self->field2C));
@@ -2515,7 +2515,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             mtl::MemManager::getHandleMEM2(), 0x18000, &lbl_eu_805071B0[0x700], 0);
         Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&this->field04));
         u8* data = (u8*)((CFileHandle*)this->field24)->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         void* tpMem = mtl::MemManager::allocate(0x858,
                                                 getAllocHandle__10CLibLayoutFv());
         // The ctor returns self in r3, so the store can reuse r3 after the call
@@ -2534,7 +2534,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
                       (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       &lbl_eu_805071B0[0x742]);
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
                                                                           this->field40);
         func_8013676C(root, reinterpret_cast<CItemBoxFontView*>(fontObj)->vf7());
 
@@ -2686,7 +2686,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         Class_8045F858 host2(reinterpret_cast<UnkClass_8045F564*>(&this->pad_14[0]));
         CFileHandle* fh28 = (CFileHandle*)this->field28;
         u8* data28 = (u8*)fh28->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 =
             createArcResourceAccessor__10CLibLayoutFv();
         this->field3C = (CItemBoxLineResView*)acc2;

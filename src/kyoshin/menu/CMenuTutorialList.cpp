@@ -4,7 +4,7 @@
 #include "kyoshin/menu/CMenuTutorialList.hpp"
 #include "kyoshin/CTutorial.hpp"       // func_80138078 (retail func_80138078__FUl)
 #include "kyoshin/code_80135FDC.hpp"   // func_80136190 string-format helper
-#include "kyoshin/CTaskGame.hpp"       // CTaskGame::getInstance / func_800426F0
+#include "kyoshin/CTaskGame.hpp"       // CTaskGame::getInstance / isFlag01Set
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -100,13 +100,13 @@ void CMenuTutorialList::Term() {
 
     func_8013B980();
     if (code80135FDC_getByte_64080() == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(0);
+        setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
 }
 
 void CMenuTutorialList::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard (same shape as cbRenderBefore): exit label
@@ -122,7 +122,7 @@ body:
     // plays the close sound and flags the closing state at 0x54.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -172,7 +172,7 @@ body:
 
 void CMenuTutorialList::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard: the exit label before the body label keeps
@@ -301,7 +301,7 @@ void func_802ACA38(CMenuTutorialList* self) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
             first = (pad->mPressedButtonFlags >> 21) & 1;
             second = (pad->mPressedButtonFlags >> 22) & 1;
         } else {

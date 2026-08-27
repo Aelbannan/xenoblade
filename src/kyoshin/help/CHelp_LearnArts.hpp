@@ -8,7 +8,7 @@ namespace cf {
 class __declspec(novtable) CHelp_LearnArts : public CHelp {
 public:
     bool func_802B8398();
-    void func_802B84E0();
+    void isHelpAvailable();
 
     s16 mWpnTypeCount; // 0xC
     u8 mLearnArtsFlag; // 0xE

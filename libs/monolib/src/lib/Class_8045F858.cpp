@@ -20,12 +20,12 @@ Class_8045F858::Class_8045F858(UnkClass_8045F564* ptr) {
     layout->hashTable[idx] = ptr;
     layout->hashCount++;
     
-    MemManager::func_80434A4C(false);
+    MemManager::setMemInitFlag(false);
 }
 
 Class_8045F858::~Class_8045F858() {
     CLibLayout* layout = lbl_eu_80665710;
     layout->hashCount--;
     
-    MemManager::func_80434A4C(true);
+    MemManager::setMemInitFlag(true);
 }

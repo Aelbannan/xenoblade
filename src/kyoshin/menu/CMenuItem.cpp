@@ -25,7 +25,7 @@ void func_80167A2C(CMenuItem* self) {
     bool up, down;
     int turboCancel, cancel, pageTurn, decide;
     bool leftTrigger, xHeld, yHeld;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Classic controller bit layout.
         turboCancel = (pad->mTurboFlags & 0x8004) != 0;
         pageTurn = (pad->mTurboFlags & 0x10008) != 0;

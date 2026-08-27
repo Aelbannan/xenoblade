@@ -48,20 +48,20 @@ extern "C" bool isActive__11CSplitFrameFv(void* splitFrame);
 void apply__11CSplitFrameFv(void* splitFrame);
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
-extern "C" void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
+extern "C" void updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
 extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
-extern "C" void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
+extern "C" void setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
 extern "C" void __ct__CViewFrame(CViewFrame* frame);
 // CFontLayer base ctor (un-mangled retail symbol; defined in the shipped
 // CFontLayer.o, which is NonMatching so no C++ declaration exists anywhere).
 extern "C" void __ct__CFontLayer(CFontLayer* layer);
-// Third arg is forwarded from CView::func_8043CCCC's own r4 (retail keeps
+// Third arg is forwarded from CView::updateViewRect's own r4 (retail keeps
 // the dead mr r5,r4 because the callee prototype has three parameters).
 extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                           const CViewFrame* frame,
                                                           u32 arg);
-void func_8043FC60__10CViewFrameFUl(CViewFrame* frame, u32 owner);
-u32 func_8044BE2C__8CGXCacheFv();
+void setViewFrameMode__10CViewFrameFUl(CViewFrame* frame, u32 owner);
+u32 getWhiteColor__8CGXCacheFv();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
 void func_8043E010__5CViewFv(CView* view);
 CView* getFullScreenView__9CViewRootFv();
@@ -71,8 +71,8 @@ void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* o
 void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
 void func_80442B54__9CViewRootFPvPv(void* viewRect, void* scissorRect, void* insetRect);
 void func_80442C68__9CViewRootFv();
-void func_8044BE38__8CGXCacheFv(CGXCache* cache);
-void func_80442DA8__9CViewRootFv();
+void resetGXStateA__8CGXCacheFv(CGXCache* cache);
+void updateViewRoot__9CViewRootFv();
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
 void render__10CViewFrameFv(CViewFrame* frame);
 // Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
@@ -545,7 +545,7 @@ void CView::setRect(const ml::CRect16& rect) {
         }
 
         if (sourceParent != nullptr) {
-            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
                 &mRectData, static_cast<CView*>(sourceParent)->mRectData.mBoundsSize);
         } else {
             {
@@ -558,7 +558,7 @@ void CView::setRect(const ml::CRect16& rect) {
                 modeWidth = renderMode->fbWidth;
                 modeSize.x = modeWidth;
                 modeSize.y = modeHeight;
-                func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+                updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
                     &mRectData, *(const ml::CPnt16*)&modeSize);
             }
         }
@@ -570,11 +570,11 @@ void CView::setRect(const ml::CRect16& rect) {
     normalSize.x = rect.mPos.x - normalPos.x;
     normalSize.y = rect.mPos.y - normalPos.y;
     *(u32*)&mFrame.mContentX = *(u32*)&normalSize;
-    func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
+    updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
 
 setRect_tail:
     if ((unk278 & 0x10) == 0) {
-        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
+        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
     }
 }
 
@@ -676,7 +676,7 @@ void CView::detachRenderWork(CWorkThread* pThread) {
 // store `param` into the payload word of the previous-index slot -- the same
 // three-step tail as CView::attachRenderWork. Note the first modulo is
 // computed signed (retail divw); the two later modulos are unsigned (divwu).
-bool func_8043DC20__5CViewFUl(CView* view, u32 param) {
+bool enqueueContextMsg__5CViewFUl(CView* view, u32 param) {
     // Uninitialized stack entry: retail only reads its payload fields
     // (wid..unk22) once each from the frame home.
     volatile CMsgParamEntry msg;
@@ -1741,8 +1741,8 @@ renderView_after_size_gate2:
         colorUpdateOff = (flags278 >> 2) & 1;
         {
             CDrawGX draw;
-            draw.func_80456570(0);
-            draw.func_8045657C(1);
+            draw.setZCompare(0);
+            draw.setZWriteEnable(1);
             if (colorUpdateOff != 0) {
                 GXSetColorUpdate(GX_FALSE);
                 goto renderView_clear_begin;
@@ -2194,8 +2194,8 @@ renderView_attach_wk_check:
     }
 
     lbl_eu_806655C8.ptr = nullptr;
-    func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
-    func_80442DA8__9CViewRootFv();
+    resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
+    updateViewRoot__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
 renderView_children:
@@ -2304,8 +2304,8 @@ renderView_attach_after_check:
     }
 
     lbl_eu_806655C8.ptr = nullptr;
-    func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
-    func_80442DA8__9CViewRootFv();
+    resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
+    updateViewRoot__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
     if (crossRootFlag == 0) {
@@ -2556,7 +2556,7 @@ CView::CView(const char* pName, CWorkThread* pParent)
     void* sentinel0;
 
     zero = 0;
-    mRectData.func_80459270();
+    mRectData.initViewRect();
     __ct__CViewFrame(&mFrame);
 
     *(void**)&unk238 = lbl_eu_8056B298;
@@ -2589,12 +2589,12 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk3FC = zero;
     mName.clear();
 
-    mGXCacheId = func_8044BE2C__8CGXCacheFv();
+    mGXCacheId = getWhiteColor__8CGXCacheFv();
     mAlpha = lbl_eu_8066A2D0;  // 1.0f -- retail references FloatUtils' .sdata2 constant (no TU-local pool)
     unk45C = (void*)zero;
     unk460 = 0xb;
     mType = THREAD_CVIEW;
-    func_8043FC60__10CViewFrameFUl(&mFrame, (u32)this);
+    setViewFrameMode__10CViewFrameFUl(&mFrame, (u32)this);
 
     reinterpret_cast<reslist<u32>*>(&unk238)->reserve(mAllocHandle, 0x10);
     reinterpret_cast<reslist<void*>*>(&unk258)->reserve(mAllocHandle, 0x10);
@@ -2783,7 +2783,7 @@ extern "C" void CView_UnkVirtualFunc9__5CViewFv(CView* self) {
 
 // us-8043CE90: byte flag at +0x8 of the split-frame object, gated on the
 // split-frame pointer being set.
-extern "C" u8 func_8043CE90__5CViewFv(CView* self) {
+extern "C" u8 getSplitFrameFlag__5CViewFv(CView* self) {
     void* split = self->unk45C;
     if (split != nullptr) {
         return *reinterpret_cast<u8*>(static_cast<u8*>(split) + 8);
@@ -2793,7 +2793,7 @@ extern "C" u8 func_8043CE90__5CViewFv(CView* self) {
 
 // us-8043CEAC: split-frame view checks with explicit flags -- each condition
 // crosses a subsequent call, so the results live in saved regs in retail.
-extern "C" s32 func_8043CEAC__5CViewFv(CView* self) {
+extern "C" s32 checkSplitActive__5CViewFv(CView* self) {
     s32 flag2 = 0;
     s32 flag1 = 0;
     if (self->unk45C != nullptr) {
@@ -2869,7 +2869,7 @@ extern "C" void func_8043E46C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 extern "C" bool isInitialized__4CLibFv();
 extern "C" bool isInitialized__9CViewRootFv();
 
-extern "C" CView* func_8043DF3C__5CViewFv(CView* self) {
+extern "C" CView* updateViewState__5CViewFv(CView* self) {
     CWorkThread* parentSnap;
     CView* cur;
     parentSnap = self->mParent;
@@ -2996,7 +2996,7 @@ struct CViewStackRect {
 };
 
 // us-80440f24: accumulated content origin + final frame's view-offset size.
-extern "C" void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
@@ -3030,7 +3030,7 @@ extern "C" void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-80441044: accumulated content origin offset by this frame's own view
 // offset (position only, no size).
-extern "C" void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void adjustRectForView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
@@ -3067,7 +3067,7 @@ extern "C" void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 
 // us-80441164: provisional rect from this frame's offsets and view size,
 // then the walk recomputes the absolute origin.
-extern "C" void func_8043E7CC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+extern "C" void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {
     CWorkThread* parentSnap;
     CView* cur;
@@ -3158,8 +3158,8 @@ extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
 // us-8043f664: recompute this view's rect data from its frame. Bit0 of
 // unk278 selects split-mode (negated view offset as content origin, size
 // from parent or render mode); otherwise size = frame rect extent. Bit4
-// (0x10) skips the func_80459384 max-size clamp.
-extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
+// (0x10) skips the setBoundsSize max-size clamp.
+extern "C" void updateViewRect__5CViewFv(CView* self, u32 arg) {
     // Retail slot map (ascending): modeSize@0x8, ifPos@0xC, ifOff@0x10,
     // elsePos@0x14, elseOff@0x18, hole@0x1C, tmp@0x20. The per-branch rects
     // are split into pos/off CPnt16 halves; the callee's size half lands in
@@ -3196,7 +3196,7 @@ extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
         }
 
         if (parentView != nullptr) {
-            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
                 &self->mRectData,
                 static_cast<CView*>(parentView)->mRectData.mBoundsSize);
         } else {
@@ -3206,7 +3206,7 @@ extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
             u16 modeW = renderMode->fbWidth;
             modeSize.x = modeW;
             modeSize.y = modeHeight;
-            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+            updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(
                 &self->mRectData, *(const ml::CPnt16*)&modeSize);
         }
     } else {
@@ -3216,10 +3216,10 @@ extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
         elseOff.y = tmp.mPos.y - elsePos.y;
         *(u32*)&self->mFrame.mContentX = *(u32*)&elseOff;
         // NOTE: passes tmp.mSize (first-call rect), not the computed extent.
-        func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+        updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
     }
 
     if ((self->unk278 & 0x10) == 0) {
-        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+        setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
     }
 }

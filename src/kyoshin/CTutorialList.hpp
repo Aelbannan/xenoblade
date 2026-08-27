@@ -48,8 +48,8 @@ class CTutorialList;
 class CTutorialCurView {
 public:
     virtual void vf0() = 0;                          // index 0 -> +0x08
-    virtual void vf1() = 0;                          // index 1 -> +0x0C - func_801D20DC
-    virtual void vf2(const nw4r::math::VEC3*) = 0;   // index 2 -> +0x10 - func_801D2144
+    virtual void vf1() = 0;                          // index 1 -> +0x0C - cleanup
+    virtual void vf2(const nw4r::math::VEC3*) = 0;   // index 2 -> +0x10 - setRootPaneTranslate
 };
 
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
@@ -83,7 +83,7 @@ extern "C" void func_801D3518(void*, void*);
 extern "C" void func_801D353C(void*, u8);
 extern "C" void func_801D3258(void*);
 // CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 
 // Global term/active flag cleared by func_802AD1F4 (.sbss word, sda21).
 extern u32 lbl_eu_80664BF0;
@@ -136,18 +136,18 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg,
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg,
                                                                      nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void __ct__CCur18(void* self, void* param);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" u32 func_8003B1EC(void* fp);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 // .sdata2 int->float conversion magic double (0x4330000000000000) referenced
 // by the u16 pane-size conversions in OnFileEvent.
 extern const double lbl_eu_80668DE8;
@@ -167,7 +167,7 @@ struct CTutorialMsgObj {
     CTutorialMsgChain* chain;  // 0x8
 };
 
-// Vtable view of the font-info object returned by CDeviceFont::func_80452C10:
+// Vtable view of the font-info object returned by CDeviceFont::getFontInfo:
 // virtual index 7 (vtable+0x24) returns the value bound via func_8013676C.
 struct CTutorialFontView {
     virtual void _v00();

@@ -80,7 +80,7 @@ struct LODShortEntry {
     u16 far;    // 0x06
 };
 
-// Live LOD record dispatch function pointer (set by func_8046368C/69C).
+// Live LOD record dispatch function pointer (set by selectCubicLookup/69C).
 typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 
 } // namespace LOD
@@ -155,9 +155,9 @@ extern "C" f32 func_8046323C__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
 extern "C" f32 func_80463118__Q23LOD17CLODCacheManagerSFv(CLODCacheManagerS*);
 
 // ===========================================================================
-// us-80467504  func_804630C0  (bind LOD tables into the sbss bases)
+// us-80467504  initLodTables  (bind LOD tables into the sbss bases)
 // ===========================================================================
-extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(void* self)
+extern "C" void initLodTables__Q23LOD17CLODCacheManagerSFv(void* self)
 {
     struct Layout {
         unsigned int p00;
@@ -186,41 +186,41 @@ extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(void* self)
 }
 
 // ===========================================================================
-// us-8046765c  func_8046368C  (select the record-lookup function)
+// us-8046765c  selectCubicLookup  (select the record-lookup function)
 // ===========================================================================
-extern "C" void func_8046368C__Q23LOD17UnkClass_8046368CFv()
+extern "C" void selectCubicLookup__Q23LOD17UnkClass_8046368CFv()
 {
     lbl_eu_80665760 = func_8046323C__Q23LOD17CLODCacheManagerSFv;
 }
 
 // ===========================================================================
-// us-8046766c  func_8046369C  (select the other record-lookup function)
+// us-8046766c  selectLinearLookup  (select the other record-lookup function)
 // ===========================================================================
-extern "C" void func_8046369C__Q23LOD17UnkClass_8046368CFv()
+extern "C" void selectLinearLookup__Q23LOD17UnkClass_8046368CFv()
 {
     lbl_eu_80665760 = func_80463118__Q23LOD17CLODCacheManagerSFv;
 }
 
 // ===========================================================================
-// us-8046771c  func_8046374C  (accumulate into field 0xC)
+// us-8046771c  getCacheEntry  (accumulate into field 0xC)
 // ===========================================================================
-extern "C" void func_8046374C__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, f32 f1)
+extern "C" void getCacheEntry__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, f32 f1)
 {
     self->field_0xC += f1;
 }
 
 // ===========================================================================
-// us-8046772c  func_8046375C  (accumulate into field 0x1C)
+// us-8046772c  getCacheCount  (accumulate into field 0x1C)
 // ===========================================================================
-extern "C" void func_8046375C__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, f32 f1)
+extern "C" void getCacheCount__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, f32 f1)
 {
     self->field_0x1C += f1;
 }
 
 // ===========================================================================
-// us-8046767c  func_804636AC  (dispatch one record-pair via bound lookup fn)
+// us-8046767c  dispatchLodPair  (dispatch one record-pair via bound lookup fn)
 // ===========================================================================
-extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, s32 index)
+extern "C" void dispatchLodPair__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, s32 index)
 {
     u16* pair = (u16*)lbl_eu_80665750;       // pair table (u16 stride)
     u32 entry = lbl_eu_8066574C[index];      // offset into the pair table
@@ -453,15 +453,15 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056D700-0x8056D71C (28B): LOD dispatch table. 8046374C/8046375C
 // are this TU's; the rest live in the sibling LOD TUs.
-extern "C" void func_8046376C__Q23LOD17UnkClass_8046368CFv();
+extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv();
 extern "C" void func_804645CC__Q23LOD17UnkClass_804645CCFv();
 extern "C" void func_80468434__Q23LOD17UnkClass_80468434Fv();
 extern "C" void func_80464B84__Q23LOD17UnkClass_804645CCFv();
 typedef void (*LODDispFn)(LOD::UnkClass_8046368C*);
 void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*) = {
-    (LODDispFn)&func_8046374C__Q23LOD17UnkClass_8046368CFv,
-    (LODDispFn)&func_8046375C__Q23LOD17UnkClass_8046368CFv,
-    (LODDispFn)&func_8046376C__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)&getCacheEntry__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)&getCacheCount__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)&setLodRotation__Q23LOD17UnkClass_8046368CFv,
     (LODDispFn)0,
     (LODDispFn)&func_804645CC__Q23LOD17UnkClass_804645CCFv,
     (LODDispFn)&func_80468434__Q23LOD17UnkClass_80468434Fv,

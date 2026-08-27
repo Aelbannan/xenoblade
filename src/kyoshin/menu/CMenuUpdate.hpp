@@ -20,7 +20,7 @@ struct Unk_8049603C {
     f32 field_C;
 };
 
-// View of the object returned by CDeviceFont::func_80452C10: vtable slot 9
+// View of the object returned by CDeviceFont::getFontInfo: vtable slot 9
 // (offset 0x24) yields the handle bound via func_8013676C. Never instantiated,
 // so no vtable is emitted; the genuine virtual call makes MWCC emit the retail
 // r12 dispatch chain.
@@ -165,7 +165,7 @@ extern "C" void __dt__10IWorkEventFv(void*, int);
 // One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
 // func_80136F08 call left in r4.
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dl__FPv(void*);
@@ -176,13 +176,13 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool func_800426F0__9CTaskGameFv(void*);
+extern "C" bool isFlag01Set__9CTaskGameFv(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 // One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
 // func_80136F08 call left in r4.
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
@@ -212,7 +212,7 @@ extern "C" bool func_80122450();
 extern "C" bool func_80226B94();
 extern "C" void func_80124270(void*, u32);
 extern "C" void func_80124288(void*, void*);
-extern "C" bool func_8006EF04__Fi(int);
+extern "C" bool isGlobalCamFlagSet__Fi(int);
 extern "C" bool func_801BCF38();
 extern "C" bool func_8029A658();
 extern "C" bool func_8029EE58();
@@ -225,9 +225,9 @@ extern "C" bool func_8009CF8C(int);
 extern "C" void func_8009D018(u32, u32);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
 extern "C" char* func_80138F78(u32);
-extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
-extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
-extern "C" bool func_80085840__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv();
 
 // C-linkage helpers for thunks
 extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8);

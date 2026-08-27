@@ -49,7 +49,7 @@ extern "C" char* func_801355BC();
 // func_801412D0 is owned by kyoshin/CUIWindowManager.hpp.
 
 // Font-info lookup (retail pre-mangled name).
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 // Layout-build helpers (retail unmangled).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);
@@ -70,7 +70,7 @@ struct CQstLogInfoPaneUser {
     u32 field_F8;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10: vtable
+// Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
 // slot 9 (+0x24) yields the u32 bound into the layout's font pane. Never
 // instantiated (all pure virtual) so no vtable is emitted.
 struct CQstLogInfoFontView {

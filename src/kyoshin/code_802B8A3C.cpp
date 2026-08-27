@@ -178,7 +178,7 @@ int func_802B8D4C() {
         cfg = NULL;
     } else {
         int sel = ((CVoiceSelView*)&handle->voice)->mAt4C();
-        GimmickHandleData* src = (GimmickHandleData*)func_8016FE34(func_800B708C(sel));
+        GimmickHandleData* src = (GimmickHandleData*)func_8016FE34(findObjectById(sel));
         if (src == NULL) {
             cfg = NULL;
         } else {

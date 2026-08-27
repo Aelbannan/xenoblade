@@ -12,11 +12,11 @@ extern "C" u16 lbl_eu_80501E48[];
 extern "C" u16 lbl_eu_80501EB8[];
 extern "C" u16 lbl_eu_80501F28[];
 extern "C" u16 lbl_eu_80501F98[];
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" void func_800ACF78(void* obj, void* mgr, u32 val);
-extern "C" void func_800ACEF8(void* obj, const void* src);
-extern "C" void func_800ACC50(void* self);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
+extern "C" void bindPartnerO_(void* obj, void* mgr, u32 val);
+extern "C" void setChild34Sc_(void* obj, const void* src);
+extern "C" void setChildF50G_(void* self);
 extern "C" void func_80484EB0(void* ptr);
 extern "C" u8 lbl_eu_8052FDD8[];
 extern "C" void* __ct__CCharEffect(void* self);
@@ -181,7 +181,7 @@ extern "C" void* func_8015CD04(CCharEffectEne* self, u32 index, s32 mode) {
         u16 entry = lbl_eu_80501E48[index];
         if (entry != 0) {
             if (entry < 0x200) {
-                result = func_8008187C__Q22cf13CfGameManagerFv(entry);
+                result = createNpcActor__Q22cf13CfGameManagerFv(entry);
             } else {
                 result = reinterpret_cast<MgrIf*>(self->mManager)->get220(entry - 0x200);
             }
@@ -203,7 +203,7 @@ extern "C" void* func_8015CD9C(CCharEffectEne* self, u32 index, s32 mode) {
         obj = reinterpret_cast<MgrIf*>(self->mManager)->get220((u32)mode);
     }
     if (obj != nullptr) {
-        func_800ACF78(obj, self->mManager, 0);
+        bindPartnerO_(obj, self->mManager, 0);
     }
     return obj;
 }
@@ -213,13 +213,13 @@ extern "C" void* func_8015CE44(CCharEffectEne* self, u32 index, s32 mode) {
     if (mode < 0) {
         u16 entry = lbl_eu_80501F28[index];
         if (entry != 0) {
-            obj = func_8008187C__Q22cf13CfGameManagerFv(entry);
+            obj = createNpcActor__Q22cf13CfGameManagerFv(entry);
         }
     } else {
-        obj = func_800817BC__Q22cf13CfGameManagerFv((u32)mode, 0);
+        obj = createBattleActor__Q22cf13CfGameManagerFv((u32)mode, 0);
     }
     if (obj != nullptr) {
-        func_800ACF78(obj, self->mManager, 0);
+        bindPartnerO_(obj, self->mManager, 0);
     }
     return obj;
 }
@@ -230,9 +230,9 @@ extern "C" void* func_8015CED0(CCharEffectEne* self, u32 index, s32 mode) {
         u16 entry = lbl_eu_80501F98[index];
         if (entry != 0) {
             if (entry < 0x200) {
-                obj = func_8008187C__Q22cf13CfGameManagerFv(entry);
+                obj = createNpcActor__Q22cf13CfGameManagerFv(entry);
                 if (obj != nullptr) {
-                    func_800ACF78(obj, self->mManager, 0);
+                    bindPartnerO_(obj, self->mManager, 0);
                 }
             } else {
                 obj = reinterpret_cast<MgrIf*>(self->mManager)->get220(entry - 0x200);
@@ -267,9 +267,9 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
     if (data != nullptr) {
         dataSrc = reinterpret_cast<void*>(reinterpret_cast<CfObjectImplPcTgt*>(data)->vfA8());
     }
-    func_800ACF78(target, self->mManager, (u32)(uintptr_t)dataSrc);
+    bindPartnerO_(target, self->mManager, (u32)(uintptr_t)dataSrc);
     reinterpret_cast<cf::CfObjectEff*>(target)->func_800ACF50(bitFlag != 0);
-    func_800ACEF8(target, (void*)((u8*)(*(void**)((u8*)self->mManager + 0x98)) + 0x304));
+    setChild34Sc_(target, (void*)((u8*)(*(void**)((u8*)self->mManager + 0x98)) + 0x304));
     func_80484EB0(*(void**)((u8*)self->mManager + 0x98));
-    func_800ACC50(target);
+    setChildF50G_(target);
 }

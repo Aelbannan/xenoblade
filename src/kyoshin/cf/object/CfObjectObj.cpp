@@ -59,14 +59,14 @@ void* __dt__800BFA14(cf::CfObjectObj* self, int deleteFlag) {
 }
 
 // us-800c04d0  - simple bool/int return after a virtual init call.
-int cf::CfObjectObj::func_800BFA88() {
+int cf::CfObjectObj::initialize() {
     // Qualified call forces direct (non-virtual) dispatch to the CfObjectModel impl.
     this->CfObjectModel::CfObject_UnkVirtualFunc2();
     return 1;
 }
 
 // us-800c04f4  - retail is a 4-byte blr stub.
-void cf::CfObjectObj::func_800BFAAC() {}
+void cf::CfObjectObj::reset() {}
 
 // us-800c04f8  - init helper: two vtable init calls, clears two flags,
 // dispatches two helper-ids through the 0x144 virtual, then sets bit-derived
@@ -95,7 +95,7 @@ int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
 }
 
 // us-800c05d8  - run the model update, then consume a pending helper id.
-void cf::CfObjectObj::func_800BFB90() {
+void cf::CfObjectObj::update() {
     // Qualified call forces direct (non-virtual) dispatch to CfObjectMove's
     // member impl (retail uses a plain bl, not a vtable dispatch).
     this->CfObjectMove::CfObject_UnkVirtualFunc4();

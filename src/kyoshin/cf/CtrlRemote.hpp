@@ -13,9 +13,9 @@ extern "C" u32 func_80061FE8();
 extern "C" int func_80148778(void* obj, int id);
 
 // Global flag-bit probe on the game-manager state word. Retail symbol is the
-// C++-mangled func_8006EF04__Fi, so this is a plain global C++ declaration
+// C++-mangled isGlobalCamFlagSet__Fi, so this is a plain global C++ declaration
 // (CfCam.cpp defines it under C linkage with the same linker name).
-bool func_8006EF04(int mask);
+bool isGlobalCamFlagSet(int mask);
 
 namespace cf {
 class CtrlRemote;
@@ -108,11 +108,11 @@ struct UnkClass_80460C34Ctx {
 
 // Retail UnkClass_80460C34 stream methods (retail binary only - declared so
 // the call sites emit real `bl` relocs; C linkage keeps the retail names).
-extern "C" int func_80460DCC__17UnkClass_80460C34Fv(void* self, const void* a, int b);
+extern "C" int isStateReady__17UnkClass_80460C34Fv(void* self, const void* a, int b);
 extern "C" int func_80460F58__17UnkClass_80460C34Fv(void* self, int a);
-extern "C" int func_80461FE0__17UnkClass_80460C34Fv(void* self);
+extern "C" int cleanupState__17UnkClass_80460C34Fv(void* self);
 
-// Data pointer passed as the second arg of func_80460DCC (retail .data).
+// Data pointer passed as the second arg of isStateReady (retail .data).
 extern u8 lbl_eu_804FBC20[];
 
 // Retail CtrlRemote vtable data (.data at 0x80527F88). Stored manually by
@@ -132,8 +132,8 @@ class CtrlPcSub37;
 class CtrlPlayerObj;
 struct CfMoveEnumList;
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
-void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
+void* findObjectById(int id);
 
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
 // Signature matches CfObjectImplMove.hpp (both headers appear together).
@@ -187,7 +187,7 @@ public:
     CtrlPlayerObj* mField5C;     // 0x5C
 };
 
-// func_800B708C result view for func_8009BD14: combo/target id at +0x74.
+// findObjectById result view for func_8009BD14: combo/target id at +0x74.
 struct CtrlVoiceSweepView {
     u8 _00[0x74];
     u32 mField74;               // 0x74

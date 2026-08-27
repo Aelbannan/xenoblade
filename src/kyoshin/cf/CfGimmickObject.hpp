@@ -61,7 +61,7 @@ struct CfGimmickObjectStep {
     /* 0x04 */ u8 field_04;    // map-object status id (func_800BE12C)
     /* 0x05 */ u8 field_05;    // LOD flags (CfGimmickLodFrame alias)
     /* 0x06 */ u8 field_06;    // LOD id byte (CfGimmickLodFrame alias)
-    /* 0x07 */ u8 field_07;    // area-manager id (func_800817BC)
+    /* 0x07 */ u8 field_07;    // area-manager id (createBattleActor)
     /* 0x08 */ u16 field_08;   // effect/flag bitmask
     /* 0x0A */ u16 field_0A;   // sound id (func_80208C60 / func_80208C48)
     /* 0x0C */ u16 field_0C;   // frame count (CfGimmickLodFrame alias)
@@ -69,7 +69,7 @@ struct CfGimmickObjectStep {
     /* 0x0F */ u8 gap_0F;
 };
 
-// CfGameManager area object (func_800817BC result) stored in field_78. Only
+// CfGameManager area object (createBattleActor result) stored in field_78. Only
 // vtable slots 0x9C / 0xC4 and the +0xB0 back-pointer are used by this TU.
 struct CfGimmickObjectMgr {
     void** vtable;              // +0x00
@@ -208,7 +208,7 @@ public:
     /* 0x6E */ u16 field_6E;
     /* 0x70 */ u8 field_70[4];         // per-LOD CTaskLOD ids (loop uses [0]/[1])
     /* 0x74 */ u32 field_74;           // state flag word
-    /* 0x78 */ CfGimmickObjectMgr* field_78;  // area manager (func_800817BC)
+    /* 0x78 */ CfGimmickObjectMgr* field_78;  // area manager (createBattleActor)
     /* 0x7C */ CfGimmickReg field_7C;  // gimmick-object registration slot
     /* 0x80 */ u16 field_80;
     /* 0x82 */ u16 field_82;
@@ -306,8 +306,8 @@ void func_802089BC(void* matrix, const f32* basis, const CfGimmickVec3* point);
 void func_80208EE4(void* self);
 void func_8020A434(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
-void func_80462DB4__8CTaskLODFv(u8 lod, int mode);
-void* func_804BC9EC__Fv(void);
+void setLODEnable__8CTaskLODFv(u8 lod, int mode);
+void* getScnHandle__Fv(void);
 void func_804BCC30(void* snd, u8 id);
 void func_804BCC3C(void* snd, u8 id);
 void* func_80186BC8(int id);
@@ -332,16 +332,16 @@ int func_801F6D8C(cf::CfGimmickObject* self);
 void func_801F627C(cf::CfGimmickObject* self, u8 lod, int mode);
 // Cross-TU imports (retail names - C linkage keeps the raw names unmangled;
 // MWCC would otherwise append __F<argtypes> to global functions).
-f32 func_80462F2C__8CTaskLODFv(u8 lod);
-f32 func_80462FF4__8CTaskLODFv(u8 lod);
-void func_80462FD8__8CTaskLODFv(u8 lod, f32 f);
-void func_80462EF4__8CTaskLODFv(u8 lod, f32 f);
-void func_80462E3C__8CTaskLODFv(u8 lod, f32 f);
-void func_80462F10__8CTaskLODFv(u8 lod);
-void func_80462F4C__8CTaskLODFv(u8 lod, int mode);
-void func_80462F70__8CTaskLODFv(u8 lod, int mode);
-void func_80462ED0__8CTaskLODFv(u8 lod, int mode);
-void func_80462F94__8CTaskLODFv(u8 lod, u16 id);
+f32 getLODDistance__8CTaskLODFv(u8 lod);
+f32 getLODLevel__8CTaskLODFv(u8 lod);
+void updateLODObject__8CTaskLODFv(u8 lod, f32 f);
+void removeLODEntry__8CTaskLODFv(u8 lod, f32 f);
+void refreshLOD__8CTaskLODFv(u8 lod, f32 f);
+void clearLODEntry__8CTaskLODFv(u8 lod);
+void attachLODObject__8CTaskLODFv(u8 lod, int mode);
+void detachLODObject__8CTaskLODFv(u8 lod, int mode);
+void addLODEntry__8CTaskLODFv(u8 lod, int mode);
+void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 int* func_8009ECB0();
 int func_8009E284(int* data, int id);
 void func_8020A010();
@@ -360,8 +360,8 @@ int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
 void func_80159C04(unsigned int a, int b);
 void func_8020974C(unsigned int a, int b);
 unsigned int func_801587E8(unsigned short id);
-u32 func_800822F4__Q22cf13CfGameManagerFv();
-u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 u16 func_80208C48(u16 id, f32* vec);
 void func_80193678(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
@@ -369,11 +369,11 @@ void func_80140E00(u32 a, u32 b, u32 c);
 void func_8015B25C(u16 id);
 void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
-extern "C" void func_800ACC64(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
+extern "C" void setChildV40__(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
 int func_801BFABC(int a);
 // Single shared flat-name form (extern "C" keeps MWCC from re-mangling;
 // see CfObjectImplMove.hpp).
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                          u32 d, f32 f);
 u16 func_80208C60(u16 id, f32* pos, f32 d);
 void func_801BFF78(int a, u16 b, int c);
@@ -381,10 +381,10 @@ CfGimmickSoundSlot* func_801BFAE4(u16 handle);
 int func_80195B04(int id);
 void func_8007B0C8(int idx);
 void func_8020A0F8();
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 id, u32 mode);  // void* form matches CTaskGameEff.hpp (return-type unity pending repo-wide)
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
-void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
+void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
 }
 
 // ---------------------------------------------------------------------------
@@ -435,7 +435,7 @@ struct CfGimmickPlayerBase {
 };
 
 // Base of a CfObjectMove player scanned by func_801F7F24's id-collection
-// loop; +0x3F04/+0x3F08 are flag words raised before func_80080F44 fires.
+// loop; +0x3F04/+0x3F08 are flag words raised before clearPlayerEffect fires.
 struct CfGimmickPlayerFlags {
     void** vtable;                     // +0x00
     u8 gap_3F04[0x3F04 - 0x04];

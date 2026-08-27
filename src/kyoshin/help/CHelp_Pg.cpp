@@ -2,7 +2,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 
 namespace cf {
-bool CHelp_Pg::func_802B85A4() {
+bool CHelp_Pg::isThresholdMet() {
     s32 value = *reinterpret_cast<s32*>(reinterpret_cast<u8*>(CBattleManager::getInstance()) + 0x194);
     return mThreshold <= static_cast<f32>(value);
 }

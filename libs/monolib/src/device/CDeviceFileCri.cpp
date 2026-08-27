@@ -41,16 +41,16 @@ extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allo
 
 CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
 
-void CDeviceFileCri::func_80450B14(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636C8[0] = (wchar_t*)pData; }
-void CDeviceFileCri::func_80450B1C(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636CC[0] = (wchar_t*)pData; }
-void CDeviceFileCri::func_80450B24(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636D0[0] = (wchar_t*)pData; }
+void CDeviceFileCri::setCriFilePathA(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636C8[0] = (wchar_t*)pData; }
+void CDeviceFileCri::setCriFilePathB(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636CC[0] = (wchar_t*)pData; }
+void CDeviceFileCri::setCriFilePathC(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636D0[0] = (wchar_t*)pData; }
 
 extern "C" void sinit_80450B2C() {
     lbl_eu_806576C8[0] = 0;
     *(u32*)(lbl_eu_806576C8 + 0x80) = 0;
 }
 
-void CDeviceFileCri::func_80450AB8(unsigned long) {
+void CDeviceFileCri::teardownAdxf(unsigned long) {
     // retail names the singleton pointer lbl_eu_80665668 here (same storage as
     // the static member); reference the C-linkage label to avoid name drift.
     if (lbl_eu_80665668 != nullptr && lbl_eu_80665668->mADXFHandle != nullptr) {
@@ -62,7 +62,7 @@ void CDeviceFileCri::func_80450AB8(unsigned long) {
 }
 
 extern "C" void func_80450B44(void* self, u32 arg) {
-    func_8044F744__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
+    checkDriveStatus__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
 extern "C" void* __dl__FPv(void* self);
@@ -164,7 +164,7 @@ inline bool criIsException(CDeviceFileCri* self) {
 
 } // namespace
 
-bool CDeviceFileCri::func_8044F744() {
+bool CDeviceFileCri::checkDriveStatus() {
     if (isOff__11CWorkSystemFv()) return true;
     if (!func_eu_804521C4()) return true;
     
@@ -173,7 +173,7 @@ bool CDeviceFileCri::func_8044F744() {
     if (status == -1) {
         // Fatal DVD error: raise the global exception handler, then fall
         // through to the shared "keep running" tail below.
-        func_80459118__10CExceptionFv(lbl_eu_80522CA0);
+        logExceptionMessage__10CExceptionFv(lbl_eu_80522CA0);
     } else if (status == 6) {
         // Recoverable DVD errors: only surface the message when an exception
         // is not already pending (flag or queued EVT_EXCEPTION), then stay
@@ -198,7 +198,7 @@ bool CDeviceFileCri::func_8044F744() {
     return true;
 }
 
-void CDeviceFileCri::func_8044F964() {
+void CDeviceFileCri::closeAdxfHandle() {
     // retail names the singleton pointer lbl_eu_80665668 here (same storage as
     // the static member); reference the C-linkage label to avoid name drift.
     if (lbl_eu_80665668 == nullptr) return;
@@ -297,7 +297,7 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
     return size;
 }
 
-void CDeviceFileCri::func_8044FB08(const char* pPath) {
+void CDeviceFileCri::cancelJobsForPath(const char* pPath) {
     // Cancel every DVD-read child job via vtable slot 0xA4
     // (cancel(const char*)).
     for (_reslist_node<CWorkThread*>* node = lbl_eu_80665668->mChildren.mStartNodePtr->mNext;
@@ -320,7 +320,7 @@ bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
     // Cancel the first matching DVD-read child whose cancel succeeds
     // (vtable slot 0xA8); stops at the first job that reports success.
     // Retail walks raw nodes (re-reading the singleton's list head in the
-    // condition). Declaration placement mirrors func_8044FB08 (100%): node
+    // condition). Declaration placement mirrors cancelJobsForPath (100%): node
     // inside the for-init, job inside the body.
     //
     // KNOWN RESIDUAL (wall-class): retail branches straight to the epilogue
@@ -527,7 +527,7 @@ bool CDeviceFileCri::func_80450058() {
         memcpy(handle->mData + handle->unk10, (char*)mBuffer + offset, copySize);
         DCFlushRangeNoSync(handle->mData + handle->unk10, copySize);
 
-        func_80451CBC__11CFileHandleFi((CFileHandle*)handle, copySize);
+        advanceReadProgress__11CFileHandleFi((CFileHandle*)handle, copySize);
 
         // Retail reads unk10 ONCE here (cached in r4) - no volatile re-read.
         int pos = handle->unk10;
@@ -596,7 +596,7 @@ bool CDeviceFileCri::func_80450260() {
         u32 remaining = handle->mLength - handle->unk10;
         u32 aligned = remaining & ~0x7FFu;
 
-        func_80451CBC__11CFileHandleFi(handle, aligned);
+        advanceReadProgress__11CFileHandleFi(handle, aligned);
 
         // Materialized-then-tested completion flag (li r3,0/1 + cmpwi).
         int complete = handle->unk10 != 0 && handle->unk10 == handle->mLength;        if (complete == 0) {
@@ -667,14 +667,14 @@ bool CDeviceFileCri::func_8045042C() {    // Seed-then-null shape (retail): keep
         // from memory at every use instead of keeping it in a register.
         CFileHandleLayout* handle = (CFileHandleLayout*)job->mHandle;
         // The subf./ble guard skips both the copy and the cache flush when
-        // the remainder is empty, but func_80451CBC always runs.
+        // the remainder is empty, but advanceReadProgress always runs.
         int remaining = handle->mLength - handle->unk10;
         if (remaining > 0) {
             memcpy(handle->mData + handle->unk10, mBuffer, remaining);
             DCFlushRange(handle->mData + handle->unk10, remaining);
         }
 
-        func_80451CBC__11CFileHandleFi((CFileHandle*)handle, remaining);
+        advanceReadProgress__11CFileHandleFi((CFileHandle*)handle, remaining);
 
         ADXF_Stop(mADXFHandle);
         ADXF_Close(mADXFHandle);
@@ -722,7 +722,7 @@ void CDeviceFileCri::wkUpdate() {
     // Retail dispatches through jumptable_eu_8056C330: a dense switch over
     // mState with deliberate FALLTHROUGH 0 -> 1 -> 2 (each case funnels its
     // failure paths through a result test before dropping into the next).
-    if (!func_8044F744()) return;
+    if (!checkDriveStatus()) return;
 
     switch (mState) {
     case 0: {
@@ -920,7 +920,7 @@ bool CDeviceFileCri::wkStandbyLogout() {
 }
 
 bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
-    bool result = func_8044F744();
+    bool result = checkDriveStatus();
     
     if (!result) {
         if (mExceptionPending) {
@@ -972,7 +972,7 @@ extern "C" void wkUpdate__14CDeviceFileCriFv();
 extern "C" void wkStandbyLogin__14CDeviceFileCriFv();
 extern "C" void wkStandbyLogout__14CDeviceFileCriFv();
 extern "C" void wkStandbyExceptionRetry__14CDeviceFileCriFUl();
-extern "C" void func_80450AB8__14CDeviceFileCriFUl();
+extern "C" void teardownAdxf__14CDeviceFileCriFUl();
 extern "C" void func_80450B4C();
 extern "C" void func_80450B44();
 extern "C" void WorkEvent1__10IWorkEventFPvPCc();
@@ -1054,7 +1054,7 @@ extern "C" u32 lbl_eu_8056C354[45] = {
     (u32)&lbl_eu_806636D8, 0xFFFFFE3C,
     (u32)&CDeviceFileCriBlob::func_80450B4C,
     (u32)&CDeviceFileCriBlob::func_80450B44,
-    (u32)&CDeviceFileCriBlob::func_80450AB8__14CDeviceFileCriFUl,
+    (u32)&CDeviceFileCriBlob::teardownAdxf__14CDeviceFileCriFUl,
 };
 extern "C" u32 lbl_eu_8056C408[6] = {
     (u32)&CDeviceFileCriBlob::__RTTI__10IWorkEvent, 0x00000000,
@@ -1073,4 +1073,4 @@ u32 lbl_eu_8066566C;
 // Only the jumptable lacks a live reference (wkUpdate's retail jump-table
 // form isn't reproduced yet); every other blob symbol is anchored by real
 // code/data relocs (ctor/dtor vptr stores, vtable/typeinfo chains,
-// func_80450B14/B1C/B24) and must NOT get a stub (split budget).
+// setCriFilePathA/B1C/B24) and must NOT get a stub (split budget).

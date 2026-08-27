@@ -2,7 +2,7 @@
 
 namespace cf {
 
-void CHelp_CloseQuestMenu::func_802B8604() {
+void CHelp_CloseQuestMenu::checkCloseQuestMenu() {
     this->func_802B7CBC(func_80122450() == 0);
 }
 

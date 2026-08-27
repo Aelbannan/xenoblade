@@ -194,7 +194,7 @@ void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_8003AA8C__5CBdatFUl(u32 value);
+void getEntry__5CBdatFUl(u32 value);
 void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
 void func_8003AA34();
 void* getFP__FPCc(const char* name);
@@ -203,7 +203,7 @@ u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 s32 func_8029A658();
 int func_8013BE50();
-void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // CSysWin / system-window helper imports (C-linkage retail symbols, defined in
 // CSysWin.cpp). func_8022BFC8 lives in CSysWin.hpp with a CSysWin* first arg.

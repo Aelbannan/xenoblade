@@ -55,13 +55,13 @@ public:
 #endif
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv). The full class
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The full class
 // header pulls monolib/scn.hpp whose real CScn clashes with the guarded
 // minimal CScn above - same pattern as CSystemWindow.hpp / CSysWinSelect.hpp.
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 /*
@@ -104,7 +104,7 @@ public:
 // C++ mangling inside the identifier). Declared extern "C" so MWCC emits the
 // retail reloc names verbatim (same scheme as CfTFile.hpp / code_800A75FC.hpp).
 extern "C" {
-void func_8008294C__Q22cf13CfGameManagerFv(u32 enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 void func_801C3D9C(CBgTex* self);
 void func_801C40A0(CTitleAHelp* self);
 void func_801CAE9C(CItemBoxGrid* self);

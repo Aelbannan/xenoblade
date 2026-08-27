@@ -7,26 +7,26 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Global-scope free functions matching the retail C names: MWCC mangles a
-// global no-arg func_800B07E8() to func_800B07E8__Fv and a global
-// func_800B8804(void*, cf::IFactoryEvent*) to
-// func_800B8804__FPvPQ22cf13IFactoryEvent, so the ctor/dtor call relocs emit
+// global no-arg getInstance() to getInstance__Fv and a global
+// registerFactoryEvent(void*, cf::IFactoryEvent*) to
+// registerFactoryEvent__FPvPQ22cf13IFactoryEvent, so the ctor/dtor call relocs emit
 // the exact retail symbols (declaring them as UnkClass_805764CC members would
-// mangle with the class prefix). func_800B07E8 is already declared
-// `extern void* func_800B07E8()` by kyoshin/cf/object/CAIAction.hpp in the
+// mangle with the class prefix). getInstance is already declared
+// `extern void* getInstance()` by kyoshin/cf/object/CAIAction.hpp in the
 // include chain; B8804 gets its own global decl here. func_800B88E0 is the
 // bare extern "C" retail symbol (0x800B91FC) used by the destructor.
-void func_800B8804(void* self, cf::IFactoryEvent* event);
+void registerFactoryEvent(void* self, cf::IFactoryEvent* event);
 // These were previously provided by the CAIAction.hpp include chain (dropped
 // to avoid a duplicate getInstance__Q22cf14CBattleManagerFv declaration);
-// plain C++ linkage mangles them to the retail names func_800B07E8__Fv /
+// plain C++ linkage mangles them to the retail names getInstance__Fv /
 // func_800EA444__FPv (symbol-map mapped).
-extern void* func_800B07E8();
+extern void* getInstance();
 void* func_800EA444(void* bm);
 // Voice-cue / user-owned-sound helpers (previously via the CBattleManager.hpp
 // include chain; C++ linkage mangles to the retail names).
 u32 func_8009CF8C(u32 resourceId);
 void func_8009D018(u32 owner, u32 flag);
-bool func_8006EF04(int mask);                // func_8006EF04__Fi
+bool isGlobalCamFlagSet(int mask);                // isGlobalCamFlagSet__Fi
 
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
@@ -49,21 +49,21 @@ namespace cf{
         unk22A = 0;
         unk22C = 0;
         unk230 = 0;
-        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)func_800B07E8();
-        func_800B8804(classPtr, (cf::IFactoryEvent*)this);
+        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)getInstance();
+        registerFactoryEvent(classPtr, (cf::IFactoryEvent*)this);
     }
 
     CCharVoiceMan::~CCharVoiceMan(){
         *(void**)this = (void*)lbl_eu_805398CC;  // vtable re-store (deleting dtor)
-        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)func_800B07E8();
+        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)getInstance();
         func_800B88E0(classPtr, (cf::IFactoryEvent*)this);
     }
 }
 
 cf::CCharVoiceMan* lbl_eu_80664A58; // CCharVoiceMan singleton
 
-// C++-mangled func_800B708C__Fi (actor-id -> action source).
-extern void* func_800B708C(BOOL id);
+// C++-mangled findObjectById__Fi (actor-id -> action source).
+extern void* findObjectById(BOOL id);
 
 bool func_802A1EA0() { return true; }
 
@@ -209,7 +209,7 @@ void func_802A1610(){
                 cf::CVoiceEdge* edge = (cf::CVoiceEdge*)br->field_3ED4;
                 if (edge != 0 && ((cf::CVoiceEdgeIf*)edge)->fn_40(0x800) == 0) {
                     if (m->unk230 != 0) {
-                        void* src = func_8016FE34(func_800B708C((BOOL)m->unk230));
+                        void* src = func_8016FE34(findObjectById((BOOL)m->unk230));
                         if (src != 0) {
                             cf::CSoundNode* node = func_802B0344(src);
                             if (node != 0) {
@@ -298,7 +298,7 @@ interactStore:
         // cmpi branches; swapping the operand order (const OP v) blocks
         // MWCC's unsigned range-fusion (MWCC_PATTERNS "swapped-operand
         // range guards").
-        int phase = func_800822F4__Q22cf13CfGameManagerFv();
+        int phase = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (0x108 >= phase)
             goto noFieldFlag;
         if (0x116 <= phase)
@@ -442,7 +442,7 @@ void func_802A1D04(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
     cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
     if (bs != 0) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04(0x04000000) == 0) {
+        if (isGlobalCamFlagSet(0x04000000) == 0) {
             if (a != 0 && b != 0) {
                 u32 af = a->field_3F10;
                 u32 bf = b->field_3F10;
@@ -492,7 +492,7 @@ int func_802A1EA8(cf::CVoiceActorState* self) {
         return 0;
     cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
     void* moveRes = move->fn_4C();
-    void* r = func_8016FE34(func_800B708C((BOOL)(u32)moveRes));
+    void* r = func_8016FE34(findObjectById((BOOL)(u32)moveRes));
     if (r == 0)
         return 0;
     if (((cf::CVoiceActorState*)r)->field_3F28 != 0x10c)
@@ -537,7 +537,7 @@ void func_802A2078(void* a, void* b, void* c) {
     if (b == 0) {
         u32 pending = lbl_eu_80664A58->unk22C;
         if (pending != 0)
-            b = (void*)func_8016FE34((void*)func_800B708C((BOOL)pending));
+            b = (void*)func_8016FE34((void*)findObjectById((BOOL)pending));
     }
     if (b != 0) {
         cf::CSoundNode* node = __ct__802A92D8(b, a);
@@ -575,7 +575,7 @@ void func_802A216C(cf::CVoiceActorState* self) {
         return;
     cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
     void* moveRes = move->fn_4C();
-    void* actor = func_800B708C((BOOL)(u32)moveRes);
+    void* actor = findObjectById((BOOL)(u32)moveRes);
     if (actor != 0)
         actor = (void*)((u8*)actor - 0x3E9C);
     if (actor == 0)
@@ -1057,15 +1057,15 @@ void func_802A2E08() {
         lbl_eu_80664A58->unk22A = 1;
     }
 }
-// C++-mangled func_800B708C__Fi (declared not extern "C" so MWCC mangles it).
-extern void* func_800B708C(BOOL id);
+// C++-mangled findObjectById__Fi (declared not extern "C" so MWCC mangles it).
+extern void* findObjectById(BOOL id);
 
 // Play a level-up-style character voice: resolve the actor id -> voice action,
 // and enqueue a fresh HP-thread node (re-checking the presentation flag).
 void func_802A2E68(int id) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    if (func_8016FE34(func_800B708C(id)) == 0)
+    if (func_8016FE34(findObjectById(id)) == 0)
         return;
     if (lbl_eu_80663E24 & 0x00400000)
         return;
@@ -1397,7 +1397,7 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     p = (cf::CVoiceActorState*)((u8*)p + 0x3E9C);
     void* mv = ((cf::CVoiceMoveIf*)p)->fn_4C();
 
-    cf::CVoiceActorState* other = (cf::CVoiceActorState*)func_800B708C((BOOL)(u32)mv);
+    cf::CVoiceActorState* other = (cf::CVoiceActorState*)findObjectById((BOOL)(u32)mv);
     if (other != 0)
         other = (cf::CVoiceActorState*)((u8*)other - 0x3E9C);
     if (other == 0)

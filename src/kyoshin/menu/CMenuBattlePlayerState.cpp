@@ -8,14 +8,14 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef func_80043D90
 #undef func_8017FD44
-#undef func_800829B8__Q22cf13CfGameManagerFv
+#undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef func_80043F18
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188);
 // CfObjectMove.hpp (via the CBattleManager.hpp include above) declares it
 // const float. This TU uses neither copy.
 #define func_80043D90 menuBpsEnumListCtor5
 #define func_8017FD44 menuBpsFd44Get5
-#define func_800829B8__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
+#define isSceneLoading__Q22cf13CfGameManagerFv menuBpsCfGameMgrCond5
 #define func_80043F18 menuBpsMoveEnumListGet5
 // CfObjectModel.hpp (via CfObjectActor.hpp) declares this symbol as ml::CVec3;
 // code_80135FDC.hpp re-types it as nw4r::math::VEC3 -> MWCC 10563. This TU
@@ -24,7 +24,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 #undef func_80043D90
 #undef func_8017FD44
-#undef func_800829B8__Q22cf13CfGameManagerFv
+#undef isSceneLoading__Q22cf13CfGameManagerFv
 #undef func_80043F18
 #undef zero__Q22ml5CVec3
 #include "monolib/device/CDeviceVI.hpp"
@@ -458,7 +458,7 @@ void CMenuBattlePlayerState::Init() {
 
         {
             Class_8045F858 scoped2(&unk7D0);
-            mtl::MemManager::func_80434A4C(false);
+            mtl::MemManager::setMemInitFlag(false);
 
             func_80136E84(&unk7E4, accessor, tbl + 0x12);
             func_80136F08(unk7E4, &unk7E8, accessor, tbl + 0x30);
@@ -566,7 +566,7 @@ void CMenuBattlePlayerState::Term() {
 
 void CMenuBattlePlayerState::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -589,7 +589,7 @@ after_bit21:
     if (lbl_eu_80663E24 & 0xAFE40000u) {
         goto done;
     }
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::isSceneLoading()) {
         goto done;
     }
 
@@ -735,7 +735,7 @@ after_bit21:
                     if (player != NULL) {
                         int id = player->CObjectParam_UnkVirtualFunc5();
                         if (id != 0) {
-                            Func800B708C_Ret* handle = reinterpret_cast<Func800B708C_Ret*>(func_800B708C(id));
+                            Func800B708C_Ret* handle = reinterpret_cast<Func800B708C_Ret*>(findObjectById(id));
                             if (handle != NULL) {
                                 u32 bits = handle->unk64;
                                 if (bits & 4) {
@@ -894,7 +894,7 @@ done:
 
 void CMenuBattlePlayerState::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -1189,7 +1189,7 @@ void func_8010CE50(int id, u32 a, u32 b, u32 c) {
         return;
     }
     Func800B708C_Ret* handle =
-        reinterpret_cast<Func800B708C_Ret*>(func_800B708C(id));
+        reinterpret_cast<Func800B708C_Ret*>(findObjectById(id));
     if (handle == NULL) {
         return;
     }

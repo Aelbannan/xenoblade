@@ -862,7 +862,7 @@ struct UnkKizunaSelfB670 {
     u16 field18;                             // 0x18
 };
 
-// View into the object returned by func_80452C10: vtable slot 9 (+0x24)
+// View into the object returned by getFontInfo: vtable slot 9 (+0x24)
 // yields the u32 bound into the layout's font pane by func_8013676C.
 // All-pure so no vtable is emitted.
 struct UnkKizunaFontView {
@@ -913,7 +913,7 @@ extern "C" u32 func_801355BC(void);
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
 // CDeviceFont font-object getter (retail symbol is the mangled C++ name).
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 
 // ---------------------------------------------------------------------------

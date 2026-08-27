@@ -96,7 +96,7 @@ IWorkEvent* CUICfManager::cfWorkEvent() {
 
 // Virtual function thunks: adjust `this` and tail-call.
 // us-80136a98
-void CUICfManager::func_80135FC4() {
+void CUICfManager::dtorThunk54() {
     __dt__12CUICfManagerFv((CUICfManager*)((char*)this - 0x54));
 }
 
@@ -107,12 +107,12 @@ void CUICfManager::func_80135FC4() {
 // callee after adjusting `this` by -0x58. Emitted under the extern "C" flat
 // name so the exact retail symbol is produced (OnFileEvent precedent); the
 // in-class no-arg declaration stays declared-only.
-extern "C" void func_80135FCC__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
+extern "C" void eventDispatchThunk__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
     func_80133324__12CUICfManagerFiii((CUICfManager*)((char*)self - 0x58), id, a1, a2);
 }
 
 // us-80136aa8
-void __dt__12CUICfManagerFv(void*); void func_80135FD4__12CUICfManagerFv(void* self) {
+void __dt__12CUICfManagerFv(void*); void dtorThunk58__12CUICfManagerFv(void* self) {
     __dt__12CUICfManagerFv((void*)((char*)self - 0x58));
 }
 
@@ -1367,7 +1367,7 @@ extern "C" void func_8012FFB4(u8* base) {
 
     // OR-combined guard: first disjunct emits the direct `bne end`, second
     // the retail branch-over `beq cont; b end` (MWCC_CASES func_802AE004).
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
         (lbl_eu_80663E28 & 0x00200000u) != 0) {
         return;
     }
@@ -1391,7 +1391,7 @@ extern "C" void func_8012FFB4(u8* base) {
         if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
             return;
         }
-        if (cf::CfGameManager::func_800829B8() != 0) {
+        if (cf::CfGameManager::isSceneLoading() != 0) {
             return;
         }
         int busy;
@@ -4135,7 +4135,7 @@ extern "C" int func_801359AC(u8* singleton) {
     CUICfObj3F60View* battleObj;
     CUICfManager* inst;
 
-    if (func_8008585C__Q22cf13CfGameManagerFv() != 0) {
+    if (isSceneActive__Q22cf13CfGameManagerFv() != 0) {
         return 1;
     }
     if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) <= 4) {
@@ -4173,7 +4173,7 @@ extern "C" int func_801359AC(u8* singleton) {
             return 1;
         }
     }
-    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) {
+    if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) {
         return 1;
     }
     {
@@ -4290,7 +4290,7 @@ CUICfManager::~CUICfManager() {
 //
 // The retail symbol is the no-arg member `OnFileEvent__12CUICfManagerFv` but
 // the body reads r4 as the CEventFile* from the IWorkEvent dispatcher (same
-// hidden-arg ABI as func_80133324; the func_80135FBC thunk passes r4
+// hidden-arg ABI as func_80133324; the onFileEventThunk thunk passes r4
 // through). The body is emitted under the extern "C" free function declared
 // in the .hpp so the exact Fv symbol name is produced; the class's member
 // `void OnFileEvent()` stays declared-only and the thunk's bl binds here.
@@ -4344,7 +4344,7 @@ extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* ev
     return false;
 }
 
-void CUICfManager::func_80135FBC() {
+void CUICfManager::onFileEventThunk() {
     // retail: subi r3,r3,0x54; b OnFileEvent__12CUICfManagerFv - secondary-subobject thunk
     reinterpret_cast<CUICfManager*>(reinterpret_cast<char*>(this) - 0x54)->OnFileEvent();
 }

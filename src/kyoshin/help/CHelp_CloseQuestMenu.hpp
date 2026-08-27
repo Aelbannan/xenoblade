@@ -6,7 +6,7 @@
 namespace cf {
 class __declspec(novtable) CHelp_CloseQuestMenu : public CHelpSwitch {
 public:
-    void func_802B8604();
+    void checkCloseQuestMenu();
 };
 } // namespace cf
 

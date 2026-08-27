@@ -18,13 +18,13 @@
 
 // CfGameManager gate query (retail 0x8007F91C); called as a free function -
 // the real body ignores its this pointer.
-int func_8007F91C__Q22cf13CfGameManagerFv();
+int isTimerActive__Q22cf13CfGameManagerFv();
 #include "kyoshin/cf/object/CfObjectEff.hpp"
 #include <nw4r/math/math_types.h>
 
 class CScn;
 
-// func_8008187C/func_800ACC64/func_800ACF78/func_801BFDE8: declared in
+// createNpcActor/setChildV40__/bindPartnerO_/func_801BFDE8: declared in
 // code_8027513C.hpp with retail-accurate linkage. func_8049603C: single owner
 // decl in libs/monolib/src/scn/CScn_8049603C.hpp.
 
@@ -170,7 +170,7 @@ void func_80275454(UnkCode8027513C* self) {
                 }
 
                 cf::CfObjectEff* eff =
-                    (cf::CfObjectEff*)func_8008187C__Q22cf13CfGameManagerFv(type);
+                    (cf::CfObjectEff*)createNpcActor__Q22cf13CfGameManagerFv(type);
                 if (eff != nullptr) {
                     // Vector addition pos + (0.0, 0.01, 0.0); VEC3Add inlines to
                     // paired-single ops matching retail.
@@ -194,7 +194,7 @@ void func_80275454(UnkCode8027513C* self) {
                     posVec[1] = posContainer->posY;
                     posVec[2] = posContainer->posZ;
                     posVec[3] = lbl_eu_806689E8; // 1.0
-                    func_800ACC64(eff, posVec);
+                    setChildV40__(eff, posVec);
                 }
 
                 // Play sound effect at the fetched position
@@ -211,11 +211,11 @@ void func_80275454(UnkCode8027513C* self) {
         }
     } else if (target->field_0xC & 2) {
         // Branch 2: field_0x4EC bit 1 not set, check field_0xC bit 1.
-        // func_8007F91C ignores its 'this' pointer, so casting self works.
-        if (!((cf::CfGameManager*)self)->func_8007F91C()) {
+        // isTimerActive ignores its 'this' pointer, so casting self works.
+        if (!((cf::CfGameManager*)self)->isTimerActive()) {
             if (self->field_0x74 == nullptr) {
                 cf::CfObjectEff* eff =
-                    (cf::CfObjectEff*)func_8008187C__Q22cf13CfGameManagerFv(190); // 0xbe
+                    (cf::CfObjectEff*)createNpcActor__Q22cf13CfGameManagerFv(190); // 0xbe
                 if (eff != nullptr) {
                     // Store &self+0x10 into eff at offset 0xB0.
                     // ptr = self; if (ptr) ptr += 16 matches retail mr/beq/addi.
@@ -226,14 +226,14 @@ void func_80275454(UnkCode8027513C* self) {
                     ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
 
                     self->field_0x74 = eff;
-                    func_800ACF78(eff, self->field_0x14, 0);
+                    bindPartnerO_(eff, self->field_0x14, 0);
 
                     cf::CfObjectMove* obj = self->field_0x14;
                     obj->CfObject_UnkVirtualFunc36();
                     eff->CfObject_UnkVirtualFunc35();
 
                     if (self->field_0x74 != nullptr && self->field_0x78 != 2) {
-                        func_800ACC14(self->field_0x74, 2);
+                        setChildB59__(self->field_0x74, 2);
                         self->field_0x78 = 2;
                     }
 
@@ -244,7 +244,7 @@ void func_80275454(UnkCode8027513C* self) {
                     posVec[1] = posContainer->posY;
                     posVec[2] = posContainer->posZ;
                     posVec[3] = lbl_eu_806689E8; // 1.0
-                    func_800ACC64(eff, posVec);
+                    setChildV40__(eff, posVec);
                 }
             }
         }
@@ -260,8 +260,8 @@ void func_802756F0(UnkCode8027513C* self) {
         return;
     }
     
-    // func_8007F91C ignores its 'this' pointer, so casting self works
-    if (((cf::CfGameManager*)self)->func_8007F91C()) {
+    // isTimerActive ignores its 'this' pointer, so casting self works
+    if (((cf::CfGameManager*)self)->isTimerActive()) {
         return;
     }
     
@@ -270,7 +270,7 @@ void func_802756F0(UnkCode8027513C* self) {
     }
     
     cf::CfObjectEff* eff =
-        (cf::CfObjectEff*)func_8008187C__Q22cf13CfGameManagerFv(190); // 0xbe
+        (cf::CfObjectEff*)createNpcActor__Q22cf13CfGameManagerFv(190); // 0xbe
     if (eff == nullptr) {
         return;
     }
@@ -284,14 +284,14 @@ void func_802756F0(UnkCode8027513C* self) {
     ((CfObjectEffB0*)eff)->field_0xB0 = ptr;
     
     self->field_0x74 = eff;
-    func_800ACF78(eff, self->field_0x14, 0);
+    bindPartnerO_(eff, self->field_0x14, 0);
     
     obj = self->field_0x14;
     obj->CfObject_UnkVirtualFunc36();
     eff->CfObject_UnkVirtualFunc35();
     
     if (self->field_0x74 != nullptr && self->field_0x78 != 2) {
-        func_800ACC14(self->field_0x74, 2);
+        setChildB59__(self->field_0x74, 2);
         self->field_0x78 = 2;
     }
     
@@ -303,7 +303,7 @@ void func_802756F0(UnkCode8027513C* self) {
     posVec[1] = posContainer->posY;
     posVec[2] = posContainer->posZ;
     posVec[3] = lbl_eu_806689E8; // 1.0
-    func_800ACC64(eff, posVec);
+    setChildV40__(eff, posVec);
 }
 
 void func_80275808(UnkCode8027513C* ptr) {
@@ -358,16 +358,16 @@ void func_80275850(UnkCode8027513C* self) {
     
     // If bit 20 was set, query game manager and update child effect state
     if (bit != 0) {
-        // func_8007F91C ignores its 'this' pointer; called as a free
+        // isTimerActive ignores its 'this' pointer; called as a free
         // function so r3 carries the leftover bit value like retail.
-        if (func_8007F91C__Q22cf13CfGameManagerFv()) {
+        if (isTimerActive__Q22cf13CfGameManagerFv()) {
             if (self->field_0x74 != nullptr && self->field_0x78 != 1) {
-                func_800ACC14(self->field_0x74, 1);
+                setChildB59__(self->field_0x74, 1);
                 self->field_0x78 = 1;
             }
         } else {
             if (self->field_0x74 != nullptr && self->field_0x78 != 2) {
-                func_800ACC14(self->field_0x74, 2);
+                setChildB59__(self->field_0x74, 2);
                 self->field_0x78 = 2;
             }
         }
@@ -385,11 +385,11 @@ extern "C" void func_8027594C(void* self, void* other) {
 }
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
-// effect via func_800ACC14 and cache the new value
+// effect via setChildB59__ and cache the new value
 void func_802753F8(UnkCode8027513C* self, s16 arg) {
     if (self->field_0x74 != nullptr) {
         if (self->field_0x78 != arg) {
-            func_800ACC14(self->field_0x74, (s8)arg);
+            setChildB59__(self->field_0x74, (s8)arg);
             self->field_0x78 = arg;
         }
     }

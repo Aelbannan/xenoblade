@@ -137,7 +137,7 @@ extern "C" void* func_8003AA34() {
     return &lbl_eu_80663D14;
 }
 
-void* CBdat::func_8003AA50() {
+void* CBdat::clearEntries() {
     void** table = lbl_eu_805705D0;
     table[0] = 0;
     table[1] = 0;
@@ -155,7 +155,7 @@ void* CBdat::func_8003AA78(u32 idx, void* p) {
     return p;
 }
 
-void CBdat::func_8003AA8C(u32 idx) {
+void CBdat::getEntry(u32 idx) {
     lbl_eu_805705D0[idx] = 0;
 }
 

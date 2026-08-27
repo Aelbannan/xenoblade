@@ -22,17 +22,17 @@ public:
     nw4r::ut::RomFont* getRomFont() { return &mRomFont; }
     const nw4r::ut::RomFont* getRomFont() const { return &mRomFont; }
 
-    const char* func_804536DC(const char* str, void** texOut, u32* xOut,
+    const char* getFontTexture(const char* str, void** texOut, u32* xOut,
                               u32* yOut, u32* widthOut);
-    void func_8045378C();   // state machine step
-    void func_804537A8();   // state check
-    int func_804537C0();    // returns (mState != 0)
-    int func_804537D4();    // state comparison
-    u16 func_80453800();    // returns mFontInfo->cellHeight
-    u16 func_8045380C();    // returns mFontInfo->sheetFormat
-    u16 func_80453818();    // returns mFontInfo->sheetHeight
-    u16 func_80453824();    // returns mFontInfo->sheetWidth
-    u32 func_80453830();    // returns field_0x04
+    void advanceState();   // state machine step
+    void initState();   // state check
+    int isStateNonZero();    // returns (mState != 0)
+    int isStateReady();    // state comparison
+    u16 getCellHeight();    // returns mFontInfo->cellHeight
+    u16 getSheetFormat();    // returns mFontInfo->sheetFormat
+    u16 getSheetHeight();    // returns mFontInfo->sheetHeight
+    u16 getSheetWidth();    // returns mFontInfo->sheetWidth
+    u32 getField04();    // returns field_0x04
 
     u32* m_vtable;               // 0x00 - retail vtable (lbl_eu_8056C788)
     u32 field_0x04;              // 0x04 - unknown init flag/counter
@@ -110,11 +110,11 @@ CDeviceFontInfoRom::~CDeviceFontInfoRom(void) {
 }
 
 // ---- func_804536DC (0x80457808) - OSGetFontTexture passthrough wrapper ----
-// Retail symbol is func_804536DC__18CDeviceFontInfoRomFv (extern "C" keeps it
+// Retail symbol is getFontTexture__18CDeviceFontInfoRomFv (extern "C" keeps it
 // verbatim). The body shifts r4-r8 up and tail-branches OSGetFontTexture: the
 // leading `this_` param (unused, in r3) forces the register shift since the 5
 // OSGetFontTexture args arrive in r4-r8.
-extern "C" const char* func_804536DC__18CDeviceFontInfoRomFv(
+extern "C" const char* getFontTexture__18CDeviceFontInfoRomFv(
     void* this_, const char* str, void** texOut, u32* xOut, u32* yOut,
     u32* widthOut) {
     return OSGetFontTexture(str, texOut, xOut, yOut, widthOut);
@@ -130,7 +130,7 @@ CDeviceFontInfoRom* CDeviceFontInfoRom::create() {
 }
 
 // ---- func_8045378C (0x8045785C) - state machine step ----
-void CDeviceFontInfoRom::func_8045378C(void) {
+void CDeviceFontInfoRom::advanceState(void) {
     // Increment mState when it is 1 or 2 (unsigned range check)
     if (mState - 1 <= 1) {
         mState++;
@@ -138,19 +138,19 @@ void CDeviceFontInfoRom::func_8045378C(void) {
 }
 
 // ---- func_804537A8 (0x80457878) - state check ----
-void CDeviceFontInfoRom::func_804537A8(void) {
+void CDeviceFontInfoRom::initState(void) {
     if (mState == 0) {
         mState++;
     }
 }
 
 // ---- func_804537C0 (0x80457890) - returns (mState != 0) ----
-int CDeviceFontInfoRom::func_804537C0() {
+int CDeviceFontInfoRom::isStateNonZero() {
     return mState != 0;
 }
 
 // ---- func_804537D4 (0x804578A4) - state comparison ----
-int CDeviceFontInfoRom::func_804537D4(void) {
+int CDeviceFontInfoRom::isStateReady(void) {
     return (int)mState >= 3;
 }
 
@@ -161,45 +161,45 @@ int CDeviceFontInfoRom::func_804537D4(void) {
 // (inline in the class definition above)
 
 // ---- func_80453800 (0x804578D0) - returns mFontInfo->cellHeight ----
-u16 CDeviceFontInfoRom::func_80453800() {
+u16 CDeviceFontInfoRom::getCellHeight() {
     return ((OSFontHeader*)mFontInfo)->cellHeight;
 }
 
 // ---- func_8045380C (0x804578DC) - returns mFontInfo->sheetFormat ----
-u16 CDeviceFontInfoRom::func_8045380C() {
+u16 CDeviceFontInfoRom::getSheetFormat() {
     return ((OSFontHeader*)mFontInfo)->sheetFormat;
 }
 
 // ---- func_80453818 (0x804578E8) - returns mFontInfo->sheetHeight ----
-u16 CDeviceFontInfoRom::func_80453818() {
+u16 CDeviceFontInfoRom::getSheetHeight() {
     return ((OSFontHeader*)mFontInfo)->sheetHeight;
 }
 
 // ---- func_80453824 (0x804578F4) - returns mFontInfo->sheetWidth ----
-u16 CDeviceFontInfoRom::func_80453824() {
+u16 CDeviceFontInfoRom::getSheetWidth() {
     return ((OSFontHeader*)mFontInfo)->sheetWidth;
 }
 
 // ---- func_80453830 (0x80457900) - returns field_0x04 ----
-u32 CDeviceFontInfoRom::func_80453830() {
+u32 CDeviceFontInfoRom::getField04() {
     return field_0x04;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace FIRBlob {
 extern "C" void __dt__18CDeviceFontInfoRomFv();
-extern "C" void func_80453830__18CDeviceFontInfoRomFv();
-extern "C" void func_80453824__18CDeviceFontInfoRomFv();
-extern "C" void func_80453818__18CDeviceFontInfoRomFv();
-extern "C" void func_8045380C__18CDeviceFontInfoRomFv();
-extern "C" void func_80453800__18CDeviceFontInfoRomFv();
-extern "C" void func_804536DC__18CDeviceFontInfoRomFv();
-extern "C" void func_804537F0__18CDeviceFontInfoRomFv();
-extern "C" void func_804537F8__18CDeviceFontInfoRomFv();
-extern "C" void func_8045378C__18CDeviceFontInfoRomFv();
-extern "C" void func_804537A8__18CDeviceFontInfoRomFv();
-extern "C" void func_804537C0__18CDeviceFontInfoRomFv();
-extern "C" void func_804537D4__18CDeviceFontInfoRomFv();
+extern "C" void getField04__18CDeviceFontInfoRomFv();
+extern "C" void getSheetWidth__18CDeviceFontInfoRomFv();
+extern "C" void getSheetHeight__18CDeviceFontInfoRomFv();
+extern "C" void getSheetFormat__18CDeviceFontInfoRomFv();
+extern "C" void getCellHeight__18CDeviceFontInfoRomFv();
+extern "C" void getFontTexture__18CDeviceFontInfoRomFv();
+extern "C" void getRomFont__18CDeviceFontInfoRomFv();
+extern "C" void getRomFontConst__18CDeviceFontInfoRomFv();
+extern "C" void advanceState__18CDeviceFontInfoRomFv();
+extern "C" void initState__18CDeviceFontInfoRomFv();
+extern "C" void isStateNonZero__18CDeviceFontInfoRomFv();
+extern "C" void isStateReady__18CDeviceFontInfoRomFv();
 }
 extern "C" u32 lbl_eu_80663728[2]; // this unit's sdata
 extern "C" u32 lbl_eu_80663720;    // foreign .sdata
@@ -208,18 +208,18 @@ extern "C" u32 lbl_eu_80663720;    // foreign .sdata
 extern "C" u32 lbl_eu_8056C788[15] = {
     (u32)&lbl_eu_80663728, 0x00000000,
     (u32)&FIRBlob::__dt__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_80453830__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_80453824__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_80453818__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_8045380C__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_80453800__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804536DC__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804537F0__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804537F8__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_8045378C__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804537A8__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804537C0__18CDeviceFontInfoRomFv,
-    (u32)&FIRBlob::func_804537D4__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getField04__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getSheetWidth__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getSheetHeight__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getSheetFormat__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getCellHeight__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getFontTexture__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getRomFont__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::getRomFontConst__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::advanceState__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::initState__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::isStateNonZero__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::isStateReady__18CDeviceFontInfoRomFv,
 };
 extern "C" u32 lbl_eu_8056C7C4[3] = {
     (u32)&lbl_eu_80663720, 0x00000000, 0x00000000,

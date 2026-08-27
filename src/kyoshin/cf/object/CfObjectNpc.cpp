@@ -8,7 +8,7 @@
 #include "kyoshin/cf/object/CfObjectNpc.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, func_8006EF04
+#include "kyoshin/cf/code_800F42AC.hpp"   // CfGameManager::getInstance, isGlobalCamFlagSet
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <string.h>
 
@@ -84,7 +84,7 @@ CfObjectNpc::~CfObjectNpc() {
 }
 
 // 0x800BFE74
-bool CfObjectNpc::func_800BF46C() {
+bool CfObjectNpc::initNpcFlags() {
     this->CfObjectModel::CfObject_UnkVirtualFunc2();
     mFlags68 |= 0x100000;
     func_800BE33C(this, 1);
@@ -97,7 +97,7 @@ bool CfObjectNpc::func_800BF46C() {
 // 0x800BFEE4
 // Per-frame NPC update: decides whether to show the NPC's dialogue bubble
 // and advances the trigger timer.
-void CfObjectNpc::func_800BF4DC() {
+void CfObjectNpc::updateNpcDialog() {
     this->CObjectState_UnkVirtualFunc13();
 
     bool resetTimer = true;
@@ -109,7 +109,7 @@ void CfObjectNpc::func_800BF4DC() {
         // fall through to timer reset (resetTimer stays true)
     } else {
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04__Fi(0x40000) == 0 &&
+        if (isGlobalCamFlagSet__Fi(0x40000) == 0 &&
             this->CObjectState_UnkVirtualFunc8(1) == 0 &&
             this->CObjectState_UnkVirtualFunc2(1) == 0 &&
             this->CObjectState_UnkVirtualFunc2(0x10) == 0) {
@@ -201,7 +201,7 @@ void CfObjectNpc::func_800BF764() {
 }
 
 // 0x800C0314
-void CfObjectNpc::func_800BF8CC() {
+void CfObjectNpc::loadIconType() {
     func_8003AA34();
     void* fp = getFP__FPCc((const char*)this + 0x78);
     u16 row = unk8C_3;

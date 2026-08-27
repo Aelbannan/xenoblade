@@ -127,7 +127,7 @@ extern "C" void* __ct__80186578(void* self){
 // func_801864DC: widget id lookup. Fast path: field_1700 == id returns
 // field_1704. Otherwise a hash-indexed table search: index =
 // ((((id>>4)&0xF) - sign) << 4) + sign (sign = bit 31), stride 0x170, 46
-// entries of 8 bytes; miss falls back to func_800B708C(id).
+// entries of 8 bytes; miss falls back to findObjectById(id).
 void* func_801864DC(void* pObj, int slot) {
     u8* self = (u8*)pObj;
     u32 id = (u32)slot;
@@ -152,7 +152,7 @@ void* func_801864DC(void* pObj, int slot) {
             return *(void**)(hit + (j << 3) + 4);
         }
     }
-    void* r = func_800B708C(slot);
+    void* r = findObjectById(slot);
     if (r) {
         return r;
     }
@@ -238,7 +238,7 @@ void func_801866F0(MapObjVt** objects, int row) {
     u32 modelCol = getBdatStringColumnValue(bdat, cols + 0x00, row);
     u32 motionCol = getBdatStringColumnValue(bdat, cols + 0x06, row);
     objects[row] = reinterpret_cast<MapObjVt*>(
-        func_80081694__Q22cf13CfGameManagerFv(*(u8*)&modelCol, *(u8*)&motionCol));
+        createPlayerEffectInstance__Q22cf13CfGameManagerFv(*(u8*)&modelCol, *(u8*)&motionCol));
     if (objects[row] == NULL) {
         return;
     }
@@ -301,7 +301,7 @@ void func_801866F0(MapObjVt** objects, int row) {
 /* func_80186A70: arts-availability check for row `row` of the current bdat
    table. Reads seven columns (c1..c7): if c1 is non-zero it must fall inside
    the [c2,c3] window around the cf game manager resource counter
-   (func_80082354); otherwise a second counter (func_800822F4) must fall in
+   (getResourceFromTable); otherwise a second counter (getQueuedFileEventCount) must fall in
    either the [c4,c5] or [c6,c7] window (a zero upper bound disables a
    window). Returns 1 when any applicable window contains the counter. */
 int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
@@ -323,14 +323,14 @@ int func_80186A70(void* p, s32 row, const char* c1, const char* c2,
     if (*(u16*)&v1 != 0) {
         // Resource id gate: must sit inside the closed [lo,hi] byte window
         // around the cf game manager resource counter.
-        cur = func_80082354__Q22cf13CfGameManagerFv(*(u16*)&v1);
+        cur = getResourceFromTable__Q22cf13CfGameManagerFv(*(u16*)&v1);
         v2 = getBdatStringColumnValue(bdat, c2, row);
         v3 = getBdatStringColumnValue(bdat, c3, row);
         if ((u32)cur < *(u8*)&v2 || (u32)cur > *(u8*)&v3) {
             return 0;
         }
     }
-    cur = func_800822F4__Q22cf13CfGameManagerFv();
+    cur = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
     v4 = getBdatStringColumnValue(bdat, c4, row);
     v5 = getBdatStringColumnValue(bdat, c5, row);
     v6 = getBdatStringColumnValue(bdat, c6, row);

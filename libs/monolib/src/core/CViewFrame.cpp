@@ -14,28 +14,28 @@ struct CFrameWorkPos {
 
 extern "C" {
 // CView method imports (retail mangled names; definitions live in CView.o).
-void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
-void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
+void clipRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
+void adjustRectForView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c);
 int func_8043CAFC__5CViewFv(CView* view);
-int func_8043CE90__5CViewFv(CView* view);
+int getSplitFrameFlag__5CViewFv(CView* view);
 s16 getSplitLine__5CViewFv(CView* view);
 void setSplitLine__5CViewFs(CView* view, s16 line);
 bool hasCurrent__5CViewCFv(const CView* view);
-CView* func_8043DF3C__5CViewFv(CView* view);
+CView* updateViewState__5CViewFv(CView* view);
 void func_8043E46C__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
-void func_8043CCCC__5CViewFv(CView* view, ml::CRect16* rect);
-CView* func_8043CEAC__5CViewFv(CView* view);
-void func_8043E7CC__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
+void updateViewRect__5CViewFv(CView* view, ml::CRect16* rect);
+CView* checkSplitActive__5CViewFv(CView* view);
+void applyRectToView__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void func_80442C68__9CViewRootFv();
 // CFontLayer method imports (retail Fv names; the args flow through the
 // tail-call stubs into CDeviceFont).
-void func_80449078__10CFontLayerFv(CFontLayer* layer, int r4, int r5, void* r6, ...);
-int func_80449148__10CFontLayerFv(CFontLayer* layer);
-void func_8044914C__10CFontLayerFv(CFontLayer* layer, void* r4);
-void func_80449150__10CFontLayerFv(CFontLayer* layer, float f1, float f2);
-void func_80449154__10CFontLayerFv(CFontLayer* layer, u32 r4);
-void func_80449158__10CFontLayerFv(CFontLayer* layer, u32 r4);
+void printFormatted__10CFontLayerFv(CFontLayer* layer, int r4, int r5, void* r6, ...);
+int resetCursor__10CFontLayerFv(CFontLayer* layer);
+void clearBuffer__10CFontLayerFv(CFontLayer* layer, void* r4);
+void updateLayout__10CFontLayerFv(CFontLayer* layer, float f1, float f2);
+void drawText__10CFontLayerFv(CFontLayer* layer, u32 r4);
+void flushBuffer__10CFontLayerFv(CFontLayer* layer, u32 r4);
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int r4);
 
 // Retail sdata2 constants used by the frame drawing (imports; the definitions
@@ -58,7 +58,7 @@ void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos);
 void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect);
 int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
 int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread);
-int func_80441290__10CViewFrameFi(CViewFrame* self, int r4);
+int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int r4);
 }
 
 // Retail sdata2 float constants + vtable used by the ctor (imports; the
@@ -199,7 +199,7 @@ bool CViewFrame::render() {
 
     scratchPos.x = 0;
     scratchPos.y = 0;
-    func_8043E58C__5CViewFRQ22ml5CRectP5CView(&viewRect, mOwner);
+    clipRectToView__5CViewFRQ22ml5CRectP5CView(&viewRect, mOwner);
 
     clipRect.mPos.x = 0;
     clipRect.mPos.y = 0;
@@ -254,7 +254,7 @@ bool CViewFrame::render() {
             int drawBorder;
             int drawSplit;
 
-            draw.func_80456570(0);
+            draw.setZCompare(0);
 
             col = mFrameColor;
             {
@@ -501,13 +501,13 @@ extern "C" void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw) {
     }
     d->end();
 
-    func_80449154__10CFontLayerFv(self->mOwner, 0);
-    func_80449158__10CFontLayerFv(self->mOwner, 0);
-    func_8044914C__10CFontLayerFv(self->mOwner, &self->mColor18);
-    func_80449150__10CFontLayerFv(self->mOwner, lbl_eu_8066A314, lbl_eu_8066A2F0);
+    drawText__10CFontLayerFv(self->mOwner, 0);
+    flushBuffer__10CFontLayerFv(self->mOwner, 0);
+    clearBuffer__10CFontLayerFv(self->mOwner, &self->mColor18);
+    updateLayout__10CFontLayerFv(self->mOwner, lbl_eu_8066A314, lbl_eu_8066A2F0);
     s16 border2 = self->mBorder;
-    int n = func_80449148__10CFontLayerFv(self->mOwner);
-    func_80449078__10CFontLayerFv(self->mOwner, border2, border2 + 0xb - (n >> 1),
+    int n = resetCursor__10CFontLayerFv(self->mOwner);
+    printFormatted__10CFontLayerFv(self->mOwner, border2, border2 + 0xb - (n >> 1),
                                   &self->mOwner->mName);
     fontFlush__10CFontLayerFi(self->mOwner, 1);
 
@@ -564,7 +564,7 @@ extern "C" void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, v
     }
 
     int splitLine = getSplitLine__5CViewFv(owner);
-    if (func_8043CE90__5CViewFv(owner) != 0) {
+    if (getSplitFrameFlag__5CViewFv(owner) != 0) {
         // Split mode: the border quad sits to the right of the split line.
         owner = frm->mOwner;
         int eFlag = 0;
@@ -795,14 +795,14 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
 // stored type straight to the shared detach helper.
 void CViewFrame::detachRenderWork(CWorkThread* pThread) {
     if ((int)unk38 == 8) {
-        func_80441290__10CViewFrameFi(
+        updateViewFrameRect__10CViewFrameFi(
             this, (int)func_80441310__10CViewFrameFP11CWorkThread(this, pThread));
     } else {
-        func_80441290__10CViewFrameFi(this, (int)unk38);
+        updateViewFrameRect__10CViewFrameFi(this, (int)unk38);
     }
 }
 
-extern "C" void func_8043FC60__10CViewFrameFUl(CViewFrame* self, u32 val) {
+extern "C" void setViewFrameMode__10CViewFrameFUl(CViewFrame* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;
 }
 
@@ -811,7 +811,7 @@ extern "C" void func_8043FC60__10CViewFrameFUl(CViewFrame* self, u32 val) {
 // rect (rect2) to follow the pointer: computes the rect from the frame layout,
 // applies border expansion and per-mode clamping around the stored offsets
 // (unk3C..unk4C set by CView_UnkVirtualFunc9), then pushes it via
-// func_8043CCCC and, when a parent view exists, writes the split line from
+// updateViewRect and, when a parent view exists, writes the split line from
 // the pointer position (modes 0xa/0xb). Records the pointer position and
 // returns 1.
 extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread) {
@@ -832,7 +832,7 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
         return 0;
     }
 
-    CView* view = func_8043DF3C__5CViewFv(self->mOwner);
+    CView* view = updateViewState__5CViewFv(self->mOwner);
     func_8043E46C__5CViewFRQ22ml5CRectP5CView(&rect, view);
 
     // Build rect2 from the frame owner's content rect while diffing the
@@ -927,9 +927,9 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
         }
     }
 
-    func_8043CCCC__5CViewFv(self->mOwner, &rect2);
+    updateViewRect__5CViewFv(self->mOwner, &rect2);
     if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
-        func_8043E6AC__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
+        adjustRectForView__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
         parentRect.mSize.x = pos->mPos.x - parentRect.mPos.x;
         parentRect.mSize.y = pos->mPos.y - parentRect.mPos.y;
         rect.mSize = parentRect.mSize;
@@ -975,7 +975,7 @@ int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread
     self->unk38 = (u32)func_80441310__10CViewFrameFP11CWorkThread(self, pThread);
 
     ml::CRect rect;
-    func_8043E58C__5CViewFRQ22ml5CRectP5CView(&rect, self->mOwner);
+    clipRectToView__5CViewFRQ22ml5CRectP5CView(&rect, self->mOwner);
 
     ml::CPnt16 d;
     CView* owner = self->mOwner;
@@ -1053,11 +1053,11 @@ int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread
 
     if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
         ml::CRect parentRect;
-        func_8043E6AC__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
+        adjustRectForView__5CViewFRQ22ml5CRectP5CView(&parentRect, self->mOwner);
         parentRect.mSize.x = pos->mPos.x - parentRect.mPos.x;
         parentRect.mSize.y = pos->mPos.y - parentRect.mPos.y;
         d = parentRect.mSize;
-        if (func_8043CE90__5CViewFv(self->mOwner) != 0) {
+        if (getSplitFrameFlag__5CViewFv(self->mOwner) != 0) {
             self->unk4C = convF32At(&bufA, d.y - getSplitLine__5CViewFv(self->mOwner));
         } else {
             self->unk4C = convF32At(&bufB, d.x - getSplitLine__5CViewFv(self->mOwner));
@@ -1071,7 +1071,7 @@ int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThread* pThread
 }
 
 // Map a work-thread type to a render-list index (see detachRenderWork).
-extern "C" int func_80441290__10CViewFrameFi(CViewFrame* self, int r4) {
+extern "C" int updateViewFrameRect__10CViewFrameFi(CViewFrame* self, int r4) {
     if (r4 == 0 || r4 == 3) {
         return 1;
     }
@@ -1100,7 +1100,7 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
     const CFrameWorkPos* wp = (const CFrameWorkPos*)pThread;
 
     // One distinct rect local per retail stack slot (no overlap between blocks).
-    ml::CRect16 rectA; // view content rect (func_8043E58C)
+    ml::CRect16 rectA; // view content rect (clipRectToView)
     ml::CRect16 splitRect;
     ml::CRect16 trV;
     ml::CRect16 trH;
@@ -1120,10 +1120,10 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
     ml::CRect16 nSplitRect;
     ml::CRect16 nCurRect;
     ml::CRect16 nOthRect;
-    ml::CRect16 parentRect; // func_8043E6AC result (unused afterwards)
+    ml::CRect16 parentRect; // adjustRectForView result (unused afterwards)
 
-    func_8043E58C__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&rectA, self->mOwner);
-    func_8043E6AC__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&parentRect, self->mOwner);
+    clipRectToView__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&rectA, self->mOwner);
+    adjustRectForView__5CViewFRQ22ml5CRectP5CView((ml::CRect*)&parentRect, self->mOwner);
 
     CView* owner = self->mOwner;
     u32 flags = owner->unk27C;
@@ -1289,10 +1289,10 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
     {
         int hit = 0;
         if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
-            if (func_8043CE90__5CViewFv(self->mOwner) != 0) {
+            if (getSplitFrameFlag__5CViewFv(self->mOwner) != 0) {
                 if ((self->mOwner->unk278 & 0x20) == 0) {
-                    func_8043E7CC__5CViewFRQ22ml5CRectP5CView(
-                        (ml::CRect*)&curRect, func_8043CEAC__5CViewFv(self->mOwner));
+                    applyRectToView__5CViewFRQ22ml5CRectP5CView(
+                        (ml::CRect*)&curRect, checkSplitActive__5CViewFv(self->mOwner));
                     curRect.mSize.y = self->mBorder;
                     curRect.mPos.y = curRect.mPos.y - self->mBorder;
                     hit = curRect.isInside(wp->mPos);
@@ -1307,10 +1307,10 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
     {
         int hit = 0;
         if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
-            if (func_8043CE90__5CViewFv(self->mOwner) == 0) {
+            if (getSplitFrameFlag__5CViewFv(self->mOwner) == 0) {
                 if ((self->mOwner->unk278 & 0x20) == 0) {
-                    func_8043E7CC__5CViewFRQ22ml5CRectP5CView(
-                        (ml::CRect*)&othRect, func_8043CEAC__5CViewFv(self->mOwner));
+                    applyRectToView__5CViewFRQ22ml5CRectP5CView(
+                        (ml::CRect*)&othRect, checkSplitActive__5CViewFv(self->mOwner));
                     othRect.mSize.y = self->mBorder;
                     othRect.mPos.y = othRect.mPos.y - self->mBorder;
                     hit = othRect.isInside(wp->mPos);

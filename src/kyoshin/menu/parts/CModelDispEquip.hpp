@@ -425,7 +425,7 @@ extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
 
 // ---- Cross-TU imports (retail C/verbatim-mangled symbol names) ----
 extern "C" int func_800BBC04(void* arg);
-extern "C" void* func_8007DE94__Q22cf13CfGameManagerFv(u32 type, int slot);
+extern "C" void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" void func_801F981C(CModelDispFileCtx* ctx);
 extern "C" u32 func_801F9894(CModelDispFileCtx* ctx, u32 size);
@@ -457,7 +457,7 @@ extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
 extern "C" u32 func_80141FE0(int index);
 extern "C" int func_80062A00();
 extern "C" void* func_80062AD8(u32 id, u32* outType);
-extern "C" void func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntries);
+extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntries);
 extern "C" void func_80485684(void* model, int flag);
 extern "C" void func_80482DF4(void* model, int flag);
 extern "C" CModelDispObj* func_800584B8(u32 global, u32 id, const char* name);
@@ -479,6 +479,6 @@ extern "C" void __ct__CMcaFile(CModelDispMca* self, u32 anim);
 extern "C" void __construct_array(void*, void*, void*, int, int);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);
 extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 // C++-mangled import: func_800BFC68(cf::CfObjectMove*) => func_800BFC68__FPQ22cf12CfObjectMove.
 CModelDispActor* func_800BFC68(cf::CfObjectMove* move);

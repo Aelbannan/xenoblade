@@ -1507,7 +1507,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         __ct__14Class_8045F858FP17UnkClass_8045F564(host, &_pad04[0]);
         CFileHandle* handle = (CFileHandle*)field_24;
         data = handle->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_2C = createArcResourceAccessor__10CLibLayoutFv();
         field_2C->Attach(data, &base[0x1FA]);
         func_80136E84((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
@@ -1515,7 +1515,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         func_80136F08((nw4r::lyt::Layout*)field_34, &field_3C, field_2C, &base[0x221]);
         func_80136F08((nw4r::lyt::Layout*)field_34, &field_40, field_2C, &base[0x239]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)((CLayoutView*)(u32)field_34)->field_10;
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, (nw4r::lyt::Layout*)field_34);
         func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
 
@@ -1585,7 +1585,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         func_801D2E4C(field_80, 0);
         func_802040A0(this);
         field_24 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&_pad04[0]);
+        validateHeap__17UnkClass_8045F564Fv(&_pad04[0]);
         __dt__14Class_8045F858Fv(host, -1);
         return true;
     }
@@ -1598,7 +1598,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         __ct__14Class_8045F858FP17UnkClass_8045F564(host, &_pad14[0]);
         CFileHandle* handle = (CFileHandle*)field_28;
         scratch = handle->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         field_30 = (u32)acc;
         acc->Attach(scratch, &base[0x1FA]);
@@ -1606,7 +1606,7 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         lbl_eu_80664698 = (u32)field_30;
         func_802040A0(this);
         field_28 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&_pad14[0]);
+        validateHeap__17UnkClass_8045F564Fv(&_pad14[0]);
         __dt__14Class_8045F858Fv(host, -1);
         return true;
     }
@@ -1929,7 +1929,7 @@ void func_8020228C(CEquipChange* self) {
     lbl_eu_80664698 = 0;
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_2C);
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_30);
-    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0]);
     ((CCurVtblView*)((u8*)self + 0x50))->v1();
     ((CCurVtblView*)((u8*)self + 0x68))->v1();
     ((CCurVtblView*)self->field_80)->v1();

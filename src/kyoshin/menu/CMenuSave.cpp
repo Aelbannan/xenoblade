@@ -44,7 +44,7 @@ extern "C" __declspec(noinline) CMenuSave* __ct__CMenuSave(
     self->mField20A = arg20A;
     self->mState = 0;
     if (arg20A != 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
     return self;
 }
@@ -82,7 +82,7 @@ extern "C" CMenuSave* __dt__9CMenuSaveFv(CMenuSave* _this, int flags) {
  */
 void CMenuSave::Init() {
     if (mField20A != 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
     if (mField208 == 0) {
         func_80240360();
@@ -233,7 +233,7 @@ void CMenuSave::Term() {
         func_80240420();
     }
     if (mField20A != 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(0);
+        setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
 }
 
@@ -242,7 +242,7 @@ void CMenuSave::Term() {
 // title/help bar and save-load panel each frame.
 void CMenuSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     switch (mState) {
@@ -270,7 +270,7 @@ void CMenuSave::Move() {
 // title/help bar in that order.
 void CMenuSave::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -338,7 +338,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
     }
 
     MenuSavePadData* pad = (MenuSavePadData*)cf::CfGameManager::getCfPadData();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Co-op layout: Classic-controller style bits.
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;

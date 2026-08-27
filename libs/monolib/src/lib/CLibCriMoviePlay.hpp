@@ -33,7 +33,7 @@ extern "C" {
     // Retail-named entry-release helper (defined in CLibCriMoviePlay.cpp).
     // C-linkage so the mangled retail name is emitted; kept outlined (large
     // body) so callers reference the symbol directly.
-    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
+    void releaseMovieEntry__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
 }
 
 // Movie playback entry (0x124 bytes)
@@ -93,16 +93,16 @@ public:
     virtual void viBeginFrame();
 
     // Movie player methods
-    // (func_80459DEC / func_8045A260 / func_8045A8C8 are retail-named free
+    // (setupMovieGfx / startMovie / renderMovie are retail-named free
     // functions defined in CLibCriMoviePlay.cpp; their retail ABIs pass the
     // object/text-map selectors in registers that do not match member mangling.)
-    static MovieEntry* func_8045A1B0();               // func_8045A1B0
-    // (func_8045A260: retail-named free function defined in the .cpp; its
+    static MovieEntry* findFreeMovieEntry();               // findFreeMovieEntry
+    // (startMovie: retail-named free function defined in the .cpp; its
     // retail ABI passes five arguments that do not match the () mangling.)
-    void func_8045B1DC() {}                            // func_8045B1DC (empty)
-    int func_8045B1E0();                               // func_8045B1E0
+    void onMovieViBegin() {}                            // onMovieViBegin (empty)
+    int getMovieWorkSize();                               // getMovieWorkSize
     void OnPauseTrigger(bool pause);                   // OnPauseTrigger
-    void func_8045AE84();                              // per-frame texture update
+    void updateMovieTextures();                              // per-frame texture update
 
     static CLibCriMoviePlay* getInstance() { return lbl_eu_806656E0; }
 

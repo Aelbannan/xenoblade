@@ -266,9 +266,9 @@ void func_800BBA7C(void* obj, f32* vec);
 void* getArtsParamAtCnt(void* self, unsigned int index);
 void* getArtsParamRC(const void* arts, int index, int subindex);
 int func_80154280(void* param, void* actor, int flags);
-void func_80082A0C__Q22cf13CfGameManagerFv();
-void func_80082A7C__Q22cf13CfGameManagerFv(void* object);
-void func_80082B38__Q22cf13CfGameManagerFv();
+void resetBattleGauge__Q22cf13CfGameManagerFv();
+void syncBattleState__Q22cf13CfGameManagerFv(void* object);
+void processFieldEffects__Q22cf13CfGameManagerFv();
 void func_801043BC();
 void func_8027CC3C(void* self, void* owner);
 void func_8027CD08(void* self, void* owner);
@@ -276,8 +276,8 @@ int func_80146300(int val, int flag);
 // (func_8025FB10: single winning decl lives on chain/CChainActorList.hpp.)
 int* func_8009ECB0();
 }
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
-extern void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
+extern void* findObjectById(int id);
 
 // Data imports (plain globals - MWCC does not mangle global data names).
 extern f32 lbl_eu_80668A90;

@@ -193,9 +193,9 @@ namespace cf{
         void cbRenderBefore();
         void Init();
         void OnFileEvent();
-        void func_802405FC();
-        void func_80240604();
-        void func_8024060C();
+        void destroyViaWorkEvent();
+        void handleRenderCallback();
+        void destroyViaRender();
     }; //size = 0x194
 } //namespace cf
 
@@ -280,7 +280,7 @@ extern "C" u32 func_8009CF8C(u32 resourceId);   // message-count lookup - (u32) 
 extern "C" u32 func_8009CF84();                 // save-region size lookup
 extern "C" u32 func_8006A80C();                 // game-progress bitfield
 extern "C" void* func_8009EC9C(u16 index);      // character-data lookup
-extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
+extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern char lbl_eu_8050B470[];                  // bdat column-name blob
 extern void* lbl_eu_80664090;                   // bdat table object
 extern f32 lbl_eu_806686E0;                     // fallback float constant
@@ -759,12 +759,12 @@ extern "C" u8* func_8009CF0C();                     // capture-region source poi
 extern "C" void func_8006CBD8(u8* dst, u8* src);    // camera settings fill
 extern "C" void func_8016E09C(struct CfNandWthrBlock* w);
 extern "C" void func_80207C94(u8* dst);             // MINE region builder
-f32 func_801C0014();                                // mangled __Fv in retail
+f32 getMasterVolume();                                // mangled __Fv in retail
 extern "C" f32 func_801896A0();
 extern "C" f32 func_801895EC();
 extern "C" struct CfNandNameRoot* func_800B6CA0(); // save-name directory container
 // Retail symbol is CfGameManager's static member but returns its result in r3.
-extern "C" u32 func_8007F9AC__Q22cf13CfGameManagerFv();
+extern "C" u32 getEventCounterA__Q22cf13CfGameManagerFv();
 extern "C" u8* getInstance__14Class_80296898Fv();
 extern char* lbl_eu_806641B8;                       // item blob (see CItem.hpp)
 extern u16 lbl_eu_80661AF4;

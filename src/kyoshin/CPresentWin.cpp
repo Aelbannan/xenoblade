@@ -371,7 +371,7 @@ void func_8022DB7C(CPresentWin* self) {
     char* s2 = func_80136190(&lbl_eu_8050A84C[0xc5], &lbl_eu_8050A84C[0xd3], 0x9b);
     func_80136B4C(self->mpLayout, &lbl_eu_8050A84C[0x100], s2, 0);
 
-    const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                               ? &lbl_eu_8050A84C[0xe4]
                               : &lbl_eu_8050A84C[0xed];
     char* handle = func_80138F78(func_8013606C(&lbl_eu_8050A84C[0xc5], msgName, 0x9b));
@@ -430,7 +430,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mAccessor, pool + 0x19);
     func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mAccessor, pool + 0x35);
 
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mpLayout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mpLayout);
     u32 fontResult = ((CPresentFontView*)fontObj)->sf9();
     // No persistent rootPane local: retail reloads GetRootPane() per use,
     // keeping callee-saved pressure down to r29-r31.
@@ -456,7 +456,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     char* s1 = func_80136190(pool + 0xc5, pool + 0xd3, 0x2b);
     func_80136B4C(self->mpLayout, pool + 0xd8, s1, 0);
 
-    const char* msgName1 = func_80086F9C__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
+    const char* msgName1 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle1 = func_80138F78(func_8013606C(pool + 0xc5, msgName1, 0x2b));
     nw4r::lyt::ArcResourceAccessor* mgr1 = func_801355F4();
     void* tex1 = mgr1->GetResource(0x74696D67, handle1, NULL);
@@ -481,7 +481,7 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     char* s2 = func_80136190(pool + 0xc5, pool + 0xd3, 0x9b);
     func_80136B4C(self->mpLayout, pool + 0x100, s2, 0);
 
-    const char* msgName2 = func_80086F9C__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
+    const char* msgName2 = isClassicController__Q22cf13CfGameManagerFv(-1) ? pool + 0xe4 : pool + 0xed;
     char* handle2 = func_80138F78(func_8013606C(pool + 0xc5, msgName2, 0x9b));
     nw4r::lyt::ArcResourceAccessor* mgr2 = func_801355F4();
     void* tex2 = mgr2->GetResource(0x74696D67, handle2, NULL);

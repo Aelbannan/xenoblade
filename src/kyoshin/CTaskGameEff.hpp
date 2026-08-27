@@ -21,7 +21,7 @@ extern "C" void func_804CBD14(void*);
 extern "C" void func_804CBDB4(void*);
 extern "C" void func_804CC154(void*);
 
-// Default effect time constant used by func_80044FBC when the caller does not
+// Default effect time constant used by setEffectEnabled when the caller does not
 // supply an explicit time (retail sdata2 float).
 extern f32 lbl_eu_80665D94;
 
@@ -110,10 +110,10 @@ struct EffHostObj {
 };
 
 // C-linkage retail effect helpers (CfObjectMove/CScn management).
-extern "C" void func_800ACF78(void* obj, void* target, u32 child);
-extern "C" void func_800ACEF8(void* obj, const void* src);
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
+extern "C" void setChild34Sc_(void* obj, const void* src);
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 

@@ -126,29 +126,29 @@ namespace cf {
 
 extern "C" {
     // ---- CTaskLOD task helpers ----
-    void func_80462A08__8CTaskLODFv(void* task, u32 value);
-    void func_80462AC0__8CTaskLODFv(void* task);
-    void func_80462BC8__8CTaskLODFv(void* task);
-    void func_80462BFC__8CTaskLODFv(float value);
-    void func_80462BE4__8CTaskLODFv(float value);
-    void func_80462C48__8CTaskLODFv(void* task);
-    void func_80462C80__8CTaskLODFv(u16 value, float amount);
-    void func_80462CBC__8CTaskLODFv(u32 value);
+    void acquireLODResource__8CTaskLODFv(void* task, u32 value);
+    void resetActiveLOD__8CTaskLODFv(void* task);
+    void bindTaskToLOD__8CTaskLODFv(void* task);
+    void updateLODFrame__8CTaskLODFv(float value);
+    void notifyLODTick__8CTaskLODFv(float value);
+    void setLODFilterFlag__8CTaskLODFv(void* task);
+    void updateLODRange__8CTaskLODFv(u16 value, float amount);
+    void syncLODTask__8CTaskLODFv(u32 value);
 
     // ---- embedded UnkClass_8047BB54 subobject (at +0xF0) ----
-    void* func_8047BB54__17UnkClass_8047BB54Fv(void* self, void* r4, void* r5, void* r6);
-    void func_8047BD7C__17UnkClass_8047BB54Fv(void* self, float value);
-    void func_8047BD84__17UnkClass_8047BB54Fv(void* self, u32 value);
-    void func_8047BD9C__17UnkClass_8047BB54Fv(void* self);
+    void* initMpfSystem__17UnkClass_8047BB54Fv(void* self, void* r4, void* r5, void* r6);
+    void setMpfFloatParam__17UnkClass_8047BB54Fv(void* self, float value);
+    void forwardMpfCallA__17UnkClass_8047BB54Fv(void* self, u32 value);
+    void resetMpfInstance__17UnkClass_8047BB54Fv(void* self);
 
     // ---- embedded UnkClass_8047CD0C node-pool manager (at +0x2F2C) ----
     void func_8047CD0C__17UnkClass_8047CD0CFv(void* self, void* r4);
-    void func_8047CDBC__17UnkClass_8047CD0CFv(void* self, void* r4, u32 r5, u32 r6);
-    void func_8047CFBC__17UnkClass_8047CD0CFv(void* self);
-    void func_8047CFD0__17UnkClass_8047CD0CFv(void* self);
+    void initNodePool__17UnkClass_8047CD0CFv(void* self, void* r4, u32 r5, u32 r6);
+    void clearPoolData__17UnkClass_8047CD0CFv(void* self);
+    void resetPoolState__17UnkClass_8047CD0CFv(void* self);
 
     // ---- CfGameManager / map-effect helpers ----
-    u32 func_800828DC__Q22cf13CfGameManagerFv();
+    u32 getMapEffectManager__Q22cf13CfGameManagerFv();
     void func_8016FBA8(u32 manager, void* task);
     u32 func_8016E08C();
     u32 func_8016E094();
@@ -199,7 +199,7 @@ extern "C" {
     UnkGimmickGlobalView* getUnk80664658();
 
     // ---- this TU's own retail symbols (Fv-annotated / unmangled) ----
-    void func_800BA66C__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task);
+    void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task);
     int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b);
     void func_800BA440(cf::CfObjectMap* self);
     void func_800B9E4C(cf::CfObjectMap* self);
@@ -246,15 +246,15 @@ namespace cf {
         float field_0x2F48;                // 0x2F48
         u8 field_0x2F4C[0x2F50 - 0x2F4C];  // 0x2F4C-0x2F4F
 
-        void* func_800B9A70();
-        void func_800B9AB4();
-        void func_800B9B78(u32 arg);
-        void func_800B9E3C(unsigned long v);
-        void func_800BA610();
+        void* checkTarget();
+        void cleanupMap();
+        void setMapVisibility(u32 arg);
+        void setMapId(unsigned long v);
+        void dispatchMapState();
         virtual ~CfObjectMap();
-        bool func_8007D814();
-        void func_800B9C64();
-        void func_800BA650();
-        void func_800BA764();
+        bool isObjectMapReady();
+        void clearStatus();
+        void setMapScale();
+        void nopMap();
     };
 } // namespace cf

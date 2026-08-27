@@ -301,20 +301,20 @@ void func_8015C2B0(CCharEffect* self, CCharEffectVTableIf* eff, u32 type, u32 fl
         bitFlag = 1;
     }
 
-    func_800ACF78(eff, (CCharEffectMgr*)self->mManager, 0);
+    bindPartnerO_(eff, (CCharEffectMgr*)self->mManager, 0);
     eff->v194(bitFlag);
 
     s8 v = lbl_eu_80501DF8[type];
     if (v == 1) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
-        func_800ACEF8(eff, &d->field_304);
+        setChild34Sc_(eff, &d->field_304);
     } else if (v == 2) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
         eff->v0DC(lbl_eu_80667530 * d->field_2E8);
     }
 
     func_80484EB0((u8*)((CCharEffectMgr*)self->mManager)->field_98);
-    func_800ACC50((u8*)eff);
+    setChildF50G_((u8*)eff);
 }
 
 void func_8015C404(){}
@@ -351,12 +351,12 @@ int func_8015CB88() { return 1; }
 
 // func_8015CB90: 1 when the current game time is not 4.
 int func_8015CB90() {
-    return cf::CfGameManager::func_80086DBC() != 4;
+    return cf::CfGameManager::getCurrentSlotIndex() != 4;
 }
 
 // func_8015CBC0: 1 when the current game time is 4.
 int func_8015CBC0() {
-    return cf::CfGameManager::func_80086DBC() == 4;
+    return cf::CfGameManager::getCurrentSlotIndex() == 4;
 }
 
 // func_8015CBEC: resolve the current actor id from the battle object's

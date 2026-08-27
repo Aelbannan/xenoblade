@@ -23,11 +23,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 /*
@@ -140,7 +140,7 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // Classic-controller detection; the retail callee ignores the arg, but the
 // call site still materialises `li r3,-1` (the CfGameManager.hpp inline
 // wrapper drops it when inlined, so bind the pre-mangled name directly).
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 // Effect/cue object factory (defined in pluginUi.cpp; declared here because
 // pluginUi.hpp's extern "C" func_80136190 clashes with code_80135FDC.hpp's).

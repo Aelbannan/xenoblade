@@ -565,7 +565,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 memHost(&mMemRegion);
 
         u8* fileData = (u8*)mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mArcResAcc = CLibLayout::createArcResourceAccessor();
         mArcResAcc->Attach(fileData, strs + 0x13c);
         func_80136E84(&mLayout, mArcResAcc, strs + 0x140);
@@ -574,7 +574,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 
         // Bind the font: root pane + font object slot 7, push back onto root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::func_80452C10(1, mLayout));
+        FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::getFontInfo(1, mLayout));
         func_8013676C(rootPane, (void*)font->v7());
 
         u32 textVal = (u32)func_801355BC();
@@ -741,6 +741,6 @@ extern "C" void func_801FD0F4(CPartyState* self) {
         self->mLayout = 0;
     }
     func_80139124(self->mArcResAcc);
-    reinterpret_cast<CPartyStateCur*>(&self->mCur22)->func_801D2180();
+    reinterpret_cast<CPartyStateCur*>(&self->mCur22)->checkDeactivate();
     self->mMemRegion.func_8045F778();
 }

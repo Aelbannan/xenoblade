@@ -7,14 +7,14 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 // ---------------------------------------------------------------------------
-// Minimal CTaskGame view: getInstance is static, but func_800426F0 is a MEMBER
+// Minimal CTaskGame view: getInstance is static, but isFlag01Set is a MEMBER
 // call in retail (the instance returned by getInstance flows straight into the
 // second call without a register reload), so it must be declared as a member.
 // ---------------------------------------------------------------------------
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    bool func_800426F0();
+    bool isFlag01Set();
 };
 
 // Render-gate mode bitfield (.sbss); bit 21 set means rendering is blocked.
@@ -55,9 +55,9 @@ void __ct__UnkClass_8011C974(void* self, const void* src);
 void func_804962A0(void*, int);
 void func_801C3D9C(void*);
 void func_8021299C(void*);
-void func_8008294C__Q22cf13CfGameManagerFv(int);
+void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 // Retail symbol keeps its Fv mangling even though it takes the pad index.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Unmangled local helper (bound literally).
 extern "C" void func_802124AC(void* self);
 void func_801C3C14(void* self);                            // CBgTex init
@@ -179,7 +179,7 @@ void CMenuMakeCrystal::Init() {
     func_802A1500();
     func_80189C88();
     func_80043C88();
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // Build a temporary CBgTex, clone its UnkClass sub-object into this+0x64
     // plus its scalar fields into this+0x74..+0x7E, then destroy the temp.
@@ -316,7 +316,7 @@ void CMenuMakeCrystal::Term() {
     func_801C3D9C((u8*)this + 0x60);
     func_8021299C((u8*)this + 0x80);
     lbl_eu_806646C8 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 // State byte at +0x43E4 plus its "ready" flag at +0x43E5.
@@ -333,7 +333,7 @@ struct MCDoneFlag {
 };
 
 void CMenuMakeCrystal::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     u8* self = reinterpret_cast<u8*>(this);
     MCStateBytes* st = reinterpret_cast<MCStateBytes*>(this);
@@ -343,7 +343,7 @@ void CMenuMakeCrystal::Move() {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 btn;
         // Button bit depends on the controller type (classic vs Wii).
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
             btn = (pad->mPressedButtonFlags >> 23) & 1;
         } else {
             btn = (pad->mPressedButtonFlags >> 10) & 1;
@@ -379,7 +379,7 @@ void CMenuMakeCrystal::Move() {
 }
 
 void CMenuMakeCrystal::cbRenderBefore() {
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;

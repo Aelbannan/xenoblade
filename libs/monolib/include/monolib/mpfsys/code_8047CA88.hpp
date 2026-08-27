@@ -25,5 +25,5 @@ public:
 // Retail symbols are Fv but the functions actually receive extra args in
 // r4 (and r5/r6/f1 for func_8047CC4C). Declared extern "C" with the exact
 // mangled name to match the calling convention and reloc names.
-extern "C" void* func_8047C034__17UnkClass_8047BB54Fv(void* self);
+extern "C" void* getMpfStatus__17UnkClass_8047BB54Fv(void* self);
 extern "C" void func_8047C040__17UnkClass_8047BB54Fv(void* self, void* ptr, u32 count);

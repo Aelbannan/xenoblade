@@ -4,8 +4,8 @@
 
 class __declspec(novtable) CDeviceFontLayer {
 public:
-    static void func_80454E6C();
-    static int func_80454E78();
+    static void resetFontCursor();
+    static int getFontHeapSize();
 };
 
 extern "C" {

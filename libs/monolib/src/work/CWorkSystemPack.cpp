@@ -93,10 +93,10 @@ class __declspec(novtable) CWorkSystemPack : public CWorkThread {
 public:
     CWorkSystemPack(const char* pName, CWorkThread* pParent);
     ~CWorkSystemPack();
-    static bool func_804DDDF4(const char* pName, void* pOut, u32* pFileId);
-    static bool func_804DDFBC(int pExcept);
-    static bool func_804DE08C();
-    static bool func_804DE100();
+    static bool findPackResource(const char* pName, void* pOut, u32* pFileId);
+    static bool isPackLoadIdle(int pExcept);
+    static bool arePacksLoaded();
+    static bool areArcsReady();
     bool wkStandbyLogin();
     bool wkStandbyLogout();
     void wkUpdate();
@@ -481,7 +481,7 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
     u32 vC;   // 0xc - file id
     u32 v8;   // 0x8
 
-    if (CWorkSystemPack::func_804DDDF4(pPath, &v8, &vC)) {
+    if (CWorkSystemPack::findPackResource(pPath, &v8, &vC)) {
         return (s32)vC;
     }
     if (func_804DDD54(pName, pPath, (char**)&v18, &v14, &v10, &vC)) {
@@ -496,7 +496,7 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
 // item's func_804DEC6C when the list is non-empty.
 // __declspec(noinline) keeps retail's out-of-line bl - without it -inline auto
 // folds this small helper into func_804DDCD4 below.
-__declspec(noinline) bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
+__declspec(noinline) bool CWorkSystemPack::findPackResource(const char* pName, void* pOut, u32* pFileId) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     u8* head = *(u8**)((u8*)sys + 0x1E8);
     u8* first = *(u8**)head;
@@ -508,7 +508,7 @@ __declspec(noinline) bool CWorkSystemPack::func_804DDDF4(const char* pName, void
 
 // Login gate: walk the circular pack-item list (head at +0x1E8, nodes link
 // via +0, data pointer at +8) and require every item's field_0x2C == 2.
-bool CWorkSystemPack::func_804DE100() {
+bool CWorkSystemPack::areArcsReady() {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     if (sys == 0) return false;
     u8* head = *(u8**)((u8*)sys + 0x1E8);
@@ -668,7 +668,7 @@ void func_eu_804E2340(const char* pName) {
 
 // Returns false if any pack item other than pExcept is currently mid-load
 // (LOAD_STATE_LOADING_AHX_ADX_FILE == 2).
-bool CWorkSystemPack::func_804DDFBC(int pExcept) {
+bool CWorkSystemPack::isPackLoadIdle(int pExcept) {
     CPackItem* item;
     PackItemListNode* sentinel;
     PackItemListNode* node;
@@ -684,7 +684,7 @@ bool CWorkSystemPack::func_804DDFBC(int pExcept) {
 }
 
 // Returns false while any pack item is still not loaded.
-bool CWorkSystemPack::func_804DE08C() {
+bool CWorkSystemPack::arePacksLoaded() {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     if (sys == 0) return false;
     PackItemListNode* node = sys->mPackList.mStartNodePtr->mNext;

@@ -146,7 +146,7 @@ __declspec(noinline) cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
     if (strstr(name, lbl_eu_80503098) != 0) {
         self->field_0x5C |= 0x1000;
     }
-    if (func_80110A70() != 0 && func_80164910() == 0 &&
+    if (func_80110A70() != 0 && isEventPending() == 0 &&
         strstr(name, &lbl_eu_80503098[0xB]) != 0) {
         func_80110A70();
         func_80111074();
@@ -305,8 +305,8 @@ extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
     if (func_80062A00() == 0) {
         return;
     }
-    func_800866A0__Q22cf13CfGameManagerFv();
-    func_80086D98__Q22cf13CfGameManagerFv(&self->field_0x116, &self->field_0x118);
+    handleBattleEnd__Q22cf13CfGameManagerFv();
+    getControllerValues__Q22cf13CfGameManagerFv(&self->field_0x116, &self->field_0x118);
     self->field_0x134 = (u16)func_8016E08C();
     u32 w1, w0, w2;
     const u32* src = &lbl_eu_80530A40[0];
@@ -316,7 +316,7 @@ extern "C" void func_80168610(cf::CTaskREvtSequence* self) {
     self->field_0x3C = w0;
     w2 = *src++;
     self->field_0x44 = w2;
-    if (func_80164910() == 0) {
+    if (isEventPending() == 0) {
         return;
     }
     lbl_eu_80663EE0 |= 0x2;
@@ -613,7 +613,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
                 reinterpret_cast<EvtSeqWalkEntry*>(self->field_0xD4)
                         ->field_0x4 *
                     i);
-            if (func_80087250__Q22cf13CfGameManagerFv() != 0) {
+            if (isVisionPackLoaded__Q22cf13CfGameManagerFv() != 0) {
                 char* name = reinterpret_cast<char*>(
                     reinterpret_cast<u8*>(entry) + 0x10);
                 if (strcmp(name, &lbl_eu_80503098[0x21]) == 0) {
@@ -714,7 +714,7 @@ extern "C" void func_80168800(cf::CTaskREvtSequence* self) {
         } else if (flags & 0x10) {
             func_8016DF4C(0);
         }
-        func_8007CE94__Q22cf13CfGameManagerFv();
+        updatePresentationTick__Q22cf13CfGameManagerFv();
     }
     // Install the move callback (3-word ptmf at +0x3C) from the
     // camera-state dependent .data table.
@@ -916,14 +916,14 @@ void func_80169050(cf::CTaskREvtSequence* self) {
     }
     // Fade the BGM back in unless both walk flags were raised while the
     // event manager was already ready.
-    if (flag1 == 0 || flag2 == 0 || func_80164910() != 0) {
+    if (flag1 == 0 || flag2 == 0 || isEventPending() != 0) {
         func_80189318(0, lbl_eu_8066765C);
         func_80189424(lbl_eu_8066765C);
-        func_8007C0F8__Q22cf13CfGameManagerFv();
+        clearBdatTextEntries__Q22cf13CfGameManagerFv();
     }
-    if (func_80164910() != 0) {
+    if (isEventPending() != 0) {
         lbl_eu_80663E28 |= 0x800000;
-        func_8007FE1C__Q22cf13CfGameManagerFv(0x1000, 1);
+        stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 1);
         func_801AAC78(1);
     }
 }
@@ -935,7 +935,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
     // three manager object-list reset walks, a state-list ready scan (arms/
     // clears the 0x10000/0x8000 presentation bits), per-entry start/advance
     // dispatch, and the ptmf-table + fade setup tail.
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
     char buf[0x20];
@@ -995,13 +995,13 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
                       (u16)pair->field_0x42, 0);
     }
     // Walk 1+2: full reset (two virtual steps + flags-object arm) over the
-   // func_80086B04 list; single-step reset over the func_80086B08 list.
+   // getGimmickListHead list; single-step reset over the getGimmickList list.
     // The container base is node->field_0x8 - 0x3E9C (null maps to 0, so the
     // retail still dispatches through the fixed 0x3E9C page).
     {
-        EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
+        EvtSeqMgrView* mgr = getGimmickListHead__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
-        while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
+        while (node != getGimmickListHead__Q22cf13CfGameManagerFv()->field_0x4) {
             u8* p = node->field_0x8 ? reinterpret_cast<u8*>(node->field_0x8) -
                                           0x3E9C
                                     : 0;
@@ -1018,9 +1018,9 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         }
     }
     {
-        EvtSeqMgrView* mgr = func_80086B08__Q22cf13CfGameManagerFv();
+        EvtSeqMgrView* mgr = getGimmickList__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
-        while (node != func_80086B08__Q22cf13CfGameManagerFv()->field_0x4) {
+        while (node != getGimmickList__Q22cf13CfGameManagerFv()->field_0x4) {
             u8* p = node->field_0x8 ? reinterpret_cast<u8*>(node->field_0x8) -
                                           0x3E9C
                                     : 0;
@@ -1060,10 +1060,10 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
         if (flag == 0) {
             // Nothing armed: stop the tasks on the third manager's object
             // list, then reset the minimap system.
-            EvtSeqMgrView* mgr = func_80086B10__Q22cf13CfGameManagerFv();
+            EvtSeqMgrView* mgr = spawnGimmickEntity__Q22cf13CfGameManagerFv();
             UnkNode4594* node = mgr->field_0x4->field_0x0;
             while (node !=
-                   func_80086B10__Q22cf13CfGameManagerFv()->field_0x4) {
+                   spawnGimmickEntity__Q22cf13CfGameManagerFv()->field_0x4) {
                 EvtSeqB10Node* n =
                     reinterpret_cast<EvtSeqB10Node*>(node->field_0x8);
                 if (n->field_0x98 != 0) {
@@ -1074,7 +1074,7 @@ void func_8016925C(cf::CTaskREvtSequence* self) {
             func_8016FC0C(0);
         }
     }
-    if (func_80164910() != 0) {
+    if (isEventPending() != 0) {
         func_800B1C78(0);
     }
     // Start every realtime-event entry, run the event dispatch advance, then
@@ -1158,7 +1158,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
     u32 flag2;
     UnkStateTable_D0* entry;
     func_8016B860(self);
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
     if (self->field_0x5C & 0x8) {
@@ -1315,7 +1315,7 @@ void func_80169A38(cf::CTaskREvtSequence* self) {
     // realtime-event list. `less` (retail r31) is the signed walk-index <
     // entry-limit comparison used twice at the end.
     func_8016B860(self);
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
     bool flag1;
@@ -1445,7 +1445,7 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     func_8016DF4C(self->field_0x134);
     EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14);
     scene->field_0x5C->field_0xD4 = lbl_eu_80667670;
-    if (func_80164910() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+    if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
         EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
                          lbl_eu_80667658 };
         func_8049602C(lbl_eu_80663E14, 0xF, &v);
@@ -1456,12 +1456,12 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     func_80164CFC();
     // The retail re-fetches the camera manager between each gate; keep the
     // calls separate so MWCC emits the four real bl's.
-    CfEvtCamManager* mgr = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
+    CfEvtCamManager* mgr = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (mgr != 0) {
-        CfEvtCamManager* mgr2 = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
+        CfEvtCamManager* mgr2 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (mgr2->field_0xC != 0) {
-            func_800821F8__Q22cf13CfGameManagerFv()->vf_0x3C(lbl_eu_80667674);
-            CfEvtCamManager* mgr4 = (CfEvtCamManager*)func_800821F8__Q22cf13CfGameManagerFv();
+            getCameraDataBlock__Q22cf13CfGameManagerFv()->vf_0x3C(lbl_eu_80667674);
+            CfEvtCamManager* mgr4 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
             // Local keeps the player object in one register (retail reuses r3
             // across the two float stores and the func_8049EB60 call).
             UnkEvtPlayer* player = mgr4->field_0xC;
@@ -1827,9 +1827,9 @@ void func_8016A480(void* selfv) {
         static_cast<cf::CTaskREvtSequence*>(selfv);
     CDeviceVI::waitForDrawDone();
     self->field_0x115 = 1;
-    if (func_80164910() != 0) {
+    if (isEventPending() != 0) {
         lbl_eu_80663E28 &= ~0x00800000u;
-        func_8007FE1C__Q22cf13CfGameManagerFv(0x1000, 0);
+        stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 0);
     }
     func_80180E1C();
     if (self->field_0x10C != 0) {
@@ -1842,9 +1842,9 @@ void func_8016A480(void* selfv) {
     // object list. Container base is node->field_0x8 - 0x3E9C (null maps to
     // 0 so dispatch still happens through the fixed page).
     {
-        EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
+        EvtSeqMgrView* mgr = getGimmickListHead__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
-        while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
+        while (node != getGimmickListHead__Q22cf13CfGameManagerFv()->field_0x4) {
             u8* p = node->field_0x8
                         ? reinterpret_cast<u8*>(node->field_0x8) - 0x3E9C
                         : 0;
@@ -1861,9 +1861,9 @@ void func_8016A480(void* selfv) {
     }
     // Walk 2: single-step reset over the second manager object list.
     {
-        EvtSeqMgrView* mgr = func_80086B08__Q22cf13CfGameManagerFv();
+        EvtSeqMgrView* mgr = getGimmickList__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
-        while (node != func_80086B08__Q22cf13CfGameManagerFv()->field_0x4) {
+        while (node != getGimmickList__Q22cf13CfGameManagerFv()->field_0x4) {
             u8* p = node->field_0x8
                         ? reinterpret_cast<u8*>(node->field_0x8) - 0x3E9C
                         : 0;
@@ -1875,9 +1875,9 @@ void func_8016A480(void* selfv) {
     // the shared event state has bit 16 set.
     if ((lbl_eu_80663E28 & 0x01000000) != 0 ||
         (lbl_eu_80664268->field_0x5C & 0x00010000) == 0) {
-        EvtSeqMgrView* mgr = func_80086B10__Q22cf13CfGameManagerFv();
+        EvtSeqMgrView* mgr = spawnGimmickEntity__Q22cf13CfGameManagerFv();
         UnkNode4594* node = mgr->field_0x4->field_0x0;
-        while (node != func_80086B10__Q22cf13CfGameManagerFv()->field_0x4) {
+        while (node != spawnGimmickEntity__Q22cf13CfGameManagerFv()->field_0x4) {
             EvtSeqB10Node* n = reinterpret_cast<EvtSeqB10Node*>(node->field_0x8);
             if (n->field_0x98 != 0) {
                 n->field_0x98->vf_0x80(0);
@@ -1886,7 +1886,7 @@ void func_8016A480(void* selfv) {
         }
         func_8016FC0C(1);
     }
-    if (func_80164910() != 0) {
+    if (isEventPending() != 0) {
         func_800B1C78(1);
     }
     // Cancel the three async file loads (direct read / common archive /
@@ -1953,7 +1953,7 @@ void func_8016A480(void* selfv) {
                 self->field_0xF0->field_0x4 * j);
             u8 b = t->field_0x9;
             if (b != 0 && b != 0xFF) {
-                func_80462D04__8CTaskLODFv(t->field_0xA);
+                activateLOD__8CTaskLODFv(t->field_0xA);
             }
         }
         // BGM/fade event rows: only when the fade-out gate bit is clear and
@@ -1980,13 +1980,13 @@ void func_8016A480(void* selfv) {
                                     play = true;
                                 } else if (gate == 1) {
                                     u32 cond = lbl_eu_80664268 != 0 &&
-                                               cf::CfGameManager::func_80086DBC() == 4;
+                                               cf::CfGameManager::getCurrentSlotIndex() == 4;
                                     if (cond == 0) {
                                         play = true;
                                     }
                                 } else if (gate == 2) {
                                     u32 cond = lbl_eu_80664268 != 0 &&
-                                               cf::CfGameManager::func_80086DBC() == 4;
+                                               cf::CfGameManager::getCurrentSlotIndex() == 4;
                                     if (cond != 0) {
                                         play = true;
                                     }
@@ -2050,12 +2050,12 @@ void func_8016A480(void* selfv) {
         func_80189318(0, lbl_eu_80667658);
         func_80189424(lbl_eu_80667658);
     } else {
-        if (func_80164910() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
+        if (isEventPending() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
             func_80043BC4();
         }
     }
     // Push a flat black fade into the scene when no sequence data remains.
-    if (func_80164910() == 0 && self->field_0xC4 != 0 &&
+    if (isEventPending() == 0 && self->field_0xC4 != 0 &&
         reinterpret_cast<EvtSeqC4Buf*>(self->field_0xC4)->field_0x44 == 3) {
         func_8049602C(lbl_eu_80663E14, 0,
                       reinterpret_cast<EvtSeqVec4*>(&ml::CCol4::black));
@@ -2075,26 +2075,26 @@ void func_8016A480(void* selfv) {
         __dt__80261B1C();
     }
     func_80167EF8();
-    func_8008670C__Q22cf13CfGameManagerFv();
-    if (cf::CfGameManager::func_80083298() != nullptr) {
-        if (*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C) !=
+    finalizeGameState__Q22cf13CfGameManagerFv();
+    if (cf::CfGameManager::getGameSubManager() != nullptr) {
+        if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) !=
             nullptr) {
             CREvtLightNotifyIf* notif = (CREvtLightNotifyIf*)*(void**)(
-                (u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                (u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
             notif->_v068(1);
         }
     }
-    if (func_80164910() != 0) {
+    if (isEventPending() != 0) {
         func_801AAC78(0);
     }
     func_801AACA8(0);
     CGame::setTaskManagerUpdateCount(1);
     self->field_0xC4 = 0;
     if ((self->field_0x5C & 0x04000000) != 0) {
-        func_804900A0__FUl(0);
+        updateScnCounter__FUl(0);
     }
     if (func_8011C2E8() == 0) {
-        if (func_80164910() == 0 &&
+        if (isEventPending() == 0 &&
             strstr(self->mPath, &lbl_eu_80503098[0x49]) == 0) {
             func_801338C8();
         }
@@ -2555,8 +2555,8 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
     if (func_8011C2E8() != 0) {
         func_8011C400();
     }
-    if (func_80164910() != 0) {
-        func_8007FE1C__Q22cf13CfGameManagerFv(0x1000, 1);
+    if (isEventPending() != 0) {
+        stubEmptyD__Q22cf13CfGameManagerFv(0x1000, 1);
     }
     if (self->field_0x5C & 0x40) {
         s32 n = CXReadUncompLH(
@@ -2573,7 +2573,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
     if (self->field_0xE8 == 0) {
         return;
     }
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
     u32 i;
@@ -2612,7 +2612,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
             } else {
                 if (entry->field_0xE == 1) {
                     u32 c1 = (lbl_eu_80664268 != 0) &&
-                             (cf::CfGameManager::func_80086DBC() == 4);
+                             (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c1 == 0) {
                         func_80188D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
@@ -2621,7 +2621,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
                 }
                 if (entry->field_0xE == 2) {
                     u32 c2 = (lbl_eu_80664268 != 0) &&
-                             (cf::CfGameManager::func_80086DBC() == 4);
+                             (cf::CfGameManager::getCurrentSlotIndex() == 4);
                     if (c2 != 0) {
                         func_80188D34(reinterpret_cast<const char*>(
                                           reinterpret_cast<u8*>(entry) + 0x10),
@@ -2629,7 +2629,7 @@ void func_8016B860(cf::CTaskREvtSequence* self) {
                     }
                 }
             }
-            func_8007C0F8__Q22cf13CfGameManagerFv();
+            clearBdatTextEntries__Q22cf13CfGameManagerFv();
             self->field_0x108 = 1;
             break;
         case 3:
@@ -2684,9 +2684,9 @@ void func_8016BB38(cf::CTaskREvtSequence* self) {
                            (const char*)func_801727D0(entry)) == 0) {
                     if (e->field_0x9 == 0xFF) {
                         e->field_0x9 =
-                            (u8)func_80462E1C__8CTaskLODFv(e->field_0xA);
+                            (u8)getLODData__8CTaskLODFv(e->field_0xA);
                     }
-                    func_80462D5C__8CTaskLODFv(e->field_0xA);
+                    deactivateLOD__8CTaskLODFv(e->field_0xA);
                 }
                 j++;
             }
@@ -2933,13 +2933,13 @@ u32 func_8016C118(u32 resId) {
     // live model object (+0x4594 / +0x4598), derive the object's packed id
     // from its name and compare the minute field (out1 / 10) against the
     // request's; return the first match. Fall back to
-    // func_8007DE94(..., 5) and return the original id if that does not match.
+    // getBdatEntryColumn(..., 5) and return the original id if that does not match.
     u32 a0, a1, a2, a3;
     func_800AA318(resId, &a0, &a1, &a2, &a3);
     u32 b0, b1, b2, b3;
-    EvtSeqMgrView* mgr = func_80086B04__Q22cf13CfGameManagerFv();
+    EvtSeqMgrView* mgr = getGimmickListHead__Q22cf13CfGameManagerFv();
     UnkNode4594* node = mgr->field_0x4->field_0x0;
-    while (node != func_80086B04__Q22cf13CfGameManagerFv()->field_0x4) {
+    while (node != getGimmickListHead__Q22cf13CfGameManagerFv()->field_0x4) {
         UnkContainer4594* container = (UnkContainer4594*)node->field_0x8;
         if (container != 0) {
             container = (UnkContainer4594*)((u8*)container - 0x3E9C);
@@ -2964,7 +2964,7 @@ u32 func_8016C118(u32 resId) {
     }
     // Reuse the b outputs so the frame matches retail (one shared out-buffer
     // for both post-walk unpacks).
-    u32 fallback = func_8007DE94__Q22cf13CfGameManagerFv(a1 / 10, 5);
+    u32 fallback = getBdatEntryColumn__Q22cf13CfGameManagerFv(a1 / 10, 5);
     func_800AA318(fallback, &b0, &b1, &b2, &b3);
     u32 result = resId;
     if (b1 / 10 == a1 / 10) {
@@ -3056,7 +3056,7 @@ u32 func_8016C410() {
     if (p == 0) {
         return 0;
     }
-    return cf::CfGameManager::func_80086DBC() == 4;
+    return cf::CfGameManager::getCurrentSlotIndex() == 4;
 }
 
 void func_8016C450(const char* path, EvtC450Buf* buf, s32 limit) {

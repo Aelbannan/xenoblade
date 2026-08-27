@@ -119,7 +119,7 @@ struct IUnkVt110 {
 // then dispatch through the state jump table, then act on mType.
 extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
     if (self->mMaxVal != 0) {
-        u32 count = func_800822F4__Q22cf13CfGameManagerFv();
+        u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (self->mMinVal > count || count > self->mMaxVal) {
             return;
         }

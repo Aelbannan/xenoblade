@@ -585,7 +585,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
 
     func_804D6074(&t->m_segCount, t, color, t->m_mode == 2, mode != 0, &t->m_color, &t->m_scale);
 
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     switch (mode) {
     default: {
@@ -641,7 +641,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
     }
     }
 
-    mtl::MemManager::func_80434A4C(true);
+    mtl::MemManager::setMemInitFlag(true);
 }
 
 // ---------------------------------------------------------------------------

@@ -187,7 +187,7 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     // Bind the device font to the layout's root pane.
     nw4r::lyt::Pane* rootPane =
         (nw4r::lyt::Pane*)((UnkKizunaMid59344*)self->layout)->field10;
-    void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, (nw4r::lyt::Layout*)self->layout);
     u32 bound = ((UnkKizunaFontView*)font)->vf7();
     func_8013676C(rootPane, bound);
@@ -1283,7 +1283,7 @@ extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
     nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
     func_8013676C(rootPane, fontResult);
     u32 val = func_801355BC();
@@ -2019,7 +2019,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
                                  lbl_eu_8050CB20 + 0xd07, 0);
         Class_8045F858 host(&mMemRegionA);
         void* fileData = ((CFileHandle*)field28)->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         // Store the accessor straight into the field and re-load it from there
         // at each use - retail never keeps it live in a register across calls.
         field30 = (u32)createArcResourceAccessor__10CLibLayoutFv();
@@ -2081,7 +2081,7 @@ bool CKizunagram::OnFileEvent(CEventFile* pEventFile) {
         // mMemRegionA (r31+8), not the region just created.
         Class_8045F858 host(&mMemRegionA);
         void* fileData = ((CFileHandle*)field2C)->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         field34 = (u32)createArcResourceAccessor__10CLibLayoutFv();
         ((nw4r::lyt::ArcResourceAccessor*)field34)->Attach(fileData,
                                                            lbl_eu_8050CB20 + 0xd13);

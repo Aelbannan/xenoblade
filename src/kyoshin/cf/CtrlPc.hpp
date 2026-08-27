@@ -244,7 +244,7 @@ extern "C" void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                               const ml::CVec3* src, int flag);
 extern "C" int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                              const ml::CVec3* src, int flag);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Direct (non-inlinable) call to the CtrlPc destructor (retail symbol name).
 extern "C" void* __dt__Q22cf6CtrlPcFv(cf::CtrlPc* obj, int flags);
 // CfObjEnumList stack-holder helpers (retail C-ABI names).
@@ -257,7 +257,7 @@ extern "C" void* func_800F6E98(void* list, int index);
 // CBattleManager singleton + actor-id query helper (retail C-ABI names).
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.
 // (func_80174C98 comes from CtrlMovePC.hpp.)
-class UnkClass_800821F8View;   // defined below (func_800821F8 result view)
+class UnkClass_800821F8View;   // defined below (getCameraDataBlock result view)
 extern "C" void func_8004DACC(void* obj);
 extern "C" void func_8014AC38(void* a, void* b);
 extern "C" void func_8027936C(void* a, int b);
@@ -268,7 +268,7 @@ extern "C" int func_800DA06C(void* bm, void* obj);
 extern "C" void func_8006BC1C(void* obj, u32 mask);
 extern "C" void func_8006BBF4(void* obj, u32 mask, int flag);
 extern "C" CfObj90E4* func_800FE68C(void);
-// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; call sites cast
 // to the UnkClass_800821F8View vtable proxy defined below.)
 #include "kyoshin/cf/CfGameManagerApi.hpp"
@@ -377,7 +377,7 @@ struct ArtsSelStateViewPc {
     s8 byte2;   // 0x02
 };
 extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
-extern "C" void func_800ACF78(void* obj, void* target, u32 child);
+extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
 extern "C" void func_800BE12C(u8* owner, int a, int b, int c, int d); // u8* (not void*) to match CfObjectMove.hpp/CfObjectMoveApi.hpp - distinct extern "C" first-param types are an illegal overload when co-visible
 extern "C" void func_800F6D50(CfEnumList* list, u32 val);
 // void* parameter form matches CAIAction.hpp's declaration (two extern "C"
@@ -699,7 +699,7 @@ public:
     virtual void vf60(void* arg);          // 0xF8
 };
 
-// func_800B708C result (voice handle); slot 0xAC = vf41.
+// findObjectById result (voice handle); slot 0xAC = vf41.
 class CtrlVoiceHandle {
 public:
     virtual void vf00();  virtual void vf01();  virtual void vf02();
@@ -719,7 +719,7 @@ public:
     virtual void* vf41();                  // 0xAC
 };
 
-// func_800821F8 result (game-manager sub-object): flag word at +0x04 and a
+// getCameraDataBlock result (game-manager sub-object): flag word at +0x04 and a
 // slot-0x2C dispatcher.
 class UnkClass_800821F8View {
 public:

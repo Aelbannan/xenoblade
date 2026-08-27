@@ -43,7 +43,7 @@ struct CSortMenuPaneSizeView {
     f32 height;
 };
 
-// Interface view of the font object returned by CDeviceFont::func_80452C10.
+// Interface view of the font object returned by CDeviceFont::getFontInfo.
 // Slot layout mirrors the retail vtable: destructor pair (+0x00/+0x04), six
 // reserved slots (+0x08..+0x1c), then the resource getter at +0x24. Declared
 // only (never defined here) so no vtable/RTTI is emitted into this TU.
@@ -114,18 +114,18 @@ extern "C" void* lbl_eu_805349B8[];  // String table for sort menu pane names
 extern "C" void __dl__FPv(void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 func_8015780C(int);
 
 // CScrollBar functions

@@ -15,10 +15,10 @@ public:
     //todo: when true return type is found clean :
     // CMCEffCrystal::func_80224CE4
     // CTitleAHelp::OnFileEvent
-    static void* func_80452C10(u32, nw4r::lyt::Layout*);
+    static void* getFontInfo(u32, nw4r::lyt::Layout*);
 
     /// Flush font rendering state.
-    void func_80452CF8();
+    void dispatchLayer4B70();
 
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 

@@ -3,9 +3,9 @@
 #include <types.h>
 #include "monolib/util/FixStr.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
-// (func_800821F8__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
+// (getCameraDataBlock__Q22cf13CfGameManagerFv: CfSoundMan.hpp now carries the
 // single winning decl from CfGameManagerApi.hpp - no pre-include rename;
-// this TU only needs cf::CfSoundMan::func_801BFC38 from it.)
+// this TU only needs cf::CfSoundMan::playActorSound from it.)
 #include "kyoshin/cf/CfSoundMan.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
@@ -748,9 +748,9 @@ void __dt__80043E88(void* holder, int);
 }
 
 // C++-mangled imports (declared so MWCC emits the retail mangled names).
-void* func_800AD860(void* obj);   // func_800AD860__FPv
-bool func_8006EF04(int mask);     // func_8006EF04__Fi
-// func_800B708C__Fi is declared (void* return) by code_802B8A3C.hpp via
+void* func_800AD860(void* obj);   // getEffOwner____FPv
+bool isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
+// findObjectById__Fi is declared (void* return) by code_802B8A3C.hpp via
 // CBattleManager.hpp - same mangled name, do not redeclare here.
 
 // sdata2 / sdata literals referenced by this unit (global scope: not mangled).

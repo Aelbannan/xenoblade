@@ -200,7 +200,7 @@ void CMenuZeal::Term() {
 // ---------------------------------------------------------------------------
 void CMenuZeal::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (CTaskGame::isFlag01Set() != 0) goto exit;
     if (lbl_eu_80663E28 & (1u << 21)) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
@@ -275,7 +275,7 @@ int func_8017FD4C(CMenuZeal* self) {
 
     if (self->mField_94 >= lbl_eu_80667870) {
         // Texture name depends on the detected pad type.
-        const char* texName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        const char* texName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_80503454[0x1c7]
                                   : &lbl_eu_80503454[0x1e2];
         void* tex = func_801355F4()->GetResource(0x74696D67, texName, 0);

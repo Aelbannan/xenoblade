@@ -62,9 +62,9 @@ extern "C" {
     extern void* func_80164724(void* parent, u32 type, int slot);
 
     // CfGameManager
-    extern void* func_80086B04__Q22cf13CfGameManagerFv();
-    extern void* func_8007DE94__Q22cf13CfGameManagerFv(u32 type, int slot);
-    extern void func_8007E038__Q22cf13CfGameManagerFv(u32 type, int flag);
+    extern void* getGimmickListHead__Q22cf13CfGameManagerFv();
+    extern void* getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 type, int slot);
+    extern void syncFieldData__Q22cf13CfGameManagerFv(u32 type, int flag);
 
     // Resource helpers
     extern void* func_80062AD8(void* handle, u32* outType);
@@ -88,7 +88,7 @@ extern "C" {
     extern void func_80484F80(void* model, f32 val);
 
     // __ptmf intrinsics
-    extern void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle* pFileHandle, u32 val);
+    extern void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle* pFileHandle, u32 val);
 
     extern int __ptmf_cmpr(void* ptmf, void* other);
 }
@@ -402,7 +402,7 @@ extern "C" void func_80183C90(void* self) {
     if (decB == 3 || decB == 8) {
         isNewFile = (func_8016C300(self) != 0) ? 1 : 0;
         if (isNewFile == 0) {
-            gameMgr = func_80086B04__Q22cf13CfGameManagerFv();
+            gameMgr = getGimmickListHead__Q22cf13CfGameManagerFv();
             objList = FLD(void*, gameMgr, 0x04);
             obj = FLD(void*, objList, 0x00);
             while (obj != objList) {
@@ -422,7 +422,7 @@ extern "C" void func_80183C90(void* self) {
 
     // Find a live character whose request matches ours (matchChr).
     if (decB <= 10) {
-        gameMgr = func_80086B04__Q22cf13CfGameManagerFv();
+        gameMgr = getGimmickListHead__Q22cf13CfGameManagerFv();
         objList = FLD(void*, gameMgr, 0x04);
         obj = FLD(void*, objList, 0x00);
         while (obj != objList) {
@@ -469,11 +469,11 @@ handles_done:
         } else if (decC == 1 && !func_8016840C()) {
             // Already-loading shortcut through the game manager cache.
             if (isNewFile) {
-                func_8007E038__Q22cf13CfGameManagerFv(decB, 0);
+                syncFieldData__Q22cf13CfGameManagerFv(decB, 0);
                 skipLoading = 1;
             }
             for (i = 0; i < 5; i++) {
-                handle = (u32)func_8007DE94__Q22cf13CfGameManagerFv(decB, i);
+                handle = (u32)getBdatEntryColumn__Q22cf13CfGameManagerFv(decB, i);
                 FLD(u32, s, 0x3C + i * 4) = handle;
             }
         } else {
@@ -561,7 +561,7 @@ handles_done:
                     (mtl::ALLOC_HANDLE)memHandle, fix1,
                     (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
                 FLD(u32, walk, 0x54) = (u32)reqHandle;
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
                 parent = FLD(void*, s, 0x1C);
                 if (FLD(u32, parent, 0x58) & 0x1) {
                     CDeviceFile::setHandleFlag1(reqHandle);
@@ -612,7 +612,7 @@ handles_done:
                 (mtl::ALLOC_HANDLE)memHandle, fix3,
                 (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
-            func_8044F400__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x1) {
                 CDeviceFile::setHandleFlag1(reqHandle);
@@ -816,8 +816,8 @@ extern "C" int func_8018497C(void* self) {
     func_800AA318(FLD(u32, FLD(void*, s, 0x1C), 0x20), &entryId, &param1, &param2, &param3);
 
     // Walk the circular list of objects; the condition re-fetches the head.
-    void* obj = FLD(void*, FLD(void*, func_80086B04__Q22cf13CfGameManagerFv(), 0x04), 0x00);
-    while (obj != FLD(void*, func_80086B04__Q22cf13CfGameManagerFv(), 0x04)) {
+    void* obj = FLD(void*, FLD(void*, getGimmickListHead__Q22cf13CfGameManagerFv(), 0x04), 0x00);
+    while (obj != FLD(void*, getGimmickListHead__Q22cf13CfGameManagerFv(), 0x04)) {
         u32 objEntryId, objParam1, objParam2, objParam3;
         func_800AA318(FLD(u32, FLD(void*, obj, 0x08), 0x70), &objEntryId, &objParam1, &objParam2, &objParam3);
 

@@ -153,21 +153,21 @@ int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 
 extern "C" void func_802B7C68(cf::CHelp* self);
-void cf::CHelp_EtherMakeTIPS::func_80295D8C(void) { ::func_802B7C68(this); }
+void cf::CHelp_EtherMakeTIPS::dispatchEtherTips(void) { ::func_802B7C68(this); }
 
 int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
 
-void cf::CHelp_TalkTIPS::func_80295D98(void) { ::func_802B7C68(this); }
+void cf::CHelp_TalkTIPS::dispatchTalkTips(void) { ::func_802B7C68(this); }
 
-void cf::CHelp_KizunaTIPS::func_80295D9C(void) { ::func_802B7C68(this); }
+void cf::CHelp_KizunaTIPS::dispatchKizunaTips(void) { ::func_802B7C68(this); }
 
-void cf::CHelp_EndEventTIPS::func_80295DA0(void) { ::func_802B7C68(this); }
+void cf::CHelp_EndEventTIPS::dispatchEndEventTips(void) { ::func_802B7C68(this); }
 
-int func_80295DA4__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
+int isHelpAlwaysEnabled__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
 
-void cf::CHelp_AlwaysTIPS::func_80295DAC(void) { ::func_802B7C68(this); }
+void cf::CHelp_AlwaysTIPS::dispatchAlwaysTips(void) { ::func_802B7C68(this); }
 
-void func_80296898__Q22cf14CHelp_ToAttackFv(void* self) {
+void clearHelpToAttackFlags__Q22cf14CHelp_ToAttackFv(void* self) {
     ((unsigned char*)self)[0xc] = 0;
     ((unsigned char*)self)[0xd] = 0;
 }

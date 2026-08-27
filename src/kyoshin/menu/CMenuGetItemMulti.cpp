@@ -152,7 +152,7 @@ char* func_eu_802B1474();
 char* func_eu_802B148C();
 u16 func_80136254(const void*, const char*, u16);
 void func_80137B44(nw4r::lyt::Layout*, char*, u32);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 CBaseCur* __ct__CCur18(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 void* __dt__6CCur18Fv(CBaseCur*, int);
 CSysWin* __ct__CSysWin(CSysWin*, int);
@@ -177,8 +177,8 @@ void __dt__8CProcessFv(CProcess*, int);
 u8* __ct__801B2794(u8*, u32, u32);
 }
 
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(int);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(int);
 
 // Pane layout adjustment for the visible-item count (defined below; called by Init).
 void func_801B5630(CMenuGetItemMulti* self);
@@ -368,7 +368,7 @@ void CMenuGetItemMulti::Init() {
     u32 initialItems[4];
 
     if (mEntryCount != 0 || field_1F6 != 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(1);
         code80135FDC_postIncByte_64080();
     }
 
@@ -385,7 +385,7 @@ void CMenuGetItemMulti::Init() {
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuGetItemFontObject* fontObject = reinterpret_cast<CMenuGetItemFontObject*>(
-        func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
+        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout));
     func_8013676C(rootPane, fontObject->getPane());
 
     u32 font = func_801355BC();
@@ -432,7 +432,7 @@ void CMenuGetItemMulti::Init() {
                    func_80136190(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 43), 0);
 
     char* fileName;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         fileName = &lbl_eu_80504A3C[0x14f];
     } else {
         fileName = &lbl_eu_80504A3C[0x158];
@@ -863,13 +863,13 @@ void CMenuGetItemMulti::Term() {
         render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
     }
     mScn->removeRenderCB(render);
-    func_8003AA8C__5CBdatFUl(5);
+    getEntry__5CBdatFUl(5);
     func_801390E0(&mFileHandle);
     if (field_208 != 0) {
         mtl::MemManager::deallocate(reinterpret_cast<void*>(field_208));
         field_208 = 0;
     }
-    reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->func_801D2180();
+    reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->checkDeactivate();
     func_8022B7F4(&mSystemWindow[0]);
     if (mLayout != 0) {
         delete mLayout;
@@ -881,7 +881,7 @@ void CMenuGetItemMulti::Term() {
     if (mEntryCount != 0 || field_1F6 != 0) {
         func_8013B980();
         if (code80135FDC_getByte_64080() == 0) {
-            func_8008294C__Q22cf13CfGameManagerFv(0);
+            setPresentationFlag__Q22cf13CfGameManagerFv(0);
         }
         // Nested: when both outer conditions fail MWCC jumps the
         // field_1F6 test straight to the epilogue (retail beq .L_801B5980).
@@ -890,7 +890,7 @@ void CMenuGetItemMulti::Term() {
             CfGameManagerTermFields* mgrView = reinterpret_cast<CfGameManagerTermFields*>(
                 cf::CfGameManager::getInstance());
             CfGameManagerTermFields* src = reinterpret_cast<CfGameManagerTermFields*>(
-                func_800B708C(mgrView->field_80));
+                findObjectById(mgrView->field_80));
             if (src != 0 && (src->field_64 & 0x100) != 0) {
                 reinterpret_cast<CfGameManagerTermFields*>(
                     cf::CfGameManager::getInstance())->field_80 = 0;
@@ -903,7 +903,7 @@ void CMenuGetItemMulti::Term() {
 
 void CMenuGetItemMulti::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (CTaskGame::isFlag01Set() != 0) goto exit;
     if (lbl_eu_80663E28 & (1u << 21)) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
@@ -1114,7 +1114,7 @@ int func_801B45A0(CMenuGetItemMulti* self, CEventFile* event) {
 // scope-exit dtor, so none is written here.
 void CMenuGetItemMulti::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (CTaskGame::isFlag01Set() != 0) goto exit;
     if (lbl_eu_80663E28 & (1u << 21)) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
@@ -2529,7 +2529,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
     }
 
     u32 up, down, curHeld, maskHeld, aPressed;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         curHeld = (pad->mTurboPressButtonFlags & 0x10000) |
                   (pad->mTurboPressButtonFlags & 0x8);
         maskHeld = pad->mTurboPressButtonFlags & 0x8004;
@@ -3148,7 +3148,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         maskHeld = (pad->mTurboPressButtonFlags & 0x8004) != 0;
         curHeld = ((pad->mTurboPressButtonFlags & 0x10000) |
                    (pad->mTurboPressButtonFlags & 0x8)) != 0;
@@ -3231,7 +3231,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 up, down, curHeld, maskHeld;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         maskHeld = (pad->mTurboPressButtonFlags & 0x8004) != 0;
         curHeld = ((pad->mTurboPressButtonFlags & 0x10000) |
                    (pad->mTurboPressButtonFlags & 0x8)) != 0;

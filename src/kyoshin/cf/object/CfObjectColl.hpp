@@ -34,7 +34,7 @@ namespace cf {
 //   cf::CObjectParam   +0x3C..+0x50 (UnkVirtualFunc1..6)
 //   cf::CfObject       +0x54..+0x174 (dtor slot + the UnkVirtualFunc zoo)
 //   cf::CfObjectPoint  overrides +0x48/+0x60/+0x68/+0x70/+0x9C/+0xA0/
-//                                 +0x158/+0x160 (func_800C136C..AC604)
+//                                 +0x158/+0x160 (loadPointData..AC604)
 //   cf::CfObjectColl   overrides +0x54/+0x58/+0x5C/+0x6C/+0xA8/+0xB8
 //
 // Intermediate tables are never constructed as most-derived in this TU and no
@@ -65,7 +65,7 @@ public:
     virtual void CObjectParam_UnkVirtualFunc1();    // +0x3C
     virtual void CObjectParam_UnkVirtualFunc2();    // +0x40
     virtual void CObjectParam_UnkVirtualFunc3();    // +0x44
-    virtual void func_800C136C();                   // +0x48 (overridden by CfObjectPoint)
+    virtual void loadPointData();                   // +0x48 (overridden by CfObjectPoint)
     virtual void CObjectParam_UnkVirtualFunc5();    // +0x4C
     virtual void CObjectParam_UnkVirtualFunc6();    // +0x50
 };
@@ -74,13 +74,13 @@ class CfObject : public CObjectParam {
 public:
     virtual ~CfObject() {}                                          // +0x54 (empty; not in retail D1/D2 chain)
 
-    virtual int func_800AB3EC();                    // +0x58 (overridden by CfObjectColl)
-    virtual void func_800AB498();                   // +0x5C (overridden by CfObjectColl)
-    virtual void func_800C14CC();                   // +0x60 (overridden by CfObjectPoint)
+    virtual int resetCollTimer();                    // +0x58 (overridden by CfObjectColl)
+    virtual void enableCollision();                   // +0x5C (overridden by CfObjectColl)
+    virtual void updatePointState();                   // +0x60 (overridden by CfObjectPoint)
     virtual void CfObject_UnkVirtualFunc5();        // +0x64
-    virtual void func_800C1444();                   // +0x68 (overridden by CfObjectPoint)
-    virtual void func_800AB57C();                   // +0x6C (overridden by CfObjectColl)
-    virtual void func_800C1658();                   // +0x70 (overridden by CfObjectPoint)
+    virtual void releasePointLink();                   // +0x68 (overridden by CfObjectPoint)
+    virtual void refreshCollLink();                   // +0x6C (overridden by CfObjectColl)
+    virtual void setChildPoint();                   // +0x70 (overridden by CfObjectPoint)
     virtual int CfObject_UnkVirtualFunc9();         // +0x74
     virtual void CfObject_UnkVirtualFunc10();       // +0x78
     virtual int CfObject_UnkVirtualFunc11();        // +0x7C
@@ -92,13 +92,13 @@ public:
     virtual float CfObject_UnkVirtualFunc17();      // +0x94
     virtual int CfObject_UnkVirtualFunc18();        // +0x98
     virtual void func_80047814(const void* pos);          // +0x9C (overridden by CfObjectPoint)
-    virtual void func_800C171C();                   // +0xA0 (overridden by CfObjectPoint)
+    virtual void setPointPosition();                   // +0xA0 (overridden by CfObjectPoint)
     virtual void CfObject_UnkVirtualFunc21();       // +0xA4
-    virtual void func_800AB798(const void* pos);          // +0xA8 (see spell-out definition in the .cpp)
+    virtual void syncCollVectors(const void* pos);          // +0xA8 (see spell-out definition in the .cpp)
     virtual ml::CVec3* CfObject_UnkVirtualFunc23(); // +0xAC
     virtual void* CfObject_UnkVirtualFunc24();      // +0xB0
     virtual void CfObject_UnkVirtualFunc25();       // +0xB4
-    virtual void func_800AB7A8();                   // +0xB8 (overridden by CfObjectColl)
+    virtual void copyCollPosition();                   // +0xB8 (overridden by CfObjectColl)
     virtual void* CfObject_UnkVirtualFunc27(void* param); // +0xBC
     virtual void* CfObject_UnkVirtualFunc28();      // +0xC0
     virtual float CfObject_UnkVirtualFunc29(float value); // +0xC4
@@ -138,9 +138,9 @@ public:
     virtual void CfObject_UnkVirtualFunc63();       // +0x14C
     virtual int CfObject_UnkVirtualFunc64(int id);  // +0x150
     virtual void CfObject_UnkVirtualFunc65(int flag); // +0x154
-    virtual void func_800C16F4(u32 flag);           // +0x158 (overridden by CfObjectPoint)
+    virtual void setPointEnabled(u32 flag);           // +0x158 (overridden by CfObjectPoint)
     virtual void CfObject_UnkVirtualFunc67(int flag); // +0x15C
-    virtual int func_800AC604();                    // +0x160 (defined by CfObjectPoint)
+    virtual int isCollEnabled();                    // +0x160 (defined by CfObjectPoint)
     virtual int CfObject_UnkVirtualFunc69();        // +0x164
     virtual void CfObject_UnkVirtualFunc70();       // +0x168
     virtual float CfObject_UnkVirtualFunc71();      // +0x16C
@@ -156,25 +156,25 @@ class CfObjectPoint : public CfObject {
 public:
     virtual ~CfObjectPoint();          // +0x54 override; defined in CfObjectPoint.cpp
 
-    void func_800C1638();              // non-virtual helper (external)
+    void notifyChildUpdate();              // non-virtual helper (external)
 
-    virtual void func_800C136C();      // +0x48
-    virtual void func_800C14CC();      // +0x60
-    virtual void func_800C1444();      // +0x68
-    virtual void func_800C1658();      // +0x70
+    virtual void loadPointData();      // +0x48
+    virtual void updatePointState();      // +0x60
+    virtual void releasePointLink();      // +0x68
+    virtual void setChildPoint();      // +0x70
     virtual void func_80047814(const void* pos); // +0x9C: copies pos[0..2] to this+0x3C
-    virtual void func_800C171C();      // +0xA0
-    virtual void func_800C16F4(u32 flag); // +0x158
-    virtual int func_800AC604();       // +0x160
+    virtual void setPointPosition();      // +0xA0
+    virtual void setPointEnabled(u32 flag); // +0x158
+    virtual int isCollEnabled();       // +0x160
 };
 
 class CfObjectColl : public CfObjectPoint {
 public:
     ~CfObjectColl();                   // +0x54 most-derived destructor
-    int func_800AB3EC();               // +0x58
-    void func_800AB498();              // +0x5C
-    void func_800AB57C();              // +0x6C
-    void func_800AB7A8();              // +0xB8
+    int resetCollTimer();               // +0x58
+    void enableCollision();              // +0x5C
+    void refreshCollLink();              // +0x6C
+    void copyCollPosition();              // +0xB8
 
     u8 pad70[0x94 - 0x70];
     u32 field_0x94;

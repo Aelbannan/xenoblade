@@ -18,14 +18,14 @@ struct CItemExt;
 s32 func_80155660(u32 row, u32 flag) {
     s32 sum1 = 0;
     for (s32 i = 0; i < 3; i++) {
-        if (func_80082E50__Q22cf13CfGameManagerFv(i, 0x92) != 0) {
-            sum1 += func_80082EC4__Q22cf13CfGameManagerFv(i, 0x92);
+        if (updatePlayerCameraLink__Q22cf13CfGameManagerFv(i, 0x92) != 0) {
+            sum1 += isEffectListEmpty__Q22cf13CfGameManagerFv(i, 0x92);
         }
     }
     s32 sum2 = 0;
     for (s32 i = 0; i < 3; i++) {
-        if (func_80082E50__Q22cf13CfGameManagerFv(i, 0x94) != 0) {
-            sum2 += func_80082EC4__Q22cf13CfGameManagerFv(i, 0x94);
+        if (updatePlayerCameraLink__Q22cf13CfGameManagerFv(i, 0x94) != 0) {
+            sum2 += isEffectListEmpty__Q22cf13CfGameManagerFv(i, 0x94);
         }
     }
     void* handle = lbl_eu_806640CC;
@@ -283,7 +283,7 @@ extern "C" __declspec(noinline) CItemImpl* CItem_initItemImplInstances(CItemData
 // retail: lwz r0,0x0(r4); extrwi r3,r0,3,27 = (x>>2)&7
 extern "C" u32 func_80155CB4(void* self, const void* p) { return (*(const u32*)p >> 2) & 7; }
 
-void func_80155CC0(CItemData*, unsigned long* ptr, unsigned long val) {
+void setItemCategory(CItemData*, unsigned long* ptr, unsigned long val) {
     unsigned long v = *ptr;
     *ptr = __rlwimi(v, val, 2, 27, 29);
 }
@@ -2228,7 +2228,7 @@ void func_80159348(CItemPartySlots* self) {
 // against the compacted indices and the party slot arrays (mArr1/mArr2/
 // mArr3), handing each (amount, item id) pair to the kind-impl vf44.
 extern "C" s32 func_80159524() {
-    func_8007F11C__Q22cf13CfGameManagerFv();
+    syncItemGroups__Q22cf13CfGameManagerFv();
     s16* buf = (s16*)mtl::MemManager::allocate_head(
         mtl::MemManager::getHandleMEM2(), 0x960, 4);
     CItemPartySlots slots;  // 0x290
@@ -2346,7 +2346,7 @@ extern "C" s32 func_80159524() {
         }
     }
     if (buf != 0) mtl::MemManager::deallocate(buf);
-    func_8007F11C__Q22cf13CfGameManagerFv();
+    syncItemGroups__Q22cf13CfGameManagerFv();
     return 1;
 }
 

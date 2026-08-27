@@ -84,7 +84,7 @@ struct CVS_THREAD_BATTLE_END_SP_raw {
     char* cmdString;        // 0x30: current command string
 };
 
-// Circular voice-node list returned by the voice manager func_800B6BA4().
+// Circular voice-node list returned by the voice manager getListB28().
 // Each node's field_8 points at the CCharVoice embedded in the handle
 // (i.e. handle + 0x3E9C).
 struct CVoiceListNode {
@@ -118,8 +118,8 @@ extern "C" {
                                       u32 dtor);
 }
 
-// C++-linkage voice-manager query (retail mangled name func_800B6BA4__Fv).
-CVoiceManager* func_800B6BA4();
+// C++-linkage voice-manager query (retail mangled name getListB28__Fv).
+CVoiceManager* getListB28();
 
 // Data tables / glove for this thread variant.
 // Unknown-size array declarations prevent MWCC sda21 folding, forcing the

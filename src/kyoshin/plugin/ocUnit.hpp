@@ -228,15 +228,15 @@ VMArg* vmArrayGet(VMThread* pThread, VMArg* pArray, int index);
 // CfGameManager spawn/lookup helpers called by func_800BD7C-style plugins
 // (retail mangled symbols; member declarations in CfGameManager.hpp carry
 // placeholder signatures).
-void* func_80081990__Q22cf13CfGameManagerFv(const char* name, u16 index);
+void* createItemObjectWrapper__Q22cf13CfGameManagerFv(const char* name, u16 index);
 void* func_80081A40__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
-void* func_80081358__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
-void* func_80081694__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
+void* createMapObjectInstance__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
+void* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
 void* func_8003AA34(void);
 const char* getFP__FPCc(const char* name);
 unsigned int func_8013EC58();
-void* func_80082D90__Q22cf13CfGameManagerFv();
-bool func_80082FE4__Q22cf13CfGameManagerFv(int arg);
+void* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
+bool isPlayerInEventRange__Q22cf13CfGameManagerFv(int arg);
 
 #ifdef __cplusplus
 }

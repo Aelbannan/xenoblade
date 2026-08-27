@@ -245,14 +245,14 @@ union SndConv {
 };
 
 void* func_80186BC8(int id);
-extern "C" u32 func_800821F8__Q22cf13CfGameManagerFv();
+extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
 int CfRes_getD80Flag();
 D80VolObj* func_8049603C();
 extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
 SndSlotRef* func_801BFAE4(u16 handle);
 extern "C" void func_801BFED0(int a, u16 b, int c);
-// func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
+// playActorSound__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
 // (CCol6System.hpp): returns the sound handle.
 extern "C" void func_801BFE58(s32 idx, u32 handle, u32 ticks, float volume);
 extern "C" void func_801BFF44(s32 idx, u16 handle, float value);
@@ -267,7 +267,7 @@ extern f32 lbl_eu_8066A208;          // column-match threshold
 
 extern "C" void func_801A96A0(SndCtrlObj* self, int unk4, int farArg,
                                int entryBase) {
-    GmRoot* root = (GmRoot*)func_800821F8__Q22cf13CfGameManagerFv();
+    GmRoot* root = (GmRoot*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (root == NULL) {
         return;
     }
@@ -373,7 +373,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, int unk4, int farArg,
             self->m1C = lbl_eu_80667D64;
             prio = 0;
         }
-        u16 h = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
+        u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
                                                            self->m1C);
         self->m2C = h;
         SndSlotRef* slot = (SndSlotRef*)func_801BFAE4((u16)h);
@@ -714,13 +714,13 @@ void func_801AA04C(void* param) {
 // CfGameManager imports (retail mangled symbols).
 class CtrlPlayerVt;
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" u32 func_80086DBC__Q22cf13CfGameManagerFv();
-extern "C" u32 func_80086DA0__Q22cf13CfGameManagerFv();
-extern "C" void func_80086DA4__Q22cf13CfGameManagerFv();
-extern "C" u32 func_8008585C__Q22cf13CfGameManagerFv();
-extern "C" u8 func_8007F9BC__Q22cf13CfGameManagerFv();
+extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
+extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
+extern "C" void getControllerWordA37C__Q22cf13CfGameManagerFv();
+extern "C" u32 isSceneActive__Q22cf13CfGameManagerFv();
+extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv();
 extern "C" u16 func_8016DF2C(void); // chapter/episode clock (CAIAction.hpp canonical form)
-extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
+extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 // Player object view: field getter at vtable slot 43 (+0xAC).
 class CtrlPlayerVt {
@@ -819,18 +819,18 @@ void func_801AA2A8(UpdWork* self) {
         return;
     }
 
-    u32 phase = func_80086DBC__Q22cf13CfGameManagerFv();
-    u16 area = (u16)func_80086DA0__Q22cf13CfGameManagerFv();
-    func_80086DA4__Q22cf13CfGameManagerFv(); // result discarded (retail calls it)
+    u32 phase = getCurrentSlotIndex__Q22cf13CfGameManagerFv();
+    u16 area = (u16)getControllerWordA33C__Q22cf13CfGameManagerFv();
+    getControllerWordA37C__Q22cf13CfGameManagerFv(); // result discarded (retail calls it)
 
     s32 row = func_8003B41C(tbl);          // first row of the range
     s32 endRow = row + func_8003B1EC(tbl); // one past the last row
     u16 secs = func_8016DF2C();            // chapter/episode clock
-    u16 counter = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+    u16 counter = (u16)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
     // Key scans: is any entry keyed 0x65 (else 0x66) present in the singleton?
     int keyFlag = 0;
-    if (func_80082900__Q22cf13CfGameManagerFv() != 0) {
+    if (getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
         CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
         BdatTable* table = lbl_eu_806640B8;
         if (work != NULL && table != NULL) {
@@ -846,7 +846,7 @@ void func_801AA2A8(UpdWork* self) {
             }
         }
     }
-    if (keyFlag == 0 && func_80082900__Q22cf13CfGameManagerFv() != 0) {
+    if (keyFlag == 0 && getEffectFlagState__Q22cf13CfGameManagerFv() != 0) {
         CtrlStateWork* work = *(CtrlStateWork**)(&lbl_eu_80664330);
         BdatTable* table = lbl_eu_806640B8;
         if (work != NULL && table != NULL) {
@@ -874,7 +874,7 @@ void func_801AA2A8(UpdWork* self) {
             gate14 = 0;
         }
     }
-    if (func_8008585C__Q22cf13CfGameManagerFv()) {
+    if (isSceneActive__Q22cf13CfGameManagerFv()) {
         gate14 = 1;
     }
     if ((u8)gate14 != self->mFlag19) {
@@ -929,7 +929,7 @@ void func_801AA2A8(UpdWork* self) {
             gate = 1;
         }
 
-        u8 farGate = func_8007F9BC__Q22cf13CfGameManagerFv();
+        u8 farGate = getGlobalFlag34__Q22cf13CfGameManagerFv();
         ColVal t49;
         t49.v = func_8003B434(tbl, cols + 0x49, colH[10], idx, entry);
         int volOk = 1;
@@ -988,7 +988,7 @@ void func_801AA2A8(UpdWork* self) {
             u8 hiCnt = t9e.b[0];
             int rangeOk = 1;
             if (resId != 0) {
-                u32 resCount = func_80082354__Q22cf13CfGameManagerFv(resId);
+                u32 resCount = getResourceFromTable__Q22cf13CfGameManagerFv(resId);
                 if (!((u32)loCnt <= resCount && resCount <= (u32)hiCnt)) {
                     rangeOk = 0;
                 }
@@ -1071,8 +1071,8 @@ extern "C" int func_801AA960(int self, int b, int c, int d) {
 // CItem.hpp, whose full include closure clashes with this TU.
 extern "C" u32 func_8003B41C(void* bdat);   // bdat first row
 extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count
-// Game-manager active gate; canonical member is cf::CfGameManager::func_80082900.
-extern "C" u32 func_80082900__Q22cf13CfGameManagerFv();
+// Game-manager active gate; canonical member is cf::CfGameManager::getEffectFlagState.
+extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
 // reloc binds to the retail-unmangled name.
 extern "C" void func_801BFE58(s32 idx, u32 a, u32 b, float volume);
@@ -1087,7 +1087,7 @@ extern BdatTable* lbl_eu_806640B8;
 // whether any entry's key (+0x2E) equals id.
 // ----------------------------------------------------------------------------
 bool func_801AAAA0(u32 id) {
-    if (func_80082900__Q22cf13CfGameManagerFv() == 0) {
+    if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return false;
     }
     extern unsigned char lbl_eu_80664330;
@@ -1120,7 +1120,7 @@ bool func_801AAAA0(u32 id) {
 // ----------------------------------------------------------------------------
 void func_801AAB64(u32 id, u32 kind, int store, float scale) {
     extern unsigned char lbl_eu_80664330;
-    if (func_80082900__Q22cf13CfGameManagerFv() == 0) {
+    if (getEffectFlagState__Q22cf13CfGameManagerFv() == 0) {
         return;
     }
     BdatTable* table = lbl_eu_806640B8;

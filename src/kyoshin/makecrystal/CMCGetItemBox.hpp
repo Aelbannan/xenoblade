@@ -269,7 +269,7 @@ extern "C" void func_8022B7F4(void*);
 extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_8050FF8C[];

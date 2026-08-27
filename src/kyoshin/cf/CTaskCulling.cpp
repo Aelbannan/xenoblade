@@ -120,7 +120,7 @@ void CTaskCulling::func_801A2C94(){
 
         func_801A2C94();
 
-        cf::CfGameManager* gm = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        cf::CfGameManager* gm = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         u32 outA, outB, outC, outD;
 
         func_800AA318(gm->unk70, &outA, &outB, &outC, &outD);

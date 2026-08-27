@@ -138,7 +138,7 @@ extern "C" s32 func_801B19F0(u8 type, s32 slotSel) {
         reinterpret_cast<PcEffectScheduleSub*>(lbl_eu_80664398->mActor);
     if (sub != NULL)
         sub = &reinterpret_cast<PcEffectActorView*>(sub)->mSub;
-    func_800ACF78(obj, sub, 0);
+    bindPartnerO_(obj, sub, 0);
 
     // Store the object into the entry, then replace the table-sourced
     // transform pointer with the holder fetched from the sub-object
@@ -264,7 +264,7 @@ u32 func_801B1DCC(u32 index) {
 // whose active flag is exactly 1; otherwise index addresses the slot directly
 // (no bounds check, matching retail). The entry must be active; its object is
 // attached to the handle, the active flag becomes 2, and the per-args state
-// is stored. When amount <= 0 the object also gets a func_800ACC14 poke with
+// is stored. When amount <= 0 the object also gets a setChildB59__ poke with
 // the sign-folded flag (retail's neg/or/srwi idiom always yields 1).
 s32 func_801B1E74(u32 handle, s32 index, s32 bankByte, s32 amount) {
     PcEffectData* data = lbl_eu_80664398;
@@ -295,7 +295,7 @@ s32 func_801B1E74(u32 handle, s32 index, s32 bankByte, s32 amount) {
     if (e->mActive != 1)
         return 0;
 
-    func_800ACFD8(e->mObj, (void*)handle);
+    setTargetObj_(e->mObj, (void*)handle);
     e->mActive = 2;
     f32 lim = lbl_eu_80667DF0;
     e->_10 = amount;
@@ -303,7 +303,7 @@ s32 func_801B1E74(u32 handle, s32 index, s32 bankByte, s32 amount) {
     lbl_eu_80664398->mField60 = lim;
     if (amount <= 0) {
         // Retail folds the byte into a constant via (-v | v) >> 31 + 1.
-        func_800ACC14(e->mObj, (s8)((((u32)(-bankByte | bankByte)) >> 31) + 1));
+        setChildB59__(e->mObj, (s8)((((u32)(-bankByte | bankByte)) >> 31) + 1));
     }
     return e->mId;
 }
@@ -395,13 +395,13 @@ extern "C" void func_801B218C(void* a1, void* r4) {
 
 // Per-frame tick: while the game manager allows updates, every running slot
 // (active flag == 2) counts up its aux timer and decrements its duration;
-// when the duration hits zero the object gets a func_800ACC14 poke with a
+// when the duration hits zero the object gets a setChildB59__ poke with a
 // sign-folded constant. Afterwards the two timers at +0x5C/+0x60 are stepped
 // down by an sdata2 epsilon and clamped to it.
 void func_801B21E0(CPcEffect07* self) {
     if (lbl_eu_80664398 == NULL)
         return;
-    if (cf::CfGameManager::func_800829B8())
+    if (cf::CfGameManager::isSceneLoading())
         return;
 
     for (int i = 0; i < 3; i++) {
@@ -415,7 +415,7 @@ void func_801B21E0(CPcEffect07* self) {
                 if (e->_10 == 0) {
                     u8 flag = e->_14;
                     // (-v | v) >> 31 + 1 folds any nonzero byte to 1.
-                    func_800ACC14(e->mObj,
+                    setChildB59__(e->mObj,
                                   (s8)(((((u32)(-(s32)(int)flag) | (u32)flag) >> 31) + 1)));
                 }
             }

@@ -47,7 +47,7 @@ public:
     CTitleAHelp();
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (slot 9, no args) yields the u32 font handle bound by func_8013676C.
 // All-pure so no vtable is emitted.
 class CTitleAHelpFontView {
@@ -75,7 +75,7 @@ extern HelpRow lbl_eu_80533E60[];
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // Retail-unmangled CfGameManager static helper (takes a selector mask).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int selector);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);
 
 // Vector copy helper (defined in CTagProcessor.cpp).
 extern "C" void copyVEC3(void* dst, const void* src);

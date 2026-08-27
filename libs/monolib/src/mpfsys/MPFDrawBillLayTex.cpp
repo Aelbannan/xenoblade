@@ -68,19 +68,19 @@ extern "C" {
 
     Vec* func_804B5A68(void);
 
-    MPFDrawBillLayer* func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(void*, u8);
-    void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(s16, f32);
+    MPFDrawBillLayer* getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(void*, u8);
+    void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(s16, f32);
     void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s16, f32);
-    void func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(f32);
-    void func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(u8);
-    void func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv(void);
-    void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32);
+    void setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(u8);
+    void resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void disableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
+    void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 }
 
 namespace mpfsys {
@@ -120,7 +120,7 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
         PSMTXMultVec(lbl_eu_80658428, &right, &positions[1]);
 
         if (billboard->layerDepth != lbl_eu_8066A848) {
-            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             s32 count = lbl_eu_8066A728;
             f32 v = lbl_eu_8066A84C;
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
@@ -152,7 +152,7 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
             layerRight.z = lbl_eu_8066A848;
             PSMTXMultVec(lbl_eu_80658428, &layerLeft, &layerLeft);
             PSMTXMultVec(lbl_eu_80658428, &layerRight, &layerRight);
-            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             s32 count = lbl_eu_8066A728;
             for (s32 i = 0; i < count; i++) {
                 PSMTXMultVec(layers->matrix, &layerLeft, &positions[2 + i * 2]);
@@ -173,7 +173,7 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
         right.z = lbl_eu_8066A848;
         PSMTXMultVec(lbl_eu_80658428, &left, &positions[0]);
         PSMTXMultVec(lbl_eu_80658428, &right, &positions[1]);
-        func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+        getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
         s32 count = lbl_eu_8066A728;
         f32 v = lbl_eu_8066A84C;
         f32 step = billboard->layerDepth * lbl_eu_8066A730;
@@ -264,7 +264,7 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
     MPFDrawBillPair* pair = list->pairs;
     s32 count = (s32)(list->count >> 1);
     for (s32 i = 0; i < count; i++, pair++) {
-        func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
+        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
 
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 1;
@@ -300,22 +300,22 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
 extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
+        setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
+        bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
     if (billboard->flags & 1) {
-        func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+        enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+        disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
     func_8047A330(billboard, positions, list);
 }
@@ -323,26 +323,26 @@ extern "C" void drawIndexed__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillbo
 extern "C" void drawPaired__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBillboard*, MPFDrawBillData* billboard, MPFDrawBillPairList* list) {
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
-        func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
+        setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
+        bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     func_8047A570(billboard, positions, list);
-    func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
+    loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
 extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions) {
-    func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
-    func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
+    bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
+    setupGfxMode0__Q26mpfsys17UnkClass_80471EC8Fv();
 
     Vec vertex0;
     Vec vertex1;
@@ -353,7 +353,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
         s32 count;
         Vec* out = positions;
         if (billboard->layerDepth != lbl_eu_8066A848) {
-            layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
             count = lbl_eu_8066A728;
             f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
@@ -394,7 +394,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             vertex3.x = zero;
             vertex3.y = billboard->halfHeight;
             vertex3.z = billboard->halfWidth;
-            layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             count = lbl_eu_8066A728;
             for (s32 i = 0; i < count; i++) {
                 PSMTXMultVec(layers->matrix, &vertex0, out);
@@ -418,7 +418,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     } else {
         Vec* out = positions;
         if (billboard->layerDepth != lbl_eu_8066A848) {
-            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            MPFDrawBillLayer* layers = getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             s32 count = lbl_eu_8066A728;
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
             f32 zero = lbl_eu_8066A848;
@@ -488,17 +488,17 @@ extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBil
     if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
         mask = 0;
     }
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
     if (billboard->flags & 1) {
-        func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+        enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+        disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     }
 
     GXBegin(GX_QUADS, GX_VTXFMT0, (list->count - 1) * 8);
@@ -571,19 +571,19 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
     if (!(billboard->flags & 2) && billboard->layerDepth == lbl_eu_8066A848) {
         mask = 0;
     }
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
 
     MPFDrawBillPair* pair = list->pairs;
     s32 count = (s32)(list->count >> 1);
     for (s32 i = 0; i < count; i++, pair++) {
-        func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
+        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 2;
         base &= mask;
@@ -639,7 +639,7 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
         GXTexCoord1u16(lbl_eu_80665850[value]);
         GXColor1x8(billboard->colors[3]);
     }
-    func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
+    loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
 extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLayTex*, MPFDrawBillData* billboard, MPFDrawBillIndexList* list) {
@@ -650,27 +650,27 @@ extern "C" void drawIndexed__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillL
         lbl_eu_80665860 = billboard;
     }
     if (billboard->flags & 1) {
-        func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+        enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+        disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
     func_8047A330(billboard, positions, list);
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)1, (GXLogicOp)5);
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)1, (GXChannelID)4);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xC, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)1, (GXTevRegID)0);
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(0);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(0);
     func_8047A330(billboard, positions, list);
-    func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)4);
@@ -683,26 +683,26 @@ extern "C" void drawPaired__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBillLa
         func_80479F54(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texMap);
     if (billboard->flags & 8) {
-        func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+        applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+        resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
     }
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     func_8047A570(billboard, positions, list);
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)1, (GXLogicOp)5);
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)1, (GXChannelID)4);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xC, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)1, (GXTevRegID)0);
-    func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(0);
+    setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(0);
     func_8047A570(billboard, positions, list);
     GXSetBlendMode((GXBlendMode)1, (GXBlendFactor)4, (GXBlendFactor)5, (GXLogicOp)0);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)8, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)4);
-    func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
+    loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

@@ -32,7 +32,7 @@ CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
 
 CMCCylinderGauge::~CMCCylinderGauge() {}
 
-void CMCCylinderGauge::func_80221EF4() {
+void CMCCylinderGauge::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry01_gage.brlyt");
 
     func_80136F08(mLayout, &mAnimTransC, mArcResourceAccessor, "mf10_cry01_gage_in.brlan");
@@ -44,39 +44,39 @@ void CMCCylinderGauge::func_80221EF4() {
     func_80136910(mLayout, "txt_sylinder", unk25);
 
     unk28 = 0.0f;
-    func_80222520();
+    bindInAnim();
     mLayout->Animate(0);
     unk1c = true;
 }
 
-void CMCCylinderGauge::func_80221FE0() {
+void CMCCylinderGauge::update() {
     if(unk1c == 0) {
         return;
     }
     switch((s32)unk20) {
         case 1:
-            func_802222C4();
+            updateIn();
             break;
         case 2:
-            func_80222318();
+            updateFill();
             break;
         case 3:
-            func_8022246C();
+            updateOut();
             break;
         case 4:
-            func_802224B0();
+            updateFull();
             break;
     }
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_80222070(nw4r::lyt::DrawInfo* pDrawInfo) {
+void CMCCylinderGauge::draw(nw4r::lyt::DrawInfo* pDrawInfo) {
     if (this->unk1c != 0) {
         func_80137038(this->mLayout, pDrawInfo, 0, 1);
     }
 }
 
-void CMCCylinderGauge::func_80222090() {
+void CMCCylinderGauge::destroy() {
     unk1c = false;
     if(mLayout != nullptr) {
         delete mLayout;
@@ -84,18 +84,18 @@ void CMCCylinderGauge::func_80222090() {
     }
 }
 
-bool CMCCylinderGauge::func_802220F0() {
+bool CMCCylinderGauge::isReady() {
     return unk24;
 }
 
-void CMCCylinderGauge::func_802220F8() {
+void CMCCylinderGauge::start() {
     if(unk20 == 0) {
         unk20 = 1;
         unk24 = false;
     }
 }
 
-void CMCCylinderGauge::func_80222118() {
+void CMCCylinderGauge::startOut() {
     unk20 = 3;
     unk24 = false;
     if(unk28 > 0.0f) {
@@ -105,13 +105,13 @@ void CMCCylinderGauge::func_80222118() {
         }
         unk28 = 0.0f;
     }
-    func_802226B8();
+    bindOutAnim();
 }
 
-//Optimization level is reduced to ensure the remainder is naively computed
+//Optimization
 #pragma push
 #pragma optimization_level 1
-void CMCCylinderGauge::func_802221A4(float arg) {
+void CMCCylinderGauge::addFillValue(float arg) {
     s32 random = (s32)ml::MTRand::getInstance()->rand31();
 
     s32 divisor = 0x29;
@@ -125,12 +125,12 @@ void CMCCylinderGauge::func_802221A4(float arg) {
 }
 #pragma pop
 
-void CMCCylinderGauge::func_80222234() {
+void CMCCylinderGauge::decrementLevel() {
     unk25 -= 1;
     func_80136910(mLayout, "txt_sylinder", unk25);
 }
 
-u8 CMCCylinderGauge::func_80222258() {
+u8 CMCCylinderGauge::getLevel() {
     u8 result = (u8)(unk25 + unk28);
     if(result > 9) {
         result = 9;
@@ -138,21 +138,21 @@ u8 CMCCylinderGauge::func_80222258() {
     return result;
 }
 
-void CMCCylinderGauge::func_802222A4(u8 arg) {
+void CMCCylinderGauge::setLevel(u8 arg) {
     unk25 = arg;
     func_80136910(mLayout, "txt_sylinder", unk25);
 }
 
-void CMCCylinderGauge::func_802222C4() {
+void CMCCylinderGauge::updateIn() {
     if(func_80137444(mAnimTransC, 1.0f) == 0) {
         return;
     }
     unk24 = true;
     unk20 = 2;
-    func_802225A8();
+    bindUpAnim();
 }
 
-void CMCCylinderGauge::func_80222318() {
+void CMCCylinderGauge::updateFill() {
     // State 2: advance the gauge-fill animation. The "in" arrow moves toward
     // a target frame proportional to the accumulated fill (unk28, capped at
     // one 1.0 level). When it reaches the end and a full level is pending,
@@ -176,7 +176,7 @@ void CMCCylinderGauge::func_80222318() {
                     unk28 = 0.0f;
                 }
                 unk20 = 4;
-                func_80222630();
+                bindFullAnim();
                 mAnimTrans14->SetFrame(0.0f);
                 func_80138078(0xb1);
             } else {
@@ -189,45 +189,45 @@ void CMCCylinderGauge::func_80222318() {
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_8022246C() {
+void CMCCylinderGauge::updateOut() {
     if(func_80137444(mAnimTrans18, 1.0f) == 0) {
         return;
     }
     unk24 = true;
 }
 
-void CMCCylinderGauge::func_802224B0() {
+void CMCCylinderGauge::updateFull() {
     if(func_80137444(mAnimTrans14, 1.0f) == 0) {
         return;
     }
     unk20 = 2;
-    func_802225A8();
+    bindUpAnim();
     mAnimTrans10->SetFrame(0.0f);
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_80222520() {
+void CMCCylinderGauge::bindInAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTransC);
     mLayout->SetAnimationEnable(mAnimTransC, true);
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_802225A8() {
+void CMCCylinderGauge::bindUpAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans10);
     mLayout->SetAnimationEnable(mAnimTrans10, true);
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_80222630() {
+void CMCCylinderGauge::bindFullAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans14);
     mLayout->SetAnimationEnable(mAnimTrans14, true);
     mLayout->Animate(0);
 }
 
-void CMCCylinderGauge::func_802226B8() {
+void CMCCylinderGauge::bindOutAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans18);
     mLayout->SetAnimationEnable(mAnimTrans18, true);

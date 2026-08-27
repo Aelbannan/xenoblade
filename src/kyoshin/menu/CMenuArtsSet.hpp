@@ -754,7 +754,7 @@ public:
     SArts3CObj* field_0x10;    // 0x10 pane (read by CArtsList::OnFileEvent)
 };
 
-// View of the object returned by func_80452C10 (CDeviceFont); its vtable
+// View of the object returned by getFontInfo (CDeviceFont); its vtable
 // slot +0x24 (declared index 7; MWCC reserves a 2-entry header) yields the
 // font handle pushed onto the layout root pane by func_8013676C.
 class SDevFontV {
@@ -971,9 +971,9 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 // OnFileEvent imports: mem-region resize / font / layout-text helpers
 // (retail emits the unmangled names at the call sites).
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(void*, u32);
 extern "C" void* func_801355BC();
 extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);

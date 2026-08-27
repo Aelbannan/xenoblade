@@ -50,7 +50,7 @@ void CSysWinSelect::Init() {
 
 void CSysWinSelect::Move() {
     // Bail if the task is busy or the global render flag is set.
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -175,7 +175,7 @@ CSysWinSelect* func_80125070(CProcess* parent, void* a2, void* a3, void* a4,
 extern "C" void func_801250FC(CSysWinSelect* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int confirm, up, down;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Co-op: D-pad rows read from the turbo-press flags, confirm from bit 21.
         up = (pad->field_104 & 0x8004) != 0;
         down = (pad->field_104 & 0x10008) != 0;
@@ -238,7 +238,7 @@ void CSysWinSelect::cbRenderBefore() {
     // fallthrough so MWCC emits retail's branch-over-branch: `bne end` for
     // the first disjunct, `beq body; b end` for the second (same scheme as
     // CPartyStateWin::cbRenderBefore).
-    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (CTaskGame::isFlag01Set() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
     goto end;

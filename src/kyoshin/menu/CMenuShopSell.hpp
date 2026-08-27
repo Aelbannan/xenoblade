@@ -152,7 +152,7 @@ extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void func_801CAE9C(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int func_801C3E34(CBgTex* self);
 extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);

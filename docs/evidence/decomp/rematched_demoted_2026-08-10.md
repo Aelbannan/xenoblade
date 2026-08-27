@@ -102,8 +102,8 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-80184b38 | kyoshin/realtimeevt/CREvtModelObj | `func_8018371C` |
 | us-80185f44 | kyoshin/realtimeevt/CREvtModelPc | `OnFileEvent__12CREvtModelPcFP10CEventFile` |
 | us-80453860 | monolib/src/device/CDeviceFileCri | `func_80450B4C` |
-| us-8044e88c | monolib/src/device/CGXCache | `func_8044BE1C__8CGXCacheFv` |
-| us-8044e894 | monolib/src/device/CGXCache | `func_8044BE24__8CGXCacheFv` |
+| us-8044e88c | monolib/src/device/CGXCache | `getSubRectPtr__8CGXCacheFv` |
+| us-8044e894 | monolib/src/device/CGXCache | `getAdjustFlag__8CGXCacheFv` |
 | us-8045f410 | monolib/src/lib/CLibCriMoviePlay | `@452@__dt__16CLibCriMoviePlayFv` |
 | us-804eb114 | monolib/src/scn/CMdlAnmUV | `func_804E6C78` |
 | us-80486010 | monolib/src/scn/CScnItemCameraNw4r | `func_80482040` |

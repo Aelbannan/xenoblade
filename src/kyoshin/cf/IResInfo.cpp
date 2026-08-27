@@ -42,7 +42,7 @@ extern "C" {
 // External function declarations
 // ============================================================
 extern "C" {
-    void func_800832BC__Q22cf13CfGameManagerFv(u16*, u16*);
+    void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16*, u16*);
     int func_800A86D8(int, int);
     int func_800A85D8(u8);
     int func_800A84FC(u8);
@@ -66,7 +66,7 @@ extern "C" {
     void func_804CC1D8(void*, void*);
     s32 func_800B1C40();
     u32 func_80061FFC(void);
-    bool func_800865E8__Q22cf13CfGameManagerFv(void);
+    bool processEventQueueB__Q22cf13CfGameManagerFv(void);
     void cancel__11CDeviceFileFP11CFileHandle(void*);
     void waitForDrawDone__9CDeviceVIFv(void);
     void* allocate_array__Q23mtl10MemManagerFUlUl(u32, u32);
@@ -234,7 +234,7 @@ extern "C" void func_800665A0(int unused, ResInfoEntry* self) {
 extern "C" void func_80065F24(int unused, ResInfoEntry* param) {
     if (param->field_0x10 == 0) {
         u16 a, b;
-        func_800832BC__Q22cf13CfGameManagerFv(&a, &b);
+        getEventHalfwordPair__Q22cf13CfGameManagerFv(&a, &b);
         u32 result = (u32)func_80066E7C(param, (b << 10) | ((a << 20) | 0x60000000));
         if (result != 0) {
             u32* fc18 = lbl_eu_8065FC18;
@@ -791,7 +791,7 @@ extern "C" bool func_800686E4(ResInfoContainer* self, bool param) {
     }
     flag25 = (flags & 0x40000) != 0;
 
-    if (func_800865E8__Q22cf13CfGameManagerFv()) return false;
+    if (processEventQueueB__Q22cf13CfGameManagerFv()) return false;
     if (flag25) return false;
 
     minVal = lbl_eu_80666200;

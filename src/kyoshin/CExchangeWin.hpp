@@ -49,7 +49,7 @@ struct CExchangeWinSize {
     f32 height;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10: its
+// Mirror of the font object returned by CDeviceFont::getFontInfo: its
 // vtable slot 9 (+0x24) yields the u32 font handle bound into the layout.
 // Never instantiated, so no vtable is emitted; a genuine virtual call makes
 // MWCC emit the retail r12 dispatch sequence.
@@ -72,7 +72,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 // Retail symbol is the pre-mangled Fv name but the call passes -1 in r3.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Retail reloc is the UNMANGLED name; the C++ member in CUICfManager.hpp
 // would mangle it, so keep C linkage here.
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();

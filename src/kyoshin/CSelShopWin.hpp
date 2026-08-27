@@ -42,12 +42,12 @@ extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void* func_80138DA4(const char*);
 void func_80124288(nw4r::lyt::Pane*, float*);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 void* getPlayer__Q22cf13CfGameManagerFi(int);
-int func_80086F9C__Q22cf13CfGameManagerFv(int);
+int isClassicController__Q22cf13CfGameManagerFv(int);
 }
 // C++-mangled retail helper (actor id -> action source).
-void* func_800B708C(int id);
+void* findObjectById(int id);
 
 /* Vtable base for CSelShopWin. Stores the vtable pointer at +0x00 so layout
 matches retail (IWorkEvent-compatible vptr), without inheriting from IWorkEvent

@@ -18,9 +18,9 @@ namespace cf {
         // function __ct__cf_CfObjectObj (defined in the .cpp); there is no
         // mangled member ctor symbol in retail.
 
-        void func_800BFAAC();
-        int func_800BFA88();
-        void func_800BFB90();
+        void reset();
+        int initialize();
+        void update();
         int func_800BFAB0(u32 arg4, u32 arg5);
 
         // Declared but NOT defined in this fork: retail's CfObjectObj ctor

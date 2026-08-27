@@ -95,7 +95,7 @@ void CtrlEnemy_UnkFunc_800877A8(cf::CtrlEnemy* self) {
     int kept;
 
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x1000000) != 0) goto fail;
+    if (isGlobalCamFlagSet(0x1000000) != 0) goto fail;
     actor = self->field_0x80;
     w34 = *actor->field_04->b030();
     if (func_80174C98(actor, &w34, 0x1) != 0) goto fail;
@@ -175,13 +175,13 @@ L_8852C:
     if (func_8008B934(&self->mSub84, enemy) != 0) kept = 1;
 L_8854C:
         if (lbl_eu_80663E24 & 0x2000) {
-            if (func_80085840__Q22cf13CfGameManagerFv() == 0) kept = 0;
+            if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) kept = 0;
         }
         if (kept != 0) {
             self->field_0x80->mSub.s050((u32)enemy);
             if (self->field_0x80->mSub.s00C(0x100) == 0) {
                 self->field_0x80->mSub.s008(0x100);
-                void* obj = func_8016FE34(func_800B708C((int)enemy));
+                void* obj = func_8016FE34(findObjectById((int)enemy));
                 self->field_0x80->v2C4(obj, lbl_eu_80666574, lbl_eu_80666570,
                                        lbl_eu_80666570);
             }
@@ -356,7 +356,7 @@ void* CtrlEnemy_UnkFunc_80087EEC(cf::CtrlEnemy* self) {
     // Scan candidates: nearest eligible enemy wins.
     for (i = 0; i < (int)func_80043F18(&holder)->field_620; i++) {
         id = (int)func_800F6E98(func_80043F18(&holder), i);
-        obj = (cf::CtrlEnemyActor*)func_8016FE34(func_800B708C(id));
+        obj = (cf::CtrlEnemyActor*)func_8016FE34(findObjectById(id));
         if (obj->field_3F60 != 0 &&
             (((cf::CtrlEnemySubFlag*)obj->field_3F60)->field_530 & 1) != 0) {
             continue;
@@ -445,7 +445,7 @@ void* CtrlEnemy_UnkFunc_80088620(cf::CtrlEnemy* self) {
     __ct__800FB044(func_80043F18(&holder), gauge, pos, 0);
     for (u32 i = 0; i < func_80043F18(&holder)->field_620; i++) {
         cf::CtrlEnemyActor* obj = (cf::CtrlEnemyActor*)func_8016FE34(
-            func_800B708C((int)func_800F6E98(func_80043F18(&holder), i)));
+            findObjectById((int)func_800F6E98(func_80043F18(&holder), i)));
         if (obj == 0) continue;
         int objId = obj->v0E0();
         int battleId = self->field_0x80->v0E0();

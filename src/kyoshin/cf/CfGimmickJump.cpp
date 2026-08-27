@@ -50,7 +50,7 @@ extern int func_80209754(u16 flags, void* first, void* second, void* third,
 extern void func_80209F5C();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
-extern CfGimmickWork* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
+extern CfGimmickWork* createBattleActor__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
 extern void func_801BFED0(int kind, u16 handle, int mode);
@@ -76,7 +76,7 @@ extern void __dl__FPv(void* value);
  *   update). The +0xAC/+0xC8 calls go through the real cf::CfObject
  *   declarations; +0x9C still needs the minimal view below because the hot
  *   shared header declares that slot no-arg.
- * - Linked object (func_800817BC work object, back-pointer at +0xB0): owning
+ * - Linked object (createBattleActor work object, back-pointer at +0xB0): owning
  *   class not yet recovered anywhere in the tree (every gimmick TU keeps a
  *   raw view: CfGimmickItemMgr / WarpObject / ...), so its +0x9C/+0xC4
  *   dispatches stay on the minimal CfGimmickJumpMgr view.
@@ -105,7 +105,7 @@ public:
 };
 
 // CfGimmickWork is defined in CfGimmickJump.hpp (hot-header fix for the
-// func_800817BC work object). No local view needed here.
+// createBattleActor work object). No local view needed here.
 
 extern "C" {
 extern void* jumptable_eu_80535830[];
@@ -440,7 +440,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     // work-object id (converted through the shared 0x43300000 int->float
     // magic, hence the plain integer source forms here).
     self->timer = (f32)self->effectFlags;
-    self->linkedObject = func_800817BC__Q22cf13CfGameManagerFv(self->effectFlags, 0);
+    self->linkedObject = createBattleActor__Q22cf13CfGameManagerFv(self->effectFlags, 0);
     if (self->linkedObject == 0) {
         return;
     }

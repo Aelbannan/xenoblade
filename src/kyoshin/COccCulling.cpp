@@ -30,7 +30,7 @@ unk2E(0){
 }
 
 COccCulling::~COccCulling(){
-    func_801A0794();
+    clear();
 
     //This function gets automatically called later in the dtor for both variables :p
     mFrustumList1.destroy();
@@ -39,14 +39,14 @@ COccCulling::~COccCulling(){
     mtl::MemManager::erase(unk28);
 }
 
-void COccCulling::func_801A06F8(mtl::ALLOC_HANDLE handle, int size){
+void COccCulling::createHeap(mtl::ALLOC_HANDLE handle, int size){
 #pragma unused(handle)
     unk28 = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), size, "OCC_CULL");
     mFrustumList1.reserve(unk28, 128);
     mFrustumList2.reserve(unk28, 128);
 }
 
-void COccCulling::func_801A0794(){
+void COccCulling::clear(){
     mFrustumList1.clearList();
     mFrustumList2.clearList();
     //Why not put this in destroy??
@@ -133,7 +133,7 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     }
 }
 
-bool COccCulling::func_801A0F04(CFrustum* r4){
+bool COccCulling::update(CFrustum* r4){
     unk24 = r4;
 
     for(CCullFrustum** it = mFrustumList1.begin(); it != mFrustumList1.end(); it++){
@@ -246,7 +246,7 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     }
 }
 
-bool COccCulling::func_801A1444(const ml::CVec3& intersectPoint, float distance){
+bool COccCulling::isOccluded(const ml::CVec3& intersectPoint, float distance){
     CCullFrustum* frustum;
     
     for(CCullFrustum** it = mFrustumList1.begin(); it != mFrustumList1.end(); it++){

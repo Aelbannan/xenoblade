@@ -15,10 +15,10 @@
 // generated ~CMenuTutorial destroys only mTitleAHelp/mTutorial then chains
 // to the base destructor). Omitting the dtor gives IScnRender an implicitly
 // trivial one while keeping the vtable layout identical (slot order:
-// dtor slot, func_80043F20).
+// dtor slot, handleEmptyRender).
 class IScnRender {
 public:
-    virtual void func_80043F20();
+    virtual void handleEmptyRender();
 };
 
 /*
@@ -112,10 +112,10 @@ extern "C" u8 func_8013B980();
 extern "C" void func_80135550();
 extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u32 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol
 // (the no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // DrawInfo layout setup (retail MANGLED name
 // func_80137250__FPQ34nw4r3lyt8DrawInfo; declared as plain C++ so MWCC
@@ -140,7 +140,7 @@ CMenuTutorial* func_8029A5DC(CProcess* self, CProcess* parent, u32 arg2);
 // CTaskGame.hpp would pull monolib/scn.hpp and clash with the body-less
 // local IScnRender declaration above.
 extern "C" void getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int isFlag01Set__9CTaskGameFv();
 
 // vtable / PMF / shared data (MWCC does not mangle global-scope data names).
 extern u32 __ptmf_null[3];

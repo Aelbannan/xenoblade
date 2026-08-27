@@ -161,9 +161,9 @@ extern "C" CfCamEvent* __ct__8006B310(void* self, void* arg2) {
         obj->field_0x294 = 0;
         obj->unk8 = 8;
         obj->unk25C = ml::CVec3::zero;
-        obj->v_16(func_8008221C__Q22cf13CfGameManagerFv());
+        obj->v_16(getActiveCameraObject__Q22cf13CfGameManagerFv());
         obj->fn_0x28();
-        func_80085878__Q22cf13CfGameManagerFv();
+        cleanupMapEffects__Q22cf13CfGameManagerFv();
     }
     return obj;
 }
@@ -188,11 +188,11 @@ void func_8006ACC0(CfCamEvent* self) {
     u8 flagByte;
     u32 evtFlags;
 
-    func_8007FE20__Q22cf13CfGameManagerFv(0x2000);
+    stubEmptyE__Q22cf13CfGameManagerFv(0x2000);
 
     // Paused/cutscene gate: when flagged (or the manager state matches), run
     // the follow dispatch once and bail out.
-    if ((self->unk4 & 0x04000000) != 0 || func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+    if ((self->unk4 & 0x04000000) != 0 || getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
         if ((self->unk4 & 0x04000000) != 0) {
             self->v_22();
             func_80071B78(self);
@@ -228,7 +228,7 @@ void func_8006ACC0(CfCamEvent* self) {
     if ((evtFlags & 0x00400000) != 0 || (evtFlags & 0x00040000) != 0) {
         flagByte = 0;
         follow = 0;
-    } else if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) {
+    } else if (isTimerActive__Q22cf13CfGameManagerFv() != 0) {
         follow = 1;
     }
 
@@ -294,9 +294,9 @@ void func_8006ACC0(CfCamEvent* self) {
     }
     if (self->field_0x290 > 0 && --self->field_0x290 == 0) {
         // Flush the camera event nodes once the trigger countdown hits 0.
-        nodeList = func_80086B0C__Q22cf13CfGameManagerFv();
+        nodeList = getFirstGimmick__Q22cf13CfGameManagerFv();
         node = nodeList->sentinel->next;
-        while (node != func_80086B0C__Q22cf13CfGameManagerFv()->sentinel) {
+        while (node != getFirstGimmick__Q22cf13CfGameManagerFv()->sentinel) {
             payload = (CfCamNodePayload*)node->field_8;
             if (payload->field_98 != 0) {
                 if ((payload->field_68 & 0x8000) == 0) {

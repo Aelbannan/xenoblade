@@ -86,7 +86,7 @@ void* __dt__801BF80C(CfSoundRecord* _this, int flags) {
 // pointer, destroys the record array (__destroy_arr) and the FX-slot pair
 // (__dt__801C3340), then frees the object when the delete flag is set. The
 // double beq after the manager compare reuses one CR0 result (early skip +
-// ?: record-base resolver), same shape as func_801BF93C.
+// ?: record-base resolver), same shape as stopSoundMan.
 void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
     if (self != 0) {
         if (lbl_eu_80664430 != 0) {
@@ -116,7 +116,7 @@ void* __dt__801BF874(CfSoundManGlobal* self, int flags) {
 // null-check shape (one cmpwi, two beq targets) comes from the early return
 // on the manager pointer plus the ?: record-base resolver reusing the same
 // CR0 result.
-void func_801BF93C() {
+void stopSoundMan() {
     if (lbl_eu_80664430 == 0) {
         return;
     }
@@ -199,7 +199,7 @@ u32 func_801BFB34(u32 a, u32 b, u32 c, float volume) {
     // to the record lookup, skipping the pause-state check below (retail
     // branch layout).
     if ((lbl_eu_80663E24 & 0x400000) != 0 &&
-        func_8008585C__Q22cf13CfGameManagerFv() != 0) {
+        isSceneActive__Q22cf13CfGameManagerFv() != 0) {
         if (func_80294624() != 0 || func_8028E440() != 0 ||
             func_802B22E0() != 0 || isInitialized__10CMenuPauseFv() != 0) {
             goto lookup;
@@ -219,11 +219,11 @@ lookup:
     return func_801C0F5C((u32)rec, b, volume, c);
 }
 
-// Actor-linked sound start (retail func_801BFC38): gates the request on the
+// Actor-linked sound start (retail playActorSound): gates the request on the
 // global event/presentation flags, optionally overrides the fade-frame count
 // during presentations, scales the volume by the scene's remaining display
 // time, and delegates to func_801C0F5C on the requested record.
-u32 cf::CfSoundMan::func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume) {
+u32 cf::CfSoundMan::playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume) {
     // HUD/menu jingle on record 0 is blocked while event bit 22 is latched.
     if (idx == 0 && (s32)a == 0x1BB && (lbl_eu_80663E24 & 0x400000) != 0) {
         return 0xFFFF;
@@ -236,12 +236,12 @@ u32 cf::CfSoundMan::func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume) {
     if ((presFlags & 0x40000) != 0 && c != 0) {
         // Presentation mode: force a 30-frame fade when the caller left the
         // fade count free and the game manager allows sound.
-        if (b == 0 && func_8008585C__Q22cf13CfGameManagerFv() != 0) {
+        if (b == 0 && isSceneActive__Q22cf13CfGameManagerFv() != 0) {
             b = 0x1E;
         }
     } else {
         if ((evtFlags & 0x400000) != 0 &&
-            func_8008585C__Q22cf13CfGameManagerFv() != 0) {
+            isSceneActive__Q22cf13CfGameManagerFv() != 0) {
             // During an event, any active UI layer (movie wipe, talk window,
             // staff roll, pause menu) cancels the request.
             if (func_80294624() == 0 && func_8028E440() == 0 &&
@@ -412,7 +412,7 @@ void func_801BFF78(s32 idx, u32 a, u32 b) {
 // Records the requested master volume in the global backing store, then
 // applies it to the nw4r AxManager with the frame count scaled by the ramp
 // multiplier.
-void func_801BFFAC(float f1, float f2) {
+void setMasterVolume(float f1, float f2) {
     lbl_eu_80662628 = f1;
     nw4r::snd::detail::AxManager::GetInstance().SetMasterVolume(
         f1, (int)(lbl_eu_80667E8C * f2));
@@ -422,7 +422,7 @@ void func_801BFFAC(float f1, float f2) {
 // MoveValue::GetValue interpolates between the origin and target volumes
 // while the ramp is in flight (mCounter < mFrame); once finished it returns
 // the target directly (retail inlines the whole ramp evaluation).
-float func_801C0014__Fv() {
+float getMasterVolume() {
     nw4r::snd::detail::AxManager& ax =
         nw4r::snd::detail::AxManager::GetInstance();
     return ax.GetMasterVolume();
@@ -556,7 +556,7 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
     if (slot->field_0x2C != 0 && slot->mSoundId != 0) {
         slot->field_0x2A |= 4;
         CfSoundActorSrc* obj =
-            (CfSoundActorSrc*)func_800B708C((int)slot->mSoundId);
+            (CfSoundActorSrc*)findObjectById((int)slot->mSoundId);
         if (obj != 0) {
             CfSoundActorPos3* res =
                 (CfSoundActorPos3*)obj->vf73(slot->field_0x2C);
@@ -579,7 +579,7 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
     if (slot->mSoundId != 0) {
         slot->field_0x2A |= 2;
         CfSoundActorSrc* obj =
-            (CfSoundActorSrc*)func_800B708C((int)slot->mSoundId);
+            (CfSoundActorSrc*)findObjectById((int)slot->mSoundId);
         if (obj != 0) {
             if (obj != 0 && obj->field_0x98 != 0) {
                 CfSoundActorSub98* sub = (CfSoundActorSub98*)obj->field_0x98;
@@ -638,7 +638,7 @@ extern "C" void func_801C055C(CfSoundSlot* slot) {
     u32 inactive = (u32)__cntlzw(rawBit) >> 5;
     if (((u32)__cntlzw(inactive) >> 5) != 0) {
         UnkClass_800821F8Snd* mgr =
-            (UnkClass_800821F8Snd*)func_800821F8__Q22cf13CfGameManagerFv();
+            (UnkClass_800821F8Snd*)getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (mgr != NULL) {
             // Refresh the slot's stored position in place (out = slot + 8).
             func_801C03C8(slot, (CfSoundActorPos*)&slot->field_0x08);
@@ -1166,7 +1166,7 @@ static inline CfSoundSlot* findSlotById(u32 id) {
 #pragma push
 #pragma auto_inline off
 // Actor-linked variant of func_801C0FCC: resolves the voice source first
-// (func_800B708C, null -> 0xFFFF), resolves the record's sound id by user
+// (findObjectById, null -> 0xFFFF), resolves the record's sound id by user
 // param (func_801C0D28), starts playback (func_801C0DC4), and on success
 // links the returned id to the matching table slot, filling it from the
 // source's getPosition block plus the caller's gain floats.
@@ -1179,7 +1179,7 @@ extern "C" u32 func_801C10C0(CfSoundRecord* rec, s32 param, u32 soundId,
     u32 res;
     CfSoundActorSrc* src;
     u32 sndId = soundId;
-    src = (CfSoundActorSrc*)func_800B708C((int)sndId);
+    src = (CfSoundActorSrc*)findObjectById((int)sndId);
     if (src == 0) {
         return 0xFFFF;
     }

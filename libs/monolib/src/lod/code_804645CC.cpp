@@ -29,10 +29,10 @@ namespace LOD {
 struct UnkClass_804645CC {
     void func_804645CC();
     void func_80464B84();
-    void func_80465298();
-    void func_8046568C();
+    void updateLodState();
+    void refreshLodView();
     void func_80465704();
-    void func_80465718();
+    void resetLodFlags();
     void func_80465730();
     void func_8046577C();
     void func_804657E4();
@@ -49,7 +49,7 @@ void LOD::UnkClass_804645CC::func_804645CC() {}
 void LOD::UnkClass_804645CC::func_80464B84() {}
 
 // Reset all four TEV swap-mode tables to the identity RGBA mapping.
-void LOD::UnkClass_804645CC::func_80465298() {
+void LOD::UnkClass_804645CC::updateLodState() {
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
     GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
     GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -94,7 +94,7 @@ extern u32 lbl_eu_80658348[];   // tex-mtx work table (0x38 / 0x68 blocks)
 extern u32 lbl_eu_80665780;     // bound ResFile pointer
 
 extern "C" void func_80471484__Q23LOD9LODMemManFv(void* self, int childIdx);
-extern "C" f32 func_804637E8__Q23LOD17UnkClass_8046368CFv(s32 index);
+extern "C" f32 getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index);
 extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA,
                                                            s32* outB);
 extern "C" void func_80465BC0__Q23LOD17UnkClass_804645CCFv(void* rec);
@@ -238,7 +238,7 @@ extern "C" void func_8046513C__Q23LOD17UnkClass_804645CCFv(LodSceneItem* item,
     lbl_eu_80665810 = (u32)obj;
 }
 
-void LOD::UnkClass_804645CC::func_8046568C() {
+void LOD::UnkClass_804645CC::refreshLodView() {
     if ((lbl_eu_806657E8 & 1) == 0) {
         if (lbl_eu_80665818 != 0) {
             lbl_eu_80665818 = 0;
@@ -252,7 +252,7 @@ void LOD::UnkClass_804645CC::func_8046568C() {
 }
 
 // Store 0xFF into the pending-value slot and clear flag bit 1 of the state word.
-void LOD::UnkClass_804645CC::func_80465718() {
+void LOD::UnkClass_804645CC::resetLodFlags() {
     lbl_eu_80665814 = 0xFF;
     lbl_eu_806657E8 &= ~2u;
 }
@@ -265,7 +265,7 @@ void func_8046534C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     LodStateRec* rec = (LodStateRec*)(lbl_eu_8066581C + value * 0x2c);
 
     if ((rec->field_0x0C & 0x40) != 0) {
-        f32 cur = func_804637E8__Q23LOD17UnkClass_8046368CFv(rec->field_0x1E);
+        f32 cur = getLodCacheObject__Q23LOD17UnkClass_8046368CFv(rec->field_0x1E);
         f32 delta = lbl_eu_8066A624 - cur;
         if (lbl_eu_8066A624 != delta) {
             s32 fade = lbl_eu_80665814;

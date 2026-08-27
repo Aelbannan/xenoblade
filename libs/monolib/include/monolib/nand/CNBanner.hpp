@@ -9,10 +9,10 @@ public:
     virtual ~CNBanner();
     void init();
     virtual bool OnFileEvent(CEventFile* pEventFile);
-    void func_804F52F8(const char* str);
-    void func_804F5304(const char* str);
-    void func_804F5310(const char* str);
-    void func_804F531C(const char** filenames, int* someArray);
+    void setTitle(const char* str);
+    void setSubtitle(const char* str);
+    void setBannerPath(const char* str);
+    void setFileList(const char** filenames, int* someArray);
 
     //0x0: vtable
     u8 unk4[0xC - 0x4];

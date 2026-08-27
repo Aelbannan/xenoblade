@@ -57,8 +57,8 @@ extern "C" {
     void* func_8023C1B4();
     void func_800628C4(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
-    void func_8007FE18__Q22cf13CfGameManagerFv(int flag);
-    bool func_8006EF04__Fi(int mask);
+    void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
+    bool isGlobalCamFlagSet__Fi(int mask);
     u32  func_8009CF8C(u32 resource);
     int  func_80148778(void* obj, int id);
     int  func_8027E018(volatile s16* obj, FuncActorRef* arg);
@@ -71,7 +71,7 @@ extern "C" {
     void func_801338C8();
     void func_80133AE8();
     s32 func_8011C2E8();
-    void func_80080F40__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
+    void lookupResourceByKeys__Q22cf13CfGameManagerFv(void* this_, u32 second, u32 third);
 
     void func_801AAC78(int arg);
     int  func_800B8FC4();
@@ -88,13 +88,13 @@ extern "C" {
     void func_801C3D9C(u8* obj);
     void func_801FA254(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
-    void func_80085878__Q22cf13CfGameManagerFv();
-    int  func_80085840__Q22cf13CfGameManagerFv();
-    int  func_80085838__Q22cf13CfGameManagerFv();
-    void func_8007FECC__Q22cf13CfGameManagerFv();
-    void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
-    void func_8007FE2C__Q22cf13CfGameManagerFv();
-    void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate);
+    void cleanupMapEffects__Q22cf13CfGameManagerFv();
+    int  isSceneReadyForInput__Q22cf13CfGameManagerFv();
+    int  resetCameraManager__Q22cf13CfGameManagerFv();
+    void processEventList__Q22cf13CfGameManagerFv();
+    void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
+    void processEffectList__Q22cf13CfGameManagerFv();
+    void recoverFieldState__Q22cf13CfGameManagerFv(bool alternate);
 
     long func_8017FD44();
     // func_8004C5EC: canonical u32(void*) decl comes from CfObjectMove.hpp.
@@ -122,7 +122,7 @@ int func_8018F8D8(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 int func_8018F924(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     if (func_800B8FC4() != 0) {
         lbl_eu_80663E28 &= ~0x20;
-        func_8007E0D0__Q22cf13CfGameManagerFv(true);
+        recoverFieldState__Q22cf13CfGameManagerFv(true);
     } else {
         func_80061A80(p0, 0x24, p1, p2, p3, p4);
     }
@@ -132,7 +132,7 @@ int func_8018F924(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 int func_8018F9A0(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     // Clear the event-pending flag when an event is already active/disabled
     // (busy manager, bit9 latching, or bit7 set); otherwise forward the request.
-    if (func_80085840__Q22cf13CfGameManagerFv() != 0 ||
+    if (isSceneReadyForInput__Q22cf13CfGameManagerFv() != 0 ||
         (lbl_eu_80663E24 & 0x400000) ||
         (lbl_eu_80663E28 & 0x1000000)) {
         lbl_eu_80663E24 &= ~0x2000;
@@ -217,7 +217,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
 
     if (found != 0) {
         func_80061A80((u32)self, 0xe, 1, 1, 0, 0);
-        func_80081D8C__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(found));
+        assignCameraTarget__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(found));
     }
     if (lbl_eu_80663E24 & 0x80000) {
         // Mark all players as needing a full status refresh (bit 28 at +0x68).
@@ -232,7 +232,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
 }
 
 int func_8018FC78(void* p0, void* p1, cf::CfGameManager* gm, u32* p3) {
-    func_80080F40__Q22cf13CfGameManagerFv(gm, *p3, 0);
+    lookupResourceByKeys__Q22cf13CfGameManagerFv(gm, *p3, 0);
     return 0;
 }
 
@@ -329,7 +329,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     func_800628C4(0x35300001, 5);
     func_80061870((u32)self, 6, 0xf, 0, 0, 0);
     func_80061A80((u32)self, 0xf, 0, 0, 0, 0);
-    func_8007FE18__Q22cf13CfGameManagerFv(1);
+    stubEmptyC__Q22cf13CfGameManagerFv(1);
     return 0;
 }
 
@@ -410,12 +410,12 @@ unsigned long func_80190284() {
 }
 
 // Menu-open request dispatcher: forward cmd 0x12 to the task queue unless the
-// manager is locked (sentinel id -1 at +0x88, or busy per func_80085838), in
+// manager is locked (sentinel id -1 at +0x88, or busy per resetCameraManager), in
 // which case abort: clear the pending-event bit, reset the scene state and
 // disable the menu input path.
 int func_80190298(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
     cf::CfGameManager* mgr = self->manager;
-    if (mgr->field_0x88 != -1 && func_80085838__Q22cf13CfGameManagerFv() == 0) {
+    if (mgr->field_0x88 != -1 && resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         func_80061A80((u32)self, 0x12, p1, p2, p3, p4);
         return 1;
     }
@@ -456,7 +456,7 @@ int func_80190414(void* p0, void* p1) {
 }
 
 int func_80190464(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
-    if (func_80085838__Q22cf13CfGameManagerFv() == 0) {
+    if (resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         func_80061A80(p0, 0x18, p1, p2, p3, p4);
         return 1;
     }
@@ -484,20 +484,20 @@ int func_801904D0(void* self) {
         // (MWCC would otherwise CSE it with the test above).
         lbl_eu_80663E28 = *(volatile u32*)&lbl_eu_80663E28 & ~0x2;
     }
-    func_80085878__Q22cf13CfGameManagerFv();
+    cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
 
 // Party-menu event dispatcher: cmd 0 resets every player's tint flag and
 // closes the party gauges; cmd 0x19 re-triggers the first-player colour flash
-// via func_8008402C; any other cmd forwards (cmd-1) to the task queue.
+// via triggerPlayerEffects; any other cmd forwards (cmd-1) to the task queue.
 // Retail keeps the (redundant-looking) per-player cmd==0 re-test inside the
 // loop, so it is written out explicitly here.
 int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
     int result = 0;
     if (cmd != 0) {
         if (cmd == 0x19) {
-            func_8008402C__Q22cf13CfGameManagerFv(lbl_eu_80663E48[1],
+            triggerPlayerEffects__Q22cf13CfGameManagerFv(lbl_eu_80663E48[1],
                                                   lbl_eu_80663E4C[1],
                                                   lbl_eu_80667A88);
         }
@@ -567,7 +567,7 @@ int func_801907E4() {
         v.field_0x8 = f;
         v.field_0xC = f;
         func_8008566C__Q22cf13CfGameManagerFv(0x1e, &v, 0);
-        func_80085878__Q22cf13CfGameManagerFv();
+        cleanupMapEffects__Q22cf13CfGameManagerFv();
     }
     func_801AAC78(0);
     return 0;
@@ -600,7 +600,7 @@ int func_eu_80191F08(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 // publishes the command byte and ends the pump.
 int func_80190840(MenuCmdRingView* buf, u32* outFlag) {
     *outFlag = 0;
-    if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::func_800829B8()) {
+    if (!(lbl_eu_80663E28 & 0x10000) && cf::CfGameManager::isSceneLoading()) {
         return buf->field_404 == 0;
     }
     MenuCmdHost* host = reinterpret_cast<MenuCmdHost*>(buf);
@@ -651,11 +651,11 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x802) == 0) return 0;
     if (probeGate90940(actor, 1) == 0) return 0;
     cf::CfGameManager::getInstance();
-    if (!func_8006EF04__Fi(0x100)) return 0;
+    if (!isGlobalCamFlagSet__Fi(0x100)) return 0;
     if (func_8009CF8C(0x335f) != 0) return 0;
     if (func_8017FD44() != 0) return 0;
-    if (!func_8006EF04__Fi(0x400)) return 0;
-    if (!func_8006EF04__Fi(0x1000)) return 0;
+    if (!isGlobalCamFlagSet__Fi(0x400)) return 0;
+    if (!isGlobalCamFlagSet__Fi(0x1000)) return 0;
     if (probeGate90940(actor, 0x1f) == 0) return 0;
     if (probeGate90940(actor, 0x1000) == 0) return 0;
     if (probeGate90940(actor, 0x806) == 0) return 0;
@@ -883,8 +883,8 @@ CMenuPTState::~CMenuPTState() {}
 // persistent fields (region layout per CMenuPTWinCopyView), then register
 // the IScnRender sub-object as a render callback at priority 0xd.
 void CMenuPTState::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(true);
-    func_8007FE2C__Q22cf13CfGameManagerFv();
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
+    processEffectList__Q22cf13CfGameManagerFv();
     {
         // Retail builds both temporaries via the unmangled slice ctor symbols,
         // so they are constructed into raw storage under C linkage. The view
@@ -1437,8 +1437,8 @@ void CMenuPTState::Term() {
     func_801C3D9C((u8*)&field_0x60);
     func_801FA254((u8*)&field_0x80);
     lbl_eu_80664300 = 0;
-    func_8007FECC__Q22cf13CfGameManagerFv();
-    func_8008294C__Q22cf13CfGameManagerFv(false);
+    processEventList__Q22cf13CfGameManagerFv();
+    setPresentationFlag__Q22cf13CfGameManagerFv(false);
     func_80135550();
 }
 
@@ -1455,7 +1455,7 @@ void CMenuPTState::Move() {
     CTaskGame::getInstance();
     // OR-combined guard: retail emits bne-exit for the first disjunct and a
     // beq-body / b-exit pair for the second (same shape as cbRenderBefore).
-    if (CTaskGame::func_800426F0() != 0 || (lbl_eu_80663E28 & 0x200000) != 0) {
+    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
     {
@@ -1465,7 +1465,7 @@ void CMenuPTState::Move() {
                     cf::CfGameManager::getCurrentPad());
                 int accept;
                 // Retail extracts single bits via rotate-left forms.
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     accept = (pad->buttons >> 23) & 1;
                 } else {
                     accept = (pad->buttons >> 10) & 1;
@@ -1515,7 +1515,7 @@ void CMenuPTState::cbRenderBefore() {
     // OR-combined guard: MWCC emits the retail beq-body/b-exit pair for the
     // second disjunct (MWCC_CASES "OR-combined guard" pattern).
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
+    if (CTaskGame::isFlag01Set() != 0 || (lbl_eu_80663E28 & (1u << 21)) != 0) {
         return;
     }
     if (func_8013BE50() == 0) {

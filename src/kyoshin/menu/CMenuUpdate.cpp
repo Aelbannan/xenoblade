@@ -176,7 +176,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
     // func_80136F08 argument setup instead of recomputing it here.
-    u8* font = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
+    u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
     func_8013676C((void*)getField10((u8*)obj->mLayout), (void*)result2);
 
@@ -224,7 +224,7 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     void* taskGame = getInstance__9CTaskGameFv();
     // Short-circuit OR gate: first test -> bne exit, res flag -> beq continue /
     // b exit (CMenuShopBuy::Move shape).
-    if (func_800426F0__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
+    if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (func_8013BE50() == 0) return;
     if (func_80143F78(self)) return;
@@ -244,7 +244,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     void* taskGame = getInstance__9CTaskGameFv();
     // Short-circuit OR gate (CMenuShopBuy::cbRenderBefore shape).
-    if (func_800426F0__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
+    if (isFlag01Set__9CTaskGameFv(taskGame) || testResInfoFlag(0x200000))
         return;
     if (func_8013BE50() == 0) return;
     if (func_80143F78(self)) return;
@@ -331,7 +331,7 @@ extern "C" void func_80142CA0(void* self, void* name, void* fmtArg) {
 
     u8 buf[0x24];
     // FixStr<32> default-init resolves to the retail CfGameManager-scope helper
-    reinterpret_cast<cf::CfGameManager*>(buf)->func_8007D794();
+    reinterpret_cast<cf::CfGameManager*>(buf)->clearTempTextBuffer();
     reinterpret_cast<ml::FixStr<32>*>(buf)->format(
         (const char*)((u32)lbl_eu_805013C8 + 0x69), fmtArg);
     void* str = noop_80142D5C(buf);
@@ -356,7 +356,7 @@ extern "C" __declspec(noinline) void func_80142D60(void* self) {
     // Shared icon texture: message id picked by controller type.
     char* icon = func_80138F78(
         func_8013606C((const char*)lbl_eu_805013C8 + 0x82,
-                      cf::CfGameManager::func_80086F9C(-1) ? (const char*)lbl_eu_805013C8 + 0x70
+                      cf::CfGameManager::isClassicController(-1) ? (const char*)lbl_eu_805013C8 + 0x70
                                                            : (const char*)lbl_eu_805013C8 + 0x79,
                       0x2a));
     void* tex = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
@@ -782,14 +782,14 @@ extern "C" __declspec(noinline) void func_80143ADC(CMenuUpdate* obj, int type, u
 // func_80143F78 - pause/transition guard; decrements a fade timer in 0x12C
 extern "C" int func_80143F78(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    if (!code80135FDC_getByte_64059() && !func_8006EF04__Fi(0x1000000) &&
-        func_8006EF04__Fi((int)0xBFE40000)) {
+    if (!code80135FDC_getByte_64059() && !isGlobalCamFlagSet__Fi(0x1000000) &&
+        isGlobalCamFlagSet__Fi((int)0xBFE40000)) {
         return 1;
     }
     if (func_8029A658()) obj->mFloat12C = lbl_eu_806673C0;
-    if (func_800829B8__Q22cf13CfGameManagerFv()) return 1;
-    if (func_8008585C__Q22cf13CfGameManagerFv()) return 1;
-    if (!func_80085840__Q22cf13CfGameManagerFv()) return 1;
+    if (isSceneLoading__Q22cf13CfGameManagerFv()) return 1;
+    if (isSceneActive__Q22cf13CfGameManagerFv()) return 1;
+    if (!isSceneReadyForInput__Q22cf13CfGameManagerFv()) return 1;
     if (func_801BCF38()) return 1;
     if (func_8029EE58()) return 1;
     // Clamp: subtract the fade step into the field, then clamp.
@@ -813,7 +813,7 @@ extern "C" __declspec(noinline) void func_80144070(void* self) {
 extern "C" __declspec(noinline) void func_801440A8(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
 
-    if (func_8006EF04__Fi(0x1000000) && obj->mState != 4 && obj->mState != 5) {
+    if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mState != 4 && obj->mState != 5) {
         // Active-window maintenance: compact the table around the active
         // entries (types 4/5) and re-file the saved header block after them.
         obj->mMode = 2;
@@ -913,7 +913,7 @@ extern "C" __declspec(noinline) f32 func_801443E4() {
 // compacts the remaining non-empty entries toward the front.
 extern "C" __declspec(noinline) void func_80144410(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    if (func_8006EF04__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
+    if (isGlobalCamFlagSet__Fi(0x1000000) && obj->mEntries[0].field_0 != 4 &&
         obj->mEntries[0].field_0 != 5)
         return;
     if (func_80135898() || func_80122450() || func_80226B94())

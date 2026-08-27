@@ -104,7 +104,7 @@ extern "C" void* __dt__17CMenuItemExchangeFv(void* self, int flags) {
 // the owning scene.
 // ---------------------------------------------------------------------------
 void CMenuItemExchange::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // Background layout widget: temp CBgTex -> copy -> destroy, then load.
     u8 tmpBgRaw[0x20];
@@ -308,7 +308,7 @@ void CMenuItemExchange::Term() {
     func_801ED618(&mItemBoxLine[0]);
     func_801CAE9C(&mItemBoxGrid);
     lbl_eu_80664428 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 // Phase handlers used by Move()'s state dispatch (defined below).
@@ -332,7 +332,7 @@ typedef void (*CMenuExchangePhaseFn)(CMenuItemExchange*);
  */
 void CMenuItemExchange::Move() {
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() == 0) {
+    if (isFlag01Set__9CTaskGameFv() == 0) {
         if ((lbl_eu_80663E28 & 0x200000) == 0) {
             goto body;
         }
@@ -366,7 +366,7 @@ body:
  */
 void CMenuItemExchange::cbRenderBefore() {
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -492,7 +492,7 @@ __declspec(noinline) void func_801BF464(CMenuItemExchange* self) {
     int cancel = (pad->mTurboFlags & 0x2001) != 0;
     int decide = (pad->mTurboFlags & 0x4002) != 0;
     int up, down, leftTrigger, yHeld;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         up = (pad->mPressedFlags & 0x00400000) != 0;
         down = (pad->mPressedFlags & 0x00800000) != 0;
         leftTrigger = (pad->mPressedFlags & 0x01000000) != 0;

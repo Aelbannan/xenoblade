@@ -138,10 +138,10 @@ namespace mtl {
         static u32 getMaxAllocSize(ALLOC_HANDLE handle);
         static void* getMaxAllocData(ALLOC_HANDLE handle);
         static f32 getPercentAlloc(ALLOC_HANDLE handle);
-        static void func_804348A4(ALLOC_HANDLE handle, u8 val);
+        static void setRegionUnk6C(ALLOC_HANDLE handle, u8 val);
 
         static u16 calculateCrc(const void* data, u32 len);
-        static void func_80434A4C(bool value);
+        static void setMemInitFlag(bool value);
 
         static bool isOptimalAlloc();
         static void setOptimalAlloc(bool enable);

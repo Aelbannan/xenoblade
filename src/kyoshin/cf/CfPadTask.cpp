@@ -31,7 +31,7 @@ extern "C" {
     // here instead of including CTaskGame.hpp: that header declares a minimal
     // CLibHbm which collides with the full CLibHbm.hpp already pulled in by
     // CfPadTask.hpp -> monolib/lib.hpp.
-    s32 func_8004368C__9CTaskGameFv();
+    s32 isMoveFuncActive__9CTaskGameFv();
 }
 
 // The retail CfPadTask.o split object carries NO data sections — the class
@@ -106,7 +106,7 @@ void CfPadTask::copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag){
     }
 
 //Set the input disable timer (all inputs ignored until timer expires)
-void CfPadTask::func_801C1B94(float f1){
+void CfPadTask::setInputDisableTime(float f1){
     if(f1 < lbl_eu_8066A208) sInputDisableTimer = 0;
     else if(f1 > sInputDisableTimer) sInputDisableTimer = f1;
 }
@@ -191,9 +191,9 @@ void CfPadTask::func_801C1BD8(float f1) {
         if(lbl_eu_80663E28 & (1u << 21)) return;
 
         int result = checkForControllerError(update());
-        if(result != ERROR_NONE && !CLibHbm::isHbmControlInitialized() && !CWorkSystem::isOff() && !func_8004368C__9CTaskGameFv()
+        if(result != ERROR_NONE && !CLibHbm::isHbmControlInitialized() && !CWorkSystem::isOff() && !isMoveFuncActive__9CTaskGameFv()
         && mFrameCounter > SECONDS_TO_FRAMES(2)){
-            if(result == ERROR_WIIMOTE_DISCONNECTED && !CGame::func_8003933C()) return;
+            if(result == ERROR_WIIMOTE_DISCONNECTED && !CGame::getGameState()) return;
 
             mErrorFrameCount++;
             

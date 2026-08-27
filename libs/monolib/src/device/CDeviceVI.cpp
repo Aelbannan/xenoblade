@@ -279,7 +279,7 @@ bool CDeviceVI::checkFlag0(){
     return spInstance->checkFlag(VI_FLAG_0);
 }
 
-void CDeviceVI::func_804483DC(u32 gamma){
+void CDeviceVI::setGammaValue(u32 gamma){
     if(spInstance != nullptr){
         u32 val = gamma;
         if(val >= VI_GM_3_0) val = VI_GM_2_9;
@@ -299,7 +299,7 @@ float CDeviceVI::getSecPerFrame(){
     return spInstance->mSecPerFrame;
 }
 
-u32 CDeviceVI::func_80448420(){
+u32 CDeviceVI::getRetraceCount(){
     return spInstance->unk2AC;
 }
 

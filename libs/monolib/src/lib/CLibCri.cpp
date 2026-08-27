@@ -117,40 +117,40 @@ extern "C" {
 extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8]; // nw4r ScnGroup vtable (defined below)
 
 // Empty error callback (free function)
-extern "C" void func_80459C70() {}
+extern "C" void handleCriError() {}
 
 // Forwarding stubs to CLibCriStreamingPlay
 extern "C" {
-    void func_8045B970__20CLibCriStreamingPlayFv();
-    void func_8045BAB0__20CLibCriStreamingPlayFv();
-    void func_8045BBA0__20CLibCriStreamingPlayFv();
-    void func_8045BC4C__20CLibCriStreamingPlayFv();
-    void func_8045CA4C__20CLibCriStreamingPlayFv();
-    void func_8045C67C__20CLibCriStreamingPlayFv();
-    void func_8045C700__20CLibCriStreamingPlayFv();
-    void func_8045C8B0__20CLibCriStreamingPlayFv();
-    void func_8045BE48__20CLibCriStreamingPlayFv();
-    void func_8045CCFC__20CLibCriStreamingPlayFv();
-    void func_8045CFDC__20CLibCriStreamingPlayFv();
-    void func_8045D03C__20CLibCriStreamingPlayFv();
+    void isStreamActive__20CLibCriStreamingPlayFv();
+    void stopStream__20CLibCriStreamingPlayFv();
+    void stopAllStreams__20CLibCriStreamingPlayFv();
+    void setStreamPause__20CLibCriStreamingPlayFv();
+    void fadeStreamVolume__20CLibCriStreamingPlayFv();
+    void getStreamVolume__20CLibCriStreamingPlayFv();
+    void setStreamVolume__20CLibCriStreamingPlayFv();
+    void setStreamVolumeScale__20CLibCriStreamingPlayFv();
+    void getStreamPosition__20CLibCriStreamingPlayFv();
+    void setStreamPanVolume__20CLibCriStreamingPlayFv();
+    void calcStreamBufferSize__20CLibCriStreamingPlayFv();
+    void isStreamPaused__20CLibCriStreamingPlayFv();
 }
 
 // Forwarding stubs to CLibCriMoviePlay
 extern "C" {
-    void func_8045A260__16CLibCriMoviePlayFv();
-    void func_8045A48C__16CLibCriMoviePlayFv();
-    void func_8045B310__16CLibCriMoviePlayFv(int, int);
-    void func_8045A708__16CLibCriMoviePlayFv();
-    void func_8045A7F8__16CLibCriMoviePlayFv();
-    void func_8045A644__16CLibCriMoviePlayFv();
-    void func_8045A8C8__16CLibCriMoviePlayFv();
-    void func_8045B1E0__16CLibCriMoviePlayFv();
+    void startMovie__16CLibCriMoviePlayFv();
+    void stopMovie__16CLibCriMoviePlayFv();
+    void setMoviePause__16CLibCriMoviePlayFv(int, int);
+    void clearMovieGlobalPause__16CLibCriMoviePlayFv();
+    void isMovieGlobalPaused__16CLibCriMoviePlayFv();
+    void isMoviePlaying__16CLibCriMoviePlayFv();
+    void renderMovie__16CLibCriMoviePlayFv();
+    void getMovieWorkSize__16CLibCriMoviePlayFv();
 }
 
 // ============================================================================
 // CLibCri AX callback handler
 // ============================================================================
-void CLibCri::func_80459830() {
+void CLibCri::handleAxCallback() {
     MIXUpdateSettings();
     if (lbl_eu_806656DC != nullptr) {
         lbl_eu_806656DC();
@@ -226,7 +226,7 @@ extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
 // ============================================================================
 // File playback dispatch function
 // ============================================================================
-int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle) {
+int CLibCri::dispatchFilePlayback(const char* filename, u32 allocHandle, int fileHandle) {
     if (allocHandle == (u32)-1) {
         allocHandle = mtl::MemManager::getHandleMEM2();
     }
@@ -250,45 +250,45 @@ int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle
 // ============================================================================
 // Forwarding stubs to CLibCriStreamingPlay
 // ============================================================================
-void CLibCri::func_80459A78() { func_8045B970__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A7C() { func_8045BAB0__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A80() { func_8045BBA0__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A84() { func_8045BC4C__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A88() { func_8045CA4C__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A8C() { func_8045C67C__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A90() { func_8045C700__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A94() { func_8045C8B0__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A98() { func_8045BE48__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459A9C() { func_8045CCFC__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459AA0() { func_8045CFDC__20CLibCriStreamingPlayFv(); }
-void CLibCri::func_80459AA4() { func_8045D03C__20CLibCriStreamingPlayFv(); }
+void CLibCri::isStreamActive() { isStreamActive__20CLibCriStreamingPlayFv(); }
+void CLibCri::stopStream() { stopStream__20CLibCriStreamingPlayFv(); }
+void CLibCri::stopAllStreams() { stopAllStreams__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamPause() { setStreamPause__20CLibCriStreamingPlayFv(); }
+void CLibCri::fadeStreamVolume() { fadeStreamVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::getStreamVolume() { getStreamVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamVolume() { setStreamVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamVolumeScale() { setStreamVolumeScale__20CLibCriStreamingPlayFv(); }
+void CLibCri::getStreamPosition() { getStreamPosition__20CLibCriStreamingPlayFv(); }
+void CLibCri::setStreamPanVolume() { setStreamPanVolume__20CLibCriStreamingPlayFv(); }
+void CLibCri::calcStreamBufferSize() { calcStreamBufferSize__20CLibCriStreamingPlayFv(); }
+void CLibCri::isStreamPaused() { isStreamPaused__20CLibCriStreamingPlayFv(); }
 
 // ============================================================================
 // Forwarding stubs to CLibCriMoviePlay
 // ============================================================================
-void CLibCri::func_80459AA8() { func_8045A260__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459AAC() { func_8045A48C__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459AC0() { func_8045A708__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459AC4() { func_8045A7F8__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459AC8() { func_8045A644__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459ACC() { func_8045A8C8__16CLibCriMoviePlayFv(); }
-void CLibCri::func_80459AD0() { func_8045B1E0__16CLibCriMoviePlayFv(); }
+void CLibCri::startMovie() { startMovie__16CLibCriMoviePlayFv(); }
+void CLibCri::stopMovie() { stopMovie__16CLibCriMoviePlayFv(); }
+void CLibCri::clearMoviePause() { clearMovieGlobalPause__16CLibCriMoviePlayFv(); }
+void CLibCri::isMovieGlobalPaused() { isMovieGlobalPaused__16CLibCriMoviePlayFv(); }
+void CLibCri::isMoviePlaying() { isMoviePlaying__16CLibCriMoviePlayFv(); }
+void CLibCri::renderMovie() { renderMovie__16CLibCriMoviePlayFv(); }
+void CLibCri::getMovieWorkSize() { getMovieWorkSize__16CLibCriMoviePlayFv(); }
 
 // Parameter swap adapter (free-function form: the retail body swaps the two
 // incoming register args before tail-calling, which a no-arg member cannot
 // spell). Incoming r3=a, r4=b are forwarded as f(b, a).
-extern "C" void func_80459AB0__7CLibCriFv(int a, int b) {
-    func_8045B310__16CLibCriMoviePlayFv(b, a);
+extern "C" void setMoviePause__7CLibCriFv(int a, int b) {
+    setMoviePause__16CLibCriMoviePlayFv(b, a);
 }
 
 // Empty virtual override (extern "C" free-function form: no auto vtable).
 extern "C" void wkUpdate__7CLibCriFv(CLibCri* self) { (void)self; }
 
 // CRI main execution (free-function form: the retail vtable references the
-// flat symbol func_80459AD8__7CLibCriFv directly). auto_inline off keeps
+// flat symbol execCriMain__7CLibCriFv directly). auto_inline off keeps
 // @452@viBeginFrame's call opaque instead of folding the thunk away.
 #pragma auto_inline off
-extern "C" void func_80459AD8__7CLibCriFv(CLibCri* self) {
+extern "C" void execCriMain__7CLibCriFv(CLibCri* self) {
     (void)self;
     ADXM_ExecMain();
 }
@@ -307,14 +307,14 @@ extern "C" bool wkStandbyLogin__7CLibCriFv(CLibCri* self) {
     // is not cold-start ready, falling into a shared `li r3, 0` exit.
     bool result;
     if (CDevice::isColdStartReady()) {
-        ADXM_SetCbErr((void (*)())func_80459C70, (void*)self);
+        ADXM_SetCbErr((void (*)())handleCriError, (void*)self);
         ADXWII_SetupDvdFs(0);
         ADXM_SetupFramework(2, 0);
         ADXT_SetDefSvrFreq(30);
         AIInit(nullptr);
         AXInit();
         MIXInit();
-        lbl_eu_806656DC = AXRegisterCallback((void (*)(void))&CLibCri::func_80459830);
+        lbl_eu_806656DC = AXRegisterCallback((void (*)(void))&CLibCri::handleAxCallback);
         ADXT_Init();
 
         // Create CLibCriMoviePlay (0x668 bytes)
@@ -369,16 +369,16 @@ return_false:
 
 // ============================================================================
 // CDeviceVICb virtual override: retail keeps ONLY the @452@ thunk (spelled
-// as a raw vtable word below) + the real body func_80459AD8 (ADXM_ExecMain).
+// as a raw vtable word below) + the real body execCriMain (ADXM_ExecMain).
 // ============================================================================
 
 // ============================================================================
-// CDeviceVICb virtual override (free-function form, see func_80459AD8 note).
+// CDeviceVICb virtual override (free-function form, see execCriMain note).
 // ============================================================================
 #pragma auto_inline off
-extern "C" void func_80459C74__7CLibCriFv(CLibCri* self) {
+extern "C" void onErrorCallback__7CLibCriFv(CLibCri* self) {
     (void)self;
-    func_8045BBA0__20CLibCriStreamingPlayFv();
+    stopAllStreams__20CLibCriStreamingPlayFv();
 }
 #pragma auto_inline on
 
@@ -389,13 +389,13 @@ extern "C" void func_80459C74__7CLibCriFv(CLibCri* self) {
 // renamed onto the retail names by UNIT_RULES exact_renames (§17.6).
 // ============================================================================
 extern "C" void thunk452_viBeginFrame(CLibCri* self) {
-    func_80459AD8__7CLibCriFv((CLibCri*)((char*)self - 0x1C4));
+    execCriMain__7CLibCriFv((CLibCri*)((char*)self - 0x1C4));
 }
 extern "C" void thunk452_dt(CLibCri* self, int flag) {
     __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C4), flag);
 }
 extern "C" void thunk456_errorWiiCB(CLibCri* self) {
-    func_80459C74__7CLibCriFv((CLibCri*)((char*)self - 0x1C8));
+    onErrorCallback__7CLibCriFv((CLibCri*)((char*)self - 0x1C8));
 }
 extern "C" void thunk456_dt(CLibCri* self, int flag) {
     __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C8), flag);
@@ -403,7 +403,7 @@ extern "C" void thunk456_dt(CLibCri* self, int flag) {
 
 // ============================================================================
 // IErrorWii virtual override: retail keeps ONLY the @456@ thunk (raw vtable
-// word below) + func_80459C74 (the real body).
+// word below) + onErrorCallback (the real body).
 // ============================================================================
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
@@ -476,8 +476,8 @@ extern "C" u32 lbl_eu_8056CE58[52] = {
     0xFFFFFE38,
     (u32)&thunk456_dt,
     (u32)&thunk456_errorWiiCB,
-    (u32)&func_80459AD8__7CLibCriFv,
-    (u32)&func_80459C74__7CLibCriFv,
+    (u32)&execCriMain__7CLibCriFv,
+    (u32)&onErrorCallback__7CLibCriFv,
 };
 extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8] = {
     (u32)&lbl_eu_80663618, 0x000001C4,
@@ -487,7 +487,7 @@ extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8] = {
 };
 
 // [.rodata] 0x80522FD8-0x80523008 (48B): ".ahx" / "CLibCriMoviePlay" /
-// "CLibCriStreamingPlay" (referenced by func_8045997C and wkStandbyLogin).
+// "CLibCriStreamingPlay" (referenced by dispatchFilePlayback and wkStandbyLogin).
 // Declared `extern const char[]` in CLibCri.hpp, so defined as a char array.
 extern "C" const char lbl_eu_80522FD8[48] = {
     0x2E,0x61,0x68,0x78,0x00,

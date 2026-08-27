@@ -19,7 +19,7 @@ extern "C" {
     void __ct__cf_CVS_THREAD(void* self);
 }
 
-// Circular voice-node list returned by the voice manager func_800B6BA4().
+// Circular voice-node list returned by the voice manager getListB28().
 // Each node's field_8 points at the CCharVoice embedded in the handle
 // (i.e. handle + 0x3E9C). Same layout family as CVS_THREAD_BATTLE_END_SP.hpp.
 struct CVoiceListNode {
@@ -33,8 +33,8 @@ struct CVoiceManager {
     CVoiceListNode* field_4;    // 0x04: circular-list sentinel
 };
 
-// C++-linkage voice-manager query (retail mangled name func_800B6BA4__Fv).
-CVoiceManager* func_800B6BA4();
+// C++-linkage voice-manager query (retail mangled name getListB28__Fv).
+CVoiceManager* getListB28();
 
 // Phantom vtable view over a CVoiceHandle vtable (vtable pointer at +0x00) so
 // the idle-check slot at byte offset 0x2BC (index 175) can be dispatched as a

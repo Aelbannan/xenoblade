@@ -22,11 +22,11 @@ public:
     static void setFlag0(bool state);
     static bool checkFlag0();
 
-    static void func_804483DC(u32 gamma);
+    static void setGammaValue(u32 gamma);
     static GXRenderModeObj* getRenderModeObj();
     static u32 getTargetFramerate();
     static float getSecPerFrame();
-    static u32 func_80448420();
+    static u32 getRetraceCount();
     static u32 getVisPerFrame();
     static bool entryCb(CDeviceVICb* entry);
     static bool removeCb(CDeviceVICb* entry);

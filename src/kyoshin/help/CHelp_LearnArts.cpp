@@ -6,7 +6,7 @@
 namespace cf {
 
 // Trivial flag reset; kept before func_802B8398 to mirror retail TU order.
-void CHelp_LearnArts::func_802B84E0() {
+void CHelp_LearnArts::isHelpAvailable() {
     mLearnArtsFlag = 0;
 }
 
@@ -22,7 +22,7 @@ bool CHelp_LearnArts::func_802B8398() {
         u8 b[4]; // byte view for the low-byte art-id extraction
     } col;
 
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::isSceneLoading()) {
         return false;
     }
     if (lbl_eu_80664A10->mLearnArtsFlag == 0) {

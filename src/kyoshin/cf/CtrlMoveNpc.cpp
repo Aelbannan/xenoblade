@@ -180,9 +180,9 @@ extern int (CCtrlMoveNpc::*const lbl_eu_80532DA8)();
 // retail unmangled symbol name is emitted.
 u32 func_8003B41C(void* bdat);
 u32 func_8003B1EC(void* bdat);
-void func_80462D04__8CTaskLODFv(s8 v);
-void func_80462D5C__8CTaskLODFv(u8 v);
-void* func_804BC9EC__Fv(void);
+void activateLOD__8CTaskLODFv(s8 v);
+void deactivateLOD__8CTaskLODFv(u8 v);
+void* getScnHandle__Fv(void);
 void func_804BCC30(void*, s8 v);
 void func_804BCC3C(void*, u8 v);
 void func_80089990(CCtrlMoveNpc* self);
@@ -199,11 +199,11 @@ void func_80093618(CNpcBaseData* data, f32 f);
 int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
-// cf::CfGameManager::func_80082354 is declared non-static void in
+// cf::CfGameManager::getResourceFromTable is declared non-static void in
 // CfGameManager.hpp, but the retail call site passes no instance and uses the
 // return value, so the header's declaration is wrong here. Declare the mangled
 // symbol directly.
-u16 func_80082354__Q22cf13CfGameManagerFv();
+u16 getResourceFromTable__Q22cf13CfGameManagerFv();
 
 } // C-linkage import block
 
@@ -329,7 +329,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
         return 0;
     }
 
-    u16 range0 = (u16)cf::CfGameManager::func_800822F4();
+    u16 range0 = (u16)cf::CfGameManager::getQueuedFileEventCount();
     u32 v20 = getBdatStringColumnValue(bdat, p4, idx);
     u32 v1c = getBdatStringColumnValue(bdat, p5, idx);
     u32 v18 = getBdatStringColumnValue(bdat, p6, idx);
@@ -343,7 +343,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
     u32 v10 = getBdatStringColumnValue(bdat, p1, idx);
     int flag2 = 1;
     if (*(u16*)&v10 != 0) {
-        u16 range1 = func_80082354__Q22cf13CfGameManagerFv();
+        u16 range1 = getResourceFromTable__Q22cf13CfGameManagerFv();
         u32 v0c = getBdatStringColumnValue(bdat, p2, idx);
         u32 v08 = getBdatStringColumnValue(bdat, p3, idx);
         if ((u32)*(u8*)&v0c <= (u32)range1 && (u32)range1 <= (u32)*(u8*)&v08)
@@ -366,7 +366,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 void func_8019FD2C() {
     func_8003AA34();
     void* bdat = (void*)lbl_eu_806640B4;
-    cf::CfGameManager::func_80083298();
+    cf::CfGameManager::getGameSubManager();
 
     u32* bitmap;
     const char* str;
@@ -389,8 +389,8 @@ void func_8019FD2C() {
             u32 bit = 1u << (idx & 31);
             if (w & bit) {
                 bitmap[word] = w & ~bit;
-                func_80462D04__8CTaskLODFv(v);
-                func_804BCC30(func_804BC9EC__Fv(), v);
+                activateLOD__8CTaskLODFv(v);
+                func_804BCC30(getScnHandle__Fv(), v);
             }
         } else {
             s32 word = idx >> 5;
@@ -398,8 +398,8 @@ void func_8019FD2C() {
             u32 bit = 1u << (idx & 31);
             if (!(w & bit)) {
                 bitmap[word] = w | bit;
-                func_80462D5C__8CTaskLODFv(v);
-                func_804BCC3C(func_804BC9EC__Fv(), v);
+                deactivateLOD__8CTaskLODFv(v);
+                func_804BCC3C(getScnHandle__Fv(), v);
             }
         }
     }

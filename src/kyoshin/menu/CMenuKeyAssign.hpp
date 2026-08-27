@@ -99,7 +99,7 @@ union F64Conv {
     f64 d;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10: vtable
+// Mirror of the font object returned by CDeviceFont::getFontInfo: vtable
 // slot 0x24 (index 9, no args) yields the u32 bound into the layout's font
 // pane via func_8013676C. Never instantiated, so no vtable is emitted; a
 // genuine virtual call makes MWCC emit retail's r12 dispatch sequence
@@ -181,7 +181,7 @@ struct CListLink {
     CListLink* next;                   // +0x00
 };
 
-// func_800B708C result view: +0x64 flags word, +0x91 type byte.
+// findObjectById result view: +0x64 flags word, +0x91 type byte.
 struct CActorTargetView {
     u8 _00[0x64];
     u32 mFlags64;                      // +0x64
@@ -219,8 +219,8 @@ void* func_8016FE34(void* source);
 bool CMenuArtsSelect_isCreated();
 }
 
-// C++-mangled import (retail symbol func_800B708C__Fi): actor id -> target.
-void* func_800B708C(int id);
+// C++-mangled import (retail symbol findObjectById__Fi): actor id -> target.
+void* findObjectById(int id);
 
 // Layout build helper - retail emits the mangled nw4r form
 // func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc,

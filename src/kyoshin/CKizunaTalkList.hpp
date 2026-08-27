@@ -128,7 +128,7 @@ extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0(CFileHandle**);
 extern "C" void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_801F35DC(void*);
@@ -136,10 +136,10 @@ extern "C" void func_8045F778(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
 // symbol names so the reloc targets line up).
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

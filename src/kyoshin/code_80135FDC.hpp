@@ -288,14 +288,14 @@ extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);
 
-extern "C" void func_80462D04__8CTaskLODFv(s8);
-extern "C" void func_80462D5C__8CTaskLODFv(u8);
-extern "C" int func_80462E1C__8CTaskLODFv(u8);
-extern "C" void* func_804BC9EC__Fv(void);
+extern "C" void activateLOD__8CTaskLODFv(s8);
+extern "C" void deactivateLOD__8CTaskLODFv(u8);
+extern "C" int getLODData__8CTaskLODFv(u8);
+extern "C" void* getScnHandle__Fv(void);
 extern "C" void func_804BCC30(void*, s8);
 extern "C" void func_804BCC3C(void*, u8);
-extern "C" void func_8047BD8C__17UnkClass_8047BB54Fv(void*, s8);
-extern "C" void func_8047BD94__17UnkClass_8047BB54Fv(void*, u8);
+extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, s8);
+extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);
 extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 

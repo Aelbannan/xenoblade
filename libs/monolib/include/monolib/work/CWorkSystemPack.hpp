@@ -9,10 +9,10 @@ public:
 
     DECL_WORKTHREAD_CREATE(CWorkSystemPack);
 
-    static bool func_804DDFBC(UNKWORD r3);
-    static bool func_804DDDF4(const char* r3, void* r4, u32* r5);
-    static bool func_804DE08C();
-    static bool func_804DE100();
+    static bool isPackLoadIdle(UNKWORD r3);
+    static bool findPackResource(const char* r3, void* r4, u32* r5);
+    static bool arePacksLoaded();
+    static bool areArcsReady();
     static void SavePkhFilenamesArrayPtr(const char* const[]);
     static void SaveStaticArcFilenameStringPtr(const char* const*);
 

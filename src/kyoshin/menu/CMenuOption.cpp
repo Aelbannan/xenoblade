@@ -89,7 +89,7 @@ CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags) {
  * destroyed, then the member's load/readFile helper is invoked. Finally the
  * widget is registered as an IScnRender render callback on its parent scene. */
 void CMenuOption::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
     u8 tempBgTex[0x20];
@@ -217,11 +217,11 @@ void CMenuOption::Term() {
     func_8029C66C((COption*)mOption);
 
     lbl_eu_80664A38 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuOption::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     switch (mState) {
@@ -238,7 +238,7 @@ void CMenuOption::Move() {
 
 void CMenuOption::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;
@@ -316,7 +316,7 @@ void func_8029BC78(CMenuOption* self) {
     int right;
     int pageLeft;
     int pageRight;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         up = (turbo & 0x8004) != 0;

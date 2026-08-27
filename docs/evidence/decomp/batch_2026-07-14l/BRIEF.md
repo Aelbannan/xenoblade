@@ -51,7 +51,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CGame::OnPauseTrigger` (`asm_OnPauseTrigger_CGame.s`)
 - Existing C++ is close: gate `CfGameManager::func_8007E1B4()`; if paused and `unk228==0` do enter path else just `unk228++`
-- Enter: `unk224 = func_801C0014()` (**stfs** — float!), `func_801BFFAC(0,0)` via SDA float `@4566` / `lbl_eu_*` zero, `func_801644BC(1)`, battle vision `getInstance()+0x219C` → `func_801A929C(1)`, `func_80044FBC(1)`
+- Enter: `unk224 = getMasterVolume()` (**stfs** — float!), `setMasterVolume(0,0)` via SDA float `@4566` / `lbl_eu_*` zero, `setAutoSleep(1)`, battle vision `getInstance()+0x219C` → `setEffectScale(1)`, `setEffectEnabled(1)`
 - Unpause when `unk228 <= 1` restore path; always `unk228--` with clamp to 0 via `subic.`
 - Fix type of `unk224` to `f32` if currently wrong; use retail SDA zero float name (see MWCC_REFERENCE §3); do not touch other CGame methods
 

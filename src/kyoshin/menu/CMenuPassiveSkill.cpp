@@ -23,7 +23,7 @@ extern "C" void Move__17CMenuPassiveSkillFv() {}
 // on the owning scene (CMenuCollepedia::Init pattern).
 // ---------------------------------------------------------------------------
 void CMenuPassiveSkill::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the background CBgTex via a temporary ---
     // No cached temp/sub pointers: every access folds to a sp/r31-relative
@@ -215,7 +215,7 @@ void CMenuPassiveSkill::Term() {
     func_8026D920(mPassiveSkill);
 
     lbl_eu_80664878 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +225,7 @@ void CMenuPassiveSkill::Term() {
 // ---------------------------------------------------------------------------
 void CMenuPassiveSkill::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (CTaskGame::isFlag01Set() != 0) goto exit;
     // Branch-over-branch guard keeps MWCC from folding the bit test into a
     // single conditional branch (see cbRenderBefore).
     if (lbl_eu_80663E28 & (1u << 21)) goto exit;
@@ -263,7 +263,7 @@ __declspec(noinline) void CMenuPassiveSkill::cbRenderBefore() {
     // Draw only while the game task is idle and the realtime-event busy bit
     // (bit 21 of the shared mode word) is clear.
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (CTaskGame::isFlag01Set() != 0) goto exit;
     // Branch-over-branch guard: the exit label + return placed BEFORE `body`
     // keeps MWCC from folding the bit test to a single `bne` -- it emits
     // retail's `beq body; b exit` (see CMenuZeal::cbRenderBefore).
@@ -418,7 +418,7 @@ extern "C" void func_802639E4(CMenuPassiveSkill* self) {
 
 // ---------------------------------------------------------------------------
 // Active-state per-frame input dispatch (us-80265ea4). Two mirror chains
-// selected by func_80086F9C (classic vs Wii controller layout):
+// selected by isClassicController (classic vs Wii controller layout):
 // - classic chain: a "special" gate (event byte > 1 and no pending transition
 //   on the +0xB8 object) enables the two turbo shortcuts, then the chain
 //   tests turbo/held flag words top to bottom.
@@ -442,7 +442,7 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
     }
 
     CMenuPassivePadView* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    int isClassic = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+    int isClassic = isClassicController__Q22cf13CfGameManagerFv(-1);
 
     if (isClassic != 0) {
         // -- classic-controller chain --

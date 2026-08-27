@@ -6,7 +6,7 @@
 extern "C" CfGimmickList* func_800B6BC8();
 
 // Resolves a CfGimmickListNode's object slot into the live object. Retail
-// mangled C++ symbol func_800AD860__FPv (single void* parameter), so a plain
+// mangled C++ symbol getEffOwner____FPv (single void* parameter), so a plain
 // C++ declaration (not extern "C") yields the matching linker symbol.
 extern cf::CHelp_EnemyEnableObj* func_800AD860(void* obj);
 
@@ -15,7 +15,7 @@ namespace cf {
 // Active-state gate used by the Help subsystem: returns true only when every
 // currently-spawned object reports its "enable" flag (the sub-object's vtable
 // slot 0x74) as set. Walks the circular CfGimmickList sentinel-headed list.
-bool CHelp_EnemyEnable::func_802B8028() {
+bool CHelp_EnemyEnable::areAllEnemiesEnabled() {
     CfGimmickList* list = func_800B6BC8();
     CfGimmickListNode* cur = list->head->next;
 

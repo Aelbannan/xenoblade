@@ -215,7 +215,7 @@ void CMenuSelectShop::Move() {
     // Single short-circuit OR per gate pair so MWCC emits the retail branch
     // shapes: first test -> bne exit, bit test -> beq continue / b exit
     // (CMenuShopBuy::Move / CSystemWindow::Move shape).
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
@@ -297,7 +297,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
     // Direct C-ABI call: the retail symbol is the no-arg Fv form but the call
     // site still loads r3=-1 (the s16 overload's arg). Calling the C-ABI decl
     // (which takes an int) reproduces the li.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // p declared first so the register allocator gives it r0 (retail
         // lwz r0, 4(r30)); f lands in r5.
         u32 p = pad->mPad.mPressedButtonFlags;
@@ -383,7 +383,7 @@ extern "C" void func_8018A4A0(CMenuSelectShop* self) {
 extern "C" void cbRenderBefore__15CMenuSelectShopFv(void*);
 void CMenuSelectShop::cbRenderBefore() {
     // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;

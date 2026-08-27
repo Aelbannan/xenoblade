@@ -58,7 +58,7 @@ public:
     /* 0x8E */ u16 field_8E;             // effect id triggered while working (func_80208C48)
     /* 0x90 */ u16 field_90;             // effect id (func_80208C48, same as field_8E)
     /* 0x92 */ u16 field_92;
-    /* 0x94 */ u16 field_94;             // resource id passed to func_80082354
+    /* 0x94 */ u16 field_94;             // resource id passed to getResourceFromTable
     /* 0x96 */ u8 field_96;              // lower bound of the respawn-count window
     /* 0x97 */ u8 field_97;              // upper bound of the respawn-count window
     /* 0x98 */ u8 field_98;
@@ -70,7 +70,7 @@ public:
     /* 0xA0 */ u16 field_A0;             // countdown timer vs field_98
 };
 
-// Area manager object (func_800817BC result); +0xB0 back-pointer to the
+// Area manager object (createBattleActor result); +0xB0 back-pointer to the
 // owning gimmick (same shape as CfGimmickObjectMgr in CfGimmickObject.hpp).
 struct CfGimmickItemMgr {
     void** vtable;              // +0x00
@@ -104,8 +104,8 @@ void func_8020974C(unsigned int a, int b);
 int func_80209754(unsigned short flag, void* a, void* b, void* c,
                   unsigned int d);
 void func_80208C48(void* self, void* arg);
-u32 func_800822F4__Q22cf13CfGameManagerFv(void);
-u32 func_80082354__Q22cf13CfGameManagerFv(u32 a);
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 unsigned int func_801587E8(unsigned short id);
 void* func_8003AA34(void);
 void func_80208F34(void* self, void* subobj, void* bdat, void* stack);
@@ -113,17 +113,17 @@ void func_80209020(void* self, void* subobj, void* bdat, void* stack);
 void func_80209288(void* self, void* subobj, void* bdat, void* stack);
 void func_8007B0C8(int idx);
 int func_8020971C(unsigned int a);
-void func_80462F4C__8CTaskLODFv(u8 lod, int mode);
-void func_80462EF4__8CTaskLODFv(u8 lod, float f);
-void func_80462F10__8CTaskLODFv(u8 lod);
-void func_80462F70__8CTaskLODFv(u8 lod, int mode);
-void func_80462ED0__8CTaskLODFv(u8 lod, int mode);
-void func_80462F94__8CTaskLODFv(u8 lod, u16 id);
+void attachLODObject__8CTaskLODFv(u8 lod, int mode);
+void removeLODEntry__8CTaskLODFv(u8 lod, float f);
+void clearLODEntry__8CTaskLODFv(u8 lod);
+void detachLODObject__8CTaskLODFv(u8 lod, int mode);
+void addLODEntry__8CTaskLODFv(u8 lod, int mode);
+void setLODObject__8CTaskLODFv(u8 lod, u16 id);
 }
 
-// Area manager object returned by func_800817BC (forward-declared class).
+// Area manager object returned by createBattleActor (forward-declared class).
 class UnkClass_800817BC;
-extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(
+extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
     unsigned int a, unsigned int b);
 
 // Data symbols (global-scope objects, not mangled by MWCC).

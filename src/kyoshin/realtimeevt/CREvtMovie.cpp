@@ -113,7 +113,7 @@ void func_80294A70(CREvtMovie* self) {
     if (func_8016A378() - func_8016A35C() >= 25) return;  // too early
 
     // Check memory availability
-    u32 criSize = (u32)func_80459AD0__7CLibCriFv();
+    u32 criSize = (u32)getMovieWorkSize__7CLibCriFv();
     if (mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM2()) + 0x200 <= criSize)
         return;
 

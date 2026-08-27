@@ -145,10 +145,10 @@ extern const float lbl_eu_8066A1FC;
 
 // Imports used only by CTaskEnvironment::Move (retail unmangled symbols).
 class CVirtualLightObj2;
-extern "C" int func_8007E1B4__Q22cf13CfGameManagerFv();
-extern "C" void func_80086D98__Q22cf13CfGameManagerFv(unsigned short* outA,
+extern "C" int isManagerInitialized__Q22cf13CfGameManagerFv();
+extern "C" void getControllerValues__Q22cf13CfGameManagerFv(unsigned short* outA,
                                                        unsigned short* outB);
-extern "C" unsigned int func_80086DA8__Q22cf13CfGameManagerFv();
+extern "C" unsigned int getControllerWordA3BC__Q22cf13CfGameManagerFv();
 extern "C" void func_804C123C(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void func_804C1270(CTaskEnvLgtCtrlAccess* ctrl, int flag);
 extern "C" void func_804C1600(CTaskEnvLgtCtrlAccess* ctrl, void* arg);

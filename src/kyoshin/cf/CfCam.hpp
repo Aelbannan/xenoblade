@@ -58,7 +58,7 @@ extern "C" int func_8006EEE4();
 extern "C" int func_801B0F8C();
 extern "C" int func_8017FD44();
 extern "C" int func_802751F8(void* self);
-extern "C" int func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" float lbl_eu_80666358; // .sdata2 constant
 extern "C" int func_8006C6B4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
 extern "C" void func_8006D734(void* self, void* src);     // CfCam sibling (retail 0x8006E18C)
@@ -528,9 +528,9 @@ int CfRes_getD80Flag();                              // scene flag gate (CUIErrM
 void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 void func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
-int func_8007FE24__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
+int getNullPtrC__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
 void func_8006CB0C(void* out, void* self, void* dir, void* sel); // follow-cam vector prep (see below decl)
-int func_8007F91C__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
+int isTimerActive__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
 void func_8049EFF8(void* obj, f32 f, void* a, void* b);  // retail 0x8049EFF8 (pose/scale apply)
 int func_8006D374(void* self);                           // CfCam sibling (retail 0x8006D374)
 cf::CfCamFollow* func_80071CDC();                    // CfCam sibling (retail 0x80072708)
@@ -661,9 +661,9 @@ public:
     virtual void* v025() = 0;
     virtual void* v026() = 0; // slot 26 / +0x70
 };
-void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
+void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
 class UnkClass_800821F8;
-UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
+UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
 // .bss second camera-defaults block (retail 0x80527160): three stride-0x34
 // records plus trailing space, keeping the original 0x100 footprint.
 // Per-camera-id default entry in the 0x80527160 table (stride 0x34).
@@ -755,7 +755,7 @@ __declspec(noinline) int func_8006DCA0(void* obj); // in-TU def (follow-cam arts
 int testResInfoFlag(unsigned int mask);
 int func_800FE68C();
 int func_8006DFA8(int obj);
-int func_800B708C__Fi(int arg);
+int findObjectById__Fi(int arg);
 int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* actor);
 int func_8006DFBC(void* obj);
 float func_800504BC(const f32* a, const f32* b); // vec dot product

@@ -581,7 +581,7 @@ CDevice* CDevice::create(){
 
 void CDevice::createRegions(){
     //TODO: what is the extra 0x80?
-    int deviceRegion1Size = CDeviceGX::getHeapSize() + CDeviceFontLayer::func_80454E78() + 0x80;
+    int deviceRegion1Size = CDeviceGX::getHeapSize() + CDeviceFontLayer::getFontHeapSize() + 0x80;
     deviceRegion1Size += CDeviceVI::usingStaticHandle() ? 0 : CDeviceVI::getXfbBuffersSize();
     // Region2 is 0x40000, bumped to 0x110000 on a JP (language 0) console.
     int deviceRegion2Size = 0x40000;

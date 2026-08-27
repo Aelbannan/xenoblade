@@ -134,7 +134,7 @@ void CMenuBattleCommu::Init() {
     func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField8C,
                   accessor, lbl_eu_805047FC + 0xe0);
 
-    CBattleCommuFontObj* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
+    CBattleCommuFontObj* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 fontHandle = font->getFontHandle();
 
     func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
@@ -171,7 +171,7 @@ void CMenuBattleCommu::Init() {
     // Language/party-dependent tag text: the 4CC key 0x74696D67 ("timg")
     // selects the tag resource; when found it is bound to the pane names at
     // 0x158 / 0x182+0x18f.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         char* res = static_cast<char*>(
             func_801355F4()->GetResource(0x74696D67, lbl_eu_805047FC + 0x13d, 0));
         if (res != 0) {
@@ -241,7 +241,7 @@ void CMenuBattleCommu::cbRenderBefore() {
     CTaskGame::getInstance();
     // OR-combined guard: MWCC emits the second disjunct as the unreduced
     // `beq cont; b exit` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
-    if (CTaskGame::func_800426F0() != 0 ||
+    if (CTaskGame::isFlag01Set() != 0 ||
         (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }

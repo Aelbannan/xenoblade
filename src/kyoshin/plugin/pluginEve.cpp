@@ -11,8 +11,8 @@ extern u32 lbl_eu_80663E28; // secondary mode bitfield (fade/skip status bits)
 
 extern "C" u32 func_8009CF8C(u32 addr); // global data/flag memory reader
 
-extern "C" void func_8007FD00__Q22cf13CfGameManagerFv(int id);
-extern "C" int func_8007FD8C__Q22cf13CfGameManagerFv(u32 mode);
+extern "C" void checkAvailableValue__Q22cf13CfGameManagerFv(int id);
+extern "C" int processBattleQueue__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const float* color,
                                                        u32 param);
 extern "C" void func_80140E00(int a, int b, int c);
@@ -96,12 +96,12 @@ int setFlag(VMThread* pThread) {
 }
 
 // Get the value of award/sequence flag F16 and push it back as the result.
-extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
-extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
+extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
+extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
 int getAwardFlagF16(VMThread* pThread) {
     VMArg arg;
     arg.value.uintVal =
-        func_80082694__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
+        getEventValue40__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
     arg.type = VM_TYPE_INT;
     vmRetValSet(pThread, &arg);
     return 1;
@@ -117,25 +117,25 @@ int addAwardFlagF16(VMThread* pThread) {
     } else {
         add = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    u32 sum = add + func_80082694__Q22cf13CfGameManagerFv(id);
+    u32 sum = add + getEventValue40__Q22cf13CfGameManagerFv(id);
     if (sum > 0xffff)
         sum = 0xffff;
-    func_8008269C__Q22cf13CfGameManagerFv(id, sum);
+    setEventManagerValue__Q22cf13CfGameManagerFv(id, sum);
     return 0;
 }
 
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
-extern "C" bool func_800865E8__Q22cf13CfGameManagerFv();
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
+extern "C" bool processEventQueueB__Q22cf13CfGameManagerFv();
 
 int setAwardFlagF1(VMThread* pThread) {
     // Set the award flag for the event passed as arg 1.
-    func_800826F0__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
+    queueEventId__Q22cf13CfGameManagerFv(vmArgIntGet(2, vmArgPtrGet(pThread, 1)));
     return 0;
 }
 
 // Start a realtime event. If the request yields while syncing with the UI,
 // suspend the script; otherwise fire the event and battle-camera reset.
-extern "C" void func_800862D0__Q22cf13CfGameManagerFv();
+extern "C" void processFieldLoad__Q22cf13CfGameManagerFv();
 extern "C" void func_800F4004(cf::CBattleManager* bm);
 int realtimeEventStart(VMThread* pThread) {
     // Arg 1: skip-if-busy flag (default TRUE).
@@ -151,7 +151,7 @@ int realtimeEventStart(VMThread* pThread) {
         proceeding = 0;
     }
     if (proceeding != 0) {
-        func_800862D0__Q22cf13CfGameManagerFv();
+        processFieldLoad__Q22cf13CfGameManagerFv();
         func_800F4004(cf::CBattleManager::getInstance());
     }
     return 0;
@@ -159,27 +159,27 @@ int realtimeEventStart(VMThread* pThread) {
 
 // Play a realtime event named in arg 2; if the realtime flag is already set,
 // suspend the script instead.
-extern "C" void func_800863F4__Q22cf13CfGameManagerFv(const char* name);
+extern "C" void handleAreaChange__Q22cf13CfGameManagerFv(const char* name);
 int realtimeEventPlay(VMThread* pThread) {
     const char* name = vmArgStringGet(2, vmArgPtrGet(pThread, 1));
     if (lbl_eu_80663E28 & 0x1) {
         vmWaitModeSet(pThread);
     } else {
-        func_800863F4__Q22cf13CfGameManagerFv(name);
+        handleAreaChange__Q22cf13CfGameManagerFv(name);
     }
     return 0;
 }
 
-void func_80086490__Q22cf13CfGameManagerFv();
+void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
 
 int realtimeEventEnd(VMThread* pThread) {
-    func_80086490__Q22cf13CfGameManagerFv();
+    clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv();
     return 0;
 }
 
 int waitRealtimeEvent(VMThread* pThread) {
     // Suspend the script while realtime event playback is active.
-    if (func_800865E8__Q22cf13CfGameManagerFv()) {
+    if (processEventQueueB__Q22cf13CfGameManagerFv()) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -253,7 +253,7 @@ int fadeIn(VMThread* pThread) {
     } else {
         c = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    func_8007FD00__Q22cf13CfGameManagerFv(0x10);
+    checkAvailableValue__Q22cf13CfGameManagerFv(0x10);
     float color[4];
     if (c == 0) {
         color[0] = 1.0f;
@@ -287,8 +287,8 @@ int fadeOut(VMThread* pThread) {
     } else {
         c = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    func_8007FD00__Q22cf13CfGameManagerFv(0x10);
-    int fadeActive = func_8007FD8C__Q22cf13CfGameManagerFv(0x19);
+    checkAvailableValue__Q22cf13CfGameManagerFv(0x10);
+    int fadeActive = processBattleQueue__Q22cf13CfGameManagerFv(0x19);
     float color[4];
     if (c == 0) {
         color[0] = 1.0f;
@@ -310,9 +310,9 @@ int fadeOut(VMThread* pThread) {
 
 // Query whether a fade/blank is active (/fadeWait command). If the game
 // is not currently presenting, suspend the script until it finishes.
-extern "C" int func_80085838__Q22cf13CfGameManagerFv();
+extern "C" int resetCameraManager__Q22cf13CfGameManagerFv();
 int fadeWait(VMThread* pThread) {
-    if (func_80085838__Q22cf13CfGameManagerFv() == 0) {
+    if (resetCameraManager__Q22cf13CfGameManagerFv() == 0) {
         vmWaitModeSet(pThread);
     }
     return 0;

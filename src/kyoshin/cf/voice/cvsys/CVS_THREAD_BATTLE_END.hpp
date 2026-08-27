@@ -54,9 +54,9 @@ struct ItemListManager {
     u32 field_0x0;        // 0x00
     ItemListNode* sentinel; // 0x04
 };
-// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// Voice/actor-manager list accessor (retail mangled name getListB28__Fv -
 // a global-scope C++ function with no args, so plain C++ linkage is correct).
-ItemListManager* func_800B6BA4();
+ItemListManager* getListB28();
 
 // C-linkage imports used by this TU's thread helpers / factory.  Kept here
 // (not in the .cpp) because they are genuine retail C/ABI symbols imported

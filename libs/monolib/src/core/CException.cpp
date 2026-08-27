@@ -37,7 +37,7 @@ static CMsgParamEntry* msgLast(CWorkThread* thread) {
     return &queue->array[(queue->front + queue->field6) % queue->capacity];
 }
 
-// Message ring header embedded in CWorkThread at +0x84 (the func_80457ED4
+// Message ring header embedded in CWorkThread at +0x84 (the getMessageQueueSlot
 // helper indexes array/front/capacity at +0x120/+0x124/+0x12C from here).
 struct CWorkThreadMsgQueue {
     u8 pad[0x120];            // +0x84..0x1A4
@@ -84,9 +84,9 @@ extern "C" {
     extern char lbl_eu_8052DC70[];
     extern char lbl_eu_8052DC3C[];
 
-    void func_804525D4__11CDeviceFontFv();
+    void getFontId__11CDeviceFontFv();
     void* func_eu_804558F4__11CDeviceFontFv(u32 index);
-    void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
+    void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
     void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
     ml::CCol4* func_800407C8(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
     void __ct__7CDrawGXFv(CDrawGX* self);
@@ -98,10 +98,10 @@ extern "C" {
     void Print__Q34nw4r2ut17TextWriterBaseFPCwi(void* writer, const wchar_t* text, int len);
     void func_80129F3C(void* writer, f32 a, f32 b);
     void func_8012B204(void* writer, f32 a);
-    void* func_80457ED4__10CExceptionFv(CMsgParamEntry* entries, u32 value);
+    void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value);
     void func_80458084__10CExceptionFv(const void* message);
     void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);
-    void func_80458CBC__10CExceptionFv(u8* writer, const wchar_t* text);
+    void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t* text);
 
     // Device exception is an unnamed class in CDevice.cpp.
     void* CDeviceException_getInstance();
@@ -138,8 +138,8 @@ extern "C" {
     void setRect__5CViewFRCQ22ml7CRect16(CView* self, const ml::CRect16* rect);
     CView* pssCreateView__5CProcFPCcP11CWorkThreadi(CProc* self, const char* name,
                                                      CWorkThread* thread, int arg);
-    void* func_8045D478__7CLibHbmFv();
-    bool func_8045DE00__7CLibHbmFv();
+    void* isHbmStopPending__7CLibHbmFv();
+    bool isHbmActive__7CLibHbmFv();
     bool isHbmControlInitialized__7CLibHbmFv();
 }
 
@@ -196,7 +196,7 @@ extern "C" bool isFadedIn__10CExceptionFv(CException* self) {
 CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message,
                                       u32 value) {
     CException* exception;
-    if (func_8045DE00__7CLibHbmFv()) {
+    if (isHbmActive__7CLibHbmFv()) {
         return nullptr;
     }
 
@@ -220,7 +220,7 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
         }
         entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
         result->unk1E4 = view->mWorkID;
-        exception = result->func_80457EB0();
+        exception = result->validateExceptionType();
     } else {
         CWorkThread* parent = (CWorkThread*)CDeviceException_getInstance();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
@@ -229,7 +229,7 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
         entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
-        exception = result->func_80457EB0();
+        exception = result->validateExceptionType();
         setException__9CWorkRootFP10CException(exception);
     }
 
@@ -256,17 +256,17 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
     queue->size += 1;
     queue->lastIndex = queue->size - 1;
 
-    CMsgParamEntry* tail1 = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(
+    CMsgParamEntry* tail1 = (CMsgParamEntry*)getMessageQueueSlot__10CExceptionFv(
         (CMsgParamEntry*)queue, queue->lastIndex);
     tail1->unk23 = 3;
-    CMsgParamEntry* tail2 = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(
+    CMsgParamEntry* tail2 = (CMsgParamEntry*)getMessageQueueSlot__10CExceptionFv(
         (CMsgParamEntry*)queue, queue->lastIndex);
     tail2->wid = exception->mWorkID;
     return exception;
 }
 
 // Type validation
-CException* CException::func_80457EB0() {
+CException* CException::validateExceptionType() {
     if (this == nullptr) {
         return nullptr;
     }
@@ -277,7 +277,7 @@ CException* CException::func_80457EB0() {
 }
 
 // Ring buffer index calculation
-extern "C" void* func_80457ED4__10CExceptionFv(CMsgParamEntry* entries, u32 value) {
+extern "C" void* getMessageQueueSlot__10CExceptionFv(CMsgParamEntry* entries, u32 value) {
     u32 offset = *(u32*)((u8*)entries + 0x124);
     u32 capacity = *(u32*)((u8*)entries + 0x12C);
     u32 index = offset + value;
@@ -317,7 +317,7 @@ void CException::wkRender() {
     mode = CDeviceVI::getRenderModeObj();
     height = mode->efbHeight;
     if (view == nullptr) {
-        func_804525D4__11CDeviceFontFv();
+        getFontId__11CDeviceFontFv();
         CDeviceVI::setFlag0(false);
         CDeviceVI::setFlag4(false);
     } else {
@@ -349,7 +349,7 @@ extern "C" void func_80458084__10CExceptionFv(const void* message) {
     u8* writer = (u8*)func_eu_804558F4__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     func_80458B78__10CExceptionFv(writer, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480);
-    func_80458CBC__10CExceptionFv(writer, (const wchar_t*)message);
+    printExceptionMessage__10CExceptionFv(writer, (const wchar_t*)message);
 }
 #pragma dont_inline reset
 
@@ -420,7 +420,7 @@ extern "C" void func_eu_8045C964__10CExceptionFv(u8* writer, void* font) {
 }
 
 // RGBA setter
-extern "C" void func_80458B64__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a) {
+extern "C" void setExceptionColor__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a) {
     buffer[0] = r;
     buffer[1] = g;
     buffer[2] = b;
@@ -464,7 +464,7 @@ extern "C" void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
 }
 
 // Print a wide string through a TextWriter.
-extern "C" void func_80458CBC__10CExceptionFv(u8* writer, const wchar_t* text) {
+extern "C" void printExceptionMessage__10CExceptionFv(u8* writer, const wchar_t* text) {
     bool writerRegs2 = true;
     bool writerRegs = true;
     bool writerIo2 = true;
@@ -577,7 +577,7 @@ bool CException::wkStandbyLogout() {
     CDoubleListNode* header = *(CDoubleListNode**)((u8*)this + 0x60);
     if (header->GetPrev() == header &&
         (lbl_eu_8066A480 == mAlpha || isOff__11CWorkSystemFv() ||
-         func_8045D478__7CLibHbmFv() != nullptr || mFlag210 != 0)) {
+         isHbmStopPending__7CLibHbmFv() != nullptr || mFlag210 != 0)) {
         setAppException__8CDesktopFi(0);
         if (getInstance__7CLibCriFv() != nullptr) {
             wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(getInstance__7CLibCriFv(),
@@ -600,7 +600,7 @@ public:
     virtual void render();
 };
 
-extern "C" void func_80459118__10CExceptionFv(const char* message) {
+extern "C" void logExceptionMessage__10CExceptionFv(const char* message) {
     int index = 0;
     while (index < (int)lbl_eu_806656C4) {
         CException* exception = lbl_eu_80657B50[index];

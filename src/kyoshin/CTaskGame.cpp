@@ -136,7 +136,7 @@ CTaskGame* CTaskGame::getInstance(){
     return lbl_eu_80663D18;
 }
 
-u32 CTaskGame::func_800404F0() {
+u32 CTaskGame::isFlag2000Set() {
     CTaskGame* instance = lbl_eu_80663D18;
     if (instance == NULL) {
         return 0;
@@ -210,7 +210,7 @@ void CTaskGame::Init(){
     create__16CTaskColiManagerFv(CTaskManager::GetRootProcGame(), unk74,
                                  unk70);
     __dt__8047BFA8();
-    func_8047D024__17UnkClass_8047CD0CFv();
+    refreshPoolMemory__17UnkClass_8047CD0CFv();
     create__Q22cf13CfNandManagerFv(this, unk74);
     // addRenderCB receiver idiom: null-this passes this(0), else this+0x58.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -248,7 +248,7 @@ void CTaskGame::Init(){
         reinterpret_cast<CTaskGamePtmfWords*>(this)->field_0x3C = v0;
         reinterpret_cast<CTaskGamePtmfWords*>(this)->field_0x44 = *pool;
     } else {
-        CLibHbm::func_8045D5C8(true);
+        CLibHbm::setHbmActiveFlag(true);
 
         CTaskGamePic* pic1 = create__12CTaskGamePicFv(this, (int)unk74);
         unkCC = reinterpret_cast<u32>(pic1);
@@ -406,7 +406,7 @@ extern "C" void func_80041AFC(CTaskGame* self) {
 void CTaskGame_stub_800426A4() {}
 // __declspec(noinline): retail callers (func_800424E0) call this out of
 // line; without it MWCC inlines the instance/flag test into the caller.
-__declspec(noinline) bool CTaskGame::func_800426F0() {
+__declspec(noinline) bool CTaskGame::isFlag01Set() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) return 1;
     return lbl_eu_80663D18->unk68 & 1;
@@ -420,13 +420,13 @@ int CTaskGame_checkLbl80663D1C() {
 // Retail func_80042FBC: flag gate over unk7C bits. Returns 1 when either the
 // {0x80,0x40} or the {0x200,!0x100} bit-pair holds, or when bit 0x400 is set;
 // only the all-clear path falls through to 0.
-// Retail CTaskGame::func_80042710: set the unk68 bit 0x1.
-void CTaskGame::func_80042710() {
+// Retail CTaskGame::setInitFlag: set the unk68 bit 0x1.
+void CTaskGame::setInitFlag() {
     unk68 |= 1;
 }
-// Retail CTaskGame::func_80042720: request exit from the cf::CTaskGameCf
+// Retail CTaskGame::requestGameExit: request exit from the cf::CTaskGameCf
 // task (when live), then switch the move-hook ptmf to pool lbl_eu_8052582C.
-void CTaskGame::func_80042720() {
+void CTaskGame::requestGameExit() {
     unk68 |= 8;
     if (cf::CTaskGameCf::getInstance() != nullptr) {
         // Retail calls getInstance twice (no value CSE across the calls).
@@ -613,10 +613,10 @@ extern "C" void func_80043564(u32 mode, u32 a, u32 b, u32 c) {
         return func_80043538(inst, b);
     }
 }
-void func_80039364__5CGameFv();
+void initGameState__5CGameFv();
 
 void CTaskGame_callCGameFunc() {
-    func_80039364__5CGameFv();
+    initGameState__5CGameFv();
 }
 // Object pointed to by CTaskGame::unkF0 has a flag byte at offset 0xE9
 // (func_80041F54 sets it to 1; func_80041E54 clears it).
@@ -650,9 +650,9 @@ void CTaskGame_setFlag_1000(CTaskGame* obj) {
 }
 int CTaskGame_checkUnkD8() {
     extern CTaskGame* lbl_eu_80663D18;
-    extern int func_80459AA4__7CLibCriFv(unsigned int arg);
+    extern int isStreamPaused__7CLibCriFv(unsigned int arg);
     if (lbl_eu_80663D18 == nullptr) return 0;
-    return func_80459AA4__7CLibCriFv(static_cast<unsigned int>(lbl_eu_80663D18->unkD8));
+    return isStreamPaused__7CLibCriFv(static_cast<unsigned int>(lbl_eu_80663D18->unkD8));
 }
 bool CTaskGame_checkUnkD8NotNegOne() {
     extern CTaskGame* lbl_eu_80663D18;
@@ -661,8 +661,8 @@ bool CTaskGame_checkUnkD8NotNegOne() {
     return value != 0xffffffffu;
 }
 extern "C" u32 func_80043F18(u32* ptr) { return *ptr; }
-// IScnRender::func_80043F20() = empty render-callback base impl (retail: blr)
-void IScnRender::func_80043F20() {}
+// IScnRender::handleEmptyRender() = empty render-callback base impl (retail: blr)
+void IScnRender::handleEmptyRender() {}
 void Tail__8CProcessFv() {}
 void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {
@@ -707,11 +707,11 @@ void CTaskGame_thunk_IErrMesWinSel_dtor(void* p) {
 //  3. Battery-timer upkeep, then battery show/hide/create/delete logic.
 extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
     CView::getCurrentView();   // retail bl getCurrentView__5CViewFv, result unused
-    if (cf::CfGameManager::func_8007E1B4() == 0) {
+    if (cf::CfGameManager::isManagerInitialized() == 0) {
         return;
     }
 
-    if (CLibHbm::func_8045DE00() == 0) {
+    if (CLibHbm::isHbmActive() == 0) {
 
     // ===== Hbm disabled: loading-screen state machine =====
     if (lbl_eu_80663D1C != 0) {
@@ -769,7 +769,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
     }
     // ===== loading-screen draw gate =====
     if (lbl_eu_80663D1C != 0 && lbl_eu_80663D24 <= 2) {
-        if (CLibHbm::func_8045DE00() == 0 && cf::CfGameManager::func_800829B8() == 0) {
+        if (CLibHbm::isHbmActive() == 0 && cf::CfGameManager::isSceneLoading() == 0) {
             if (CGame::getInstance() == 0 ||
                 func_80042FBC(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
                 func_802AE560(lbl_eu_80663D1C);
@@ -799,7 +799,7 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
 
 L_8004316C:
     // ===== battery timer upkeep =====
-    if (CLibHbm::func_8045DE00() == 0) {
+    if (CLibHbm::isHbmActive() == 0) {
         if (getWiimoteBattery__Q22cf9CfPadTaskFv() == 1 && (lbl_eu_80663E24 & 0x02040000) == 0) {
             lbl_eu_80663D30++;
             if (lbl_eu_80663D30 >= getTargetFramerate__9CDeviceVIFv() * 0x258) {
@@ -830,7 +830,7 @@ L_8004321C:
         if (lbl_eu_80663D1C == 0 && lbl_eu_80663D34 == 0) {
             if (func_804960A8(scene) == 0) {
                 if (lbl_eu_80663D20 != 0) {
-                    lbl_eu_80663D20->func_802B9364();
+                    lbl_eu_80663D20->releaseLayout();
                 }
                 if (lbl_eu_80663D20 != 0) {
                     delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
@@ -840,7 +840,7 @@ L_8004321C:
             } else {
                 if (lbl_eu_80663D24 >= 3 && lbl_eu_80663D1C != 0) {
                     if (lbl_eu_80663D20 != 0) {
-                        lbl_eu_80663D20->func_802B9364();
+                        lbl_eu_80663D20->releaseLayout();
                     }
                     if (lbl_eu_80663D20 != 0) {
                         delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
@@ -856,7 +856,7 @@ L_8004321C:
             if (lbl_eu_80663D28 >= fps3 || func_800FF738() != 0 || CMenuArtsSelect_isCreated() != 0) {
                 lbl_eu_80663D28 = 0;
                 if (lbl_eu_80663D20 != 0) {
-                    lbl_eu_80663D20->func_802B9364();
+                    lbl_eu_80663D20->releaseLayout();
                     if (lbl_eu_80663D20 != 0) {
                         delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
                         lbl_eu_80663D20 = 0;
@@ -867,10 +867,10 @@ L_8004321C:
         }
         if (lbl_eu_80663D20 != 0) {
             lbl_eu_80663D20->setBatteryLevel((u8)getWiimoteBattery__Q22cf9CfPadTaskFv());
-            if (CLibHbm::func_8045DE00() == 0 && cf::CfGameManager::func_800829B8() == 0) {
+            if (CLibHbm::isHbmActive() == 0 && cf::CfGameManager::isSceneLoading() == 0) {
                 if (CGame::getInstance() == 0 ||
                     func_80042FBC(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
-                    lbl_eu_80663D20->func_802B92FC();
+                    lbl_eu_80663D20->updateLayout();
                 }
             }
             lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
@@ -896,7 +896,7 @@ L_80043460:
                 u8 drawInfo[0x54];
                 __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
                 func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-                lbl_eu_80663D20->func_802B9334((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                lbl_eu_80663D20->drawBattery((nw4r::lyt::DrawInfo*)&drawInfo[0]);
                 __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
             }
             goto L_80043514;
@@ -909,7 +909,7 @@ L_80043460:
                     new (battery) CBattery(0);
                 }
                 lbl_eu_80663D20 = battery;
-                battery->func_802B92A4();
+                battery->loadBatteryArchive();
             }
             goto L_80043514;
         }
@@ -920,7 +920,7 @@ L_800434CC:
         goto L_80043514;
     }
     if (lbl_eu_80663D20 != 0) {
-        lbl_eu_80663D20->func_802B9364();
+        lbl_eu_80663D20->releaseLayout();
         if (lbl_eu_80663D20 != 0) {
             delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
             lbl_eu_80663D20 = 0;
@@ -943,7 +943,7 @@ void CTaskGame::Term() {
     unkF0 = 0;
     func_80043BC4();
     if ((u32)(unkE8 + 0x10000) != 0xFFFF) {
-        func_80459A7C__7CLibCriFv(unkE8);
+        stopStream__7CLibCriFv(unkE8);
         unkE8 = -1;
         unkEC = 0;
     }
@@ -973,11 +973,11 @@ void CTaskGame::Term() {
         }
     }
     __dt__8047BFFC();
-    func_8047D028__17UnkClass_8047CD0CFv();
-    CLibHbm::func_8045D470(false);
+    releasePoolMemory__17UnkClass_8047CD0CFv();
+    CLibHbm::setHbmStopFlag(false);
 }
 #pragma optimize_for_size off
-// Retail func_80040A3C: set the title/loading text pair (unk86/unk88), copy
+// Retail setLoadingCaption: set the title/loading text pair (unk86/unk88), copy
 // the caption string (or the default lbl_eu_804FA890[0x6D] when null) into
 // the unkA4 FixStr<32> (strlen+strcpy via the inline operator=), then raise
 // the 0x2 unk68 flag, set the 0x128 request code, and when the unkD4 object
@@ -985,7 +985,7 @@ void CTaskGame::Term() {
 // with a single stmw (MWCC merges the callee-saved saves only under size
 // optimization).
 #pragma optimize_for_size on
-__declspec(noinline) void CTaskGame::func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7) {
+__declspec(noinline) void CTaskGame::setLoadingCaption(u16 r4, u16 r5, const char* r6, s16 r7) {
     unk86 = r4;
     unk88 = r5;
     if (r6 != nullptr) {
@@ -1265,8 +1265,8 @@ void func_80041024(CTaskGame* self) {
 // lbl_eu_8052561C (bit 0x2000 set).
 void func_800411A4(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(true);
-    CLibHbm::func_8045D5C8(false);
-    CLibHbm::func_8045D470(true);
+    CLibHbm::setHbmActiveFlag(false);
+    CLibHbm::setHbmStopFlag(true);
     func_eu_804521BC(0);
     self->unk68 = (self->unk68 | 0x200000) & 0xFE6030FF;
     func_8023FD4C(0);
@@ -1714,8 +1714,8 @@ extern "C" void func_80041B94(CTaskGame* self) {
 // the callee-saved saves only under size optimization).
 void func_80041BC0(CTaskGame* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
-    CLibHbm::func_8045D470(false);
-    CLibHbm::func_8045D5C8(false);
+    CLibHbm::setHbmStopFlag(false);
+    CLibHbm::setHbmActiveFlag(false);
     func_eu_804521BC(1);
     self->unk68 &= 0xFFDFFFFF;
     lbl_eu_80663D2C = 1;
@@ -1807,7 +1807,7 @@ void func_80041CC8(CTaskGame* self) {
 }
 // Target us-800423cc: scene gate then move-hook switch by unkF4 mode. When
 // the scene current-process query (func_80496034) returns non-null: for
-// unkF4==0 show the default loading caption via func_80040A3C, for
+// unkF4==0 show the default loading caption via setLoadingCaption, for
 // unkF4==1/2 clear the unkF0 object's +0xE9 byte; each case copies a
 // different move-hook ptmf pool (+0x234 / +0x240 / +0x24C), held in one
 // base register.
@@ -1820,7 +1820,7 @@ void func_80041E54(CTaskGame* self) {
     u32* base = lbl_eu_80525568;
     if (func_80496034(self->unk74) != 0) {
         if (self->unkF4 == 0) {
-            self->func_80040A3C(0, 0, &lbl_eu_804FA890[0x6D], 0);
+            self->setLoadingCaption(0, 0, &lbl_eu_804FA890[0x6D], 0);
             // Retail keeps the entry address in a register (addi rX,base,off)
             // and loads w1/w2 relative to it.
             CTaskGamePtmfPool* pool = reinterpret_cast<CTaskGamePtmfPool*>(reinterpret_cast<char*>(base) + 0x234);
@@ -2032,7 +2032,7 @@ void func_80042274(CTaskGame* self) {
         strcpy(self->unkA4.mString, cap);
         self->unk8A = 0;
     }
-    CLibHbm::func_8045D5C8(false);
+    CLibHbm::setHbmActiveFlag(false);
     create__Q22cf11CTaskGameCfFv(self, 0);
     lbl_eu_80663E28 |= 0x10000000;
     if ((int)self->unk128 == 1) {
@@ -2050,11 +2050,11 @@ void func_80042274(CTaskGame* self) {
 }
 #pragma optimize_for_size off
 // Target us-80042a58: when the game instance is absent / its flag bit 0x1 is
-// set (func_800426F0) or this task's bit 0x2 is set, raise bit 0x8, request
+// set (isFlag01Set) or this task's bit 0x2 is set, raise bit 0x8, request
 // cf::CTaskGameCf exit, set its unk_54 bit 0x4 when bit 0x2 is still set, and
 // switch the move-hook ptmf to pool lbl_eu_805257FC.
 void func_800424E0(CTaskGame* self) {
-    if (CTaskGame::func_800426F0() || (self->unk68 & 0x2) != 0) {
+    if (CTaskGame::isFlag01Set() || (self->unk68 & 0x2) != 0) {
         self->unk68 |= 0x8;
         cf::CTaskGameCf::getInstance()->reqExit();
         if ((self->unk68 & 0x2) != 0) {
@@ -2119,7 +2119,7 @@ void func_80042630(CTaskGame* self) {
         func_800450C8();
     }
     __dt__800FDEF8(func_800FE68C());
-    func_800B15A4(func_800B07E8());
+    func_800B15A4(getInstance());
     u32 v0;
     u32* pool = reinterpret_cast<u32*>(lbl_eu_80525820);
     v0 = pool[0];
@@ -2133,20 +2133,20 @@ extern "C" void func_800426A8() {
     extern int func_8029183C();
     if (func_8029183C() == 2) {
         CTaskGame* self = CTaskGame::getInstance();
-        self->func_80040A3C(0, 0, &lbl_eu_804FA890[0x8A], 1);
+        self->setLoadingCaption(0, 0, &lbl_eu_804FA890[0x8A], 1);
     }
 }
 void CTaskGame::stub_80042720() {}
 void CTaskGame_stub_80042784(){}
 // Target us-80042cfc: window-state gate (retail func_80040DE4 / func_80040C2C
 // call it with the task pointer in r3 and branch on the result). When the
-// game-instance reset gate (func_800426F0) is open: clear the unkD4 object's
+// game-instance reset gate (isFlag01Set) is open: clear the unkD4 object's
 // +0x60 bit 0x2, request cf::CTaskGameCf exit, switch the move-hook ptmf to
 // pool lbl_eu_80525838 and return 1. Otherwise, when unk68 bit 0x2 is set:
 // clear the unkD4 object's +0x60 bit 0x2, switch the move-hook ptmf to pool
 // lbl_eu_80525844 and return 1. Returns 0 otherwise.
 u32 func_80042784(CTaskGame* self) {
-    if (CTaskGame::func_800426F0() != 0) {
+    if (CTaskGame::isFlag01Set() != 0) {
         if (self->unkD4 != 0) {
             func_802956A8(reinterpret_cast<void*>(self->unkD4));
             reinterpret_cast<CTaskGameUnkD4Obj*>(self->unkD4)->field_0x60 &= ~2;
@@ -2266,7 +2266,7 @@ extern "C" void func_8004312C();
 // attribute only affects call sites; the body itself is untouched).
 __declspec(noinline) int func_8004362C(CTaskGame*) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 pressed = pad->mPressedButtonFlags;
         u32 v = (pressed & 0x1FE00000) | (pressed & 0xF);
         return v != 0;
@@ -2283,7 +2283,7 @@ __declspec(noinline) s32 func_800436A8(CTaskGame* self) {
 }
 // Defined after func_800436A8 so MWCC keeps the real call/tail-branch instead
 // of inlining the helper body.
-s32 CTaskGame::func_8004368C() {
+s32 CTaskGame::isMoveFuncActive() {
     if (lbl_eu_80663D18 == nullptr) {
         return 0;
     }
@@ -2297,11 +2297,11 @@ s32 CTaskGame::func_8004368C() {
 // run the shared reset (func_80043BC4), pick the alloc handle (func_80495FF0
 // on lbl_eu_80663E14 when the caller passed -1), copy the path into a local
 // FixStr<256> (mLength + strcpy; func_eu_804520D0 path fix-up for the
-// non-archive case), open the CRI stream (func_8045997C) into unkD8, set the
+// non-archive case), open the CRI stream (dispatchFilePlayback) into unkD8, set the
 // unk68 0x40/0x80 flags from the a5/a6 args, and when the play-time gate
 // re-opens: re-seed the +0x130 caption FixStr<64> with the path, store the
 // unkDC budget, and behind the CfGameManager reset gate forward the stream
-// active state (func_80459A84) / run the func_80189C70 sound reset and
+// active state (setStreamPause) / run the func_80189C70 sound reset and
 // store the unk8E ticker. Finally ramp the CRI volume (func_80043B04).
 void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume) {
     if (lbl_eu_80663D18 == 0) {
@@ -2338,7 +2338,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
     if (found == 0) {
         func_eu_804520D0(filename.mString);
     }
-    lbl_eu_80663D18->unkD8 = func_8045997C__7CLibCriFPCcUli(filename.mString, a3, a1);
+    lbl_eu_80663D18->unkD8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, a3, a1);
     // Single textual read of the flag word: retail hoists the global-pointer
     // load above the branch and shares it between both arms.
     u32 flags = lbl_eu_80663D18->unk68;
@@ -2358,9 +2358,9 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
     }
     reinterpret_cast<CTaskGameCaption130*>(lbl_eu_80663D18)->str = path;
     lbl_eu_80663D18->unkDC = a4;
-    if (cf::CfGameManager::func_8007E1B4() != 0) {
+    if (cf::CfGameManager::isManagerInitialized() != 0) {
         if ((lbl_eu_80663D18->unk68 & 0x40) == 0) {
-            func_80459A84__7CLibCriFv(lbl_eu_80663D18->unkD8, cf::CfGameManager::func_800829B8());
+            setStreamPause__7CLibCriFv(lbl_eu_80663D18->unkD8, cf::CfGameManager::isSceneLoading());
         }
         if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
             func_80189C70();
@@ -2376,7 +2376,7 @@ void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, flo
 // the CRI stop + handle reset for the unkEC case). Then when the play-time
 // gate (func_80043D68) is open: with a live unkE8 handle re-seed the unk18C
 // struct (func_8004041C); otherwise allocate a fresh CRI stream (MEM2/MEM1
-// alloc-handle selection by max-alloc size, func_80459AA0 + 0x800 budget),
+// alloc-handle selection by max-alloc size, calcStreamBufferSize + 0x800 budget),
 // open it via CLibCri and record the unkE8 handle / unkEC id. When the
 // gate is closed: start streaming via func_80043738 and record the unkE4 id.
 int func_8004392C(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
@@ -2391,7 +2391,7 @@ int func_8004392C(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
         if ((s32)lbl_eu_80663D18->unkE4 == (s32)a) {
             func_80043BC4();
         } else if ((u32)(lbl_eu_80663D18->unkE8 + 0x10000) != 0xFFFF) {
-            func_80459A7C__7CLibCriFv(lbl_eu_80663D18->unkE8);
+            stopStream__7CLibCriFv(lbl_eu_80663D18->unkE8);
             lbl_eu_80663D18->unkE8 = -1;
             lbl_eu_80663D18->unkEC = 0;
         }
@@ -2404,11 +2404,11 @@ int func_8004392C(u32 a, u32 b, u32 c, u32 d, u32 e, float f) {
             if ((u32)(c + 0x10000) == 0xFFFF) {
                 c = static_cast<u32>(mtl::MemManager::getHandleMEM2());
             }
-            u32 budget = static_cast<u32>(func_80459AA0__7CLibCriFv(1)) + 0x800;
+            u32 budget = static_cast<u32>(calcStreamBufferSize__7CLibCriFv(1)) + 0x800;
             if (mtl::MemManager::getMaxAllocSize(c) < budget) {
                 c = static_cast<u32>(mtl::MemManager::getHandleMEM1());
             }
-            lbl_eu_80663D18->unkE8 = func_8045997C__7CLibCriFPCcUli(filename.mString, c, 0);
+            lbl_eu_80663D18->unkE8 = dispatchFilePlayback__7CLibCriFPCcUli(filename.mString, c, 0);
             if ((u32)(lbl_eu_80663D18->unkE8 + 0x10000) != 0xFFFF) {
                 lbl_eu_80663D18->unkEC = a;
                 return 1;
@@ -2434,7 +2434,7 @@ extern "C" int func_80043D68();
 // gate body into the caller.
 extern "C" __declspec(noinline) void func_80043B04(float f1) {
     if (lbl_eu_80663D18 != nullptr && func_80043D68() != 0) {
-        func_80459A90__7CLibCriFv(lbl_eu_80663D18->unkD8, f1);
+        setStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, f1);
     }
 }
 // Play-time seconds getter: -1 when no instance / gate closed, else the CRI
@@ -2444,7 +2444,7 @@ extern "C" s32 func_80043B54() {
         return -1;
     }
     if (func_80043D68() != 0) {
-        return func_80459A98__7CLibCriFv(lbl_eu_80663D18->unkD8);
+        return getStreamPosition__7CLibCriFv(lbl_eu_80663D18->unkD8);
     }
     return -1;
 }
@@ -2463,10 +2463,10 @@ extern "C" s32 func_80043B54() {
 __declspec(noinline) void func_80043BC4() {
     if (lbl_eu_80663D18 != nullptr) {
         if ((u32)(lbl_eu_80663D18->unkD8 + 0x10000) != 0xFFFF) {
-            func_80459A7C__7CLibCriFv(lbl_eu_80663D18->unkD8);
+            stopStream__7CLibCriFv(lbl_eu_80663D18->unkD8);
             lbl_eu_80663D18->unkD8 = -1;
         }
-        if (cf::CfGameManager::func_8007E1B4() != 0) {
+        if (cf::CfGameManager::isManagerInitialized() != 0) {
             if ((lbl_eu_80663D18->unk68 & 0x80) != 0) {
                 func_80189C7C();
             }
@@ -2486,7 +2486,7 @@ extern "C" void func_80043C88() {
     func_80043BC4();
     int handle = lbl_eu_80663D18->unkE8;
     if ((u32)handle != 0xFFFFFFFFu) {
-        func_80459A7C__7CLibCriFv(handle);
+        stopStream__7CLibCriFv(handle);
         lbl_eu_80663D18->unkE8 = -1;
         lbl_eu_80663D18->unkEC = 0;
     }
@@ -2497,7 +2497,7 @@ extern "C" void func_80043C88() {
 // CRI streaming-play setter. The global instance is re-read for the handle.
 extern "C" __declspec(noinline) void func_80043CD8(int frames, float volume) {
     if (lbl_eu_80663D18 != nullptr && (u32)lbl_eu_80663D18->unkD8 != 0xFFFFFFFFu) {
-        func_80459A88__7CLibCriFv(lbl_eu_80663D18->unkD8, volume,
+        fadeStreamVolume__7CLibCriFv(lbl_eu_80663D18->unkD8, volume,
                                   (float)frames * getSecPerFrame__9CDeviceVIFv(), 2);
     }
 }
@@ -2587,13 +2587,13 @@ extern "C" __declspec(noinline) char* func_80044070(ml::FixStr<32>* str, const c
 #pragma optimize_for_size off
 
 // Target us-800436a4: per-frame CRI / error-message maintenance. While the
-// unkD8 stream handle is live: stop it via func_80459A78 when it reports
+// unkD8 stream handle is live: stop it via isStreamActive when it reports
 // done (else, behind the CfGameManager reset gate and unk68 bit 0x80, count
 // down the unk8E ticker and reset the sound state when it expires). The
 // unkE8 handle is similarly reset. Then, when the play-time gate
 // (func_80043D68) and the CfGameManager reset gate are open and unk68 bit
 // 0x40 is clear, forward (unkD8, bool) to the CRI active-setter with the OR
-// of the func_8016C720 / func_800829B8 gates. Finally, when the unk18C
+// of the func_8016C720 / isSceneLoading gates. Finally, when the unk18C
 // struct's +0x18 word is non-zero and the func_8004392C vision helper
 // succeeds, re-seed the unk18C struct (func_8004041C with the float
 // constant); when the scene pointer is gone, disable the Hbm state.
@@ -2602,12 +2602,12 @@ extern "C" __declspec(noinline) char* func_80044070(ml::FixStr<32>* str, const c
 #pragma optimize_for_size on
 void func_8004312C(CTaskGame* self) {
     if ((u32)(self->unkD8 + 0x10000) != 0xFFFF) {
-        if (func_80459A78__7CLibCriFv(self->unkD8) == 0) {
+        if (isStreamActive__7CLibCriFv(self->unkD8) == 0) {
             // Retail keeps this small reset inline (the big gate chain is
             // sunk out-of-line at the end with a bne from the test).
             func_80043BC4();
         } else {
-            if (cf::CfGameManager::func_8007E1B4() != 0) {
+            if (cf::CfGameManager::isManagerInitialized() != 0) {
                 if ((self->unk68 & 0x80) != 0) {
                     self->unk8E--;
                     if (self->unk8E <= 0) {
@@ -2619,21 +2619,21 @@ void func_8004312C(CTaskGame* self) {
         }
     }
     if ((u32)(self->unkE8 + 0x10000) != 0xFFFF) {
-        if (func_80459A78__7CLibCriFv(self->unkE8) == 0) {
+        if (isStreamActive__7CLibCriFv(self->unkE8) == 0) {
             self->unkE8 = -1;
             self->unkEC = 0;
         }
     }
     if (func_80043D68() != 0) {
-        if (cf::CfGameManager::func_8007E1B4() != 0) {
+        if (cf::CfGameManager::isManagerInitialized() != 0) {
             if ((lbl_eu_80663D18->unk68 & 0x40) == 0) {
                 // Right-to-left arg evaluation: write the CfGameManager gate
                 // first so func_8016C720 runs first into r30 (retail
                 // mr r30, r3), then the gate returns in r3 and the OR is
                 // r3 | r30 (retail or r4, r3, r30) before the subic/subfe
                 // bool conversion (size-opt idiom).
-                func_80459A84__7CLibCriFv(self->unkD8,
-                                          (cf::CfGameManager::func_800829B8() | func_8016C720()) != 0);
+                setStreamPause__7CLibCriFv(self->unkD8,
+                                          (cf::CfGameManager::isSceneLoading() | func_8016C720()) != 0);
             }
         }
     }
@@ -2652,7 +2652,7 @@ void func_8004312C(CTaskGame* self) {
         }
     }
     if (self->unk74 == 0) {
-        CLibHbm::func_8045D470(false);
+        CLibHbm::setHbmStopFlag(false);
     }
 }
 #pragma optimize_for_size off

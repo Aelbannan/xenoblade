@@ -24,9 +24,9 @@ UnkClass_8045F564::~UnkClass_8045F564() {
             MEMDestroyFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4));
             unk4 = 0;
         }
-        MemManager::func_80434A4C(false);
+        MemManager::setMemInitFlag(false);
         MemManager::erase(unk0);
-        MemManager::func_80434A4C(true);
+        MemManager::setMemInitFlag(true);
         unk0 = 0xFFFFFFFF;
     }
     
@@ -46,7 +46,7 @@ UnkClass_8045F564::~UnkClass_8045F564() {
 }
 
 void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int flag) {
-    MemManager::func_80434A4C(false);
+    MemManager::setMemInitFlag(false);
     
     if (unk0 != 0xFFFFFFFF) {
         MemManager::erase(unk0);
@@ -66,7 +66,7 @@ void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int
         }
     }
     
-    MemManager::func_80434A4C(true);
+    MemManager::setMemInitFlag(true);
     
     void* allocData = MemManager::getMaxAllocData(unk0);
     unk4 = reinterpret_cast<u32>(MEMCreateFrmHeapEx(allocData, size2, 0));
@@ -79,9 +79,9 @@ void UnkClass_8045F564::deleteRegion() {
         MEMDestroyFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4));
         unk4 = 0;
     }
-    MemManager::func_80434A4C(false);
+    MemManager::setMemInitFlag(false);
     MemManager::erase(unk0);
-    MemManager::func_80434A4C(true);
+    MemManager::setMemInitFlag(true);
     unk0 = 0xFFFFFFFF;
 }
 
@@ -92,7 +92,7 @@ void UnkClass_8045F564::clearFrmHeap() {
 }
 
 void UnkClass_8045F564::validateHeap() {
-    MemManager::func_804348A4(unk0, 1);
+    MemManager::setRegionUnk6C(unk0, 1);
     if (unk4 != 0) {
         MEMGetAllocatableSizeForFrmHeapEx(reinterpret_cast<MEMiHeapHead*>(unk4), 4);
     }

@@ -32,7 +32,7 @@ extern "C" void func_80137F88(void* pane, void* tex);
 // Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
 extern char lbl_eu_805092C0[];
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (declared index 7, no args) yields the u32 passed to func_8013676C.
 // All-pure so no vtable is emitted; a genuine virtual call makes MWCC emit
 // the retail lwz r12 dispatch sequence.

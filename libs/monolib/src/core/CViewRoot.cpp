@@ -1026,7 +1026,7 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
 
 create_entry_work:
     entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(root, pParent, false);
-    root->func_804385CC(0);
+    root->setWorkParam(0);
 
     return root;
 }

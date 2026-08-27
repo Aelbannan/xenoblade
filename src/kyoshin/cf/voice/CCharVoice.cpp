@@ -33,9 +33,9 @@ extern "C" {
     void  func_801BFAE8(u16, CVoicePos*);                    // update battle sound position
     void  func_801BFED0(CVoiceBattleSndMgr*, u16, s32);      // stop battle sound
 
-    // cf::CfSoundMan::func_801BFC38(unsigned long, unsigned long,
+    // cf::CfSoundMan::playActorSound(unsigned long, unsigned long,
     //                               unsigned long, unsigned long, float)
-    u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+    u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         CVoiceBattleSndMgr*, u32, u32, u32, float);
 }
 
@@ -261,7 +261,7 @@ bool CCharVoice::func_802A109C(float volume,
         CVoiceBattleSndMgr* man = func_800BF2CC(mOwner);
         if ((s32)man < 0) return false;
 
-        u16 h = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+        u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             man, voiceId, 0, 0, volume);
         mBattleSndHandle = h;
 

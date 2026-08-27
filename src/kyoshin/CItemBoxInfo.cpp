@@ -4369,7 +4369,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
                                       &lbl_eu_805063BC[0x524], 1);
         Class_8045F858 host(&state.memRegion1);
         u8* data = (u8*)state.fileHandle1->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         state.arcResourceAccessor = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
@@ -4377,7 +4377,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         func_80136F08(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
         func_80136F08(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
         func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
 
         // Seed the label textboxes with the shared text object.
@@ -4603,7 +4603,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
                                       &lbl_eu_805063BC[0x804], 1);
         Class_8045F858 host(&state.memRegion2);
         u8* data = (u8*)state.fileHandle2->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
         state.resource = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
@@ -7737,7 +7737,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
                                       &lbl_eu_805063BC[0x826], 1);
         Class_8045F858 host(&state.memRegion1);
         u8* data = (u8*)state.fileHandle1->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         state.arcResourceAccessor = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
@@ -7745,7 +7745,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         func_80136F08(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
         func_80136F08(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
         func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
 
         // Seed the label textboxes with the shared text object.
@@ -7966,7 +7966,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
                                       &lbl_eu_805063BC[0x834], 1);
         Class_8045F858 host(&state.memRegion2);
         u8* data = (u8*)state.fileHandle2->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
         state.resource = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);

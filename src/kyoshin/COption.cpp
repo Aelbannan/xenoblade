@@ -512,19 +512,19 @@ extern "C" void __declspec(noinline) func_8029D278(COption* self) {
     if (self->field_0xFC == 0) {
         if ((s8)self->field_0x31 == 0) {
             u8 cur = Class_80296898::getInstance()->mConfigData[0x0C];
-            func_80296AE8__FPUc((u8*)&lbl_eu_80577308, 1);
+            updateConfig__FPUc((u8*)&lbl_eu_80577308, 1);
             if (cur != Class_80296898::getInstance()->mConfigData[0x0C]) {
-                if (cf::CfGameManager::func_8007E1B4() != 0
+                if (cf::CfGameManager::isManagerInitialized() != 0
                     && (lbl_eu_80663E28 & 0x01000000u) == 0) {
-                    VoiceSource* vs = func_eu_800874D0();
+                    VoiceSource* vs = getVoiceSourcePtr();
                     while (vs != 0) {
                         func_800BF2F8(reinterpret_cast<cf::CfObject*>(vs));
-                        vs = func_eu_800874D8(vs);
+                        vs = getVoiceSourceForSystem(vs);
                     }
-                    CfEnumObject* eo = func_eu_800874CC();
+                    CfEnumObject* eo = triggerVoiceDown();
                     while (eo != 0) {
                         func_800BF2F8(reinterpret_cast<cf::CfObject*>(eo));
-                        eo = func_eu_800874D4(eo);
+                        eo = resetVoiceSystem(eo);
                     }
                 }
             }
@@ -535,7 +535,7 @@ extern "C" void __declspec(noinline) func_8029D278(COption* self) {
         self->field_0xFC = 1;
         self->field_0x100 = 0;
     } else if (self->field_0xFC == 1) {
-        if (CWorkSystemPack::func_804DE08C() != 0) {
+        if (CWorkSystemPack::arePacksLoaded() != 0) {
             self->field_0xFC = 2;
         }
     } else if (self->field_0xFC == 2) {
@@ -1001,7 +1001,7 @@ bool COption::OnFileEvent(CEventFile* pEventFile) {
         u8 tempB[0x18];   // CCur19 build temp (cursor 2)
         u8 tempC[0x18];   // CCur18 build temp (cursor 3)
         void* fileData = mem->mFHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mem->mArcAcc = createArcResourceAccessor__10CLibLayoutFv();
         mem->mArcAcc->Attach(fileData, &lbl_eu_805103D8[0xff]);
         func_80136E84(&mem->mpLayout, mem->mArcAcc, &lbl_eu_805103D8[0x103]);
@@ -1011,7 +1011,7 @@ bool COption::OnFileEvent(CEventFile* pEventFile) {
         // Bind the font: take the layout root pane, ask the font object for its
         // pane, and push it back onto the root.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)mem->mpLayout + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mem->mpLayout);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mem->mpLayout);
         func_8013676C(rootPane, reinterpret_cast<COptionFontView*>(fontObj)->vf7());
 
         func_8029E144(this);
@@ -1049,7 +1049,7 @@ bool COption::OnFileEvent(CEventFile* pEventFile) {
 // sinit: constructor run for the Class_80296898 global at lbl_eu_80577308.
 // Tail-calls the global constructor with the object address.
 extern "C" void sinit_8029E7D8(){
-    func_80296A04__FP14Class_80296898(&lbl_eu_80577308);
+    initInstance__FP14Class_80296898(&lbl_eu_80577308);
 }
 
 // func_8029BF68: load the option layout arc. Build the layout + two animation

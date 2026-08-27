@@ -68,7 +68,7 @@ namespace cf{
         CBattleManager();
         virtual ~CBattleManager(); //0x8
         virtual void FactoryEvent2(); //0x10
-        virtual void func_80085220(u32 r4, u32 r5); //0x1C
+        virtual void setPartyMaskFlag(u32 r4, u32 r5); //0x1C
         virtual void func_800E2584(u32 mask); //0x20
         virtual void func_800F42A0(); //0x24
         virtual void func_800885F0(); //0x28
@@ -83,8 +83,8 @@ namespace cf{
         static CBattleManager* getInstance();
         // TUs that cannot include this class reach the same retail symbol
         // through kyoshin/cf/CBattleManagerApi.hpp (the one shared copy).
-        static void func_800D9190();
-        static void func_800D91D0();
+        static void getBattleStateA();
+        static void getBattleStateB();
         void func_800D9218();
 
         //0x0: vtable
@@ -438,8 +438,8 @@ extern "C" void func_800DB7F8(void* self, void* obj, void* enemy, void* move);
 extern "C" void func_800DBA2C(void* self, void* obj, void* enemy, void* move);
 extern "C" int func_802799F0(void* chain, void* obj);
 
-// C++-mangled retail import (func_800B708C__Fi): actor id -> action source.
-void* func_800B708C(int id);
+// C++-mangled retail import (findObjectById__Fi): actor id -> action source.
+void* findObjectById(int id);
 
 // Object scanned by func_800D7D24: key word at +0x4, flags at +0x78 and the
 // 0x20-stride entry block pointer at +0xB8.

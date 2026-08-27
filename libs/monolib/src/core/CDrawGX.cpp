@@ -43,7 +43,7 @@ mPrimitive(0){
 }
 
 CDrawGX::~CDrawGX(){
-    CDeviceGX::getCacheInstance()->func_8044BFC0();
+    CDeviceGX::getCacheInstance()->resetMtxState();
 }
 
 void CDrawGX::clear(){
@@ -96,16 +96,16 @@ void CDrawGX::setCol(const ml::CCol4& col){
     setFlag(FLAG_INITIALIZED, false);
 }
 
-void CDrawGX::func_80456570(int r4){
-    CDeviceGX::getCacheInstance()->func_8044A94C(r4, 0);
+void CDrawGX::setZCompare(int r4){
+    CDeviceGX::getCacheInstance()->setZCompareMD(r4, 0);
 }
 
-void CDrawGX::func_8045657C(int r4){
-    CDeviceGX::getCacheInstance()->func_8044AA7C(r4, 0);
+void CDrawGX::setZWriteEnable(int r4){
+    CDeviceGX::getCacheInstance()->setZWriteMode(r4, 0);
 }
 
 void CDrawGX::setTex(GXTexObj* pTexObj, u16 width, u16 height){
-    CDeviceGX::getCacheInstance()->func_8044B4B8(pTexObj, width, height);
+    CDeviceGX::getCacheInstance()->bindTextureGX(pTexObj, width, height);
 
     setFlag(FLAG_USE_TEX, true);
     setFlag(FLAG_INITIALIZED, false);
@@ -186,15 +186,15 @@ void CDrawGX::setupGX(){
         col.a *= mOpacity;
 
         if(checkFlag(FLAG_USE_TEX)){
-            CDeviceGX::getCacheInstance()->func_8044AE8C(col, 0);
+            CDeviceGX::getCacheInstance()->setTevColorTx(col, 0);
         }else{
-            CDeviceGX::getCacheInstance()->func_8044ACDC(col, 0);
+            CDeviceGX::getCacheInstance()->setTevColorNo(col, 0);
         }
     }else{
         if(checkFlag(FLAG_USE_TEX)){
-            CDeviceGX::getCacheInstance()->func_8044B168(0);
+            CDeviceGX::getCacheInstance()->setDirectColB(0);
         }else{
-            CDeviceGX::getCacheInstance()->func_8044B03C(0);
+            CDeviceGX::getCacheInstance()->setDirectColA(0);
         }
 
         GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -202,9 +202,9 @@ void CDrawGX::setupGX(){
     }
 
     if(mCol.a < lbl_eu_8066A468){
-        CDeviceGX::getCacheInstance()->func_8044A6C8(1, 0);
+        CDeviceGX::getCacheInstance()->setBlendState(1, 0);
     }else{
-        CDeviceGX::getCacheInstance()->func_8044A6C8((mFlags >> 4) & 1, 0);
+        CDeviceGX::getCacheInstance()->setBlendState((mFlags >> 4) & 1, 0);
     }
 
     if(checkFlag(FLAG_PERSPECTIVE)){

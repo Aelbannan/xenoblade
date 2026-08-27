@@ -38,7 +38,7 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
                 return rec;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(h->field_0x1) != 0) {
             return rec;
@@ -49,12 +49,12 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
     // Matrix slot + matrix select (u16 at +0x0E indexes lbl_eu_806581C8,
     // zero selects the fixed lbl_eu_806583E0 table).
-    func_804683D0__Q23LOD17UnkClass_80466348Fv((h->field_0xE_u16 + 1) * 3);
+    setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv((h->field_0xE_u16 + 1) * 3);
     const nw4r::math::MTX34* mtx;
     if (h->field_0xE_u16 != 0) {
         mtx = (const nw4r::math::MTX34*)lbl_eu_806581C8[h->field_0xE_u16 - 1];
@@ -321,7 +321,7 @@ void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
     for (i = 0; i < o->field_0x4; i++) {
         if ((rec2[i].field_0x0 & 4) != 0) {
             PSMTXConcat(work, lbl_eu_80658048[i], work);
-            func_804BCC48(func_804BC9EC__Fv(), arg2, (u8*)work);
+            func_804BCC48(getScnHandle__Fv(), arg2, (u8*)work);
         }
     }
 }
@@ -347,7 +347,7 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                 return (u16*)rec;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(h->field_0x1) != 0) {
             return (u16*)rec;
@@ -358,7 +358,7 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
     // Visible: upload the matrix slot and set up colour/texcoord state.
@@ -400,7 +400,7 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     for (u32 i = 0; i < count; i++) {
         LodDrawRec* r = &recs[i];
         u8 b = r->field_0x2A;
-        func_804683D0__Q23LOD17UnkClass_80466348Fv(b * 3 + 6);
+        setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(b * 3 + 6);
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
         nw4r::math::VEC3 scaled;
@@ -453,7 +453,7 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                 return (u16*)rec;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(h->field_0x1) != 0) {
             return (u16*)rec;
@@ -464,7 +464,7 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
     // Visible: upload the matrix slot and set up colour/texcoord state.
@@ -519,7 +519,7 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     for (u32 i = 0; i < count; i++) {
         LodDrawRec* r = &recs[i];
         u8 b = r->field_0x2A;
-        func_804683D0__Q23LOD17UnkClass_80466348Fv(b * 3 + 6);
+        setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(b * 3 + 6);
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
         nw4r::math::VEC3 scaledA;
@@ -572,7 +572,7 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                 return (u16*)rec;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(h->field_0x1) != 0) {
             return (u16*)rec;
@@ -583,13 +583,13 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
 
     // Matrix slot + matrix select (u16 at +0x0E indexes lbl_eu_806581C8,
     // zero selects the fixed lbl_eu_806583E0 table).
     u16 e = *(u16*)&h->field_0xE;
-    func_804683D0__Q23LOD17UnkClass_80466348Fv((e + 1) * 3);
+    setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv((e + 1) * 3);
 
     const nw4r::math::MTX34* mtx;
     if (e != 0) {
@@ -664,13 +664,13 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 }
 
 // ===========================================================================
-// us-8046dffc  func_8046A02C  (record-A visibility cull)
+// us-8046dffc  cullLodRecordA  (record-A visibility cull)
 // When the object's distance-cull flag (u16@0x16 bit 1) is set, the range
 // [u16@0x2 * 60, u16@0x4 * 60] is tested against the shared LOD distance
 // limit and *out is set on a hit; when the flag is clear the record is always
 // visible (*out = 1).  Returns the render-record pointer at this+0x24.
 // ===========================================================================
-u8* func_8046A02C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
+u8* cullLodRecordA__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u8* result = &self->records[0].field_0x24;
     if ((self->records[0].field_0x16 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x2 * 0x3c,
@@ -684,10 +684,10 @@ u8* func_8046A02C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out)
 }
 
 // ===========================================================================
-// us-8046e074  func_8046A0A4  (record-B visibility cull)
-// Same shape as func_8046A02C; returns the render-record pointer at this+0x58.
+// us-8046e074  cullLodRecordB  (record-B visibility cull)
+// Same shape as cullLodRecordA; returns the render-record pointer at this+0x58.
 // ===========================================================================
-u8* func_8046A0A4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
+u8* cullLodRecordB__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u8* result = &self->records[2].field_0x0;
     if ((self->records[0].field_0x16 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x2 * 0x3c,
@@ -701,13 +701,13 @@ u8* func_8046A0A4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out)
 }
 
 // ===========================================================================
-// us-8046e0ec  func_8046A11C  (per-record visibility cull)
+// us-8046e0ec  cullLodEntry  (per-record visibility cull)
 // The record index (u16@0x2) selects an entry of the 0x2C-byte record array;
 // when the record-level cull flag (u8@0x1 bit 1) is set the range
 // [u16@0x8 * 60, u16@0xA * 60] is tested against the LOD distance limit.
 // Returns the render-record pointer at record+0x1C.
 // ===========================================================================
-u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
+u16* cullLodEntry__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u16* result = (u16*)((u32)self + (self->records[0].field_0x2 * 0x2c + 0x1c));
     if ((self->records[0].field_0x1 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x8 * 0x3c,
@@ -721,11 +721,11 @@ u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 }
 
 // ===========================================================================
-// us-8046e170  func_8046A1A0  (second per-record visibility cull)
-// Same shape as func_8046A11C; returns the render-record pointer at
+// us-8046e170  cullLodEntryAlt  (second per-record visibility cull)
+// Same shape as cullLodEntry; returns the render-record pointer at
 // record+0x48 (the next record's +0x1C).
 // ===========================================================================
-u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
+u16* cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     // record = this + idx * 0x2C; return &record->field_0x1C + 0x2C (the next
     // record's view).  Parenthesised (scaled + 0x48) unit keeps the scaled
     // value as the add's first operand (retail: add r5, r5, r3).
@@ -742,7 +742,7 @@ u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 }
 
 // ===========================================================================
-// us-8046e1f4  func_8046A224  (spawn-position copy)
+// us-8046e1f4  copySpawnPos  (spawn-position copy)
 // Retail is a nofralloc paired-single kernel: it loads the spawn bias/table/
 // spread globals, computes a dead dir*scale value, then stores in.x -> out.x
 // and in.z -> out.z (the earlier psq_st results at out+0/out+8 are
@@ -753,11 +753,11 @@ u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 #include "monolib/lod/code_80468434_ps.inl"
 
 // ===========================================================================
-// us-8046e250  func_8046A280  (spawn-position transform + copy)
+// us-8046e250  transformSpawnPos  (spawn-position transform + copy)
 // Transforms vec[0] and vec[3] in place by the matrix stored at +0x174 of the
 // matrix record selected by bit 2 of (idx + bias), then copies src into self.
 // ===========================================================================
-void func_8046A280__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
+void transformSpawnPos__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
                                                 const Vec* src, s32 idx) {
     u8* record = (u8*)lbl_eu_806657AC + ((idx + lbl_eu_806657A0) & 4) * 0xb4;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[0],
@@ -776,11 +776,11 @@ void func_8046A280__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
 }
 
 // ===========================================================================
-// us-8046e2e8  func_8046A318  (spawn-position transform + copy, record +8)
-// Same shape as func_8046A280 but transforms vec[1]/vec[2] using matrix record
+// us-8046e2e8  transformSpawnPosAlt  (spawn-position transform + copy, record +8)
+// Same shape as transformSpawnPos but transforms vec[1]/vec[2] using matrix record
 // ((idx + bias) & 4) + 8.
 // ===========================================================================
-void func_8046A318__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
+void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
                                                 const Vec* src, s32 idx) {
     u8* record = (u8*)lbl_eu_806657AC + (((idx + lbl_eu_806657A0) & 4) + 8) * 0xb4;
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[1],
@@ -799,13 +799,13 @@ void func_8046A318__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
 }
 
 // ===========================================================================
-// us-8046c8fc  func_8046892C  (record dispatch loop)
+// us-8046c8fc  dispatchLodRecords  (record dispatch loop)
 // Stores the object pointer, reads the count at u16[self + idx*2 + 6], then
 // walks the byte stream at self + u32[self + idx*4 + 0x1C]: each byte selects
 // a render function from lbl_eu_8056D998 which is called with (p, &flag) and
 // whose return value becomes the next pointer.  Returns the flag byte.
 // ===========================================================================
-s32 func_8046892C__Q23LOD17UnkClass_80468434Fv(u8* self) {
+s32 dispatchLodRecords__Q23LOD17UnkClass_80468434Fv(u8* self) {
     lbl_eu_8066576C = self;
     s32 n = *(u16*)(self + lbl_eu_80665794 * 2 + 6);
     if (n != 0) {
@@ -820,12 +820,12 @@ s32 func_8046892C__Q23LOD17UnkClass_80468434Fv(u8* self) {
 }
 
 // ===========================================================================
-// us-8046c9a4  func_804689D4  (per-object visibility + render)
+// us-8046c9a4  renderLodBatch  (per-object visibility + render)
 // When the visibility mask (lbl_eu_8066A5F0) has bit 1 of the u16 flag set,
 // the distance/fade helpers gate an early return of self+0x24; otherwise the
 // record's display list is submitted.  Bit 7 gates a group fade check.
 // ===========================================================================
-u8* func_804689D4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
+u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     u8* result = &self->records[0].field_0x24;
     if ((self->records[0].field_0x16 & lbl_eu_8066A5F0) != 0) {
         if ((self->records[0].field_0x16 & 2) != 0) {
@@ -836,7 +836,7 @@ u8* func_804689D4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                 return result;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(self->records[0].field_0x16) != 0) {
             return result;
@@ -848,24 +848,24 @@ u8* func_804689D4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
     func_80465314(self->records[0].field_0x8);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
-    func_804683D0__Q23LOD17UnkClass_80466348Fv(self->records[0].field_0x14 + 3);
+    setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(self->records[0].field_0x14 + 3);
     GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
                       self->records[0].field_0x10);
     return result;
 }
 
 // ===========================================================================
-// us-8046caa0  func_80468AD0  (per-object visibility + render, record 2)
-// Same guard chain as func_804689D4 but returns self+0x58, uses the fade
+// us-8046caa0  renderLodBatchAlt  (per-object visibility + render, record 2)
+// Same guard chain as renderLodBatch but returns self+0x58, uses the fade
 // group ids at records[1].field_0x20/0x22, uploads the matrix at self+0x1C
 // from bytes at self+0x18/0x19, and resets the cached-matrix sentinel
 // (lbl_eu_80665818) to -1 after submitting the display list.
 // ===========================================================================
-u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
+u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     u8* result = &self->records[2].field_0x0;
     if ((self->records[0].field_0x16 & lbl_eu_8066A5F0) != 0) {
         if ((self->records[0].field_0x16 & 2) != 0) {
@@ -876,7 +876,7 @@ u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
                 return result;
             }
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         if (func_80464128(self->records[0].field_0x16) != 0) {
             return result;
@@ -888,7 +888,7 @@ u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
             }
         }
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
     func_80463C24((s32)self->records[0].field_0x18 >> 1,
                   self->records[0].field_0x19,
@@ -912,37 +912,37 @@ u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 // __declspec(align(8)) matches the retail .data section alignment.
 namespace Blob34 {
 extern "C" {
-void func_804689D4__Q23LOD17UnkClass_80468434Fv();
+void renderLodBatch__Q23LOD17UnkClass_80468434Fv();
 void func_80468BDC__Q23LOD17UnkClass_80468434Fv();
 void func_80469138__Q23LOD17UnkClass_80468434Fv();
-void func_80468AD0__Q23LOD17UnkClass_80468434Fv();
+void renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv();
 void func_80469620__Q23LOD17UnkClass_80468434Fv();
 void func_80469B5C__Q23LOD17UnkClass_80468434Fv();
-void func_8046A02C__Q23LOD17UnkClass_80468434Fv();
-void func_8046A11C__Q23LOD17UnkClass_80468434Fv();
-void func_8046A0A4__Q23LOD17UnkClass_80468434Fv();
-void func_8046A1A0__Q23LOD17UnkClass_80468434Fv();
-void func_8046A224__Q23LOD17UnkClass_80468434Fv();
-void func_8046A280__Q23LOD17UnkClass_80468434Fv();
-void func_8046A318__Q23LOD17UnkClass_80468434Fv();
+void cullLodRecordA__Q23LOD17UnkClass_80468434Fv();
+void cullLodEntry__Q23LOD17UnkClass_80468434Fv();
+void cullLodRecordB__Q23LOD17UnkClass_80468434Fv();
+void cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv();
+void copySpawnPos__Q23LOD17UnkClass_80468434Fv();
+void transformSpawnPos__Q23LOD17UnkClass_80468434Fv();
+void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv();
 }
 }
 extern "C" __declspec(align(8)) u32 lbl_eu_8056D980[16] = {
-    (u32)&Blob34::func_804689D4__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::renderLodBatch__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::func_80468BDC__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::func_80469138__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_80468AD0__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::func_80469620__Q23LOD17UnkClass_80468434Fv,
     (u32)&Blob34::func_80469B5C__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A02C__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A11C__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A11C__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A0A4__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A1A0__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A1A0__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A224__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A280__Q23LOD17UnkClass_80468434Fv,
-    (u32)&Blob34::func_8046A318__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodRecordA__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodEntry__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodRecordB__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::copySpawnPos__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::transformSpawnPos__Q23LOD17UnkClass_80468434Fv,
+    (u32)&Blob34::transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv,
     0x00000000,
 };
 

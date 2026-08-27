@@ -24,8 +24,8 @@ public:
 
 class UnkClass_805764CC{
 public:
-    static UnkClass_805764CC* func_800B07E8();
-    void func_800B8804(cf::IFactoryEvent*);
+    static UnkClass_805764CC* getInstance();
+    void registerFactoryEvent(cf::IFactoryEvent*);
     void func_800B88E0(cf::IFactoryEvent*);
 
     reslist<cf::CfObject*> mObjList1; //0x00

@@ -266,7 +266,7 @@ void func_80235958(CArtsInfo* self, void* drawInfo) {
 // func_802359CC - cleanup
 // .text:0x2C4, size 0xC4
 __declspec(noinline) void func_802359CC(CArtsInfo* self) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
 
     func_801390E0__FPP11CFileHandle(&self->field_0x14);
     func_801390E0__FPP11CFileHandle(&self->field_0x18);
@@ -296,7 +296,7 @@ __declspec(noinline) void func_802359CC(CArtsInfo* self) {
     ((CArtsInfoCurView*)self->mCursor)->vf03();
 
     // Cleanup memory region
-    func_8045F778__17UnkClass_8045F564Fv(&self->mMemRegion);
+    deleteRegion__17UnkClass_8045F564Fv(&self->mMemRegion);
 }
 
 // func_80235A90 - get field_0x48
@@ -2505,7 +2505,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         // never caches it in a saved register).
         CFileHandle* fh = (CFileHandle*)field_0x14;
         void* arcData = fh->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_0x1C = (int)createArcResourceAccessor__10CLibLayoutFv();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
 
@@ -2516,7 +2516,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         func_80136F08(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
 
         nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
-        void* fontObj1 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
+        void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
         func_8013676C(root1, reinterpret_cast<CArtsFontView*>(fontObj1)->sf9());
 
         char* lang = func_801355BC();
@@ -2553,7 +2553,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         // Message-detail textbox: pane name depends on the CFGameManager
         // query result.
-        const char* detailPane = (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0)
+        const char* detailPane = (isClassicController__Q22cf13CfGameManagerFv(-1) == 0)
                                      ? &lbl_eu_8050B00C[970]
                                      : &lbl_eu_8050B00C[961];
         // Retail masks the lookup result to its low half and feeds it through
@@ -2580,7 +2580,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         func_80136F08(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
         func_80136F08(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x3DD]);
 
-        void* fontObj2 = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
+        void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
         func_8013676C(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
                       reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
 

@@ -60,12 +60,12 @@ extern "C" {
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 extern void* cacheInstance__9CDeviceGX;
-int func_8044BE24__8CGXCacheFv(void*);
-s16* func_8044BE1C__8CGXCacheFv(void*);
+int getAdjustFlag__8CGXCacheFv(void*);
+s16* getSubRectPtr__8CGXCacheFv(void*);
 
 extern void* lbl_eu_80664860;
 extern nw4r::ut::TagProcessorBase<wchar_t>* lbl_eu_8066486C;
-const nw4r::ut::Font* func_80449160__10CFontLayerFv(void*, int);
+const nw4r::ut::Font* setupDraw__10CFontLayerFv(void*, int);
 
 extern char lbl_eu_805377CC[];
 extern char lbl_eu_80537798[];
@@ -1605,7 +1605,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     GXLoadPosMtxImm(identity, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 
-    if (!func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX)) {
+    if (!getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX)) {
         f32 width = static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         f32 height = static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         C_MTXOrtho(projection, lbl_eu_806688D0, height,
@@ -1617,7 +1617,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         s16 cacheWidth = cache->width;
         f32 renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
-        s16* rect = func_8044BE1C__8CGXCacheFv(cache);
+        s16* rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatio = static_cast<f32>(rect[2]) / renderWidth;
         f32 right = static_cast<f32>(cacheWidth) * rectRatio;
 
@@ -1626,14 +1626,14 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         cacheWidth = cache->width;
         renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatioLeft = static_cast<f32>(rect[0]) / renderWidth;
         f32 left = static_cast<f32>(cacheWidth) * rectRatioLeft;
 
         s16 cacheHeight = cache->height;
         f32 renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatioBottom = static_cast<f32>(rect[3]) / renderHeight;
         f32 bottom = static_cast<f32>(cacheHeight) * rectRatioBottom;
 
@@ -1642,7 +1642,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         cacheHeight = cache->height;
         renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatioTop = static_cast<f32>(rect[1]) / renderHeight;
         f32 top = static_cast<f32>(cacheHeight) * rectRatioTop;
 
@@ -1660,7 +1660,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     setScaleChecked(&writer, lbl_eu_806688D8, lbl_eu_806688DC);
     setCharSpaceChecked(&writer, lbl_eu_806688D0);
 
-    const nw4r::ut::Font* font = func_80449160__10CFontLayerFv(
+    const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, font);
     validateTextColorPointer(&writer);

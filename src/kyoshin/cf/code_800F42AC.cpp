@@ -28,7 +28,7 @@ float func_800F42AC(ScMain* self) {
     if (self->sub == NULL)
         return lbl_eu_80666E90;
 
-    cf::Sc48778* node = (cf::Sc48778*)func_8016FE34((void*)func_800B708C__Fi((int)self->field_00));
+    cf::Sc48778* node = (cf::Sc48778*)func_8016FE34((void*)findObjectById__Fi((int)self->field_00));
     if (func_80148778(node->data_08, 0x10) != 0) {
         cf::Sc149154Ret* obj = (cf::Sc149154Ret*)func_80149154(node->data_08, 0x10);
         double round;
@@ -42,7 +42,7 @@ float func_800F42AC(ScMain* self) {
         return (f32)((s32)((double)sum + round));
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000))
+    if (isGlobalCamFlagSet__Fi(0x04000000))
         return roundf_to_f32(self->field_830);
     return roundf_to_f32(self->sub->field_7C);
 }
@@ -54,7 +54,7 @@ float func_800F4424(ScMain* self) {
     if (self->flags_824 & 0x100000)
         return lbl_eu_80666E90;
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000))
+    if (isGlobalCamFlagSet__Fi(0x04000000))
         return lbl_eu_80666EB0;
     if (self->sub == 0)
         return lbl_eu_80666E90;

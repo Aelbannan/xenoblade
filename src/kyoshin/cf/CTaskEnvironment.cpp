@@ -323,11 +323,11 @@ void CTaskEnvironment::Move() {
     CTaskEnvTime* time = reinterpret_cast<CTaskEnvTime*>(this);
     u8* tbl = reinterpret_cast<u8*>(lbl_eu_80570830);
     u16 hourArg, minuteArg;
-    if (func_8007E1B4__Q22cf13CfGameManagerFv() != 0) {
+    if (isManagerInitialized__Q22cf13CfGameManagerFv() != 0) {
         // Live clock from the game manager: (hour, minute) out-params plus a
         // truncated seconds word.
-        func_80086D98__Q22cf13CfGameManagerFv(&hourArg, &minuteArg);
-        u32 secArg = func_80086DA8__Q22cf13CfGameManagerFv();
+        getControllerValues__Q22cf13CfGameManagerFv(&hourArg, &minuteArg);
+        u32 secArg = getControllerWordA3BC__Q22cf13CfGameManagerFv();
         func_800599E0(time, hourArg, minuteArg, secArg & 0xFFFF);
     } else if (field_0x58 == 0) {
         float delta = lbl_eu_80665FCC * func_80496288(mScene);

@@ -24,7 +24,7 @@ struct CREvtModelMapNameInfo {
 // (two hidden typeinfo slots), so declaring v08() first and counting up in
 // steps of 4 makes slot N land at vtable offset N (MWCC_CASES r12).
 
-// Game-manager core object returned by cf::CfGameManager::func_80083298().
+// Game-manager core object returned by cf::CfGameManager::getGameSubManager().
 class CGameMgrCoreIf {
 public:
     virtual void v08();
@@ -244,7 +244,7 @@ struct CEmoteModelObj {
 };
 
 // Guest-flag word at +0x100 of the game-manager core object returned by
-// cf::CfGameManager::func_80083298().
+// cf::CfGameManager::getGameSubManager().
 struct CGameMgrCoreFlagsIf {
     u8 _pad[0x100];
     u32 field_100;   // +0x100

@@ -155,7 +155,7 @@ public:
 class CScnItemPool {
 public:
     void update();
-    void func_8048CEDC();
+    void updateItemD0();
 };
 
 class CScnEnvLgtCtrl;

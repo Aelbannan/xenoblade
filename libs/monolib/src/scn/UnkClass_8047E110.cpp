@@ -158,7 +158,7 @@ extern "C" void sinit_80481E68() {}
 // lwzu @l at first use instead of an eager addi.
 extern const u32 __ptmf_null[3];
 
-extern "C" void func_8047E110__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" void init__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     WalkSpawnDesc* desc) {
     // null member-pointer slot: triplet copy; elem0 through a temp stored
     // late (retail keeps it across the [4]-slot store), elem1/elem2 direct
@@ -371,7 +371,7 @@ gEnd:
 // (retail Fv mangling; signatures recovered from caller register setup).
 // func_8047E62C -- two-stage segment solve: E1B0 (point-in-box) then E390
 // (neighbour search with clearance); both results stored, 1 on success.
-extern "C" s32 func_8047E62C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32* outSeg,
+extern "C" s32 findNode__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32* outSeg,
     u32* outNode, const ml::CVec3* pos, f32 clearance) {
     s32 seg = ::func_8047E1B0__17UnkClass_8047E110Fv(self, pos);
     *outSeg = seg;
@@ -1414,7 +1414,7 @@ crossingAccepted:
 }
 
 // func_80480EF0 -- scan a node's neighbour list for `value` (direct edge test).
-extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, s32 value) {
+extern "C" s32 hasNeighbor__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, s32 value) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     u16* edges = m.edges;
     s32 count = edges[m.nodes[nodeIndex].edgeOffset];
@@ -1429,7 +1429,7 @@ extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32
 // func_80480F48 -- compare two stride-10 records against `value`: locate which
 // endpoint slot (+4/+6) of record A holds it, likewise for record B, then
 // report whether the two slots' paired ids (+0/+2) agree.
-extern "C" bool func_80480F48__17UnkClass_8047E110Fv(UnkClass_8047E110* self, s32 value,
+extern "C" bool compareRecords__17UnkClass_8047E110Fv(UnkClass_8047E110* self, s32 value,
     s32 idxA, s32 idxB) {
     const u16* recs = (const u16*)self->field_0xC;
     const u16* lo = recs + 2; // +4 endpoint slots
@@ -1466,7 +1466,7 @@ extern "C" bool func_80480F48__17UnkClass_8047E110Fv(UnkClass_8047E110* self, s3
 // func_80481014 -- activate/clear the walk box: a==b==0 clears it (flag bit 0
 // off); otherwise write the clearance pair, position words and set the flag.
 // Either way, advance the accumulated distance by `c`.
-extern "C" void func_80481014__17UnkClass_8047E110Fv(UnkClass_8047E110* self, f32 a, f32 b, const ScnVecWords* v, f32 c) {
+extern "C" void setWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self, f32 a, f32 b, const ScnVecWords* v, f32 c) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     if (a == lbl_eu_8066A8AC) {
         if (b == lbl_eu_8066A8AC)
@@ -1549,7 +1549,7 @@ extern "C" s32 func_80481074__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // func_804812D8 -- point-in-node test against the active walk box: the node
 // cell (expanded one cell up/right) must overlap the box horizontally and in z,
 // and the node plane must be within vertical clearance of the box floor.
-extern "C" bool func_804812D8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     // branch-forward shape: beq takes the check body, fall-through returns 0
@@ -1576,7 +1576,7 @@ fail:
 // func_804813E8 -- point-in-node test around the reference point kept at
 // 0x54/0x58/0x5C: the point must lie inside the node cell expanded by one cell
 // on every side and within vertical clearance of the node plane.
-extern "C" bool func_804813E8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     if (!(scaleNodeCoord(node->x) <= m.field_0x54))
@@ -1637,7 +1637,7 @@ extern "C" void func_804814DC__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // func_8048163C -- build the walk box (half-size lbl_eu_8066A890) around `v`
 // into 0x48-0x5C, reset the 0x90 counter and refresh the reference block at
 // 0x9C from the data global.
-extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* v) {
+extern "C" void setWalkBoxCenter__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* v) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     m.field_0x90 = 0;
     m.field_0x4C = v->y;
@@ -1660,7 +1660,7 @@ extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, co
 // x/z portal threshold scales start at 1.0 and fall back to the cross-axis
 // ratios z/x and x/z whenever the corresponding direction axis isn't 1.0,
 // the visit counter clears and the reference block at 0x9C reloads.
-extern "C" void func_8048169C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" void setWalkBoxBounds__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* cornerMin, const ml::CVec3* cornerMax) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     m.field_0x90 = 0;
@@ -1765,7 +1765,7 @@ extern "C" s32 func_80481790__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 
 // func_804819AC -- test bit 1 of the node flag word (offset 0x8); the walker
 // skips nodes whose closed/blocked bit is set.
-extern "C" s32 func_804819AC__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex) {
+extern "C" s32 isNodeBlocked__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     return (m.nodes[nodeIndex].reserved8 & 2) != 0;
 }
@@ -1862,9 +1862,9 @@ extern "C" s32 func_804819C4__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
 // functions defined above (retail Fv mangling); the remaining slots are
 // foreign functions/locators.
 // (func_80481074__17UnkClass_8047E110Fv declared/defined above)
-extern "C" bool func_804812D8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool isNodeInWalkBox__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node);
-extern "C" bool func_804813E8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
+extern "C" bool isNodeAtPosition__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ScnWalkNode* node);
 extern "C" void __dt__18CScnItemCameraNw4rFv();
 extern "C" void func_8049F9A4();
@@ -1885,9 +1885,9 @@ extern "C" u32 lbl_eu_8056DC68[3] = {
 // func_8048163C). Defined as the ScnPtmf struct so the field copy compiles.
 // NOTE: declared AFTER lbl_eu_8056DC68 so MWCC emits the .data symbols in
 // retail offset order (definition order = section order for .data).
-ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&func_804812D8__17UnkClass_8047E110Fv };
+ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&isNodeInWalkBox__17UnkClass_8047E110Fv };
 extern "C" u32 lbl_eu_8056DC80[4] = {
-    0x00000000, 0xFFFFFFFF, (u32)&func_804813E8__17UnkClass_8047E110Fv,
+    0x00000000, 0xFFFFFFFF, (u32)&isNodeAtPosition__17UnkClass_8047E110Fv,
     0x00000000,
 };
 extern "C" u32 lbl_eu_8056DC90[10] = {

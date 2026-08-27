@@ -127,13 +127,13 @@ extern "C" void cbRenderBefore__11CScnFadeManFv(const CScnFadeMan* self) {
     if (fadeZero == self->mCurrentColor.a) {
         return;
     }
-    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
     CViewRoot::getInstance();
-    CViewRoot::func_80442DA8();
+    CViewRoot::updateViewRoot();
     {
         CDrawGX draw;
-        draw.func_80456570(0);
-        draw.func_8045657C(0);
+        draw.setZCompare(0);
+        draw.setZWriteEnable(0);
         draw.setCol(self->mCurrentColor);
         draw.begin(0x9, 0x1);
         ml::CRect rect;

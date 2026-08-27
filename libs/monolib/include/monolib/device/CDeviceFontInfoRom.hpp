@@ -27,16 +27,16 @@ public:
     // FULL_MATCH: Returns a pointer to the embedded RomFont (const).
     const nw4r::ut::RomFont* getRomFont() const { return &mRomFont; }
 
-    const char* func_804536DC(const char* str, void** texOut, u32* xOut,
+    const char* getFontTexture(const char* str, void** texOut, u32* xOut,
                               u32* yOut, u32* widthOut);
-    void func_8045378C();   // state machine step
-    void func_804537A8();   // state check
-    int func_804537C0();    // returns (mState != 0)
-    int func_804537D4();   // state comparison
-    u16 func_80453800();    // returns mFontInfo->cellHeight
-    u16 func_8045380C();    // returns mFontInfo->sheetFormat
-    u16 func_80453818();    // returns mFontInfo->sheetHeight
-    u16 func_80453824();    // returns mFontInfo->sheetWidth
+    void advanceState();   // state machine step
+    void initState();   // state check
+    int isStateNonZero();    // returns (mState != 0)
+    int isStateReady();   // state comparison
+    u16 getCellHeight();    // returns mFontInfo->cellHeight
+    u16 getSheetFormat();    // returns mFontInfo->sheetFormat
+    u16 getSheetHeight();    // returns mFontInfo->sheetHeight
+    u16 getSheetWidth();    // returns mFontInfo->sheetWidth
 
     // 0x00-0x13: CDeviceFontInfo base class
     nw4r::ut::RomFont mRomFont;  // 0x14 - embedded ROM font instance

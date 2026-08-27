@@ -45,7 +45,7 @@ struct MenuEnemyPanel {
 // 4 packed shorts returned in r3:r4 by func_801397AC.
 struct FourShorts { s16 a, b, c, d; };
 
-// Abstract view of the object returned by CDeviceFont::func_80452C10; the
+// Abstract view of the object returned by CDeviceFont::getFontInfo; the
 // 10th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
 // All-pure, never constructed directly (no vtable is emitted).
 class MenuFontView {
@@ -302,7 +302,7 @@ extern "C" void* func_801984F0(void* a, u32 idx);
 extern "C" void func_80139AC8(void* a, void* b, void* c);
 extern "C" void* func_800B8A64(void);
 int sprintf(char*, const char*, ...);
-// func_800AD860__FPv: C++ linkage (MWCC re-derives the retail mangled name).
+// getEffOwner____FPv: C++ linkage (MWCC re-derives the retail mangled name).
 void* func_800AD860(void* obj);
 
 // Retail .sdata singleton (created by func_801109D8, cleared by Term).

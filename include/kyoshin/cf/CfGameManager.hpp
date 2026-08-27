@@ -144,18 +144,18 @@ namespace cf{
 
         static void func_80086B5C(int arg1, int arg2, int arg3);
         static void enablePadFlags(u32 enableFlags, bool enable);
-        static bool func_8007E1B4();
-        static void func_8007E218();
+        static bool isManagerInitialized();
+        static void teardownGameManager();
         static void func_8007E514(int, int, char const*, int, int);
-        static void func_8007F930(bool arg1);
-        static UNKWORD func_800822F4();
-        static bool func_800829B8();
+        static void setPauseMode(bool arg1);
+        static UNKWORD getQueuedFileEventCount();
+        static bool isSceneLoading();
         static u32 getCurrentPadChannel();
-        static UnkClass_80083298* func_80083298();
+        static UnkClass_80083298* getGameSubManager();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C();
-        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static bool isClassicController();
+        static bool isClassicController(s16) { return isClassicController(); }
         static void setCurrentPadPtr(const CPad* pad, u32 channel);
         static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
@@ -194,7 +194,7 @@ namespace cf{
         u8 unk80[0x86 - 0x80];
         u16 field_0x86;
         // Signed halfwords: func_800853C8 reads them with lha (reset-to -1
-        // sentinel), func_80085E58 writes them through u16 casts.
+        // sentinel), loadFieldPartyState writes them through u16 casts.
         s16 field_0x88;
         s16 field_0x8A;
         s32 unk8C;
@@ -217,288 +217,288 @@ namespace cf{
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
 public:
-    void func_8007C0F8();
-    void func_8007C140();
-    void func_8007C188(unsigned long flags);
+    void clearBdatTextEntries();
+    void resetGameFlags();
+    void enableGameFlag(unsigned long flags);
     void func_8007C198();
-    void func_8007C2F4();
-    void func_8007C344();
-    void func_8007C360();
+    void writeBdatTextEntry();
+    void queueBdatTextA();
+    void queueBdatTextB();
     void func_8007C374();
-    void* func_8007C4B4();
+    void* getSelf();
     ~CfGameManager();
-    void func_8007C5B8();
-    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void resetManagerState();
+    cf::CfObjectMove** getPlayerSlotPtr(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
     void* func_8007C8C8();
-    bool func_8007CBC8();
+    bool isGameFlagEnabled();
     void func_8007CBEC();
-    void func_8007CDA8();
-    void func_8007CE94();
+    void updateCameraState();
+    void updatePresentationTick();
     void func_8007CF64() const;
-    void func_8007D190(unsigned long flags);
+    void disableGameFlag(unsigned long flags);
     void func_8007D1A0();
-    void func_8007D794();
-    void func_8007D7A4();
-    void func_8007D834();
+    void clearTempTextBuffer();
+    void prepareTextBuffer();
+    void notifyObjectMapChange();
     void func_8007D84C();
-    void* func_8007DA00();
-    void func_8007DA0C();
+    void* getResetDataPtr();
+    void loadBdatTableCache();
     void func_8007DCB8();
-    void func_8007DE94();
-    void func_8007DECC();
-    u16 func_8007E030();
-    void func_8007E038();
-    CfObject** func_8007E0C8();
-    void func_8007E0D0();
-    void func_8007E4DC();
-    void func_8007E864();
-    void func_8007E908();
-    void func_8007E960();
+    void getBdatEntryColumn();
+    void syncBdatDataCache();
+    u16 getField18Value();
+    void syncFieldData();
+    CfObject** getField04Ptr();
+    void recoverFieldState();
+    void fadeOutGameEffects();
+    void loadPlayerResources();
+    void initParticleSystem();
+    void getBdatIndexMapping();
     void func_8007E9CC();
-    void func_8007EEF0();
-    u32 func_8007EEF8();
-    void func_8007EF04();
-    void func_8007EF44();
-    void func_8007EF48();
-    void func_8007EF4C();
-    void func_8007F054();
-    void func_8007F0A4();
-    void func_8007F0C4();
-    void func_8007F114();
-    void func_8007F11C();
+    void loadBdatGroupData();
+    u32 getPackedResourceBits();
+    void getItemCountForGroup();
+    void stubEmptyA();
+    void stubEmptyB();
+    void resetItemGroupState();
+    void getItemSlotData();
+    void getNullPtrA();
+    void resetItemSlotA();
+    void getNullPtrB();
+    void syncItemGroups();
     void func_8007F1FC();
-    void func_8007F830();
-    u16 func_8007F8B8();
-    void** func_8007F8D0();
-    void func_8007F8DC();
-    void func_8007F8F4();
-    bool func_8007F91C();
-    void func_8007F990();
-    void func_8007F9AC();
-    void func_8007F9B4();
-    void func_8007F9BC();
+    void setupBattleCamera();
+    u16 getItemId();
+    void** getObjectNodePtr();
+    void linkItemNode();
+    void checkFlagEquality();
+    bool isTimerActive();
+    void togglePauseFlag();
+    void getEventCounterA();
+    void setEventCounterA();
+    void getGlobalFlag34();
     void func_8007F9C4();
-    void func_8007FBFC();
-    void func_8007FC2C();
-    void func_8007FC5C();
-    void func_8007FD00();
-    void func_8007FD8C();
-    void func_8007FE18();
-    void func_8007FE1C();
-    void func_8007FE20();
-    void func_8007FE24();
-    void func_8007FE2C();
-    void func_8007FECC();
+    void refreshCameraIfCurrentView();
+    void resetCameraIfCurrentView();
+    void queueCameraRequest();
+    void checkAvailableValue();
+    void processBattleQueue();
+    void stubEmptyC();
+    void stubEmptyD();
+    void stubEmptyE();
+    void getNullPtrC();
+    void processEffectList();
+    void processEventList();
     void func_8007FF6C();
     void func_8008064C();
-    void func_800807BC();
+    void spawnPartyActor();
     void func_80080888();
-    u8 func_80080E20();
-    u8 func_80080E28();
-    void func_80080E30();
-    void func_80080E44();
-    void func_80080EE4();
-    void func_80080F40();
-    void func_80080F44();
+    u8 getVoiceFlag5D();
+    u8 getVoiceFlag6D();
+    void clearObjectMask();
+    void loadMapObjectByName();
+    void attachObjectText();
+    void lookupResourceByKeys();
+    void clearPlayerEffect();
     void func_80080F48();
-    void func_80081258();
-    void func_80081264();
-    void func_8008126C();
-    void func_80081274();
-    void func_8008127C();
-    void func_80081284();
-    void func_8008128C();
-    void func_80081294();
-    void func_8008129C();
-    void func_800812A4();
-    void func_800812AC();
-    void func_800812B4();
-    void func_800812BC();
-    void func_800812C4();
-    void func_800812CC();
-    void func_800812D4();
-    void func_800812DC();
-    void func_800812E4();
-    void func_800812EC();
-    void func_800812F4();
-    void func_80081318();
-    void func_80081330();
-    void func_80081338();
-    void func_80081340();
-    void func_80081348();
-    void func_80081350();
-    void func_80081358();
-    void func_80081694();
-    Unk817A8Object* func_800817A8();
-    bool func_800817B0();
-    void func_800817BC();
-    void func_80081874();
-    void func_8008187C();
-    void func_80081900();
-    void func_80081988();
-    void func_80081990();
-    void func_80081A24();
+    void clearResourceStack();
+    void setResourceField04();
+    void getBdatTextId0();
+    void setResourceField08();
+    void getBdatTextId1();
+    void setResourceField10();
+    void getBdatTextId2();
+    void setResourceField0C();
+    void getBdatTextId3();
+    void setResourceField14();
+    void getBdatTextId4();
+    void getResourceField0E();
+    void getResourceWord10();
+    void getResourceWord12();
+    void getResourceWord14();
+    void getResourceWord16();
+    void getBdatTextId5();
+    void getResourceField0C_2();
+    void setResourceField24();
+    void setResourceField00();
+    void packThreeFieldIds();
+    void setResourceField18();
+    void setResourceField20();
+    void setResourceField22();
+    void setResourceField1C();
+    void setResourceField1E();
+    void createMapObjectInstance();
+    void createPlayerEffectInstance();
+    Unk817A8Object* getManagerObjectA8();
+    bool isManagerFlag82C();
+    void createBattleActor();
+    void setObjectFlags64();
+    void createNpcActor();
+    void createEffectForPlayer();
+    void setObjectFieldA8();
+    void createItemObjectWrapper();
+    void createItemFromBdatId();
     void func_80081A40();
-    void func_80081CB0();
-    static void* func_80081CB8();
-    void func_80081CBC();
-    void func_80081D2C();
-    void func_80081D8C();
-    void func_80081DD8();
-    void func_80081E90();
-    void func_80081F28();
-    void func_80081F90();
-    void func_80082008();
-    void func_80082060();
-    void func_80082088();
-    bool func_80082104();
-    void func_8008212C();
-    UnkClass_800821F8* func_800821F8();
-    CfObject* func_8008221C();
-    void func_80082254();
-    void func_80082258();
-    void func_8008228C();
-    void func_800822FC();
-    void func_80082354();
-    void func_8008235C();
-    void func_800823A4();
-    void func_80082418();
-    void func_800824FC();
-    void func_80082544();
-    void func_80082568();
-    void func_80082614();
-    void func_8008261C();
-    bool func_80082680();
-    void func_80082694();
-    void func_8008269C();
-    void func_800826F0();
-    void func_80082768();
+    void setObjectItemId();
+    static void* createBdatCollisionObj();
+    void getOrCreateBdatObj();
+    void isObjectFlagSet();
+    void assignCameraTarget();
+    void maybeCreateCameraMember();
+    void lookupEffectForResource();
+    void createBattleEffect();
+    void updateBattleEffectState();
+    void notifyBattleSystem();
+    void notifyCameraManager();
+    void isEffectReady();
+    bool isCameraReady();
+    void getCamManagerData();
+    UnkClass_800821F8* getCameraDataBlock();
+    CfObject* getActiveCameraObject();
+    void resetFieldState();
+    void syncFieldAndBattle();
+    void isFieldDataReady();
+    void clearQueuedEvents();
+    void getResourceFromTable();
+    void isResourceFlagSet();
+    void setResourceFlag();
+    void getTableIndexForPair();
+    void getTableValueByPair();
+    void clampValueToRange();
+    void addTableValueWithClamp();
+    void isEventFlagActive();
+    void setEventFlag();
+    bool isAllEventsDone();
+    void getEventValue40();
+    void setEventManagerValue();
+    void queueEventId();
+    void getEventQueueCount();
     u16 func_80082770();
-    void func_800827A8();
-    void func_800827E4();
-    void func_80082834();
-    u32 func_800828DC();
-    u32 func_80082900();
-    void func_80082940();
-    void func_8008294C();
-    void func_80082A0C();
-    void func_80082A7C();
-    void func_80082B38();
+    void pushEventQueue();
+    void flushEventQueue();
+    void drainEventQueue();
+    u32 getMapEffectManager();
+    u32 getEffectFlagState();
+    void linkEffectObjects();
+    void setPresentationFlag();
+    void resetBattleGauge();
+    void syncBattleState();
+    void processFieldEffects();
     void func_80082C48();
-    void func_80082D90();
-    void func_80082E50();
-    void func_80082EC0();
-    void func_80082EC4();
-    void func_80082F2C();
-    void func_80082FE4();
-    u32 func_80083100();
-    u32 func_8008310C();
+    void getPlayerContainerForCam();
+    void updatePlayerCameraLink();
+    void cleanupPlayerEffectList();
+    void isEffectListEmpty();
+    void isPlayerReadyForEvent();
+    void isPlayerInEventRange();
+    u32 isField4ECFlag16();
+    u32 isField4ECFlag07();
     void func_80083118();
-    void func_80083284();
-    void func_80083290();
-    void func_800832BC();
-    static void func_80083304();
-    void func_80083328();
-    u32 func_80083458();
-    u32 func_80083460();
-    void func_80083468(u32 value);
-    void func_80083470();
-    bool func_80083538();
-    bool func_80083544();
-    void func_80083550();
-    void func_80083560();
-    void func_800835FC();
+    void isStateFlag20Set();
+    void getStateTimer532();
+    void getEventHalfwordPair();
+    static void tickGameManager();
+    void syncGameTime();
+    u32 getGlobalWord64188();
+    u32 getGlobalWord64184();
+    void setGlobalByte64298(u32 value);
+    void clearGlobalState();
+    bool isFlag20Set();
+    bool isFlag10Set();
+    void enableFlag10();
+    void toggleFlag10();
+    void enableFlag20();
     void func_8008360C();
     void func_80083718();
     void func_8008372C();
-    void func_80083878();
-    void func_80083888();
+    void enableFlag40();
+    void notifyFieldChange();
     void func_800838F4();
-    void func_80083C70();
-    void func_80083C78();
-    void func_80083CC8();
-    void func_80083CD8();
-    void func_80083D50();
-    void func_80083D70();
-    void func_80083DEC();
-    void func_80083EA4();
-    void func_80083F28();
-    void func_8008402C();
+    void getDataArray219C();
+    void compareFloatVectors();
+    void disableFlag20();
+    void copyBdatTextEntryFull();
+    void queueSceneEventA();
+    void queueSceneEventB();
+    void queueSceneEventC();
+    void resetPlayerEffectsA();
+    void resetPlayerEffectsB();
+    void triggerPlayerEffects();
     void func_8008413C();
     void func_80084654();
-    void func_80084A00();
-    void func_80084AD4();
-    bool func_80084B68();
-    bool func_80084BAC();
-    bool func_80084BF4();
-    void func_80084C10();
+    void handleFieldTransition();
+    void processMapChange();
+    bool isFieldTransitionReady();
+    bool isFieldBlockedByFlag();
+    bool isAnyFieldFlagSet();
+    void clearFieldFlagsA();
     void func_80084CA4();
-    void func_80084F50();
-    void func_80085220();
-    void func_80085248();
-    void func_80085334();
+    void resetBattlePresentation();
+    void setPartyMaskFlag();
+    void clearPartyMaskFlag();
+    void loadPartyResources();
     void func_800853C8();
     void func_8008566C();
-    void func_80085838();
-    bool func_80085840();
-    bool func_8008585C();
-    void func_80085878();
-    void func_800858B8();
+    void resetCameraManager();
+    bool isSceneReadyForInput();
+    bool isSceneActive();
+    void cleanupMapEffects();
+    void updatePlayerContainers();
     void func_80085978();  // body lives in the extern "C" Fv-symbol definition below
-    void func_80085E58();
+    void loadFieldPartyState();
     void func_80085FB8();
-    void func_800862D0();
-    void func_800863F4();
-    void func_80086490();
-    void func_800865E8();
-    void func_800866A0();
-    void func_8008670C();
+    void processFieldLoad();
+    void handleAreaChange();
+    void clearBattleFlagsAndQueue();
+    void processEventQueueB();
+    void handleBattleEnd();
+    void finalizeGameState();
     void func_80086778();
-    void func_80086B04();
-    void func_80086B08();
-    void func_80086B0C();
-    void func_80086B10();
-    void func_80086B14();
-    void func_80086B18();
-    void func_80086B1C();
-    void func_80086B24();
-    void func_80086B2C();
-    void func_80086B34();
-    void func_80086B3C();
-    void func_80086B44();
-    void func_80086B48();
-    void func_80086D90();
-    void func_80086D94();
-    void func_80086D98();
-    bool func_80086D9C();
-    static u32 func_80086DA0();
-    void func_80086DA4();
-    void func_80086DA8();
-    void func_80086DAC();
-    void func_80086DB0();
-    void func_80086DB4();
-    static u32 func_80086DBC();
-    void func_80086E6C();
-    bool func_80087244();
-    bool func_80087250();
-    void func_80087280();
-    void func_80087330();
-    void func_80087334();
-    void func_80087348();
-    void func_80087364();
-    void func_80087378();
-    void func_80087390();
-    void func_800873AC();
-    CfObjectSub54* func_800873C8();
-    void func_800873D4();
-    void func_800873E8();
-    void func_800873FC();
-    void func_80087410();
-    u32 func_80087424();
-    void func_8008742C();
-    void func_8008743C();
-    void func_80087448();
+    void getGimmickListHead();
+    void getGimmickList();
+    void getFirstGimmick();
+    void spawnGimmickEntity();
+    void clearGimmickFlags();
+    void isGimmickActive();
+    void getGlobalWord64184Dup();
+    void getGlobalPtr6409C();
+    void getGlobalPtr640A8();
+    void getGlobalWord640A4();
+    void getGlobalWord640F4();
+    void initPadSubSystem();
+    void updatePadState();
+    void loadControllerConfigA();
+    void loadControllerConfigB();
+    void getControllerValues();
+    bool isControllerReady();
+    static u32 getControllerWordA33C();
+    void getControllerWordA37C();
+    void getControllerWordA3BC();
+    void resetControllerState();
+    void clearControllerState();
+    void getFieldD90Value();
+    static u32 getCurrentSlotIndex();
+    void setInputMaskByAmount();
+    bool isFlag010000Set();
+    bool isVisionPackLoaded();
+    void updateVisionState();
+    void dispatchObjectFunc52();
+    void dispatchObjectFunc52b();
+    void dispatchObjectFunc53();
+    void dispatchObjectFunc48();
+    void dispatchObjectFunc46();
+    void dispatchObjectFunc56();
+    void dispatchObjectFunc58();
+    CfObjectSub54* getObjectSub54Ptr();
+    void dispatchObjectFunc31();
+    void dispatchObjectFuncC4();
+    void dispatchObjectFunc23();
+    void dispatchObjectFunc19();
+    u32 getObjectFlags();
+    void clearObjectMask8();
+    void clearObjectFlagsAll();
+    void toggleObjectMask8();
     }; //size = 0xB8
 } // namespace cf
 
@@ -531,7 +531,7 @@ extern "C" bool func_80068E44(u32 flag);
 extern "C" bool func_800B45A0();
 extern "C" void func_80141B20(cf::CfGameManager* manager);
 extern "C" void func_800B1E2C(cf::CfGameManager* manager);
-extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* subobject);
+extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* subobject);
 extern "C" bool func_800FF778__9CMainMenuFv();
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 extern "C" bool isInitialized__10CMenuPauseFv();
@@ -571,7 +571,7 @@ extern void* lbl_eu_80664090;
 extern void* lbl_eu_80663E74;
 
 // ---------------------------------------------------------------------------
-// func_8007E218 / func_80084F50 / func_8007E514 teardown imports (retail
+// teardownGameManager / resetBattlePresentation / func_8007E514 teardown imports (retail
 // C-linkage names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
@@ -588,7 +588,7 @@ struct CBattleManagerVt1C {
     virtual void m1C(u32 first, u32 second);  // vtable +0x1C
 };
 
-// Minimal CBattleManager data view for func_80084F50: the +0x94 payload
+// Minimal CBattleManager data view for resetBattlePresentation: the +0x94 payload
 // wiped with memset and the +0x194 party-gauge block handed to
 // func_8018C8F4 before the vtable+0x1C dispatch.
 struct CBattleManagerView {
@@ -598,7 +598,7 @@ struct CBattleManagerView {
 };
 
 // Result of func_8009D5FC (file-event table query): the two u16 ids read by
-// func_80084F50 (lhz +2 as first arg, lhz +0 as second arg).
+// resetBattlePresentation (lhz +2 as first arg, lhz +0 as second arg).
 struct CfFileEventIdsView {
     u16 field_0x0;
     u16 field_0x2;
@@ -623,7 +623,7 @@ struct CfVt08Dtor {
 
 // The player-file slots live at the very start of CfGameManager (0x00, 0x04,
 // 0x08): func_8007C6C0 allocates the three CfTFile streams there and
-// func_8007E218 tears them down with a 3-element pointer loop. The class
+// teardownGameManager tears them down with a 3-element pointer loop. The class
 // proper types unk0/field_0x4/mObjectFlags as scalars, so the loop goes
 // through this offset view.
 struct CfGameManagerSlotArray {
@@ -631,14 +631,14 @@ struct CfGameManagerSlotArray {
 };
 
 class CProcess;
-// CProcess hooks removed by func_8007E218 (defined in other TUs, .sbss).
+// CProcess hooks removed by teardownGameManager (defined in other TUs, .sbss).
 extern CProcess* lbl_eu_80663E1C;
 extern CProcess* lbl_eu_80663E18;
 extern CProcess* lbl_eu_80663E20;
 
 extern "C" void func_8012F87C(u32 value);
 extern "C" void func_802A1DA8();
-extern "C" void func_800D91D0__Q22cf14CBattleManagerFv();
+extern "C" void getBattleStateB__Q22cf14CBattleManagerFv();
 extern "C" void func_80295924();
 extern "C" void __dt__80157150();
 extern "C" void* __dt__801A9F78(void* self, s32 deleteFlag);
@@ -651,16 +651,16 @@ extern "C" void* __dt__Q22cf17UnkClass_8018EF3CFv(void* self, s32 deleteFlag);
 extern "C" void func_80068AC8();
 extern "C" void func_8009CE88();
 extern "C" void func_80069A18(cf::CfObjectMove* self);
-extern "C" u32 func_801BF93C__Fv();
+extern "C" u32 stopSoundMan__Fv();
 extern "C" void func_800A7D9C();
 extern "C" void Remove__8CProcessFv(CProcess* process);
-extern "C" void func_8003AA8C__5CBdatFUl(u32 value);
+extern "C" void getEntry__5CBdatFUl(u32 value);
 
 // --- UnkClass_8007DAE0::init / func_8008566C imports (retail C-linkage names)
 extern "C" void __ct__8009D604();
 extern "C" void __dt__801570F0();
-extern "C" void func_800D9190__Q22cf14CBattleManagerFv();
-extern "C" void __ct__Q22cf12CHelpManagerFv();
+extern "C" void getBattleStateA__Q22cf14CBattleManagerFv();
+extern "C" void* __ct__Q22cf12CHelpManagerFv(void*);
 extern "C" void func_802A14B8();
 extern "C" CProcess* GetRootProcRealTime__12CTaskManagerFv();
 extern "C" CProcess* GetRootProcGame__12CTaskManagerFv();
@@ -678,7 +678,7 @@ extern "C" void func_800C1E9C(UnkGameManagerCallback callback, s32 value);
 extern "C" void func_800627FC(u32 value, u32 mode);
 extern "C" void func_80062860(u32 value, u32 mode);
 extern "C" void func_80068A20(s32 value);
-extern "C" bool func_8007DECC__Q22cf13CfGameManagerFv(s32 value, s32* current,
+extern "C" bool syncBdatDataCache__Q22cf13CfGameManagerFv(s32 value, s32* current,
                                                         u32 size);
 // Scene state query result: three words plus a float threshold at +0xC.
 struct UnkScnResult {
@@ -696,7 +696,7 @@ struct CTaskGameCamView;
 
 extern const float lbl_eu_80666568;
 
-// --- func_80084F50 imports ---
+// --- resetBattlePresentation imports ---
 extern "C" void func_80135FDC();
 extern "C" void func_802062BC();
 extern "C" void func_80164CFC();
@@ -712,7 +712,7 @@ extern "C" void func_8018C8F4(u8* object, u32 value);
 // callers cast at the use site.
 extern "C" void func_802959AC(cf::CHelpManager* object);
 extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* buffer, s32 mode);
-extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second,
+extern "C" void queueSceneEventA__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                          u32 third, u32 fourth,
                                                          float value);
 // --- func_80086778 bdat-object collision imports (defined in CfObjectColl unit) ---
@@ -721,7 +721,7 @@ extern "C" void func_800AC1BC(void* self, const void* pA, const void* pB, float 
 extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b);
 // CHelpManager singleton (func_802959AC argument; .sdata).
 extern cf::CHelpManager* lbl_eu_80664A10;
-// Event-done halfword countdown flag (.sbss) cleared by func_80084F50.
+// Event-done halfword countdown flag (.sbss) cleared by resetBattlePresentation.
 extern u16 lbl_eu_80664774;
 // Fade/reset float pair written with the shared zero constant.
 extern float lbl_eu_80663ED8;
@@ -742,8 +742,8 @@ extern "C" void func_800FE104();
 extern "C" void func_8019FD2C();
 extern "C" void func_80069F2C();
 extern "C" void func_80462CD8__8CTaskLODFv(u16 first, u16 second, u16 third);
-extern "C" u32 func_80082900__Q22cf13CfGameManagerFv();
-extern "C" void func_800827E4__Q22cf13CfGameManagerFv();
+extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
+extern "C" void flushEventQueue__Q22cf13CfGameManagerFv();
 
 // --- func_8007F1FC imports (CtrlObjectParam / cfsys CTaskParty units) ---
 extern "C" void func_8009E3C0();

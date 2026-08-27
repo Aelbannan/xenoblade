@@ -60,7 +60,7 @@ public:
 };
 
 // Minimal abstract mirror of the font object returned by
-// CDeviceFont::func_80452C10. Its slot 9 sits at vtable offset 0x24 and
+// CDeviceFont::getFontInfo. Its slot 9 sits at vtable offset 0x24 and
 // returns the u32 bound into the gauge's font pane. Never instantiated (no
 // ctor), so no vtable is emitted; declaring the call as a genuine virtual
 // member makes MWCC emit retail's native r12 dispatch sequence.

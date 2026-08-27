@@ -91,7 +91,7 @@ struct ProcPrefixView {
     void* vt10;
 };
 
-// Field view over actor objects reached through func_800B708C: measured-id
+// Field view over actor objects reached through findObjectById: measured-id
 // halfword at +0x8C, dispatch-kind byte at +0x91, marker name word at +0x74.
 struct CfActorFields {
     u8 pad00[0x74];
@@ -235,7 +235,7 @@ public:
     SymbolMarkRenderItem* mRenderItem; // 0x8B0
 };
 
-// Read-only view over the actor object returned by func_800B708C: only the
+// Read-only view over the actor object returned by findObjectById: only the
 // vtable slots consumed by func_8011EA98 are named (never instantiated, so
 // no vtable is emitted).
 class CfActorView {

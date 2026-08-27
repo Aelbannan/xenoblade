@@ -5,20 +5,20 @@
 namespace cf{
     CChainCombo::CChainCombo(){
         mVtbl = lbl_eu_80538994;
-        func_80294824__FPv(&mGauge);
+        initChainGauge__FPv(&mGauge);
         mArtsType = 0;
         mComboCount = 0;
         mPending = false;
-        func_80294834__FPv(&mGauge);
-        func_802AA338__Fv();
+        resetChainGauge__FPv(&mGauge);
+        requestCancelChain__Fv();
     }
 
     void CChainCombo::func1(){
         mArtsType = 0;
         mComboCount = 0;
         mPending = false;
-        func_80294834__FPv(&mGauge);
-        func_802AA338__Fv();
+        resetChainGauge__FPv(&mGauge);
+        requestCancelChain__Fv();
     }
 }
 
@@ -54,8 +54,8 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending != 0) {
         // Call vtable[0x4c] on the +0x3e9c CfObjectMove sub-object, then chain
-        // its id through func_800B708C -> func_8016FE34.
-        CChainVObj* vobjRaw = (CChainVObj*)func_8016FE34(func_800B708C(
+        // its id through findObjectById -> func_8016FE34.
+        CChainVObj* vobjRaw = (CChainVObj*)func_8016FE34(findObjectById(
             ((CChainCombo_Vt4CIf*)((u8*)actor + 0x3E9C))->m4C()));
 
         if (vobjRaw != nullptr) {

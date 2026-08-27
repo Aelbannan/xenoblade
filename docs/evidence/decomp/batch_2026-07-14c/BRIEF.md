@@ -47,7 +47,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `ICulling_UnkVirtualFunc1` (`asm_ICulling_UnkVirtualFunc1.s`)
 - Load instance from **`lbl_eu_80664328@sda21`** (not `spInstance` mangled)
-- Null → return false/`0`; else `addi r3,r3,0x60; b func_801A0F04__11COccCullingFPQ22ml8CFrustum` (tail)
+- Null → return false/`0`; else `addi r3,r3,0x60; b update__11COccCullingFPQ22ml8CFrustum` (tail)
 - Current draft uses `spInstance` + call through `mOccCulling` — fix reloc + match tail
 - Unit **over budget** (`0x878` vs `0x70C`) — shrink elsewhere in file if needed; still only edit this method's body unless size requires shared trim
 

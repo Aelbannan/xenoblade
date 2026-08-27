@@ -9,7 +9,7 @@
 #include "kyoshin/cf/chain/CChainEffect.hpp"
 
 // ---- Cross-TU helper declarations ---------------------------------------
-// func_800AD860 / func_800B708C are mangled C++ retail symbols; the rest are
+// func_800AD860 / findObjectById are mangled C++ retail symbols; the rest are
 // plain (unmangled) C-ABI functions and are declared with C linkage.
 extern "C" void* func_802A0804(u32 cls, void* src);
 extern "C" void func_8018C8F4(u8* self, u32 ptg);
@@ -19,7 +19,7 @@ extern "C" void* func_80193AB0(void* list, u32 id);
 extern "C" void* func_800B6BC8(void);
 extern "C" void* func_8016FE34(void* src);
 extern void* func_800AD860(void*);
-extern void* func_800B708C(int);
+extern void* findObjectById(int);
 
 // Layout view of the enemy chain actor's timeline object (the object reached
 // through this->unk0 (rebased +0x3E9C) and passed through func_800AD860).
@@ -100,7 +100,7 @@ extern "C" void func_8028133C(cf::CChainActorEne* self) {
 // object id, and only then runs the chain logic.
 extern "C" int func_80281384(cf::CChainActorEne* self, int arg) {
     if (arg == 0) return 0;
-    void* handle = func_800B708C(arg);
+    void* handle = findObjectById(arg);
     void* obj = func_8016FE34(handle);
     if (obj == 0) return 0;
     // sub is the object at obj+4; its vtable-slot-12 hook (offset 0x30) returns

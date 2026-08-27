@@ -100,7 +100,7 @@ struct CfObjectPcSpeed {
 };
 
 namespace cf {
-bool CHelp_Sp::func_802B8654() {
+bool CHelp_Sp::isSpThresholdMet() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
     if (objPc != nullptr) {
         f32 value = reinterpret_cast<CfObjectPcSpeed*>(objPc)->_v160();

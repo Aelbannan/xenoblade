@@ -30,7 +30,7 @@ void CBgTex::func_801C3A24() {
     u32 handle = mtl::MemManager::getHandleMEM2();
     mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
     Class_8045F858 unusedVar(&mMemRegion);
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
     if (regionId == 0x19) {

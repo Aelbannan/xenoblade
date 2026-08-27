@@ -158,7 +158,7 @@ struct CSysWinData {
     u8 field_39;             // +0x39
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 bound into the layout's font pane
 // (handed to func_8013676C). All-pure so no vtable is emitted.
 class CDeviceFontVtblView {
@@ -546,7 +546,7 @@ extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80124270(void*, u32);   // pane visibility setter
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
-// linkage; func_801355A0 / func_80086F9C__Q22cf13CfGameManagerFv use the
+// linkage; func_801355A0 / isClassicController__Q22cf13CfGameManagerFv use the
 // plain C++ forms that re-derive the retail mangled names.
 extern "C" u32 func_801355BC();
 extern "C" void* func_801355F4();   // shared timg resource accessor
@@ -557,13 +557,13 @@ extern "C" void func_8013676C(void*, u32);   // bind font pane onto root
 extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 extern "C" void func_8018B0FC(void*, void*);   // cursor copy (func_801D24E8 sibling)
 extern "C" void func_801D24E8(void*, void*, void*);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
 extern "C" float lbl_eu_80668488;
 extern "C" float lbl_eu_8066848C;
 extern "C" float lbl_eu_80668490;
@@ -592,10 +592,10 @@ extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CMCCrystalInfo(void*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSysWin(void*, int);
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void**);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_80139198(u32);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8021A860(void*);

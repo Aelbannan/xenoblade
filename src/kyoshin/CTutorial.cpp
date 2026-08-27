@@ -138,7 +138,7 @@ void CTutorial::func_8029B124() {
     // Sign-extend before increment: retail computes extsb(field_50)+1.
     func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
     func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x82], field_51);
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sprintf(buf, &lbl_eu_80510290[0x8b], field_48, field_50 + 1);
     } else {
         sprintf(buf, &lbl_eu_80510290[0xa0], field_48, field_50 + 1);
@@ -198,7 +198,7 @@ extern "C" void func_8029ADF8(CTutorial* self) {
     self->func_8029B124();
 }
 
-// Font object returned by CDeviceFont::func_80452C10: vtable slot 9 (+0x24)
+// Font object returned by CDeviceFont::getFontInfo: vtable slot 9 (+0x24)
 // yields the u32 font handle bound into the layout. Never instantiated, so no
 // vtable is emitted; a genuine virtual call reproduces the retail dispatch.
 struct CTutorialFontView {
@@ -225,7 +225,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
 
         // Take ownership of the loaded arc buffer.
         void* arcData = mFileHandle0->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mAccessor0 = CLibLayout::createArcResourceAccessor();
         mAccessor0->Attach(arcData, &lbl_eu_80510290[0xc7]);
@@ -240,7 +240,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         // before fetching the font handle from vtable slot 9).
         nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
         u32 fontResult = static_cast<CTutorialFontView*>(
-                             CDeviceFont::func_80452C10(1, mpLayout))->sf9();
+                             CDeviceFont::getFontInfo(1, mpLayout))->sf9();
         func_8013676C(rootPane, fontResult);
 
         u32 lang = func_801355A0();
@@ -278,7 +278,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 regionHost(&mRegion1);
 
         void* arcData = mFileHandle2->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mAccessor1 = CLibLayout::createArcResourceAccessor();
         mAccessor1->Attach(arcData, &lbl_eu_80510290[0xc7]);
@@ -298,7 +298,7 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
 void CTutorial::func_8029ABD8() {
     CDeviceVI::waitForDrawDone();
     if (field_53 != 0) {
-        CBdat::func_8003AA8C(4);
+        CBdat::getEntry(4);
     }
     func_801390E0(&mFileHandle0);
     func_801390E0(&mFileHandle1);
@@ -340,7 +340,7 @@ void CTutorial::func_8029AA34() {
             mtl::MemManager::getHandleMEM2(), buf,
             reinterpret_cast<IWorkEvent*>(this), 0, 0);
     }
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sprintf(buf, &lbl_eu_80510290[0x33], field_48);
     } else {
         sprintf(buf, &lbl_eu_80510290[0x4f], field_48);

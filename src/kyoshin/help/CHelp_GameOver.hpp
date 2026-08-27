@@ -6,7 +6,7 @@
 namespace cf {
 class __declspec(novtable) CHelp_GameOver : public CHelp {
 public:
-    bool func_802B80F4();
+    bool isAvailable();
 
     s32 unkC; // 0xC
     u8 mFlag10; // 0x10

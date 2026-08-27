@@ -4,10 +4,10 @@
 #include "kyoshin/plugin/ocCfp.hpp"
 
 extern "C" {
-unsigned short func_80086DA0__Q22cf13CfGameManagerFv();
-unsigned short func_80086DA4__Q22cf13CfGameManagerFv();
-void func_80086D90__Q22cf13CfGameManagerFv(unsigned short);
-void func_80086D94__Q22cf13CfGameManagerFv(unsigned short);
+unsigned short getControllerWordA33C__Q22cf13CfGameManagerFv();
+unsigned short getControllerWordA37C__Q22cf13CfGameManagerFv();
+void loadControllerConfigA__Q22cf13CfGameManagerFv(unsigned short);
+void loadControllerConfigB__Q22cf13CfGameManagerFv(unsigned short);
 }
 
 extern "C" int func_80045560(VMThread* self, int a, int val){
@@ -22,7 +22,7 @@ extern "C" int func_80045560(VMThread* self, int a, int val){
 extern "C" int func_8004559C(VMThread* self){
     VMArg arg;
     arg.type = 3;
-    arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv();
+    arg.value.intVal = getControllerWordA33C__Q22cf13CfGameManagerFv();
     vmRetValSet(self, &arg);
     return 1;
 }
@@ -30,7 +30,7 @@ extern "C" int func_8004559C(VMThread* self){
 extern "C" int func_800455E8(VMThread* self){
     VMArg arg;
     arg.type = 3;
-    arg.value.intVal = func_80086DA4__Q22cf13CfGameManagerFv();
+    arg.value.intVal = getControllerWordA37C__Q22cf13CfGameManagerFv();
     vmRetValSet(self, &arg);
     return 1;
 }
@@ -38,7 +38,7 @@ extern "C" int func_800455E8(VMThread* self){
 extern "C" int func_80045634(VMThread* self){
     VMArg arg;
     arg.type = 3;
-    arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv() / 3;
+    arg.value.intVal = getControllerWordA33C__Q22cf13CfGameManagerFv() / 3;
     vmRetValSet(self, &arg);
     return 1;
 }
@@ -46,14 +46,14 @@ extern "C" int func_80045634(VMThread* self){
 extern "C" int func_80045694(VMThread* self){
     void* prop = vmOCPropertyGet(self);
     u32 val = *(u32*)((char*)prop + 4);
-    func_80086D90__Q22cf13CfGameManagerFv(val & 0xFFFF);
+    loadControllerConfigA__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
 extern "C" int func_800456C4(VMThread* self){
     void* prop = vmOCPropertyGet(self);
     u32 val = *(u32*)((char*)prop + 4);
-    func_80086D94__Q22cf13CfGameManagerFv(val & 0xFFFF);
+    loadControllerConfigB__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 

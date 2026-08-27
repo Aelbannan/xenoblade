@@ -78,7 +78,7 @@ __declspec(noinline) reslist<T>::~reslist() {}
 
 // Item object stored in the pool's slot arrays and referenced by the reslist
 // sub-pools. The retail class carries a large vtable (>= 0xD0 bytes); only
-// the slot at offset 0xD0, used by CScnItemPool::func_8048CEDC, is modelled
+// the slot at offset 0xD0, used by CScnItemPool::updateItemD0, is modelled
 // here. MWCC prepends a 2-entry header to the vtable, so the 51st declared
 // virtual lands at offset 0xD0. Slot size is 0x58 bytes.
 class CScnItem {
@@ -226,11 +226,11 @@ public:
     CScnItemBig* mSlotsD8;     // 0xD8
     u16 mSubCountDC;           // 0xDC
 
-    void func_8048CEDC();
-    void func_8048CF58();
+    void updateItemD0();
+    void cleanupACPool();
     void update();
-    void func_8048D014();   // this-4 thunk -> func_8048CF58 (vtable+0x98)
-    void func_8048D01C();   // this-4 thunk -> ~CScnItemPool   (vtable+0x90)
+    void vicbCleanupAC();   // this-4 thunk -> cleanupACPool (vtable+0x98)
+    void vicbDtorThunk();   // this-4 thunk -> ~CScnItemPool   (vtable+0x90)
 };
 
 // Cross-unit pool-item helpers (retail C-ABI, unmangled symbols).
@@ -615,11 +615,11 @@ CScnItem* func_8048C400(u8* self) {
     }
     return 0;
 }
-// CScnItemPool::func_8048CEDC - iterates the reslist at 0xC and calls the
+// CScnItemPool::updateItemD0 - iterates the reslist at 0xC and calls the
 // item's vtable slot at offset 0xD0 on each item. The comma-condition keeps
 // the sentinel refresh (func_8048C5AC) before the loop test (func_8048C9D8)
 // at the bottom of the loop, matching the retail test-at-bottom shape.
-void CScnItemPool::func_8048CEDC() {
+void CScnItemPool::updateItemD0() {
     CScnItemPoolNode* iter;
     CScnItemPoolNode* sentinel;
     func_8048CA00((u32*)&iter, &mList0C);
@@ -685,20 +685,20 @@ extern "C" __declspec(noinline) void __dt__8048C378(CScnItemPoolListData* self) 
     }
     self->field_0x18 = 0;
 }
-// func_8048CF58: 4-byte tail-call wrapper to func_8048CF5C (retail: b func_8048CF5C)
+// cleanupACPool: 4-byte tail-call wrapper to func_8048CF5C (retail: b func_8048CF5C)
 extern "C" void func_8048CF5C(CScnItemPool* self);
-__declspec(noinline) void CScnItemPool::func_8048CF58() { func_8048CF5C(this); }
+__declspec(noinline) void CScnItemPool::cleanupACPool() { func_8048CF5C(this); }
 // CDeviceVICb-subobject thunks: adjust this from the +4 secondary base back to
 // the primary and tail-call the implementation.
 extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
 extern "C" void __dt__11CDeviceVICbFv(void* self, int flags);
 extern "C" void __dt__10IWorkEventFv(void* self, int flags);
-void CScnItemPool::func_8048D014() {
-    ((CScnItemPool*)((char*)this - 4))->func_8048CF58();
+void CScnItemPool::vicbCleanupAC() {
+    ((CScnItemPool*)((char*)this - 4))->cleanupACPool();
 }
 // One-arg opaque view: retail's thunk tail-calls WITHOUT setting r4, so the
 // call site must not materialize the flags argument.
-void CScnItemPool::func_8048D01C() {
+void CScnItemPool::vicbDtorThunk() {
     ((void (*)(CScnItemPool*))__dt__12CScnItemPoolFv)((CScnItemPool*)((char*)this - 4));
 }
 

@@ -65,7 +65,7 @@ CMenuCollepedia::~CMenuCollepedia() {}
 // copying its body into the embedded storage, then register this screen as a
 // render callback on the owning scene (same pattern as CMenuSave::Init).
 void CMenuCollepedia::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
@@ -211,7 +211,7 @@ void CMenuCollepedia::Term() {
     func_80254C04(&mCollepedia);
 
     lbl_eu_806647D0 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuCollepedia::Move() {
@@ -269,7 +269,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
 
     MenuCollepediaPadData* pad =
         (MenuCollepediaPadData*)cf::CfGameManager::getCfPadData();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Classic-controller (co-op) layout.
         if (func_80255688(&self->mCollepedia) != 0) {
             func_801C41E8(&self->mTitleAHelp, 0x50);

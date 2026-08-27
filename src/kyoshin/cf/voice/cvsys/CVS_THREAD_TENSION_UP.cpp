@@ -175,7 +175,7 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
             if (ownerState != 4) {
                 isThird = 0;
             } else {
-                u32 x = cf::CfGameManager::func_800822F4();
+                u32 x = cf::CfGameManager::getQueuedFileEventCount();
                 // Retail lowers this unsigned compare via the branchless
                 // subfic/li/orc/srwi/subf/srwi idiom.
                 isThird = (int)(x <= 3);

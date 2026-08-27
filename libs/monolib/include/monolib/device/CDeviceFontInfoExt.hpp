@@ -8,10 +8,10 @@ public:
     virtual ~CDeviceFontInfoExt();
     void func_80453468();
     void create();
-    void func_804535C0();
-    void func_804535DC();
-    void func_804535F4();
-    void func_80453608();
+    void advanceState();
+    void initState();
+    void isStateNonZero();
+    void isStateReady();
 
     u32 field_04;
     void* mFontData;  //written from allocate_tail void*
@@ -24,11 +24,11 @@ public:
     u16 _5E;
     u32 field_60;
 
-    void func_80453624();
-    void func_8045362C();
-    void func_80453634();
-    void func_8045363C();
-    void func_80453644();
-    void func_8045364C();
-    void func_80453654();
+    void* getFont();
+    void* getFontConst();
+    u16 getLineHeight();
+    u32 getBufferSize();
+    u16 getMode();
+    u16 getState();
+    u32 getFlags();
 };

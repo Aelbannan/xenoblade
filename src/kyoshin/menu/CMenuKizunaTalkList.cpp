@@ -89,7 +89,7 @@ extern unsigned long lbl_eu_806648B0;
 // (retail loads r3=-1 even though the no-arg function ignores it).
 
 // CfGameManager one-arg init flag (retail loads r3=1 into the no-arg symbol).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8);
 
 // CW-mangled constructors/destructors referenced by Init() (extern "C" stops
 // C++ re-mangling of the retail CW names).
@@ -155,7 +155,7 @@ CMenuKizunaTalkList::~CMenuKizunaTalkList() {}
 // via a temporary object + copy (see CMenuTutorial::Init), then registers this
 // screen as a render callback on its parent scene.
 void CMenuKizunaTalkList::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
@@ -285,7 +285,7 @@ void CMenuKizunaTalkList::Term() {
     func_8027346C(&mKizunaTalkList);
 
     lbl_eu_806648B0 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 // Per-frame update of the kizuna talk-list screen. Gate on the task/busy
@@ -293,12 +293,12 @@ void CMenuKizunaTalkList::Term() {
 // 4-state FSM and refresh the bg / help bar / list each frame.
 void CMenuKizunaTalkList::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cancel;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         cancel = (pad->mPressedButtonFlags & 0x800000) != 0;
     } else {
         cancel = (pad->mPressedButtonFlags & 0x400) != 0;
@@ -338,7 +338,7 @@ void CMenuKizunaTalkList::Move() {
 // title/help bar in that order.
 void CMenuKizunaTalkList::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -412,7 +412,7 @@ void func_80272560(CMenuKizunaTalkList* self) {
     // Classic controllers shift the menu-trigger bit to bit 9 of the pressed
     // flags; Wiimote/Nunchuk use bit 26. The four directional buttons
     // (up/down/page-up/page-down) are read from the turbo flags.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         up = (turbo & 0x8004) != 0;

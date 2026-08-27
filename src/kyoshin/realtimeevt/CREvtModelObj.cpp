@@ -51,16 +51,16 @@ extern "C" {
     extern void func_80484F80(void*, float);
     extern void func_804838DC(void*, int);
     extern void func_80483448(void*, void*);
-    extern void* func_80490098__Fv(void);
-    extern void* func_80087250__Q22cf13CfGameManagerFv(void);
+    extern void* getScnCounter__Fv(void);
+    extern void* isVisionPackLoaded__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
     extern void* func_8016C118(void*);
     extern void* func_80164838(void*, int);
     extern int func_800AA33C(const char*, u32, int, int);
-    extern int func_8044F154__11CDeviceFileFP11CFileHandlei(void*, int);
-    extern int func_8044F400__11CDeviceFileFP11CFileHandleUl(void*, u32);
-    extern int func_8044E768__11CDeviceFileFv(void);
+    extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
+    extern int setHandleParam__11CDeviceFileFP11CFileHandleUl(void*, u32);
+    extern int isStandbyReady__11CDeviceFileFv(void);
     extern void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
     extern void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
     extern void func_801390E0__FPP11CFileHandle(void**);
@@ -242,7 +242,7 @@ extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
 
     // Refresh the model when the parent requests player-specific handling
     if ((self->mParent->mField58 & 0x80) != 0 && self->mModel != 0) {
-        if (func_80087250__Q22cf13CfGameManagerFv() != 0) {
+        if (isVisionPackLoaded__Q22cf13CfGameManagerFv() != 0) {
             func_804838DC(self->mModel, 0);
         }
     }
@@ -641,7 +641,7 @@ extern "C" void func_80182B2C(void* self) {
                 // Check model flags
                 u32 modelFlags = FLD(u32, model, 0x7A4);
                 if (modelFlags & 0x100) {
-                    void* gm = cf::CfGameManager::func_80083298();
+                    void* gm = cf::CfGameManager::getGameSubManager();
                     if (gm != 0) {
                         void* view = FLD(void*, gm, 0x98);
                         if (view != 0) {

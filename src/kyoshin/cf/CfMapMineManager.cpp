@@ -658,7 +658,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
     }
 
     MineNameBuf name;
-    void* obj = func_800B20B4(func_800B07E8__Fv(), 0x4000, 0, 0);
+    void* obj = func_800B20B4(getInstance__Fv(), 0x4000, 0, 0);
     if (obj != 0) {
         pt->mObj4 = obj;
 
@@ -742,9 +742,9 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
 
     void* player = cf::CfGameManager::getPlayer(0);
     if (player == 0) return;
-    void* obj = func_8008187C__Q22cf13CfGameManagerFv(sfx);
+    void* obj = createNpcActor__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
-    func_800ACF78(obj, player, 0);
+    bindPartnerO_(obj, player, 0);
     ((MineSceneObjectIf*)obj)->setPosition(pos);
 }
 
@@ -787,7 +787,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
         if (((f2 >> 15) & 1) != 0) {
             // (double)(160 - flagBit): 0x4330 int->double sequence minus
             // the 160.0 sdata double literal, passed raw in fp1.
-            func_80462E58__8CTaskLODFv(
+            setLODParam__8CTaskLODFv(
                 pt->mPointId1C, 1,
                 (f64)(0xA0 - ((lbl_eu_80663E24 >> 20) & 1)) -
                     lbl_eu_806682C0);
@@ -862,7 +862,7 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
     BdatFilePointer* file = lbl_eu_806640C8;
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
-    u32 playerId = cf::CfGameManager::func_800822F4();
+    u32 playerId = cf::CfGameManager::getQueuedFileEventCount();
     *out = 0;
     playerId &= 0xFFFF;
 
@@ -891,7 +891,7 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
                                                    n->mItem.mFlags >> 22);
             if (playerId < lo || playerId > hi) {
                 if (n->mItem.mObj0 != 0) {
-                    func_800ACC14(n->mItem.mObj0, 1);
+                    setChildB59__(n->mItem.mObj0, 1);
                     n->mItem.mObj0 = released;
                 }
             } else {
@@ -987,7 +987,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                 func_802066A8(self, &found->mItem);
                 if ((found->mItem.mFlags & 0x00010000) != 0) {
                     u32 g = lbl_eu_80663E24;
-                    func_80462E58__8CTaskLODFv(
+                    setLODParam__8CTaskLODFv(
                         found->mItem.mPointId1C, 1,
                         (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                 } else {
@@ -1002,7 +1002,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                                   found->mItem.mAreaSub1F) != 0) {
                     if ((found->mItem.mFlags & 0x00010000) != 0) {
                         u32 g = lbl_eu_80663E24;
-                        func_80462E58__8CTaskLODFv(
+                        setLODParam__8CTaskLODFv(
                             found->mItem.mPointId1C, 0,
                             (f64)(0xA0 - ((g >> 20) & 1)) - lbl_eu_806682C0);
                     } else {
@@ -1207,7 +1207,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
         if (snd->mId != 0) {
             snd->mTime -= dt;
             if (snd->mTime <= zeroD) {
-                func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, snd->mId, 0, 0,
+                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, snd->mId, 0, 0,
                                                            lbl_eu_806682E4);
                 snd->mId = 0;
                 snd->mTime = zero;
@@ -1236,7 +1236,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     lbl_eu_80663E24 &= ~0x80000000u;
     func_8020712C(&nearest, mgr, (CfMapMineManager*)((u8*)mgr + 0x4), pos);
     if (nearest == 0) return;
-    if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) return;
+    if (isTimerActive__Q22cf13CfGameManagerFv() != 0) return;
 
     u32 fl = nearest->mItem.mFlags;
     int ready = 0;
@@ -1249,12 +1249,12 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     if (func_8013EB90(1) != 0) return;
     if (func_800FF738() != 0) return;
     if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
-    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) return;
-    UnkClass_800821F8* unk = func_800821F8__Q22cf13CfGameManagerFv();
+    if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
+    UnkClass_800821F8* unk = getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (unk != 0) {
         if ((*(u32*)((u8*)unk + 0x4) & 0x01000000) != 0) return;
     }
-    if (func_80085840__Q22cf13CfGameManagerFv() == 0) return;
+    if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
     if ((lbl_eu_80663E24 & 0x00002000) != 0) return;
     void* pad = cf::CfGameManager::getCurrentPad();
     if ((*(u32*)((u8*)pad + 0x4) & 0x00000010) == 0) return;
@@ -1297,7 +1297,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
                 fl2 = nearest->mItem.mFlags;
                 if ((fl2 & 0x00010000) != 0) {
                     u32 bit = (lbl_eu_80663E24 >> 20) & 1;
-                    func_80462E58__8CTaskLODFv(
+                    setLODParam__8CTaskLODFv(
                         nearest->mItem.mPointId1C, 0,
                         (f64)(0xA0 & ~(u32)-(s32)bit) - lbl_eu_806682C0);
                 } else {
@@ -1321,7 +1321,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
 
     mgr->mTime = lbl_eu_806682EC;
     func_80207B24(mgr, drop.mKind07 & 0x3F, &nearest->mItem.mPosX);
-    func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x3C, 0, 0, lbl_eu_806682E4);
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x3C, 0, 0, lbl_eu_806682E4);
 
     // Register a one-shot sound timer in the first free slot.
     u16 sndId = 0x46 + (u16)(dropFlag != 0 ? 1 : 0);
@@ -1363,26 +1363,26 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     slot->mTime = msgTime;
     ring->mCount += 1;
 
-    u32 cid = func_80082694__Q22cf13CfGameManagerFv(0x70);
+    u32 cid = getEventValue40__Q22cf13CfGameManagerFv(0x70);
     u32 cval = cid + 1;
-    func_8008269C__Q22cf13CfGameManagerFv(0x70, cval);
-    if (cval == 1) func_800826F0__Q22cf13CfGameManagerFv(0x70);
-    else if (cval == 0x32) func_800826F0__Q22cf13CfGameManagerFv(0x71);
-    else if (cval == 0x1F4) func_800826F0__Q22cf13CfGameManagerFv(0x72);
+    setEventManagerValue__Q22cf13CfGameManagerFv(0x70, cval);
+    if (cval == 1) queueEventId__Q22cf13CfGameManagerFv(0x70);
+    else if (cval == 0x32) queueEventId__Q22cf13CfGameManagerFv(0x71);
+    else if (cval == 0x1F4) queueEventId__Q22cf13CfGameManagerFv(0x72);
 
     CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(&drop);
     u32 rarity = ((CItemInstVt50*)im2)->_v08(&drop);
     if ((rarity & 0xFFFF) >= 5) {
-        func_800826F0__Q22cf13CfGameManagerFv(0x76);
+        queueEventId__Q22cf13CfGameManagerFv(0x76);
     }
 
     if (dropFlag != 0) {
-        u32 sid = func_80082694__Q22cf13CfGameManagerFv(0x73);
+        u32 sid = getEventValue40__Q22cf13CfGameManagerFv(0x73);
         u32 sval = sid + 1;
-        func_8008269C__Q22cf13CfGameManagerFv(0x73, sval);
-        if (sval == 1) func_800826F0__Q22cf13CfGameManagerFv(0x73);
-        else if (sval == 7) func_800826F0__Q22cf13CfGameManagerFv(0x74);
-        else if (sval == 0x4D) func_800826F0__Q22cf13CfGameManagerFv(0x75);
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x73, sval);
+        if (sval == 1) queueEventId__Q22cf13CfGameManagerFv(0x73);
+        else if (sval == 7) queueEventId__Q22cf13CfGameManagerFv(0x74);
+        else if (sval == 0x4D) queueEventId__Q22cf13CfGameManagerFv(0x75);
     }
 
     lbl_eu_80663E24 |= 0x80000000;

@@ -128,13 +128,13 @@ extern "C" void func_800D11B0(CtrlActView* self) {
             r30 = 0;
         } else {
             src = (CtrlActSrc*)func_8016FE34(
-                func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+                findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
             self->mField7A = 0;
             self->mField74 &= ~0x10;
         }
     } else {
         src = (CtrlActSrc*)func_8016FE34(
-            func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+            findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     }
     if (src == 0) {
         return;
@@ -483,7 +483,7 @@ void func_800D1CFC(CtrlActView* self) {
             return;
         }
     }
-    src = (CtrlActSrc*)func_800B708C(
+    src = (CtrlActSrc*)findObjectById(
         (int)(intptr_t)self->mPlayer->mSub3E9C.v17());
     if (src != NULL) {
         // Normalize the handle: if it points at our own +0x3E9C owner
@@ -715,23 +715,23 @@ void func_800D1F0C(CtrlActView* self) {
             ->vtbl->fn_0x7C(self, &entry);
         break;
     case 4:
-        func_8016FE34(func_800B708C((int)entry.mField0));
+        func_8016FE34(findObjectById((int)entry.mField0));
         func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 4, 1);
         break;
     case 5: {
-        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        void* src = func_8016FE34(findObjectById((int)entry.mField0));
         func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 1, 1);
         func_802A29A4(self->mPlayer, src);
         break;
     }
     case 6: {
-        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        void* src = func_8016FE34(findObjectById((int)entry.mField0));
         func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 0, 1);
         func_802A2A0C(self->mPlayer, src);
         break;
     }
     case 7: {
-        void* src = func_8016FE34(func_800B708C((int)entry.mField0));
+        void* src = func_8016FE34(findObjectById((int)entry.mField0));
         func_800BE12C((u8*)&self->mPlayer->mSub3E9C, 0x1b, 0, 2, 1);
         func_802A2ADC(self->mPlayer, src);
         break;
@@ -785,7 +785,7 @@ void func_800D1F0C(CtrlActView* self) {
         func_800D5874(self, 9, 0);
         break;
     case 19: {
-        void* t = func_8016FE34(func_800B708C((int)entry.mField0));
+        void* t = func_8016FE34(findObjectById((int)entry.mField0));
         if (t != NULL) {
             ((CtrlActSrc*)t)->mField3388 |= 8;
         }
@@ -898,7 +898,7 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
         }
     }
     CtrlActSrcReal* src =
-        (CtrlActSrcReal*)func_8016FE34(func_800B708C((int)arg->mField0));
+        (CtrlActSrcReal*)func_8016FE34(findObjectById((int)arg->mField0));
     if (src == NULL) {
         return 0;
     }
@@ -970,7 +970,7 @@ int func_800D2A5C(CtrlActView* self, CtrlActAtkArg* arg) {
 // virtuals run before the block is committed.
 extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     s16 atkIndex = arg->mField12;
-    CtrlActSrc* src = (CtrlActSrc*)func_8016FE34(func_800B708C((int)arg->mField0));
+    CtrlActSrc* src = (CtrlActSrc*)func_8016FE34(findObjectById((int)arg->mField0));
     // Each arts-set lookup reloads self->mPlayer fresh (scoped locals):
     // retail issues two separate lwz 0x5c(r29) + slot-0x27C dispatches here,
     // so the player load must not be CSE'd across the two statements.
@@ -1175,7 +1175,7 @@ extern "C" int func_800D34D4(CtrlActView* self) {
     cf::CfGameManager::getInstance();
     // NOTE: retail materializes this mask with lis -> the real value is
     // 0x04000000, not 0x400.
-    if (func_8006EF04(0x04000000) != 0) {
+    if (isGlobalCamFlagSet(0x04000000) != 0) {
         self->mField14 = lbl_eu_80666CF8;
         return 1;
     }
@@ -1335,7 +1335,7 @@ extern "C" void func_800D3998(CtrlActView* self) {
         return;
     }
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)s->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)s->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;
     } else {
@@ -1438,7 +1438,7 @@ extern "C" void func_800D3D34(CtrlActView* self) {
     }
     CtrlActSrc* src;
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;
     } else {
@@ -1514,7 +1514,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
     }
     // Voice/battle-list resolve of this actor's action source.
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
         src = (CtrlActSrc*)t;
@@ -1688,7 +1688,7 @@ extern "C" void func_800D4834(CtrlActView* self) {
             return;
         }
     }
-    void* t = func_8016FE34(func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+    void* t = func_8016FE34(findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     void* other;
     if (t != 0) {
         other = t;
@@ -1747,7 +1747,7 @@ extern "C" void func_800D49F4(CtrlActView* self) {
         }
     }
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
         src = (CtrlActSrc*)t;
@@ -1885,7 +1885,7 @@ extern "C" void func_800D4F30(CtrlActView* self) {
         }
     }
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     CtrlActSrc* src;
     if (t != 0) {
         src = (CtrlActSrc*)t;
@@ -1992,7 +1992,7 @@ void func_800D5308(CtrlActView* self) {
         }
     }
     void* t = func_8016FE34(
-        func_800B708C((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
+        findObjectById((int)(intptr_t)self->mPlayer->mSub3E9C.v17()));
     if (t != 0) {
         src = (CtrlActSrc*)t;
     } else {
@@ -2210,7 +2210,7 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
             lst = (CfEnumList*)func_80043F18(&holder);
             int id = (int)(intptr_t)func_800F6E08(lst);
             if (id != 0) {
-                void* actor = func_800B708C(id);
+                void* actor = findObjectById(id);
                 if (actor != 0) {
                     actor = (u8*)actor - 0x3E9C;
                 }

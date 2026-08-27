@@ -156,7 +156,7 @@ struct UnkPtrHolder {
 // func_8028EC74 is a C-linkage function in retail (unmangled symbol); declare
 // it extern "C" so the call reloc inside func_8028EC28 resolves unmangled.
 
-// Declarations for functions called by func_8028EA74
+// Declarations for functions called by initLayout
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout,
     nw4r::lyt::ArcResourceAccessor* accessor,
@@ -345,7 +345,7 @@ extern "C" void func_8028ED70(UnkED70_Struct* s) {
     
     // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
     void* rootPane = *(void**)((char*)s->mLayout + 0x10);
-    void* fontObj = CDeviceFont::func_80452C10(1, s->mLayout);
+    void* fontObj = CDeviceFont::getFontInfo(1, s->mLayout);
     
     // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
     u32 result = static_cast<FontHelper*>(fontObj)->v7();
@@ -605,7 +605,7 @@ extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
 void func_8028F4AC(CSaveLoad* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
     func_eu_804521BC(1);
-    CLibHbm::func_8045D470(false);
+    CLibHbm::setHbmStopFlag(false);
     func_801390E0(&self->mFileHandle);
     self->mField120 = 0;
     // Use local variable to prevent MWCC from optimizing &self->mCur to a load
@@ -1081,7 +1081,7 @@ extern "C" __declspec(noinline) void func_8029022C(CSaveLoad* self) {
         // Delete/overwrite path
         CWorkSystem::setSaveLoadInvalidReset(true);
         func_eu_804521BC(0);
-        CLibHbm::func_8045D470(true);
+        CLibHbm::setHbmStopFlag(true);
 
         char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
         func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
@@ -1106,7 +1106,7 @@ extern "C" __declspec(noinline) void func_8029022C(CSaveLoad* self) {
         // (rlwinm./bne skips over it otherwise).
         if ((lbl_eu_80663E28 & 0x01000000u) == 0) {
             int result = func_8028E998(&self->mCur, self->mField124);
-            func_80083470__Q22cf13CfGameManagerFv(*(u16*)(result + 0x0E), *(u8*)(result + 0x11), 1);
+            clearGlobalState__Q22cf13CfGameManagerFv(*(u16*)(result + 0x0E), *(u8*)(result + 0x11), 1);
         }
     } else {
         // Save path
@@ -1116,7 +1116,7 @@ extern "C" __declspec(noinline) void func_8029022C(CSaveLoad* self) {
 
         CWorkSystem::setSaveLoadInvalidReset(true);
         func_eu_804521BC(0);
-        CLibHbm::func_8045D470(true);
+        CLibHbm::setHbmStopFlag(true);
 
         char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
         func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
@@ -1151,7 +1151,7 @@ extern "C" __declspec(noinline) void func_8029040C(CSaveLoad* p) {
             getInstance__9CTaskGameFv();
             func_800426A8();
         } else {
-            func_80084F50__Q22cf13CfGameManagerFv();
+            resetBattlePresentation__Q22cf13CfGameManagerFv();
         }
     }
     return;
@@ -1228,7 +1228,7 @@ clear12E:
     if (self->mField12C != 0) {
         CWorkSystem::setSaveLoadInvalidReset(false);
         func_eu_804521BC(1);
-        CLibHbm::func_8045D470(false);
+        CLibHbm::setHbmStopFlag(false);
         s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
@@ -1254,7 +1254,7 @@ clear12E:
 
     CWorkSystem::setSaveLoadInvalidReset(false);
     func_eu_804521BC(1);
-    CLibHbm::func_8045D470(false);
+    CLibHbm::setHbmStopFlag(false);
     s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
     func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
     func_8022BFC8(&self->mSysWinD4, 1);
@@ -1749,7 +1749,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     FileHandleView* fh = (FileHandleView*)self->mFileHandle;
     void* fileData = fh->mData;
     fh->mData = nullptr;
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     // Fresh arc resource accessor bound to the detached arc payload
     // (local keeps the value in r3 for the Attach call, matching retail)
@@ -1768,7 +1768,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
 
     // Font setup: root pane -> font object -> apply font to pane
     void* rootPane = *(void**)((char*)self->mLayout + 0x10);
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
     u32 fontResult = static_cast<FontHelper*>(fontObj)->v7();
     func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
 
@@ -2403,7 +2403,7 @@ extern "C" void func_80291B30() {
 
     for (; i <= 7; i++) {
         for (j = i + 1; j <= 7; j++) {
-            int result = func_800824FC__Q22cf13CfGameManagerFv(i, j);
+            int result = getTableValueByPair__Q22cf13CfGameManagerFv(i, j);
 
             if (result >= 1000) {
                 func_8027EEF4(0xaf);
@@ -2597,7 +2597,7 @@ extern "C" void sinit_802930E0() {
 // Virtual dispatch through self->mPtr using proper typed virtual calls
 // Use local variables for the pointer and vtable to match retail's register allocation
 // (self saved to r31, mPtr loaded into r3 each time)
-// noinline: retail keeps this out-of-line (called from CSLCur::func_8028EA74 etc.)
+// noinline: retail keeps this out-of-line (called from CSLCur::initLayout etc.)
 extern "C" __declspec(noinline) void func_8028EC74(UnkPtrHolder* self) {
     self->mPtr->vf8(self->mField10);
     self->mPtr->vf7(self->mField0C);

@@ -662,7 +662,7 @@ ALLOC_HANDLE MemManager::create_tail(ALLOC_HANDLE handle, u32 size, const char* 
 
         entry->mHandle = child;
         entry->mStartAddress = block;
-        entry->mEndAddress = static_cast<u8*>(block) + dataSize;
+        entry->mEndAddress = reinterpret_cast<u8*>(block) + dataSize;
         entry->mOldest = nullptr;
         entry->mYoungest = nullptr;
 
@@ -1030,7 +1030,7 @@ f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
         (f32)region->mSize * lbl_eu_8066A1C4;
 }
 
-void MemManager::func_804348A4(ALLOC_HANDLE handle, u8 value) {
+void MemManager::setRegionUnk6C(ALLOC_HANDLE handle, u8 value) {
     MemRegion* region = getRegion(handle);
     region->unk6C = value;
 }
@@ -1069,7 +1069,7 @@ u16 MemManager::calculateCrc(const void* data, u32 len) {
     return crc >> 8;
 }
 
-void MemManager::func_80434A4C(bool value) {
+void MemManager::setMemInitFlag(bool value) {
     lbl_eu_80663511 = value;
 }
 

@@ -182,7 +182,7 @@ u8* __dt__800BAA24(u8* object, s32 deleteFlag) {
 // run the model-specific cleanup pair (vtable 0x17C then 0x178) and reset
 // the +0x70/+0x90/+0x94 words plus the +0x68 flag mask.
 void cf::CfObjectModel::CfObject_UnkVirtualFunc6() {
-    func_800AD4B0(this);
+    notifyDetach_(this);
     if (mSubObj38 != 0) {
         reinterpret_cast<cf::CfObjectSub38If*>(mSubObj38)->mAC();
         if (mSubObj38 != 0) {
@@ -877,7 +877,7 @@ void func_800BBADC(cf::CfObjectModel* self, cf::CfObjectModelSub98* arg) {
     self->mSubObj98 = arg;
     if (arg != 0 && obj->field_C0 != 0) {
         u32 v = (arg != 0) ? reinterpret_cast<cf::CfObjectModelSub98Vt*>(arg)->mA8() : 0;
-        func_800AD5EC(obj->field_C0, reinterpret_cast<void*>(v));
+        reattachTrg__(obj->field_C0, reinterpret_cast<void*>(v));
     }
     obj->field_C0 = 0;
 }
@@ -900,7 +900,7 @@ void func_800BBB50(cf::CfObjectModel* self) {
             cf::CfObjectModelSub98* sub2 = self->mSubObj98;
             u32 v2 = (sub2 != 0) ? reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub2)->mA8() : 0;
             obj->field_C0 = reinterpret_cast<void*>(v2);
-            func_800AD558(reinterpret_cast<u8*>(v2));
+            detachTrgPrt_(reinterpret_cast<u8*>(v2));
         }
     }
 }
@@ -927,7 +927,7 @@ void func_800BBC04() {
 }
 
 const char* func_800BBC08(u16 index) {
-    return cf::CfBdat::func_801424A8(index);
+    return cf::CfBdat::getBdatStringEntry(index);
 }
 
 // Return the object when any of the +0x64 flag bits (2, 4, 8, 0x80, 0x100)

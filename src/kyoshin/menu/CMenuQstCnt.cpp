@@ -222,7 +222,7 @@ void CMenuQstCnt::Init() {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, mLayout);
+    u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuQstCntFont*>(fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
@@ -277,7 +277,7 @@ void CMenuQstCnt::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    func_8045F778__17UnkClass_8045F564Fv(&mMemRegion[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
     lbl_eu_80664720 = 0;
 }
 
@@ -285,7 +285,7 @@ void CMenuQstCnt::Move() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (!func_8013BE50()) return;
     // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
     // destroys r0 and the andis needs a second copy. Two adjacent volatile
@@ -294,7 +294,7 @@ void CMenuQstCnt::Move() {
     u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
     u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
-    if (cf::CfGameManager::func_800829B8()) return;
+    if (cf::CfGameManager::isSceneLoading()) return;
     if (lbl_eu_80663E24 & (1u << 9)) return;
     {
         CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
@@ -323,7 +323,7 @@ void CMenuQstCnt::Move() {
 void CMenuQstCnt::cbRenderBefore() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (CTaskGame::getInstance()->func_800426F0() ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
@@ -334,7 +334,7 @@ void CMenuQstCnt::cbRenderBefore() {
     u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
     u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
     if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
-    if (cf::CfGameManager::func_800829B8()) return;
+    if (cf::CfGameManager::isSceneLoading()) return;
     {
         CTaskGameCamView* cam = (CTaskGameCamView*)func_8049603C(lbl_eu_80663E14);
         f32 camDist = *(f32*)((u8*)cam + 0xC);
@@ -419,7 +419,7 @@ void invalidateQstFlag() {
 // Quest-log gating: when the CF-game resource gate reports the scene is open
 // (not mid-load) and the input state allows it, play the sound and set state 1.
 void func_80226BBC(QstMenuData* self) {
-    if (func_80144FF0() == 0 || cf::CfGameManager::func_800829B8() || func_80145030()) {
+    if (func_80144FF0() == 0 || cf::CfGameManager::isSceneLoading() || func_80145030()) {
         func_80138078(0x1f);
         self->mState8C = 1;
     }

@@ -6,7 +6,7 @@ extern char lbl_eu_80571628[0x24];
 
 namespace cf {
 
-void CHelp_EndEvent::func_802B7EC4() {
+void CHelp_EndEvent::checkEndEventState() {
     u32 v;
 
     if (unk10 != NULL) {

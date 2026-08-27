@@ -126,9 +126,9 @@ extern "C" int func_8018B398();
 // Task-game gate helpers. Declared with C linkage because CTaskGame.hpp
 // defines a minimal local CLibHbm view that clashes with the full CLibHbm
 // pulled in by CSelShopWin.hpp -> monolib/lib.hpp (same scheme as
-// CMenuUpdate / CMenuShopBuy). func_800426F0 takes the task-game instance.
+// CMenuUpdate / CMenuShopBuy). isFlag01Set takes the task-game instance.
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool func_800426F0__9CTaskGameFv(void* taskGame);
+extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 extern "C" void func_8022C7C0(CSelShopWin*);
 extern "C" void func_8022C770(CSelShopWin*);
 extern "C" void func_8022C830(CSelShopWin*, nw4r::lyt::DrawInfo*);
@@ -144,7 +144,7 @@ extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CSelShopWin(void*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, void*, u32, u32);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, UnkClass_8045F564*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 

@@ -84,33 +84,33 @@ extern MPFDrawMdlData* lbl_eu_80665860;          // last draw data handed to the
 // TEV / texture pipeline helpers implemented by mpfsys::UnkClass_80471EC8.
 // Retail mangles them as Fv members but they are invoked with the arguments
 // below (see the dispatch comment at the top of this file).
-void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(u16 texIdx, const MPFDrawMdlMat* mat, f32 lodBias);
-void func_804743E0__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_804744EC__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_8047466C__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474780__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(u16 texIdx, const MPFDrawMdlMat* mat, f32 lodBias);
+void setupGfxMode1__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void setupGfxMode2__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void setupGfxMode3__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void setupGfxMode4__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group, s32 tevStage, f32 scale, u8 mtxSelect);
-void func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
-void func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
-void func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(f32 param);
-void func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(u8 texMapId);
-void func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
+void applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group);
+void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32 param);
+void setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(u8 texMapId);
+void resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void disableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 } // extern "C"
 
 // Foreign base-list label referenced by both param blocks (MPFDrawBillboard).
 extern "C" u32 lbl_eu_80663870;
 // Forward decls of the in-TU draw helpers referenced by the dispatch tables.
-extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
-extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
-extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
-extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
+extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
+extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
+extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
+extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
 
 // === .rodata size=0x38 align=8 ===
 extern "C" __declspec(align(8)) const char lbl_eu_80523DC8[24] = {
@@ -132,7 +132,7 @@ extern "C" u32 lbl_eu_80663880[2] = { (u32)&lbl_eu_80523DE0, (u32)&lbl_eu_8056DB
 // === .data size=0x40 align=8 ===
 // MPFDrawMdlColor dispatch table (16B).
 extern "C" u32 lbl_eu_8056DBC0[4] = {
-    (u32)&lbl_eu_80663878, 0x00000000, (u32)&func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv, (u32)&func_80479D40__Q26mpfsys15MPFDrawMdlColorFv,
+    (u32)&lbl_eu_80663878, 0x00000000, (u32)&drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv, (u32)&drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv,
 };
 // MPFDrawMdlColor base-list tail (16B).
 extern "C" u32 lbl_eu_8056DBD0[4] = {
@@ -140,7 +140,7 @@ extern "C" u32 lbl_eu_8056DBD0[4] = {
 };
 // MPFDrawMdlNoColor dispatch table (16B).
 extern "C" u32 lbl_eu_8056DBE0[4] = {
-    (u32)&lbl_eu_80663880, 0x00000000, (u32)&func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv,
+    (u32)&lbl_eu_80663880, 0x00000000, (u32)&drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv,
 };
 // MPFDrawMdlNoColor base-list tail (16B).
 extern "C" u32 lbl_eu_8056DBF0[4] = {
@@ -165,9 +165,9 @@ MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
 
 } // namespace mpfsys
 
-// mpfsys::MPFDrawMdlNoColor::func_80479894() - draw every group, no vertex
+// mpfsys::MPFDrawMdlNoColor::drawAllNoColor() - draw every group, no vertex
 // colors.
-extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
+extern "C" void drawAllNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     mpfsys::UnkClass_80471EC8* const* slot;
     const MPFDrawMdlPolyNoColor* poly;
     const MPFDrawMdlPolyNoColor* polys;
@@ -182,35 +182,35 @@ extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {
-        func_8047466C__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode3__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 3;
     } else {
-        func_804743E0__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode1__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 0;
     }
 
     if (data->flags & 1) {
-        func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+        enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+        disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     }
 
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
 
     slot = list->groups;
     for (i = 1; i < list->count; slot++, i++) {
         func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
-        func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
+        applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         poly = polys;
         for (j = 0; j < data->polyCount; poly++, j++) {
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
             GXCallDisplayList(lbl_eu_80665840 + poly->dlOff, poly->dlSize);
@@ -220,9 +220,9 @@ extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlNoColor::func_80479A1C() - draw the first half of the
+// mpfsys::MPFDrawMdlNoColor::drawHalfNoColor() - draw the first half of the
 // groups (pair list), no vertex colors.
-extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
+extern "C" void drawHalfNoColor__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyNoColor* poly;
     const MPFDrawMdlPolyNoColor* polys;
     const MPFDrawMdlMat* mats;
@@ -238,45 +238,45 @@ extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     lbl_eu_80665860 = data;
 
     if (data->flags & 2) {
-        func_8047466C__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode3__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 3;
     } else {
-        func_804743E0__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode1__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 0;
     }
 
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
 
     pair = list->pairs;
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
-        func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
+        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
         func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
-        func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
+        applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         poly = polys;
         for (j = 0; j < data->polyCount; poly++, j++) {
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
             GXCallDisplayList(lbl_eu_80665840 + poly->dlOff, poly->dlSize);
         }
     }
 
-    func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
+    loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlColor::func_80479BA0() - draw every group with vertex
+// mpfsys::MPFDrawMdlColor::drawAllWithColor() - draw every group with vertex
 // colors.
-extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
+extern "C" void drawAllWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     mpfsys::UnkClass_80471EC8* const* slot;
     const MPFDrawMdlPolyColor* poly;
     const MPFDrawMdlPolyColor* polys;
@@ -291,35 +291,35 @@ extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {
-        func_80474780__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode4__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 3;
     } else {
-        func_804744EC__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode2__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 0;
     }
 
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
 
     if (data->flags & 1) {
-        func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+        enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     } else {
-        func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
+        disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
     }
 
     slot = list->groups;
     for (i = 1; i < list->count; slot++, i++) {
         func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
-        func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
+        applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         poly = polys;
         for (j = 0; j < data->polyCount; poly++, j++) {
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_CLR0, lbl_eu_80665840 + poly->clrOff, 3);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
@@ -330,9 +330,9 @@ extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlColor::func_80479D40() - draw the first half of the
+// mpfsys::MPFDrawMdlColor::drawHalfWithColor() - draw the first half of the
 // groups (pair list) with vertex colors.
-extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
+extern "C" void drawHalfWithColor__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyColor* poly;
     const MPFDrawMdlPolyColor* polys;
     const MPFDrawMdlMat* mats;
@@ -348,32 +348,32 @@ extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
     GXSetCurrentMtx(3);
 
     if (data->flags & 2) {
-        func_80474780__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode4__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 3;
     } else {
-        func_804744EC__Q26mpfsys17UnkClass_80471EC8Fv();
+        setupGfxMode2__Q26mpfsys17UnkClass_80471EC8Fv();
         tevStage = 0;
     }
 
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
 
     pair = list->pairs;
     pairCount = list->count / 2;
     for (i = 0; i < pairCount; i++, pair++) {
-        func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
+        setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(pair->param);
         func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj, tevStage, data->scale, data->mtxSelect);
-        func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
+        applyTevColor__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         poly = polys;
         for (j = 0; j < data->polyCount; poly++, j++) {
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_CLR0, lbl_eu_80665840 + poly->clrOff, 3);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
@@ -381,6 +381,6 @@ extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
         }
     }
 
-    func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
+    loadTevKColor__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetCurrentMtx(0);
 }

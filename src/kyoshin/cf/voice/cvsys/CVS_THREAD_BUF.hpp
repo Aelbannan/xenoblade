@@ -43,7 +43,7 @@ extern "C" {
     void   __ct__cf_CVS_THREAD();
     int    func_802A77E8(CVoiceHandle* handle);
     CVoiceHandle* func_802A7A54(int a);
-    void*  func_800B708C__Fi(int id);
+    void*  findObjectById__Fi(int id);
     void*  func_8016FE34(void* src);
 }
 

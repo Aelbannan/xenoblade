@@ -48,7 +48,7 @@ extern const f32 lbl_eu_8066A74C;
 extern const f32 lbl_eu_8066A758;
 extern const f32 lbl_eu_8066A75C;
 extern const f32 lbl_eu_8066A770;
-// Embedded-subobject pointer cache (written by func_8047BE8C in
+// Embedded-subobject pointer cache (written by initMpfDrawBuffer in
 // code_8047BB54.cpp); func_80471FCC registers `this` here.
 extern void* lbl_eu_80665838;
 // Panic file-name / message strings (retail rodata).
@@ -230,7 +230,7 @@ extern "C" void Init__Q34nw4r3g3d7ResFileFv(MpfsysResFileHandle*);
 // Map attach: validate the descriptor magic/revision, then bind the embedded
 // ResFile (alignment-panic, revision/tex checks, Init) and stash the camera /
 // view pair, before refreshing the layer state. Returns 1 on success.
-bool func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(
+bool tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, MpfsysResFileHandle* a5, void* a6, u32 a7) {
     MpfsysResDesc* d = (MpfsysResDesc*)a4;
     if (d->field_0x0 == 0x4D504646 && d->field_0x4 == 0x3EA) {
@@ -261,9 +261,9 @@ bool func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(
     return false;
 }
 
-void mpfsys::UnkClass_80471EC8::func_80471FC8(void) { func_80473394(); }
+void mpfsys::UnkClass_80471EC8::update(void) { updateLayers(); }
 
-void func_80471FCC__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7) {
+void submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7) {
     // Register this instance in the shared pointer slot, then, when the map
     // descriptor carries display lists, resolve the current view frame and
     // push the layer draws into the MPF display list. The retail leaves r3
@@ -571,7 +571,7 @@ struct MpfsysCamBlock {
 // code_8047BB54.cpp). The literal mangled names are kept (MWCC emits
 // `__`-containing identifiers verbatim), matching the func_8047230C
 // precedent in this file.
-void func_8047233C__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
+void clearFlag__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
     // Clear one bit of the 256-bit flag array at 0x2D00.
     MpfsysFlagArray* flags = (MpfsysFlagArray*)self;
     if (index > 0xFF) {
@@ -580,7 +580,7 @@ void func_8047233C__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
     flags->field_0x2D00[index >> 5] &= ~(1 << (index & 31));
 }
 
-void func_80472370__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
+void setFlag__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, int index) {
     // Set one bit of the 256-bit flag array at 0x2D00.
     MpfsysFlagArray* flags = (MpfsysFlagArray*)self;
     if (index > 0xFF) {
@@ -618,7 +618,7 @@ static inline GXColor ColorFromQuad(const f32* quad, f32 scale) {
     return c;
 }
 
-void func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(
+void getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, GXColor* outMat, GXColor* outFog) {
     // Build two GXColors from the animation object's colour quads; both alphas
     // are forced to 0xFF only after both colours have been copied out.
@@ -660,9 +660,9 @@ void func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(
     outFog->a = 0xFF;
 }
 
-void mpfsys::UnkClass_80471EC8::func_80472864() { *(u8*)((u8*)this + 0x2E10) = 1; }
+void mpfsys::UnkClass_80471EC8::markDirty() { *(u8*)((u8*)this + 0x2E10) = 1; }
 
-void func_80472870__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, s32 mode) {
+void setColorMode__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, s32 mode) {
     // Layer colour-mode setter. The retail symbol is annotated Fv but takes
     // (self, mode) in r3/r4 - mode is stored at 0x2E04 and selects one of
     // three fixed RGB colours written to the f32 triple at 0x2DE0.
@@ -985,7 +985,7 @@ extern "C" f32 func_80496288(void* scene);
 
 #pragma push
 #pragma auto_inline off
-void mpfsys::UnkClass_80471EC8::func_80473394() {
+void mpfsys::UnkClass_80471EC8::updateLayers() {
     MpfsysResState* res = (MpfsysResState*)this;
     MpfsysRandState* st = (MpfsysRandState*)this;
 
@@ -1019,7 +1019,7 @@ void mpfsys::UnkClass_80471EC8::func_80473394() {
 }
 #pragma pop
 
-void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
+void* mpfsys::UnkClass_80471EC8::getLayerRecord(u8 layerIndex) {
     return (u8*)this + layerIndex * 0x1680;
 }
 
@@ -1144,7 +1144,7 @@ void func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f
 }
 extern "C" {
 #pragma dont_inline on
-void func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, f32 f1) {
+void setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, f32 f1) {
     // Layer-scale setter. The retail symbol is annotated Fv but the function
     // actually takes (self, f32) - see the caller in code_8047BB54.cpp.
     // Stores the raw scale at 0x2DFC and the folded scale at 0x2E00.
@@ -1160,7 +1160,7 @@ void func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
 }
 
 extern "C" {
-void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) {
+void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) {
     if (lbl_eu_80665858 == texIndex) {
         return;
     }
@@ -1360,7 +1360,7 @@ void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
     GXInitLightColor(&lightObj, keyColor);
     GXLoadLightObjImm(&lightObj, GX_LIGHT1);
 
-    func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(
+    getLayerColors__Q26mpfsys17UnkClass_80471EC8Fv(
         (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838,
         (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
 
@@ -1408,7 +1408,7 @@ void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
     nw4r::g3d::G3DState::LoadFog(0x40);
 }
 
-void mpfsys::UnkClass_80471EC8::func_804742BC() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode0() {
     if (lbl_eu_8066585A == 0) {
         return;
     }
@@ -1432,7 +1432,7 @@ void mpfsys::UnkClass_80471EC8::func_804742BC() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_804743E0() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode1() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 1).
     if (lbl_eu_8066585A == 1) {
         return;
@@ -1455,7 +1455,7 @@ void mpfsys::UnkClass_80471EC8::func_804743E0() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_804744EC() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode2() {
     // Fullscreen TEV two-stage setup (idempotent per state 2).
     if (lbl_eu_8066585A == 2) {
         return;
@@ -1483,7 +1483,7 @@ void mpfsys::UnkClass_80471EC8::func_804744EC() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_8047466C() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode3() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 3).
     if (lbl_eu_8066585A == 3) {
         return;
@@ -1507,7 +1507,7 @@ void mpfsys::UnkClass_80471EC8::func_8047466C() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474780() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode4() {
     // Fullscreen TEV two-stage setup with a texture order on stage 1
     // (idempotent per state 4).
     if (lbl_eu_8066585A == 4) {
@@ -1538,7 +1538,7 @@ void mpfsys::UnkClass_80471EC8::func_80474780() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_8047491C() {
+void mpfsys::UnkClass_80471EC8::setupGfxMode5() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 5);
     // position attribute arrives as direct u16 pairs like the texcoord.
     if (lbl_eu_8066585A == 5) {
@@ -1564,7 +1564,7 @@ void mpfsys::UnkClass_80471EC8::func_8047491C() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474A40() {
+void mpfsys::UnkClass_80471EC8::enableAlphaBlend() {
     // One-shot alpha/blend setup: when the 0x2 flag is clear, push the
     // transparent-overlay blend state and set the flag.
     if (!(lbl_eu_8066586C & 0x2)) {
@@ -1574,7 +1574,7 @@ void mpfsys::UnkClass_80471EC8::func_80474A40() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474AA0() {
+void mpfsys::UnkClass_80471EC8::disableAlphaBlend() {
     // One-shot alpha/blend teardown: when the 0x2 flag is set, push the
     // opaque blend state and clear the flag.
     if (lbl_eu_8066586C & 0x2) {
@@ -1627,7 +1627,7 @@ void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(int idx, s32 layerIdx,
     GXLoadPosMtxImm(out, 3);
     if (layerIdx != 0) {
         mpfsys::UnkClass_80471EC8* inst = (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838;
-        u8* ent = (u8*)inst->func_804734F4(layerSel);
+        u8* ent = (u8*)inst->getLayerRecord(layerSel);
         ent += (((u32)idx + layerIdx) & lbl_eu_8066A72C) * 0xB4;
         PSMTXConcat(m, *(Mtx*)(ent + 0x84), out);
         PSMTXConcat(lbl_eu_80658458, out, out);
@@ -1776,14 +1776,14 @@ void func_80474064__Q26mpfsys17UnkClass_80471EC8Fv(
     lbl_eu_80665864 = (u32)((u8*)lbl_eu_80665838 + 0x2D00);
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474CC4() {
+void mpfsys::UnkClass_80471EC8::loadTevKColor() {
     // Push the shared constant key color (RGBA latch) as TEV K-color 0.
     GXColor color;
     *(u32*)&color = lbl_eu_8066A7A0;
     GXSetTevKColor((GXTevKColorID)0, color);
 }
 
-void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(s32 index) {
+void applyMatColor__Q26mpfsys17UnkClass_80471EC8Fv(s32 index) {
     // Push the channel-material colour for table entry `index` of the shared
     // RGB565 colour table. The retail symbol is annotated Fv: r3 carries the
     // table index and is never dereferenced, so the literal mangled name is
@@ -1797,7 +1797,7 @@ void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(s32 index) {
     GXSetChanMatColor(GX_COLOR0, color);
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474D50() {
+void mpfsys::UnkClass_80471EC8::applyTevColor() {
     // Same RGB565->GXColor expansion as func_80474CF4 (alpha byte from
     // lbl_eu_8066A7D4), pushed as TEV register colour 0.
     u16 rgb565 = lbl_eu_80665850[(u32)this];
@@ -1813,13 +1813,13 @@ void mpfsys::UnkClass_80471EC8::func_80474D50() {
 // mangled name is kept. Scales lbl_eu_8066A7D8 by the argument, stores the
 // converted byte as the alpha of the shared key color (lbl_eu_80663858),
 // then pushes that color as TEV K-color 0.
-void func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(f32 value) {
+void setKeyAlpha__Q26mpfsys17UnkClass_80471EC8Fv(f32 value) {
     lbl_eu_80663858.a = (u8)(s32)(lbl_eu_8066A7D8 * value);
     GXColor color = lbl_eu_80663858;
     GXSetTevKColor(GX_KCOLOR0, color);
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474DF8() {
+void mpfsys::UnkClass_80471EC8::setFogIndex() {
     // Fog-index setter. The retail symbol is annotated Fv (no args), so this
     // is written as a no-arg member: r3 (this) itself carries the new fog
     // index value and is compared/stored/loaded without ever being
@@ -1835,7 +1835,7 @@ void mpfsys::UnkClass_80471EC8::func_80474DF8() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474E24(void) {
+void mpfsys::UnkClass_80471EC8::resetAmbient(void) {
     // One-shot ambient-color push: when the 0x20 "ambient set" flag is set,
     // clear it and push the shared ambient color (lbl_eu_80665878) for
     // channel 0.
@@ -1848,7 +1848,7 @@ void mpfsys::UnkClass_80471EC8::func_80474E24(void) {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474E68(void) {
+void mpfsys::UnkClass_80471EC8::applyAmbient(void) {
     // One-shot ambient-color push: when the 0x20 flag is clear, push the
     // shared ambient color (lbl_eu_8066587C) for channel 0, then set the flag.
     if (!(lbl_eu_8066586C & 0x20)) {
@@ -1859,7 +1859,7 @@ void mpfsys::UnkClass_80471EC8::func_80474E68(void) {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474EB0() {
+void mpfsys::UnkClass_80471EC8::resetTevSwap() {
     // Install the default TEV swap-mode tables: identity (R,G,B,A) for all
     // four swap selectors.
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
@@ -1868,7 +1868,7 @@ void mpfsys::UnkClass_80471EC8::func_80474EB0() {
     GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474F2C() {
+void mpfsys::UnkClass_80471EC8::disableZMode() {
     // One-shot Z-mode disable: when the 0x40 "Z configured" flag is set,
     // clear it and push GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE).
     if (!(lbl_eu_8066586C & 0x40)) {
@@ -1878,7 +1878,7 @@ void mpfsys::UnkClass_80471EC8::func_80474F2C() {
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474F54() {
+void mpfsys::UnkClass_80471EC8::enableZMode() {
     // One-shot Z-mode enable: when the 0x40 flag is clear, set it and push
     // GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE).
     if (lbl_eu_8066586C & 0x40) {

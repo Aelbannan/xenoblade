@@ -385,9 +385,9 @@ struct PcEffectSpawnRec {
 };
 
 // Imports from other TUs used by this TU's free functions.
-extern "C" void func_800ACFD8(void* obj, void* target);
-extern "C" void func_800ACC14(void* obj, s8 val);
-extern "C" void func_800ACF78(CPcEffect07Obj* obj, PcEffectScheduleSub* sub, s32 flags);
+extern "C" void setTargetObj_(void* obj, void* target);
+extern "C" void setChildB59__(void* obj, s8 val);
+extern "C" void bindPartnerO_(CPcEffect07Obj* obj, PcEffectScheduleSub* sub, s32 flags);
 
 // Effect-id -> wstring table index matrix (indexed by selector slot).
 extern u32 lbl_eu_80533738[];

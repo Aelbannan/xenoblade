@@ -10,13 +10,13 @@ extern "C" {
     void __ct__cf_CREvtObj(CREvtCamera* self, u32 param);
     void __dt__Q22cf8CREvtObjFv(CREvtCamera* self, int deleteFlag);
     void __dt__80185754(CREvtCamera* self);
-    CREvtCamManager* func_800821F8__Q22cf13CfGameManagerFv();
+    CREvtCamManager* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
     void  func_8006BBF4(void* mgr, u32 mask, int flag);
-    unsigned char func_80462E1C__8CTaskLODFv(s16 taskID);
-    void func_80462D04__8CTaskLODFv(s16 taskID);
-    void func_80462D5C__8CTaskLODFv(s16 taskID);
-    void func_80462F4C__8CTaskLODFv(s16 taskID, int flag);
+    unsigned char getLODData__8CTaskLODFv(s16 taskID);
+    void activateLOD__8CTaskLODFv(s16 taskID);
+    void deactivateLOD__8CTaskLODFv(s16 taskID);
+    void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
     int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(const char*, u8**, u32*);
     CREvtSceneModel* func_80495E8C(u32 mgr, u8* handle, int flag, int flag2);
     void func_80495E60(void* ptr);
@@ -108,8 +108,8 @@ extern "C" void func_80180394(CREvtCamera* self) {
     if (!lbl_eu_806642A8) return;
     for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount2AC; i++) {
         s16 taskID = ((CREvtCamera*)lbl_eu_806642A8)->mTaskArray1A6[i];
-        func_80462D04__8CTaskLODFv(taskID);
-        func_80462F4C__8CTaskLODFv(taskID, 1);
+        activateLOD__8CTaskLODFv(taskID);
+        attachLODObject__8CTaskLODFv(taskID, 1);
     }
 }
 
@@ -154,12 +154,12 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
     self->mField444 = f0;
 
     // Mirror the game manager's camera settings into this camera. Each
-    // func_800821F8() call is a separate retrieval (MWCC cannot CSE calls).
-    if (func_800821F8__Q22cf13CfGameManagerFv()) {
-        if (func_800821F8__Q22cf13CfGameManagerFv()->field_0x0C) {
-            self->mField8C = func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x58();
-            self->mField440 = ((CREvtPlayerObj*)func_800821F8__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
-            self->mField444 = ((CREvtPlayerObj*)func_800821F8__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
+    // getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE calls).
+    if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
+        if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
+            self->mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x58();
+            self->mField440 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
+            self->mField444 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
         }
     }
 
@@ -181,11 +181,11 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
         self->vtable = (u8*)lbl_eu_80531CE8;
         lbl_eu_806642A8 = 0;
 
-        // Each func_800821F8() call is a separate retrieval (MWCC cannot CSE
+        // Each getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE
         // function calls) - retail makes 3 calls before func_8006BBF4.
-        if (func_800821F8__Q22cf13CfGameManagerFv()) {
-            if (func_800821F8__Q22cf13CfGameManagerFv()->field_0x0C) {
-                func_8006BBF4(func_800821F8__Q22cf13CfGameManagerFv(), 0x04000000, 0);
+        if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
+            if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
+                func_8006BBF4(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 0);
 
                 if (self->mFieldA4) {
                     // Mirror the camera position into the game manager.
@@ -196,10 +196,10 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
                     f32 y = self->mMatrix58[1][3];
                     f32 x = self->mMatrix58[0][3];
                     f32 pos[3] = { x, y, z };
-                    func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x14(pos);
+                    getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x14(pos);
                 }
 
-                func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mField8C);
+                getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mField8C);
 
                 // Restore the player object's stored fields. Declaring both
                 // locals first then assigning keeps MWCC's f30/f31 allocation
@@ -209,7 +209,7 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
                 f30 = self->mField444;
                 f31 = self->mField440;
                 CREvtPlayerObj* player =
-                    (CREvtPlayerObj*)func_800821F8__Q22cf13CfGameManagerFv()->field_0x0C;
+                    (CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C;
                 player->field_0x1EC = f31;
                 player->field_0x1F0 = f30;
                 func_8049EB60();
@@ -250,7 +250,7 @@ extern "C" void func_80180210(CREvtCamera* taskData) {
     if (taskData) {
         for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount2A8; i++) {
             s16 taskID = ((CREvtCamera*)lbl_eu_806642A8)->mTaskArrayA6[i];
-            u8 isActive = func_80462E1C__8CTaskLODFv(taskID);
+            u8 isActive = getLODData__8CTaskLODFv(taskID);
             s32 found = 0;
             s32 count = (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount434;
             for (s32 j = 0; j < count; j++) {
@@ -264,18 +264,18 @@ extern "C" void func_80180210(CREvtCamera* taskData) {
                 ((CREvtCamera*)lbl_eu_806642A8)->mTaskArray334[((CREvtCamera*)lbl_eu_806642A8)->mTaskCount434] = taskID;
                 ((CREvtCamera*)lbl_eu_806642A8)->mTaskCount434++;
             }
-            if (isActive) func_80462D5C__8CTaskLODFv(taskID);
+            if (isActive) deactivateLOD__8CTaskLODFv(taskID);
         }
         ((CREvtCamera*)lbl_eu_806642A8)->mField438 = 1;
     } else {
         if (((CREvtCamera*)lbl_eu_806642A8)->mField438) {
             for (s32 i = 0; i < (s32)((CREvtCamera*)lbl_eu_806642A8)->mTaskCount434; i++) {
                 s16 taskID = ((CREvtCamera*)lbl_eu_806642A8)->mTaskArray334[i];
-                u8 isActive = func_80462E1C__8CTaskLODFv(taskID);
+                u8 isActive = getLODData__8CTaskLODFv(taskID);
                 if (((CREvtCamera*)lbl_eu_806642A8)->mFlagArray2B4[i]) {
-                    if (!isActive) func_80462D04__8CTaskLODFv(taskID);
+                    if (!isActive) activateLOD__8CTaskLODFv(taskID);
                 } else {
-                    if (isActive) func_80462D5C__8CTaskLODFv(taskID);
+                    if (isActive) deactivateLOD__8CTaskLODFv(taskID);
                 }
             }
             ((CREvtCamera*)lbl_eu_806642A8)->mField438 = 0;
@@ -323,11 +323,11 @@ static f32 ConvU32ToTime(u32 v) {
 // game manager, and applies the result to the active camera object.
 // ============================================================================
 extern "C" void func_801804CC(CREvtCamera* self) {
-    if (func_800821F8__Q22cf13CfGameManagerFv()) {
-        func_8006BBF4(func_800821F8__Q22cf13CfGameManagerFv(), 0x04000000, 1);
+    if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
+        func_8006BBF4(getCameraDataBlock__Q22cf13CfGameManagerFv(), 0x04000000, 1);
     }
     if (!self->mField1C) return;
-    if (cf::CfGameManager::func_800829B8()) return;
+    if (cf::CfGameManager::isSceneLoading()) return;
 
     CREvtSceneModel* sceneObj = (CREvtSceneModel*)self->mField1C;
     nw4r::g3d::ChrAnmResult* result =
@@ -340,8 +340,8 @@ extern "C" void func_801804CC(CREvtCamera* self) {
     CREvtCamObj* camObj = func_80496264(lbl_eu_80663E14, -1);
     if (!camObj) return;
 
-    if (func_800821F8__Q22cf13CfGameManagerFv()) {
-        func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mMatrix28[2][3]);
+    if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
+        getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mMatrix28[2][3]);
     }
     camObj->field_0x1E0 = self->mMatrix28[2][3];
     func_8049EB60();

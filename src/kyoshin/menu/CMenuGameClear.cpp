@@ -121,7 +121,7 @@ void CMenuGameClear::Term() {
     lbl_eu_80664C08 = 0;
 
     cf::CfGameManager::enablePadFlags(-1, false);
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuGameClear::Move() {}
@@ -139,7 +139,7 @@ void CMenuGameClear::cbRenderBefore() {
     // so MWCC emits retail's branch-over-branch: `bne end` for the first
     // disjunct, `beq body; b end` for the second (MWCC_CASES
     // §&&-gate branch-over-branch).
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -174,7 +174,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
     int dirBit;
     int down;
     int up;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         buttons = pad->field_104;
         dirBit = (pad->field_04 >> 21) & 1;
         down = (buttons & 0x8004) != 0;
@@ -216,7 +216,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
     int dirBit;
     int down;
     int up;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         buttons = pad->field_104;
         dirBit = (pad->field_04 >> 21) & 1;
         down = (buttons & 0x8004) != 0;

@@ -70,7 +70,7 @@ extern "C" void func_8047CAA8__17UnkClass_8047CA88Fv(
             }
         } else {
             func_8047C040__17UnkClass_8047BB54Fv(
-                func_8047C034__17UnkClass_8047BB54Fv(self),
+                getMpfStatus__17UnkClass_8047BB54Fv(self),
                 (u8*)self->field_20 + param->index * 8, param->count);
         }
     }

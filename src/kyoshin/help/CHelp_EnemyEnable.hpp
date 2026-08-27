@@ -7,11 +7,11 @@ namespace cf {
 // size: 0xC (no extra members beyond CHelp).
 class __declspec(novtable) CHelp_EnemyEnable : public CHelp {
 public:
-    bool func_802B8028();
+    bool areAllEnemiesEnabled();
 };
 
 // Virtual-dispatch shim: the object returned by func_800AD860 has a sub-object
-// with its own vtable at +0x3E9C, and func_802B8028 calls that sub-object's
+// with its own vtable at +0x3E9C, and areAllEnemiesEnabled calls that sub-object's
 // vtable slot 0x74. Declaring the slot as a real virtual method makes MWCC emit
 // the r12 virtual-call sequence used by retail (a raw slot cast would use r4).
 // This class is never instantiated, so none of these need out-of-line

@@ -16,7 +16,7 @@
  *   0x3C  two null pointer-to-member-function callback slots
  *   0x54  nw4r layout (drawn by cbRenderBefore, deleted by Term)
  *   0x5C  tag-processor object (0x858 heap block, viewed as AnimTransform*)
- *   0x68  talk-source id (fed to func_800B708C in cbRenderBefore)
+ *   0x68  talk-source id (fed to findObjectById in cbRenderBefore)
  *   0x70  IScnRender vtable slot (render callback, passed to CScn)
  *   0x74  owning CScn
  *   0x78  UnkClass_8045F564 layout-build region (raw buffer: retail drives
@@ -87,11 +87,11 @@ public:
 #endif
 
 // Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv).
+// isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Talk-window views of the talk-source objects (func_800BBC0C result). The
@@ -160,7 +160,7 @@ struct CTalkWinPosObj {
     f32 field_0x2C; // +0x2C
 };
 
-// func_800B708C(id) result view for Init / func_8012CD38: dispatched virtuals
+// findObjectById(id) result view for Init / func_8012CD38: dispatched virtuals
 // at +0x40 (talk text), +0xAC (position fallback), +0x120 (named-position
 // lookup) and +0x158 (voice stop). Field +0x8C carries the case-4 message id.
 // Never instantiated - cast view only, so no vtable is emitted.
@@ -315,7 +315,7 @@ public:
     u32 field_F8;                      // 0xF8 tag-processor pointer
 };
 
-// func_80452C10(1, layout) result view: vtable+0x24 returns the font handle
+// getFontInfo(1, layout) result view: vtable+0x24 returns the font handle
 // handed to func_8013676C.
 class CTalkFontObj {
 public:
@@ -351,7 +351,7 @@ void func_8012D3D8(CTalkWindow* self);
 int code80135FDC_getByte_64058();
 int code80135FDC_getByte_64059();
 int func_8013BF78();
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 CTalkWinTalkSrc* func_800BBC0C();
 int func_8004C5EC(CTalkWinTalkC4* talkC4);
 void func_8004B9D4(CTalkWinTalkC4* talkC4, int a, int b, int c, int d);
@@ -376,7 +376,7 @@ void func_80127764(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
 void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
 u32 getAllocHandle__10CLibLayoutFv();
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
@@ -393,7 +393,7 @@ void func_8049B59C(nw4r::math::VEC3* out, CTalkWinPose* pose,
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
-void* func_800B708C(int id);
+void* findObjectById(int id);
 u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
 void func_80138078(unsigned long id);
 

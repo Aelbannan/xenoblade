@@ -41,8 +41,8 @@ void func_804948F4(int a, int b);
 void func_80494F10(ml::CRect* rect, ml::CCol4* p2, ml::CCol4* p3);
 void func_8044A578__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
 void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 a, u32 b, u32 c, u32 d, u32 e);
-void func_8044B5C0__8CGXCacheFv(CGXCache* cache);
-void func_8044ABAC__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
+void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
+void setAlphaBlend__8CGXCacheFv(CGXCache* cache, u32 a, u32 b);
 }
 
 // Extern declarations for functions not yet decompiled
@@ -229,7 +229,7 @@ extern "C" void func_8049A128(CScnBloom* self) {
     func_80490314(texWork);
     self->mTexture = func_80490208(texWork, (u16)rect.mSize.x, (u16)rect.mSize.y, self->mTexFormat);
     if (self->mTexture != 0) {
-        ml::CCol4* cacheColor = CDeviceGX::getCacheInstance()->func_8044B5B4();
+        ml::CCol4* cacheColor = CDeviceGX::getCacheInstance()->getClearColor();
         self->mClearColor = *cacheColor;
         func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &ml::CCol4::black, 0);
         func_804944DC(self->mTexture, &rect, 0, 1);
@@ -326,11 +326,11 @@ extern "C" void func_8049AA74(CScnBloom* self) {
     GXTexObj* tex = func_80490208(texWork, (u16)((w + (w >> 31)) >> 1), (u16)((h + (h >> 31)) >> 1), fmt);
     if (tex != 0) {
         func_804944DC(tex, &rect, 1, 0);
-        CDeviceGX::getCacheInstance()->func_8044BE38();
-        func_8044B5C0__8CGXCacheFv(CDeviceGX::getCacheInstance());
-        CDeviceGX::getCacheInstance()->func_8044A94C(0, 0);
-        CDeviceGX::getCacheInstance()->func_8044AA7C(0, 0);
-        func_8044ABAC__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
+        CDeviceGX::getCacheInstance()->resetGXStateA();
+        updateOrthoGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
+        CDeviceGX::getCacheInstance()->setZCompareMD(0, 0);
+        CDeviceGX::getCacheInstance()->setZWriteMode(0, 0);
+        setAlphaBlend__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
         func_804948F4(0, 1);
@@ -379,7 +379,7 @@ extern "C" void func_8049A318(CScnBloom* self) {
     CView* view = CView::getCurrentView();
     if (self->mTexture == NULL)
         return;
-    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
 
     ml::CRect rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, view);
@@ -453,10 +453,10 @@ extern "C" void func_8049A318(CScnBloom* self) {
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     func_80494A64(0, 2, 0);
     func_80494C30(0, 0, 0);
-    func_8044B5C0__8CGXCacheFv(cache);
-    cache->func_8044A94C(0, 0);
-    cache->func_8044AA7C(0, 0);
-    func_8044ABAC__8CGXCacheFv(cache, 0, 0);
+    updateOrthoGX__8CGXCacheFv(cache);
+    cache->setZCompareMD(0, 0);
+    cache->setZWriteMode(0, 0);
+    setAlphaBlend__8CGXCacheFv(cache, 0, 0);
     func_8044A7F8__8CGXCacheFv(cache, 0, 4, 5, 0, 0);
     GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
     GXSetCurrentMtx(0);
@@ -696,10 +696,10 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
                            lbl_eu_8066AAF4);
             GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
             GXSetCurrentMtx(0);
-            func_8044B5C0__8CGXCacheFv(cache);
-            cache->func_8044A94C(0, 0);
-            cache->func_8044AA7C(0, 0);
-            func_8044ABAC__8CGXCacheFv(cache, 0, 0);
+            updateOrthoGX__8CGXCacheFv(cache);
+            cache->setZCompareMD(0, 0);
+            cache->setZWriteMode(0, 0);
+            setAlphaBlend__8CGXCacheFv(cache, 0, 0);
             func_804948F4(0, 1);
             GXSetNumTexGens(1);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
@@ -777,9 +777,9 @@ extern "C" void func_8049928C(CScnBloom* self, u32 param) {
             }
             func_804902D8(texWork, tex);
             func_80490314(texWork);
-            cache->func_8044A94C(1, 0);
-            cache->func_8044AA7C(1, 0);
-            func_8044ABAC__8CGXCacheFv(cache, 0, 0);
+            cache->setZCompareMD(1, 0);
+            cache->setZWriteMode(1, 0);
+            setAlphaBlend__8CGXCacheFv(cache, 0, 0);
         }
     }
 }

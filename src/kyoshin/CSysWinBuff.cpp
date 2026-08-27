@@ -90,7 +90,7 @@ void CSysWinBuff::Term() {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&mFileHandle);
     func_8022B7F4(&mSysWin[0]);
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     lbl_eu_806648E4 = 0;
     lbl_eu_806648E0 = 0;
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
@@ -98,7 +98,7 @@ void CSysWinBuff::Term() {
     mScene->removeRenderCB(render);
     func_8013B980();
     if (code80135FDC_getByte_64080() == 0)
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ void CSysWinBuff::Term() {
 // ---------------------------------------------------------------------------
 void CSysWinBuff::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50()) return;
     if (func_8029A658() != 0) return;
@@ -181,7 +181,7 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
 
         obj->flagB8 = 0;
         obj->argBA = arg;
-        func_8008294C__Q22cf13CfGameManagerFv(true);
+        setPresentationFlag__Q22cf13CfGameManagerFv(true);
         code80135FDC_postIncByte_64080();
     }
     lbl_eu_806648E0 = (CSysWinBuff*)obj;
@@ -249,7 +249,7 @@ void CSysWinBuff::Init() {
 // ---------------------------------------------------------------------------
 void CSysWinBuff::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
     if (func_8029A658() != 0) return;
@@ -284,7 +284,7 @@ void CSysWinBuff::Move() {
         // Confirm button: player-specific (Classic A) in co-op, else Wiimote A.
         CPad* pad = cf::CfGameManager::getCurrentPad();
         int confirm;
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
             confirm = (pad->mPressedButtonFlags >> 21) & 1;
         else
             confirm = (pad->mPressedButtonFlags >> 4) & 1;

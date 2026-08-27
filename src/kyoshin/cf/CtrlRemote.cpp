@@ -77,11 +77,11 @@ void func_80098CB8(CtrlPcVf44* self)
     }
 
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000)) {
+    if (isGlobalCamFlagSet(0x4000000)) {
         return;
     }
 
-    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                    ? lbl_eu_80527F10[21]
                    : lbl_eu_80527E98[21];
     CtrlPcSub37Ae80* sub = self->vf37();
@@ -113,9 +113,9 @@ void func_80098CB8(CtrlPcVf44* self)
 void func_80098EF8(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
-    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)func_800B708C(func_800FE68C()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(func_800FE68C()->mField90E4);
 
     u32 v1a;    // probe 0x1a
     u32 v1;
@@ -162,7 +162,7 @@ void func_80098EF8(CtrlPcVf38* self)
             }
         } else {
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x4000000) == 0) {
+            if (isGlobalCamFlagSet(0x4000000) == 0) {
                 CtrlPlayerSub3F60* s = self->mField5C->mField3F60;
                 u32 f4ec = s->mField4EC;
                 if ((f4ec & 0x10) != 0) {
@@ -232,7 +232,7 @@ void func_80098EF8(CtrlPcVf38* self)
                 }
             } else {
                 cf::CfGameManager::getInstance();
-                if (func_8006EF04(0x4000000) != 0) {
+                if (isGlobalCamFlagSet(0x4000000) != 0) {
                     self->mField8 = lbl_eu_80666730;
                     if (self->mField5C->mField3F60 != NULL) {
                         self->mField5C->mField3F60->mFieldC |= 0x400;
@@ -267,7 +267,7 @@ void func_80098EF8(CtrlPcVf38* self)
         abs((s8)sub->mField5A) > 0xa || abs((s8)sub->mField5B) > 0xa) {
         self->mField4 |= 0x200;
     } else {
-        u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                         ? lbl_eu_80527F10[2]
                         : lbl_eu_80527E98[2];
         if ((self->vf37()->mField4 & mask2) != 0) {
@@ -453,7 +453,7 @@ a89c:
         probePlayerCtrl((cf::CtrlPc*)self, &v806, 0x806) == 0) {
         // battle-target re-aim below
     } else if (self->mField5C->mSub3E9C.v01(4) != 0) {
-        void* other = func_8016FE34(func_800B708C((s32)self->mField5C->mSub3E9C.v17()));
+        void* other = func_8016FE34(findObjectById((s32)self->mField5C->mSub3E9C.v17()));
         if (other != 0) {
             ml::CVec3 diff;
             CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
@@ -475,7 +475,7 @@ a89c:
         probePlayerCtrl((cf::CtrlPc*)self, &v801b, 0x801) != 0) {
         CtrlPlayerSub298Vf4* sub298 =
             (CtrlPlayerSub298Vf4*)self->mField5C->vf164();
-        void* t = func_8016FE34(func_800B708C((s32)sub298->mField4));
+        void* t = func_8016FE34(findObjectById((s32)sub298->mField4));
         if (t != 0 && t != self->mField5C) {
             ml::CVec3 diff;
             CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
@@ -516,7 +516,7 @@ void func_8009A1DC(cf::CtrlPc* self)
 {
     bool flag = true;
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000) != 0) {
+    if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
     if (func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
@@ -548,16 +548,16 @@ void func_8009A1DC(cf::CtrlPc* self)
         flag = false;
     }
     if (flag) {
-        u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                        ? lbl_eu_80527F10[2]
                        : lbl_eu_80527E98[2];
         u32 mf4 = self->vf37()->mField4;
         if ((mf4 & mask) != 0) {
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 &&
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0 &&
                 (self->vf37()->mField0 & 0x2000000)) {
                 return;
             }
-            u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[2]
                             : lbl_eu_80527E98[2];
             u32 mf4b = self->vf37()->mField4;
@@ -579,9 +579,9 @@ void func_8009A1DC(cf::CtrlPc* self)
 void func_8009A4AC(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
-    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8View* gm8 = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)func_800B708C(func_800FE68C()->mField90E4);
+        (CtrlVoiceHandle*)findObjectById(func_800FE68C()->mField90E4);
 
     u32 v1;
     u32 v2;
@@ -594,15 +594,15 @@ void func_8009A4AC(CtrlPcVf38* self)
     int flagA = 0;
     int flagB = 0;
 
-    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                    ? lbl_eu_80527F10[16]
                    : lbl_eu_80527E98[16];
     CtrlRemoteSubA0* sub = (CtrlRemoteSubA0*)self->vf38();
     self->mField5C->mSub3ED4->vf10(0x400, (sub->mField0 & mask) != 0);
 
     if (probePlayerCtrl((cf::CtrlPc*)self, &v3, 0x803) != 0) {
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-            u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
+            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[18]
                             : lbl_eu_80527E98[18];
             CtrlRemoteSubA0* s2 = (CtrlRemoteSubA0*)self->vf38();
@@ -622,7 +622,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                     }
                 }
             } else {
-                u32 mask3 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                 ? lbl_eu_80527F10[18]
                                 : lbl_eu_80527E98[18];
                 CtrlRemoteSubA0* s3 = (CtrlRemoteSubA0*)self->vf38();
@@ -642,13 +642,13 @@ void func_8009A4AC(CtrlPcVf38* self)
                         }
                     }
                 } else {
-                    u32 mask4 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                    u32 mask4 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                     ? lbl_eu_80527F10[29]
                                     : lbl_eu_80527E98[29];
                     CtrlRemoteSubA0* s4 = (CtrlRemoteSubA0*)self->vf38();
                     if ((s4->mFieldC & mask4) != 0) {
                         func_8006BBF4(gm8, 0x100, 1);
-                        u32 mask5 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                        u32 mask5 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s5 = (CtrlRemoteSubA0*)self->vf38();
@@ -656,12 +656,12 @@ void func_8009A4AC(CtrlPcVf38* self)
                             self->mField5C->mSub3ED4->vf11(0x2000);
                         }
                     } else {
-                        u32 mask6 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                        u32 mask6 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s6 = (CtrlRemoteSubA0*)self->vf38();
                         if ((s6->mField0 & mask6) != 0 ||
-                            ((func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                            ((isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? lbl_eu_80527F10[29]
                                   : lbl_eu_80527E98[29]) &
                              self->vf38()->mField0) != 0) {
@@ -687,7 +687,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                 }
             }
         } else {
-            u32 mask7 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+            u32 mask7 = isClassicController__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[18]
                             : lbl_eu_80527E98[18];
             CtrlRemoteSubA0* s7 = (CtrlRemoteSubA0*)self->vf38();
@@ -704,7 +704,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                 }
                 func_8006BC1C(gm8, 0x8000);
             } else {
-                u32 mask8 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                u32 mask8 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                 ? lbl_eu_80527F10[18]
                                 : lbl_eu_80527E98[18];
                 CtrlRemoteSubA0* s8 = (CtrlRemoteSubA0*)self->vf38();
@@ -717,7 +717,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                 } else {
                     u32 mf4 = gm8->mField4;
                     if ((mf4 & 0x10) != 0) {
-                        u32 mask9 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                        u32 mask9 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* s9 = (CtrlRemoteSubA0*)self->vf38();
@@ -727,7 +727,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                                 self->mField5C->mSub3ED4->vf10(0x2000, 1);
                             } else {
                                 u32 maskA =
-                                    func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                                    isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[28]
                                         : lbl_eu_80527E98[28];
                                 CtrlRemoteSubA0* sA =
@@ -747,7 +747,7 @@ void func_8009A4AC(CtrlPcVf38* self)
                         } else {
                             flagA = 1;
                         }
-                        u32 maskB = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                        u32 maskB = isClassicController__Q22cf13CfGameManagerFv(-1)
                                         ? lbl_eu_80527F10[18]
                                         : lbl_eu_80527E98[18];
                         CtrlRemoteSubA0* sB = (CtrlRemoteSubA0*)self->vf38();
@@ -796,7 +796,7 @@ void func_8009A4AC(CtrlPcVf38* self)
     // 0x802 gate: clear the 0x20 flag range when the mask-19 word is set
     // and neither 0x200 nor 0x20 is already active.
     if (probePlayerCtrl((cf::CtrlPc*)self, &v4, 0x802) != 0) {
-        u32 maskC = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        u32 maskC = isClassicController__Q22cf13CfGameManagerFv(-1)
                         ? lbl_eu_80527F10[19]
                         : lbl_eu_80527E98[19];
         CtrlRemoteSubA0* sC = (CtrlRemoteSubA0*)self->vf38();
@@ -816,12 +816,12 @@ void func_8009A4AC(CtrlPcVf38* self)
 void func_8009AE80(CtrlPcVf37State* self)
 {
     cf::CfGameManager::getInstance();
-    func_800821F8__Q22cf13CfGameManagerFv();
+    getCameraDataBlock__Q22cf13CfGameManagerFv();
     CtrlVoiceHandle* actionSrc =
-        (CtrlVoiceHandle*)func_800B708C(
+        (CtrlVoiceHandle*)findObjectById(
             (s32)((CfObjAe80*)func_800FE68C())->mField90E4);
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000) != 0) {
+    if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
 
@@ -848,7 +848,7 @@ void func_8009AE80(CtrlPcVf37State* self)
     // loaded menu-state word in r0, which only falls out of this expression
     // shape.
     #define PAD_MASK(idx) \
-        (func_80086F9C__Q22cf13CfGameManagerFv(-1) ? lbl_eu_80527F10[(idx)] \
+        (isClassicController__Q22cf13CfGameManagerFv(-1) ? lbl_eu_80527F10[(idx)] \
                                                    : lbl_eu_80527E98[(idx)])
     if (actionSrc == NULL) {
         // No action source: gate the 0x4000 range purely on the vf37 words.
@@ -859,7 +859,7 @@ void func_8009AE80(CtrlPcVf37State* self)
                     keep = 0;
                 }
             }
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0 && keep == 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0 && keep == 0) {
                 keep = 1;
                 if ((self->vf37()->mField14 & PAD_MASK(7)) == 0) {
                     keep = 0;
@@ -878,7 +878,7 @@ void func_8009AE80(CtrlPcVf37State* self)
     } else {
         // Action source present: the 0x10 menu word arms both flags.
         if ((self->vf37()->mField10 & PAD_MASK(7)) != 0) {
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) {
                 flag30 = 1;
                 flag31 = 1;
             } else if ((self->vf37()->mField0 & 0x10000000) != 0) {
@@ -958,7 +958,7 @@ void func_8009AE80(CtrlPcVf37State* self)
     if (func_800FE910(func_800FE68C()) != 0) {
         return;
     }
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 &&
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0 &&
         (self->vf37()->mField0 & 0x10000000) != 0) {
         return;
     }
@@ -982,10 +982,10 @@ void func_8009AE80(CtrlPcVf37State* self)
 void func_8009B788(CtrlPcVf38* self)
 {
     cf::CfGameManager::getInstance();
-    func_800821F8__Q22cf13CfGameManagerFv();
-    void* handle = func_800B708C(func_800FE68C()->mField90E4);
+    getCameraDataBlock__Q22cf13CfGameManagerFv();
+    void* handle = findObjectById(func_800FE68C()->mField90E4);
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000)) {
+    if (isGlobalCamFlagSet(0x4000000)) {
         return;
     }
 
@@ -1108,7 +1108,7 @@ void func_8009BD14(CtrlPcVf38* self)
     // Declared at function scope: MWCC creates the pseudo early, which pins
     // the counter's register ahead of the list-walk temps (retail r4).
     s32 count;
-    void* handle = func_800B708C(func_800FE68C()->mField90E4);
+    void* handle = findObjectById(func_800FE68C()->mField90E4);
     if (handle == 0) {
         return;
     }
@@ -1131,10 +1131,10 @@ void func_8009BD14(CtrlPcVf38* self)
         return;
     }
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000) != 0) {
+    if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
-    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                    ? lbl_eu_80527F10[24]
                    : lbl_eu_80527E98[24];
     u32 mf0 = self->vf38()->mField0;
@@ -1164,7 +1164,7 @@ void func_8009BD14(CtrlPcVf38* self)
         if (func_8017FD44() != 0) {
             return;
         }
-        u32 mask1 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        u32 mask1 = isClassicController__Q22cf13CfGameManagerFv(-1)
                         ? lbl_eu_80527F10[26]
                         : lbl_eu_80527E98[26];
         u32 mf1 = self->vf38()->mField4;
@@ -1197,7 +1197,7 @@ void func_8009BD14(CtrlPcVf38* self)
             }
             __dt__80043E88(&holder1, -1);
         } else {
-            u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+            u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[25]
                             : lbl_eu_80527E98[25];
             u32 mf2 = self->vf38()->mField4;
@@ -1240,7 +1240,7 @@ void func_8009BD14(CtrlPcVf38* self)
                 }
                 __dt__80043E88(&holder2, -1);
             } else {
-                u32 mask3 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                 ? lbl_eu_80527F10[27]
                                 : lbl_eu_80527E98[27];
                 u32 mf3 = self->vf38()->mField4;
@@ -1312,7 +1312,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         return;
     }
 
-    mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                    ? lbl_eu_80527F10[22]
                    : lbl_eu_80527E98[22];
     u32 menuState = self->vf38()->mField4;
@@ -1483,13 +1483,13 @@ void func_8009C6B8() {}
 void func_8009C6BC(CtrlPcVf38State* self)
 {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x4000000) != 0) {
+    if (isGlobalCamFlagSet(0x4000000) != 0) {
         return;
     }
     if (func_800FEDF8() != 0) {
         return;
     }
-    u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask = isClassicController__Q22cf13CfGameManagerFv(-1)
                    ? lbl_eu_80527F10[16]
                    : lbl_eu_80527E98[16];
     CtrlRemoteSubA0* sub = (CtrlRemoteSubA0*)self->vf38();
@@ -1503,7 +1503,7 @@ void func_8009C6BC(CtrlPcVf38State* self)
     if (self->mField5C->mSub3ED4->vf14(0x40000) == 0) {
         return;
     }
-    u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                     ? lbl_eu_80527F10[4]
                     : lbl_eu_80527E98[4];
     u32 mf4 = self->vf37()->mField4;
@@ -1511,7 +1511,7 @@ void func_8009C6BC(CtrlPcVf38State* self)
         self->mField2C |= 0xA00000;
         return;
     }
-    u32 mask3 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+    u32 mask3 = isClassicController__Q22cf13CfGameManagerFv(-1)
                     ? lbl_eu_80527F10[23]
                     : lbl_eu_80527E98[23];
     u32 mf4b = self->vf37()->mField4;
@@ -1625,17 +1625,17 @@ u32 func_8009CAAC(cf::CtrlRemote* self, CtrlRemoteBuf* buf, u32 arg)
     ctx.mFree = (void*)func_8009C980;
     ctx.mZero = 0;
     ctx.mPayload = (u8*)buf + 8;
-    if (func_80460DCC__17UnkClass_80460C34Fv(&ctx, lbl_eu_804FBC20, 0x38) != 0) {
+    if (isStateReady__17UnkClass_80460C34Fv(&ctx, lbl_eu_804FBC20, 0x38) != 0) {
         return 0;
     }
     s32 v = func_80460F58__17UnkClass_80460C34Fv(&ctx, 4);
     if (v != 1) {
-        func_80461FE0__17UnkClass_80460C34Fv(&ctx);
+        cleanupState__17UnkClass_80460C34Fv(&ctx);
         if (v != 0) {
             return 0;
         }
     }
-    if (func_80461FE0__17UnkClass_80460C34Fv(&ctx) != 0) {
+    if (cleanupState__17UnkClass_80460C34Fv(&ctx) != 0) {
         return 0;
     }
     return size;

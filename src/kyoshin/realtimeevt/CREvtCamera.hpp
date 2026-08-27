@@ -31,7 +31,7 @@ struct CREvtCamTaskEvent {
     u32 field_1B8;
 };
 
-// Camera manager returned by cf::CfGameManager::func_800821F8(). Slot names
+// Camera manager returned by cf::CfGameManager::getCameraDataBlock(). Slot names
 // are vtable byte offsets. MWCC puts the Nth declared virtual at vtable
 // offset (N+1)*4 (two leading slots), so declaring vfunc_0x08 first and
 // counting up makes the names match the real offsets.

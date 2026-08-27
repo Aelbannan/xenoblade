@@ -5,10 +5,10 @@
 
 class CViewRectDataCore {
 public:
-    void func_804592F0();
+    void updateScrollForSize();
 
     // TODO: add fields
-    void func_80459270();
-    void func_80459384(const ml::CPnt16& maxSize);
+    void initViewRect();
+    void setBoundsSize(const ml::CPnt16& maxSize);
 };
 

@@ -92,7 +92,7 @@ extern f64 lbl_eu_806685E8;
 // the call site passes an argument; declare the retail symbol verbatim under
 // C linkage so calls bind to it (a C++ declaration would re-mangle the
 // __Q22cf13CfGameManagerFv suffix into an Fi overload).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 class CSysWin;
 

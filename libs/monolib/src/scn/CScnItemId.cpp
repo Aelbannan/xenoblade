@@ -42,7 +42,7 @@ extern "C" u32 lbl_eu_8056DCF8[4] = {
 // ===========================================================================
 CScnItemId::~CScnItemId() {
     *(void**)this = (void*)lbl_eu_8056DCD8;
-    func_804BCC1C(func_804BC9EC__Fv());
+    resetScnData(getScnHandle__Fv());
 }
 
 // ===========================================================================
@@ -91,7 +91,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
             newItem->mNameLen = std::strlen(str);
             std::strcpy(newItem->mName, str);
             newItem->mValue = value;
-            func_804BC9F4(func_804BC9EC__Fv(), value);
+            func_804BC9F4(getScnHandle__Fv(), value);
         }
         item = newItem;
     } else {
@@ -103,7 +103,7 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
             item->mNameLen = std::strlen(NULL);
             std::strcpy(item->mName, NULL);
             item->mValue = value;
-            func_804BC9F4(func_804BC9EC__Fv(), value);
+            func_804BC9F4(getScnHandle__Fv(), value);
         }
     }
 

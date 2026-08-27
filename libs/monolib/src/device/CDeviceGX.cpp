@@ -106,7 +106,7 @@ mFilter(VFILTER_NONE){
     mGxHeapEndAddr = mGxHeap + gxHeapSize__9CDeviceGX;
     cacheInstance->unk50C = 0;
     updateVerticalFilter(VFILTER_NONE);
-    cacheInstance->func_8044B294(0);
+    cacheInstance->clearStubFunc(0);
     setUnk260(1);
 }
 
@@ -247,7 +247,7 @@ void CDeviceGX::viBeginFrame(){
     if(lbl_eu_806656A0->mDevicesInitialized == 1){
         return;
     }
-    cacheInstance->func_8044BE38();
+    cacheInstance->resetGXStateA();
 }
 
 void CDeviceGX::drawFrame(){
@@ -265,11 +265,11 @@ void CDeviceGX::drawFrame(){
         GXEnableBreakPt(writePtr);
 
         GXSetDrawSync(token1);
-        cacheInstance->func_8044BE38();
+        cacheInstance->resetGXStateA();
 
         if(lbl_eu_806656A0->unk274 == 0){
             CDrawGX something;
-            something.setCol(*cacheInstance->func_8044B5B4());
+            something.setCol(*cacheInstance->getClearColor());
             s16 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
             s16 fbWidth = CDeviceVI::getRenderModeObj()->fbWidth;
             CRect16 rect = CRect16(0,0,fbWidth,efbHeight);
@@ -344,7 +344,7 @@ bool CDeviceGX::wkStandbyLogin(){
             GXSetPixelFmt(lbl_eu_8066569C, GX_ZC_LINEAR);
         }
 
-        cacheInstance->func_8044BE38();
+        cacheInstance->resetGXStateA();
         GXSetDither(GX_DISABLE);
 
         if(lbl_eu_806656A0->mDevicesInitialized == true){

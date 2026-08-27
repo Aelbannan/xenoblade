@@ -188,7 +188,7 @@ struct CIBLColorSrc {
     GXColorS10 color;  // +0x10
 };
 
-/* Vtable view of the font-info object returned by CDeviceFont::func_80452C10:
+/* Vtable view of the font-info object returned by CDeviceFont::getFontInfo:
  * virtual index 7 (vtable+0x24) yields the pane data bound via func_8013676C
  * (same scheme as COption::OnFileEvent). */
 class CItemBoxFontView {
@@ -355,7 +355,7 @@ extern "C" void* func_8003AA34();                           // bdat manager rese
 extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void func_801368C0(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* func_801355BC(void);                      // line text string

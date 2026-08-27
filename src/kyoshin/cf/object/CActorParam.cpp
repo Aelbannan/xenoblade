@@ -772,7 +772,7 @@ struct EnumListHolder { void* list; u32 handle; };
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 // getInstance__Q22cf14CBattleManagerFv: declared by CfGameManager.hpp
 // (CBattleManagerView*); all uses here cast the pointer, so no local decl.
-extern "C" bool func_8006EF04__Fi(s32 mask);
+extern "C" bool isGlobalCamFlagSet__Fi(s32 mask);
 extern "C" void func_802804F8(void*);
 extern "C" void func_80280588(void*);
 extern "C" void func_80280640(void*);
@@ -783,7 +783,7 @@ extern "C" int func_80145BC4(int);
 extern "C" int func_80145C00(int); // battle-state status-id classifier (CBattleState.cpp)
 extern "C" bool func_80146384(unsigned int);
 extern "C" void* func_8016FE34(void*);
-extern void* func_800B708C(int);            // C++ linkage -> func_800B708C__Fi
+extern void* findObjectById(int);            // C++ linkage -> findObjectById__Fi
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" float func_800D81A8(void*, void*, void*);
 extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
@@ -918,10 +918,10 @@ void func_801765A4(cf::CActorParam* self, int arg, float f1) {
 
 extern "C" void CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv(cf::CActorParam* self, float dt) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     if (reinterpret_cast<CBattleMgrVt*>(getInstance__Q22cf14CBattleManagerFv())->vf28(0x10)) return;
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x10000000)) return;
+    if (isGlobalCamFlagSet__Fi(0x10000000)) return;
 
     bool flag = true;
     if (*(s16*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x20C8) == 0) {
@@ -1297,7 +1297,7 @@ unk28_done:
                 if (!p) break;
                 void* base = (u8*)p + 0x3E9C;
                 int v = reinterpret_cast<SubObjVt*>(base)->vf4C();
-                void* actor = func_8016FE34(func_800B708C(v));
+                void* actor = func_8016FE34(findObjectById(v));
                 if (!actor) break;
                 if (reinterpret_cast<ActorVt*>(actor)->vf2BC()) break;
                 reinterpret_cast<ActorVt*>(actor)->vf2C4(reinterpret_cast<CActorParamVt*>(self)->vf9C(), e->unk14, (float)e->unk10, (float)e->unk14, (float)e->unk16);
@@ -1314,13 +1314,13 @@ unk28_done:
             switch (e->unk0C) {
             case 0x11: {
                 if (e->unk10 == -1) break;
-                void* actor = func_8016FE34(func_800B708C(e->unk10));
+                void* actor = func_8016FE34(findObjectById(e->unk10));
                 if (actor && !reinterpret_cast<ActorVt*>(actor)->vf2BC()) break;
                 self->CBattleState_UnkVirtualFunc7(0x11);
                 break;
             }
             case 0x112: {
-                void* actor = func_8016FE34(func_800B708C(e->unk10));
+                void* actor = func_8016FE34(findObjectById(e->unk10));
                 if (actor && !reinterpret_cast<ActorVt*>(actor)->vf2BC()) break;
                 EnumListHolder holder;
                 func_80043D90(&holder);
@@ -1991,18 +1991,18 @@ void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 // us-8017cdb0: retail symbol is Fv; the real ABI passes (self, dt). Under a
 // non-0x04000000 game flag, decay the 8 CActorParam_UnkStruct5 gauges at
-// 0x1928: entries whose actor (unk14 -> func_800B708C/8016FE34) is gone or
+// 0x1928: entries whose actor (unk14 -> findObjectById/8016FE34) is gone or
 // busy (Func138 / battle state 0xF8) are reset to the sdata2 default; live
 // entries decay unk0 by dt*unk8 and unk4 by dt*unkC, clamped to
 // [lbl_eu_806677E8, lbl_eu_80667864].
 void CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv(cf::CActorParam* self, float dt) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     cf::CActorParamUnk1928View* view = reinterpret_cast<cf::CActorParamUnk1928View*>(self);
     for (int i = 0; i < 8; i++) {
         cf::CActorParam_UnkStruct5* e = &view->entries[i];
         if (e->unk14 == 0) continue;
-        void* actor = func_8016FE34(func_800B708C((int)e->unk14));
+        void* actor = func_8016FE34(findObjectById((int)e->unk14));
         if (actor == NULL || reinterpret_cast<ActorVt*>(actor)->vf2BC() != 0 ||
             func_80148778((u8*)actor + 8, 0xF8) != 0) {
             e->unk14 = 0;
@@ -2099,7 +2099,7 @@ void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, 
             f28 = f30 / ((float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818);
         }
         if (func_80260264(reinterpret_cast<CActorParamVt*>(self)->vf290(), 0x5E, &sv) &&
-            cf::CfGameManager::func_80086DBC() != 4) {
+            cf::CfGameManager::getCurrentSlotIndex() != 4) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f30 /= (float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818;
@@ -2108,7 +2108,7 @@ void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(cf::CActorParam* self, 
             f1 /= (float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818;
         }
         if (func_80260264(reinterpret_cast<CActorParamVt*>(self)->vf290(), 0x5F, &sv) &&
-            cf::CfGameManager::func_80086DBC() == 4) {
+            cf::CfGameManager::getCurrentSlotIndex() == 4) {
             ux.w[0] = 0x43300000;
             ux.w[1] = (u32)(100 - sv) ^ 0x80000000;
             f30 /= (float)(ux.d - lbl_eu_806677F8) / lbl_eu_80667818;
@@ -2479,7 +2479,7 @@ void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, 
     case 0x11:
         if (arg->field_0x10 != NULL) {
             if (arg->field_0x14 == 0) {
-                void* actor = func_8016FE34(func_800B708C((int)arg->field_0x10));
+                void* actor = func_8016FE34(findObjectById((int)arg->field_0x10));
                 if (actor != NULL) {
                     ((cf::CActorParam*)actor)->CBattleState_UnkVirtualFunc7(0x11);
                 }
@@ -2650,7 +2650,7 @@ bool cf::CActorParam::CActorParam_UnkVirtualFunc138() {
 // initialised with the deltas (f1 clamped, 0x10 = f2/f3 spread).
 void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam140Target* arg, float f1, float f2, float f3) {
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x04000000)) return;
+    if (isGlobalCamFlagSet__Fi(0x04000000)) return;
     if (arg == NULL) return;
     u32 actorId = arg->field_0x3F10;
     int firstFree = -1; // live across the probes below (retail keeps it in a saved reg)

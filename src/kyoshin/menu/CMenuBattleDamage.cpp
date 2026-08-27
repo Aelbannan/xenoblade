@@ -183,7 +183,7 @@ void CMenuBattleDamage::Init() {
             nw4r::lyt::Pane* root = e.mLayout1->GetRootPane();
             CMenuBattleDamageFontView* fontObj =
                 static_cast<CMenuBattleDamageFontView*>(
-                    func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+                    getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                         1, e.mLayout1));
             func_8013676C(root, fontObj->sf7());
         }
@@ -231,7 +231,7 @@ void CMenuBattleDamage::Move() {
     // Retail gate: `bne done` (guard 1) then the branch-over-branch
     // `beq body; b done` (guard 2) - reproduced by the ||-chain early return
     // (same shape as the matched CMenuLvUp::Move).
-    if (CTaskGame::getInstance()->func_800426F0() ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50()) return;
@@ -261,7 +261,7 @@ void CMenuBattleDamage::Move() {
         screen.x = e.field_28;
         screen.z = zero;
 
-        CMenuBattleDamageActor* actor = func_800B708C((int)e.field_24);
+        CMenuBattleDamageActor* actor = findObjectById((int)e.field_24);
         if (actor != 0) {
             const nw4r::math::VEC3* src;
             CMenuBattleDamageObjPos* obj = actor->vfn12C(0xfa);
@@ -336,7 +336,7 @@ void CMenuBattleDamage::cbRenderBefore() {
     // Retail: guard 1 folds to `bne done`; guard 2 (rlwinm. bit test) is the
     // branch-over-branch `beq body; b done` - reproduced by the &&-chain
     // gate (first condition folds, second becomes the gate).
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -654,7 +654,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageEntry& o = self->mEntries[i];
         if (o.mActive != 0) {
-            CMenuBattleDamageActor* a = func_800B708C((int)o.field_24);
+            CMenuBattleDamageActor* a = findObjectById((int)o.field_24);
             if (a != 0 && (a->field_0x64 & 2) != 0) {
                 aliveCount++;
             }
@@ -678,7 +678,7 @@ void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
     screen.y = lbl_eu_80666F68;
     screen.z = lbl_eu_80666F68;
 
-    CMenuBattleDamageActor* actor = func_800B708C((int)e.field_24);
+    CMenuBattleDamageActor* actor = findObjectById((int)e.field_24);
     u32 dirFlag = 0;
     if (actor != 0) {
         const nw4r::math::VEC3* src;

@@ -179,7 +179,7 @@ void CMenuBattleChain::Term() {
 
 void CMenuBattleChain::Move() {
     // Skip while the game task is busy or the render-before flag is set.
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
     if (func_8013BE50() == 0) {
@@ -255,7 +255,7 @@ void CMenuBattleChain::cbRenderBefore() {
     // body off the fallthrough so MWCC emits retail's branch-over-branch:
     // `bne end` for the first disjunct, `beq body; b end` for the second
     // (same scheme as CSysWinSelect::cbRenderBefore).
-    if (CTaskGame::getInstance()->func_800426F0() == 0 &&
+    if (CTaskGame::getInstance()->isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -306,7 +306,7 @@ CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
  * Per-frame hook: if the singleton is live, switch to chain mode 7 and bind /
  * play the first anim transform on the layout.
  */
-void func_802AA338() {
+void requestCancelChain() {
     CMenuBattleChain* menu = lbl_eu_80664A60;
     if (menu != NULL) {
         menu->mField9C = 7;

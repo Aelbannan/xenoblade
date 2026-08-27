@@ -188,7 +188,7 @@ void func_802534F0(CLPPageSetup* pg) {
     // Bind the device font: root pane first (retail loads it before the
     // CDeviceFont call), then fetch the font handle from vtable slot 9.
     nw4r::lyt::Pane* rootPane = pg->mpLayout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
     u32 fontHandle = static_cast<CLPFontView*>(fontObj)->sf9();
     func_8013676C(rootPane, fontHandle);
 
@@ -209,7 +209,7 @@ void func_802534F0(CLPPageSetup* pg) {
 
     // Sample-texture msg id: lookup table picked by controller type; result is
     // arg2 of the id lookup (retail keeps it in r4 across the branch merge).
-    const char* texTable = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* texTable = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
         ? &lbl_eu_8050C6E8[0x10f] : &lbl_eu_8050C6E8[0x118];
 
     u16 id = func_8013606C(&lbl_eu_8050C6E8[0xf0], texTable, 0x2b);
@@ -992,7 +992,7 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 // us-80256e40
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void func_80254C04(CCollepedia* this_) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0__FPP11CFileHandle(&this_->field_24);
     func_801390E0__FPP11CFileHandle(&this_->field_28);
     func_801390E0__FPP11CFileHandle(&this_->field_2C);
@@ -1018,8 +1018,8 @@ void func_80254C04(CCollepedia* this_) {
     }
 
     // Tear down memory regions backing the layouts
-    func_8045F778__17UnkClass_8045F564Fv(&this_->field_4);
-    func_8045F778__17UnkClass_8045F564Fv(&this_->_14[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&this_->field_4);
+    deleteRegion__17UnkClass_8045F564Fv(&this_->_14[0]);
 
     // Sub-objects at +0x54 and +0x84: parameterless finalizer at vtable +0xC
     reinterpret_cast<CLPSubProxy*>(&this_->field_54[0])->finalize();
@@ -1778,7 +1778,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         // Detach the arc payload from the handle and attach it to the layout
         // resource accessor.
         void* fileData = reinterpret_cast<CFileHandle*>(field_24)->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         void* tagMem = allocate__Q23mtl10MemManagerFUlUl(
             getAllocHandle__10CLibLayoutFv(), 0x858);
@@ -1796,7 +1796,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         func_80136F08(field_38, &field_44, field_30, &lbl_eu_8050C6E8[0x36c]);
 
         // Bind the device font into every text pane via the root pane.
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         u32 fontHandle = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
         func_8013676C(field_38->GetRootPane(), fontHandle);
 
@@ -1880,7 +1880,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 regionGuard(memRegion);
 
         void* fileData = reinterpret_cast<CFileHandle*>(field_28)->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         field_34 = createArcResourceAccessor__10CLibLayoutFv();
         field_34->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);

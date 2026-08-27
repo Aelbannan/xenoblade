@@ -138,14 +138,14 @@ int func_801042B4();
 int func_800FF738();
 // Family-canonical form - must match CfObjectPc.hpp / CAIAction.hpp /
 // code_802B8A3C.hpp (see the 10197 note in CTaskGame.hpp).
-bool func_8006EF04__Fi(UNKWORD r3);
+bool isGlobalCamFlagSet__Fi(UNKWORD r3);
 void* func_801355F4();
 }
 
 extern u32 func_801355A0();
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
-void* func_800B708C(int id);typedef u32* (*GetU32Fn)(void*);
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
+void* findObjectById(int id);typedef u32* (*GetU32Fn)(void*);
 typedef int (*GetIntFn)(void*);
 
 template <typename Fn>
@@ -220,7 +220,7 @@ void CUIBattleManager::Move() {
     int count;
 
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         return;
     }
     if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
@@ -405,7 +405,7 @@ void CUIBattleManager::Move() {
     if (inst != NULL && inst->unkE8 != 0 &&
         CMenuArtsSelect_isFinished() == 0) {
         cf::CfGameManager::getInstance();
-        if (func_8006EF04__Fi(0x10000000) == 0) {
+        if (isGlobalCamFlagSet__Fi(0x10000000) == 0) {
             player = cf::CfGameManager::getPlayer(0);
             if (player != NULL) {
                 actor = static_cast<CUIBattleActor*>(func_8016FE34(NULL));
@@ -443,11 +443,11 @@ void CUIBattleManager::Move() {
                         if (handle == 0) {
                             lbl_eu_8066404C = NULL;
                         } else {
-                            obj = func_800B708C(handle);
+                            obj = findObjectById(handle);
                             if (obj != NULL &&
                                 (((CUIBattleAction*)obj)->field_64 & 4) != 0) {
                                 cf::CfGameManager::getInstance();
-                                if (func_8006EF04__Fi(0x1000000) == 0 &&
+                                if (isGlobalCamFlagSet__Fi(0x1000000) == 0 &&
                                     func_800FF738() == 0) {
                                     if (lbl_eu_8066404C != (void*)handle ||
                                         CMenuArtsSelect_isCreated() == 0) {

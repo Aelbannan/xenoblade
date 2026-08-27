@@ -140,7 +140,7 @@ void* func_800B6CC4();
 u32 func_800F6E98(void* list, u32 index);
 void* func_80193804();
 void func_800ABC5C(ml::CVec3* out, void* obj);
-void func_8045F7E8__17UnkClass_8045F564Fv(void* self);
+void clearFrmHeap__17UnkClass_8045F564Fv(void* self);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* sub);
 void __dt__14Class_8045F858Fv(void* self, int);
 u32 func_801380A0(u16 row);
@@ -170,7 +170,7 @@ int sprintf(char*, const char*, ...);
 void func_80117734(CMMMapImg* self);
 }
 // C++-mangled retail helper: actor id -> action source object.
-void* func_800B708C(int id);
+void* findObjectById(int id);
 
 // ============================================================================
 // func_80118854 - CMiniMap marker/map-icon update (retail symbol unmangled).
@@ -721,7 +721,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             }
         }
         func_80116B40((u8*)self + 0x17C);
-        func_8045F7E8__17UnkClass_8045F564Fv((u8*)self + 0x834);
+        clearFrmHeap__17UnkClass_8045F564Fv((u8*)self + 0x834);
     }
     {
         u8 guard[0x10];
@@ -1090,7 +1090,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)func_80043F18(&holder))->count; i++) {
                                         u32 id = (u32)func_800F6E98(func_80043F18(&holder), i);
-                                        MiniMapObj* o = (MiniMapObj*)func_800B708C((s32)id);
+                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
                     if ((o->m64 & 0x4000) == 0 && (o->m64 & 0x8000) == 0) continue;
@@ -1177,7 +1177,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             if (gimmickView != 0) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)func_80043F18(&holder))->count; i++) {
-                                        MiniMapObj* o = (MiniMapObj*)func_800B708C((s32)func_800F6E98(func_80043F18(&holder), i));
+                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)func_800F6E98(func_80043F18(&holder), i));
                     if (!o) continue;
                     if ((o->m64 & 0x8) == 0) continue;
                     f32 objY = o->GetPos()->y;
@@ -1263,7 +1263,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             for (u32 i = 0;
                  i < ((MiniMapEnumList*)func_80043F18(&holder))->count; i++) {
                                     u32 id = (u32)func_800F6E98(func_80043F18(&holder), i);
-                                    MiniMapObj* o = (MiniMapObj*)func_800B708C((s32)id);
+                                    MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
                 if ((o->m64 & 0x8) == 0) continue;
@@ -1343,7 +1343,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
             for (u32 i = 0;
                  i < ((MiniMapEnumList*)func_80043F18(&holder))->count; i++) {
                                     u32 id = (u32)func_800F6E98(func_80043F18(&holder), i);
-                                    MiniMapObj* o = (MiniMapObj*)func_800B708C((s32)id);
+                                    MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                 if (!o) continue;
                 if (!o->v160()) continue;
                 if ((o->m64 & 0x4000) == 0 && (o->m64 & 0x8000) == 0) continue;
@@ -1424,7 +1424,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 for (u32 i = 0;
                      i < ((MiniMapEnumList*)func_80043F18(&holder))->count; i++) {
                                         u32 id = (u32)func_800F6E98(func_80043F18(&holder), i);
-                                        MiniMapObj* o = (MiniMapObj*)func_800B708C((s32)id);
+                                        MiniMapObj* o = (MiniMapObj*)findObjectById((s32)id);
                     if (!o) continue;
                     if (!o->v160()) continue;
                     f32 objY = o->GetPos()->y;
@@ -1775,10 +1775,10 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
                 n->ofs = tmp;
             }
         }
-    } else if (cf::CfGameManager::getInstance()->func_800821F8() != NULL) {
+    } else if (cf::CfGameManager::getInstance()->getCameraDataBlock() != NULL) {
         // Battle target present: pin the clock panes to the target position.
         MiniMapObj* tgt =
-            (MiniMapObj*)cf::CfGameManager::getInstance()->func_800821F8();
+            (MiniMapObj*)cf::CfGameManager::getInstance()->getCameraDataBlock();
         f32 ty = ((MiniMapB05CVec4*)(
             (MiniMapB05CObjView*)tgt)->v01C())->field_4;
         f64 t = lbl_eu_806670BC * ty / lbl_eu_8066A1F8;
@@ -1812,9 +1812,9 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
     nw4r::lyt::Pane* pic =
         ((nw4r::lyt::Pane*)self->m0C->m10)->FindPaneByName(&lbl_eu_804FE1FC[0x20A], true);
     if (pic != NULL) {
-        if (cf::CfGameManager::getInstance()->func_800821F8() != NULL) {
+        if (cf::CfGameManager::getInstance()->getCameraDataBlock() != NULL) {
             MiniMapObj* tgt = (MiniMapObj*)(
-                cf::CfGameManager::getInstance()->func_800821F8());
+                cf::CfGameManager::getInstance()->getCameraDataBlock());
             f32 ty = ((MiniMapB05CVec4*)(
                 (MiniMapB05CObjView*)tgt)->v01C())->field_4;
             f32 t = lbl_eu_806670BC * ty / lbl_eu_8066A1F8;
@@ -2126,7 +2126,7 @@ void CMenuMiniMap2::Move() {
     // Gate chain: game is rendering, no menu overlay, no cutscene - two
     // short-circuit OR guards so MWCC emits the retail branch alternation
     // (first test bne-exit, second test beq-continue / b-exit).
-    if (CTaskGame::getInstance()->func_800426F0() ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000)) return;
     if (func_80242354() || func_80251550()) return;
 
@@ -2165,7 +2165,7 @@ void CMenuMiniMap2::Move() {
         // Active -> fade out: camera is in the map mode and event flag 0x1000
         // is cleared, so restart both animations.
         cf::CfGameManager::getInstance();
-        if (func_8006EF04(0x10000000) != 0) {
+        if (isGlobalCamFlagSet(0x10000000) != 0) {
             mField8D4 = 3;
             mClock.field_0x18 = 3;
             mClock.field_0x19 = 0;
@@ -2251,7 +2251,7 @@ void CMenuMiniMap2::Move() {
         int btn;
         // Pre-mangled form with an int arg: retail emits `li r3,-1` before the
         // call, which the cf::CfGameManager s16 inline wrapper would drop.
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
             btn = (pad->mPressedButtonFlags >> 10) & 1;
         } else {
             btn = (pad->mPressedButtonFlags >> 6) & 1;
@@ -2267,7 +2267,7 @@ void CMenuMiniMap2::Move() {
 void CMenuMiniMap2::cbRenderBefore() {
     // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
     // B -> beq continue / b exit (same shape as CSystemWindow::Move).
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50()) return;
     if (!func_8013BE88()) return;

@@ -166,7 +166,7 @@ class CFileHandle {
 public:
     ~CFileHandle();
     u32 getRsrc() const;
-    void func_80451984(unsigned long);
+    void addFallbackHandle(unsigned long);
     CFileHandle* setup1(const char* pPath, unsigned long size, IWorkEvent* pEvent);
     CFileHandle* setup2(const char* pPath, unsigned long size, IWorkEvent* pEvent);
 
@@ -197,7 +197,7 @@ public:
 class CDeviceFileCri {
 public:
     static CDeviceFile* getInstance();
-    static void func_8044FB08();
+    static void cancelJobsForPath();
     static void cancel(CFileHandle* pHandle);
 };
 
@@ -501,7 +501,7 @@ int CDeviceFile::isInitialized() {
     return isDeviceFileReady(CDeviceFileCri::getInstance()) ? 1 : 0;
 }
 
-extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
+extern "C" u8 isStandbyReady__11CDeviceFileFv() { return lbl_eu_806636A8; }
 
 int CDeviceFile::func_8044E770(CWorkThread* parent) {
     // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
@@ -766,7 +766,7 @@ bool CDeviceFile::removeFileJob(CDeviceFileJob* job) {
 }
 
 void CDeviceFile::func_8044F0E4(const char* pPath) {
-    CDeviceFileCri::func_8044FB08();
+    CDeviceFileCri::cancelJobsForPath();
     CDeviceFileDvd::isRequestFile(pPath);
 }
 
@@ -890,7 +890,7 @@ bool CDeviceFile::func_8044F1B8(CFileHandle* pFileHandle, int param) {
 }
 
 void CDeviceFile::func_8044F400(CFileHandle* pHandle, unsigned long param) {
-    pHandle->func_80451984(param);
+    pHandle->addFallbackHandle(param);
 }
 
 void CDeviceFile::setHandleFlag1(CFileHandle* pFileHandle) {

@@ -14,19 +14,19 @@ public:
     const char* func_80453468(const char* pStr, u32** ppTexture, u32* pCellX,
                               u32* pCellY, u32* pGlyphWidth);
     void create();
-    void func_804535C0();
-    void func_804535DC();
-    void func_804535F4();
-    void func_80453608();
+    void advanceState();
+    void initState();
+    void isStateNonZero();
+    void isStateReady();
 
     // TODO: add fields
-    void func_80453624();
-    void func_8045362C();
-    void func_80453634();
-    void func_8045363C();
-    void func_80453644();
-    void func_8045364C();
-    void func_80453654();
+    void* getFont();
+    void* getFontConst();
+    u16 getLineHeight();
+    u32 getBufferSize();
+    u16 getMode();
+    u16 getState();
+    u32 getFlags();
 
 private:
     u32 field_04;

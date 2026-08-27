@@ -91,7 +91,7 @@ static cf::CFunc8008E760Vec3W& A2C8PosW(cf::CFunc8008A2C8View* view) {
 // battle-AI driver. It refreshes the controller state, orients the velocity
 // toward the move-sub heading, runs the battle-object busy/HP gate, dispatches
 // func_8008BEEC for the actor-word checks, runs the approach/ground-probe
-// chain (actor lookup via func_800B708C__Fi / func_8016FE34, the collision
+// chain (actor lookup via findObjectById__Fi / func_8016FE34, the collision
 // height-band scan, the +0x192 timer), then the heading / +0x178 / +0x168
 // pursuit gates, the player proximity scan and the mVec144 commit, the
 // +0x8000 / +0x4 / +0x5 flag paths and finally the +0x31 battle event.
@@ -156,7 +156,7 @@ void func_8008A2C8(cf::CfObjectMove* self) {
                     } else {
                         // Approach: resolve the action source and probe.
                         A2C8Sub(obj)->vtable->fn_0x150(A2C8Sub(obj), 1);
-                        void* src = (void*)func_800B708C__Fi(
+                        void* src = (void*)findObjectById__Fi(
                             A2C8Sub(obj)->vtable->fn_0x4C(A2C8Sub(obj),
                                                           1));
                         cf::CFunc8008B580Obj* r26 =
@@ -372,7 +372,7 @@ void func_8008A2C8(cf::CfObjectMove* self) {
                 return;
             }
             getInstance__Q22cf13CfGameManagerFv();
-            if (func_8006EF04(0x400) != 0) return;
+            if (isGlobalCamFlagSet(0x400) != 0) return;
             cf::CFunc8008A2C8BMan* bm = (cf::CFunc8008A2C8BMan*)
                 getInstance__Q22cf14CBattleManagerFv();
             u8 b1aa = bm->field_1AA;
@@ -813,7 +813,7 @@ int func_8008B974(cf::CCtrlMoveEneView* self) {
     u32 flags = self->field_0x17C;
     if (flags & 0x4000u) {
         self->field_0x17C = flags & ~0x4000u;
-        if (func_800B708C(self->field_0x15C) != 0) {
+        if (findObjectById(self->field_0x15C) != 0) {
             return 1;
         }
     }
@@ -1497,7 +1497,7 @@ void func_8008E2D4(cf::CfObjectMove* self) {
         rate = *sub2->_v1D8() / denom;
     }
     view->field_0x60 = (s32)rate;
-    int count = func_80086B44__Q22cf13CfGameManagerFv();
+    int count = initPadSubSystem__Q22cf13CfGameManagerFv();
     int idx = 0;
     cf::CfMoveSubEntry* entry = view->field_0x78;
     for (int i = 0; i < count; i++) {

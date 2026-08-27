@@ -251,7 +251,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                 if (second != 0) {
                     CfCamEventObj* v =
                         (CfCamEventObj*)((CamEventVoice*)second)->vtable->fn_0x4C(second);
-                    if (v != 0) player = (CfCamEventObj*)func_800B708C__Fi((int)v);
+                    if (v != 0) player = (CfCamEventObj*)findObjectById__Fi((int)v);
                     if (player == 0)
                         player = (CfCamEventObj*)getPlayer__Q22cf13CfGameManagerFi(1);
                 }
@@ -431,9 +431,9 @@ int func_80074F4C(CfCamShakeState* self, int mode) {
 done:
     return result;
 }
-void func_80082088__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val){}
-void func_80082008__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e){}
-void func_80081E90__Q22cf13CfGameManagerFv(int a, int b, int c){}
+void isEffectReady__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val){}
+void notifyBattleSystem__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e){}
+void lookupEffectForResource__Q22cf13CfGameManagerFv(int a, int b, int c){}
 // Vector-normalize helper; the body is provided by this TU (declared in
 // CfCamEvent_1.hpp). Callers pass raw triplet/element storage, so the
 // call sites view it through the CVec3 parameter type.
@@ -945,7 +945,7 @@ void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
     // Demo-mode pitch correction between the two voices' current positions.
     if (c1 == 1 && c2 == 1 && func_800FE68C() != 0) {
         void* sel = func_800FE68C();
-        void* handle = func_800B708C__Fi((int)*(u32*)((u8*)sel + 0x90E4));
+        void* handle = findObjectById__Fi((int)*(u32*)((u8*)sel + 0x90E4));
         if (handle != 0) {
             f32 ya = ((CinemVecOut*)((CamEventVoice*)&a->voice)->vtable->fn_0xAC(&a->voice))->v.y;
             CinemVecOut* vb = (CinemVecOut*)((CamEventVoice*)handle)
@@ -1043,8 +1043,8 @@ int func_800762A0(CfCamEventManager* self) {
         idx++;
     }
 
-    void* hA = func_800B708C__Fi((int)self->field_0x10);
-    void* hB = func_800B708C__Fi((int)self->field_0x24);
+    void* hA = findObjectById__Fi((int)self->field_0x10);
+    void* hB = findObjectById__Fi((int)self->field_0x24);
     void* sa = func_8016FE34(hA);
     void* sb = func_8016FE34(hB);
     if (hA == 0 || hB == 0) return 0;
@@ -1226,7 +1226,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
     void* followObj = src;
     if (src != 0) followObj = &src->voice;
     if (p31 == 0) {
-        followObj = func_800BBC0C(func_800B708C__Fi((int)field_0x3F10));
+        followObj = func_800BBC0C(findObjectById__Fi((int)field_0x3F10));
     }
     void* srcSel = src;
     if (src != 0) srcSel = &src->voice;
@@ -1242,7 +1242,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
         (u16)(cam->h10 - 2) <= 1) {
         if (p31 == 0) {
         void* v = src->voice.vtable->fn_0x4C(&src->voice);
-        followObj = func_800BBC0C(func_800B708C__Fi((int)v));
+        followObj = func_800BBC0C(findObjectById__Fi((int)v));
         if (unk34 == 0x2B) {
             void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
             if (p0 == 0) {
@@ -1250,7 +1250,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
             } else {
                 followObj = 0;
                 void* q = ((CamEventVoice*)p0)->vtable->fn_0x4C(p0);
-                if (q != 0) followObj = func_800BBC0C(func_800B708C__Fi((int)q));
+                if (q != 0) followObj = func_800BBC0C(findObjectById__Fi((int)q));
                 if (followObj == 0) followObj = getPlayer__Q22cf13CfGameManagerFi(1);
             }
             self->field_0x34 = (u32)followObj;
@@ -1581,7 +1581,7 @@ void* func_800778E4(
     if (follow == 0)
         follow = (void*)field3F10;
     CamEventTargetInfo* other =
-        (CamEventTargetInfo*)func_800BBC0C(func_800B708C__Fi((int)follow));
+        (CamEventTargetInfo*)func_800BBC0C(findObjectById__Fi((int)follow));
     if (other == 0)
         return 0;
 
@@ -1741,7 +1741,7 @@ void func_80078B60(CfCamEventManager* self, u32 idx, u32 param) {
 // the cam-data setup helper when the game manager is alive.
 void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
                    u32 third, u32 fourth, u32 fifth) {
-    func_8008212C__Q22cf13CfGameManagerFv(first);
+    getCamManagerData__Q22cf13CfGameManagerFv(first);
     f32 f1C = lbl_eu_8066641C;
     f32 f18 = lbl_eu_80666418;
     self->field_0x40 = 0;
@@ -1772,7 +1772,7 @@ void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
     self->shake[1].field_0x164 = 0;
     self->field_0x3E = (s16)first;
     self->field_0x34 = fifth;
-    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (third != 0 && gm != 0) {
         func_8007990C(self, 0, fourth, (CamEventVecSrc*)&self->field_0x54, 0);
         self->field_0x40 = (u16)third;
@@ -2412,7 +2412,7 @@ bool func_80079DBC(CfCamEventManager* manager) {
 // renormalizes the unit-0 base anchor. Returns whether either shake table
 // finished (or the delegate's result when busy).
 int func_80079E04(CfCamEventManager* self) {
-    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     CfDynMgr* dyn = (CfDynMgr*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                               (const void*)&lbl_eu_80661B30, 0);
     if (dyn == 0) return 0;
@@ -2436,7 +2436,7 @@ int func_80079E04(CfCamEventManager* self) {
             }
         }
         if (self->field_0x46 != 0) {
-            func_80081E90__Q22cf13CfGameManagerFv(0, 0, self->field_0x44);
+            lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, self->field_0x44);
             self->field_0x46 = 0;
         }
         return 0;
@@ -2724,7 +2724,7 @@ int func_8007AA4C(CfCamEventManager* self) {
                self->shake[0].u.tab.baseZ);
     }
 
-    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     CfCamAdvObj* adv =
         (CfCamAdvObj*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                      (const void*)&lbl_eu_80661B30, 0);
@@ -2795,10 +2795,10 @@ int func_8007B0A0(int val) {
 //    entry at lbl_eu_805273C8[(u16)(col_11b + 5)] is seeded from columns
 //    0x126/0x132 (angle / duration, divided by the cam-table speed divisor
 //    and scaled by the sdata2 factor) and the shared handler is notified.
-// 2. Otherwise the event-cam mode is programmed (func_8008212C/80082008),
+// 2. Otherwise the event-cam mode is programmed (getCamManagerData/80082008),
 //    an optional slot snapshot is fed to func_8007990C, and up to six
 //    per-frame rows are walked: runtime-built column names (ml::FixStr<16>
-//    + format) feed two aim triplets through func_80082088, and each row's
+//    + format) feed two aim triplets through isEffectReady, and each row's
 //    follow column seeds another cam-table entry.
 void func_8007B0C8(int idx) {
     if (lbl_eu_80663DF0 == 0) return;
@@ -2842,15 +2842,15 @@ void func_8007B0C8(int idx) {
     }
 
     // Program the event-cam mode from column 0x19 (mode 2 forces the flag).
-    func_8008212C__Q22cf13CfGameManagerFv(8);
+    getCamManagerData__Q22cf13CfGameManagerFv(8);
     u8 mode = getColB(mgr, colBase + 0x19, idx);
     ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x47 = 0;
     if (mode == 2) ((CfCamEventManager*)lbl_eu_80663DF0)->field_0x47 = 1;
-    func_80082008__Q22cf13CfGameManagerFv(8, mode, 0, 0, 0);
+    notifyBattleSystem__Q22cf13CfGameManagerFv(8, mode, 0, 0, 0);
 
     // Mirror the dynamic-cast target's "busy" flag byte.
     u8 dynFlag = (getColB(mgr, colBase + 0x13e, idx) != 0);
-    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* gm = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* casted = __dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                   (const void*)&lbl_eu_80661B30, 0);
     if (casted != 0)
@@ -2937,11 +2937,11 @@ void func_8007B0C8(int idx) {
 
         // First frame of mode-1 runs an extra blend at mode 0.
         if (mode == 1 && i == 1) {
-            func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+            isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
                                                   tripA, tripB, 0, lift);
             angle += 1;
         }
-        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+        isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
                                               tripA, tripB, nextMode, lift);
 
         // Optional per-row cam-table entry (follow column w70 -> index,
@@ -2971,7 +2971,7 @@ void func_8007B0C8(int idx) {
     g->field_0x44 = getColH(mgr, colBase + 0x1d2, idx);
     g->field_0x46 = 1;
     if (g->field_0x42 != 0 && g->field_0x44 != 0) {
-        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+        isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
                                               tripA, tripB, 4, lift);
         CfCamEventManager* m = (CfCamEventManager*)lbl_eu_80663DF0;
         CfCamEventSlot* slot0 = m->slots[0];
@@ -2983,10 +2983,10 @@ void func_8007B0C8(int idx) {
             func_8007990C(m, (u16)angle, 4, (CamEventVecSrc*)&snap, 0);
         }
     } else {
-        func_80082088__Q22cf13CfGameManagerFv((u32)(u16)angle,
+        isEffectReady__Q22cf13CfGameManagerFv((u32)(u16)angle,
                                               tripA, tripB, 0, lift);
     }
-    func_80082060__Q22cf13CfGameManagerFv();
+    notifyCameraManager__Q22cf13CfGameManagerFv();
 }
 
 
@@ -3074,7 +3074,7 @@ void func_8007BAFC(CfCamEventManager* self) {
     }
 
     if (updateResult != 0) {
-        func_80085878__Q22cf13CfGameManagerFv();
+        cleanupMapEffects__Q22cf13CfGameManagerFv();
         func_8016FD84(lbl_eu_80666470, lbl_eu_80666428);
     }
 

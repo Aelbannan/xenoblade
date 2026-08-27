@@ -8,7 +8,7 @@ namespace cf {
 class __declspec(novtable) CHelp_ArtsSet : public CHelp {
 public:
     // Help-availability predicate (CHelpManager help-list check): false until
-    // the sequence counter (CfGameManager::func_800822F4) reaches unkC, then
+    // the sequence counter (CfGameManager::getQueuedFileEventCount) reaches unkC, then
     // true iff the Arts-Set menu instance exists (func_8022F530).
     bool isHelpAvailable();
 

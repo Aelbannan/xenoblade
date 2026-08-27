@@ -20,13 +20,13 @@ public:
     static bool isEventReady();
     static void recreateGame();
     // Compat aliases for external callers not yet renamed
-    static bool func_8003933C() { return isEventReady(); }
-    static void func_80039364() { recreateGame(); }
+    static bool getGameState() { return isEventReady(); }
+    static void initGameState() { recreateGame(); }
     static void setTaskManagerUpdateCount(u32 count);
     virtual void wkUpdate();
     virtual void wkRender();
     static void setLetterbox(bool r3);
-    static void func_800395F4(bool b) { setLetterbox(b); }
+    static void setGameActive(bool b) { setLetterbox(b); }
     static void setViewRect(CView* view, s16 x, s16 y, s16 width, s16 height);
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();

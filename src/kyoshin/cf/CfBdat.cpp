@@ -130,7 +130,7 @@ namespace cf{
     CfBdat::~CfBdat(){
     }
 
-    void CfBdat::func_801414CC(){
+    void CfBdat::loadBdatFileTable(){
         CBdat::func_8003AA34();
         spBtlPcListFileData = CBdat::getFP("BTL_pclist");
         spBtlEneListFileData = CBdat::getFP("BTL_enelist");
@@ -214,7 +214,7 @@ namespace cf{
         }
 
         if(lbl_80666A70 != nullptr){
-            CBdat::func_8003AA8C(3);
+            CBdat::getEntry(3);
             DELETE_OBJ(lbl_80666A70);
         }
 
@@ -352,7 +352,7 @@ void CfBdat::resetMapBdatFileDataPointers(){
         return 0;
     }
 
-const char* CfBdat::func_801424A8(u16 index) {
+const char* CfBdat::getBdatStringEntry(u16 index) {
     return lbl_eu_8052E6F0[index];
 }
 
@@ -545,7 +545,7 @@ u32 func_80142154(u32 param1, u32 mode){
     u32 result = 0;
     if(param1 != 0){
         func_8003AA34();
-        void* fp = (void*)func_80086B3C__Q22cf13CfGameManagerFv();
+        void* fp = (void*)getGlobalWord640F4__Q22cf13CfGameManagerFv();
         const char* col = &lbl_eu_80500FA4[0x37c];
         if(mode != 0) col = &lbl_eu_80500FA4[0x372];
         // Retail spills the call result to the stack and lbz's it back.
@@ -559,7 +559,7 @@ u32 func_8014235C(u32 param1, const char* column, u32 param3){
     u32 result = 0;
     if(param1 != 0){
         func_8003AA34();
-        void* fp = (void*)func_80086B3C__Q22cf13CfGameManagerFv();
+        void* fp = (void*)getGlobalWord640F4__Q22cf13CfGameManagerFv();
         u32 rowBase = func_8003B41C(fp);
         u32 rowCount = func_8003B1EC(fp);
         if(param1 < rowBase + rowCount){

@@ -42,7 +42,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     void func_804DA97C(void* param);                         // NAND completion callback (defined below)
     CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data);  // check sub-task config
     CNReqtaskSaveVtbl**  func_804DACE8(CNReqtaskSaveData* data);   // save sub-task config (defined below)
-    CException* func_80459118__10CExceptionFv(const wchar_t* msg); // CException::func_80459118 (stripped name)
+    CException* logExceptionMessage__10CExceptionFv(const wchar_t* msg); // CException::logExceptionMessage (stripped name)
 
     // Init sub-task config helpers from the sibling NAND sub-task units. The
     // wrappers below forward their own arguments straight through: the retail
@@ -109,13 +109,13 @@ void func_804DA4CC(CNandTask* data, CNandTask* dealloc) {
 // without it MWCC inlines this body into each caller.
 __declspec(noinline) CException* func_804DAA58(s32 code) {
     if (code == -4) {
-        return func_80459118__10CExceptionFv(lbl_eu_80663B60);
+        return logExceptionMessage__10CExceptionFv(lbl_eu_80663B60);
     }
     if (code == -3 || code == -2) {
-        return func_80459118__10CExceptionFv(lbl_eu_80663B64);
+        return logExceptionMessage__10CExceptionFv(lbl_eu_80663B64);
     }
     if (code == -0x40) {
-        return func_80459118__10CExceptionFv(lbl_eu_80663B60);
+        return logExceptionMessage__10CExceptionFv(lbl_eu_80663B60);
     }
     return (CException*)code;
 }
@@ -433,18 +433,18 @@ extern "C" char* func_804DA9C4(u32 a1, u8 a2) {
 #pragma optimize_for_size off
 
 // Set the NAND error message string for error code -4 / -64
-void func_804DAA90__FPCw(const wchar_t* msg) {
+void setGeneralNandErrorMessage__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B60;
     lbl_eu_80663B60 = msg;
 }
 
 // Set the NAND error message string for error code -3
-void func_804DAA98__FPCw(const wchar_t* msg) {
+void setSaveNandErrorMessage__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B64;
     lbl_eu_80663B64 = msg;
 }
 
-extern "C" void func_804DAAA0__FPCw(const wchar_t* msg){
+extern "C" void setExtraNandErrorMessage__FPCw(const wchar_t* msg){
     extern const wchar_t* lbl_eu_80663B68;
     lbl_eu_80663B68 = msg;
 }

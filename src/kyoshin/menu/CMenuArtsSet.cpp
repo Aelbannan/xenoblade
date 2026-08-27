@@ -147,7 +147,7 @@ extern "C" unsigned long func_8022F530() {
 
 // Per-frame input dispatch for the arts menu (retail func_8022F544). After
 // ramping the idle timer, two mirror pad chains run: classic controller
-// (func_80086F9C(-1) != 0) and Wii remote/nunchuk. Each tests turbo/pressed/
+// (isClassicController(-1) != 0) and Wii remote/nunchuk. Each tests turbo/pressed/
 // held button-flag combinations and dispatches to the cursor/window handlers;
 // the shared tail syncs the title help bar from the list state.
 extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
@@ -163,7 +163,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
 
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // -- classic-controller chain --
         int special = 0;
         if (func_80233888((SArts33888*)&self->mList) == 0 &&
@@ -3245,7 +3245,7 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     Class_8045F858 regionGuard(&mMemRegion);
     u8* fileData = field_0x14->mData;
     field_0x14->mData = 0;
-    func_80434A4C__Q23mtl10MemManagerFb(false);
+    setMemInitFlag__Q23mtl10MemManagerFb(false);
     field_0x18 = createArcResourceAccessor__10CLibLayoutFv();
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_0x18, fileData,
                                                    lbl_eu_8050AC70 + 0x2D9);
@@ -3256,7 +3256,7 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     func_80136F08((nw4r::lyt::Layout*)field_0x1C, &field_0x24, field_0x18,
                   lbl_eu_8050AC70 + 0x314);
     SArts3CObj* pane = field_0x1C->field_0x10;
-    u32 fontHandle = ((SDevFontV*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    u32 fontHandle = ((SDevFontV*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                           1, (nw4r::lyt::Layout*)field_0x1C))
                          ->v7();
     func_8013676C(pane, fontHandle);

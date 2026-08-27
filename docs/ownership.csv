@@ -11,9 +11,9 @@ viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A
 setCurrent__5CViewFv,cursor-agent,2026-07-14,FULL_MATCH high-level
 setRect__5CViewFRCQ22ml7CRect16,auto-agent,2026-07-13,FULL_MATCH via CPnt16 dual homes + u16 modeSize
 wkStandbyLogin__5CGameFv,cursor-agent,2026-07-13,100% FULL_MATCH u32 shift narrow height
-func_80459270__17CViewRectDataCoreFv,auto-agent,2026-07-13,FULL_MATCH; configure path fixed to CViewRectDataCore.cpp
-func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,98.2% CODE_MATCH Exact 0x94; int remains; Chaitin widthRemain r6 vs r8 — defer
-func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,FULL_MATCH; unit size PASS 0x120
+initViewRect__17CViewRectDataCoreFv,auto-agent,2026-07-13,FULL_MATCH; configure path fixed to CViewRectDataCore.cpp
+updateScrollForSize__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,98.2% CODE_MATCH Exact 0x94; int remains; Chaitin widthRemain r6 vs r8 — defer
+setBoundsSize__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,FULL_MATCH; unit size PASS 0x120
 copyEfb__9CDeviceGXFPv,auto-agent,2026-07-13,FULL_MATCH; CDeviceGX .text budget PASS via out-of-line CDeviceBase dtor + trim 0x8E8
 viAfterDrawDone__9CDeviceGXFv,auto-agent,2026-07-13,FULL_MATCH; same CDeviceGX size PASS
 setDisp__5CViewFbb,cursor-agent,2026-07-13,FULL_MATCH

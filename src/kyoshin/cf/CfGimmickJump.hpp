@@ -7,7 +7,7 @@ namespace cf {
 
 class CfGimmickJump;
 
-// Work object returned by func_800817BC (CfGameManager's per-gimmick
+// Work object returned by createBattleActor (CfGameManager's per-gimmick
 // manager object). Retail factory builds it as a CfObject-derived with
 // vtable lbl_eu_80528600 (cf::CfObjectColl) or similar; the only slots
 // used here are +0x9C setPosition (CfObject_UnkVirtualFunc19) and

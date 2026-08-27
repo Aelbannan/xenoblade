@@ -23,7 +23,7 @@ bool isExistData__5CRsrcFPCv(const void* data);
 bool releaseCache__5CRsrcFPCv(const void* data);
 size_t strlen(const char* str);
 char* strcpy(char* dst, const char* src);
-UnkStruct_80438AF0* func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(UnkStruct_80438AF0* p);
+UnkStruct_80438AF0* getData__9CWorkUtilFP18UnkStruct_80438AF0(UnkStruct_80438AF0* p);
 }
 
 CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
@@ -195,7 +195,7 @@ extern "C" bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* da
     int flag;
 
     node = reinterpret_cast<_reslist_node<CWorkThread*>*>(
-        func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(
+        getData__9CWorkUtilFP18UnkStruct_80438AF0(
             reinterpret_cast<UnkStruct_80438AF0*>((u8*)parent + 0x5C)));
     goto check;
 loop:

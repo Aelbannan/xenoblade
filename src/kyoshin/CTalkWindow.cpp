@@ -118,7 +118,7 @@ void func_8012D8C0(CTalkWindow* self) {
     if (func_80137444(self->field_88, frame) == 0) return;
     if (self->field_B4 != 0) {
         if (code80135FDC_getByte_64058() == 0) {
-            if (func_800B708C(self->field_68) != 0) {
+            if (findObjectById(self->field_68) != 0) {
                 CTalkWinTalkSrc* src =
                     reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
                 // Re-read mTalkC4 at each use: retail reloads the field
@@ -140,7 +140,7 @@ skip_b9d4:;
                 }
             }
         } else if (code80135FDC_getByte_64059() != 0) {
-            if (func_800B708C(self->field_68) != 0) {
+            if (findObjectById(self->field_68) != 0) {
                 CTalkWinTalkSrc* src =
                     reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
                 src->mVoice->play(1, 0);
@@ -179,7 +179,7 @@ void func_8012DA6C(CTalkWindow* self) {
             cf::CfGameManager::getCurrentPad());
         int confirm;
         // Co-op (Classic) vs single-player (Wiimote) confirm-press bits.
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
             confirm = (pad->field_04 & 0x00600000) != 0;
         else
             confirm = (pad->field_04 & 0x00000030) != 0;
@@ -206,7 +206,7 @@ void func_8012DA6C(CTalkWindow* self) {
         if (self->field_65 != 0) self->field_65 = 0;
         if (self->field_B4 != 0) {
             if (code80135FDC_getByte_64058() == 0) {
-                if (func_800B708C(self->field_68) != 0) {
+                if (findObjectById(self->field_68) != 0) {
                     CTalkWinTalkSrc* src =
                         reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
                     CTalkWinTalkC4* talkC4 = src->mTalkC4;
@@ -219,7 +219,7 @@ void func_8012DA6C(CTalkWindow* self) {
                     }
                 }
             } else if (code80135FDC_getByte_64059() != 0) {
-                if (func_800B708C(self->field_68) != 0) {
+                if (findObjectById(self->field_68) != 0) {
                     CTalkWinTalkSrc* src =
                         reinterpret_cast<CTalkWinTalkSrc*>(func_800BBC0C());
                     src->mVoice->play(0, 0);
@@ -360,7 +360,7 @@ extern "C" bool func_8012CD24() {
 
 extern "C" void func_8012CD38(CTalkWindow* self) {
     CTalkWinSrc* src =
-        reinterpret_cast<CTalkWinSrc*>(func_800B708C(self->field_68));
+        reinterpret_cast<CTalkWinSrc*>(findObjectById(self->field_68));
     if (src == 0) {
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
         if (self != 0) {
@@ -560,7 +560,7 @@ p2done:;
 //    (a :7 field + a :1 field both assigned per site); plain `u8 mFlag |= 1`
 //    gives lbz/ori/stb without the mask.
 //  - Font binding order: retail loads GetRootPane() BEFORE calling
-//    func_80452C10(1, layout) (hoist into its own statement).
+//    getFontInfo(1, layout) (hoist into its own statement).
 //  - The lbl_eu_804FFCA4 blob base is materialised once into r30 before the
 //    five func_80136F08 calls, then rematerialised (r30/r28/r27/r30 again)
 //    at each section boundary after Animate() - the source likely redeclares
@@ -601,7 +601,7 @@ void CTalkWindow::Init() {
         break;
     case 2: {
         CTalkWinSrc* s2 = reinterpret_cast<CTalkWinSrc*>(
-            func_800B708C(field_68));
+            findObjectById(field_68));
         if (s2 != 0) {
             s2->vfn158(0);
         }
@@ -614,7 +614,7 @@ void CTalkWindow::Init() {
         break;
     case 4: {
         CTalkWinSrc* s4 = reinterpret_cast<CTalkWinSrc*>(
-            func_800B708C(field_68));
+            findObjectById(field_68));
         func_8013E204(s4->field_0x8C);
         field_64 = 1;
         break;
@@ -646,7 +646,7 @@ void CTalkWindow::Init() {
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_98, func_801355F4(), &lbl_eu_804FFCA4[0x92]);
 
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, mpLayout);
         func_8013676C(mpLayout->GetRootPane(),
                       reinterpret_cast<CTalkFontObj*>(fontObj)->getFontHandle());
@@ -659,7 +659,7 @@ void CTalkWindow::Init() {
 
         char* msg = func_80138DA4(
             reinterpret_cast<CTalkWinSrc*>(
-                func_800B708C(field_68))->getText());
+                findObjectById(field_68))->getText());
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);
@@ -807,9 +807,9 @@ void CTalkWindow::Init() {
 // ---------------------------------------------------------------------------
 void CTalkWindow::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (func_8013BE50() == 0) return;
-    if (cf::CfGameManager::func_800829B8() != 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
     func_8012CD38(this);
 
     // Signed switch: retail emits a beq dispatch chain with signed cmpwi.
@@ -928,11 +928,11 @@ void CTalkWindow::Term() {
 // ---------------------------------------------------------------------------
 void CTalkWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;
-    if (func_800B708C((int)field_68) == 0)
+    if (findObjectById((int)field_68) == 0)
         return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls

@@ -22,7 +22,7 @@ extern "C" {
     extern void func_80189318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
     extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
-    extern void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
+    extern void queueBdatTextA__Q22cf13CfGameManagerFv(u32 first, u32 second, bool enabled, float value); // field BGM state
     extern void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second, float value, u8 enabled); // town BGM state
 }
 
@@ -43,7 +43,7 @@ struct SndVec3 {
 extern "C" {
     extern void func_801896A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void func_801AAC70(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
-    extern u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
+    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
     extern SoundSlotEntry* func_801BFAE4(u16 handle);                      // SE slot lookup (tail-call stub)
     extern void func_801AACBC(SndVec3* pos, SndVec3* target);              // set map camera position
 }
@@ -125,7 +125,7 @@ int setFieldBgm(VMThread* pThread) {
         VMArg* arg = vmArgPtrGet(pThread, idx++);
         enable = vmArgBoolGet(idx, arg);
     }
-    func_8007C344__Q22cf13CfGameManagerFv(first, second, enable != 0,
+    queueBdatTextA__Q22cf13CfGameManagerFv(first, second, enable != 0,
                                           (float)volInt / lbl_eu_80667D90);
     return 0;
 }
@@ -184,7 +184,7 @@ int stopFieldBgm(VMThread* pThread) {
         vol = converted;
     }
     float fade = (float)(int)vol / lbl_eu_80667D90;
-    func_8007C344__Q22cf13CfGameManagerFv(0, 0, 1, fade);
+    queueBdatTextA__Q22cf13CfGameManagerFv(0, 0, 1, fade);
     func_80189318(1, fade);
     return 0;
 }
@@ -205,10 +205,10 @@ int stopTownBgm(VMThread* pThread) {
     return 0;
 }
 
-// Script command: force the field BGM.  Calls CfGameManager::func_8007C140
+// Script command: force the field BGM.  Calls CfGameManager::resetGameFlags
 // with a null this (the callee handles this == nullptr internally).
 int forceFieldBgm(VMThread* pThread) {
-    ((cf::CfGameManager*)nullptr)->func_8007C140();
+    ((cf::CfGameManager*)nullptr)->resetGameFlags();
     return 0;
 }
 
@@ -310,7 +310,7 @@ int playSeCommon(VMThread* pThread) {
     if ((lbl_eu_80663E24 & 0x100) == 0) {
         float fadeF = (float)fadeInt / lbl_eu_80667D90;
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
-        u16 handle = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+        u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             0, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = func_801BFAE4(handle);
         if (entry != nullptr) {
@@ -351,7 +351,7 @@ int playSeMap(VMThread* pThread) {
         // vol -> 0x10/0x14), matching the retail schedule.
         float fadeF = (float)fadeInt / lbl_eu_80667D90;
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
-        u16 handle = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+        u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, id, volScaled, 1, fadeF);
         SoundSlotEntry* entry = func_801BFAE4(handle);
         if (entry != nullptr) {

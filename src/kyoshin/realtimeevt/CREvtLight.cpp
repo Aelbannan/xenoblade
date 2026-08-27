@@ -66,10 +66,10 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
             self->field_20 = 0;
 
             // Notify the object behind the game manager's +0x2F3C pointer.
-            if (cf::CfGameManager::func_80083298() != nullptr) {
-                if (*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C) != nullptr) {
+            if (cf::CfGameManager::getGameSubManager() != nullptr) {
+                if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
                     CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
                     notif->_v068(1);
                 }
             }
@@ -100,10 +100,10 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
         func_804C1D7C(mgr, (void*)self->field_20);
         self->field_20 = 0;
 
-        if (cf::CfGameManager::func_80083298() != nullptr) {
-            if (*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C) != nullptr) {
+        if (cf::CfGameManager::getGameSubManager() != nullptr) {
+            if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
                 CREvtLightNotifyIf* notif =
-                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
                 notif->_v068(1);
             }
         }
@@ -115,10 +115,10 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
         void* handle = func_804C1BA0(mgr, resourceName, 7);
         self->field_20 = (u32)handle;
 
-        if (cf::CfGameManager::func_80083298() != nullptr) {
-            if (*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C) != nullptr) {
+        if (cf::CfGameManager::getGameSubManager() != nullptr) {
+            if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
                 CREvtLightNotifyIf* notif =
-                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
                 notif->_v068(func_80180940());
             }
         }

@@ -49,7 +49,7 @@ distinct frontier functions that reference them.
 | 17 | `func_801CB0F4` | 0x801CB0F4 | 4 | 4 | CMenuItemExchange, CMenuShopSell |
 | 18 | `func_801D3320` | 0x801D3320 | 4 | 4 | CEquipItemBox, CItemBoxGrid, CTutorialList |
 | 19 | `func_8006C6B4` | 0x8006C6B4 | 6 | 3 | CfCam |
-| 20 | `func_80434A4C` | 0x80434A4C | 5 | 3 | CLibCriMoviePlay, Class_8045F858, UnkClass_8045F564 |
+| 20 | `setMemInitFlag` | 0x80434A4C | 5 | 3 | CLibCriMoviePlay, Class_8045F858, UnkClass_8045F564 |
 | 21 | `func_800AA318` | 0x800AA318 | 4 | 3 | CTaskREvtSequence, CCharVoice, CREvtModelPc |
 | 22 | `func_80086DA0` | 0x80086DA0 | 3 | 3 | ocCfp, pluginTime |
 | 23 | `func_8006BFC4` | 0x8006BFC4 | 3 | 3 | CfCam |
@@ -99,7 +99,7 @@ Only **one** `UnkClass_*` symbol is referenced by the ready frontier:
 | configure.py | `Object(NonMatching, "monolib/src/lod/CLODCacheManagerS.cpp")` |
 
 **Demangled methods:**
-- `func_804630C0` — likely constructor; stores computed pointer to static
+- `initLodTables` — likely constructor; stores computed pointer to static
 - `func_80463118` — reads u16 at `this+0x0`, converts to float
 - `func_8046323C` — same pattern as above
 - `func_8046339C` — multiple params, u16-to-float conversion

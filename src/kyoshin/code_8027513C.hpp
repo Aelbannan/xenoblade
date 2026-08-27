@@ -95,13 +95,13 @@ typedef void (UnkCode8027513C::*UnkCode8027513CStateFn)();
 extern UnkCode8027513CStateFn lbl_eu_80537F98[2];
 
 // Child-effect state notifier (retail symbol is unmangled C-linkage).
-extern "C" void func_800ACC14(void* obj, s8 val);
+extern "C" void setChildB59__(void* obj, s8 val);
 
-// func_800ACC64/func_800ACF78/func_801BFDE8: retail-unmangled C-linkage
+// setChildV40__/bindPartnerO_/func_801BFDE8: retail-unmangled C-linkage
 // imports already declared by CfObjectImplMove.hpp.
-// Retail calls func_8008187C through the cf::CfGameManager member declaration
-// (mangled func_8008187C__Q22cf13CfGameManagerFv) even though the callee
+// Retail calls createNpcActor through the cf::CfGameManager member declaration
+// (mangled createNpcActor__Q22cf13CfGameManagerFv) even though the callee
 // actually takes a type code in r3 and returns a CfObjectEff*. Declare the
 // literal retail symbol with C linkage so the bl reloc name matches.
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 

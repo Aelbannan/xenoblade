@@ -19,7 +19,7 @@
 #include <revolution/wpad/WPAD.h>
 #include <revolution/vi/vi.h>
 
-u32 func_80164910();
+u32 isEventPending();
 
 class CScnNw4r;
 class CView;
@@ -113,7 +113,7 @@ struct CTaskREventDataEntry {
     u32 field_0x28;         // +0x28 parse flag (1 = parse)
 };
 
-// Camera/player object behind func_800821F8's field_0xC (only the floats
+// Camera/player object behind getCameraDataBlock's field_0xC (only the floats
 // this TU reads are declared).
 struct CfEvtCamPlayerObj {
     u8 field_0x00[0x1EC];
@@ -121,7 +121,7 @@ struct CfEvtCamPlayerObj {
     f32 field_0x1F0;        // +0x1F0
 };
 
-// Object returned by func_800821F8 (CfGameManager.hpp forward-declares it;
+// Object returned by getCameraDataBlock (CfGameManager.hpp forward-declares it;
 // only field_0xC is read here).
 struct UnkClass_800821F8 {
     u8 field_0x00[0xC];
@@ -224,7 +224,7 @@ struct REvtListNode {
 };
 struct REvtListHead { REvtListNode* first; };
 
-// Manager view returned by func_80086B04/func_80086B08 (+0x04 list head).
+// Manager view returned by getGimmickListHead/getGimmickList (+0x04 list head).
 struct REvtMgrView {
     u8 _00[0x4];
     REvtListHead* list;
@@ -248,7 +248,7 @@ extern CEventMgr* lbl_eu_80664240;
 extern u32 lbl_eu_80664244; // auto-sleep/dimming state word written by the ctor + siblings
 // Frame-target word: getTargetFramerate() * 300 (ctor + func_80166050/80166150).
 extern u32 lbl_eu_80664248;
-extern u32 lbl_eu_80663E28; // event flag word (bit7 tested by func_80164910)
+extern u32 lbl_eu_80663E28; // event flag word (bit7 tested by isEventPending)
 extern s16 lbl_eu_80502F90[]; // event-id table walked by func_801644D8 (32 entries)
 extern const char lbl_eu_80503008[];  // Init: base string copied into each entry
 // Init: 0xAE suffix strings appended to each entry (walked by pointer).
@@ -276,17 +276,17 @@ extern "C" {
     int func_80164FB4();
     void func_80166150(CEventMgr* self, u32 arg);
     // Value-returning tail call through the CRI movie controller: CLibCri.hpp
-    // declares func_80459AC4 as void, but retail func_80164FB4 performs a
+    // declares isMovieGlobalPaused as void, but retail func_80164FB4 performs a
     // value tail call through it, so import the mangled symbol with an
     // explicit value signature.
-    u32 func_80459AC4__7CLibCriFv(CLibCri* self);
+    u32 isMovieGlobalPaused__7CLibCriFv(CLibCri* self);
     void func_80164F6C();
     void func_80165DF4(cf::CTaskREvent* self, int arg);
     void func_80166050(cf::CTaskREvent* self, int arg);
     void func_8016462C(u32 index);
     // CRI movie-player setup: retail func_80164ED0 passes 4 extra words even
     // though the retail symbol is Fv; declared here with the caller's shape.
-    CLibCri* func_80459AA8__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
+    CLibCri* startMovie__7CLibCriFv(const char* self, u32 memHandle, u32 buffer, int flag, int zero);
     u32 func_8016847C();
     u32 func_80495FF0(CScn* scene);
     void func_80164ED0(const char* path, int flag, u8* handle);
@@ -318,12 +318,12 @@ extern "C" {
     // Imports for cf::CTaskREvent::cbRenderBefore
     CView* getCurrentView__5CViewFv();
     void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
-    void func_80459ACC__7CLibCriFv(CLibCri* self, ml::CRect& rect);
+    void renderMovie__7CLibCriFv(CLibCri* self, ml::CRect& rect);
     // CfGameManager helpers: retail symbols are Fv but the call sites pass
     // real arguments / read the return (declared here with the caller shape,
-    // same scheme as func_80459AA8__7CLibCriFv above).
-    u32 func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value);
-    void func_80086D98__Q22cf13CfGameManagerFv(u16* first, u16* second);
+    // same scheme as startMovie__7CLibCriFv above).
+    u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value);
+    void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
     // Play-time seconds getter (same signature as CfMapEffectManager.hpp).
     u16 func_8016DF2C();
     // Frame/timing helpers used by func_801662E8 (global retail names).
@@ -362,21 +362,21 @@ extern "C" {
     void func_8016C450(u32 a, u32 b, u32 c);
     void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
     // Imports for func_80165DF4
-    s32 func_8004368C__9CTaskGameFv();
+    s32 isMoveFuncActive__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();
     bool func_8012CD24();
-    UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
     void func_8049EB60();
     // Imports for Move (CRI player state / frame timing / object lists)
     void func_80043B04(float v);
-    u32 func_80459AC8__7CLibCriFv(CLibCri* self);
-    void func_80459AB0__7CLibCriFv(CLibCri* self, u32 arg);
-    REvtMgrView* func_80086B04__Q22cf13CfGameManagerFv();
-    REvtMgrView* func_80086B08__Q22cf13CfGameManagerFv();
+    u32 isMoviePlaying__7CLibCriFv(CLibCri* self);
+    void setMoviePause__7CLibCriFv(CLibCri* self, u32 arg);
+    REvtMgrView* getGimmickListHead__Q22cf13CfGameManagerFv();
+    REvtMgrView* getGimmickList__Q22cf13CfGameManagerFv();
     REvtActor* func_800BFC68__FPQ22cf12CfObjectMove(REvtActor* obj);
-    REvtActor* func_800AD860__FPv(REvtActor* obj);
-    void func_80462D5C__8CTaskLODFv(s16 taskID);
-    void func_80462D04__8CTaskLODFv(s16 taskID);
+    REvtActor* getEffOwner____FPv(REvtActor* obj);
+    void deactivateLOD__8CTaskLODFv(s16 taskID);
+    void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
     u32 func_801684F4();
     void func_8016C6EC(int arg);

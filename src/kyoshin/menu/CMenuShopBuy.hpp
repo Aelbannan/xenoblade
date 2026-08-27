@@ -224,7 +224,7 @@ extern "C" void func_801ED864(CItemBoxLine* self);
 // declared int (not u8) so the caller compares with cmpwi directly.
 extern "C" int func_8029A658();
 extern "C" ShopBuyPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int func_801ED808(CItemBoxLine* self);
 extern "C" void func_801EECE0(CItemBoxLine* self, u32 arg);
 extern "C" void func_801EECE8(CItemBoxLine* self);
@@ -295,7 +295,7 @@ extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg);
 // unsigned int (not u32 = unsigned long): must match CItemBoxLine.hpp's
 // declaration so the two extern "C" redeclarations merge.
 extern "C" void func_80138078__FUl(unsigned int op);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 // CScn.hpp pulls broken monolib umbrella headers (kyoshin headers already
 // define an opaque CScn), so the render-callback removal is called through
 // its retail C name (same scheme as CMenuBattleEnd / CMenuCollepedia).
@@ -303,9 +303,9 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 
 // Task-game gate helpers. Declared with C linkage because CTaskGame.hpp pulls
 // broken monolib umbrella headers that redefine CScn (same scheme as
-// CMenuUpdate). func_800426F0 takes the task-game instance in r3.
+// CMenuUpdate). isFlag01Set takes the task-game instance in r3.
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" bool func_800426F0__9CTaskGameFv(void* taskGame);
+extern "C" bool isFlag01Set__9CTaskGameFv(void* taskGame);
 
 // Shared data imports (MWCC does not mangle global-scope data names).
 extern "C" int func_8013BE50();

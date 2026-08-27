@@ -7,7 +7,7 @@ struct CHelpFlagBag {
 };
 
 namespace cf {
-u8 CHelp_Kizuna::func_802B818C() {
+u8 CHelp_Kizuna::isKizunaFlag() {
     return lbl_eu_80664A10->mKizuna;
 }
 } // namespace cf

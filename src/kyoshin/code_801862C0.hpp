@@ -47,8 +47,8 @@ void* func_80186BC8(int p);
 void func_80186C7C(void* p);
 
 // cf::CfGameManager sequence/resource counters (retail mangled symbols).
-u32 func_800822F4__Q22cf13CfGameManagerFv(void);
-u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 #ifdef __cplusplus
 }
@@ -336,7 +336,7 @@ public:
 // cf::CfGameManager resource-pair lookup: spawns the map object for
 // (modelId, motionId) and returns it (retail mangled symbol).
 class Unk80EE4Data;
-extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
+extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(u32 modelId, u32 motionId);
 
 // bdat column reader: canonical decl comes from plugin/ocBdat.hpp (above).
 // NOTE: do NOT declare func_8003AA34 here - member TUs
@@ -352,5 +352,5 @@ extern "C" void* func_8003AA34();
 extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
 
-// C++-linkage import: retail symbol is the mangled func_800B708C__Fi.
-void* func_800B708C(int id);
+// C++-linkage import: retail symbol is the mangled findObjectById__Fi.
+void* findObjectById(int id);

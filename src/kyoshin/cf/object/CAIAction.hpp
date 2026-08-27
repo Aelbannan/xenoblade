@@ -123,7 +123,7 @@ extern void func_8014A8F8();
 // (u16 entry count at +0, variable-length entries at +2). Walked by
 // func_8015396C; cleared by func_8014A8F8.
 extern cf::CAIActionTable* lbl_eu_806641B0;
-extern void* func_800B708C(int);        // C++ linkage -> func_800B708C__Fi
+extern void* findObjectById(int);        // C++ linkage -> findObjectById__Fi
 
 // Raw vtable view: retail code invokes fixed slots through object vtables.
 struct CAIVtable {
@@ -213,7 +213,7 @@ extern "C" u32 func_8009CF8C(u32 id);
 extern "C" int func_80158018(u32 v);
 extern "C" u32 getBdatStringColumnValue(void* table, const char* col, s32 index = 0); // canonical ocBdat.hpp form; default keeps 2-arg call sites compiling
 extern "C" void* func_80193AB0(void* table, u32 id);
-void* func_800AD860(void* obj);   // C++ linkage -> func_800AD860__FPv
+void* func_800AD860(void* obj);   // C++ linkage -> getEffOwner____FPv
 extern "C" void* func_80193670(void);
 extern "C" int func_80260264(void* self, int id, void* out);
 extern "C" int func_80145C00(int id);   // canonical int param (CBattleState.cpp definition)
@@ -311,7 +311,7 @@ extern "C" void __ct__800FD250(void*);
 extern "C" void* func_800B76A4(void*);
 extern "C" void* func_800B77E4(void*, void*);
 extern "C" void* func_800B8B94(s32);
-extern void* func_800B07E8();   // C++ linkage -> func_800B07E8__Fv
+extern void* getInstance();   // C++ linkage -> getInstance__Fv
 extern "C" int func_80148778(void*, int);
 extern "C" void* func_80149154(void*, u32);
 extern "C" void* func_800EA444(void*);

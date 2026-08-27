@@ -53,7 +53,7 @@ extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
 namespace cf {
     class CfSoundMan {
     public:
-        static u32 func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume);
+        static u32 playActorSound(u32 idx, u32 a, u32 b, u32 c, float volume);
     };
 
     // Sound-slot record: 0x268-byte entries in the manager's record array
@@ -138,7 +138,7 @@ namespace cf {
         f32 x, y, z;
     };
 
-    // func_800B708C(id) result view ("voice source"): the sound-slot starters
+    // findObjectById(id) result view ("voice source"): the sound-slot starters
     // call the vtable+0xAC slot (getPosition) and the vtable+0x12C slot
     // (vf73, position query) to fetch the actor's position blocks. 74
     // virtuals so getPosition lands at 0x8 + 41*4 = 0xAC and vf73 at
@@ -233,8 +233,8 @@ extern const char lbl_eu_80533C30[];
 extern const char lbl_eu_80533C84[];
 extern const char lbl_eu_80533C60[];
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> voice source).
-void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> voice source).
+void* findObjectById(int id);
 
 // Global-object registration link cell for the sound-slot table (retail .bss,
 // sits 0x10 bytes before the table; passed by address to __register_global_object).
@@ -262,10 +262,10 @@ extern const float lbl_eu_80667E9C;
 extern const float lbl_eu_80667EA0;
 
 // Master-volume backing store (retail .sdata, 8 bytes; written by
-// func_801BFFAC).
+// setMasterVolume).
 extern float lbl_eu_80662628;
 
-// Volume ramp multiplier (retail .sdata2 const; used by func_801BFFAC).
+// Volume ramp multiplier (retail .sdata2 const; used by setMasterVolume).
 extern const float lbl_eu_80667E8C;
 
 // Retail sound-manager pointer (unmangled at global scope).
@@ -277,7 +277,7 @@ extern u32 lbl_eu_80663E28;
 
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs
 // bind to the retail-unmangled names).
-extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" u32 func_80294624();
 extern "C" u32 func_8028E440();
 extern "C" u32 func_802B22E0();
@@ -319,7 +319,7 @@ struct CfSoundPos3 {
     f32 z;
 };
 
-// Camera-position object behind func_800821F8()->field_0xC (only the three
+// Camera-position object behind getCameraDataBlock()->field_0xC (only the three
 // position floats the per-slot update reads are declared).
 struct CfSndCamObj {
     u8 field_0x00[0x10C];
@@ -339,7 +339,7 @@ struct CfSndPoseBlock {
     u8 data[0x20];
 };
 
-// Minimal data view of the func_800821F8 result (only field_0xC is read);
+// Minimal data view of the getCameraDataBlock result (only field_0xC is read);
 // call sites cast from the canonical UnkClass_800821F8* returned by the
 // owner decl on CfGameManagerApi.hpp.
 struct UnkClass_800821F8Snd {
@@ -347,12 +347,12 @@ struct UnkClass_800821F8Snd {
     CfSndCamObj* field_0xC;
 };
 
-// func_800821F8__Q22cf13CfGameManagerFv: single winning decl lives on
+// getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl lives on
 // CfGameManagerApi.hpp (canonical UnkClass_800821F8* view); this TU's call
 // sites cast to the minimal UnkClass_800821F8Snd data view above.
 #include "kyoshin/cf/CfGameManagerApi.hpp"
 
-// Sound-start gate helpers used by cf::CfSoundMan::func_801BFC38 (defined in
+// Sound-start gate helpers used by cf::CfSoundMan::playActorSound (defined in
 // other TUs).
 extern "C" u32 func_80252538();
 extern "C" int CfRes_getD80Flag();

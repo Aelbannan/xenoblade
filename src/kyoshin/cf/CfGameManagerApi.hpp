@@ -1,7 +1,7 @@
 #pragma once
 
-// Thin owner-API header for cf::CfGameManager::func_800821F8()
-// (retail symbol func_800821F8__Q22cf13CfGameManagerFv, 0x80082B7C).
+// Thin owner-API header for cf::CfGameManager::getCameraDataBlock()
+// (retail symbol getCameraDataBlock__Q22cf13CfGameManagerFv, 0x80082B7C).
 //
 // The real declaration is the member in include/kyoshin/cf/CfGameManager.hpp
 // (defined in kyoshin/cf/CfGameManager.cpp). Caller TUs treat the result
@@ -16,4 +16,4 @@
 // TUs (divergent extern "C" return types trip MWCC 10505, which is what the
 // old per-TU #define-renames papered over).
 class UnkClass_800821F8;
-extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
+extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();

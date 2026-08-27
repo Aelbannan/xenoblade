@@ -64,14 +64,14 @@ void CMenuKeyAssign::Init() {
         (int)mtl::MemManager::getHandleMEM2(), 0x4200, lbl_eu_804FDEE8, 0);
     Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&mUnkClass[0]));
 
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     // Build the layout from the arc resource.
     func_80136E84(&mLayout, func_801355F4(), &lbl_eu_804FDEE8[0xf]);
 
     // Bind the font: push the font object's pane back onto the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult =
         reinterpret_cast<CMenuKeyAssignFont*>(fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
@@ -123,7 +123,7 @@ void CMenuKeyAssign::Term() {
 void CMenuKeyAssign::Move() {
     CMenuKeyAssign* self = this;
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) {
+    if (CTaskGame::isFlag01Set() != 0) {
         return;
     }
     if (lbl_eu_80663E28 & (1u << 21)) {
@@ -138,7 +138,7 @@ void CMenuKeyAssign::Move() {
     if (lbl_eu_80663E24 & 0xafa40000u) {
         return;
     }
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
 
@@ -147,7 +147,7 @@ void CMenuKeyAssign::Move() {
     CMenuKeyAssignActor* arts = (CMenuKeyAssignActor*)func_8016FE34(player);
     CPad* pad = cf::CfGameManager::getCurrentPad();
 
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // ---- in battle ----
         int battleMode = 0;
         void* bm = getInstance__Q22cf14CBattleManagerFv();        s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
@@ -277,7 +277,7 @@ void CMenuKeyAssign::Move() {
                 if (cnt == 0) {
                     int id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                     if (id != 0) {
-                        void* target = func_800B708C(id);
+                        void* target = findObjectById(id);
                         if (target != 0) {
                             u32 flags = ((CActorTargetView*)target)->mFlags64;
                             if (flags & 0x10000000) {
@@ -340,7 +340,7 @@ void CMenuKeyAssign::Move() {
             if (id != 0) {
                 id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                 if (id != 0) {
-                    if (func_800B708C(id) != 0) {
+                    if (findObjectById(id) != 0) {
                         func_801154D0(self, 1, 2, 9, 0, 0, 1);
                         goto done;
                     }
@@ -487,7 +487,7 @@ void CMenuKeyAssign::Move() {
             if (cnt == 0) {
                 int id = ((int (*)(void*))((void**)player)[0x4C / 4])(player);
                 if (id != 0) {
-                    void* target = func_800B708C(id);
+                    void* target = findObjectById(id);
                     if (target != 0) {
                         u32 flags = ((CActorTargetView*)target)->mFlags64;
                         if (flags & 0x10000000) {
@@ -558,7 +558,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & (1u << 21))) {
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
         return;
     }
     if (!func_8013BE50()) {
@@ -573,7 +573,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     if (lbl_eu_80663E24 & 0xafa40000u) {
         return;
     }
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::isSceneLoading()) {
         return;
     }
 
@@ -671,7 +671,7 @@ extern "C" void func_80115060(CMenuKeyAssign* self, int state, int count, int mo
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         name = &base[0x32];
     }
 
@@ -795,7 +795,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         name = &base[0x32];
     }
 
@@ -921,7 +921,7 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
 
     const char* base = lbl_eu_804FDEE8;
     const char* name = &base[0x29];
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         name = &base[0x32];
     }
 

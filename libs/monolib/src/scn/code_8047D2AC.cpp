@@ -46,8 +46,8 @@ struct UnkClass_8047D2AC {
 };
 
 struct UnkClass_8047E064 {
-    void func_8047E0B8();
-    void func_8047E100();
+    void initScnDefaults();
+    void resetScnState();
 
     u32 mField0;    // 0x00
     f32 mField4;    // 0x04
@@ -84,26 +84,26 @@ extern const f32 lbl_eu_8066A884; // 0.01f
 extern const f64 lbl_eu_8066A888; // 2^52 (int->float magic)
 
 // UnkClass_8047CD0C
-void* func_8047D178__17UnkClass_8047CD0CFv(void* self);
+void* getNodeBlock__17UnkClass_8047CD0CFv(void* self);
 
 // UnkClass_8047E110 -- scene manager methods (retail Fv annotations).
 // Signatures recovered from caller register setup.
-void func_80481014__17UnkClass_8047E110Fv(void* self, f32 a, f32 b, void* v, f32 c);
+void setWalkBox__17UnkClass_8047E110Fv(void* self, f32 a, f32 b, void* v, f32 c);
 s32 func_8047E6C4__17UnkClass_8047E110Fv(void* self, void* out, void* a, u16 b, u16 c, void* d, f32 f);
-s32 func_8047E62C__17UnkClass_8047E110Fv(void* self, void* out, void* a, void* b, f32 f);
+s32 findNode__17UnkClass_8047E110Fv(void* self, void* out, void* a, void* b, f32 f);
 void func_8047F214__17UnkClass_8047E110Fv(void* self, void* out, void* pos, u32 a, u16 node);
 s32 func_8047F658__17UnkClass_8047E110Fv(void* self, void* out);
 s32 func_8047FE48__17UnkClass_8047E110Fv(void* self, void* state, u32 a, u32 b, u32 c, u32 d);
 s32 func_8048020C__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
 s32 func_804804DC__17UnkClass_8047E110Fv(void* self, void* out, void* arr, u32 a, u32 b, u32 c);
 s32 func_804808A0__17UnkClass_8047E110Fv(void* self, u32 a, f32 f, void* pos, u32 b, u16 node);
-s32 func_80480EF0__17UnkClass_8047E110Fv(void* self, u16 node);
-s32 func_80480F48__17UnkClass_8047E110Fv(void* self, u32 a, u16 b, u16 c);
+s32 hasNeighbor__17UnkClass_8047E110Fv(void* self, u16 node);
+s32 compareRecords__17UnkClass_8047E110Fv(void* self, u32 a, u16 b, u16 c);
 void func_804814DC__17UnkClass_8047E110Fv(void* self, f32 f, void* a, void* b);
 s32 func_80481790__17UnkClass_8047E110Fv(void* self, u32 a);
-void func_8048163C__17UnkClass_8047E110Fv(void* self, void* a);
-void func_8048169C__17UnkClass_8047E110Fv(void* self, void* a, void* b);
-s32 func_804819AC__17UnkClass_8047E110Fv(void* self, u32 a);
+void setWalkBoxCenter__17UnkClass_8047E110Fv(void* self, void* a);
+void setWalkBoxBounds__17UnkClass_8047E110Fv(void* self, void* a, void* b);
+s32 isNodeBlocked__17UnkClass_8047E110Fv(void* self, u32 a);
 s32 func_804819C4__17UnkClass_8047E110Fv(void* self, u32 a);
 
 // In-TU walker methods (extern "C" -- retail Fv mangling, take registers)
@@ -115,14 +115,14 @@ s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32* arg1, voi
 // UnkClass_8047E064 methods
 // ------------------------------------------------------------------
 
-// func_8047E100 -- clear/reset (0x10)
-void UnkClass_8047E064::func_8047E100() {
+// resetScnState -- clear/reset (0x10)
+void UnkClass_8047E064::resetScnState() {
     mField0 = 0;
     mFlags = 0;
 }
 
-// func_8047E0B8 -- initialize defaults (0x48)
-void UnkClass_8047E064::func_8047E0B8() {
+// initScnDefaults -- initialize defaults (0x48)
+void UnkClass_8047E064::initScnDefaults() {
     mFlags |= 1;
     mField8 = 0;
     mFieldA = 0;
@@ -135,9 +135,9 @@ void UnkClass_8047E064::func_8047E0B8() {
     mField24 = 0;
 }
 
-// func_8047E064 -- attach to node pool (0x54)
-extern "C" void func_8047E064__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u16 val) {
-    self->mField0 = (u32)func_8047D178__17UnkClass_8047CD0CFv(lbl_eu_80658540);
+// attachScnNode -- attach to node pool (0x54)
+extern "C" void attachScnNode__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u16 val) {
+    self->mField0 = (u32)getNodeBlock__17UnkClass_8047CD0CFv(lbl_eu_80658540);
     self->mFlags |= 2;
     self->mField1E = val;
 }
@@ -152,7 +152,7 @@ extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     if (!(self->mFlags & 2)) return 0;
 
     f32 ga, gb;
-    func_80481014__17UnkClass_8047E110Fv(lbl_eu_80658560, ga, gb, arg2, self->mSpeed);
+    setWalkBox__17UnkClass_8047E110Fv(lbl_eu_80658560, ga, gb, arg2, self->mSpeed);
 
     s32 result = 0;
     u32 localA;
@@ -166,7 +166,7 @@ extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
         }
     }
     if (!result) {
-        if (func_8047E62C__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1, arg2,
+        if (findNode__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, arg1, arg2,
                                                   lbl_eu_8066A87C)) {
             result = 1;
             self->mField18 = (u16)localA;
@@ -176,8 +176,8 @@ extern "C" s32 func_8047DF54__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     return result;
 }
 
-// func_8047DE14 -- thin wrapper: run DF54 into a scratch word (0x28)
-extern "C" s32 func_8047DE14__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg) {
+// dispatchScnCommand -- thin wrapper: run DF54 into a scratch word (0x28)
+extern "C" s32 dispatchScnCommand__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg) {
     u32 local;
     return func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg);
 }
@@ -188,7 +188,7 @@ extern "C" s32 func_8047DE3C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     if (!(self->mFlags & 2)) return 0;
 
     f32 ga, gb;
-    func_80481014__17UnkClass_8047E110Fv(lbl_eu_80658560, ga, gb, arg, self->mSpeed);
+    setWalkBox__17UnkClass_8047E110Fv(lbl_eu_80658560, ga, gb, arg, self->mSpeed);
 
     s32 result = 0;
     u32 localB, localA;
@@ -202,7 +202,7 @@ extern "C" s32 func_8047DE3C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
         }
     }
     if (!result) {
-        if (func_8047E62C__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB, arg,
+        if (findNode__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB, arg,
                                                   lbl_eu_8066A87C)) {
             result = 1;
             self->mField1A = (u16)localA;
@@ -236,19 +236,37 @@ extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
     if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
         void* manager = lbl_eu_80658560;
 
-        if (func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
+        if (isNodeBlocked__17UnkClass_8047E110Fv(manager, local)) {
             return 0;
         }
 
         if (arg3) {
-            func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
+            setWalkBoxBounds__17UnkClass_8047E110Fv(manager, arg1, arg2);
             return func_804819C4__17UnkClass_8047E110Fv(manager, local);
         }
 
-        func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
+        setWalkBoxCenter__17UnkClass_8047E110Fv(manager, arg2);
         return func_80481790__17UnkClass_8047E110Fv(manager, local);
     }
 
+    return 0;
+}
+
+extern "C" s32 updateWalker__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
+                                                     void* arg2, u32 arg3) {
+    u32 local;
+    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+        void* manager = lbl_eu_80658560;
+        if (isNodeBlocked__17UnkClass_8047E110Fv(manager, local)) {
+            return 0;
+        }
+        if (arg3) {
+            setWalkBoxBounds__17UnkClass_8047E110Fv(manager, arg1, arg2);
+            return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+        }
+        setWalkBoxCenter__17UnkClass_8047E110Fv(manager, arg2);
+        return func_80481790__17UnkClass_8047E110Fv(manager, local);
+    }
     return 0;
 }
 
@@ -262,7 +280,7 @@ extern "C" s32 func_8047D2AC__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, voi
         *(f32*)((u8*)outDir + 8) = lbl_eu_8066A880;
         return 2;
     }
-    func_80481014__17UnkClass_8047E110Fv(lbl_eu_80658560, (f32)0, (f32)0, posA,
+    setWalkBox__17UnkClass_8047E110Fv(lbl_eu_80658560, (f32)0, (f32)0, posA,
                                           self->mSpeed);
     if (self->mFlags & 4) {
         u32 localA;

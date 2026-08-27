@@ -42,7 +42,7 @@ struct CMB_Bm_8018C5FC {
     CMB_ListNode_8018C5FC* listHead; // +0x08
 };
 
-// Party list returned by func_800B6BA4__Fv: head node ptr at +0x04.
+// Party list returned by getListB28__Fv: head node ptr at +0x04.
 struct CMB_PartyList_8018C5FC {
     u8 pad_00[0x4];
     CMB_ListNode_8018C5FC* headNode; // +0x04
@@ -70,10 +70,10 @@ extern "C" {
     // which would emit func_8009CF8C__Fi; the cf-namespace extern "C" decl
     // below shadows it so the unmangled func_8009CF8C reloc is emitted.
     u32 func_8009CF8C(u32);
-    CMB_PartyList_8018C5FC* func_800B6BA4__Fv();
+    CMB_PartyList_8018C5FC* getListB28__Fv();
     s32 func_8026178C(s32, u32);
     void func_802A293C(s32, s32);
-    extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
+    extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
 UnkClass_8018C5FC::UnkClass_8018C5FC() : gaugeValue(0) {
@@ -87,7 +87,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
     u32 cf8cVal = func_8009CF8C(0x3357);
     u32 cntlz = (u32)__cntlzw(cf8cVal);
     if ((cntlz >> 5) != 0) return;
-    if (cf::CfGameManager::func_800829B8()) return;
+    if (cf::CfGameManager::isSceneLoading()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
     f32 scale = func_80496288(&lbl_eu_80663E14);
@@ -109,7 +109,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             // character (virtual call via vtable+0x290 on the low-priority
             // subobject) to decide whether to drop the gauge by 1 or 2. The
             // loop reloads list->headNode at its bottom like retail.
-            CMB_PartyList_8018C5FC* list = func_800B6BA4__Fv();
+            CMB_PartyList_8018C5FC* list = getListB28__Fv();
             s32 found = 0;
             for (CMB_ListNode_8018C5FC* node = list->headNode->next;
                  node != list->headNode; node = node->next)
@@ -160,7 +160,7 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             if ((oldVal < 0x64 && clamped >= 0x64) ||
                 (oldVal < 0xc8 && clamped >= 0xc8))
             {
-                func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+                playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
             }
         }
     }
@@ -189,7 +189,7 @@ s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
     return _this->gaugeValue;
@@ -216,7 +216,7 @@ s32 func_8018C8F4(UnkClass_8018C5FC* _this, s32 val) {
     if ((oldVal < 0x64 && clamped >= 0x64) ||
         (oldVal < 0xc8 && clamped >= 0xc8))
     {
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
     return _this->gaugeValue;

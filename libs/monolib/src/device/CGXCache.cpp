@@ -343,28 +343,28 @@ public:
     ~CGXCache();
     void func_80449D68();
     void func_8044A578();
-    void func_8044A6C8(int param1, int param2);
+    void setBlendState(int param1, int param2);
     void func_8044A7F8();
-    void func_8044A94C(int param1, int param2);
-    void func_8044AA7C(int param1, int param2);
-    void func_8044ABAC();
-    void func_8044ACDC(const ml::CCol4& color, int flag);
-    void func_8044AE8C(const ml::CCol4& color, int flag);
-    void func_8044B03C(int param);
-    void func_8044B168(int param);
+    void setZCompareMD(int param1, int param2);
+    void setZWriteMode(int param1, int param2);
+    void setAlphaBlend();
+    void setTevColorNo(const ml::CCol4& color, int flag);
+    void setTevColorTx(const ml::CCol4& color, int flag);
+    void setDirectColA(int param);
+    void setDirectColB(int param);
     void func_8044B298(void* a, void* b, void* c);
-    bool func_8044B4B8(GXTexObj* texObj, u16 w, u16 h);
-    void func_8044B5B4();
-    void func_8044B5C0();
+    bool bindTextureGX(GXTexObj* texObj, u16 w, u16 h);
+    void getClearColor();
+    void updateOrthoGX();
     void func_8044B660();
     void func_8044B8CC(f32 fovy, f32 znear, f32 zfar);
     void func_8044BB20();
     s32 func_8044BD74(s32 param);
-    void func_8044BE10();
-    void* func_8044BE2C();
-    void func_8044BE3C();
-    void func_8044BFC0();
-    void func_8044C034();
+    void getViewRectGX();
+    void* getWhiteColor();
+    void disableTexGen();
+    void resetMtxState();
+    void resetTevState();
     void func_8044C1FC();
 
     //0x0: vtable (IStateCache)
@@ -379,7 +379,7 @@ public:
     Mtx44 mProjMtx;           //0x4C0..0x4FF
     s16 unk500;               //0x500
     s16 unk502;               //0x502..0x503
-    GXTexObj* unk504;         //0x504 (last texture bound by func_8044B4B8)
+    GXTexObj* unk504;         //0x504 (last texture bound by bindTextureGX)
     u32 unk508;               //0x508..0x50B
     u32 unk50C;               //0x50C
     s16 mRectLeft;            //0x510 (sub-rect left edge)
@@ -390,12 +390,12 @@ public:
     u8 unk519[3];             //0x519..0x51B
 };
 
-// Ring lookup used by func_8044B5B4 / func_8044BE10 / func_8044BD74. The
-// retail symbol is func_8044CF74__8CGXCacheFv (zero-param mangling) even
+// Ring lookup used by getClearColor / getViewRectGX / func_8044BD74. The
+// retail symbol is findRingEntry__8CGXCacheFv (zero-param mangling) even
 // though the body reads the message id from r4, so it is written as an
 // extern "C" free function with the exact retail name (same pattern as
-// func_8044CE68 / func_8044CEF8 below).
-extern "C" u32* func_8044CF74__8CGXCacheFv(CMsgParam_32* ring, u32 id);
+// dispatchCmdGX / getCmdPayload below).
+extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ring, u32 id);
 
 // CDeviceGX::cacheInstance (retail .sbss sda symbol). The shared CDeviceGX
 // header cannot be included here (local CGXCache class), so the mangled
@@ -406,7 +406,7 @@ extern CGXCache* cacheInstance__9CDeviceGX;
 // ring cache-update functions above use it before its definition.
 // noinline lives on the DEFINITION below (MWCC 10176 rejects
 // extern "C" + __declspec(noinline) on a pure prototype).
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 
 // Retail .sdata2 magic doubles
 // the definitions live in the monolib shared data blob). Referenced by name
@@ -424,7 +424,7 @@ extern u32 lbl_eu_8066364C;
 extern u32 lbl_eu_80663650;
 
 
-// __ct__80449548 / func_8044954C are no-op helpers defined below (they take
+// __ct__80449548 / clearStackTmp are no-op helpers defined below (they take
 // an address in r3 at the call site); the harness stubs that map to these
 // symbols reference them rather than redefining.
 
@@ -482,7 +482,7 @@ void* __dt__804494D8(void* self, int deleting) {
 extern "C" u32 lbl_eu_8056BFE4[];
 extern "C" void __ct__CMsgParam_32(void* self, u32 param);
 extern "C" void* __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d);
-extern "C" void func_8044954C(void* self);
+extern "C" void clearStackTmp(void* self);
 extern "C" void __ct__80449548(void* self);
 extern "C" u32 lbl_eu_8056BFF0[];
 extern "C" void __ct__IStateCache(void* self);
@@ -506,12 +506,12 @@ CGXCache::~CGXCache() {
 // Retail GX-state dispatcher: selects the GX command group by the u32 in r4
 // (blend, copy-clear, TEV, viewport or scissor) with the argument block in
 // r5. Retail symbol is Fv-mangled although r4/r5 are live register params
-// (same pattern as func_8044CE68 / func_8044CF74).
+// (same pattern as dispatchCmdGX / findRingEntry).
 extern "C" u32 VIGetNextField(void);
 extern const f32 lbl_eu_8066A37C;
 extern const f32 lbl_eu_8066A380;
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
-extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd);
 
 static inline s32 minS32(s32 a, s32 b) { return a < b ? a : b; }
 static inline s32 maxS32(s32 a, s32 b) { return a > b ? a : b; }
@@ -540,7 +540,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         // Copy-clear: color block in the data (floats scaled to 0-255), z
         // depth from ring command 3. Ring lookup runs first so the 255
         // scale is loaded after it into a volatile FPR (retail shape).
-        void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
+        void* pz = getCmdPayload__8CGXCacheFv(&self->unk4, 3);
         // Single nested expression: MWCC reserves the outgoing color-temp
         // address first, evaluates the scaled color, then loads z.
         GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(ml::CCol4*)data),
@@ -550,7 +550,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
     case 3: {
         // Copy-clear: color from ring command 2, z depth from the data word.
         // Mirror case 2's shape exactly: untyped void* local, cast at use.
-        void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
+        void* pz = getCmdPayload__8CGXCacheFv(&self->unk4, 2);
         GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(ml::CCol4*)pz), vu[0]);
         break;
     }
@@ -563,14 +563,14 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
     case 5: {
         // Z-mode: test enable from the data byte, compare func from ring cmd 6.
         u8 test = *(u8*)data;
-        GXSetZMode(1, (GXCompare)(*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 6) ? GX_LEQUAL : GX_ALWAYS),
+        GXSetZMode(1, (GXCompare)(*(u8*)getCmdPayload__8CGXCacheFv(&self->unk4, 6) ? GX_LEQUAL : GX_ALWAYS),
                        (GXBool)test);
         break;
     }
     case 6:
         // Z-mode: compare func from the data byte, test enable from ring cmd 5.
         GXSetZMode(1, (GXCompare)(*(u8*)data ? GX_LEQUAL : GX_ALWAYS),
-                   (GXBool)*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 5));
+                   (GXBool)*(u8*)getCmdPayload__8CGXCacheFv(&self->unk4, 5));
         break;
     case 7:
         GXSetColorUpdate((GXBool)*(u8*)data);
@@ -753,7 +753,7 @@ static u32 ringFindIndex(CGXCache* self) {
     return 0xFFFFFFFF;
 }
 
-// Signed-command variant (func_8044A6C8): retail tests the command word with
+// Signed-command variant (setBlendState): retail tests the command word with
 // a signed `cmpwi` against 0 instead of the unsigned `cmplwi`.
 template <s32 CMD>
 static u32 ringFindIndexS(CGXCache* self) {
@@ -766,10 +766,10 @@ static u32 ringFindIndexS(CGXCache* self) {
 }
 
 // Ring command-5 cache update with a one-byte wid (bloom alpha value). Same
-// shape as func_8044A94C (command 6): find the entry whose command is 5;
+// shape as setZCompareMD (command 6): find the entry whose command is 5;
 // unless (param2 == 0 && the entry's wid byte already equals param1) the
 // entry is re-stamped (unk23 = 4, wid byte = val) and command 5 dispatched.
-void CGXCache::func_8044AA7C(int param1, int param2) {
+void CGXCache::setZWriteMode(int param1, int param2) {
     u8 val = (u8)param1;
     u32 i = ringFindIndex<0x5>(this);
     if (param2 != 0) goto update;
@@ -787,18 +787,18 @@ update:
         u32 idx2 = unk4.mFront + i;
         u32 slot2 = idx2 % unk4.mCapacity;
         *(u8*)&unk4.mArrayPtr[slot2].wid = val;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x5);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x5);
     }
 end:
     ;
 }
 
 // Ring command-8 cache update with a one-byte wid. Retail symbol is
-// func_8044ABAC__8CGXCacheFv (zero-param mangling) even though the body reads
+// setAlphaBlend__8CGXCacheFv (zero-param mangling) even though the body reads
 // (int param1, int param2) from r4/r5 (CScnBloom passes them like the other
 // ring setters), so it is written as an extern "C" free function with the
-// exact retail name (same pattern as func_8044CE68 / func_8044CF74 below).
-extern "C" void func_8044ABAC__8CGXCacheFv(CGXCache* self, int param1, int param2) {
+// exact retail name (same pattern as dispatchCmdGX / findRingEntry below).
+extern "C" void setAlphaBlend__8CGXCacheFv(CGXCache* self, int param1, int param2) {
     u8 val = (u8)param1;
     u32 i = ringFindIndex<0x8>(self);
     if (param2 != 0) goto update;
@@ -816,7 +816,7 @@ update:
         u32 idx2 = self->unk4.mFront + i;
         u32 slot2 = idx2 % self->unk4.mCapacity;
         *(u8*)&self->unk4.mArrayPtr[slot2].wid = val;
-        func_8044CE68__8CGXCacheFv(&self->unk4, 0x8);
+        dispatchCmdGX__8CGXCacheFv(&self->unk4, 0x8);
     }
 end:
     ;
@@ -854,7 +854,7 @@ update:
         u32 c2 = *(u32*)&color->b;
         e->unkC = c2;
         e->unk10 = c3;
-        func_8044CE68__8CGXCacheFv(&self->unk4, 0x2);
+        dispatchCmdGX__8CGXCacheFv(&self->unk4, 0x2);
     }
 end:
     ;
@@ -887,7 +887,7 @@ update:
         for (int j = 0; j < 4; j++) {
             dst[j] = payload[j];
         }
-        func_8044CE68__8CGXCacheFv(&self->unk4, 0x1);
+        dispatchCmdGX__8CGXCacheFv(&self->unk4, 0x1);
     }
 end:
     ;
@@ -916,7 +916,7 @@ static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c) {
     return col;
 }
 
-void CGXCache::func_8044ACDC(const ml::CCol4& color, int flag) {
+void CGXCache::setTevColorNo(const ml::CCol4& color, int flag) {
     f32 scale;
     u32 i = ringFindIndex<0x9>(this);
     if (flag != 0) goto update;
@@ -934,7 +934,7 @@ update:
         u32 idx2 = unk4.mFront + i;
         u32 slot2 = idx2 % unk4.mCapacity;
         unk4.mArrayPtr[slot2].wid = lbl_eu_80663644;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x9);
     }
 end:
     {
@@ -944,8 +944,8 @@ end:
     }
 }
 
-// Same cache update as func_8044ACDC but for the lbl_eu_80663648 slot.
-void CGXCache::func_8044AE8C(const ml::CCol4& color, int flag) {
+// Same cache update as setTevColorNo but for the lbl_eu_80663648 slot.
+void CGXCache::setTevColorTx(const ml::CCol4& color, int flag) {
     f32 scale;
     u32 i = ringFindIndex<0x9>(this);
     if (flag != 0) goto update;
@@ -963,7 +963,7 @@ update:
         u32 idx2 = unk4.mFront + i;
         u32 slot2 = idx2 % unk4.mCapacity;
         unk4.mArrayPtr[slot2].wid = lbl_eu_80663648;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x9);
     }
 end:
     {
@@ -972,9 +972,9 @@ end:
     }
 }
 
-void func_8044B294__8CGXCacheFUl(void) {}
+void clearStubFunc__8CGXCacheFUl(void) {}
 
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
     u32 command;
     union {
@@ -1010,7 +1010,7 @@ struct C1FCCacheLayout {
 };
 
 // Optional ring pair pointers in r4-r6 update cached scissor rects, then enqueue
-// GX commands for tags 0xB / 0xC via func_8044CE68 (this+4).
+// GX commands for tags 0xB / 0xC via dispatchCmdGX (this+4).
 void CGXCache::func_8044B298(void* a, void* b, void* c) {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
     u32* insetPair;
@@ -1067,7 +1067,7 @@ found_b:
     entry->wid = *(u32*)&stack[0];
     entry->unk8 = *(u32*)&stack[2];
     // Retail recomputes this+4 at each call site (addi before bl).
-    func_8044CE68__8CGXCacheFv(&unk4, 0xb);
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0xb);
 
     count = cache->mSize;
     for (i = 0; i < count; i++) {
@@ -1090,7 +1090,7 @@ found_c:
     {
         // volatile blocks CSE of (this+4) into a third saved GPR (+4B over).
         void* volatile vself = this;
-        func_8044CE68__8CGXCacheFv(&static_cast<CGXCache*>(vself)->unk4, 0xc);
+        dispatchCmdGX__8CGXCacheFv(&static_cast<CGXCache*>(vself)->unk4, 0xc);
     }
 }
 
@@ -1098,7 +1098,7 @@ found_c:
 // the entry whose command is 9; unless (param == 0 && the entry's wid already
 // equals lbl_eu_8066364C) it re-stamps the entry (unk23 = 3, wid =
 // lbl_eu_8066364C) and dispatches command 9 to the device.
-void CGXCache::func_8044B03C(int param) {
+void CGXCache::setDirectColA(int param) {
     u32 i = ringFindIndex<0x9>(this);
     if (param == 0) {
         u32 slot = (unk4.mFront + i) % unk4.mCapacity;
@@ -1110,11 +1110,11 @@ void CGXCache::func_8044B03C(int param) {
     unk4.mArrayPtr[slot].unk23 = 0x3;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
     unk4.mArrayPtr[slot2].wid = lbl_eu_8066364C;
-    func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0x9);
 }
 
-// Same cache-update as func_8044B03C but for texture slot 0x63650.
-void CGXCache::func_8044B168(int param) {
+// Same cache-update as setDirectColA but for texture slot 0x63650.
+void CGXCache::setDirectColB(int param) {
     u32 i = ringFindIndex<0x9>(this);
     if (param == 0) {
         u32 slot = (unk4.mFront + i) % unk4.mCapacity;
@@ -1126,13 +1126,13 @@ void CGXCache::func_8044B168(int param) {
     unk4.mArrayPtr[slot].unk23 = 0x3;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
     unk4.mArrayPtr[slot2].wid = lbl_eu_80663650;
-    func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0x9);
 }
 
-// Ring command-0 cache update. Same shape as func_8044B03C: the entry's wid
+// Ring command-0 cache update. Same shape as setDirectColA: the entry's wid
 // is compared (when param2 == 0) against param1 and re-stamped (unk23 = 3,
 // wid = param1) before dispatching command 0.
-void CGXCache::func_8044A6C8(int param1, int param2) {
+void CGXCache::setBlendState(int param1, int param2) {
     u32 i = ringFindIndexS<0>(this);
     if (param2 == 0) {
         u32 slot = (unk4.mFront + i) % unk4.mCapacity;
@@ -1144,12 +1144,12 @@ void CGXCache::func_8044A6C8(int param1, int param2) {
     unk4.mArrayPtr[slot].unk23 = 0x3;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
     unk4.mArrayPtr[slot2].wid = param1;
-    func_8044CE68__8CGXCacheFv(&unk4, 0x0);
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0x0);
 }
 
 // Ring command-6 cache update with a one-byte wid. The byte value of param1
 // is stamped (unk23 = 4, wid byte = val) and command 6 dispatched.
-void CGXCache::func_8044A94C(int param1, int param2) {
+void CGXCache::setZCompareMD(int param1, int param2) {
     u8 val = (u8)param1;
     u32 i = ringFindIndex<0x6>(this);
     if (param2 == 0) {
@@ -1162,7 +1162,7 @@ void CGXCache::func_8044A94C(int param1, int param2) {
     unk4.mArrayPtr[slot].unk23 = 0x4;
     u32 slot2 = (unk4.mFront + i) % unk4.mCapacity;
     *(u8*)&unk4.mArrayPtr[slot2].wid = val; // only the low byte is written
-    func_8044CE68__8CGXCacheFv(&unk4, 0x6);
+    dispatchCmdGX__8CGXCacheFv(&unk4, 0x6);
 }
 
 // Binds a texture to TEXMAP0 and installs the tex-gen matrix that maps a
@@ -1225,7 +1225,7 @@ static inline f32 cvtU32Slot(F64Cvt* c, u32 v) {
 }
 
 
-bool CGXCache::func_8044B4B8(GXTexObj* texObj, u16 w, u16 h) {
+bool CGXCache::bindTextureGX(GXTexObj* texObj, u16 w, u16 h) {
     GXLoadTexObj(texObj, GX_TEXMAP0);
     Mtx mtx = {
         { lbl_eu_8066A380 / (f32)w, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378 },
@@ -1239,11 +1239,11 @@ bool CGXCache::func_8044B4B8(GXTexObj* texObj, u16 w, u16 h) {
     return true;
 }
 
-void CGXCache::func_8044B5B4() { func_8044CF74__8CGXCacheFv(&unk4, 2); }
+void CGXCache::getClearColor() { findRingEntry__8CGXCacheFv(&unk4, 2); }
 
 // Rebuild the ortho projection from the current scissor deltas and z depth:
 // t/l/n = lbl_eu_8066A378, b = deltaY, r = deltaX, f = -unk500 (retail FPRs).
-void CGXCache::func_8044B5C0() {
+void CGXCache::updateOrthoGX() {
     CGXCache* cache = cacheInstance__9CDeviceGX;
     f32 c = lbl_eu_8066A378;
     f32 far = (f32)(-unk500);
@@ -1298,7 +1298,7 @@ void CGXCache::func_8044B660() {
         C_MTXOrtho(mProjMtx, top, bottom, left, right, lbl_eu_8066A378, far);
     } else {
         // Plain ortho: top/left/near = 1.0, bottom = deltaY, right = deltaX,
-        // far = -unk500 (same shape as func_8044B5C0).
+        // far = -unk500 (same shape as updateOrthoGX).
         F64Cvt cs;
         cs.w[0] = 0x43300000u;
         f32 far = cvtS32Slot(&cs, -unk500);
@@ -1338,7 +1338,7 @@ void CGXCache::func_8044B8CC(f32 fovy, f32 znear, f32 zfar) {
 // (used for camera items) instead of mProjMtx, and does not push the matrix
 // to GX. Retail symbol is Fv-mangled although the body reads
 // (CGXCache*, f32[4][4], f32 fovY, f32 nearZ, f32 farZ) from r3/r4/f1-f3
-// (same pattern as func_8044ABAC / func_8044CE68).
+// (same pattern as setAlphaBlend / dispatchCmdGX).
 extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* self, f32 projOut[4][4], f32 fovy, f32 nearZ, f32 farZ) {
     // Plain float casts reproduce retail's exact schedule; the conversion
     // magics land in MWCC's anonymous .sdata2 pool (@N) - they need
@@ -1377,7 +1377,7 @@ s32 CGXCache::func_8044BD74(s32 param) {
     // signed 2^52+2^31 magic, the width payload word is loaded only after the
     // conversion stores, and both param/width convert via the unsigned 2^52
     // magic before the single-precision mul/div.
-    u32 wid = *func_8044CF74__8CGXCacheFv(&unk4, 3);
+    u32 wid = *findRingEntry__8CGXCacheFv(&unk4, 3);
     // Plain float casts reproduce retail's exact 156B schedule; the s16 field
     // converts through the signed magic (lha/xoris/2^52+2^31) and param/wid
     // through the unsigned 2^52 magic. NOTE: MWCC pools these as anonymous
@@ -1388,24 +1388,24 @@ s32 CGXCache::func_8044BD74(s32 param) {
     return (s32)f;
 }
 
-void CGXCache::func_8044BE10() { func_8044CF74__8CGXCacheFv(&unk4, 11); }
+void CGXCache::getViewRectGX() { findRingEntry__8CGXCacheFv(&unk4, 11); }
 
 // retail: addi r3,r3,0x510 (returns &unk510)
-void* func_8044BE1C__8CGXCacheFv(void* self) { return (u8*)self + 0x510; }
+void* getSubRectPtr__8CGXCacheFv(void* self) { return (u8*)self + 0x510; }
 
 // retail: lbz r3,0x518(r3) (unk510[8])
-u8 func_8044BE24__8CGXCacheFv(void* self) { return *(u8*)((u8*)self + 0x518); }
+u8 getAdjustFlag__8CGXCacheFv(void* self) { return *(u8*)((u8*)self + 0x518); }
 
-void* CGXCache::func_8044BE2C(void) { return (void*)0xFFFFFF; }
+void* CGXCache::getWhiteColor(void) { return (void*)0xFFFFFF; }
 
 // Retail is a pure tail to func_8044C1FC. Keep callee undefined here so MWCC
 // cannot inline an empty same-TU stub into a lone blr.
 void func_8044C1FC__8CGXCacheFv(void* self);
-void func_8044BE38__8CGXCacheFv(void* self) {
+void resetGXStateA__8CGXCacheFv(void* self) {
     func_8044C1FC__8CGXCacheFv(self);
 }
 
-void CGXCache::func_8044BE3C() {
+void CGXCache::disableTexGen() {
     (void)this;
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, GX_DISABLE, 0x7D);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x3C, GX_DISABLE, 0x7D);
@@ -1426,7 +1426,7 @@ void CGXCache::func_8044BE3C() {
     GXEnableTexOffsets(GX_TEXCOORD7, GX_DISABLE, GX_DISABLE);
 }
 
-void CGXCache::func_8044BFC0() {
+void CGXCache::resetMtxState() {
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
     GXClearVtxDesc();
@@ -1437,7 +1437,7 @@ void CGXCache::func_8044BFC0() {
     GXLoadTexMtxImm(*ml::CMat34::identity, 0x7D, GX_MTX_3x4);
 }
 
-void CGXCache::func_8044C034() {
+void CGXCache::resetTevState() {
     (void)this;
     int tevStage;
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
@@ -1477,10 +1477,10 @@ extern const f32 lbl_eu_8066A37C;
 extern const f32 lbl_eu_8066A3A0;
 extern const f32 lbl_eu_8066A3A4;
 extern u32 lbl_eu_80663644;
-extern "C" void func_8044BE3C__8CGXCacheFv(void* self);
-extern "C" void func_8044C034__8CGXCacheFv(void* self);
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
-extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void disableTexGen__8CGXCacheFv(void* self);
+extern "C" void resetTevState__8CGXCacheFv(void* self);
+extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd);
 
 // Inline ring-entry search: the mid-loop return yields retail's two-branch
 // exit and the runtime member bound compiles to mtctr/bdnz. Defined before
@@ -1511,7 +1511,7 @@ void CGXCache::func_8044C1FC() {
     GXSetCoPlanar(GX_DISABLE);
     GXSetCullMode(GX_CULL_BACK);
     GXSetClipMode(GX_CLIP_ENABLE);
-    func_8044BE3C__8CGXCacheFv(this);
+    disableTexGen__8CGXCacheFv(this);
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
     GXClearVtxDesc();
@@ -1564,7 +1564,7 @@ void CGXCache::func_8044C1FC() {
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZTexture(GX_ZT_DISABLE, GX_TF_Z8, 0);
 
-    func_8044C034__8CGXCacheFv(this);
+    resetTevState__8CGXCacheFv(this);
 
     GXSetNumIndStages(0);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_1, GX_ITS_1);
@@ -1589,8 +1589,8 @@ void CGXCache::func_8044C1FC() {
     GXSetDispCopyGamma(cache->unk50C);
 
     // cmd 3 payload word is the clear z value; cmd 2 payload is the color.
-    zTex = *(u32*)func_8044CEF8__8CGXCacheFv(&unk4, 3);
-    pCol = (ml::CCol4*)func_8044CEF8__8CGXCacheFv(&unk4, 2);
+    zTex = *(u32*)getCmdPayload__8CGXCacheFv(&unk4, 3);
+    pCol = (ml::CCol4*)getCmdPayload__8CGXCacheFv(&unk4, 2);
     gxCol.r = (u8)(lbl_eu_8066A37C * pCol->r);
     gxCol.g = (u8)(lbl_eu_8066A37C * pCol->g);
     gxCol.b = (u8)(lbl_eu_8066A37C * pCol->b);
@@ -1633,56 +1633,56 @@ void CGXCache::func_8044C1FC() {
         C1FC_STAMP(0xD)
         e->wid = *(u32*)&deltaPair[0];
         e->unk8 = *(u32*)&deltaPair[2];
-        func_8044CE68__8CGXCacheFv(&unk4, 0xB);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0xB);
     }
     {
         u32 i = c1fcFindEntry<0xD>(cache);
         C1FC_STAMP(0xD)
         e->wid = *(u32*)&stackScissor[0];
         e->unk8 = *(u32*)&stackScissor[2];
-        func_8044CE68__8CGXCacheFv(&unk4, 0xC);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0xC);
     }
     {
         u32 i = c1fcFindEntry<3>(cache);
         C1FC_STAMP(3)
         e->wid = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x4);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x4);
     }
     {
         u32 i = c1fcFindEntry<4>(cache);
         C1FC_STAMP(4)
         e->wid8 = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x5);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x5);
     }
     {
         u32 i = c1fcFindEntry<4>(cache);
         C1FC_STAMP(4)
         e->wid8 = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x6);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x6);
     }
     {
         u32 i = c1fcFindEntry<4>(cache);
         C1FC_STAMP(4)
         e->wid8 = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x7);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x7);
     }
     {
         u32 i = c1fcFindEntry<4>(cache);
         C1FC_STAMP(4)
         e->wid8 = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x8);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x8);
     }
     {
         u32 i = c1fcFindEntry<3>(cache);
         C1FC_STAMP(3)
         e->wid = 1;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x0);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x0);
     }
     {
         u32 i = c1fcFindEntry<9>(cache);
         C1FC_STAMP(3)
         e->wid = lbl_eu_80663644;
-        func_8044CE68__8CGXCacheFv(&unk4, 0x9);
+        dispatchCmdGX__8CGXCacheFv(&unk4, 0x9);
     }
 #undef C1FC_STAMP
 
@@ -1757,7 +1757,7 @@ static inline u32 gxCacheFindCmd(MsgParam32Ring* ring, u32 cmd) {
     return 0xFFFFFFFF;
 }
 
-extern "C" __declspec(noinline) void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
+extern "C" __declspec(noinline) void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = gxCacheFindCmd(ring, cmd);
     // Statement order reproduces retail's schedule; the virtual-call syntax
@@ -1772,7 +1772,7 @@ extern "C" __declspec(noinline) void func_8044CE68__8CGXCacheFv(void* self, u32 
 
 #pragma push
 #pragma auto_inline off
-extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
+extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = msgRingFind(ring, cmd);
     u32 idx = ring->mFront + i;
@@ -1785,7 +1785,7 @@ extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
 // Find the ring entry whose command == id and return a pointer to its payload
 // word (wid). If not found, the slot is computed with i = -1 (wraps to the
 // last ring slot), mirroring retail's fallthrough li r8, -1.
-extern "C" u32* func_8044CF74__8CGXCacheFv(CMsgParam_32* ringp, u32 id) {
+extern "C" u32* findRingEntry__8CGXCacheFv(CMsgParam_32* ringp, u32 id) {
     MsgParam32Ring* ring = (MsgParam32Ring*)ringp;
     u32 i = msgRingFind(ring, id);
     u32 idx = ring->mFront + i;
@@ -2232,7 +2232,7 @@ CGXCache::CGXCache() {
     // full-screen rect words.
     ((CMsgParam<32>*)&unk4)->func_80449B94(0, &lbl_eu_80663620);
 
-    ((void (*)(void*))func_8044954C)(payload);
+    ((void (*)(void*))clearStackTmp)(payload);
     payload[0] = 1;
     payload[1] = 4;
     payload[2] = 5;
@@ -2292,7 +2292,7 @@ extern "C" __declspec(noinline) void* __ct__80449534(void* self, s16 a, s16 b, s
 }
 
 // No-op helpers called with an address in r3 (retail `addi r3,..; bl`).
-__declspec(noinline) void func_8044954C(void* self) { (void)self; }
+__declspec(noinline) void clearStackTmp(void* self) { (void)self; }
 __declspec(noinline) void __ct__80449548(void* self) { (void)self; }
 #pragma pop
 

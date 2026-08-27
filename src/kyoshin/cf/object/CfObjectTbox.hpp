@@ -17,7 +17,7 @@ namespace cf {
         u32 field_73C;      // 0x73C
     CfObjectTbox();
     virtual ~CfObjectTbox();
-    void func_801F8DD0();
+    void initTbox();
     };
 }
 

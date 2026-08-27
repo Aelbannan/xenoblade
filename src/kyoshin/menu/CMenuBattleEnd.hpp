@@ -15,13 +15,13 @@ class CProcess;
 class IScnRender;
 
 // Minimal CTaskGame decl (retail global-namespace class; symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv). The real
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The real
 // CTaskGame.hpp pulls broken monolib work.hpp-umbrella headers, so the static
 // members are declared here (same scheme as CSystemWindow.hpp).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // One entry of the internal message/queue array (stride 8).
@@ -123,7 +123,7 @@ void waitForDrawDone__9CDeviceVIFv();
 void Regist__8CProcessFP8CProcessb(void*, void*, bool);
 void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-void func_8045F778__17UnkClass_8045F564Fv(void*);
+void deleteRegion__17UnkClass_8045F564Fv(void*);
 }
 
 // C++-linkage helpers (retail symbols are their Itanium-mangled forms).

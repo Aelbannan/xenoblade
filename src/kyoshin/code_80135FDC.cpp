@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 
 extern "C" {
 // copyVEC3 stays inline
@@ -1163,9 +1163,9 @@ extern "C" void func_80137F88(void* a, void* palette) {
 }
 
 void func_80138078__FUl(u32 arg) {
-    extern u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
+    extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
     extern f32 lbl_eu_80667300;
-    func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, arg, 0, 0, lbl_eu_80667300);
 }
 
 void code80135FDC_thunk_BFE8C(u8* arg) {
@@ -2039,14 +2039,14 @@ extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
 extern "C" void func_80139CEC(const char* arg) {
     func_8003AA34(arg);
     getFP__FPCc(&lbl_eu_80500664[0x1F9]);
-    void* gm = cf::CfGameManager::func_80083298();
+    void* gm = cf::CfGameManager::getGameSubManager();
     if (gm == NULL) return;
 
     for (u8 i = 0; i <= 0x63; i++) {
-        func_80462D5C__8CTaskLODFv(i);
-        void* snd = func_804BC9EC__Fv();
+        deactivateLOD__8CTaskLODFv(i);
+        void* snd = getScnHandle__Fv();
         func_804BCC3C(snd, i);
-        func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
+        forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
     }
 
     struct B21 {
@@ -2065,26 +2065,26 @@ extern "C" void func_80139CEC(const char* arg) {
     for (;;) {
         s8 ch = (s8)chars[j];
         if (ch < 0) break;
-        func_80462D04__8CTaskLODFv(ch);
-        void* snd = func_804BC9EC__Fv();
+        activateLOD__8CTaskLODFv(ch);
+        void* snd = getScnHandle__Fv();
         func_804BCC30(snd, ch);
-        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
+        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
         j++;
     }
 
     if (func_8009CF8C(0x7D0) == 1) {
-        func_80462D04__8CTaskLODFv(0x50);
-        void* snd = func_804BC9EC__Fv();
+        activateLOD__8CTaskLODFv(0x50);
+        void* snd = getScnHandle__Fv();
         func_804BCC30(snd, 0x50);
-        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
-        func_80462D04__8CTaskLODFv(0x63);
-        snd = func_804BC9EC__Fv();
+        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+        activateLOD__8CTaskLODFv(0x63);
+        snd = getScnHandle__Fv();
         func_804BCC30(snd, 0x63);
-        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
-        func_80462D04__8CTaskLODFv(0x09);
-        snd = func_804BC9EC__Fv();
+        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
+        activateLOD__8CTaskLODFv(0x09);
+        snd = getScnHandle__Fv();
         func_804BCC30(snd, 0x09);
-        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
+        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
     }
 
     for (u8 i = 0; i < 4; i++) {
@@ -2092,209 +2092,209 @@ extern "C" void func_80139CEC(const char* arg) {
         u32 base = (u32)((i + 1) * 10);
         for (u8 k = 1; k <= n; k++) {
             u8 v1 = (u8)(base + k);
-            func_80462D04__8CTaskLODFv(v1);
-            void* snd = func_804BC9EC__Fv();
+            activateLOD__8CTaskLODFv(v1);
+            void* snd = getScnHandle__Fv();
             func_804BCC30(snd, v1);
-            func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
+            forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
 
             u8 v2 = (u8)(k + 0x3C);
-            func_80462D04__8CTaskLODFv(v2);
-            snd = func_804BC9EC__Fv();
+            activateLOD__8CTaskLODFv(v2);
+            snd = getScnHandle__Fv();
             func_804BCC30(snd, v2);
-            func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
+            forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
 
             u8 v3 = (u8)(k + 0x46);
-            func_80462D5C__8CTaskLODFv(v3);
-            snd = func_804BC9EC__Fv();
+            deactivateLOD__8CTaskLODFv(v3);
+            snd = getScnHandle__Fv();
             func_804BCC3C(snd, v3);
-            func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
+            forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
 
             if (v2 == 0x3D) {
-                func_80462D04__8CTaskLODFv(0x55);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x55);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x55);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
             if (v2 == 0x3E) {
-                func_80462D04__8CTaskLODFv(0x56);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x56);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x56);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
             }
             if (v2 == 0x3D) {
-                func_80462D04__8CTaskLODFv(0x57);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x57);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x57);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
             if (v2 == 0x3D) {
-                func_80462D04__8CTaskLODFv(0x58);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x58);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x58);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
             if (func_8009CF8C(0x20) >= 0x16E) {
-                func_80462D04__8CTaskLODFv(0x59);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x59);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x59);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
                 if (v1 == 0x0E) {
-                    func_80462D04__8CTaskLODFv(0x5A);
-                    snd = func_804BC9EC__Fv();
+                    activateLOD__8CTaskLODFv(0x5A);
+                    snd = getScnHandle__Fv();
                     func_804BCC30(snd, 0x5A);
-                    func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
+                    forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
                 }
             }
             if (v2 == 0x3D) {
-                func_80462D04__8CTaskLODFv(0x5B);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x5B);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x5B);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
             if (v2 == 0x3D) {
-                func_80462D04__8CTaskLODFv(0x5C);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x5C);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x5C);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
             if (v2 == 0x3E) {
-                func_80462D04__8CTaskLODFv(0x5D);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x5D);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x5D);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
             if (v2 == 0x3F) {
-                func_80462D04__8CTaskLODFv(0x5E);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x5E);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x5E);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
             if (v2 == 0x40) {
-                func_80462D04__8CTaskLODFv(0x5F);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x5F);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x5F);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
             if (v2 == 0x40) {
-                func_80462D04__8CTaskLODFv(0x60);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x60);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x60);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
             if (v2 == 0x41) {
-                func_80462D04__8CTaskLODFv(0x61);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x61);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x61);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
             if (v2 == 0x41) {
-                func_80462D04__8CTaskLODFv(0x62);
-                snd = func_804BC9EC__Fv();
+                activateLOD__8CTaskLODFv(0x62);
+                snd = getScnHandle__Fv();
                 func_804BCC30(snd, 0x62);
-                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+                forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
 
-            if (func_80462E1C__8CTaskLODFv(0x2D)) {
-                func_80462D5C__8CTaskLODFv(0x50);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x2D)) {
+                deactivateLOD__8CTaskLODFv(0x50);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x50);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0E)) {
-                func_80462D5C__8CTaskLODFv(0x51);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0E)) {
+                deactivateLOD__8CTaskLODFv(0x51);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x51);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
             }
-            if (func_80462E1C__8CTaskLODFv(0x2A)) {
-                func_80462D5C__8CTaskLODFv(0x52);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x2A)) {
+                deactivateLOD__8CTaskLODFv(0x52);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x52);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
             }
-            if (func_80462E1C__8CTaskLODFv(0x22)) {
-                func_80462D5C__8CTaskLODFv(0x53);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x22)) {
+                deactivateLOD__8CTaskLODFv(0x53);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x53);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
             }
-            if (func_80462E1C__8CTaskLODFv(0x23)) {
-                func_80462D5C__8CTaskLODFv(0x54);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x23)) {
+                deactivateLOD__8CTaskLODFv(0x54);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x54);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
             }
-            if (func_80462E1C__8CTaskLODFv(0x3E)) {
-                func_80462D5C__8CTaskLODFv(0x55);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x3E)) {
+                deactivateLOD__8CTaskLODFv(0x55);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x55);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
             }
-            if (func_80462E1C__8CTaskLODFv(0x2D)) {
-                func_80462D5C__8CTaskLODFv(0x57);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x2D)) {
+                deactivateLOD__8CTaskLODFv(0x57);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x57);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
             }
-            if (func_80462E1C__8CTaskLODFv(0x2D)) {
-                func_80462D5C__8CTaskLODFv(0x58);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x2D)) {
+                deactivateLOD__8CTaskLODFv(0x58);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x58);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0E)) {
-                func_80462D5C__8CTaskLODFv(0x59);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0E)) {
+                deactivateLOD__8CTaskLODFv(0x59);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x59);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0B)) {
-                func_80462D5C__8CTaskLODFv(0x5B);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0B)) {
+                deactivateLOD__8CTaskLODFv(0x5B);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x5B);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
             }
-            if (func_80462E1C__8CTaskLODFv(0x15)) {
-                func_80462D5C__8CTaskLODFv(0x5C);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x15)) {
+                deactivateLOD__8CTaskLODFv(0x5C);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x5C);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0C)) {
-                func_80462D5C__8CTaskLODFv(0x5D);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0C)) {
+                deactivateLOD__8CTaskLODFv(0x5D);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x5D);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0D)) {
-                func_80462D5C__8CTaskLODFv(0x5E);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0D)) {
+                deactivateLOD__8CTaskLODFv(0x5E);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x5E);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0E)) {
-                func_80462D5C__8CTaskLODFv(0x5F);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0E)) {
+                deactivateLOD__8CTaskLODFv(0x5F);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x5F);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
             }
-            if (func_80462E1C__8CTaskLODFv(0x2C)) {
-                func_80462D5C__8CTaskLODFv(0x60);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x2C)) {
+                deactivateLOD__8CTaskLODFv(0x60);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x60);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
             }
-            if (func_80462E1C__8CTaskLODFv(0x0F)) {
-                func_80462D5C__8CTaskLODFv(0x61);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x0F)) {
+                deactivateLOD__8CTaskLODFv(0x61);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x61);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
             }
-            if (func_80462E1C__8CTaskLODFv(0x19)) {
-                func_80462D5C__8CTaskLODFv(0x62);
-                snd = func_804BC9EC__Fv();
+            if (getLODData__8CTaskLODFv(0x19)) {
+                deactivateLOD__8CTaskLODFv(0x62);
+                snd = getScnHandle__Fv();
                 func_804BCC3C(snd, 0x62);
-                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+                forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
             }
         }
     }
@@ -2302,10 +2302,10 @@ extern "C" void func_80139CEC(const char* arg) {
     u8 n2 = (u8)func_8009CF8C(0x802);
     for (u8 k = 1; k <= n2; k++) {
         u8 v = (u8)(k + 0x32);
-        func_80462D04__8CTaskLODFv(v);
-        void* snd = func_804BC9EC__Fv();
+        activateLOD__8CTaskLODFv(v);
+        void* snd = getScnHandle__Fv();
         func_804BCC30(snd, v);
-        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
+        forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
     }
 }
 
@@ -2719,7 +2719,7 @@ extern "C" void func_8013B428__FUl(u32 value) {
     case 0xA2: if ((u16)n == 0xC8) flag = 1; break;
     case 0xA9: {
         // separate counter: retail reuses the (dead) n register for the loop
-        // and calls func_800826F0 with the ORIGINAL m afterwards
+        // and calls queueEventId with the ORIGINAL m afterwards
         u8 i;
         for (i = 1; i <= 5; i++) {
             if (func_8009CF8C(i + 0x21) < 0x1F40) return;
@@ -2738,7 +2738,7 @@ extern "C" void func_8013B428__FUl(u32 value) {
     default: flag = 1; break;
     }
     if (flag) {
-        func_800826F0__Q22cf13CfGameManagerFv(m);
+        queueEventId__Q22cf13CfGameManagerFv(m);
     }
 }
 

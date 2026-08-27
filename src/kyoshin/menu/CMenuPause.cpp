@@ -27,7 +27,7 @@ extern u32 lbl_eu_80663E28;
 extern "C" void func_80252564(CMenuPause* p);
 
 void CMenuPause::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
     func_80188890(1);
 
     // Scoped MEM2 region guard, then build the layout + animations.
@@ -35,7 +35,7 @@ void CMenuPause::Init() {
                             lbl_eu_8050C5C8, 0);
     u8 regionBuf[4];
     __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     func_80136E84(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
     func_80136F08(mLayout,
@@ -44,7 +44,7 @@ void CMenuPause::Init() {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = ((CMenuPauseFontView*)fontObj)->sf9();
     func_8013676C(rootPane, fontResult);
 
@@ -69,7 +69,7 @@ void CMenuPause::Init() {
     {
         u16 msg = func_8013606C(
             &lbl_eu_8050C5C8[0x5d],
-            func_80086F9C__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
+            isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6b);
         char* handle = func_80138F78(msg);
@@ -99,7 +99,7 @@ void CMenuPause::Init() {
     {
         u16 msg = func_8013606C(
             &lbl_eu_8050C5C8[0x5d],
-            func_80086F9C__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
+            isClassicController__Q22cf13CfGameManagerFv(-1) ? &lbl_eu_8050C5C8[0x7d]
                                                       : &lbl_eu_8050C5C8[0x86],
             0x6c);
         char* handle = func_80138F78(msg);
@@ -158,12 +158,12 @@ void CMenuPause::Term() {
 
     lbl_eu_806647C8 = NULL;
     func_80188890(0);
-    func_8008294C__Q22cf13CfGameManagerFv(false);
+    setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 void CMenuPause::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) goto exit;
+    if (CTaskGame::isFlag01Set()) goto exit;
     if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
@@ -208,7 +208,7 @@ body:
 
 void CMenuPause::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) goto done;
+    if (CTaskGame::isFlag01Set()) goto done;
     // Branch-over-branch guard, same trick as Move(): keeps MWCC from folding
     // the bit test into the first bne -- retail emits `beq body; b done`.
     if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto done;
@@ -356,7 +356,7 @@ extern "C" void func_80252564(CMenuPause* p) {
     u32 first;
     u32 second;
     // Call the raw mangled import so the -1 channel argument reaches r3.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         first = (pad->mPressedButtonFlags >> 21) & 1;
         second = (pad->mPressedButtonFlags >> 22) & 1;
     } else {

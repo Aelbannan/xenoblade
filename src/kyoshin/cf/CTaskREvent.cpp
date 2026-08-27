@@ -229,7 +229,7 @@ float func_80164478() {
 extern "C" u32 func_801644AC() { return (u32)lbl_eu_80662380; }
 
 extern "C" u32 func_801644B4() { return (u32)lbl_eu_80664240; }
-void func_801644BC(u32 arg) {
+void setAutoSleep(u32 arg) {
     CEventMgr* mgr = lbl_eu_80664240;
     if (!mgr) return;
     func_80166150(mgr, arg);
@@ -240,19 +240,19 @@ void func_801644BC(u32 arg) {
 // so the retail plain symbol is emitted). noinline so the call stays a real
 // bl (an empty inline body would make MWCC DCE the whole walk loop).
 // Fills one event-table index's character data: 7 rows of 5 bytes (byte
-// extracted from CfGameManager::func_8007DE94(row, col) at bits 10-17), 7
-// words, then the id halfword (func_80086D98 output) and a flag byte.
+// extracted from CfGameManager::getBdatEntryColumn(row, col) at bits 10-17), 7
+// words, then the id halfword (getControllerValues output) and a flag byte.
 __declspec(noinline) void func_8016462C(u32 index) {
     // Byte rows are indexed 1..7 (row 0 unused): the retail offsets start at
     // 5*1 / 4*1 and step by 5 / 4 per row.
     for (int row = 1; row < 8; row++) {
         for (int col = 0; col <= 4;) {
-            // Retail order: call func_8007DE94, narrow to a byte while it
+            // Retail order: call getBdatEntryColumn, narrow to a byte while it
             // lives in a callee-saved reg, then fetch the blob for the store.
-            u8 b = (u8)((func_8007DE94__Q22cf13CfGameManagerFv(row, col) >> 10) & 0xFF);
+            u8 b = (u8)((getBdatEntryColumn__Q22cf13CfGameManagerFv(row, col) >> 10) & 0xFF);
             evtCharBlob()->mByteRows[index][5 * row + col++] = b;
         }
-        u32 w = func_8007DE94__Q22cf13CfGameManagerFv(row, 5);
+        u32 w = getBdatEntryColumn__Q22cf13CfGameManagerFv(row, 5);
         CEventCharBlob* blobW = evtCharBlob();
         blobW->mWordRows[index][row] = w;
     }
@@ -261,7 +261,7 @@ __declspec(noinline) void func_8016462C(u32 index) {
     u32 v = 0;
     u16 hi = 0xC;
     u16 lo = 0;
-    func_80086D98__Q22cf13CfGameManagerFv(&hi, &lo);
+    getControllerValues__Q22cf13CfGameManagerFv(&hi, &lo);
     v = (u16)((hi << 8) | lo);
     evtCharBlob()->mHalfSlots[index] = v;
     v = (u8)func_8016DF2C();
@@ -400,7 +400,7 @@ int func_80164838(const char* key, int slot) {
     return (int)blob->mWordRows[idx][slot];
 }
 
-u32 func_80164910() {
+u32 isEventPending() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == nullptr) return 0;
     u32 result = 0;
@@ -533,7 +533,7 @@ int func_80164C28() {
 int func_80164C48() {
     CEventMgr* mgr = lbl_eu_80664240;
     if (mgr == 0) return 0;
-    if (cf::CfGameManager::func_8007E1B4() == 0) return 0;
+    if (cf::CfGameManager::isManagerInitialized() == 0) return 0;
     int result = lbl_eu_80664240->field_0x74 & 1;
     if (result) {
         u32 flag;
@@ -576,10 +576,10 @@ void func_80164CFC() {
         lbl_eu_80664240->field_0x1D0 = 0;
     }
     lbl_eu_80664240->field_0x6C &= ~1;
-    if (cf::CfGameManager::func_80083298() != 0) {
-        if (&cf::CfGameManager::func_80083298()->field_0xF0 != 0) {
-            func_8047BDA0__17UnkClass_8047BB54Fv(
-                &cf::CfGameManager::func_80083298()->field_0xF0);
+    if (cf::CfGameManager::getGameSubManager() != 0) {
+        if (&cf::CfGameManager::getGameSubManager()->field_0xF0 != 0) {
+            flushMpfBuffer__17UnkClass_8047BB54Fv(
+                &cf::CfGameManager::getGameSubManager()->field_0xF0);
         }
     }
     if (lbl_eu_80664240->field_0x1BC != 0) {
@@ -629,7 +629,7 @@ void func_80164ED0(const char* path, int flag, u8* handle) {
         } else {
             buffer = func_80495FF0(lbl_eu_80663E14);
         }
-        CLibCri* cri = func_80459AA8__7CLibCriFv(
+        CLibCri* cri = startMovie__7CLibCriFv(
             path, mtl::MemManager::getHandleMEM2(), buffer, flag, 0);
         lbl_eu_80664240->mCri = cri;
     }
@@ -640,7 +640,7 @@ void func_80164F6C() {
     if (mgr == nullptr) return;
     CLibCri* cri = mgr->mCri;
     if ((u32)cri == 0xFFFFFFFF) return;
-    cri->func_80459AAC();
+    cri->stopMovie();
     // Store through the global again: the call above may have changed it,
     // so retail re-reads lbl_eu_80664240 instead of reusing the local.
     lbl_eu_80664240->mCri = (CLibCri*)-1;
@@ -655,7 +655,7 @@ int func_80164FB4() {
     if ((u32)cri == 0xFFFFFFFF) {
         return 0;
     }
-    return func_80459AC4__7CLibCriFv(cri);
+    return isMovieGlobalPaused__7CLibCriFv(cri);
 }
 
 int func_80164FE8(void) {
@@ -670,7 +670,7 @@ void func_80165014() {
     if (!mgr) return;
     CLibCri* cri = mgr->mCri;
     if ((u32)cri == 0xFFFFFFFF) return;
-    cri->func_80459AC0();
+    cri->clearMoviePause();
 }
 
 extern "C" void func_8016C2E4();
@@ -701,10 +701,10 @@ void cf::CTaskREvent::Term() {
                 lbl_eu_80664240->field_0x1D0 = 0;
             }
             lbl_eu_80664240->field_0x6C &= ~1;
-            if (cf::CfGameManager::func_80083298() != 0) {
-                if (&cf::CfGameManager::func_80083298()->field_0xF0 != 0) {
-                    func_8047BDA0__17UnkClass_8047BB54Fv(
-                        &cf::CfGameManager::func_80083298()->field_0xF0);
+            if (cf::CfGameManager::getGameSubManager() != 0) {
+                if (&cf::CfGameManager::getGameSubManager()->field_0xF0 != 0) {
+                    flushMpfBuffer__17UnkClass_8047BB54Fv(
+                        &cf::CfGameManager::getGameSubManager()->field_0xF0);
                 }
             }
             if (lbl_eu_80664240->field_0x1BC != 0) {
@@ -726,7 +726,7 @@ void cf::CTaskREvent::Term() {
     // Re-read the global (not the local) after the manager section: the calls
     // above may have replaced the manager object.
     if (lbl_eu_80664240 != 0 && (u32)lbl_eu_80664240->mCri != 0xFFFFFFFF) {
-        lbl_eu_80664240->mCri->func_80459AAC();
+        lbl_eu_80664240->mCri->stopMovie();
         lbl_eu_80664240->mCri = (CLibCri*)-1;
     }
     if (this->mBuf != 0) {
@@ -789,12 +789,12 @@ void cf::CTaskREvent::Move() {
 
     // CRI movie controller upkeep: drop a finished player, tick a live one.
     if ((u32)this->mCri != 0xFFFFFFFF &&
-        func_80459AC8__7CLibCriFv(this->mCri) == 0) {
+        isMoviePlaying__7CLibCriFv(this->mCri) == 0) {
         this->mCri = (CLibCri*)-1;
     }
     if ((u32)this->mCri != 0xFFFFFFFF) {
-        func_80459AB0__7CLibCriFv(this->mCri,
-                                  cf::CfGameManager::func_800829B8());
+        setMoviePause__7CLibCriFv(this->mCri,
+                                  cf::CfGameManager::isSceneLoading());
     }
 
     if (this->field_0x1D4 >= 0) {
@@ -855,7 +855,7 @@ void cf::CTaskREvent::Move() {
                    func_801684F4() != 0) {
             // Event-active path: advance the subtitle clock and set up the
             // current subtitle entry.
-            if (!cf::CfGameManager::func_800829B8()) {
+            if (!cf::CfGameManager::isSceneLoading()) {
                 this->field_0x1E4 = this->field_0x1E4 + this->field_0x1E8;
             }
             evtSubtitleSetup(this);
@@ -928,10 +928,10 @@ void cf::CTaskREvent::Move() {
     if (this->field_0x1B8 > 0) {
         this->field_0x1B8--;
         if (this->field_0x1B8 == 0) {
-            if (cf::CfGameManager::func_80083298() != 0) {
-                if (&cf::CfGameManager::func_80083298()->field_0xF0 != 0) {
-                    func_8047BDA0__17UnkClass_8047BB54Fv(
-                        &cf::CfGameManager::func_80083298()->field_0xF0);
+            if (cf::CfGameManager::getGameSubManager() != 0) {
+                if (&cf::CfGameManager::getGameSubManager()->field_0xF0 != 0) {
+                    flushMpfBuffer__17UnkClass_8047BB54Fv(
+                        &cf::CfGameManager::getGameSubManager()->field_0xF0);
                 }
             }
         }
@@ -945,7 +945,7 @@ void cf::CTaskREvent::Move() {
         if (m2 == 0 || (u32)m2->mCri == 0xFFFFFFFF) {
             st = 0;
         } else {
-            st = func_80459AC4__7CLibCriFv(m2->mCri);
+            st = isMovieGlobalPaused__7CLibCriFv(m2->mCri);
         }
         playing = (st != 0) ? 1 : 0;
     }
@@ -957,7 +957,7 @@ void cf::CTaskREvent::Move() {
     if (cur >= 0) {
         if (func_80043BA4() == 0 && (this->field_0x6C & 0x100) == 0 &&
             (lbl_eu_80663E28 & 0x01000000) == 0 &&
-            cf::CfGameManager::func_800829B8() == 0) {
+            cf::CfGameManager::isSceneLoading() == 0) {
             if (this->field_0x1F0 == (u32)cur) {
                 this->field_0x1F4++;
             } else {
@@ -985,9 +985,9 @@ void cf::CTaskREvent::Move() {
     if ((lbl_eu_80663E24 & 0x04000000) != 0) {
         u32 bt = func_800EA444((u32)getInstance__Q22cf14CBattleManagerFv());
         if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
-            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             REvtListNode* n = gf->list->first;
-            while (n != func_80086B04__Q22cf13CfGameManagerFv()->list->first) {
+            while (n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first) {
                 REvtActor* item = n->item;
                 if (func_800BFC68__FPQ22cf12CfObjectMove(item) != 0) {
                     REvtGateObj* gate = item->field_0x3F34;
@@ -1002,18 +1002,18 @@ void cf::CTaskREvent::Move() {
 
     if ((((this->field_0x6C >> 21) & 1) ^ battleFade) != 0) {
         if (battleFade != 0) {
-            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf->list->first;
-                 n != func_80086B04__Q22cf13CfGameManagerFv()->list->first;
+                 n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
                 REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
                 if (mv != 0) mv->mSub.vfn88(lbl_eu_80667640);
             }
-            REvtMgrView* gf2 = func_80086B08__Q22cf13CfGameManagerFv();
+            REvtMgrView* gf2 = getGimmickList__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf2->list->first;
-                 n != func_80086B08__Q22cf13CfGameManagerFv()->list->first;
+                 n != getGimmickList__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
-                REvtActor* ad = func_800AD860__FPv(n->item);
+                REvtActor* ad = getEffOwner____FPv(n->item);
                 if (ad != 0) {
                     u32 o0, o1, o2, o3;
                     func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
@@ -1022,22 +1022,22 @@ void cf::CTaskREvent::Move() {
                     }
                 }
             }
-            func_80462D5C__8CTaskLODFv(3);
-            func_80462D5C__8CTaskLODFv(4);
-            func_80462D5C__8CTaskLODFv(5);
+            deactivateLOD__8CTaskLODFv(3);
+            deactivateLOD__8CTaskLODFv(4);
+            deactivateLOD__8CTaskLODFv(5);
         } else {
-            REvtMgrView* gf = func_80086B04__Q22cf13CfGameManagerFv();
+            REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf->list->first;
-                 n != func_80086B04__Q22cf13CfGameManagerFv()->list->first;
+                 n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
                 REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
                 if (mv != 0) mv->mSub.vfn88(lbl_eu_80667628);
             }
-            REvtMgrView* gf2 = func_80086B08__Q22cf13CfGameManagerFv();
+            REvtMgrView* gf2 = getGimmickList__Q22cf13CfGameManagerFv();
             for (REvtListNode* n = gf2->list->first;
-                 n != func_80086B08__Q22cf13CfGameManagerFv()->list->first;
+                 n != getGimmickList__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
-                REvtActor* ad = func_800AD860__FPv(n->item);
+                REvtActor* ad = getEffOwner____FPv(n->item);
                 if (ad != 0) {
                     u32 o0, o1, o2, o3;
                     func_800AA318(ad->field_0x3F0C, &o0, &o1, &o2, &o3);
@@ -1046,9 +1046,9 @@ void cf::CTaskREvent::Move() {
                     }
                 }
             }
-            func_80462D04__8CTaskLODFv(3);
-            func_80462D04__8CTaskLODFv(4);
-            func_80462D04__8CTaskLODFv(5);
+            activateLOD__8CTaskLODFv(3);
+            activateLOD__8CTaskLODFv(4);
+            activateLOD__8CTaskLODFv(5);
         }
     }
     if (battleFade != 0) {
@@ -1075,7 +1075,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
                    ? ((e24 & 0x02440000) != 0)
                    : 0;
     if ((*(volatile u32*)&lbl_eu_80663E28 & 0x01000000) != 0) {
-        busy = func_8004368C__9CTaskGameFv();
+        busy = isMoveFuncActive__9CTaskGameFv();
     }
     if (busy != 0) {
         if ((lbl_eu_80663E24 & 0x00040000) != 0 &&
@@ -1101,7 +1101,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
             if ((self->field_0x6C & 0xC0) == 0) {
                 VIEnableDimming(0);
                 self->field_0x6C &= ~0x800;
-                if (func_8004368C__9CTaskGameFv() != 0) {
+                if (isMoveFuncActive__9CTaskGameFv() != 0) {
                     WPADSetAutoSleepTime(5);
                 } else {
                     WPADSetAutoSleepTime(0);
@@ -1117,7 +1117,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
         if (lbl_eu_80664244 > 0) {
             lbl_eu_80664244 -= 1;
             if (lbl_eu_80664244 == 0) {
-                if (func_8004368C__9CTaskGameFv() == 0 &&
+                if (isMoveFuncActive__9CTaskGameFv() == 0 &&
                     (self->field_0x6C & 0x800) == 0) {
                     VIEnableDimming(1);
                     VISetTimeToDimming(0);
@@ -1133,9 +1133,9 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
             }
         }
     }
-    UnkClass_800821F8* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (cam != 0) {
-        cam = func_800821F8__Q22cf13CfGameManagerFv();
+        cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (cam->field_0xC != 0) {
             u32 mgrFlag;
             if (lbl_eu_80664240 != 0) {
@@ -1145,7 +1145,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
             }
             if (mgrFlag == 0) {
                 CfEvtCamPlayerObj* obj =
-                    func_800821F8__Q22cf13CfGameManagerFv()->field_0xC;
+                    getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0xC;
                 obj->field_0x1EC = lbl_eu_80667644;
                 obj->field_0x1F0 = lbl_eu_80667648;
                 func_8049EB60();
@@ -1160,7 +1160,7 @@ __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
 // manager-idle branch only bumps when bit6 is set. The two bit6-guarded
 // blocks share the flag re-test shape (see func_80166150).
 __declspec(noinline) void func_80166050(cf::CTaskREvent* self, int arg) {
-    bool flag = cf::CfGameManager::func_800829B8();
+    bool flag = cf::CfGameManager::isSceneLoading();
     u32 flags = self->field_0x6C;
     // Retail tests with xor. (flag ^ bit7); branch when different.
     if ((flag ^ ((flags >> 7) & 1)) != 0 || arg != 0) {
@@ -1242,12 +1242,12 @@ void cf::CTaskREvent::cbRenderBefore() {
     } else if ((u32)mgr->mCri == 0xFFFFFFFF) {
         result = 0;
     } else {
-        result = func_80459AC4__7CLibCriFv(mgr->mCri);
+        result = isMovieGlobalPaused__7CLibCriFv(mgr->mCri);
     }
     if (result != 0) return;
     ml::CRect rect;
     func_8043EA88__5CViewFRQ22ml5CRectP5CView(rect, view);
-    func_80459ACC__7CLibCriFv(this->mCri, rect);
+    renderMovie__7CLibCriFv(this->mCri, rect);
 }
 
 // Frame-timing callback (vtable entry of the CDeviceVICb subobject at 0x54,
@@ -1262,7 +1262,7 @@ void func_801662E8(cf::CTaskREvent* self) {
     // The 800829B8 check and the global bit test form an &&-goto chain:
     // retail emits bne end for the first disjunct and branch-over-branch
     // (beq body; b end) for the second (CSysWinSelect/CCol6Hint scheme).
-    if (cf::CfGameManager::func_800829B8() == 0 &&
+    if (cf::CfGameManager::isSceneLoading() == 0 &&
         (lbl_eu_80663E28 & 0x01000000) == 0) {
         goto body;
     }
@@ -1335,7 +1335,7 @@ int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                             f32 v[3] = { f, f, f };
                             // Retail zero-narrows both ids to 16 bits
                             // (clrlwi) before the shared-header call.
-                            func_80083D50__Q22cf13CfGameManagerFv(
+                            queueSceneEventA__Q22cf13CfGameManagerFv(
                                 (u32)(u16)out1, (u32)(u16)out2,
                                 reinterpret_cast<u32>(v),
                                 reinterpret_cast<u32>(&lbl_eu_80503008[0xe]), f);

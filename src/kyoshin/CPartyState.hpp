@@ -101,7 +101,7 @@ struct CPartyCharData {
     CPartySlotArea slotArea;             // 0x3534
 };
 
-// Abstract view of the object returned by CDeviceFont::func_80452C10; the
+// Abstract view of the object returned by CDeviceFont::getFontInfo; the
 // 8th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
 // All-pure, never constructed directly.
 class FontHelper {
@@ -128,14 +128,14 @@ union PartyStateSeed {
 };
 
 /* Vtable-dispatch view of the embedded cursor. MWCC puts two implicit dtor
-   slots at the start of every polymorphic vtable, so func_801D2180 (retail
+   slots at the start of every polymorphic vtable, so checkDeactivate (retail
    cursor slot 3) is declared as the SECOND virtual to land at vtable offset
    0xC, matching the retail dispatch in func_801FD0F4. All-pure, never
    constructed directly; only used to reproduce the retail vtable dispatch. */
 class CPartyStateCur {
 public:
     virtual void vfn0() = 0;          // MWCC vtable slot 2
-    virtual void func_801D2180() = 0; // MWCC vtable slot 3 (retail slot 3)
+    virtual void checkDeactivate() = 0; // MWCC vtable slot 3 (retail slot 3)
 };
 
 /* ---- imports (declared here, never locally in the .cpp) ---- */

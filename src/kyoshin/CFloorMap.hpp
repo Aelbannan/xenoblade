@@ -659,7 +659,7 @@ struct CFloorMapRowList {
 
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
-extern "C" void func_8003AA8C__5CBdatFUl(u32);     // CBdat::func(u32) - release shared BDAT handle
+extern "C" void getEntry__5CBdatFUl(u32);     // CBdat::func(u32) - release shared BDAT handle
 extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
 extern "C" void func_801F35DC(void* scrollBar);    // CScrollBar teardown
 extern "C" void func_8022B7F4(void* sysWin);       // CSysWin teardown
@@ -795,7 +795,7 @@ extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 // does not emit the varargs CR1 clear); func_80136B4C updates a pane.
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 extern "C" void func_801F3850(void*, u16);
 // C linkage so the same-TU definition emits the retail symbol
@@ -960,7 +960,7 @@ public:
     virtual CFloorMapMgrSrc* getScaleSrc(); // vtable+0x1C
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (slot 9, no args) yields the u32 passed to func_8013676C. All-pure so no
 // vtable is emitted.
 // Per-table BDAT entry pointers + flat-name helpers used by func_80249C1C

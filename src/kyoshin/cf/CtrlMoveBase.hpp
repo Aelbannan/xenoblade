@@ -132,7 +132,7 @@ namespace cf {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-extern "C" void* func_8047CE7C__17UnkClass_8047CD0CFv();
+extern "C" void* allocFreeNode__17UnkClass_8047CD0CFv();
 extern "C" int func_8047D2AC__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, const void* f);
 extern "C" int walkPathCheck__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
@@ -146,7 +146,7 @@ extern "C" int func_8047DC8C__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, f32 f, int g);
 extern "C" int func_8047DE3C__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);
-extern "C" int func_8047DE14__17UnkClass_8047D2ACFv(void* a, void* b,
+extern "C" int dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, void* b,
                                                      f32 c, f32 d);
 
 // Float constants in .sdata2 (values recovered from the retail binary).

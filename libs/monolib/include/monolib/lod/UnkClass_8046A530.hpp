@@ -20,6 +20,8 @@ namespace LOD {
  */
 class UnkClass_8046A530 {
 public:
+    /* 8046AADC */ void updateLodPositions();
+    /* 8046CFB4 */ void checkLodFlagState();
     /* 8046E500 */ UnkClass_8046A530* func_8046A530();
     /* 8046E594 */ void func_8046A5C4();
     /* 8046EAA8 */ void updateSimple();

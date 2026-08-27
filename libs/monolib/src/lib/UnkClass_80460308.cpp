@@ -1,7 +1,7 @@
 // monolib zlib compression helpers.
 //
 // Recovered from retail asm (build/us/asm/monolib/src/lib/UnkClass_80460308.s):
-//   - func_80460308__17UnkClass_80460308Fv: Adler-32 checksum (zlib adler32).
+//   - processData__17UnkClass_80460308Fv: Adler-32 checksum (zlib adler32).
 //   - func_80460728__17UnkClass_80460308Fv: inflate "fast" block decoder core
 //     (zlib inflate_fast), driven by the inflate loop in UnkClass_80460C34.
 //

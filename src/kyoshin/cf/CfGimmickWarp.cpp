@@ -342,12 +342,12 @@ void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
 int func_8020A5DC(WarpData*);
 int func_8020A87C(WarpData*, WarpObject*);
 void func_8020A484(u16);
-// func_80082354__Q22cf13CfGameManagerFv is declared no-arg below (retail
+// getResourceFromTable__Q22cf13CfGameManagerFv is declared no-arg below (retail
 // leaves its r4 stale at the func_8020D824 call site; MWCC keeps caller r4
 // untouched for arg-less decls).
 int func_8020971C(int);
 int func_80209754(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
-u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);  // matches code_801862C0.hpp
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);  // matches code_801862C0.hpp
 void func_80209F5C();
 void func_80209FB8();
 void func_80209FE4();
@@ -355,9 +355,9 @@ void func_8020A124(f32);
 // Retail call site passes the raw flags word (parameter is unused there).
 void func_8020A1DC(u32 flags);
 void func_801BFED0(int, u16, int);
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);  // canonical form (CTaskGameEff.hpp)
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);  // canonical form (CTaskGameEff.hpp)
 void func_8006CC4C();
-void func_800ACC14(WarpObject*, int);
+void setChildB59__(WarpObject*, int);
 extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);  // matches CfObjectImplMove.hpp via harness
 extern "C" void func_804BE4B4(void* out, int a);  // matches CfObjectImplMove.hpp via harness
 u16 func_80208C48(u16, const WarpVec3*);
@@ -365,7 +365,7 @@ void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
 int func_8019876C(WarpVec3*, WarpVec3*);
 void func_80199810(u8*, const WarpVec3*);
-WarpObject* func_800821F8__Q22cf13CfGameManagerFv();
+WarpObject* getCameraDataBlock__Q22cf13CfGameManagerFv();
 void __dt__Q22cf9CfGimmickFv(WarpData*, int);
 void __dl__FPv(void*);
 }
@@ -386,7 +386,7 @@ static WarpPlayerTail* playerTail(WarpPlayer* player) {
 
 static void clearObject(WarpObject*& object) {
     if (object != 0) {
-        func_800ACC14(object, 1);
+        setChildB59__(object, 1);
         object->owner = 0;
         object = 0;
     }
@@ -412,25 +412,25 @@ struct BattleMgrWarpState {
 
 static void preparePlayers(WarpData* self) {
     self->flags &= ~1u;
-    WarpObject* first = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+    WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object7c = first;
     if (first != 0) {
         WarpPlayerTail* p0 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(0);
-        func_800ACF78(first, p0, 0);
+        bindPartnerO_(first, p0, 0);
     }
 
-    WarpObject* second = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+    WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object100 = second;
     if (second != 0) {
         WarpPlayerTail* p1 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(1);
-        func_800ACF78(second, p1, 0);
+        bindPartnerO_(second, p1, 0);
     }
 
-    WarpObject* third = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+    WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object104 = third;
     if (third != 0) {
         WarpPlayerTail* p2 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(2);
-        func_800ACF78(third, p2, 0);
+        bindPartnerO_(third, p2, 0);
     }
 
     if (self->object7c != 0) {
@@ -586,13 +586,13 @@ extern "C" void func_8020D824(WarpData* self) {
 
     self->flags |= 0x10;
     if (self->maxValue != 0) {
-        u32 current = cf::CfGameManager::func_800822F4();
+        u32 current = cf::CfGameManager::getQueuedFileEventCount();
         if (self->minValue > current || current > self->maxValue) {
             return;
         }
     }
     if (self->unkEE != 0 &&
-        func_80082354__Q22cf13CfGameManagerFv(self->unkEE) < self->unkF0) {
+        getResourceFromTable__Q22cf13CfGameManagerFv(self->unkEE) < self->unkF0) {
         return;
     }
     /* NOTE: retail passes r3 = the lhz-loaded unkE4 value here (no mr self) */
@@ -635,17 +635,17 @@ extern "C" void func_8020D998(WarpData* self) {
             self->state = 5;
             if (self->flagE7 != 0) {
                 if (self->object7c != 0) {
-                    func_800ACC14(self->object7c, 1);
+                    setChildB59__(self->object7c, 1);
                     self->object7c->owner = 0;
                     self->object7c = 0;
                 }
                 if (self->object100 != 0) {
-                    func_800ACC14(self->object100, 1);
+                    setChildB59__(self->object100, 1);
                     self->object100->owner = 0;
                     self->object100 = 0;
                 }
                 if (self->object104 != 0) {
-                    func_800ACC14(self->object104, 1);
+                    setChildB59__(self->object104, 1);
                     self->object104->owner = 0;
                     self->object104 = 0;
                 }
@@ -655,20 +655,20 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags &= ~1u;
 
-                WarpObject* first = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object7c = first;
                 if (first != 0) {
-                    func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+                    bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
                 }
-                WarpObject* second = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object100 = second;
                 if (second != 0) {
-                    func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+                    bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
                 }
-                WarpObject* third = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object104 = third;
                 if (third != 0) {
-                    func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+                    bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
                 }
 
                 if (self->object7c != 0) {
@@ -716,17 +716,17 @@ extern "C" void func_8020D998(WarpData* self) {
             self->state = 5;
             if (self->flagE7 != 0) {
                 if (self->object7c != 0) {
-                    func_800ACC14(self->object7c, 1);
+                    setChildB59__(self->object7c, 1);
                     self->object7c->owner = 0;
                     self->object7c = 0;
                 }
                 if (self->object100 != 0) {
-                    func_800ACC14(self->object100, 1);
+                    setChildB59__(self->object100, 1);
                     self->object100->owner = 0;
                     self->object100 = 0;
                 }
                 if (self->object104 != 0) {
-                    func_800ACC14(self->object104, 1);
+                    setChildB59__(self->object104, 1);
                     self->object104->owner = 0;
                     self->object104 = 0;
                 }
@@ -736,20 +736,20 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
                 self->flags &= ~1u;
 
-                WarpObject* first = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object7c = first;
                 if (first != 0) {
-                    func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+                    bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
                 }
-                WarpObject* second = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object100 = second;
                 if (second != 0) {
-                    func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+                    bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
                 }
-                WarpObject* third = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                 self->object104 = third;
                 if (third != 0) {
-                    func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+                    bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
                 }
 
                 if (self->object7c != 0) {
@@ -831,17 +831,17 @@ extern "C" void func_8020DF04(WarpData* self) {
     self->state = 5;
     if (self->flagE7 != 0) {
         if (self->object7c != 0) {
-            func_800ACC14(self->object7c, 1);
+            setChildB59__(self->object7c, 1);
             self->object7c->owner = 0;
             self->object7c = 0;
         }
         if (self->object100 != 0) {
-            func_800ACC14(self->object100, 1);
+            setChildB59__(self->object100, 1);
             self->object100->owner = 0;
             self->object100 = 0;
         }
         if (self->object104 != 0) {
-            func_800ACC14(self->object104, 1);
+            setChildB59__(self->object104, 1);
             self->object104->owner = 0;
             self->object104 = 0;
         }
@@ -851,20 +851,20 @@ extern "C" void func_8020DF04(WarpData* self) {
         }
         self->flags &= ~1u;
 
-        WarpObject* first = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object7c = first;
         if (first != 0) {
-            func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+            bindPartnerO_(first, cf::CfGameManager::getPlayer(0), 0);
         }
-        WarpObject* second = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object100 = second;
         if (second != 0) {
-            func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+            bindPartnerO_(second, cf::CfGameManager::getPlayer(1), 0);
         }
-        WarpObject* third = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
         self->object104 = third;
         if (third != 0) {
-            func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+            bindPartnerO_(third, cf::CfGameManager::getPlayer(2), 0);
         }
 
         if (self->object7c != 0) {
@@ -972,17 +972,17 @@ extern "C" void func_8020E3F0(WarpData* self) {
         self->state = 5;
         if (self->flagE7 != 0) {
             if (self->object7c != 0) {
-                func_800ACC14(self->object7c, 1);
+                setChildB59__(self->object7c, 1);
                 self->object7c->owner = 0;
                 self->object7c = 0;
             }
             if (self->object100 != 0) {
-                func_800ACC14(self->object100, 1);
+                setChildB59__(self->object100, 1);
                 self->object100->owner = 0;
                 self->object100 = 0;
             }
             if (self->object104 != 0) {
-                func_800ACC14(self->object104, 1);
+                setChildB59__(self->object104, 1);
                 self->object104->owner = 0;
                 self->object104 = 0;
             }
@@ -992,17 +992,17 @@ extern "C" void func_8020E3F0(WarpData* self) {
             }
             self->flags &= ~1u;
 
-            self->object7c = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            self->object7c = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object7c != 0) {
-                func_800ACF78(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+                bindPartnerO_(self->object7c, cf::CfGameManager::getPlayer(0), 0);
             }
-            self->object100 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            self->object100 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object100 != 0) {
-                func_800ACF78(self->object100, cf::CfGameManager::getPlayer(1), 0);
+                bindPartnerO_(self->object100, cf::CfGameManager::getPlayer(1), 0);
             }
-            self->object104 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+            self->object104 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
             if (self->object104 != 0) {
-                func_800ACF78(self->object104, cf::CfGameManager::getPlayer(2), 0);
+                bindPartnerO_(self->object104, cf::CfGameManager::getPlayer(2), 0);
             }
 
             if (self->object7c != 0) {
@@ -1096,7 +1096,7 @@ extern "C" void func_8020E704(WarpData* self) {
             }
         }
 
-        WarpPlayerTailIf* manager = reinterpret_cast<WarpPlayerTailIf*>(func_800821F8__Q22cf13CfGameManagerFv());
+        WarpPlayerTailIf* manager = reinterpret_cast<WarpPlayerTailIf*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
         if (manager != 0) {
             manager->v0c(0);
         }
@@ -1158,17 +1158,17 @@ extern "C" void func_8020EA2C(WarpData* self) {
                     }
                     self->flags = flags & ~1u;
 
-                    self->object7c = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    self->object7c = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object7c != 0) {
-                        func_800ACF78(self->object7c, cf::CfGameManager::getPlayer(0), 0);
+                        bindPartnerO_(self->object7c, cf::CfGameManager::getPlayer(0), 0);
                     }
-                    self->object100 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    self->object100 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object100 != 0) {
-                        func_800ACF78(self->object100, cf::CfGameManager::getPlayer(1), 0);
+                        bindPartnerO_(self->object100, cf::CfGameManager::getPlayer(1), 0);
                     }
-                    self->object104 = (WarpObject*)func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                    self->object104 = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
                     if (self->object104 != 0) {
-                        func_800ACF78(self->object104, cf::CfGameManager::getPlayer(2), 0);
+                        bindPartnerO_(self->object104, cf::CfGameManager::getPlayer(2), 0);
                     }
 
                     if (self->object7c != 0) {

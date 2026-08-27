@@ -20,11 +20,11 @@ class CScn;
 class IScnRender;
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv; same scheme as CMenuBattleEnd.hpp).
+// isFlag01Set__9CTaskGameFv; same scheme as CMenuBattleEnd.hpp).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Unknown per-entry object, deleted via virtual dispatch (vtable+8, flag 1).
@@ -39,7 +39,7 @@ public:
 // stride: +0x0c / +0x1c / +0x2c).
 struct MenuLvUpObjPos;
 
-// Opaque view of the func_800B708C(id) actor object (the real class lives in
+// Opaque view of the findObjectById(id) actor object (the real class lives in
 // the retail module that owns it). The two dispatched virtuals sit at +0xac
 // (slot 43) and +0x12c (slot 75): declaring them as real virtuals makes MWCC
 // emit the retail dispatch shape (`lwz r12,0(r3); lwz r12,slot(r12)`); a
@@ -159,7 +159,7 @@ struct CMenuLvUpEntry {
     nw4r::lyt::AnimTransform* field_0x04; // +0x04 first anim
     nw4r::lyt::Layout* field_0x08;        // +0x08 second layout
     nw4r::lyt::AnimTransform* field_0x0C; // +0x0C second anim
-    u32 field_0x10;                       // +0x10 actor id (func_800B708C)
+    u32 field_0x10;                       // +0x10 actor id (findObjectById)
     u8 field_0x14;                        // +0x14 state (0/1/2/3)
     u8 field_0x15;                        // +0x15 last-processed queue state
     u8 field_0x16[0x20];                  // +0x16..0x35 queued-state list (0 = empty)
@@ -225,12 +225,12 @@ void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* mem);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
-bool func_800829B8__Q22cf13CfGameManagerFv();
+bool isSceneLoading__Q22cf13CfGameManagerFv();
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
-MenuLvUpActor* func_800B708C(int id);
+MenuLvUpActor* findObjectById(int id);
 void func_80138078(u32);   // UI sound effect (func_80138078__FUl)
 
 // C-linkage data imports (retail names; global-scope plain externs keep the

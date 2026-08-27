@@ -37,7 +37,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - **Do not edit** UnkVirtualFunc1 body or ctor
 
 ### `CMenuBattlePlayerState::cbRenderBefore` (`asm_cbRenderBefore_CMenuBattlePlayerState.s`)
-- Same gate prefix as PTGauge/Enemy: `CTaskGame::getInstance` → `func_800426F0` nonzero early-out; **`lbl_eu_80663E28` bit 10**; `func_8013BE50` null; **`this+0x7c9` nonzero**; **`lbl_eu_80663E24 & 0xAFE40000`**
+- Same gate prefix as PTGauge/Enemy: `CTaskGame::getInstance` → `isFlag01Set` nonzero early-out; **`lbl_eu_80663E28` bit 10**; `func_8013BE50` null; **`this+0x7c9` nonzero**; **`lbl_eu_80663E24 & 0xAFE40000`**
 - `GXSetZMode(0,0,0)`; stack `DrawInfo` + `func_80137250`; loop `i=0..` stride `0x270` drawing layouts at slot offsets via `func_80137038` gated by flags at slot `+0x2d0`
 - Leave `Term` untouched; extend hpp for `cbRenderBefore` + field `0x7c9` if needed
 

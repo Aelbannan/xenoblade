@@ -90,7 +90,7 @@ extern "C" void* getAtkParam(void* base, int index);                           /
 
 extern "C" void func_80157F04(u16 v, void* outA, void* outB);                  // CItemBoxInfo.cpp (item family resolver)
 
-extern "C" u32 func_8008235C__Q22cf13CfGameManagerFv(u32 bit);               // CfGameManager.cpp (flag-bit test)
+extern "C" u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32 bit);               // CfGameManager.cpp (flag-bit test)
 extern "C" u32 func_8009CF8C(u32 resourceId);                                // CfGameManager.cpp (resource lookup)
 
 extern "C" int func_8026178C(void* data, u32 flag);                          // code_8025FB10.cpp (status lookup)

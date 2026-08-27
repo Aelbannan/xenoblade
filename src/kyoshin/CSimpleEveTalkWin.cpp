@@ -146,14 +146,14 @@ void CSimpleEveTalkWin::Init() {
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     u8* fontObj =
-        (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+        (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
@@ -165,7 +165,7 @@ void CSimpleEveTalkWin::Init() {
     if (field_68 != 0) {
         // Real message: fill the five name fields from the talk source.
         char* msgText =
-            reinterpret_cast<CSimpleTalkSrc*>(func_800B708C(field_68))
+            reinterpret_cast<CSimpleTalkSrc*>(findObjectById(field_68))
                 ->getText();
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
@@ -224,7 +224,7 @@ void CSimpleEveTalkWin::Init() {
 
 void CSimpleEveTalkWin::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
     if (isInitialized__10CMenuPauseFv()) return;
@@ -234,7 +234,7 @@ void CSimpleEveTalkWin::Move() {
         // Intro animation finished: play the message voice, then cross-fade
         // to the cursor animation set and enter the advance state.
         if (func_80137444(field_8C, lbl_eu_80667CB0) != 0) {
-            void* src = func_800B708C(field_68);
+            void* src = findObjectById(field_68);
             if (src != 0) {
                 reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
             }
@@ -289,13 +289,13 @@ void CSimpleEveTalkWin::Term() {
         delete field_88;
         field_88 = 0;
     }
-    func_8045F778__17UnkClass_8045F564Fv(
+    deleteRegion__17UnkClass_8045F564Fv(
         reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 }
 
 void CSimpleEveTalkWin::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;
@@ -404,7 +404,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = owner->mpLayout->GetRootPane();
-    u8* fontObj = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    u8* fontObj = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, owner->mpLayout);
     u32 fontResult =
         reinterpret_cast<CSimpleFontObj*>(fontObj)->getFontHandle();
@@ -419,7 +419,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
 
     // Co-op mode uses the 2P button texture.
     const char* texName;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
         texName = &lbl_eu_80503E14[0x8e];
     else
         texName = &lbl_eu_80503E14[0xaa];
@@ -432,14 +432,14 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         // Real message: fill the five name fields from the talk source, then
         // start the voice line.
         char* msgText =
-            reinterpret_cast<CSimpleTalkSrc*>(func_800B708C(owner->field_68))
+            reinterpret_cast<CSimpleTalkSrc*>(findObjectById(owner->field_68))
                 ->getText();
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xf2], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
-        void* src = func_800B708C(owner->field_68);
+        void* src = findObjectById(owner->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
         }
@@ -492,7 +492,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
     // (bit 4); the pad flag fields are 2-bit counters, so test the extracted
     // pair for non-zero.
     int confirmBtn;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
         confirmBtn = (pad->mPressedButtonFlags & 0x00600000) != 0;
     else
         confirmBtn = (pad->mPressedButtonFlags & 0x00000030) != 0;
@@ -506,7 +506,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
     if (state == 4) {
         // Selection accepted: play the confirm voice.
         func_80128740(self->field_88, pane);
-        void* src = func_800B708C(self->field_68);
+        void* src = findObjectById(self->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
         }
@@ -545,7 +545,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
     } else if (state == 0 || self->field_65 != 0 || self->field_66 != 0) {
         // Page advance: stop the current voice, switch to the next page's
         // animation set and let the window close when the page ends.
-        void* src = func_800B708C(self->field_68);
+        void* src = findObjectById(self->field_68);
         if (src != 0) {
             reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(0, 0);
         }

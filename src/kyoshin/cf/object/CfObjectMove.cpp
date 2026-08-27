@@ -117,7 +117,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     // value is fed to the CCharEffect slot helper.
     this->CfObject_UnkVirtualFunc12();
     this->CfObject_UnkVirtualFunc5();
-    if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
+    if (isSceneLoading__Q22cf13CfGameManagerFv() == 0) {
         func_800BCD04(this);
         // Pointer-induction release walk: the base pointer starts at this and
         // the fixed +0xC8 member offset stays folded into the load (retail
@@ -1068,7 +1068,7 @@ extern "C" void* CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv(cf::CfObje
     void* a = self->mField6DC;
     bool cond = (a != 0 && self->mField6E0 != 0);
     if (cond) {
-        return func_80081900__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
+        return createEffectForPlayer__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
     }
     return 0;
 }
@@ -1076,7 +1076,7 @@ extern "C" void* CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv(cf::CfObje
 // Retail returns the sub-object voice-request result (r3) or 0; the base
 // header declares void, so use the forced-name form to carry the bool
 // return. Only `this` (+0x28) is forwarded to func_802A109C in retail.
-extern "C" bool func_800BE898__Q22cf8CfObjectFiUlff(cf::CfObject* self, int a, u32 b, float c, float d) {
+extern "C" bool requestVoice__Q22cf8CfObjectFiUlff(cf::CfObject* self, int a, u32 b, float c, float d) {
     void* sub = self->mSubObj38;
     if (sub != 0) {
         return func_802A109C((char*)sub + 0x28);
@@ -1302,12 +1302,12 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // Retail symbol is Fv but the body consumes r4/r5 (a bdat id and a slot
 // index) - forced-name form carrying the hidden args (same scheme as
 // CfObject_UnkVirtualFunc39/42). Unlike the 39/42 pair the slot index is
-// first converted to a name (CfBdat::func_801424A8) and the arm path feeds
+// first converted to a name (CfBdat::getBdatStringEntry) and the arm path feeds
 // that name back through func_80142428. Slot 0 / flags 6,0.
 int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
+    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[0] = (u16)arg1;
     self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
@@ -1343,12 +1343,12 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // index) - forced-name form carrying the hidden args (same scheme as
 // CfObject_UnkVirtualFunc39/42). Same name round-trip as
 // CfObject_UnkVirtualFunc40 but slot 1 / flags 7,1. r is declared first so
-// MWCC colours it into r31 (retail keeps r in r31, the func_801424A8
+// MWCC colours it into r31 (retail keeps r in r31, the getBdatStringEntry
 // result in r30).
 int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
+    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[1] = (u16)arg1;
     self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
@@ -1562,7 +1562,7 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
             } else {
                 f32 dist = lbl_eu_80666A9C;
                 if (func_8007560C() != 0) {
-                    void* mgr = func_800821F8__Q22cf13CfGameManagerFv();
+                    void* mgr = getCameraDataBlock__Q22cf13CfGameManagerFv();
                     if (mgr == 0 || (void*)self != ((cf::CfDynMgrVt60*)mgr)->m60()) {
                         dist += lbl_eu_80666AA0;
                     }
@@ -2186,16 +2186,16 @@ extern "C" u32 func_800BED6C(u32 id, u32 flag) {
 }
 // Column-name lookup through the bdat reader: index self->field_710[flag],
 // resolve column offset 0x7 of the name table, then map the u16 result to a
-// name string via CfBdat::func_801424A8.
+// name string via CfBdat::getBdatStringEntry.
 const char* func_800BED80(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x7], flag);
-    return cf::CfBdat::func_801424A8((u16)result);
+    return cf::CfBdat::getBdatStringEntry((u16)result);
 }
 
 // Same as func_800BED80 but column offset 0x11.
 const char* func_800BEDC4(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x11], flag);
-    return cf::CfBdat::func_801424A8((u16)result);
+    return cf::CfBdat::getBdatStringEntry((u16)result);
 }
 // Same as func_800BED6C but column offset 0x11.
 extern "C" u32 func_800BEE08(u32 id, u32 flag) {

@@ -72,8 +72,8 @@ int getFileSize__11CDeviceFileFPCc(const char* pPath, int flags);
 void func_800C1CAC(u32 arg0, u32 arg1);
 void* func_8003AA34();
 int CfRes_getD80Flag();
-u32 func_80086B1C__Q22cf13CfGameManagerFv();
-u32 func_80086B2C__Q22cf13CfGameManagerFv();
+u32 getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
+u32 getGlobalPtr640A8__Q22cf13CfGameManagerFv();
 }
 
 // CfTFile vtable (retail .data:0x80526F98).

@@ -121,11 +121,11 @@ public:
 class __declspec(novtable) CfObjectPoint : public CfObjectBase {
 public:
     virtual ~CfObjectPoint();
-    void func_800C1324();
-    void func_800C136C();
-    void func_800C1444();
-    void func_800C14CC();
-    void func_800C1638();
+    void resetPointFlags();
+    void loadPointData();
+    void releasePointLink();
+    void updatePointState();
+    void notifyChildUpdate();
 
     u8* mPtr70;       // 0x70-0x73
     u8 _pad74[4];     // 0x74-0x77
@@ -170,13 +170,13 @@ CfObjectPoint::~CfObjectPoint() {
     }
 }
 
-void CfObjectPoint::func_800C1324() {
+void CfObjectPoint::resetPointFlags() {
     cfVt158(1);
     mFlag91 = 0;
     mFlag90 = 0;
 }
 
-void CfObjectPoint::func_800C136C() {
+void CfObjectPoint::loadPointData() {
     func_8003AA34();
     u8* fp = (u8*)getFP(mName);
     u32 name = getBdatStringColumnValue(fp, lbl_eu_804FC648, mIndex8C);
@@ -185,7 +185,7 @@ void CfObjectPoint::func_800C136C() {
     mFlag91 = *(u8*)&val;
 }
 
-void CfObjectPoint::func_800C1444() {
+void CfObjectPoint::releasePointLink() {
     if (mSubObj38 != nullptr) {
         CfObjectPoint* child = mSubObj38;
         child->cfVtAC();
@@ -202,7 +202,7 @@ void CfObjectPoint::func_800C1444() {
     mFlags68 &= 0x40000000;
 }
 
-void CfObjectPoint::func_800C14CC() {
+void CfObjectPoint::updatePointState() {
     CObjectState_UnkVirtualFunc13();
 
     if ((lbl_eu_80663E24 & 0x01000000) != 0) {
@@ -241,20 +241,20 @@ done:
     return;
 }
 
-void CfObjectPoint::func_800C1638() {
+void CfObjectPoint::notifyChildUpdate() {
     if (mSubObj38 == nullptr) return;
     ((CfObject*)mSubObj38)->CfObject_UnkVirtualFunc22();
 }
 
 } // namespace cf
 
-// Forced-name form: the retail symbols func_800C1658/16F4/171C end in a
+// Forced-name form: the retail symbols setChildPoint/16F4/171C end in a
 // decompiler-guessed "Fv" (the bodies consume r4/f1/f2 arguments), and the
 // symbols.txt entries cannot be corrected to the true signatures (FPv/Fi/Fff)
 // from this TU's writable scope. A real member would mangle to the corrected
 // name, so these stay C-linkage functions with the mangled retail symbol as
 // the identifier to emit the exact symbol.
-extern "C" void func_800C1658__Q22cf13CfObjectPointFv(
+extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* self, cf::CfObjectPoint* child) {
     cf::CfObjectPoint* old = self->mSubObj38;
     if (old != nullptr) {
@@ -271,7 +271,7 @@ extern "C" void func_800C1658__Q22cf13CfObjectPointFv(
     }
 }
 
-extern "C" void func_800C16F4__Q22cf13CfObjectPointFv(
+extern "C" void setPointEnabled__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* self, int enable) {
     if (enable != 0) {
         self->mFlags68 |= 0x00100000;
@@ -280,7 +280,7 @@ extern "C" void func_800C16F4__Q22cf13CfObjectPointFv(
     }
 }
 
-extern "C" void func_800C171C__Q22cf13CfObjectPointFv(
+extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* self, float x, float z) {
     // The const-qualified SDA float (see CfObjectPoint.hpp) lets MWCC hoist
     // the lfs above the prologue LR store (retail schedule); a non-const

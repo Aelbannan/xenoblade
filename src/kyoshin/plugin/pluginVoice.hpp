@@ -11,7 +11,7 @@ struct VoiceActorVoiceId {
     u16 field_3F28; // +0x3F28: character/voice-group id (u16)
 };
 
-// Raw-node view of the voice/actor-manager list returned by func_800B6BA4():
+// Raw-node view of the voice/actor-manager list returned by getListB28():
 // same CErrMesList/reslist shape (sentinel pointer at +0x04, node next at
 // +0x00, item at +0x08). Retail walks these nodes directly instead of using
 // the reslist<cf::CfObject*>::iterator API (see CSysWinScenarioLog.hpp).
@@ -25,9 +25,9 @@ struct VoiceActorList {
     VoiceActorListNode* sentinel;  // 0x04
 };
 
-// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// Voice/actor-manager list accessor (retail mangled name getListB28__Fv -
 // plain C++ linkage reproduces the Fv suffix).
-VoiceActorList* func_800B6BA4();
+VoiceActorList* getListB28();
 
 int voice_play(_sVMThread* pThread);
 void pluginVoiceRegist();

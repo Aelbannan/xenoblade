@@ -38,7 +38,7 @@ public:
     virtual void Animate(u32 option = 0);           // +0x38
 };
 
-// Font-handle object returned by CDeviceFont::func_80452C10: vtable +0x24
+// Font-handle object returned by CDeviceFont::getFontInfo: vtable +0x24
 // yields the font handle passed to func_801368C0.
 class CBattleCommuFontObj {
 public:
@@ -172,9 +172,9 @@ void* __dynamic_cast(void* src, long offset, const void* src_type,
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // CDeviceFont font handle (retail called with a single argument; the second
 // layout parameter is left unset at this call site).
-CBattleCommuFontObj* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
+CBattleCommuFontObj* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
 // Battle/party presence check (retail passes -1).
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 }
 
 // Global data imports (MWCC does not mangle global-scope data names).

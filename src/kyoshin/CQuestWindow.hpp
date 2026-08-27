@@ -73,7 +73,7 @@ struct CCur18Data {
     u8    f_17;    // 0x17
 };
 
-// Abstract view of the object returned by CDeviceFont::func_80452C10; the
+// Abstract view of the object returned by CDeviceFont::getFontInfo; the
 // 8th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
 // All-pure, never constructed directly (CPartyState::FontHelper scheme) - a
 // real C++ virtual call forces MWCC's canonical r12 vtable dispatch.
@@ -259,7 +259,7 @@ extern const char* lbl_eu_8052CF80[];
 // Window arc path pointer (.sdata) fed to CDeviceFile::readFile (Init).
 extern const char* lbl_eu_80661EB8;
 
-// CfPadTask teardown float (.sdata2) passed to func_801C1B94 in the dtor.
+// CfPadTask teardown float (.sdata2) passed to setInputDisableTime in the dtor.
 // `const` hoists the sdata2 load above the frame stores (CArtsInfo pattern).
 extern const f32 lbl_eu_80667138;
 
@@ -287,7 +287,7 @@ void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 extern "C" int func_800A9D90(void);        // common-archive handle
 u32 func_80138138(u32 questId);             // quest id -> name-table index
-void func_8008294C__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
 void* __dt__12CQuestWindowFv(CQuestWindow* self, int flags);
 void __dt__6CCur18Fv(void* self, int flags);
@@ -315,14 +315,14 @@ nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // CfGameManager C-ABI imports (pre-mangled retail names; some retail symbols
 // are Fv-mangled but receive a vestigial register arg - keep the arg for the
-// call sites that set it, e.g. func_80086F9C(-1)).
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+// call sites that set it, e.g. isClassicController(-1)).
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 u32 getEnabledInputFlags__Q22cf13CfGameManagerFv();
 void enablePadFlags__Q22cf13CfGameManagerFUlb(u32 enableFlags, bool enable);
 void* getCurrentPad__Q22cf13CfGameManagerFv();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
-u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
+u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
 
 // C-ABI UI / misc imports used by Term, func_80122EF8, func_80122C08.
 u8 func_8013B980();
@@ -331,7 +331,7 @@ void func_80135550();
 u8 code80135FDC_getByte_64080();
 void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
-void func_8003AA8C__5CBdatFUl(u32);
+void getEntry__5CBdatFUl(u32);
 void func_80137924(void*, void*, void*, void*);
 void func_80138078__FUl(u32);
 void func_8013B428__FUl(u32);
@@ -402,11 +402,11 @@ __attribute__((noinline)) void func_801231C4(CQuestWindow* self);
 }
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Quest-window state record behind the retail .sbss singleton

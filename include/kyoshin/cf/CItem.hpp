@@ -433,7 +433,7 @@ struct CItemNameBuf {
 
 // CfGameManager data-id refresh (retail C-linkage name; the unity TU
 // provides the definition).
-extern "C" void func_8007F11C__Q22cf13CfGameManagerFv();
+extern "C" void syncItemGroups__Q22cf13CfGameManagerFv();
 
 // Console language id (0..6).
 extern "C" int getLanguage__9CDeviceSCFv();
@@ -517,8 +517,8 @@ extern "C" void func_8009E0C4(void* table, u16 index, u16 value);
 // TU, src/kyoshin/cf/CfGameManagerUnityHelpers.hpp): count/sum the items of
 // a kind across the party members. The retail mangled names are kept as the
 // plain C-linkage identifiers.
-extern "C" u32 func_80082E50__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
-extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
+extern "C" u32 updatePlayerCameraLink__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
+extern "C" u32 isEffectListEmpty__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
 
 // Item-box engine helpers (defined in kyoshin/cf/CtrlObjectParam.cpp).
 // func_8009EC9C returns the character-data block for a u16 character id;

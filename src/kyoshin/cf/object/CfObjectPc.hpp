@@ -5,7 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-extern UNKTYPE* func_800B708C(BOOL r3);
+extern UNKTYPE* findObjectById(BOOL r3);
 extern UNKTYPE* func_800AD860(UNKTYPE* r3);
 extern UNKTYPE* func_800C1228(UNKTYPE* r3);
 
@@ -24,18 +24,18 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 
 
 // Arts data object returned by func_8009EC9C: the per-entry table scanned by
-// func_800C0174 starts at +0x1C (passed to func_8009D7E4).
+// scanArtsEntries starts at +0x1C (passed to func_8009D7E4).
 struct CfObjectPcArtsData {
     u8 _0[0xC];
-    u16 field_0xC;    // +0xC: u16 index read by func_800C0474
+    u16 field_0xC;    // +0xC: u16 index read by setupActionTable
     u8 _E[0x1C - 0xE];
     u8 mEntries;      // +0x1C: start of the entry table
     u8 _1D[0x17C - 0x1D];
-    u8 field_0x17C;   // +0x17C: write target of func_80175A50 (func_800BFFEC)
+    u8 field_0x17C;   // +0x17C: write target of func_80175A50 (syncArtsEntry)
 };
 
 // Return layout of func_8009D7E4 (indexed entry within the arts data object):
-// the u16 flag at +0x1A is the "occupied" mark checked by func_800C0174.
+// the u16 flag at +0x1A is the "occupied" mark checked by scanArtsEntries.
 struct UnkStruct_8009D7E4_Ret {
     u8 _0[0x1A];
     u16 field_0x1A;
@@ -136,7 +136,7 @@ u32 func_8003B1EC(void* mgr);                  // bdat row count (canonical form
 unsigned long func_801BA2C8(void* obj);        // battle-manager state probe (unified with CChainTimer.hpp)
 }
 // cf::CfSoundMan lives on kyoshin/cf/CfSoundMan.hpp (single definition;
-// include it where func_801BFC38 is needed).
+// include it where playActorSound is needed).
 
 // Flags object reached through +0x3F34 (word at +0x7A4).
 struct FlagsObj7A4 {
@@ -204,8 +204,8 @@ struct BattleMgrRangeView {
 };
 
 // Layout of the CfObjectPc region below the CfObjectActor bases (inside the
-// CfObjectMove sub-object at +0x3E9C); read by func_800C11CC and the
-// CActorParam_UnkVirtualFunc166/167 / func_800C02C4 family.
+// CfObjectMove sub-object at +0x3E9C); read by handleMoveState and the
+// CActorParam_UnkVirtualFunc166/167 / resetArtsState family.
 struct CfObjectPcSubFields {
     u8 _0[0x15E0];
     u32 field_0x15E0;  // 0x15E0: sub-object pointer word (set by func_800C00C0)
@@ -223,9 +223,9 @@ struct CfObjectPcSubFields {
     u8 _1828[0x3ED4 - 0x1828];
     u8* mPtr3ED4;      // 0x3ED4: sub-object pointer (CfObjectMove+0x38)
     u8 _3ED8[0x28];    // 0x3ED8-0x3EFF
-    u32 field_0x3F00;  // 0x3F00: gate flag (bit 0 checked by func_800BFF20)
+    u32 field_0x3F00;  // 0x3F00: gate flag (bit 0 checked by initialize)
     u8 _3F04[4];
-    u32 field_0x3F08;  // 0x3F08: flag word OR'd with 1 by func_800BFF20
+    u32 field_0x3F08;  // 0x3F08: flag word OR'd with 1 by initialize
     u8 _3F0C[4];       // 0x3F0C-0x3F0F
     u8* field_0x3F10;  // 0x3F10: effect target pointer
     u8 _3F14[0x14];    // 0x3F14-0x3F27
@@ -237,9 +237,9 @@ struct CfObjectPcSubFields {
     u8 _3F50[0x10];    // 0x3F50-0x3F5F
     PcResFlagsObj* mPtr3F60; // 0x3F60: resource flags object (+0x4EC word)
     u8 _3F64[0x4568 - 0x3F64];
-    u16 field_0x4568;  // 0x4568: enabled flag (set by func_800C0080)
+    u16 field_0x4568;  // 0x4568: enabled flag (set by enablePcFlag)
     u8 _456A[0x56];    // 0x456A-0x45BF
-    float field_0x45C0; // 0x45C0: float field (set by func_800C0080)
+    float field_0x45C0; // 0x45C0: float field (set by enablePcFlag)
 };
 
 // Absolute-offset vtable-pointer slots rewritten by the CfObjectPc
@@ -285,30 +285,30 @@ namespace cf {
     class __declspec(novtable) CfObjectPc : public CfObjectActor {
     public:
         virtual ~CfObjectPc();
-        __attribute__((never_inline)) virtual int func_800BFF20(); //0x5D4
-        virtual void func_800C0080(); //0x5D8
+        __attribute__((never_inline)) virtual int initialize(); //0x5D4
+        virtual void enablePcFlag(); //0x5D8
         virtual void func_800C0524(); //0x5DC
-        __attribute__((never_inline)) virtual void func_800BFFEC(); //0x5E0
+        __attribute__((never_inline)) virtual void syncArtsEntry(); //0x5E0
         virtual void func_800C00C0(); //0x5E4
-        virtual void func_800C0174(); //0x5E8
-        virtual void func_800C02C4(); //0x5EC
-        virtual void func_800C02EC(); //0x5F0
-        virtual void func_800C032C(); //0x5F4
-        virtual void func_800C03A8(); //0x5F8
-        virtual void func_800C0474(); //0x5FC
-        virtual void func_800C0504(); //0x600
-        virtual void func_800C0514(); //0x604
-        virtual void func_800C11CC(); //0x608
+        virtual void scanArtsEntries(); //0x5E8
+        virtual void resetArtsState(); //0x5EC
+        virtual void applyArtsParam(); //0x5F0
+        virtual void dispatchPlayerBranch(); //0x5F4
+        virtual void resetActionTable(); //0x5F8
+        virtual void setupActionTable(); //0x5FC
+        virtual void triggerActionRefreshA(); //0x600
+        virtual void triggerActionRefreshB(); //0x604
+        virtual void handleMoveState(); //0x608
 
         inline UNKTYPE* unkInline1(){
             BOOL thing = CObjectParam_UnkVirtualFunc5();
-            UNKTYPE* idk = func_800B708C(thing);
+            UNKTYPE* idk = findObjectById(thing);
             return func_800AD860(idk);
         }
 
         inline UNKTYPE* unkInline2(){
             BOOL thing2 = CObjectParam_UnkVirtualFunc5();
-            UNKTYPE* idk2 = func_800B708C(thing2);
+            UNKTYPE* idk2 = findObjectById(thing2);
             return func_800C1228(idk2);
         }
 
@@ -332,6 +332,6 @@ namespace cf {
     void CfObjectMove_UnkVirtualFunc16();
     void CfObject_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc4();
-    void func_800C1220();
+    void finalizePcCleanup();
     };
 }

@@ -232,8 +232,8 @@ struct CFileHandle {
     CFileHandle* setup1(const char* pPath, u32 size, IWorkEvent* pEvent);
     CFileHandle* setup2(const char* pPath, u32 size, IWorkEvent* pEvent);
     void destroy(u32 size = 0, u32 param_5 = 0, int param_6 = 0);
-    void func_80451984(unsigned long);
-    int func_80451CBC(int);
+    void addFallbackHandle(unsigned long);
+    int advanceReadProgress(int);
 };
 
 // Static (retail pHandle in r3) chain walker mirroring isRequestFile: call the
@@ -347,7 +347,7 @@ bool CDeviceFileDvd::transState3() {
         u32 delta = transferred - field_0x1CC;
         u32 remaining = pHandle->field_0x3C - pHandle->field_0x10;
         if (remaining < delta) delta = remaining;
-        pHandle->func_80451CBC(delta);
+        pHandle->advanceReadProgress(delta);
         field_0x1CC = transferred;
 
         bool done =
@@ -642,7 +642,7 @@ void CFileHandle::init(int param) {
     *(u32*)(s + 0x58) = 0;
 }
 
-void CFileHandle::func_80451984(unsigned long param) {
+void CFileHandle::addFallbackHandle(unsigned long param) {
     u8* p = (u8*)this;
     for (int i = 0; i < 4; i++) {
         if (*(u32*)(p + 0x18) == 0xFFFFFFFF) {
@@ -752,7 +752,7 @@ void CFileHandle::destroy(u32 size, u32 param_5, int param_6) {
     }
 }
 
-int CFileHandle::func_80451CBC(int param) {
+int CFileHandle::advanceReadProgress(int param) {
     *(s32*)((u8*)this + 0x10) += param;
     return 1;
 }

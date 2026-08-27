@@ -84,14 +84,14 @@ void* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
     return self;
 }
 
-void setFileName__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
+void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
     self->mSomeData = arg1;
     self->mFileNameLen = strlen(pPath);
     strcpy(self->mFileName, pPath);
 }
 
 bool wkStandbyLogin__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
-    if (!CWorkSystemPack::func_804DE08C()) {
+    if (!CWorkSystemPack::arePacksLoaded()) {
         return false;
     }
 

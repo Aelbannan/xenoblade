@@ -30,8 +30,8 @@ public:
     void setPerspective(const ml::CMat34& mat, float f1, float f2, float f3);
     void setCol(const ml::CCol3& col);
     void setCol(const ml::CCol4& col);
-    void func_80456570(int r4);
-    void func_8045657C(int r4);
+    void setZCompare(int r4);
+    void setZWriteEnable(int r4);
     void setTex(GXTexObj* pTexObj, u16 r5, u16 r6);
     void begin(u32 primType, u32 r5);
     void add(const ml::CRect16& r4, const ml::CRect16& r5);

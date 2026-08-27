@@ -507,7 +507,7 @@ __declspec(noinline) void CfScriptManager::updateScript() {
         }
     }
 
-    if (cf::CfGameManager::func_800829B8() == 0) {
+    if (cf::CfGameManager::isSceneLoading() == 0) {
         vmExec();
     }
 }

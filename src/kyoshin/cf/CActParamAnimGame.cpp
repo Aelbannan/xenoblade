@@ -167,7 +167,7 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
             len = sp2 * FrSqrt__Q24nw4r4mathFf(sp2);
         }
         self->f448 = len;
-        func_804BC9EC__Fv();
+        getScnHandle__Fv();
         if (func_804BCC10() != 0) {
             // Paused: probe the vt+0xE8 hook with the position/delta pair;
             // land only when the vertical speed is positive or the hook
@@ -238,11 +238,11 @@ void func_8004B840(void*, f32);
 void func_804BE628(int);
 int func_804BE5B8(void);
 int func_804BE5C0(void);
-u32 func_800822F4__Q22cf13CfGameManagerFv(void);
-extern "C" void* func_80086B04__Q22cf13CfGameManagerFv(void);
-int func_80082694__Q22cf13CfGameManagerFv(int);
-void func_8008269C__Q22cf13CfGameManagerFv(int, int);
-void func_800826F0__Q22cf13CfGameManagerFv(int);
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
+extern "C" void* getGimmickListHead__Q22cf13CfGameManagerFv(void);
+int getEventValue40__Q22cf13CfGameManagerFv(int);
+void setEventManagerValue__Q22cf13CfGameManagerFv(int, int);
+void queueEventId__Q22cf13CfGameManagerFv(int);
 void func_804B0B54(void*, const ml::CVec3*);
 void func_804B1130(void*, void*, void*, void*, void*);
 s8 lbl_eu_80663D64;
@@ -1084,7 +1084,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     if (timerB >= lbl_eu_80666040) v->f508 = timerB;
     if (v->f50C >= lbl_eu_80666040) v->f508 = v->f50C;
 
-    func_804BC9EC__Fv();
+    getScnHandle__Fv();
     if (func_804BCC10() != 0 && (v->flags4EC & 1) == 0) {
         func_8005A5B0(this);
     }
@@ -1180,7 +1180,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     }
 }
 
-// Typed view for func_8005D608: keeps the +0x8 link as a typed pointer.
+// Typed view for isActionReady: keeps the +0x8 link as a typed pointer.
 struct CActParamAnimGameViewD608 {
     u8 _00[0x08];
     CActParamAnimGameOwner* owner;  // 0x08
@@ -1198,7 +1198,7 @@ struct CActParamAnimGameViewD608 {
 // +0x4 flags; then notifies the region via func_8004BC94. The type arg is
 // forwarded to func_8004BC94 untouched (retail leaves r4 as-is), so keeping
 // it a live parameter pins r4 and colors the locals into retail's r5/r6.
-bool cf::CActParamAnimGame::func_8005D608(u32 type) {
+bool cf::CActParamAnimGame::isActionReady(u32 type) {
     CActParamAnimGameViewD608* self = reinterpret_cast<CActParamAnimGameViewD608*>(this);
     CActParamAnimGameOwner* owner = self->owner;
     if (owner == 0) return false;
@@ -1223,7 +1223,7 @@ fail:
 // Returns true when the +0x4F8 float exceeds the +0x508 float; the linked
 // region is then notified via func_8004BC94. The explicit bool local keeps
 // MWCC's dead mfcr/rlwinm capture of the fcmpo result (retail `extrwi.` shape).
-bool cf::CActParamAnimGame::func_8005D67C() {
+bool cf::CActParamAnimGame::checkHeightThreshold() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     bool cond = self->f4F8 > self->f508;
     if (cond) {
@@ -1233,9 +1233,9 @@ bool cf::CActParamAnimGame::func_8005D67C() {
     return false;
 }
 
-// Mirror of func_8005D67C phrased with <= (retail `cntlzw`/`srwi.` shape).
+// Mirror of checkHeightThreshold phrased with <= (retail `cntlzw`/`srwi.` shape).
 // The negated comparison keeps MWCC's dead mfcr/cntlzw capture chain.
-bool cf::CActParamAnimGame::func_8005D6C0() {
+bool cf::CActParamAnimGame::checkHeightBelow() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     bool cond = !(self->f4F8 > self->f508);
     if (cond) {
@@ -1246,7 +1246,7 @@ bool cf::CActParamAnimGame::func_8005D6C0() {
 }
 
 bool func_8004ECF4__13CActParamAnimFv(void* self);
-bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
+bool checkNotFalling__Q22cf17CActParamAnimGame(void* self) {
     if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 2) {
         return false;
     }
@@ -1255,7 +1255,7 @@ bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
 
 // Clears the +0x4EC bit-12 (0x80000) flag and notifies the linked region.
 // Volatile re-read reproduces the retail's second lwz before the mask.
-bool cf::CActParamAnimGame::func_8005D728() {
+bool cf::CActParamAnimGame::clearFlag80000() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if ((self->flags4EC & 0x80000) != 0) {
         self->flags4EC = *(volatile u32*)&self->flags4EC & ~0x80000;
@@ -1328,7 +1328,7 @@ bool cf::CActParamAnimGame::func_8005D84C(u32 type, u32 state) {
 // State-0/1 gate: state 1 uses the facing-offset ground probe
 // (func_8005E7C4), state 0 the waiting probe (func_8005E60C); on success the
 // matching 0x20/0x10 bit goes up and the 0x100 bit comes down.
-bool cf::CActParamAnimGame::func_8005D99C(u32 type, u32 state) {
+bool cf::CActParamAnimGame::tryGroundStep(u32 type, u32 state) {
     CActParamAnimGameViewBC14* view = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if (state == 1) {
         if (func_8005E7C4(this)) {
@@ -1366,7 +1366,7 @@ bool cf::CActParamAnimGame::func_8005DA44(u32 type) {
     return true;
 }
 
-bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
+bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
     if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 0x00040000) {
         func_8004BC94(self);
         return true;
@@ -1385,11 +1385,11 @@ bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
     if (*(u32*)obj->_00 != (u32)lbl_eu_80663E14) return false;
 
     CActParamAnimGameListNode* node =
-        (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)func_80086B04__Q22cf13CfGameManagerFv())->head;
+        (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)getGimmickListHead__Q22cf13CfGameManagerFv())->head;
     f32 scale = lbl_eu_80666104;
     bool found = false;
     while (node !=
-           (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)func_80086B04__Q22cf13CfGameManagerFv())->head) {
+           (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)getGimmickListHead__Q22cf13CfGameManagerFv())->head) {
         void* item = func_8016FE34(node->f08);
         f32 limit = ((CActParamAnimGameListVt*)item)->v128();
         f32 value = ((CActParamAnimGameListVt*)item)->v12C();
@@ -1430,9 +1430,9 @@ bool cf::CActParamAnimGame::func_8005DC30(u32 type) {
     return false;
 }
 
-// cf::CActParamAnimGame::func_8005DCA0 - trivial leaf, returns false
+// cf::CActParamAnimGame::isAlwaysFalse - trivial leaf, returns false
 // Retail symbol lacks Fv suffix; preserves exact mangling for FULL_MATCH
-bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
+bool isAlwaysFalse__Q22cf17CActParamAnimGame() { return false; }
 
 // Rotation-matrix facing update (state 2 only): builds a 3x4 matrix from the
 // cached yaw (sin/cos of 40.743663f * field_444), rotates the yaw basis
@@ -2016,7 +2016,7 @@ int cf::CActParamAnimGame::func_8005EEB4(ml::CVec3* pos, ml::CVec3* move) {
         }
     }
 
-    if (func_800822F4__Q22cf13CfGameManagerFv() == 0x31) {
+    if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() == 0x31) {
         if (field_4E8 != 0 && (field_4E8->f64 & 4)) {
             if (PSVECMag((const Vec*)&moveV) > lbl_eu_80666104) {
                 f32 len2 = moveV.x * moveV.x + moveV.y * moveV.y + moveV.z * moveV.z;
@@ -2222,9 +2222,9 @@ l60418:
             if (!(field_0C & 0x80) && field_488 - pos->y <= lbl_eu_80666154) {
                 if (field_4EC & 2) {
                     if ((field_530 & 0x400) && field_488 - pos->y <= lbl_eu_80666158) {
-                        if (func_80082694__Q22cf13CfGameManagerFv(0x83) == 0) {
-                            func_8008269C__Q22cf13CfGameManagerFv(0x83, 1);
-                            func_800826F0__Q22cf13CfGameManagerFv(0x83);
+                        if (getEventValue40__Q22cf13CfGameManagerFv(0x83) == 0) {
+                            setEventManagerValue__Q22cf13CfGameManagerFv(0x83, 1);
+                            queueEventId__Q22cf13CfGameManagerFv(0x83);
                         }
                     }
                 } else {
@@ -2286,7 +2286,7 @@ void cf::CActParamAnimGame::func_80060110() {
     // independent so MWCC colors them like retail.
     if (v->link4E8 == 0) return;
     if (((CActParamAnimGameVt4C*)v->link4E8)->v4C() == 0) return;
-    void* src = func_800B708C((int)((CActParamAnimGameVt4C*)v->link4E8)->v4C());
+    void* src = findObjectById((int)((CActParamAnimGameVt4C*)v->link4E8)->v4C());
     if (src == 0) return;
     ml::CVec3* p = (ml::CVec3*)((CActParamAnimGameVt4C*)src)->vAC();
     ml::CVec3 d;
@@ -2309,7 +2309,7 @@ void cf::CActParamAnimGame::func_80060110() {
 // Forwards the +0x444 scalar to the +0xC4 virtual slot of the object at
 // +0x4E8 (tail call; retail keeps no stack frame). Real virtual dispatch
 // so MWCC emits the r12 vtable load (the manual cast would use r4).
-void cf::CActParamAnimGame::func_80060268() {
+void cf::CActParamAnimGame::syncYawToLink() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     CActParamAnimGameVt4C* region = (CActParamAnimGameVt4C*)self->region4E8;
     if (region == 0) return;

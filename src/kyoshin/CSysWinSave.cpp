@@ -22,13 +22,13 @@ void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveF
 
 void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 
-extern "C" void func_80294824__FPv(float* self) {
+extern "C" void initChainGauge__FPv(float* self) {
     float v = lbl_eu_80668BA0;
     self[0] = v;
     self[1] = v;
 }
 
-extern "C" void func_80294834__FPv(float* self) {
+extern "C" void resetChainGauge__FPv(float* self) {
     float v = lbl_eu_80668BA0;
     self[0] = v;
     self[1] = v;
@@ -78,7 +78,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Co-op: confirm/D-pad row bits live at +17 over single-player.
         sels    = (pad->field_104 & 0x8004) != 0;
         confirm = ((pad->field_104 & 0x10000) | (pad->field_104 & 0x8)) != 0;
@@ -130,7 +130,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
 // their non-vtable fields into the embedded storage.
 // ---------------------------------------------------------------------------
 void CSysWinSave::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
@@ -195,7 +195,7 @@ void CSysWinSave::Init() {
 // ---------------------------------------------------------------------------
 void CSysWinSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -267,7 +267,7 @@ void CSysWinSave::Term() {
     mScene->removeRenderCB(render);
 
     if (mFlagDD != 0)
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -306,7 +306,7 @@ void CSysWinSave::cbRenderBefore() {
     // chain keeps the body off the fallthrough so MWCC emits retail's
     // branch-over-branch: `bne end` for the first disjunct, `beq body; b end`
     // for the second (same scheme as CSysWinSelect::cbRenderBefore).
-    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (CTaskGame::isFlag01Set() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
     goto end;

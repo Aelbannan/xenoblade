@@ -124,7 +124,7 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         mMemRegion.createRegion(mem2, 0x3000, path + 0x16, 1);
         Class_8045F858 sp8 = Class_8045F858(&mMemRegion);
         void* data = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(0);
+        mtl::MemManager::setMemInitFlag(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, path + 0x21);
         func_80136E84(&mLayout, mAccessor, path + 0x25);

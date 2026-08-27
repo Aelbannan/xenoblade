@@ -14,17 +14,17 @@
 
 namespace cf {
 // Local minimal view of cf::CfGameManager used by func_8016F9D4. The full
-// class in include/kyoshin/cf/CfGameManager.hpp declares func_80086DA4 as
+// class in include/kyoshin/cf/CfGameManager.hpp declares getControllerWordA37C as
 // void, but retail returns a value (its body is a tail call to
 // func_8006A37C) and this caller truncates it to u16.
 class CfGameManager {
 public:
-    static u32 func_80086DBC();
-    static u32 func_80086DA0();
-    static u32 func_80086DA4();
-    static u32 func_80086B1C();
-    static u32 func_80086B2C();
-    static void* func_80083298();
+    static u32 getCurrentSlotIndex();
+    static u32 getControllerWordA33C();
+    static u32 getControllerWordA37C();
+    static u32 getGlobalWord64184Dup();
+    static u32 getGlobalPtr640A8();
+    static void* getGameSubManager();
 };
 } // namespace cf
 
@@ -115,14 +115,14 @@ int func_8016EFD8(int unused, int index) {
     u8* bdat = lbl_eu_806640AC;
     u32 v0 = getBdatStringColumnValue(bdat, lbl_eu_80503248, index);
     if ((u16)v0 != 0) {
-        u32 cur = (u16)func_80082354__Q22cf13CfGameManagerFv((u16)v0);
+        u32 cur = (u16)getResourceFromTable__Q22cf13CfGameManagerFv((u16)v0);
         u32 v1 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 8, index);
         u32 v2 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x11, index);
         if (cur < (u8)v1 || cur > (u8)v2) {
             return 0;
         }
     }
-    u32 cur2 = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+    u32 cur2 = (u16)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
     u32 v3 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x1A, index);
     u32 v4 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x20, index);
     u32 v5 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x26, index);
@@ -144,13 +144,13 @@ extern "C" void func_8016F140(CfMapEffectManager* self) { func_8016F9D4(self); }
 // create the one matching the new state (BGM/ambient effect ids are
 // language-dependent). The 0x16/1 area-id pair disables the feature entirely.
 void func_8016F144(CfMapEffectManager* self) {
-    cf::CfGameManager::func_80086DBC();
-    u16 cur0 = (u16)cf::CfGameManager::func_80086DA0();
-    u16 cur1 = (u16)cf::CfGameManager::func_80086DA4();
+    cf::CfGameManager::getCurrentSlotIndex();
+    u16 cur0 = (u16)cf::CfGameManager::getControllerWordA33C();
+    u16 cur1 = (u16)cf::CfGameManager::getControllerWordA37C();
     int type = 0;
     if (lbl_eu_80663E42 != 0x16 || lbl_eu_80663E44 != 1) {
-        cf::CfGameManager::func_80086B2C();
-        cf::CfGameManager::func_80086B1C();
+        cf::CfGameManager::getGlobalPtr640A8();
+        cf::CfGameManager::getGlobalWord64184Dup();
         if (self->field_0x12E != cur0 || self->field_0x130 != cur1) {
             if ((int)cur0 == 4 && (int)cur1 == 0x3b) {
                 type = 0xb6;
@@ -158,13 +158,13 @@ void func_8016F144(CfMapEffectManager* self) {
                     type = (CDeviceSC::getLanguage() - 1) * 2 + 0xcf;
                 }
                 u16 bgm = lbl_eu_80661AF4;
-                if (bgm != func_80082694__Q22cf13CfGameManagerFv(0x6f)) {
-                    u32 next = func_80082694__Q22cf13CfGameManagerFv(0x81) + 1;
-                    func_8008269C__Q22cf13CfGameManagerFv(0x81, next);
+                if (bgm != getEventValue40__Q22cf13CfGameManagerFv(0x6f)) {
+                    u32 next = getEventValue40__Q22cf13CfGameManagerFv(0x81) + 1;
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0x81, next);
                     if (next == 0x16e) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x81);
+                        queueEventId__Q22cf13CfGameManagerFv(0x81);
                     }
-                    func_8008269C__Q22cf13CfGameManagerFv(0x6f, lbl_eu_80661AF4);
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0x6f, lbl_eu_80661AF4);
                 }
             } else if ((int)cur0 == 0x12 && (int)cur1 == 0x3b) {
                 type = 0xb7;
@@ -173,7 +173,7 @@ void func_8016F144(CfMapEffectManager* self) {
                 }
             }
         }
-        if (type != 0 && func_8007F91C__Q22cf13CfGameManagerFv() == 0) {
+        if (type != 0 && isTimerActive__Q22cf13CfGameManagerFv() == 0) {
             CfMapEffectHandle* obj = self->field_0x134;
             self->field_0x12C = -1;
             self->field_0x12E = -1;
@@ -187,7 +187,7 @@ void func_8016F144(CfMapEffectManager* self) {
                 self->field_0x134 = 0;
             }
             CfMapEffectHandle* h =
-                (CfMapEffectHandle*)func_8008187C__Q22cf13CfGameManagerFv(type);
+                (CfMapEffectHandle*)createNpcActor__Q22cf13CfGameManagerFv(type);
             self->field_0x134 = h;
             h->field_0xB0 = (u32)self;
         }
@@ -218,9 +218,9 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
         return;
     }
 
-    u32 phase = cf::CfGameManager::func_80086DBC();
-    u16 area = (u16)cf::CfGameManager::func_80086DA0();
-    cf::CfGameManager::func_80086DA4(); // result discarded (retail calls it)
+    u32 phase = cf::CfGameManager::getCurrentSlotIndex();
+    u16 area = (u16)cf::CfGameManager::getControllerWordA33C();
+    cf::CfGameManager::getControllerWordA37C(); // result discarded (retail calls it)
     u16 secs = func_8016DF2C();
 
     u32 modelCol = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x38, index);
@@ -239,7 +239,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     if (gate != 0 && func_8009CF8C(gate + 0x278a) == 0) {
         // Gated off: force idle state (1) unless already applied.
         if (*slot != 0 && self->field_0xE4[index] != 1) {
-            func_800ACC14(*slot, 1);
+            setChildB59__(*slot, 1);
             self->field_0xE4[index] = 1;
             self->field_0x9C[index] = 0;
         }
@@ -273,7 +273,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     }
     if (spawn == 0) {
         if (*slot != 0 && self->field_0xE4[index] != 1) {
-            func_800ACC14(*slot, 1);
+            setChildB59__(*slot, 1);
             self->field_0xE4[index] = 1;
             self->field_0x9C[index] = 0;
         }
@@ -285,7 +285,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
 
     // Active path: bounce a live object to state 2, then (re)create it.
     if (*slot != 0 && self->field_0xE4[index] == 1) {
-        func_800ACC14(*slot, 2);
+        setChildB59__(*slot, 2);
         self->field_0xE4[index] = 2;
     }
     if (onceCol == 0 && self->field_0x9C[index] != 0) {
@@ -304,7 +304,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
         }
         float flashArg = lbl_eu_80667710;
         CfObjectEff* newObj =
-            (CfObjectEff*)func_800817BC__Q22cf13CfGameManagerFv((u16)modelCol, 0);
+            (CfObjectEff*)createBattleActor__Q22cf13CfGameManagerFv((u16)modelCol, 0);
         if (newObj != 0) {
             *slot = newObj;
             if (onceCol != 0) {
@@ -346,11 +346,11 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
             (*(CfObjectEff_VTable39**)newObj)->fn(newObj, pos);
             (*(CfObjectEff_VTable47**)newObj)->fn(newObj, args);
             if (extra != 0) {
-                func_800ACF78(newObj, extra, 0);
+                bindPartnerO_(newObj, extra, 0);
             }
-            void* cam = cf::CfGameManager::func_80083298();
+            void* cam = cf::CfGameManager::getGameSubManager();
             int camFlag = (*(CfGameManager_VTable101**)cam)->fn(cam);
-            func_800AD040((char*)newObj, camFlag);
+            setChild5CFl_((char*)newObj, camFlag);
             newObj->CfObject_UnkVirtualFunc66(self->field_0x138);
 
             if (flashCol != 0) {
@@ -361,7 +361,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
                     flashArg = (float)(convLo.d - lbl_eu_80667728);
                 }
                 convHi.w[1] = (u16)flashCol;
-                func_800ACC28(newObj, (float)(convHi.d - lbl_eu_80667728), flashArg);
+                setChildScl__(newObj, (float)(convHi.d - lbl_eu_80667728), flashArg);
             }
         }
     }
@@ -379,7 +379,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
                 r = func_8016FA68((int)self, (int)phase, (int)area, (int)(u8)vv);
             }
             if (r != 0 && (s16)self->field_0xE4[index] != (s16)i) {
-                func_800ACC14(self->field_0x0C[index], (s8)i);
+                setChildB59__(self->field_0x0C[index], (s8)i);
                 self->field_0xE4[index] = (u16)i;
             }
         }
@@ -389,9 +389,9 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
 // retail: func_8016F9D4 (0x80170DD0)
 extern "C" void func_8016F9D4(CfMapEffectManager* pSelf) {
     u8* bdat = lbl_eu_806640AC;
-    u32 v = cf::CfGameManager::func_80086DBC();
-    u16 a = (u16)cf::CfGameManager::func_80086DA0();
-    u16 b = (u16)cf::CfGameManager::func_80086DA4();
+    u32 v = cf::CfGameManager::getCurrentSlotIndex();
+    u16 a = (u16)cf::CfGameManager::getControllerWordA33C();
+    u16 b = (u16)cf::CfGameManager::getControllerWordA37C();
     u16 c = func_8016DF2C();
     int end;
     int i = (int)func_8003B41C(bdat);
@@ -426,7 +426,7 @@ void func_8016FBA8(CfMapEffectManager* pSelf, int flag) {
     for (int i = 0; i < 0x24; i++) {
         CfObject* obj = pSelf->field_0x0C[i];
         if (obj != 0) {
-            func_800AD040((char*)obj, flag);
+            setChild5CFl_((char*)obj, flag);
         }
     }
 }
@@ -474,7 +474,7 @@ void func_8016FD84(float first, float second) {
         for (int i = 0; i < 0x24; i++) {
             CfObject* obj = lbl_eu_80664290->field_0x0C[i];
             if (obj != 0) {
-                func_800ACC28(obj, first, value);
+                setChildScl__(obj, first, value);
             }
         }
     }

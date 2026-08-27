@@ -109,7 +109,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
     if ((lbl_eu_806646BC & 0x4) != 0 && (lbl_eu_80663E24 & 0x10000000) == 0) {
         flag = 0;
     } else if (self->maxVal != 0) {
-        u32 count = func_800822F4__Q22cf13CfGameManagerFv();
+        u32 count = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (self->minVal > count || count > self->maxVal) {
             flag = 0;
         } else {
@@ -418,9 +418,9 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
 extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
     if ((self->flags & 2) == 0) {
         if (self->stateIndex - 3 <= 1) {
-            self->field_78 = func_800817BC__Q22cf13CfGameManagerFv(0x4d, 0);
+            self->field_78 = createBattleActor__Q22cf13CfGameManagerFv(0x4d, 0);
         } else if (self->stateIndex - 1 <= 1) {
-            self->field_78 = func_800817BC__Q22cf13CfGameManagerFv(0x4c, 0);
+            self->field_78 = createBattleActor__Q22cf13CfGameManagerFv(0x4c, 0);
         } else {
             return;
         }
@@ -437,7 +437,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
                 vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[0] = self->extent0 / lbl_eu_806683C4;
                 ((cf::CfGimmickLockObj*)self->field_78)->setPos(vec);
-                func_800ACEF8(self->field_78, vec);
+                setChild34Sc_(self->field_78, vec);
             } else {
                 ((cf::CfGimmickLockObj*)self->field_78)->setPos(&self->position.x);
                 ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / lbl_eu_806683C4);
@@ -463,7 +463,7 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
                 vec[2] = self->extent3 / lbl_eu_806683C4;
                 vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[0] = self->extent0 / lbl_eu_806683C4;
-                func_800ACEF8(mgr, vec);
+                setChild34Sc_(mgr, vec);
             } else if (self->stateIndex - 1 <= 1) {
                 ((cf::CfGimmickLockObj*)mgr)->setScale(self->extent0 / lbl_eu_806683C4);
             } else {

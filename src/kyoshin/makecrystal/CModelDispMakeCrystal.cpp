@@ -118,7 +118,7 @@ int func_80222A58(void*);
 void func_8004CF00(void*);
 void func_8021FEDC(void*);
 void func_80220C34(void*);
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void func_8004B6BC(void*, void*);
 void func_80495E60(void*);
 void* func_80495E8C(void*, int, int, ...);
@@ -135,7 +135,7 @@ void* func_804CC1F4(void*, void*, void*, int, int, int);
 int isFinished__11CMCEffStartFv(void* self);
 int isFinished__13CMCEffCrystalFv(void* self);
 int isFinished__14CMCEffCylinderFv(void*);
-int func_802220F0__16CMCCylinderGaugeFv(void*);
+int isReady__16CMCCylinderGaugeFv(void*);
 void func_802203D8(void*);
 void func_8022077C(void*);
 void func_8022EA88(void*, u8);
@@ -146,7 +146,7 @@ void func_80189C88(void);
 void func_80043C88(void);
 void func_80133E58(u32, u32, u32);
 void func_80138078__FUl(u32);
-void func_8045F778__17UnkClass_8045F564Fv(void* self);
+void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void func_804E3D48(void*, void*);
 int CSysWin_getUnk34(void*);
@@ -195,7 +195,7 @@ short func_800BE954(void*);
 void func_8009ECB0();
 u32 func_80141E90(u32, s16, u32, u32);
 int func_800AA33C(void*, u32, int, int);
-void func_8007E038__Q22cf13CfGameManagerFv(u32, bool);
+void syncFieldData__Q22cf13CfGameManagerFv(u32, bool);
 int func_8003B1EC(void*);
 void func_80159F6C(void*, u16, u16, u8);
 void func_802232E4(void*);
@@ -216,16 +216,16 @@ void __ct__CMCEffCylinder(void*, nw4r::lyt::ArcResourceAccessor*);
 void __ct__6CCur18Fv(void*, void*);
 void createRegion__17UnkClass_8045F564FiiPCci(void*, u32, int, const char*, int);
 void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-void func_80434A4C__Q23mtl10MemManagerFb(bool);
+void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 void* createArcResourceAccessor__10CLibLayoutFv();
 void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(void*, void*, const char*);
-void func_80221EF4__16CMCCylinderGaugeFv(void*);
+void init__16CMCCylinderGaugeFv(void*);
 void func_8022E8F8(void*);
 void func_80211CB8(void*, void*);
 void init__11CMCEffUpPrmFv(void*);
 void* func_801355F4();
 void func_8018B0FC(void*, void*);
-void func_8045F810__17UnkClass_8045F564Fv(void*);
+void validateHeap__17UnkClass_8045F564Fv(void*);
 void __dt__14Class_8045F858Fv(void*, int);
 void func_804CC1BC(void*);
 void* func_800584B8(void*, unsigned int, const char*);
@@ -900,7 +900,7 @@ void func_8021C8B0(CModelDispMakeCrystal* self) {
     func_801390E0(reinterpret_cast<CFileHandle**>(base + 0x3c));
     func_80139124(*reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
     *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) = nullptr;
-    func_8045F778__17UnkClass_8045F564Fv(base + 0x2c);
+    deleteRegion__17UnkClass_8045F564Fv(base + 0x2c);
 }
 
 
@@ -1054,7 +1054,7 @@ void func_8021CD8C(CModelDispMakeCrystal* self)
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 bit;
     // Classic-controller vs Wiimote/Nunchuk trigger bit.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
         bit = (pad->mTurboPressButtonFlags >> 21) & 1;
     else
         bit = (pad->mTurboPressButtonFlags >> 4) & 1;
@@ -1667,7 +1667,7 @@ void __declspec(noinline) func_8021DF84(CModelDispMakeCrystal* self)
     // Once the cylinder effect finishes and the gauge is full, start the
     // cylinder-count anim: rebuild the step list and flush the buffered entry.
     if (isFinished__14CMCEffCylinderFv(base + 0xdfc) == 0) return;
-    if (func_802220F0__16CMCCylinderGaugeFv(base + 0xbec) == 0) return;
+    if (isReady__16CMCCylinderGaugeFv(base + 0xbec) == 0) return;
     base[0xbdd] = 0x12;
     func_801D216C(base + 0xe20, 1);
     u8 buf[16];
@@ -1691,7 +1691,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
     // after decode; trigger bits are extracted as 0/1 ints (retail extrwi).
     u32 cancel, dir, confirm, menu;
     int trigger1, trigger2, trigger3;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 0x104);
         u32 p = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 4);
         cancel = f & 0x8004;
@@ -2126,7 +2126,7 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote/Nunchuk.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2236,7 +2236,7 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
     // Cursor step / cancel booleans derived from turbo and pressed button flags.
     // Bit positions differ between Classic controller and Wiimote/Nunchuk.
     u32 trigger1, trigger2, cancel, dir;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2324,7 +2324,7 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     int trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote/Nunchuk.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 c = f & 0x8004;
@@ -2415,7 +2415,7 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, cancel, dir;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPad.mPressedButtonFlags;
         u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -2525,7 +2525,7 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, cancel, dir;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -3355,7 +3355,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
                         *reinterpret_cast<u32*>(slot) =
                             reinterpret_cast<u32>(func_80062AD8(*(u32*)(subp + 0x544 + i * 4), &outTag));
                         if (outTag == 0xffffffff) {
-                            func_8007E038__Q22cf13CfGameManagerFv(ch, false);
+                            syncFieldData__Q22cf13CfGameManagerFv(ch, false);
                         }
                     }
                 }
@@ -3490,8 +3490,8 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         void* fileData =
             *reinterpret_cast<void**>(reinterpret_cast<u8*>(f3c) + 4);
         *reinterpret_cast<void**>(reinterpret_cast<u8*>(f3c) + 4) = 0;
-        func_80434A4C__Q23mtl10MemManagerFb(false);
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) =
             reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                 createArcResourceAccessor__10CLibLayoutFv());
@@ -3515,7 +3515,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xc11] = cylGauge[0x25];
         *(f32*)(base + 0xc14) = *(f32*)(cylGauge + 0x28);
         __dt__16CMCCylinderGaugeFv(cylGauge, -1);
-        func_80221EF4__16CMCCylinderGaugeFv(base + 0xbec);
+        init__16CMCCylinderGaugeFv(base + 0xbec);
         // Crystal support: same build/copy/destroy pattern.
         __ct__CMCCrystalSupport(
             crySupport,
@@ -3651,7 +3651,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__6CCur18Fv(cur2, -1);
         reinterpret_cast<CMCCur18Vt*>(base + 0xeb4)->m0();
         *reinterpret_cast<void**>(base + 0x3c) = 0;
-        func_8045F810__17UnkClass_8045F564Fv(base + 0x2c);
+        validateHeap__17UnkClass_8045F564Fv(base + 0x2c);
         __dt__14Class_8045F858Fv(cls858, -1);
         return 1;
     }

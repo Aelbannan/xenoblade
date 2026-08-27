@@ -8,10 +8,10 @@
 // makes MWCC emit a standalone __dt__10IScnRenderFv strong copy (0x40) here
 // and blows the split budget (retail keeps that copy only in CTaskGame.o).
 // Omitting the dtor gives IScnRender an implicitly trivial one while keeping
-// the vtable layout identical (slot order: dtor slot, func_80043F20).
+// the vtable layout identical (slot order: dtor slot, handleEmptyRender).
 class IScnRender {
 public:
-    virtual void func_80043F20();
+    virtual void handleEmptyRender();
 };
 
 // Minimal CScn view exposing only the render-callback registration used by
@@ -179,8 +179,8 @@ extern "C" void __ct__CQstLogList(CQstLogList* self, u16 arg);
 extern "C" void __ct__CQstLogInfo(CQstLogInfo* self);
 
 // CfGameManager helpers (retail pre-mangled names).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Save/skip system busy queries (retail unmangled).
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();

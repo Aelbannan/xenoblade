@@ -75,7 +75,7 @@ CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
 // CfGameManager one-arg controller-type query, kept as the retail mangled
 // C symbol (extern "C" stops C++ `__Fi` param mangling). The inline header
 // wrapper drops the -1 argument, so it cannot be used here.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int controllerType);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int controllerType);
 
 extern "C" void func_802B5F0C(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
 
@@ -105,7 +105,7 @@ void func_802B5FA8(CMenuTitleInput* self) {
 
     // The activation mask differs between controller types: classic controllers
     // add the right-stick trigger bits (0x1fe0060f) to the common button bits.
-    u32 mask = (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) ? 0x1fe0060fU : 0x1effU;
+    u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) ? 0x1fe0060fU : 0x1effU;
     if (pad->mPadPressedFlags & mask) {
         self->field_e8 = 5;
         func_802B7630(&self->mSub);
@@ -118,7 +118,7 @@ void func_802B6020(CMenuTitleInput* self) {
     if (func_802B7590(&self->mSub) == 0) {
         CfPadDataLocal* pad =
             (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
-        u32 mask = (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+        u32 mask = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                        ? 0x1fe0060fU
                        : 0x1effU;
         if (pad->mPadPressedFlags & mask) {
@@ -159,7 +159,7 @@ void func_802B60CC(CMenuTitleInput* self) {
         u32 trigger2;
         u32 cancelButton;
         u32 dirButton;
-        s32 controllerType = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+        s32 controllerType = isClassicController__Q22cf13CfGameManagerFv(-1);
         if (controllerType != 0) {
             // Classic controller: trigger bits 21, 22 from right.
             turbo = pad->mTurboPressButtonFlags;

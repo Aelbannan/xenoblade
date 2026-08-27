@@ -1,12 +1,12 @@
 /**
  * monolib LOD code_80468434 — isolated Gekko paired-single backend for the
- * func_8046A224 spawn-position spread kernel.
+ * copySpawnPos spawn-position spread kernel.
  *
  * Isolated PS backend under PLAN.md §17.6 ("Isolated MWCC Gekko paired-single
  * backend").  Included ONLY by code_80468434.cpp on the Wii/MWCC build;
  * non-MWCC / PC builds compile the readable scalar fallback in that TU.
  *
- * func_8046A224: nofralloc straight-line kernel that loads the spawn
+ * copySpawnPos: nofralloc straight-line kernel that loads the spawn
  * bias/table/spread globals, computes scale = spread * in.w, and writes a
  * per-component select of in vs a dir*scale-derived value into out:
  *   out.c = (in.c < 0) ? in.c : sel(dir.c, scale)
@@ -35,7 +35,7 @@
 // The `idx` parameter is declared register s32 so MWCC passes it in r6.
 // clang-format off
 
-asm void func_8046A224__Q23LOD17UnkClass_80468434Fv(register void* out,
+asm void copySpawnPos__Q23LOD17UnkClass_80468434Fv(register void* out,
                                                     register void* r4scratch,
                                                     register const void* in,
                                                     register s32 idx) {
@@ -76,7 +76,7 @@ asm void func_8046A224__Q23LOD17UnkClass_80468434Fv(register void* out,
 // value).  Retail's ps1 halves are undefined; this fallback treats the
 // scalar `scale` sign as governing both halves, which is the intended
 // single-scalar reading.
-void func_8046A224__Q23LOD17UnkClass_80468434Fv(void* out, void*,
+void copySpawnPos__Q23LOD17UnkClass_80468434Fv(void* out, void*,
                                                 const void* in, s32 idx) {
     const f32* iv = (const f32*)in;
     f32* ov = (f32*)out;

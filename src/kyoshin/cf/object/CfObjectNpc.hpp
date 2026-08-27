@@ -123,10 +123,10 @@ namespace cf {
         virtual ~CfObjectNpc();
 
         // NPC-specific member functions
-        bool func_800BF46C();
-        void func_800BF4DC();
+        bool initNpcFlags();
+        void updateNpcDialog();
         void func_800BF764();
-        void func_800BF8CC();
+        void loadIconType();
         s16 func_800BF920();
         u8 func_800BF984();
 

@@ -7,7 +7,7 @@
 // init() on this object before main() runs.
 Class_80296898 lbl_eu_805772C8;
 
-Class_80296898* func_80296A04(Class_80296898* obj){
+Class_80296898* initInstance(Class_80296898* obj){
     obj->init();
     return obj;
 }
@@ -55,7 +55,7 @@ void Class_80296898::init(){
 
 // Overwrite the full configuration from external source.
 // Resets mFrameCount to 10 if the incoming data had it at 0.
-void func_80296AE8(u8* src){
+void updateConfig(u8* src){
     std::memcpy(lbl_eu_805772C8.mSlotFlags, src, 0x40);
 
     if(lbl_eu_805772C8.mFrameCount == 0){

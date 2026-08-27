@@ -68,11 +68,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the
@@ -198,14 +198,14 @@ struct CSysWinSaveVtShim {
 // (func_80137250 is the exception: retail emits the mangled nw4r form, so it
 // is declared below as a normal C++ function to let MWCC mangle it.)
 extern "C" {
-void func_8045F778__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
+void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void*, void*);
 int func_8013BE50();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);
 void __ct__CCur18(void* cursor, void* accessor);
@@ -220,7 +220,7 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 // are unmangled / non-namespace, so C linkage is required).
 void* func_801355F4();
 void* getCfPadData__Q22cf13CfGameManagerFv();
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void func_80138078__FUl(u32 op);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);

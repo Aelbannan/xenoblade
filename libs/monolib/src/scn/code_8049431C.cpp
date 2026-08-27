@@ -8,9 +8,9 @@ extern "C" {
     extern void __dl__FPv(void* ptr);
     extern void* getCurrentView__5CViewFv();
     extern void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, void* view);
-    extern void func_8044AA7C__8CGXCacheFii(void* self, int, int);
-    extern void func_8044A94C__8CGXCacheFii(void* self, int, int);
-    extern void func_8044ABAC__8CGXCacheFv(void* self);
+    extern void setZWriteMode__8CGXCacheFii(void* self, int, int);
+    extern void setZCompareMD__8CGXCacheFii(void* self, int, int);
+    extern void setAlphaBlend__8CGXCacheFv(void* self);
     extern void func_8044A7F8__8CGXCacheFv(void* self, int, int, int, int, int);
     extern void* cacheInstance__9CDeviceGX;
 }
@@ -60,9 +60,9 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
         rh = rh - 1;
     if (rw != 0) {
         if (rh != 0) {
-        func_8044AA7C__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
-        func_8044A94C__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
-        func_8044ABAC__8CGXCacheFv(cacheInstance__9CDeviceGX);
+        setZWriteMode__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
+        setZCompareMD__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
+        setAlphaBlend__8CGXCacheFv(cacheInstance__9CDeviceGX);
         func_8044A7F8__8CGXCacheFv(cacheInstance__9CDeviceGX, 1, 4, 5, 0, 0);
         GXSetTexCopySrc((u16)x, (u16)y, (u16)rw, (u16)rh);
         GXSetTexCopyDst(w, h, GXGetTexObjFmt((GXTexObj*)self), p3);

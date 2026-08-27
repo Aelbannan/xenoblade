@@ -896,7 +896,7 @@ extern "C" {
     void func_802AB474(CBattleChainMenuState* self);
     // Presentation/event flag-bit probe (code_800F42AC.cpp; retail symbol
     // carries the Fi suffix) and battle-manager sub-check (CBattleManager).
-    bool func_8006EF04__Fi(int mask);
+    bool isGlobalCamFlagSet__Fi(int mask);
     void* func_800EA444(void* bm);
     // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail
     // call site, so declared here with C linkage rather than through the

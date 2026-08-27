@@ -587,7 +587,7 @@ extern "C" int func_8015DB08(CCol6Hint* self, CEventFile* event) {
         CFileHandle* handle = self->mField88;
         data = handle->mData;
         handle->mData = 0;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         self->mField8C =
             (u32)(uintptr_t)CLibLayout::createArcResourceAccessor();
@@ -619,7 +619,7 @@ void CCol6Hint::cbRenderBefore() {
     // First two gates use the if-&&-goto-body / goto-end chain (bne end +
     // beq body/b end); the running/loaded checks are early returns; the
     // visibility check positively wraps the draw block.
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0 &&
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -704,7 +704,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane = reinterpret_cast<CCol6LayoutView*>(
         reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost))->mpRootPane;
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost));
     func_8013676C(rootPane,
                   reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
@@ -819,7 +819,7 @@ extern "C" void func_8015DD4C(CCol6Hint* self) {
 extern "C" void func_8015E0BC(CCol6Hint* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int sels, confirm, up2, down2, up, down;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         up      = (pad->mField04 >> 21) & 1;
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x2001) != 0;
@@ -1483,20 +1483,20 @@ body:
         mFieldA4 = 0x10;
         func_80135464(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);
-        func_80082008__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
+        isEffectReady__Q22cf13CfGameManagerFv(
             0, &mCamPos, &mCamLookAt, 0, lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x10:
         mFieldA4 = 0x11;
-        func_80082008__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(
             9, 0, (u32)(s32)mField180, mField184, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        isEffectReady__Q22cf13CfGameManagerFv(
             (u16)(s32)mField180, &mVec168, &mVec174, mField184,
             lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x11:
@@ -1505,23 +1505,23 @@ body:
         break;
 
     case 0x12:
-        if (func_80082104__Q22cf13CfGameManagerFv() != 0) break;
+        if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x13;
-        func_80082008__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
+        isEffectReady__Q22cf13CfGameManagerFv(
             0, &mVec188, &mVec194, 0, lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x13:
-        if (func_80082104__Q22cf13CfGameManagerFv() != 0) break;
+        if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x14;
-        func_80082008__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(
             9, 0, (u32)(s32)mField1B8, mField1BC, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        isEffectReady__Q22cf13CfGameManagerFv(
             (u16)(s32)mField1B8, &mVec1A0, &mVec1AC, mField1BC,
             lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x14:
@@ -1535,7 +1535,7 @@ body:
         mFieldA4 = 0xe;
         func_80135464(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);
-        func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
+        lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
         break;
 
     case 0x16:
@@ -1544,12 +1544,12 @@ body:
 
     case 0x17:
         mFieldA4 = 0x18;
-        func_80082008__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(
             9, 0, (u32)(s32)mField180, mField184, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        isEffectReady__Q22cf13CfGameManagerFv(
             (u16)(s32)mField180, &mVec168, &mVec174, mField184,
             lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x18:
@@ -1558,28 +1558,28 @@ body:
         break;
 
     case 0x19:
-        if (func_80082104__Q22cf13CfGameManagerFv() != 0) break;
+        if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x1a;
-        func_80082008__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
+        isEffectReady__Q22cf13CfGameManagerFv(
             0, &mVec188, &mVec194, 0, lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x1a:
-        if (func_80082104__Q22cf13CfGameManagerFv() != 0) break;
+        if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x1b;
-        func_80082008__Q22cf13CfGameManagerFv(
+        notifyBattleSystem__Q22cf13CfGameManagerFv(
             9, 0, (u32)(s32)mField1B8, mField1BC, 0);
-        func_80082088__Q22cf13CfGameManagerFv(
+        isEffectReady__Q22cf13CfGameManagerFv(
             (u16)(s32)mField1B8, &mVec1A0, &mVec1AC, mField1BC,
             lbl_eu_80667564);
-        func_80082060__Q22cf13CfGameManagerFv();
+        notifyCameraManager__Q22cf13CfGameManagerFv();
         break;
 
     case 0x1b:
         // Window-2 join banner for the current player count.
-        if (func_80082104__Q22cf13CfGameManagerFv() != 0) break;
+        if (isCameraReady__Q22cf13CfGameManagerFv() != 0) break;
         mFieldA4 = 0x20;
         {
             u8 cnt = (u8)func_8009CF8C(0x802);
@@ -1591,7 +1591,7 @@ body:
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             func_8022B9B4(&mSysWin2, buf.mString, 0);
             func_8022B8B8(&mSysWin2);
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         }
         break;
@@ -1606,7 +1606,7 @@ body:
             if (CSysWin_isActive(&mSysWin2) != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1635,7 +1635,7 @@ body:
             if (CSysWin_isActive(&mSysWin2) != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1662,7 +1662,7 @@ body:
             if (CSysWin_isActive(&mSysWin2) != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1747,7 +1747,7 @@ body:
             if (CSysWin_isActive(&mSysWin2) != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1771,7 +1771,7 @@ body:
             if (CSysWin_isActive(&mSysWin2) != 0) {
                 CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
                 u32 cond;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     cond = (pad->mPressedButtonFlags & 0x200000) != 0;
                 } else {
                     cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -1819,7 +1819,7 @@ extern "C" int func_80160118(CCol6System* self, CEventFile* event) {
         CFileHandle* handle = self->mFileHandle;
         data = handle->mData;
         handle->mData = 0;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         self->mArcAccessor = CLibLayout::createArcResourceAccessor();
         self->mArcAccessor->Attach(data, &pool[0x42]);
@@ -1910,7 +1910,7 @@ extern "C" void func_80160370(CCol6System* self) {
     // Bind the device font into the layout's root pane.
     nw4r::lyt::Pane* rootPane =
         reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane;
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mpLayout);
     func_8013676C(rootPane, reinterpret_cast<CCol6FontView*>(fontObj)->vf7());
 
@@ -2278,7 +2278,7 @@ extern "C" int func_80161024(CCol6System* self) {
 void func_80161178(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2405,7 +2405,7 @@ void func_80161178(CCol6System* self) {
 void func_8016169C(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2549,7 +2549,7 @@ void func_8016169C(CCol6System* self) {
 void func_80161C5C(CCol6System* self) {
     CCol6PadData* pad = (CCol6PadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int up, down, sels, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sels    = (pad->mField104 & 0x8004) != 0;
         confirm = (pad->mField104 & 0x10000) | (pad->mField104 & 0x8);
         up      = (pad->mField04 >> 21) & 1;
@@ -2642,7 +2642,7 @@ void func_80161C5C(CCol6System* self) {
 
 // func_80162000 - open the item box: bump the player count and the two
 // summary counters from the per-player table, seed the TaskLOD/audio slots
-// (v1/v2/v3 chains identical to func_8047BB54's own seeding), write the camera
+// (v1/v2/v3 chains identical to initMpfSystem's own seeding), write the camera
 /// vector block from the s16-keyed lookup, then refresh the layout labels
 // (0x10f/0x11d/0x2b6) and the item box for the current player.
 extern "C" void func_80162000(CCol6System* self) {
@@ -2660,178 +2660,178 @@ extern "C" void func_80162000(CCol6System* self) {
     func_8009D018(0x7fd, func_8009CF8C(0x7fd) + b);
 
     // Seed the TaskLOD/audio slots for this player's three id ranges.
-    UnkClass_80083298View* gm = func_80083298__Q22cf13CfGameManagerFv();
+    UnkClass_80083298View* gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v1 = (u8)(((s8)self->mPadA5[0] + 1) * 10 + f + 1);
-        func_80462D04__8CTaskLODFv(v1);
-        func_804BCC30(func_804BC9EC__Fv(), v1);
-        func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
+        activateLOD__8CTaskLODFv(v1);
+        func_804BCC30(getScnHandle__Fv(), v1);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v1);
 
         u8 v2 = (u8)(f + 0x3d);
-        func_80462D04__8CTaskLODFv(v2);
-        func_804BCC30(func_804BC9EC__Fv(), v2);
-        func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
+        activateLOD__8CTaskLODFv(v2);
+        func_804BCC30(getScnHandle__Fv(), v2);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v2);
 
         u8 v3 = (u8)(f + 0x47);
-        func_80462D5C__8CTaskLODFv(v3);
-        func_804BCC3C(func_804BC9EC__Fv(), v3);
-        func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
+        deactivateLOD__8CTaskLODFv(v3);
+        func_804BCC3C(getScnHandle__Fv(), v3);
+        forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, v3);
 
         if (v2 == 0x3d) {
-            func_80462D04__8CTaskLODFv(0x55);
-            func_804BCC30(func_804BC9EC__Fv(), 0x55);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
+            activateLOD__8CTaskLODFv(0x55);
+            func_804BCC30(getScnHandle__Fv(), 0x55);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
         if (v2 == 0x3e) {
-            func_80462D04__8CTaskLODFv(0x56);
-            func_804BCC30(func_804BC9EC__Fv(), 0x56);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
+            activateLOD__8CTaskLODFv(0x56);
+            func_804BCC30(getScnHandle__Fv(), 0x56);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x56);
         }
         if (v2 == 0x3d) {
-            func_80462D04__8CTaskLODFv(0x57);
-            func_804BCC30(func_804BC9EC__Fv(), 0x57);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
+            activateLOD__8CTaskLODFv(0x57);
+            func_804BCC30(getScnHandle__Fv(), 0x57);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
         if (v2 == 0x3d) {
-            func_80462D04__8CTaskLODFv(0x58);
-            func_804BCC30(func_804BC9EC__Fv(), 0x58);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
+            activateLOD__8CTaskLODFv(0x58);
+            func_804BCC30(getScnHandle__Fv(), 0x58);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
         if (func_8009CF8C(0x20) >= 0x16e) {
-            func_80462D04__8CTaskLODFv(0x59);
-            func_804BCC30(func_804BC9EC__Fv(), 0x59);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
+            activateLOD__8CTaskLODFv(0x59);
+            func_804BCC30(getScnHandle__Fv(), 0x59);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
             if (v1 == 0xe) {
-                func_80462D04__8CTaskLODFv(0x5a);
-                func_804BCC30(func_804BC9EC__Fv(), 0x5a);
-                func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5a);
+                activateLOD__8CTaskLODFv(0x5a);
+                func_804BCC30(getScnHandle__Fv(), 0x5a);
+                forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5a);
             }
         }
         if (v2 == 0x3d) {
-            func_80462D04__8CTaskLODFv(0x5b);
-            func_804BCC30(func_804BC9EC__Fv(), 0x5b);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
+            activateLOD__8CTaskLODFv(0x5b);
+            func_804BCC30(getScnHandle__Fv(), 0x5b);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
         if (v2 == 0x3d) {
-            func_80462D04__8CTaskLODFv(0x5c);
-            func_804BCC30(func_804BC9EC__Fv(), 0x5c);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
+            activateLOD__8CTaskLODFv(0x5c);
+            func_804BCC30(getScnHandle__Fv(), 0x5c);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
         if (v2 == 0x3e) {
-            func_80462D04__8CTaskLODFv(0x5d);
-            func_804BCC30(func_804BC9EC__Fv(), 0x5d);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
+            activateLOD__8CTaskLODFv(0x5d);
+            func_804BCC30(getScnHandle__Fv(), 0x5d);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
         if (v2 == 0x3f) {
-            func_80462D04__8CTaskLODFv(0x5e);
-            func_804BCC30(func_804BC9EC__Fv(), 0x5e);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
+            activateLOD__8CTaskLODFv(0x5e);
+            func_804BCC30(getScnHandle__Fv(), 0x5e);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
         if (v2 == 0x40) {
-            func_80462D04__8CTaskLODFv(0x5f);
-            func_804BCC30(func_804BC9EC__Fv(), 0x5f);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
+            activateLOD__8CTaskLODFv(0x5f);
+            func_804BCC30(getScnHandle__Fv(), 0x5f);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
         if (v2 == 0x40) {
-            func_80462D04__8CTaskLODFv(0x60);
-            func_804BCC30(func_804BC9EC__Fv(), 0x60);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
+            activateLOD__8CTaskLODFv(0x60);
+            func_804BCC30(getScnHandle__Fv(), 0x60);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
         if (v2 == 0x41) {
-            func_80462D04__8CTaskLODFv(0x61);
-            func_804BCC30(func_804BC9EC__Fv(), 0x61);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
+            activateLOD__8CTaskLODFv(0x61);
+            func_804BCC30(getScnHandle__Fv(), 0x61);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
         if (v2 == 0x41) {
-            func_80462D04__8CTaskLODFv(0x62);
-            func_804BCC30(func_804BC9EC__Fv(), 0x62);
-            func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
+            activateLOD__8CTaskLODFv(0x62);
+            func_804BCC30(getScnHandle__Fv(), 0x62);
+            forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
 
-        if (func_80462E1C__8CTaskLODFv(0x2d)) {
-            func_80462D5C__8CTaskLODFv(0x50);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x50);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
+        if (getLODData__8CTaskLODFv(0x2d)) {
+            deactivateLOD__8CTaskLODFv(0x50);
+            func_804BCC3C(getScnHandle__Fv(), 0x50);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x50);
         }
-        if (func_80462E1C__8CTaskLODFv(0xe)) {
-            func_80462D5C__8CTaskLODFv(0x51);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x51);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
+        if (getLODData__8CTaskLODFv(0xe)) {
+            deactivateLOD__8CTaskLODFv(0x51);
+            func_804BCC3C(getScnHandle__Fv(), 0x51);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x51);
         }
-        if (func_80462E1C__8CTaskLODFv(0x2a)) {
-            func_80462D5C__8CTaskLODFv(0x52);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x52);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
+        if (getLODData__8CTaskLODFv(0x2a)) {
+            deactivateLOD__8CTaskLODFv(0x52);
+            func_804BCC3C(getScnHandle__Fv(), 0x52);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x52);
         }
-        if (func_80462E1C__8CTaskLODFv(0x22)) {
-            func_80462D5C__8CTaskLODFv(0x53);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x53);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
+        if (getLODData__8CTaskLODFv(0x22)) {
+            deactivateLOD__8CTaskLODFv(0x53);
+            func_804BCC3C(getScnHandle__Fv(), 0x53);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x53);
         }
-        if (func_80462E1C__8CTaskLODFv(0x23)) {
-            func_80462D5C__8CTaskLODFv(0x54);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x54);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
+        if (getLODData__8CTaskLODFv(0x23)) {
+            deactivateLOD__8CTaskLODFv(0x54);
+            func_804BCC3C(getScnHandle__Fv(), 0x54);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x54);
         }
-        if (func_80462E1C__8CTaskLODFv(0x3e)) {
-            func_80462D5C__8CTaskLODFv(0x55);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x55);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
+        if (getLODData__8CTaskLODFv(0x3e)) {
+            deactivateLOD__8CTaskLODFv(0x55);
+            func_804BCC3C(getScnHandle__Fv(), 0x55);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x55);
         }
-        if (func_80462E1C__8CTaskLODFv(0x2d)) {
-            func_80462D5C__8CTaskLODFv(0x57);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x57);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
+        if (getLODData__8CTaskLODFv(0x2d)) {
+            deactivateLOD__8CTaskLODFv(0x57);
+            func_804BCC3C(getScnHandle__Fv(), 0x57);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x57);
         }
-        if (func_80462E1C__8CTaskLODFv(0x2d)) {
-            func_80462D5C__8CTaskLODFv(0x58);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x58);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
+        if (getLODData__8CTaskLODFv(0x2d)) {
+            deactivateLOD__8CTaskLODFv(0x58);
+            func_804BCC3C(getScnHandle__Fv(), 0x58);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x58);
         }
-        if (func_80462E1C__8CTaskLODFv(0xe)) {
-            func_80462D5C__8CTaskLODFv(0x59);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x59);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
+        if (getLODData__8CTaskLODFv(0xe)) {
+            deactivateLOD__8CTaskLODFv(0x59);
+            func_804BCC3C(getScnHandle__Fv(), 0x59);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x59);
         }
-        if (func_80462E1C__8CTaskLODFv(0xb)) {
-            func_80462D5C__8CTaskLODFv(0x5b);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x5b);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
+        if (getLODData__8CTaskLODFv(0xb)) {
+            deactivateLOD__8CTaskLODFv(0x5b);
+            func_804BCC3C(getScnHandle__Fv(), 0x5b);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5b);
         }
-        if (func_80462E1C__8CTaskLODFv(0x15)) {
-            func_80462D5C__8CTaskLODFv(0x5c);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x5c);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
+        if (getLODData__8CTaskLODFv(0x15)) {
+            deactivateLOD__8CTaskLODFv(0x5c);
+            func_804BCC3C(getScnHandle__Fv(), 0x5c);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5c);
         }
-        if (func_80462E1C__8CTaskLODFv(0xc)) {
-            func_80462D5C__8CTaskLODFv(0x5d);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x5d);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
+        if (getLODData__8CTaskLODFv(0xc)) {
+            deactivateLOD__8CTaskLODFv(0x5d);
+            func_804BCC3C(getScnHandle__Fv(), 0x5d);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5d);
         }
-        if (func_80462E1C__8CTaskLODFv(0xd)) {
-            func_80462D5C__8CTaskLODFv(0x5e);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x5e);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
+        if (getLODData__8CTaskLODFv(0xd)) {
+            deactivateLOD__8CTaskLODFv(0x5e);
+            func_804BCC3C(getScnHandle__Fv(), 0x5e);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5e);
         }
-        if (func_80462E1C__8CTaskLODFv(0xe)) {
-            func_80462D5C__8CTaskLODFv(0x5f);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x5f);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
+        if (getLODData__8CTaskLODFv(0xe)) {
+            deactivateLOD__8CTaskLODFv(0x5f);
+            func_804BCC3C(getScnHandle__Fv(), 0x5f);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x5f);
         }
-        if (func_80462E1C__8CTaskLODFv(0x2c)) {
-            func_80462D5C__8CTaskLODFv(0x60);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x60);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
+        if (getLODData__8CTaskLODFv(0x2c)) {
+            deactivateLOD__8CTaskLODFv(0x60);
+            func_804BCC3C(getScnHandle__Fv(), 0x60);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x60);
         }
-        if (func_80462E1C__8CTaskLODFv(0xf)) {
-            func_80462D5C__8CTaskLODFv(0x61);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x61);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
+        if (getLODData__8CTaskLODFv(0xf)) {
+            deactivateLOD__8CTaskLODFv(0x61);
+            func_804BCC3C(getScnHandle__Fv(), 0x61);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x61);
         }
-        if (func_80462E1C__8CTaskLODFv(0x19)) {
-            func_80462D5C__8CTaskLODFv(0x62);
-            func_804BCC3C(func_804BC9EC__Fv(), 0x62);
-            func_8047BD94__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
+        if (getLODData__8CTaskLODFv(0x19)) {
+            deactivateLOD__8CTaskLODFv(0x62);
+            func_804BCC3C(getScnHandle__Fv(), 0x62);
+            forwardMpfCallC__17UnkClass_8047BB54Fv(&gm->field_0xF0, 0x62);
         }
     }
 
@@ -2843,7 +2843,7 @@ extern "C" void func_80162000(CCol6System* self) {
     u16 d = func_8013606C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x36a], n);
     if (d != 0) func_8009D018(d + 0x220, 0xc8);
     u16 e = func_8013606C(&lbl_eu_80502050[0x334], &lbl_eu_80502050[0x376], n);
-    self->mFieldA2 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+    self->mFieldA2 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, e, 0, 0, lbl_eu_80667558);
 
     // Camera/vector block: every value is the s16 lookup result cast to float
@@ -2927,7 +2927,7 @@ extern "C" void func_80162000(CCol6System* self) {
 // count/name strings for the player index at +0xA5, format the banner, set
 // the window text, activate it and play the open sound.
 void func_80162C40(CCol6System* self) {
-    if (func_80082104__Q22cf13CfGameManagerFv() != 0) {
+    if (isCameraReady__Q22cf13CfGameManagerFv() != 0) {
         return;
     }
 
@@ -2951,7 +2951,7 @@ void func_80162C40(CCol6System* self) {
     func_8022B9B4(&self->mSysWin2, buf.mString, 0);
     func_8022BFC8(&self->mSysWin2, 1);
     func_8022B8B8(&self->mSysWin2);
-    func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
         1, 0x134, 0, 0, lbl_eu_80667558);
 }
 
@@ -2971,20 +2971,20 @@ void func_80162DB4(CCol6System* self) {
     self->mFieldA4 = 0x17;
     f32 vol = lbl_eu_80667578;
     func_80135464(2, 0, vol, vol, vol);
-    func_80082008__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
-    func_80082088__Q22cf13CfGameManagerFv(
+    notifyBattleSystem__Q22cf13CfGameManagerFv(9, 0, 0, 0, 0);
+    isEffectReady__Q22cf13CfGameManagerFv(
         0, &self->mCamPos, &self->mCamLookAt, 0, lbl_eu_80667564);
-    func_80082060__Q22cf13CfGameManagerFv();
+    notifyCameraManager__Q22cf13CfGameManagerFv();
 
     UnkClass_80083298View* gm;
     u8 count = (u8)func_8009CF8C(0x802);
     s32 n = (s32)count + 0x14;
-    gm = func_80083298__Q22cf13CfGameManagerFv();
+    gm = getGameSubManager__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         u8 v = (u8)(count + 0x32);
-        func_80462D04__8CTaskLODFv(v);
-        func_804BCC30(func_804BC9EC__Fv(), v);
-        func_8047BD8C__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
+        activateLOD__8CTaskLODFv(v);
+        func_804BCC30(getScnHandle__Fv(), v);
+        forwardMpfCallB__17UnkClass_8047BB54Fv(&gm->field_0xF0, v);
     }
 
     u8 a = func_8013600C(
@@ -3009,7 +3009,7 @@ extern "C" void func_80162EF8(CCol6System* self) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -3111,7 +3111,7 @@ extern "C" void func_80162EF8(CCol6System* self) {
             buf.format(&lbl_eu_80502050[0xb5], s1, s2);
             func_8022B9B4(&self->mSysWin2, buf.mString, 0);
             func_8022B8B8(&self->mSysWin2);
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         } else {
             // Per-slot threshold scan (same shape as CCol6Invite::Move).
@@ -3188,7 +3188,7 @@ void func_80163614(CCol6System* self) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -3226,7 +3226,7 @@ void func_80163614(CCol6System* self) {
             buf.format(&lbl_eu_80502050[0xb5], s76, s77);
             func_8022B9B4(&self->mSysWin2, buf.mString, 0);
             func_8022B8B8(&self->mSysWin2);
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                 1, 0x134, 0, 0, lbl_eu_80667558);
         }
     }
@@ -3241,7 +3241,7 @@ void func_8016378C(CCol6System* self) {
         if (CSysWin_isActive(&self->mSysWin2) != 0) {
             CCol6Pad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
             u32 cond;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 cond = (pad->mPressedButtonFlags & 0x200000) != 0;
             } else {
                 cond = (pad->mPressedButtonFlags & 0x10) != 0;
@@ -3299,7 +3299,7 @@ void func_801638C0(CCol6System* self) {
         buf.format(&lbl_eu_80502050[0xb5], s1, s2);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
         func_8022B8B8(&self->mSysWin2);
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }
@@ -3386,7 +3386,7 @@ void func_80163AF4(CCol6System* self) {
         buf.format(&lbl_eu_80502050[0xb5], s76, s77);
         func_8022B9B4(&self->mSysWin2, buf.mString, 0);
         func_8022B8B8(&self->mSysWin2);
-        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+        playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, 0x134, 0, 0, lbl_eu_80667558);
         return;
     }

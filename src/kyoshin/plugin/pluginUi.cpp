@@ -403,10 +403,10 @@ int save() {
 int kizunaTalkStart() {
     extern void func_8013BDBC();
     extern u32 lbl_eu_80663E28;
-    extern void func_8007D7A4__Q22cf13CfGameManagerFv();
+    extern void prepareTextBuffer__Q22cf13CfGameManagerFv();
     func_8013BDBC();
     lbl_eu_80663E28 |= 0x1000;
-    func_8007D7A4__Q22cf13CfGameManagerFv();
+    prepareTextBuffer__Q22cf13CfGameManagerFv();
     return 0;
 }
 // Retail C callee (code80135FDC split unit), extern "C" at file scope (MWCC

@@ -18,13 +18,13 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
-#include "kyoshin/cf/object/CfObjectMove.hpp" // func_800829B8__Q22cf13CfGameManagerFv
+#include "kyoshin/cf/object/CfObjectMove.hpp" // isSceneLoading__Q22cf13CfGameManagerFv
 #include "kyoshin/cf/chain/CChainActorList.hpp" // lbl_eu_80538338
 #include "kyoshin/cf/chain/CChain.hpp" // extern-C func_80107C54 (retail-unmangled)
 #include <math.h>
 
 // Offset-typed view of cf::CBattleManager for the chain-start gates (the full
-// class header drags in a conflicting func_801BFC38 declaration chain).
+// class header drags in a conflicting playActorSound declaration chain).
 // Byte phase counter at 0x1AA (head of the embedded CChain), sudden-commu
 // sub-object at 0x216C.
 namespace cf {
@@ -84,7 +84,7 @@ extern "C" void func_8027D1A4(cf::CChainState* self) {
 // resets the chain when any died, otherwise advances the state machine and
 // drives the chain wave effect.
 void func_8027D20C(cf::CChainState* self) {
-    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
+    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
     if (self->field_0 == 0) return;
 
     int changed = 0;
@@ -108,7 +108,7 @@ void func_8027D20C(cf::CChainState* self) {
         self->field_10 = 0;
         self->field_14 = 0;
     }
-    if (func_800B708C((int)self->field_C) == 0) {
+    if (findObjectById((int)self->field_C) == 0) {
         self->field_C = 0;
         changed = 1;
     }
@@ -258,7 +258,7 @@ void func_8027D478(cf::CChainState* self, cf::CChainBattleObj* obj) {
 extern "C" void func_8027D8C4(cf::CChainState* self) {
     int st = 0;
     cf::CChainBattleObj* voice =
-        (cf::CChainBattleObj*)func_8016FE34(func_800B708C((int)self->field_C));
+        (cf::CChainBattleObj*)func_8016FE34(findObjectById((int)self->field_C));
     if (voice == 0) st = 1;
     else if (voice->v173() != 0) st = 1;
     else if (self->field_4->v173() != 0) st = 1;
@@ -267,7 +267,7 @@ extern "C" void func_8027D8C4(cf::CChainState* self) {
     else st = (func_8027E200(self, self->field_8, 0) == 0);
     if (st != 0) self->field_0 = 3;
 
-    func_80082A0C__Q22cf13CfGameManagerFv();
+    resetBattleGauge__Q22cf13CfGameManagerFv();
 
     cf::CChainBattleObj* o1 = self->field_4;
     u32 id1 = *(u32*)o1->field_04->f30();
@@ -358,7 +358,7 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
             int actorId = (int)self->field_C;
             cf::CChainBattleObj* target = self->field_8;
             cf::CChainBattleObj* voice =
-                (cf::CChainBattleObj*)func_8016FE34(func_800B708C(actorId));
+                (cf::CChainBattleObj*)func_8016FE34(findObjectById(actorId));
             f32 distSq;
             if (voice == 0) {
                 distSq = lbl_eu_80668AC4;
@@ -393,11 +393,11 @@ extern "C" void func_8027DB74(cf::CChainState* self, int val) {
         }
     }
     if (val != 0) {
-        func_80082A7C__Q22cf13CfGameManagerFv(self->field_8 ? &self->field_8->mSub : 0);
+        syncBattleState__Q22cf13CfGameManagerFv(self->field_8 ? &self->field_8->mSub : 0);
         CMenuArtsSelect_setDisabled();
         func_801043BC();
     } else {
-        func_80082B38__Q22cf13CfGameManagerFv();
+        processFieldEffects__Q22cf13CfGameManagerFv();
         CMenuArtsSelect_setDisabled();
     }
 }

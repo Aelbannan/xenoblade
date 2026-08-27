@@ -77,7 +77,7 @@ extern "C" CMenuPlayAward* __dt__14CMenuPlayAwardFv(CMenuPlayAward* _this, int f
 // and copying its body into the embedded storage, then register this screen
 // as a render callback on the owning scene (same pattern as CMenuCollepedia).
 void CMenuPlayAward::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the background CBgTex via a temporary ---
     u8 tempBgTex[0x20];
@@ -217,12 +217,12 @@ void CMenuPlayAward::Term() {
     func_80270E64(&mPlayAwardList);
 
     lbl_eu_806648A0 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuPlayAward::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard (same shape as cbRenderBefore / CMenuTutorialList):
@@ -239,7 +239,7 @@ body:
     // help-display byte (0x1160) leaves the phase dispatch.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -276,7 +276,7 @@ body:
 
 void CMenuPlayAward::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard (same shape as CMenuTutorialList::cbRenderBefore):
@@ -357,7 +357,7 @@ void func_80270454(CMenuPlayAward* self) {
     // words inside each branch). Same shape as CMenuOption's input handler.
     bool up, down, pageUp, pageDown;
     bool left, right, pageLeft;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;   // +0x104
         u32 pressed = pad->mPadPressedFlags;       // +0x04
         up = (turbo & 0x8004) != 0;
@@ -1009,7 +1009,7 @@ void func_802717F8(CPlayAwardList* self) {
     char* s5;
     char* s4 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
     s5 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
-    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050E7C0[0xd7]
                           : &lbl_eu_8050E7C0[0xe0];
     u16 msgId = func_8013606C(&lbl_eu_8050E7C0[0xc4], sel, 0x3a);
@@ -1089,7 +1089,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
 
         // Detach the loaded file buffer and hand it to the layout accessor.
         void* fileData = mFileHandle->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         // Allocate the tag processor (0x858 bytes, layout memory pool).
         void* tagProc = allocate__Q23mtl10MemManagerFUlUl(
@@ -1112,7 +1112,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         // Bind the shared font into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout20->GetRootPane();
         CPlayAwardFontObj* fontObj = (CPlayAwardFontObj*)
-            func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20);
+            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20);
         u32 fontResult = fontObj->getFontHandle();
         func_8013676C(rootPane, fontResult);
 

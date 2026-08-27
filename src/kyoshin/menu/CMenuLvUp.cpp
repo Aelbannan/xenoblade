@@ -106,12 +106,12 @@ void CMenuLvUp::Term() {
 // three entry states.
 // ---------------------------------------------------------------------------
 void CMenuLvUp::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50()) return;
     if (lbl_eu_80663E24 & 0xbfe40000) return;
-    if (func_800829B8__Q22cf13CfGameManagerFv()) return;
+    if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
 
     if (mField11C != 0) {
         f32 resetFrame = lbl_eu_80668A00;
@@ -160,12 +160,12 @@ void CMenuLvUp::Move() {
 // destructor is not virtual-dispatched; same scheme as CSystemWindow).
 // ---------------------------------------------------------------------------
 void CMenuLvUp::cbRenderBefore() {
-    if (CTaskGame::getInstance()->func_800426F0() ||
+    if (CTaskGame::getInstance()->isFlag01Set() ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50()) return;
     if (lbl_eu_80663E24 & 0xbfe40000) return;
-    if (func_800829B8__Q22cf13CfGameManagerFv()) return;
+    if (isSceneLoading__Q22cf13CfGameManagerFv()) return;
     if (mField11C == 0) return;
 
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
@@ -441,7 +441,7 @@ void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     screen.y = v;
     screen.z = v;
 
-    MenuLvUpActor* actor = func_800B708C((int)entry->field_0x10);
+    MenuLvUpActor* actor = findObjectById((int)entry->field_0x10);
     if (actor != 0) {
         const nw4r::math::VEC3* src;
         MenuLvUpObjPos* anchor = actor->vfn12C(0x64);
@@ -488,13 +488,13 @@ void func_802768E0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
 
 // ---------------------------------------------------------------------------
 // Per-entry teardown: if the entry's actor id resolves to a live action
-// source (func_800B708C) whose bit 1 is set, leave the entry alone; otherwise
+// source (findObjectById) whose bit 1 is set, leave the entry alone; otherwise
 // clear the id, drop the root panes' visible flag bit, and wipe the state
 // bytes.
 // ---------------------------------------------------------------------------
 extern "C" void func_80276B14(CMenuLvUp* self, CMenuLvUpEntry* entry) {
     if (entry->field_0x10 != 0) {
-        MenuLvUpActor* src = func_800B708C((int)entry->field_0x10);
+        MenuLvUpActor* src = findObjectById((int)entry->field_0x10);
         if (src != 0 && (src->field_0x64 & 2)) {
             return;
         }

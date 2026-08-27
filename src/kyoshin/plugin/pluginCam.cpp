@@ -49,15 +49,15 @@ public:
 };
 
 extern "C" {
-UnkCamIntf* func_800821F8__Q22cf13CfGameManagerFv();
-void func_80085878__Q22cf13CfGameManagerFv();
-void func_80082060__Q22cf13CfGameManagerFv();
-int func_80082104__Q22cf13CfGameManagerFv();
-void func_8008212C__Q22cf13CfGameManagerFv(u32 mode);
-void func_80081E90__Q22cf13CfGameManagerFv(u32 third, u32 fourth, u32 seventh);
-u32 func_80082008__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
+UnkCamIntf* getCameraDataBlock__Q22cf13CfGameManagerFv();
+void cleanupMapEffects__Q22cf13CfGameManagerFv();
+void notifyCameraManager__Q22cf13CfGameManagerFv();
+int isCameraReady__Q22cf13CfGameManagerFv();
+void getCamManagerData__Q22cf13CfGameManagerFv(u32 mode);
+void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 third, u32 fourth, u32 seventh);
+u32 notifyBattleSystem__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                           u32 fourth, u32 fifth);
-void func_80082088__Q22cf13CfGameManagerFv(u32 first, ml::CVec3* pos,
+void isEffectReady__Q22cf13CfGameManagerFv(u32 first, ml::CVec3* pos,
                                            ml::CVec3* lookat, u32 extra, f32 seventh);
 void func_8007B044(void* data, int flag);
 void func_8007B078(s32 val);
@@ -92,7 +92,7 @@ static inline f32 s32ToF32(s32 v) {
 
 extern "C" int select(VMThread* pThread) {
     s32 mode = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    func_8008212C__Q22cf13CfGameManagerFv(mode);
+    getCamManagerData__Q22cf13CfGameManagerFv(mode);
     return 0;
 }
 
@@ -121,7 +121,7 @@ extern "C" int restore(VMThread* pThread) {
     }
 
     // Retinal bool args: neg/or/srwi booleanize of each value (nonzero -> 1).
-    func_80081E90__Q22cf13CfGameManagerFv(
+    lookupEffectForResource__Q22cf13CfGameManagerFv(
         (u32)(-cameraId | cameraId) >> 31,
         (u32)(-transitionTime | transitionTime) >> 31,
         0);
@@ -138,9 +138,9 @@ extern "C" int setPos(VMThread* pThread) {
     pos.y = (f32)fixedY / lbl_eu_80666168;
     pos.z = (f32)fixedZ / lbl_eu_80666168;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x14(&pos);
-    func_80085878__Q22cf13CfGameManagerFv();
+    cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -154,7 +154,7 @@ extern "C" int setLookat(VMThread* pThread) {
     lookat.y = (f32)fixedY / lbl_eu_80666168;
     lookat.z = (f32)fixedZ / lbl_eu_80666168;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x64(&lookat);
     func_8016FD84(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
@@ -170,9 +170,9 @@ extern "C" int setDir(VMThread* pThread) {
     dir.y = (f32)fixedDist / lbl_eu_80666168 * deg;
     dir.z = lbl_eu_80666178;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x4C(&dir);
-    func_80085878__Q22cf13CfGameManagerFv();
+    cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -181,7 +181,7 @@ extern "C" int setRotX(VMThread* pThread) {
     f32 value = fixedToFloat(fixedAngle);
     f32 rotX = value * lbl_eu_8066A210;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x50(rotX);
     return 0;
 }
@@ -191,7 +191,7 @@ extern "C" int setRotY(VMThread* pThread) {
     f32 value = fixedToFloat(fixedAngle);
     f32 rotY = value * lbl_eu_8066A210;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x54(rotY);
     return 0;
 }
@@ -199,7 +199,7 @@ extern "C" int setRotY(VMThread* pThread) {
 extern "C" int setFov(VMThread* pThread) {
     s32 fixedFov = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x3C(fixedToFloat(fixedFov));
     return 0;
 }
@@ -207,9 +207,9 @@ extern "C" int setFov(VMThread* pThread) {
 extern "C" int setTarget(VMThread* pThread) {
     CamOCHandle* oc = (CamOCHandle*)vmArgOCGet(2, vmArgPtrGet(pThread, 1));
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     cam->vfunc_0x5C(oc->field_0x04);
-    func_80085878__Q22cf13CfGameManagerFv();
+    cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -231,7 +231,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
     pos.y = (f32)fixedY / lbl_eu_80666168;
     pos.z = (f32)fixedZ / lbl_eu_80666168;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0();
     void* slot = func_801864DC(obj, oc->field_0x04);
     cam->vfunc_0x68(slot, &pos, -flags);
@@ -256,7 +256,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     lookat.y = (f32)fixedY / lbl_eu_80666168;
     lookat.z = (f32)fixedZ / lbl_eu_80666168;
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0();
     void* slot = func_801864DC(obj, oc->field_0x04);
     cam->vfunc_0x6C(slot, &lookat, -flags);
@@ -267,7 +267,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
 extern "C" int getPos(VMThread* pThread) {
     s32 index = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     CamStateObj* camObj = cam->objPtr;
 
     VMArg ret;
@@ -290,7 +290,7 @@ extern "C" int getPos(VMThread* pThread) {
 extern "C" int getRot(VMThread* pThread) {
     s32 index = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
 
-    UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     CamStateObj* camObj = cam->objPtr;
 
     VMArg ret;
@@ -351,13 +351,13 @@ extern "C" int keyBegin(VMThread* pThread) {
         ocId = (u32)func_801864DC(func_801862C0(), oc->field_0x04);
     }
 
-    func_80082008__Q22cf13CfGameManagerFv(
+    notifyBattleSystem__Q22cf13CfGameManagerFv(
         first, second, third, (u32)fourth & 0xFFFF, ocId);
     return 0;
 }
 
 extern "C" int keyEnd(VMThread* pThread) {
-    func_80082060__Q22cf13CfGameManagerFv();
+    notifyCameraManager__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -414,7 +414,7 @@ extern "C" int keyAdd(VMThread* pThread) {
     cam.lookat.y = (f32)fixed5 / lbl_eu_80666168;
     cam.lookat.z = (f32)fixed6 / lbl_eu_80666168;
 
-    func_80082088__Q22cf13CfGameManagerFv(
+    isEffectReady__Q22cf13CfGameManagerFv(
         (u32)first & 0xFFFF, &cam.pos, &cam.lookat, extraArg,
         (f32)seventh / lbl_eu_80666168);
     return 0;
@@ -425,13 +425,13 @@ extern "C" int isKeyMove(VMThread* pThread) {
     // is moving, VM_TYPE_FALSE (2) otherwise. `!x + 1` reproduces the
     // branchless cntlzw/srwi/addi idiom.
     VMArg ret;
-    ret.type = !func_80082104__Q22cf13CfGameManagerFv() + 1;
+    ret.type = !isCameraReady__Q22cf13CfGameManagerFv() + 1;
     vmRetValSet(pThread, &ret);
     return 1;
 }
 
 extern "C" int waitKeyMove(VMThread* pThread) {
-    if (func_80082104__Q22cf13CfGameManagerFv()) {
+    if (isCameraReady__Q22cf13CfGameManagerFv()) {
         vmWaitModeSet(pThread);
     }
     return 0;

@@ -153,7 +153,7 @@ public:
     u8 mAnimFrame;                        // 0x31
 };
 
-// Opaque view of the func_800B708C(id) actor object (the real class lives in
+// Opaque view of the findObjectById(id) actor object (the real class lives in
 // the retail module that owns it). The two dispatched virtuals sit at +0xac
 // (slot 43) and +0x12c (slot 75): declaring them as real virtuals makes MWCC
 // emit the retail dispatch shape (`lwz r12,0(r3); lwz r12,slot(r12)`); a
@@ -257,7 +257,7 @@ struct CMenuBattleDamageObjPos {
 struct CMenuBattleDamagePose;
 
 // Cast-only mirror of the font object returned by
-// func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout. With RTTI on, MWCC
+// getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout. With RTTI on, MWCC
 // places two hidden slots before the first declared virtual, so the 8th
 // declared virtual sits at vtable offset 0x24 and yields the u32 bound into
 // the layout's font pane. Never instantiated (no ctor -> no vtable emitted).
@@ -316,7 +316,7 @@ void func_8013676C(void*, u32);
 // reads the low byte), so the declaration must not force a u32->u8 mask.
 void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
                                               u32);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 CMenuBattleDamagePose* func_80496264(CScn* scene, int index);
 void func_8049B59C(nw4r::math::VEC3* out, CMenuBattleDamagePose* pose,
@@ -332,7 +332,7 @@ const char* func_eu_802B145C();
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
 void func_80138078(u32 op);  // func_80138078__FUl
 u32 func_801355A0();        // func_801355A0__Fv
-CMenuBattleDamageActor* func_800B708C(int id);  // func_800B708C__Fi
+CMenuBattleDamageActor* findObjectById(int id);  // findObjectById__Fi
 u32 func_80137444(nw4r::lyt::AnimTransform*, float); // func_80137444__FPQ34nw4r3lyt13AnimTransformf
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
                    const char*);

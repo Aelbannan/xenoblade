@@ -291,10 +291,10 @@ extern "C" void __dl__FPv(void* object);
 extern "C" void func_80484E10(void* self, u32 a, u32 b);
 // Registers the caller with the effect chain (defined in CfObjectEff.cpp;
 // called by CfObject_UnkVirtualFunc6).
-extern "C" void func_800AD4B0(void* self);
-extern "C" void func_800AD5EC(void* arg0, void* arg1);
+extern "C" void notifyDetach_(void* self);
+extern "C" void reattachTrg__(void* arg0, void* arg1);
 // Effect reattachment helper (defined in CfObjectEff.cpp). C linkage keeps
 // the call-site reloc at the plain retail name (a C++ declaration makes
 // MWCC emit the mangled __FPUc reference).
-extern "C" void func_800AD558(u8* arg);
+extern "C" void detachTrgPrt_(u8* arg);
 

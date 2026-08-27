@@ -101,7 +101,7 @@ void CSystemWindow::Init() {
     u32 w = lbl_eu_80663E24;
     mFlag2B6 = (w >> 30) & 1;
     if (mFlag2B6 == 0)
-        func_8008294C__Q22cf13CfGameManagerFv(true);
+        setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
@@ -150,14 +150,14 @@ void CSystemWindow::Term() {
     mScene->removeRenderCB(render);
 
     if (mFlag2B6 == 0)
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
 }
 
 void CSystemWindow::Move() {
     // Bail out if the task is busy or the global render flag is set.
     // (single OR so MWCC emits short-circuit branches: A -> bne exit,
     //  B -> beq continue / b exit)
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -182,7 +182,7 @@ void CSystemWindow::Move() {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         int confirmBtn;
         // In co-op, the player-specific button (Classic A); otherwise Wiimote A.
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
             confirmBtn = (pad->mPressedButtonFlags >> 21) & 1;
         else
             confirmBtn = (pad->mPressedButtonFlags >> 4) & 1;
@@ -208,7 +208,7 @@ void CSystemWindow::Move() {
 
 void CSystemWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;

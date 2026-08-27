@@ -129,9 +129,9 @@ struct MPFDrawDisplayListLayout {
     u32 flags;                // +0x38
 };
 
-// Draw-data chain handed to func_8047958C / func_804795A4 (retail r4).  The
+// Draw-data chain handed to setPlainDrawNode / setColorDrawNode (retail r4).  The
 // pointer is stored at self+0x04 and forwarded to the sibling draw walkers
-// (func_804795BC / func_804796F0) when the chain carries data.
+// (func_804795BC / drawColoredList) when the chain carries data.
 struct MPFDrawNode {
     u32 field_0x0;            // +0x00 arena offset of the batch data
     u32 field_0x4;            // +0x04 non-zero when the chain has draw data
@@ -150,7 +150,7 @@ struct MPFDrawNode {
     f32 field_0x38;           // +0x38 bounds max Z
 };
 
-// Global slot chain (head at lbl_eu_80665870) browsed by func_80475238.  The
+// Global slot chain (head at lbl_eu_80665870) browsed by allocateDrawSlot.  The
 // key at +0x00 is an arena offset expressed in 16-byte units with a 0x2c
 // base; +0x0e bit 1 marks a slot as occupied.
 struct MPFDrawSlot {
@@ -266,8 +266,8 @@ struct MPFBillMtx {
     u8 gap84[0x30];           // +0x84
 };
 
-// Layout used by the draw-list management functions (func_8047958C,
-// func_804795A4, func_80475238, func_80478BDC).  Kept separate from
+// Layout used by the draw-list management functions (setPlainDrawNode,
+// setColorDrawNode, allocateDrawSlot, checkProbeRange).  Kept separate from
 // MPFDrawDisplayListLayout because those functions read +0x04/+0x0e/+0x14 as
 // pointer/flag/vector fields rather than the map-walk layout.
 struct MPFDrawMgrLayout {
@@ -281,13 +281,13 @@ struct MPFDrawMgrLayout {
     MPFDrawSlot* field_0x54;  // +0x54 best-fit insertion slot
 };
 
-// self layout for func_80474FB0: only the +0x3c gate field is read.
+// self layout for updateSlotChain: only the +0x3c gate field is read.
 struct MPFDrawGateLayout {
     u8 gap00[0x3c];           // +0x00
     u32 field_0x3c;           // +0x3c
 };
 
-// Draw-list buffer header used by func_804752EC.  Slots (0x2c bytes each)
+// Draw-list buffer header used by createSlotFromPool.  Slots (0x2c bytes each)
 // are carved out of the buffer at 16-byte-unit offsets past the header.
 struct MPFDrawListHdr {
     u32 field_0x0;            // +0x00 free-space / arena offset
@@ -407,15 +407,15 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523DB8[0x10] = {
 
 // [.data] 0x8056DBA0-0x8056DBC0 (0x20 = 32B): prototype instance vtables.
 namespace MPFDrawBlob {
-extern "C" void func_80479840__Q26mpfsys18MPFDrawDisplayListFv();
-extern "C" void func_8047983C__Q26mpfsys18MPFDrawDisplayListFv();
+extern "C" void deallocate__Q26mpfsys18MPFDrawDisplayListFv();
+extern "C" void destroy__Q26mpfsys18MPFDrawDisplayListFv();
 }
 extern "C" u32 lbl_eu_80663868[2];  // .sdata RTTI locators (defined below)
 extern "C" u32 lbl_eu_80663870[2];
 extern "C" u32 lbl_eu_8056DBA0[4] = {
     (u32)&lbl_eu_80663868, 0x00000000,
-    (u32)&MPFDrawBlob::func_80479840__Q26mpfsys18MPFDrawDisplayListFv,
-    (u32)&MPFDrawBlob::func_8047983C__Q26mpfsys18MPFDrawDisplayListFv,
+    (u32)&MPFDrawBlob::deallocate__Q26mpfsys18MPFDrawDisplayListFv,
+    (u32)&MPFDrawBlob::destroy__Q26mpfsys18MPFDrawDisplayListFv,
 };
 extern "C" u32 lbl_eu_8056DBB0[4] = {
     (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
@@ -457,9 +457,9 @@ MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
     return (MPFDrawDisplayList*)&lbl_eu_80658488;
 }
 
-void MPFDrawDisplayList::func_8047983C() {}
+void MPFDrawDisplayList::destroy() {}
 
-void MPFDrawDisplayList::func_80479840() {}
+void MPFDrawDisplayList::deallocate() {}
 
 } // namespace mpfsys
 
@@ -500,21 +500,21 @@ extern const f32 lbl_eu_8066A844;  // billboard probe color scale
 // Retail mangles them as Fv/Fif members but they are invoked with the
 // arguments below (see the sibling MPFDrawBillLayTex / MPFDrawMdlColor
 // units).
-void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(s16 texIdx, f32 texScale);
-void* func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(mpfsys::UnkClass_80471EC8* self, u8 layer);
+void bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(s16 texIdx, f32 texScale);
+void* getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc(mpfsys::UnkClass_80471EC8* self, u8 layer);
 void* func_804B5A68(void);
-void func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(u8 texMapId);
-void func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv(void);
-void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void setupGfxMode5__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(u8 texMapId);
+void resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void disableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
+void enableZMode__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 // Sibling draw walkers (retail Fv names; called with the node chain in r4).
 void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
-void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
+void drawColoredList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
 
 // Per-item draw helpers (retail Fv names; still stubs - called from
 // func_80477F80 with the item index / scale values below).
@@ -526,14 +526,14 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // Height/color walker + position advance (defined below in this unit).
 bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e);
 bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self);
-MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2);
+MPFDrawSlot* allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2);
 bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell);
-void func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr);
+void createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr);
 
-// func_8047509C: collect the in-use, non-empty slots from the global chain
+// collectActiveSlots: collect the in-use, non-empty slots from the global chain
 // into 16 buckets keyed by slot->field_0xc, then splice the buckets into a
 // single list whose head is stored at self+0x58.
-void func_8047509C__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+void collectActiveSlots__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawListLayout* d = (MPFDrawListLayout*)self;
     MPFDrawSlot* buckets[16];
     MPFDrawSlot* tails[16];
@@ -684,13 +684,13 @@ bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     if ((u32)d->field_0x50->field_0x2a <= (u32)d->field_0x50->field_0x28) {
         // Slot exhausted: grow the buffer chain, then claim a fresh slot
         // carrying over the color, dimensions and height of the filled one.
-        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+        createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
         height = d->field_0x50->field_0x24;
         // Reuses `off` (dead after the jitter block) to hold the carried
         // slot color across the allocation call - this is what pins it to
         // the same saved register (r29) as retail.
         off = d->field_0x50->field_0xc;
-        MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+        MPFDrawSlot* slot = allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(
             self, 0x20, off, d->field_0x50->field_0xd + 1, d->field_0x50->field_0x10,
             d->field_0x50->field_0x12, d->field_0x50->field_0x14, d->field_0x50->field_0x1c);
         d->field_0x50 = slot;
@@ -716,9 +716,9 @@ bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     return false;
 }
 
-// func_8047958C: attach a node chain and hand it to the plain draw walker
+// setPlainDrawNode: attach a node chain and hand it to the plain draw walker
 // when the chain carries data.
-void func_8047958C__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     d->field_0x4 = node;
     if (node->field_0x4 != 0) {
@@ -726,19 +726,19 @@ void func_8047958C__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 }
 
-// func_804795A4: same as func_8047958C but for the colored draw walker.
-void func_804795A4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+// setColorDrawNode: same as setPlainDrawNode but for the colored draw walker.
+void setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     d->field_0x4 = node;
     if (node->field_0x4 != 0) {
-        func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(self, node);
+        drawColoredList__Q26mpfsys18MPFDrawDisplayListFv(self, node);
     }
 }
 
-// func_80475238: scan the global slot chain for a free slot at/after the
+// allocateDrawSlot: scan the global slot chain for a free slot at/after the
 // given 16-byte-unit position and fill it; otherwise record the best-fit
 // insertion slot in self+0x54 and report failure.
-MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2) {
+MPFDrawSlot* allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, s32 v1, s32 v2, u16 v3, u16 v4, f32 f1, f32 f2) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     u32 key;
     MPFDrawSlot* best;
@@ -776,10 +776,10 @@ MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDispl
     return 0;
 }
 
-// func_80478BDC: probe test - is the probe vector (self+0x14) still inside
+// checkProbeRange: probe test - is the probe vector (self+0x14) still inside
 // the moving display range?  The VEC3Sub inline lowers to paired-single
 // psq_l/ps_sub/psq_st so the x/z deltas are computed in one pass.
-bool func_80478BDC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+bool checkProbeRange__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
     MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
     ml::CVec3 diff;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&d->field_0x14,
@@ -1001,11 +1001,11 @@ check_i:
     return true;
 }
 
-// func_804752EC: allocate a 0x2c-byte slot from the draw-list buffer when at
+// createSlotFromPool: allocate a 0x2c-byte slot from the draw-list buffer when at
 // least 0x12c bytes remain, prepend it to the buffer's chain, then set the
 // buffer's flag byte from the shared state global (bit 2 -> 0x20, bit 3 ->
 // 0x40, base 2).
-void func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr) {
+void createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr) {
     u32 off = (hdr->field_0x28 << 4) + 0x2c;
     if (hdr->field_0x0 >= off + 0x12c) {
         MPFDrawSlot* node = (MPFDrawSlot*)((u8*)hdr + off);
@@ -1027,11 +1027,11 @@ void func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 }
 
-// func_80474FB0: walk the global slot chain (lbl_eu_80665870).  Slots marked
+// updateSlotChain: walk the global slot chain (lbl_eu_80665870).  Slots marked
 // in-use (bit 0) are freed unless bit 3 is set or the self+0x3c gate is open
 // (then the slot key is merged into the previous slot); free slots are
 // re-marked in-use, with the bit-2 transition gated on the mask argument.
-void func_80474FB0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 mask) {
+void updateSlotChain__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 mask) {
     MPFDrawGateLayout* g = (MPFDrawGateLayout*)self;
     MPFDrawSlot* slot = lbl_eu_80665870;
     MPFDrawSlot* prev = 0;
@@ -1142,9 +1142,9 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
     if (count == 0) return;
 
-    func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
+    setupGfxMode5__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
+    disableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
 
     off = 0;
     entry = entries;
@@ -1153,13 +1153,13 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         clrOff = posOff + 0xbe0;
         if (!(entry->field_0x2 & 2)) {
             // The per-item data address is recomputed at every use (matches retail).
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(
                 dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
             if (dataBase[entry->field_0x0].field_0x10 & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
             GXSetArray(GX_VA_POS, (u8*)entries + posOff, 12);
             GXSetArray(GX_VA_CLR0, (u8*)entries + clrOff, 3);
@@ -1170,13 +1170,13 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 }
 
-// func_804796F0: draw the vertex-colored display list.  Same walk as
+// drawColoredList: draw the vertex-colored display list.  Same walk as
 // func_804795BC but for entries with bit 1 set, with the color TEV alpha
 // inputs reconfigured up front.
 //
 // Declaration order drives MWCC's preserved-register assignment (first
 // declared takes the highest GPR); retail map is off=r31 .. entry=r24.
-void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
+void drawColoredList__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node) {
     s32 flags;
     MPFDrawCfg* cfg = (MPFDrawCfg*)lbl_eu_80665874;
     MPFDrawNode* chain = ((MPFDrawMgrLayout*)self)->field_0x4;
@@ -1202,9 +1202,9 @@ void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
     if (count == 0) return;
 
-    func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
-    func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
+    setupGfxMode5__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableAlphaBlend__Q26mpfsys17UnkClass_80471EC8Fv();
+    enableZMode__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
 
     i = 0;
@@ -1216,13 +1216,13 @@ void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         clrOff = posOff + 0xbe0;
         if (entry->field_0x2 & 2) {
             // The per-item data address is recomputed at every use (matches retail).
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+            bindTexture__Q26mpfsys17UnkClass_80471EC8Fif(
                 dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
-            func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+            setFogIndex__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
             if (dataBase[entry->field_0x0].field_0x10 & 8) {
-                func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
+                applyAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             } else {
-                func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
+                resetAmbient__Q26mpfsys17UnkClass_80471EC8Fv();
             }
             GXSetArray(GX_VA_POS, (u8*)(entriesAddr + posOff), 12);
             GXSetArray(GX_VA_CLR0, (u8*)(entriesAddr + clrOff), 3);
@@ -1266,7 +1266,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     const nw4r::math::VEC3* coeff = (const nw4r::math::VEC3*)&lbl_eu_8065841C;
 
     while (slot != 0) {
-        if (func_80478BDC__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)slot)) {
+        if (checkProbeRange__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)slot)) {
             s32 layer = slot->field_0xc;
             MPFBillItem* item = (MPFBillItem*)&itemBase[layer]; 
             if (!(lbl_eu_80665864[item->field_0x34 >> 5] & (1u << (item->field_0x34 & 31)))) {
@@ -1656,7 +1656,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 goto nextCol;
             }
             {
-                MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+                MPFDrawSlot* slot = allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(
                     self, r23, index, 0, (u16)vx, (u16)(r25 + r26), f20, f18);
                 d->field_0x50 = slot;
                 if (slot == 0) {
@@ -1733,7 +1733,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         best->field_0x24 = cur->field_0x24;
                         d->field_0x50 = best;
                     }
-                    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                    createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                 } else {
                     // Walk missed: splice in the best-fit slot and advance it.
                     if (d->field_0x54 != 0) {
@@ -1751,7 +1751,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         best->field_0x24 = slot->field_0x24;
                         d->field_0x50 = best;
                     }
-                    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                    createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                 }
                 r20++;
                 if (r20 > 0x14 && d->field_0x3c == 0) {
@@ -1955,7 +1955,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         }
                         rv = rr + t0 - rv;
                     }
-                    MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+                    MPFDrawSlot* slot = allocateDrawSlot__Q26mpfsys18MPFDrawDisplayListFv(
                         self, rr, index, r26, (u16)s60,
                         (u16)s5c, f20, f19);
                     d->field_0x50 = slot;
@@ -2000,7 +2000,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             best->field_0x24 = slot->field_0x24;
                             d->field_0x50 = best;
                         }
-                        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                        createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                         if (d->field_0x18->field_0x17 != 1 && d->field_0x18->field_0x17 != 2) {
                             // Deterministic sub-grid: index v picks a cell;
                             // its /mode and %mode parts give the z/x offsets.
@@ -2060,7 +2060,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         // Sub-step: just position and store the slot.
                         d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
                         slot->field_0x24 = f17;
-                        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
+                        createSlotFromPool__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
                     }
                 }
             next_step: ;
@@ -2170,7 +2170,7 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
         PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
 
-        MPFBillMtx* m = (MPFBillMtx*)func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc((mpfsys::UnkClass_80471EC8*)lbl_eu_80665838, item->layer);
+        MPFBillMtx* m = (MPFBillMtx*)getLayerRecord__Q26mpfsys17UnkClass_80471EC8FUc((mpfsys::UnkClass_80471EC8*)lbl_eu_80665838, item->layer);
         Vec* out = &dst[2];
 
         if (item->spread != lbl_eu_8066A7E8) {
@@ -2302,8 +2302,8 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 // region bases off the attached draw node, then for each active map cell that
 // has come due (round-robin index in the global state) regenerates its display
 // list quads via func_80476E50 / func_80476344, collecting a completion mask.
-// The mask drives the slot retirement walk (func_80474FB0), after which the
-// slots are bucketed (func_8047509C) and the accumulated display-list buffers
+// The mask drives the slot retirement walk (updateSlotChain), after which the
+// slots are bucketed (collectActiveSlots) and the accumulated display-list buffers
 // are flushed into the configured entry array and cache-stored.
 //
 // The retail Fv symbol actually receives (self, draw node, flagA, flagB).
@@ -2384,8 +2384,8 @@ void func_80477F80__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             }
             d->field_0x18 = (MPFDrawItem*)((u8*)d->field_0x18 + sizeof(MPFDrawItem));
         }
-        func_80474FB0__Q26mpfsys18MPFDrawDisplayListFv(self, doneMask);
-        func_8047509C__Q26mpfsys18MPFDrawDisplayListFv(self);
+        updateSlotChain__Q26mpfsys18MPFDrawDisplayListFv(self, doneMask);
+        collectActiveSlots__Q26mpfsys18MPFDrawDisplayListFv(self);
     }
 
     // Flush the accumulated quads into the configured display-list entry

@@ -45,7 +45,7 @@ struct AnimFrameAccess {
 };
 
 extern "C" {
-void* func_800B708C__Fi(int);
+void* findObjectById__Fi(int);
 void* func_800EA444(cf::CBattleManager*);
 u32 func_800F4784(void*);
 void* func_800F477C(void*);
@@ -402,7 +402,7 @@ void CMenuVision::cbRenderBefore() {
     // Combined first guard via || reproduces retail's short-circuit branch
     // shape (direct bne for clause 1, trampolined b for clause 2); the
     // remaining guards fold to direct branches.
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
     if (!func_8013BE50()) {
@@ -611,7 +611,7 @@ extern "C" void func_801AD504(int flags) {
         }
         void* actorBase;
         void* image = 0;
-        void* actor = func_800B708C__Fi(battle->actor);
+        void* actor = findObjectById__Fi(battle->actor);
         if (actor == 0) {
             return;
         }
@@ -695,7 +695,7 @@ extern "C" void func_801AD504(int flags) {
         u32 color1 = lbl_eu_80662580;
         u32 color2 = lbl_eu_80662584;
         u32 color3 = lbl_eu_80662588;
-        void* actor = func_800B708C__Fi(battle->actor);
+        void* actor = findObjectById__Fi(battle->actor);
         if (actor != 0) {
             actor = (u8*)actor - 0x3E9C;
         }
@@ -772,7 +772,7 @@ extern "C" void func_801AD504(int flags) {
         if (battle->flags824 & 0x20000) {
             image = menuVisionResource(lbl_eu_80504268 + 0x439);
         } else {
-            void* actor = func_800B708C__Fi(battle->targetActor);
+            void* actor = findObjectById__Fi(battle->targetActor);
             if (actor == 0) {
                 return;
             }
@@ -900,7 +900,7 @@ extern "C" void func_801AD504(int flags) {
             VisionQuad second = lbl_eu_80664340;
             u32 color1 = lbl_eu_80662584;
             u32 color2 = lbl_eu_80662588;
-            void* actor = func_800B708C__Fi(battle->actor);
+            void* actor = findObjectById__Fi(battle->actor);
             if (actor != 0) {
                 actor = (u8*)actor - 0x3E9C;
             }
@@ -1022,7 +1022,7 @@ extern "C" void func_801AD504(int flags) {
             }
 
             if (battle->targetActor != 0) {
-                void* target = func_800B708C__Fi(battle->targetActor);
+                void* target = findObjectById__Fi(battle->targetActor);
                 if (target != 0) {
                     target = (u8*)target - 0x3E9C;
                 }
@@ -1157,7 +1157,7 @@ void sinit_801AFCE8() {
 // --- CMenuVision::Move ---
 void CMenuVision::Move() {
     // Early-out guards: game paused, UI-suppression bits, or no active entry.
-    if (CTaskGame::getInstance()->func_800426F0()) {
+    if (CTaskGame::getInstance()->isFlag01Set()) {
         goto L_ret;
     }
     if ((lbl_eu_80663E28 & 0x200000) != 0) {
@@ -1321,7 +1321,7 @@ void CMenuVision::Init() {
         // Per-index special setup
         if (i == 1) {
             CMenuVisionFontView* fontObj = reinterpret_cast<CMenuVisionFontView*>(
-                func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1));
+                getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1));
             u32 fontVal = fontObj->getFontHandle();
 
             func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
@@ -1403,7 +1403,7 @@ void func_801AFAD0(CMenuVision*, CMenuVisionEntry* entry) {
     if (index < 0) {
         return;
     }
-    u32 eff = (u32)func_8008187C__Q22cf13CfGameManagerFv(kind);
+    u32 eff = (u32)createNpcActor__Q22cf13CfGameManagerFv(kind);
     lbl_eu_80575858[index] = eff;
     entry->field_0x28 = 1;
 }

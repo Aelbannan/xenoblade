@@ -87,7 +87,7 @@ extern "C" CMenuMapSelectSC* __dt__16CMenuMapSelectSCFv(CMenuMapSelectSC* _this,
 }
 
 void CMenuMapSelectSC::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CTitleAHelp via a temporary ---
     char* name = func_80136190(lbl_eu_8050C5A4, lbl_eu_8050C5A4 + 8, 1);
@@ -276,13 +276,13 @@ void CMenuMapSelectSC::Term() {
     func_8024CB94(&mFloorMap);
 
     lbl_eu_806647C0 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuMapSelectSC::Move() {
     getInstance__9CTaskGameFv();
     // Same gate idiom as cbRenderBefore (see comment there).
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -329,7 +329,7 @@ void CMenuMapSelectSC::cbRenderBefore() {
     // set. The combined `A == 0 && B == 0 -> goto body` chain with the exit
     // label BEFORE the body label reproduces retail's branch-over-branch
     // (`bne end`, then `beq body; b end`).
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
@@ -437,7 +437,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
         self->mTimer = timerCap;
     }
 
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         // Classic controller layout.
         if (func_8024F6E0(&self->mFloorMap) != 0) {
             if (func_8024F630(&self->mFloorMap) > 1 && func_8024F6D8(&self->mFloorMap) != 0) {

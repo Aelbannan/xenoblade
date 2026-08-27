@@ -296,7 +296,7 @@ struct CSysWinListNode {
 };
 
 // Actor/device-list walk used by func_80280640 / func_8027F148: the list
-// returned by func_800B6BA4__Fv shares the CErrMesList shape (sentinel at
+// returned by getListB28__Fv shares the CErrMesList shape (sentinel at
 // +0x04, item pointer at +0x08 pointing at the embedded +0x3E9C sub-object).
 struct CSysWinActorListNode {
     CSysWinActorListNode* next;  // 0x00
@@ -308,9 +308,9 @@ struct CSysWinActorList {
     CSysWinActorListNode* sentinel;  // 0x04
 };
 
-// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// Voice/actor-manager list accessor (retail mangled name getListB28__Fv -
 // plain C++ linkage reproduces the Fv suffix).
-CSysWinActorList* func_800B6BA4();
+CSysWinActorList* getListB28();
 
 // func_8027F148 view: the owner's +0x4 sub-object carries a virtual at vtable
 // offset 0x30 returning an object whose field_0 feeds the func_80174C98
@@ -848,10 +848,10 @@ struct CScenarioLogArg2 {
 // The CfGameManager "sequence/flag" helpers are mangled Fv in retail even
 // though they take an argument (see CfMapMineManager / code_80135FDC for the
 // same convention), so reference them via their retail mangled names.
-extern "C" u32  func_80082694__Q22cf13CfGameManagerFv(u32 id);   // get sequence value
-extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
-extern "C" u32  func_800822F4__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
+extern "C" u32  getEventValue40__Q22cf13CfGameManagerFv(u32 id);   // get sequence value
+extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
+extern "C" u32  getQueuedFileEventCount__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 extern "C" int   func_800DA06C(void* bm, void* obj); // battle-list membership check
 extern "C" void* func_8016FE34(void* source);
@@ -878,12 +878,12 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* _this, void* param); // returns this
 
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
-// but takes a vestigial bool arg - same convention as func_80086F9C above).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+// but takes a vestigial bool arg - same convention as isClassicController above).
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 extern "C" u8   func_8013B980();
 extern "C" u8   code80135FDC_getByte_64080();
 extern "C" void code80135FDC_postIncByte_64080();
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
 // func_801390E0__FPP11CFileHandle / func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor).
@@ -919,7 +919,7 @@ extern "C" void* getFP__FPCc(const char*);
 extern "C" void* __ct__CTagProcessor(void* self);
 extern "C" u32 getAllocHandle__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
@@ -939,7 +939,7 @@ extern "C" s32  func_8029A658();
 extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80138078__FUl(u32);
-extern "C" int  func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;
 extern "C" void func_8027EA6C(CSysWinScenarioLog* self);

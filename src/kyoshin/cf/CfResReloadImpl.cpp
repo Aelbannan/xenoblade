@@ -292,7 +292,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     // the field_94 store and the game-manager call (no reload before bl).
     cf::CfResReloadParent* mgr = self->field_00;
     mgr->field_94 = 0;
-    if (((cf::CfGameManager*)mgr)->func_80082900() == 0) {
+    if (((cf::CfGameManager*)mgr)->getEffectFlagState() == 0) {
         return;
     }
     if (!(self->field_00->field_68 & 0x00100000)) {
@@ -367,7 +367,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         }
     }
     if (found == 0) {
-        if (cf::CfGameManager::func_800829B8() == 0) {
+        if (cf::CfGameManager::isSceneLoading() == 0) {
             if (lbl_eu_80663E28 & 0x40) {
                 if (self->field_00->field_64 & 0x4) {
                     func_80063A60((s32)v);
@@ -401,7 +401,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (entry->field_04 != self->field_00->field_70) {
         ((cf::CfResReloadVtIf*)self)->_v028();
         CfRes_stub_63990();
-        func_800AD4B0(self->field_00);
+        notifyDetach_(self->field_00);
         return;
     }
     if ((f6c & 0x2) != 0) {  // redundant re-test, kept for byte-identity (cr1)
@@ -435,7 +435,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             }
         }
         if (ok == 0 && self->field_04 > lbl_eu_80667698) {
-            if (mgr->func_80085840() == 0) {
+            if (mgr->isSceneReadyForInput() == 0) {
                 return;
             }
             if (self->field_04 > lbl_eu_80667698) {
@@ -446,7 +446,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         self->field_04 = lbl_eu_80667698;
     }
     self->field_08++;
-    func_80434A4C__Q23mtl10MemManagerFb(false);
+    setMemInitFlag__Q23mtl10MemManagerFb(false);
     if (self->field_00->field_6C & 0x20) {
         if (self->field_00->field_98 == 0) {
             u8* slot18 = ((cf::CfResEntryIf2*)entry->field_2C)->_v018(entry);
@@ -484,7 +484,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             par->field_6E0 = ((u32)entry->field_04 & 0x07FFFFFF) | 0x80000000;
         }
     }
-    func_80434A4C__Q23mtl10MemManagerFb(true);
+    setMemInitFlag__Q23mtl10MemManagerFb(true);
     int ok2 = (self->field_00->field_68 >> 20) & 1;
     if (ok2 != 0) {
         func_800BB618((cf::CfObjectModel*)self->field_00, 0);
@@ -687,7 +687,7 @@ void func_8016DDE8(cf::CfResReloadImpl* self) {
     self->field_00->field_6C &= 0xFFD88C0C;  // clears 0x002773F3 flag bits
     self->field_1C = 3;
     self->field_08 = 0;
-    func_800AD4B0(self->field_00);
+    notifyDetach_(self->field_00);
     if (self->field_0C != 0) {
         self->field_0C = 0;
         self->field_0A = -1;
@@ -953,7 +953,7 @@ extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
 extern "C" int func_8016E430(u32 type) {
     void* bdat = lbl_eu_806640A8;
     u16 row = (u16)lbl_eu_80664184;
-    u16 gm = (u16)cf::CfGameManager::func_800822F4();
+    u16 gm = (u16)cf::CfGameManager::getQueuedFileEventCount();
     u16 a;
     u16 b;
     if (type == 1) {

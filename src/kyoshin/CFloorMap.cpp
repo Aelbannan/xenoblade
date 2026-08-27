@@ -590,7 +590,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         func_80136E84(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
         nw4r::lyt::Layout* lay = self->slots[i].layout;
         CFloorMapFontView* font =
-            (CFloorMapFontView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
+            (CFloorMapFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
         func_8013676C(lay->GetRootPane(), font->getFontHandle());
     }
 
@@ -2379,7 +2379,7 @@ void func_8024AEEC(void* self) {
 
     holder->SetTranslate(*(nw4r::math::VEC3*)&result);
 
-    UnkClass_800821F8* mgr = cf::CfGameManager::getInstance()->func_800821F8();
+    UnkClass_800821F8* mgr = cf::CfGameManager::getInstance()->getCameraDataBlock();
     if (mgr != NULL) {
         // Scale the marker by the game's map zoom numerator; retail stores it
         // into the wrapper pane's rotate vector.
@@ -3091,7 +3091,7 @@ void func_8024C8F8(void* self, void* drawInfo) {
 // releases every layout/resource/widget created for the screen and clears
 // each owning pointer.
 void func_8024CB94(CFloorMapFull* p) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_24));
     func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_28));
     func_801390E0(reinterpret_cast<CFileHandle**>(&p->field_2C));
@@ -4529,7 +4529,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         CFileHandle* file = (CFileHandle*)this->field_24;
         void* data = file->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         this->field_34 = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)this->field_34)->Attach(data, &lbl_eu_8050BEA8[0x6d1]);
@@ -4689,7 +4689,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         CFileHandle* file = (CFileHandle*)this->field_28;
         void* data = file->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         this->field_38 = (u32)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)this->field_38)->Attach(data, &lbl_eu_8050BEA8[0x6d1]);
@@ -4897,7 +4897,7 @@ extern "C" void __ct__8024507C(void* self) {
     // Font bind onto the loaded layout's root pane.
     nw4r::lyt::Layout* layout = cv->layout;
     nw4r::lyt::Pane* rootPane = layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
@@ -4991,7 +4991,7 @@ void func_80244764(CFloorMapLayoutData0* self) {
     func_80136E84(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
 
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
@@ -5026,7 +5026,7 @@ void func_80244944(void* self) {
     func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
@@ -5048,7 +5048,7 @@ void func_80244AE8(void* self) {
     func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
@@ -5069,7 +5069,7 @@ void func_80244C60(void* self) {
     func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
@@ -5089,7 +5089,7 @@ void func_80244DD8(void* self) {
     func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
     u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 

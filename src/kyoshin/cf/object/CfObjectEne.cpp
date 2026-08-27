@@ -226,7 +226,7 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     return 1;
 }
 
-// us-800ae4a0: CfObjectEne::func_800ADBD4 (retail Fv; this in r3). Probes
+// us-800ae4a0: CfObjectEne::updateEnemyBattleState (retail Fv; this in r3). Probes
 // the +0x4 sub-object's actor id (vtable +0x30 first word) against
 // func_80174C98 masks 0x803/0xE; on the clean path runs the +0x8 CBattleState
 // subobject slot +0x14 when func_80148778(&+0x8, 0x35) is clear, else runs
@@ -234,7 +234,7 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 // func_801765A4, and when the game-manager bit 0x100 is set applies the
 // +0x3F34 target's bit-0x80000000 flag + subobject slots +0x80/+0x64, else
 // runs the CfObjectMove subobject's CfObject_UnkVirtualFunc4.
-void cf::CfObjectEne::func_800ADBD4() {
+void cf::CfObjectEne::updateEnemyBattleState() {
     u32 wordA = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
     u32 wordB;
     if (func_80174C98((void*)this, (int*)&wordA, 0x803) == 0 &&
@@ -262,7 +262,7 @@ void cf::CfObjectEne::func_800ADBD4() {
     getInstance__Q22cf13CfGameManagerFv();
     // retail flattens the nested guards into two branches on one shared
     // else label (the CfObject_UnkVirtualFunc4 call); goto pins that shape
-    if (func_8006EF04__Fi(0x1000000) == 0)
+    if (isGlobalCamFlagSet__Fi(0x1000000) == 0)
         goto defaultPath;
     {
         u32 wordC = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
@@ -518,13 +518,13 @@ void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) 
 
 void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
 
-// us-800af534: CfObjectEne::func_800AEC68 (retail Fv; this in r3). Resets
+// us-800af534: CfObjectEne::initEnemyBdatParams (retail Fv; this in r3). Resets
 // the bdat manager, reads the enemy bdat column value (getFP on the
 // +0x3F14 name, row id at +0x3F28), multiplies it by the vtable +0xF0
 // result and the 0x806669B0 scale, feeds the vtable +0xD4 slot, runs the
 // primary vtable +0x288 slot six times and resets the +0x3380 CAIAction
 // subobject (func_8014B7B0 / func_8015396C).
-void cf::CfObjectEne::func_800AEC68() {
+void cf::CfObjectEne::initEnemyBdatParams() {
     func_8003AA34();
     // addressable union pins the raw column word to a frame home across the
     // slot +0xF0 vcall; the u16 punned read narrows on reload (retail lhz)
@@ -736,18 +736,18 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
 }
 // us-800b00b0: bdat lookup helper. Reads the u16 row id at self+0x456C
 // (shifted right 4) and looks up the column value in the BDAT table returned
-// by func_80086B24. Returns whatever getBdatStringColumnValue produced (the
+// by getGlobalPtr6409C. Returns whatever getBdatStringColumnValue produced (the
 // retail leaves it in r3).
 u32 func_800AF7E4(cf::CfObjectEne* self, const char* column) {
-    return getBdatStringColumnValue((void*)func_80086B24__Q22cf13CfGameManagerFv(), column,
+    return getBdatStringColumnValue((void*)getGlobalPtr6409C__Q22cf13CfGameManagerFv(), column,
                                     ((cf::CfObjectEne456CView*)self)->field_0x456C >> 4);
 }
 
 // us-800b00f8: bdat lookup helper. r3 is a dead incoming arg (retail never
-// reads it); the bdat pointer is func_80086B34's return (party-count
+// reads it); the bdat pointer is getGlobalWord640A4's return (party-count
 // getter), column/index come from r4/r5.
 u32 func_800AF82C(u32 unused, const char* col, u32 index) {
-    return getBdatStringColumnValue((u8*)func_80086B34__Q22cf13CfGameManagerFv(), col, index);
+    return getBdatStringColumnValue((u8*)getGlobalWord640A4__Q22cf13CfGameManagerFv(), col, index);
 }
 
 // us-800b013c: enemy drop/reward application. Guard chain (flag bit
@@ -1352,9 +1352,9 @@ void CfObject_UnkVirtualFunc14__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, 
 
 void CfObject_UnkVirtualFunc2__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADBD4__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))updateEnemyBattleState__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-void func_800B069C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void destroyEnemyObject__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
 void CBattleState_UnkVirtualFunc23__Q22cf12CBattleStateFv(cf::CBattleState* self) { reinterpret_cast<BSIf*>(self)->vf0044(); }
 

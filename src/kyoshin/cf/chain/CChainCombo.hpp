@@ -4,10 +4,10 @@
 
 namespace cf {
 
-// Two-float chain gauge at CChainCombo+0xC (written by func_80294824/34/44).
+// Two-float chain gauge at CChainCombo+0xC (written by initChainGauge/34/44).
 struct CChainGauge {
-    float mVal0; // 0x0 first gauge value (initialized by func_80294824)
-    float mVal1; // 0x4 second gauge value (written by func_80294834/44)
+    float mVal0; // 0x0 first gauge value (initialized by initChainGauge)
+    float mVal1; // 0x4 second gauge value (written by resetChainGauge/44)
 };
 
 } // namespace cf
@@ -16,12 +16,12 @@ struct CChainGauge {
 // Declared as extern "C" with explicit mangled names so callers in this TU
 // reference the correct retail symbols without re-mangling when the parameter
 // type is not void*.  The gauges these operate on live at CChainCombo+0xC.
-extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
-extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+extern "C" void initChainGauge__FPv(cf::CChainGauge* gauge);
+extern "C" void resetChainGauge__FPv(cf::CChainGauge* gauge);
 extern "C" void func_80294844(cf::CChainGauge* gauge, float value);
 
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
-extern "C" void func_802AA338__Fv();
+extern "C" void requestCancelChain__Fv();
 
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];

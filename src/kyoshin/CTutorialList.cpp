@@ -568,7 +568,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
 
         // getData() reads and clears the handle's buffer pointer.
         void* fileData = ((CFileHandle*)mField14)->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         mField1C = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
@@ -588,7 +588,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         // the root-pane fetch (+0x10 raw field) above the font lookup.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((char*)mLayout20 + 0x10);
         CTutorialFontView* fontObj = reinterpret_cast<CTutorialFontView*>(
-            func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20));
+            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20));
         func_8013676C(rootPane, fontObj->fontData());
 
         func_802ADC28(this);
@@ -599,7 +599,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         func_80136B4C(mLayout20, &lbl_eu_80510B78[0x10c], title, 0);
 
         // Pick the message archive variant from the game-manager mode.
-        const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+        const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                               ? (const char*)&lbl_eu_80510B78[0x117]
                               : (const char*)&lbl_eu_80510B78[0x120];
         u16 msgId =
@@ -658,7 +658,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
 
         func_802AE004(this);
         mField14 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&mGap04[0]);
+        validateHeap__17UnkClass_8045F564Fv(&mGap04[0]);
         __dt__14Class_8045F858Fv(regionBuf, -1);
         return 1;
     }
@@ -753,7 +753,7 @@ extern "C" void func_802AD188(CTutorialList* self,
 // two file handles, release the bound layout and resource accessor, then run
 // the cursor/scrollbar/sort-menu/region teardown helpers.
 extern "C" void func_802AD1F4(CTutorialList* self) {
-    func_8003AA8C__5CBdatFUl(4);
+    getEntry__5CBdatFUl(4);
     func_801390E0((CFileHandle**)&self->mField14);
     func_801390E0((CFileHandle**)&self->mField18);
     self->mField174 = 0;
@@ -766,7 +766,7 @@ extern "C" void func_802AD1F4(CTutorialList* self) {
     ((CTutorialCurView*)self->mGap2C)->vf1();
     func_801F35DC(&self->mScrollBar);
     func_801D3258(&self->mSortMenu84[0]);
-    func_8045F778__17UnkClass_8045F564Fv(&self->mGap04[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&self->mGap04[0]);
 }
 
 struct CTutorialWindowIds {

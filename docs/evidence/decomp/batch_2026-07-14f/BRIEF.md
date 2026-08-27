@@ -45,7 +45,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - **Wrong:** writing mangled instance reloc instead of `lbl_eu_80663F24`
 
 ### `CMenuEnemyState::cbRenderBefore` (`asm_cbRenderBefore_CMenuEnemyState.s`)
-- Frame `-0xd0`; same gate prefix as PTGauge: `CTaskGame::getInstance` → `func_800426F0` nonzero early-out; **`lbl_eu_80663E28` bit 10**; `func_8013BE50` null; **`lbl_eu_80663E24 & 0xAFA40000`**
+- Frame `-0xd0`; same gate prefix as PTGauge: `CTaskGame::getInstance` → `isFlag01Set` nonzero early-out; **`lbl_eu_80663E28` bit 10**; `func_8013BE50` null; **`lbl_eu_80663E24 & 0xAFA40000`**
 - `GXSetZMode(0,0,0)`; stack `nw4r::lyt::DrawInfo` ctor; `func_80137250(&drawInfo)`
 - Build/sort index array (bubble on `this + idx*0x4c + 0xbc` floats) then draw via `func_80137038` — replicate loops from asm
 - Share patterns with `CMenuPTGauge::cbRenderBefore` if helpful; declare missing externs

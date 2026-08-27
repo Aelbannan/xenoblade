@@ -9,27 +9,27 @@ namespace cf {
 
 class __declspec(novtable) CHelp_EtherMakeTIPS : public CHelp {
 public:
-    void func_80295D8C();
+    void dispatchEtherTips();
 };
 
 class __declspec(novtable) CHelp_KizunaTIPS : public CHelp {
 public:
-    void func_80295D9C();
+    void dispatchKizunaTips();
 };
 
 class __declspec(novtable) CHelp_AlwaysTIPS : public CHelp {
 public:
-    void func_80295DAC();
+    void dispatchAlwaysTips();
 };
 
 class __declspec(novtable) CHelp_TalkTIPS : public CHelp {
 public:
-    void func_80295D98();
+    void dispatchTalkTips();
 };
 
 class __declspec(novtable) CHelp_EndEventTIPS : public CHelp {
 public:
-    void func_80295DA0();
+    void dispatchEndEventTips();
 };
 
 // 8-byte list holder embedded at CHelpManager +0x0 and +0x8. Holds a

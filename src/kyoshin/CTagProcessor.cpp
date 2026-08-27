@@ -642,7 +642,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
     outbuf[0] = 0;
     // Talk-source / party-member / player lookups (r29/r28/r30).
     TagMemberObj* member = 0;
-    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(func_800B708C(msg->field_804));
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(findObjectById(msg->field_804));
     if (tsrc != 0)
         member = tsrc->field_98;
     TagTalkSrc* player = (TagTalkSrc*)func_800BBC0C(cf::CfGameManager::getPlayer(0));
@@ -684,7 +684,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                         TagPadView* pad =
                             (TagPadView*)cf::CfGameManager::getCurrentPad();
                         int pressed;
-                        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+                        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                             pressed = (pad->field_04 & 0x00600000) != 0;
                         else
                             pressed = (pad->field_04 & 0x00000030) != 0;
@@ -1013,7 +1013,7 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                 int btn;
                 bool upDown;
                 bool leftRight;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                     btn = (pad->field_04 >> 22) & 1;
                     upDown = (pad->field_104 & 0x8004) != 0;
                     leftRight = (pad->field_104 & 0x8000) != 0 ||
@@ -1727,7 +1727,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
         return 3;
     // Talk-source / party-member lookups (r31 / r23).
     TagMemberObj* member = 0;
-    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(func_800B708C(msg->field_804));
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C(findObjectById(msg->field_804));
     if (tsrc != 0)
         member = tsrc->field_98;
 
@@ -1800,7 +1800,7 @@ __declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
                     (TagPadView*)cf::CfGameManager::getCurrentPad();
                 member = (TagMemberObj*)pad;  // retail reuses r23 here
                 u32 bits;
-                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+                if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                     bits = pad->field_04 & 0x00600000;
                 else
                     bits = pad->field_04 & 0x00000030;

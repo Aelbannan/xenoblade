@@ -353,7 +353,7 @@ public:
 struct CTagProcMsg {
     u16 buf[0x400];    // +0x000 message buffer (0x800 bytes)
     u8  pad_800[0x4];  // +0x800
-    u32 field_804;     // +0x804 talk-source index (func_800B708C arg)
+    u32 field_804;     // +0x804 talk-source index (findObjectById arg)
     f32 field_808;     // +0x808 current char scale
     u8  pad_80c[0x4];  // +0x80C
     u16 field_810;     // +0x810 next-tag write position / index
@@ -959,7 +959,7 @@ int code80135FDC_getWord_64060();
 void code80135FDC_setPair_6405C_64060(int a, int b);
 // cf::CfGameManager controller-mode query. Retail name keeps the Fv suffix
 // but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Local context-walk helpers (defined in CTagProcessor.cpp).
 void* func_80127670(void* self);
 u32 func_801276C8(const u32* a, const u32* b);
@@ -970,7 +970,7 @@ void copyVEC2(float* dst, const float* src);
 }
 
 // C++-linkage imports (retail emits the mangled forms).
-void* func_800B708C(int id);  // func_800B708C__Fi (talk-source index lookup)
+void* findObjectById(int id);  // findObjectById__Fi (talk-source index lookup)
 void func_80138078(u32 op);   // func_80138078__FUl (UI sound effect)
 
 // Tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038, 4 bytes

@@ -225,7 +225,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         mMemRegion.createRegion(handle, 0x8000, &lbl_eu_8050A62C[0x2f], 0);
         Class_8045F858 sp8(&mMemRegion);
         void* archive = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(archive, &lbl_eu_8050A62C[0x3b]);
         func_80136E84(&mLayout, mAccessor, &lbl_eu_8050A62C[0x3f]);
@@ -233,7 +233,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         ShopFontView* fontObj =
-            (ShopFontView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+            (ShopFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = fontObj->getSpacing();
         func_8013676C(rootPane, fontResult);
 
@@ -250,7 +250,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         if (player != NULL) {
             void* sub = player->getMenuSource();
             if (sub != NULL) {
-                ShopActorView* srcActor = (ShopActorView*)func_800B708C(reinterpret_cast<int>(sub));
+                ShopActorView* srcActor = (ShopActorView*)findObjectById(reinterpret_cast<int>(sub));
                 if (srcActor != NULL) {
                     text = static_cast<char*>(func_80138DA4(srcActor->getName()));
                 }
@@ -278,7 +278,7 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         // (retail preloads 0xe2 then overwrites with 0xd9 when nonzero).
         u16 val = static_cast<u16>(func_8013606C(
             &lbl_eu_8050A62C[0xae],
-            func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
+            isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &lbl_eu_8050A62C[0xd9]
                                                            : &lbl_eu_8050A62C[0xe2],
             0x2b));
         char* mssg = func_80138F78(val);

@@ -298,7 +298,7 @@ struct CfObjectImplPcEvtCmd {
 };
 
 // View of the object returned by func_800FE68C: word at +0x90E4 feeds
-// func_800B708C in func_800C891C's actor fallback.
+// findObjectById in func_800C891C's actor fallback.
 struct CfObjectImplPcFe68C {
     u8 _pad00[0x90E4];
     u32 field_90E4;                  // 0x90E4
@@ -382,7 +382,7 @@ struct CfObjectImplPc3380 {
 // +0x04 plus a 16-word entry table at +0x08.
 struct CfObjectImplPc298Res {
     u8 _pad00[0x04];
-    s32 field_04;                    // 0x04 (fed to func_800B708C)
+    s32 field_04;                    // 0x04 (fed to findObjectById)
     u32 entries[16];                 // 0x08-0x47
     s32 field_48;                    // 0x48 (signed 7..9 range test)
     u8 _pad4C[0x50 - 0x4C];
@@ -392,7 +392,7 @@ struct CfObjectImplPc298Res {
     u32 field_78;                    // 0x78 flags (bit 0x800)
 };
 
-// Manager/effect object handed back by func_8008187C / func_800817BC and by
+// Manager/effect object handed back by createNpcActor / createBattleActor and by
 // the battle object's vtable slot 0x220; vtable slot 0x194 receives the
 // event's bit-7 flag. Never instantiated, so no vtable is emitted.
 class CfObjectImplPcEffObj {
@@ -810,7 +810,7 @@ public:
     u8 _pad3F2A[0x3F2C - 0x3F2A];    // 0x3F2A-0x3F2B
     u32 field_3F2C;                  // 0x3F2C
     u8 _pad3F30[0x3F34 - 0x3F30];    // 0x3F30-0x3F33
-    u8* field_3F34;                  // 0x3F34 data block (func_800ACEF8 src)
+    u8* field_3F34;                  // 0x3F34 data block (setChild34Sc_ src)
     u8 _pad3F38[0x3F60 - 0x3F38];    // 0x3F38-0x3F5F
     CfObjectImplPc3F60* field_3F60;  // 0x3F60
     u32 field_3F64;                  // 0x3F64 own battle id
@@ -959,7 +959,7 @@ void func_800CAA44(void* self);
 void func_800CEE28(void* self, u32 param);
 void func_800CEBE0(void* self);
 int func_80148778(void* obj, int id);
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv(void); // canonical u32 form
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void); // canonical u32 form
 void func_800CA948(u8* self);
 void func_8015BB3C(u8* a, u8* b, u8* c);
 void func_802A0B8C(u8* self, u8* owner);
@@ -1003,7 +1003,7 @@ void func_801BFE8C(u32 a, u32 b, u32 c);
 void func_802A3074(void* obj);
 void func_800CC964(void);
 void func_800983B8(void* a, int b);
-unsigned int func_80082568__Q22cf13CfGameManagerFv(unsigned int a,
+unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
                                                     unsigned int b,
                                                     unsigned int c);
 int func_80260518(void* obj, int id, u32* outW, f32* outF);
@@ -1021,9 +1021,9 @@ u8* func_8009D7E4(u8* info, int a);
 
 // C++-mangled imports (plain declarations let MWCC append the retail
 // mangling from the parameter types).
-bool func_8006EF04(int mask);                      // func_8006EF04__Fi
+bool isGlobalCamFlagSet(int mask);                      // isGlobalCamFlagSet__Fi
 cf::CfObjectImplPc18* func_800BFC68(cf::CfObjectMove* objMove);  // func_800BFC68__FPQ22cf12CfObjectMove
-// (func_800B708C__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
+// (findObjectById__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 
 // sdata2 constants used by func_800CA294 / func_800C86E8 / func_800C9A20 /
 // func_800C75D4.
@@ -1075,8 +1075,8 @@ namespace math {
 int mtRand(int n);                   // mtRand__Q22ml4mathFi
 }
 }
-extern "C" void func_800ACF78(void* obj, void* target, u32 child);
-extern "C" void func_800ACEF8(void* obj, const void* src);
-extern "C" void func_800ACFD8(void* obj, void* target);
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
+extern "C" void bindPartnerO_(void* obj, void* target, u32 child);
+extern "C" void setChild34Sc_(void* obj, const void* src);
+extern "C" void setTargetObj_(void* obj, void* target);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);

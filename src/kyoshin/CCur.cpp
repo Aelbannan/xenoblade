@@ -31,7 +31,7 @@ DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::V
 // func_801D21CC: Deactivation tail handler
 // Unbinds the active anim transform, re-binds animTrans0, enables and resets
 // its frame, then re-animates. Retail reloads mpLayout before every call.
-// noinline: -ipa would fold this body into func_801D2180's call site
+// noinline: -ipa would fold this body into checkDeactivate's call site
 // (retail keeps the bl out-of-line).
 extern "C" __declspec(noinline) void func_801D21CC(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
@@ -89,9 +89,9 @@ extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 // ============================================================================
-// CBaseCur::func_801D20DC: Deinitialize cursor
+// CBaseCur::cleanup: Deinitialize cursor
 // ============================================================================
-extern "C" void func_801D20DC__8CBaseCurFv(CBaseCur* cur) {
+extern "C" void cleanup__8CBaseCurFv(CBaseCur* cur) {
     cur->mVisible = 0;
     cur->mpAnimTrans0 = NULL;
     cur->mpAnimTrans1 = NULL;
@@ -102,9 +102,9 @@ extern "C" void func_801D20DC__8CBaseCurFv(CBaseCur* cur) {
 }
 
 // ============================================================================
-// CBaseCur::func_801D2144: Forward translation to root pane
+// CBaseCur::setRootPaneTranslate: Forward translation to root pane
 // ============================================================================
-extern "C" void func_801D2144__8CBaseCurFv(CBaseCur* cur, const nw4r::math::VEC3* trans) {
+extern "C" void setRootPaneTranslate__8CBaseCurFv(CBaseCur* cur, const nw4r::math::VEC3* trans) {
     func_801D2150(cur->mpLayout->GetRootPane(), trans);
 }
 
@@ -124,9 +124,9 @@ extern "C" void func_801D2174(CBaseCur* cur) {
 }
 
 // ============================================================================
-// CBaseCur::func_801D2180: Check anim finish and deactivate
+// CBaseCur::checkDeactivate: Check anim finish and deactivate
 // ============================================================================
-extern "C" void func_801D2180__8CBaseCurFv(CBaseCur* cur) {
+extern "C" void checkDeactivate__8CBaseCurFv(CBaseCur* cur) {
     if (func_80137444(cur->mpAnimTrans1, 1.0f) != 0) {
         cur->mActive = 0;
         func_801D21CC(cur);
@@ -178,9 +178,9 @@ extern "C" void* __dt__6CCur07Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur07::func_801D2378: Load layout curs07 and two anim transforms
+// CCur07::initLayout: Load layout curs07 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2378__6CCur07Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur07Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x50);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x68);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x85);
@@ -208,9 +208,9 @@ extern "C" void* __dt__6CCur09Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur09::func_801D2478: Load layout curs09 and one anim transform
+// CCur09::initLayout: Load layout curs09 and one anim transform
 // ============================================================================
-extern "C" void func_801D2478__6CCur09Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur09Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0xa0);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0xb8);
     cur->mpLayout->UnbindAllAnimation();
@@ -248,9 +248,9 @@ extern "C" void* __dt__6CCur11Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur11::func_801D25EC: Load layout curs11 and two anim transforms
+// CCur11::initLayout: Load layout curs11 and two anim transforms
 // ============================================================================
-extern "C" void func_801D25EC__6CCur11Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur11Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0xed);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x105);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x122);
@@ -288,9 +288,9 @@ extern "C" void* __dt__6CCur14Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur14::func_801D2778: Load layout curs14 and two anim transforms
+// CCur14::initLayout: Load layout curs14 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2778__6CCur14Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur14Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x15d);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x175);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x192);
@@ -318,9 +318,9 @@ extern "C" void* __dt__6CCur15Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur15::func_801D2878: Load layout curs15 and two anim transforms
+// CCur15::initLayout: Load layout curs15 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2878__6CCur15Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur15Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x1ad);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x1c5);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x1e2);
@@ -348,9 +348,9 @@ extern "C" void* __dt__6CCur16Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur16::func_801D2978: Load layout curs16 and two anim transforms
+// CCur16::initLayout: Load layout curs16 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2978__6CCur16Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur16Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x1fd);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x215);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x232);
@@ -378,9 +378,9 @@ extern "C" void* __dt__6CCur18Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur18::func_801D2A78: Load layout curs18 and two anim transforms
+// CCur18::initLayout: Load layout curs18 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2A78__6CCur18Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur18Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x29d);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x2b5);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x2d2);
@@ -408,9 +408,9 @@ extern "C" void* __dt__6CCur22Fv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CCur22::func_801D2B78: Load layout curs22 and two anim transforms
+// CCur22::initLayout: Load layout curs22 and two anim transforms
 // ============================================================================
-extern "C" void func_801D2B78__6CCur22Fv(CBaseCur* cur) {
+extern "C" void initLayout__6CCur22Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x33d);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x355);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x372);
@@ -476,9 +476,9 @@ extern "C" void* __dt__7CSubCurFv(CBaseCur* _this, int flags) {
 }
 
 // ============================================================================
-// CSubCur::func_801D2DC8: Load layout subcur and two anim transforms
+// CSubCur::initLayout: Load layout subcur and two anim transforms
 // ============================================================================
-extern "C" void func_801D2DC8__7CSubCurFv(CBaseCur* cur) {
+extern "C" void initLayout__7CSubCurFv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0x38d);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0x3a9);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans1, cur->mArcResAcc, lbl_eu_80505DE8 + 0x3ca);

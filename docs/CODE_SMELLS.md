@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 15138 |
-| extern "C" declarations (non-lbl_*, imports) | 6530 |
-| extern "C" definitions (forced names) | 4211 |
-| `self`/register-style params | 14277 |
-| `void*` (params + locals) | 8048 |
-| raw pointer offset arithmetic | 7383 |
+| extern "C" (total lines) | 15140 |
+| extern "C" declarations (non-lbl_*, imports) | 6531 |
+| extern "C" definitions (forced names) | 4212 |
+| `self`/register-style params | 14279 |
+| `void*` (params + locals) | 8052 |
+| raw pointer offset arithmetic | 7384 |
 | deref-through-cast arithmetic | 2767 |
 | inline asm / `register` | 126 |
 | rN-named params | 487 |
@@ -39,7 +39,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/coli/code_804A6C60.cpp | 1556 |
 | src/kyoshin/cf/object/CActorParam.cpp | 1500 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1446 |
-| src/kyoshin/code_800B06A4.cpp | 1350 |
+| src/kyoshin/code_800B06A4.cpp | 1355 |
 
 ## Per-TU metrics
 
@@ -178,7 +178,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 1 | 18 | 15 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 10 | 2 | 11 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/UnkClass_8047E110.cpp | 41 | 5 | 49 | 1 | 0 | 0 | 0 | 0 | 27 | 0 | 0 | 0 |
-| libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/code_8047D2AC.cpp | 23 | 4 | 31 | 31 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BC9EC.cpp | 10 | 0 | 4 | 15 | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BD8E8.cpp | 20 | 10 | 4 | 14 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -490,7 +490,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/code_800A3B24.cpp | 9 | 3 | 10 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 1 | 10 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/code_800B06A4.cpp | 93 | 87 | 181 | 258 | 139 | 44 | 0 | 1 | 79 | 0 | 0 | 0 |
+| src/kyoshin/code_800B06A4.cpp | 93 | 88 | 181 | 259 | 140 | 44 | 0 | 1 | 79 | 0 | 0 | 0 |
 | src/kyoshin/code_80135FDC.cpp | 21 | 72 | 14 | 168 | 70 | 9 | 0 | 1 | 24 | 0 | 0 | 0 |
 | src/kyoshin/code_801862C0.cpp | 0 | 3 | 15 | 21 | 3 | 2 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 24 | 4 | 10 | 13 | 12 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -2016,13 +2016,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/code_8047D2AC.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 22,
+  "extern_c_nonlbl_decl": 23,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "schedule_pragma": 0,
-  "self_params": 29,
-  "void_ptr": 28
+  "self_params": 31,
+  "void_ptr": 31
  },
  "libs/monolib/src/scn/code_8049431C.cpp": {
   "asm_insn_shim": 0,
@@ -5200,14 +5200,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 44,
   "extern_c_nonlbl_decl": 93,
-  "extern_c_nonlbl_def": 87,
+  "extern_c_nonlbl_def": 88,
   "goto_count": 79,
   "init_side_effect": 0,
-  "ptr_arith": 139,
+  "ptr_arith": 140,
   "rn_params": 1,
   "schedule_pragma": 0,
   "self_params": 181,
-  "void_ptr": 258
+  "void_ptr": 259
  },
  "src/kyoshin/code_80135FDC.cpp": {
   "asm_insn_shim": 0,

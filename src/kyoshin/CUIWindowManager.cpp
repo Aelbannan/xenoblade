@@ -636,7 +636,7 @@ extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
                     player);
                 if (sel != 0) {
                     CActorFlagsView* actor =
-                        (CActorFlagsView*)func_800B708C(sel);
+                        (CActorFlagsView*)findObjectById(sel);
                     if (actor != NULL && (actor->mFlags64 & 0x8u) != 0) {
                         func_8009ECD0(actor->mId8C);
                     }

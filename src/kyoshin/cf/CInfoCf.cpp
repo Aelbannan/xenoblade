@@ -114,7 +114,7 @@ void CMenuItem::Init() {
     // Gate the game-manager handoff until the menu flag is clear (retail
     // reads mField4AC5 before any widget setup).
     if (mField4AC5 == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
@@ -434,20 +434,20 @@ void CMenuItem::Term() {
 
     lbl_eu_80664258 = 0;
     if (mField4AC5 == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(0);
+        setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
 }
 
 void CMenuItem::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     // Button input: the confirm trigger comes from a different pad bit in
     // co-op vs single-player mode.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 pressed;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         pressed = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         pressed = (pad->mPressedButtonFlags >> 10) & 1;
@@ -500,7 +500,7 @@ void CMenuItem::Move() {
 
 void CMenuItem::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

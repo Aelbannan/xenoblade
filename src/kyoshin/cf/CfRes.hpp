@@ -21,7 +21,7 @@ int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfw
 extern "C" void CfRes_clearField4(u8* self);
 extern "C" void CfResEntry_clearField8(u8* self);
 extern "C" int CfRes_incField8(u8* self);
-extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value);
+extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_8006398C(u32 value);
 
 // Acquire a resource-table entry for a resource id, bumping refcounts.
@@ -30,7 +30,7 @@ extern "C" int func_80063560(int id, int incRef, int incCount);
 
 // Helpers used by the func_800643F0 load dispatcher (defined across cf TUs;
 // C linkage keeps the call relocs carrying the retail unmangled names).
-extern "C" bool func_800829B8__Q22cf13CfGameManagerFv(void* self);
+extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(void* self);
 extern "C" void CfRes_clearE28Mask(u32 mask);
 extern "C" void CfRes_setE28Mask(u32 mask);
 extern "C" int CfRes_getE24Bit18();
@@ -299,7 +299,7 @@ extern "C" void* CfRes_vcall02(void* self, void* arg);
 // Packed-field query on the CfGameManager singleton (defined in
 // CfGameManagerUnityHelpers.hpp; the retail name is the mangled member
 // symbol, kept verbatim via C linkage).
-extern "C" void func_800832BC__Q22cf13CfGameManagerFv(u16* first, u16* second);
+extern "C" void getEventHalfwordPair__Q22cf13CfGameManagerFv(u16* first, u16* second);
 
 // Main per-entry update step (defined in kyoshin/cf/IResInfo.cpp); C linkage
 // so the call reloc carries the retail unmangled name.

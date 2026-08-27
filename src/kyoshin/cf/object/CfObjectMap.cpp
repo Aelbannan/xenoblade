@@ -74,7 +74,7 @@ struct CMIf {
 // this->mTarget70 keeps r4 live as the call argument, so MWCC keeps the ret
 // default in r0 — retail's exact allocation (FULL_MATCH).
 #pragma scheduling off
-void* cf::CfObjectMap::func_800B9A70() {
+void* cf::CfObjectMap::checkTarget() {
     void* ret = (void*)1;
     if (this->mTarget70) {
         ret = this->CfObjectModel_UnkVirtualFunc6(this->mTarget70);
@@ -83,21 +83,21 @@ void* cf::CfObjectMap::func_800B9A70() {
 }
 #pragma scheduling on
 
-void cf::CfObjectMap::func_800B9AB4() {
+void cf::CfObjectMap::cleanupMap() {
     this->CfObjectModel_UnkVirtualFunc1();
     if (this->field_0xEC != 0) {
         func_80495E60(this->field_0xEC);
         this->field_0xEC = 0;
     }
-    func_8047CFD0__17UnkClass_8047CD0CFv(&this->field_0x2F2C);
+    resetPoolState__17UnkClass_8047CD0CFv(&this->field_0x2F2C);
     if (this->field_0xE0 != 0) {
         this->field_0xE0 = 0;
         CDeviceVI::waitForDrawDone();
-        func_8047BD9C__17UnkClass_8047BB54Fv(&this->field_0xF0);
+        resetMpfInstance__17UnkClass_8047BB54Fv(&this->field_0xF0);
         *reinterpret_cast<u32*>(this->_pad6C) &= ~0x8000;
     }
     if (this->field_0x2F40 != 0) {
-        func_80462AC0__8CTaskLODFv(0);
+        resetActiveLOD__8CTaskLODFv(0);
         this->field_0x2F40 = 0;
     }
     void* resource = this->field_0x2F3C;
@@ -112,7 +112,7 @@ void cf::CfObjectMap::func_800B9AB4() {
 // no-args but the body reads r4 as a genuine input (used 3x: func_804838DC
 // flag, the field_100 |=4 / &=~2 select, and the vfn6C boolean). Defined as
 // extern "C" with the explicit Fv-mangled name so the symbol matches retail.
-extern "C" void func_800B9B78__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 arg) {
+extern "C" void setMapVisibility__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 arg) {
     struct V {
         u8 _00[0x6C];
         u32 field_6C;      // 0x6C
@@ -138,18 +138,18 @@ extern "C" void func_800B9B78__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 a
     }
 }
 
-extern "C" void* func_8047BC54__17UnkClass_8047BB54Fv(void*, void*);
+extern "C" void* checkMpfFlags__17UnkClass_8047BB54Fv(void*, void*);
 // When the +0x6C bit-15 flag is set, refresh the region pairing through the
 // shared scene-view globals and re-bind the +0xF0 sub-object's +0x9C offset.
 extern "C" void func_800B9C14(void* self) {
     if (*(u32*)((u8*)self + 0x6C) & 0x8000) {
         extern void* func_8049626C(void*, void*);
         void* r = func_8049626C((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
-        func_8047BC54__17UnkClass_8047BB54Fv((u8*)self + 0xF0, (u8*)r + 0x9C);
+        checkMpfFlags__17UnkClass_8047BB54Fv((u8*)self + 0xF0, (u8*)r + 0x9C);
     }
 }
 
-void func_800B9C64__Q22cf11CfObjectMapFv(void* self) {
+void clearStatus__Q22cf11CfObjectMapFv(void* self) {
     *(unsigned short*)((char*)self + 0x8e) = 0;
 }
 
@@ -203,9 +203,9 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
     return handle != 0;
 }
 
-// Retail symbol name is func_800B9E3C__Q22cf11CfObjectMapFv (vtable slot); the
+// Retail symbol name is setMapId__Q22cf11CfObjectMapFv (vtable slot); the
 // body consumes r4, so keep the retail name via extern "C" (see func_800BA650).
-extern "C" void func_800B9E3C__Q22cf11CfObjectMapFv(cf::CfObjectMap* self,
+extern "C" void setMapId__Q22cf11CfObjectMapFv(cf::CfObjectMap* self,
                                                     unsigned long v) {
     func_800B9C74(self, (v >> 20) & 0x7F, (v >> 10) & 0x3FF);
 }
@@ -293,23 +293,23 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         self->field_0xDC = func_80065D00(resC->field_0x2C, resC);
         void* r3 = func_80489A60(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
         func_800BBADC(self, r3);
-        func_8047CFBC__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
+        clearPoolData__17UnkClass_8047CD0CFv(&self->field_0x2F2C);
         if (self->field_0xDC != 0) {
             self->field_0xEC = func_80495EB0(lbl_eu_80663E14, self->field_0xDC, buf);
-            func_8047CDBC__17UnkClass_8047CD0CFv(&self->field_0x2F2C,
+            initNodePool__17UnkClass_8047CD0CFv(&self->field_0x2F2C,
                                                  getHandleMEM1__Q23mtl10MemManagerFv(), 0xB0000, 0x32);
             func_8047CD0C__17UnkClass_8047CD0CFv(&self->field_0x2F2C, self->field_0xDC);
         }
         if (self->field_0xE0 != 0) {
-            if (func_8047BB54__17UnkClass_8047BB54Fv(&self->field_0xF0, self->field_0xE0,
+            if (initMpfSystem__17UnkClass_8047BB54Fv(&self->field_0xF0, self->field_0xE0,
                                                      lbl_eu_80663E14, lbl_eu_80663E10) != 0) {
                 *reinterpret_cast<u32*>(self->_pad6C) |= 0x8000;
             }
         }
         if (self->field_0xE4 != 0) {
-            func_80462A08__8CTaskLODFv(self->field_0xE4, 0);
-            func_80462BC8__8CTaskLODFv(*reinterpret_cast<void**>(&self->field_0x90[8]));
-            func_80462BE4__8CTaskLODFv(lbl_eu_80666A38);
+            acquireLODResource__8CTaskLODFv(self->field_0xE4, 0);
+            bindTaskToLOD__8CTaskLODFv(*reinterpret_cast<void**>(&self->field_0x90[8]));
+            notifyLODTick__8CTaskLODFv(lbl_eu_80666A38);
         }
         if (self->field_0xE8 != 0) {
             UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(
@@ -368,9 +368,9 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
         value = lbl_eu_80666A38;
     }
     if (&self->field_0xF0 != 0) {
-        func_8047BD7C__17UnkClass_8047BB54Fv(&self->field_0xF0, value);
+        setMpfFloatParam__17UnkClass_8047BB54Fv(&self->field_0xF0, value);
     }
-    func_80462BFC__8CTaskLODFv(value);
+    updateLODFrame__8CTaskLODFv(value);
     u32 v = func_8016E08C();
     if (getUnk80664658()->field_214 & 0x80) {
         v = getUnk80664658()->field_210 & 0xFFFF;
@@ -383,16 +383,16 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
         value = lbl_eu_80666A38;
     }
     // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
-    func_80462C80__8CTaskLODFv(v, value);
+    updateLODRange__8CTaskLODFv(v, value);
     func_804C1F10(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, v, value);
     if (lbl_eu_80663E28 & 0x01000000) {
         v = 2;
     } else {
         v = func_8016E094() & 0xFFFF;
     }
-    func_80462CBC__8CTaskLODFv(v);
+    syncLODTask__8CTaskLODFv(v);
     if (&self->field_0xF0 != 0) {
-        func_8047BD84__17UnkClass_8047BB54Fv(&self->field_0xF0, v);
+        forwardMpfCallA__17UnkClass_8047BB54Fv(&self->field_0xF0, v);
     }
     UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(self->field_0x2F3C);
     if (fx != 0) {
@@ -418,14 +418,14 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
 // lbl_eu_80529100__2cf, drifting from retail's plain name.
 typedef void (cf::CfObjectMap::*CfObjectMapDispatchPMF)();
 extern "C" { extern CfObjectMapDispatchPMF lbl_eu_80529100[3]; }
-void cf::CfObjectMap::func_800BA610() {
+void cf::CfObjectMap::dispatchMapState() {
     u16 idx = *(u16*)((u8*)this + 0x8E);
     if (idx < 3) {
         (this->*lbl_eu_80529100[idx])();
     }
 }
 
-extern "C" void func_800BA650__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
+extern "C" void setMapScale__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
     extern void func_80484E5C(void*);
     void* unk = *(void**)((char*)self + 0x98);
     *(float*)((char*)self + 0x2F48) = f;
@@ -434,7 +434,7 @@ extern "C" void func_800BA650__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float
     }
 }
 
-extern "C" void func_800BA66C__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task) {
+extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task) {
     cf::CfObject* model = *reinterpret_cast<cf::CfObject**>(&self->field_0x90[8]);
     if (model != 0) {
         model->CfObject_UnkVirtualFunc25();
@@ -447,9 +447,9 @@ extern "C" void func_800BA66C__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void*
             sub->flags_0x10 &= ~8;
         }
     }
-    func_80462C48__8CTaskLODFv(task);
-    if (func_800828DC__Q22cf13CfGameManagerFv() != 0) {
-        func_8016FBA8(func_800828DC__Q22cf13CfGameManagerFv(), task);
+    setLODFilterFlag__8CTaskLODFv(task);
+    if (getMapEffectManager__Q22cf13CfGameManagerFv() != 0) {
+        func_8016FBA8(getMapEffectManager__Q22cf13CfGameManagerFv(), task);
     }
 }
 
@@ -467,7 +467,7 @@ extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(cf::CfObjec
 
 
 
-extern "C" void func_800BA764__Q22cf11CfObjectMapFv() {}
+extern "C" void nopMap__Q22cf11CfObjectMapFv() {}
 
 // Retail D1 dtor for CfObjectMap: vtable reset (lbl_eu_80529128) then the
 // CfObject_UnkVirtualFunc6 virtual at vtable+0x68 called via the constant

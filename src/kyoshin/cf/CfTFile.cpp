@@ -364,8 +364,8 @@ u16 func_8006A404() { return lbl_eu_80661AF8; }
 // bdat file or the column is unavailable.
 int func_8006A40C(int mode) {
     func_8003AA34();
-    u32 bdat = func_80086B2C__Q22cf13CfGameManagerFv();
-    int row = (int)func_80086B1C__Q22cf13CfGameManagerFv();
+    u32 bdat = getGlobalPtr640A8__Q22cf13CfGameManagerFv();
+    int row = (int)getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
     const char* pSec;
     const char* pMin;
     if (bdat != 0) {

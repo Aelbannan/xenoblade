@@ -150,7 +150,7 @@ extern "C" {
     extern u16 lbl_eu_80663E44;
     extern float lbl_eu_80665C40;
     void func_800BDB4C(void* obj);
-    void func_80085878__Q22cf13CfGameManagerFv();
+    void cleanupMapEffects__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
     extern void* lbl_eu_806618D8;
     extern void* lbl_eu_806618F0;
@@ -165,9 +165,9 @@ extern "C" {
     void func_800F3958(void* battleMgr, void* actor, int index);
     void func_800EC8FC(void* battleMgr, void* actor, void* data, int flag);
     u32 func_800FE68C();
-    void func_800ACC14(void* obj, s8 val);
-    void func_800ACF78(void* obj, void* target, void* child);
-    void func_800ACFD8(void* obj, void* target);
+    void setChildB59__(void* obj, s8 val);
+    void bindPartnerO_(void* obj, void* target, void* child);
+    void setTargetObj_(void* obj, void* target);
     void func_800AC4A8(void* obj, u16 param);
     void func_800ABF24(void* obj, void* pos, void* offset, float f);
     void func_8013D07C(void* subObj, const char* str, int flag);
@@ -177,10 +177,10 @@ extern "C" {
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);
-    void* func_80081CBC__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
-    void* func_80081CB8__Q22cf13CfGameManagerFv();
-    void* func_800817BC__Q22cf13CfGameManagerFv(int index, int mode);
-    void* func_8008187C__Q22cf13CfGameManagerFv(int index);
+    void* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
+    void* createBdatCollisionObj__Q22cf13CfGameManagerFv();
+    void* createBattleActor__Q22cf13CfGameManagerFv(int index, int mode);
+    void* createNpcActor__Q22cf13CfGameManagerFv(int index);
 }
 
 // Checks whether the current OC context object can start a battle/talk
@@ -266,7 +266,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     lbl_eu_80663E24 = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
     OcSpawnObjView* found = NULL;
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
-        found = (OcSpawnObjView*)func_80081990__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
+        found = (OcSpawnObjView*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
         if (found != NULL) {
             func_8003AA34();
             getFP__FPCc(lbl_eu_804FA74C); // init side effect only; result unused
@@ -278,7 +278,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     } else if (strcmp(str, lbl_eu_804FA74C + 0x17) == 0 || strcmp(str, lbl_eu_804FA74C + 0x23) == 0) {
         found = (OcSpawnObjView*)func_80081A40__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x17, (u16)idx, 0, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x27) == 0 || strcmp(str, lbl_eu_804FA74C + 0x32) == 0) {
-        found = (OcSpawnObjView*)func_80081358__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
+        found = (OcSpawnObjView*)createMapObjectInstance__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x35) == 0) {
         if (idx > 0) {
             idx--;
@@ -525,7 +525,7 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     }
     if (obj != 0 && obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0) &&
         (lbl_eu_80663E24 & 0x00400000)) {
-        func_80085878__Q22cf13CfGameManagerFv();
+        cleanupMapEffects__Q22cf13CfGameManagerFv();
     }
     return 0;
 }
@@ -1580,7 +1580,7 @@ extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
     u32 savedFlag = (flags >> 14) & 1;
     lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x40000u)
                                   : (lbl_eu_80663E24 & ~0x40000u);
-    cf::CfObject* obj = (cf::CfObject*)func_80081694__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
+    cf::CfObject* obj = (cf::CfObject*)createPlayerEffectInstance__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
     lbl_eu_80663E24 = (savedFlag != 0) ? (lbl_eu_80663E24 | 0x40000u)
                                        : (lbl_eu_80663E24 & ~0x40000u);
     if (!obj) {
@@ -1656,9 +1656,9 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
     lbl_eu_80663E24 = (arg3 != 0) ? (lbl_eu_80663E24 | 0x00040000u)
                                   : (lbl_eu_80663E24 & ~0x00040000u);
     if (strcmp(name, &lbl_eu_804FA74C[0x6B]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x54]) == 0) {
-        result = func_80081CBC__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
+        result = getOrCreateBdatObj__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x79]) == 0) {
-        result = func_80081CB8__Q22cf13CfGameManagerFv();
+        result = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     }
     if (!result) {
         vmOCExceptionThrow(pThread);
@@ -1727,9 +1727,9 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
                                   : (lbl_eu_80663E24 & ~0x00040000u);
     void* result = NULL;
     if (strcmp(name, &lbl_eu_804FA74C[0x85]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x89]) == 0) {
-        result = func_800817BC__Q22cf13CfGameManagerFv(index, 0);
+        result = createBattleActor__Q22cf13CfGameManagerFv(index, 0);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x8C]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x93]) == 0) {
-        result = func_8008187C__Q22cf13CfGameManagerFv(index);
+        result = createNpcActor__Q22cf13CfGameManagerFv(index);
     }
     if (!result) {
         vmOCExceptionThrow(pThread);
@@ -1791,7 +1791,7 @@ extern "C" int func_8003F74C(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    func_800ACC14(obj, (s8)value);
+    setChildB59__(obj, (s8)value);
     return 0;
 }
 
@@ -1812,7 +1812,7 @@ extern "C" int func_8003F7CC(VMThread* pThread, int handle) {
         ctx = func_801862C0();
         target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
     }
-    func_800ACF78(obj, target, 0);
+    bindPartnerO_(obj, target, 0);
     return 0;
 }
 
@@ -1849,7 +1849,7 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
             }
         }
     }
-    func_800ACF78(obj, parent, child);
+    bindPartnerO_(obj, parent, child);
     return 0;
 }
 
@@ -1870,7 +1870,7 @@ extern "C" int func_8003F97C(VMThread* pThread, int handle) {
         ctx = func_801862C0();
         target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
     }
-    func_800ACFD8(obj, target);
+    setTargetObj_(obj, target);
     return 0;
 }
 
@@ -1882,7 +1882,7 @@ extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
     const char* name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
     int param = vmArgIntGet(3, ptr2);
-    void* battleMgr = func_80081CB8__Q22cf13CfGameManagerFv();
+    void* battleMgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (battleMgr) {
         *(u32*)((u8*)battleMgr + 0x94) = 5;
         func_800AC4A8(battleMgr, (u16)param);
@@ -2005,7 +2005,7 @@ extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
         void* ctx2 = func_801862C0();
         target = (cf::CfObject*)func_801864DC(ctx2, *(u32*)((u8*)target + 4));
     } else {
-        target = (cf::CfObject*)func_80082D90__Q22cf13CfGameManagerFv();
+        target = (cf::CfObject*)getPlayerContainerForCam__Q22cf13CfGameManagerFv();
     }
     void* ctx = func_801862C0();
     cf::CfObject* self = (cf::CfObject*)func_801864DC(ctx, handle);
@@ -2015,7 +2015,7 @@ extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
                            lbl_eu_80665D44);
         // When the target is an embedded move object, gate on the game state.
         if (ok != 0 && (target->unk64 & 0x2)) {
-            if (func_80082FE4__Q22cf13CfGameManagerFv(0) == false) {
+            if (isPlayerInEventRange__Q22cf13CfGameManagerFv(0) == false) {
                 ok = 0;
             }
         }

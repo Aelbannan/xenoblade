@@ -92,7 +92,7 @@ struct CLPSize {
     f32 height;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10: its
+// Mirror of the font object returned by CDeviceFont::getFontInfo: its
 // vtable slot 9 (+0x24) yields the u32 font handle bound into the layout.
 // Never instantiated, so no vtable is emitted; a genuine virtual call makes
 // MWCC emit the retail r12 dispatch sequence.
@@ -295,9 +295,9 @@ extern "C" void func_8022BFC8(CSysWin*, u8);
 extern "C" void func_8022B8B8(void*);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_8022B7F4(void*);
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8009EC18(u16, u32);
 extern "C" u32 func_801587E8(u16);
 extern "C" void func_80158118(void*, u16, u32);
@@ -326,7 +326,7 @@ extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);  // BDAT archive release
 extern "C" void* func_8003AA34();                        // BDAT table unload
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
     nw4r::lyt::Layout*);                                 // CDeviceFont helper
 // Shared tag string; retail symbol is the MANGLED func_801355A0__Fv, so this
 // import must keep C++ linkage (MWCC appends __Fv).
@@ -334,7 +334,7 @@ void* func_801355A0();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // CLibLayout accessor
 extern "C" void* func_801355BC();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" void func_8018B0FC(void* dst, void* src);     // cursor body copy
 
 // Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to

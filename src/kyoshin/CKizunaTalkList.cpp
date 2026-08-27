@@ -194,7 +194,7 @@ void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 // Teardown (retail func_8027346C): release the BDAT query state, file handles,
 // layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
 void func_8027346C(CKizunaTalkList* self) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0((CFileHandle**)&self->mEntryCount);
     func_801390E0((CFileHandle**)&self->mUnknown18);
     self->mState84 = 0;
@@ -841,7 +841,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
         CFileHandle* fh = (CFileHandle*)this->mEntryCount;
         void* fileData = fh->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         // Attach the layout archive to a fresh ArcResource accessor.
         this->mUnknown1C = (u32)createArcResourceAccessor__10CLibLayoutFv();
@@ -854,7 +854,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
 
         // Bind the font pane onto the layout.
         void* rootPane = *(void**)((char*)this->mpLayout20 + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, this->mpLayout20);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, this->mpLayout20);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
         func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
 

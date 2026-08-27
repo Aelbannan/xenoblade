@@ -8,7 +8,7 @@
 // NOTE: the retail symbol-map entries for the three functions below have
 // decompiler-guessed parameter fragments (Fv / FP7CDrawGX) that do not match
 // the real C++ mangling of their signatures, so they are defined as extern
-// "C" with the exact retail names. Same for the func_80452C10 import, which
+// "C" with the exact retail names. Same for the getFontInfo import, which
 // retail callers invoke with a single argument (the callee never reads the
 // second).
 
@@ -335,25 +335,25 @@ public:
     CDrawGX* drawGX() { return (CDrawGX*)mDrawGXBuf; }
     u8 mFlag2F0;        // 0x2F0 (read by wkUpdate)
 
-    u32 func_80453F78();
-    void func_80454DE4();
-    void func_80454E2C();
-    void func_80454E6C();
-    u32 func_80454E78();
+    u32 getScaledTextHeight();
+    void allocFontHeap();
+    void freeFontHeap();
+    void resetFontCursor();
+    u32 getFontHeapSize();
     bool wkStandbyLogout();
     void wkUpdate();
 };
 
-// CDeviceFont::func_80452C10(u32) - font-info lookup by index. Declared with
+// CDeviceFont::getFontInfo(u32) - font-info lookup by index. Declared with
 // the exact retail name; callers pass only the index (see file header note).
-extern "C" IDeviceFontInfo* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+extern "C" IDeviceFontInfo* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 index);
 
 // Font-info lookup + slot-9 dispatch. The retail symbol carries the
 // decompiler-guessed Fv suffix; the body passes r4 (a font index) through to
-// func_80452C10, so the real signature takes a u32.
-extern "C" void* func_80454684__16CDeviceFontLayerFv(void* self, u32 index) {
-    IDeviceFontInfo* info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+// getFontInfo, so the real signature takes a u32.
+extern "C" void* getFontSlotData__16CDeviceFontLayerFv(void* self, u32 index) {
+    IDeviceFontInfo* info = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         index);
     if (info == 0)
         return 0;
@@ -510,7 +510,7 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
             memcpy(buf, str, count);
             buf[count] = '\0';
             const char* p = buf;
-            info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
+            info = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
             if (info == 0) {
                 cur = 0;
             } else {
@@ -535,7 +535,7 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
         }
     }
 
-    info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
+    info = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
     if (info == 0) {
         cur = 0;
     } else {
@@ -618,8 +618,8 @@ void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
 // its text length (u16), scale it by mScaleY and return the integer height.
 // The float conversions follow the retail double-trick (u16->f32 via 2^52
 // lfd) and __cvt_fp2unsigned for the final (u32) cast.
-u32 CDeviceFontLayer::func_80453F78() {
-    IDeviceFontInfo* info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+u32 CDeviceFontLayer::getScaledTextHeight() {
+    IDeviceFontInfo* info = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         mFontId);
     if (info == 0) {
         return 0;
@@ -629,7 +629,7 @@ u32 CDeviceFontLayer::func_80453F78() {
 }
 
 // Queue a background-color change unless the color already matches.
-void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* self,
+void setBackgroundColor__16CDeviceFontLayerFv(CDeviceFontLayer* self,
                                          const ml::CCol4* col) {
     bool same = self->mBgColor.r == col->r && self->mBgColor.g == col->g &&
                 self->mBgColor.b == col->b && self->mBgColor.a == col->a;
@@ -683,7 +683,7 @@ void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 // Single chained record-pointer expression: MWCC forms the end-of-record
 // pointer, writes the leading fields end-relative, then rebases to the
 // record start (subi) for the trailing field and the queue append.
-void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
+void setFontScale__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
                                          f32 scaleY) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
@@ -729,7 +729,7 @@ void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
 // The reslist append follows the func_8048C524/CDeviceVI recipe: hand-inlined
 // push_back walk with explicit byteOff + comma-init so the register assignment
 // matches retail (cmd r4, i r5, byteOff r6, capacity r7, sentinel r8).
-void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
+void setFontId__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
     FONT_LAYER_RESERVE_SLOTS(self);
 
     u32 cursor = lbl_eu_80665694 + 8;
@@ -807,7 +807,7 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
     CDrawGX* draw, u32 fontId, const char* str, s16 x, s16 y, f32 scaleX,
     f32 scaleY, const ml::CCol4* col, u8 flag) {
     IDeviceFontInfo* info =
-        func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
+        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
     if (info == 0) {
         return;
     }
@@ -822,7 +822,7 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
             // measured text width and the scaled line height.
             u32 w = func_80453D78__16CDeviceFontLayerFv(str, fontId, scaleX);
             IDeviceFontInfo* info2 =
-                func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
+                getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId);
             u32 h;
             if (info2 == 0) {
                 h = 0;
@@ -918,8 +918,8 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
         return;
     }
 
-    self->drawGX()->func_80456570(0);
-    self->drawGX()->func_8045657C(0);
+    self->drawGX()->setZCompare(0);
+    self->drawGX()->setZWriteEnable(0);
 
     CDeviceFontLayerCmdNode* node =
         (CDeviceFontLayerCmdNode*)self->mQueList.mStartNodePtr->mNext;
@@ -991,8 +991,8 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
         gxLayout->mFlags = gxFlags | 0x10;
     }
 
-    self->drawGX()->func_80456570(1);
-    self->drawGX()->func_8045657C(1);
+    self->drawGX()->setZCompare(1);
+    self->drawGX()->setZWriteEnable(1);
 }
 
 void CDeviceFontLayer::wkUpdate() {
@@ -1018,7 +1018,7 @@ extern "C" void* allocate_array_ex__Q23mtl10MemManagerFUlUli(u32 size,
 // and reset the adjacent word.
 // lbl_eu_80665690 / 80665694 now dissolved above
 
-void CDeviceFontLayer::func_80454DE4() {
+void CDeviceFontLayer::allocFontHeap() {
     if (lbl_eu_80665690 != 0)
         return;
     int handle = getDevSys1Handle__7CDeviceFv();
@@ -1030,7 +1030,7 @@ void CDeviceFontLayer::func_80454DE4() {
 // Font-layer global state: an allocated object pointer plus an adjacent word.
 extern "C" void __dla__FPv(void* p);
 
-void CDeviceFontLayer::func_80454E2C() {
+void CDeviceFontLayer::freeFontHeap() {
     if (lbl_eu_80665690 == 0)
         return;
     if (lbl_eu_80665690 != 0) {
@@ -1040,9 +1040,9 @@ void CDeviceFontLayer::func_80454E2C() {
     lbl_eu_80665694 = 0;
 }
 
-void CDeviceFontLayer::func_80454E6C() { lbl_eu_80665694 = 0; }
+void CDeviceFontLayer::resetFontCursor() { lbl_eu_80665694 = 0; }
 
-u32 CDeviceFontLayer::func_80454E78() { return 0x10000; }
+u32 CDeviceFontLayer::getFontHeapSize() { return 0x10000; }
 
 // ===== Dissolved retail data (CDeviceFontLayer TU) =====
 // .rodata 0x80522E40 (0x78) - RTTI type names. Retail packs them at +0x00,

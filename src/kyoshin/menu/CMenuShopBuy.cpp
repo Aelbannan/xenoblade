@@ -75,7 +75,7 @@ extern "C" CMenuShopBuy* __ct__CMenuShopBuy(CMenuShopBuy* self, CScn* scene, u32
 }
 
 void CMenuShopBuy::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // Build a temporary CBgTex (retail unmangled ctor) and copy its data
     // fields into the member, then destroy the temp (CMenuMapSelect pattern).
@@ -299,13 +299,13 @@ void CMenuShopBuy::Term() {
     func_801ED618(reinterpret_cast<CItemBoxLine*>(mItemBoxLine));
 
     lbl_eu_806642F8 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 void CMenuShopBuy::Move() {
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
 
@@ -333,7 +333,7 @@ void CMenuShopBuy::Move() {
 
 void CMenuShopBuy::cbRenderBefore() {
     // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
         (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
@@ -429,7 +429,7 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
     if (self->mFloat6FC > lbl_eu_80667A28) self->mFloat6FC = lbl_eu_80667A28;
 
     ShopBuyPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Pointer input enabled: turbo flags move the cursor, pressed flags
         // run the confirm/cancel flow. The item-box pointer is recomputed per
         // call (addi r3,r31,0xbc) exactly like retail - no cached local.

@@ -156,7 +156,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     mMemRegion.createRegion(mem2, 0x8000, &lbl_eu_80506C14[0x73], 0);
     Class_8045F858 host(&mMemRegion);
     void* data = field_14->getData();
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     field_18 = CLibLayout::createArcResourceAccessor();
     field_18->Attach(data, &lbl_eu_80506C14[0x7e]);
@@ -166,7 +166,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     func_80136F08(mpLayout, &field_28, field_18, &lbl_eu_80506C14[0xdb]);
 
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
-    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+    void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     func_8013676C(rootPane,
                   reinterpret_cast<CNumSelectFontView*>(fontObj)->vf7());
     func_801368C0(mpLayout, &lbl_eu_80506C14[0x20], (u32)func_801355BC());
@@ -203,7 +203,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     // size both highlight panes to its dimensions.
     // Ternary form reproduces retail's select: default 0x15d, bt-eq skips
     // the 0x154 overwrite.
-    const char* msgKey = (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    const char* msgKey = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                              ? &lbl_eu_80506C14[0x154]
                              : &lbl_eu_80506C14[0x15d];
     u16 msgId = func_8013606C(&lbl_eu_80506C14[0x129], msgKey, 0x2b);

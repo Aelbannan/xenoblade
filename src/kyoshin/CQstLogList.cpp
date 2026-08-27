@@ -515,7 +515,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 
     // The detached file-data pointer is loaded inline at the Attach call
     // site so it never gets a stack slot.
-    func_80434A4C__Q23mtl10MemManagerFb(false);
+    setMemInitFlag__Q23mtl10MemManagerFb(false);
     mArcResAcc =
         (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
     mArcResAcc->Attach(mFileHandle->getData(), &s[0x11e]);
@@ -527,7 +527,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj =
-        func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+        getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
     func_8013676C(rootPane, fontResult);
 
@@ -649,7 +649,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 
     // Look up the quest-log message texture ('timg') and size the panes from
     // its row/column counts.
-    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &s[0x185]
                           : &s[0x18e];
     u16 msgId = func_8013606C(&s[0x197], sel, 0x61);
@@ -689,7 +689,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
     field_0x178 = 1;
     field_0x170 = 1;
     mFileHandle = 0;
-    func_8045F810__17UnkClass_8045F564Fv(&mUnk04[0]);
+    validateHeap__17UnkClass_8045F564Fv(&mUnk04[0]);
     __dt__14Class_8045F858Fv(regionBuf, -1);
     return 1;
     }
@@ -724,7 +724,7 @@ extern "C" void func_80227BD8(CQstLogList* self) {
     reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf03();
     func_801F35DC(&self->mScrollBar);
     func_801D3258(&self->mSortMenuData);
-    func_8045F778__17UnkClass_8045F564Fv(&self->mUnk04[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&self->mUnk04[0]);
 }
 
 // Sort-menu open-in animation start (one-shot on mode 0): switch animations,

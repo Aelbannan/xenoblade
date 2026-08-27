@@ -158,8 +158,8 @@ extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" int func_804962A0(CScn* scn, int flag);
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+extern "C" int isFlag01Set__9CTaskGameFv();
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // code_80135FDC helpers (retail-unmangled).
 extern "C" u8 func_8013B980();
@@ -264,7 +264,7 @@ struct KizunaPadData {
     u32 mTurboPressButtonFlags; // 0x104
 };
 extern "C" KizunaPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_806647E0;    // CMenuKizunagram singleton pointer (sbss)

@@ -105,12 +105,12 @@ extern u32 lbl_eu_80538888[];        // CMenuPTChangeNotice primary vtable
 extern const f32 lbl_eu_80668B90;    // animation frame target
 extern const f32 lbl_eu_80668B80;    // pad-input disable timer
 extern const char* lbl_eu_80662AF8;  // file path for the notice layout
-void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 handle, const char* path,
                                                    IWorkEvent* evt, int, int);
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                    bool insertTop);
-void func_801C1B94__Q22cf9CfPadTaskFf(float f1);
+void setInputDisableTime__Q22cf9CfPadTaskFf(float f1);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
@@ -118,7 +118,7 @@ void __dl__FPv(void* p);
 // Unmangled in retail (unlike func_80137444's mangled form).
 u32 func_80137510(nw4r::lyt::AnimTransform* anim, float f1);
 // Layout/message/input helpers used by the file-load completion handler.
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 u16 func_8013606C(const void*, const void*, u32);
 char* func_80136190(const void*, const void*, int);
 void func_8013676C(void*, u32);
@@ -134,7 +134,7 @@ u8 func_801392B4(u32);
 u8 func_801392C8(u32);
 u8 code80135FDC_getByte_64077();
 u8 code80135FDC_getByte_6407E();
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
 // C++-linkage helpers (retail symbols are their MWCC-mangled forms).

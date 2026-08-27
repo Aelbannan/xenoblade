@@ -176,7 +176,7 @@ struct CCol6Cur18Data {
     u8    f_17;    // 0x17
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (virtual index 7, no args) yields the u32 bound into the layout's font pane
 // by func_8013676C. All-pure so no vtable is emitted.
 class CCol6FontView {
@@ -332,7 +332,7 @@ public:
     virtual void v20() = 0;  // index 32 -> +0x88 - Init
 };
 
-// Minimal view of the object returned by cf::CfGameManager::func_80083298:
+// Minimal view of the object returned by cf::CfGameManager::getGameSubManager:
 // only the +0xF0 subobject (UnkClass_8047BB54) is accessed in this unit.
 struct UnkClass_80083298View {
     u8 field_0x00[0xF0];
@@ -340,10 +340,10 @@ struct UnkClass_80083298View {
 };
 
 // Minimal CTaskGame import (retail symbols getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv; chained-call form per CUICfManager.cpp).
+// isFlag01Set__9CTaskGameFv; chained-call form per CUICfManager.cpp).
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" bool func_800426F0__9CTaskGameFv(CTaskGame* self);
+extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
 
 // CMenuFade object (opaque here; func_80113E1C/func_80113E24 gate on it).
 class CCol6Fade;
@@ -368,7 +368,7 @@ void func_801D20B0(void*, void*);     // CCur.cpp
 void func_8013D55C(char* msg, int a, int b);                         // CUICfManager.cpp
 void func_8009D018(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
+int isClassicController__Q22cf13CfGameManagerFv(int arg);                  // cf::CfGameManager
 void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);     // CUICfManager.cpp
 u8 func_8013600C(const void*, const void*, u32);                     // code_80135FDC.cpp
 s32 func_801571FC();                                                 // CItemBoxInfo.cpp
@@ -386,14 +386,14 @@ void func_80135464(u32 a, u32 b, f32 x, f32 y, f32 z);                // CUICfMa
 u32 func_801B481C();                                                   // code_80135FDC.cpp (any block condition active)
 u16 func_8013606C(const void*, const void*, u32);                     // code_80135FDC.cpp
 char* func_80136190(const void*, const void*, int);                   // code_80135FDC.cpp
-void func_80082008__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // CfGameManager.cpp
-void func_80082060__Q22cf13CfGameManagerFv();                         // CfGameManager.cpp
-int func_80082104__Q22cf13CfGameManagerFv();                          // CfGameManager.cpp
-void func_80081E90__Q22cf13CfGameManagerFv(u32, u32, u32);           // CfGameManager.cpp
+void notifyBattleSystem__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // CfGameManager.cpp
+void notifyCameraManager__Q22cf13CfGameManagerFv();                         // CfGameManager.cpp
+int isCameraReady__Q22cf13CfGameManagerFv();                          // CfGameManager.cpp
+void lookupEffectForResource__Q22cf13CfGameManagerFv(u32, u32, u32);           // CfGameManager.cpp
 void* func_801BFAE4(u16 handle);                                      // CfSoundMan.cpp
-void func_80082088__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
-UnkClass_80083298View* func_80083298__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
+void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
+UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)
 extern "C" void func_eu_801651A0(char* buffer, const char* format, ...); // EU format helper (unmangled retail)
 void func_8022B9B4(void* syswin, const char* msg, int flag);          // CSysWin.cpp
 void func_8022BFC8(void* syswin, int flag);                           // CSysWin.cpp
@@ -430,14 +430,14 @@ void func_8022BF6C(void* syswin, void* a, void* b);                  // CSysWin.
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);          // code_80135FDC.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
-void func_80462D04__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
-void func_80462D5C__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
-int func_80462E1C__8CTaskLODFv(u8);                                   // CTaskLOD.cpp
-void* func_804BC9EC__Fv(void);                                        // code_80135FDC.cpp
+void activateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
+void deactivateLOD__8CTaskLODFv(u8);                                  // CTaskLOD.cpp
+int getLODData__8CTaskLODFv(u8);                                   // CTaskLOD.cpp
+void* getScnHandle__Fv(void);                                        // code_80135FDC.cpp
 void func_804BCC30(void*, u8);                                        // code_80135FDC.cpp
 void func_804BCC3C(void*, u8);                                        // code_80135FDC.cpp
-void func_8047BD8C__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
-void func_8047BD94__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
+void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
+void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, u8);                 // code_80135FDC.cpp
 void __ct__8CProcessFv(CProcess* self);                              // CProcess ctor
 void __ct__CScrollBar(void* self, u8 direction);                     // CScrollBar ctor (retail short name)
 void __ct__CSysWin(void* self, int arg);                              // CSysWin ctor (retail short name)
@@ -459,7 +459,7 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
     nw4r::lyt::ArcResourceAccessor* accessor, char* animName);
 void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout* layout,
                                             char* paneName, u8 value);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 }
 

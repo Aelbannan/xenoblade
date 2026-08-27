@@ -7,10 +7,10 @@
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
-extern void func_80496998();
-extern void func_80496994();
-extern UNKTYPE* func_804BC9EC();
-extern void func_804BCC1C(UNKTYPE* r3);
+extern void resetScriptCode();
+extern void execScriptCode();
+extern UNKTYPE* getScnHandle();
+extern void resetScnData(UNKTYPE* r3);
 extern void func_804BC9F4(UNKTYPE* r3, u32 r4);
 
 // ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
@@ -170,14 +170,14 @@ bool CWorkSystem::wkStandbyLogin(){
     CViewRoot::create(this);
 
     CDeviceGX::updateVerticalFilter(VFILTER_NONE);
-    func_80496994();
+    execScriptCode();
     CTaskManager::Create();
 
     //Initialize the mersenne twister RNG class
     s64 time = CDeviceClock::getTimeNow();
     ml::math::mtInit(time & 0xFFFFFFFF);
 
-    UNKTYPE* r3 = func_804BC9EC();
+    UNKTYPE* r3 = getScnHandle();
     func_804BC9F4(r3, 0);
 
     //Call base
@@ -190,13 +190,13 @@ bool CWorkSystem::wkStandbyLogout(){
     wkCheckTimeout(30000, !hasChild(this), &lbl_eu_8052279C[0x54]); // "ログアウトに失敗しました"
 
     if(CScriptCode::getInstance() != nullptr){
-        func_80496998();
+        resetScriptCode();
     }
 
     if(!hasChild(this)){
         CTaskManager::Release();
-        UNKTYPE* r3 = func_804BC9EC();
-        func_804BCC1C(r3); //probably class function
+        UNKTYPE* r3 = getScnHandle();
+        resetScnData(r3); //probably class function
 
         mMemHandle = mtl::INVALID_HANDLE;
 
@@ -260,8 +260,8 @@ void CWorkSystem::setExitFunc(ExitFunc func){
 void CWorkSystem::callExitFunc(){
     if(lbl_eu_80665618 != nullptr){
         lbl_eu_80665618();
-        CLibCri::func_80459A80();
-        CDeviceFileCri::func_8044F964();
+        CLibCri::stopAllStreams();
+        CDeviceFileCri::closeAdxfHandle();
         CPadManager::destroy();
     }
 }

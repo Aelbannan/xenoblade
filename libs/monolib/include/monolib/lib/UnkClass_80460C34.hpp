@@ -116,7 +116,7 @@ extern const z_ushort lbl_eu_80523CE0[]; // dbase
 extern const z_ushort lbl_eu_80523D20[]; // dext
 
 // adler32 / inflate_fast live in the sibling TU UnkClass_80460308.
-z_ulong func_80460308__17UnkClass_80460308Fv(z_ulong adler, const z_uchar* buf, z_uint len);
+z_ulong processData__17UnkClass_80460308Fv(z_ulong adler, const z_uchar* buf, z_uint len);
 void    func_80460728__17UnkClass_80460308Fv(z_stream* strm, z_uint out);
 }
 

@@ -10,7 +10,7 @@
 extern "C" u32 func_8009CF8C(u32);
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int isFlag01Set__9CTaskGameFv();
 
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
@@ -156,7 +156,7 @@ extern "C" void func_8024448C(CFade* self);
 // UI/sound + scene-active helpers.
 extern "C" void func_8013EC6C(u32 a, u32 b);
 extern "C" int func_8013BE50();
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // Retail constructor (unmangled global, ctor with explicit arg).
 extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CProcess* arg);
 // Ctor/re-init copy helpers for the embedded widgets (retail-unmangled).

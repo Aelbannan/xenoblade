@@ -147,7 +147,7 @@ int func_802ABB38() {
 CVS_THREAD_BATTLE_END_SP* __ct__802AB5F0() {
     // Collect inactive voice handles from the voice-manager list. The loop
     // condition reloads the sentinel each iteration, as retail does.
-    CVoiceManager* mgr = (CVoiceManager*)func_800B6BA4();
+    CVoiceManager* mgr = (CVoiceManager*)getListB28();
     CVoiceHandle* active[8];
     CVoiceHandle* handle;
     int count = 0;

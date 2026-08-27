@@ -17,7 +17,7 @@ public:
     u16 field_0x6;   // 0x06 entry count
     u32 field_0x8;   // 0x08 table index
 
-    void func_804630C0();
+    void initLodTables();
     s32 func_80463590();
     f32 func_80463118();
     f32 func_8046323C();
@@ -77,7 +77,7 @@ public:
     f32 field_0x1C;  // 0x1C
 };
 
-// Live LOD record dispatch function pointer (set by func_8046368C/69C).
+// Live LOD record dispatch function pointer (set by selectCubicLookup/69C).
 typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 
 } // namespace LOD
@@ -86,7 +86,7 @@ typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 // Shared sbss / sdata2 data (retail symbol names).
 // ---------------------------------------------------------------------------
 
-// Cache record / pair-table bases (set up by func_804630C0).
+// Cache record / pair-table bases (set up by initLodTables).
 extern LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
 extern LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
 extern u32* lbl_eu_8066574C;    // index -> pair-table offset

@@ -274,7 +274,7 @@ void func_80213300(CMakeCrystalWin* self) {
 // CSystemWindow::cbRenderBefore.
 void CMakeCrystalWin::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0)
         return;

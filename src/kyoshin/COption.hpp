@@ -176,7 +176,7 @@ public:
     virtual void v20() = 0;  // index 32 -> +0x88 - layout-build virtual
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (slot 9, no args) yields the u32 pushed onto the root pane by func_8013676C.
 // All-pure so no vtable is emitted.
 class COptionFontView {
@@ -249,7 +249,7 @@ extern "C" void __ct__CCur18(void* self, void* accessor);
 extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void* lbl_eu_805396D0[];
 extern void* lbl_eu_80539638[];             // COption vtable (stored at +0x00 by __ct__COption)
 
@@ -259,16 +259,16 @@ extern "C" void __ct__CScrollBar(CScrollBar* self, int arg);
 extern "C" void __ct__CSysWin(CSysWin* self, int arg);
 extern "C" Class_80296898 lbl_eu_80577308;
 extern "C" u8 lbl_eu_8053948C[0x30];
-// func_80296AE8 retail symbol (1-arg mangling); func_8029D278 calls it with a
+// updateConfig retail symbol (1-arg mangling); func_8029D278 calls it with a
 // dead second argument (retail emits li r4,1), so declare the literal
 // mangled identifier under C linkage with both args.
-extern "C" void func_80296AE8__FPUc(u8* src, int mode);
+extern "C" void updateConfig__FPUc(u8* src, int mode);
 // Voice/enum-object list iteration helpers (retail C-linkage wrappers in
 // CfGameManager.cpp that leave the inner getter's result in r3).
-extern "C" CfEnumObject* func_eu_800874CC();
-extern "C" VoiceSource* func_eu_800874D0();
-extern "C" CfEnumObject* func_eu_800874D4(CfEnumObject* obj);
-extern "C" VoiceSource* func_eu_800874D8(VoiceSource* source);
+extern "C" CfEnumObject* triggerVoiceDown();
+extern "C" VoiceSource* getVoiceSourcePtr();
+extern "C" CfEnumObject* resetVoiceSystem(CfEnumObject* obj);
+extern "C" VoiceSource* getVoiceSourceForSystem(VoiceSource* source);
 extern "C" void func_800BF2F8(cf::CfObject* obj);
 extern "C" void func_801F34F4(CScrollBar* self);
 extern "C" void func_8022C1B4(u8* out, u8* syswin, u8 sel);
@@ -313,5 +313,5 @@ extern "C" void func_8022BF6C(void*, void*, void*);
 extern "C" void func_8022B8B8(void*);
 extern "C" void func_801D202C(void*);
 extern "C" char* func_80136190(const void*, const void*, int);
-extern "C" void func_80296A04__FP14Class_80296898(void*);
+extern "C" void initInstance__FP14Class_80296898(void*);
 

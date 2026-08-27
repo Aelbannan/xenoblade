@@ -44,7 +44,7 @@ extern CGradEntry lbl_eu_80660B78[360]; // cos table
 // External helpers (other monolib TUs).
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern void* cacheInstance__9CDeviceGX;
-extern u32 func_8044BE24__8CGXCacheFv(void* cache);
+extern u32 getAdjustFlag__8CGXCacheFv(void* cache);
 extern void* func_80496264(void* rsrc, int idx);
 extern void func_804D8B28(void* desktop);
 extern void func_804D8B30(void* desktop);
@@ -777,7 +777,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
 extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* color,
                               const ml::CVec3* size, void* clampInfo, void* material,
                               CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha, float vertRot) {
-    if (func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
+    if (getAdjustFlag__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
         return;
     }
 

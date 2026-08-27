@@ -8,7 +8,7 @@ extern "C" void func_80137924(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (func_80138078__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, func_801355A0__Fv,
-// func_80086F9C__Q22cf13CfGameManagerFv, func_801355F4,
+// isClassicController__Q22cf13CfGameManagerFv, func_801355F4,
 // func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
 // "C-linkage imports" section of kyoshin/CItemBoxGridSubMenu.hpp.
 
@@ -179,7 +179,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     func_80136E84(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
     func_80136F08(self->mLayout, &self->mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
 
-    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, self->mLayout);
+    u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
     u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
     func_8013676C(root, fontVal);
@@ -201,7 +201,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     char* str = (char*)func_80136190(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
     func_80136B4C(self->mLayout, &lbl_eu_805084BC[0x8b], str, 0);
 
-    int gmVal = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+    int gmVal = isClassicController__Q22cf13CfGameManagerFv(-1);
     const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
 
     u16 msgId = func_8013606C(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);

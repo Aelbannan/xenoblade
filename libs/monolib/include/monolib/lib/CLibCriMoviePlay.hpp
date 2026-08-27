@@ -51,21 +51,21 @@ public:
     virtual bool wkStandbyLogout();
     virtual void errorWiiCB();
     virtual void viBeginFrame();
-    void func_8045AE84();
-    void func_8045B1E0();
+    void updateMovieTextures();
+    void getMovieWorkSize();
     void OnPauseTrigger(bool pause);
-    void func_8045B310(bool pause);
+    void setMoviePause(bool pause);
 
     void setupGXState();
-    void func_80459DEC();
-    void func_8045A1B0();
-    void func_8045A260();
-    void func_8045A48C();
-    void func_8045A54C();
-    void func_8045A644();
-    void func_8045A708();
-    void func_8045A7F8();
-    void func_8045A8C8();
+    void setupMovieGfx();
+    void findFreeMovieEntry();
+    void startMovie();
+    void stopMovie();
+    void releaseMovieEntry();
+    void isMoviePlaying();
+    void clearMovieGlobalPause();
+    void isMovieGlobalPaused();
+    void renderMovie();
     void stopMovieById(int id);
     void releaseEntry(MovieEntry* entry);
     bool isMoviePlaying(int id);
@@ -78,9 +78,9 @@ public:
     int getWorkSize();
     int startMovie(const char* filename, u32 allocHandle, u32 allocHandle2,
                     bool waitForStart, bool useAlternateBuf);
-    void func_8045B1DC();
-    void func_8045B3D4();
-    void func_8045B3DC();
+    void onMovieViBegin();
+    void handleViBeginFrame();
+    void forwardUpdateMovies();
     void func_8045B3E4();
 
     // Singleton instance (sda21 lbl_eu_806656E0)

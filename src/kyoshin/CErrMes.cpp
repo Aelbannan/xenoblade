@@ -18,7 +18,7 @@ void func_eu_802B12DC() {
     lbl_eu_80664BF8 = (u32)CBdat::getFP((const char*)lbl_eu_80513420);
 }
 
-void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
+void func_eu_802B1334() { CBdat::getEntry(6); }
 
 // Error-screen bdat string getters: forward the column index to the shared
 // bdat helper (bdat data from lbl_eu_80664BF8, column "???" at +9 of 0x80513420).

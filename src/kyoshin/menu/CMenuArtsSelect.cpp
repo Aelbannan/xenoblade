@@ -121,7 +121,7 @@ struct ArtsSubObj {
     u16 mFlag530;            // +0x530 - bit0 gates arts-select availability
 };
 
-// Result of func_800B708C (battle action source); u32@+0x64 bit2.
+// Result of findObjectById (battle action source); u32@+0x64 bit2.
 struct ArtsActionSource {
     u8 _pad00[0x64];
     u32 mFlags;              // +0x64 - bit2 gates arts-select availability
@@ -155,7 +155,7 @@ struct ArtsMoveVtbl {
     virtual nw4r::math::VEC3* mFnAC();  // #41 => +0xAC: position getter
 };
 
-// Battle action source (func_800B708C result) vtable view.
+// Battle action source (findObjectById result) vtable view.
 struct ArtsActionSrcVtbl {
     // fillers #0..#40
     virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
@@ -283,7 +283,7 @@ int func_8010EDD4(void*);
 int func_8010A840(void*);
 
 // func_8010433C arts-ref allocator: CfGameManager creates the ref object.
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 // func_801088CC player gate: converts a CfObjectMove to its actor container.
 extern "C" BattleActor* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* objMove);
 extern "C" int func_801B2084();
@@ -363,7 +363,7 @@ extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
 u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
-u8* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+u8* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 void func_80139198(u32);
 u32 func_801392C0();
@@ -628,7 +628,7 @@ void CMenuArtsSelect::Init() {
     unk6C.createRegion(mtl::MemManager::getHandleMEM2(), 0x17a00, lbl_eu_804FD1E0, 0);
     Class_8045F858 regionGuard(&unk6C);
 
-    mtl::MemManager::func_80434A4C(0);
+    mtl::MemManager::setMemInitFlag(0);
     void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, getAllocHandle__10CLibLayoutFv());
     if (tagProc != NULL) {
         __ct__CTagProcessor(tagProc);
@@ -643,7 +643,7 @@ void CMenuArtsSelect::Init() {
 
     {
         nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
-        u8* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
+        u8* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
         typedef u32 (*FontVFn)(void*);
         u32 lineSpace = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
         func_8013676C(rootPane, lineSpace);
@@ -912,7 +912,7 @@ void CMenuArtsSelect::Move() {
     u32 one = 1;
 
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -937,7 +937,7 @@ after_bit21:
     if (lbl_eu_80663E24 & 0xAFA40000u) {
         goto done;
     }
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::isSceneLoading()) {
         goto done;
     }
     if (func_8018A608()) {
@@ -1183,7 +1183,7 @@ after_ce48:
                 if (bm->mActorList1.size() == 0) {
                     CPad* pad = cf::CfGameManager::getCurrentPad();
                     u32 bit;
-                    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+                    if (cf::CfGameManager::isClassicController(-1) != 0) {
                         bit = (pad->mPressedButtonFlags >> 23) & 1;
                     } else {
                         bit = (pad->mPressedButtonFlags >> 10) & 1;
@@ -1327,7 +1327,7 @@ done:
 
 void CMenuArtsSelect::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -1519,7 +1519,7 @@ extern "C" CMenuArtsSelect* func_80104210(CProcess* parent, CScn* scn) {
 extern "C" void func_8010433C() {
     if (lbl_eu_80663F20 != NULL && lbl_eu_80663F24 == NULL) {
         UnkArtsSelectRef* ref =
-            (UnkArtsSelectRef*)func_8008187C__Q22cf13CfGameManagerFv(0xb5);
+            (UnkArtsSelectRef*)createNpcActor__Q22cf13CfGameManagerFv(0xb5);
         lbl_eu_80663F24 = ref;
         if (ref != NULL) {
             // Local first: retail re-reads the global after the call and uses
@@ -1682,7 +1682,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     bool b31;
     bool b0;
     bool bX;
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         u32 held = pad->mHeldButtonFlags;
         if ((held & (1u << 27)) != 0) return;
         if ((held & (1u << 28)) != 0) return;
@@ -2378,7 +2378,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
     bool bC;
     bool bD;
     int selDir;
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    if (cf::CfGameManager::isClassicController(-1) != 0) {
         if ((pad->mHeldButtonFlags & (1u << 27)) != 0) return;
         if ((pad->mHeldButtonFlags & (1u << 28)) != 0) return;
         if ((pad->mHeldButtonFlags & (1u << 25)) != 0) return;
@@ -3187,7 +3187,7 @@ extern "C" int func_8010784C(CMenuArtsSelect* self) {
     typedef void* (*GetPtrFn)(void*);
 
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x10000000) != 0) return 1;
+    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) return 1;
 
     cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
     BattleActor* actor = reinterpret_cast<BattleActor*>(move);
@@ -3205,7 +3205,7 @@ extern "C" int func_8010784C(CMenuArtsSelect* self) {
             void* ret = reinterpret_cast<ArtsMoveVtbl*>(moveObj)->mFn4C();
             if (ret == NULL) return 1;
             ArtsActionSource* src =
-                static_cast<ArtsActionSource*>(func_800B708C((int)ret));
+                static_cast<ArtsActionSource*>(findObjectById((int)ret));
             if (src == NULL) return 1;
             if ((src->mFlags & 0x4) == 0) return 1;
         }
@@ -3256,7 +3256,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
         if (mv == NULL) return 0;
         ArtsActionSource* srcRaw =
-            static_cast<ArtsActionSource*>(func_800B708C(index));
+            static_cast<ArtsActionSource*>(findObjectById(index));
         if (srcRaw == NULL) return 0;
         // Squared distance between the action source position and the player;
         // threshold constant depends on srcFlags bit 3.
@@ -3333,7 +3333,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         // action source and the skill object's flag bit 23 must all be set.
         void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
         if (mv != NULL) {
-            void* src = func_800B708C((int)mv);
+            void* src = findObjectById((int)mv);
             if (src != NULL) {
                 void* skill = func_8016FE34(src);
                 if (skill != NULL) {
@@ -3385,7 +3385,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         } else {
             void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
             if (mv != NULL) {
-                void* src = func_800B708C((int)mv);
+                void* src = findObjectById((int)mv);
                 if (src != NULL) {
                     void* skill = func_8016FE34(src);
                     if (skill != NULL) {

@@ -46,17 +46,17 @@ public:
 // unkD8 CRI handle + volume), so declare the mangled symbols with the caller's
 // shape (same scheme as cf/CTaskREvent.hpp). extern "C" keeps the retail
 // verbatim symbol (C++ linkage would append an __F-arg mangling suffix).
-extern "C" void func_80459A90__7CLibCriFv(int handle, float volume);
-extern "C" int func_80459A98__7CLibCriFv(int handle);
-extern "C" int func_80459A7C__7CLibCriFv(int handle);
+extern "C" void setStreamVolume__7CLibCriFv(int handle, float volume);
+extern "C" int getStreamPosition__7CLibCriFv(int handle);
+extern "C" int stopStream__7CLibCriFv(int handle);
 // CRI streaming-play volume/rate setter (4-arg form; same caller-shape scheme
 // as the members above).
-extern "C" void func_80459A88__7CLibCriFv(s32 handle, float volume, float time, s32 mode);
+extern "C" void fadeStreamVolume__7CLibCriFv(s32 handle, float volume, float time, s32 mode);
 // CRI handle-state query / active-set (caller-shape scheme as above; retail
 // func_8004312C branches on the query result and forwards the booleanized OR
 // of two gates as the active flag).
-extern "C" int func_80459A78__7CLibCriFv(int handle);
-extern "C" void func_80459A84__7CLibCriFv(int handle, bool active);
+extern "C" int isStreamActive__7CLibCriFv(int handle);
+extern "C" void setStreamPause__7CLibCriFv(int handle, bool active);
 // Frame-time getter (CDeviceVI; retail verbatim name).
 extern "C" f32 getSecPerFrame__9CDeviceVIFv();
 // Target-frame-rate getter (CDeviceVI static; same flat name as
@@ -103,10 +103,10 @@ struct UnkClass_8004041C{
 class CBattery {
 public:
     CBattery(u8 batteryLevel);
-    void func_802B92A4();
-    void func_802B92FC();
-    void func_802B9334(void*);
-    void func_802B9364();
+    void loadBatteryArchive();
+    void updateLayout();
+    void drawBattery(void*);
+    void releaseLayout();
     void setBatteryLevel(u8 level);
     bool mLayoutReady; // 0x20
 };
@@ -123,7 +123,7 @@ public:
     virtual ~CTaskGame();
 
     static CTaskGame* getInstance();
-    static u32 func_800404F0(); // isUnk68Bit13Set: (spInstance->unk68 >> 13) & 1
+    static u32 isFlag2000Set(); // isUnk68Bit13Set: (spInstance->unk68 >> 13) & 1
     virtual void Init();
 
     // Retail func_800436A8 compares the inherited CTTask move-hook ptmf against
@@ -138,12 +138,12 @@ public:
     void setMoveFunc(CTTask<CTaskGame>::MoveFunc f) { mMoveFunc = f; }
     void setMoveFuncFrom(const CTTask<CTaskGame>::MoveFunc* src) { mMoveFunc = *src; }
 
-    void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
-    static bool func_800426F0();
-    void func_80042710();
-    void func_80042720();
+    void setLoadingCaption(u16 r4, u16 r5, const char* r6, s16 r7);
+    static bool isFlag01Set();
+    void setInitFlag();
+    void requestGameExit();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
-    static s32 func_8004368C();
+    static s32 isMoveFuncActive();
 
     virtual void Term();
     void stub_80040A3C();
@@ -278,10 +278,10 @@ extern "C" void func_8049602C(void* scene, int index, void* vec);
 extern "C" void* func_80496034(CScn* scene);
 
 // Hbm state toggle (flat retail names; defined in CLibHbm.cpp). Retail
-// func_800411A4 disables via func_8045D5C8 then re-enables via func_8045D470.
+// func_800411A4 disables via setHbmActiveFlag then re-enables via setHbmStopFlag.
 extern "C" void func_eu_804521BC(int value);
 // CTaskGameEvt event-helper import (retail flat name; stub body in
-// CTaskGameEvt.cpp): func_80040A3C passes the unkD4 object.
+// CTaskGameEvt.cpp): setLoadingCaption passes the unkD4 object.
 extern "C" void func_802956A8(void*);
 // Per-mode dispatch helpers for the func_80043564 callback (flat retail
 // names; stub bodies in this TU). Retail func_80043564 tail-calls them.
@@ -291,7 +291,7 @@ extern "C" void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c);
 extern "C" void func_800434AC(CTaskGame* inst, u32 a, u32 b, u32 c);
 extern "C" void func_800434DC(CTaskGame* inst, u32 a, u32 b, u32 c);
 extern "C" void func_80043538(CTaskGame* inst, u32 a);
-// Default caption/title string data (.data); func_80040A3C / func_8004256C
+// Default caption/title string data (.data); setLoadingCaption / func_8004256C
 // index into it for the empty-caption fallback (offsets 0x6D / 0x8A).
 extern char lbl_eu_804FA890[];
 
@@ -340,7 +340,7 @@ extern u32 lbl_eu_805255C8[3];
 // cf::CfGameManager controller-type query (flat retail name): the call site
 // must load r3=-1 before the bl, so bind the caller's shape directly (the
 // CfGameManager.hpp inline wrapper drops the argument).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern u32 lbl_eu_80525760[3];
 extern u32 lbl_eu_8052576C[3];
 extern u32 lbl_eu_8052582C[3];
@@ -423,8 +423,8 @@ extern "C" void func_800450C8();
 extern "C" void* func_800FE68C();
 extern "C" void __dt__800FDEF8(void* obj);
 extern "C" void func_800B15A4(void* obj);
-// Object-factory singleton accessor (C++ linkage -> retail func_800B07E8__Fv).
-extern void* func_800B07E8();
+// Object-factory singleton accessor (C++ linkage -> retail getInstance__Fv).
+extern void* getInstance();
 
 // (definition moved above class CTaskGame; see CTaskGamePtmfWords)
 
@@ -469,7 +469,7 @@ struct CTaskGameFlags68 {
 extern const f32 lbl_eu_80665D6C;
 extern const f32 lbl_eu_80665D74;
 
-// Object pointed to by CTaskGame::unkD4: flag word at +0x60 (func_80040A3C
+// Object pointed to by CTaskGame::unkD4: flag word at +0x60 (setLoadingCaption
 // clears its bit 0x2).
 struct CTaskGameUnkD4Obj {
     u8 pad[0x60];
@@ -523,7 +523,7 @@ extern "C" int func_8004362C(CTaskGame* self);
 extern "C" void func_804C8690(int a, int b);
 // Battle/script-time gate (flat retail name; stub body in
 // CTaskREvtSequence.cpp): retail func_8004312C ORs its result with
-// func_800829B8 and forwards the boolean to the CRI active-setter.
+// isSceneLoading and forwards the boolean to the CRI active-setter.
 extern "C" int func_8016C720();
 // Vision resource-copy helper (flat retail name; defined in this TU). Retail
 // func_8004312C passes the unk18C struct fields and branches on the result.
@@ -563,8 +563,8 @@ extern "C" void func_80134C34();
 extern "C" void func_80134E50(u32 value);
 extern "C" u32 func_80496110(CScnNw4r* scene);
 extern "C" int func_802A0CB8(char* buffer, int index, int value);
-extern "C" int func_8045997C__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
-extern "C" u32 func_80459AA0__7CLibCriFv(int arg);
+extern "C" int dispatchFilePlayback__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
+extern "C" u32 calcStreamBufferSize__7CLibCriFv(int arg);
 extern "C" int func_804DE010();
 extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
@@ -628,7 +628,7 @@ extern "C" CLoad* __ct__CLoad(CLoad* self, u8 arg);
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
 extern "C" void __dt__8009D72C();
 extern "C" void __dt__8047BFFC();
-extern "C" void func_8047D028__17UnkClass_8047CD0CFv();
+extern "C" void releasePoolMemory__17UnkClass_8047CD0CFv();
 
 // --- CTaskGame::Init factory imports (flat retail names; defined in the
 // monolib / cf / kyoshin TUs with C linkage) ---
@@ -649,7 +649,7 @@ extern "C" void* create__8CTaskLODFv(void* parent, void* p1, void* p2, u32 handl
 extern "C" void* create__16CTaskColiManagerFv(CProcess* parent, void* scene,
                                                void* view);
 extern "C" void __dt__8047BFA8();
-extern "C" void func_8047D024__17UnkClass_8047CD0CFv();
+extern "C" void refreshPoolMemory__17UnkClass_8047CD0CFv();
 extern "C" void* create__Q22cf13CfNandManagerFv(CProcess* parent, void* scene);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void* scn, void* cb, u32 a,
                                                       u32 b);

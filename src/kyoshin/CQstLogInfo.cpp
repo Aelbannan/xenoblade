@@ -144,7 +144,7 @@ extern "C" __declspec(noinline) void func_80229570(CQstLogInfo* self) {
 // delete the layout + tag processor, release the resource accessor and tear
 // down the scratch region.
 extern "C" __declspec(noinline) void func_80229620(CQstLogInfo* self) {
-    CBdat::func_8003AA8C(2);
+    CBdat::getEntry(2);
     func_801390E0(&self->mFileHandle);
     func_801390E0(&self->field_0x18);
     self->mUnk30 = 0;
@@ -758,7 +758,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
                                 &lbl_eu_8050A0B4[0x35e], 0);
         Class_8045F858 guard(&mMemRegion);
         void* fileData = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         void* tagMem = mtl::MemManager::allocate(
             0x858, getAllocHandle__10CLibLayoutFv());
         if (tagMem != 0) {
@@ -778,7 +778,7 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
                       &lbl_eu_8050A0B4[0x397]);
 
         nw4r::lyt::Pane* rootPane = mUnk20->GetRootPane();
-        void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
+        void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mUnk20);
         func_8013676C(rootPane, ((CQstLogInfoFontView*)font)->sf9());
 
         char* questName = func_801355BC();

@@ -610,7 +610,7 @@ public:
     virtual f32 vf14();                      // index 3 -> vtable 0x14
 };
 
-// Actor object from func_800B708C (id -> object): flags at +0x64, move handle
+// Actor object from findObjectById (id -> object): flags at +0x64, move handle
 // at +0x74, sub-object pointer at +0x98, battle sub-object at +0xC4, area
 // id/step at +0x734/+0x738.
 class CfWalkActorObj {
@@ -734,7 +734,7 @@ struct CfWalkVf2A4Result {
     u32 field_78;                            // 0x78 flags
 };
 
-// Phantom vtable for func_800821F8 result (dynamic manager): slot 0x2C.
+// Phantom vtable for getCameraDataBlock result (dynamic manager): slot 0x2C.
 class CfWalkDynMgr {
 public:
     virtual void f0();   virtual void f1();   virtual void f2();   virtual void f3();
@@ -984,11 +984,11 @@ struct CfWalkBattleState3F60 {
 };
 
 // Phantom view of cf::CfObject for the direct member call that emits the
-// mangled reloc func_800BE898__Q22cf8CfObjectFiUlff (note unsigned long so
+// mangled reloc requestVoice__Q22cf8CfObjectFiUlff (note unsigned long so
 // the mangling matches retail's Ul).
 class CfObject {
 public:
-    void func_800BE898(int a, unsigned long b, float c, float d);
+    void requestVoice(int a, unsigned long b, float c, float d);
 };
 
 // Battle-object view reached through CfWalkBattleObj::field_3F60 (battle
@@ -1108,7 +1108,7 @@ public:
 };
 
 // Minimal view of cf::CBattleManager for the vtable slots this TU calls
-// (func_80085220 at 0x1c). The real class lives in CBattleManager.hpp, which
+// (setPartyMaskFlag at 0x1c). The real class lives in CBattleManager.hpp, which
 // is not included here: its CChainActorList.hpp/CSuddenCommu.hpp chain
 // conflicts on the func_80174C98 extern "C" declaration. With -RTTI on,
 // declared index N -> vtable offset (N+2)*4.
@@ -1119,7 +1119,7 @@ public:
     virtual void vf10();                    // index 2 -> vtable 0x10
     virtual void vf14();                    // index 3
     virtual void vf18();                    // index 4
-    virtual void func_80085220(u32 a, u32 b);  // index 5 -> vtable 0x1c
+    virtual void setPartyMaskFlag(u32 a, u32 b);  // index 5 -> vtable 0x1c
     virtual void vf20();                    // index 6
     virtual void vf24();                    // index 7
     virtual u32 vf28(u32 a);                // index 8 -> vtable 0x28
@@ -1138,12 +1138,12 @@ public:
     s16 field_20C8;                            // 0x20C8
 };
 
-// C++-mangled import (retail symbol func_800B708C__Fi; declared here so MWCC
+// C++-mangled import (retail symbol findObjectById__Fi; declared here so MWCC
 // emits the mangled reloc name).
-extern void* func_800B708C(int id);
+extern void* findObjectById(int id);
 
-// func_8006EF04__Fi: presentation/event flag-bit probe (mangled C++ match).
-extern bool func_8006EF04(int mask);
+// isGlobalCamFlagSet__Fi: presentation/event flag-bit probe (mangled C++ match).
+extern bool isGlobalCamFlagSet(int mask);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
@@ -1158,8 +1158,8 @@ void func_800C5B00(void);
 void func_802A0E08(void* self);
 void func_80140E00(u32 a, u32 b, u32 c);
 bool func_80226B94(void);
-u32 func_80086DA0__Q22cf13CfGameManagerFv();
-u32 func_80086DA4__Q22cf13CfGameManagerFv();
+u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
+u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
 int func_8011CD5C(void);
 int func_80257308(void);
 int func_802AC510(void);
@@ -1202,12 +1202,12 @@ void* func_800451D8(u32 cls, int param);
 void func_80485774(void* obj, u32 flags);
 void func_8015AFA4(u32 a, u32 b);
 void func_8013E424(void* str, int flags);
-void* func_800821F8__Q22cf13CfGameManagerFv(void* self);
-u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
-void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
-void func_800826F0__Q22cf13CfGameManagerFv(u32 id);
-int func_80085840__Q22cf13CfGameManagerFv();
-extern "C" void func_80084A00__Q22cf13CfGameManagerFv(); // CfGameManagerUnityHelpers.hpp (stub def)
+void* getCameraDataBlock__Q22cf13CfGameManagerFv(void* self);
+u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
+void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
+void queueEventId__Q22cf13CfGameManagerFv(u32 id);
+int isSceneReadyForInput__Q22cf13CfGameManagerFv();
+extern "C" void handleFieldTransition__Q22cf13CfGameManagerFv(); // CfGameManagerUnityHelpers.hpp (stub def)
 void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* tmp);
 
 // Enum-list / selector helpers (CfObjectEnumList + selector subsystem).
@@ -1236,7 +1236,7 @@ int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
 int func_80260264(void* obj, u32 id, u32* outA);
 void func_8013E2E0(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
-int func_8007FE24__Q22cf13CfGameManagerFv(u32 mask);
+int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
 void* func_800EA444(void* mgr);
 // NOTE: real decl below returns cf::CfWalkEA444* via overload-free rename.
 
@@ -1244,8 +1244,8 @@ void* func_800EA444(void* mgr);
 void* func_8049627C(void* scene, int flag);
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(void* rect, void* view);
 // func_80496044 is declared in kyoshin/cf/CfGameManager.hpp (already in scope).
-// func_80084BF4__Q22cf13CfGameManagerFv (retail mangled C++ name).
-int func_80084BF4__Q22cf13CfGameManagerFv(void);
+// isAnyFieldFlagSet__Q22cf13CfGameManagerFv (retail mangled C++ name).
+int isAnyFieldFlagSet__Q22cf13CfGameManagerFv(void);
 int func_800967F8(void);
 // getInstance__11CSysWinBuffFv is declared in CMainMenu.hpp (already in scope).
 void* getUnk80664658(void);

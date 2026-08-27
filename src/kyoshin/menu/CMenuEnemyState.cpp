@@ -495,13 +495,13 @@ public:
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
-// func_800B708C(BOOL)/func_800BFC68(CfObjectMove*) declared (not extern "C")
+// findObjectById(BOOL)/func_800BFC68(CfObjectMove*) declared (not extern "C")
 // - MWCC's own C++ mangling matches the retail linker names
-// (func_800B708C__Fi / func_800BFC68__FPQ22cf12CfObjectMove).
-extern void* func_800B708C(int);
+// (findObjectById__Fi / func_800BFC68__FPQ22cf12CfObjectMove).
+extern void* findObjectById(int);
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
 // Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
 // is not includable here due to the concurrent func_8049603C/A8 conflict).
@@ -525,10 +525,10 @@ extern void func_80138078(u32);
 void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor);
 extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2);
 extern "C" {
-// CfGameManager::func_8008585C is not declared in CfGameManager.hpp (owned
+// CfGameManager::isSceneActive is not declared in CfGameManager.hpp (owned
 // by other batch targets); call the mangled linker name directly instead of
 // touching that shared header.
-int func_8008585C__Q22cf13CfGameManagerFv();
+int isSceneActive__Q22cf13CfGameManagerFv();
 
 extern u8 lbl_eu_80663F98;        // once-guard byte
 extern f32 lbl_eu_80573A60[3];    // mutable pulse vector (shake/scale-like)
@@ -643,7 +643,7 @@ static inline Fn vslot(void* obj, u32 offset) {
 
 void CMenuEnemyState::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -759,7 +759,7 @@ done:
 
 void CMenuEnemyState::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -779,7 +779,7 @@ after_bit21:
     if (lbl_eu_80663E24 & 0xAFA40000u) {
         goto done;
     }
-    if (func_8008585C__Q22cf13CfGameManagerFv()) {
+    if (isSceneActive__Q22cf13CfGameManagerFv()) {
         goto done;
     }
 
@@ -796,7 +796,7 @@ after_bit21:
                 reinterpret_cast<u8*>(func_800FE68C()) + 0x90E4);
 
             if (lastId != 0) {
-                Obj64_91* obj = reinterpret_cast<Obj64_91*>(func_800B708C(static_cast<int>(lastId)));
+                Obj64_91* obj = reinterpret_cast<Obj64_91*>(findObjectById(static_cast<int>(lastId)));
 
                 if (obj == NULL) {
                     goto targetDone;
@@ -826,7 +826,7 @@ after_bit21:
                             unk834 = 0;
                             unk838 = lbl_eu_80667004;
 
-                            void* oldObj = func_800B708C(static_cast<int>(unk830));
+                            void* oldObj = findObjectById(static_cast<int>(unk830));
                             // Double guard matches retail's paired beq before the call.
                             if (oldObj != NULL) {
                                 if (oldObj != NULL) {
@@ -858,7 +858,7 @@ after_bit21:
         ;
         if (noTarget) {
             if (unk830 != 0) {
-                void* h = func_800B708C(static_cast<int>(unk830));
+                void* h = findObjectById(static_cast<int>(unk830));
                 if (h != NULL) {
                     if (h != NULL) {
                         func_800BBA08(h);
@@ -904,7 +904,7 @@ after_bit21:
         }
 
         u32 actorId = panel.actorId;
-        Obj64_91* handle = reinterpret_cast<Obj64_91*>(func_800B708C(static_cast<int>(actorId)));
+        Obj64_91* handle = reinterpret_cast<Obj64_91*>(findObjectById(static_cast<int>(actorId)));
         if (handle == NULL) {
             panel.visible = z;
             continue;
@@ -1170,7 +1170,7 @@ void func_8010EB44(CPcSelectCursor* self) {
     self->mem08.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
                              &lbl_eu_804FDBF8[0x00], 0);
     Class_8045F858 regionGuard(&self->mem08);
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     // Retail reloads field18 (the arc accessor) and layout1C per call instead
     // of caching them in locals, so each is re-loaded from the object.
@@ -1360,7 +1360,7 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     }
     if (freeIdx == -1) return;
 
-    Obj64_91* obj = reinterpret_cast<Obj64_91*>(func_800B708C(static_cast<int>(actorId)));
+    Obj64_91* obj = reinterpret_cast<Obj64_91*>(findObjectById(static_cast<int>(actorId)));
     if (obj == NULL) return;
 
     // entry/panelData are the same address; retail keeps one base (r30).
@@ -1523,7 +1523,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         panel->visible = 0;
         self->field82C = 0;
         Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-            func_800B708C(static_cast<int>(lastId)));
+            findObjectById(static_cast<int>(lastId)));
         if (obj == NULL) return;
         self->field82C = lastId;
 
@@ -1701,7 +1701,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         panel->visible = 0;
         self->field82C = 0;
         Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-            func_800B708C(static_cast<int>(lastId)));
+            findObjectById(static_cast<int>(lastId)));
         if (obj == NULL) return;
         self->field82C = lastId;
 
@@ -2029,7 +2029,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     // Retail initialises the special flag (r28) before the actor lookup.
     s32 special = 0;
     Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-        func_800B708C(static_cast<int>(panel->actorId)));
+        findObjectById(static_cast<int>(panel->actorId)));
     if (obj != NULL && (obj->word64 & (1 << 2)) != 0) {
         // Signed int id: retail uses cmpwi against 0x96b/0x9c9.
         int id = obj->id8C;
@@ -2095,7 +2095,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
     u32 lastId = static_cast<Fe68CView*>(func_800FE68C())->lastId90E4;
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
-        func_800B708C(static_cast<int>(lastId)));
+        findObjectById(static_cast<int>(lastId)));
     if (lastObj != NULL) {
         sub = func_800AD860(lastObj);
         if (sub != NULL) {
@@ -2127,7 +2127,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
     char buf[0x20];
     panel->panelType = 0;
     Obj64_91* obj = reinterpret_cast<Obj64_91*>(
-        func_800B708C(static_cast<int>(panel->actorId)));
+        findObjectById(static_cast<int>(panel->actorId)));
     if (obj == NULL) return;
 
     // Only the last-selected enemy gets the full highlight path. (Retail
@@ -2150,7 +2150,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         static_cast<Fe68CView*>(func_800FE68C())->lastId90E4) {
         return;
     }
-    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(func_800B708C(
+    Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(findObjectById(
         static_cast<int>(static_cast<Fe68CView*>(func_800FE68C())->lastId90E4)));
     if (lastObj == NULL) return;
 
@@ -2616,7 +2616,7 @@ void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
     // and branches forward over it to the unk1C check (retail layout).
     if ((bm->flags824 & 0x20000) == 0) {
         Obj64_91* cur = reinterpret_cast<Obj64_91*>(
-            func_800B708C(static_cast<int>(panel->actorId)));
+            findObjectById(static_cast<int>(panel->actorId)));
         if (cur == NULL) {
             return;
         }
@@ -2625,7 +2625,7 @@ void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
             return;
         }
         Obj64_91* tgt = reinterpret_cast<Obj64_91*>(
-            func_800B708C(static_cast<int>(targetId)));
+            findObjectById(static_cast<int>(targetId)));
         if (tgt == NULL || cur != tgt) {
             return;
         }
@@ -2980,7 +2980,7 @@ void CMenuEnemyState::Init() {
 
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, unk74);
+    void* fontObj = CDeviceFont::getFontInfo(1, unk74);
     func_8013676C(rootPane, reinterpret_cast<MenuFontView*>(fontObj)->m24());
 
     func_801368C0(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());

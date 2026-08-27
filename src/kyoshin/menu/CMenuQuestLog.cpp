@@ -16,9 +16,9 @@
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
-#include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / func_80086F9C
+#include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / isClassicController
 #include "kyoshin/code_80135FDC.hpp"     // func_8013BE50 / func_80137250
 #include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
 #include "monolib/util/MemManager.hpp"
@@ -74,7 +74,7 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
 
     _this->field_2280 = arg2;
     _this->mState = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
     code80135FDC_postIncByte_64080();
     return _this;
 }
@@ -285,13 +285,13 @@ void CMenuQuestLog::Term() {
     lbl_eu_80663FC0 = 0;
     func_8013B980();
     if (code80135FDC_getByte_64080() == 0)
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
     func_80135550();
 }
 
 void CMenuQuestLog::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard (same shape as cbRenderBefore): exit label
@@ -307,7 +307,7 @@ body:
     // sound and flags the closing state.
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 close;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         close = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         close = (pad->mPressedButtonFlags >> 10) & 1;
@@ -363,7 +363,7 @@ body:
 
 __declspec(noinline) void CMenuQuestLog::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto exit;
     }
     // Branch-over-branch guard keeps MWCC from folding the bit test into a
@@ -450,7 +450,7 @@ extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
     CQuestLogPadData* pad = (CQuestLogPadData*)cf::CfGameManager::getCfPadData();
     int cancel, trigger3, trigger1, trigger2, confirm, menu, dir;
     // The bit positions differ between Classic Controller and Wiimote.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPressedButtonFlags;
         cancel = (f & 0x8004) != 0;
@@ -556,7 +556,7 @@ extern "C" void func_8011D1A8(CMenuQuestLog* self) {
     // Close-button press: classic-controller bits 22-23 vs wii bits 4-5,
     // normalized to bool (retail's rlwinm + subic/subfe shape).
     bool close;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1)) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1)) {
         close = pad->mPressedButtonFlags & 0x600000;
     } else {
         close = pad->mPressedButtonFlags & 0x30;

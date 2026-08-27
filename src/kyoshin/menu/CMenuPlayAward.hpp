@@ -16,11 +16,11 @@
 class CScn;
 
 // Minimal CTaskGame decl (retail global-namespace class; symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // 8-byte award list entry (array element; zeroed by func_802706C4 and freed by
@@ -136,7 +136,7 @@ public:
     virtual void vf4(const nw4r::math::VEC3*) = 0; // slot 4 (+0x10): Move
 };
 
-// View into the object returned by CDeviceFont::func_80452C10 (cf.
+// View into the object returned by CDeviceFont::getFontInfo (cf.
 // CMenuBattleCommu.hpp): with MWCC's 2-entry vtable prefix the 8th virtual
 // lands at +0x24 and returns the font handle passed to func_8013676C.
 // Never instantiated here, so no vtable is emitted.
@@ -385,7 +385,7 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
 
 // CfGameManager controller-type query + save/skip busy queries (retail
 // pre-mangled / unmangled C symbols; same scheme as CMenuTutorialList.hpp).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
 
@@ -395,7 +395,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // CfGameManager controller-type query (retail pre-mangled name; declared
 // under C linkage so calls bind the literal identifier).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 
 // CScrollBar show request (retail-unmangled import). The member declaration in
 // CScrollBar.hpp would mangle the call reloc (func_801F367C__10CScrollBarFv),
@@ -452,9 +452,9 @@ extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 
 // OnFileEvent / Init layout-build imports (retail-unmangled C symbols).
 extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 func_801355BC();
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 extern "C" u32 func_8003B1EC(void*);

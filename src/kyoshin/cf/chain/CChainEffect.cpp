@@ -55,11 +55,11 @@ extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d
             if (m2 != 0) {
                 m2 += 0x3E9C;
             }
-            func_800ACFD8((void*)self->unk4, (void*)m2);
+            setTargetObj_((void*)self->unk4, (void*)m2);
         }
         self->unk8 = (u32)d;
         if (e != 0) {
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, (u32)e, 0, 0, lbl_eu_80668C50);
+            playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, (u32)e, 0, 0, lbl_eu_80668C50);
         }
         return;
     }
@@ -68,10 +68,10 @@ extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d
     if (self->unk4 != 0) {
         ((CChainObj*)self->unk4)->field_b0 = 0;
         if (((CChainObj*)self->unk4)->field_98 != 0) {
-            func_800ACFD8((void*)self->unk4, 0);
-            func_800ACC14((void*)self->unk4, 1);
+            setTargetObj_((void*)self->unk4, 0);
+            setChildB59__((void*)self->unk4, 1);
         } else {
-            func_800B3A88(func_800B07E8(), (void*)self->unk4);
+            func_800B3A88(getInstance(), (void*)self->unk4);
         }
         self->unk4 = 0;
         self->unk8 = 0;
@@ -141,7 +141,7 @@ scan:
                         goto next_node;
                     }
                 }
-                func_800B3A88(func_800B07E8(), item);
+                func_800B3A88(getInstance(), item);
                 matched = 1;
                 goto check;
             }

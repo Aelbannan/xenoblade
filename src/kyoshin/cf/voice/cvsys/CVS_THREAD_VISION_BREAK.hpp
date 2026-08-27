@@ -73,8 +73,8 @@ extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, vo
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 
 // Global object-manager list accessor (C++ linkage; retail mangled name
-// func_800B6BA4__Fv). Returns a reslist of CfObject pointers.
-reslist<cf::CfObject*>* func_800B6BA4();
+// getListB28__Fv). Returns a reslist of CfObject pointers.
+reslist<cf::CfObject*>* getListB28();
 
 // Init-data triples (3 u32s each: {field_0, field_4, callback}). Plain
 // globals: MWCC does not mangle global data names.

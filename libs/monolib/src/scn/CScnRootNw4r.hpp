@@ -82,7 +82,7 @@ struct CScnCamLayout {
     s16 field_0x16C0;                 // +0x16C0 camera index
 };
 
-// Viewport rect produced by CGXCache::func_8044BE10 (four s16 fields).
+// Viewport rect produced by CGXCache::getViewRectGX (four s16 fields).
 struct CGXCacheViewportRect {
     s16 x;       // +0x0
     s16 y;       // +0x2
@@ -99,10 +99,10 @@ struct CGXCacheScissorArea {
     s16 field_0x4A6;                  // +0x4A6
 };
 
-// Pre-mangled retail member symbol (CGXCache::func_8044BE10) - returns the
+// Pre-mangled retail member symbol (CGXCache::getViewRectGX) - returns the
 // current viewport rect. The shared CGXCache.hpp still declares it as a void
 // stub, so this TU declares the real shape under the retail mangled name.
-CGXCacheViewportRect* func_8044BE10__8CGXCacheFv(CGXCache* cache);
+CGXCacheViewportRect* getViewRectGX__8CGXCacheFv(CGXCache* cache);
 
 // Callback object stored in the (callback, id) pair table (mArrA).
 // Slot +0xC is dispatched by func_8048FED8 each frame.
@@ -121,8 +121,8 @@ extern "C" void func_8048D1B0(CScnLightMan* man);
 extern "C" void func_8049DE70(CScnFogMan* man);
 extern "C" void func_8048CD0C(CScnItemPool* pool);
 extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag);
-extern "C" void func_8044BE38__8CGXCacheFv(CGXCache* cache);
-extern "C" void func_80442DA8__9CViewRootFv();
+extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
+extern "C" void updateViewRoot__9CViewRootFv();
 
 // Panic strings for the ScnGroup bounds check (same file/format as CScnMem).
 extern const char lbl_eu_8056E720[];

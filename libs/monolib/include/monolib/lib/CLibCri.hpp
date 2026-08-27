@@ -25,30 +25,30 @@ public:
     static CLibCri* spInstance;
     static CLibCri* getInstance();
 
-    static void func_80459830();
-    static int func_8045997C(const char* filename, u32 allocHandle, int fileHandle);
-    void func_80459A78();
-    void func_80459A7C();
-    static void func_80459A80();
-    void func_80459A84();
-    void func_80459A88();
-    void func_80459A8C();
-    void func_80459A90();
-    void func_80459A94();
-    void func_80459A98();
-    void func_80459A9C();
-    void func_80459AA0();
-    void func_80459AA4();
-    void func_80459AA8();
-    void func_80459AAC();
-    void func_80459AB0();
-    void func_80459AC0();
-    void func_80459AC4();
-    void func_80459AC8();
-    void func_80459ACC();
-    void func_80459AD0();
-    void func_80459AD8();
-    void func_80459C74();
+    static void handleAxCallback();
+    static int dispatchFilePlayback(const char* filename, u32 allocHandle, int fileHandle);
+    void isStreamActive();
+    void stopStream();
+    static void stopAllStreams();
+    void setStreamPause();
+    void fadeStreamVolume();
+    void getStreamVolume();
+    void setStreamVolume();
+    void setStreamVolumeScale();
+    void getStreamPosition();
+    void setStreamPanVolume();
+    void calcStreamBufferSize();
+    void isStreamPaused();
+    void startMovie();
+    void stopMovie();
+    void setMoviePause();
+    void clearMoviePause();
+    void isMovieGlobalPaused();
+    void isMoviePlaying();
+    void renderMovie();
+    void getMovieWorkSize();
+    void execCriMain();
+    void onErrorCallback();
 
     static inline CLibCri* create(const char* pName, CWorkThread* pParent){
         CLibCri* lib = new (CWorkThreadSystem::getWorkMem()) CLibCri(pName, pParent);
@@ -65,7 +65,7 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // CLibCriStreamingPlay factory function (static, 8 args)
-// Called from func_8045997C with various parameters
+// Called from dispatchFilePlayback with various parameters
 extern "C" int func_8045B5AC(
     int fileIdOrName,
     u32 allocHandle,

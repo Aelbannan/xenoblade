@@ -12,7 +12,7 @@
 // Setter helpers are declared here but defined at the BOTTOM of this file
 // (after every caller) so MWCC's -inline auto cannot fold them into the
 // tail-call wrappers below; retail keeps them as separate functions (same
-// pattern as CGXCache.cpp func_8044BE38).
+// pattern as CGXCache.cpp resetGXStateA).
 extern "C" void func_8049D274(CScnFilterListIter* self, u32 val);
 extern "C" void func_8049D64C(CScnFilterListIter* self, u32 val);
 extern "C" void func_8049CD34(CScnFilterIteratorReslist* self);
@@ -29,7 +29,7 @@ extern "C" void func_8049DC5C(CScnFilterListNode** cur, CScnFilterListNode** end
 
 // CGXCache helpers reached by their flat retail symbols (the member decls in
 // CGXCache.hpp are zero-param; func_8044A7F8 actually lives on r4-r8).
-extern "C" void func_8044BE38__8CGXCacheFv(CGXCache* cache);
+extern "C" void resetGXStateA__8CGXCacheFv(CGXCache* cache);
 extern "C" void func_8044A7F8__8CGXCacheFv(CGXCache* cache, u32 w0, u32 w1, u32 w2,
                                            u32 w3, int flag);
 extern "C" u32 func_8049DC04(CScnFilterReslist* list);
@@ -746,7 +746,7 @@ __declspec(noinline) void func_8049DB14(CScnFilterMan* self) {
     if (func_8049DC04(&self->field_08) == 0) {
         return;
     }
-    func_8044BE38__8CGXCacheFv(func_8049DBF0());
+    resetGXStateA__8CGXCacheFv(func_8049DBF0());
     func_8044A7F8__8CGXCacheFv(func_8049DBF0(), 1, 4, 5, 0, 1);
     func_8049D9D0(self);
 
@@ -830,8 +830,8 @@ extern "C" __declspec(noinline) CScnFilterListNode* func_8049DD30(CScnFilterList
 void CScnFilterMan::cbRenderBefore() {
     func_8049DB14(this);
     CGXCache* cache = (CGXCache*)func_8049DBF0();
-    cache->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    cache->resetGXStateA();
+    CViewRoot::updateViewRoot();
 }
 
 // clearList for the filter reslist: walk the ring from the first node,

@@ -189,8 +189,8 @@ extern "C" void func_804B0B54(void* region, const f32* vec);
 extern "C" void func_804B0C0C(void* region, const f32* vec, const CfGimmickVec3* rot);
 
 // CfGameManager object factory / player accessors.
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv(void);  // u32 (not unsigned int): must match UnityHelpers/code_801862C0.hpp
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);  // u32 (not unsigned int): must match UnityHelpers/code_801862C0.hpp
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 // CfGimmick-TU helpers (CfGimmick.cpp).
@@ -201,7 +201,7 @@ extern "C" void func_80209F8C();
 
 // Scene / frame-time helpers.
 extern "C" void* func_8049626C(void* a, void* b);
-extern "C" void func_800ACEF8(void* obj, const void* src);
+extern "C" void setChild34Sc_(void* obj, const void* src);
 extern "C" void func_8008B95C(void* target);
 
 // Same-TU functions (C-linkage names, defined in CfGimmickLock.cpp).

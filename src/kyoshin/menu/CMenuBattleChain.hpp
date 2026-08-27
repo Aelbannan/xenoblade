@@ -21,12 +21,12 @@ class DrawInfo;
 class CScn;
 
 // Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv); the full header would pull the monolib CScn,
+// isFlag01Set__9CTaskGameFv); the full header would pull the monolib CScn,
 // conflicting with the minimal CScn from harness_catalog.hpp -> CTaskGameEff.hpp.
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Battle-chain menu state shared by the func_802AB3D0..func_802AB5E4 helpers:

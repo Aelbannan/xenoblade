@@ -41,13 +41,13 @@ public:
     virtual bool OnFileEvent(CEventFile* pFile);
 
     static void setCurrentWpadChannel(int channel);
-    static void func_8045D470(bool r3);
-    static bool func_8045D478();
+    static void setHbmStopFlag(bool r3);
+    static bool isHbmStopPending();
     static void loadTplImage(void* pTplData);
     static void removeTplImage();
     static void addCallback(IHBMCallback* r3);
     static void removeCallback(IHBMCallback* r3);
-    static void func_8045D5C8(bool r3);
+    static void setHbmActiveFlag(bool r3);
     void destroy();
     static bool isHbmMemPointerValid();
     static bool checkFlag6();
@@ -55,7 +55,7 @@ public:
     static void initHbm();
     static void deleteHbm();
     static bool isHbmControlInitialized();
-    static bool func_8045DE00();
+    static bool isHbmActive();
     static void renderHbmstopIcon();
     static inline void initHbmInfoStruct();
 

@@ -35,10 +35,10 @@ public:
     virtual void UnkStruct_8044F65C_UnkVirtualFunc2();
     virtual void UnkStruct_8044F65C_UnkVirtualFunc3();
 
-    bool func_8044F744();
-    static void func_8044F964();
+    bool checkDriveStatus();
+    static void closeAdxfHandle();
     static int getFileSize(const char* pPath, int arg1);
-    static void func_8044FB08(const char* pPath);
+    static void cancelJobsForPath(const char* pPath);
     static bool cancel(CFileHandle* pHandle);
     static void func_8044FC38();
     bool func_8044FCFC();
@@ -46,10 +46,10 @@ public:
     bool func_80450260();
     bool func_8045042C();
 
-    static void func_80450B14(const wchar_t*);
-    static void func_80450B1C(const wchar_t*);
-    static void func_80450B24(const wchar_t*);
-    static void func_80450AB8(unsigned long);
+    static void setCriFilePathA(const wchar_t*);
+    static void setCriFilePathB(const wchar_t*);
+    static void setCriFilePathC(const wchar_t*);
+    static void teardownAdxf(unsigned long);
 
 private:
     CDeviceFileJobReadDvd* getFirstCDeviceFileJobReadDvd();
@@ -84,7 +84,7 @@ extern "C" {
 extern "C" {
     void func_804591BC__10CExceptionFP10IException(CException* self, IException* pException);
     void func_804591DC__10CExceptionFP10IException(CException* self);
-    void func_80459118__10CExceptionFv(const char* msg);
+    void logExceptionMessage__10CExceptionFv(const char* msg);
     void func_8045925C__10CExceptionFv(CException* self);
     CException* func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
     void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);
@@ -107,9 +107,9 @@ extern "C" {
 extern "C" bool isOff__11CWorkSystemFv();
 extern "C" void* getInstance__11CWorkSystemFv();
 extern "C" void* getInstance__4CLibFv();
-extern "C" void func_80451CBC__11CFileHandleFi(CFileHandle* handle, int val);
+extern "C" void advanceReadProgress__11CFileHandleFi(CFileHandle* handle, int val);
 extern "C" void destroy__11CFileHandleFv(CFileHandle* handle);
 extern "C" void call__11CFileHandleF3CBM(CFileHandle* handle, int cbm);
 extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvd* job);
 extern "C" u32 getTargetFramerate__9CDeviceVIFv();
-extern "C" void func_8044F744__14CDeviceFileCriFv(CDeviceFileCri* self);
+extern "C" void checkDriveStatus__14CDeviceFileCriFv(CDeviceFileCri* self);

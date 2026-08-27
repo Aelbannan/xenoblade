@@ -80,16 +80,16 @@ extern "C" {
     void func_8009E0A8(int*, int);
     int func_8009E284(int*, int);
     int* func_8009D790(int*, int);
-    void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* func_800B07E8__Fv();
+    void func_800B6800(UnkClass_805764CC*, void*, int, float);    void* getInstance__Fv();
     void func_800B1AF4(void*);
-    void func_8007C360__Q22cf13CfGameManagerFv(float, int, int);
-    void func_8007F830__Q22cf13CfGameManagerFv(int, int);
-    void func_800823A4__Q22cf13CfGameManagerFv(int, int);
-    void func_80083EA4__Q22cf13CfGameManagerFv();
-    bool func_80084B68__Q22cf13CfGameManagerFv();
+    void queueBdatTextB__Q22cf13CfGameManagerFv(float, int, int);
+    void setupBattleCamera__Q22cf13CfGameManagerFv(int, int);
+    void setResourceFlag__Q22cf13CfGameManagerFv(int, int);
+    void resetPlayerEffectsA__Q22cf13CfGameManagerFv();
+    bool isFieldTransitionReady__Q22cf13CfGameManagerFv();
     void func_8008566C__Q22cf13CfGameManagerFv(int, float*, int);
-    int func_80086B1C__Q22cf13CfGameManagerFv();
-    void* func_80081CB8__Q22cf13CfGameManagerFv();
+    int getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
+    void* createBdatCollisionObj__Q22cf13CfGameManagerFv();
     void func_800AB978(void*, float, float, void*, void*);
     void func_800AB7F8(void*, float, void*, void*, int, int, int, int);
     void func_800ABD44(void*, float*, float*, float);
@@ -100,17 +100,17 @@ extern "C" {
     void func_800AB8CC(void*, float, void*, void*);
     void func_800ABA18(float, float*, float*);
     void func_800AC30C(void*, int, int, const char*);
-    void func_80082254__Q22cf13CfGameManagerFv();
-    void func_80086DAC__Q22cf13CfGameManagerFv();
-    void func_80082258__Q22cf13CfGameManagerFv();
+    void resetFieldState__Q22cf13CfGameManagerFv();
+    void resetControllerState__Q22cf13CfGameManagerFv();
+    void syncFieldAndBattle__Q22cf13CfGameManagerFv();
     void func_80080888__Q22cf13CfGameManagerFv(int, int);
-    void func_80085E58__Q22cf13CfGameManagerFv(int, int);
+    void loadFieldPartyState__Q22cf13CfGameManagerFv(int, int);
     void func_80085FB8__Q22cf13CfGameManagerFv(int);
     void func_800B946C();
     void func_800B98C8(int);
-    void func_80083888__Q22cf13CfGameManagerFv(const char*);
-    bool func_80084BF4__Q22cf13CfGameManagerFv();
-    bool func_80087250__Q22cf13CfGameManagerFv();
+    void notifyFieldChange__Q22cf13CfGameManagerFv(const char*);
+    bool isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+    bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
     void func_800B94A0(const char*);
     bool func_8009E344(void*, int, int*, int*);
     void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, int, float);
@@ -119,13 +119,13 @@ extern "C" {
     void func_80159C04(int, int);
     int  func_80158068(int);
     void func_800F4004(void*);
-    void func_80462D04__8CTaskLODFv(int);
-    void func_80462D5C__8CTaskLODFv(int);
-    void* func_804BC9EC__Fv();
+    void activateLOD__8CTaskLODFv(int);
+    void deactivateLOD__8CTaskLODFv(int);
+    void* getScnHandle__Fv();
     void func_804BCC30(void*, int);
     void func_804BCC3C(void*, int);
-    void func_8047BD8C__17UnkClass_8047BB54Fv(void*, int);
-    void func_8047BD94__17UnkClass_8047BB54Fv(void*, int);
+    void forwardMpfCallB__17UnkClass_8047BB54Fv(void*, int);
+    void forwardMpfCallC__17UnkClass_8047BB54Fv(void*, int);
 }
 
 // ============================================================================
@@ -249,7 +249,7 @@ int setMapJumpArea(VMThread* pThread) {
     float warpH = (float)(s32)radius / lbl_eu_80665E30;
 
     cf::CfGameManager* mgr =
-        (cf::CfGameManager*)func_80081CB8__Q22cf13CfGameManagerFv();
+        (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800AB978(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
         func_800AB8CC(mgr, warpH, &cornerMin, &cornerMax);
@@ -276,7 +276,7 @@ int setMapJumpArea(VMThread* pThread) {
     }
 
     // Called unconditionally.
-    func_8007C360__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
+    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
     return 0;
 }
 
@@ -385,7 +385,7 @@ int setMapJumpAreaBox(VMThread* pThread) {
     corners[2] = (float)(s32)highV[2] / lbl_eu_80665E30;
 
     cf::CfGameManager* mgr =
-        (cf::CfGameManager*)func_80081CB8__Q22cf13CfGameManagerFv();
+        (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800AB978(mgr, lbl_eu_80665E48, lbl_eu_80665E34, &corners[3], &corners[3]);
         func_800ABA18(lbl_eu_80665E4C, &corners[6], &corners[0]);
@@ -398,7 +398,7 @@ int setMapJumpAreaBox(VMThread* pThread) {
     }
 
     // Called unconditionally, even without a manager.
-    func_8007C360__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, opt2, lowV[0]);
+    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, opt2, lowV[0]);
     return 0;
 }
 
@@ -517,7 +517,7 @@ int setWarpArea(VMThread* pThread) {
     float warpH = (float)(s32)fw / lbl_eu_80665E30;
 
     cf::CfGameManager* mgr =
-        (cf::CfGameManager*)func_80081CB8__Q22cf13CfGameManagerFv();
+        (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800AB7F8(mgr, warpH, &cornerMin, &cornerMax, g0, g1, g2, g3);
         func_800AB978(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
@@ -540,7 +540,7 @@ int setWarpArea(VMThread* pThread) {
         ((CfGameManagerWarpView*)mgr)->warpFade = (float)(s32)fade;
     }
 
-    func_8007C360__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
+    queueBdatTextB__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
     return 0;
 }
 
@@ -582,7 +582,7 @@ int setMapPreloadArea(VMThread* pThread) {
     float scale = (float)(s32)fw / lbl_eu_80665E30;
 
     cf::CfGameManager* mgr =
-        (cf::CfGameManager*)func_80081CB8__Q22cf13CfGameManagerFv();
+        (cf::CfGameManager*)createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         func_800ABD44(mgr, boxMax, boxMin, scale);
         func_800AC30C(mgr, argA, argB, 0);
@@ -635,7 +635,7 @@ int mapJump(VMThread* pThread) {
     pt[1] = (float)(s32)fy / lbl_eu_80665E30;
     pt[2] = (float)(s32)fz / lbl_eu_80665E30;
 
-    func_80083D50__Q22cf13CfGameManagerFv(areaId & 0xFFFF, subId & 0xFFFF,
+    queueSceneEventA__Q22cf13CfGameManagerFv(areaId & 0xFFFF, subId & 0xFFFF,
                                            (u32)&pt[0], (u32)name,
                                            (float)(s32)rot / lbl_eu_80665E30);
     func_8007C374__Q22cf13CfGameManagerFv(flag, frames, lbl_eu_80665E3C, 1);
@@ -697,7 +697,7 @@ int setEventArea(VMThread* pThread) {
     float top = (float)(s32)args[3] / lbl_eu_80665E30;
     float bottom = (float)(s32)args[4] / lbl_eu_80665E30;
 
-    void* mgr = func_80081CB8__Q22cf13CfGameManagerFv();
+    void* mgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         ml::CVec3 pt;
         pt.x = box[0];
@@ -791,7 +791,7 @@ int setTownArea(VMThread* pThread) {
     height = (float)(s32)fh / lbl_eu_80665E30;
     topOff = (float)(s32)ft / lbl_eu_80665E30;
 
-    void* mgr = func_80081CB8__Q22cf13CfGameManagerFv();
+    void* mgr = createBdatCollisionObj__Q22cf13CfGameManagerFv();
     if (mgr != NULL) {
         // Struct copy from box then y-patch: reproduces retail's integer
         // lwz/stw bit-copy triple plus the lfs/fadds/stfs y update.
@@ -849,7 +849,7 @@ int setTownArea(VMThread* pThread) {
 int addPopID(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     vmArgIntGet(2, arg);
-    func_80082254__Q22cf13CfGameManagerFv();
+    resetFieldState__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -857,7 +857,7 @@ int addPopID(VMThread* pThread) {
 int setTimeSpeed(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     vmArgIntGet(2, arg);
-    func_80086DAC__Q22cf13CfGameManagerFv();
+    resetControllerState__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -865,7 +865,7 @@ int setTimeSpeed(VMThread* pThread) {
 int setPopSheet(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     vmArgStringGet(2, arg);
-    func_80082258__Q22cf13CfGameManagerFv();
+    syncFieldAndBattle__Q22cf13CfGameManagerFv();
     return 0;
 }
 
@@ -892,7 +892,7 @@ int eventStart(VMThread* pThread) {
 
     // Fused ternary keeps the priority value in the return-value register
     // across both arms, matching retail's register allocation.
-    func_80085E58__Q22cf13CfGameManagerFv(
+    loadFieldPartyState__Q22cf13CfGameManagerFv(
         eventId,
         vmArgOmitChk(pThread, idx)
             ? 0
@@ -962,16 +962,16 @@ int setMapDispID(VMThread* pThread) {
         v30 = vmArgBoolGet(6, arg);
     }
     
-    void* gm = cf::CfGameManager::func_80083298();
+    void* gm = cf::CfGameManager::getGameSubManager();
     if (gm) {
         if (v27) {
-            if (v28) func_80462D04__8CTaskLODFv(v26);
-            if (v29) { func_804BCC30(func_804BC9EC__Fv(), v26); }
-            if (v30) func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
+            if (v28) activateLOD__8CTaskLODFv(v26);
+            if (v29) { func_804BCC30(getScnHandle__Fv(), v26); }
+            if (v30) forwardMpfCallB__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         } else {
-            if (v28) func_80462D5C__8CTaskLODFv(v26);
-            if (v29) { func_804BCC3C(func_804BC9EC__Fv(), v26); }
-            if (v30) func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
+            if (v28) deactivateLOD__8CTaskLODFv(v26);
+            if (v29) { func_804BCC3C(getScnHandle__Fv(), v26); }
+            if (v30) forwardMpfCallC__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         }
     }
     return 0;
@@ -981,13 +981,13 @@ int setMapDispID(VMThread* pThread) {
 int loadCfEvent(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     const char* str = vmArgStringGet(2, arg);
-    func_80083888__Q22cf13CfGameManagerFv(str);
+    notifyFieldChange__Q22cf13CfGameManagerFv(str);
     return 0;
 }
 
 // --- waitCfEvent (us-80049950) ---
 int waitCfEvent(VMThread* pThread) {
-    if (func_80084BF4__Q22cf13CfGameManagerFv()) {
+    if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv()) {
         vmWaitModeSet(pThread);
     }
     return 0;
@@ -1064,7 +1064,7 @@ int addParty(VMThread* pThread) {
         }
     }
 
-    func_800823A4__Q22cf13CfGameManagerFv(v31, 1);
+    setResourceFlag__Q22cf13CfGameManagerFv(v31, 1);
     return 0;
 }
 
@@ -1180,8 +1180,8 @@ int makeParty(VMThread* pThread) {
         func_80080888__Q22cf13CfGameManagerFv(d[1] & 0xFFFF, 1);
     }
 
-    if (cf::CfGameManager::func_800822F4() == 1 &&
-        func_80087250__Q22cf13CfGameManagerFv()) {
+    if (cf::CfGameManager::getQueuedFileEventCount() == 1 &&
+        isVisionPackLoaded__Q22cf13CfGameManagerFv()) {
         func_8012FAA8();
     }
 
@@ -1552,7 +1552,7 @@ int setWeaponSlot(VMThread* vmThread) {
 int waitEventRes(VMThread* vmThread) {
     int waitMode = 0;
 
-    if (!func_80084B68__Q22cf13CfGameManagerFv()) {
+    if (!isFieldTransitionReady__Q22cf13CfGameManagerFv()) {
         waitMode = 1;
     }
 
@@ -1613,8 +1613,8 @@ int applyPcPrm(VMThread* vmThread) {
         return 0;
     }
 
-    func_8007F830__Q22cf13CfGameManagerFv(charId, param);
-    func_800823A4__Q22cf13CfGameManagerFv(param, 0);
+    setupBattleCamera__Q22cf13CfGameManagerFv(charId, param);
+    setResourceFlag__Q22cf13CfGameManagerFv(param, 0);
     return 0;
 }
 
@@ -1631,11 +1631,11 @@ int setDispOffArea(VMThread* vmThread) {
     void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
-        // The singleton from func_800B07E8__Fv is passed as the callee's self.
+        // The singleton from getInstance__Fv is passed as the callee's self.
         // The int->float arg uses MWCC's builtin biased-conversion idiom
         // (xoris/lis 0x4330/stw/stw/lfd/fsubs); its magic pools as a TU-local
         // label that resolves to lbl_eu_80665E40 (MWCC_CASES 7i/fsub-rule).
-        UnkClass_805764CC* box = (UnkClass_805764CC*)func_800B07E8__Fv();
+        UnkClass_805764CC* box = (UnkClass_805764CC*)getInstance__Fv();
         func_800B6800(box, obj, 1, areaId);
     }
 
@@ -1776,7 +1776,7 @@ int setActMapObj(VMThread* vmThread) {
 int getMapID(VMThread* vmThread) {
     VMArg ret;
     ret.type = 3;
-    ret.value.intVal = func_80086B1C__Q22cf13CfGameManagerFv();
+    ret.value.intVal = getGlobalWord64184Dup__Q22cf13CfGameManagerFv();
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -1787,7 +1787,7 @@ int clearGimmickJump(VMThread* vmThread) {
     lbl_eu_80663E24 = flags & ~0x80000;
 
     if (flags & 0x80) {
-        func_80083EA4__Q22cf13CfGameManagerFv();
+        resetPlayerEffectsA__Q22cf13CfGameManagerFv();
     }
 
     return 0;
@@ -2023,7 +2023,7 @@ void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
 }
 
 int clearTbox() {
-    void* ptr = func_800B07E8__Fv();
+    void* ptr = getInstance__Fv();
     if (ptr) func_800B1AF4(ptr);
     return 0;
 }

@@ -13,7 +13,7 @@
 
 namespace cf {
 // Minimal view of cf::CfGameManager for this TU (CfGameManager.hpp is not
-// included - its func_8007F91C is declared non-static, but retail callers
+// included - its isTimerActive is declared non-static, but retail callers
 // (func_80208CC0) invoke the Fv symbol with a dead r3, i.e. a static call).
 // Static members here emit the same pre-mangled retail symbols without a
 // `this` load.  getPlayer() coexists with CfObjectMove.hpp's extern "C"
@@ -21,10 +21,10 @@ namespace cf {
 class CfGameManager {
 public:
     static CfObjectMove* getPlayer(int playerIndex);
-    static bool func_8007F91C();
+    static bool isTimerActive();
     u8 pad[0xB0];               // 0x00..0xAF
     UnkClass_800821F8* unkB0;   // 0xB0 - cleared by func_80208EE4
-    void func_80080F44();
+    void clearPlayerEffect();
 };
 } // namespace cf
 
@@ -209,7 +209,7 @@ void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
     // guard extra gimmick-party flags.
     if (lbl_eu_80663E24 & 0x22040000u)
         lbl_eu_806646BC |= 0x4;
-    if (!cf::CfGameManager::func_8007F91C())
+    if (!cf::CfGameManager::isTimerActive())
         lbl_eu_806646BC |= 0x1;
 }
 
@@ -225,7 +225,7 @@ void func_80208EDC(u32 value) { lbl_eu_806646B8 = value; }
 void func_80208EE4(cf::CfGimmick* self) {
     if (self->field_78) {
         self->field_78->unkB0 = 0;
-        self->field_78->func_80080F44();
+        self->field_78->clearPlayerEffect();
         self->field_78 = 0;
     }
 }
@@ -708,7 +708,7 @@ int func_8020A294(u32 playerId) {
 CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3* point) {
     CfGimmickVec3 pos;
     char buf[0x40];
-    CfGimmickObject* obj = func_800B20B4(func_800B07E8(), 0x4000, 0, 0);
+    CfGimmickObject* obj = func_800B20B4(getInstance(), 0x4000, 0, 0);
     if (obj != 0) {
         if (strlen(name) >= 0x20) {
             strcpy(buf, name);
@@ -738,7 +738,7 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
 
 void func_8020A434(CfGimmickReg* self) {
     if (self->field_00) {
-        func_800B3A88(func_800B07E8(), self->field_00);
+        func_800B3A88(getInstance(), self->field_00);
         self->field_00 = 0;
     }
 }
@@ -841,7 +841,7 @@ void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
         // check, keeping one shared return path for both guard fails.
         f32 lenSq = VEC3LenSq(&diff);
         if (lenSq > radiusSq && self->field_00 != 0) {
-            func_800B3A88(func_800B07E8(), self->field_00);
+            func_800B3A88(getInstance(), self->field_00);
             self->field_00 = 0;
         }
         return;
@@ -878,7 +878,7 @@ defaultName:
         name = (const char*)lbl_eu_80662788;
 resolvedName:;
 
-    CfGimmickObject* obj = func_800B20B4(func_800B07E8(), 0x4000, 0, 0);
+    CfGimmickObject* obj = func_800B20B4(getInstance(), 0x4000, 0, 0);
         CfGimmickObject* result;
         if (obj == 0) {
             result = 0;

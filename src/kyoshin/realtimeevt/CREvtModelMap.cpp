@@ -39,10 +39,10 @@ extern "C" {
     s32 func_80180978();
     s32 func_80180990();
     void func_8016FC0C(int val);
-    void func_80462A08__8CTaskLODFv(int val);
-    void func_80462B30__8CTaskLODFv();
-    void func_80462B68__8CTaskLODFv();
-    void func_80462B4C__8CTaskLODFv();
+    void acquireLODResource__8CTaskLODFv(int val);
+    void enableLOD__8CTaskLODFv();
+    void restorePrimaryLOD__8CTaskLODFv();
+    void disableLOD__8CTaskLODFv();
     extern mtl::ALLOC_HANDLE func_80495FF0(void* self); // retail: virtual at vtable[0x2C] of *(lbl_eu_80663E14)
     void func_80495E60(void* pEmote);
     void* func_80495E8C(void* a, void* b, int c, int d);
@@ -51,7 +51,7 @@ extern "C" {
     void func_80484F80(void* pEmote, float time);
     void func_804C1D7C(void* pData);
     void* func_804C1BA0(void* pData, void* pFile, int r5);
-    mtl::ALLOC_HANDLE func_80490098__Fv();
+    mtl::ALLOC_HANDLE getScnCounter__Fv();
     void* getGlobalSda();
     void __dt__80185754(CREvtModelMap* self);
     void __ct__80172668(CREvtModelMap* self, int dealloc);
@@ -106,9 +106,9 @@ extern "C" {
     extern CREvtModelMap* lbl_eu_806642B4;  // current visible model map
     extern float lbl_eu_806678C0;            // 1.0f scale
     extern double lbl_eu_806678C8;           // 0x43300000_80000000 double for int→float conv
-extern "C" void* func_80086B10__Q22cf13CfGameManagerFv();
-extern "C" void* func_800828DC__Q22cf13CfGameManagerFv();
-extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
+extern "C" void* spawnGimmickEntity__Q22cf13CfGameManagerFv();
+extern "C" void* getMapEffectManager__Q22cf13CfGameManagerFv();
+extern "C" void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
 extern "C" void __ct__CREvtModel(void* self, void* pData, int pArg); // retail base ctor name
 extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 }
@@ -213,19 +213,19 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
 
             // Retail re-fetches the singleton for the virtual call (MWCC
             // does not CSE calls).
-            if (cf::CfGameManager::func_80083298()) {
-                ((CGameMgrCoreIf*)cf::CfGameManager::func_80083298())->v158(1);
+            if (cf::CfGameManager::getGameSubManager()) {
+                ((CGameMgrCoreIf*)cf::CfGameManager::getGameSubManager())->v158(1);
             }
 
-            func_80462B30__8CTaskLODFv();
+            enableLOD__8CTaskLODFv();
 
             if (self->mCreatureCount > 0) {
                 // Hide every tracked creature (circular list; the head is
                 // re-fetched each iteration because MWCC does not CSE the call).
                 s32 i = 0;
-                CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv())->field_0x4;
+                CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;
                 CCreatureNode* it = head->next;
-                while (it != (CCreatureNode*)((cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv())->field_0x4) {
+                while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
                     u8 v = (u8)self->mModelName[i];
                     it->obj->v158(!v);
                     it = it->next;
@@ -236,15 +236,15 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
             // Clear global pointer
             lbl_eu_806642B0 = 0;
 
-            if (func_800828DC__Q22cf13CfGameManagerFv()) {
-                func_800828DC__Q22cf13CfGameManagerFv();
+            if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
+                getMapEffectManager__Q22cf13CfGameManagerFv();
                 func_8016FC0C(1);
             }
         }
 
         // Cleanup virtual, then base-class teardown
         ((CREvtMapVtIf*)self)->v3C();
-        func_80462B68__8CTaskLODFv();
+        restorePrimaryLOD__8CTaskLODFv();
         __ct__80172668(self, 0);
 
         if (dealloc > 0) {
@@ -354,11 +354,11 @@ extern "C" void func_80180DCC(CREvtModelMap* self)
         return;
     }
 
-    if (cf::CfGameManager::func_80083298()) {
-        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+    if (cf::CfGameManager::getGameSubManager()) {
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         // virtual call: core->vtable[0x158](0) - real dispatch (r12 ABI)
         ((CGameMgrCoreIf*)mgr)->v158(0);
-        func_80462B4C__8CTaskLODFv();
+        disableLOD__8CTaskLODFv();
     }
 }
 
@@ -371,11 +371,11 @@ extern "C" void func_80180E1C(CREvtModelMap* self)
         return;
     }
 
-    cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+    cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
     // Virtual call CfGameManager::setGuestMode(1) (vtable slot 0x158);
     // retail does NOT null-check the singleton result.
     ((CGameMgrCoreIf*)mgr)->v158(1);
-    func_80462B30__8CTaskLODFv();
+    enableLOD__8CTaskLODFv();
 }
 
 // ---------------------------------------------------------------------------
@@ -439,7 +439,7 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
 
         self->mFlags = flags;
 
-        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         func_800AA33C(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
 
         // Append ".lod" to the base path.
@@ -467,19 +467,19 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
                 self->mFileHandle1 = CDeviceFile::readFile(
                     func_80495FF0(lbl_eu_80663E14), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM2());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM2());
             } else {
                 // Read directly from disc.
                 self->mFileHandle1 = CDeviceFile::readFile(
                     mtl::MemManager::getHandleMEM2(), filePath.mString,
                     (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, func_80495FF0(lbl_eu_80663E14));
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, func_80495FF0(lbl_eu_80663E14));
             }
 
             if (func_8016846C()) {
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, func_80490098__Fv());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, getScnCounter__Fv());
             }
-            func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM1());
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle1, mtl::MemManager::getHandleMEM1());
             if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
                 CDeviceFile::setHandleFlag1(self->mFileHandle1);
             }
@@ -494,18 +494,18 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
                     self->mFileHandle2 = CDeviceFile::readFile(
                         func_80495FF0(lbl_eu_80663E14), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM2());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle2 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, func_80495FF0(lbl_eu_80663E14));
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, func_80495FF0(lbl_eu_80663E14));
                 }
 
                 if (func_8016846C()) {
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, func_80490098__Fv());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
                 }
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM1());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, mtl::MemManager::getHandleMEM1());
                 if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
                     CDeviceFile::setHandleFlag1(self->mFileHandle2);
                 }
@@ -521,20 +521,20 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
                     self->mFileHandle3 = CDeviceFile::readFile(
                         func_80495FF0(lbl_eu_80663E14), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM2());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM2());
                 } else {
                     self->mFileHandle3 = CDeviceFile::readFile(
                         mtl::MemManager::getHandleMEM2(), filePath.mString,
                         (IWorkEvent*)(self ? (char*)self + 0x38 : (char*)self), 0, 0);
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, func_80495FF0(lbl_eu_80663E14));
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, func_80495FF0(lbl_eu_80663E14));
                 }
 
                 // Retail bug: this error path re-uses mFileHandle2 (0x48)
                 // instead of mFileHandle3 (0x94); kept for byte identity.
                 if (func_8016846C()) {
-                    func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, func_80490098__Fv());
+                    setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle2, getScnCounter__Fv());
                 }
-                func_8044F400__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM1());
+                setHandleParam__11CDeviceFileFP11CFileHandleUl(self->mFileHandle3, mtl::MemManager::getHandleMEM1());
                 if (((CREvtModelMapNameInfo*)self->mPtr1C)->field_0x58 & 1) {
                     CDeviceFile::setHandleFlag1(self->mFileHandle3);
                 }
@@ -644,12 +644,12 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
     // Guest visibility is mirrored into the game-manager core's flag word at
     // +0x100 (bit 2), gated on func_80180978's global state.
     if (self->mIsGuest) {
-        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             if (func_80180978()) {
-                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::func_80083298())->field_100 &= ~4;
+                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::getGameSubManager())->field_100 &= ~4;
             } else if (visible) {
-                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::func_80083298())->field_100 |= 4;
+                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::getGameSubManager())->field_100 |= 4;
             }
         }
     }
@@ -660,33 +660,33 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
 
     if (self->mIsGuest) {
         // Tell the game-manager core to enter/leave guest mode.
-        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             ((CGameMgrCoreIf*)mgr)->v158(visible);
         }
 
         if (visible) {
-            func_80462B68__8CTaskLODFv();
+            restorePrimaryLOD__8CTaskLODFv();
             lbl_eu_806642B4 = self;
         } else {
             if (lbl_eu_806642B4 == self) {
-                func_80462B4C__8CTaskLODFv();
+                disableLOD__8CTaskLODFv();
                 lbl_eu_806642B4 = 0;
             }
         }
 
         // Retail re-fetches the singleton for the actual call (two bl's).
-        if (func_800828DC__Q22cf13CfGameManagerFv()) {
-            func_800828DC__Q22cf13CfGameManagerFv();
+        if (getMapEffectManager__Q22cf13CfGameManagerFv()) {
+            getMapEffectManager__Q22cf13CfGameManagerFv();
             func_8016FC0C(visible);
         }
 
         // Walk the circular creature list (head at CfGameManager +0x04;
         // re-fetched every iteration because MWCC does not CSE the call).
         s32 i = 0;
-        CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv())->field_0x4;
+        CCreatureNode* head = (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4;
         CCreatureNode* it = head->next;
-        while (it != (CCreatureNode*)((cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv())->field_0x4) {
+        while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
             if (!visible) {
                 // Query each creature's status byte and record it, then hide.
                 u8 v = it->obj->v160();
@@ -714,17 +714,17 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
         if (visible) {
             // Set visible
             if (self->mFileData2) {
-                func_80462A08__8CTaskLODFv(1);
+                acquireLODResource__8CTaskLODFv(1);
             }
 
             if (self->mFileData3) {
                 // Load model data
                 self->mLoadedModelData = func_804C1BA0(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), self->mFileData3, 7);
 
-                cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+                cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
                     notif->_v068(0);
                 }
             }
@@ -733,7 +733,7 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
         } else {
             // Clear visible
             if (lbl_eu_806642B4 == self) {
-                func_80462B4C__8CTaskLODFv();
+                disableLOD__8CTaskLODFv();
                 lbl_eu_806642B4 = 0;
             }
 
@@ -741,10 +741,10 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
                 self->mLoadedModelData = 0;
 
-                cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+                cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
                     CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::func_80083298() + 0x2F3C);
+                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
                     notif->_v068(1);
                 }
             }
@@ -760,7 +760,7 @@ set_guest_flags:
     // Guest mode also mirrors a global bit (0x10) in the core flag word.
     if (self->mIsGuest) {
         s32 isZero = (func_80180990() == 0);
-        cf::CfGameManager* m3 = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        cf::CfGameManager* m3 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (isZero) {
             ((CGameMgrCoreFlagsIf*)m3)->field_100 |= 0x10;
         } else {
@@ -778,8 +778,8 @@ set_guest_flags:
 extern "C" void func_801818BC(CREvtModelMap* self, int visible)
 {
     if (self->mIsGuest) {
-        if (cf::CfGameManager::func_80083298()) {
-            cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+        if (cf::CfGameManager::getGameSubManager()) {
+            cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
             // virtual call: core->vtable[0x190](visible) - real dispatch
             ((CGameMgrCoreIf*)mgr)->v190(visible);
         }

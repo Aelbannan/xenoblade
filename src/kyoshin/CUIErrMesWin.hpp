@@ -93,13 +93,13 @@ extern "C" void func_802B74F4(void*);
 
 // cf::CfGameManager helper. Retail names it with the no-arg Fv suffix, but the
 // call site passes three zero args; declare the retail symbol verbatim under
-// C linkage so calls bind to it (same pattern as func_80086F9C in CSysWin.hpp).
-extern "C" void func_80081E90__Q22cf13CfGameManagerFv(int, int, int);
+// C linkage so calls bind to it (same pattern as isClassicController in CSysWin.hpp).
+extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(int, int, int);
 
 // cf::CfGameManager error-message helper (func_802B48E4 dispatches 0x29/0x24).
 // Retail ships the no-arg-Fv mangled name verbatim; keep it under C linkage so
-// the call site binds to the retail symbol (same pattern as func_80081E90).
-extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32, u8*);
+// the call site binds to the retail symbol (same pattern as lookupEffectForResource).
+extern "C" void createBattleEffect__Q22cf13CfGameManagerFv(u32, u8*);
 
 // Capsule geometry types used by func_802B5254. nw4r defines these in
 // math_geometry.cpp (not in the shipped headers); identical layout here so the
@@ -172,7 +172,7 @@ extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flag
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 
 // Circular-list views used by func_802B58A4's active-flag sweeps. The lists
-// returned by func_800B6BA4__Fv / func_800B6C7C share the same shape: the
+// returned by getListB28__Fv / func_800B6C7C share the same shape: the
 // sentinel head lives at +0x04 and each node carries its item at +0x08.
 struct CErrMesListNode {
     CErrMesListNode* next;  // 0x00
@@ -184,9 +184,9 @@ struct CErrMesList {
     CErrMesListNode* sentinel;  // 0x04
 };
 
-// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// Voice/actor-manager list accessor (retail mangled name getListB28__Fv -
 // plain C++ linkage reproduces the Fv suffix).
-CErrMesList* func_800B6BA4();
+CErrMesList* getListB28();
 
 // Enemy-manager list accessor (retail unmangled C symbol).
 extern "C" CErrMesList* func_800B6C7C();
@@ -206,7 +206,7 @@ struct CErrMesEnemyObj {
 };
 
 // Owner object for func_802B48E4: battle-object-like layout with the embedded
-// CfObjectMove at +0x3E9C (its address is passed to func_80081F28), a flag
+// CfObjectMove at +0x3E9C (its address is passed to createBattleEffect), a flag
 // word at +0x3F00 (bit 1 = battle active) and a comparison word at +0x3F10.
 struct CErrMesOwner {
     u8 _00[0x3E9C];             // 0x00..0x3E9B
@@ -220,7 +220,7 @@ struct CErrMesOwner {
 // CfObjectMove-like view (func_8016FE34 result / error-message owner): the
 // embedded CObjectParam sub-object sits at +0x3E9C and its +0x4C virtual
 // (CObjectParam_UnkVirtualFunc5) returns the actor/action id fed to
-// func_800B708C.
+// findObjectById.
 struct CErrMesObjView {
     u8 _00[0x3E9C];
     cf::CObjectParam objectParam;  // +0x3E9C
@@ -338,7 +338,7 @@ struct CErrMesEnemyRec {
     u8 field_0x6F4;          // +0x6F4 active flag
 };
 
-// Actor-source view (func_8016FE34(func_800B708C(...)) result): signed word
+// Actor-source view (func_8016FE34(findObjectById(...)) result): signed word
 // at +0x15E4 (battle-state counter compared against 4).
 struct CErrMesActor15E4 {
     u8 _00[0x15E4];
@@ -378,7 +378,7 @@ int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 }
 
 // C++-mangled retail helper (actor id -> action source).
-void* func_800B708C(int id);
+void* findObjectById(int id);
 
 // Player accessor (retail pre-mangled cf::CfGameManager static).
 namespace cf { class CfObjectMove; }

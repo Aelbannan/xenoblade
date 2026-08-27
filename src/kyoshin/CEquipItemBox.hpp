@@ -244,7 +244,7 @@ struct CEquipItemBoxFourShorts {
     s16 a, b, c, d;
 };
 
-/* Font object returned by CDeviceFont::func_80452C10: vtable slot 9
+/* Font object returned by CDeviceFont::getFontInfo: vtable slot 9
    (offset 0x24) yields the pane data bound via func_8013676C. */
 struct CEquipItemBoxFontView {
     virtual void f2() = 0;
@@ -311,10 +311,10 @@ struct CEquipItemBoxPageStoreView {
 extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 // Font/line text providers: func_801355A0 is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
@@ -322,7 +322,7 @@ char* func_801355A0();
 extern "C" char* func_801355BC();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" u16 func_8013606C(const void*, const void*, u16);
 extern "C" CEquipItemBoxFourShorts func_80139658(void*, void*, u32);
 extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
@@ -334,7 +334,7 @@ extern "C" void __ct__CCur18(void*, void*);
 extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
 extern void* lbl_eu_806649E0;
 
@@ -621,10 +621,10 @@ extern "C" void func_80282610(CEquipItemGrid* grid, u8 v, u8 b, u8 hi);
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);

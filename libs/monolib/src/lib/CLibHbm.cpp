@@ -94,11 +94,11 @@ void CLibHbm::setCurrentWpadChannel(int channel){
     if(channel >= WPAD_CHAN_INVALID && channel < WPAD_MAX_CONTROLLERS) sCurWpadChannel = channel;
 }
 
-void CLibHbm::func_8045D470(bool r3){
+void CLibHbm::setHbmStopFlag(bool r3){
     lbl_80667FDD = r3;
 }
 
-bool CLibHbm::func_8045D478(){
+bool CLibHbm::isHbmStopPending(){
     return lbl_80667FDC;
 }
 
@@ -148,7 +148,7 @@ void CLibHbm::removeCallback(IHBMCallback* r3){
 
 }
 
-void CLibHbm::func_8045D5C8(bool r3){
+void CLibHbm::setHbmActiveFlag(bool r3){
     lbl_80667FD4 = r3;
 }
 
@@ -173,7 +173,7 @@ void CLibHbm::destroy(){
     mHandle = mtl::INVALID_HANDLE;
 
     if(mFlags & 0x20){
-        func_804900A0(0);
+        updateScnCounter(0);
         mFlags &= ~0x20;
     }
 
@@ -199,9 +199,9 @@ void CLibHbm::loadHbmArcFile(){
     lbl_eu_806656F8->mFlags &= ~0x40;
 
     CDeviceVI::waitForDrawDone();
-    func_804900A0(1);
+    updateScnCounter(1);
     lbl_eu_806656F8->mFlags |= 0x20;
-    lbl_eu_806656F8->mHandle = func_80490098();
+    lbl_eu_806656F8->mHandle = getScnCounter();
 
     if(lbl_eu_806656F8->mHandle == mtl::INVALID_HANDLE){
         lbl_eu_806656F8->mHandle = mtl::MemManager::getHandleMEM2();
@@ -437,7 +437,7 @@ bool CLibHbm::isHbmControlInitialized(){
     return CLibHbmControl::getInstance() != nullptr;
 }
 
-bool CLibHbm::func_8045DE00(){
+bool CLibHbm::isHbmActive(){
     return CLibHbmControl::isActive();
 }
 
@@ -556,12 +556,12 @@ void CLibHbm::renderHbmstopIcon(){
             break;
     }
 
-    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
     //Cast to a custom struct for easier use
     ml::CTPLData* tplData = reinterpret_cast<ml::CTPLData*>(spHbmstopTplData); //r31
     CDrawGX draw;
-    draw.func_80456570(0);
-    draw.func_8045657C(0);
+    draw.setZCompare(0);
+    draw.setZWriteEnable(0);
 
     float smth = spInstance->unk25C * 4;
 
@@ -589,8 +589,8 @@ void CLibHbm::renderHbmstopIcon(){
 
     draw.end();
 
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
 }
 
 // ===== Dissolved monolibdata2 (.data/.sdata) owned by this TU =====

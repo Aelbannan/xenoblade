@@ -73,7 +73,7 @@ void func_8049AED4(CScnCameraMan* cam, CView* view, u32 idx) {
     if (param != NULL) {
         param = (CScnCameraParam*)((u8*)param + 0x54);
     }
-    view->func_8043DC20((u32)param);
+    view->enqueueContextMsg((u32)param);
     cam->mViews[idx] = view->mWorkID;
 }
 
@@ -350,7 +350,7 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
 
     // Slot 2 holds the target euler vector; scale every component, then copy
     // member-wise into the non-const argument (retail uses lfs/stfs).
-    ml::CVec3* src = (ml::CVec3*)func_8043B588__7CEvent1Fv(ev, 2);
+    ml::CVec3* src = (ml::CVec3*)getPtrParam__7CEvent1Fv(ev, 2);
     ml::CVec3 scaled;
     scaled.x = src->x * scale;
     scaled.y = src->y * scale;
@@ -369,17 +369,17 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* payload, const char* r5) {
     cam->field_0x64 = *(u32*)&rot.y;
     cam->field_0x68 = *(u32*)&rot.z;
 
-    cam->mFovY = func_8043B574__7CEvent1Fv(ev, 3);
+    cam->mFovY = getFloatParam__7CEvent1Fv(ev, 3);
     func_8049EB60(item);
 
-    f32 farZ = func_8043B574__7CEvent1Fv(ev, 5);
-    cam->mNearZ = func_8043B574__7CEvent1Fv(ev, 4);
+    f32 farZ = getFloatParam__7CEvent1Fv(ev, 5);
+    cam->mNearZ = getFloatParam__7CEvent1Fv(ev, 4);
     cam->mFarZ = farZ;
     func_8049EB60(item);
 
     // Slot 1 holds the new position; slot 6 the camera distance.
-    func_8049F6D4(item, (ml::CVec3*)func_8043B588__7CEvent1Fv(ev, 1));
-    func_8049F824(item, func_8043B574__7CEvent1Fv(ev, 6));
+    func_8049F6D4(item, (ml::CVec3*)getPtrParam__7CEvent1Fv(ev, 1));
+    func_8049F824(item, getFloatParam__7CEvent1Fv(ev, 6));
     return true;
 }
 

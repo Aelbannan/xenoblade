@@ -596,7 +596,7 @@ void func_80214408(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
 // handles for the first three resource sub-objects, frees the layout/arc
 // resources, then destroys every placed member sub-object.
 void func_802144F4(CMCCrystalBox* self) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[0]);
     func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[1]);
     func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[2]);
@@ -614,8 +614,8 @@ void func_802144F4(CMCCrystalBox* self) {
         }
         func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[3]);
         func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[4]);
-        func_8045F778__17UnkClass_8045F564Fv((u8*)self + 0x4);
-        func_8045F778__17UnkClass_8045F564Fv((u8*)self + 0x14);
+        deleteRegion__17UnkClass_8045F564Fv((u8*)self + 0x4);
+        deleteRegion__17UnkClass_8045F564Fv((u8*)self + 0x14);
         func_801D3258((u8*)self + 0xfc);
         func_8021A860((u8*)self + 0x1ec);
         // Deactivate each placed cursor sub-object via its slot-0x0C virtual.
@@ -3070,7 +3070,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         char buf[0x20];
         CFileHandle* fh = (CFileHandle*)subObjPtrs[0];
         void* data = fh->getData();
-        mtl::MemManager::func_80434A4C(0);
+        mtl::MemManager::setMemInitFlag(0);
         subObjPtrs[3] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3])
             ->Attach(data, lbl_eu_8050888C + 0x37f);
@@ -3117,7 +3117,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         // Bind the shared font into the layout's root pane.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)subObjPtrs[5] + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, (nw4r::lyt::Layout*)subObjPtrs[5]);
         u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
         func_8013676C(rootPane, fontHandle);
@@ -3168,7 +3168,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
 
         // Window title: pick the message by game-manager flag, resolve the
         // timg texture and publish it onto the pane.
-        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? lbl_eu_8050888C + 0x4dd
                                   : lbl_eu_8050888C + 0x4e6;
         u16 id = (u16)func_8013606C(lbl_eu_8050888C + 0x4ef, msgName, 0x49);
@@ -3308,7 +3308,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         Class_8045F858 host2(reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10]));
         CFileHandle* fh2 = (CFileHandle*)subObjPtrs[1];
         void* data2 = fh2->getData();
-        mtl::MemManager::func_80434A4C(0);
+        mtl::MemManager::setMemInitFlag(0);
         subObjPtrs[4] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[4])
             ->Attach(data2, lbl_eu_8050888C + 0x37f);

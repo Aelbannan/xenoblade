@@ -3,11 +3,11 @@
 
 
 namespace cf {
-void CHelp_EnemyCount::func_802B7F54() {
+void CHelp_EnemyCount::resetEnemyCount() {
     unkC = 0;
 }
 
-bool CHelp_EnemyCount::func_802B7F60() {
+bool CHelp_EnemyCount::checkEnemyCountDone() {
     if (unkC <= 0) {
         // Count active enemy entries in the circular list from func_800B6C7C.
         CHelp_EnemyList* list = func_800B6C7C();

@@ -75,9 +75,9 @@ void CPackItem::update(){
     int dotPos;
 
     if(mLoadState == LOAD_STATE_NOT_LOADED){
-        if(CWorkSystemPack::func_804DE100() == 0) return;
+        if(CWorkSystemPack::areArcsReady() == 0) return;
 
-        if(CWorkSystemPack::func_804DDDF4(mFilePath, &mWorkPackDataPtr, &mWorkPackDataSize) != 0){
+        if(CWorkSystemPack::findPackResource(mFilePath, &mWorkPackDataPtr, &mWorkPackDataSize) != 0){
             mPackHeaderExternal = 1;
             mPackHeader = (PackHeader*)mWorkPackDataPtr;
             setupHashTable();
@@ -87,7 +87,7 @@ void CPackItem::update(){
             }
             
             mFileHandle = CDeviceFile::readFile(lbl_eu_80663BC8, mFilePath, this, 0, 0);
-            func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle, mtl::MemManager::getHandleMEM2());
+            setHandleParam__11CDeviceFileFP11CFileHandleUl(mFileHandle, mtl::MemManager::getHandleMEM2());
             
             if((s32)field_0x68 >= 0){
                 func_eu_804521B0();
@@ -134,7 +134,7 @@ void CPackItem::update(){
         if(mPackHeader == nullptr) return;
 
         if(mIsAhxAdxFile){
-            if(CWorkSystemPack::func_804DDFBC((u32)this) == 0) return;
+            if(CWorkSystemPack::isPackLoadIdle((u32)this) == 0) return;
             u32 bufferSize = ((mPackHeader->mFiles + 1) * 2 + 0x11a) & ~3;
             mAhxAdxBuffer = (u8*)mtl::MemManager::allocate_head(CWorkThreadSystem::getWorkMem(), bufferSize, 4);
             ADXF_LoadPartitionNw(mAdxPartitionId, mPkbFilename.c_str(), nullptr, mAhxAdxBuffer);

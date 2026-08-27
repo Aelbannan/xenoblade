@@ -353,7 +353,7 @@ extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* self);
 // Create a battle-voice node from a voice-action source.
 extern "C" cf::CSoundNode* func_802B0344(void* src);
 // Current battle/field phase id.
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv(void);
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 // Create a battle-voice trigger node.
 extern "C" void* func_802A7A54(int a);
 // Run one node's level-thread handler (list sweep).

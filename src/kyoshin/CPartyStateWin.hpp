@@ -4,11 +4,11 @@
 #include "monolib/core/CViewFrame.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Verbatim-mangled import: the real retail CfGameManager::func_80086F9C
+// Verbatim-mangled import: the real retail CfGameManager::isClassicController
 // takes the selector argument (call sites pass -1). The inline s16 overload
 // in include/kyoshin/cf/CfGameManager.hpp drops it, so callers that need the
 // argument use this declaration instead.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Forward decls only. The full sub-object headers (CTitleAHelp.hpp,
 // CModelDisp.hpp, CPartyState.hpp, CEquipChange.hpp) cannot be included here:
@@ -246,14 +246,14 @@ extern "C" void func_8022B8E4(CSysWin*);
 
 // cf::CfGameManager helper (retail pre-mangled Fv name with a vestigial arg;
 // same convention as CfGameManagerUnityHelpers.hpp).
-extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
+extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
                                                        bool requireFlag);
 
 // CfGameManager controller-type query. Retail materializes r3=-1 into the
 // pre-mangled Fv symbol; the inline s16 wrapper in CfGameManager.hpp would
 // discard the arg when inlined, so bind the verbatim retail name with the
 // int arg (same scheme as CSysWin.hpp / CMenuSkipTimer.hpp).
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // UI sound effect (func_80138078__FUl). C++ linkage so MWCC emits the mangled
 // retail name.
@@ -328,7 +328,7 @@ extern u32 lbl_eu_80663E28;
 // headers, so only a forward decl is used here).
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int isFlag01Set__9CTaskGameFv();
 
 // Screen-active check used by cbRenderBefore (retail unmangled).
 extern "C" int func_8013BE50();

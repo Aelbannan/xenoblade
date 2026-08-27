@@ -7,7 +7,7 @@
 // then zeroes all scroll/inset fields. Calls getRenderModeObj on each access
 // to match retail register allocation rather than caching the pointer.
 // @return Pointer to this CViewRectDataCore instance for chaining.
-CViewRectDataCore* CViewRectDataCore::func_80459270() {
+CViewRectDataCore* CViewRectDataCore::initViewRect() {
     s16 efbHeight;
     s16 zero = 0;
 
@@ -60,7 +60,7 @@ CViewRectDataCore* CViewRectDataCore::func_80459270() {
 // :173) that resists every high-level ordering. Structural match is exact;
 // only register assignment (r8 vs r7, r4/r7/r6 vs r6/r5/r4) differs.
 // @param size New viewport dimensions (x=width, y=height).
-void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
+void CViewRectDataCore::updateScrollForSize(const ml::CPnt16& size) {
     int maxWidth;
     int maxHeight;
     int widthRemain;
@@ -85,6 +85,6 @@ void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
     }
 }
 
-void CViewRectDataCore::func_80459384(const ml::CPnt16& maxSize) {
+void CViewRectDataCore::setBoundsSize(const ml::CPnt16& maxSize) {
     mBoundsSize = maxSize;
 }

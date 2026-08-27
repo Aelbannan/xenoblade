@@ -12,7 +12,7 @@ public:
     void func_804406D8();
     void func_804409D0();
     void func_80440D78();
-    void func_80441290();
+    void updateViewFrameRect();
     void func_80441310();
     void detachRenderWork();
     void CView_UnkVirtualFunc9();
@@ -20,7 +20,7 @@ public:
     void func_80441EF0();
 
     // TODO: add fields
-    void func_8043FC60();
+    void setViewFrameMode();
     void getFrame2ViewOffset();
     void func_8043FD10();
 };

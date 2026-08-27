@@ -1299,9 +1299,9 @@ extern "C" { extern const double lbl_eu_8066AAD0; }
 extern "C" __declspec(noinline) u32 func_80497544(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, int f) {
-    u32 size;
-    nw4r::g3d::ResAnmChr chr(*anmRes);
     nw4r::g3d::ResMdl mdl(self->field_0x1D0);
+    nw4r::g3d::ResAnmChr chr(*anmRes);
+    u32 size;
     nw4r::g3d::AnmObjChrRes* anmObj =
         Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(
             (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, &chr,

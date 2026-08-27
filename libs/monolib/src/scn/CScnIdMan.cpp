@@ -12,7 +12,7 @@ extern "C" {
     extern void* func_80496264(void* r3, u32 r4);
     extern void* func_804961D4(void* r3, u32 r4);
     extern void func_8049B764(void* r3, void* r4);
-    extern void* func_804BC9EC__Fv();
+    extern void* getScnHandle__Fv();
     extern void func_804BCC78(void* r3, void* r4, void* r5);
 }
 
@@ -54,7 +54,7 @@ void CScnIdMan::cbRenderBefore() {
         u8 stackbuf[0x38];
         func_8049B764(stackbuf, a);
         void* b = func_804961D4(mParam, -1);
-        func_804BCC78(func_804BC9EC__Fv(), b, stackbuf);
+        func_804BCC78(getScnHandle__Fv(), b, stackbuf);
     }
 }
 

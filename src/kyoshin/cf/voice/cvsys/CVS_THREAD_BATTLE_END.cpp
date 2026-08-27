@@ -104,7 +104,7 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     u8 live = self->field_0x3a;
     if (live == 0) {
         // No forced direction: scan the manager's voice list for a live one.
-        ItemListManager* mgr = func_800B6BA4();
+        ItemListManager* mgr = getListB28();
         ItemListNode* node = mgr->sentinel->next;
         while (node != mgr->sentinel) {
             // node->object points at the embedded CCharVoice (handle+0x3E9C);

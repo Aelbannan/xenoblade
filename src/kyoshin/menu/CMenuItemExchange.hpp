@@ -227,7 +227,7 @@ extern "C" CMenuItemExchange* __ct__CMenuItemExchange(CMenuItemExchange* self, C
 // cbRenderBefore gates / draw pipeline (retail verbatim names; the DrawInfo
  // ct/dt keep their pre-mangled forms - a C++ local would virtual-dispatch).
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" int func_8013BE50();
 namespace nw4r { namespace lyt { class DrawInfo; } }
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
@@ -239,10 +239,10 @@ extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* di);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* di);
 extern u32 lbl_eu_80663E28;   // cbRenderBefore mode-flag word (.sbss)
 
-// Input-handler callees (retail unmangled names). func_80086F9C keeps the
+// Input-handler callees (retail unmangled names). isClassicController keeps the
 // u32 return declared by CItemBoxGrid.hpp (included above) - do not redeclare.
 extern "C" CMIExPadData* getCfPadData__Q22cf13CfGameManagerFv();
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" int func_8029A658();
 extern "C" int func_801ED808(CItemBoxLine* self);
 extern "C" void func_801EECE0(CItemBoxLine* self, u32 arg);

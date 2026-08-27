@@ -53,7 +53,7 @@ void* func_800F6EC0(void* list, s32 index);
 void* func_800F6E98(void* list, s32 index);
 void* func_800FD2FC(void* list, s32 index);
 void* func_800FD378(void* list, s32 index);
-// func_80174C98 / func_800B708C come from the kyoshin headers (CChainTimer.hpp
+// func_80174C98 / findObjectById come from the kyoshin headers (CChainTimer.hpp
 // / CTalkWindow.hpp) already on the include chain.
 void func_800FB270(void* self, void* pos, u32 flags, f32 a, f32 b, f32 c);
 void func_800F49F8(void* dst, void* src);
@@ -931,7 +931,7 @@ void func_800FE104(cf::CfObjectSelectorData* self) {
     {
         cf::CfObjectSelectorData* sel = lbl_eu_80663F14;
         SelObjFlagsView* obj = reinterpret_cast<SelObjFlagsView*>(
-            func_800B708C((int)sel->mInner1.w3044));
+            findObjectById((int)sel->mInner1.w3044));
         u32 f180 = self->fieldC180;
         if ((f180 & 0x400) || (f180 & 0x100) ||
             (obj != NULL && (obj->flags64 & 0x4))) {
@@ -968,7 +968,7 @@ l_fee90:
     // Current selection lost or invalid.
     {
         u32 fl = reinterpret_cast<SelObjFlagsView*>(
-            func_800B708C((int)(u32)func_800F6E98(self, 0)))->flags64;
+            findObjectById((int)(u32)func_800F6E98(self, 0)))->flags64;
         if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {
             // Tear down pending request state on the singleton.
             cf::CfObjectSelectorData* s = lbl_eu_80663F14;
@@ -1012,11 +1012,11 @@ l_fee90:
 l_ffeff4:
     // Scan the rebuilt candidates for the currently highlighted entry.
     {
-        void* target = func_800B708C((int)lbl_eu_80663F14->mInner1.w3044);
+        void* target = findObjectById((int)lbl_eu_80663F14->mInner1.w3044);
         u32 found = 0;
         for (u32 i = 0; i < self->field620; i++) {
             SelObjFlagsView* o = reinterpret_cast<SelObjFlagsView*>(
-                func_800B708C((int)(u32)func_800F6E98(self, i)));
+                findObjectById((int)(u32)func_800F6E98(self, i)));
             if ((void*)o == target) {
                 u32 fl = o->flags64;
                 if ((fl & (0x8 | 0x100 | 0x4000)) || (fl & 0x8000)) {

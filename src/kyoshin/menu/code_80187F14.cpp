@@ -29,16 +29,16 @@ extern "C" {
 
 // CLibCri wrappers: retail reloc names are unmangled (C ABI), so C linkage
 // is required for the call-site reloc names to match.
-extern "C" s32 func_80459A78__7CLibCriFv(s32);
-extern "C" s32 func_80459A7C__7CLibCriFv(s32);
-extern "C" void func_80459A84__7CLibCriFv(s32, s32);
-extern "C" void func_80459A88__7CLibCriFv(s32, float, float, s32);
-extern "C" void func_80459A8C__7CLibCriFv(s32);
-extern "C" void func_80459A90__7CLibCriFv(s32, float);
-extern "C" void func_80459A94__7CLibCriFv(s32, float);
-extern "C" s32 func_80459A9C__7CLibCriFv(s32, void*, s32, float, float, float);
+extern "C" s32 isStreamActive__7CLibCriFv(s32);
+extern "C" s32 stopStream__7CLibCriFv(s32);
+extern "C" void setStreamPause__7CLibCriFv(s32, s32);
+extern "C" void fadeStreamVolume__7CLibCriFv(s32, float, float, s32);
+extern "C" void getStreamVolume__7CLibCriFv(s32);
+extern "C" void setStreamVolume__7CLibCriFv(s32, float);
+extern "C" void setStreamVolumeScale__7CLibCriFv(s32, float);
+extern "C" s32 setStreamPanVolume__7CLibCriFv(s32, void*, s32, float, float, float);
 extern "C" void getInstance__7CLibCriFv();
-extern "C" s32 func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" s32 isSceneActive__Q22cf13CfGameManagerFv();
 
 struct SoundSlot {
     s32 handle;              // 0x00
@@ -147,7 +147,7 @@ s32 func_8018892C(s32 index) {
 }
 
 // Callers pass a position pointer (r4), a value (r5) and three floats; they
-// are forwarded unchanged to func_80459A9C, so the extra params stay live in
+// are forwarded unchanged to setStreamPanVolume, so the extra params stay live in
 // r4/r5/f1-f3 and the slot base lands in r6 (retail allocation).
 s32 func_80189C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     SoundSlot* s;
@@ -155,7 +155,7 @@ s32 func_80189C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
     else s = nullptr;
     if (s == nullptr) return (s32)s;  // 0 - reuse the register so MWCC folds beq+{blr} into beqlr
-    return func_80459A9C__7CLibCriFv(s->handle, pos, val, f1, f2, f3);
+    return setStreamPanVolume__7CLibCriFv(s->handle, pos, val, f1, f2, f3);
 }
 
 // vol arrives in f1 from the caller and is passed straight through to
@@ -190,7 +190,7 @@ void func_80188890(s32 active) {
         else s = nullptr;
         if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
             getInstance__7CLibCriFv();
-            func_80459A84__7CLibCriFv(s->handle, active);
+            setStreamPause__7CLibCriFv(s->handle, active);
             if (active != 0) s->status = 5;
             else s->status = 2;
         }
@@ -242,12 +242,12 @@ extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, flo
     s32 h = slot->handle;
     if (st == 4) return;
     if (f3 <= lbl_eu_80667A08 || st == 5) {
-        func_80459A90__7CLibCriFv(h, prod);
+        setStreamVolume__7CLibCriFv(h, prod);
         slot->x = f1;
         slot->y = f2;
         return;
     }
-    func_80459A88__7CLibCriFv(h, prod, f3, type);
+    fadeStreamVolume__7CLibCriFv(h, prod, f3, type);
     slot->x = f1;
     slot->y = f2;
     if (type == 2) {
@@ -361,7 +361,7 @@ extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
     if (lbl_eu_80667A08 == vol) {
         getInstance__7CLibCriFv();
         if ((u32)slot->backupHandle != 0xFFFFFFFF) {
-            func_80459A7C__7CLibCriFv(slot->backupHandle);
+            stopStream__7CLibCriFv(slot->backupHandle);
             slot->backupHandle = -1;
             slot->backupU16_1 = 0;
             slot->backupU16_2 = 0;
@@ -383,16 +383,16 @@ extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
         slot->backupF1 = lbl_eu_80667A08;
         slot->x = lbl_eu_80667A08;
         if (vol > lbl_eu_80667A08 && type != 1) {
-            func_80459A7C__7CLibCriFv(slot->handle);
+            stopStream__7CLibCriFv(slot->handle);
             slot->handle = cM1;
             slot->field_0x54 = cZero;
             slot->field_0x56 = cZero;
             slot->status = cZero;
             slot->field_0x48 = lbl_eu_80667A08;
         } else {
-            func_80459A88__7CLibCriFv(slot->handle, lbl_eu_80667A08, vol, type);
+            fadeStreamVolume__7CLibCriFv(slot->handle, lbl_eu_80667A08, vol, type);
             if (type == 2) {
-                if ((u32)slot->backupHandle != 0xFFFFFFFF) func_80459A7C__7CLibCriFv(slot->backupHandle);
+                if ((u32)slot->backupHandle != 0xFFFFFFFF) stopStream__7CLibCriFv(slot->backupHandle);
                 slot->backupHandle = slot->handle;
                 slot->backupNameLen = strlen(slot->name);
                 strcpy(slot->backupName, slot->name);
@@ -420,7 +420,7 @@ void func_80189C88() {
         if (s != nullptr && isValid(s->handle)) {
             if (i <= 1) {
                 if (isValid(s->backupHandle)) {
-                    func_80459A7C__7CLibCriFv(s->backupHandle);
+                    stopStream__7CLibCriFv(s->backupHandle);
                     s->backupHandle = -1;
                     s->backupU16_1 = 0;
                     s->backupU16_2 = 0;
@@ -570,7 +570,7 @@ void func_801889D0(SoundSlot* base) {
         h = s->backupHandle;
         if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(h))) {
+                : (getInstance__7CLibCriFv(), !isStreamActive__7CLibCriFv(h))) {
             s->backupHandle = m1;
             s->backupU16_1 = z;
             s->backupU16_2 = z;
@@ -581,7 +581,7 @@ void func_801889D0(SoundSlot* base) {
         h = s->handle;
         if (((u32)h == 0xFFFFFFFF)
                 ? 0
-                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(h))) {
+                : (getInstance__7CLibCriFv(), !isStreamActive__7CLibCriFv(h))) {
             s->handle = m1;
             s->field_0x54 = z;
             s->field_0x56 = z;
@@ -616,7 +616,7 @@ void func_801889D0(SoundSlot* base) {
             // branches around the volume push.
             if (((u32)h == 0xFFFFFFFF)
                     ? 0
-                    : (func_80459A94__7CLibCriFv(h, (float)(double)v), 0)) {
+                    : (setStreamVolumeScale__7CLibCriFv(h, (float)(double)v), 0)) {
             }
         }
         SoundSlot* s0 = sptr(0);
@@ -625,7 +625,7 @@ void func_801889D0(SoundSlot* base) {
             h = s0->handle;
             if (((u32)h == 0xFFFFFFFF)
                     ? 0
-                    : (func_80459A94__7CLibCriFv(h, cv), 0)) {
+                    : (setStreamVolumeScale__7CLibCriFv(h, cv), 0)) {
             }
         }
     }
@@ -687,19 +687,19 @@ s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
     // skips the getInstance/query calls entirely.
     if ((slot->handle == 0xFFFFFFFF)
             ? 0
-            : (getInstance__7CLibCriFv(), func_80459A78__7CLibCriFv(slot->handle))) {
+            : (getInstance__7CLibCriFv(), isStreamActive__7CLibCriFv(slot->handle))) {
         if (strcmp(slot->name, name) == 0) {
             // Same name: restart the voice.
             if ((u32)slot->handle != 0xFFFFFFFF) {
                 getInstance__7CLibCriFv();
-                func_80459A84__7CLibCriFv(slot->handle, 0);
+                setStreamPause__7CLibCriFv(slot->handle, 0);
                 slot->status = 2;
             }
             if ((u32)slot->handle != 0xFFFFFFFF) {
                 getInstance__7CLibCriFv();
-                func_80459A8C__7CLibCriFv(slot->handle);
+                getStreamVolume__7CLibCriFv(slot->handle);
             }
-            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
             slot->x = params->vol2;
             slot->y = params->vol3;
             return slot->handle;
@@ -738,9 +738,9 @@ s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
             slot->status = tmp.status;
             if ((u32)slot->handle != 0xFFFFFFFF) {
                 getInstance__7CLibCriFv();
-                func_80459A8C__7CLibCriFv(slot->handle);
+                getStreamVolume__7CLibCriFv(slot->handle);
             }
-            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
             slot->x = params->vol2;
             slot->y = params->vol3;
             return slot->handle;
@@ -756,7 +756,7 @@ s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
     strcpy(slot->name, name);
     slot->x = params->vol2;
     slot->y = params->vol3;
-    s32 newHandle = CLibCri::func_8045997C(slot->name, allocHandle, 0);
+    s32 newHandle = CLibCri::dispatchFilePlayback(slot->name, allocHandle, 0);
     if ((u32)newHandle != 0xFFFFFFFF) {
         slot->handle = newHandle;
         slot->field_0x54 = field14;
@@ -764,14 +764,14 @@ s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
         slot->field_0x48 = lbl_eu_80667A08;
         slot->status = 0;
         if (vol > lbl_eu_80667A08 && product > lbl_eu_80667A08) {
-            func_80459A90__7CLibCriFv(slot->handle, lbl_eu_80667A08);
-            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            setStreamVolume__7CLibCriFv(slot->handle, lbl_eu_80667A08);
+            fadeStreamVolume__7CLibCriFv(slot->handle, product, vol, 0);
             if ((u32)slot->handle != 0xFFFFFFFF) {
                 getInstance__7CLibCriFv();
-                func_80459A8C__7CLibCriFv(slot->handle);
+                getStreamVolume__7CLibCriFv(slot->handle);
             }
         } else {
-            func_80459A90__7CLibCriFv(slot->handle, product);
+            setStreamVolume__7CLibCriFv(slot->handle, product);
         }
     }
     return newHandle;
@@ -1075,7 +1075,7 @@ void func_8018896C(s32 index, u32 type, float f1, float f2) {
 }
 
 extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
-    if (func_8008585C__Q22cf13CfGameManagerFv()) return 0;
+    if (isSceneActive__Q22cf13CfGameManagerFv()) return 0;
     // Two explicit volatile loads (retail emits both up front).
     // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
     u32 flagsA = *(volatile u32*)&lbl_eu_80663E24;  // canonical decl: CfGameManagerData.hpp (non-volatile)

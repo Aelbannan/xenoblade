@@ -9,19 +9,19 @@ extern const char lbl_eu_80503818[];
 extern PluginFuncData lbl_eu_80532348[];
 }
 
-// pluginTime getter: returns the value from CfGameManager::func_80086DBC() as an int.
+// pluginTime getter: returns the value from CfGameManager::getCurrentSlotIndex() as an int.
 int func_80185760(VMThread* pThread) {
     VMArg result;
-    result.value.uintVal = cf::CfGameManager::func_80086DBC();
+    result.value.uintVal = cf::CfGameManager::getCurrentSlotIndex();
     result.type = VM_TYPE_INT;
     vmRetValSet(pThread, &result);
     return 1;
 }
 
-// pluginTime getter: returns the value from CfGameManager::func_80086DA0() masked to u16 as an int.
+// pluginTime getter: returns the value from CfGameManager::getControllerWordA33C() masked to u16 as an int.
 int func_801857A8(VMThread* pThread) {
     VMArg result;
-    u16 val = (u16)cf::CfGameManager::func_80086DA0();
+    u16 val = (u16)cf::CfGameManager::getControllerWordA33C();
     result.type = VM_TYPE_INT;
     result.value.uintVal = val;
     vmRetValSet(pThread, &result);

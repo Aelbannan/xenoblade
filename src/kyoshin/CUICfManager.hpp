@@ -86,12 +86,12 @@ extern "C" void func_8012FFB4(u8* base);          // slot dispatch + rebuild (th
 // the verbatim retail names per the CLibCri caller-shape scheme in CTaskGame.hpp).
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
-extern "C" bool func_800426F0__9CTaskGameFv(CTaskGame* self);
+extern "C" bool isFlag01Set__9CTaskGameFv(CTaskGame* self);
 // Sound/battle-state gates (member-shaped C-ABI imports; CfSoundMan.hpp and
 // CMainMenu.hpp declare the same flat names but pull nw4r/snd.h / CMainMenu
 // classes into this TU).
-extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
-extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 extern "C" int func_8011CD5C();
 extern "C" bool CMenuArtsSelect_isCreated();
 // Window/IUI helpers (flat retail names; defining TU is CUIWindowManager.cpp).
@@ -365,7 +365,7 @@ extern "C" void func_80133324__12CUICfManagerFiii(CUICfManager* self, int id, in
 
 // Same hidden-arg ABI: the retail OnFileEvent symbol is a no-arg member
 // (`Fv`) but the body reads r4 as the CEventFile* from the IWorkEvent
-// dispatcher (see the func_80135FBC thunk). Declared extern "C" before the
+// dispatcher (see the onFileEventThunk thunk). Declared extern "C" before the
 // class so the in-class friend binds to this same C linkage.
 extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* evt);
 
@@ -514,13 +514,13 @@ private:
     CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
     virtual ~CUICfManager();
     void OnFileEvent();
-    void func_80135FBC();
-    void func_80135FC4();
+    void onFileEventThunk();
+    void dtorThunk54();
     // Retail symbol mangles `Fv` but the vtable thunk passes its three hidden
     // args (r4/r5/r6) through to func_80133324 after adjusting `this`; body
     // is emitted under the extern "C" flat name (see .cpp).
-    void func_80135FCC();
-    void func_80135FD4();
+    void eventDispatchThunk();
+    void dtorThunk58();
     void func_80133324(int id, int a1, int a2);
     IWorkEvent* cfWorkEvent();
 

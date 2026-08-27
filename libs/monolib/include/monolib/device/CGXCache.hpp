@@ -10,10 +10,10 @@
 // ---------------------------------------------------------------------------
 extern "C" { extern char lbl_eu_8056BFE4[]; }
 extern "C" { extern char lbl_eu_8056BFF0[]; }
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
-extern "C" void func_8044BE3C__8CGXCacheFv(void* self);
-extern "C" void func_8044C034__8CGXCacheFv(void* self);
-extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void dispatchCmdGX__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void disableTexGen__8CGXCacheFv(void* self);
+extern "C" void resetTevState__8CGXCacheFv(void* self);
+extern "C" void* getCmdPayload__8CGXCacheFv(void* self, u32 cmd);
 
 //size: 0x4
 class IStateCache {
@@ -26,19 +26,19 @@ class CGXCache : public IStateCache {
 public:
     CGXCache();
     virtual ~CGXCache();
-    void func_8044B294(u32 r4);
-    void func_8044B4B8(GXTexObj* pTexObj, u16 r5, u16 r6);
-    ml::CCol4* func_8044B5B4();
+    void clearStubFunc(u32 r4);
+    void bindTextureGX(GXTexObj* pTexObj, u16 r5, u16 r6);
+    ml::CCol4* getClearColor();
     void func_8044B660();
-    bool func_8044BE38();
-    void func_8044BFC0();
-    void func_8044A94C(int r4, int r5);
-    void func_8044AA7C(int r4, int r5);
-    void func_8044ACDC(const ml::CCol4& r4, int r5);
-    void func_8044AE8C(const ml::CCol4& r4, int r5);
-    void func_8044B03C(int r4);
-    void func_8044B168(int r4);
-    void func_8044A6C8(int r4, int r5);
+    bool resetGXStateA();
+    void resetMtxState();
+    void setZCompareMD(int r4, int r5);
+    void setZWriteMode(int r4, int r5);
+    void setTevColorNo(const ml::CCol4& r4, int r5);
+    void setTevColorTx(const ml::CCol4& r4, int r5);
+    void setDirectColA(int r4);
+    void setDirectColB(int r4);
+    void setBlendState(int r4, int r5);
     void func_8044B8CC(float f1, float f2, float f3);
     u32 func_8044BD74(UNKWORD r3);
 

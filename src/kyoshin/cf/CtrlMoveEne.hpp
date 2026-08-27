@@ -921,7 +921,7 @@ struct CFunc8009DataView {
 
 // View of the movement-controller object func_8008B934 / func_8008B95C /
 // func_8008B974 operate on (CtrlMoveEne unit): +0x15C is an actor id fed to
-// func_800B708C, +0x17C a flags word.
+// findObjectById, +0x17C a flags word.
 struct CCtrlMoveEneView {
     u8 _pad[0x15C];                 // 0x00-0x15B
     int field_0x15C;                // 0x15C
@@ -1636,7 +1636,7 @@ extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 // CfGameManager member-count accessor (retail mangled name kept verbatim).
-extern "C" int func_80086B44__Q22cf13CfGameManagerFv();
+extern "C" int initPadSubSystem__Q22cf13CfGameManagerFv();
 // func_8008E760 call sites: battle-object probe helpers (code_800B06A4.cpp),
 // parts-element lookup (CPartsChange.cpp), party-info state builder/dispatch
 // (CPartsChange.cpp) and the file/bdat column readers (retail C-ABI names).
@@ -1660,7 +1660,7 @@ extern "C" void func_800898D4(void* self, ml::CVec3* vec);
 extern "C" int rand(void);
 // func_8008A2C8 call sites: battle-object helpers, the CfGameManager /
 // CBattleManager singletons and the parts/actor lookups (retail names).
-extern "C" int func_800B708C__Fi(int id);
+extern "C" int findObjectById__Fi(int id);
 extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
 extern "C" int func_801984F0(void* self, int index);
@@ -1674,8 +1674,8 @@ extern "C" void* getUnk80664658(void);
 extern "C" void func_800D9CA0(void* self, void* obj);
 extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
 // func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
-// func_8006EF04__Fi).
-bool func_8006EF04(int r3);
+// isGlobalCamFlagSet__Fi).
+bool isGlobalCamFlagSet(int r3);
 
 // .sdata2 float constants compared/stored by the func_80092CC4 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them

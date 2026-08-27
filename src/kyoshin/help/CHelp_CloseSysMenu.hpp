@@ -6,7 +6,7 @@
 namespace cf {
 class __declspec(novtable) CHelp_CloseSysMenu : public CHelpSwitch {
 public:
-    void func_802B7E7C();
+    void updateCloseSysHelp();
 };
 } // namespace cf
 

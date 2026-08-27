@@ -17,16 +17,16 @@
 
 extern "C" {
 void func_804525F0__11CDeviceFontFv(CDeviceFont* self);
-void func_80452690__11CDeviceFontFv(CDeviceFont* self);
-void func_8045271C__11CDeviceFontFv(
+void notifyLayerDestroy__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayerBB4__11CDeviceFontFv(
     CDeviceFont* self, const char* a, const char* b, const char* str);
-void func_804527A4__11CDeviceFontFv(CDeviceFont* self);
-void func_8045283C__11CDeviceFontFv(CDeviceFont* self);
-void func_804528C4__11CDeviceFontFv(CDeviceFont* self);
-void func_8045294C__11CDeviceFontFv(CDeviceFont* self);
-void func_804529D4__11CDeviceFontFv(CDeviceFont* self);
-void func_80452B78__11CDeviceFontFv(CDeviceFont* self);
-void func_80452CF8__11CDeviceFontFv(CDeviceFont* self);
+void getLayerStatus__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayer3FF0__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayer41F8__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayer438C__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayer4508__11CDeviceFontFv(CDeviceFont* self);
+void getLayerData__11CDeviceFontFv(CDeviceFont* self);
+void dispatchLayer4B70__11CDeviceFontFv(CDeviceFont* self);
 void __dl__FPv(void*);
 }
 
@@ -50,7 +50,7 @@ extern "C" void* __ct__CFontLayer(CFontLayer* self) {
 extern "C" void* __dt__10CFontLayerFv(CFontLayer* self, int flag) {
     if (self != 0) {
         *(void**)self = (void*)lbl_eu_8056BF80;
-        func_80452690__11CDeviceFontFv((CDeviceFont*)self);
+        notifyLayerDestroy__11CDeviceFontFv((CDeviceFont*)self);
         if (flag > 0) {
             __dl__FPv(self);
         }
@@ -60,48 +60,48 @@ extern "C" void* __dt__10CFontLayerFv(CFontLayer* self, int flag) {
 
 // Thin variadic forwarding: build a formatted string on the stack and push it
 // to the device font layer along with the first two arguments.
-extern "C" void func_80449078__10CFontLayerFv(
+extern "C" void printFormatted__10CFontLayerFv(
     CFontLayer* self, const char* a, const char* b, const char* fmt, ...) {
     char buffer[0x200];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
-    func_8045271C__11CDeviceFontFv((CDeviceFont*)self, a, b, buffer);
+    dispatchLayerBB4__11CDeviceFontFv((CDeviceFont*)self, a, b, buffer);
 }
 
-extern "C" void func_80449148__10CFontLayerFv(CFontLayer* self) {
+extern "C" void resetCursor__10CFontLayerFv(CFontLayer* self) {
     // Pure tail call to CDeviceFont (same this).
-    func_804527A4__11CDeviceFontFv((CDeviceFont*)self);
+    getLayerStatus__11CDeviceFontFv((CDeviceFont*)self);
 }
 
-extern "C" void func_8044914C__10CFontLayerFv(CFontLayer* self) {
-    func_8045283C__11CDeviceFontFv((CDeviceFont*)self);
+extern "C" void clearBuffer__10CFontLayerFv(CFontLayer* self) {
+    dispatchLayer3FF0__11CDeviceFontFv((CDeviceFont*)self);
 }
 
-extern "C" void func_80449150__10CFontLayerFv(CFontLayer* self) {
-    func_804528C4__11CDeviceFontFv((CDeviceFont*)self);
+extern "C" void updateLayout__10CFontLayerFv(CFontLayer* self) {
+    dispatchLayer41F8__11CDeviceFontFv((CDeviceFont*)self);
 }
 
-extern "C" void func_80449154__10CFontLayerFv(CFontLayer* self) {
-    func_8045294C__11CDeviceFontFv((CDeviceFont*)self);
+extern "C" void drawText__10CFontLayerFv(CFontLayer* self) {
+    dispatchLayer438C__11CDeviceFontFv((CDeviceFont*)self);
 }
 
-extern "C" void func_80449158__10CFontLayerFv(CFontLayer* self) {
-    func_804529D4__11CDeviceFontFv((CDeviceFont*)self);
+extern "C" void flushBuffer__10CFontLayerFv(CFontLayer* self) {
+    dispatchLayer4508__11CDeviceFontFv((CDeviceFont*)self);
 }
 
-// FULL_MATCH: Pure tail call to CDeviceFont::func_80452CF8 (same this).
+// FULL_MATCH: Pure tail call to CDeviceFont::dispatchLayer4B70 (same this).
 // The 'channel' parameter is accepted but unused in this forwarding path.
 void CFontLayer::fontFlush(int channel) {
     // Decomp note: reinterpret_cast is used because CFontLayer and
     // CDeviceFont are unrelated types -- the tail call relies on the
     // containing object's layout placing both at the same address.
-    reinterpret_cast<CDeviceFont*>(this)->func_80452CF8();
+    reinterpret_cast<CDeviceFont*>(this)->dispatchLayer4B70();
 }
 
-extern "C" void func_80449160__10CFontLayerFv(CFontLayer* self) {
-    func_80452B78__11CDeviceFontFv((CDeviceFont*)self);
+extern "C" void setupDraw__10CFontLayerFv(CFontLayer* self) {
+    getLayerData__11CDeviceFontFv((CDeviceFont*)self);
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

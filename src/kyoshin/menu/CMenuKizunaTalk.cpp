@@ -94,7 +94,7 @@ void CMenuKizunaTalk::Init() {
 #pragma optimize_for_size on
 void CMenuKizunaTalk::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0__FPP11CFileHandle(reinterpret_cast<void**>(&mFile1));
     func_801390E0__FPP11CFileHandle(reinterpret_cast<void**>(&mFile2));
 
@@ -118,7 +118,7 @@ void CMenuKizunaTalk::Term() {
     reinterpret_cast<CCur18View*>(&mCur[0])->vf03();
 
     lbl_eu_80664424 = 0;
-    func_8045F778__17UnkClass_8045F564Fv(&mMemRegion[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
     lbl_eu_80664420 = 0;
 }
 #pragma optimize_for_size off
@@ -298,7 +298,7 @@ void func_801BD228(CMenuKizunaTalk* self) {
 void func_801BD2F8(CMenuKizunaTalk* self) {
     KizunaTalkPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     u32 cancel, confirm, left, right;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Player 0 (co-op): D-pad bits sit at different positions.
         u32 pressed = pad->mPressedFlags;
         u32 turbo = pad->mTurboFlags;
@@ -464,7 +464,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
             (int)(u32)mem2, 0x2000, &lbl_eu_80505118[0x6e], 0);
         Class_8045F858 regionHandle((UnkClass_8045F564*)&self->mMemRegion[0]);
         void* data = self->mFile1->getData();
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         self->mArcAccessor = acc;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(acc, data, &lbl_eu_80505118[0x7e]);
@@ -475,7 +475,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
 
         nw4r::lyt::Layout* layout = self->mLayout;
         nw4r::lyt::Pane* rootPane = layout->GetRootPane();
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
         u32 fontVal = ((u32 (*)(void*))((void**)fontObj)[0x24 / 4])(fontObj);
         func_8013676C(rootPane, fontVal);
 
@@ -539,7 +539,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         func_80136B4C(layout, &lbl_eu_80505118[0x1bd], talkText, 0);
 
         // Character portrait texture: name differs per player in co-op.
-        s32 player = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+        s32 player = isClassicController__Q22cf13CfGameManagerFv(-1);
         const char* name = &lbl_eu_80505118[0x1d2];
         if (player != 0) name = &lbl_eu_80505118[0x1c9];
         u16 msgId = func_8013606C(&lbl_eu_80505118[0x1aa], name, 0x2c);

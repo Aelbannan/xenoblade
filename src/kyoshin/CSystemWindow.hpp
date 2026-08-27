@@ -72,11 +72,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // C-ABI function imports / definitions: these retail symbols are unmangled
@@ -89,7 +89,7 @@ extern "C" {
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 int func_8013BE50();
-void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void __ct__8CProcessFv(CProcess* self);
@@ -105,7 +105,7 @@ void func_8022B8E4(void* syswin);
 void func_8022B748(void* syswin);
 // Verbatim-mangled retail import: a C++ member declaration on cf::CfGameManager
 // would change call-site codegen (see MWCC_CASES); keep C linkage.
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
 void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }

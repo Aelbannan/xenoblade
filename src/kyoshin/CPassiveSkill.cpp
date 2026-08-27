@@ -283,7 +283,7 @@ void func_802646E8(UI_CPassiveSkillInfo* self) {
                   &lbl_eu_8050DC20[0x111]);
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
-    CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
+    CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
     func_8013676C(rootPane, font->vf7());
     u32 textVal = func_801355BC();
     if (textVal != 0) {
@@ -328,7 +328,7 @@ void func_802646E8(UI_CPassiveSkillInfo* self) {
     func_80124270(pane, flag);
     char* text = func_80136190(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 0x87);
     func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x1a9], text, 0);
-    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050DC20[0x1b4]
                           : &lbl_eu_8050DC20[0x1bd];
     u16 msgId = func_8013606C(&lbl_eu_8050DC20[0x196], sel, 0x87);
@@ -3758,10 +3758,10 @@ extern "C" void func_8026D8FC(UI_CPassiveSkill* self, u8* arg2) {
 
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void getEntry__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_800A13C4(void*, u32);
 extern "C" void func_8022B7F4(void*);
 #pragma optimize_for_size on
@@ -3770,7 +3770,7 @@ extern "C" void func_8022B7F4(void*);
 // down the embedded line sub-object and syswin, release the mem-region
 // object, then clear each character's skill-blob pointer (rows 1..8).
 extern "C" void func_8026D920(UI::CPassiveSkill* self) {
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
     func_801390E0__FPP11CFileHandle(&self->field_18);
     func_801390E0__FPP11CFileHandle(&self->field_1C);
     self->field_24 = 0;
@@ -3778,7 +3778,7 @@ extern "C" void func_8026D920(UI::CPassiveSkill* self) {
     func_8022B7F4(&self->mSysWin);
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
     self->field_20 = 0;
-    func_8045F778__17UnkClass_8045F564Fv(&self->mUnk8);
+    deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
     for (u8 i = 1; i <= 8; i++) {
         func_800A13C4(func_8009EC9C(i), 1);
     }
@@ -4117,10 +4117,10 @@ extern "C" void func_8026DB64() {}
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 class CEventFile;
 
@@ -4145,7 +4145,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         void* fh = (void*)self->field_18;
         void* buf = *(void**)((u8*)fh + 4);
         *(void**)((u8*)fh + 4) = 0;
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         self->field_20 = (u32)createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
             (nw4r::lyt::ArcResourceAccessor*)self->field_20, buf,
@@ -4216,7 +4216,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
         func_80266B78(reinterpret_cast<UI::CPassiveSkillLine*>(&self->mLine));
         func_8026DD84(self);
         self->field_18 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&self->mUnk8);
+        validateHeap__17UnkClass_8045F564Fv(&self->mUnk8);
         __dt__14Class_8045F858Fv(guard, -1);
         return 1;
     }

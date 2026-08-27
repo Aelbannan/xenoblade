@@ -79,6 +79,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc64(int flag);     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
+        void func_800BFB90();
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual int CfObject_UnkVirtualFunc68(); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -88,7 +89,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc73();     //0x174
 
         //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
-        void func_800BE898(int, u32, float, float);
+        void requestVoice(int, u32, float, float);
 
 
         //0x0: vtable

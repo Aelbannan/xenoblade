@@ -23,21 +23,21 @@ void func_8046406C(s32 count);
 
 // Scene-resource current-data getter (monolib/src/scn/code_804BC9EC.cpp).
 // C linkage so the 0-arg call emits the retail name unmangled (a C++ 0-arg
-// declaration would mangle to func_804BC9EC__Fv__Fv).
-extern "C" void* func_804BC9EC__Fv(void);
+// declaration would mangle to getScnHandle__Fv__Fv).
+extern "C" void* getScnHandle__Fv(void);
 
 // Fv-named entry points of sibling LOD classes (retail Fv names carry extra
 // ABI values in r3, per the "Fv ABI note" - model them as explicit args).
 extern "C" {
-void func_80465718__Q23LOD17UnkClass_804645CCFv(void);
+void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
 void func_8046534C__Q23LOD17UnkClass_804645CCFv(s32 value);
-void func_804683D0__Q23LOD17UnkClass_80466348Fv(s32 value);
+void setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(s32 value);
 }
 
 namespace LOD {
 
 // Shared LOD spawn-direction table entry (retail stride 0x24).  The direction
-// vector lives at +0x0C; func_8046A224 spreads a spawn position along it.
+// vector lives at +0x0C; copySpawnPos spreads a spawn position along it.
 struct LodDirEntry {
     u8 pad_00[0x0C];
     nw4r::math::VEC3 dir;   // 0x0C direction
@@ -173,7 +173,7 @@ struct LodDrawRec {
 };
 
 // Per-type render dispatch table (.data): the visibility-cull entry points
-// (func_8046892C walks it).  Each entry takes (self, out) and returns the
+// (dispatchLodRecords walks it).  Each entry takes (self, out) and returns the
 // next record pointer.
 typedef u8* (*LodDispatchFn)(u8*, u8*);
 extern "C" LodDispatchFn lbl_eu_8056D998[];
@@ -219,19 +219,19 @@ public:
 // entry points take explicit ABI arguments (MWCC_CASES "Fv ABI note");
 // the linker names must stay verbatim, hence C linkage.
 extern "C" {
-u8* func_8046A02C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
-u8* func_8046A0A4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
-u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
-u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
-void func_8046A224__Q23LOD17UnkClass_80468434Fv(nw4r::math::VEC3* out, u32 unused,
+u8* cullLodRecordA__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
+u8* cullLodRecordB__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
+u16* cullLodEntry__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
+u16* cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
+void copySpawnPos__Q23LOD17UnkClass_80468434Fv(nw4r::math::VEC3* out, u32 unused,
                                                const ml::CVec4* in, s32 idx);
-s32 func_8046892C__Q23LOD17UnkClass_80468434Fv(u8* self);
-u8* func_804689D4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
-u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
-void func_8046A280__Q23LOD17UnkClass_80468434Fv(Vec* self,
+s32 dispatchLodRecords__Q23LOD17UnkClass_80468434Fv(u8* self);
+u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
+u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self);
+void transformSpawnPos__Q23LOD17UnkClass_80468434Fv(Vec* self,
                                                 Vec* vec,
                                                 const Vec* src, s32 idx);
-void func_8046A318__Q23LOD17UnkClass_80468434Fv(Vec* self,
+void transformSpawnPosAlt__Q23LOD17UnkClass_80468434Fv(Vec* self,
                                                 Vec* vec,
                                                 const Vec* src, s32 idx);
 

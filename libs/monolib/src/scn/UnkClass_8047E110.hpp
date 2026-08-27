@@ -181,10 +181,10 @@ public:
     u32 field_0x98;       // current table cursor
     ScnPtmf callback; // 0x9C null pointer-to-member block
 
-    void func_8047E110();
+    void init();
     void func_8047E1B0();
     void func_8047E390();
-    void func_8047E62C();
+    void findNode();
     void func_8047EAD4();
     void func_8047EEB0();
     void func_8047EFBC();
@@ -197,17 +197,17 @@ public:
     void func_8048020C();
     void func_804804DC();
     void func_804808A0();
-    void func_80480EF0();
-    void func_80480F48();
-    void func_80481014();
+    void hasNeighbor();
+    void compareRecords();
+    void setWalkBox();
     void func_80481074();
-    void func_804812D8();
-    void func_804813E8();
+    void isNodeInWalkBox();
+    void isNodeAtPosition();
     void func_804814DC();
-    void func_8048163C();
-    void func_8048169C();
+    void setWalkBoxCenter();
+    void setWalkBoxBounds();
     void func_80481790();
-    void func_804819AC();
+    void isNodeBlocked();
     void func_804819C4();
 };
 

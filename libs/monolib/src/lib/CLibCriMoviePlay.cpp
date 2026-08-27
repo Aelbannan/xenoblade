@@ -50,14 +50,14 @@ extern "C" {
 // External function declarations
 extern "C" {
     // GX cache
-    void func_8044B5C0__8CGXCacheFv(void* cache);
-    void func_8044A6C8__8CGXCacheFii(void* cache, int a, int b);
-    void func_8044BE38__8CGXCacheFv(void* cache);
-    void func_80442DA8__9CViewRootFv();
+    void updateOrthoGX__8CGXCacheFv(void* cache);
+    void setBlendState__8CGXCacheFii(void* cache, int a, int b);
+    void resetGXStateA__8CGXCacheFv(void* cache);
+    void updateViewRoot__9CViewRootFv();
     void* cacheInstance__9CDeviceGX;
 
     // Memory manager
-    void func_80434A4C__Q23mtl10MemManagerFb(bool flag);
+    void setMemInitFlag__Q23mtl10MemManagerFb(bool flag);
     bool isTvFormatPal__9CDeviceVIFv();
     bool hasFlow__12CWorkControlFv();
 
@@ -134,13 +134,13 @@ CLibCriMoviePlay::~CLibCriMoviePlay() {
 }
 
 // ============================================================================
-// func_80459DEC (us-8045de04)
+// setupMovieGfx (us-8045de04)
 // Sets up the GX TEV pipeline for movie rendering (YUV->RGB).
 // Retail ABI: (r3 = stage-1 tex map, r4 = stage-0/2 tex map); the caller
 // passes (GX_TEXMAP0, GX_TEXMAP1). The TEVREG1/KColor structs are filled
 // with direct word copies from the sdata2 pool.
 // ============================================================================
-extern "C" void func_80459DEC__16CLibCriMoviePlayFv(unsigned int texMapStage1, unsigned int texMapStage02) {
+extern "C" void setupMovieGfx__16CLibCriMoviePlayFv(unsigned int texMapStage1, unsigned int texMapStage02) {
     GXSetNumTexGens(2);
 
     // Tex coord gen 0 and 1
@@ -223,10 +223,10 @@ extern "C" void func_80459DEC__16CLibCriMoviePlayFv(unsigned int texMapStage1, u
 
 // ============================================================================
 // findFreeEntry (us-8045e1c8)
-// CLibCriMoviePlay::func_8045A1B0()
+// CLibCriMoviePlay::findFreeMovieEntry()
 // Returns pointer to first free movie entry, or NULL if none available
 // ============================================================================
-MovieEntry* CLibCriMoviePlay::func_8045A1B0() {
+MovieEntry* CLibCriMoviePlay::findFreeMovieEntry() {
     if (sInstance == nullptr) return nullptr;
 
     MovieEntry* entry = &sInstance->mEntries[0];
@@ -247,16 +247,16 @@ MovieEntry* CLibCriMoviePlay::func_8045A1B0() {
 
 // ============================================================================
 // startMovie (us-8045e278)
-// CLibCriMoviePlay::func_8045A260()
+// CLibCriMoviePlay::startMovie()
 // Starts movie playback with given parameters
 // Returns stream ID on success, -1 on failure
 // ============================================================================
-extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 allocHandle,
+extern "C" int startMovie__16CLibCriMoviePlayFv(const char* filename, u32 allocHandle,
                                   u32 allocHandle2, bool globalPause,
                                   bool waitFinish) {
     if (sInstance == nullptr) return -1;
 
-    MovieEntry* entry = CLibCriMoviePlay::func_8045A1B0();
+    MovieEntry* entry = CLibCriMoviePlay::findFreeMovieEntry();
     if (entry == nullptr) return -1;
 
     // Fill the inline cprm block (retail zeroes the tail word first, then
@@ -279,7 +279,7 @@ extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 all
     entry->mWorkBuf = workBuf;
 
     if (workBuf == nullptr) {
-        func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
+        releaseMovieEntry__16CLibCriMoviePlayFv(entry, 0);
         return -1;
     }
 
@@ -351,9 +351,9 @@ extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 all
 
 // ============================================================================
 // releaseEntry (us-8045e564)
-// CLibCriMoviePlay::func_8045A54C()
+// CLibCriMoviePlay::releaseMovieEntry()
 // Cleans up and releases movie entries. Body lives in the retail-named
-// wrapper func_8045A54C__16CLibCriMoviePlayFv (see below) so MWCC keeps it
+// wrapper releaseMovieEntry__16CLibCriMoviePlayFv (see below) so MWCC keeps it
 // outlined (large body) and other functions call it directly.
 // ============================================================================
 // ============================================================================
@@ -363,14 +363,14 @@ extern "C" int func_8045A260__16CLibCriMoviePlayFv(const char* filename, u32 all
 // match a member-function ABI).
 // ============================================================================
 // renderMovie (us-8045e8e0)
-// CLibCriMoviePlay::func_8045A8C8()
+// CLibCriMoviePlay::renderMovie()
 // Renders a movie frame to the screen using GX
 // Returns true on success, false if movie not found
 // ============================================================================
 // Renders the movie frame matching id as a textured quad spanning rect.
 // Retail ABI passes id in r3 and the destination rectangle in r4 despite the
 // Fv mangling.
-extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id, const ml::CRect16& rect) {
+extern "C" bool renderMovie__16CLibCriMoviePlayFv(int id, const ml::CRect16& rect) {
     if (sInstance == nullptr) return false;
 
     MovieEntry* entry = sInstance->mEntries;
@@ -381,15 +381,15 @@ extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id, const ml::CRect16& r
         if (entry->mTexBufCbCr == nullptr) continue;
 
         // Flush GX cache and bind both movie textures
-        func_8044B5C0__8CGXCacheFv(cacheInstance__9CDeviceGX);
+        updateOrthoGX__8CGXCacheFv(cacheInstance__9CDeviceGX);
 
         GXLoadTexObj(&entry->mTexObjY, GX_TEXMAP0);
         GXLoadTexObj(&entry->mTexObjCbCr, GX_TEXMAP1);
 
         // YUV->RGB TEV setup (stage-1 map = Y, stage-0/2 map = CbCr)
-        func_80459DEC__16CLibCriMoviePlayFv(GX_TEXMAP0, GX_TEXMAP1);
+        setupMovieGfx__16CLibCriMoviePlayFv(GX_TEXMAP0, GX_TEXMAP1);
 
-        func_8044A6C8__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
+        setBlendState__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
         GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
 
         // Identity matrices for texture and position transforms
@@ -424,17 +424,17 @@ extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id, const ml::CRect16& r
         GXTexCoord1f32(lbl_eu_8066A4F4);
 
         // Flush the quad, then draw the tint overlay on top
-        func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
-        func_80442DA8__9CViewRootFv();
+        resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
+        updateViewRoot__9CViewRootFv();
 
         CDrawGX drawGx;
-        drawGx.func_80456570(0);
-        drawGx.func_8045657C(0);
+        drawGx.setZCompare(0);
+        drawGx.setZWriteEnable(0);
         drawGx.setCol((const CCol4&)entry->mColor[0]);
         drawGx.renderRect(rect);
 
-        func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
-        func_80442DA8__9CViewRootFv();
+        resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
+        updateViewRoot__9CViewRootFv();
         // (destructor runs automatically at scope exit)
 
         return true;
@@ -445,10 +445,10 @@ extern "C" bool func_8045A8C8__16CLibCriMoviePlayFv(int id, const ml::CRect16& r
 
 // ============================================================================
 // updateMovies (us-8045eeb0)
-// CLibCriMoviePlay::func_8045AE84()
+// CLibCriMoviePlay::updateMovieTextures()
 // Updates texture buffers for all active movie entries
 // ============================================================================
-void CLibCriMoviePlay::func_8045AE84() {
+void CLibCriMoviePlay::updateMovieTextures() {
     MovieEntry* entry = mEntries;
 
     for (u32 i = 0; i < 4; i++) {
@@ -578,17 +578,17 @@ void CLibCriMoviePlay::func_8045AE84() {
 }
 
 // ============================================================================
-// func_8045B1DC (us-8045f208)
+// onMovieViBegin (us-8045f208)
 // Empty function - just returns
 // ============================================================================
 // (declared inline in header)
 
 // ============================================================================
 // getWorkSize (us-8045f20c)
-// CLibCriMoviePlay::func_8045B1E0()
+// CLibCriMoviePlay::getMovieWorkSize()
 // Calculates required work buffer size for movie playback
 // ============================================================================
-int CLibCriMoviePlay::func_8045B1E0() {
+int CLibCriMoviePlay::getMovieWorkSize() {
     // Set up temporary cprm structure (0x4C bytes on the stack)
     u32 cprm[0x13];
     memset(cprm, 0, 0x4C);
@@ -659,7 +659,7 @@ void CLibCriMoviePlay::wkUpdate() {
         if (entry->mPlyHandle == nullptr) {
             // Entry not in use - free its saved texture buffers under the
             // memory-manager lock.
-            func_80434A4C__Q23mtl10MemManagerFb(false);
+            setMemInitFlag__Q23mtl10MemManagerFb(false);
             if (entry->mSavedTexBufY != nullptr) {
                 MemManager::deallocate(entry->mSavedTexBufY);
                 entry->mSavedTexBufY = nullptr;
@@ -668,7 +668,7 @@ void CLibCriMoviePlay::wkUpdate() {
                 MemManager::deallocate(entry->mSavedTexBufCbCr);
                 entry->mSavedTexBufCbCr = nullptr;
             }
-            func_80434A4C__Q23mtl10MemManagerFb(true);
+            setMemInitFlag__Q23mtl10MemManagerFb(true);
             continue;
         }
 
@@ -678,7 +678,7 @@ void CLibCriMoviePlay::wkUpdate() {
 
         if (stat == 3 || stat == 4 || stat == 0) {
             // Playback ended or error - release entry
-            func_8045A54C__16CLibCriMoviePlayFv(entry, 1);
+            releaseMovieEntry__16CLibCriMoviePlayFv(entry, 1);
             continue;
         }
 
@@ -776,7 +776,7 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
             // the memory-manager lock.
             MovieEntry* cur = &mEntries[0];
         for (int i = 0; i < 4; i++) {
-            func_80434A4C__Q23mtl10MemManagerFb(false);
+            setMemInitFlag__Q23mtl10MemManagerFb(false);
             if (cur->mSavedTexBufY != nullptr) {
                 MemManager::deallocate(cur->mSavedTexBufY);
                 cur->mSavedTexBufY = nullptr;
@@ -785,7 +785,7 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
                 MemManager::deallocate(cur->mSavedTexBufCbCr);
                 cur->mSavedTexBufCbCr = nullptr;
             }
-            func_80434A4C__Q23mtl10MemManagerFb(true);
+            setMemInitFlag__Q23mtl10MemManagerFb(true);
             cur++;
         }
 
@@ -802,7 +802,7 @@ bool CLibCriMoviePlay::wkStandbyLogout() {
 // ============================================================================
 void CLibCriMoviePlay::viBeginFrame() {
     // Called every video frame - update movie textures
-    func_8045AE84();
+    updateMovieTextures();
 }
 
 // ============================================================================
@@ -810,7 +810,7 @@ void CLibCriMoviePlay::viBeginFrame() {
 // ============================================================================
 extern "C" {
     // Forward declarations (definitions below, in retail order)
-    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
+    void releaseMovieEntry__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
 
 
 // Finds the movie entry whose player ID matches id (id == -1 matches none).
@@ -821,7 +821,7 @@ extern "C" {
 // The search peeks entry[1] then advances, matching the retail load schedule
 // (constant 0x220 offset per stage with the stride addi hoisted above cmpl).
 
-    void func_8045A48C__16CLibCriMoviePlayFv(int id) {
+    void stopMovie__16CLibCriMoviePlayFv(int id) {
         MovieEntry* entry;
 
         if (sInstance == nullptr) {
@@ -852,15 +852,15 @@ extern "C" {
 stop:
         if (entry != nullptr) {
             mwPlyStop(entry->mPlyHandle);
-            func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
+            releaseMovieEntry__16CLibCriMoviePlayFv(entry, 0);
         }
     }
 
-    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags) {
+    void releaseMovieEntry__16CLibCriMoviePlayFv(MovieEntry* entry, int flags) {
         if (sInstance == nullptr) return;
 
         // Lock memory manager
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
 
         MovieEntry* cur = &sInstance->mEntries[0];
         for (u32 i = 0; i < 4; i++) {
@@ -892,11 +892,11 @@ stop:
         }
 
         // Unlock memory manager
-        func_80434A4C__Q23mtl10MemManagerFb(true);
+        setMemInitFlag__Q23mtl10MemManagerFb(true);
     }
 
     // Returns true if any active movie matches id (id == -1 matches any).
-    bool func_8045A644__16CLibCriMoviePlayFv(u32 id) {
+    bool isMoviePlaying__16CLibCriMoviePlayFv(u32 id) {
         if (sInstance == nullptr) return false;
 
         MovieEntry* cur = &sInstance->mEntries[0];
@@ -915,7 +915,7 @@ stop:
     // the resulting pause state to every active entry (the matched entry's
     // pause-override flag is fanned out to all entries before evaluating the
     // per-entry pause conditions).
-    void func_8045A708__16CLibCriMoviePlayFv(int id) {
+    void clearMovieGlobalPause__16CLibCriMoviePlayFv(int id) {
         MovieEntry* entry;
 
         if (sInstance == nullptr) {
@@ -960,7 +960,7 @@ stop:
     }
 
     // Returns true if the movie matching id is globally paused.
-    bool func_8045A7F8__16CLibCriMoviePlayFv(int id) {
+    bool isMovieGlobalPaused__16CLibCriMoviePlayFv(int id) {
         if (sInstance == nullptr) return false;
 
         for (int i = 0; i < 4; i++) {
@@ -980,14 +980,14 @@ stop:
     extern "C" void wkUpdate__16CLibCriMoviePlayFv();
     extern "C" bool wkStandbyLogout__16CLibCriMoviePlayFv();
 
-    void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self);
+    void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self);
 
     // Sets the pause override flag on the movie matching id (id == -1
     // matches none). The player handle is loaded before evaluating the pause
     // conditions so the call argument is ready ahead of the branches.
     // Sets the pause override flag on the movie matching id (id == -1
     // matches none).
-    void func_8045B310__16CLibCriMoviePlayFv(bool pause, u32 id) {
+    void setMoviePause__16CLibCriMoviePlayFv(bool pause, u32 id) {
         if (sInstance == nullptr) return;
 
         u32 i;
@@ -1009,19 +1009,19 @@ stop:
         }
     }
 
-    // Virtual thunks: func_8045B3D4 (viBeginFrame) is the subi+b thunk
+    // Virtual thunks: handleViBeginFrame (viBeginFrame) is the subi+b thunk
     // defined near the bottom of this file (thunk_452_dt/thunk_456 pattern);
     // a C++ body gets erased because a tail call to the empty
-    // func_8045B1DC is indistinguishable from a plain return.
+    // onMovieViBegin is indistinguishable from a plain return.
 
-    void func_8045B3DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
+    void forwardUpdateMovies__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Thunk for CDeviceVICb update
-        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->func_8045AE84();
+        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->updateMovieTextures();
     }
 
     // Defined below its callers so the inliner cannot fold the empty body
-    // into the func_8045B3D4 thunk.
-    void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
+    // into the handleViBeginFrame thunk.
+    void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Empty
     }
 
@@ -1052,14 +1052,14 @@ asm void thunk_452_dt(void) {
 }
 
 // CDeviceVICb viBeginFrame thunk (retail .text @0x8045F400): adjust this by
-// -0x1C4 and tail-branch to func_8045B1DC. Written as an asm thunk (same
+// -0x1C4 and tail-branch to onMovieViBegin. Written as an asm thunk (same
 // isolated-tail exception as thunk_452_dt / CDeviceVI thunk_456): any C++
-// body is optimized away since tail-calling the empty func_8045B1DC equals
+// body is optimized away since tail-calling the empty onMovieViBegin equals
 // returning. Named literally so the symbol carries the retail mangled name.
-asm void func_8045B3D4__16CLibCriMoviePlayFv(void) {
+asm void handleViBeginFrame__16CLibCriMoviePlayFv(void) {
     nofralloc
     subi r3, r3, 0x1C4
-    b func_8045B1DC__16CLibCriMoviePlayFv
+    b onMovieViBegin__16CLibCriMoviePlayFv
 }
 
 // ===== Vtable + RTTI + locator (dissolved monolibdata2) =====
@@ -1102,7 +1102,7 @@ extern "C" int WorkEvent31__10IWorkEventFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" bool wkStandbyLogin__16CLibCriMoviePlayFv();
-extern "C" void func_8045AE84__16CLibCriMoviePlayFv();
+extern "C" void updateMovieTextures__16CLibCriMoviePlayFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 extern "C" void viBeginFrame__11CDeviceVICbFv();
 extern "C" u32 lbl_eu_80663618[];   // type_info vtable (foreign)
@@ -1139,11 +1139,11 @@ extern "C" u32 lbl_eu_8056CF48[48] = {
     // CDeviceVICb sub-vtable (this -0x1C4)
     (u32)&lbl_eu_80663798, 0xFFFFFE3C,
     (u32)&thunk_452_dt,
-    (u32)&func_8045B3DC__16CLibCriMoviePlayFv,
-    (u32)&func_8045B3D4__16CLibCriMoviePlayFv,
+    (u32)&forwardUpdateMovies__16CLibCriMoviePlayFv,
+    (u32)&handleViBeginFrame__16CLibCriMoviePlayFv,
     (u32)&viBeginFrame__11CDeviceVICbFv,
-    (u32)&func_8045AE84__16CLibCriMoviePlayFv,
-    (u32)&func_8045B1DC__16CLibCriMoviePlayFv,
+    (u32)&updateMovieTextures__16CLibCriMoviePlayFv,
+    (u32)&onMovieViBegin__16CLibCriMoviePlayFv,
 };
 
 // [.data] 0x8056D008-0x8056D028 (0x20): typeinfo / base-list block

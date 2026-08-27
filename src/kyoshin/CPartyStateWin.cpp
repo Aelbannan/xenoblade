@@ -559,7 +559,7 @@ int func_801FA524(CPartyStateWin* self) {
     if (self->field_6BE4 == 0xC) {
         return 1;
     }
-    if (func_80082F2C__Q22cf13CfGameManagerFv(0, 1) == 0) {
+    if (isPlayerReadyForEvent__Q22cf13CfGameManagerFv(0, 1) == 0) {
         return 1;
     }
     if (CSysWin_getUnk34(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
@@ -609,7 +609,7 @@ extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self) {
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     bool up, down, left, right;
     u32 a, b, y;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         up = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
         down = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
         left = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
@@ -640,7 +640,7 @@ extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self) {
         if (func_801FD580(reinterpret_cast<CPartyState*>(&self->_pad3038)) != 0) {
             func_801FD594(reinterpret_cast<CPartyState*>(&self->_pad3038));
             func_801FBC7C(self);
-        } else if (func_80082F2C__Q22cf13CfGameManagerFv(0, 1)) {
+        } else if (isPlayerReadyForEvent__Q22cf13CfGameManagerFv(0, 1)) {
             func_801C414C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
             func_801FD1BC(reinterpret_cast<CPartyState*>(&self->_pad3038));
             func_801FC13C(reinterpret_cast<CModelDisp*>(&self->_pad50));
@@ -728,7 +728,7 @@ extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {
 // Equip-change input step: increments the window timer field_6BE8 (clamped at
 // lbl_eu_806681E0), then while the equip-change sub-object is active,
 // dispatches on the held/pressed/turbo pad flags. Two mirror chains (classic
-// vs Wii controller layout, selected by func_80086F9C): each chain tests a
+// vs Wii controller layout, selected by isClassicController): each chain tests a
 // list of flag combinations and either opens a system window (string ids
 // 0x84/0x85/0x8A via func_8022B9B4/8022BFC8/8022B8B8 + state 0xD), arms a
 // display state (0x8/0xA/0xB/0xC/0x10), or plays a sound (func_80138078).
@@ -743,7 +743,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
         return;
     }
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // -- classic-controller chain --
         func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
         if ((cfPad->mTurboPressButtonFlags & 0x02000000) != 0 &&
@@ -1199,7 +1199,7 @@ extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self);
 extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self) {
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cond;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         cond = (pad->mPressedButtonFlags & 0x00600000) != 0;
     } else {
         cond = (pad->mPressedButtonFlags & 0x00000030) != 0;
@@ -1229,7 +1229,7 @@ extern "C" __declspec(noinline) void func_801FB900(CPartyStateWin* self) {
     // shape: each branch reloads both flag words and re-decodes).
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     int up, down, left, right, y, aCond;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 pressed = pad->mPressedButtonFlags;
         u32 held = pad->mHeldButtonFlags;
         aCond = (pressed & 0x00400400) != 0;
@@ -1389,7 +1389,7 @@ __declspec(noinline) void CPartyStateWin::cbRenderBefore() {
     // fallthrough so MWCC emits retail's branch-over-branch: `bne end` for
     // the first disjunct, `beq body; b end` for the second (same scheme as
     // CMenuKizunagram::Move).
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }

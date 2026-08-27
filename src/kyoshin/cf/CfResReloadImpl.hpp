@@ -284,7 +284,7 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
 extern "C" int func_8016E578(u32 type, int sub);
 extern "C" void func_8016EA68(cf::CfResReloadImpl* self);
 
-// func_800AD860 (retail mangled C++ symbol func_800AD860__FPv, single void*
+// func_800AD860 (retail mangled C++ symbol getEffOwner____FPv, single void*
 // parameter): a plain C++ declaration (not extern "C") yields the matching
 // linker name. Return type is void* to match CfObjectPc.hpp (the same
 // function is declared there first; C++ rejects differing return types).
@@ -308,7 +308,7 @@ extern "C" void func_800B1BBC(int arg);
 extern "C" void func_800BBB50(cf::CfObjectModel* self);
 // Imports used by func_8016D688 (defined in CfTFile.cpp / CfRes.cpp /
 // CfGameManager.cpp / object/CfObjectModel.cpp).
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResReloadParent* parent, u8* handle);
 extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);

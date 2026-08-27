@@ -68,7 +68,7 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     u32 openBit = (lbl_eu_80663E24 >> 1) & 1;
     self->mSomething = openBit;
     if (openBit == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(1);
+        setPresentationFlag__Q22cf13CfGameManagerFv(1);
     }
 
     code80135FDC_postIncByte_64080();
@@ -77,7 +77,7 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     // Re-enable the input-flag set the player had before the tutorial:
     // classic controller (0x60000000) or core pad (0x30).
     u32 padFlags =
-        func_80086F9C__Q22cf13CfGameManagerFv(-1) ? 0x60000000 : 0x30;
+        isClassicController__Q22cf13CfGameManagerFv(-1) ? 0x60000000 : 0x30;
     cf::CfGameManager::enablePadFlags((u32)-1, false);
     cf::CfGameManager::enablePadFlags(padFlags, true);
     return self;
@@ -177,7 +177,7 @@ void CMenuTutorial::Term() {
     func_8013B980();
     if (mSomething == 0) {
         if (code80135FDC_getByte_64080() == 0) {
-            func_8008294C__Q22cf13CfGameManagerFv(0);
+            setPresentationFlag__Q22cf13CfGameManagerFv(0);
         }
         func_80135550();
     }
@@ -188,7 +188,7 @@ void CMenuTutorial::Move() {
     // Gate: skip the whole move when the task is busy or the global mode bit
     // (0x200000) is set. The &&-chain + goto body + return shape reproduces
     // retail's branch-over-branch `beq body; b exit` (MWCC_CASES §8960).
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -221,7 +221,7 @@ void CMenuTutorial::cbRenderBefore() {
     getInstance__9CTaskGameFv();
     // Gate: skip the render when the task is busy or the global mode bit
     // (0x200000) is set. Same branch-over-branch shape as Move().
-    if (func_800426F0__9CTaskGameFv() == 0 &&
+    if (isFlag01Set__9CTaskGameFv() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;
     }
@@ -317,7 +317,7 @@ void func_8029A7B4(CMenuTutorial* self) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         u32 first;
         u32 second;
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
             first = (pad->mPressedButtonFlags >> 21) & 1;
             second = (pad->mPressedButtonFlags >> 22) & 1;
         } else {

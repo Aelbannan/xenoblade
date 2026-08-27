@@ -153,15 +153,15 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
         if ((*word & bit) != 0)
             continue;
         if ((self->field_161 & 0x2) != 0) {
-            func_80462DB4__8CTaskLODFv(lod, 0);
-            func_804BCC3C(func_804BC9EC__Fv(), lod);
+            setLODEnable__8CTaskLODFv(lod, 0);
+            func_804BCC3C(getScnHandle__Fv(), lod);
         } else if (self->field_162 != 0 || self->field_163 != 0) {
-            func_80462DB4__8CTaskLODFv(lod, 1);
-            func_804BCC30(func_804BC9EC__Fv(), lod);
+            setLODEnable__8CTaskLODFv(lod, 1);
+            func_804BCC30(getScnHandle__Fv(), lod);
         }
-        func_80462F4C__8CTaskLODFv(lod, 0);
-        func_80462EF4__8CTaskLODFv(lod, lbl_eu_806681A0);
-        func_80462E3C__8CTaskLODFv(lod, lbl_eu_806681A4);
+        attachLODObject__8CTaskLODFv(lod, 0);
+        removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
+        refreshLOD__8CTaskLODFv(lod, lbl_eu_806681A4);
         *word |= bit;
     }
 
@@ -412,7 +412,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
     if (mgrId != 0) {
         func_80208EE4(self);
         CfGimmickObjectMgr* mgr =
-            (CfGimmickObjectMgr*)func_800817BC__Q22cf13CfGameManagerFv(mgrId, 0);
+            (CfGimmickObjectMgr*)createBattleActor__Q22cf13CfGameManagerFv(mgrId, 0);
         self->field_78 = mgr;
         if (mgr != 0)
             mgr->field_B0 = self;
@@ -471,44 +471,44 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
         if (a < b)
             lastId = self->field_A4[b - 1].field_06;
         if (lastId != 0)
-            func_80462F94__8CTaskLODFv(lod, lastId);
+            setLODObject__8CTaskLODFv(lod, lastId);
         // u16 -> f32 via the direct cast: MWCC emits the retail 2^52
         // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
         if (frames != 0)
-            func_80462FD8__8CTaskLODFv(lod, (f32)frames);
+            updateLODObject__8CTaskLODFv(lod, (f32)frames);
         if (flags == 0)
             continue;
         if ((flags & 0x8) != 0) {
             if ((flags & 0x4) != 0)
-                func_80462EF4__8CTaskLODFv(lod, lbl_eu_806681A0);
+                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
             else
-                func_80462F10__8CTaskLODFv(lod);
-            func_80462F4C__8CTaskLODFv(lod, 0);
+                clearLODEntry__8CTaskLODFv(lod);
+            attachLODObject__8CTaskLODFv(lod, 0);
         } else if ((flags & 0x1) != 0) {
-            func_80462F10__8CTaskLODFv(lod);
-            func_80462F70__8CTaskLODFv(lod, 0);
+            clearLODEntry__8CTaskLODFv(lod);
+            detachLODObject__8CTaskLODFv(lod, 0);
             if ((flags & 0x10) != 0) {
-                func_80462ED0__8CTaskLODFv(lod, 0);
-                func_80462F4C__8CTaskLODFv(lod, 0);
+                addLODEntry__8CTaskLODFv(lod, 0);
+                attachLODObject__8CTaskLODFv(lod, 0);
             } else {
-                func_80462ED0__8CTaskLODFv(lod, 1);
-                func_80462F4C__8CTaskLODFv(lod, 1);
+                addLODEntry__8CTaskLODFv(lod, 1);
+                attachLODObject__8CTaskLODFv(lod, 1);
             }
         } else {
             if ((flags & 0x4) != 0) {
-                func_80462EF4__8CTaskLODFv(lod, lbl_eu_806681A0);
-                func_80462F70__8CTaskLODFv(lod, 1);
+                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
+                detachLODObject__8CTaskLODFv(lod, 1);
                 if ((flags & 0x10) != 0) {
-                    func_80462ED0__8CTaskLODFv(lod, 0);
-                    func_80462F4C__8CTaskLODFv(lod, 0);
+                    addLODEntry__8CTaskLODFv(lod, 0);
+                    attachLODObject__8CTaskLODFv(lod, 0);
                 } else {
-                    func_80462ED0__8CTaskLODFv(lod, 1);
-                    func_80462F4C__8CTaskLODFv(lod, 1);
+                    addLODEntry__8CTaskLODFv(lod, 1);
+                    attachLODObject__8CTaskLODFv(lod, 1);
                 }
             } else if ((flags & 0x30) != 0) {
                 // Retail issues the rebuild call twice back-to-back.
-                func_80462F4C__8CTaskLODFv(lod, 0);
-                func_80462F4C__8CTaskLODFv(lod, 0);
+                attachLODObject__8CTaskLODFv(lod, 0);
+                attachLODObject__8CTaskLODFv(lod, 0);
             }
         }
     }
@@ -518,11 +518,11 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
 void func_801F61B0(cf::CfGimmickObject* self, int mode) {
     for (int i = 0; i < 2; i++) {
         if (self->field_70[i] != 0) {
-            func_80462DB4__8CTaskLODFv(self->field_70[i], mode);
+            setLODEnable__8CTaskLODFv(self->field_70[i], mode);
             if (mode != 0) {
-                func_804BCC30(func_804BC9EC__Fv(), self->field_70[i]);
+                func_804BCC30(getScnHandle__Fv(), self->field_70[i]);
             } else {
-                func_804BCC3C(func_804BC9EC__Fv(), self->field_70[i]);
+                func_804BCC3C(getScnHandle__Fv(), self->field_70[i]);
             }
         }
     }
@@ -556,8 +556,8 @@ refresh:
     if ((self->field_74 & 0x10) != 0)
         return;
     if (mode != 0) {
-        f32 base = func_80462F2C__8CTaskLODFv(lod);
-        f32 v = func_80462FF4__8CTaskLODFv(lod);
+        f32 base = getLODDistance__8CTaskLODFv(lod);
+        f32 v = getLODLevel__8CTaskLODFv(lod);
         u32 w = self->field_74;
         self->field_178 = v - base;
         // volatile read so MWCC re-loads field_74 here instead of reusing w
@@ -565,7 +565,7 @@ refresh:
         if ((w & 0x20000000) != 0)
             *(volatile u32*)&self->field_74 |= 0x40000000;
     } else {
-        self->field_178 = func_80462F2C__8CTaskLODFv(lod);
+        self->field_178 = getLODDistance__8CTaskLODFv(lod);
     }
     self->field_74 |= 0x10;
 }
@@ -604,7 +604,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
                 self->field_74 &= ~2;
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0)
-                        func_80462E3C__8CTaskLODFv(self->field_70[i],
+                        refreshLOD__8CTaskLODFv(self->field_70[i],
                                                    lbl_eu_806681A4);
                 }
                 result = 1;
@@ -614,12 +614,12 @@ int func_801F634C(cf::CfGimmickObject* self) {
                         lbl_eu_806681A4 - v / (f32)self->field_18A;
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            func_80462E3C__8CTaskLODFv(self->field_70[i], fade);
+                            refreshLOD__8CTaskLODFv(self->field_70[i], fade);
                     }
                 } else {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            func_80462E3C__8CTaskLODFv(self->field_70[i],
+                            refreshLOD__8CTaskLODFv(self->field_70[i],
                                                        lbl_eu_806681A0);
                     }
                 }
@@ -638,14 +638,14 @@ int func_801F634C(cf::CfGimmickObject* self) {
                     func_801F61B0(self, 0);
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            func_80462E3C__8CTaskLODFv(self->field_70[i],
+                            refreshLOD__8CTaskLODFv(self->field_70[i],
                                                        lbl_eu_806681A4);
                     }
                 } else {
                     f32 fade = v / (f32)self->field_18A;
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
-                            func_80462E3C__8CTaskLODFv(self->field_70[i], fade);
+                            refreshLOD__8CTaskLODFv(self->field_70[i], fade);
                     }
                 }
             } else {
@@ -665,12 +665,12 @@ int func_801F634C(cf::CfGimmickObject* self) {
                 f32 step = (v / lbl_eu_806681B4) * delta;
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0) {
-                        f32 cur = func_80462F2C__8CTaskLODFv(self->field_70[i]);
-                        f32 tgt = func_80462FF4__8CTaskLODFv(self->field_70[i]);
+                        f32 cur = getLODDistance__8CTaskLODFv(self->field_70[i]);
+                        f32 tgt = getLODLevel__8CTaskLODFv(self->field_70[i]);
                         f32 s = cur + step;
                         if (tgt <= s)
                             s -= tgt;
-                        func_80462EF4__8CTaskLODFv(self->field_70[i], s);
+                        removeLODEntry__8CTaskLODFv(self->field_70[i], s);
                     }
                 }
                 result = 1;
@@ -688,9 +688,9 @@ int func_801F634C(cf::CfGimmickObject* self) {
                 if ((flags & 0x40000000) != 0) {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0) {
-                            func_80462EF4__8CTaskLODFv(self->field_70[i],
+                            removeLODEntry__8CTaskLODFv(self->field_70[i],
                                                        lbl_eu_806681A0);
-                            func_80462F4C__8CTaskLODFv(self->field_70[i], 0);
+                            attachLODObject__8CTaskLODFv(self->field_70[i], 0);
                         }
                     }
                     self->field_74 &= ~0x40000000;
@@ -719,8 +719,8 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // field_188, 16 bytes per entry) drives: a +0x170 activation countdown,
 // camera events (func_8007B0C8), per-LOD frame updates (func_801F6B98), the
 // +0x68 map-object status (func_800BE12C), a player-control reset (getPlayer
-// slot 0x110 -> func_80199678), the area-manager attach (func_800817BC with
-// vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / func_801BFC38 /
+// slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
+// vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / playActorSound /
 // func_80208C60 / func_80208C48, plus the func_801BFAE4 volume slot).
 void func_801F6780(cf::CfGimmickObject* self) {
     u32 f = self->field_74;
@@ -770,7 +770,7 @@ void func_801F6780(cf::CfGimmickObject* self) {
     if (step->field_07 != 0) {
         func_80208EE4(self);
         CfGimmickObjectMgr* mgr =
-            (CfGimmickObjectMgr*)func_800817BC__Q22cf13CfGameManagerFv(step->field_07, 0);
+            (CfGimmickObjectMgr*)createBattleActor__Q22cf13CfGameManagerFv(step->field_07, 0);
         self->field_78 = mgr;
         if (mgr != 0) {
             mgr->field_B0 = self;
@@ -800,7 +800,7 @@ void func_801F6780(cf::CfGimmickObject* self) {
             func_801BFED0(1, self->field_80, 0xa);
         if (func_801BFABC(1) != 0) {
             if ((step->field_0E & 1) != 0) {
-                self->field_80 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+                self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                     1, step->field_0A, 0, 0, lbl_eu_806681A4);
             } else if ((step->field_0E & 0x20) != 0) {
                 self->field_80 =
@@ -848,25 +848,25 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
     if (frame->field_0C != 0)
         // u16 -> f32 via the direct cast: MWCC emits the retail 2^52
         // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
-        func_80462FD8__8CTaskLODFv(lod, (f32)frame->field_0C);
+        updateLODObject__8CTaskLODFv(lod, (f32)frame->field_0C);
     if ((frame->field_05 & ~0x40) != 0) {
         u8 flags = frame->field_05;
         if ((flags & 0x4) != 0) {
             if ((flags & 0x2) != 0)
-                func_80462EF4__8CTaskLODFv(lod, lbl_eu_806681A0);
+                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
             else
-                func_80462F10__8CTaskLODFv(lod);
-            func_80462F4C__8CTaskLODFv(lod, 0);
+                clearLODEntry__8CTaskLODFv(lod);
+            attachLODObject__8CTaskLODFv(lod, 0);
         } else if ((flags & 0x1) != 0) {
-            func_80462F70__8CTaskLODFv(lod, 0);
-            func_80462F4C__8CTaskLODFv(lod, 1);
+            detachLODObject__8CTaskLODFv(lod, 0);
+            attachLODObject__8CTaskLODFv(lod, 1);
             func_801F627C(self, lod, 1);
         } else if ((flags & 0x2) != 0) {
-            func_80462F70__8CTaskLODFv(lod, 1);
-            func_80462F4C__8CTaskLODFv(lod, 1);
+            detachLODObject__8CTaskLODFv(lod, 1);
+            attachLODObject__8CTaskLODFv(lod, 1);
             func_801F627C(self, lod, 0);
         } else if ((flags & 0x30) != 0) {
-            func_80462F4C__8CTaskLODFv(lod, 0);
+            attachLODObject__8CTaskLODFv(lod, 0);
             if ((flags & 0x20) != 0) {
                 // Rebuild the LOD2 range across both registered LOD tasks.
                 constv = lbl_eu_806681A4;
@@ -877,24 +877,24 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
                 for (i = 0; i < 2; i++) {
                     slot = &self->field_70[i];
                     if (*slot != 0) {
-                        a = func_80462F2C__8CTaskLODFv(*slot);
-                        f32 b = func_80462FF4__8CTaskLODFv(*slot);
+                        a = getLODDistance__8CTaskLODFv(*slot);
+                        f32 b = getLODLevel__8CTaskLODFv(*slot);
                         f32 c = a + constv;
                         if (b <= c)
                             c -= b;
-                        func_80462EF4__8CTaskLODFv(*slot, c);
+                        removeLODEntry__8CTaskLODFv(*slot, c);
                     }
                 }
             }
         }
         if ((flags & 0x8) != 0)
-            func_80462ED0__8CTaskLODFv(lod, 0);
+            addLODEntry__8CTaskLODFv(lod, 0);
         else
-            func_80462ED0__8CTaskLODFv(lod, 1);
+            addLODEntry__8CTaskLODFv(lod, 1);
     }
     if (self->field_194 != frame->field_06) {
         self->field_194 = frame->field_06;
-        func_80462F94__8CTaskLODFv(lod, frame->field_06);
+        setLODObject__8CTaskLODFv(lod, frame->field_06);
     }
 }
 
@@ -1230,8 +1230,8 @@ int func_801F75CC(cf::CfGimmickObject* self) {
 // func_801F76A8 - step-machine cleanup: resolves the +0x6A area registration
 // (func_8020A6B0 / func_8020A434), runs the +0x180 effect countdown
 // (func_80496288 delta; on expiry notify func_80208EE4, otherwise scale the
-// remaining time into func_800ACC64's position vector), and plays / refreshes
-// the step sound selected by field_192 (func_801BFC38 for kind 3,
+// remaining time into setChildV40__'s position vector), and plays / refreshes
+// the step sound selected by field_192 (playActorSound for kind 3,
 // func_80208C60 for kinds 2/1, func_80208C48 otherwise). The sound-slot
 // volume (func_801BFAE4 +0x1C) is forced to 0/1 by the global 0x8 flag.
 void func_801F76A8(cf::CfGimmickObject* self) {
@@ -1260,7 +1260,7 @@ void func_801F76A8(cf::CfGimmickObject* self) {
                 vec[0] = lbl_eu_806681A4;
                 vec[1] = lbl_eu_806681A4;
                 vec[2] = lbl_eu_806681A4;
-                func_800ACC64(self->field_78, vec);
+                setChildV40__(self->field_78, vec);
             }
         } else {
             self->field_180 = lbl_eu_806681A0;
@@ -1273,10 +1273,10 @@ void func_801F76A8(cf::CfGimmickObject* self) {
             if ((f & 0x400000) != 0) {
                 self->field_74 &= ~0x400000;
                 if (lbl_eu_806646C0 == 0)
-                    lbl_eu_806646C0 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+                    lbl_eu_806646C0 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                         1, 0xcb, 0, 0, lbl_eu_806681A4);
             } else if (self->field_192 == 3) {
-                self->field_80 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+                self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
                     1, self->field_190, 0, 0, lbl_eu_806681A4);
             } else if (self->field_192 == 2) {
                 self->field_80 =
@@ -1350,12 +1350,12 @@ int func_801F7978(cf::CfGimmickObject* self) {
             return 0;
     }
     if (self->field_6E != 0) {
-        u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+        u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (self->field_6C > seq || seq > self->field_6E)
             return 0;
     }
     if (self->field_13C != 0 &&
-        func_80082354__Q22cf13CfGameManagerFv(self->field_13C) != self->field_13E)
+        getResourceFromTable__Q22cf13CfGameManagerFv(self->field_13C) != self->field_13E)
         return 0;
     if (self->field_140 != 0 &&
         func_8020971C((void*)(u32)self->field_140) == 0)
@@ -1420,12 +1420,12 @@ int func_801F7B44(cf::CfGimmickObject* self) {
     CfGimmickObjectArea* area = self->field_84;
     for (int i = 0; i < 2; i++, area++) {
         if (area->field_06 != 0) {
-            u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
             if (area->field_04 > seq || seq > area->field_06)
                 return 0;
         }
         if (area->field_00 != 0 &&
-            func_80082354__Q22cf13CfGameManagerFv(area->field_00) != area->field_02)
+            getResourceFromTable__Q22cf13CfGameManagerFv(area->field_00) != area->field_02)
             return 0;
         if (area->field_08 != 0 && func_8020971C((void*)(u32)area->field_08) == 0)
             return 0;
@@ -1461,7 +1461,7 @@ int func_801F7D38(cf::CfGimmickObject* self) {
     }
     if (self->field_15E == 1) {
         if (self->field_6E != 0) {
-            u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
             if (self->field_6C > seq || seq > self->field_6E) {
                 self->field_188 = 0;
                 return 0;
@@ -1472,7 +1472,7 @@ int func_801F7D38(cf::CfGimmickObject* self) {
         CfGimmickObjectArea* area = self->field_84;
         for (int i = 0; i < 2; i++, area++) {
             if (area->field_06 != 0) {
-                u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+                u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
                 if (area->field_04 > seq || seq > area->field_06) {
                     self->field_188 = 0;
                     return 0;
@@ -1663,23 +1663,23 @@ int func_801F7F24(cf::CfGimmickObject* self) {
         }
         // Gated pass: scenario windows must be open.
         if (self->field_6E != 0) {
-            u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
             if (self->field_6C <= seq && seq <= self->field_6E)
                 return 0;
         }
         if (self->field_13C != 0 &&
-            func_80082354__Q22cf13CfGameManagerFv(self->field_13C) ==
+            getResourceFromTable__Q22cf13CfGameManagerFv(self->field_13C) ==
                 self->field_13E)
             return 0;
         CfGimmickObjectArea* e = self->field_84;
         for (int i = 0; i < 2; i++, ++e) {
             if (e->field_06 != 0) {
-                u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+                u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
                 if (e->field_04 <= seq && seq <= e->field_06)
                     return 0;
             }
             if (e->field_00 != 0 &&
-                func_80082354__Q22cf13CfGameManagerFv(e->field_00) ==
+                getResourceFromTable__Q22cf13CfGameManagerFv(e->field_00) ==
                     e->field_02)
                 return 0;
         }
@@ -1711,7 +1711,7 @@ int func_801F7F24(cf::CfGimmickObject* self) {
                 o->field_3F04 |= 0x40;
                 o->field_3F08 |= 0x800;
                 if (o != NULL)
-                    func_80080F44__Q22cf13CfGameManagerFv((char*)o + 0x3E9C);
+                    clearPlayerEffect__Q22cf13CfGameManagerFv((char*)o + 0x3E9C);
             }
         }
     } else {

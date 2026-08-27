@@ -27,7 +27,7 @@ extern const double lbl_eu_8066A678; // 2^52 + 2^31 (int->float conversion trick
 static inline f32 s32ToF_678(s32 v) {
     return v;
 }
-extern const f32 lbl_eu_8066A680;    // func_8046AADC default x/z
+extern const f32 lbl_eu_8066A680;    // updateLodPositions default x/z
 extern const f32 lbl_eu_8066A684;    // 1000.0f (rand() % 1000 divisor)
 extern const f32 lbl_eu_8066A688;    // 20.0f   (rand() % 20 divisor)
 extern const f32 lbl_eu_8066A68C;    // 0.4f
@@ -57,7 +57,7 @@ extern const char lbl_eu_80526300[];
 // recovered fields are declared here and the object is viewed through this
 // struct instead of raw pointer arithmetic.
 struct LODLayout_8046A530 {
-    u32 field_0x00;                 // 0x000  flag word (func_8046CFB4)
+    u32 field_0x00;                 // 0x000  flag word (checkLodFlagState)
     u8  mPad_04[0xa44 - 0x04];      // 0x004..0xa43
     u8  mPad_A44[0x1200 - 0xa44];   // 0xa44..0x11ff
     f32 field_0x1200;               // 0x1200
@@ -105,14 +105,14 @@ LOD::LODMemMan& LOD::UnkClass_8046A530::GetMemMan() {
  *
  * Equivalent to:
  *   addi r3, r3, 0xa44
- *   b func_80471834__Q23LOD9LODMemManFv
+ *   b initElementBuffers__Q23LOD9LODMemManFv
  */
 void LOD::UnkClass_8046A530::forwardToMem() {
-    GetMemMan().func_80471834();
+    GetMemMan().initElementBuffers();
 }
 
 // ---------------------------------------------------------------------------
-// func_8046CFB4: OR 0x20000 into the flag word at 0x00 and store it.  If bit
+// checkLodFlagState: OR 0x20000 into the flag word at 0x00 and store it.  If bit
 // 0x40 was set in the result, stop; otherwise clear bit 0x40 and set bit
 // 0x100.
 // ---------------------------------------------------------------------------
@@ -271,7 +271,7 @@ extern "C" void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A53
 void LOD::UnkClass_8046A530::updateSimple() { func_8046AB54(); }
 
 // ---------------------------------------------------------------------------
-// func_8046AADC: record the type at 0x121c and set the 0x1200/0x1204/0x1208
+// updateLodPositions: record the type at 0x121c and set the 0x1200/0x1204/0x1208
 // floats from per-type constants.  The retail symbol is Fv-mangled but the
 // body reads r4 as its argument, so it is defined here with the exact
 // mangled name and a real parameter list.

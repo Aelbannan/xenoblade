@@ -30,7 +30,7 @@ extern "C" void func_8020A0CC();
 extern "C" void func_8008B95C(void* target);
 
 // Scenario/sequence counter from the game manager.
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
 // ---------------------------------------------------------------------------
 // External data (retail linker symbols; global-scope variables keep their

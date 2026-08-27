@@ -135,7 +135,7 @@ extern "C" void __dt__6CLightFv(void* self, int flag);
 extern "C" void __dt__reslist_IScnEnvCtl(void* self, int flag);
 extern "C" void __dt___reslist_base_IScnEnvCtl(void* self, int flag);
 
-int func_804BC9EC__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
+int getScnHandle__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 int func_804BC9F4(void* outStruct, u32 data) {
     *(u32*)outStruct = 0;
@@ -231,7 +231,7 @@ int func_804BC9F4(void* outStruct, u32 data) {
 // extern "C" in monolib/scn/code_804BC9EC.hpp
 extern "C" void func_804BCC10() { func_804BC9A0(&lbl_eu_8065F32C); }
 
-void func_804BCC1C(void* p) {
+void resetScnData(void* p) {
     *(u32*)p = 0;
     func_804B7804(&lbl_eu_8065F32C);
 }

@@ -22,27 +22,27 @@ public:
 
     // Playback control
     int func_8045B5AC(const char* filename, int param2, bool loopFlag, int afsId, int afsSubId, bool forceAhx);
-    bool func_8045B970(int id);
-    void func_8045BAB0(int id);
-    void func_8045BBA0();
-    void func_8045BC4C(int id, bool pause);
-    int func_8045BE48(int id);
+    bool isStreamActive(int id);
+    void stopStream(int id);
+    void stopAllStreams();
+    void setStreamPause(int id, bool pause);
+    int getStreamPosition(int id);
 
     // Volume/fade control
-    float func_8045C67C(int id);
-    void func_8045C700(int id, float volume);
-    void func_8045C8B0(int id, float volume);
-    void func_8045CA4C(int id, float volume, float fadeTime, int action);
-    void func_8045CCFC(int id, float param2, float param3, float param4);
+    float getStreamVolume(int id);
+    void setStreamVolume(int id, float volume);
+    void setStreamVolumeScale(int id, float volume);
+    void fadeStreamVolume(int id, float volume, float fadeTime, int action);
+    void setStreamPanVolume(int id, float param2, float param3, float param4);
 
     // Cleanup/state
-    void func_8045CF30();
-    int func_8045CFDC(int param);
-    bool func_8045D03C(int id);
+    void clearAllStreams();
+    int calcStreamBufferSize(int param);
+    bool isStreamPaused(int id);
 
     // Virtual thunks (FULL_MATCH - adjust this from CDeviceVICb subobject)
-    void func_8045D140();
-    void func_8045D148();
+    void onViBeginFrame();
+    void onViDestroy();
 
     // CWorkThread virtual overrides
     void wkUpdate();

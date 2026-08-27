@@ -18,8 +18,8 @@ struct CHelp_EnemyList {
 
 class __declspec(novtable) CHelp_EnemyCount : public CHelp {
 public:
-    void func_802B7F54();
-    bool func_802B7F60();
+    void resetEnemyCount();
+    bool checkEnemyCountDone();
 
     s32 unkC; // 0xC
     u32 unk10; // 0x10

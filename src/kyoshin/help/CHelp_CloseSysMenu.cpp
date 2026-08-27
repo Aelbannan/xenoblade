@@ -2,7 +2,7 @@
 
 namespace cf {
 
-void CHelp_CloseSysMenu::func_802B7E7C() {
+void CHelp_CloseSysMenu::updateCloseSysHelp() {
     this->func_802B7CBC(func_80124B78() == 0);
 }
 

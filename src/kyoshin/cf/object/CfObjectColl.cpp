@@ -7,7 +7,7 @@
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Minimal local view: the shared CfGameManager.hpp declares func_80086B48 as
+// Minimal local view: the shared CfGameManager.hpp declares updatePadState as
 // a void member, but retail returns the frame delta in f1 (call sites add it
 // straight into +0x154). The shared header is outside this session's writable
 // scope, so re-declare the enclosing class here with the correct signature.
@@ -15,7 +15,7 @@ namespace cf {
 class CfGameManager {
 public:
     ~CfGameManager();
-    static float func_80086B48();
+    static float updatePadState();
 };
 } // namespace cf
 
@@ -32,25 +32,25 @@ extern "C" void* func_800AB3D0(void* self) {
 }
 
 // Reset the +0x154 default value, then notify through the CfObjectPoint slot
-// at vtable +0x70 (func_800C1658). Const self so MWCC hoists the sdata2 lfs
+// at vtable +0x70 (setChildPoint). Const self so MWCC hoists the sdata2 lfs
 // above the LR-save store (load-hoist family).
-int cf::CfObjectColl::func_800AB3EC() {
+int cf::CfObjectColl::resetCollTimer() {
     field_0x154 = lbl_eu_80666910;
-    this->func_800C1658();
+    this->setChildPoint();
     return true;
 }
 
 // Most-derived destructor: stores the class vptr, releases the resource via
-// the CfObjectPoint slot at +0x68 (func_800C1444), then runs the base
+// the CfObjectPoint slot at +0x68 (releasePointLink), then runs the base
 // destructor and the flag-guarded operator delete (compiler-generated).
 cf::CfObjectColl::~CfObjectColl() {
-    this->func_800C1444();
+    this->releasePointLink();
 }
 
 // Set/clear the coll-enable flag through the CfObjectPoint slot at vtable
-// +0x158 (func_800C16F4(flag)).
-void cf::CfObjectColl::func_800AB498() {
-    this->func_800C16F4(1);
+// +0x158 (setPointEnabled(flag)).
+void cf::CfObjectColl::enableCollision() {
+    this->setPointEnabled(1);
 }
 
 // Lazily bind each coll-impl singleton once, then return the packed resource
@@ -85,8 +85,8 @@ extern "C" cf::CfCollImpl* CfObjectColl_initCollImplInstances(cf::CfObjectColl* 
     }
     return &lbl_eu_80663EAC;
 }
-void cf::CfObjectColl::func_800AB57C() {
-    func_800C1638();
+void cf::CfObjectColl::refreshCollLink() {
+    notifyChildUpdate();
 }
 
 // Null-guarded bit-13 flag test on +0x68: reject when the object is marked
@@ -123,7 +123,7 @@ extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec
             if (lbl_eu_80663E24 & 0x00200000) {
                 self->field_0x154 = lbl_eu_8066694C;
             } else {
-                self->field_0x154 += cf::CfGameManager::func_80086B48();
+                self->field_0x154 += cf::CfGameManager::updatePadState();
             }
             if (self->field_0x154 < lbl_eu_8066694C) {
                 ok = 0;
@@ -135,7 +135,7 @@ extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec
         }
     } else if ((int)self->field_0x94 == 4) {
         if (ok != 0) {
-            self->field_0x154 += cf::CfGameManager::func_80086B48();
+            self->field_0x154 += cf::CfGameManager::updatePadState();
             if (self->field_0x154 < lbl_eu_80666950) {
                 ok = 0;
             } else {
@@ -162,7 +162,7 @@ extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec
 // Copy the position block at this+0x3C through the CfObjectPoint slot at
 // vtable +0x9C (func_80047814), after refreshing state through the slot at
 // +0xB4 (CfObject_UnkVirtualFunc25).
-void cf::CfObjectColl::func_800AB7A8() {
+void cf::CfObjectColl::copyCollPosition() {
     this->CfObject_UnkVirtualFunc25();
     this->func_80047814((u8*)this + 0x3c);
 }
@@ -683,7 +683,7 @@ void cf::CfObject::CfObject_UnkVirtualFunc10() {
 
 extern "C" void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv() {}
 
-int cf::CfObjectPoint::func_800AC604() {
+int cf::CfObjectPoint::isCollEnabled() {
     return (field_0x68 >> 20) & 1;
 }
 
@@ -697,7 +697,7 @@ extern "C" void* func_800AC610(void* param_1) {
 // Forward the position refresh through the CfObjectPoint slot at vtable
 // +0x9C (func_80047814). Retail keeps the Fv linker name even though the
 // callee's r4 (the forwarded param) flows straight through to the virtual.
-extern "C" void func_800AB798__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, void* param) {
+extern "C" void syncCollVectors__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, void* param) {
     self->func_80047814(param);
 }
 

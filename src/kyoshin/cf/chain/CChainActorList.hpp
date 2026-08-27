@@ -143,7 +143,7 @@ extern const float lbl_eu_80668A70;
 extern const double lbl_eu_80668A78;
 extern "C" int func_800B8920(void* addr);
 extern "C" int func_80148778(void*, int);
-extern "C" void func_80082568__Q22cf13CfGameManagerFv(int, int, int);
+extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
 // Read-only view of a chain actor's +0x0 target key (the battle object
 // whose identity chain lookups compare against).
 class CChainActorKeyView {
@@ -157,11 +157,11 @@ public:
 // form matches CfGameManagerUnityHelpers.hpp; int(void*,u32) form matches
 // CChainTimer.hpp so both headers co-exist without rename guards.
 class CChainActorObjId;
-extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
+extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
 extern "C" int func_8025FB10(void* data, u32 flag);
 extern "C" int func_8017FD44(void);
 extern "C" int func_8017FD4C(int);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void func_8027EEF4(int);

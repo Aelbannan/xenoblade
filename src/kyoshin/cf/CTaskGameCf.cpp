@@ -99,7 +99,7 @@ CTaskGameCf* CTaskGameCf::getInstance() {
 
     void CTaskGameCf::reqExit(){
         unk_54 |= 1;
-        if(cf::CfGameManager::func_8007E1B4()){
+        if(cf::CfGameManager::isManagerInitialized()){
             cf::CfGameManager::sUnkFlags |= 0x200000;
         }
     }
@@ -202,7 +202,7 @@ void CTaskGameCf::func_800444FC(){
         }
 
         UnkClass_8007DAE0_init(pTaskGame->getScene(), pTaskGame->unk70, padInit);
-        func_8007F930__Q22cf13CfGameManagerFv((unk_54 >> 3) & 1);
+        setPauseMode__Q22cf13CfGameManagerFv((unk_54 >> 3) & 1);
 
         if((lbl_eu_80663E28 & 0x01000000) == 0){
             // Scene argument is evaluated before the MEM2 handle query.
@@ -213,7 +213,7 @@ void CTaskGameCf::func_800444FC(){
             lbl_eu_80663E28 |= 0x10000000;
         }
 
-        if(CTaskGame::func_800404F0()){
+        if(CTaskGame::isFlag2000Set()){
             lbl_eu_80663E28 |= 0x40000000;
         } else {
             lbl_eu_80663E28 &= ~0x40000000u;
@@ -262,7 +262,7 @@ void CTaskGameCf::func_800444FC(){
             Class_80296898::getInstance()->mFrameCount = frame;
         }
 
-        CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
+        CDeviceVI::setGammaValue(Class_80296898::getInstance()->mFrameCount - 1);
 
         // volatile forces MWCC to emit the retail load/test + reload/clear shape
         volatile u32& flags = unk_54;
@@ -311,7 +311,7 @@ void CTaskGameCf::beginExit() {
         unk_8C--;
         if(unk_8C <= 0){
             if(!chkUnk54(2)){
-                CfGameManager::func_8007E218();
+                CfGameManager::teardownGameManager();
             }
             CfObjectSelectorObj::destroy();
             mMoveFunc = &CTaskGameCf::finishExit;

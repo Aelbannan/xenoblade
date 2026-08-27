@@ -132,7 +132,7 @@ struct CfResObjModel98Data {
     /* 0x7A4 */ u32 field_7A4;
 };
 
-// View of the object returned by cf::CfGameManager::func_80083298: only the
+// View of the object returned by cf::CfGameManager::getGameSubManager: only the
 // +0x98 pointer is read (the real class UnkClass_80083298 keeps +0x98 inside
 // opaque padding).
 struct CfResObjGm98View {

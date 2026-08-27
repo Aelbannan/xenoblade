@@ -614,7 +614,7 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         region->createRegion(mem2, 0x14000, base + 0x97, 0);
         Class_8045F858 memHost((UnkClass_8045F564*)(void*)&mMemRegion[0]);
         void* fileData = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mArcAccessor = CLibLayout::createArcResourceAccessor();
         mArcAccessor->Attach(fileData, base + 0x9f);
         func_80136E84(&mLayout, mArcAccessor, base + 0xa3);
@@ -624,7 +624,7 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         // Bind the font: take the layout root pane, ask the font object for
         // its pane, and push it back onto the root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
         u32 fontResult = static_cast<CDeviceFontView*>(fontObj)->vf7();
         func_8013676C(rootPane, fontResult);
 

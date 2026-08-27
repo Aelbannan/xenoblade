@@ -144,8 +144,8 @@ extern "C" {
     extern void wkUpdate__20CLibCriStreamingPlayFv();
     extern void wkStandbyLogin__20CLibCriStreamingPlayFv();
     extern void wkStandbyLogout__20CLibCriStreamingPlayFv();
-    extern void func_8045CF30__20CLibCriStreamingPlayFv();
-    extern void func_8045D140__20CLibCriStreamingPlayFv();
+    extern void clearAllStreams__20CLibCriStreamingPlayFv();
+    extern void onViBeginFrame__20CLibCriStreamingPlayFv();
 }
 
 // Volume lookup helper - searches table for volume dB value.
@@ -429,10 +429,10 @@ extern "C" int func_8045B5AC__20CLibCriStreamingPlayFv(const char* filename, int
     return slot->id;
 }
 
-// func_8045B970 - Check if stream ID is active.
+// isStreamActive - Check if stream ID is active.
 // Unrolled-by-MWCC 5-slot scan: id == -1 (id+0x10000 wraps to 0xFFFF)
 // matches any slot that is itself not unused (-1).
-extern "C" bool func_8045B970__20CLibCriStreamingPlayFv(u32 id) {
+extern "C" bool isStreamActive__20CLibCriStreamingPlayFv(u32 id) {
     CLibCriStreamingPlayData* data = reinterpret_cast<CLibCriStreamingPlayData*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -445,10 +445,10 @@ extern "C" bool func_8045B970__20CLibCriStreamingPlayFv(u32 id) {
     return false;
 }
 
-// func_8045BAB0 - Stop a specific stream.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// stopStream - Stop a specific stream.
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" void func_8045BAB0__20CLibCriStreamingPlayFv(int id) {
+extern "C" void stopStream__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -468,8 +468,8 @@ extern "C" void func_8045BAB0__20CLibCriStreamingPlayFv(int id) {
     }
 }
 
-// func_8045BBA0 - Stop all streams
-void CLibCriStreamingPlay::func_8045BBA0() {
+// stopAllStreams - Stop all streams
+void CLibCriStreamingPlay::stopAllStreams() {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -496,11 +496,11 @@ void CLibCriStreamingPlay::func_8045BBA0() {
     }
 }
 
-// func_8045BC4C - Update stream pause/volume state.
+// setStreamPause - Update stream pause/volume state.
 // Retail has no `this`: r3 = stream id, r4 = pause flag.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" void func_8045BC4C__20CLibCriStreamingPlayFv(int id, bool pause) {
+extern "C" void setStreamPause__20CLibCriStreamingPlayFv(int id, bool pause) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -537,12 +537,12 @@ extern "C" void func_8045BC4C__20CLibCriStreamingPlayFv(int id, bool pause) {
     }
 }
 
-// func_8045BE48 - Get playback position.
+// getStreamPosition - Get playback position.
 // Retail entry takes the stream id directly in r3 (see func_8045B5AC).
 // The search must stay a conditional-expression chain: if/else and loop forms
 // fuse the match exit into a single branch, while this shape reproduces
 // retail's per-stage "bne next / b done" pair and chained pointer advance.
-extern "C" int func_8045BE48__20CLibCriStreamingPlayFv(int id) {
+extern "C" int getStreamPosition__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -805,10 +805,10 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
     }
 }
 
-// func_8045C67C - Get current volume for stream.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// getStreamVolume - Get current volume for stream.
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" float func_8045C67C__20CLibCriStreamingPlayFv(int id) {
+extern "C" float getStreamVolume__20CLibCriStreamingPlayFv(int id) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -823,10 +823,10 @@ extern "C" float func_8045C67C__20CLibCriStreamingPlayFv(int id) {
     return entry == NULL ? lbl_eu_8066A50C : entry->field_0x64;
 }
 
-// func_8045C700 - Set volume immediately.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// setStreamVolume - Set volume immediately.
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" void func_8045C700__20CLibCriStreamingPlayFv(int id, float volume) {
+extern "C" void setStreamVolume__20CLibCriStreamingPlayFv(int id, float volume) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -858,10 +858,10 @@ extern "C" void func_8045C700__20CLibCriStreamingPlayFv(int id, float volume) {
     }
 }
 
-// func_8045C8B0 - Set volume multiplier.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// setStreamVolumeScale - Set volume multiplier.
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" void func_8045C8B0__20CLibCriStreamingPlayFv(int id, float volume) {
+extern "C" void setStreamVolumeScale__20CLibCriStreamingPlayFv(int id, float volume) {
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
 
@@ -900,10 +900,10 @@ static StreamEntry* findSlotById(u32 id) {
         (entry = NULL);
 }
 
-// func_8045CA4C - Start a volume fade.
+// fadeStreamVolume - Start a volume fade.
 // Retail has no `this`: r3 = stream id, r4 = fade-end action, f1 = volume,
-// f2 = fade time (see the CLibCri forwarding trampoline func_80459A88).
-extern "C" void func_8045CA4C__20CLibCriStreamingPlayFv(int id, int action, float volume, float fadeTime) {
+// f2 = fade time (see the CLibCri forwarding trampoline fadeStreamVolume).
+extern "C" void fadeStreamVolume__20CLibCriStreamingPlayFv(int id, int action, float volume, float fadeTime) {
     // Immediate volume change when the fade time is <= 0.
     if (fadeTime <= lbl_eu_8066A50C) {
         StreamEntry* entry = findSlotById((u32)id);
@@ -946,12 +946,12 @@ extern "C" void func_8045CA4C__20CLibCriStreamingPlayFv(int id, int action, floa
     }
 }
 
-// func_8045CCFC - Set pan/volume from a 3D position pair.
+// setStreamPanVolume - Set pan/volume from a 3D position pair.
 // Retail has no `this`: r3 = stream id, r4/r5 = position pointers,
 // f1/f2/f3 = the pan/volume parameters (see func_8049B834).
-extern "C" void func_8045CCFC__20CLibCriStreamingPlayFv(int id, const u8* in2, const u8* in1,
+extern "C" void setStreamPanVolume__20CLibCriStreamingPlayFv(int id, const u8* in2, const u8* in1,
                    float a, float b, float c) {
-    // Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+    // Unrolled match chain (same shape as getStreamPosition): reproduces retail's
     // per-stage "bne next / b done" pairs and chained pointer advance.
     StreamEntry* slot = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
@@ -1005,8 +1005,8 @@ extern "C" void func_8045CCFC__20CLibCriStreamingPlayFv(int id, const u8* in2, c
     }
 }
 
-// func_8045CF30 - Stop all streams (alternate entry)
-void CLibCriStreamingPlay::func_8045CF30() {
+// clearAllStreams - Stop all streams (alternate entry)
+void CLibCriStreamingPlay::clearAllStreams() {
     u32 i = 0;
     StreamEntry* entry = reinterpret_cast<StreamEntry*>(
         reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
@@ -1034,9 +1034,9 @@ void CLibCriStreamingPlay::func_8045CF30() {
     }
 }
 
-// func_8045CFDC - Calculate buffer size for stream.
+// calcStreamBufferSize - Calculate buffer size for stream.
 // Retail entry takes the channel flag directly in r3 (see also func_8045B5AC).
-extern "C" int func_8045CFDC__20CLibCriStreamingPlayFv(int ch) {
+extern "C" int calcStreamBufferSize__20CLibCriStreamingPlayFv(int ch) {
     // Channel count: 1 when ch is non-zero (AHX/mono flag), else 2.
     int neg = -ch;
     ch = neg | ch;
@@ -1048,10 +1048,10 @@ extern "C" int func_8045CFDC__20CLibCriStreamingPlayFv(int ch) {
     return (int)(e + (u32)(((ch >> 31) + 2) * 24768) + 100);
 }
 
-// func_8045D03C - Check if stream is playing/paused.
-// Unrolled match chain (same shape as func_8045BE48): reproduces retail's
+// isStreamPaused - Check if stream is playing/paused.
+// Unrolled match chain (same shape as getStreamPosition): reproduces retail's
 // per-stage "bne next / b done" pairs and chained pointer advance.
-extern "C" bool func_8045D03C__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self) {
+extern "C" bool isStreamPaused__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self) {
     u32 flags;
     CLibCriStreamingPlay* inst = lbl_eu_806656E8;
     if (inst == NULL) return false;
@@ -1082,15 +1082,15 @@ extern "C" bool func_8045D03C__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* se
     return (flow | (bits | bit1)) != 0;
 }
 
-// func_8045D140 - CDeviceVICb thunk: adjust this and call func_8045CF30
-void CLibCriStreamingPlay::func_8045D140() {
+// onViBeginFrame - CDeviceVICb thunk: adjust this and call clearAllStreams
+void CLibCriStreamingPlay::onViBeginFrame() {
     CLibCriStreamingPlay* base = (CLibCriStreamingPlay*)((u8*)this - 0x1C4);
-    base->func_8045CF30();
+    base->clearAllStreams();
 }
 
-// func_8045D148 - CDeviceVICb thunk: adjust this and tail-branch to destructor
+// onViDestroy - CDeviceVICb thunk: adjust this and tail-branch to destructor
 // (virtual ~ call would dispatch via vtable; retail tail-branches to __dt__ directly)
-extern "C" void func_8045D148__20CLibCriStreamingPlayFv(void* self) {
+extern "C" void onViDestroy__20CLibCriStreamingPlayFv(void* self) {
     ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1C4);
 }
 
@@ -1151,8 +1151,8 @@ extern "C" u32 lbl_eu_8056D028[45] __attribute__((aligned(8))) = {
     (u32)&wkStandbyLogout__20CLibCriStreamingPlayFv,
     (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
     (u32)&lbl_eu_806637A8, 0xFFFFFE3C,
-    (u32)&func_8045D148__20CLibCriStreamingPlayFv, (u32)&func_8045D140__20CLibCriStreamingPlayFv,
-    (u32)&func_8045CF30__20CLibCriStreamingPlayFv
+    (u32)&onViDestroy__20CLibCriStreamingPlayFv, (u32)&onViBeginFrame__20CLibCriStreamingPlayFv,
+    (u32)&clearAllStreams__20CLibCriStreamingPlayFv
 };
 
 // RTTI base list (.data 0x8056D0DC)

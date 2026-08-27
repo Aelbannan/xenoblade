@@ -463,8 +463,8 @@ extern "C" int func_8049698C() {
 }
 extern "C" void func_8049B3FC();
 extern "C" void func_8049B408();
-void func_80496994__Fv(void) { func_8049B3FC(); }
-void func_80496998__Fv(void) { func_8049B408(); }
+void execScriptCode__Fv(void) { func_8049B3FC(); }
+void resetScriptCode__Fv(void) { func_8049B408(); }
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 
 
@@ -567,7 +567,7 @@ extern "C" void Move__4CScnFv(CScnMoveView* self) {
         self->filterMan->update();
         self->fadeMan->update();
         self->unk8C->vf14();
-        self->itemPool->func_8048CEDC();
+        self->itemPool->updateItemD0();
     }
     self->unk3E8 = 0;
 }

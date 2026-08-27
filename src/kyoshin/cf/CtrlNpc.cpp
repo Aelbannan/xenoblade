@@ -129,7 +129,7 @@ void func_8009398C(cf::CtrlNpc* self) {
     u16 act;
     // Singleton fetched but unused at this site (retail discards the result).
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x1000000))
+    if (isGlobalCamFlagSet(0x1000000))
         goto gateFail;
     if (self->field_28->_v24(1) != 0)
         goto gateFail;
@@ -339,7 +339,7 @@ void func_80093F28(cf::CtrlNpc* self) {
         if (self->field_28->_v0C(1) != 0 &&
             self->field_28->_v24(0x1000) == 0) {
             cf::CCtrlNpcChar* target =
-                (cf::CCtrlNpcChar*)func_800B708C(self->field_28->_v4C());
+                (cf::CCtrlNpcChar*)findObjectById(self->field_28->_v4C());
             if (target != 0 && self->field_28->field_C4 != 0) {
                 int page = (int)func_8004C5EC((u32)self->field_28->field_C4);
                 int flag = 1;
@@ -450,7 +450,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                     continue;
 
                 const char* col2 =
-                    lbl_eu_80527A60[(u16)func_80086DA0__Q22cf13CfGameManagerFv() /
+                    lbl_eu_80527A60[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
                                     3];
                 v3C.w = getBdatStringColumnValue(fp2, col2, count);
                 if (v3C.b == 0)
@@ -535,7 +535,7 @@ void func_80093F28(cf::CtrlNpc* self) {
         } else if (self->field_28->_v24(0x2000) != 0 &&
                    self->field_17C != 0) {
             const char* col3 =
-                lbl_eu_80527A80[(u16)func_80086DA0__Q22cf13CfGameManagerFv() /
+                lbl_eu_80527A80[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
                                 3];
             v08.w = getBdatStringColumnValue(fp2, col3, self->field_17C);
             if (v08.b == 0) {
@@ -599,7 +599,7 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
     self->field_E0w[4] = vw[1];
     self->field_E0w[5] = vw[2];
     self->field_158 = paramB;
-    self->field_160 = func_80086DB4__Q22cf13CfGameManagerFv();
+    self->field_160 = getFieldD90Value__Q22cf13CfGameManagerFv();
     self->field_C4 = 1;
     self->field_15C = 2;
     const ml::CVec3* posf = reinterpret_cast<const ml::CVec3*>(pos);
@@ -950,9 +950,9 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
     self->field_14 = lbl_eu_80666698;
     u16 first;
     u16 second;
-    func_80086D98__Q22cf13CfGameManagerFv(&first, &second);
-    func_80086DB0__Q22cf13CfGameManagerFv();
-    u32 tick = func_80086DB4__Q22cf13CfGameManagerFv();
+    getControllerValues__Q22cf13CfGameManagerFv(&first, &second);
+    clearControllerState__Q22cf13CfGameManagerFv();
+    u32 tick = getFieldD90Value__Q22cf13CfGameManagerFv();
 
     if (second < self->field_160 || second >= self->field_164)
         return;
@@ -1071,8 +1071,8 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
                    (f32)__fabs((f64)d.y) >= lbl_eu_806666D8;
         if (far) {
             // Teleport / reposition near the interpolated point.
-            u32 mgrA = func_80086DA0__Q22cf13CfGameManagerFv();
-            func_80086DA4__Q22cf13CfGameManagerFv();
+            u32 mgrA = getControllerWordA33C__Q22cf13CfGameManagerFv();
+            getControllerWordA37C__Q22cf13CfGameManagerFv();
             u16 evt = lbl_eu_80663E42;
             if (evt == 1 && ch->field_8C == 0x91 && (u16)mgrA == 4) {
                 if (flag20) {
@@ -1178,7 +1178,7 @@ void func_80095F44(cf::CtrlNpc* self) {
         self->field_C6 = (u16)(c6 & 0xFF00);
     }
 
-    u32 frames = func_80086DB0__Q22cf13CfGameManagerFv();
+    u32 frames = clearControllerState__Q22cf13CfGameManagerFv();
     f32 cap = (f32)(f64)frames;
     if (!(cap > lbl_eu_806666F0)) {
         cap = (f32)(f64)frames;
@@ -1288,8 +1288,8 @@ void func_80095F44(cf::CtrlNpc* self) {
 void func_80096488(cf::CtrlNpc* self) {
     u16 id;
     u16 dummy;
-    func_80086D98__Q22cf13CfGameManagerFv(&id, &dummy);
-    func_80086DB0__Q22cf13CfGameManagerFv();
+    getControllerValues__Q22cf13CfGameManagerFv(&id, &dummy);
+    clearControllerState__Q22cf13CfGameManagerFv();
     if (id < self->field_160 || id >= self->field_164) {
         self->field_BE = 0;
         func_8009565C(self);

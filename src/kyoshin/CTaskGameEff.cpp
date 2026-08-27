@@ -223,10 +223,10 @@ void CTaskGameEff::Term() {
 
 
 
-// func_80044FBC: toggle the effect singleton's visibility. Non-zero `enable`
+// setEffectEnabled: toggle the effect singleton's visibility. Non-zero `enable`
 // uses the default effect time constant (lbl_eu_80665D94) and sets bit 0x2 of
 // field_0x68; zero uses the per-instance field_0x6C time and clears the bit.
-void func_80044FBC(u32 enable) {
+void setEffectEnabled(u32 enable) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask == nullptr) return;
     f32 time = (enable != 0) ? lbl_eu_80665D94 : gTask->field_0x6C;
@@ -248,8 +248,8 @@ extern "C" __declspec(noinline) void cbRenderBefore__12CTaskGameEffFv(void* self
 // update pass, then flush GX state again.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* param) {
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
     // Bitfield assign folds to the retail lhz/rlwimi/sth insert of mActive
     // into bit 11 (0x800) of the singleton flag halfword.
     struct EffFlagBits {
@@ -263,8 +263,8 @@ extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* par
     func_804CBD14(&lbl_eu_8065FC18[0]);
     func_804CBDB4(&lbl_eu_8065FC18[0]);
     func_804CC104(&lbl_eu_8065FC18[0]);
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
 }
 #pragma optimize_for_size off
 
@@ -272,7 +272,7 @@ void func_800450C8() {}
 
 // func_8004513C: resolve an effect object by id and attach it to the battle
 // host's +0x3E9C container. mode selects the resolver: 1 = the host
-// container's vtable slot 0x220, 2 = func_800817BC, otherwise func_8008187C.
+// container's vtable slot 0x220, 2 = createBattleActor, otherwise createNpcActor.
 // The attach target is the caller's +0x3E9C container (or null itself).
 #pragma optimize_for_size on
 void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
@@ -280,9 +280,9 @@ void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
     if (mode == 1) {
         obj = host->field_0x3E9C.vfn220(id);
     } else if (mode == 2) {
-        obj = func_800817BC__Q22cf13CfGameManagerFv(id, 0);
+        obj = createBattleActor__Q22cf13CfGameManagerFv(id, 0);
     } else {
-        obj = func_8008187C__Q22cf13CfGameManagerFv(id);
+        obj = createNpcActor__Q22cf13CfGameManagerFv(id);
     }
     if (obj != nullptr) {
         // Retail folds the +0x3E9C container offset into the target variable
@@ -291,7 +291,7 @@ void* func_8004513C(EffHostObj* target, EffHostObj* host, u32 id, u32 mode) {
         if (dst != nullptr) {
             dst += 0x3E9C;
         }
-        func_800ACF78(obj, dst, 0);
+        bindPartnerO_(obj, dst, 0);
     }
     return obj;
 }
@@ -309,13 +309,13 @@ void* func_800451D8(int index, void* manager) {
     if (lbl_eu_80663D40 == nullptr) {
         return nullptr;
     }
-    void* eff = func_8008187C__Q22cf13CfGameManagerFv(index);
+    void* eff = createNpcActor__Q22cf13CfGameManagerFv(index);
     void* obj = __dynamic_cast(eff, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
     if (obj != nullptr && manager != nullptr) {
-        func_800ACF78(obj, manager, 0);
+        bindPartnerO_(obj, manager, 0);
         void* data = *(void**)((u8*)manager + 0x98);
         if (data != nullptr) {
-            func_800ACEF8(obj, (u8*)data + 0x304);
+            setChild34Sc_(obj, (u8*)data + 0x304);
         }
     }
     return obj;
@@ -329,14 +329,14 @@ void* func_800451D8(int index, void* manager) {
 // region - retail saves r30+r31 via stmw in both.
 #pragma optimize_for_size on
 void func_80045284(void* unused, void* param) {
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
     func_804CBB84(lbl_eu_8065FC18, param);
     func_804CBE48(lbl_eu_8065FC18);
     func_804CC104(lbl_eu_8065FC18);
     func_804CBEE8(lbl_eu_8065FC18);
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
 }
 
 // func_800452EC: register `scene` with the effect task - push it onto the

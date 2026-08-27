@@ -8,13 +8,13 @@
 #include "monolib/work/CWorkThread.hpp"
 
 // Minimal CView surface for this TU. The read-only CView header declares
-// func_8043DC20 arg-less (retail signature is unsigned long), so the members
+// enqueueContextMsg arg-less (retail signature is unsigned long), so the members
 // used here are declared with their true retail signatures; the head layout
 // mirrors retail CView (vptr + CWorkThread base, mWorkID at +0x4C).
 class CView {
 public:
     static CView* getCurrentView();   // getCurrentView__5CViewFv
-    void func_8043DC20(u32 arg);      // func_8043DC20__5CViewFUl
+    void enqueueContextMsg(u32 arg);      // enqueueContextMsg__5CViewFUl
 
     u8 _00[0x4C];   // +0x00
     u32 mWorkID;    // +0x4C
@@ -53,7 +53,7 @@ struct CScnCameraList {
 
 // Parameter object for the camera manager: view id at +0x4C, pool at +0x60.
 // The opaque field at +0x54 is handed to the view release/attach callbacks
-// (func_8043DC20 and the vtable+0xB8 slot) as a pointer.
+// (enqueueContextMsg and the vtable+0xB8 slot) as a pointer.
 struct CScnCameraParam {
     u8 _00[0x4C];         // +0x00
     u32 mViewId;          // +0x4C - current view id
@@ -72,8 +72,8 @@ struct CEvent1 {
 
 // Retail symbols keep their Fv mangling because the defining TU declares them
 // with C linkage.
-extern "C" f32 func_8043B574__7CEvent1Fv(CEvent1* self, int index);
-extern "C" void* func_8043B588__7CEvent1Fv(CEvent1* self, int index);
+extern "C" f32 getFloatParam__7CEvent1Fv(CEvent1* self, int index);
+extern "C" void* getPtrParam__7CEvent1Fv(CEvent1* self, int index);
 
 // Camera-item fields written by WorkEvent1 (overlay over CScnItemCamera;
 // the read-only header stops before these offsets).

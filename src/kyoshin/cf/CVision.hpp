@@ -234,7 +234,7 @@ namespace cf{
         virtual void f172();
         virtual s32 vt2BC();        // index 173 -> vtable 0x2BC
 
-        u32 field_04;               // 0x04 (id handed to func_800B708C)
+        u32 field_04;               // 0x04 (id handed to findObjectById)
         u8 unk08[0x50 - 0x08];
         CVisionActor50* field_50;   // 0x50
         u8 unk54[0x3F00 - 0x54];
@@ -522,7 +522,7 @@ namespace cf{
         virtual void vt_2C(u32 r4); //0x2C
         virtual void vt_30(u32 r4);  //0x30
         virtual void vt_34();       //0x34
-        void func_801A929C(u32 r4);
+        void setEffectScale(u32 r4);
 
         //0x0: vtable
         //0x0-4: IObjectInfo
@@ -546,7 +546,7 @@ namespace cf{
 // C-linkage imports: retail symbol names relocated from CVision.cpp.
 // Keep `extern "C"` and the exact symbol names -- they ARE the retail names.
 // ---------------------------------------------------------------------------
-extern "C" void func_800ACC50(void* self, float v);
+extern "C" void setChildF50G_(void* self, float v);
 extern "C" void func_804E36DC(CSchedule* self, f32 dt);
 extern "C" void* func_800451D8(u32 cls, int param);
 extern "C" void __dl__FPv(void* ptr);
@@ -560,7 +560,7 @@ extern "C" void func_801A8244(cf::CVision* self, void* r25, int r26, int r27, in
 struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
 extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
 
-// sdata2 float constants used by func_801A929C / vision state checks.
+// sdata2 float constants used by setEffectScale / vision state checks.
 extern "C" f32 lbl_eu_80667CD4;
 extern "C" f32 lbl_eu_80667CF0;
 extern "C" f32 lbl_eu_80667CD0;
@@ -585,13 +585,13 @@ extern "C" f32 lbl_eu_80667D44;
 extern "C" f32 lbl_eu_80667D48;
 extern "C" f32 lbl_eu_80667CE8;
 
-extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
+extern "C" void lookupEffectForResource__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
 extern "C" void func_8006E5D8();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 // func_8004392C is owned by kyoshin/CTaskGame.hpp (single unified decl).
 extern "C" void func_801537E0(void* obj); // void return: CAIAction.cpp definition
 extern "C" void func_801537F0(void* obj);
-extern "C" int func_800B708C__Fi(int id);
+extern "C" int findObjectById__Fi(int id);
 extern "C" float func_800F42AC(void* obj);
 extern "C" void func_800F449C(void* obj);
 extern "C" int func_80133F48(int id, float f);
@@ -605,7 +605,7 @@ extern "C" u8 func_800A32C4(void* row);
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void func_80043D90(void* list);
 extern "C" void* func_80043F18(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
@@ -618,7 +618,7 @@ extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
 // Player-list enumeration (CfObjectEnumList).
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
-extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 a, u32 b);
+extern "C" void updateBattleEffectState__Q22cf13CfGameManagerFv(u32 a, u32 b);
 
 // Typeinfo names for __dynamic_cast in the player-list loops.
 extern "C" const void* lbl_eu_806618E8;

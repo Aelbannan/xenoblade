@@ -564,8 +564,8 @@ void func_80297AAC(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
 #pragma push
 #pragma optimize_for_size on
 void func_80297B68(CMCGetItemBox* self) {
-    func_8003AA8C__5CBdatFUl(2);
-    func_8003AA8C__5CBdatFUl(5);
+    getEntry__5CBdatFUl(2);
+    getEntry__5CBdatFUl(5);
     func_801390E0__FPP11CFileHandle(&self->fileHandle1);
     func_801390E0__FPP11CFileHandle(&self->fileHandle2);
     func_801390E0__FPP11CFileHandle(&self->fileHandle3);
@@ -1441,7 +1441,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         CFileHandle* h1 = this->fileHandle1;
         void* fileData = h1->mData;
         h1->mData = 0;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         void* tagMem = mtl::MemManager::allocate(0x858, (mtl::ALLOC_HANDLE)getAllocHandle__10CLibLayoutFv());
         if (tagMem != 0) tagMem = __ct__CTagProcessor(tagMem);
@@ -1460,7 +1460,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // Bind the loaded font's pane into the layout root. Retail keeps the
         // root pane in a callee-saved register only across these calls.
         nw4r::lyt::Pane* rootPane = this->layout40->GetRootPane();
-        void* font = CDeviceFont::func_80452C10(1, this->layout40);
+        void* font = CDeviceFont::getFontInfo(1, this->layout40);
         void* fontData = ((CDeviceFontVt9*)font)->getResource();
         func_8013676C(rootPane, (u32)fontData);
 
@@ -1546,7 +1546,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         CFileHandle* h2 = this->fileHandle2;
         void* fileData = h2->mData;
         h2->mData = 0;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         this->arcAcc2 = CLibLayout::createArcResourceAccessor();
         this->arcAcc2->Attach(fileData, &lbl_eu_8050FF8C[0x206]);

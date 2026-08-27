@@ -426,7 +426,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             }
             // Weapon-id-8 gate: announce via the actor's battle sub-object.
             if (actor->field_3F28 == 8 &&
-                func_800822F4__Q22cf13CfGameManagerFv() >= 0x168) {
+                getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x168) {
                 ((CModelDispVt28*)actor->field_3F34)->m28(nameBase + 0xC, 0);
             }
             h->timer = 150;

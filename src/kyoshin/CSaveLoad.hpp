@@ -10,7 +10,7 @@ class CSLCur {
 public:
     CSLCur();
     void createLayout();
-    void func_8028EA74() { createLayout(); } // compat
+    void initLayout() { createLayout(); } // compat
     // Retail defines func_8028EEC0
 
     // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
@@ -34,7 +34,7 @@ public:
     CSaveLoad();
     virtual ~CSaveLoad();
     void loadSaveData();
-    void func_8028F23C() { loadSaveData(); } // compat
+    void initLayout() { loadSaveData(); } // compat
     u8 func_8028F664();
     u8 func_8028FEC4();
 
@@ -86,7 +86,7 @@ struct CfAward {
     // The destructor is a regular member function (not virtual).
     // MWCC generates the delete flag handling automatically.
     ~CfAward();
-    // func_80291B18 is implemented as an extern "C" function (unmangled retail symbol)
+    // getAwardState is implemented as an extern "C" function (unmangled retail symbol)
 };
 
 } // namespace cf
@@ -321,7 +321,7 @@ extern "C" void func_8014A2D0();
 extern "C" void invalidateQstFlag();
 extern "C" void* getInstance__9CTaskGameFv();
 extern "C" void func_800426A8();
-extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
+extern "C" void resetBattlePresentation__Q22cf13CfGameManagerFv();
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F36BC(void*, int, int);
@@ -349,7 +349,7 @@ extern "C" void func_80124270(void* obj, u32 value);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" u8 func_80141BA0(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -376,8 +376,8 @@ extern "C" void func_8023F860(int, void*);
 extern "C" void func_8023FB28(int, void*);
 extern "C" void func_8023F3C0(int, void*, u8);
 extern "C" void func_8009D018(u32, u32);
-extern "C" void func_80083470__Q22cf13CfGameManagerFv(int, int, int);
+extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(int, int, int);
 extern "C" void code80135FDC_thunk_BFE8C(u8*);
 extern "C" void func_8027EEF4(u32);
 extern "C" u32 func_8027EE88(u32, u32);
-extern "C" int func_800824FC__Q22cf13CfGameManagerFv(int, int);
+extern "C" int getTableValueByPair__Q22cf13CfGameManagerFv(int, int);

@@ -42,7 +42,7 @@ extern "C" void func_8009377C(cf::CtrlNpc* self, u32 param);
 extern "C" int func_80094D1C(const cf::CtrlNpc* self);
 // Region-library helpers (0x804B0xxx): attach/detach a region object to the
 // shared manager global below. CfGimmickLock.hpp also declares these but is
-// not included here (its func_800817BC return type conflicts with the
+// not included here (its createBattleActor return type conflicts with the
 // CfGameManager unity header). func_804B0924 is the +0x60C region
 // sub-object ctor called from the CfObjectMove ctor.
 extern "C" void func_804B0924(void* region);
@@ -63,7 +63,7 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // CfGameManager resource loader (defined in CfGameManagerUnityHelpers.hpp as
 // extern "C" with Unk8187CData* return; declared void* here to avoid pulling
 // that unity-TU header into this TU).
-extern "C" void* func_80081900__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
+extern "C" void* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
 
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (func_800BED6C / func_800BEE08)
@@ -127,7 +127,7 @@ namespace cf {
 class CfBdat {
 public:
     static void* func_801422A8(u32 param1);
-    static const char* func_801424A8(u16 index);
+    static const char* getBdatStringEntry(u16 index);
 };
 }  // namespace cf
 // Retail sbss bdat globals used by func_800BCFA0.
@@ -177,10 +177,10 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 extern "C" int CfRes_getD80Flag();
 extern "C" void* func_80496264(void* obj, int index);
 extern "C" int func_8007560C();
-extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
+extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 class UnkClass_800821F8;
-extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
+extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
 // Region-library helper used by func_800BC4CC (region, target, flags, dist).
 extern "C" int func_804B192C(void* region, void* target, int arg2, int arg3, f32 dist);
 // +0x98 sub-object flag query (CfObjectModel.cpp, retail unmangled name) used
@@ -214,7 +214,7 @@ extern "C" void func_80484E5C(void* self, f32 value);
 // call relocs unmangled).
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-// Enemy-state query (mangled global C++ symbol func_800AD860__FPv; defined
+// Enemy-state query (mangled global C++ symbol getEffOwner____FPv; defined
 // outside this repo's src tree) used by func_800BC9EC.
 void* func_800AD860(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
@@ -241,7 +241,7 @@ extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 
 // Retail unmangled import used by the CfObjectMove wrappers: voice-request
 // helper (defined in kyoshin/cf/voice/CCharVoice.cpp). The CCharVoice member
-// declaration takes three args; retail func_800BE898 forwards only `this`
+// declaration takes three args; retail requestVoice forwards only `this`
 // (addi r3,+0x28; b), so a one-arg C-ABI form is declared here to
 // reproduce the call site exactly.
 extern "C" bool func_802A109C(void* self);
@@ -886,7 +886,7 @@ namespace cf {
         u8 _pad[0x2A];          // 0x00-0x29
         u8 field_2A;            // 0x2A
     };
-    // Vtable proxy for the func_800821F8 result (dynamic manager): retail
+    // Vtable proxy for the getCameraDataBlock result (dynamic manager): retail
     // func_800BC4CC invokes its slot +0x60 and compares the result to self.
     // Dummy slots pin the offset.
     class CfDynMgrVt60 {

@@ -1006,7 +1006,7 @@ int func_8027C1A8(cf::CChainChanceS* self,
         return 0;
     }
     int tblOff = lbl_eu_8050EDD0[((CChainBattleVtIf*)objA)->v192()];
-    u32 pair = (u16)func_800824FC__Q22cf13CfGameManagerFv(
+    u32 pair = (u16)getTableValueByPair__Q22cf13CfGameManagerFv(
         objA->field_0x3F28, objB->field_0x3F28);
     u32 val;
     if (((CChainBattleVtIf*)objA)->v160() != 0) {
@@ -1081,7 +1081,7 @@ int func_8027C33C(cf::CChainAction* self, u8* out){
     }
     CPad* pad = cf::CfGameManager::getCurrentPad();
     // The chain-trigger pad bit depends on controller type (classic vs wii).
-    u32 bit = (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+    u32 bit = (isClassicController__Q22cf13CfGameManagerFv(-1) != 0)
                   ? (pad->mPressedButtonFlags >> 22) & 1
                   : (pad->mPressedButtonFlags >> 5) & 1;
     if (bit != 0) {
@@ -1218,7 +1218,7 @@ extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
 }
 // For each actor while @p target is nonzero, advances the chain combo
 // (vtable[6]) and if the actor is chainable (vtable[23]) and there is a
-// distinct next actor, accumulates the arts pair via func_80082568.
+// distinct next actor, accumulates the arts pair via addTableValueWithClamp.
 // The actor pointer is re-read from the list before each use (retail reloads
 // *r31 after every call), and the next-index saturation is `(i+1 < count)
 // ? i+1 : 0` (the retail min idiom yields 0, not count, when i+1 >= count).
@@ -1229,7 +1229,7 @@ void func_8027C924(cf::CChainList* self, int target){
             int next = (i + 1 < (int)self->mCount) ? (i + 1) : 0;
             if (i != next) {
                 cf::CChainActor* other = self->mActors[next];
-                func_80082568__Q22cf13CfGameManagerFv(
+                addTableValueWithClamp__Q22cf13CfGameManagerFv(
                     ((CChainActorObjId*)self->mActors[i]->unk0)->field_0x3F28,
                     ((CChainActorObjId*)other->unk0)->field_0x3F28, 0xa);
             }
@@ -1274,7 +1274,7 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
 // If the counter is positive, runs chain update steps and resets it.
 void func_8027CBE8(cf::CChainCounter* self) {
     if (self->field_0x0 > 0) {
-        func_802AA338__Fv();
+        requestCancelChain__Fv();
         func_8013C54C();
         func_8013E800(self->field_0x0);
         func_8027BFE0(self->field_0x0);

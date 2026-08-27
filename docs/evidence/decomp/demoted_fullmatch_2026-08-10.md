@@ -32,7 +32,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-802bbcc0 | kyoshin/CBattery | `__dt__8CBatteryFv` | CBattery::~CBattery() | 0x802BBCC0 |
 | us-802bbe54 | kyoshin/CBattery | `setBatteryLevel__8CBatteryFUc` | CBattery::setBatteryLevel(unsigned char) | 0x802BBE54 |
 | us-802bbe5c | kyoshin/CBattery | `updateBatteryImage__8CBatteryFv` | CBattery::updateBatteryImage() | 0x802BBE5C |
-| us-802bbf20 | kyoshin/CBattery | `func_802B94B0__8CBatteryFv` | CBattery::func_802B94B0() | 0x802BBF20 |
+| us-802bbf20 | kyoshin/CBattery | `onLayoutReady__8CBatteryFv` | CBattery::onLayoutReady() | 0x802BBF20 |
 | us-802bbf40 | kyoshin/CBattery | `OnFileEvent__8CBatteryFP10CEventFile` | CBattery::OnFileEvent(...*, 1, 0, C, E, v, e, n, t, int, long, e) | 0x802BBF40 |
 | us-801c5338 | kyoshin/CBgTex | `__ct__CBgTex` | constructor | 0x801C5338 |
 | us-801c5394 | kyoshin/CBgTex | `__dt__6CBgTexFv` | CBgTex::~CBgTex() | 0x801C5394 |
@@ -84,7 +84,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | arts-set-vfunc1 | kyoshin/cf/CArtsSet | `CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv` | CArtsSet::CArtsSet_UnkVirtualFunc1 | 0x80154740 |
 | us-80154880 | kyoshin/cf/CArtsSet | `getArtsParamRC2` | getArtsParamRC2 | 0x80154880 |
 | us-80154898 | kyoshin/cf/CArtsSet | `getArtsParamByIdx` | getArtsParamByIdx | 0x80154898 |
-| us-800d84ec | kyoshin/cf/CBattleManager | `func_800D7A04__2cfFPQ22cf10CfObjectPcPQ22cf11CfObjectEne` | cf::func_800D7A04(...*, Q, 2, 2, char, float, 1, 0, C, float, O, bool, j, e, char, t, ...*, char, ...*, Q, 2, 2, char, float, 1, 1, C, float, O, bool, j, e, char, t, E, n, e) | 0x800D84EC |
+| us-800d84ec | kyoshin/cf/CBattleManager | `applyBattleDamage__2cfFPQ22cf10CfObjectPcPQ22cf11CfObjectEne` | cf::func_800D7A04(...*, Q, 2, 2, char, float, 1, 0, C, float, O, bool, j, e, char, t, ...*, char, ...*, Q, 2, 2, char, float, 1, 1, C, float, O, bool, j, e, char, t, E, n, e) | 0x800D84EC |
 | us-800d8c90 | kyoshin/cf/CBattleManager | `func_800D81A8` | func_800D81A8 | 0x800D8C90 |
 | us-800d9460 | kyoshin/cf/CBattleManager | `__dt__30reslist<PQ22cf13CfObjectActor>Fv` | reslist<PQ22cf13CfObjectActor>::~reslist<PQ22cf13CfObjectActor>() | 0x800D9460 |
 | us-800d95cc | kyoshin/cf/CBattleManager | `__dt__29reslist<PQ22cf12IBattleEvent>Fv` | reslist<PQ22cf12IBattleEvent>::~reslist<PQ22cf12IBattleEvent>() | 0x800D95CC |
@@ -221,8 +221,8 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-80453860 | monolib/src/device/CDeviceFileCri | `func_80450B4C` | func_80450B4C | 0x80453860 |
 | us-80454f24 | monolib/src/device/CDeviceFileJobReadDvd | `wkStandbyLogout__21CDeviceFileJobReadDvdFv` | CDeviceFileJobReadDvd::wkStandbyLogout() | 0x80454F24 |
 | us-8044a644 | monolib/src/device/CDeviceSC | `isInitialized__9CDeviceSCFv` | CDeviceSC::isInitialized() | 0x8044A644 |
-| us-8044e88c | monolib/src/device/CGXCache | `func_8044BE1C__8CGXCacheFv` | CGXCache::func_8044BE1C() | 0x8044E88C |
-| us-8044e894 | monolib/src/device/CGXCache | `func_8044BE24__8CGXCacheFv` | CGXCache::func_8044BE24() | 0x8044E894 |
+| us-8044e88c | monolib/src/device/CGXCache | `getSubRectPtr__8CGXCacheFv` | CGXCache::func_8044BE1C() | 0x8044E88C |
+| us-8044e894 | monolib/src/device/CGXCache | `getAdjustFlag__8CGXCacheFv` | CGXCache::func_8044BE24() | 0x8044E894 |
 | us-804e1bb4 | monolib/src/effect/code_804DB938 | `func_804DD89C` | func_804DD89C | 0x804E1BB4 |
 | us-804e1be0 | monolib/src/effect/code_804DB938 | `func_804DD8C8` | func_804DD8C8 | 0x804E1BE0 |
 | us-8045d408 | monolib/src/lib/CLib | `isInitialized__4CLibFv` | CLib::isInitialized() | 0x8045D408 |

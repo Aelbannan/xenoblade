@@ -76,7 +76,7 @@ public:
     virtual void _v40();
     virtual void _v44();
     virtual void _v48();
-    virtual int _v4C();               // +0x4C (id fed to func_800B708C)
+    virtual int _v4C();               // +0x4C (id fed to findObjectById)
     virtual void _v50();
     virtual void _v54();
     virtual void _v58();          // +0x58
@@ -289,7 +289,7 @@ extern "C" int func_800A72E0(const ml::CVec3* self, ml::CVec3* out, s32 flags,
 // Position-region copy helper (retail func_804B0B54, CActParamAnimGame.cpp).
 extern "C" void func_804B0B54(u8* dst, const ml::CVec3* src);
 // CfGameManager play-frame helper (see CfObjectImplWalker.hpp).
-extern "C" u32 func_80086DA4__Q22cf13CfGameManagerFv();
+extern "C" u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
 // Battle-status position getter (retail func_800BE0B0): returns a Vec*
 // (the character object's +0x54 sub-object) fed straight into PSVECMag.
 extern "C" void* func_800BE0B0(cf::CCtrlNpcChar* self);
@@ -311,10 +311,10 @@ extern "C" void* getFP__FPCc(const char* name);
 extern "C" void* func_8003AA34();
 extern "C" void func_8013D07C(void* self, char* text, int flag);
 extern "C" void func_8013D1E8(void* self);
-extern "C" u32 func_80086DA0__Q22cf13CfGameManagerFv();
-// C++-linkage decl: MWCC mangles the call to func_800B708C__Fi (actor id ->
+extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
+// C++-linkage decl: MWCC mangles the call to findObjectById__Fi (actor id ->
 // action source object; the result has a position getter at vtable +0xac).
-void* func_800B708C(int id);
+void* findObjectById(int id);
 
 // Addressable raw-column holder for func_80093F28: full-word store of the
 // getBdatStringColumnValue result, punned u8/u16 read on reload (retail's
@@ -359,11 +359,11 @@ extern "C" int func_800964EC(cf::CtrlNpc* self);
 // CfGameManager helpers: the retail symbols keep the Fv suffix but the real
 // call sites pass arguments / read the return (same scheme as CTaskREvent.hpp),
 // so C linkage emits the literal retail names at the call sites.
-extern "C" void func_80086D98__Q22cf13CfGameManagerFv(u16* first, u16* second);
-extern "C" u32 func_80086DB0__Q22cf13CfGameManagerFv();
+extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
+extern "C" u32 clearControllerState__Q22cf13CfGameManagerFv();
 // Play-frame helper returning a u32 (CfGameManager.cpp defines it as a plain
 // extern "C" free function returning lbl_eu_80663D90).
-extern "C" u32 func_80086DB4__Q22cf13CfGameManagerFv();
+extern "C" u32 getFieldD90Value__Q22cf13CfGameManagerFv();
 // Movement-timer helper defined in this TU (retail name unmangled); C linkage
 // keeps the call reloc from func_80096488 matching retail.
 extern "C" void func_8009565C(cf::CtrlNpc* self);
@@ -419,9 +419,9 @@ extern const CtrlNpcActionMfp lbl_eu_80527AA0[2];   // action 4 handlers
 extern const CtrlNpcActionMfp lbl_eu_80527AB8[3];   // action 5 handlers
 extern const CtrlNpcActionMfp lbl_eu_80527B10[3];   // action 3 handlers
 
-// CfGameManager singleton + presentation-flag probe (func_8006EF04__Fi).
+// CfGameManager singleton + presentation-flag probe (isGlobalCamFlagSet__Fi).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
-bool func_8006EF04(int mask);
+bool isGlobalCamFlagSet(int mask);
 // Search-helper helpers reached with CCtrlNpcChar::field_98.
 extern "C" float func_80484F18(cf::CCtrlNpcSearch* obj);
 extern "C" void func_804876DC(cf::CCtrlNpcSearch* obj);

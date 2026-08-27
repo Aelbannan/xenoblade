@@ -66,7 +66,7 @@ struct CfCamNodePayload {
     void* field_98;        // 0x98 - target object
 };
 
-// List head returned by CfGameManager::func_80086B0C. field_4 is a sentinel
+// List head returned by CfGameManager::getFirstGimmick. field_4 is a sentinel
 // node: iteration starts at sentinel->next and stops back at the sentinel.
 struct CfCamNodeList {
     CfCamNode* field_0;    // 0x00
@@ -165,15 +165,15 @@ extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(void* self, void* arg1, void* a
 // Camera-event factory imports.
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
-void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
-void func_80085878__Q22cf13CfGameManagerFv();
+void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
+void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern u8 lbl_eu_80527048[];                          // CfCamEvent vtable label
 
 // Per-frame update (func_8006ACC0) imports.
-extern "C" void func_8007FE20__Q22cf13CfGameManagerFv(u32);
-extern "C" int func_8007FE24__Q22cf13CfGameManagerFv(u32);
-extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
-extern "C" cf::CfCamNodeList* func_80086B0C__Q22cf13CfGameManagerFv();
+extern "C" void stubEmptyE__Q22cf13CfGameManagerFv(u32);
+extern "C" int getNullPtrC__Q22cf13CfGameManagerFv(u32);
+extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
+extern "C" cf::CfCamNodeList* getFirstGimmick__Q22cf13CfGameManagerFv();
 extern "C" void func_80071B78(void*);
 extern "C" void func_8006D8D0(void*, void*);
 extern "C" void* func_800BBC0C(void*);

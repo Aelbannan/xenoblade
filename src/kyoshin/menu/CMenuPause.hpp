@@ -67,7 +67,7 @@ union CMenuPauseF64Conv {
     double d;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10.
+// Mirror of the font object returned by CDeviceFont::getFontInfo.
 // vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
 // pane. Never instantiated, so no vtable is emitted; a genuine virtual call
 // makes MWCC emit the retail r12 dispatch sequence.
@@ -102,11 +102,11 @@ extern "C" {
     void __dt__8CProcessFv(void*, int);
     void func_80138078__FUl(u32);
     void func_80188890(u32);
-    int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+    int isClassicController__Q22cf13CfGameManagerFv(int arg);
     void func_801BFB34(f32, int, int, int);
     void func_eu_8013C8E8();
     void func_800853C8__Q22cf13CfGameManagerFv();
-    void func_8008294C__Q22cf13CfGameManagerFv(bool);
+    void setPresentationFlag__Q22cf13CfGameManagerFv(bool);
 
     // CMenuPause factory constructor imports.
     void __ct__8CProcessFv(void*);
@@ -125,9 +125,9 @@ extern "C" {
     void* getHandleMEM2__Q23mtl10MemManagerFv();
     void* __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
     void __dt__14Class_8045F858Fv(void*, int);
-    void func_80434A4C__Q23mtl10MemManagerFb(bool);
-    void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-    void func_8045F810__17UnkClass_8045F564Fv(void*);
+    void setMemInitFlag__Q23mtl10MemManagerFb(bool);
+    void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+    void validateHeap__17UnkClass_8045F564Fv(void*);
     void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
     nw4r::lyt::ArcResourceAccessor* func_801355F4();
 }

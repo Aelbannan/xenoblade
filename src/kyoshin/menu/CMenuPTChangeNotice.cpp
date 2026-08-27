@@ -45,7 +45,7 @@ extern "C" CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotic
         self->mVtab = (u32)lbl_eu_80538888;
         self->mWorkEventVt = (u32)lbl_eu_80538888 + 0x24;
         self->mScnRenderVt = (u32)lbl_eu_80538888 + 0xac;
-        func_801C1B94__Q22cf9CfPadTaskFf(lbl_eu_80668B80);
+        setInputDisableTime__Q22cf9CfPadTaskFf(lbl_eu_80668B80);
         __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
         __dt__9IUIWindowFv(self, 0);
         if (flags > 0) {
@@ -56,7 +56,7 @@ extern "C" CMenuPTChangeNotice* __dt__19CMenuPTChangeNoticeFv(CMenuPTChangeNotic
 }
 
 void CMenuPTChangeNotice::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
 
     // Pass the IWorkEvent subobject to the async file loader; retail keeps the
     // null-checked compare/branch pair around the +0x6c adjustment.
@@ -93,7 +93,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     CFileHandle* fh = (CFileHandle*)self->mFileHandle;
     u8* data = fh->mData;
     fh->mData = NULL;
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
     self->mAccessor = CLibLayout::createArcResourceAccessor();
     self->mAccessor->Attach(data, &lbl_eu_8050FC20[0x14]);
 
@@ -103,7 +103,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = self->mLayout90->GetRootPane();
-    void** fontObj = (void**)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    void** fontObj = (void**)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
         1, self->mLayout90);
     u32 fontResult = ((u32 (*)(void*))fontObj[0x24 / 4])(fontObj);
     func_8013676C(rootPane, fontResult);
@@ -129,7 +129,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     // Party-member icon texture: pick the message name by pad type, load the
     // "timg" texture, bind it and set its pixel size on the pane.
     {
-        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = func_8013606C(&lbl_eu_8050FC20[0x76], msgName, 0x2f);
@@ -172,7 +172,7 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
                       func_80136190(&lbl_eu_8050FC20[0x76],
                                     &lbl_eu_8050FC20[0x84], 0x2e),
                       0);
-        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+        const char* msgName = isClassicController__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050FC20[0x95]
                                   : &lbl_eu_8050FC20[0x9e];
         u16 msg = func_8013606C(&lbl_eu_8050FC20[0x76], msgName, 0x2e);

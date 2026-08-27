@@ -95,7 +95,7 @@ void OnBdatFileLoaded(void* pData, u32 length) {
 }
 
 void OnBdatFileUnloaded(void* pData, u32 length) {
-    CBdat::func_8003AA8C(0);
+    CBdat::getEntry(0);
 }
 
 void OnAidatFileLoaded(void* pData, u32 length){
@@ -208,7 +208,7 @@ int main(){
     // (not ...data.0) and can emit stmw r30/r31 like retail.
     char* dataBase = reinterpret_cast<char*>(&sGameMainIcon);
     lbl_eu_8065FD00[0x125] = 0;
-    CBdat::func_8003AA50();
+    CBdat::clearEntries();
     func_eu_802B12DC();
     func_eu_802B11C0();
     func_eu_804520B0(func_eu_802B14D4());
@@ -218,12 +218,12 @@ int main(){
     func_eu_804520B0(dataBase + 0x10);
     func_eu_804520B0(dataBase + 0x30);
 #endif
-    CDeviceFileCri::func_80450B14(func_eu_802B133C());
-    CDeviceFileCri::func_80450B1C(func_eu_802B1354());
-    CDeviceFileCri::func_80450B24(func_eu_802B136C());
-    func_804DAA90(func_eu_802B13E4());
-    func_804DAA98(func_eu_802B13FC());
-    func_804DAAA0(func_eu_802B1414());
+    CDeviceFileCri::setCriFilePathA(func_eu_802B133C());
+    CDeviceFileCri::setCriFilePathB(func_eu_802B1354());
+    CDeviceFileCri::setCriFilePathC(func_eu_802B136C());
+    setGeneralNandErrorMessage(func_eu_802B13E4());
+    setSaveNandErrorMessage(func_eu_802B13FC());
+    setExtraNandErrorMessage(func_eu_802B1414());
     lbl_eu_80663B18 = 0;
     mtl::MemManager::MemRegion::setRegionMaxSize(0x686000, 0);
     CDeviceVI::setUseStaticHandle(true);
@@ -243,7 +243,7 @@ int main(){
     CWorkSystemPack::SaveStaticArcFilenameStringPtr(scStaticArcStr);
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);
     CActParamData::func_80057CDC();
-    CLibHbm::func_8045D5C8(true);
+    CLibHbm::setHbmActiveFlag(true);
     func_eu_80457318(func_eu_802B136C());
     CWorkRoot::run();
     func_eu_802B1334();

@@ -166,12 +166,12 @@ extern "C" void func_80490088(u8* self) { ((void(*)(void*))func_8048FED8)((char*
 
 extern "C" void func_80490090(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
 
-extern "C" u32 func_80490098__Fv(void) {
+extern "C" u32 getScnCounter__Fv(void) {
     extern u32 lbl_eu_806639A8;
     return lbl_eu_806639A8;
 }
 
-extern "C" void func_804900A0__FUl(u32 param) {
+extern "C" void updateScnCounter__FUl(u32 param) {
     extern u32 lbl_eu_806658FC;
     if (param) {
         lbl_eu_806658FC += 1;
@@ -222,7 +222,7 @@ extern "C" void func_8048F4D0(CScnRootNw4r* self, CScnCamLayout* cam) {
     camera.SetCameraMtxDirectly(cam->mCamMtx);
 
     CGXCacheViewportRect* viewport =
-        func_8044BE10__8CGXCacheFv(CDeviceGX::getCacheInstance());
+        getViewRectGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
     cx.w[1] = (u32)((s32)viewport->x ^ 0x80000000);
     f32 vx = (f32)(cx.d - lbl_eu_8066A9F8);
     cy.w[1] = (u32)((s32)viewport->y ^ 0x80000000);
@@ -405,8 +405,8 @@ extern "C" void func_8048FAA8(CScnRootNw4r* self, int flag) {
 
         CScnDrawList* list =
             (CScnDrawList*)func_8048C698(self->field_0x4->mItemPool, 1);
-        func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
-        func_80442DA8__9CViewRootFv();
+        resetGXStateA__8CGXCacheFv(CDeviceGX::getCacheInstance());
+        updateViewRoot__9CViewRootFv();
 
         if (func_8048D264(self->field_0x4) != 0) {
             for (CScnDrawNode* node = list->mStartNodePtr->mNext;

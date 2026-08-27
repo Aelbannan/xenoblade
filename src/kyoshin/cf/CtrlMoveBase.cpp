@@ -90,7 +90,7 @@ int func_80088974(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
     // Lazy-create the per-object move instance through the manager's
     // +0x2F2C sub-object.
     if (self->mpSomePtr == 0) {
-        gm = cf::CfGameManager::func_80083298();
+        gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
             p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2f2c);
             if (p != 0) {
@@ -108,7 +108,7 @@ int func_80088974(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
                     self->mVelocity = *out;
                     return 1;
                 }
-                self->mpSomePtr = func_8047CE7C__17UnkClass_8047CD0CFv();
+                self->mpSomePtr = allocFreeNode__17UnkClass_8047CD0CFv();
                 self->mVelocity = ml::CVec3::zero;
             }
         }
@@ -240,7 +240,7 @@ int func_800890A8(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
@@ -251,7 +251,7 @@ int func_800890A8(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
         goto haveOk;
     }
     {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        void* inst = allocFreeNode__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
         if (inst != 0)
             goto okTrue;
@@ -383,13 +383,13 @@ void func_80089628() {}
 
 // Dispatch the pending +0x30 slot through the manager's +0x2F2C sub-object,
 // then clear it.
-extern "C" void* func_80083298__Q22cf13CfGameManagerFv(void);
-extern "C" void func_8047CF20__17UnkClass_8047CD0CFv(void*, void*);
+extern "C" void* getGameSubManager__Q22cf13CfGameManagerFv(void);
+extern "C" void releaseNode__17UnkClass_8047CD0CFv(void*, void*);
 extern "C" void func_8008962C(void* self) {
     if (*(u32*)((u8*)self + 0x30) != 0) {
-        void* gm = func_80083298__Q22cf13CfGameManagerFv();
+        void* gm = getGameSubManager__Q22cf13CfGameManagerFv();
         if (gm && (u8*)gm + 0x2F2C) {
-            func_8047CF20__17UnkClass_8047CD0CFv((u8*)gm + 0x2F2C, *(void**)((u8*)self + 0x30));
+            releaseNode__17UnkClass_8047CD0CFv((u8*)gm + 0x2F2C, *(void**)((u8*)self + 0x30));
         }
         *(u32*)((u8*)self + 0x30) = 0;
     }
@@ -487,7 +487,7 @@ int func_800899C0(CCtrlMoveBase* self, ml::CVec3* out, void* arg, f32 val) {
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
@@ -498,7 +498,7 @@ int func_800899C0(CCtrlMoveBase* self, ml::CVec3* out, void* arg, f32 val) {
         goto haveOk;
     }
     {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        void* inst = allocFreeNode__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
         if (inst != 0)
             goto okTrue;
@@ -603,7 +603,7 @@ int func_80089B24(CCtrlMoveBase* self, ml::CVec3* out) {
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2f2c);
@@ -614,7 +614,7 @@ int func_80089B24(CCtrlMoveBase* self, ml::CVec3* out) {
         goto haveOk;
     }
     {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        void* inst = allocFreeNode__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
         if (inst != 0)
             goto okTrue;
@@ -662,7 +662,7 @@ int func_80089E88(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
@@ -673,7 +673,7 @@ int func_80089E88(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
         goto haveOk;
     }
     {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        void* inst = allocFreeNode__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
         if (inst != 0)
             goto okTrue;
@@ -709,7 +709,7 @@ int func_80089F68(CCtrlMoveBase* self) {
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
@@ -720,7 +720,7 @@ int func_80089F68(CCtrlMoveBase* self) {
         goto haveOk;
     }
     {
-        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        void* inst = allocFreeNode__17UnkClass_8047CD0CFv();
         self->mpSomePtr = inst;
         if (inst != 0)
             goto okTrue;
@@ -732,7 +732,7 @@ okTrue:
 haveOk:
     if (ok != 0) {
         ml::CVec3* pos = getPos(self);
-        return func_8047DE14__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
+        return dispatchScnCommand__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
                                                      lbl_eu_806665A0, lbl_eu_806665A0);
     }
     return 0;
@@ -749,7 +749,7 @@ int func_8008A01C(CCtrlMoveBase* self, ml::CVec3* out) {
 
     if (self->mpSomePtr != 0)
         goto okTrue;
-    gm = cf::CfGameManager::func_80083298();
+    gm = cf::CfGameManager::getGameSubManager();
     if (gm == 0)
         goto okTrue;
     p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C);
@@ -759,7 +759,7 @@ int func_8008A01C(CCtrlMoveBase* self, ml::CVec3* out) {
         ok = 0;
         goto haveOk;
     }
-    inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+    inst = allocFreeNode__17UnkClass_8047CD0CFv();
     self->mpSomePtr = inst;
     if (inst != 0)
         goto okTrue;

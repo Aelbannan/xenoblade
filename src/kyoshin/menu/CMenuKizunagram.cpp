@@ -61,7 +61,7 @@ void CMenuKizunagram::Term() {
     lbl_eu_806647E0 = 0;
     func_8013B980();
     if (code80135FDC_getByte_64080() == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(0);
+        setPresentationFlag__Q22cf13CfGameManagerFv(0);
     }
     func_801338C8();
 }
@@ -74,7 +74,7 @@ void CMenuKizunagram::Move() {
     // the first disjunct, `beq body; b end` for the second (MWCC_CASES
     // §&&-gate branch-over-branch).
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (isFlag01Set__9CTaskGameFv() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
     goto end;
@@ -86,7 +86,7 @@ body:
     if (field_0x21C != 0) {
         CPad* pad = cf::CfGameManager::getCurrentPad();
         int bit;
-        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
             bit = (pad->mPressedButtonFlags >> 23) & 1;
         } else {
             bit = (pad->mPressedButtonFlags >> 10) & 1;
@@ -123,7 +123,7 @@ body:
 
 void CMenuKizunagram::cbRenderBefore() {
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() != 0) {
+    if (isFlag01Set__9CTaskGameFv() != 0) {
         return;
     }
     // Gate: when the global mode bit (0x200000) is set, skip the kizuna
@@ -301,7 +301,7 @@ void func_80257498(CMenuKizunagram* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 f1, f2, f3, f4;
     u32 openWin, dismiss, toggle, cursorA, cursorB;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) {
         goto wiimote;
     }
     // Classic controller layout (fall-through).
@@ -439,7 +439,7 @@ void func_80257840(CMenuKizunagram* self) {
     }
     KizunaPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
     u32 b, a, f1, f2, f3, f4;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 turbo = pad->mTurboPressButtonFlags;
         u32 pressed = pad->mPadPressedFlags;
         f1 = (turbo & 0x8004) != 0;

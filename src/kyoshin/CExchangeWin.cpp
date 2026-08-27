@@ -97,7 +97,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     void* arcData = mFileHandle->mData;
     mFileHandle->mData = nullptr;
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
 
     mAccessor = CLibLayout::createArcResourceAccessor();
     mAccessor->Attach(arcData, &lbl_eu_8050A740[0x5b]);
@@ -109,7 +109,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     // Bind the shared font: root pane first (retail loads it into r29 before
     // the CDeviceFont call), then fetch the font handle from vtable slot 9.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    void* fontObj = CDeviceFont::getFontInfo(1, mLayout);
     u32 fontResult = static_cast<CExchangeWinFontView*>(fontObj)->sf9();
     func_8013676C(rootPane, fontResult);
 
@@ -131,7 +131,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     // Choose the message texture name by the game-manager mode flag (ternary
     // keeps the selection after the call so MWCC loads it straight into r4).
-    const char* fileID = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* fileID = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                              ? &lbl_eu_8050A740[0xe4]
                              : &lbl_eu_8050A740[0xed];
 

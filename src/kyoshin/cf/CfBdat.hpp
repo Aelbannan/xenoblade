@@ -22,7 +22,7 @@ extern "C" u32 func_800AA2BC(u32 a, u32 b);
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
 extern "C" u32 func_800AA714(const char* path);
 extern "C" u32 func_800AA2E8(u32 a, u32 b, u32 c);
-extern "C" u32 func_80086B3C__Q22cf13CfGameManagerFv();
+extern "C" u32 getGlobalWord640F4__Q22cf13CfGameManagerFv();
 
 // Retail sbss bdat file-pointer globals (anonymous lbl_eu_* labels in retail).
 // The CfBdat static members are kept for the file-data assignment functions.
@@ -60,13 +60,13 @@ namespace cf{
         virtual ~CfBdat();
         virtual bool OnFileEvent(CEventFile* pEventFile);
 
-        static void func_801414CC();
+        static void loadBdatFileTable();
         static void resetMapBdatFileDataPointers();
         static void loadMapBdatFileDataPointers(int mapId, int areaId);
         static void* func_80141B20(const char* pName);
         static const char* func_801421C4(u16 index);
         static u32 func_801422A8(u32 param1);
-        static const char* func_801424A8(u16 index);
+        static const char* getBdatStringEntry(u16 index);
 
         //Pointers to file data for bdat files
         static void* spBtlPcListFileData;

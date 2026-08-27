@@ -7,10 +7,10 @@
 // later transitive inclusion a no-op); the properly-typed import is declared
 // below.
 #define __dt__8023E448 dt_8023E448_stale_void_decl
-#define func_8007F9AC cf_func_8007F9AC_stale_void_decl
+#define getEventCounterA cf_getEventCounterA_stale_void_decl
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef __dt__8023E448
-#undef func_8007F9AC
+#undef getEventCounterA
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 // (CSaveLoad.hpp intentionally not included: its void return for
@@ -394,7 +394,7 @@ extern "C" u32 func_8023C2E4(CfNandWorkBuf* work) {
     if ((u32)q & 1) {
         q = (u8*)dst + 0x44B2;
     }
-    ((cf::CfGameManager*)q)->func_80082834();
+    ((cf::CfGameManager*)q)->drainEventQueue();
     return OSCalcCRC16((const u8*)dst, 0x6C28);
 }
 
@@ -450,7 +450,7 @@ extern "C" u32 func_8023C7C4(CfNandSaveSource* src, CfNandSaveBuf* dst, u32 id) 
     // Size expressions kept structurally distinct so MWCC does not CSE them
     // into one preserved-register constant (retail computes each separately).
     memset(dst, 0, 0x9C80);
-    dst->field00 = (s16)cf::CfGameManager::func_800822F4();
+    dst->field00 = (s16)cf::CfGameManager::getQueuedFileEventCount();
     OSCalendarTime cal;
     OSTicksToCalendarTime(OSGetTime(), &cal);
     dst->field04 = (u16)cal.yday;
@@ -551,7 +551,7 @@ int func_8023C93C(CfNandSaveImage* img, u32 id) {
     u16 cnt = (u16)func_8009CF8C(0x3F);
     img->wthrBlock.f0E = cnt;
     if (cnt == 0) {
-        img->wthrBlock.f0E = (u16)func_8007F9AC__Q22cf13CfGameManagerFv();
+        img->wthrBlock.f0E = (u16)getEventCounterA__Q22cf13CfGameManagerFv();
     }
     crc = OSCalcCRC16((const u8*)&img->wthrBlock, 0x10);
     img->wthrTag.tag = 0x57544852;
@@ -560,7 +560,7 @@ int func_8023C93C(CfNandSaveImage* img, u32 id) {
     img->wthrTag.crc = crc;
 
     // SNDS region: three audio-query floats plus a zero word.
-    img->sndArea.f00 = func_801C0014();
+    img->sndArea.f00 = getMasterVolume();
     img->sndArea.f04 = func_801896A0();
     img->sndArea.f08 = func_801895EC();
     img->sndArea.f0C = 0;
@@ -805,11 +805,11 @@ extern "C" __declspec(noinline) void* func_8023D3D8() {
 // and the file event in r4; the OnFileEvent adjustor thunk rewrites r3, so the
 // file is the only live argument here). The dummy first parameter keeps the
 // file in r4 without touching the verbatim retail symbol name.
-extern "C" u32 func_8023E4D4__Q22cf13CfNandManagerFv(void* unused, CEventFile* file) {
+extern "C" u32 handleFileEvent__Q22cf13CfNandManagerFv(void* unused, CEventFile* file) {
     lbl_eu_8066476C = 0;
     // Event types: 1 = load finished (kick the game manager), 4 = teardown.
     if (file->unk0 == 1 && file->field_14 != 0) {
-        func_80084F50__Q22cf13CfGameManagerFv();
+        resetBattlePresentation__Q22cf13CfGameManagerFv();
     } else if (file->unk0 == 4) {
         if (lbl_eu_80664768->field_0x5C != 0) {
             __dl__FPv(lbl_eu_80664768->field_0x5C);
@@ -1774,13 +1774,13 @@ void cf::CfNandManager::cbRenderBefore() {
     }
 }
 
-void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))func_8023E4D4__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
+void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))handleFileEvent__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 
-void func_802405FC__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
+void destroyViaWorkEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 
-void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
+void handleRenderCallback__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
-extern "C" void func_8024060C__Q22cf13CfNandManagerFv(cf::CfNandManager* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
+extern "C" void destroyViaRender__Q22cf13CfNandManagerFv(cf::CfNandManager* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);

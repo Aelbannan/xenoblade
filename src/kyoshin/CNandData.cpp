@@ -21,12 +21,12 @@ CNandData CNandData::sInstance;
 void func_eu_802B11C0()
 {
     const char* title = func_eu_802B14A4();
-    CNandData::sInstance.mNandBanner.func_804F52F8(title);
+    CNandData::sInstance.mNandBanner.setTitle(title);
 
     const char* desc = func_eu_802B14BC();
-    CNandData::sInstance.mNandBanner.func_804F5304(desc);
+    CNandData::sInstance.mNandBanner.setSubtitle(desc);
 
-    CNandData::sInstance.mNandBanner.func_804F5310(lbl_eu_80662E00);
-    CNandData::sInstance.mNandBanner.func_804F531C(lbl_eu_8053A3D8, lbl_eu_8053A3FC);
+    CNandData::sInstance.mNandBanner.setBannerPath(lbl_eu_80662E00);
+    CNandData::sInstance.mNandBanner.setFileList(lbl_eu_8053A3D8, lbl_eu_8053A3FC);
     CNandData::sInstance.mNandBanner.unkC &= ~0x10;
 }

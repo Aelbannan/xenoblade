@@ -185,7 +185,7 @@ extern "C" void func_80281CB8(cf::CChainActorPc* self) {
 extern u8* func_8009EC9C(u16);
 extern int func_800A32BC(u8*);
 extern u32 func_8025FB10(u8*, u32);
-extern u8* func_800B6BA4();
+extern u8* getListB28();
 extern float func_800D81A8(int, u8*, int);
 
 // Processes chain actor damage/healing based on arg.
@@ -233,7 +233,7 @@ arg0:
     }
     if (lbl_eu_80668AEC < f30) {
         if (((int(*)(u8*))(*(u8***)unk0obj)[175])(unk0obj) == 0) {
-            u8* list = func_800B6BA4();
+            u8* list = getListB28();
             u8* sentinel = *(u8**)(list + 4);
             u8* node = *(u8**)sentinel;
             while (node != sentinel) {

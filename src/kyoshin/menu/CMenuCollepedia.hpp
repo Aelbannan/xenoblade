@@ -61,7 +61,7 @@ public:
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u32 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
 extern "C" void func_80138078__FUl(u32 op);
@@ -106,7 +106,7 @@ extern "C" void func_80255000(CCollepedia* self);
 extern "C" void func_802550B4(CCollepedia* self);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol
 // (the no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Flat pad-data view exposing only the flag words func_80252DD8 reads:
 // CPad::mPressedButtonFlags at +0x4 and CfPadData::mTurboPressButtonFlags at

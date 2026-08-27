@@ -44,15 +44,15 @@ void func_801F8EB0(CfResTboxImpl* self) {
     CfResTboxParent* parent = self->field_00;
     parent->field_94 = 0;
     // parent stays live in r3 across the member call (retail emits no reload)
-    if (((cf::CfGameManager*)parent)->func_80082900() == 0) return;
+    if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     if (lbl_eu_80663E24 & 0x100000) return;
-    if (func_8008585C__Q22cf13CfGameManagerFv() != 0) return;
+    if (isSceneActive__Q22cf13CfGameManagerFv() != 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)func_80063080();
     int ok = 1;
     if (entry->field_0x2C->vfunc0C(entry) == 0) ok = 0;
     if (!ok) return;
     self->field_08 = self->field_08 + 1;
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u32 handle1 = ((CfResTboxVtIf*)self)->_v034(1);
         self->field_00->field_90 = func_80066E7C(entry, handle1);
@@ -79,7 +79,7 @@ void func_801F8EB0(CfResTboxImpl* self) {
                 (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
         }
     }
-    mtl::MemManager::func_80434A4C(true);
+    mtl::MemManager::setMemInitFlag(true);
     if (self->field_00->field_6C & 0x20000000) {
         // Volatile re-read defeats CSE with the test load (retail emits a
         // fresh lwz before the rlwinm mask); single rlwinm clears bit only.

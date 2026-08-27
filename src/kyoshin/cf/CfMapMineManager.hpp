@@ -90,8 +90,8 @@ extern "C" void* func_800B8920(void* obj);
 extern "C" void func_800B9404(void* obj);
 extern "C" void* func_80186BC8(int id);
 extern "C" void func_800BFBF4(u16 id, int mode);
-extern "C" void func_80462E58__8CTaskLODFv(u32 a, u32 b, f64 c);
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
+extern "C" void setLODParam__8CTaskLODFv(u32 a, u32 b, f64 c);
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                           u32 d, f32 e);
 extern "C" void* CItem_initItemImplInstances(void* item);
 extern "C" void func_801583E0(void* item);
@@ -104,23 +104,23 @@ extern "C" int func_8026178C(void* data, u32 flag);
 extern "C" u32 func_8025FB10(void* data, u32 flag);
 extern "C" void* func_801599D4(void* item, int v);
 extern "C" void func_801352A4(void* mgr);
-extern "C" void* func_800B07E8__Fv();
+extern "C" void* getInstance__Fv();
 extern "C" void* func_800B20B4(void* a, u32 b, u32 c, u32 d);
 extern "C" void func_800C13FC(void* obj, void* name, u32 len);
-extern "C" void func_800ACC14(void* obj, int mode);
-extern "C" void func_800ACF78(void* obj, void* player, u32 v);
+extern "C" void setChildB59__(void* obj, int mode);
+extern "C" void bindPartnerO_(void* obj, void* player, u32 v);
 extern "C" int func_8013EB90(int v);
 extern "C" int func_800FF738();
 extern "C" void func_8013D55C(void* a, u32 b, u32 c);
 extern "C" void* func_800FE68C();
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void* func_8007F91C__Q22cf13CfGameManagerFv();
-extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
-extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
-extern "C" int func_80085840__Q22cf13CfGameManagerFv();
-extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
-extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 id);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void* isTimerActive__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
+extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
+extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
+extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void* getFP__FPCc(const char* name);
 
 // External data (retail linker symbols)

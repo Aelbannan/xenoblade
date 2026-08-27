@@ -162,7 +162,7 @@ extern "C" void __declspec(noinline) func_801C41E8(CTitleAHelp* self, u8 arg) {
             func_80124270(self->mLayout->GetRootPane()->FindPaneByName(buf2, true), 1);
 
             const char* fileID = lbl_eu_805054BC + 0x37;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 fileID = lbl_eu_805054BC + 0x40;
             }
 
@@ -330,7 +330,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
 
         Class_8045F858 memRegion(&unk4);
         void* data = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
         mArcResourceAccessor->Attach(data, &lbl_eu_805054BC[0x88]);
@@ -343,7 +343,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
         // keeps it live across func_8013676C.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         u32 fontHandle = static_cast<CTitleAHelpFontView*>(
-            CDeviceFont::func_80452C10(1, mLayout))->vf7();
+            CDeviceFont::getFontInfo(1, mLayout))->vf7();
         func_8013676C(rootPane, fontHandle);
 
         mLayout->SetAnimationEnable(mAnimTrans24, false);

@@ -344,16 +344,16 @@ extern "C" {
     void func_8018C820(void* obj, int value);
     // Voice/battle-manager helpers.
     void func_80280BF0();
-    void func_80082568__Q22cf13CfGameManagerFv(int a, int b, int c);
+    void addTableValueWithClamp__Q22cf13CfGameManagerFv(int a, int b, int c);
     // CfGameManager gate used by the commu re-arm (retail pre-mangled name;
     // the class member is declared in CfGameManager.hpp, this is the bare
     // Fv-form import so the call reloc keeps the retail symbol verbatim).
-    bool func_8007F91C__Q22cf13CfGameManagerFv();
-    bool func_8006EF04__Fi(int mask);
+    bool isTimerActive__Q22cf13CfGameManagerFv();
+    bool isGlobalCamFlagSet__Fi(int mask);
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
-    // does not reflect the actual argument counts - see func_80082568).
-    int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
-    void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
+    // does not reflect the actual argument counts - see addTableValueWithClamp).
+    int isClassicController__Q22cf13CfGameManagerFv(int arg);
+    void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
     int func_8017FD4C(int);
     void func_8017FEF0(void* obj, int arg);
@@ -391,6 +391,6 @@ extern "C" void func_801537E0(void* voiceAct);   // voice-act reset (CVision.hpp
 // (owner: code_800B06A4.hpp); this TU picks them up through the include chain.
 // Retail aliases the CfGameManager singleton getter under its raw symbol
 // name; CSuddenCommu's driver calls that alias.
-extern "C" bool func_800829B8__Q22cf13CfGameManagerFv(); // canonical bool form (CfObjectMove.hpp owner)
+extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv(); // canonical bool form (CfObjectMove.hpp owner)
 extern "C" void func_801BADE4(cf::CSuddenCommu* self);   // re-arm scan (plain retail symbol)
 extern "C" int func_801BBCBC(cf::CSuddenCommu* self);    // per-frame tick (plain retail symbol)

@@ -152,14 +152,14 @@ void CMenuLandTelop::Move() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (cbRenderBefore shape).
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x00200000)) return;
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x00200000)) return;
     if (func_8013BE50() == 0) return;
     if (lbl_eu_80663E24 & 0xBFE40000u) return;
 
     switch (field_8E) {
     case 0: {
         // Any blocking screen active: park the banner timer and leave.
-        if (cf::CfGameManager::func_800829B8() || func_80293C10() ||
+        if (cf::CfGameManager::isSceneLoading() || func_80293C10() ||
             func_8029A658() || func_801B481C() || func_80122450() ||
             (func_80124B78() != 0)) {
             field_DA = 1;
@@ -207,9 +207,9 @@ void CMenuLandTelop::Move() {
                 // then report it per registered land.
                 for (int i = 1; i <= 8; i++) {
                     if (i == 3 &&
-                        (u32)cf::CfGameManager::func_800822F4() >= 0x1d)
+                        (u32)cf::CfGameManager::getQueuedFileEventCount() >= 0x1d)
                         continue;
-                    if (func_8008235C__Q22cf13CfGameManagerFv(i) == 0)
+                    if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) == 0)
                         continue;
 
                     u32 data = (u32)func_8009EC9C((u16)i);
@@ -272,7 +272,7 @@ void CMenuLandTelop::Move() {
         break;
     }
     case 1: {
-        if (cf::CfGameManager::func_800829B8()) return;
+        if (cf::CfGameManager::isSceneLoading()) return;
         switch (field_90) {
         case 0:
             if (field_98 != 0) {
@@ -307,10 +307,10 @@ void CMenuLandTelop::cbRenderBefore() {
     CTaskGame::getInstance();
     // Single short-circuit OR so MWCC emits: func test -> bne exit;
     // bit test -> beq continue / b exit (CSystemWindow::Move shape).
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (func_8013BE50() == 0) return;
     if (lbl_eu_80663E24 & 0xBFE40000u) return;
-    if (cf::CfGameManager::func_800829B8()) return;
+    if (cf::CfGameManager::isSceneLoading()) return;
     if (field_DA != 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -593,7 +593,7 @@ void func_8014548C(CMenuLandTelop* self) {
     func_8013676C(
         self->field_54->GetRootPane(),
         reinterpret_cast<CLandTelopFontObj*>(
-            func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
                 1, self->field_54))->getFontHandle());
 
     self->field_88->SetFrame(lbl_eu_806673C8);

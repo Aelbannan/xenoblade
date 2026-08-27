@@ -32,10 +32,10 @@ public:
     virtual void UnkStruct_8044F65C_UnkVirtualFunc2();
     virtual void UnkStruct_8044F65C_UnkVirtualFunc3();
 
-    bool func_8044F744();
-    static void func_8044F964();
+    bool checkDriveStatus();
+    static void closeAdxfHandle();
     static int getFileSize(const char* pPath, int arg1);
-    static void func_8044FB08(const char* pPath);
+    static void cancelJobsForPath(const char* pPath);
     bool cancel(CFileHandle* pHandle);
     static void func_8044FC38();
     bool func_8044FCFC();
@@ -43,10 +43,10 @@ public:
     bool func_80450260();
     bool func_8045042C();
 
-    static void func_80450B14(const wchar_t* pData);
-    static void func_80450B1C(const wchar_t* pData);
-    static void func_80450B24(const wchar_t* pData);
-    static void func_80450AB8();
+    static void setCriFilePathA(const wchar_t* pData);
+    static void setCriFilePathB(const wchar_t* pData);
+    static void setCriFilePathC(const wchar_t* pData);
+    static void teardownAdxf();
 
 private:
     CDeviceFileJobReadDvd* getFirstCDeviceFileJobReadDvd();

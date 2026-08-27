@@ -122,7 +122,7 @@ void CMenuGCItem::Term() {
  * drive the 4-state FSM and refresh the bg / help bar / item grid each frame. */
 void CMenuGCItem::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     switch (mState) {
@@ -164,7 +164,7 @@ void CMenuGCItem::Move() {
  * grid in that order. */
 void CMenuGCItem::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 

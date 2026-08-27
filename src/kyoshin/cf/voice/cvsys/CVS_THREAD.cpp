@@ -10,7 +10,7 @@
 // vtable is emitted for this view.
 
 // Result of the target-state virtual at vtable offset 0x2A4: +0x04 is an
-// actor id fed to func_800B708C, +0x50 is a work object carrying a u16
+// actor id fed to findObjectById, +0x50 is a work object carrying a u16
 // state word at +0x48 checked by the battle-state helpers.
 struct UnkVoiceWork {
     u8 _00[0x48];
@@ -23,10 +23,10 @@ struct CVoiceVf167Res {
     UnkVoiceWork* field_50;
 };
 
-// C++-mangled imports (MWCC emits func_800B708C__Fi /
+// C++-mangled imports (MWCC emits findObjectById__Fi /
 // func_800BFC68__FPQ22cf12CfObjectMove, matching the retail symbols).
 namespace cf { class CfObjectMove; }
-void* func_800B708C(int id);
+void* findObjectById(int id);
 void* func_800BFC68(cf::CfObjectMove* objMove);
 // Battle-state helpers (retail unmangled C-ABI symbols).
 extern "C" int func_80146148(int value);
@@ -75,12 +75,12 @@ struct CVoiceSndCamView {
 
 namespace cf {
 // TU-local phantom view of cf::CfObject: emits the retail-mangled reloc
-// func_800BE898__Q22cf8CfObjectFiUlff. object/CfObject.hpp declares a
+// requestVoice__Q22cf8CfObjectFiUlff. object/CfObject.hpp declares a
 // void-returning form shared with other TUs; the mangling encodes neither
 // the return type, and this call site passes the callee's r3 straight out.
 class CfObject {
 public:
-    int func_800BE898(int a, unsigned long b, float c, float d);
+    int requestVoice(int a, unsigned long b, float c, float d);
 };
 } // namespace cf
 
@@ -185,19 +185,19 @@ int func_802A3C44(CVS_THREAD* thread, CCharVoice* voice, s32 voiceId) {
         result = 0;
         goto check;
     }
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         result = 0;
         goto check;
     }
     if (((CVoiceSndFlagView*)voice)->flag64 & 0x4) {
         // Flag set: alternate constant for the fourth argument.
         f32 vol = lbl_eu_80668C88 - ((CVoiceSndCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
-        result = ((cf::CfObject*)voice)->func_800BE898(voiceId, handle,
+        result = ((cf::CfObject*)voice)->requestVoice(voiceId, handle,
                                                        lbl_eu_80662CB0 * vol,
                                                        lbl_eu_80662CB8);
     } else {
         f32 vol = lbl_eu_80668C88 - ((CVoiceSndCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
-        result = ((cf::CfObject*)voice)->func_800BE898(voiceId, handle,
+        result = ((cf::CfObject*)voice)->requestVoice(voiceId, handle,
                                                        lbl_eu_80662CB0 * vol,
                                                        lbl_eu_80662CB4);
     }
@@ -258,19 +258,19 @@ extern "C" __declspec(noinline) int func_802A3D54(CCharVoice* voice, int voiceId
     if (voiceId < 0) {
         return 0;
     }
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return 0;
     }
     CVoiceSndFlagView* fv = (CVoiceSndFlagView*)voice;
     if (fv->flag64 & 0x4) {
         // Flag set: alternate constant for the fourth argument.
         f32 vol = lbl_eu_80668C88 - ((CVoiceSndCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
-        return ((cf::CfObject*)voice)->func_800BE898(voiceId, arg,
+        return ((cf::CfObject*)voice)->requestVoice(voiceId, arg,
                                                      lbl_eu_80662CB0 * vol,
                                                      lbl_eu_80662CB8);
     } else {
         f32 vol = lbl_eu_80668C88 - ((CVoiceSndCamView*)func_8049603C(lbl_eu_80663E14))->field_C;
-        return ((cf::CfObject*)voice)->func_800BE898(voiceId, arg,
+        return ((cf::CfObject*)voice)->requestVoice(voiceId, arg,
                                                      lbl_eu_80662CB0 * vol,
                                                      lbl_eu_80662CB4);
     }
@@ -359,7 +359,7 @@ extern "C" __declspec(noinline) int func_802A3FD4(CVoiceHandle* self) {
     // through the actor-source lookup and CfObjectMove resolution.
     res = ((CVoiceVTV*)self)->voiceTarget();
     actor = (cf::CfObjectMove*)func_800BFC68(
-        (cf::CfObjectMove*)func_800B708C(res->field_04));
+        (cf::CfObjectMove*)findObjectById(res->field_04));
     if (actor == NULL)
         return -1;
 
@@ -424,7 +424,7 @@ char_ok:
     {
         int gaugeActive = 0;
         if (func_802A77E8(self) == 3) {
-            if ((u32)cf::CfGameManager::func_800822F4() < 0x2A)
+            if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x2A)
                 gaugeActive = 1;
         }
         if (gaugeActive != 0) {
@@ -473,7 +473,7 @@ char_ok:
         }
         // Low party gauge during a chain attack shifts the line further.
         int gauge = 0;
-        if (func_802A77E8(self) == 3 && (u32)cf::CfGameManager::func_800822F4() < 0x2A)
+        if (func_802A77E8(self) == 3 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x2A)
             gauge = 1;
         if (gauge != 0) {
             if (voiceId == 0xDC1) voiceId = 0xDD5;
@@ -492,7 +492,7 @@ char_ok:
             else if (voiceId == 0xDAE) voiceId = 0xDB5;
         }
         int gauge = 0;
-        if (func_802A77E8(self) == 3 && (u32)cf::CfGameManager::func_800822F4() < 0x2A)
+        if (func_802A77E8(self) == 3 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x2A)
             gauge = 1;
         if (gauge != 0) {
             if (voiceId == 0xDAD) voiceId = 0xDB5;
@@ -591,7 +591,7 @@ char_ok:
         // (retail keeps both live ranges in r31).
         charType = 0;
         if (func_802A77E8(self) == 3) {
-            if ((u32)cf::CfGameManager::func_800822F4() < 42) {
+            if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 42) {
                 charType = 1;
             }
         }

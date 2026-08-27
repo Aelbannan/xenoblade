@@ -81,13 +81,13 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     self->field_00->field_90 = 0;
     cf::CfResObjParent* parent = self->field_00;
     parent->field_94 = 0;
-    if (((cf::CfGameManager*)parent)->func_80082900() == 0) return;
+    if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)func_80063038();
     int ok = 1;
     if (entry->field_0x2C->vfunc0C(entry) == 0) ok = 0;
     if (!ok) return;
     self->field_08 = self->field_08 + 1;
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u32 handle1 = ((cf::CfResObjImplVtIf*)self)->_v034(1);
         self->field_00->field_90 = func_80066E7C(entry, handle1);
@@ -96,9 +96,9 @@ void func_8016C98C(cf::CfResObjImpl* self) {
         func_800BBADC(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
             (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
-            cf::CfGameManager::func_80083298() != 0 &&
-            ((cf::CfResObjGm98View*)cf::CfGameManager::func_80083298())->field_98 != 0) {
-            self->field_00->field_98->_v078(((cf::CfResObjGm98View*)cf::CfGameManager::func_80083298())->field_98);
+            cf::CfGameManager::getGameSubManager() != 0 &&
+            ((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98 != 0) {
+            self->field_00->field_98->_v078(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
         }
         ((cf::CfResObjParentVtIf*)self->field_00)->_v0DC(anim);
     }
@@ -117,7 +117,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
                 (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
         }
     }
-    mtl::MemManager::func_80434A4C(true);
+    mtl::MemManager::setMemInitFlag(true);
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
     u32 handle = ((cf::CfResObjImplVtIf*)self)->_v034(1);
     u8* obj = func_80066E7C(entry, (handle & 0x07FFFFFF) | 0xF0000000);

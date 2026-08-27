@@ -6,7 +6,6 @@
 namespace cf {
 class __declspec(novtable) CHelp_OpenPartyMenu : public CHelp {
 public:
-    bool func_802B84EC();
-    bool func_802B859C();
+    bool isPartyMenuReady();
 };
 } // namespace cf

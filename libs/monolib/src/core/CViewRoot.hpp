@@ -16,7 +16,7 @@ public:
     void invalidCurrent();
     void func_80442B54();
     void func_80442C68();
-    void func_80442DA8();
+    void updateViewRoot();
     void getRootView();
     void wkStandbyLogin();
     void wkStandbyLogout();

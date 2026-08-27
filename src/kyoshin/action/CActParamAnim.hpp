@@ -729,10 +729,10 @@ public:
     void copyVec3To3C0(const float* src);
     void setVec3Y(float val);
     int checkAnimFlag();
-    float func_8004B854();
-    float func_8004B86C();
+    float getAttachedAnimTime();
+    float getAttachedAnimRate();
     void callObjUpdate();
-    float func_8004B898();
+    float getAttachedAnimScale();
     int callObjFunc(void* param);
     void* getNextChainObj();
     void setBlendFlag(int param);
@@ -741,7 +741,7 @@ public:
     void setAnimCounter(int value);
     void* getEffObj();
     void clearEffObj();
-    void func_8004C5E8();
+    void clearAnimState();
     void func_8004F884();
     void resetVec3Y();
     void setActiveFlag(s32 param);
@@ -757,16 +757,16 @@ public:
     u32 testAndClearFlag18();
     void mulVec3Y(float param_2);
     int getChainInt();
-    bool func_80053990();
-    bool func_80053998();
-    bool func_800539A0();
-    bool func_800539A8();
-    bool func_800539B0();
-    bool func_800539B8();
-    bool func_800539C0();
-    bool func_800539C8();
-    bool func_800539D0();
-    bool func_800539D8();
+    bool isAnimBlendActive();
+    bool isAnimMotionActive();
+    bool isAnimLoopActive();
+    bool isAnimChainActive();
+    bool isAnimEffectActive();
+    bool isAnimRotateActive();
+    bool isAnimScaleActive();
+    bool isAnimUpdateActive();
+    bool isAnimTransActive();
+    bool isAnimFrameActive();
 
 private:
     u8 _pad_04[0x08];      // +0x04..+0x0B
@@ -899,8 +899,8 @@ extern "C" void func_800526C0(Quaternion* out, const Vec* axis, f32 angle);
 extern "C" Quaternion* func_8005274C(Quaternion* self, const Quaternion* param);
 extern "C" void func_80052780(void* self, void* src);
 extern "C" f32 func_80484EB0(u8* obj);
-// Global-scope C++ declaration: mangles to the retail symbol func_804BC9EC__Fv.
-int func_804BC9EC();
+// Global-scope C++ declaration: mangles to the retail symbol getScnHandle__Fv.
+int getScnHandle();
 extern "C" int func_804BCC10();
 
 // Extra sdata2/sdata float constants.

@@ -6,7 +6,7 @@
 // the pool object at lbl_eu_80658540, and is initialised by sinit_8047D290.
 //
 // Retail main.dol is stripped; symbols.txt annotates every method as Fv even
-// though func_8047D178 really takes a register index argument.  That one
+// though getNodeBlock really takes a register index argument.  That one
 // function is therefore defined with extern "C" linkage using the exact retail
 // mangled name (PLAN.md §17.6 relocation-name pattern), mirroring how
 // code_8047D2AC.cpp already references it.
@@ -18,7 +18,7 @@
 
 // ------------------------------------------------------------------
 // Node object type (0x28-byte elements in the pool's node array).  The
-// methods func_8047E0B8 / func_8047E100 / func_8047E064 live in another
+// methods initScnDefaults / resetScnState / attachScnNode live in another
 // TU (code_8047D2AC.cpp) and are declared there with extern "C" linkage
 // because retail annotates them as Fv while they take register args
 // (PLAN.md §17.6 relocation-name pattern).  Keep the same layout here.
@@ -57,15 +57,15 @@ struct UnkCfgHead {
 // ------------------------------------------------------------------
 
 struct UnkClass_8047CD0C {
-    UnkClass_8047E064* func_8047CE7C();
-    void func_8047CFBC();
-    void func_8047CFD0();
-    void func_8047D024();
-    void func_8047D028();
-    void func_8047D02C();
-    void func_8047D1B0();
-    void func_8047D208();
-    void func_8047D258();
+    UnkClass_8047E064* allocFreeNode();
+    void clearPoolData();
+    void resetPoolState();
+    void refreshPoolMemory();
+    void releasePoolMemory();
+    void clearPoolFlags();
+    void freePoolAllocation();
+    void createGlobalHeap();
+    void freeGlobalHeap();
 
     u8* mData;        // 0x00 - owned allocation (freed/deallocated)
     u32 mField04;     // 0x04 - base/geometry (node-array base or a count)
@@ -85,13 +85,13 @@ struct UnkClass_8047CD0C {
 
 extern u8 lbl_eu_80658560[]; // scene manager (bss)
 
-extern "C" void func_8047E0B8__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
-extern "C" void func_8047E100__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
-extern "C" void func_8047E064__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u32 val);
+extern "C" void initScnDefaults__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
+extern "C" void resetScnState__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
+extern "C" void attachScnNode__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u32 val);
 
-extern "C" void func_8047D0F0__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" void configurePoolLayout__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       UnkClass_8047CD0C* src);
-extern "C" u8* func_8047D038__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount);
 
@@ -107,39 +107,39 @@ extern void* lbl_eu_806658C8;             // owned allocation slot (sbss)
 // Pool "clear/reset" helpers
 // ------------------------------------------------------------------
 
-// func_8047D024 -- tail-call to func_8047D208 (reallocate pool storage)
-void UnkClass_8047CD0C::func_8047D024() {
-    func_8047D208();
+// refreshPoolMemory -- tail-call to createGlobalHeap (reallocate pool storage)
+void UnkClass_8047CD0C::refreshPoolMemory() {
+    createGlobalHeap();
 }
 
-// func_8047D028 -- tail-call to func_8047D258 (release pool storage)
-void UnkClass_8047CD0C::func_8047D028() {
-    func_8047D258();
+// releasePoolMemory -- tail-call to freeGlobalHeap (release pool storage)
+void UnkClass_8047CD0C::releasePoolMemory() {
+    freeGlobalHeap();
 }
 
-// func_8047D02C -- clear flags word. noinline so the CFBC/CFD0 callers emit a
+// clearPoolFlags -- clear flags word. noinline so the CFBC/CFD0 callers emit a
 // tail-call `b` instead of inlining (retail keeps them as separate functions).
-void __declspec(noinline) UnkClass_8047CD0C::func_8047D02C() {
+void __declspec(noinline) UnkClass_8047CD0C::clearPoolFlags() {
     mFlags = 0;
 }
 
-// func_8047CFBC -- clear own data pointer, then clear pool flags
-void UnkClass_8047CD0C::func_8047CFBC() {
+// clearPoolData -- clear own data pointer, then clear pool flags
+void UnkClass_8047CD0C::clearPoolData() {
     mData = 0;
-    lbl_eu_80658540.func_8047D02C();
+    lbl_eu_80658540.clearPoolFlags();
 }
 
-// func_8047CFD0 -- hand pool storage over to D1B0/D02C, clear own state
-void UnkClass_8047CD0C::func_8047CFD0() {
-    lbl_eu_80658540.func_8047D1B0();
+// resetPoolState -- hand pool storage over to D1B0/D02C, clear own state
+void UnkClass_8047CD0C::resetPoolState() {
+    lbl_eu_80658540.freePoolAllocation();
     mField04 = 0;
     mField08 = 0;
     mData = 0;
-    lbl_eu_80658540.func_8047D02C();
+    lbl_eu_80658540.clearPoolFlags();
 }
 
-// func_8047D1B0 -- release owned allocation and reset pool fields
-void __declspec(noinline) UnkClass_8047CD0C::func_8047D1B0() {
+// freePoolAllocation -- release owned allocation and reset pool fields
+void __declspec(noinline) UnkClass_8047CD0C::freePoolAllocation() {
     if (!lbl_eu_806658C8) {
         if (mData) {
             mtl::MemManager::deallocate(mData);
@@ -150,10 +150,10 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D1B0() {
     mFlags = 0;
 }
 
-// func_8047D208 -- (re)allocate the pool storage slot. noinline so func_8047D024
+// createGlobalHeap -- (re)allocate the pool storage slot. noinline so refreshPoolMemory
 // emits a tail-call `b` rather than inlining this body. The duplicated `lbl || lbl`
 // makes MWCC CSE the null-test into one cmp + two beq (dead second branch).
-void __declspec(noinline) UnkClass_8047CD0C::func_8047D208() {
+void __declspec(noinline) UnkClass_8047CD0C::createGlobalHeap() {
     // Nested identical null-tests so MWCC emits two beq-skip branches (dead second
     // branch) before the deallocate, matching retail's double-beq shape.
     if (lbl_eu_806658C8) {
@@ -166,10 +166,10 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D208() {
         mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20);
 }
 
-// func_8047D258 -- release the pool storage slot. noinline so func_8047D028
+// freeGlobalHeap -- release the pool storage slot. noinline so releasePoolMemory
 // emits a tail-call `b` rather than inlining this body. Same duplicate-null-test
 // trick as D208 for the retail dead-beq shape.
-void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
+void __declspec(noinline) UnkClass_8047CD0C::freeGlobalHeap() {
     // Nested identical null-tests -> two beq-skip branches (dead second branch),
     // matching retail's double-beq before deallocate.
     if (lbl_eu_806658C8) {
@@ -183,7 +183,7 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
 // ------------------------------------------------------------------
 // func_8047CD0C -- constructor from a scene-config blob.
 // If the config begins with the magic 0x57504F49, adopt the node array
-// (config+0x0C), (re)size the global pool via func_8047D0F0, and attach
+// (config+0x0C), (re)size the global pool via configurePoolLayout, and attach
 // every node element to the pool.  Fv-annotated but really takes config.
 // ------------------------------------------------------------------
 
@@ -198,34 +198,34 @@ extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
     config += 0xC;
     self->mData = config;
     ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
-    func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
+    configurePoolLayout__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
                                          (UnkClass_8047CD0C*)self->mData);
     if (self->mField08 != 0) {
         i = 0;
         off = 0;
         for (; i < (s32)self->mField08; i++) {
-            func_8047E064__17UnkClass_8047E064Fv(
+            attachScnNode__17UnkClass_8047E064Fv(
                 (UnkClass_8047E064*)(self->mField04 + off), i);
             off += 0x28;
         }
     }
 }
 // ------------------------------------------------------------------
-// func_8047CDBC -- full pool setup.  Call D038 to (re)allocate the node
+// initNodePool -- full pool setup.  Call D038 to (re)allocate the node
 // storage, store the count, clear every node object, then attach them.
 // Fv-annotated but really takes (handle, size, nodeCount) in r4-r6.
 // ------------------------------------------------------------------
 
-extern "C" void func_8047CDBC__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" void initNodePool__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount) {
-    self->mField04 = (u32)func_8047D038__17UnkClass_8047CD0CFv(
+    self->mField04 = (u32)allocateNodeStorage__17UnkClass_8047CD0CFv(
         &lbl_eu_80658540, handle, size, nodeCount);
     self->mField08 = nodeCount;
     s32 i = 0;
     s32 off = 0;
     while (i < (s32)self->mField08) {
-        func_8047E100__17UnkClass_8047E064Fv(
+        resetScnState__17UnkClass_8047E064Fv(
             (UnkClass_8047E064*)(self->mField04 + off));
         off += 0x28;
         i++;
@@ -235,7 +235,7 @@ extern "C" void func_8047CDBC__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
         s32 k = 0;
         o = 0;
         while (k < (s32)self->mField08) {
-            func_8047E064__17UnkClass_8047E064Fv(
+            attachScnNode__17UnkClass_8047E064Fv(
                 (UnkClass_8047E064*)(self->mField04 + o), k);
             o += 0x28;
             k++;
@@ -244,18 +244,18 @@ extern "C" void func_8047CDBC__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 }
 
 // ------------------------------------------------------------------
-// func_8047CE7C -- find the first unowned node element, initialise it via
-// func_8047E0B8, clear its ownership flag, and return it (or NULL).
+// allocFreeNode -- find the first unowned node element, initialise it via
+// initScnDefaults, clear its ownership flag, and return it (or NULL).
 // ------------------------------------------------------------------
 
-UnkClass_8047E064* UnkClass_8047CD0C::func_8047CE7C() {
+UnkClass_8047E064* UnkClass_8047CD0C::allocFreeNode() {
     if (mData) {
         for (s32 i = 0; i < (s32)mField08; i++) {
             // Check via the strength-reduced (accumulated) pointer, but pass a
             // freshly i*0x28-computed pointer to the call so MWCC materialses
             // a mulli like retail (keeps i*0x28 in a callee-saved reg).
             if (!((((UnkClass_8047E064*)(mField04 + i * 0x28))->mFlags) & 1)) {
-                func_8047E0B8__17UnkClass_8047E064Fv(
+                initScnDefaults__17UnkClass_8047E064Fv(
                     (UnkClass_8047E064*)(mField04 + i * 0x28));
                 ((UnkClass_8047E064*)(mField04 + i * 0x28))->mFlags &= 0xff83;
                 return (UnkClass_8047E064*)(mField04 + i * 0x28);
@@ -266,11 +266,11 @@ UnkClass_8047E064* UnkClass_8047CD0C::func_8047CE7C() {
 }
 
 // ------------------------------------------------------------------
-// func_8047CF20 -- clear the ownership flag of one node element by pointer
+// releaseNode -- clear the ownership flag of one node element by pointer
 // (or of every element when target is NULL).  Fv-annotated, real arg in r4.
 // ------------------------------------------------------------------
 
-extern "C" void func_8047CF20__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" void releaseNode__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       UnkClass_8047E064* target) {
     if (!self->mData) return;
     if (target) {
@@ -290,7 +290,7 @@ extern "C" void func_8047CF20__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 }
 
 // ------------------------------------------------------------------
-// func_8047D038 -- (re)allocate the pool node storage.  If the global
+// allocateNodeStorage -- (re)allocate the pool node storage.  If the global
 // owned slot is already populated, reuse it; otherwise free the current
 // allocation and allocate a fresh block sized for `nodeCount` 0x28-byte
 // elements.  Returns the storage pointer in r3.  Fv-annotated (another
@@ -298,7 +298,7 @@ extern "C" void func_8047CF20__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
 // real `bl` to it (retail keeps it a separate function).
 // ------------------------------------------------------------------
 
-extern "C" __declspec(noinline) u8* func_8047D038__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" __declspec(noinline) u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       mtl::ALLOC_HANDLE handle,
                                                       u32 size, u32 nodeCount) {
     if (!lbl_eu_806658C8) {
@@ -323,13 +323,13 @@ extern "C" __declspec(noinline) u8* func_8047D038__17UnkClass_8047CD0CFv(UnkClas
 }
 
 // ------------------------------------------------------------------
-// func_8047D0F0 -- (re)size the pool geometry from a node header's counts:
+// configurePoolLayout -- (re)size the pool geometry from a node header's counts:
 // align a computed capacity, store it as the node-array base, and derive
 // the element stride from the leftover space.  Fv-annotated, real arg in r4.
 // noinline so the CD0C constructor emits a real `bl` to it.
 // ------------------------------------------------------------------
 
-extern "C" __declspec(noinline) void func_8047D0F0__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
+extern "C" __declspec(noinline) void configurePoolLayout__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       UnkClass_8047CD0C* src) {
     if (!(self->mFlags & 1)) return;
 
@@ -359,13 +359,13 @@ extern "C" __declspec(noinline) void func_8047D0F0__17UnkClass_8047CD0CFv(UnkCla
 }
 
 // ------------------------------------------------------------------
-// func_8047D178 -- resolve node subset pointer for an index.
+// getNodeBlock -- resolve node subset pointer for an index.
 // Declared Fv in symbols.txt, but the real code reads a register
 // index argument (index in r4), so it must keep the exact retail
 // mangled name via extern "C" (§17.6).
 // ------------------------------------------------------------------
 
-extern "C" u16* func_8047D178__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self, u32 index) {
+extern "C" u16* getNodeBlock__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self, u32 index) {
     // Success block falls through into the shared return-0 tail, matching retail's
     // compute-in-the-middle / li r3,0-at-the-end layout.
     if ((self->mFlags & 2) && self->mNodeCount > index) {

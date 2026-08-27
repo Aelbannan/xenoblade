@@ -32,7 +32,7 @@ extern "C" int func_802B5AC8(CErrMesOwner* a, CErrMesOwner* b, CErrMesOwner* c);
 // MWCC keeps the call out-of-line (retail emits `bl func_802B5148`; placing it
 // after the stub definition would inline the empty stub away).
 void func_802B4B84(CErrMesEntry* self) {
-    func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
+    lookupEffectForResource__Q22cf13CfGameManagerFv(0, 0, 0);
     self->field_0 = 0;
     self->field_4 = 0;
     self->field_8 = 0;
@@ -165,13 +165,13 @@ void func_802B4FA8(CUIErrMesWin* self) {
 }
 
 // func_802B4FE8 (us-802b7a58) - on a confirm press (A on Wii pads / X on the
-// classic controller mask when func_80086F9C reports classic), close the
+// classic controller mask when isClassicController reports classic), close the
 // embedded CSysWin and advance the state byte to 5.
 void func_802B4FE8(CUIErrMesWin* self) {
     CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(getCurrentPad__Q22cf13CfGameManagerFv());
     // Button mask: 0x10 by default; the classic-controller path uses 0x20000000.
     u32 mask = 0x10;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         mask = 0x20000000;
     }
     if (pad->field_0x4 & mask) {
@@ -223,7 +223,7 @@ extern "C" void func_802B515C(CErrMesSub* self, int flag) {
             if (id == 0) {
                 candidate = 0;
             } else {
-                void* src = func_8016FE34(func_800B708C(id));
+                void* src = func_8016FE34(findObjectById(id));
                 if (src != 0) {
                     candidate = src;
                 } else {
@@ -255,7 +255,7 @@ extern "C" __declspec(noinline) void func_802B5254(CErrMesSub* self,
 // +0x3E9C sub-object, so the record base is recovered by subtracting 0x3E9C.
 extern "C" void func_802B58A4(CErrMesSub* self) {
     u8* base;
-    CErrMesList* list = func_800B6BA4();
+    CErrMesList* list = getListB28();
     for (CErrMesListNode* node = list->sentinel->next; node != list->sentinel; node = node->next) {
         base = node->object;
         if (base != 0) base -= 0x3E9C;
@@ -287,9 +287,9 @@ int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
     // (retail keeps hA in r31, hB in r30); computed hA first (retail order).
     CErrMesVoiceHandle* hB;
     CErrMesVoiceHandle* hA = reinterpret_cast<CErrMesVoiceHandle*>(
-        func_8016FE34(func_800B708C(actorA)));
+        func_8016FE34(findObjectById(actorA)));
     hB = reinterpret_cast<CErrMesVoiceHandle*>(
-        func_8016FE34(func_800B708C(actorB)));
+        func_8016FE34(findObjectById(actorB)));
     if (hA == 0 || hB == 0) return 0;
     if (hA->isActive() != 0) return 0;
     if (hB->isActive() != 0) return 0;
@@ -448,11 +448,11 @@ void func_802B48E4(CErrMesEntry* self, CErrMesOwner* owner) {
             // conditional `addi` (no separate null materialization).
             u8* sub = reinterpret_cast<u8*>(owner);
             if (owner != 0) sub = &owner->field_0x3E9C;
-            func_80081F28__Q22cf13CfGameManagerFv(0x29, sub);
+            createBattleEffect__Q22cf13CfGameManagerFv(0x29, sub);
         } else {
             u8* sub = reinterpret_cast<u8*>(owner);
             if (owner != 0) sub = &owner->field_0x3E9C;
-            func_80081F28__Q22cf13CfGameManagerFv(0x24, sub);
+            createBattleEffect__Q22cf13CfGameManagerFv(0x24, sub);
         }
     }
 }
@@ -474,7 +474,7 @@ void func_802B4968(CErrMesEntry* self, CErrMesOwner* owner) {
     if (flag != 0) {
         if (owner->field_0x3F00 & 0x2) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
-                func_8016FE34(func_800B708C(
+                func_8016FE34(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
                         ->objectParam.CObjectParam_UnkVirtualFunc5())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps
@@ -488,11 +488,11 @@ void func_802B4968(CErrMesEntry* self, CErrMesOwner* owner) {
             if (cond == 0) {
                 u8* sub = reinterpret_cast<u8*>(owner);
                 if (owner != 0) sub = &owner->field_0x3E9C;
-                func_80081F28__Q22cf13CfGameManagerFv(0x11, sub);
+                createBattleEffect__Q22cf13CfGameManagerFv(0x11, sub);
             } else {
                 u8* sub = reinterpret_cast<u8*>(owner);
                 if (owner != 0) sub = &owner->field_0x3E9C;
-                func_80081F28__Q22cf13CfGameManagerFv(0x27, sub);
+                createBattleEffect__Q22cf13CfGameManagerFv(0x27, sub);
             }
         }
     }
@@ -515,7 +515,7 @@ void func_802B4A68(CErrMesEntry* self, CErrMesOwner* owner) {
     if (flag != 0) {
         if (owner->field_0x3F00 & 0x2) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
-                func_8016FE34(func_800B708C(
+                func_8016FE34(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
                         ->objectParam.CObjectParam_UnkVirtualFunc5())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps
@@ -529,16 +529,16 @@ void func_802B4A68(CErrMesEntry* self, CErrMesOwner* owner) {
             if (cond == 0) {
                 u8* sub = reinterpret_cast<u8*>(owner);
                 if (owner != 0) sub = &owner->field_0x3E9C;
-                func_80081F28__Q22cf13CfGameManagerFv(0x12, sub);
+                createBattleEffect__Q22cf13CfGameManagerFv(0x12, sub);
             } else {
                 u8* sub = reinterpret_cast<u8*>(owner);
                 if (owner != 0) sub = &owner->field_0x3E9C;
-                func_80081F28__Q22cf13CfGameManagerFv(0x28, sub);
+                createBattleEffect__Q22cf13CfGameManagerFv(0x28, sub);
             }
         } else {
             u8* sub = reinterpret_cast<u8*>(owner);
             if (owner != 0) sub = &owner->field_0x3E9C;
-            func_80081F28__Q22cf13CfGameManagerFv(0x25, sub);
+            createBattleEffect__Q22cf13CfGameManagerFv(0x25, sub);
         }
     }
 }

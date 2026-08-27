@@ -5,7 +5,7 @@
 
 extern "C" {
     extern void __dl__FPv(void* ptr);
-    extern u32 func_80448420__9CDeviceVIFv();
+    extern u32 getTargetFramerate__9CDeviceVIFv();
     extern const float lbl_eu_8066ABE0; // 1.0f
     extern const float lbl_eu_8066ABE4; // 0.5f
     extern const double lbl_eu_8066ABE8; // 0x4330000000000000
@@ -41,7 +41,7 @@ CScnFrame::~CScnFrame() {
 
 void CScnFrame::update() {
     if (mFlag) {
-        u32 tick = func_80448420__9CDeviceVIFv();
+        u32 tick = getTargetFramerate__9CDeviceVIFv();
         f32 factor = lbl_eu_8066ABE4 * (f32)tick;
         mElapsed = mStep * factor;
     } else {

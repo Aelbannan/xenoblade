@@ -152,8 +152,8 @@ extern "C" {
                                       u32 dtor);
 }
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
-extern void* func_800B708C(int id);
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
+extern void* findObjectById(int id);
 
 // Vtable view on the voice handle: with -RTTI a virtual declared at index N
 // sits at vtable offset (N+2)*4, so mAt2BC (index 173) lands on 0x2bc. The

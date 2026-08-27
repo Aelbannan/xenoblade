@@ -285,7 +285,7 @@ L_tail:
         if (func_80174C98(obj, &f1c, 0x1c)) {
             obj->v234();
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x04000000) == 0) {
+            if (isGlobalCamFlagSet(0x04000000) == 0) {
                 if (func_800B8C78(0x9c5)) {
                     u8 h58[8];
                     func_80043D90(h58);
@@ -353,10 +353,10 @@ L_tail:
                 }
             }
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x10000000)) {
+            if (isGlobalCamFlagSet(0x10000000)) {
                 goto L_end;
             }
-            if (func_8006EF04(0x02000000)) {
+            if (isGlobalCamFlagSet(0x02000000)) {
                 goto L_end;
             }
             u8 h50[8];
@@ -437,7 +437,7 @@ L_tail:
                 func_800EA444(cf::CBattleManager::getInstance()));
             cf::CfGameManager::getInstance();
             bool runRest = false;
-            if (func_8006EF04(0x04000000) == 0 && res != 0) {
+            if (isGlobalCamFlagSet(0x04000000) == 0 && res != 0) {
                 u32 own = self->field_18->field_3F10;
                 if (res->field_04 != own && res->field_00 != own) {
                     runRest = true;
@@ -556,7 +556,7 @@ L_end:
 void func_800C6A58(cf::CfObjectImplPc* self)
 {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x04000000)) {
+    if (isGlobalCamFlagSet(0x04000000)) {
         return;
     }
     if (func_80496288(lbl_eu_80663E14) == lbl_eu_80666BCC) {
@@ -572,7 +572,7 @@ void func_800C6A58(cf::CfObjectImplPc* self)
         // (v2BC == 0) or its +0x3F00 bit 30 is set; otherwise re-arm the
         // 0x800000 flag via the fallback path below.
         cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
-            func_8016FE34((u8*)func_800B708C((int)self->field_18->mSub.sf4C())));
+            func_8016FE34((u8*)findObjectById((int)self->field_18->mSub.sf4C())));
         if (obj != 0 && obj->mSub.v160() != 0 &&
         (obj->v2BC() == 0 || (obj->field_3F00 & 2) != 0)) {
         goto L_flags;
@@ -635,7 +635,7 @@ L_flags:
             reinterpret_cast<cf::CfObjectImplPc18*>(
                 func_800BFC68(cf::CfGameManager::getPlayer(0)));
         cf::CfObjectImplPc18* tgt = reinterpret_cast<cf::CfObjectImplPc18*>(
-            func_8016FE34((u8*)func_800B708C((int)player->mSub.sf4C())));
+            func_8016FE34((u8*)findObjectById((int)player->mSub.sf4C())));
         if (tgt != 0 && tgt->v2BC() == 0) {
             u32 tid = *tgt->field_04->vf30();
             if (func_80174C98(tgt, &tid, 0x100000) != 0) {
@@ -766,25 +766,25 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
     u8 mode = param->field_0A;
     if (mode == 0) {
         cf::CfObjectImplPcEffObj* mgr = (cf::CfObjectImplPcEffObj*)
-            func_8008187C__Q22cf13CfGameManagerFv(param->field_0C);
+            createNpcActor__Q22cf13CfGameManagerFv(param->field_0C);
         if (mgr == 0) {
             return;
         }
-        func_800ACF78(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
+        bindPartnerO_(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
         mgr->vf194(bit7);
         if (self->field_14->field_98 != 0) {
-            func_800ACEF8(mgr, (u8*)self->field_14->field_98 + 0x304);
+            setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
         }
     } else if (mode == 2) {
         cf::CfObjectImplPcEffObj* mgr = (cf::CfObjectImplPcEffObj*)
-            func_800817BC__Q22cf13CfGameManagerFv(param->field_0C, 0);
+            createBattleActor__Q22cf13CfGameManagerFv(param->field_0C, 0);
         if (mgr == 0) {
             return;
         }
-        func_800ACF78(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
+        bindPartnerO_(mgr, actor != 0 ? (u8*)&actor->mSub : 0, child);
         mgr->vf194(bit7);
         if (self->field_14->field_98 != 0) {
-            func_800ACEF8(mgr, (u8*)self->field_14->field_98 + 0x304);
+            setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
         }
     } else if (mode == 1) {
         cf::CfObjectImplPcEffObj* mgr = 0;
@@ -801,10 +801,10 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
                     if (actor != 0) {
                         actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                     }
-                    func_800ACF78(mgr, actor, child);
+                    bindPartnerO_(mgr, actor, child);
                     mgr->vf194(bit7);
                     if (self->field_14->field_98 != 0) {
-                        func_800ACEF8(mgr, (u8*)self->field_14->field_98 + 0x304);
+                        setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
                     }
                 }
             } else if (res == 0 && actor->field_3F28 == 6 &&
@@ -814,10 +814,10 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
                     if (actor != 0) {
                         actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                     }
-                    func_800ACF78(mgr, actor, child);
+                    bindPartnerO_(mgr, actor, child);
                     mgr->vf194(bit7);
                     if (self->field_14->field_98 != 0) {
-                        func_800ACEF8(mgr, (u8*)self->field_14->field_98 + 0x304);
+                        setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
                     }
                 }
             } else {
@@ -829,10 +829,10 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
                 if (actor != 0) {
                     actor = (cf::CfObjectImplPc18*)((u8*)actor + 0x3E9C);
                 }
-                func_800ACF78(mgr, actor, child);
+                bindPartnerO_(mgr, actor, child);
                 mgr->vf194(bit7);
                 if (self->field_14->field_98 != 0) {
-                    func_800ACEF8(mgr, (u8*)self->field_14->field_98 + 0x304);
+                    setChild34Sc_(mgr, (u8*)self->field_14->field_98 + 0x304);
                 }
             }
         }
@@ -849,7 +849,7 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
             for (u32 j = 0; j < 8; j++) {
                 if (p[j] == (u32)list->field_04) {
                     actor = (cf::CfObjectImplPc18*)
-                        func_8016FE34((u8*)func_800B708C((int)list->field_04));
+                        func_8016FE34((u8*)findObjectById((int)list->field_04));
                     resolved = true;
                     break;
                 }
@@ -860,7 +860,7 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
             for (u32 i = 0; i < 16; i++) {
                 if (list->entries[i] != 0) {
                     actor = (cf::CfObjectImplPc18*)
-                        func_8016FE34((u8*)func_800B708C((int)list->entries[i]));
+                        func_8016FE34((u8*)findObjectById((int)list->entries[i]));
                     break;
                 }
             }
@@ -875,9 +875,9 @@ void func_800C70BC(cf::CfObjectImplPc* self, u32 id, CfObjectImplPcEvt* param)
             }
         }
         if (actor != 0) {
-            func_800ACFD8(mgr, actor != 0 ? (u8*)&actor->mSub : 0);
+            setTargetObj_(mgr, actor != 0 ? (u8*)&actor->mSub : 0);
             if (actor->field_3F34 != 0) {
-                func_800ACEF8(mgr, (u8*)actor->field_3F34 + 0x304);
+                setChild34Sc_(mgr, (u8*)actor->field_3F34 + 0x304);
             }
         }
         mgr->vf194(bit7);
@@ -1070,7 +1070,7 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
         func_801BFE8C(0, 0x1bb, 0);
         break;
     case 17:
-        cf::CfSoundMan::func_801BFC38(0, 0x1bb, 0, 0, lbl_eu_80666BC8);
+        cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666BC8);
         break;
     case 6:
         if (self->field_18->field_3F60 != 0 &&
@@ -1137,7 +1137,7 @@ void func_800C86E8(cf::CfObjectImplPc* self)
         self->field_18->mSub.sf50(listId);
         if (self->field_18->mSub.sf4C() == 0) {
             cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)func_8016FE34(
-                (u8*)func_800B708C((int)func_800BFC68(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
+                (u8*)findObjectById((int)func_800BFC68(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
             if (pobj == 0) {
                 return;
             }
@@ -1184,10 +1184,10 @@ void func_800C891C(cf::CfObjectImplPc* self)
     // the id stored in the global record returned by func_800FE68C.
     cf::CfObjectImplPc18* actor = reinterpret_cast<cf::CfObjectImplPc18*>(
         func_8016FE34(
-            (u8*)func_800B708C((int)self->field_18->mSub.sf4C())));
+            (u8*)findObjectById((int)self->field_18->mSub.sf4C())));
     if (actor == 0) {
         actor = reinterpret_cast<cf::CfObjectImplPc18*>(func_8016FE34((u8*)
-            func_800B708C(
+            findObjectById(
                 (int)reinterpret_cast<cf::CfObjectImplPcFe68C*>(func_800FE68C())
                     ->field_90E4)));
         if (actor == 0) {
@@ -1675,7 +1675,7 @@ void func_800CA104(cf::CfObjectImplPc* self, u32 param)
 {
     cf::CfGameManager::getInstance();
     // Retail loads lis r3, 0x400 -> the flag word passed is 0x04000000.
-    if (func_8006EF04(0x04000000) != 0) {
+    if (isGlobalCamFlagSet(0x04000000) != 0) {
         return;
     }
     switch (param - 0xea) {
@@ -1750,7 +1750,7 @@ int func_800CA294(cf::CfObjectImplPc* self)
         self->field_18->mSub.sf208(0x11);
         self->field_18->mSub.sf204(0x11, 0, -1, 0, 0);
         if (v == 0) {
-            cf::CfSoundMan::func_801BFC38(0, 0x5c, 0, 0, lbl_eu_80666BC8);
+            cf::CfSoundMan::playActorSound(0, 0x5c, 0, 0, lbl_eu_80666BC8);
         }
         __dt__80043E88(holder, -1);
         return 1;
@@ -1779,7 +1779,7 @@ void func_800CA458(cf::CfObjectImplPc* self)
     func_800CEBE0(self);
     self->field_18->field_3F60->field_0C |= 0x400000;
     if (self->field_14->field_8C == 8) {
-        if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x167) {
+        if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
             self->field_14->field_98->vf28((const char*)(lbl_eu_804FC758 + 0x3b), 0);
         }
     }
@@ -1803,7 +1803,7 @@ extern "C" void func_800CA4E4(void* self)
 // token gate, dispatches on the ASCII command name in the event record
 // (+0x1C) against offsets into the string table at lbl_eu_804FC758. Each
 // command drives a different mix of actor refresh (func_8016FE34 of
-// func_800B708C over field_3E5C), battle-manager notifications, arts
+// findObjectById over field_3E5C), battle-manager notifications, arts
 // queries and status-effect structs. Every exit shares one tail that
 // replays the landing sound for battle state 4.
 void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
@@ -1848,7 +1848,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             // Actor refresh; retail duplicates the F3970 notify (once in the
             // non-idle branch, once unconditionally).
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)func_800B708C(
+                func_8016FE34((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -1864,7 +1864,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             }
             func_800F3970(cf::CBattleManager::getInstance(), self->field_18,
                           res, 6, 0);
-            func_80082568__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
             u32 f6 = *res->field_04->vf30();
             bool hit = func_80174C98(res, &f6, 6) != 0;
@@ -1921,7 +1921,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             }
             s32 out60;
             if (func_80260264(self->field_18->vf290(), 0x60, &out60)) {
-                func_80082568__Q22cf13CfGameManagerFv(
+                addTableValueWithClamp__Q22cf13CfGameManagerFv(
                     self->field_18->field_3F28, res->field_3F28, (u32)out60);
             }
             break;
@@ -1931,7 +1931,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             // Like +7 but drives the arts container with ids 9 / 0xb and
             // notifies with kind 7 (no duplicated call, no query ladder).
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)func_800B708C(
+                func_8016FE34((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -1945,7 +1945,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             } else {
                 res->v314();
             }
-            func_80082568__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
             break;
         }
@@ -1953,7 +1953,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
         if (strcmp(cmd, lbl_eu_804FC758 + 0x12) == 0) {
             // Same shape as +0xC minus the arts dispatch, slot 0x5AC.
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)func_800B708C(
+                func_8016FE34((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -1965,7 +1965,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             } else {
                 res->v314();
             }
-            func_80082568__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
             break;
         }
@@ -1974,11 +1974,11 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
             // Fixed-damage command: 100 HP scaled down by the 0x7a query,
             // pushed into the party gauge block at CBattleManager+0x194.
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x04000000)) {
+            if (isGlobalCamFlagSet(0x04000000)) {
                 break;
             }
             cf::CfObjectImplPc18* res = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)func_800B708C(
+                func_8016FE34((u8*)findObjectById(
                     (int)self->field_18->field_3380.field_ADC)));
             if (res == 0 || (res->field_3F00 & 0x40000000) == 0) {
                 break;
@@ -1997,7 +1997,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                 }
             }
             func_8018C820(&cf::CBattleManager::getInstance()->unk194, -dmg);
-            func_80082568__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
+            addTableValueWithClamp__Q22cf13CfGameManagerFv(self->field_18->field_3F28,
                                                    res->field_3F28, 0x14);
             func_802A2A74(self->field_18, res);
             func_802809C8();
@@ -2014,7 +2014,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                 break;
             }
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x04000000)) {
+            if (isGlobalCamFlagSet(0x04000000)) {
                 break;
             }
             f32 total = lbl_eu_80666BEC;
@@ -2061,7 +2061,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                 break;
             }
             cf::CfObjectImplPc18* obj = reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_8016FE34((u8*)func_800B708C(
+                func_8016FE34((u8*)findObjectById(
                     (int)((cf::CfObjectImplPc18*)dc)->vFC())));
             if (obj == 0) {
                 break;

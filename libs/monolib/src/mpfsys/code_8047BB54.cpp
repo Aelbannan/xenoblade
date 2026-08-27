@@ -60,7 +60,7 @@ struct MPFDrawSingletonTable {
 };
 extern MPFDrawSingletonTable lbl_eu_806584E8;
 
-// Global scratch draw context returned by func_8047C034 (retail .bss
+// Global scratch draw context returned by getMpfStatus (retail .bss
 // 0x80658500, 0x18 bytes). func_8047C588 / func_8047C904 fill it from the
 // map descriptor before issuing the per-layer draw calls.
 
@@ -152,7 +152,7 @@ class CView;
 // Forward declarations of this TU's target functions (defined below with C
 // linkage so the retail names stay verbatim at call sites).
 extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB);
-extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv(
+extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
     nw4r::g3d::ScnProc* proc, bool opa);
 extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
     UnkDrawObj* obj, UnkDesc8047BB54* desc, void* a5, void* a6, void* a7,
@@ -166,20 +166,20 @@ extern "C" void func_8047C904__17UnkClass_8047BB54Fv(
 // actually receive extra args; declaring them with the exact mangled name
 // (global scope keeps the name verbatim) matches the call-site relocs.
 // ---------------------------------------------------------------------------
-extern "C" int func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(
+extern "C" int tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
-extern "C" void* func_80471FCC__Q26mpfsys17UnkClass_80471EC8Fv(
+extern "C" void* submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, void* a6, u32 a7);
 extern "C" void func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, void* a4, void* a5, u32 a6);
-extern "C" void func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(
+extern "C" void setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
     mpfsys::UnkClass_80471EC8* self, f32 f1);
 extern "C" void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
     void* self, void* a4, void* a5, void* a6, void* a7, u32 a8);
-extern "C" void func_80474EB0__Q26mpfsys17UnkClass_80471EC8Fv();
-extern "C" void func_8047958C__Q26mpfsys18MPFDrawDisplayListFv(
+extern "C" void resetTevSwap__Q26mpfsys17UnkClass_80471EC8Fv();
+extern "C" void setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
-extern "C" void func_804795A4__Q26mpfsys18MPFDrawDisplayListFv(
+extern "C" void setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
     mpfsys::MPFDrawDisplayList* self, void* arg);
 extern "C" void* func_8048ECEC(CScn* self);
 extern "C" u32 func_8048ECD0(CScn* self);
@@ -192,7 +192,7 @@ extern "C" void* func_8049626C(void* camera, CView* view);
 
 // .sdata2 float for the layer-scale setup (func_8047230C).
 extern const f32 lbl_eu_8066A858;
-// Embedded subobject pointer cache (this+0x24) written by func_8047BE8C.
+// Embedded subobject pointer cache (this+0x24) written by initMpfDrawBuffer.
 extern void* lbl_eu_80665838;
 // Draw-description VEC3 buffers handed to func_8047CC4C (retail .bss).
 extern f32 lbl_eu_80658410[3];
@@ -221,27 +221,27 @@ extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx);
 // (same pattern as CNBanner.cpp).
 extern "C" void __dl__FPv(void* p);
 
-extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallA__17UnkClass_8047BB54Fv(u8* self) {
+    ((void(*)(void*))setColorMode__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
 }
 
-extern "C" void func_8047BD7C__17UnkClass_8047BB54Fv(u8* self, float val) {
+extern "C" void setMpfFloatParam__17UnkClass_8047BB54Fv(u8* self, float val) {
     *(float*)((u8*)self + 0x2e14) = val;
 }
 
-extern "C" void func_8047BD8C__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))func_8047233C__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallB__17UnkClass_8047BB54Fv(u8* self) {
+    ((void(*)(void*))clearFlag__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
 }
 
-extern "C" void func_8047BD94__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))func_80472370__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void forwardMpfCallC__17UnkClass_8047BB54Fv(u8* self) {
+    ((void(*)(void*))setFlag__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
 }
 
 extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj);
-void UnkClass_8047BB54::func_8047BD9C(void) { __dt__8047BDA8(this); }
+void UnkClass_8047BB54::resetMpfInstance(void) { __dt__8047BDA8(this); }
 
-extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(u8* self) {
-    ((void(*)(void*))func_80472864__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+extern "C" void flushMpfBuffer__17UnkClass_8047BB54Fv(u8* self) {
+    ((void(*)(void*))markDirty__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
 
 }
 
@@ -299,7 +299,7 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
 }
 
 extern u8 lbl_eu_80658500[];
-void* UnkClass_8047BB54::func_8047C034(void) { return lbl_eu_80658500; }
+void* UnkClass_8047BB54::getMpfStatus(void) { return lbl_eu_80658500; }
 
 // ---------------------------------------------------------------------------
 // func_8047C040 helpers (retail keeps the Fv mangling but the function
@@ -490,23 +490,23 @@ extern "C" void func_8047C040__17UnkClass_8047BB54Fv(void* self, void* ptr,
 // UnkClass_80471EC8 to (re)attach the descriptor + ResFile, and on success
 // allocate the draw buffer, create the ScnProc callback node and append it
 // to the scene root group.
-extern "C" int func_8047BB54__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
+extern "C" int initMpfSystem__17UnkClass_8047BB54Fv(UnkClass_8047BB54* self,
                                          UnkDesc8047BB54* desc,
                                          CScn* cscn, u32 a6) {
     UnkClass_8047BB54Layout* layout = (UnkClass_8047BB54Layout*)self;
     __dt__8047BDA8(self);
-    if (func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(
+    if (tryAttach__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, desc,
             &layout->mResFile, cscn, a6) != 0) {
         layout->field_0xC = desc;
         layout->field_0x10 = 0x15;
         __dt__8047BC74(self, 0x96000, 0x64000);
-        func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(
+        setLayerScale__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)layout->gap_0x24, lbl_eu_8066A858);
         u32 size;
         nw4r::g3d::ScnProc* proc = nw4r::g3d::ScnProc::Construct(
             (MEMAllocator*)func_8048ECEC(cscn), &size,
-            &func_8047BE8C__17UnkClass_8047BB54Fv, true, true, 0);
+            &initMpfDrawBuffer__17UnkClass_8047BB54Fv, true, true, 0);
         layout->field_0x2E38 = proc;
         proc->SetUserData(self);
         nw4r::g3d::ScnObj* procCopy =
@@ -557,7 +557,7 @@ extern "C" void __dt__8047BC74(UnkClass_8047BB54* self, u32 sizeA, u32 sizeB) {
 // ScnProc draw callback: gate on the ResFile/active flag bits and the scene
 // gate byte, then forward into the per-layer draws (func_8047C588 for opa,
 // func_8047C904 for xlu).
-extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv(
+extern "C" void initMpfDrawBuffer__17UnkClass_8047BB54Fv(
     nw4r::g3d::ScnProc* proc, bool opa) {
     CView* view;
     void* vf;
@@ -571,18 +571,18 @@ extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv(
     vf = func_8049626C(func_8049698C(view), view);
     lbl_eu_80665838 = (u8*)self + 0x24;
     if (opa) {
-        void* frame = func_80471FCC__Q26mpfsys17UnkClass_80471EC8Fv(
+        void* frame = submitDraw__Q26mpfsys17UnkClass_80471EC8Fv(
             (mpfsys::UnkClass_80471EC8*)self->gap_0x24, self->field_0xC,
             self->field_0x14, self->field_0x18, (self->field_0x10 >> 4) & 1);
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
-        void* obj = func_8047C034__17UnkClass_8047BB54Fv(frame);
+        void* obj = getMpfStatus__17UnkClass_8047BB54Fv(frame);
         func_8047C588__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
             ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     } else {
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
-        void* obj = func_8047C034__17UnkClass_8047BB54Fv(vf);
+        void* obj = getMpfStatus__17UnkClass_8047BB54Fv(vf);
         func_8047C904__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
@@ -615,10 +615,10 @@ extern "C" void func_8047C904__17UnkClass_8047BB54Fv(
     }
     if (desc->field_0x10) {
         mpfsys::MPFDrawDisplayList* dl = mpfsys::MPFDrawDisplayList::getInstance();
-        func_804795A4__Q26mpfsys18MPFDrawDisplayListFv(
+        setColorDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
             dl, (u8*)obj->field_0x0 + desc->field_0x10);
     }
-    func_80474EB0__Q26mpfsys17UnkClass_80471EC8Fv();
+    resetTevSwap__Q26mpfsys17UnkClass_80471EC8Fv();
 }
 
 // --- Target 5: us-80480558 ---------------------------------------------------
@@ -648,7 +648,7 @@ extern "C" void func_8047C588__17UnkClass_8047BB54Fv(
         lbl_eu_80658410, (nw4r::math::VEC3*)lbl_eu_8065841C, slot->field_0x10);
     if (desc->field_0x10) {
         mpfsys::MPFDrawDisplayList* dl = mpfsys::MPFDrawDisplayList::getInstance();
-        func_8047958C__Q26mpfsys18MPFDrawDisplayListFv(
+        setPlainDrawNode__Q26mpfsys18MPFDrawDisplayListFv(
             dl, (u8*)obj->field_0x0 + desc->field_0x10);
     }
     if (desc->field_0x28 && (desc->field_0x30 & 1)) {
@@ -680,7 +680,7 @@ void sinit_8047CA2C() {
 // [.bss] 0x806584E8-0x80658518 (0x30 = 48B): singleton draw-object table
 // (6 pointers) + scratch draw context (0x18).
 MPFDrawSingletonTable lbl_eu_806584E8;
-u8 lbl_eu_80658500[0x18];  // (FORCEACTIVE retired: returned by func_8047C034)
+u8 lbl_eu_80658500[0x18];  // (FORCEACTIVE retired: returned by getMpfStatus)
 
 // [.sdata] 0x806638A0-0x806638A8 (8B): 1/3.0f + zero pad (retail raw words).
 extern "C" f32 lbl_eu_806638A0[2] = { 0.33333334f, 0.0f };
@@ -692,11 +692,11 @@ u32 lbl_eu_806658B8pad;  // (FORCEACTIVE retired: .sbss tail needs no anchor)
 // --- Target 1: us-8047fc24 ---------------------------------------------------
 // Gate on two flag bits; when both are set, forward into the embedded
 // subobject at +0x24 (tail call).
-void UnkClass_8047BB54::func_8047BC54() {
+void UnkClass_8047BB54::checkMpfFlags() {
     UnkClass_8047BB54Layout* self = (UnkClass_8047BB54Layout*)this;
     u32 flags = self->field_0x10;
     if ((flags & 1) == 0) return;
     if ((flags & 4) == 0) return;
-    ((mpfsys::UnkClass_80471EC8*)self->gap_0x24)->func_80471FC8();
+    ((mpfsys::UnkClass_80471EC8*)self->gap_0x24)->update();
 }
 

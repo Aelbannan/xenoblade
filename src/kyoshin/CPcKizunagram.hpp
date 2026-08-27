@@ -46,7 +46,7 @@ public:
     int OnFileEvent(CEventFile* event);
 };
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 bound into the layout's font pane.
 // All-pure so no vtable is emitted; the call keeps the retail r12 dispatch.
 class CDeviceFontVtblView {
@@ -246,11 +246,11 @@ extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAcc
     nw4r::lyt::Layout** dst, nw4r::lyt::ArcResourceAccessor* acc, const char* name);
 extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* lay, nw4r::lyt::AnimTransform** dst, nw4r::lyt::ArcResourceAccessor* acc, char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
     nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void func_8013676C(void*, u32);
 

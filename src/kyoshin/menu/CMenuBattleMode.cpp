@@ -237,7 +237,7 @@ void CMenuBattleMode::Move() {
     // so MWCC emits retail's branch-over-branch: `bne end` for the first
     // disjunct, `beq run; b end` for the second (CMenuGameClear idiom,
     // MWCC_CASES section on &&-gate branch-over-branch).
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto run;
     }
@@ -249,7 +249,7 @@ run:
         return;
     }
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0xafa40000)) {
+    if (isGlobalCamFlagSet__Fi(0xafa40000)) {
         return;
     }
 
@@ -318,7 +318,7 @@ void CMenuBattleMode::cbRenderBefore() {
     // so MWCC emits retail's branch-over-branch: `bne end` for the first
     // disjunct, `beq draw; b end` for the second (CMenuGameClear idiom,
     // MWCC_CASES section on &&-gate branch-over-branch).
-    if (CTaskGame::func_800426F0() == 0 &&
+    if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto draw;
     }
@@ -330,7 +330,7 @@ draw:
         return;
     }
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0xafa40000)) {
+    if (isGlobalCamFlagSet__Fi(0xafa40000)) {
         return;
     }
     if (mState == 0) {

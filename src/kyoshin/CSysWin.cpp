@@ -142,7 +142,7 @@ extern "C" void func_8022C258(CSysWin* self) {
 #pragma dont_inline on
 extern "C" void func_8022C2A4(CSysWin* self) {
     if (self->field_38 >= 5) return;
-    if (self->field_39 == (u32)func_80086F9C__Q22cf13CfGameManagerFv(-1)) return;
+    if (self->field_39 == (u32)isClassicController__Q22cf13CfGameManagerFv(-1)) return;
     func_8022BFC8(self, self->field_38);
 }
 #pragma dont_inline off
@@ -240,7 +240,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     mMemRegion.createRegion(handle, 0x3000, &lbl_eu_8050A478[0x10f], 1);
     Class_8045F858 regionGuard(&mMemRegion);
     u8* archive = reinterpret_cast<u8*>(mFileHandle->getData());
-    mtl::MemManager::func_80434A4C(false);
+    mtl::MemManager::setMemInitFlag(false);
     CTagProcessor* tag = (CTagProcessor*)mtl::MemManager::allocate(
         0x858, getAllocHandle__10CLibLayoutFv());
     if (tag != 0) {
@@ -252,7 +252,7 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     func_80136E84(&mLayout, mArcAccessor, &lbl_eu_8050A478[0x11b]);
     func_80136F08(mLayout, &mAnimTrans, mArcAccessor, &lbl_eu_8050A478[0x134]);
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u8* font = (u8*)CDeviceFont::func_80452C10(1, mLayout);
+    u8* font = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     typedef u32 (*FontVFn)(void*);
     u32 fontRes = (*reinterpret_cast<FontVFn**>(font))[0x24 / 4](font);
     func_8013676C(rootPane, fontRes);
@@ -313,7 +313,7 @@ extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 // us-8022d62c - tear down the window layout and free its resources.
 // The `if (x != 0) { delete x; x = 0; }` shape reproduces retail's double-beq
-// prologue check (same as CBattery::func_802B9364).
+// prologue check (same as CBattery::releaseLayout).
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_8022B7F4(CSysWin* self) {
@@ -548,7 +548,7 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind) {
     char* str = func_80136190(&lbl_eu_8050A478[0x8d], &lbl_eu_8050A478[0x9b], idx);
     func_80136B4C(self->mLayout, &lbl_eu_8050A478[0xa0], str, 0);
     func_80136B4C(self->mLayout, &lbl_eu_8050A478[0xac], str, 0);
-    u32 gm = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+    u32 gm = isClassicController__Q22cf13CfGameManagerFv(-1);
     self->field_39 = (u8)gm;
     u16 keyVal = func_8013606C(
         &lbl_eu_8050A478[0x8d],

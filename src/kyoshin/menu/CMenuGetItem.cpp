@@ -223,7 +223,7 @@ void CMenuGetItem::Init() {
 
         // Bind the font: push the font object's pane back onto the root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
         func_8013676C(rootPane, fontResult);
 
@@ -323,7 +323,7 @@ void CMenuGetItem::cbRenderBefore() {
     CTaskGame::getInstance();
     // Combined short-circuit produces retail's double branch for the bit-21
     // gate (bne return; beq continue; b return) - same shape as CMenuGCItem::Move.
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & (1u << 21))) {
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & (1u << 21))) {
         return;
     }
     if (!func_8013BE50()) {
@@ -332,7 +332,7 @@ void CMenuGetItem::cbRenderBefore() {
     if (lbl_eu_80663E24 & 0xbfe40000u) {
         return;
     }
-    if (cf::CfGameManager::func_800829B8()) {
+    if (cf::CfGameManager::isSceneLoading()) {
         return;
     }
 

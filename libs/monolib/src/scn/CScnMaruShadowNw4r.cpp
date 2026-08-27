@@ -170,7 +170,7 @@ void func_8048D500(CScnMaruShadowNw4r* self, ShadowCtx* ctx) {
     if ((flags & 1) == 0 || (flags & 0x40) != 0) {
         return;
     }
-    func_804BC9EC();
+    getScnHandle();
     if (func_804BCC10() == 0 || ctx == NULL) {
         return;
     }

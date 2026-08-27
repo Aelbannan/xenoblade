@@ -51,7 +51,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuBattlePlayerState::Move` (`asm_Move_CMenuBattlePlayerState.s`) **NEW**
 - Frame `-0xc0` + paired floats f26–f31 + `_savegpr_20`
-- Same gate family as other HUD Moves: `CTaskGame::getInstance` / `func_800426F0` / `lbl_eu_80663E28` bit / `func_8013BE50` / mask
+- Same gate family as other HUD Moves: `CTaskGame::getInstance` / `isFlag01Set` / `lbl_eu_80663E28` bit / `func_8013BE50` / mask
 - Large body: party slot walk, HP/tension/status updates, layout pane sizing — follow full asm
 - Extend hpp with fields `Move` needs; **do not** edit `Term` or `cbRenderBefore`
 - Prefer PTGauge/Enemy gate pattern (§17.6 single-insn `b done` if MWCC collapses `rlwinm.`/`beq`/`b`)

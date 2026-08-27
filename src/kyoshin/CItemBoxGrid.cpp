@@ -62,10 +62,10 @@ void func_801CDB94(void*, u32);
 }
 void func_801CB9D8(u32*, void*, u32);
 void func_801CBA04(void*);
-void func_8003AA8C__5CBdatFUl(u32);
+void getEntry__5CBdatFUl(u32);
 void func_801390E0__FPP11CFileHandle(void**);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-void func_8045F778__17UnkClass_8045F564Fv(void*);
+void deleteRegion__17UnkClass_8045F564Fv(void*);
 void func_8022B7F4(void*);
 void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
 void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
@@ -2794,8 +2794,8 @@ void func_801CAE9C(void* self, int r4) {
     u8* p = (u8*)self;
 
     if (p[0x543]) {
-        func_8003AA8C__5CBdatFUl(2);
-        func_8003AA8C__5CBdatFUl(5);
+        getEntry__5CBdatFUl(2);
+        getEntry__5CBdatFUl(5);
     }
 
     func_801390E0__FPP11CFileHandle((void**)(p + 0x28));
@@ -2825,8 +2825,8 @@ void func_801CAE9C(void* self, int r4) {
         *(u32*)(p + 0x5c) = 0;
     }
 
-    func_8045F778__17UnkClass_8045F564Fv(p + 0x8);
-    func_8045F778__17UnkClass_8045F564Fv(p + 0x18);
+    deleteRegion__17UnkClass_8045F564Fv(p + 0x8);
+    deleteRegion__17UnkClass_8045F564Fv(p + 0x18);
 
     ((CItemBoxObjVt0C*)(p + 0x70))->_v0C();
     ((CItemBoxObjVt0C*)(p + 0x88))->_v0C();
@@ -4353,7 +4353,7 @@ __declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch tabl
         char* subMsg = 0;   // optional second dialog line
         u32 showDetail = 0;
 
-        if (func_8008235C__Q22cf13CfGameManagerFv(nameIdx & 0xFF)) {
+        if (isResourceFlagSet__Q22cf13CfGameManagerFv(nameIdx & 0xFF)) {
             u8* save = (u8*)func_8009EC9C(nameIdx & 0xFF);
             u32 cnt = func_800A32BC() & 0xFF;
             // Per-(character, slot) record in the collection-save area.
@@ -5707,7 +5707,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     u32* fileData = *(u32**)(p + 0x28);
     void* fileBuf = (void*)fileData[1];
     fileData[1] = 0;
-    func_80434A4C__Q23mtl10MemManagerFb(0);
+    setMemInitFlag__Q23mtl10MemManagerFb(0);
     void* allocHandle = getAllocHandle__10CLibLayoutFv();
     void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, (u32)allocHandle);
     if (tpMem != NULL) __ct__CTagProcessor(tpMem);
@@ -5726,7 +5726,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         layout, (nw4r::lyt::AnimTransform**)(p + 0x50), arcRes, (char*)&lbl_eu_8050566C[0x6a8]);
     // Pane lookups go through the root-pane host object at Layout+0x10.
     CItemPaneObjVt* paneHost = *(CItemPaneObjVt**)((char*)layout + 0x10);
-    void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
+    void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
     void* fontData = ((CibgFontVt24*)font)->_v24();
     func_8013676C(paneHost, (u32)fontData);
     u32 screenW = (u32)func_801355A0__Fv();
@@ -5757,7 +5757,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     func_80136B4C(layout, (char*)&lbl_eu_8050566C[0x642], (char*)&lbl_eu_8050566C[0x3af], 0);
     // Mode-dependent help texture.
     const char* modeStr = &lbl_eu_8050566C[0x6e6];
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1)) modeStr = &lbl_eu_8050566C[0x6dd];
+    if (isClassicController__Q22cf13CfGameManagerFv(-1)) modeStr = &lbl_eu_8050566C[0x6dd];
     u16 msgKey = func_8013606C(&lbl_eu_8050566C[0x6ef], modeStr, 0x49);
     u32 msgId = (u32)func_80138F78(msgKey);
     void* sysWin = func_801355F4();
@@ -5889,7 +5889,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     }
     func_801CEC80(self);
     *(u32*)(p + 0x28) = 0;
-    func_8045F810__17UnkClass_8045F564Fv(p + 8);
+    validateHeap__17UnkClass_8045F564Fv(p + 8);
     __dt__14Class_8045F858Fv(regionBuf, -1);
     return 1;
     }
@@ -5902,13 +5902,13 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         u32* fileData = *(u32**)(p + 0x2c);
         void* fileBuf = (void*)fileData[1];
         fileData[1] = 0;
-        func_80434A4C__Q23mtl10MemManagerFb(0);
+        setMemInitFlag__Q23mtl10MemManagerFb(0);
         nw4r::lyt::ArcResourceAccessor* arcRes = createArcResourceAccessor__10CLibLayoutFv();
         *(nw4r::lyt::ArcResourceAccessor**)(p + 0x40) = arcRes;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
         func_801CEC80(self);
         *(u32*)(p + 0x2c) = 0;
-        func_8045F810__17UnkClass_8045F564Fv(p + 0x18);
+        validateHeap__17UnkClass_8045F564Fv(p + 0x18);
         __dt__14Class_8045F858Fv(regionBuf, -1);
         return 1;
     }

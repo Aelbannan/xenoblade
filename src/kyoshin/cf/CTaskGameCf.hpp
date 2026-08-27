@@ -84,7 +84,7 @@ extern "C" void init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs(CScnNw4r* scene, C
 // Alias so the call site reads cleanly next to the other manager setup calls.
 #define UnkClass_8007DAE0_init init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs
 extern "C" void* __ct__800FDB4C();
-extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool arg);
+extern "C" void setPauseMode__Q22cf13CfGameManagerFv(bool arg);
 extern "C" void func_8013CFDC(void* self, CScnNw4r* pScene, u32 memHandle);
 extern "C" void func_8012F558(void* self, CScnNw4r* pScene, s32 memHandle);
 extern "C" void func_801336E4(CProcess* pParent, CScnNw4r* pScene, s32 memHandle);

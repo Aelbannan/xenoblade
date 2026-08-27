@@ -194,8 +194,8 @@ extern const u8 lbl_eu_8052E61C[0x10];
 // the 0x608 window path of func_8013CBB4.
 
 // Actor id -> actor object lookup (plain decl so the call reloc binds to the
-// C++-mangled retail symbol func_800B708C__Fi).
-void* func_800B708C(int id);
+// C++-mangled retail symbol findObjectById__Fi).
+void* findObjectById(int id);
 
 // C-ABI imports used by func_8013CBB4.
 extern "C" {
@@ -205,7 +205,7 @@ u8 func_8013600C(const void* tbl, const void* key, u32 idx);
 void func_8013B88C(u8 v);
 }
 
-// func_800B708C result view used by the 0x608 window path: +0x64 flags word
+// findObjectById result view used by the 0x608 window path: +0x64 flags word
 // (bit 28 = show-talk-target) and +0x8C id handed to func_8009ECD0.
 struct CActorFlagsView {
     u8 _00[0x64];

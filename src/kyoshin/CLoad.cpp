@@ -53,7 +53,7 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
         // then flush the MEM2 allocator state before building resources.
         void* data = mFileHandle->mData;
         mFileHandle->mData = nullptr;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, &lbl_eu_80510CC8[0x17]);

@@ -5,7 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-class UnkClass_800821F8;  // fwd decl: only pointer-position use (func_800821F8__Q22cf13CfGameManagerFv result)
+class UnkClass_800821F8;  // fwd decl: only pointer-position use (getCameraDataBlock__Q22cf13CfGameManagerFv result)
 
 // Forward declaration sufficient for CfCamEvent_1.cpp's out-of-line
 // definition of CActorParam's battle-state entry accessor (vtable slot
@@ -565,7 +565,7 @@ struct CamCamSrc {
     f32 f_44E0;                     // +0x44E0
 };
 
-// Minimal WIP scaffolding: dynamic manager returned by func_800821F8
+// Minimal WIP scaffolding: dynamic manager returned by getCameraDataBlock
 // (CfGameManager). Only +0x04 is read by the cam-event update.
 struct CfDynMgr {
     u8  _00[0x04];
@@ -656,7 +656,7 @@ extern "C" CfCamDataTable lbl_eu_80570C90;
 extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
 extern "C" void* func_8016FE34(void* source);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void* func_800B708C__Fi(int id);
+extern "C" void* findObjectById__Fi(int id);
 extern "C" void* func_800BBC0C(void* obj);
 extern "C" f32   lbl_eu_8066A1F8;
 extern "C" f32   lbl_eu_8066A1FC;
@@ -701,7 +701,7 @@ extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const c
 extern char lbl_eu_805262F0[];   // warning file name
 extern char lbl_eu_805262C8[];   // warning format string
 extern "C" f32 lbl_eu_8066646C;   // acos-angle scale
-// Dynamic-cast result view (func_800821F8 -> __dynamic_cast): a single
+// Dynamic-cast result view (getCameraDataBlock -> __dynamic_cast): a single
 // flag byte is stored at +0x294 by the cam-event setup.
 struct CfCamDynObj {
     u8 _000[0x294];
@@ -709,12 +709,12 @@ struct CfCamDynObj {
 };
 
 // CfGameManager cam-event hooks (defined in this TU; retail symbols unmangled).
-extern "C" void func_80082008__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e);
-extern "C" void func_80082088__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val);
-extern "C" void func_80082060__Q22cf13CfGameManagerFv(void);
+extern "C" void notifyBattleSystem__Q22cf13CfGameManagerFv(int a, u8 b, int c, int d, int e);
+extern "C" void isEffectReady__Q22cf13CfGameManagerFv(int idx, void* vecA, void* vecB, int mode, f32 val);
+extern "C" void notifyCameraManager__Q22cf13CfGameManagerFv(void);
 
 // GameManager helpers used by the cam-event advance.
-extern "C" void func_80085878__Q22cf13CfGameManagerFv();
+extern "C" void cleanupMapEffects__Q22cf13CfGameManagerFv();
 extern "C" void func_8016FD84(f32 a, f32 b);
 extern "C" void func_80240AAC(u32 state);
 extern "C" void func_80240B10(u32 state, void* p);
@@ -724,7 +724,7 @@ extern "C" CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                                                       CfCamEventObj* fifth,
                                                       CfCamDataTable* sixth,
                                                       CfCamEventObj* seventh);
-extern "C" void  func_8008212C__Q22cf13CfGameManagerFv(u32 mode);
+extern "C" void  getCamManagerData__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void* func_80074CEC(void* self, void* arg2);
 extern "C" void* __ct__8006B310(void* self, void* arg2);
 extern "C" void  func_8006BC1C(void* obj, u32 mask);
@@ -749,7 +749,7 @@ extern "C" int func_804BE348(void* a, void* b, u32 c, u32 d);
 extern "C" void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a,
                                CamCamSrc* b, ml::CVec3* v1, ml::CVec3* v2,
                                u16 c1, u16 c2, u8 s0, u8 s1);
-extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(void);
+extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(void);
 extern "C" u32   func_80061FFC(void);
 extern "C" void  func_80240878(u8* p);
 extern "C" void  func_80240A64(u8* base);

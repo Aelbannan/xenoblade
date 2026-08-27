@@ -34,8 +34,8 @@ struct CfCode800F42AC {
 // resolution).
 // ---------------------------------------------------------------------------
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" bool func_8006EF04__Fi(int mask);
-extern "C" int func_800B708C__Fi(int id);
+extern "C" bool isGlobalCamFlagSet__Fi(int mask);
+extern "C" int findObjectById__Fi(int id);
 extern "C" void* func_8016FE34(void* src);
 extern "C" int func_80148778(void* self, int id);
 extern "C" void* func_80149154(void* self, u32 id);   // aligned with CAIAction.hpp (u32 param, per CBattleState.cpp def)

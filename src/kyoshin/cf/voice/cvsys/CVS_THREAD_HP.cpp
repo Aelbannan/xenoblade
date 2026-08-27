@@ -311,7 +311,7 @@ extern "C" int func_802A7850(int iter) {
 // separate (retail stwx rD,rOut,rOff; addi rOff,4) under GC/3.0a5.2 -O4,s.
 int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
     CVoiceHandle* handle;
-    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceManager* mgr = getListB28();
     CVoiceListNode* node;
     int count;
     for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4;
@@ -337,7 +337,7 @@ int func_802A790C(CVoiceHandle* exclude) {
     int count;
     CVoiceHandle* handle;
     CVoiceListNode* node;
-    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceManager* mgr = getListB28();
     // Sentinel is re-read from the manager every iteration (the idle-check
     // virtual call may alias it, so MWCC cannot cache it in a register).
     for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4;
@@ -363,7 +363,7 @@ CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
     // Indexing the store as out[count++] keeps base and offset registers
     // separate under GC/3.0a5.2 -O4,s (retail stwx rD,rOut,rOff; addi rOff,4);
     // a manual byte-offset local folds into a pointer walk and drops a reg.
-    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceManager* mgr = getListB28();
     int count = 0;
     CVoiceHandle* handle;
     CVoiceHandle* out[3];
@@ -393,7 +393,7 @@ CVoiceHandle* func_802A7998(CVoiceHandle* exclude) {
 // return the first one whose sub-state maps to the given iterator value
 // `match` (NULL when none matches).
 CVoiceHandle* func_802A7A54(int match) {
-    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceManager* mgr = getListB28();
     CVoiceHandle* out[7];
     // Declaration order colours the registers like retail (MWCC colors in
     // reverse declaration order here): count -> r28, handle -> r27,
@@ -499,7 +499,7 @@ int func_802A7B90(CVoiceHandleState* a, CVoiceHandleState* b) {
 
     int result = 0;
     if (iterA == 2) {
-        if (iterB == 6 && (u32)cf::CfGameManager::func_800822F4() < 0x91u) {
+        if (iterB == 6 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x91u) {
             result = 1;
         }
     }
@@ -553,7 +553,7 @@ int func_802A7CC4(CVoiceHandleState* a, CVoiceHandleState* b) {
     }
 
     int result = 0;
-    if (iterA == 1 && iterB == 3 && (u32)cf::CfGameManager::func_800822F4() < 0x24u) {
+    if (iterA == 1 && iterB == 3 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x24u) {
         result = 1;
     }
     return result;
@@ -588,7 +588,7 @@ int func_802A7DF8(CVoiceHandle* handle) {
     }
 
     int result = 0;
-    if (iter == 3 && (u32)cf::CfGameManager::func_800822F4() < 0x24u) {
+    if (iter == 3 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x24u) {
         result = 1;
     }
     return result;
@@ -641,7 +641,7 @@ int func_802A7EB0(CVoiceHandle* a, CVoiceHandle* b) {
     }
 
     int result = 0;
-    if (iterA == 7 && iterB == 1 && (u32)cf::CfGameManager::func_800822F4() < 0x85u) {
+    if (iterA == 7 && iterB == 1 && (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x85u) {
         result = 1;
     }
     return result;
@@ -686,7 +686,7 @@ int func_802A7FE4(CVoiceHandle* handle) {
         result = (iter == 7);
     }
     if (result) {
-        CVoiceManager* mgr = func_800B6BA4();
+        CVoiceManager* mgr = getListB28();
         int count = 0;
         CVoiceHandle* h;
         CVoiceListNode* node = mgr->field_4->field_0;
@@ -710,6 +710,6 @@ int func_802A7FE4(CVoiceHandle* handle) {
 // threshold (0x94). Retail emits the branchless highest-differing-bit scan
 // ((C << cntlzw(v ^ C)) & 0x80000000), so write that shape literally.
 int func_802A8140() {
-    int v = cf::CfGameManager::func_800822F4();
+    int v = cf::CfGameManager::getQueuedFileEventCount();
     return (u32)(0x94 << __cntlzw(v ^ 0x94)) >> 31;
 }

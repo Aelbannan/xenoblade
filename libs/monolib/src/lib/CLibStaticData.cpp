@@ -133,7 +133,7 @@ bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHan
 
 bool CLibStaticData::wkStandbyLogin(){
     if(isNoEvent()) return CWorkThread::wkStandbyLogin();
-    if(!CWorkSystemPack::func_804DE08C()) return false;
+    if(!CWorkSystemPack::arePacksLoaded()) return false;
 
     switch(mState){
         case STATE_0:
@@ -203,7 +203,7 @@ unk14(false) {
     }
 
     //Try loading the file through CWorkSystemPack
-    if(CWorkSystemPack::func_804DDDF4(arcFileData->mPath, &mData, &mLength)){
+    if(CWorkSystemPack::findPackResource(arcFileData->mPath, &mData, &mLength)){
         //If successful, call the loaded callback
         unk14 = true;
         if(mFileData->mFileLoadedCallback != nullptr){

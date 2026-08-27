@@ -100,12 +100,12 @@ void CMenuPTGauge::Init() {
     func_80136F08(mLayout, &mAnimSpecial, accessor, lbl_eu_805039C8 + 0xb7);
 
     // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
-    // CDeviceFont::func_80452C10(1, layout) returns an object whose vt+0x24
+    // CDeviceFont::getFontInfo(1, layout) returns an object whose vt+0x24
     // (no explicit args) yields the u32 passed to func_8013676C. The virtual
     // call through CMenuPTGaugeFont makes MWCC emit retail's r12 dispatch.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     CMenuPTGaugeFont* fontObj =
-        static_cast<CMenuPTGaugeFont*>(CDeviceFont::func_80452C10(1, mLayout));
+        static_cast<CMenuPTGaugeFont*>(CDeviceFont::getFontInfo(1, mLayout));
     u32 fontResult = fontObj->sf9();
     func_8013676C(rootPane, fontResult);
 
@@ -130,7 +130,7 @@ void CMenuPTGauge::Init() {
  * Per-frame update driving a 4-phase FSM for the PT Gauge widget.
  *
  * Gate sequence (shared with cbRenderBefore):
- *   1. CTaskGame pause (func_800426F0) -> skip
+ *   1. CTaskGame pause (isFlag01Set) -> skip
  *   2. lbl_eu_80663E28 bit 21 (IBM bit 10; realtime event busy) -> skip
  *   3. func_8013BE50 (battle inactive) -> skip
  *   4. lbl_eu_80663E24 & 0xAFA40000 (UI suppress mask) -> skip
@@ -149,7 +149,7 @@ void CMenuPTGauge::Init() {
  */
 void CMenuPTGauge::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
@@ -315,9 +315,9 @@ done:
  * @return none
  */
 void CMenuPTGauge::cbRenderBefore() {
-    // getInstance result discarded; feeds static func_800426F0 call schedule
+    // getInstance result discarded; feeds static isFlag01Set call schedule
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    if (CTaskGame::isFlag01Set()) {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq

@@ -445,8 +445,8 @@ extern f32 lbl_eu_80666584;    // 100.0f
 extern f64 lbl_eu_80666588;    // 2^52 + 2^31 (signed int -> double magic)
 
 // C++-linkage imports (mangle to the retail __Fi forms).
-void* func_800B708C(int id);       // func_800B708C__Fi
-bool  func_8006EF04(int mask);     // func_8006EF04__Fi
+void* findObjectById(int id);       // findObjectById__Fi
+bool  isGlobalCamFlagSet(int mask);     // isGlobalCamFlagSet__Fi
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
@@ -465,7 +465,7 @@ int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 // kyoshin/cf/CBattleManagerApi.hpp (via cf/CtrlPc.hpp's include chain).
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-int func_80085840__Q22cf13CfGameManagerFv(void);
+int isSceneReadyForInput__Q22cf13CfGameManagerFv(void);
 void func_80043D90(cf::CtrlEnemyEnumHolder* holder);
 cf::CtrlEnemyEnumList* func_80043F18(cf::CtrlEnemyEnumHolder* holder);
 void func_800F4A98(cf::CtrlEnemyEnumList* list, u32 a, u32 b);

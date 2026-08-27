@@ -197,7 +197,7 @@ struct CScnItemCameraRefreshIf {
     virtual void refresh();
 };
 
-// Viewport rect returned by CGXCache::func_8044BE10 (four s16 fields).
+// Viewport rect returned by CGXCache::getViewRectGX (four s16 fields).
 struct CGXCacheViewportRect {
     s16 x;       // +0x0
     s16 y;       // +0x2
@@ -209,7 +209,7 @@ struct CGXCacheViewportRect {
 // retail functions take real arguments (the mangled `Fv` suffix is a stub
 // artifact). The header is shared and read-only here, so C-linkage
 // declarations reproduce the exact retail reloc names.
-extern "C" CGXCacheViewportRect* func_8044BE10__8CGXCacheFv(CGXCache* cache);
+extern "C" CGXCacheViewportRect* getViewRectGX__8CGXCacheFv(CGXCache* cache);
 extern "C" void func_8044BB20__8CGXCacheFv(CGXCache* cache, f32* projOut,
                                            f32 fovY, f32 nearZ, f32 farZ);
 
@@ -441,7 +441,7 @@ extern "C" void func_8049F8E4(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     CGXCacheViewportRect* vp =
-        func_8044BE10__8CGXCacheFv(CDeviceGX::getCacheInstance());
+        getViewRectGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
     // Read before the aspect math: keeps f1-f3 reserved for these call
     // arguments while the conversion temporaries color into f4+.
     f32 farZ = cam->mFarZ;

@@ -9,7 +9,7 @@ namespace nw4r { namespace lyt {
 }}
 class CScn;
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10. vtable
+// Mirror of the font object returned by CDeviceFont::getFontInfo. vtable
 // slot 0x24 (index 9) yields the u32 bound into the layout's font pane via
 // func_8013676C. Never instantiated, so no vtable is emitted; a genuine
 // virtual call makes MWCC emit retail's r12 dispatch sequence
@@ -106,7 +106,7 @@ extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);

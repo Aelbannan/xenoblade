@@ -612,14 +612,14 @@ void func_80138078(u32 id); // UI sound (C++-mangled retail name)
 
 // CfGameManager pre-mangled imports (same convention as CPartyStateWin.hpp:
 // verbatim retail symbols, real argument shapes observed at call sites).
-extern "C" void func_80081D8C__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void assignCameraTarget__Q22cf13CfGameManagerFv(u32 value);
 extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(u16 objectId,
                                                                     void* obj,
                                                                     u32 selector,
                                                                     float amount);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int selector);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int selector);
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
-extern "C" void func_8008402C__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
+extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
                                                         float value);
 
 // Character-data block returned by func_8009EC9C; the +0x17C sub-object gets

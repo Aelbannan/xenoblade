@@ -42,7 +42,7 @@ cf::CfObjectTbox::~CfObjectTbox() {
     CfObject_UnkVirtualFunc6();
 }
 
-void cf::CfObjectTbox::func_801F8DD0() {
+void cf::CfObjectTbox::initTbox() {
     // Pull the eventFlags bit 22 (0x400000); pass its inverse as the arg.
     this->CfObject_UnkVirtualFunc66(!(lbl_eu_80663E24 & 0x400000));
     this->func_800BFB90();

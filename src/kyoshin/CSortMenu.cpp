@@ -151,7 +151,7 @@ extern "C" void func_801D3258(CSortMenu* _this) {
     }
     func_80139124(_this->mArcResAcc);
     _this->mArcResAcc = NULL;
-    func_8045F778__17UnkClass_8045F564Fv((u8*)_this + 0x04);
+    deleteRegion__17UnkClass_8045F564Fv((u8*)_this + 0x04);
     func_801F35DC((u8*)_this + 0x2C);
 }
 
@@ -536,7 +536,7 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         // Save the file data buffer and clear the handle's reference to it.
         void* fileData = mFileHandle->getData();
 
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
         mArcResAcc->Attach(fileData, s + 0x49);
 
@@ -550,7 +550,7 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         nw4r::lyt::Layout* lyt = mpLayout;
         int fontId = 1;
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)lyt + 0x10);
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(fontId, lyt);
         // Virtual call through the font object's vtable slot +0x24.
         u32 result = ((CDeviceFontItf*)fontObj)->getResource();
         func_8013676C(rootPane, result);
@@ -564,7 +564,7 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         }
 
         mFileHandle = NULL;
-        func_8045F810__17UnkClass_8045F564Fv(&_04[0]);
+        validateHeap__17UnkClass_8045F564Fv(&_04[0]);
         __dt__14Class_8045F858Fv(sp8, -1);
 
         return 1;

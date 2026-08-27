@@ -7,8 +7,8 @@ namespace mpfsys {
 class MPFDrawMdlNoColor {
 public:
     static MPFDrawMdlNoColor* getInstance();
-    void func_80479894();
-    void func_80479A1C();
+    void drawAllNoColor();
+    void drawHalfNoColor();
 };
 
 } // namespace mpfsys

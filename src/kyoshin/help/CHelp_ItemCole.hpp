@@ -12,6 +12,6 @@ extern "C" CHelpFlagBag* lbl_eu_80664A10;
 namespace cf {
 class __declspec(novtable) CHelp_ItemCole : public CHelp {
 public:
-    u8 func_802B8180();
+    u8 getItemCole();
 };
 } // namespace cf

@@ -53,7 +53,7 @@ struct CUIBattleFlagObj {
     u16 field_530;                    // bit0 checked by Move
 };
 
-// Action-source object returned by func_800B708C.
+// Action-source object returned by findObjectById.
 struct CUIBattleAction {
     u8 unk00[0x64];
     u32 field_64;                     // bit2 checked by Move

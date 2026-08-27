@@ -15,12 +15,12 @@ struct MenuBpsActorFields {
     u16 unk3f28;  // +0x3f28: low byte snapshotted into CMenuBattlePlayerStateSlot::unk204
 };
 
-// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
+// C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 // Declared here (not in CfObjectPc.hpp) so this TU avoids that header's
 // `extern void* lbl_eu_806640F4` clashing with code_80135FDC.hpp's u32 form.
-void* func_800B708C(int id);
+void* findObjectById(int id);
 
-// Layout for handle returned by func_800B708C
+// Layout for handle returned by findObjectById
 struct Func800B708C_Ret {
     u8 pad_00[0x64];
     u32 unk64;    // +0x64: bit flags read by Move()/func_8010CE50

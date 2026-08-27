@@ -11,7 +11,7 @@
 // All sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
 // func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
 // func_8016FE34, func_800BE924), the base constructor __ct__cf_CVS_THREAD,
-// and func_800B6BA4 are declared in CVS_THREAD_VISION_BREAK.hpp.
+// and getListB28 are declared in CVS_THREAD_VISION_BREAK.hpp.
 
 // Sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
 // func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
@@ -60,13 +60,13 @@ int func_802A9604() {
     }
 
     // Select a voice ID based on the game-manager frame counter.
-    // Retail calls func_800822F4() for EACH branch condition (not once).
+    // Retail calls getQueuedFileEventCount() for EACH branch condition (not once).
     // Cast to u32 ensures unsigned compare (cmpli) matches retail.
     int voiceId;
-    if ((u32)cf::CfGameManager::func_800822F4() < 0x38u) {
+    if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x38u) {
         // Early phase: voice IDs 0x65-0x66.
         voiceId = ml::math::mtRand(2) + 0x65;
-    } else if ((u32)cf::CfGameManager::func_800822F4() < 0x62u) {
+    } else if ((u32)cf::CfGameManager::getQueuedFileEventCount() < 0x62u) {
         // Mid phase: voice IDs 0x67-0x68.
         voiceId = ml::math::mtRand(2) + 0x67;
     } else {
@@ -179,7 +179,7 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     }
 
     // Iterate through the global object list, processing voice handles.
-    list = func_800B6BA4();
+    list = getListB28();
     for (reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); ++it) {
         cf::CfObject* obj = *it;
         // func_8016FE34 returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.

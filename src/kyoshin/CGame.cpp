@@ -17,11 +17,11 @@
 
 using namespace ml;
 
-extern void func_801BF93C();
-extern float func_801C0014();
-extern void func_801BFFAC(float f1, float f2);
-extern void func_801644BC(u32 value);
-extern void func_80044FBC(u32 value);
+extern void stopSoundMan();
+extern float getMasterVolume();
+extern void setMasterVolume(float f1, float f2);
+extern void setAutoSleep(u32 value);
+extern void setEffectEnabled(u32 value);
 // Layout draw helpers. Owner decls live in kyoshin/code_80135FDC.hpp, but that
 // header's C-linkage import block (getCurrentView/getInstance/func_80462D04/
 // func_80462D5C) conflicts with cf/CTaskREvent.hpp's caller-shape copies, so
@@ -59,7 +59,7 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
     mPrevBgmSpeed(1.0f),
     mPauseRefCount(0) {
     spInstance = this;
-    CLibHbm::func_8045D5C8(1);
+    CLibHbm::setHbmActiveFlag(1);
     CWorkSystem::setExitFunc(&onExit);
     wkSetEvent(EVT_4);
     CDeviceVI::isTvFormatPal();
@@ -68,7 +68,7 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
 
 CGame::~CGame() {
     CWorkSystem::setExitFunc(0);
-    CLibHbm::func_8045D5C8(0);
+    CLibHbm::setHbmActiveFlag(0);
     spInstance = 0;
 }
 
@@ -83,7 +83,7 @@ CGame* CGame::getInstance() {
 }
 
 bool CGame::isEventReady() {
-    return func_80164910() == 0;
+    return isEventPending() == 0;
 }
 
 void CGame::recreateGame() {
@@ -111,9 +111,9 @@ void CGame::setTaskManagerUpdateCount(u32 count) {
 void CGame::wkUpdate() {
     if ((s16)mSceneReqId >= 0 && CTaskGame::getInstance() != nullptr) {
         if (unk1FC.size() == 0) {
-            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, nullptr, mSceneReqFlag);
+            CTaskGame::getInstance()->setLoadingCaption(mSceneReqId, mSceneReqId2, nullptr, mSceneReqFlag);
         } else {
-            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, unk1FC.c_str(), mSceneReqFlag);
+            CTaskGame::getInstance()->setLoadingCaption(mSceneReqId, mSceneReqId2, unk1FC.c_str(), mSceneReqFlag);
         }
 
         mSceneReqId = -1;
@@ -127,8 +127,8 @@ void CGame::wkUpdate() {
     if (isNoEvent() && CTaskGame::getInstance() != nullptr) {
         // The repeated singleton lookup is part of the retail call schedule.
         (void)CTaskGame::getInstance();
-        if (CTaskGame::func_800426F0() == false) {
-            CTaskGame::getInstance()->func_80042720();
+        if (CTaskGame::isFlag01Set() == false) {
+            CTaskGame::getInstance()->requestGameExit();
         }
     }
 
@@ -147,12 +147,12 @@ void CGame::wkRender() {
     // Draw the 4:3 presentation overlay before dispatching task rendering.
     if (lbl_80666604 != nullptr) {
         if (!CDeviceSC::isWideAspectRatio()) {
-            CDeviceGX::getCacheInstance()->func_8044BE38();
+            CDeviceGX::getCacheInstance()->resetGXStateA();
             GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
             nw4r::lyt::DrawInfo drawInfo;
             func_80137250(&drawInfo);
             func_80137038(lbl_80666604, &drawInfo, 0, 1);
-            CViewRoot::func_80442DA8();
+            CViewRoot::updateViewRoot();
         }
     }
 
@@ -258,7 +258,7 @@ bool CGame::wkStandbyLogin() {
 // @return true when fully torn down, false while waiting for phases
 bool CGame::wkStandbyLogout() {
     if (mShutdownState == SHUTDOWN_STATE_0) {
-        CTaskGame::getInstance()->func_80042710();
+        CTaskGame::getInstance()->setInitFlag();
         mShutdownState = SHUTDOWN_STATE_1;
     }
 
@@ -311,7 +311,7 @@ void CGame::GameMain() {
 // @param handler  Callback interface invoked during exception retry
 // @param param    Opaque parameter forwarded to the handler
 void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException* handler, u32 param) {
-    if (spInstance != nullptr && CTaskGame::func_800426F0() == nullptr && !spInstance->isNoEvent()) {
+    if (spInstance != nullptr && CTaskGame::isFlag01Set() == nullptr && !spInstance->isNoEvent()) {
         CException* exception = CException::func_80457CA4(spInstance, message, 5);
         if (exception != nullptr) {
             exception->mException = handler;
@@ -329,7 +329,7 @@ bool CGame::wkStandbyExceptionRetry(u32 wid) {
     if (isNoEvent()) {
         return true;
     }
-    if (CLibHbm::func_8045DE00()) {
+    if (CLibHbm::isHbmActive()) {
         return false;
     }
 
@@ -356,34 +356,34 @@ bool CGame::wkStandbyExceptionRetry(u32 wid) {
 // Uses reference counting to correctly handle nested pause/resume sequences.
 // @param paused  true = enter pause, false = exit pause
 void CGame::OnPauseTrigger(bool paused) {
-    if (cf::CfGameManager::func_8007E1B4()) {
+    if (cf::CfGameManager::isManagerInitialized()) {
         if (paused) {
             if (mPauseRefCount == 0) {
-                mPrevBgmSpeed = func_801C0014();
-                func_801BFFAC(0, 0);
-                func_801644BC(1);
+                mPrevBgmSpeed = getMasterVolume();
+                setMasterVolume(0, 0);
+                setAutoSleep(1);
 
                 if (cf::CBattleManager::getInstance() != nullptr) {
                     cf::CBattleManager* battleManager = cf::CBattleManager::getInstance();
-                    battleManager->mVision.func_801A929C(1);
+                    battleManager->mVision.setEffectScale(1);
                 }
 
-                func_80044FBC(1);
+                setEffectEnabled(1);
             }
 
             mPauseRefCount++;
         } else {
             // <=1 catches the last resume (count drops to 0 after decrement)
             if (mPauseRefCount <= 1) {
-                func_801BFFAC(mPrevBgmSpeed, 0);
-                func_801644BC(0);
+                setMasterVolume(mPrevBgmSpeed, 0);
+                setAutoSleep(0);
 
                 if (cf::CBattleManager::getInstance() != nullptr) {
                     cf::CBattleManager* battleManager = cf::CBattleManager::getInstance();
-                    battleManager->mVision.func_801A929C(0);
+                    battleManager->mVision.setEffectScale(0);
                 }
 
-                func_80044FBC(0);
+                setEffectEnabled(0);
             }
 
             mPauseRefCount--;
@@ -396,8 +396,8 @@ void CGame::OnPauseTrigger(bool paused) {
 
 void CGame::onExit() {
     if (spInstance != nullptr) {
-        if (cf::CfGameManager::func_8007E1B4()) {
-            func_801BF93C();
+        if (cf::CfGameManager::isManagerInitialized()) {
+            stopSoundMan();
         }
     }
 }

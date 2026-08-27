@@ -48,7 +48,7 @@ extern void func_8024439C(CFade* fade);
 extern "C" {
 extern char lbl_eu_8050B498[];
 // CfGameManager unity helpers bridge
-extern void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+extern void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 
 // Term-time helpers (declared here; retail unmangled call relocs).
 extern "C" void waitForDrawDone__9CDeviceVIFv();
@@ -256,7 +256,7 @@ extern "C" void func_80240AAC(MenuFxObj* entries) {
 // and walks the 8 entries as an unrolled pair inside a 4-iteration ctr loop;
 // the sums are in-place nw4r VEC3Add paired-single operations.
 void func_80240B10(MapPointEntry* entries, void* target) {
-    if (cf::CfGameManager::func_800829B8() != 0) {
+    if (cf::CfGameManager::isSceneLoading() != 0) {
         return;
     }
 
@@ -461,7 +461,7 @@ extern "C" void* __dt__14CMenuMapSelectFv(CMenuMapSelect* _this, int flags) {
 }
 
 void CMenuMapSelect::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     {
         CBgTex bgTex(0);
@@ -713,7 +713,7 @@ void CMenuMapSelect::Term() {
     func_8024CB94(&mFloorMap);
 
     lbl_eu_80664790 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 // CMenuMapSelect state machine. States: 0 waits for bg/help/map resources,
@@ -723,7 +723,7 @@ void CMenuMapSelect::Term() {
 // fade-out back to the world map, 9 waits for that fade, 10 exits the scene,
 // 11 marks completion in mField54.
 void CMenuMapSelect::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
 
@@ -827,7 +827,7 @@ void CMenuMapSelect::Move() {
 // the game task is busy or the global bit-21 busy flag is set, then draws bg,
 // map selector, floor map, title help and fade through a stack DrawInfo.
 void CMenuMapSelect::cbRenderBefore() {
-    if (CTaskGame::getInstance()->func_800426F0() != 0 || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 || (lbl_eu_80663E28 & 0x200000)) return;
     if (func_8013BE50() == 0) return;
     if (mState >= 0xb) return;
 

@@ -554,7 +554,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
 // signature shapes verbatim so the mangled names line up).
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" char* func_801355BC(void);
 extern "C" char* func_80138DA4(const char* msg);
@@ -572,7 +572,7 @@ struct CItemBoxGXColor {
 // Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
 extern "C" CItemBoxGXColor func_801397AC(void* obj, int index);
 
-// Vtable view of the font-info object from CDeviceFont::func_80452C10:
+// Vtable view of the font-info object from CDeviceFont::getFontInfo:
 // virtual index 7 (vtable+0x24) returns the pane data bound via func_8013676C.
 struct CItemBoxFontInfoVt {
     virtual void _v00();

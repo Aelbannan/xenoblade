@@ -23,7 +23,7 @@ namespace cf {
 // the owning actor joins a battle, runs the PC-side init, then clears the
 // walker's own status fields (six u32s, a byte and a float).
 void func_800C1F44(cf::CfObjectImplWalker* self) {
-    ((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->func_80085220(1, 1);
+    ((CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv())->setPartyMaskFlag(1, 1);
     func_800C5998(self);
     self->field_384 = 0;
     self->field_388 = 0;
@@ -52,7 +52,7 @@ void func_800C1FB8(cf::CfObjectImplWalker* self) {
             self->vfDC();
             if (lbl_eu_80663E24 & 0x800000) {
                 getInstance__Q22cf13CfGameManagerFv();
-                if (func_8006EF04(0x1000000) == 0) {
+                if (isGlobalCamFlagSet(0x1000000) == 0) {
                     self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
                     func_80174B4C(self->field_18, 3);
                     lbl_eu_80663E24 &= ~0x800000;
@@ -60,7 +60,7 @@ void func_800C1FB8(cf::CfObjectImplWalker* self) {
             }
             if (lbl_eu_80663E24 & 0x08000000) {
                 getInstance__Q22cf13CfGameManagerFv();
-                if (func_8006EF04(0x1000000) == 0) {
+                if (isGlobalCamFlagSet(0x1000000) == 0) {
                     self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
                     func_80174B4C(self->field_18, 3);
                     lbl_eu_80663E24 &= ~0x08000000;
@@ -101,7 +101,7 @@ void func_800C22CC(cf::CfObjectImplWalker* self) {
     // Gate: needs a bound battle object, the 0x800 state clear, and bit 0x80
     // in its flag word.
     if (self->field_18->field_3F60 == 0) goto L2DE0;
-    if (func_8007FE24__Q22cf13CfGameManagerFv(0x800) != 0) goto L2DE0;
+    if (getNullPtrC__Q22cf13CfGameManagerFv(0x800) != 0) goto L2DE0;
     if (!(((cf::CfWalkBfObj*)(uintptr_t)self->field_18->field_3F60)->field_4EC &
           0x80)) {
         goto L2DE0;
@@ -114,9 +114,9 @@ void func_800C22CC(cf::CfObjectImplWalker* self) {
             playerObj = (void*)((char*)playerObj - 0x3e9c);
         }
         if ((void*)self->field_18 == playerObj) {
-            if (func_80082694__Q22cf13CfGameManagerFv(0x82) == 0) {
-                func_8008269C__Q22cf13CfGameManagerFv(0x82, 1);
-                func_800826F0__Q22cf13CfGameManagerFv(0x82);
+            if (getEventValue40__Q22cf13CfGameManagerFv(0x82) == 0) {
+                setEventManagerValue__Q22cf13CfGameManagerFv(0x82, 1);
+                queueEventId__Q22cf13CfGameManagerFv(0x82);
             }
         }
     }
@@ -135,7 +135,7 @@ L2DE0:
         if (func_80174C98(bo, &v, 0x1c) == 0) goto L30FC;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x4000000) != 0) goto L2EA0;
+    if (isGlobalCamFlagSet(0x4000000) != 0) goto L2EA0;
 
     // Accumulate elapsed time against one target-frame window.
     self->field_3A0 = self->field_3A0 + func_80496288(lbl_eu_80663E14);
@@ -152,7 +152,7 @@ L2EA0:
         cf::CfWalkEA444* rec = (cf::CfWalkEA444*)func_800EA444(
             getInstance__Q22cf14CBattleManagerFv());
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04(0x4000000) == 0) goto L2EE8;
+        if (isGlobalCamFlagSet(0x4000000) == 0) goto L2EE8;
         if (rec == 0) goto L2EE8;
         // Either record id matching our move sub-object handle disarms.
         if (rec->field_4 == self->field_18->mSub.field_74) goto L30FC;
@@ -174,7 +174,7 @@ L2EE8:
             goto L3030;
         if (self->field_18->field_3374 & 0x20) goto L3030;
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04(0x200) != 0) goto L3030;
+        if (isGlobalCamFlagSet(0x200) != 0) goto L3030;
         {
             CfWalkBMView* bm = (CfWalkBMView*)getInstance__Q22cf14CBattleManagerFv();
             u32 count = 0;
@@ -194,13 +194,13 @@ L2EE8:
         ((cf::CfWalkBattleObjSync*)(uintptr_t)self->field_18)->vf314();
         func_800BE12C((u8*)&self->field_18->mSub, 0x2f, 1, -1, 1);
         self->field_18->mSub.m08(0x200);
-        func_80084A00__Q22cf13CfGameManagerFv();
+        handleFieldTransition__Q22cf13CfGameManagerFv();
         __dt__80043E88(&holder, -1);
         goto L313C;
     }
 L3030:
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x4000000) != 0) goto L30F0;
+    if (isGlobalCamFlagSet(0x4000000) != 0) goto L30F0;
     func_800F4A98(func_80043F18(&holder), 0x20, 0x1000);
     // Distance decayed past the threshold?
     if (!(dist > lbl_eu_80666B90)) goto L30F0;
@@ -256,7 +256,7 @@ void func_800C2714(cf::CfObjectImplWalker* self) {
     u32 gid = func_800FE68C()->field_90E4;
     u32 gid0 = gid;
     cf::CfWalkTalkSrc* actor =
-        (cf::CfWalkTalkSrc*)func_800B708C((int)func_800FE68C()->field_90E4);
+        (cf::CfWalkTalkSrc*)findObjectById((int)func_800FE68C()->field_90E4);
     if (gid0 == 0) goto L3284;
     if (actor == 0 || actor->t160() == 0) goto L320C;
     if (!(actor->field_64 & 8) || actor->t16C() == lbl_eu_80666B84) goto L3234;
@@ -466,12 +466,12 @@ void func_800C3878(cf::CfObjectImplWalker* self) {
     }
     self->field_18->field_04->b20(0x400000);
     self->field_18->field_04->b20(0x800000);
-    void* gm = func_800821F8__Q22cf13CfGameManagerFv(
+    void* gm = getCameraDataBlock__Q22cf13CfGameManagerFv(
         getInstance__Q22cf13CfGameManagerFv());
     if (gm != 0) {
         func_8006BBF4(gm, 0x10, 1);
         if (func_800FE68C() != 0) {
-            void* obj = func_800B708C((int)func_800FE68C()->field_90E4);
+            void* obj = findObjectById((int)func_800FE68C()->field_90E4);
             if (obj != 0) {
                 ((cf::CfWalkDynMgr*)gm)->vf2C(((cf::CfWalkObjAC*)obj)->vfAC());
             }
@@ -482,7 +482,7 @@ void func_800C3878(cf::CfObjectImplWalker* self) {
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x20, 1);
     for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
-        void* obj = func_800B708C((int)(uintptr_t)func_800F6E98(
+        void* obj = findObjectById((int)(uintptr_t)func_800F6E98(
             func_80043F18(&holder), i));
         if (obj != getPlayer__Q22cf13CfGameManagerFi(0)) {
             ((cf::CfWalkPlayerRec*)func_8016FE34(obj))->mSub.m08(0x100);
@@ -524,9 +524,9 @@ void func_800C3A88(cf::CfObjectImplWalker* self) {
 // battle list (or from the move sub-object), then walks the enum list of
 // battle actors and applies a sight-line clamp to the selected one.
 void func_800C3AD4(cf::CfObjectImplWalker* self) {
-    void* v = func_800B708C((int)func_800FE68C()->field_90E4);
+    void* v = findObjectById((int)func_800FE68C()->field_90E4);
     if (v == 0) {
-        v = func_800B708C((int)self->field_18->mSub.m4C());
+        v = findObjectById((int)self->field_18->mSub.m4C());
     }
     if (v == 0) return;
     cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)func_800BF324(v);
@@ -537,7 +537,7 @@ void func_800C3AD4(cf::CfObjectImplWalker* self) {
     func_800F4A98(func_80043F18(&holder), 0x300, 0);
     for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
-            func_800B708C((int)(uintptr_t)func_800F6E98(func_80043F18(&holder), i)));
+            findObjectById((int)(uintptr_t)func_800F6E98(func_80043F18(&holder), i)));
         if (src == mgr) continue;
         if (src->field_64 & 0x10000) continue;
         if (src->t160() == 0) continue;
@@ -568,14 +568,14 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
     }
     // Retail spills only the hours half to a callee-saved register; the
     // minutes half is masked inline into the add.
-    u32 h = (u16)func_80086DA0__Q22cf13CfGameManagerFv();
-    u32 t = (u16)func_80086DA4__Q22cf13CfGameManagerFv() + h * 60;
+    u32 h = (u16)getControllerWordA33C__Q22cf13CfGameManagerFv();
+    u32 t = (u16)getControllerWordA37C__Q22cf13CfGameManagerFv() + h * 60;
     if (t >= 0x167 && t <= 0x169) return;
     if (t >= 0x437 && t <= 0x439) return;
     if (((cf::CfWalkGimmickGlobal*)getUnk80664658())->field_214 & 0x4000000) return;
-    void* actor = func_800B708C((int)func_800FE68C()->field_90E4);
+    void* actor = findObjectById((int)func_800FE68C()->field_90E4);
     if (actor == 0) {
-        actor = func_800B708C((int)self->field_18->mSub.m4C());
+        actor = findObjectById((int)self->field_18->mSub.m4C());
     }
     if (actor == 0) return;
     if (func_80226B94() != 0) return;
@@ -597,7 +597,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         if (!(mgr->field_68 & 0x100000)) return;
         if (mgr->field_68 & 0x6000) return;
         if (func_80496044((CScn*)lbl_eu_80663E14) == 0) return;
-        if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) return;
+        if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
         mgr->t110();
         if (func_800967F8() != 0) return;
         if (func_8011CD5C() != 0) return;
@@ -633,7 +633,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         if (sub != 0) {
             if (!(sub->field_270 & 0x400000)) {
                 if (mgr->field_64 & 1) {
-                    ((cf::CfObject*)mgr)->func_800BE898(
+                    ((cf::CfObject*)mgr)->requestVoice(
                         0x1195, -1, lbl_eu_80666B8C, lbl_eu_80666BB8);
                 } else {
                     // Retail converts the sdata2 constant through
@@ -660,7 +660,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
         for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
-                func_800B708C((int)(uintptr_t)func_800F6E98(
+                findObjectById((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
             if (src != mgr) {
                 if (src->t160() != 0) {
@@ -694,7 +694,7 @@ void func_800C3BF0(cf::CfObjectImplWalker* self) {
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
         for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* talk =
-                (cf::CfWalkTalkSrc*)func_800BBC0C(func_800B708C(
+                (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById(
                     (int)(uintptr_t)func_800F6E98(func_80043F18(&holder), i)));
             if (talk->t160() != 0) {
                 func_800BC3D8(talk, lbl_eu_80666BA4);
@@ -779,7 +779,7 @@ L3B48:
         self->field_18->mSub.m1AC(0, lbl_eu_804FC694);
         func_80174B4C(self->field_18, 3);
         lbl_eu_80663E24 &= ~0x800000;
-        void* actor = func_800B708C((int)func_800FE68C()->field_90E4);
+        void* actor = findObjectById((int)func_800FE68C()->field_90E4);
         if (actor == 0) goto L4070;
         ((cf::CfWalkTalkSrc*)actor)->t08(1);
         ((cf::CfWalkTalkSrc*)actor)->t10(3);
@@ -805,7 +805,7 @@ L3C68:
         func_80043D90(&holder);
         func_800F4A98(func_80043F18(&holder), 0xa20, 0);
         for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
-            void* obj = func_800B708C((int)(uintptr_t)func_800F6E98(
+            void* obj = findObjectById((int)(uintptr_t)func_800F6E98(
                 func_80043F18(&holder), i));
             void* msub = self->field_18;
             if (msub != 0) {
@@ -825,13 +825,13 @@ L3C68:
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
         for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
-                func_800B708C((int)(uintptr_t)func_800F6E98(
+                findObjectById((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
             if (src->field_68 & 0x100000) {
                 func_800BC3B0(src, lbl_eu_80666BA4);
             }
         }
-        void* actor = func_800B708C((int)self->field_18->mSub.m4C());
+        void* actor = findObjectById((int)self->field_18->mSub.m4C());
         if (actor != 0) {
             if (self->vf40(0x10000) != 0 ||
                 (lbl_eu_80663E24 & 0x08000000)) {
@@ -927,7 +927,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
     case 0: {
         self->field_398 = slot;
         cf::CfWalkTalkSrc* obj =
-            (cf::CfWalkTalkSrc*)func_800B708C((int)func_800FE68C()->field_90E4);
+            (cf::CfWalkTalkSrc*)findObjectById((int)func_800FE68C()->field_90E4);
         if (obj != NULL) {
             obj->t10(1);
         }
@@ -975,7 +975,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
             __dt__80043E88(&holder, -1);
         }
         cf::CfWalkTalkSrc* talk =
-            (cf::CfWalkTalkSrc*)func_800BBC0C(func_800B708C((int)self->field_394));
+            (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk == 0) goto reset;
         u16 t8c = talk->field_8C;
         if (t8c == 8) t8c = 3;
@@ -1034,7 +1034,7 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
             fp, lbl_eu_804FC694 + 0x3f, self->field_38C);
         func_8013D07C(self->field_18->mSub.field_74, col, 1);
         cf::CfWalkTalkSrc* talk =
-            (cf::CfWalkTalkSrc*)func_800BBC0C(func_800B708C((int)self->field_394));
+            (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk != 0) {
             self->field_18->mSub.m1AC((u32)talk, lbl_eu_804FC694);
         }
@@ -1047,14 +1047,14 @@ int func_800C4244(cf::CfObjectImplWalker* self, u32 battleId, u32 slot) {
 reset:
     {
         cf::CfWalkTalkSrc* talk =
-            (cf::CfWalkTalkSrc*)func_800BBC0C(func_800B708C((int)self->field_394));
+            (cf::CfWalkTalkSrc*)func_800BBC0C(findObjectById((int)self->field_394));
         if (talk != 0) {
             talk->t1AC(0, lbl_eu_804FC694);
             talk->t10(3);
         }
         cf::CfWalkTalkSrc* talk2 =
             (cf::CfWalkTalkSrc*)func_800BBC0C(
-                func_800B708C((int)func_800FE68C()->field_90E4));
+                findObjectById((int)func_800FE68C()->field_90E4));
         if (talk2 != 0) {
             self->field_18->mSub.m1AC((u32)talk2, lbl_eu_804FC694);
         }
@@ -1087,13 +1087,13 @@ void func_800C4888(cf::CfObjectImplWalker* self) {
     if (count != 0) return;
     if (lbl_eu_80663E24 & 0x9048000) return;
     cf::CfWalkTalkSrc* actor =
-        (cf::CfWalkTalkSrc*)func_800B708C((int)func_800FE68C()->field_90E4);
+        (cf::CfWalkTalkSrc*)findObjectById((int)func_800FE68C()->field_90E4);
     if (actor == 0) return;
     if (func_80226B94() != 0) return;
     // Retail spills only the hours half to a callee-saved register; the
     // minutes half is masked inline into the add.
-    u32 h = (u16)func_80086DA0__Q22cf13CfGameManagerFv();
-    u32 t = h * 60 + (u16)func_80086DA4__Q22cf13CfGameManagerFv();
+    u32 h = (u16)getControllerWordA33C__Q22cf13CfGameManagerFv();
+    u32 t = h * 60 + (u16)getControllerWordA37C__Q22cf13CfGameManagerFv();
     // WALL (MWCC_CASES "Range-test normalization"): retail keeps two
     // un-fused cmplwi pairs; the OR'd form keeps the SECOND range un-fused
     // (best observed). Separate statements fuse both.
@@ -1126,7 +1126,7 @@ void func_800C4888(cf::CfObjectImplWalker* self) {
         func_800F4A98(func_80043F18(&holder), 0x300, 0);
         for (u32 i = 0; i < ((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
             cf::CfWalkTalkSrc* src = (cf::CfWalkTalkSrc*)func_800BBC0C(
-                func_800B708C((int)(uintptr_t)func_800F6E98(
+                findObjectById((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
             if (src == mgr) continue;
             if (src->t160() == 0) continue;
@@ -1166,7 +1166,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     // Resolve the global actor and its talk-source manager.
     void* tbl98;
     cf::CfWalkTalkSrc* mgr = (cf::CfWalkTalkSrc*)func_800BF324(
-        func_800B708C((int)func_800FE68C()->field_90E4));
+        findObjectById((int)func_800FE68C()->field_90E4));
     tbl98 = lbl_eu_80664098;
 
     cf::CfWalkEnumHolder holder;
@@ -1176,7 +1176,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b) {
     for (u32 i = 0; i < (u32)((cf::CfWalkEnumList*)func_80043F18(&holder))->field_620; i++) {
         cf::CfWalkTalkSrc* talk =
             (cf::CfWalkTalkSrc*)func_800BBC0C(
-                func_800B708C((int)(uintptr_t)func_800F6E98(
+                findObjectById((int)(uintptr_t)func_800F6E98(
                     func_80043F18(&holder), i)));
         // Skip entries bound to this walker's own move sub-object.
         cf::CfWalkBattleObj* bo = self->field_18;
@@ -1446,7 +1446,7 @@ void func_800C50F4(cf::CfObjectImplWalker* self) {
         if (lbl_eu_80663E24 & 0x400000) return;
     }
     actor =
-        (cf::CfWalkActorObj*)func_800B708C((int)func_800FE68C()->field_90E4);
+        (cf::CfWalkActorObj*)findObjectById((int)func_800FE68C()->field_90E4);
     if (actor == 0) return;
     u32 flags = actor->field_64;
     if ((flags & 0x100) == 0) return;
@@ -1471,7 +1471,7 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
     if (func_8013EB90(1) != 0) return;
     if (self->field_39C == 0) return;
     if ((lbl_eu_80663E24 & 0x200000) == 0) return;
-    cf::CfWalkActorObj* obj = (cf::CfWalkActorObj*)func_800B708C(
+    cf::CfWalkActorObj* obj = (cf::CfWalkActorObj*)findObjectById(
         (int)(uintptr_t)((cf::CfWalkGameMgr*)getInstance__Q22cf13CfGameManagerFv())->field_80);
     if (obj == nullptr) return;
     if (!(obj->field_64 & 0x100)) return;
@@ -1489,7 +1489,7 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
         ok = 0;
     } else if (lbl_eu_80663E24 & 0x4) {
         ok = 0;
-    } else if (func_80085840__Q22cf13CfGameManagerFv() == 0) {
+    } else if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) {
         ok = 0;
     }
     if (ok == 0) {
@@ -1515,30 +1515,30 @@ void func_800C525C(cf::CfObjectImplWalker* self) {
                 self->field_39C = 0;
                 // Bump the area step counters for the leaving area.
                 if (obj->field_734 == 2) {
-                    u32 c = func_80082694__Q22cf13CfGameManagerFv(0x6B) + 1;
-                    func_8008269C__Q22cf13CfGameManagerFv(0x6B, c);
+                    u32 c = getEventValue40__Q22cf13CfGameManagerFv(0x6B) + 1;
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0x6B, c);
                     if (c == 10) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x6B);
+                        queueEventId__Q22cf13CfGameManagerFv(0x6B);
                     } else if (c == 0x32) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x6C);
+                        queueEventId__Q22cf13CfGameManagerFv(0x6C);
                     }
                 }
                 if (obj->field_734 == 3) {
-                    u32 c = func_80082694__Q22cf13CfGameManagerFv(0x6D) + 1;
-                    func_8008269C__Q22cf13CfGameManagerFv(0x6D, c);
+                    u32 c = getEventValue40__Q22cf13CfGameManagerFv(0x6D) + 1;
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0x6D, c);
                     if (c == 1) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x6D);
+                        queueEventId__Q22cf13CfGameManagerFv(0x6D);
                     } else if (c == 10) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x6E);
+                        queueEventId__Q22cf13CfGameManagerFv(0x6E);
                     } else if (c == 0x32) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0x6F);
+                        queueEventId__Q22cf13CfGameManagerFv(0x6F);
                     }
                 }
                 if (obj->field_734 >= 2) {
-                    u32 c = func_80082694__Q22cf13CfGameManagerFv(0xBA) + 1;
-                    func_8008269C__Q22cf13CfGameManagerFv(0xBA, c);
+                    u32 c = getEventValue40__Q22cf13CfGameManagerFv(0xBA) + 1;
+                    setEventManagerValue__Q22cf13CfGameManagerFv(0xBA, c);
                     if (c == 0x3E8) {
-                        func_800826F0__Q22cf13CfGameManagerFv(0xBA);
+                        queueEventId__Q22cf13CfGameManagerFv(0xBA);
                     }
                 }
             }

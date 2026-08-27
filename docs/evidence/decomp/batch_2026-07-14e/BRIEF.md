@@ -48,7 +48,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Extend hpp field layout to match offsets (size ~`0xB1C`)
 
 ### `CMenuPTGauge::cbRenderBefore` (`asm_cbRenderBefore_CMenuPTGauge.s`)
-- Frame `-0x70`; early-outs: `CTaskGame::getInstance()` → `func_800426F0` nonzero; **`lbl_eu_80663E28` bit 10** (`rlwinm.,0,10,10`); `func_8013BE50` null; `*(this+0x8C)==0`; **`lbl_eu_80663E24 & 0xAFA40000`** (`andis. …,0xafa4`)
+- Frame `-0x70`; early-outs: `CTaskGame::getInstance()` → `isFlag01Set` nonzero; **`lbl_eu_80663E28` bit 10** (`rlwinm.,0,10,10`); `func_8013BE50` null; `*(this+0x8C)==0`; **`lbl_eu_80663E24 & 0xAFA40000`** (`andis. …,0xafa4`)
 - Then `GXSetZMode(0,0,0)`; stack `nw4r::lyt::DrawInfo` ctor; `func_80137250(&drawInfo)`; `func_80137038(*(this+0x74), &drawInfo, 0, 1)`; `DrawInfo` dtor `-1`
 - Declare missing helpers/`DrawInfo` extern; create minimal class with fields `@0x74` (layout*) and `@0x8C`
 

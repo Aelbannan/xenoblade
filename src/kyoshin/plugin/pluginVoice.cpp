@@ -19,7 +19,7 @@ int voice_play(VMThread* pThread) {
     int voiceId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int vol = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 
-    VoiceActorList* list = func_800B6BA4();
+    VoiceActorList* list = getListB28();
 
     for(node = list->sentinel->next; node != list->sentinel; node = node->next){
         // Items point at the embedded CfObjectMove (base+0x3E9C);
@@ -27,7 +27,7 @@ int voice_play(VMThread* pThread) {
         u8* object = node->object != 0 ? node->object - 0x3E9C : node->object;
         if(((cf::CfObjectPc*)object)->CActorParam_UnkVirtualFunc138() == 0){
             if(voiceId == ((VoiceActorVoiceId*)object)->field_3F28){
-                ((cf::CfObject*)(object + 0x3E9C))->func_800BE898(vol, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
+                ((cf::CfObject*)(object + 0x3E9C))->requestVoice(vol, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
                 break;
             }
         }

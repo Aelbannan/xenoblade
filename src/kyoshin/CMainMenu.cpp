@@ -331,7 +331,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
         // Take ownership of the loaded file data (getData clears the handle's
         // data pointer) and release the loader's lock.
         void* fileData = self->field_0x74->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
     self->field_0x78 = createArcResourceAccessor__10CLibLayoutFv();
             self->field_0x78->Attach(fileData, &base[0x94]);
@@ -351,7 +351,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
             func_8013676C(
                 rootPane,
                 reinterpret_cast<CMainMenuFontView*>(
-                    func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
+                    getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
                     ->sf9());
 
             func_80136B4C(self->field_0x7C, &base[0x71], &base[0x89], 0);
@@ -439,7 +439,7 @@ extern "C" void func_800FEA88(CBaseCur* self) {
 void CMainMenu::cbRenderBefore() {
     // Single OR so MWCC emits the short-circuit branches: A -> bne exit,
     // B -> beq continue / b exit (same shape as CMiniMap::cbRenderBefore).
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (!func_8013BE50())
         return;
@@ -593,7 +593,7 @@ void func_800FF920(CMainMenu* self) {
     }
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
     // Held-button early-outs per input style.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
             return;
         }
@@ -604,7 +604,7 @@ void func_800FF920(CMainMenu* self) {
     }
 
     u32 down, up, aPressed, bPressed, confirm;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
         u32 cHi = p & 0x400000;
@@ -947,7 +947,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
 
     CMainMenuPad* pad = getCurrentPad__Q22cf13CfGameManagerFv();
     // First mode query: held-button early-outs per input style.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         if (pad->mHeldButtonFlags & 0x08000000) {
             return;
         }
@@ -958,7 +958,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
     }
     u32 down, up, aPressed, bPressed, confirm;
     // Second mode query picks the button extraction.
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
         int c = ((p >> 22) & 1) | ((p >> 10) & 1);
@@ -1069,7 +1069,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
             // Retail biases the returned pointer back to the player base
             // before the null check and dispatches slot 0x9C with the address
             // of the sub-object's 0x3B4 region.
-            func_8008294C__Q22cf13CfGameManagerFv(true);
+            setPresentationFlag__Q22cf13CfGameManagerFv(true);
             CMainMenuPlayer* player =
                 (CMainMenuPlayer*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0) {
@@ -1211,7 +1211,7 @@ extern "C" int func_80101A88(CMainMenu* self) {
         CMainMenuPlayerSub* sub = player->spot.field_0xC4;
         if (sub != 0) {
             int cond = (sub->field_4EC >> 15) & 1;
-            if (func_800829B8__Q22cf13CfGameManagerFv() != 0) cond = 1;
+            if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) cond = 1;
             // Retail shares one return-1 tail (L1C) for the flag/action/arts
             // gates; goto anchors that shared block at its retail position.
             if (cond == 0 && (sub->field_4EC & 2) == 0) goto ret1;
@@ -1246,7 +1246,7 @@ battle:
     u32 ev1 = *(volatile u32*)&lbl_eu_80663E24;
     if ((ev0 & 0x4) != 0) goto ret2;
     if ((ev1 & 0x400000) != 0) goto ret2;
-    if (func_80084BF4__Q22cf13CfGameManagerFv() == 0) goto end;
+    if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() == 0) goto end;
 ret2:
     return 1;
 end:

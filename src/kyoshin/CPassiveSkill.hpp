@@ -475,7 +475,7 @@ extern u8 lbl_eu_8050DB60[];
 // CUICfManager.hpp / CArtsInfo.hpp).
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
-// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // (index 7, no args) yields the u32 pushed onto the root pane by
 // func_8013676C. All-pure so no vtable is emitted (CMapSel.hpp / COption.hpp
 // carry the same view under different class names).
@@ -494,7 +494,7 @@ public:
 // CDeviceFont font-create helper (retail symbol is the literal mangled
 // identifier; extern "C" so calls bind to it, same convention as
 // CItemBoxGrid.hpp / COption.hpp).
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 
 // Character/party name-text value pushed into layout panes by func_801368C0
 // (retail symbol unmangled; same convention as CPartyState.hpp).

@@ -689,9 +689,9 @@ Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol 
 
 **Inline-empty base dtor elides the call in derived dtors (CTaskCulling dtor, us-801a4278):** MWCC only elides a base-class dtor call in a derived dtor when the base dtor's empty body is visible in the same TU. Retail's `IWorkEvent` header was `virtual ~IWorkEvent(){}` (inline-empty) — `~CTaskCulling` then calls only `~CProcess` (+ member `~COccCulling`), no `~IWorkEvent`, and the dtor is 0x78. When the dtor was moved out-of-line (IWorkEvent.cpp), the call reappeared (+0xC, dtor 0x84, unit 8 bytes over split budget). Fix: keep `virtual ~IWorkEvent(){}` inline-empty in the header, and keep a **strong copy** in the key-function TU (`src/kyoshin/CTaskGame.cpp` had `IWorkEvent::~IWorkEvent() {}` matching retail's strong symbol placement — remove it only if the header body replaces it; an out-of-line redefinition of an inline member errors with `(10333) object redefined`). Verified: derived `~Der` with a secondary inline-empty base emits only the offset-0 base call + delete; the decomp `~CTaskCulling` returned to byte-identity and the unit to 0x708 ≤ 0x70C.
 
-**Pool-cookie reloc drift certified by the register-renaming witness (no SMT/linked DOL):** for byte-identical functions whose only diff is a TU-local pool reloc (`@N` vs `lbl_eu_*`), the mined reloc map (`reloc_map.py mine` → `retail_reloc_map.json`) canonicalizes both names via the decoder's `canonical_symbols` hook, so the **pre-SMT witness certifies directly** (`register-renaming-witness: N terminal pair(s) structurally equal under rho`) — no Z3, no `main.elf`. Verified: `func_80222258__16CMCCylinderGaugeFv` (us-80224098, `@6134`→`lbl_eu_80668520`) and `__ct__16CMCCylinderGaugeF…` (us-80223cac, `@6092`→`lbl_eu_80668518`) both accepted EQUIVALENT_MATCH with 99.7% static and exact 0x8D4 size. **Re-mine after any edit that shifts pool numbering** (removing a `.data` vtable via novtable renumbers every `@N` in the TU — the stale map entry then silently un-canonicalizes). `__vt__`-named drift (global symbols, not `unit@` keys) is NOT canonicalized; fix those in source with `__declspec(novtable)` + explicit retail-label assignment (`__vt__6CToken`→`lbl_eu_8056B52C` via `*(void**)this = (void*)lbl_eu_8056B52C;` as the first ctor statement — works byte-identically when the member-init list is empty; with a non-empty init list the manual store is scheduled at the end, see COccCulling above).
+**Pool-cookie reloc drift certified by the register-renaming witness (no SMT/linked DOL):** for byte-identical functions whose only diff is a TU-local pool reloc (`@N` vs `lbl_eu_*`), the mined reloc map (`reloc_map.py mine` → `retail_reloc_map.json`) canonicalizes both names via the decoder's `canonical_symbols` hook, so the **pre-SMT witness certifies directly** (`register-renaming-witness: N terminal pair(s) structurally equal under rho`) — no Z3, no `main.elf`. Verified: `getLevel__16CMCCylinderGaugeFv` (us-80224098, `@6134`→`lbl_eu_80668520`) and `__ct__16CMCCylinderGaugeF…` (us-80223cac, `@6092`→`lbl_eu_80668518`) both accepted EQUIVALENT_MATCH with 99.7% static and exact 0x8D4 size. **Re-mine after any edit that shifts pool numbering** (removing a `.data` vtable via novtable renumbers every `@N` in the TU — the stale map entry then silently un-canonicalizes). `__vt__`-named drift (global symbols, not `unit@` keys) is NOT canonicalized; fix those in source with `__declspec(novtable)` + explicit retail-label assignment (`__vt__6CToken`→`lbl_eu_8056B52C` via `*(void**)this = (void*)lbl_eu_8056B52C;` as the first ctor statement — works byte-identically when the member-init list is empty; with a non-empty init list the manual store is scheduled at the end, see COccCulling above).
 
-When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `func_802B7CBC__Q22cf11CHelpSwitchFv(self, u32 flag)`.
+When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `trySetHelpFlag__Q22cf11CHelpSwitchFv(self, u32 flag)`.
 
 **LOD Fv entry-point verification:** `libs/monolib/src/lod/code_804645CC.cpp` confirms that a high-level `extern "C"` definition with explicit ABI parameters can retain a shortened Fv linker name; `func_80465704__Q23LOD17UnkClass_804645CCFv(s32)` reaches 100% static match (0x14 bytes). Do not use `asm("...")` symbol-label syntax with MWCC Wii/1.1 build 151: it fails at compile time with error 33106 (`<string not found>`), including on free functions. Use the explicit `extern "C"` Fv entry-point form instead.
 
@@ -714,7 +714,7 @@ count rises):**
    is five virtuals; 0x24 is seven. Compare sibling tables to see which slots
    a subclass adds.
 2. **Name the owning class from the linker symbol**, not from the TU you are
-   in. `func_802B7CBC__Q22cf11CHelpSwitchFv` is `cf::CHelpSwitch`, even if the
+   in. `trySetHelpFlag__Q22cf11CHelpSwitchFv` is `cf::CHelpSwitch`, even if the
    call site is `CHelp_ArtsAttack`. JP `__RTTI__` / `*_typestr` / `*_hierarchy`
    confirm. Hierarchy size: 0xC = one parent, 0x14 = two, 0x1C = three.
    A missing `__vt__` for an intermediate (Switch) is normal if nothing
@@ -751,7 +751,7 @@ count rises):**
   `neg`/`or`/`srwi` and grows the caller ~0xC. ArtsAttack evaluate is `u32`
   `func_802B7D00` calling `u32 func_802B7CBC`.
 - Keep a pad "until we know the name". The vtable word **is** the name
-  (`func_802B7CBC__Q22cf11CHelpSwitchFv`).
+  (`trySetHelpFlag__Q22cf11CHelpSwitchFv`).
 
 Worked example follows.
 
@@ -780,9 +780,9 @@ Two families, read from the US split1 objects (JP `__vt__Q22cf16CHelp_ArtsAttack
 
 | Slot | Direct `CHelp` child (Target, Sp, ArtsSet, size 0x1C) | `CHelpSwitch` child (ArtsAttack, Close*, CkKizuna, EndEvent, Talk) |
 |---|---|---|
-| +0x08 | `CHelp_UnkVirtualFunc1` (or leaf override) | `CHelpSwitch::func_802B7CB0` (Talk overrides with `func_802B86BC`) |
+| +0x08 | `CHelp_UnkVirtualFunc1` (or leaf override) | `CHelpSwitch::func_802B7CB0` (Talk overrides with `resetTalkHelp`) |
 | +0x0C | `CHelp_UnkVirtualFunc2` | same |
-| +0x10 | leaf **evaluate** (`CHelp_Target::CHelp_UnkVirtualFunc3`, `func_802B8654`, ...) | leaf **evaluate** (`func_802B7D00`, `func_802B8534`, `func_802B86F0`, ...) |
+| +0x10 | leaf **evaluate** (`CHelp_Target::CHelp_UnkVirtualFunc3`, `isSpThresholdMet`, ...) | leaf **evaluate** (`func_802B7D00`, `func_802B8534`, `func_802B86F0`, ...) |
 | +0x14 / +0x18 | `CHelp_UnkVirtualFunc4` / `5` (`return 0`) | same |
 | +0x1C | not present | `CHelpSwitch::func_802B7CBC` |
 | +0x20 | not present | `CHelpSwitch::func_802B7CE4` |
@@ -795,7 +795,7 @@ The evaluate function **is** the +0x10 virtual, not a regular method that
 casts `this` through a view. `CHelp_ArtsAttack::func_802B7D00` is slot +0x10
 on `__vt__Q22cf16CHelp_ArtsAttack`; its body then calls Switch +0x1C. Same
 for ClosePartyMenu `func_802B8534`, Talk `func_802B86F0`, Target
-`CHelp_UnkVirtualFunc3`. Talk `func_802B86BC` is the +0x08 override (it
+`CHelp_UnkVirtualFunc3`. Talk `resetTalkHelp` is the +0x08 override (it
 already calls `CHelpSwitch::func_802B7CB0()`). Talk's extra slot is +0x24,
 not +0x20 -- +0x20 is already `func_802B7CE4`.
 
@@ -911,7 +911,7 @@ mangling are in the write-up.
 
 **menu-enemy-cbrender sort Chaitin (~99.172%):** keep exact size `0x274` with draw counter as `u32 i` and `order[static_cast<u8>(i)]` / `while (i < 0x18)` (u8 counter emits terminal `clrlwi`, +4). Sort: pass-before-order + block-scoped `s32 limit`, outer `for (left=0x17; left!=0; left--)` CTR, inner bottom-tested goto, `&indices[j]` rematerialize, depthB before depthA, XOR store-reload with `swapped=1` after the first store. That locks `order=r9`, `j=r12`, `swapped=r11`. Residual: `pass/limit/pair` = MWCC `r8/r10/r30` vs retail `r10/r5/r8` (pair should reuse vacant `r8`). Hoisting `j` before `order` gets `pass=r10` but pins `j` in `r8` and spills pair to `r30`. Dead `gap` before the loop is DCE'd and does not reserve `r8`. Equivalence blocked by unvalidated callees.
 
-**menu-arts-cbrender bitfield-loop Chaitin (~99.3125%):** exact size `0x3C0`; gates + `unk1B8`/`unk80`/`unk98` draws are byte-identical. Residual is NV homes on the 8-slot (`unk318`/`unkA4`) and 9-slot (`unk310`/`unk314`/`unk104`/`unk170`) bitfield passes only: retail `i8=r28` / `i9=r27` with `bitI=r28`/`bit18=r29`, MWCC coalesces both counters into `r29` (`bitI=r27`/`bit18=r28`). `one=r31` and pointer `r30` already match. Ruled out: distinct `Layout**` walks (~94.8%), predeclared `i8`/`i9` (flat), early `i8=i9=0` overlap (~98.5%), `#pragma scheduling off` (~75%). Keep high-level C++; **no** `.text` `insn_patches`. EQUIVALENT blocked by unvalidated callees (`getInstance`, `func_800426F0`, layout draw helpers, `DrawInfo` ctor/dtor, etc.).
+**menu-arts-cbrender bitfield-loop Chaitin (~99.3125%):** exact size `0x3C0`; gates + `unk1B8`/`unk80`/`unk98` draws are byte-identical. Residual is NV homes on the 8-slot (`unk318`/`unkA4`) and 9-slot (`unk310`/`unk314`/`unk104`/`unk170`) bitfield passes only: retail `i8=r28` / `i9=r27` with `bitI=r28`/`bit18=r29`, MWCC coalesces both counters into `r29` (`bitI=r27`/`bit18=r28`). `one=r31` and pointer `r30` already match. Ruled out: distinct `Layout**` walks (~94.8%), predeclared `i8`/`i9` (flat), early `i8=i9=0` overlap (~98.5%), `#pragma scheduling off` (~75%). Keep high-level C++; **no** `.text` `insn_patches`. EQUIVALENT blocked by unvalidated callees (`getInstance`, `isFlag01Set`, layout draw helpers, `DrawInfo` ctor/dtor, etc.).
 
 **occ-cull-helper dir-vector Chaitin (~99.829%):** keep `CPlane::isOnPositiveSide`
   + `CVec3::dot(mDir, unk24->unk10C - mPos)` / `lbl_eu_80667C8C` (0.0f pool rename OK).
@@ -952,7 +952,7 @@ mangling are in the write-up.
   `convertToView` / `getInstance` accumulating `getFrame2ViewOffset`, then FD10
   for size (~87% schedule); avoid long `cycle` SMT on it.
 
-**`func_8043CE90` / frame draw / GX scissor ring:** CE90 is `lbz` of
+**`getSplitFrameFlag` / frame draw / GX scissor ring:** CE90 is `lbz` of
   `unk45C[8]` (FULL via tiny `extern "C" asm`). `func_804409D0` draws border
   quads (`begin(9,1)`/`add`/`end`) with `mFrameColor`×`lbl_eu_8066A318` then
   ×`lbl_eu_8066A2F4` (~54% first pass). `func_8044B298` copies optional
@@ -1007,7 +1007,7 @@ ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 
 **CUIBattleManager::Move soft-cap (~95.57%):** unit size PASS; function `0xB2C` vs retail `0xB00`. Peak keeps indirect `func_8012F5F8` call (same-TU empty stub is IPA'd away on direct `bl`), pad0C chain, capacity-first slot loads, `framePad[8]`. Residual: decomp `-0x210`/`stmw r24` vs retail `-0x220`/`stmw r25` because `battleWorkEvent` `this+0x54` is CSE'd into an NV across the asset `readFile` loop (4th NV). Volatile `this` reload restores `stmw r25`/`-0x220` but fuzzy drops to ~94.4%. Slot `r8`/`r7` order and pathBuf homes (`0x178`/`0xF8` vs `0x158`/`0xD8`) ride the frame skew. `EQUIVALENT` blocked by unresolved indirect + unvalidated callees. Keep high-level C++; no `asm void`.
 
-`CHelp_Pg::func_802B85A4` int→float uses retail `lbl_eu_80669000@sda21`; MWCC pools `@N` with the signed magic double — rename via `CHelp_Pg.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669000` once `.text` already matches.
+`CHelp_Pg::isThresholdMet` int→float uses retail `lbl_eu_80669000@sda21`; MWCC pools `@N` with the signed magic double — rename via `CHelp_Pg.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669000` once `.text` already matches.
 
 
 
@@ -1784,9 +1784,9 @@ Update `config/<region>/symbols.txt` to the MWCC 1.1 mangling when needed.
 In the retail binary, some functions have `Fv` mangling (no C++ parameters
 beyond `this`) but their bodies read extra register parameters (r4, r5)
 passed by the caller. Examples:
-- `func_80454F30__17CDeviceFontLoaderFv` (takes `void* arg1, const char* path`)
-- `func_8043B574__7CEvent1Fv` (takes `int index` as r4)
-- `func_8043B588__7CEvent1Fv` (takes `int index` as r4)
+- `setFontPath__17CDeviceFontLoaderFv` (takes `void* arg1, const char* path`)
+- `getFloatParam__7CEvent1Fv` (takes `int index` as r4)
+- `getPtrParam__7CEvent1Fv` (takes `int index` as r4)
 
 **Fix:** define the function as `extern "C"` with an explicit `self`
 pointer as first parameter. This produces the exact `Fv` symbol name
@@ -1795,7 +1795,7 @@ calling convention (r3=self, r4=arg1, r5=arg2):
 
 ```cpp
 extern "C" {
-void func_80454F30__17CDeviceFontLoaderFv(
+void setFontPath__17CDeviceFontLoaderFv(
     CDeviceFontLoader* self, void* arg1, const char* pPath) {
     self->mSomeData = arg1;
     self->mFileNameLen = strlen(pPath);
@@ -2115,7 +2115,7 @@ from pre-existing failures. **Files:** `tools/ppc_equivalence/jump_table.py`,
 
 The equivalence probe resolves the decomp side **by symbol name only** (`_resolve_candidates` in `tools/ppc_equivalence/elf_symbols.py`). A byte-identical body under a different name reads as `inconclusive_unsupported (0 candidates)` — the sweep's 24 blocked targets were mostly this. Rule:
 
-- **Mangled retail symbol** (`func_800B07E8__Fv`, `func_80133324__12CUICfManagerFiii`) → the source must be a **C++ function** (member or free, MWCC emits the mangling). `extern "C"` emits the bare name → 0-candidate probe failure even at 100% bytes.
+- **Mangled retail symbol** (`getInstance__Fv`, `func_80133324__12CUICfManagerFiii`) → the source must be a **C++ function** (member or free, MWCC emits the mangling). `extern "C"` emits the bare name → 0-candidate probe failure even at 100% bytes.
 - **Bare retail symbol** (`func_8004350C`, `func_800B1A5C`, `lbl_eu_80663D18`) → `extern "C"` free function (explicit `self` param for member-like bodies).
 - Verify the retail symbol's mangled signature against retail asm (arg registers r4-r10/f1-f8) before trusting it — `func_80133324__12CUICfManagerFv` was a wrong `Fv`; retail used r4/r5/r6 → corrected to `Fiii` in symbols.txt + target record.
 
@@ -2144,7 +2144,7 @@ Verify with `.scratch/` probes (compile a tiny TU with the unit's exact flags) b
 
 ### Byte-identical rename path to FULL_MATCH
 
-For a target whose decomp body exists under another name: find the byte-identical counterpart (compare `FunctionBytes.code` across the decomp unit), rename source to the retail symbol (linkage per the rule above), rebuild, hexdiff 100%, cycle → FULL_MATCH. Worked on: `isUnk68Bit13Set`→`func_800404F0`, `actCallVt90/94/30`→`func_800560E4/F4/118`, `callStubReturnZero_800436A8`→`func_8004368C`, plus symbols.txt mangling fixes (`UnkVirtualFunc29 Fv→Ff`, `getRsrc Fv→CFv`).
+For a target whose decomp body exists under another name: find the byte-identical counterpart (compare `FunctionBytes.code` across the decomp unit), rename source to the retail symbol (linkage per the rule above), rebuild, hexdiff 100%, cycle → FULL_MATCH. Worked on: `isUnk68Bit13Set`→`isFlag2000Set`, `actCallVt90/94/30`→`func_800560E4/F4/118`, `callStubReturnZero_800436A8`→`func_8004368C`, plus symbols.txt mangling fixes (`UnkVirtualFunc29 Fv→Ff`, `getRsrc Fv→CFv`).
 
 ---
 
@@ -2199,7 +2199,7 @@ pragma combos) all failed on register colors or spilled. Root causes:
 2. **The retail `...FPv` name is a decompiler guess.** The mangled symbol
    `CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv` claims `void*` but retail
    codegen proves the original source had a typed pointer (same scheme as
-   CfObjectEff's `func_800ACDA0__Q22cf11CfObjectEffFv` and CfObjectModel's
+   CfObjectEff's `setEffRotVec___Q22cf11CfObjectEffFv` and CfObjectModel's
    `CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv`, both FULL_MATCH).
    Define the function as `extern "C" void <mangled-name>(...)` with typed
    params — `extern "C"` emits the name VERBATIM (no `__FP<params>` re-mangle);
@@ -2438,7 +2438,7 @@ single-register copy byte-for-byte under -O4,s (verified Wii/1.1).
   dropping the retail's ctor call and its null-check (and mangling the args — the size
   leaks into r3). `extern "C" __declspec(noinline)` restores the call + `cmpi/bc` pair.
 
-- **Ternary vs if/else for a f32 selection (CTaskGameEff func_80044FBC, 0x7C,
+- **Ternary vs if/else for a f32 selection (CTaskGameEff setEffectEnabled, 0x7C,
   FULL_MATCH):** `f32 time; if (enable) time = const; else time = g->field;` lets MWCC
   hoist the following call's `lis/addi` base ABOVE the if; the single-expression
   `f32 time = (enable) ? const : g->field;` pins the base after the selection — byte-

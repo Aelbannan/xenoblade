@@ -92,11 +92,11 @@ extern char* lbl_eu_806640A8;
 extern char* lbl_eu_8052C7E8[];
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv; same scheme as CSystemWindow.hpp).
+// isFlag01Set__9CTaskGameFv; same scheme as CSystemWindow.hpp).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Global gimmick container returned by getUnk80664658 (flag word at +0x214).
@@ -128,17 +128,17 @@ extern "C" int func_801AC124();
 // Move() gate/state helpers (unmangled retail symbols - C linkage).
 extern "C" u32 func_80242354();
 extern "C" bool func_80251550();
-bool func_8006EF04(int mask);   // func_8006EF04__Fi (mangled C++)
+bool isGlobalCamFlagSet(int mask);   // isGlobalCamFlagSet__Fi (mangled C++)
 extern "C" u32 func_80134538();
 extern "C" void func_8013ACFC();
 extern "C" int func_8013BE58();
-// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp; this TU uses the CfGameManager.hpp member form.)
 // cf::CfGameManager pad-mode probe with an explicit int arg: the retail symbol
 // is the pre-mangled name, so it must stay C linkage (inside extern "C") or
 // MWCC appends a __Fi suffix (see CQuestWindow.hpp:280 block). The s16 inline
 // wrapper in CfGameManager.hpp would DCE the `li r3,-1` arg setup.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // CProcess base ctor is out-of-line in retail (CProcess is abstract, so the
 // factory calls it as a plain function).
 void __ct__8CProcessFv(CProcess* self);

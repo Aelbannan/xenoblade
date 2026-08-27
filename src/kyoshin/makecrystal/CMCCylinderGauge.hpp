@@ -12,25 +12,25 @@ class __declspec(novtable) CMCCylinderGauge {
 public:
     CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg);
     virtual ~CMCCylinderGauge();
-    void func_80221EF4();
-    void func_80221FE0();
-    void func_80222070(nw4r::lyt::DrawInfo*);
-    void func_80222090();
-    bool func_802220F0();
-    void func_802220F8();
-    void func_80222118();
-    void func_802221A4(float);
-    void func_80222234();
-    u8 func_80222258();
-    void func_802222A4(u8);
-    DECOMP_DONT_INLINE void func_802222C4();
-    DECOMP_DONT_INLINE void func_80222318();
-    DECOMP_DONT_INLINE void func_8022246C();
-    DECOMP_DONT_INLINE void func_802224B0();
-    DECOMP_DONT_INLINE void func_80222520();
-    DECOMP_DONT_INLINE void func_802225A8();
-    DECOMP_DONT_INLINE void func_80222630();
-    DECOMP_DONT_INLINE void func_802226B8();
+    void init();
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void destroy();
+    bool isReady();
+    void start();
+    void startOut();
+    void addFillValue(float);
+    void decrementLevel();
+    u8 getLevel();
+    void setLevel(u8);
+    DECOMP_DONT_INLINE void updateIn();
+    DECOMP_DONT_INLINE void updateFill();
+    DECOMP_DONT_INLINE void updateOut();
+    DECOMP_DONT_INLINE void updateFull();
+    DECOMP_DONT_INLINE void bindInAnim();
+    DECOMP_DONT_INLINE void bindUpAnim();
+    DECOMP_DONT_INLINE void bindFullAnim();
+    DECOMP_DONT_INLINE void bindOutAnim();
 
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; //0x4
     nw4r::lyt::Layout* mLayout;                           //0x8

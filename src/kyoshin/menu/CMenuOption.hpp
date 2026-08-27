@@ -136,7 +136,7 @@ extern "C" void func_801C41E8(CTitleAHelp* self, u8 arg);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // Retail-unmangled callee names (US strips mangling for these func_ helpers).
 // isIdle/func_8029C790 are declared int (not u8) so callers compare with
@@ -144,7 +144,7 @@ extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 extern "C" int func_8029C790(COption* self);
 extern "C" void func_8029C66C(COption* self);
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable);
 // CBgTex / CTitleAHelp helpers (retail unmangles these member helpers).
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);

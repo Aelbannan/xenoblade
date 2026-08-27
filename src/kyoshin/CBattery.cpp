@@ -25,27 +25,27 @@ CBattery::CBattery(u8 batteryLevel) : CBatteryVtblBase(), mMemRegion() {
 CBattery::~CBattery() {
 }
 
-void CBattery::func_802B92A4() {
+void CBattery::loadBatteryArchive() {
     mFileHandle = CDeviceFile::readFile(CWorkThreadSystem::getWorkMem(), lbl_eu_8051399C,
         reinterpret_cast<IWorkEvent*>(this), 0, 0);
     CDeviceFile::func_8044F154(mFileHandle, 3);
     CDeviceFile::setHandleFlag2(mFileHandle);
 }
 
-void CBattery::func_802B92FC() {
+void CBattery::updateLayout() {
     if (mDrawn == false || mLayoutReady == false)
         return;
     mLayout->Animate(0);
 }
 
 // r4 inherits from DrawInfo
-void CBattery::func_802B9334(void* param) {
+void CBattery::drawBattery(void* param) {
     if (mDrawn == 0 || mLayoutReady == 0)
         return;
     func_80137038(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
 }
 
-__declspec(noinline) void CBattery::func_802B9364() {
+__declspec(noinline) void CBattery::releaseLayout() {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
@@ -85,7 +85,7 @@ void __declspec(noinline) CBattery::updateBatteryImage() {
     }
 }
 
-__declspec(noinline) void CBattery::func_802B94B0() {
+__declspec(noinline) void CBattery::onLayoutReady() {
     if (mLayout != nullptr) {
         mDrawn = true;
         mLayoutReady = true;
@@ -97,7 +97,7 @@ bool CBattery::OnFileEvent(CEventFile* pEventFile) {
     // Only run the event if the file handle in the event struct matches the one in this class
     if (mFileHandle == pEventFile->mFileHandle) {
         if (pEventFile->unk0 != 1) {
-            func_802B9364();
+            releaseLayout();
             return true;
         }
 
@@ -105,11 +105,11 @@ bool CBattery::OnFileEvent(CEventFile* pEventFile) {
         mMemRegion.createRegion(CWorkThreadSystem::getWorkMem(), 0xC00, lbl_eu_8051399C + 0x1D, 0);
         Class_8045F858 sp8 = Class_8045F858(&mMemRegion);
         void* data = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(0);
+        mtl::MemManager::setMemInitFlag(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, lbl_eu_8051399C + 0x26);
         func_80136E84(&mLayout, mAccessor, lbl_eu_8051399C + 0x2A);
-        func_802B94B0();
+        onLayoutReady();
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
         return true;

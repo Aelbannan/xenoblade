@@ -53,9 +53,9 @@ void func_80096974(cf::CtrlPc* self) {
     CtrlPlayerObj* p;
 
     cf::CfGameManager::getInstance();
-    gmSub = (UnkClass_800821F8View*)func_800821F8__Q22cf13CfGameManagerFv();
+    gmSub = (UnkClass_800821F8View*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     CfObj90E4* g = func_800FE68C();
-    vh = (CtrlVoiceHandle*)(void*)func_800B708C__Fi((int)g->mField90E4);
+    vh = (CtrlVoiceHandle*)(void*)findObjectById__Fi((int)g->mField90E4);
     p = self->mField5C;
     v1 = *p->mField4->vf30();
     if (func_80174C98(p, &v1, 1) != 0) {
@@ -228,7 +228,7 @@ probe100:
             }
         } else {
             cf::CfGameManager::getInstance();
-            if (func_8006EF04__Fi(0x400000) == 0) {
+            if (isGlobalCamFlagSet__Fi(0x400000) == 0) {
                 // Clear the lock-on bit when both target words agree it is
                 // stale (rlwinm keep-range with wraparound == clearing one
                 // bit).
@@ -257,7 +257,7 @@ probe100:
     func_8019956C((cf::CCtrlMovePC*)(void*)self->mSubObj8C);
     self->mField10 = self->mFieldC;
     if (func_80148778(&self->mField5C->mField8, 6) != 0 ||
-        (cf::CfGameManager::getInstance(), func_8006EF04__Fi(0x400000) != 0)) {
+        (cf::CfGameManager::getInstance(), isGlobalCamFlagSet__Fi(0x400000) != 0)) {
         self->mField14 = lbl_eu_80666720;
     }
 tail:
@@ -278,7 +278,7 @@ void func_80097598(cf::CtrlPc* self) {
     CtrlPlayerObj* obj;
 
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x1000000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x1000000) != 0) {
         goto fail;
     }
     p = self->mField5C;
@@ -391,7 +391,7 @@ void func_80097A5C(cf::CtrlPc* self) {
                 if (self->mField5C != 0) {
                     tgt = &self->mField5C->mSub3E9C;
                 }
-                func_800ACF78(hand, tgt, 0);
+                bindPartnerO_(hand, tgt, 0);
             }
         } else if (sw == 1) {
             func_800983B8(self, 5);
@@ -401,7 +401,7 @@ void func_80097A5C(cf::CtrlPc* self) {
                 if (self->mField5C != 0) {
                     tgt = &self->mField5C->mSub3E9C;
                 }
-                func_800ACF78(hand, tgt, 0);
+                bindPartnerO_(hand, tgt, 0);
             }
         }
         return;
@@ -514,7 +514,7 @@ extern "C" int func_80097E00(cf::CtrlPc* self) {
     }
     chainActive = (((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0);
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x4000000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
         return 0;
     }
     CVoiceOwnerIntfPc* owner = (CVoiceOwnerIntfPc*)self->mField5C;
@@ -614,9 +614,9 @@ void cf::CtrlPc::delegateTo89F68() {}
 // Retail func_80098A04: writes the tri-state pad state (-1/0/1) into
 // mField24.
 // REBUILD-STUB: body lost in the accidental clobber; re-derive from retail
-// ASM (uses func_8006EF04__Fi(0x10000000) gate).
+// ASM (uses isGlobalCamFlagSet__Fi(0x10000000) gate).
 void func_80098A04(cf::CtrlPc* self) {
-    if (func_8006EF04__Fi(0x10000000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) {
         self->mField24 = -1;
         return;
     }

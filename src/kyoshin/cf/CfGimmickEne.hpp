@@ -246,14 +246,14 @@ extern char* lbl_eu_80537A68[4];
 extern char* lbl_eu_806629B0;
 
 // CTaskLOD delegates (monolib lod) and sound helpers used by func_8026ECEC.
-extern void func_80462DB4__8CTaskLODFv(u8 lod, int mode);
-extern void func_80462E3C__8CTaskLODFv(u8 lod, f32 f);
-extern void func_80462EF4__8CTaskLODFv(u8 lod, f32 f);
-extern void func_80462F10__8CTaskLODFv(u8 lod);
-extern void func_80462F4C__8CTaskLODFv(u8 lod, int mode);
-extern void func_80462F70__8CTaskLODFv(u8 lod, int mode);
-extern void func_80462ED0__8CTaskLODFv(u8 lod, int mode);
-extern void* func_804BC9EC__Fv();
+extern void setLODEnable__8CTaskLODFv(u8 lod, int mode);
+extern void refreshLOD__8CTaskLODFv(u8 lod, f32 f);
+extern void removeLODEntry__8CTaskLODFv(u8 lod, f32 f);
+extern void clearLODEntry__8CTaskLODFv(u8 lod);
+extern void attachLODObject__8CTaskLODFv(u8 lod, int mode);
+extern void detachLODObject__8CTaskLODFv(u8 lod, int mode);
+extern void addLODEntry__8CTaskLODFv(u8 lod, int mode);
+extern void* getScnHandle__Fv();
 extern void func_804BCC30(void* snd, u8 id);
 extern void func_804BCC3C(void* snd, u8 id);
 
@@ -262,7 +262,7 @@ extern void func_804BCC3C(void* snd, u8 id);
 extern void func_8020A068(int arg0, int flag, u32 value);
 // Single shared flat-name form (unmangled retail symbol; see
 // CfObjectImplMove.hpp).
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
     u32 a, u32 b, u32 c, u32 d, f32 vol);
 
 // Scene / frame helpers (monolib scn).

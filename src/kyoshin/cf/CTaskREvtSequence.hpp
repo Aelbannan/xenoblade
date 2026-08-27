@@ -35,13 +35,13 @@ extern "C" void func_80189424(float vol);
 // and the sound-system flag arm.
 extern "C" bool func_8012E6DC();
 extern "C" int func_80062A00();
-extern "C" void func_800866A0__Q22cf13CfGameManagerFv();
-extern "C" void func_80086D98__Q22cf13CfGameManagerFv(u16* first, u16* second);
+extern "C" void handleBattleEnd__Q22cf13CfGameManagerFv();
+extern "C" void getControllerValues__Q22cf13CfGameManagerFv(u16* first, u16* second);
 extern "C" u32 func_8016E08C();
 extern "C" void func_800B9438(void* arg);
 // Event-manager readiness check (defined at global scope in CTaskREvent.cpp,
-// so C++ linkage mangles it back to the retail func_80164910__Fv).
-u32 func_80164910();
+// so C++ linkage mangles it back to the retail isEventPending__Fv).
+u32 isEventPending();
 
 // Name-string helper for realtime-event entries (CREvtModel.cpp): returns
 // entry->field_0x1C + 0x10 as a C string.
@@ -112,8 +112,8 @@ extern "C" u32 func_80168028(u32 idx);
 // func_802A1500: voice-event manager reset (CCharVoiceMan.cpp).
 extern "C" void func_802A1500();
 // CfGameManager helpers with the caller shape (same scheme as CTaskREvent.hpp).
-extern "C" EvtSeqMgrView* func_80086B04__Q22cf13CfGameManagerFv();
-extern "C" u32 func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value);
+extern "C" EvtSeqMgrView* getGimmickListHead__Q22cf13CfGameManagerFv();
+extern "C" u32 getBdatEntryColumn__Q22cf13CfGameManagerFv(u32 index, u32 value);
 // Camera-manager getter: single winning decl on CfGameManagerApi.hpp
 // (canonical UnkClass_800821F8* view); this TU's call sites cast to the
 // local CfEvtCamManager view below.
@@ -152,8 +152,8 @@ extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg);
 extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self,
                                         CREvtMovieScript* scriptData);
 extern "C" void* func_801730D0(void* self);
-extern "C" bool func_80087250__Q22cf13CfGameManagerFv();
-extern "C" void func_8007CE94__Q22cf13CfGameManagerFv();
+extern "C" bool isVisionPackLoaded__Q22cf13CfGameManagerFv();
+extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv();
 extern "C" u32 func_801AC088();
 extern "C" void func_801AC1F8();
 extern "C" void func_80294980(CREvtMovie* self);
@@ -167,8 +167,8 @@ extern "C" void func_80261944(int arg);
 // Imports for func_80169050 (fade/arm sequence state): CfGameManager helpers
 // (caller shape - retail symbols are Fv) and the voice/UI-system arm helper
 // (code_801A929C.cpp).
-extern "C" void func_8007C0F8__Q22cf13CfGameManagerFv();
-extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv(int a, int b);
+extern "C" void clearBdatTextEntries__Q22cf13CfGameManagerFv();
+extern "C" void stubEmptyD__Q22cf13CfGameManagerFv(int a, int b);
 extern "C" void func_801AAC78(int v);
 // Imports for the ctor: menu/event-system singleton gate + arm
 // (CMenuEnemyState.cpp).
@@ -269,7 +269,7 @@ struct UnkEvtPlayer {
     f32 field_0x1F0;   // 0x1F0
 };
 
-// Camera/event manager returned by CfGameManager::func_800821F8 (the retail
+// Camera/event manager returned by CfGameManager::getCameraDataBlock (the retail
 // object behind the forward-declared UnkClass_800821F8; also modelled as
 // CREvtCamManager in CREvtCamera.hpp). The retail vtable slot at +0x3C is
 // user virtual 13.
@@ -334,7 +334,7 @@ struct UnkNode4594 {
     UnkObj4594* field_0x8;    // 0x08: sub-object pointer (+0x3E9C into container)
 };
 
-// View of the CfGameManager object returned by func_80086B04: object list
+// View of the CfGameManager object returned by getGimmickListHead: object list
 // head at +0x4.
 struct EvtSeqMgrView {
     u8 gap00[0x04];         // 0x00
@@ -854,8 +854,8 @@ extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2,
                               u32* out3);
 // CTaskLOD helpers (code_80135FDC.cpp): task id -> active flag. s16 id so the
 // call site passes the halfword directly (retail emits lha, no u8 conversion).
-extern "C" void func_80462D5C__8CTaskLODFv(s16 taskId);
-extern "C" int func_80462E1C__8CTaskLODFv(s16 taskId);
+extern "C" void deactivateLOD__8CTaskLODFv(s16 taskId);
+extern "C" int getLODData__8CTaskLODFv(s16 taskId);
 
 // Definitions in this TU (retail unmangled names; the extern "C" decls above
 // keep the emitted symbols byte-identical to retail).
@@ -925,9 +925,9 @@ extern "C" void func_8016FC0C(int val);
 // Guest-mode-off reset (CREvtModelMap.cpp).
 extern "C" void func_80180DCC();
 // Second/third CfGameManager object-list getters (same scheme as
-// func_80086B04 above).
-extern "C" EvtSeqMgrView* func_80086B08__Q22cf13CfGameManagerFv();
-extern "C" EvtSeqMgrView* func_80086B10__Q22cf13CfGameManagerFv();
+// getGimmickListHead above).
+extern "C" EvtSeqMgrView* getGimmickList__Q22cf13CfGameManagerFv();
+extern "C" EvtSeqMgrView* spawnGimmickEntity__Q22cf13CfGameManagerFv();
 // Extra .sdata2 floats / ptmf tables used by func_8016925C.
 extern f32 lbl_eu_80667660;
 extern f32 lbl_eu_80667664;
@@ -974,7 +974,7 @@ public:
 };
 
 // Object at the head of the character container (+0x3E9C) walked by the
-// func_80086B04/B08 manager lists: the reset slots live at vtable offsets
+// getGimmickListHead/B08 manager lists: the reset slots live at vtable offsets
 // 0x158 (user 84) and 0x1C0 (user 110).
 class EvtSeqResetObj {
 public:
@@ -1091,7 +1091,7 @@ public:
     virtual void vf_0x1C0(int arg);  // user 110 -> vtable+0x1C0: reset step 2
 };
 
-// Object reached through the func_80086B10 list nodes: a sub-object pointer
+// Object reached through the spawnGimmickEntity list nodes: a sub-object pointer
 // at +0x98 whose vtable slot at absolute 0x80 (user 30) stops the task.
 class EvtSeqB10Obj {
 public:
@@ -1128,7 +1128,7 @@ public:
     virtual void vf_0x80(int flag);  // user 30 -> vtable+0x80
 };
 
-// Node-object view for the func_80086B10 walk: the word at +0x98 names the
+// Node-object view for the spawnGimmickEntity walk: the word at +0x98 names the
 // task object stopped by the walk.
 struct EvtSeqB10Node {
     u8 gap00[0x98];            // 0x00
@@ -1152,16 +1152,16 @@ extern f32 lbl_eu_80667688;
 class CFileHandle;
 extern "C" void func_80180E1C();
 extern "C" void cancel__11CDeviceFileFP11CFileHandle(CFileHandle* handle);
-extern "C" void func_80462D04__8CTaskLODFv(s16 taskId);
+extern "C" void activateLOD__8CTaskLODFv(s16 taskId);
 extern "C" void func_80043BC4();
 // Static shutdown for the shared menu-text state (code_8025FB10.cpp).
 extern "C" void __dt__80261B1C();
 extern "C" void func_80167EF8();
-extern "C" void func_8008670C__Q22cf13CfGameManagerFv();
+extern "C" void finalizeGameState__Q22cf13CfGameManagerFv();
 extern "C" void func_801338C8();
 extern "C" void func_80133B80();
 extern "C" void func_8012F750(u32 arg);
-extern "C" void func_804900A0__FUl(u32 arg);
+extern "C" void updateScnCounter__FUl(u32 arg);
 
 // Event-task object behind func_801644B4(): teardown-arm word at +0x1B8.
 struct EvtSeqMgrTaskView {

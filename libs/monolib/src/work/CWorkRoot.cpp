@@ -381,7 +381,7 @@ extern "C" void endFrame__9CDeviceVIFv();
 extern "C" void onPreRetrace__9CDeviceVIFv();
 extern "C" CDeviceGX* getInstance__9CDeviceGXFv();
 extern "C" void onRenderWork__9CDeviceGXFv();
-extern "C" void func_80454E6C__16CDeviceFontLayerFv();
+extern "C" void resetFontCursor__16CDeviceFontLayerFv();
 extern "C" CDevice* getInstance__7CDeviceFv();
 extern "C" bool isColdStartReady__7CDeviceFv();
 extern "C" void createRegions__7CDeviceFv();
@@ -731,7 +731,7 @@ __declspec(noinline) void CWorkRoot::renderWork(){
         }
     }
 
-    func_80454E6C__16CDeviceFontLayerFv();
+    resetFontCursor__16CDeviceFontLayerFv();
 }
 
 bool CWorkRoot::isShutdownAll(){

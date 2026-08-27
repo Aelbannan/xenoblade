@@ -298,7 +298,7 @@ void CTaskGamePic::cbRenderBefore() {
     if (field_8C == 0) return;
     CView* view = CView::getCurrentView();
     if (field_68 == 0) return;
-    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
     tex = static_cast<const CTaskGamePicTexData*>(field_68);
 
     // View-sized rect: narrow it to 3/4 width (centred) on 16:9.
@@ -323,8 +323,8 @@ void CTaskGamePic::cbRenderBefore() {
     // Inner scope so the automatic destructor fires where retail's does.
     {
         CDrawGX dgx0;
-        dgx0.func_80456570(0);
-        dgx0.func_8045657C(0);
+        dgx0.setZCompare(0);
+        dgx0.setZWriteEnable(0);
         ml::CCol3 col;
         col.r = lbl_eu_80668BB8;
         col.g = lbl_eu_80668BB8;
@@ -351,11 +351,11 @@ void CTaskGamePic::cbRenderBefore() {
     }
 
     // Full-screen colour wash from the animated 0x90 RGBA block.
-    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
     {
         CDrawGX dgx1;
-        dgx1.func_80456570(0);
-        dgx1.func_8045657C(0);
+        dgx1.setZCompare(0);
+        dgx1.setZWriteEnable(0);
         dgx1.setCol(*(ml::CCol4*)&param_90);
         dgx1.begin(9, 1);
         ml::CRect rectC;
@@ -368,8 +368,8 @@ void CTaskGamePic::cbRenderBefore() {
         dgx1.add(*(ml::CRect16*)&rectC);
         dgx1.end();
     }
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    CDeviceGX::getCacheInstance()->resetGXStateA();
+    CViewRoot::updateViewRoot();
 }
 
 // Preserve empty Draw member (retail 4-byte body).

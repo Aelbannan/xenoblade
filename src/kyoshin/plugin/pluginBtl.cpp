@@ -25,7 +25,7 @@ public:
     virtual void v002() = 0;
     virtual void v003() = 0;
     virtual void v004() = 0;
-    virtual void func_80085220(u32 r4, u32 r5) = 0;   // slot 0x1C
+    virtual void setPartyMaskFlag(u32 r4, u32 r5) = 0;   // slot 0x1C
     virtual void func_800E2584(u32 mask) = 0;         // slot 0x20
     // +0x194: UnkClass_8018C5FC
     // +0x219C: CVision
@@ -147,7 +147,7 @@ extern "C" {
     void func_801F92B0(void* self, int, int, int);
 
     // Game state / flags
-    bool func_8006EF04__Fi(s32 mask);
+    bool isGlobalCamFlagSet__Fi(s32 mask);
     u32 func_80192BD0();
 
     // bdat helpers
@@ -161,7 +161,7 @@ extern "C" {
     extern u32 lbl_eu_806618D8;
     extern u32 lbl_eu_806619A0;
     void* __dynamic_cast(void*, long, const void*, const void*, void*);
-    void* func_800B708C__Fi(int);
+    void* findObjectById__Fi(int);
 }
 
 // --- pluginBtl function implementations ---
@@ -385,7 +385,7 @@ int vision(VMThread* pThread) {
         bm->func_800E2584(0x200);
     } else {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        bm->func_80085220(0x200, 1);
+        bm->setPartyMaskFlag(0x200, 1);
     }
     return 0;
 }
@@ -406,7 +406,7 @@ int voiceEvent(VMThread* pThread) {
 int isVoiceEvent(VMThread* pThread) {
     int result = 0;
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x10000000) != 0) {
+    if (isGlobalCamFlagSet__Fi(0x10000000) != 0) {
         if (!CMenuArtsSelect_isCreated() && func_80192BD0() == 0) {
             result = 1;
         }
@@ -498,7 +498,7 @@ int breakVision(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     void* visionList = func_800EA444(bm);
     if (visionList != 0) {
-        void* actor = func_800B708C__Fi(*(u32*)((u8*)visionList + 0));
+        void* actor = findObjectById__Fi(*(u32*)((u8*)visionList + 0));
         void* voiceAction = func_8016FE34(actor);
         // Retail re-fetches the manager here instead of caching it across the
         // intervening calls (keeps the frame small).

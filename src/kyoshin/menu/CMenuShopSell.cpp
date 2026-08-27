@@ -144,14 +144,14 @@ void CMenuShopSell::Term() {
     func_801CAE9C(&mItemBoxGrid);
 
     lbl_eu_806642F0 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 /* Per-frame update of the shop-sell screen. Gate on the task/busy flags, then
  * drive the 4-state FSM and refresh the bg / item grid / title bar each frame. */
 void CMenuShopSell::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
 
     switch (mState) {
@@ -181,7 +181,7 @@ void CMenuShopSell::Move() {
  * bar in that order. */
 void CMenuShopSell::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -252,7 +252,7 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
     if (func_8029A658() != 0) return;
 
     ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // Pointer input enabled: materialise the 0/1 flag bools first (retail
         // andi/rlwinm+rlwimi then subic/subfe normalisation, pressed bits via
         // extrwi), then dispatch through cmpwi/beq in this order.

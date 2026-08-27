@@ -1,7 +1,7 @@
 #include "kyoshin/help/CHelp_ShopBuy.hpp"
 
 namespace cf {
-void CHelp_ShopBuy::func_802B864C() {
+void CHelp_ShopBuy::checkHelpCondition() {
     func_8018C180();
 }
 } // namespace cf

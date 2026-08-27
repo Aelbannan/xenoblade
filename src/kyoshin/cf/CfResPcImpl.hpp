@@ -14,7 +14,7 @@ class CfObjectMove;
 class CfBdat {
 public:
     static u32 func_801422A8(u32 param1);
-    static const char* func_801424A8(u16 index);
+    static const char* getBdatStringEntry(u16 index);
     static void resetMapBdatFileDataPointers();
 };
 
@@ -621,8 +621,8 @@ extern "C" void func_8009F6D4(void* object);
 extern "C" void* func_8009EC9C(u32 idx);  // canonical owner-form (void*) shared by all TUs; callers cast to cf::CfResPcCharData*
 extern "C" void func_80068AEC(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
-extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask);
-extern "C" bool func_8007DA0C__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
+extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
+extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
 extern "C" void func_801BFF04(int a, int b, int c, int d);
 extern "C" int func_80062928(int destination, int source, int size);
 extern "C" int func_80062998(int first, int second, int third);
@@ -631,7 +631,7 @@ extern "C" int func_800A807C();
 extern "C" void func_800A98A8(int index);
 extern "C" void func_80062758(u8* obj, int arg);
 extern "C" void func_800B1EC8();
-extern "C" void func_8007D834__Q22cf13CfGameManagerFv(cf::CfResPcMgrView* manager);
+extern "C" void notifyObjectMapChange__Q22cf13CfGameManagerFv(cf::CfResPcMgrView* manager);
 extern "C" void func_800BBB50(cf::CfResPcParent* parent);
 extern "C" void func_800BE1A4(cf::CfResPcParent* parent);
 extern "C" void func_8018F63C(void* self);
@@ -662,17 +662,17 @@ extern "C" void func_eu_80063174(int a, u8* b);
 extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" int func_800625A0(int a, int b);
 extern "C" int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second);
+extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second);
 
 // C-ABI imports used by func_8018F1FC (defined in CfGameManager.cpp / the
 // CfGameManagerUnityHelpers.hpp wrappers / code_80187F14.cpp). The Fv-mangled
 // CfGameManager methods are called with a vestigial int arg here (retail
 // `li r3, X` before the bl); extern "C" keeps the call relocs at the retail
 // names (same convention as code_8018F8D8.cpp / CPartyStateWin.hpp).
-extern "C" void func_8007FE18__Q22cf13CfGameManagerFv(int flag);
-extern "C" void func_80085334__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void func_80083328__Q22cf13CfGameManagerFv(cf::CfGameManager* object, u32 first, u32 second);
-extern "C" void func_8007C140__Q22cf13CfGameManagerFv(int arg);
+extern "C" void stubEmptyC__Q22cf13CfGameManagerFv(int flag);
+extern "C" void loadPartyResources__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void syncGameTime__Q22cf13CfGameManagerFv(cf::CfGameManager* object, u32 first, u32 second);
+extern "C" void resetGameFlags__Q22cf13CfGameManagerFv(int arg);
 extern "C" int func_8018892C(int index);
 extern "C" void func_8004302C(int a, int b);
 
@@ -710,14 +710,14 @@ extern "C" void func_80080F48__Q22cf13CfGameManagerFv(u32 value, cf::CfResPcLoad
 // C-ABI imports used by func_8018E7E4 / func_8018D79C (defined in IResInfo.cpp /
 // CfGameManager.cpp / the model layer). extern "C" keeps the call-site relocs
 // at the plain retail names.
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" u32 func_804873EC(void* obj, u32 bdat, u32 arg);
 extern "C" void func_804875B8(void* obj, u32 bdat, f32 f1, f32 f2);
 extern "C" int func_80062BAC(int handle);
 extern "C" cf::CfResPcFindEntry* findResEntry(u8* self, u32 id, u32* outIndex, u32* outValue);
 extern "C" void* func_800685C8(u8* self, u32 id, u32* outIdx);
-extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value);
+extern "C" bool initParticleSystem__Q22cf13CfGameManagerFv(u32 value);
 extern "C" const void* func_8009E120(cf::CfResPcCharData* object, u16 value);
 extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);
 extern "C" void func_800BE3E8(void* object, u32 value);

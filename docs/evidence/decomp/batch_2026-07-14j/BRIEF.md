@@ -46,7 +46,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 - Do **not** implement other vfuncs — call through vtable if retail does
 
 ### `CUIBattleManager::Move` (`asm_Move_CUIBattleManager.s`)
-- Frame `-0x220` + `stmw r25`; early gates: `CTaskGame::getInstance` / `func_800426F0` / `lbl_eu_80663E28` bit10 / MEM2
+- Frame `-0x220` + `stmw r25`; early gates: `CTaskGame::getInstance` / `isFlag01Set` / `lbl_eu_80663E28` bit10 / MEM2
 - Repeated create/bind patterns via `func_801355A0`, `func_801355F4`, `lbl_eu_80664048`, `func_801096B8`, `func_801ACCE0`
 - Bit tests on manager flags; allocate/register child UI objects
 - Extend `CUIBattleManager.hpp` fields `Move` needs; **leave `Init` untouched**

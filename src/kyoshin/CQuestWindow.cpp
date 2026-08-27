@@ -4,13 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQuestWindow.hpp"
 #include "kyoshin/code_80135FDC.hpp"              // func_80137444 (anim frame wait)
-#include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::func_801C1B94
+#include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::setInputDisableTime
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
 // Implicit-r3 form: retail call sites that do NOT set r3 (the def in
 // ocBdat.cpp takes no args); header decl is the 1-arg caller-tuned form.
 extern "C" void* func_8003AA34(void);
 #include "monolib/device/CDeviceFile.hpp"         // readFile / readCommonArchiveFile
-#include "monolib/device/CDeviceFont.hpp"         // CDeviceFont::func_80452C10
+#include "monolib/device/CDeviceFont.hpp"         // CDeviceFont::getFontInfo
 #include "monolib/device/CDeviceVI.hpp"          // waitForDrawDone
 #include "monolib/util/MemManager.hpp"            // mtl::MemManager::allocate / getHandleMEM2
 #include "monolib/work/CWorkThreadSystem.hpp"     // CWorkThreadSystem::getWorkMem
@@ -58,7 +58,7 @@ void func_801226C8(QuestWinObj* self) {
     if (func_8013BE50() == 0) return;
     switch (self->field_0xBC) {
     case 0:
-        func_8008294C__Q22cf13CfGameManagerFv(true);
+        setPresentationFlag__Q22cf13CfGameManagerFv(true);
         self->field_0xBC = 1;
         func_801D216C(&self->mCursor, 0);
         func_8012435C(self);
@@ -99,7 +99,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
         __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &self->mMemRegion);
 
         u8* fileData = (u8*)self->field_0x88->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         CTagProcessor* tag = (CTagProcessor*)mtl::MemManager::allocate(
             0x858, getAllocHandle__10CLibLayoutFv());
         if (tag != 0) {
@@ -118,7 +118,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
 
         // Bind the font handle into the layout's root pane.
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
-        u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, self->mpLayout);
+        u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
         func_8013676C(rootPane, fontResult);
 
@@ -195,7 +195,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
 // ---------------------------------------------------------------------------
 void CQuestWindow::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) return;
     if (func_8013BE50() == 0) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
@@ -272,12 +272,12 @@ extern "C" void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 
     self->field_0xDA = 0;
 
     lbl_eu_80663FD0 = lbl_eu_80663FD0 + 1;
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
     self->field_0xE8 = getEnabledInputFlags__Q22cf13CfGameManagerFv();
 
     // Classic-pad pad-flag mask when the detected pad type is CLASSIC.
-    isClassic = func_80086F9C__Q22cf13CfGameManagerFv(-1);
+    isClassic = isClassicController__Q22cf13CfGameManagerFv(-1);
     padFlags = isClassic != 0 ? 0x61800C : 0x1803C;
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 0);
     enablePadFlags__Q22cf13CfGameManagerFUlb(padFlags, 1);
@@ -331,7 +331,7 @@ void func_80122BB0(QuestWinObj* self) {
 __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
     if (self->field_0xC8 != 0) {
         CPadView* pad = (CPadView*)getCurrentPad__Q22cf13CfGameManagerFv();
-        int classic = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
         u32 confirm = (classic != 0) ? ((pad->field_04 >> 21) & 1)
                                      : ((pad->field_04 >> 4) & 1);
         if (confirm != 0) {
@@ -342,7 +342,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
         }
     } else if (self->field_0xC4 != 0) {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
-        int classic = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
             u32 turbo = pad->field_104;
@@ -379,7 +379,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
         }
     } else {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
-        int classic = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0;
+        int classic = isClassicController__Q22cf13CfGameManagerFv(-1) != 0;
         u32 dLeft, dRight, confirm;
         if (classic != 0) {
             u32 turbo = pad->field_104;
@@ -437,7 +437,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
         f64 two52 = lbl_eu_80667160;
         for (int i = 1; i <= 8; i++) {
             void* obj = func_8009EC9C((u16)i);
-            if (func_8008235C__Q22cf13CfGameManagerFv(i) != 0 ||
+            if (isResourceFlagSet__Q22cf13CfGameManagerFv(i) != 0 ||
                 (i == 4 && func_800A32BC() != 0)) {
                 char* p = (char*)obj + 0x3534;
                 int v = 0x64;
@@ -712,7 +712,7 @@ void func_801231C4(CQuestWindow* self) {
     s = func_80136190(&base[0x22d], &base[0x23b], 0x2b);
     func_80136B4C(self->mpLayout, &base[0x240], s, 0);
     func_80136B4C(self->mpLayout, &base[0x24b], s, 0);
-    const char* cp = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
+    const char* cp = isClassicController__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
     char* resName = func_80138F78(func_8013606C(&base[0x22d], cp, 0x2b));
     void* res2 = func_801355F4()->GetResource(0x74696D67, resName, 0);
     if (res2 != 0) {
@@ -967,7 +967,7 @@ void CQuestWindow::Term() {
     mpScn->removeRenderCB(render);
     func_801390E0(&field_0x88);
     func_801390E0(&field_0x8C);
-    CBdat::func_8003AA8C(2);
+    CBdat::getEntry(2);
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf3();
     if (mpLayout != 0) {
         delete mpLayout;
@@ -986,7 +986,7 @@ void CQuestWindow::Term() {
     func_8013B980();
     if (func_801B481C() == 0) {
         if (code80135FDC_getByte_64080() == 0) {
-            func_8008294C__Q22cf13CfGameManagerFv(false);
+            setPresentationFlag__Q22cf13CfGameManagerFv(false);
         }
         func_80135550();
     }
@@ -1007,7 +1007,7 @@ void* __dt__12CQuestWindowFv(CQuestWindow* _this, int flags) {
         _this->mVtable = (u32)lbl_eu_8052D0F0;
         _this->field_6C = (u32)lbl_eu_8052D0F0 + 0x24;
         _this->field_70 = (u32)lbl_eu_8052D0F0 + 0xAC;
-        cf::CfPadTask::func_801C1B94(lbl_eu_80667138);
+        cf::CfPadTask::setInputDisableTime(lbl_eu_80667138);
         __dt__6CCur18Fv(&_this->mCursor[0], -1);
         __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
         __dt__9IUIWindowFv(_this, 0);

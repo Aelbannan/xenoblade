@@ -12,6 +12,6 @@ extern "C" CHelpFlagBag* lbl_eu_80664A10;
 namespace cf {
 class __declspec(novtable) CHelp_Kizuna : public CHelp {
 public:
-    u8 func_802B818C();
+    u8 isKizunaFlag();
 };
 } // namespace cf

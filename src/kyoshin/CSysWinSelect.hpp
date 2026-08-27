@@ -75,11 +75,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv).
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the
@@ -159,7 +159,7 @@ int func_8013BE50();
 void* func_801355F4();
 void func_80138078(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the
 // vtable-compatible thunks at the end of the TU (retail mangled members).
 void __dt__13CSystemWindowFv(u8* win);

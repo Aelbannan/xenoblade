@@ -32,14 +32,14 @@ extern "C" void func_802808AC(s32 mode);
 // Cross-TU imports for func_801742D4 (mangled retail symbols; headers are
 // outside this session's writable scope).
 extern "C" bool func_80083118__Q22cf13CfGameManagerFv(s32 self);
-extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(int self);
+extern "C" void setInputMaskByAmount__Q22cf13CfGameManagerFv(int self);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);  // int (not s32=long): must match CfObjectImplMove.hpp exactly
 // These CfGameManager helpers ignore their incoming r3 in retail; they are
 // declared argument-less so MWCC leaves the caller's r3 untouched (matching
 // the stale-register chain in the retail asm).
-extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
-extern "C" int func_8008585C__Q22cf13CfGameManagerFv();
-extern "C" int func_80085840__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
+extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
 extern "C" void* func_8016FE34(void* obj);  // void* form matches the harness-chain header decl
 extern "C" bool func_800FF8B0();
 extern "C" bool func_80251550();
@@ -48,13 +48,13 @@ extern "C" bool func_802B37F4(u32 handle);
 extern "C" void* func_801351C4(int idx);
 extern "C" void func_8009D018(unsigned long index, unsigned long value);
 extern "C" int func_80140E00(int arg1, int arg2, int arg3, int arg4);
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
 // Extra imports for func_80173CA0.
 extern "C" int CfRes_getD80Flag();
 extern "C" u32 func_8016DF2C();
-extern "C" u32 func_80086DBC__Q22cf13CfGameManagerFv();
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
-extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 cond);
+extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
+extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 cond);
 extern "C" int func_8020971C(u16 id);
 extern "C" u32 func_802B2894(u8* self, const u32* src, u16 value);
 
@@ -639,8 +639,8 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
     func_8003AA34();
     void* table = (void*)self->func_8017389C();
     u32 clock = func_8016DF2C();
-    u16 curArea = func_80086DBC__Q22cf13CfGameManagerFv();
-    u16 curMap = func_800822F4__Q22cf13CfGameManagerFv();
+    u16 curArea = getCurrentSlotIndex__Q22cf13CfGameManagerFv();
+    u16 curMap = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 
     // Declaration order fixes the stack-cell layout (later locals get lower
     // slots): then the seven column cells downward from sp+0x20.
@@ -738,7 +738,7 @@ extern "C" int func_80173CA0(CfMapItemManager* self, ml::CVec3* pos) {
         cCond.raw = getBdatStringColumnValue(table, cols + 0x38, row);
         if (cCond.s != 0) {
             cReq.raw = getBdatStringColumnValue(table, cols + 0x40, row);
-            if (cReq.b != func_80082354__Q22cf13CfGameManagerFv(cCond.s)) {
+            if (cReq.b != getResourceFromTable__Q22cf13CfGameManagerFv(cCond.s)) {
                 *flagsW |= 0x800;
                 u32 h = rec->handle;
                 if (h != 0) {
@@ -870,10 +870,10 @@ void func_801742D4(CfMapItemManager* self) {
     pv = (u32)getPlayer__Q22cf13CfGameManagerFi(0);
     if (pv == 0) return;
     if (lbl_eu_80663E24 & 0x00400000) return;          // bit 22: cutscene-ish gate
-    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) return;
+    if (isAnyFieldFlagSet__Q22cf13CfGameManagerFv() != 0) return;
     if (lbl_eu_80663E24 & 0xAFA40000) return;
-    if (func_8008585C__Q22cf13CfGameManagerFv() != 0) return;
-    if (func_80085840__Q22cf13CfGameManagerFv() == 0) return;
+    if (isSceneActive__Q22cf13CfGameManagerFv() != 0) return;
+    if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
 
     // Player feet position + small Y offset, fed to the item lookup.
     ml::CVec3* pp = ((CfPlayerPosView*)pv)->getPos();
@@ -931,7 +931,7 @@ void func_801742D4(CfMapItemManager* self) {
         rec->handle = 0;
         if (self->field_3806 != 0) self->field_3806--;
     }
-    func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
+    playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x45, 0, 0, lbl_eu_806677D4);
     if (self->func_801737CC()) {
         // No event: wipe the record and bump the flag-table reset counter.
         func_801351C4(kind);
@@ -962,7 +962,7 @@ void func_801742D4(CfMapItemManager* self) {
             rec->field_18 = (rec->field_18 & 0xFFFF) & ~0x2000;
         }
     }
-    func_80086E6C__Q22cf13CfGameManagerFv(func_80140E00(2, kind, 0, 0));
+    setInputMaskByAmount__Q22cf13CfGameManagerFv(func_80140E00(2, kind, 0, 0));
 }
 
 // cf::CfValueItemManager +0x0C override: an event is always active.

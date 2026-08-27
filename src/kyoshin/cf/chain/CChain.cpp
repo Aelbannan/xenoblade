@@ -226,7 +226,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         if (result == 0x7d8) {
             flag = 0;
             if (m1 == 2 && t2 == 6 &&
-                (u32)cf::CfGameManager::func_800822F4() < 0x91) {
+                (u32)cf::CfGameManager::getQueuedFileEventCount() < 0x91) {
                 flag = 1;
             }
             if (flag != 0) result = 0xc25;
@@ -304,7 +304,7 @@ void cf::CChain::func_8027728C() {
 // a chain type is active decrement both chain timers and advance the chance /
 // voice / time / menu sub-objects; finally forward the err-mes record.
 void func_8027732C(cf::CChain* self) {
-    if (cf::CfGameManager::func_800829B8() != 0) return;
+    if (cf::CfGameManager::isSceneLoading() != 0) return;
     // rlwinm r0,r0,0,12,12: bit 19 (0x80000) of the mode-flag word.
     if ((lbl_eu_80663E28 & 0x80000) != 0) return;
     func_8027B200(&self->mChainActorList);
@@ -518,7 +518,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             node = node->mNext;
         }
         self->mChainActorList.unk1DA8[0] = 0;
-        func_80082B38__Q22cf13CfGameManagerFv();
+        processFieldEffects__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
             func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
@@ -549,7 +549,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             actor = 0;
         }
         int runKey = ((cf::CChainActorVtIfB38*)actor)->v024();
-        void* src = func_8016FE34(func_800B708C(runKey));
+        void* src = func_8016FE34(findObjectById(runKey));
         if (src != 0) {
             func_8027B770(&self->mChainActorList, (u32)src);
         }
@@ -590,7 +590,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         func_8027C098((cf::CChainChance*)&self->mChainChance);
         func_80276C30();
         ((cf::CChainActorVtIfB38*)actor0)->v012(0, 0);
-        cf::CfSoundMan::func_801BFC38(0, 0x69, 0, 0, lbl_eu_80668A40);
+        cf::CfSoundMan::playActorSound(0, 0x69, 0, 0, lbl_eu_80668A40);
         ((cf::CChainHeadView*)self)->field_7 = 1;
         ((cf::CChainHeadView*)self)->field_5 = 0;
         ((cf::CChainHeadView*)self)->field_2++;
@@ -1092,7 +1092,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
                 node = node->mNext;
             }
             self->mChainActorList.unk1DA8[0] = 0;
-            func_80082B38__Q22cf13CfGameManagerFv();
+            processFieldEffects__Q22cf13CfGameManagerFv();
             func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
             if (((cf::CChainHeadView*)self)->field_8 != 0) {
                 func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
@@ -1156,7 +1156,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             node = node->mNext;
         }
         self->mChainActorList.unk1DA8[0] = 0;
-        func_80082B38__Q22cf13CfGameManagerFv();
+        processFieldEffects__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
             func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
@@ -1269,7 +1269,7 @@ void func_80278E0C(cf::CChain* self) {
     ((cf::CChainBattleObjE*)actor->unk0)->mSub8.e06(0xeb);
     u8* spot = (u8*)actor->unk0;
     if (spot != 0) spot += 0x3e9c;
-    func_80082A7C__Q22cf13CfGameManagerFv(spot);
+    syncBattleState__Q22cf13CfGameManagerFv(spot);
     if ((s8)self->unk0[1] != -1) {
         func_802AB474((CBattleChainMenuState*)&self->unk1F0C[0]);
         ((cf::CChainActorVtIf2*)actor)->v012(2, 0);
@@ -1431,7 +1431,7 @@ setTimer:
     self->unk0[2]++;
 }
 // Chain-start validation + activation: after the presentation gate
-// (func_8006EF04(0x4000000)) and the battle-object / battle-manager checks,
+// (isGlobalCamFlagSet(0x4000000)) and the battle-object / battle-manager checks,
 // resolve the target battle object (explicit key, or the first player's
 // embedded spot minus 0x3E9C - the resolution runs twice, once for the gate
 // key and once for the activation target), activate the member actors
@@ -1439,7 +1439,7 @@ setTimer:
 // every chain sub-object. Returns 1 on success.
 int func_8027936C(cf::CChain* self, u32 param) {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x4000000)) return 0;
+    if (isGlobalCamFlagSet__Fi(0x4000000)) return 0;
     if (param != 0 && (((cf::CChainFlag*)param)->field_0x3F00 & 4) != 0) {
         if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) != 0) return 0;
     }
@@ -1832,7 +1832,7 @@ int func_8027A024(cf::CChainActor* self, int param) {
             // length-sq; the threshold differs by the unk6C bit-0 flag).
             int distOk = 0;
             if (param != 0) {
-                void* src = func_8016FE34(func_800B708C(param));
+                void* src = func_8016FE34(findObjectById(param));
                 if (src != 0) {
                     nw4r::math::VEC3* targetPos =
                         ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
@@ -1957,7 +1957,7 @@ int func_8027A338(cf::CChainActor* self, int param) {
 // unavailable. Slot 8 uses the RC arts param and an extra menu-up check.
 int func_8027A58C(cf::CChainActor* self) {
     int runKey = ((cf::CChainActorVtIf2*)self)->v024();
-    void* src = func_8016FE34(func_800B708C(runKey));
+    void* src = func_8016FE34(findObjectById(runKey));
     if (src != 0) {
         f32 gauge = ((cf::CChainBattleObj5B4*)self->unk0)->v363();
         nw4r::math::VEC3* minePos =

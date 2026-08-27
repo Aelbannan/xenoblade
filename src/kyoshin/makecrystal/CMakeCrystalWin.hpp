@@ -40,7 +40,7 @@ struct CScnFlagView {
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
     u8 _00[0x6C];
     CProc* unk6C;          // +0x6C: task sub-process (pssDetachView target)
 };

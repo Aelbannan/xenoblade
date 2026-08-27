@@ -122,10 +122,10 @@ extern "C" void func_8029ACC4(CTutorial* self);
 extern "C" void func_8029ABD8(CTutorial* self);
 extern "C" u8 func_8013B980();
 extern "C" u8 code80135FDC_getByte_64080();
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 // CfGameManager controller-type query: retail loads r3=-1 into the symbol (the
 // no-arg member wrapper drops it), so call through the C name directly.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // UI sound playback (retail unmangled C symbol; id + param).
 extern "C" void func_8009D018(u32 soundId, u32 arg);
 // Save/skip system busy queries (retail unmangled).

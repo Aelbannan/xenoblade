@@ -631,7 +631,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         // retail (CLoad/CTitle idiom).
         Class_8045F858 regionGuard(&mMemRegion);
         fileData = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         mArcRes = createArcResourceAccessor__10CLibLayoutFv();
         mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
         func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -642,7 +642,7 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         // Bind the font handle into the layout's root pane.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         CDeviceFontVtblView* font =
-            (CDeviceFontVtblView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+            (CDeviceFontVtblView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
         u32 fontResult = font->vf7();
         func_8013676C(rootPane, fontResult);
         func_801355BC();

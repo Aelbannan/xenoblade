@@ -30,7 +30,7 @@ static inline bool isSceneActive() {
 // return on the paused path makes MWCC materialize the result copy before the
 // compare, giving retail's `lhz / mr / cmpi / beq / b` ladder.
 static inline u32 scenarioBump(u32 id) {
-    u32 n = func_80082694__Q22cf13CfGameManagerFv(id);
+    u32 n = getEventValue40__Q22cf13CfGameManagerFv(id);
     if (lbl_eu_80664772 != 0) {
         return n;
     }
@@ -38,14 +38,14 @@ static inline u32 scenarioBump(u32 id) {
     if (n >= 0xFFFF) {
         n = 0xFFFF;
     }
-    func_8008269C__Q22cf13CfGameManagerFv(id, n);
+    setEventManagerValue__Q22cf13CfGameManagerFv(id, n);
     return n;
 }
 
 static inline void scenarioClose(u32 id) {
-    bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+    bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
     if (!booting && isSceneActive()) {
-        func_800826F0__Q22cf13CfGameManagerFv(id);
+        queueEventId__Q22cf13CfGameManagerFv(id);
     }
 }
 
@@ -161,7 +161,7 @@ extern "C" CSysWinScenarioLog* __ct__CSysWinScenarioLog(CSysWinScenarioLog* s,
     s->mpLayout = 0;
     s->mpAnim = 0;
 
-    func_8008294C__Q22cf13CfGameManagerFv(true);
+    setPresentationFlag__Q22cf13CfGameManagerFv(true);
     code80135FDC_postIncByte_64080();
     return s;
 }
@@ -215,9 +215,9 @@ void func_8027F0B8() {
     }
     if (count > 0) {
         if (lbl_eu_80664912 != 0) {
-            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+            bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
             if (!booting && isSceneActive()) {
-                func_800826F0__Q22cf13CfGameManagerFv(0x3A);
+                queueEventId__Q22cf13CfGameManagerFv(0x3A);
             }
         }
         lbl_eu_80664910 = 1;
@@ -239,7 +239,7 @@ struct CScenarioFlagObj {
 void func_80280804(CScenarioFlagObj* self) {
     if ((self->field_0x3F00 & 0x2) != 0) {
         u32 n;
-        u32 cur = func_80082694__Q22cf13CfGameManagerFv(0xB);
+        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0xB);
         u16 pauseFlag = lbl_eu_80664772;
         if (pauseFlag != 0) {
             // Scene frozen by a subwindow: keep the un-bumped value.
@@ -249,12 +249,12 @@ void func_80280804(CScenarioFlagObj* self) {
             if (n >= 0xFFFF) {
                 n = 0xFFFF;
             }
-            func_8008269C__Q22cf13CfGameManagerFv(0xB, n);
+            setEventManagerValue__Q22cf13CfGameManagerFv(0xB, n);
         }
         if (n >= 0x64) {
-            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+            bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
             if (!booting && lbl_eu_80664772 == 0) {
-                func_800826F0__Q22cf13CfGameManagerFv(0xB);
+                queueEventId__Q22cf13CfGameManagerFv(0xB);
             }
         }
     }
@@ -285,9 +285,9 @@ void func_8027EF50() {
         }
         if (count <= 0) {
             if (lbl_eu_80664911 == 0) {
-                bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+                bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
                 if (!booting && isSceneActive()) {
-                    func_800826F0__Q22cf13CfGameManagerFv(0xC);
+                    queueEventId__Q22cf13CfGameManagerFv(0xC);
                 }
             }
             // Player voice/action range check: both sides call the same virtual.
@@ -303,9 +303,9 @@ void func_8027EF50() {
                 inRange = false;
             }
             if (inRange) {
-                bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+                bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
                 if (!booting && isSceneActive()) {
-                    func_800826F0__Q22cf13CfGameManagerFv(0x3B);
+                    queueEventId__Q22cf13CfGameManagerFv(0x3B);
                 }
             }
         }
@@ -325,7 +325,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     // OR-combined guards with early return (MWCC_CASES control_flow pattern):
     // the first disjunct folds to a direct branch to the shared epilogue and
     // the second becomes the branch-over-branch gate (beq forward + b end).
-    if (CTaskGame::getInstance()->func_800426F0() != 0 ||
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
         (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
@@ -362,7 +362,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
 // separate single-condition early returns (direct conditional branches).
 // ---------------------------------------------------------------------------
 void CSysWinScenarioLog::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() != 0 ||
+    if (CTaskGame::getInstance()->isFlag01Set() != 0 ||
         (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
@@ -388,7 +388,7 @@ void CSysWinScenarioLog::Move() {
         case 2: {
             CSysWinPadView* pad = (CSysWinPadView*)cf::CfGameManager::getCurrentPad();
             bool pressed;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 pressed = (pad->mButtons & 0x4600000) != 0;
             } else {
                 pressed = (pad->mButtons & 0x1030) != 0;
@@ -450,7 +450,7 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
     func_80136B4C(self->mpLayout, &lbl_eu_8050EE24[0x5b], t, (u32)self->mField94);
     char* u = func_80136190(&lbl_eu_8050EE24[0x68], &lbl_eu_8050EE24[0x56], 0x2c);
     func_80136B4C(self->mpLayout, &lbl_eu_8050EE24[0x76], u, 0);
-    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+    const char* sel = isClassicController__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050EE24[0x82]
                           : &lbl_eu_8050EE24[0x8b];
     u16 msgId = (u16)func_8013606C(&lbl_eu_8050EE24[0x68], sel, 0x2c);
@@ -492,7 +492,7 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
 void func_8027F148() {
     int result;
     u32 n;
-    CSysWinActorList* list = func_800B6BA4();
+    CSysWinActorList* list = getListB28();
     // Declaration order drives MWCC callee-saved coloring (retail colors the
     // walk pointer r29 and the adjusted device base r30).
     u8* base;
@@ -530,7 +530,7 @@ done:
         // Two-arm keep-first bump (best known shape; MWCC sinks the phi
         // copy after the branch - same residual 3 as siblings 80280804/
         // 802809C8/80280BF0, scheduling-swap class per MWCC_CASES).
-        u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x3c);
+        u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x3c);
         if (lbl_eu_80664772 != 0) {
             // Scene frozen by a subwindow: keep the un-bumped value.
             n = cur;
@@ -539,7 +539,7 @@ done:
             if (n >= 0xFFFF) {
                 n = 0xFFFF;
             }
-            func_8008269C__Q22cf13CfGameManagerFv(0x3c, n);
+            setEventManagerValue__Q22cf13CfGameManagerFv(0x3c, n);
         }
         if (n >= 1) {
             scenarioClose(0x3c);
@@ -984,7 +984,7 @@ void func_80280640(CSysWinDevice* self) {
         ((CSysWinDevView*)self)->mAt2BC() == 0) {
         return;
     }
-    CSysWinActorList* list = func_800B6BA4();
+    CSysWinActorList* list = getListB28();
     CSysWinActorListNode* node = list->sentinel->next;
     CScenarioLogOwner* found;
     while (node != list->sentinel) {
@@ -1037,7 +1037,7 @@ void func_802808AC(s32 self) {
     if (self < 4) {
         return;
     }
-    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x2C);
+    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x2C);
     // Two-arm phi merge reproduces retail's `beq bump; b after` pair.
     // RESIDUAL (3 structural): MWCC sinks the keep-path copy (`mr r31,r3`)
     // after the cmpi/beq; retail hoists it between the lhz and cmpi.
@@ -1057,27 +1057,27 @@ void func_802808AC(s32 self) {
             if (n >= 0xFFFF) {
                 n = 0xFFFF;
             }
-            func_8008269C__Q22cf13CfGameManagerFv(0x2C, n);
+            setEventManagerValue__Q22cf13CfGameManagerFv(0x2C, n);
         }
         seq = n;
     }
 after:
     if (seq >= 0x1) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x2C);
+            queueEventId__Q22cf13CfGameManagerFv(0x2C);
         }
     }
     if (seq >= 0x32) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x2D);
+            queueEventId__Q22cf13CfGameManagerFv(0x2D);
         }
     }
     if (seq >= 0xC8) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x2E);
+            queueEventId__Q22cf13CfGameManagerFv(0x2E);
         }
     }
 }
@@ -1090,7 +1090,7 @@ after:
 // ---------------------------------------------------------------------------
 void func_802809C8() {
     u32 n;
-    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x23);
+    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x23);
     // Two-arm if/else assigning n on both sides reproduces retail's
     // `beq bump; b after` guard pair; the keep-arm copy is the phi resolution.
     if (lbl_eu_80664772 != 0) {
@@ -1101,32 +1101,32 @@ void func_802809C8() {
         if (n >= 0xFFFF) {
             n = 0xFFFF;
         }
-        func_8008269C__Q22cf13CfGameManagerFv(0x23, n);
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x23, n);
     }
 after:
     ;
     if (n >= 0xA) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x23);
+            queueEventId__Q22cf13CfGameManagerFv(0x23);
         }
     }
     if (n >= 0x64) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x24);
+            queueEventId__Q22cf13CfGameManagerFv(0x24);
         }
     }
     if (n >= 0x1F4) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x25);
+            queueEventId__Q22cf13CfGameManagerFv(0x25);
         }
     }
 }
 
 void func_80280ADC() {
-    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x29);
+    u32 seq = getEventValue40__Q22cf13CfGameManagerFv(0x29);
     u32 n;
     // Two-arm if/else assigning n on both sides reproduces retail's
     // `beq bump; b after` pair (same shape as func_80280BF0).
@@ -1135,26 +1135,26 @@ void func_80280ADC() {
         if (n >= 0xFFFF) {
             n = 0xFFFF;
         }
-        func_8008269C__Q22cf13CfGameManagerFv(0x29, n);
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x29, n);
     } else {
         n = seq;
     }
     if (n >= 0x1) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x29);
+            queueEventId__Q22cf13CfGameManagerFv(0x29);
         }
     }
     if (n >= 0x64) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x2A);
+            queueEventId__Q22cf13CfGameManagerFv(0x2A);
         }
     }
     if (n >= 0x3E8) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x2B);
+            queueEventId__Q22cf13CfGameManagerFv(0x2B);
         }
     }
 }
@@ -1164,7 +1164,7 @@ void func_80280ADC() {
 // post-bump value (retail keeps it live in r31 across every gate).
 void func_80280BF0() {
     u32 n;
-    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x5A);
+    u32 cur = getEventValue40__Q22cf13CfGameManagerFv(0x5A);
     // Two-arm if/else assigning n on both sides reproduces retail's
     // `beq bump; b after` guard pair (same shape as func_802809C8).
     if (lbl_eu_80664772 != 0) {
@@ -1175,24 +1175,24 @@ void func_80280BF0() {
         if (n >= 0xFFFF) {
             n = 0xFFFF;
         }
-        func_8008269C__Q22cf13CfGameManagerFv(0x5A, n);
+        setEventManagerValue__Q22cf13CfGameManagerFv(0x5A, n);
     }
     if (n >= 0x1) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x5A);
+            queueEventId__Q22cf13CfGameManagerFv(0x5A);
         }
     }
     if (n >= 0x12C) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x5B);
+            queueEventId__Q22cf13CfGameManagerFv(0x5B);
         }
     }
     if (n >= 0x7D0) {
-        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
-            func_800826F0__Q22cf13CfGameManagerFv(0x5C);
+            queueEventId__Q22cf13CfGameManagerFv(0x5C);
         }
     }
 }
@@ -1501,14 +1501,14 @@ void* func_8028120C(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
 // Target-only helper definitions (moved below their callers to block inline).
 // ---------------------------------------------------------------------------
 extern "C" void __declspec(noinline) func_8027EEF4(u32 self) {
-    bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+    bool booting = getQueuedFileEventCount__Q22cf13CfGameManagerFv() <= 3;
     if (!booting && lbl_eu_80664772 == 0) {
-        func_800826F0__Q22cf13CfGameManagerFv(self);
+        queueEventId__Q22cf13CfGameManagerFv(self);
     }
 }
 
 extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
-    u32 v = func_80082694__Q22cf13CfGameManagerFv(self);
+    u32 v = getEventValue40__Q22cf13CfGameManagerFv(self);
     if (lbl_eu_80664772 != 0) {
         // Scene frozen by a subwindow: return the un-bumped value.
         return v;
@@ -1517,7 +1517,7 @@ extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
     if (sum >= 0xFFFF) {
         sum = 0xFFFF;
     }
-    func_8008269C__Q22cf13CfGameManagerFv(self, sum);
+    setEventManagerValue__Q22cf13CfGameManagerFv(self, sum);
     return sum;
 }
 
@@ -1537,7 +1537,7 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
                                       &lbl_eu_8050EE24[0x9e], 0);
         Class_8045F858 memHost(&self->mMemRegion);
         void* fileData = self->mFileHandle74->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         void* tag = mtl::MemManager::allocate(0x858, getAllocHandle__10CLibLayoutFv());
         if (tag != 0) {
             tag = __ct__CTagProcessor(tag);
@@ -1550,7 +1550,7 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             self->mpLayout, &self->mpAnim, self->mpAccessor, &lbl_eu_8050EE24[0xce]);
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
-        void* fontObj = CDeviceFont::func_80452C10(1, self->mpLayout);
+        void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
         u32 fontHandle = ((CSysWinFontObjView*)fontObj)->getFontHandle();
         func_8013676C(rootPane, fontHandle);
         self->mpLayout->SetAnimationEnable(self->mpAnim, true);
@@ -1618,7 +1618,7 @@ void CSysWinScenarioLog::Term() {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&mFileHandle74);
     func_801390E0(&mFileHandle78);
-    func_8003AA8C__5CBdatFUl(2);
+    getEntry__5CBdatFUl(2);
 
     if (mpLayout != 0) {
         nw4r::lyt::Layout* p = mpLayout;
@@ -1648,6 +1648,6 @@ void CSysWinScenarioLog::Term() {
 
     func_8013B980();
     if (code80135FDC_getByte_64080() == 0) {
-        func_8008294C__Q22cf13CfGameManagerFv(false);
+        setPresentationFlag__Q22cf13CfGameManagerFv(false);
     }
 }

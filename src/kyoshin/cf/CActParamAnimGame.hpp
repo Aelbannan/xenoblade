@@ -174,22 +174,22 @@ public:
     virtual ~CActParamAnimGame();
     void func_8005A524();
     void func_8005D2C4();
-    bool func_8005D608(u32 type);
-    bool func_8005D67C();
-    bool func_8005D6C0();
-    bool func_8005D728();
+    bool isActionReady(u32 type);
+    bool checkHeightThreshold();
+    bool checkHeightBelow();
+    bool clearFlag80000();
     bool func_8005D76C(u32 type, u32 state);
     bool func_8005D84C(u32 type, u32 state);
-    bool func_8005D99C(u32 type, u32 state);
+    bool tryGroundStep(u32 type, u32 state);
     bool func_8005DA44(u32 type);
     bool func_8005DB1C(u32 type);
     bool func_8005DC30(u32 type);
     void func_8005DCA8();
     int func_8005EEB4(ml::CVec3* pos, ml::CVec3* move);
     void func_80060110();
-    void func_80060268();
-    void func_8005D70C();
-    void func_8005DAE4();
+    void syncYawToLink();
+    void checkNotFalling();
+    void checkFlag40000();
 
     // base ::CActParamAnim vptr occupies 0x00-0x03; retail base payload pads
     // to 0x4E8 before this class's own fields.
@@ -326,13 +326,13 @@ struct CActParamAnimGameVt10I {
 };
 
 // Opaque object stored at the actor's +0x8 slot; its +0x4 word holds gate
-// flag bits consumed by func_8005D608.
+// flag bits consumed by isActionReady.
 struct CActParamAnimGameOwner {
     u32 _00;
     u32 flags04;
 };
 
-// Game-manager list container returned by func_80086B04; the +0x4 word is
+// Game-manager list container returned by getGimmickListHead; the +0x4 word is
 // the list head/sentinel walked by func_8005DB1C.
 struct CActParamAnimGameMgr {
     u8 _00[4];
@@ -443,8 +443,8 @@ extern f32 lbl_eu_8066AF20;   // sdata2: probe arg (func_8005E60C); f32 form to 
 extern u8 lbl_eu_80526458[];  // retail CActParamAnimGame vtable (.data split1)
 
 // C++-mangled retail helper (actor id -> action source), used by
-// func_80060110. Global-scope C++ declaration mangles to func_800B708C__Fi.
-void* func_800B708C(int id);
+// func_80060110. Global-scope C++ declaration mangles to findObjectById__Fi.
+void* findObjectById(int id);
 
 // C-linkage imports (retail names, defined in kyoshin/action/CActParamAnim.cpp).
 extern "C" int func_80051AD0(CActParamAnim* self);
@@ -460,7 +460,7 @@ extern "C" int func_804BCC10(void);
 // C-linkage imports from libs/monolib/src/scn/code_804BC9EC.cpp (sound
 // system global state / query) and kyoshin/CUIBattleManager.cpp (link
 // resolution), used by func_8005D2C4.
-extern "C" void* func_804BC9EC__Fv(void);
+extern "C" void* getScnHandle__Fv(void);
 extern "C" void* func_8016FE34(void* r3);
 
 // C-linkage import: the retail base-class ctor, called directly by the

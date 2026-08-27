@@ -27,8 +27,8 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__8CProcessFv(void* self);
 extern "C" void func_8007F9C4__Q22cf13CfGameManagerFv(void);
-extern "C" void func_8007FBFC__Q22cf13CfGameManagerFv(void);
-extern "C" void func_8007FC2C__Q22cf13CfGameManagerFv(void);
+extern "C" void refreshCameraIfCurrentView__Q22cf13CfGameManagerFv(void);
+extern "C" void resetCameraIfCurrentView__Q22cf13CfGameManagerFv(void);
 extern "C" unsigned long lbl_eu_80663E28;
 extern "C" void __dt__Q22cf10CfTaskMainFv(void* self);
 

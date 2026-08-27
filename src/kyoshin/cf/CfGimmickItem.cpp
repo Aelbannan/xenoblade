@@ -132,8 +132,8 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     self->field_9E = 0;
     self->field_A0 = 0;
     if (self->field_70 != 0) {
-        func_80462F4C__8CTaskLODFv(self->field_70, 0);
-        func_80462EF4__8CTaskLODFv(self->field_70, lbl_eu_80668448);
+        attachLODObject__8CTaskLODFv(self->field_70, 0);
+        removeLODEntry__8CTaskLODFv(self->field_70, lbl_eu_80668448);
     }
 
     if (func_8020971C(self->field_64) != 0 && self->field_9C == 3) {
@@ -254,7 +254,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     // Only run while the current sequence counter sits inside the item's
     // active window [field_6C, field_6E] (either bound non-zero enables it).
     if (self->field_6C != 0 || self->field_6E != 0) {
-        u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+        u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         if (self->field_6C > seq || seq > self->field_6E)
             return;
     }
@@ -262,7 +262,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     // Respawn-gate: when field_94 is set, the current count must sit inside
     // the [field_96, field_97] window or the spawn is skipped.
     if (self->field_94 != 0) {
-        int count = (int)func_80082354__Q22cf13CfGameManagerFv(self->field_94);
+        int count = (int)getResourceFromTable__Q22cf13CfGameManagerFv(self->field_94);
         if (self->field_97 > count || self->field_96 < count)
             return;
     }
@@ -315,24 +315,24 @@ void func_802108D8(cf::CfGimmickItem* self) {
             // the CfGimmickEne per-LOD filter block).
             if ((fc & 4) != 0) {
                 if ((fc & 2) != 0) {
-                    func_80462EF4__8CTaskLODFv(lod, lbl_eu_80668448);
+                    removeLODEntry__8CTaskLODFv(lod, lbl_eu_80668448);
                 } else {
-                    func_80462F10__8CTaskLODFv(lod);
+                    clearLODEntry__8CTaskLODFv(lod);
                 }
-                func_80462F4C__8CTaskLODFv(lod, 0);
+                attachLODObject__8CTaskLODFv(lod, 0);
             } else if ((fc & 1) != 0) {
-                func_80462F70__8CTaskLODFv(lod, 0);
-                func_80462F4C__8CTaskLODFv(lod, 1);
+                detachLODObject__8CTaskLODFv(lod, 0);
+                attachLODObject__8CTaskLODFv(lod, 1);
             } else if ((fc & 2) != 0) {
-                func_80462F70__8CTaskLODFv(lod, 1);
-                func_80462F4C__8CTaskLODFv(lod, 1);
+                detachLODObject__8CTaskLODFv(lod, 1);
+                attachLODObject__8CTaskLODFv(lod, 1);
             }
             if ((fc & 8) != 0) {
-                func_80462ED0__8CTaskLODFv(lod, 0);
+                addLODEntry__8CTaskLODFv(lod, 0);
             } else {
-                func_80462ED0__8CTaskLODFv(lod, 1);
+                addLODEntry__8CTaskLODFv(lod, 1);
             }
-            func_80462F94__8CTaskLODFv(lod, self->field_99);
+            setLODObject__8CTaskLODFv(lod, self->field_99);
         }
 
         self->field_74 |= 8;
@@ -342,7 +342,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
 
         if (self->field_9B != 0) {
             UnkClass_800817BC* obj =
-                func_800817BC__Q22cf13CfGameManagerFv(self->field_9B, 0);
+                createBattleActor__Q22cf13CfGameManagerFv(self->field_9B, 0);
             self->field_78 = (u32)obj;
             if (obj != 0) {
                 ((cf::CfGimmickItemMgr*)obj)->field_B0 = self;

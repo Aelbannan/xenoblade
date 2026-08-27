@@ -29,7 +29,7 @@ struct CTutorialFull {
     u8 field_52;
 };
 
-// Font-handle object returned by CDeviceFont::func_80452C10. The first member
+// Font-handle object returned by CDeviceFont::getFontInfo. The first member
 // is the vtable pointer; vtable slot 9 (offset 0x24) is the font accessor that
 // feeds func_8013676C.
 struct CTutorialFontVtbl {
@@ -166,4 +166,4 @@ extern "C" u32 func_801361E8(u32, const char*, u32);
 
 // Retail calls the language-flag query through its unmangled Fv symbol with a
 // dummy -1 argument that the callee ignores.
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

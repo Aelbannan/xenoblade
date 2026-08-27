@@ -68,7 +68,7 @@ extern void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char*
 // monolib helpers called from the maru-shadow draw path.
 extern void* func_8049621C(u32 unk, int id);
 extern void* func_804961D4(u32 unk, int id);
-extern void func_804BC9EC();
+extern void getScnHandle();
 extern int func_804BCC10();
 extern bool func_804BE398(mlCVec3* out, float x, float y, int a, int b);
 extern void func_804BE3E0(const void* cb, void* mtx, u32 unk, int flag);

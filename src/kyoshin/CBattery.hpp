@@ -32,13 +32,13 @@ class CBattery : public CBatteryVtblBase {
 public:
     CBattery(u8 batteryLevel);
     ~CBattery();
-    void func_802B92A4();
-    void func_802B92FC();
-    void func_802B9334(void*);
-    void func_802B9364();
+    void loadBatteryArchive();
+    void updateLayout();
+    void drawBattery(void*);
+    void releaseLayout();
     void setBatteryLevel(u8 level);
     void updateBatteryImage();
-    void func_802B94B0();
+    void onLayoutReady();
     bool OnFileEvent(CEventFile* pEventFile);
 
     UnkClass_8045F564 mMemRegion; // 0x4 - scratch region for layout build

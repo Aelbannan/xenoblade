@@ -112,7 +112,7 @@ struct CSimpleTagProcFields {
     f32 field_0x81C;              // 0x81C
 };
 
-// func_800B708C(id) result view (retail CfObject-ish "talk source"): the
+// findObjectById(id) result view (retail CfObject-ish "talk source"): the
 // vtable+0x40 getter returns the talk text, and +0x98 is a voice sub-object
 // whose vtable+0x58 plays/stops the character voice. Data members start at
 // vptr+4 (standard C++ model), hence the 0x04-based pad.
@@ -141,7 +141,7 @@ public:
     virtual void play(int flag, int priority);  // 0x58
 };
 
-class CSimpleTalkSrc {            // func_800B708C(id) result
+class CSimpleTalkSrc {            // findObjectById(id) result
 public:
     virtual ~CSimpleTalkSrc();    // 0x00 (3 dtor slots)
     virtual void vfunc_0x0C();    // 0x0C
@@ -162,7 +162,7 @@ public:
     CSimpleTalkVoice* field_0x98; // 0x98 voice sub-object
 };
 
-// func_80452C10(1, layout) result view: vtable+0x24 returns the font handle
+// getFontInfo(1, layout) result view: vtable+0x24 returns the font handle
 // handed to func_8013676C (CDeviceFont/root-pane font binding).
 class CSimpleFontObj {
 public:
@@ -185,11 +185,11 @@ public:
 };
 
 // Minimal CTaskGame decl (retail getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv).
+// isFlag01Set__9CTaskGameFv).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // C-ABI imports (retail symbols are unmangled or pre-mangled; C linkage stops
@@ -199,7 +199,7 @@ void __ct__8CProcessFv(CProcess* self);
 void __dt__8CProcessFv(CProcess* self, int flags);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
-void func_8045F778__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+void deleteRegion__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void func_80136400(const char* src, u16* dst, u32 destLen);
 // arg1 is the singleton pointer left in r3 by the caller's flag test (retail
 // does not set r3 for the call).
@@ -214,8 +214,8 @@ void __dt__14Class_8045F858Fv(void* self, int flags);
 void func_80135464(u8 a, int b, float c, float d, float e);
 int func_8013BE50();
 bool isInitialized__10CMenuPauseFv();
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32, nw4r::lyt::Layout*);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int func_801286E0(void* tagProc, nw4r::lyt::Pane* pane);
@@ -224,8 +224,8 @@ int func_80128740(void* tagProc, nw4r::lyt::Pane* pane);
 void func_801287BC(void* tagProc, nw4r::lyt::Pane* pane, int flag);
 }
 
-// C++-linkage import: retail symbol is the mangled func_800B708C__Fi.
-void* func_800B708C(int id);
+// C++-linkage import: retail symbol is the mangled findObjectById__Fi.
+void* findObjectById(int id);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSimpleEveTalkWin* lbl_eu_80664320;  // singleton instance (.sbss)

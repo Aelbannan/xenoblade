@@ -44,7 +44,7 @@ struct CMainMenuSubCurView {
     u8 mActive;
     u8 mVisible;
 };
-// Mirror of the font object returned by CDeviceFont::func_80452C10; vtable
+// Mirror of the font object returned by CDeviceFont::getFontInfo; vtable
 // slot 9 (offset 0x24) yields the pane bound by func_8013676C.
 struct CMainMenuFontView {
     virtual void sf2() = 0;
@@ -69,8 +69,8 @@ public:
 #endif
 struct CMainMenuCurVt {
     virtual void _v008();       // VUpdate
-    virtual void _v00C();       // func_801D20DC
-    virtual void vfn_0x10(const nw4r::math::VEC3* trans);  // func_801D2144
+    virtual void _v00C();       // cleanup
+    virtual void vfn_0x10(const nw4r::math::VEC3* trans);  // setRootPaneTranslate
 };
 
 class CMainMenu {
@@ -207,8 +207,8 @@ extern "C" u32 func_80212480();   // make-crystal menu active (CMenuMakeCrystal.
 extern "C" u32 func_8022F530();   // arts-set menu active (CMenuArtsSet.cpp)
 
 // Gameplay-input gate helpers (cf::CfGameManager / cf::CBattleManager)
-extern "C" int func_800829B8__Q22cf13CfGameManagerFv();
-extern "C" int func_80084BF4__Q22cf13CfGameManagerFv();
+extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
+extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
 
 // split1 .sdata2 float constants (int->float magic f64 at 0x80666F10,
 // then two 0.0f)
@@ -227,7 +227,7 @@ extern "C" u32 func_8009CF8C(u32 resourceId);
 class UnkClass_8045F564;
 extern "C" void __ct__17UnkClass_8045F564Fv(void* _this);
 extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void* _this);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* _this);
 
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
 extern "C" int func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
@@ -238,7 +238,7 @@ extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt
 // Cursor constructors (defined in kyoshin/CCur.cpp)
 extern "C" void __ct__8CBaseCurFv(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 // Font binding imports (CDeviceFont / CLibLayout)
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
@@ -259,8 +259,8 @@ extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 extern "C" void func_80134460();
 extern "C" void func_801341D8();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
 // cf::CPad view: only the three flag words this unit reads.
 struct CMainMenuPad {
@@ -276,12 +276,12 @@ extern "C" void func_801D2174(CBaseCur* cur);
 extern "C" void func_801D20B0(void* cur, nw4r::lyt::DrawInfo* drawInfo);
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
-// func_800426F0__9CTaskGameFv). The full CTaskGame.hpp pulls monolib headers
+// isFlag01Set__9CTaskGameFv). The full CTaskGame.hpp pulls monolib headers
 // whose declarations clash with this TU's include set.
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 // Cursor per-frame update helper (defined in CCur.cpp).
 extern "C" void func_801D202C(void* cur);
@@ -469,7 +469,7 @@ struct CMainMenuGimmickGlobal {
 extern "C" CMainMenuGimmickGlobal* getUnk80664658();
 
 // CSubCur view at +0xA8 (CBaseCur layout, 0x16 bytes). Cast-only iface for
-// the vtable+0x10 dispatch (func_801D2144, takes a translate VEC3).
+// the vtable+0x10 dispatch (setRootPaneTranslate, takes a translate VEC3).
 
 // Menu dispatch handlers (defined in CUICfManager.cpp / menu TUs)
 extern "C" int func_8029A658();            // party-change notice gate

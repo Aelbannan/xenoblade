@@ -828,7 +828,7 @@ class UnkClass_805764CC : public reslist<cf::CfObject*> {
 public:
     UnkClass_805764CC();
     ~UnkClass_805764CC();
-    static UnkClass_805764CC* func_800B07E8();
+    static UnkClass_805764CC* getInstance();
     u32 get_u32_18();
     u32 get_u32_04();
     u32 get_u32_74();
@@ -903,17 +903,17 @@ struct F8C0ListSource {
 // CfGameManager item-list traversal primitives (retail mangled names).
 // The retail symbols are C-ABI-named (extern "C" suppresses MWCC's C++
 // param mangling, which would append __FP.. to the identifier).
-extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
-extern "C" void** func_8007F8D0__Q22cf13CfGameManagerFv(F8C0IteratorNode* iterator);
-extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
-extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
-extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
+extern "C" void copyItemSourceNode__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
+extern "C" void** getObjectNodePtr__Q22cf13CfGameManagerFv(F8C0IteratorNode* iterator);
+extern "C" void linkItemNode__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
+extern "C" void checkFlagEquality__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
+extern "C" bool compareFlagValues__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
 extern "C" void* func_800B182C(void* node);
-extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(void* object);
+extern "C" u16 getItemId__Q22cf13CfGameManagerFv(void* object);
 
 // Imports used by func_800B70FC / func_800B7214 (retail symbol names).
 extern "C" void func_800B71C4();
-extern "C" void* func_800B6BA4__Fv();
+extern "C" void* getListB28__Fv();
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 
 // Payload record stored inside each 0x24-byte pool slot of the TboxInfo
@@ -1012,29 +1012,29 @@ public:
 
 // CfGameManager imports (retail mangled names).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
-extern "C" bool func_8008585C__Q22cf13CfGameManagerFv(void* gm);
-extern "C" bool func_80085840__Q22cf13CfGameManagerFv(void* gm);
-extern "C" u32 func_80082FE4__Q22cf13CfGameManagerFv(void* gm);
+extern "C" bool isSceneActive__Q22cf13CfGameManagerFv(void* gm);
+extern "C" bool isSceneReadyForInput__Q22cf13CfGameManagerFv(void* gm);
+extern "C" u32 isPlayerInEventRange__Q22cf13CfGameManagerFv(void* gm);
 extern "C" void func_8008360C__Q22cf13CfGameManagerFv(void* gm);
-extern "C" void func_8007F9B4__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void func_80084C10__Q22cf13CfGameManagerFv(void* gm);
-extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
+extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void clearFieldFlagsA__Q22cf13CfGameManagerFv(void* gm);
+extern "C" void queueSceneEventC__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
                                                           u32 e, u32 f, u32 g, u32 h,
                                                           float value);
 // Imports used by func_800B7AF0.
 extern "C" void func_8008372C__Q22cf13CfGameManagerFv(void* a, void* b, u32 c);
-extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 a, u32 b);
-extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
-extern "C" void func_80083D70__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
+extern "C" void toggleFlag10__Q22cf13CfGameManagerFv(u32 a, u32 b);
+extern "C" void clearGlobalState__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
+extern "C" void queueSceneEventB__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c, u32 d,
                                                           float value);
 extern "C" void func_800ABB9C(void* out, void* item);
 extern "C" void func_8009D018(u32 destination, u32 value);
 extern "C" int func_800AC470(void* item);
 extern "C" void func_800AC460(void* item, int flag);
 extern "C" void func_8013DCAC(u32 a, u32 b);
-extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
-extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+extern "C" u32 getEventValue40__Q22cf13CfGameManagerFv(u32 id);
+extern "C" void setEventManagerValue__Q22cf13CfGameManagerFv(u32 id, u32 value);
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_80062600();
 extern "C" void* func_800B6C7C();
 extern "C" void* func_800B6C58();
@@ -1185,7 +1185,7 @@ extern "C" void __ct__Q22cf10CfObjectPcFv(void* self);
 extern "C" void func_800BE948(void* obj, u16 id);
 extern "C" void func_800BE960(void* obj, s32 a);
 extern "C" void func_800BE978(void* obj, s32 a);
-extern "C" s32 func_800822F4__Q22cf13CfGameManagerFv();
+extern "C" s32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 extern "C" s32 func_80063560(s32 kind, s32 a, s32 b);
 extern "C" s32 func_8006398C(s32 a);
 extern "C" u32 func_80063310(u32 a);
@@ -1575,7 +1575,7 @@ extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
 extern "C" void func_800B1C24(int arg, void* ptr);
 extern "C" void* func_800B39C0(void* arg);
 extern "C" void func_800BC3B0(void* obj, float val);
-extern "C" void* func_800B708C__Fi(int arg);
+extern "C" void* findObjectById__Fi(int arg);
 // Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
 extern "C" void func_80043D90(void* holder);
 extern "C" void* func_80043F18(void* holder);
@@ -1641,7 +1641,7 @@ extern "C" int func_800B31B0(void* obj);
 extern "C" void func_800B3A60(void* list, void* obj);
 
 // --- imports for func_800B83AC (us-800b8cc8) ---
-extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
+extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" void* func_8009ECB0();
 extern "C" void* func_8009EC9C(unsigned long index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
@@ -1853,7 +1853,7 @@ extern "C" void func_800B4F6C(void* obj);
 extern "C" void func_800B4F90(void* obj);
 extern "C" void func_800B4F80(void* obj, u32 mask);
 extern "C" int func_800B3D4C(void* obj, u32 flag);
-extern "C" int func_80082FCC__Q22cf13CfGameManagerFv(void* obj);
+extern "C" int isObjectFlagMaskSet__Q22cf13CfGameManagerFv(void* obj);
 extern "C" u32 func_eu_800BFC7C(void* obj);
 extern "C" u32 func_800A8C84();
 extern "C" void CfRes_callFunc_68110(u32 value);
@@ -2377,8 +2377,8 @@ struct B8524Sub {
 
 // Imports used by the batch targets (retail symbol names).
 extern "C" int func_800B4594(void* obj);
-// C++ linkage so MWCC emits the retail-mangled func_8006EF04__Fi reloc.
-bool func_8006EF04(int mask);
+// C++ linkage so MWCC emits the retail-mangled isGlobalCamFlagSet__Fi reloc.
+bool isGlobalCamFlagSet(int mask);
 extern "C" int func_800B64B8(void* obj, u32 mask);
 extern "C" void func_8004CB80(void* dst, void* a, void* b);
 extern "C" float func_80073F88(void* p);
@@ -2393,7 +2393,7 @@ extern "C" void* func_800B77BC();
 extern "C" s32 func_800B7AF0(UnkClass_805764CC* self, class IB7Arg* arg);
 extern "C" void func_800B9C14(void* obj);
 extern "C" void func_80068358(void* obj);
-// (func_800821F8__Q22cf13CfGameManagerFv: single winning decl on
+// (getCameraDataBlock__Q22cf13CfGameManagerFv: single winning decl on
 // CfGameManagerApi.hpp - canonical UnkClass_800821F8* view; this TU's use
 // site casts to the local IDispB3A88Mgr vtable proxy.)
 #include "kyoshin/cf/CfGameManagerApi.hpp"

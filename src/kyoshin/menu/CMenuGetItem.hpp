@@ -118,9 +118,9 @@ extern char lbl_eu_805018D0[];
 extern "C" u8 func_80144FC8();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void* func_801394D4(u32);
-// Pre-mangled static member name (CDeviceFont::func_80452C10(u32, Layout*));
+// Pre-mangled static member name (CDeviceFont::getFontInfo(u32, Layout*));
 // extern "C" keeps the literal identifier (no double mangling).
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 
 // C-ABI imports (retail pre-mangled symbols keep C linkage).
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);

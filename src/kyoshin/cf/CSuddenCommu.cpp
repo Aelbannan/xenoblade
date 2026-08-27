@@ -7,7 +7,7 @@
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::func_801BFC38
+#include "kyoshin/cf/CfSoundMan.hpp" // cf::CfSoundMan::playActorSound
 #include "kyoshin/cf/CfGameManager.hpp"
 // ml::math::mtRand(int) - mangles to the retail mtRand__Q22ml4mathFi.
 #include "monolib/math/Random.hpp"
@@ -15,7 +15,7 @@
 // (func_80149154 overload); use the standalone header chain instead.
 // NOTE: CVision.hpp omitted - its extern "C" func_80043D90(void*) clashes
 // with the typed decl reachable via harness_catalog.hpp -> CfObjectImplMove.hpp.
-#include "kyoshin/cf/CCharEffect.hpp" // func_800ACC14 (cue release)
+#include "kyoshin/cf/CCharEffect.hpp" // setChildB59__ (cue release)
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 
 namespace cf {}
@@ -83,7 +83,7 @@ extern "C" void func_801BA250(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
 // entry address straight to __ptmf_scall in r12.
 typedef void (CSuddenCommu::*CSuddenCommuStateFn)();
 void func_801BA25C(CSuddenCommu* self) {
-    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
+    if (isSceneLoading__Q22cf13CfGameManagerFv() != 0) return;
     func_801BADE4(self);
     if (func_801BBCBC(self) != 0) return;
     CSuddenCommuStateFn const& pmf =
@@ -254,7 +254,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 CSuddenCommuActor* other = (CSuddenCommuActor*)spot2;
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
-                func_80082568__Q22cf13CfGameManagerFv(partner->field_3F28, other->field_3F28, limit);
+                addTableValueWithClamp__Q22cf13CfGameManagerFv(partner->field_3F28, other->field_3F28, limit);
             }
         }
     }
@@ -430,7 +430,7 @@ extern "C" void func_801BADE4(CSuddenCommu* self) {
     // Single "current player" slot reused across the probe blocks (retail r30).
     CSuddenCommuActor* player;
     self->field_24 &= ~1;
-    if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) {
+    if (isTimerActive__Q22cf13CfGameManagerFv() != 0) {
         self->field_18 -= lbl_eu_80667E38;
         if (cf::CfGameManager::getPlayer(0) != 0) {
             void* spotP = cf::CfGameManager::getPlayer(0);
@@ -485,7 +485,7 @@ extern "C" void func_801BADE4(CSuddenCommu* self) {
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_1AA != 0) goto commu_end;
                 if (((CSuddenCommuBmView*)getInstance__Q22cf14CBattleManagerFv())->field_20C8 != 0) goto commu_end;
                 cf::CfGameManager::getInstance();
-                if (func_8006EF04__Fi(0x04000000) != 0) goto commu_end;
+                if (isGlobalCamFlagSet__Fi(0x04000000) != 0) goto commu_end;
                 if (getUnk80664658()->field_214 & 2) goto commu_end;
                 void* spotG = cf::CfGameManager::getPlayer(0);
                 CSuddenCommuActor* pG = (CSuddenCommuActor*)spotG;
@@ -552,7 +552,7 @@ commu_end:
 // documented us-801bc48c duplicated-exit wall in func_801BAB94.
 __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x04000000) != 0) return;
+    if (isGlobalCamFlagSet__Fi(0x04000000) != 0) return;
     // Mutate the parameter: merging the arg5/chance webs lets MWCC reuse
     // arg5's saved register for the roll result (retail subf r26,r26,r3).
     arg5 = ml::math::mtRand(100) - arg5;
@@ -654,7 +654,7 @@ void func_801BB81C(CSuddenCommu* self) {
             // access path lets MWCC order the float-arg load before this
             // store, matching retail.
             self->field_20p->field_B0 = self;
-            cf::CfSoundMan::func_801BFC38(0, 0x8e, 0, 0, lbl_eu_80667E38);
+            cf::CfSoundMan::playActorSound(0, 0x8e, 0, 0, lbl_eu_80667E38);
         }
     }
     // Retail interleaves the field_1C store inside the field_24 read-modify-
@@ -793,7 +793,7 @@ void func_801BBC38(CSuddenCommu* self) {
 // (global flag mask / camera distance) runs the end-of-commu reset; after it
 // the pad dispatch advances the voice-cue on bit 0x8 or reads pad input on
 // bit 0x10. When the tick ends with no dispatch, the live cue object is
-// released (via func_80080F44 when the commu just ended, else func_800ACC14).
+// released (via clearPlayerEffect when the commu just ended, else setChildB59__).
 int func_801BBCBC(CSuddenCommu* self) {
     // camRun mirrors retail r31 (camera/pad path taken), ended retail r30.
     int camRun;
@@ -908,7 +908,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         int winState = func_8017FD44();
         if (winState != 0) {
             CSuddenCommuPadView* pad = (CSuddenCommuPadView*)cf::CfGameManager::getCurrentPad();
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+            if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
                 padBit = (pad->field_00 >> 9) & 1;
             } else {
                 padBit = (pad->field_00 >> 26) & 1;
@@ -918,7 +918,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         }
         if (self->field_20p != 0) {
             self->field_20p->field_B0 = 0;
-            func_800ACC14((void*)self->field_20p, 1);
+            setChildB59__((void*)self->field_20p, 1);
             ((CSuddenCommuVoiceCueVt*)self->field_20p)->vf88(lbl_eu_80667E38);
             self->field_20p = 0;
         }
@@ -946,9 +946,9 @@ int func_801BBCBC(CSuddenCommu* self) {
     if (self->field_20p != 0) {
         self->field_20p->field_B0 = 0;
         if (ended != 0) {
-            func_80080F44__Q22cf13CfGameManagerFv(self->field_20p);
+            clearPlayerEffect__Q22cf13CfGameManagerFv(self->field_20p);
         } else {
-            func_800ACC14((void*)self->field_20p, 1);
+            setChildB59__((void*)self->field_20p, 1);
         }
         self->field_20p = 0;
     }
@@ -961,7 +961,7 @@ int func_801BBCBC(CSuddenCommu* self) {
     }
     if (self->field_20p != 0) {
         self->field_20p->field_B0 = 0;
-        func_800ACC14((void*)self->field_20p, 1);
+        setChildB59__((void*)self->field_20p, 1);
         self->field_20p = 0;
     }
     return 0;
@@ -1075,7 +1075,7 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
         const u8* t4 = tbl;
         result = ((self->field_E == 0) ? 0x214 : 0x20B) + t4[v2 - 1];
         if (player1->field_3F28 == 2 && v2 == 6 &&
-            cf::CfGameManager::func_800822F4() < 0x91) {
+            cf::CfGameManager::getQueuedFileEventCount() < 0x91) {
             result = 0x1FA;
         }
         break;

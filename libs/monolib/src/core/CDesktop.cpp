@@ -19,12 +19,12 @@ extern "C" CView* getRootView__9CViewRootFP5CView(CView* view);
 // CGXCache ring command-2 cache update (retail func_8044A578__8CGXCacheFv);
 // the read-only CGXCache.hpp omits it.
 extern "C" void func_8044A578__8CGXCacheFv(CGXCache* self, func_800407C8_tmp* color, int flag);
-// CDeviceFile work-thread detach (retail func_8044E770__11CDeviceFileFP11CWorkThread);
+// CDeviceFile work-thread detach (retail setParent__11CDeviceFileFP11CWorkThread);
 // the read-only CDeviceFile.hpp only stubs a no-arg member form.
-extern "C" void func_8044E770__11CDeviceFileFP11CWorkThread(CWorkThread* parent);
-// CDeviceFile instance-field clear (retail func_8044E780__11CDeviceFileFv);
+extern "C" void setParent__11CDeviceFileFP11CWorkThread(CWorkThread* parent);
+// CDeviceFile instance-field clear (retail clearParent__11CDeviceFileFv);
 // the read-only CDeviceFile.hpp omits it entirely.
-extern "C" void func_8044E780__11CDeviceFileFv(CDeviceFile* self);
+extern "C" void clearParent__11CDeviceFileFv(CDeviceFile* self);
 // Work-memory allocation path used by wkStandbyLogin: retail placement-
 // constructs the raw CProc subobject in work memory (no derived ctor).
 // getWorkMem/allocate/entryWork are declared in CViewRoot.hpp.
@@ -143,12 +143,12 @@ bool CDesktop::wkStandbyLogin(){
     CGXCache* cache = CDeviceGX::getCacheInstance();
     func_800407C8_tmp col1;
     func_8044A578__8CGXCacheFv(cache, func_800407C8(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C), 1);
-    func_8044E770__11CDeviceFileFP11CWorkThread(this);
+    setParent__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give
     // it a transparent-black clear color.
     mView = this->pssCreateView(this->mName.c_str(), CViewRoot::getInstance(), 0x80);
-    func_8044E770__11CDeviceFileFP11CWorkThread(this);
+    setParent__11CDeviceFileFP11CWorkThread(this);
 
     // Create the desktop's view (named after the desktop itself), then give
     // it a transparent-black clear color.
@@ -230,7 +230,7 @@ bool CDesktop::wkStandbyLogin(){
 bool CDesktop::wkStandbyLogout(){
     if(hasChild(this) == false && CProcRoot::getInstance()->getWorkThread(lbl_eu_80522F44) == nullptr){
         CDeviceVI::setFlag0(true);
-        func_8044E780__11CDeviceFileFv(reinterpret_cast<CDeviceFile*>(this));
+        clearParent__11CDeviceFileFv(reinterpret_cast<CDeviceFile*>(this));
         return CProc::wkStandbyLogout();
     }
 

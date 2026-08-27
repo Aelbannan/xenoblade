@@ -1608,7 +1608,7 @@ extern "C" void func_80286340(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo
 // delete the layout object, release the arc accessors and both memory regions,
 // then tear down the embedded cursors, sort menu and both system windows.
 extern "C" void func_80286454(CEquipItemBox* self) {
-    func_8003AA8C__5CBdatFUl(5);
+    getEntry__5CBdatFUl(5);
     func_801390E0__FPP11CFileHandle(&self->field_24);
     func_801390E0__FPP11CFileHandle(&self->field_28);
     func_801390E0__FPP11CFileHandle(&self->field_2C);
@@ -1619,8 +1619,8 @@ extern "C" void func_80286454(CEquipItemBox* self) {
     }
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_30);
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_34);
-    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0]);
-    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
+    deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0]);
+    deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
     func_80285ABC((CEIBCur*)((u8*)self + 0x44));
     func_80285ABC((CEIBCur*)((u8*)self + 0x5c));
     ((CEquipItemBoxSysWinView*)&self->ccur18[0])->v01();
@@ -3860,13 +3860,13 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         CEquipItemBoxFileHandleView* fh = (CEquipItemBoxFileHandleView*)field_24;
         void* buf = fh->field_4;
         fh->field_4 = 0;
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_30 = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_30, buf, base + 0x71f);
         func_80136E84(&field_38, field_30, base + 0x723);
         func_80136F08(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
-        void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
+        void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         func_8013676C(root, (void*)((CEquipItemBoxFontView*)font)->f9());
         char* msg = func_801355A0();
         func_801368C0(field_38, base + 0x29b, (u32)msg);
@@ -3882,7 +3882,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         char* s4 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 4);
         func_80136B4C(field_38, base + 0x74c, s4, 0);
         func_80136B4C(field_38, base + 0x2d4, base + 0x228, 0);
-        const char* name = (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0) ? base + 0x761 : base + 0x758;
+        const char* name = (isClassicController__Q22cf13CfGameManagerFv(-1) == 0) ? base + 0x761 : base + 0x758;
         u16 key = func_8013606C(base + 0x76a, name, 0x49);
         char* texName = func_80138F78(key);
         nw4r::lyt::ArcResourceAccessor* acc2 = func_801355F4();
@@ -4002,7 +4002,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         lbl_eu_806649D8[3] = lbl_eu_806649B8[3];
         func_80288AC0(this);
         field_24 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&_pad04[0]);
+        validateHeap__17UnkClass_8045F564Fv(&_pad04[0]);
         __dt__14Class_8045F858Fv(guard, -1);
         return 1;
     }
@@ -4015,12 +4015,12 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         CEquipItemBoxFileHandleView* fh2 = (CEquipItemBoxFileHandleView*)field_28;
         void* buf2 = fh2->field_4;
         fh2->field_4 = 0;
-        func_80434A4C__Q23mtl10MemManagerFb(false);
+        setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_34 = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_34, buf2, base + 0x71f);
         func_80288AC0(this);
         field_28 = 0;
-        func_8045F810__17UnkClass_8045F564Fv(&_pad04[0x14]);
+        validateHeap__17UnkClass_8045F564Fv(&_pad04[0x14]);
         __dt__14Class_8045F858Fv(guard2, -1);
         return 1;
     }

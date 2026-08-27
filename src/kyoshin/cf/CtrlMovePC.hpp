@@ -250,7 +250,7 @@ void func_804BE4B4(void* out, int a);
 void func_804BE4E0(void* out, int a);
 int  func_804B526C(void* a, void* b, void* c, void* d, int e, int f, void* g);
 int  func_804B54D4(void* a, void* b, void* c, int d, int e);
-void* func_800B708C__Fi(int id);
+void* findObjectById__Fi(int id);
 void* func_8004B7C0(void* out, const ml::CVec3* src); // matches CfGameManager.hpp decl
 void func_800BC3B0(void* a, f32 b);
 void func_80089990(cf::CCtrlMovePC* self);
@@ -311,15 +311,15 @@ extern int (cf::CCtrlMovePC::*const lbl_eu_80532CBC)();
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-// C++-linkage global (mangles to func_8006EF04__Fi).
-int func_8006EF04(int r3);
+// C++-linkage global (mangles to isGlobalCamFlagSet__Fi).
+int isGlobalCamFlagSet(int r3);
 
 // Node-pool manager shared with the scene path classes
 // (libs/monolib/src/scn/UnkClass_8047CD0C.cpp). Only the task-allocating
 // accessor is needed here; the definition lives in its own TU.
 class UnkClass_8047CD0C {
 public:
-    void* func_8047CE7C();
+    void* allocFreeNode();
 };
 
 // Result block filled by func_8019876C (CfPartyInfo at stack +0x128): the

@@ -108,13 +108,13 @@ public:
 #endif
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv). The real
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). The real
 // CTaskGame.hpp pulls broken monolib work.hpp-umbrella headers, so the static
 // members are declared here (same scheme as CSystemWindow.hpp).
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 // cf::CBattleManager battle-list view (only the +0x8 list head is touched by
@@ -175,7 +175,7 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
                                               int flags);
 
-// View of the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// View of the object returned by CDeviceFont::getFontInfo: vtable+0x24
 // returns the font handle handed to func_8013676C (root-pane font binding).
 class CLandTelopFontObj {
 public:
@@ -212,8 +212,8 @@ unsigned char func_8014A2B4();
 f32 func_801895EC();                      // scene BGM volume
 u32 func_80495FF0(CScn* scene);           // scene audio handle
 void func_80043738(u32, const char*, u32, u32, u32, u32, f32);
-u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
+u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
                                                          nw4r::lyt::Layout*);
 int func_8026178C(void* data, u32 flag);
 u32 func_8025FB10(void* data, u32 flag);

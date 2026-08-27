@@ -32,12 +32,12 @@ extern "C" u32 func_800FEDF8();
 extern "C" void func_800FF914();
 
 // Minimal CTaskGame decl (retail global-namespace class, symbols
-// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv). Full header
+// getInstance__9CTaskGameFv / isFlag01Set__9CTaskGameFv). Full header
 // clashes with the harness_catalog CScn stub in this TU.
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    static bool func_800426F0();
+    static bool isFlag01Set();
 };
 
 /*
@@ -272,7 +272,7 @@ extern "C" int func_8026DCA0(u8* self);
 
 // Shared event-file byte + classic-controller query (retail unmangled).
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" CMenuPassivePadView* getCfPadData__Q22cf13CfGameManagerFv();
 
 // Timer-tick addend / clamp cap seeded around field_2B0.
@@ -313,13 +313,13 @@ extern "C" void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern "C" void __dt__800FED0C(CProcess* self, int flags);
 
 // cf pad enable/disable (retail pre-mangled name), sound-op helper.
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable);
+extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 extern "C" void func_80138078__FUl(u32 op);
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
 extern "C" int func_8013BE50();
 extern "C" void getInstance__9CTaskGameFv();
-extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int isFlag01Set__9CTaskGameFv();
 
 // DrawInfo setup helper; the C++ declaration mangles to the retail name
 // func_80137250__FPQ34nw4r3lyt8DrawInfo.

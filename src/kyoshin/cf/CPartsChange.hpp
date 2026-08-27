@@ -32,13 +32,13 @@ extern "C" void func_802761C0(void* self);
 // CfGameManager statics (retail pre-mangled names; the extern "C" block
 // stops MWCC from re-mangling them - CSelShopWin.hpp pattern).
 extern "C" {
-u32 func_8008235C__Q22cf13CfGameManagerFv(u32 id);
+u32 isResourceFlagSet__Q22cf13CfGameManagerFv(u32 id);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // BDAT table pointer (func_80194AFC / func_80195BD4 column lookups) and the
 // party-count getters used by the range checks (retail pre-mangled names).
-u32 func_80086B24__Q22cf13CfGameManagerFv();
-u32 func_800822F4__Q22cf13CfGameManagerFv();
-u32 func_80082354__Q22cf13CfGameManagerFv(u32 a);
+u32 getGlobalPtr6409C__Q22cf13CfGameManagerFv();
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 // Party-change object resolver used by func_80194610 (retail pre-mangled
 // name): column lookup returning the sub-object at +0x3E9C (the caller
 // de-biases it).
@@ -53,9 +53,9 @@ void* func_80081A40__Q22cf13CfGameManagerFv(const char* col, u32 a, u32 b, u32 c
 extern "C" int func_800DA06C(void* bm, void* obj);
 
 // CfGameManager statics used by func_80195E5C (retail pre-mangled names).
-extern "C" u32 func_80086B34__Q22cf13CfGameManagerFv();
-extern "C" int func_80084BAC__Q22cf13CfGameManagerFv();
-extern "C" int func_800829B8__Q22cf13CfGameManagerFv();
+extern "C" u32 getGlobalWord640A4__Q22cf13CfGameManagerFv();
+extern "C" int isFieldBlockedByFlag__Q22cf13CfGameManagerFv();
+extern "C" int isSceneLoading__Q22cf13CfGameManagerFv();
 // Global settings object returned by getUnk80664658 (func_80195E5C reads the
 // flag word at +0x214).
 struct CfGlobalGimmickView {
@@ -144,7 +144,7 @@ extern u16 lbl_eu_80662528[1];
 // Party-drop sound play (retail CfSoundMan static, mangled name; CfSoundMan.hpp
 // pulls nw4r/snd.h which conflicts with this TU's include chain, so the flat
 // C-ABI name is declared here - CUICfManager.hpp / CCol6System.hpp precedent).
-extern "C" u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
     u32 soundMan, u32 a, u32 b, u32 c, f32 e);  // single shared flat-name form
 // Position-offset added to the spawn position Y by func_80197C6C (.sdata2).
 extern const f32 lbl_eu_80667AE8;
@@ -386,7 +386,7 @@ struct CfPartsTri {
 };
 
 // 8-byte-stride list entries (func_801984E4 / func_801984F0); the first word
-// is an actor id fed to func_800B708C.
+// is an actor id fed to findObjectById.
 struct CfPartsListEntry {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u32 field_04;

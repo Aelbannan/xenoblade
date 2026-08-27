@@ -20,18 +20,18 @@ class Layout;
 class IDeviceFontInfo {
 public:
     virtual ~IDeviceFontInfo();  // 0x8
-    virtual s32 func_80453654(); // 0xC (identity/query)
-    virtual u32 func_8045364C(); // 0x10
-    virtual u32 func_80453644(); // 0x14
-    virtual u32 func_8045363C(); // 0x18
-    virtual u16 func_80453634(); // 0x1C
+    virtual s32 getFlags(); // 0xC (identity/query)
+    virtual u32 getState(); // 0x10
+    virtual u32 getMode(); // 0x14
+    virtual u32 getBufferSize(); // 0x18
+    virtual u16 getLineHeight(); // 0x1C
     virtual void func_80453468();// 0x20
-    virtual void* func_80453624(); // 0x24
-    virtual void* func_8045362C(); // 0x28
-    virtual void func_804535C0();// 0x2C
-    virtual void func_804535DC();// 0x30
-    virtual u32 func_804535F4(); // 0x34 (availability: returns v != 0)
-    virtual u32 func_80453608();// 0x38
+    virtual void* getFont(); // 0x24
+    virtual void* getFontConst(); // 0x28
+    virtual void advanceState();// 0x2C
+    virtual void initState();// 0x30
+    virtual u32 isStateNonZero(); // 0x34 (availability: returns v != 0)
+    virtual u32 isStateReady();// 0x38
 };
 
 // reslist<IDeviceFontInfo> node layout (12 bytes): mNext@0, mPrev@4, item@8.
@@ -154,9 +154,9 @@ public:
 
     static CDeviceFont* getInstance();
 
-    u32 func_804525D4();
+    u32 getFontId();
     u32 func_804525F0();
-    IDeviceFontInfo* func_80452C10(u32 fontId, nw4r::lyt::Layout* layout);
+    IDeviceFontInfo* getFontInfo(u32 fontId, nw4r::lyt::Layout* layout);
     IDeviceFontInfo* func_eu_804558F4();
     u32 func_80452D80();
     void wkUpdate();
@@ -184,18 +184,18 @@ public:
     u8 field_0x54[0x1F8 - 0x54];  // 0x54
     u32 field_0x1F8;              // 0x1F8 (bound key: font id or device)
     u8 field_0x1FC[0x2F0 - 0x1FC]; // 0x1FC
-    u8 mFlag2F0;                  // 0x2F0 (set by func_80452690)
+    u8 mFlag2F0;                  // 0x2F0 (set by notifyLayerDestroy)
 
     // The retail symbol-map entries carry decompiler-guessed Fv suffixes even
     // though the bodies consume arguments; the wrappers in CDeviceFont.cpp
     // reference them under the literal retail names.
     void func_80453BB4();
-    void func_80453FF0();
-    void func_804541F8();
-    void func_8045438C();
+    void setBackgroundColor();
+    void setFontScale();
+    void setFontId();
 
-    static void func_80454DE4();  // font-layer unit helper (standby login)
-    static void func_80454E2C();  // font-layer unit helper (standby logout)
+    static void allocFontHeap();  // font-layer unit helper (standby login)
+    static void freeFontHeap();  // font-layer unit helper (standby logout)
 };
 
 class CDeviceFontInfo {
@@ -286,7 +286,7 @@ extern char lbl_eu_805376B8[];
 extern "C" {
 void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name,
                               CWorkThread* parent);
-void func_80454F30__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1,
+void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1,
                                           const char* pPath);
 bool func_eu_8044A600();
 }

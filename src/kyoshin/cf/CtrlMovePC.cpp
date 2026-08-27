@@ -35,9 +35,9 @@ void __ptmf_scall(...);
 
 // Engine helpers.
 void* func_8016FE34(void* obj);
-void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
-void* func_8047CE7C__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
-int   func_8047DE14__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
+void  releaseNode__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
+void* allocFreeNode__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
+int   dispatchScnCommand__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
 int   walkPathCheck__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
 // getInstance__Q22cf14CBattleManagerFv comes from CfGameManager.hpp
 // (extern "C" CBattleManagerView* form) - do not redeclare here.
@@ -155,11 +155,11 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
 // ============================================================================
 extern "C" void func_80199618(CCtrlMovePC* self) {
     if (self->mTask != 0) {
-        void* gm = cf::CfGameManager::func_80083298();
+        void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
-                func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
+                releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
         }
         self->mTask = 0;
@@ -291,11 +291,11 @@ static inline void zeroArr(CCtrlMovePC* s) {
 
 // Release mTask through the game manager (shared by reset paths).
 static inline void releaseTask(CCtrlMovePC* s) {
-    void* gm = cf::CfGameManager::func_80083298();
+    void* gm = cf::CfGameManager::getGameSubManager();
     if (gm != 0) {
         void* p = (char*)gm + 0x2f2c;
         if (p != 0) {
-            func_8047CF20__17UnkClass_8047CD0CFv(p, s->mTask);
+            releaseNode__17UnkClass_8047CD0CFv(p, s->mTask);
         }
     }
     s->mTask = 0;
@@ -374,11 +374,11 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     // --- one-shot reset ---
     func_80089990(self);
     if (self->mTask != 0) {
-        void* gm = cf::CfGameManager::func_80083298();
+        void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
-                func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
+                releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
         }
         self->mTask = 0;
@@ -414,7 +414,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
                 self->mFlags4C |= 0x80u;
             } else {
                 int id = (int)((cf::CMoveEmbedded*)((char*)self->mPlayer + 0x3e9c))->get19();
-                void* ent = func_8016FE34(func_800B708C__Fi(id));
+                void* ent = func_8016FE34(findObjectById__Fi(id));
                 if (ent == 0) {
                     self->mFlags4C |= 0x80u;
                 } else {
@@ -495,7 +495,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- battle-mode bail-out: freeze the follow anchor ---
     cf::CfGameManager::getInstance();
-    bool inBattle = func_8006EF04(0x40000000) != 0;
+    bool inBattle = isGlobalCamFlagSet(0x40000000) != 0;
     if (!inBattle) {
         u8 phase = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
         if (!((u32)phase >= 1 && (u32)phase <= 0x18)) {
@@ -593,11 +593,11 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         int okT;
         if (self->mTask == 0) {
             okT = 0;
-            void* gm = cf::CfGameManager::func_80083298();
+            void* gm = cf::CfGameManager::getGameSubManager();
             if (gm != 0) {
                 UnkClass_8047CD0C* mgr = (UnkClass_8047CD0C*)((char*)gm + 0x2f2c);
                 if (*(void**)mgr != 0) {
-                    self->mTask = mgr->func_8047CE7C();
+                    self->mTask = mgr->allocFreeNode();
                     okT = (self->mTask != 0);
                 }
             }
@@ -605,7 +605,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
             okT = 1;
         }
         if (okT != 0) {
-            if (func_8047DE14__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
+            if (dispatchScnCommand__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                     lbl_eu_80667B60, lbl_eu_80667B60) != 0) {
                 if (walkPathCheck__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                         &out, lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
@@ -637,11 +637,11 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     }
     func_80089990(self);
     if (self->mTask != 0) {
-        void* gm = cf::CfGameManager::func_80083298();
+        void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
-                func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
+                releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
         }
         self->mTask = 0;
@@ -934,11 +934,11 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
             int ok;
             if (self->mTask == 0) {
                 ok = 0;
-                void* gm = cf::CfGameManager::func_80083298();
+                void* gm = cf::CfGameManager::getGameSubManager();
                 if (gm != 0) {
                     UnkClass_8047CD0C* mgr = (UnkClass_8047CD0C*)((char*)gm + 0x2f2c);
                     if (*(void**)mgr != 0) {
-                        self->mTask = mgr->func_8047CE7C();
+                        self->mTask = mgr->allocFreeNode();
                         ok = (self->mTask != 0);
                     }
                 }
@@ -1261,11 +1261,11 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         self->mFlags4C |= 0x00800000u;
         func_80089990(self);
         if (self->mTask != 0) {
-            void* gm = cf::CfGameManager::func_80083298();
+            void* gm = cf::CfGameManager::getGameSubManager();
             if (gm != 0) {
                 void* p = (char*)gm + 0x2f2c;
                 if (p != 0) {
-                    func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
+                    releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
                 }
             }
             self->mTask = 0;
@@ -1698,7 +1698,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
             ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
             return 0;
         }
-        if (func_8006EF04(0x40000000) != 0) {
+        if (isGlobalCamFlagSet(0x40000000) != 0) {
             ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
             return 0;
         }
@@ -2283,11 +2283,11 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
     }
     func_80089990(self);
     if (self->mTask != 0) {
-        void* gm = cf::CfGameManager::func_80083298();
+        void* gm = cf::CfGameManager::getGameSubManager();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
-                func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
+                releaseNode__17UnkClass_8047CD0CFv(p, self->mTask);
             }
         }
         self->mTask = 0;

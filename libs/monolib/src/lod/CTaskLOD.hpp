@@ -8,7 +8,7 @@ struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
 
 // Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
 // +0x7C slot holds the scene-light control list head handed to func_804C2014
-// by the func_80462D04/D5C/DB4 wrappers.
+// by the activateLOD/deactivateLOD/setLODEnable wrappers.
 struct LODParam1Obj {
     u8 _00[0x7C];
     CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head
@@ -35,33 +35,33 @@ public:
     virtual void Move();
     virtual void Draw();
     void create();
-    void func_80462A08();
-    void func_80462AC0();
-    void func_80462B30();
-    void func_80462B4C();
-    void func_80462B68();
-    void func_80462BC8();
-    void func_80462BE4();
-    void func_80462BFC();
-    void func_80462C14();
-    void func_80462C48();
-    void func_80462C80();
-    void func_80462CBC();
-    void func_80462D04();
-    void func_80462D5C();
-    // func_80462DB4 takes a real r4 argument but is retail-named as no-arg
+    void acquireLODResource();
+    void resetActiveLOD();
+    void enableLOD();
+    void disableLOD();
+    void restorePrimaryLOD();
+    void bindTaskToLOD();
+    void notifyLODTick();
+    void updateLODFrame();
+    float getLODScale();
+    void setLODFilterFlag();
+    void updateLODRange();
+    void syncLODTask();
+    void activateLOD();
+    void deactivateLOD();
+    // setLODEnable takes a real r4 argument but is retail-named as no-arg
     // (`.Fv`); it is defined in CTaskLOD.cpp as the global function
-    // `extern "C" void func_80462DB4__8CTaskLODFv(CTaskLOD*, int)`.
-    void* func_80462E1C();
-    void func_80462E3C();
-    void func_80462E58();
-    void func_80462EF4();
-    void func_80462F10();
-    float func_80462F2C();
-    void* func_80462FB8();
-    void func_80462FD8();
-    float func_80462FF4();
-    void* func_80463014();
+    // `extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD*, int)`.
+    void* getLODData();
+    void refreshLOD();
+    void setLODParam();
+    void removeLODEntry();
+    void clearLODEntry();
+    float getLODDistance();
+    void* getLODObject();
+    void updateLODObject();
+    float getLODLevel();
+    void* getLODOrSelf();
 
 private:
     // Layout (0x1D44 total):
@@ -87,12 +87,12 @@ public:
 // global functions carrying the full retail mangled name (MWCC emits
 // `extern "C"` identifiers verbatim), so the wrapper symbols and their
 // tail-call relocs carry the exact retail names.
-extern "C" void func_80462CD8__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c);
-extern "C" void func_80462DB4__8CTaskLODFv(CTaskLOD* self, int flag);
-extern "C" void func_80462ED0__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void func_80462F4C__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void func_80462F70__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void func_80462F94__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
+extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c);
+extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag);
+extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
+extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
+extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
+extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
 
 // The one CTaskLOD instance reference used by the delegates below.
 extern CTaskLOD* lbl_eu_80665730;

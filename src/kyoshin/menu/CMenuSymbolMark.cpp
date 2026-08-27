@@ -24,12 +24,12 @@ extern "C" u8 func_8009CF8C(u32);
 extern "C" u32 func_80138138(u16);
 extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" int func_80138574(void*, u32);
-// Naturally-mangled retail import (func_800B708C__Fi).
-void* func_800B708C(int id);
+// Naturally-mangled retail import (findObjectById__Fi).
+void* findObjectById(int id);
 extern u32 lbl_eu_804FE720[];
 extern u32 lbl_eu_8052CCA8[];
 extern u32 lbl_eu_80573D18[];
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void* region);
+extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* region);
 // Flat retail helper imports for the timer/list walkers and layout glue.
 extern "C" void* func_800B6BEC();
 extern "C" void* func_800B6C58();
@@ -101,7 +101,7 @@ extern "C" int func_8011D338(u32 regionBase) {
 
 // Render-gate globals/callees (declared locally to avoid header conflicts).
 extern "C" void* getInstance__9CTaskGameFv();
-extern "C" void* func_800426F0__9CTaskGameFv(void* self);
+extern "C" void* isFlag01Set__9CTaskGameFv(void* self);
 extern "C" int func_8013BE50();
 struct CMenuGimmickGlobal { u8 mPad[0x214]; u32 field_214; };
 extern "C" CMenuGimmickGlobal* getUnk80664658();
@@ -321,7 +321,7 @@ void CMenuSymbolMark::Term() {
             entry.layout = 0;
         }
     }
-    func_8045F778__17UnkClass_8045F564Fv(&mUnkClass);
+    deleteRegion__17UnkClass_8045F564Fv(&mUnkClass);
     lbl_eu_80663FC8 = 0;
 }
 
@@ -388,7 +388,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self);
         const f32 distLimit = lbl_eu_806670EC;                                 \
         for (u32 mi = 0; mi < self->countField; mi++) {                         \
             CfActorView* actorV =                                              \
-                (CfActorView*)func_800B708C(self->listArr[mi]);                 \
+                (CfActorView*)findObjectById(self->listArr[mi]);                 \
             if (actorV == 0 || actorV->_v160() == 0) {                         \
                 continue;                                                      \
             }                                                                  \
@@ -497,7 +497,7 @@ void CMenuSymbolMark::Move() {
 // DrawInfo.
 void CMenuSymbolMark::cbRenderBefore() {
     // Nested guard reproduces retail's beq-body/b-exit branch pair.
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0) {
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0) {
         if (!(lbl_eu_80663E28 & 0x200000)) {
             goto cont;
         }
@@ -703,7 +703,7 @@ extern "C" __declspec(noinline) void func_8011E778(
 }
 
 // ---------- func_8011EA98 ----------
-// Per-entry update: resolves the actor bound to the entry (func_800B708C on
+// Per-entry update: resolves the actor bound to the entry (findObjectById on
 // unk04) when flag1 is set; entries without an actor are released. Live
 // actors are polled (vtable 0x160 gate for ids 9-10) and their measured
 // values (vtable 0x12C / 0xAC) are forwarded to func_8011E778.
@@ -714,7 +714,7 @@ extern "C" void func_8011EA98(CMenuSymbolMark* self) {
     for (i = 0; i < self->mEntryCount; i++) {
         SymbolMarkEntry* entry = &self->mEntries[i];
         if (entry->flag1 != 0) {
-            CfActorView* actor = (CfActorView*)func_800B708C(entry->unk04);
+            CfActorView* actor = (CfActorView*)findObjectById(entry->unk04);
             if (actor == 0) {
                 entry->flag0 = zero;
                 continue;
@@ -1112,7 +1112,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
     Vec anchor;
     Vec extent;
     for (u32 i = 0; i < self->mField_6A0; i++) {
-        CfActorView* actorV = (CfActorView*)func_800B708C(self->mArray4A0[i]);
+        CfActorView* actorV = (CfActorView*)findObjectById(self->mArray4A0[i]);
         if (actorV == 0 || actorV->_v160() == 0) {
             continue;
         }
@@ -1297,7 +1297,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
             u32 nActors = isFirst ? self->mField_6A0 : self->mField_8A8;
             const u32 argD = isFirst ? 1 : 0;
             for (u32 j = 0; j < nActors; j++) {
-                CfActorView* actorV = (CfActorView*)func_800B708C(arr[j]);
+                CfActorView* actorV = (CfActorView*)findObjectById(arr[j]);
                 if (actorV == 0) {
                     continue;
                 }
@@ -1516,7 +1516,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
 extern "C" void func_801209BC(CMenuSymbolMark* self) {
     const f32 distLimit = lbl_eu_806670EC;
     for (u32 i = 0; i < self->mField_8A8; i++) {
-        CfActorView* actorV = (CfActorView*)func_800B708C(self->mArray6A8[i]);
+        CfActorView* actorV = (CfActorView*)findObjectById(self->mArray6A8[i]);
         if (actorV == 0 || actorV->_v160() == 0) {
             continue;
         }
@@ -1717,8 +1717,8 @@ CTTask<CArrow3D>::~CTTask() {}
 // color update off for the light pass, then normally).
 // Render-gate imports.
 extern "C" int func_8013C008();
-extern "C" void func_80442DA8__9CViewRootFv();
-extern "C" void func_8044BE38__8CGXCacheFv(void* cache);
+extern "C" void updateViewRoot__9CViewRootFv();
+extern "C" void resetGXStateA__8CGXCacheFv(void* cache);
 extern "C" void func_8044BB20__8CGXCacheFv(void* cache, void* proj, f32 a,
                                            f32 b, f32 c);
 // CGXCache singleton (static data member, symbol cacheInstance__9CDeviceGX).
@@ -1753,7 +1753,7 @@ extern u32 identity__Q22ml6CMat34[12];
 #pragma push
 #pragma auto_inline off
 void CArrow3D::cbRenderBefore() {
-    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0) {
+    if (isFlag01Set__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0) {
         return;
     }
     if (lbl_eu_80663E28 & 0x200000) {
@@ -1891,7 +1891,7 @@ void CArrow3D::cbRenderBefore() {
         }
         // Camera projection from the GX cache, then pick the view matrix.
         void* cache = cacheInstance__9CDeviceGX;
-        func_8044BE38__8CGXCacheFv(cache);
+        resetGXStateA__8CGXCacheFv(cache);
         f32 proj44[16];
         func_8044BB20__8CGXCacheFv(cache, &proj44[0], lbl_eu_806670E8,
                                    lbl_eu_80667120, lbl_eu_80667124);
@@ -2141,8 +2141,8 @@ void CArrow3D::cbRenderBefore() {
         }
     }
 restore:
-    func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
-    func_80442DA8__9CViewRootFv();
+    resetGXStateA__8CGXCacheFv(cacheInstance__9CDeviceGX);
+    updateViewRoot__9CViewRootFv();
     if (mLayout != 0) {
         // Raw-storage DrawInfo (same shape as CMenuSymbolMark::cbRenderBefore).
         u8 drawInfo[0x54];

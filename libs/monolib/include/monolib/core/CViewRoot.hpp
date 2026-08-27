@@ -29,7 +29,7 @@ public:
     static CView* getCurrent();
     static bool isCurrent(const CView* view);
     static bool isCurrentChild(const CView* view, const CView* current);
-    static void func_80442DA8();
+    static void updateViewRoot();
     static bool isInitialized();
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);

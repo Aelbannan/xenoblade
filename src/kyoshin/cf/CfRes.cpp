@@ -1076,7 +1076,7 @@ extern "C" int func_80063560(int id, int incRef, int incCount) {
         if (idx < 0) {
             switch (uid) {
             case 3:
-                if (func_8007E908__Q22cf13CfGameManagerFv(8)) {
+                if (initParticleSystem__Q22cf13CfGameManagerFv(8)) {
                     return -1;
                 }
                 idx = func_8006328C(8);
@@ -1088,7 +1088,7 @@ extern "C" int func_80063560(int id, int incRef, int incCount) {
                 }
                 break;
             case 8:
-                if (func_8007E908__Q22cf13CfGameManagerFv(3)) {
+                if (initParticleSystem__Q22cf13CfGameManagerFv(3)) {
                     return -1;
                 }
                 idx = func_8006328C(3);
@@ -1727,7 +1727,7 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
     if (packed == 0) {
         return 0;
     }
-    if (func_800829B8__Q22cf13CfGameManagerFv(self)) {
+    if (isSceneLoading__Q22cf13CfGameManagerFv(self)) {
         return 0;
     }
     CfRes_clearE28Mask(0x40);
@@ -2285,7 +2285,7 @@ void __declspec(noinline) func_80065254(int inst, u8* arg) {
     if (vc != 0) {
         u16 first;
         u16 second;
-        func_800832BC__Q22cf13CfGameManagerFv(&first, &second);
+        getEventHalfwordPair__Q22cf13CfGameManagerFv(&first, &second);
         int packed = (int)CfRes_packThreeFields(0x1d, first, second);
         CfRes_initFields4(p, packed, 0, (int)(uintptr_t)vc, (int)(uintptr_t)arg);
         CfRes_resetState2(p);

@@ -34,7 +34,7 @@ public:
 // inside class CfGameManager even though the fwd decl sits in the same
 // namespace. Rename the type for the duration of the include so the lookup
 // hits a name this TU pre-declares; pointer params/members keep their layout,
-// and the only affected mangled symbol (member func_8007C6B4) is never called
+// and the only affected mangled symbol (member getPlayerSlotPtr) is never called
 // here.
 #define CfObjectMove cfCamGameManagerObjMoveFwd
 namespace cf {
@@ -51,8 +51,8 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern char lbl_eu_80661B28[8];
 extern char lbl_eu_80661B30[8];
-// C++-linkage global; MWCC mangles it to func_8006EF04__Fi (the retail name).
-int func_8006EF04(int gate);
+// C++-linkage global; MWCC mangles it to isGlobalCamFlagSet__Fi (the retail name).
+int isGlobalCamFlagSet(int gate);
 // Cross-TU imports (flat retail names).
 // func_804BE398's retail ABI passes two FP args after the four GPR args
 // (same shape as CtrlMoveBase.hpp / CfCamEvent.hpp).
@@ -491,9 +491,9 @@ extern "C" void* cfCam_getUnk6CPtr(void* ptr) {
 extern "C" int cfCam_getBit19_0x0C(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
 }
-// func_8006EF04__Fi: flag-bit probe.  Retail codegen is the branchless idiom
+// isGlobalCamFlagSet__Fi: flag-bit probe.  Retail codegen is the branchless idiom
 // r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
-extern "C" bool func_8006EF04__Fi(s32 mask) {
+extern "C" bool isGlobalCamFlagSet__Fi(s32 mask) {
     unsigned int flag = lbl_eu_80663E24;
     unsigned int x = flag & (unsigned int)mask;
     return ((((unsigned int)-(int)x | x) >> 31) & 1) != 0;
@@ -694,9 +694,9 @@ extern "C" void func_8006B720(int arg1, int arg2) {
     lbl_eu_80661BA4 = arg1;
     int col = 1;
     // Two separate getter calls (retail emits both; no CSE).
-    if (func_8008221C__Q22cf13CfGameManagerFv() != 0) {
+    if (getActiveCameraObject__Q22cf13CfGameManagerFv() != 0) {
         void* ret =
-            reinterpret_cast<cf::CfCamGmView*>(func_8008221C__Q22cf13CfGameManagerFv())
+            reinterpret_cast<cf::CfCamGmView*>(getActiveCameraObject__Q22cf13CfGameManagerFv())
                 ->fnAt60();
         if (ret != 0) {
             col = reinterpret_cast<cf::CfCamRowView*>(ret)->rowId;
@@ -751,7 +751,7 @@ extern "C" void func_8006B720(int arg1, int arg2) {
     lbl_eu_80661B4C = lbl_eu_806662A0 * (f32)(convB.d - lbl_eu_806662A8);
 
     if (arg2 != 0) {
-        UnkClass_800821F8* state = func_800821F8__Q22cf13CfGameManagerFv();
+        UnkClass_800821F8* state = getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (state != 0) {
             reinterpret_cast<cf::UnkClass800821F8FlagView*>(state)->flags |= 0x20000000;
         }
@@ -1121,7 +1121,7 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
         f32 h = lbl_eu_8066631C + local_20.y;
         if (local_2c.y < h) {
             local_2c.y = h;
-            if (func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+            if (getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
                 func_800C1DF0(0x140, 0x70, lbl_eu_804FB4F0 + 0x15);
             }
             func_8006C640(self, 0x8000000, 1);
@@ -1137,7 +1137,7 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
                 f32 h = lbl_eu_8066631C + local_20.y;
                 if (local_2c.y <= h) {
                     local_2c.y = h;
-                    if (func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+                    if (getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
                         func_800C1DF0(0x140, 0x70, lbl_eu_804FB4F0 + 0x21);
                     }
                     flag = 1;
@@ -1617,7 +1617,7 @@ extern "C" __declspec(noinline) int func_8006DCA0(void* obj) {
     if (a == 0) {
         return 0;
     }
-    if (func_8007F91C__Q22cf13CfGameManagerFv() == 0) {
+    if (isTimerActive__Q22cf13CfGameManagerFv() == 0) {
         return 0;
     }
     if (func_8006DBD4(a, 3) != 0) {
@@ -1660,7 +1660,7 @@ __declspec(noinline) void func_8006DD58(cf::CfCamFollow* self, void* arg) {
             func_8006BFC4(reinterpret_cast<int>(self), 0x20000) == 0 &&
             func_800FE68C() != 0) {
             func_800FE68C();
-            int sel = func_800B708C__Fi(func_8006DFA8(func_800FE68C()));
+            int sel = findObjectById__Fi(func_8006DFA8(func_800FE68C()));
             // angle lands in tmp2c.y (retail stores it at tmp+4)
             ml::CVec3 tmp2c;
             if (sel != 0) {
@@ -2082,7 +2082,7 @@ void func_8006E884(cf::CfCamFollow* self, float argF) {
     }
     func_80071754(self, &stack80);
     func_80072194(self, &stack80);
-    func_8006EF04(0x200);
+    isGlobalCamFlagSet(0x200);
     if (func_8006BFC4(reinterpret_cast<int>(self), 0x1000000) != 0) {
         func_80074A74(self, lbl_eu_806662DC);
         if (func_802753B8(self) != 0 &&
@@ -2348,7 +2348,7 @@ void func_8006EFA0(cf::CfCamFollow* self, float argF, ml::CVec3* outPos,
 // the 0x1/0x4 flag + camera-register matrix (scaled by |sub+0x68| on a classic
 // pad) and out2 from the 0x2/0x8 flag + move-register matrix (scaled by
 // |sub+0x6C|). The flag-word OR of CfRes_getE24Bit22/func_8006F9D4/
-// func_8006EEE4 drives a delayed reset path (0x254 countdown, func_8008585C /
+// func_8006EEE4 drives a delayed reset path (0x254 countdown, isSceneActive /
 // func_80070EBC) and finally zeroes both outputs when set.
 int func_8006F5C8(cf::CfCamFollow* self, void* arg, float* out1, float* out2) {
     *out1 = lbl_eu_806662DC;
@@ -2425,13 +2425,13 @@ int func_8006F5C8(cf::CfCamFollow* self, void* arg, float* out1, float* out2) {
             }
         }
     }
-    int flags2 = CfRes_getE24Bit22() | (int)func_8006EF04__Fi(0xABA40000) |
+    int flags2 = CfRes_getE24Bit22() | (int)isGlobalCamFlagSet__Fi(0xABA40000) |
                  (int)func_8006EEE4();
     if (func_8006BFC4(reinterpret_cast<int>(self), 0xC10) == 0 && r31 == 0) {
         if (self->unk254 != 0) {
             self->unk254 -= 1;
         } else if (flags2 == 0) {
-            if (func_8008585C__Q22cf13CfGameManagerFv() == 0) {
+            if (isSceneActive__Q22cf13CfGameManagerFv() == 0) {
                 func_80070EBC(self);
             }
         }
@@ -3349,7 +3349,7 @@ __declspec(noinline) void func_80072194(cf::CfCamFollow* self, void* arg){}
 __declspec(noinline) void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self,
                                         const ml::CVec3* dir, const f32* angles,
                                         float f) {
-    if (func_8006EF04(0x200) != 0) {
+    if (isGlobalCamFlagSet(0x200) != 0) {
         func_8004B79C(out, reinterpret_cast<const ml::CVec3*>(self->unk1C + 24));
         return;
     }
@@ -3441,7 +3441,7 @@ int func_8007351C(cf::CfCamFollow* arg1, ml::CVec3* arg2, ml::CVec3* arg3,
         func_8004B3F0(lbl_eu_80570A74, arg4);
         func_8004B3F0(lbl_eu_80570A80, &v2);
         result = 1;
-        if (func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+        if (getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
             func_800C1DF0(0x90, 0x120, lbl_eu_804FB4F0 + 0x92);
         }
     } else {
@@ -3505,7 +3505,7 @@ int func_80073640(cf::CfCamFollow* self, ml::CVec3* arg2, ml::CVec3* out) {
             f32 distA = func_8006BB00(&diff74);
             func_8004CB80(&diff68.x, &pos->x, &copyE0.x);
             f32 distB = func_8006BB00(&diff68);
-            if (func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+            if (getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
                 func_800C1DF0(0x30, rowId, lbl_eu_804FB4F0 + 0x98, pos->x,
                               pos->y, pos->z, info->x, info->y, info->z, distA,
                               distB);
@@ -3597,7 +3597,7 @@ int func_80073640(cf::CfCamFollow* self, ml::CVec3* arg2, ml::CVec3* out) {
                               reinterpret_cast<const nw4r::math::VEC3*>(&tmp8));
                 func_8004B3F0(out, &tmp14);
                 result = 1;
-                if (func_8007FE24__Q22cf13CfGameManagerFv(8) != 0) {
+                if (getNullPtrC__Q22cf13CfGameManagerFv(8) != 0) {
                     func_800C1DF0(0x10, 0x170, lbl_eu_804FB4F0 + 0xc6,
                                   snap98.x, snap98.y, snap98.z);
                 }

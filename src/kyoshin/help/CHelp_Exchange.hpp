@@ -11,6 +11,6 @@ extern "C" void func_801BEE5C();
 namespace cf {
 class __declspec(novtable) CHelp_Exchange : public CHelp {
 public:
-    void func_802B80F0();
+    void checkExchangeState();
 };
 } // namespace cf

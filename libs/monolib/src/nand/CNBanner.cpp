@@ -42,7 +42,7 @@
 extern "C" {
 // Releases a registered file path from the CDeviceFile manager
 // (CDeviceFile::func_8044F0E4; header edit out of scope for this session).
-void func_8044F0E4__11CDeviceFileFPCc(const char* path);
+void cancelJobsForPath__11CDeviceFileFPCc(const char* path);
 // Locale/count selector latch (defined in CDeviceFile.cpp).
 void func_eu_804521BC(u8 val);
 }
@@ -78,10 +78,10 @@ public:
     ~CNBanner();
     // IWorkEvent override: only OnFileEvent is ever specialised here.
     virtual bool OnFileEvent(CEventFile* event);
-    void func_804F531C(const char** names, int* ids);
-    void func_804F52F8(const char* str);
-    void func_804F5304(const char* str);
-    void func_804F5310(const char* str);
+    void setFileList(const char** names, int* ids);
+    void setTitle(const char* str);
+    void setSubtitle(const char* str);
+    void setBannerPath(const char* str);
 
     void* mAlloc0;             // 0x004
     u32 field_8;               // 0x008
@@ -124,7 +124,7 @@ CNBanner::CNBanner() {
 // automatically for the virtual out-of-line member destructor.
 CNBanner::~CNBanner() {
     if (this->mBusy != 0) {
-        func_8044F0E4__11CDeviceFileFPCc(this->mPath.c_str());
+        cancelJobsForPath__11CDeviceFileFPCc(this->mPath.c_str());
         // Byte offset kept alongside the index: retail walks the slot array
         // with a base+offset pair (add r3,r28,r30 / lbzu 220(r3)) and reuses
         // the computed element address for both the empty-check and the
@@ -134,7 +134,7 @@ CNBanner::~CNBanner() {
         while (i < this->mCount) {
             const char* p = (const char*)this->mFiles + off;
             if ((s8)p[0] != 0) {
-                func_8044F0E4__11CDeviceFileFPCc(p);
+                cancelJobsForPath__11CDeviceFileFPCc(p);
             }
             off += (int)sizeof(ml::FixStr<64>);
             i++;
@@ -148,12 +148,12 @@ CNBanner::~CNBanner() {
     }
 }
 
-// --- func_804F531C -------------------------------------------------------
+// --- setFileList -------------------------------------------------------
 
 // us-804f9894: (re)build the banner slot list from a NULL-terminated array of
 // path strings. Copies each name into a FixStr slot, records its id, then
 // fills any remaining slots up to 8 with the empty format string.
-void CNBanner::func_804F531C(const char** names, int* ids) {
+void CNBanner::setFileList(const char** names, int* ids) {
     int i = 0;
     while (names[i] != 0) {
         this->mFiles[i].format(names[i]);
@@ -177,10 +177,10 @@ void CNBanner::func_804F531C(const char** names, int* ids) {
 // the exact_renames rule for CNBanner.o maps our C++-mangled name onto it.
 void CNBanner_destroyBlock(CNBanner* banner) {
     if (banner->mBusy != 0) {
-        func_8044F0E4__11CDeviceFileFPCc(banner->mPath.c_str());
+        cancelJobsForPath__11CDeviceFileFPCc(banner->mPath.c_str());
         for (int i = 0; i < banner->mCount; i++) {
             if ((s8)banner->mFiles[i].mString[0] != 0) {
-                func_8044F0E4__11CDeviceFileFPCc(banner->mFiles[i].c_str());
+                cancelJobsForPath__11CDeviceFileFPCc(banner->mFiles[i].c_str());
             }
         }
         banner->mBusy = 0;
@@ -233,11 +233,11 @@ bool CNBanner::OnFileEvent(CEventFile* event) {
 
 // --- non-target scaffolding (retained from the catalog stub) --------------
 
-void CNBanner::func_804F52F8(const char* str) { mTitle.format(str); }
+void CNBanner::setTitle(const char* str) { mTitle.format(str); }
 
-void CNBanner::func_804F5304(const char* str) { mDesc.format(str); }
+void CNBanner::setSubtitle(const char* str) { mDesc.format(str); }
 
-void CNBanner::func_804F5310(const char* str) { mPath.format(str); }
+void CNBanner::setBannerPath(const char* str) { mPath.format(str); }
 
 // --- func_804F53DC --------------------------------------------------------
 

@@ -105,17 +105,17 @@ typedef void (*LodDrawFn)(void*, void*);
 typedef s32 (*LodPickFn)(void*);
 extern LodDrawFn lbl_eu_8056D710[3];
 extern LodPickFn lbl_eu_8056D71C[3];
-extern "C" void func_8046892C__Q23LOD17UnkClass_80468434Fv();
+extern "C" void dispatchLodRecords__Q23LOD17UnkClass_80468434Fv();
 
 // ---------------------------------------------------------------------------
 // External LOD helpers (other translation units, retail mangled names).
 // ---------------------------------------------------------------------------
-void func_804630C0__Q23LOD17CLODCacheManagerSFv(void*);
+void initLodTables__Q23LOD17CLODCacheManagerSFv(void*);
 void* func_8046323C__Q23LOD17CLODCacheManagerSFv(void*);
-void func_8046368C__Q23LOD17UnkClass_8046368CFv(void);
-void func_8046369C__Q23LOD17UnkClass_8046368CFv(void);
+void selectCubicLookup__Q23LOD17UnkClass_8046368CFv(void);
+void selectLinearLookup__Q23LOD17UnkClass_8046368CFv(void);
 void func_80465704(s32);
-void func_80465718__Q23LOD17UnkClass_804645CCFv(void);
+void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
 void func_80465730(f32);
 void func_8046577C(s32);
 void func_8006BEC0(void*);
@@ -173,14 +173,14 @@ typedef struct LodRangeObj {
     u8 mode;     // 0x24
 } LodRangeObj;
 
-extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
+extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
 // [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  Retail
 // split object's .data section is align 4; MWCC would otherwise emit align 8
 // for a u32[3], so force __declspec(align(4)).
 extern "C" __declspec(align(4)) LodPickFn lbl_eu_8056D71C[3] = {
-    (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
-    (LodPickFn)&func_8046892C__Q23LOD17UnkClass_80468434Fv,
-    (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
+    (LodPickFn)&isRangeActive__Q23LOD17UnkClass_8046368CFv,
+    (LodPickFn)&dispatchLodRecords__Q23LOD17UnkClass_80468434Fv,
+    (LodPickFn)&isRangeActive__Q23LOD17UnkClass_8046368CFv,
 };
 
 // Shared sdata2 magic-number double (s32->f32 conversion, 2^52+2^31); owned
@@ -206,7 +206,7 @@ typedef struct LodVtxPool {
 // ===========================================================================
 // us-8046773c  func_8046376C  (rotation table entry, angle in f1)
 // ===========================================================================
-extern "C" void func_8046376C__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32 angle) {
+extern "C" void setLodRotation__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32 angle) {
     f32 s = nw4r::math::SinFIdx(lbl_eu_8066A5E8 * angle);
     f32 c = nw4r::math::CosFIdx(lbl_eu_8066A5E8 * angle);
     self->f00 = c;
@@ -218,7 +218,7 @@ extern "C" void func_8046376C__Q23LOD17UnkClass_8046368CFv(LodRotObj* self, f32 
 // ===========================================================================
 // us-804677b8  func_804637E8  (index lookup + tail call)
 // ===========================================================================
-extern "C" void* func_804637E8__Q23LOD17UnkClass_8046368CFv(s32 index) {
+extern "C" void* getLodCacheObject__Q23LOD17UnkClass_8046368CFv(s32 index) {
     u32 entry = lbl_eu_8066574C[index];
     u16 kind = *(const u16*)(lbl_eu_80665750 + entry * 2 + 2);
     return func_8046323C__Q23LOD17CLODCacheManagerSFv(lbl_eu_80665738 + kind * 0xC);
@@ -245,14 +245,14 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
     PSMTXInverse(g->mtx28, g->mtx28);
     GXSetCurrentMtx(0);
     LodVtxPool* pool = (LodVtxPool*)lbl_eu_80665768;
-    func_8046369C__Q23LOD17UnkClass_8046368CFv();
+    selectLinearLookup__Q23LOD17UnkClass_8046368CFv();
 
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     if (pool->version >= 0x3EE) {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S16, 14);
         lbl_eu_806657C8 = 6;
         if (pool->version >= 0x3EF) {
-            func_8046368C__Q23LOD17UnkClass_8046368CFv();
+            selectCubicLookup__Q23LOD17UnkClass_8046368CFv();
         }
     } else {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
@@ -427,7 +427,7 @@ extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value)
     lbl_eu_80665820 = addr820;
     lbl_eu_80665824 = addr824;
 
-    func_804630C0__Q23LOD17CLODCacheManagerSFv((u8*)obj + obj->f20);
+    initLodTables__Q23LOD17CLODCacheManagerSFv((u8*)obj + obj->f20);
 
     lbl_eu_806657A0 = value;
     lbl_eu_8056D710[1]((u8*)obj + obj->f1C, lbl_eu_8066577C + value * 0x48);
@@ -436,7 +436,7 @@ extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value)
 // ===========================================================================
 // us-80467f30  func_80463F60  (pick dispatch, tail call)
 // ===========================================================================
-extern "C" s32 func_80463F60__Q23LOD17UnkClass_8046368CFv(const LodPickObj* obj) {
+extern "C" s32 dispatchLodPick__Q23LOD17UnkClass_8046368CFv(const LodPickObj* obj) {
     return lbl_eu_8056D71C[obj->kind - 2](lbl_eu_80665768 + obj->off);
 }
 
@@ -462,7 +462,7 @@ void func_80463F8C(f32 a, f32 b, f32 c) {
 // ===========================================================================
 // us-80467fc8  func_80463FF8  (range crosses the distance limit?)
 // ===========================================================================
-extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj) {
+extern "C" s32 isRangeActive__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj) {
     if (obj->mode & 0x2) {
         s32 lim;
         if ((s32)obj->start * 60 <= (s32)obj->end * 60) {
@@ -645,7 +645,7 @@ s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
             s32 over = a + da - lim;
             func_80465704(255 - (over * 255) / da);
         } else {
-            func_80465718__Q23LOD17UnkClass_804645CCFv();
+            resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
         return 0;
     }
@@ -656,7 +656,7 @@ s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
         s32 under = b - lim;
         func_80465704((under * 255) / db);
     } else {
-        func_80465718__Q23LOD17UnkClass_804645CCFv();
+        resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
     return 0;
 
@@ -677,7 +677,7 @@ ordered:
         func_80465704((under2 * 255) / db);
         return 0;
     }
-    func_80465718__Q23LOD17UnkClass_804645CCFv();
+    resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     return 0;
 }
 

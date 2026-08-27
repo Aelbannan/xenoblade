@@ -88,7 +88,7 @@ int func_8016A378(void);
 int func_8016A35C(void);
 
 // Memory availability probe (CLibCri member, defined in the CLibCri TU).
-void* func_80459AD0__7CLibCriFv(void);
+void* getMovieWorkSize__7CLibCriFv(void);
 
 // Targets defined in this TU (declared here so the definitions keep C
 // linkage and emit the retail unmangled symbol names).

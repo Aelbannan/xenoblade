@@ -35,7 +35,7 @@ void* mVtable;                              // +0x00
     u8 mDataCount;                             // 0x41
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10.
+// Mirror of the font object returned by CDeviceFont::getFontInfo.
 // vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
 // pane. Never instantiated, so no vtable is emitted; a genuine virtual call
 // makes MWCC emit the retail r12 dispatch sequence (same trick as
@@ -81,9 +81,9 @@ extern void* lbl_eu_80664090;
 // Retail symbols that ARE the Itanium-mangled C++ names: declare under C
 // linkage so calls bind to the literal mangled identifier.
 extern "C" {
-int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void func_80137F88(void*, void*);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
 // Layout teardown view: with -RTTI the virtual index N sits at vtable offset

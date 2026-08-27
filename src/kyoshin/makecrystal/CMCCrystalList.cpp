@@ -627,7 +627,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
         fileData = mFileHandle1->mData;
         mFileHandle1->mData = nullptr;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mArcResAccessor = CLibLayout::createArcResourceAccessor();
         mArcResAccessor->Attach(fileData, &lbl_eu_805092C0[0x19e]);
@@ -649,7 +649,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         func_8013676C(rootPane,
             reinterpret_cast<CMCCrystalListFontView*>(
-                CDeviceFont::func_80452C10(1, mLayout))
+                CDeviceFont::getFontInfo(1, mLayout))
                 ->vf7());
 
         // If a character set is loaded, stamp every crystal-slot text pane
@@ -691,7 +691,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 
         fileData = mFileHandle2->mData;
         mFileHandle2->mData = nullptr;
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
 
         mArcResAccessor2 = CLibLayout::createArcResourceAccessor();
         mArcResAccessor2->Attach(fileData, &lbl_eu_805092C0[0x19e]);

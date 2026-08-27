@@ -778,7 +778,7 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
         mMemRegion.createRegion(mem2, 0x10000, &lbl_eu_80510568[0xbd], 0);
         Class_8045F858 memHost(&mMemRegion);
         void* fileData = mFileHandle->getData();
-        mtl::MemManager::func_80434A4C(false);
+        mtl::MemManager::setMemInitFlag(false);
         // 0x18 is the arc accessor here (func_8029FE30 releases it as one); the
         // header models it as mLayout (func_8029F440 stamps text through it).
         mLayout = reinterpret_cast<nw4r::lyt::Layout*>(CLibLayout::createArcResourceAccessor());

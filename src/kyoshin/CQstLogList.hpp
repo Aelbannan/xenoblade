@@ -213,7 +213,7 @@ extern "C" u16 func_80227710(u8*, u16);
 // BDAT helpers / msg-manager imports (C-ABI retail symbols).
 extern "C" u32 func_8003B1EC(void*);              // BDAT row count
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the

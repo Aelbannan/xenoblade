@@ -387,14 +387,14 @@ extern "C" u32 func_8004B848(const CActParamAnim* self) {
     return (*(const u32*)((const u8*)self + 0xC) >> 1) & 1;
 }
 
-float CActParamAnim::func_8004B854() {
+float CActParamAnim::getAttachedAnimTime() {
     extern float func_80484F18(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj) return func_80484F18(obj);
     return lbl_eu_80665EA0;
 }
 
-float CActParamAnim::func_8004B86C() {
+float CActParamAnim::getAttachedAnimRate() {
     extern float func_804850A4(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj != 0) return func_804850A4(obj);
@@ -407,7 +407,7 @@ void CActParamAnim::callObjUpdate() {
     if (obj != 0) func_80484F80(obj);
 }
 
-float CActParamAnim::func_8004B898() {
+float CActParamAnim::getAttachedAnimScale() {
     extern float func_80484EB0(void*);
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj != 0) return func_80484EB0(obj);
@@ -797,7 +797,7 @@ void func_8004BDCC(CActParamAnim* self, u32 param, u32 sel, u32 resId,
     view->field4C4 = 0;
 }
 
-void CActParamAnim::func_8004C5E8() {}
+void CActParamAnim::clearAnimState() {}
 
 void* CActParamAnim::getModelObj() {
     void* result = *(void**)((char*)this + 0x2fc);
@@ -1115,10 +1115,10 @@ void func_8004CF00(CActParamAnim* self) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 // Compares the sub-object's progress float against an int threshold widened
 // to double (retail xoris/0x4330 magic conversion).
-int func_8004D074__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+int calcAnimBlendWeight__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
         int result = 1;
@@ -1151,7 +1151,7 @@ int func_8004D074__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 
 // Retail symbol is Fv but the body reads r4/r5 (two extra args: anim id +
 // dispatch arg) — forced-name free function, same scheme as
-// func_80053164__13CActParamAnimFv.
+// initAnimBlendVectors__13CActParamAnimFv.
 int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
@@ -1329,7 +1329,7 @@ int func_8004D4AC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
@@ -1389,7 +1389,7 @@ int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
@@ -1436,7 +1436,7 @@ int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 // Plateau packet (best 30 mismatch / 24 structural / 6 reg-swap, size PASS,
 // no reloc drift): semantics fully reconstructed; residual confined to the
 // call-arg materialization region of the small path. Same scheduler tie-break
@@ -1586,7 +1586,7 @@ extern "C" void* func_8004B9B8(CActParamAnim* self) {
 void CActParamAnim::func_8004DAE0() {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
@@ -1649,7 +1649,7 @@ int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv. Mirror of
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
 // func_8004DDD0 with the owner flag mask 0x800.
 int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -1714,7 +1714,7 @@ int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv. Mirror of
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
 // func_8004DDD0 with the owner flag mask 0x400.
 int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -1779,7 +1779,7 @@ int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv. Mirror of
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
 // func_8004DDD0 with the owner flag mask 0x1000.
 int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -1844,7 +1844,7 @@ int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 // Plateau packet (best 35 mismatch / 28 structural / 7 reg-swap, size PASS
 // 404B=404B, no reloc drift): residual is the small-path arg-
 // materialization scheduler wall from the func_8004FCE0 packet - retail
@@ -1915,7 +1915,7 @@ int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004E694__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
@@ -2039,7 +2039,7 @@ extern "C" __declspec(noinline) f32 func_8004EC78(f32 value) {
 void CActParamAnim::func_8004ECF4() const {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv. Per-frame
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Per-frame
 // anim update: gates on the active/playing flags, starts the requested anim
 // (param) through the data dispatcher, then advances the anim axis state and
 // writes the per-frame delta to +0x48C.
@@ -2173,7 +2173,7 @@ int func_8004ECF4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004F1E4__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
@@ -2224,7 +2224,7 @@ int func_8004F1E4__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
 }
 
 // Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004F334__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
@@ -2272,7 +2272,7 @@ int func_8004F334__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
 }
 
 // Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004F484__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -2411,7 +2411,7 @@ fail:
 void CActParamAnim::func_8004F884() {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 void func_8004FAB4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     view->field384 = lbl_eu_80665E9C;
@@ -2472,7 +2472,7 @@ void func_8004FAB4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 // Plateau packet (best 51 mismatch / 29 structural / 22 reg-swap, size PASS
 // 376=376, no reloc drift): residual is the same small-path arg-
 // materialization scheduler wall as func_8004BC94/51448/51584 — retail parks
@@ -2533,7 +2533,7 @@ int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004FE58__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -2576,7 +2576,7 @@ int func_8004FE58__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv (no params) — forced-name free function, same scheme as
-// func_80053164__13CActParamAnimFv. Per-frame anim-axis update: builds the
+// initAnimBlendVectors__13CActParamAnimFv. Per-frame anim-axis update: builds the
 // Y-rotation matrix from the anim angle, optionally aligns the anim quaternion
 // (+0x414) through func_80053490 and pulls the running value toward +0x460,
 // then computes the frame delta (+0x48C) from the rotated axis and the speed.
@@ -2710,7 +2710,7 @@ extern "C" __declspec(noinline) f32 func_800504BC(const f32* a, const f32* b){
 void func_800504DC(CActParamAnim* self) {}
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
@@ -2871,7 +2871,7 @@ failOwner:
 }
 
 // Retail symbol is Fv but the body reads r4/r5 (anim id + rng arg) —
-// forced-name free function, same scheme as func_80053164__13CActParamAnimFv.
+// forced-name free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_80050C50__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -3100,7 +3100,7 @@ int func_800510FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -3184,7 +3184,7 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // free arg computations above branches. Byte-identical sibling
 // func_80051584 carries the identical residual.
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 local;
@@ -3225,7 +3225,7 @@ int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_80051584__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
@@ -3267,7 +3267,7 @@ int func_80051584__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_800516C0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
@@ -3309,7 +3309,7 @@ int func_800516C0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_800517FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -3354,7 +3354,7 @@ int func_800517FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 }
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv. Mirror of
+// free function, same scheme as initAnimBlendVectors__13CActParamAnimFv. Mirror of
 // func_800517FC with the 0x4D4 guard inverted.
 int func_8005194C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
@@ -4148,7 +4148,7 @@ void CActParamAnim::func_80052934() {
             p.y -= s->field3D0;
             p.z -= s->field3D4;
         }
-        func_804BC9EC();
+        getScnHandle();
         if (func_804BCC10() != 0) {
             if ((s->field0C & 0x00400000) != 0) {
                 func_80053198(reinterpret_cast<CActParamAnim*>(s),
@@ -4201,7 +4201,7 @@ void CActParamAnim::func_80052934() {
 // Retail symbol is Fv but the body reads r4/r5: two extra args forwarded to
 // func_804BD94C's (a, b) slots (forced-name global, same scheme as
 // CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv).
-void func_80053164__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
+void initAnimBlendVectors__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
     func_804BD94C(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
                   lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,
                   lbl_eu_80665F70, lbl_eu_80665EA0);
@@ -4466,25 +4466,25 @@ extern "C" u8 func_eu_80053FD4() { return lbl_eu_80663D4C; }
 extern u8 lbl_eu_80663D4C;
 extern "C" void func_eu_80053FDC() { lbl_eu_80663D4C = 1; }
 
-bool CActParamAnim::func_80053990() { return false; }
+bool CActParamAnim::isAnimBlendActive() { return false; }
 
-bool CActParamAnim::func_80053998() { return false; }
+bool CActParamAnim::isAnimMotionActive() { return false; }
 
-bool CActParamAnim::func_800539A0() { return false; }
+bool CActParamAnim::isAnimLoopActive() { return false; }
 
-bool CActParamAnim::func_800539A8() { return false; }
+bool CActParamAnim::isAnimChainActive() { return false; }
 
-bool CActParamAnim::func_800539B0() { return false; }
+bool CActParamAnim::isAnimEffectActive() { return false; }
 
-bool CActParamAnim::func_800539B8() { return false; }
+bool CActParamAnim::isAnimRotateActive() { return false; }
 
-bool CActParamAnim::func_800539C0() { return false; }
+bool CActParamAnim::isAnimScaleActive() { return false; }
 
-bool CActParamAnim::func_800539C8() { return false; }
+bool CActParamAnim::isAnimUpdateActive() { return false; }
 
-bool CActParamAnim::func_800539D0() { return false; }
+bool CActParamAnim::isAnimTransActive() { return false; }
 
-bool CActParamAnim::func_800539D8() { return false; }
+bool CActParamAnim::isAnimFrameActive() { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_800539E0() {

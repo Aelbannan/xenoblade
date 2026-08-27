@@ -13,18 +13,18 @@ int func_8015CCB4();
 // them yet; same pattern as include/kyoshin/cf/CCharEffectEne.hpp).
 extern "C" u32 func_80053F40(u8* p, u32 v);
 extern "C" void func_80484EB0(u8* ptr);
-extern "C" void func_800ACC50(u8* self);
+extern "C" void setChildF50G_(u8* self);
 
 // Retail C-ABI imports used by func_8015BB3C / func_8015C404 (retail symbols
-// are unmangled C; func_80086B08 is called as a static __Fv even though the
+// are unmangled C; getGimmickList is called as a static __Fv even though the
 // shared CfGameManager header declares it as a member - same pattern as
-// CTaskGameEff.hpp's func_8008187C__Q22cf13CfGameManagerFv).
+// CTaskGameEff.hpp's createNpcActor__Q22cf13CfGameManagerFv).
 extern "C" void* func_80495FF0(void* scene);
 extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-extern "C" void func_800ACFD8(void* obj, void* target);
-extern "C" void func_800ACC14(void* obj, s8 val);
+extern "C" void setTargetObj_(void* obj, void* target);
+extern "C" void setChildB59__(void* obj, s8 val);
 extern "C" void func_804E3CDC(void* effect, f32 f1, f32 f2);
-extern "C" void* func_80086B08__Q22cf13CfGameManagerFv();
+extern "C" void* getGimmickList__Q22cf13CfGameManagerFv();
 
 // External data referenced by this unit (MWCC does not mangle global data).
 extern u32 lbl_eu_80664228;     // default slot value when NULL is registered

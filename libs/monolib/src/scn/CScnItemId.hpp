@@ -11,12 +11,12 @@ extern "C" u32 lbl_eu_8056DCD8[];
 // already ends in `__Fv` as a literal identifier, so C linkage is required to
 // avoid double-mangling. Takes no arguments, returns the active scene-resource
 // container pointer.
-extern "C" void* func_804BC9EC__Fv(void);
+extern "C" void* getScnHandle__Fv(void);
 
 // Scene-resource helpers (scn/code_804BC9EC.cpp). Declared as C++ global
-// functions so MWCC mangles them to the retail forms func_804BCC1C__FPv and
+// functions so MWCC mangles them to the retail forms resetScnData__FPv and
 // func_804BC9F4__FPvUl.
-void func_804BCC1C(void* p);
+void resetScnData(void* p);
 int func_804BC9F4(void* outStruct, u32 data);
 
 // Host scene-object accessors (unmangled C-linkage retail names).

@@ -97,7 +97,7 @@ extern "C" CMenuSkipTimer* __dt__14CMenuSkipTimerFv(CMenuSkipTimer* self, int fl
  * load/readFile helper is invoked. Finally the widget is registered as an
  * IScnRender render callback on its parent scene. */
 void CMenuSkipTimer::Init() {
-    func_8008294C__Q22cf13CfGameManagerFv(1);
+    setPresentationFlag__Q22cf13CfGameManagerFv(1);
 
     // --- Re-initialise the embedded CBgTex via a temporary ---
     u8 tempBgTex[0x20];
@@ -206,7 +206,7 @@ void CMenuSkipTimer::Term() {
     func_8029FE30(&mTimerData);
 
     lbl_eu_80664A48 = 0;
-    func_8008294C__Q22cf13CfGameManagerFv(0);
+    setPresentationFlag__Q22cf13CfGameManagerFv(0);
 }
 
 /* Per-frame update of the skip-timer widget.
@@ -216,7 +216,7 @@ void CMenuSkipTimer::Term() {
  * 3. Drive the 5-state FSM (mFlag3) and refresh the bg/help bar/layout each
  *    frame. */
 void CMenuSkipTimer::Move() {
-    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000)) {
+    if (CTaskGame::getInstance()->isFlag01Set() || (lbl_eu_80663E28 & 0x200000)) {
         return;
     }
 
@@ -224,7 +224,7 @@ void CMenuSkipTimer::Move() {
     // Keep the extracted skip-button bit as a plain u32 (0/1): retail compares
     // the extrwi result with cmpwi directly (no bool u8 re-mask).
     u32 pressed;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         pressed = (pad->mPressedButtonFlags >> 23) & 1;
     } else {
         pressed = (pad->mPressedButtonFlags >> 10) & 1;
@@ -255,7 +255,7 @@ void CMenuSkipTimer::Move() {
 
 void CMenuSkipTimer::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -342,7 +342,7 @@ extern "C" void func_8029EF30(CMenuSkipTimer* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     bool upM, dnM;
     u32 upBit, dnBit;
-    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 held = pad->mPad.mPressedButtonFlags;
         u32 turbo = pad->mTurboPressButtonFlags;
         upM = (turbo & 0x4002) != 0;

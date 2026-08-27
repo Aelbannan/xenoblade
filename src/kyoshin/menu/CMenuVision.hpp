@@ -37,7 +37,7 @@ struct PaneVisAccess {
     u8 visByte;
 };
 
-// Mirror of the font object returned by CDeviceFont::func_80452C10.
+// Mirror of the font object returned by CDeviceFont::getFontInfo.
 // vtable slot 9 (offset 0x24 with -RTTI) yields the u32 font handle bound
 // into the layout's text panes. Never instantiated, so no vtable is emitted;
 // a genuine virtual call makes MWCC emit the retail r12 dispatch sequence.
@@ -88,7 +88,7 @@ extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, 
 extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent); // retail-unmangled ctor
 // CDeviceFont font-handle lookup; retail Init calls it with a single argument
 // (the second Layout* parameter is left unset at this call site).
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
+extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg);
 
 // DrawInfo raw-storage ct/dt helpers: pre-mangled retail identifiers, so they
 // must keep C linkage (a C++ declaration double-mangles the name).
@@ -96,7 +96,7 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 
 // cf::CfGameManager helper (retail mangled member symbol, one u32 arg).
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+extern "C" void* createNpcActor__Q22cf13CfGameManagerFv(u32 index);
 
 // Retail data symbols referenced by the constructor.
 extern char lbl_eu_8052C1C0[];   // base-class vtable group (pre-overwrite)

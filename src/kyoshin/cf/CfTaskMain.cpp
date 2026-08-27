@@ -53,11 +53,11 @@ void CfTaskMain::Move() {
 }
 
 void CfTaskMain::Draw() {
-    func_8007FBFC__Q22cf13CfGameManagerFv();
+    refreshCameraIfCurrentView__Q22cf13CfGameManagerFv();
 }
 
 void CfTaskMain::Tail() {
-    func_8007FC2C__Q22cf13CfGameManagerFv();
+    resetCameraIfCurrentView__Q22cf13CfGameManagerFv();
 }
 
 } // namespace cf

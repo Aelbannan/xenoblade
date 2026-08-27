@@ -229,8 +229,8 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     return 1;
 }
 
-// func_8047DD4C -- solve + branch on arg3 to 8169C/819C4 or 8163C/81790 (0xC8)
-extern "C" s32 func_8047DD4C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
+// walkPathCheck -- solve + branch on arg3 to 8169C/819C4 or 8163C/81790 (0xC8)
+extern "C" s32 walkPathCheck__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
     if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {

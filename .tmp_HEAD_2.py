@@ -5500,11 +5500,25 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_8066A164"),             # 0.0f
             (struct.pack(">I", 0x3F000000), "lbl_eu_8066A170"),             # 0.5f
         ),
-        # (retarget_relocs REMOVED 2026-08-26: source now binds every one of these
-        # directly via extern "C" (floats) and extern "C" blob u8 defs; the
-        # old hardcoded .text offsets (0x94..0x21F8) drift whenever emission
-        # order changes and used to corrupt whichever functions now occupy those
-        # offsets, e.g. AdjustCursor<w> +0x4c0 fmuls and __ct__<w>'s lfs sites.)
+        retarget_relocs=(
+            # statics (SDA21) and guards (SDA21) -> monolibdata1.s sbss
+            (".text", 0x94, "lbl_eu_8066A164"),
+            (".text", 0x9C, "lbl_eu_8066A160"),
+            (".text", 0xA4, "lbl_eu_80665564"),
+            (".text", 0x2194, "lbl_eu_80665568"),
+            (".text", 0x21A0, "lbl_eu_80665560"),
+            (".text", 0x21B4, "lbl_eu_80665560"),
+            (".text", 0x21C4, "lbl_eu_80665568"),
+            (".text", 0x21C8, "lbl_eu_80665569"),
+            (".text", 0x21D4, "lbl_eu_80665564"),
+            (".text", 0x21E8, "lbl_eu_80665564"),
+            (".text", 0x21F8, "lbl_eu_80665569"),
+            # TagProcessorBase vtables (ADDR16_HA/LO) -> nw4r_data.s .bss
+            (".text", 0x21AE, "@3592_80653EC8"),
+            (".text", 0x21BA, "@3592_80653EC8"),
+            (".text", 0x21E2, "@3992_80653ED4"),
+            (".text", 0x21EE, "@3992_80653ED4"),
+        ),
         extern_data_sections=(".sdata", ".sdata2", ".bss", ".sbss"),
         drop_text_symbols=(
             "__dt__Q34nw4r2ut4RectFv",

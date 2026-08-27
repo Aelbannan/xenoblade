@@ -126,7 +126,7 @@ public:
 
     bool wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage);
     bool wkIsCurrent() const;
-    void func_804385CC(u32);
+    void setWorkParam(u32);
 
     void wkTimeoutInit();
     void wkStandby();

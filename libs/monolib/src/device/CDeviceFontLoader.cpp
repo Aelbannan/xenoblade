@@ -84,7 +84,7 @@ void* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
     return self;
 }
 
-void func_80454F30__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
+void setFileName__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
     self->mSomeData = arg1;
     self->mFileNameLen = strlen(pPath);
     strcpy(self->mFileName, pPath);

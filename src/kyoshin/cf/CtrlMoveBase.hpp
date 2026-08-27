@@ -135,7 +135,7 @@ namespace cf {
 extern "C" void* func_8047CE7C__17UnkClass_8047CD0CFv();
 extern "C" int func_8047D2AC__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
                                                      f32 d, f32 e, const void* f);
-extern "C" int func_8047DD4C__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
+extern "C" int walkPathCheck__17UnkClass_8047D2ACFv(void* a, void* b, const void* c,
                                                      f32 d, f32 e, int f);
 extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);

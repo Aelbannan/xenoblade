@@ -165,8 +165,9 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
     ml::CVec3 dir;
-    dir.x = (f32)fixedAngle / lbl_eu_80666168 * lbl_eu_8066A210;
-    dir.y = (f32)fixedDist / lbl_eu_80666168 * lbl_eu_8066A210;
+    volatile f32 deg = lbl_eu_8066A210;
+    dir.x = (f32)fixedAngle / lbl_eu_80666168 * deg;
+    dir.y = (f32)fixedDist / lbl_eu_80666168 * deg;
     dir.z = lbl_eu_80666178;
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();

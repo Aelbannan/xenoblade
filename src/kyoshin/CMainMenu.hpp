@@ -81,7 +81,7 @@ public:
     void Init();
     void Term();
     void cbRenderBefore();
-    int func_800FF778();
+    int isMenuOpen();
     void func_800FEB14(float* pos);
 
     // CProcess layout (inherited, 0x00-0x3C):
@@ -185,7 +185,7 @@ extern "C" void* __dt__7CSubCurFv(CBaseCur*, int); // defined in kyoshin/CCur.cp
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-extern "C" bool func_800FF778__9CMainMenuFv();   // mangled member symbol, prevents IPA inlining
+extern "C" bool isMenuOpen__9CMainMenuFv();
 
 // Menu singleton/state guards (defined in their owning menu TUs)
 extern "C" u32 func_80167A18();   // item menu active (CMenuItem.cpp)

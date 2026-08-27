@@ -22,7 +22,16 @@ kyoshin/CGame.cpp to match retail weak placement. ~IWorkEvent is inline-empty so
 MWCC elides the base-dtor call in derived dtors (retail shape); a strong copy is
 defined in kyoshin/CTaskGame.cpp for symbol placement. Do not make these inline
 in the header -- that pulls weak stubs into every overriding TU and blows split
-budgets (see MWCC_CASES CBattery/CBgTex note). */
+budgets (see MWCC_CASES CBattery/CBgTex note).
+
+CMCCrystalSupport is the one exception where retail's object (build/us/obj/
+kyoshin/makecrystal/CMCCrystalSupport.o) carries no weak __dt__10IWorkEventFv
+stub even though its vtable lbl_eu_80536770 proves IWorkEvent parentage -- retail
+compiled that TU without odr-using ~IWorkEvent. Decomp now derives IWorkEvent
+with IWORK_EVENT_INLINE_DTOR (so the derived dtor elides the base call and
+matches retail's 0x40-byte shape); the extra weak stub is link-deduped and
+within split budget (0x870 spare), matching the normal retail shape of sibling
+makecrystal TUs like CMCCrystalList. */
 class IWorkEvent {
 public:
 #ifdef IWORK_EVENT_INLINE_DTOR

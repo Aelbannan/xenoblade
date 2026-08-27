@@ -14,9 +14,13 @@ public:
 
     
     void createRegion(int, int, const char*, int);
-    void func_8045F778();
-    void func_8045F7E8();
-    void func_8045F810();
+    void deleteRegion();
+    void clearFrmHeap();
+    void validateHeap();
+    // Compat aliases for external callers not yet renamed
+    void func_8045F778() { deleteRegion(); }
+    void func_8045F7E8() { clearFrmHeap(); }
+    void func_8045F810() { validateHeap(); }
 };
 
 class Class_8045F858{

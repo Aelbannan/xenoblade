@@ -72,7 +72,7 @@ void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int
     unk4 = reinterpret_cast<u32>(MEMCreateFrmHeapEx(allocData, size2, 0));
 }
 
-void UnkClass_8045F564::func_8045F778() {
+void UnkClass_8045F564::deleteRegion() {
     if (unk0 == 0xFFFFFFFF) return;
     
     if (unk4 != 0) {
@@ -85,13 +85,13 @@ void UnkClass_8045F564::func_8045F778() {
     unk0 = 0xFFFFFFFF;
 }
 
-void UnkClass_8045F564::func_8045F7E8() {
+void UnkClass_8045F564::clearFrmHeap() {
     if (unk0 == 0xFFFFFFFF) return;
     if (unk4 == 0) return;
     MEMFreeToFrmHeap(reinterpret_cast<MEMiHeapHead*>(unk4), 3);
 }
 
-void UnkClass_8045F564::func_8045F810() {
+void UnkClass_8045F564::validateHeap() {
     MemManager::func_804348A4(unk0, 1);
     if (unk4 != 0) {
         MEMGetAllocatableSizeForFrmHeapEx(reinterpret_cast<MEMiHeapHead*>(unk4), 4);

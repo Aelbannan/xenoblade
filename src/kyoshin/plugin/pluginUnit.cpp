@@ -10,6 +10,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/object/CObjectState.hpp"
 
 namespace cf {
 class CfObjectActor;
@@ -172,26 +173,7 @@ int getEneHpRate(VMThread* pThread) {
     vmRetValSet(pThread, &result);
     return 1;
 }
-// Sub-object dispatched by the arts-attack script commands. RECOVERED TREE:
-// *(actor+4) is stored by __ct__Q22cf11CActorParamFPvPv as owner+0x3E9C - the
-// cf::CfObjectMove base-part of the actor (its vptr is blob+0x37C of the
-// CfObjectPc/CfObjectEne table, the cf::CObjectState chain). Retail slots
-// (US lbl_eu_80529DA0+0x3AC/+0x3B0):
-//   +0x30 CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv
-//         (body: addi r3, r3, 0x8 -> returns a POINTER; object/CObjectState.hpp
-//          declares it `void` - hot header, ~50 TU include chain incl.
-//          CObjectParam.hpp; signature fix is out of scope for this TU)
-//   +0x34 CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv
-//         (body: addi r3, r3, 0xC -> returns a pointer; declared `void*`)
-// NOTE: this local iface's virtual dtor shifts its two declared slots to
-// +0x10/+0xC - they do NOT land on the retail +0x30/+0x34. Folding onto the
-// real class waits on the CObjectState_UnkVirtualFunc11 signature fix above;
-// both call sites fold together once that lands.
-struct ArtsSubObjectIf {
-    virtual ~ArtsSubObjectIf() {}
-    virtual u32* subFunc0x30() = 0;
-    virtual u32* subFunc0x34() = 0;
-};
+
 
 /// Script command: check whether the PC actor with the given id is currently
 /// performing an arts attack matching the given arts type. Returns 1 if the
@@ -220,20 +202,20 @@ int onPcArtsAttack(VMThread* pThread) {
         return 1;
     }
 
-    // Access the arts-state sub-object at offset 4 of the actor.
-    ArtsSubObjectIf* subObj =
-        reinterpret_cast<ArtsSubObjectIf*>(*reinterpret_cast<void**>(
-            reinterpret_cast<u8*>(actor) + 4));
+    // Arts-state sub-object at actor+4 is the CfObjectMove part (stored as
+    // owner+0x3E9C by CActorParam ctor); its vtable is the CObjectState chain.
+    cf::CObjectState* subObj =
+        *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
-    // Try selector 0xa against the sub-object's vtable[13] (offset 0x34) value.
-    u32 val = *reinterpret_cast<u32*>(subObj->subFunc0x34());
+    // Try selector 0xa against the sub-object's vtable slot +0x34 value.
+    u32 val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc12());
 
     bool matched = false;
     if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
-        // Fall back to vtable[12] (offset 0x30) value.
-        val = *reinterpret_cast<u32*>(subObj->subFunc0x30());
+        // Fall back to vtable slot +0x30 value.
+        val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc11());
         if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
@@ -339,20 +321,20 @@ int onEneArtsAttack(VMThread* pThread) {
         return 1;
     }
 
-    // Access the arts-state sub-object at offset 4 of the actor.
-    ArtsSubObjectIf* subObj =
-        reinterpret_cast<ArtsSubObjectIf*>(*reinterpret_cast<void**>(
-            reinterpret_cast<u8*>(actor) + 4));
+    // Arts-state sub-object at actor+4 is the CfObjectMove part (stored as
+    // owner+0x3E9C by CActorParam ctor); its vtable is the CObjectState chain.
+    cf::CObjectState* subObj =
+        *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
-    // Try selector 0xa against the sub-object's vtable[13] (offset 0x34) value.
-    u32 val = *subObj->subFunc0x34();
+    // Try selector 0xa against the sub-object's vtable slot +0x34 value.
+    u32 val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc12());
 
     bool matched = false;
     if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
-        // Fall back to vtable[12] (offset 0x30) value.
-        val = *subObj->subFunc0x30();
+        // Fall back to vtable slot +0x30 value.
+        val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc11());
         if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }

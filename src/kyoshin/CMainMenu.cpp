@@ -491,15 +491,15 @@ extern "C" void* func_800FF6BC(void* parent, void* param) {
 
 extern u32 lbl_eu_80663F18;
 
-// Returns 1 if func_800FF778() is non-zero, else booleanizes lbl_eu_80663F18.
+// Returns 1 if isMenuOpen() is non-zero, else booleanizes lbl_eu_80663F18.
 extern "C" u32 func_800FF738(CMainMenu* self) {
-    if (func_800FF778__9CMainMenuFv() != 0) {
+    if (isMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
     return lbl_eu_80663F18 != 0 ? 1 : 0;
 }
 
-int CMainMenu::func_800FF778() {
+int CMainMenu::isMenuOpen() {
     // Menu-open gate: returns 1 while any menu screen is active (each callee
     // is a singleton/state guard), otherwise the tutorial-list state.
     if (func_80192BD0()) return 1;
@@ -519,10 +519,10 @@ int CMainMenu::func_800FF778() {
     return func_802AC510();
 }
 
-// Returns 1 if func_800FF778() is non-zero, else checks the global CMainMenu
+// Returns 1 if isMenuOpen() is non-zero, else checks the global CMainMenu
 // singleton's field_0xE0 for states 4 or 8 (active/invite).
 extern "C" u32 func_800FF8B0() {
-    if (func_800FF778__9CMainMenuFv() != 0) {
+    if (isMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
     CMainMenu* menu = (CMainMenu*)(uintptr_t)lbl_eu_80663F18;

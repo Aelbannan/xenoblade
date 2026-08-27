@@ -33,7 +33,7 @@ public:
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);
     static void invalidCurrent(CView* view);
-    static void func_80442DA8();
+    static void updateCache();
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);

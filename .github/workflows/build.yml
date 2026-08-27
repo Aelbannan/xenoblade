@@ -13,9 +13,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python
+      # 3.13 — the checker calls math.fma (stdlib since 3.13); 3.12 AttributeError.
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
         cache: pip
         cache-dependency-path: tools/ppc_equivalence/requirements.txt
 
@@ -32,7 +33,10 @@ jobs:
   build:
     # This is a *private* build container.
     # See docs/github_actions.md for more information.
-    container: ghcr.io/xbret/build:main
+    # Overridable via the BUILD_IMAGE repo variable: the upstream
+    # ghcr.io/xbret/build image is private to xbret, so this fork must set
+    # BUILD_IMAGE to a fork-published image for the build matrix to run.
+    container: ${{ vars.BUILD_IMAGE || 'ghcr.io/xbret/build:main' }}
 
     runs-on: ubuntu-latest
     strategy:

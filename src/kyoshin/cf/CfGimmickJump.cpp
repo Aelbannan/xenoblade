@@ -50,7 +50,7 @@ extern int func_80209754(u16 flags, void* first, void* second, void* third,
 extern void func_80209F5C();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
-extern void* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
+extern CfGimmickWork* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
 extern void func_801BFED0(int kind, u16 handle, int mode);
@@ -104,64 +104,8 @@ public:
     virtual void setPosition(const CfGimmickJumpVec3& position);  // +0x9C
 };
 
-/*
- * Minimal view of the func_800817BC work object (the CfGameManager-owned
- * object cached per gimmick id; CfGimmickJump stores its back-pointer at
- * +0xB0). The owning class is not yet recovered anywhere in the tree -- every
- * gimmick TU keeps a raw view of this same object (CfGimmickItemMgr,
- * WarpObject, ...). Slots dispatched here: vtable +0x9C setPosition and
- * +0xC4 setHeight (both arg-carrying in retail).
- */
-struct CfGimmickJumpMgr {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void setPosition(const CfGimmickJumpVec3& position);
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void setHeight(f32 height);
-};
+// CfGimmickWork is defined in CfGimmickJump.hpp (hot-header fix for the
+// func_800817BC work object). No local view needed here.
 
 extern "C" {
 extern void* jumptable_eu_80535830[];
@@ -501,14 +445,11 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         return;
     }
 
-    *(void**)((u8*)self->linkedObject + 0xB0) = self;
-    // Retail reloads the linked-object field for each dispatch (the calls in
-    // between can clobber it); slots stay on the minimal view (see above).
+    self->linkedObject->field_B0 = self;
     if ((self->jumpFlags & 0x10) != 0) {
-        reinterpret_cast<CfGimmickJumpMgr*>(self->linkedObject)
-            ->setPosition(self->position);
-        reinterpret_cast<CfGimmickJumpMgr*>(self->linkedObject)
-            ->setHeight(self->rotation.y);
+        self->linkedObject->CfObject_UnkVirtualFunc19(
+            reinterpret_cast<const ml::CVec3*>(&self->position));
+        self->linkedObject->CfObject_UnkVirtualFunc29(self->rotation.y);
     }
 
     if (self->soundHandle != 0) {

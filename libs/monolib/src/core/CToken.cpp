@@ -138,7 +138,7 @@ end:
     return r6;
 }
 
-void CToken::func_8043AA1C() {
+void CToken::clear() {
     // Resets the token data (same as constructor initialization)
     m_fieldCount = 0;
     for (int i = 0; i < 16; i++) {

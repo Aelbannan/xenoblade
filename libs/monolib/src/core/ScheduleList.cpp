@@ -521,7 +521,6 @@ void __ct__804E4B64(int arg) {
     } else {
         list = (SLList*)mtl::MemManager::allocate(0x24, slAllocHandle());
         if (list != 0) {
-            #pragma unroll(16)
             SCHEDULELIST_CTOR_BODY(list);
         }
     }

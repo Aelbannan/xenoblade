@@ -40,6 +40,10 @@ extern f32 lbl_eu_80667530;
 // 80338 object), so CCharEffect instances are dispatched virtually in
 // some contexts. Declared as data: MWCC does not mangle global data names.
 extern u8 lbl_eu_8052FDB8[];
+extern u8 lbl_eu_8052FDD8[];
+extern u8 lbl_eu_8052FE08[];
+extern u8 lbl_eu_8052FE38[];
+extern u8 lbl_eu_8052FE68[];
 
 namespace cf {
 
@@ -67,6 +71,46 @@ public:
 struct CCharEffectBattleObj {
     u8 pad_00[0x4];
     CCharEffectBattleObj4* field_04;  // 0x04
+};
+
+// Real class tree for CCharEffect family (retail __vt__ dump from US split1.s):
+// lbl_eu_8052FDB8 (CCharEffect, 0x20): RTTI 80662330, 0, __dt__Q22cf11CCharEffectFv, func_8015BF04, func_8015C9A0, func_800CEE7C, 0, func_8015C2B0
+// lbl_eu_8052FDD8 (CCharEffectEne, 0x20): same but +0x18 = func_8015CD04
+// lbl_eu_8052FE08 (Npc, 0x20): +0x18 = func_8015CD9C
+// lbl_eu_8052FE38 (Obj, 0x20): +0x18 = func_8015CE44
+// lbl_eu_8052FE68 (Pc, 0x20): +0x18 = func_8015CED0, +0x1C = func_8015CF90
+// Hierarchy: CCharEffect is root, others derive directly. CHelp is the proven instance.
+// novtable: do not emit __vt__ from this TU, ctor writes lbl_eu_... label explicitly.
+
+class __declspec(novtable) CCharEffect {
+public:
+    virtual ~CCharEffect(); // vtable 0x08
+    virtual void func_8015BF04(CCharEffectSlot* p); // 0x0C
+    virtual void func_8015C9A0(); // 0x10
+    virtual void func_800CEE7C(); // 0x14
+    virtual void* getObj(u32 idx, s32 mode) = 0; // 0x18 pure in base
+    virtual void applyEffect(void* target, u32 type, u32 flags); // 0x1C
+};
+
+class __declspec(novtable) CCharEffectEne : public CCharEffect {
+public:
+    virtual void* getObj(u32 idx, s32 mode) override; // 0x18
+};
+
+class __declspec(novtable) CCharEffectNpc : public CCharEffect {
+public:
+    virtual void* getObj(u32 idx, s32 mode) override;
+};
+
+class __declspec(novtable) CCharEffectObj : public CCharEffect {
+public:
+    virtual void* getObj(u32 idx, s32 mode) override;
+};
+
+class __declspec(novtable) CCharEffectPc : public CCharEffect {
+public:
+    virtual void* getObj(u32 idx, s32 mode) override;
+    virtual void applyEffect(void* target, u32 type, u32 flags) override;
 };
 
 } // namespace cf

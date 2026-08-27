@@ -1,7 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/CMiniMap
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMiniMap.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -507,7 +506,7 @@ struct MiniMapObj {
 // (The former MiniMapDtorIf pad is gone: the pane teardown calls are explicit
 // virtual destructor invocations on nw4r::lyt::Pane -- MWCC dispatches vt+8
 // with flag -1 -- and the layout release is a plain delete, vt+8 with +1.)
-
+struct MiniMapEnumHolder {
     void* list;                      // 0x00
     u32 handle;                      // 0x04
 };
@@ -593,7 +592,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
                     Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 573,
                                                (const char*)lbl_eu_8052CB1C);
                 }
-                pane = lay->mgr->v03C(node->name, 1);
+                pane = (nw4r::lyt::Pane*)lay->mgr->v03C(node->name, 1);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
@@ -604,21 +603,21 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             }
         }
         // Fixed clock-label textboxes created by OnFileEvent.
-        pane = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x202], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x202], 1);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
-        pane = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x20A], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x20A], 1);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
             pane->~Pane();
             deleteTextboxOrPicture__10CLibLayoutFv(pane);
         }
-        pane = ((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x212], 1);
+        pane = (nw4r::lyt::Pane*)((MiniMapLayout*)self->mLayout0C)->mgr->v03C(&lbl_eu_804FE1FC[0x212], 1);
         if (pane && *(void**)((u8*)pane + 0x0C)) {
             RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                 *(void**)((u8*)pane + 0x0C), pane);
@@ -638,7 +637,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             if (!node) {
                 Panic__Q24nw4r2dbFPCciPCce(pf, 573, ps);
             }
-            pane = lay->mgr->v03C(node->name, 1);
+            pane = (nw4r::lyt::Pane*)lay->mgr->v03C(node->name, 1);
             if (pane && *(void**)((u8*)pane + 0x0C)) {
                 RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                     *(void**)((u8*)pane + 0x0C), pane);
@@ -726,7 +725,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                                (const char*)lbl_eu_8052CB1C);
                 }
                 MiniMapCleanupNode* next = node->next;
-                nw4r::lyt::Pane* pane = self->m0C->m10->v03C(node->name, 1);
+                nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)self->m0C->m10->v03C(node->name, 1);
                 if (pane && *(void**)((u8*)pane + 0x0C)) {
                     RemoveChild__Q34nw4r3lyt4PaneFPQ34nw4r3lyt4Pane(
                         *(void**)((u8*)pane + 0x0C), pane);
@@ -1687,33 +1686,17 @@ struct MiniMapB05CObjView {
     virtual f32 v0CC();              // vtable+0xCC
 };
 
-// Pane interface view with vtable slots 0x3C (child lookup) / 0x68 (material).
-// (MWCC prepends a hidden two-slot dtor pair to these views.)
-struct MiniMapB05CIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void* vf3C(const char* name, int create);
-    virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-    virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-    virtual void _v060(); virtual void _v064(); virtual void* vf68();
-};
-
-// Pane-manager view whose lookup helper sits at vtable+0x3C.
-struct MiniMapB05CMgr {
-    virtual void _v000(); virtual void _v004(); virtual void _v008(); virtual void _v00C();
-    virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-    virtual void _v030();
-    virtual void* vfFind(const char* name, int create);
-};
+// (Former MiniMapB05CIf/B05CMgr pads were retail's nw4r::lyt::Pane vtables:
+// +0x3C FindPaneByName(const char*, bool) on the root pane at Layout+0x10
+// and +0x68 GetMaterial() on a child pane.)
 
 // Best-effort reconstruction (elided retail loop body).
 extern "C" void func_8011B05C(MiniMapSelf* self) {
-    // 'panemapmark' holder pane + its material (pane manager v03C -> vt+0x68).
-    MiniMapB05CIf* pane = (MiniMapB05CIf*)(
-        (MiniMapB05CMgr*)self->m0C->m10)->vfFind(&lbl_eu_804FE1FC[0x1FA], 1);
-    MiniMapB05CMat* mat = (MiniMapB05CMat*)pane->vf68();
+    // 'panemapmark' holder pane + its material (pane via root-pane
+    // FindPaneByName -> GetMaterial at vt+0x68).
+    nw4r::lyt::Pane* pane =
+        ((nw4r::lyt::Pane*)self->m0C->m10)->FindPaneByName(&lbl_eu_804FE1FC[0x1FA], true);
+    MiniMapB05CMat* mat = (MiniMapB05CMat*)pane->GetMaterial();
     const nw4r::lyt::Material* matC = (const nw4r::lyt::Material*)mat;
 
     if (((mat->field_3C >> 24) & 0xF) == 0) {
@@ -1781,8 +1764,8 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
 
     // Clock pane group: reposition it, then sweep the clock label panes'
     // child lists (either the idle layout or the battle-target tracking one).
-    MiniMapB05CIf* group = (MiniMapB05CIf*)(
-        (MiniMapB05CMgr*)self->m0C->m10)->vfFind(&lbl_eu_804FE1FC[0x212], 1);
+    nw4r::lyt::Pane* group =
+        ((nw4r::lyt::Pane*)self->m0C->m10)->FindPaneByName(&lbl_eu_804FE1FC[0x212], true);
     ml::CVec3 gv(lbl_eu_80667090, lbl_eu_80667090, scale);
 
     if (func_8013BE58() == 0) {
@@ -1791,8 +1774,8 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
         ((MiniMapB05CPaneView*)pane)->tr = ml::CVec3(
             lbl_eu_80667090, lbl_eu_80667090, lbl_eu_80667090);
         for (u8 i = 0; lbl_eu_8052C788[i] != 0; i++) {
-            MiniMapB05CIf* p =
-                (MiniMapB05CIf*)pane->vf3C(lbl_eu_8052C788[i], 1);
+            nw4r::lyt::Pane* p =
+                pane->FindPaneByName(lbl_eu_8052C788[i], true);
             if (p == NULL) continue;
             MiniMapB05CPaneView* pv = (MiniMapB05CPaneView*)p;
             for (MiniMapB05CNode* n = (MiniMapB05CNode*)pv->first;
@@ -1822,8 +1805,8 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
         ((MiniMapB05CPaneView*)pane)->tr.z = -(f32)t;
         gv.z = (f32)(-t) * lbl_eu_806670C0;
         for (u8 i = 0; lbl_eu_8052C788[i] != 0; i++) {
-            MiniMapB05CIf* p =
-                (MiniMapB05CIf*)pane->vf3C(lbl_eu_8052C788[i], 1);
+            nw4r::lyt::Pane* p =
+                pane->FindPaneByName(lbl_eu_8052C788[i], true);
             if (p == NULL) continue;
             MiniMapB05CPaneView* pv = (MiniMapB05CPaneView*)p;
             for (MiniMapB05CNode* n = (MiniMapB05CNode*)pv->first;
@@ -1841,8 +1824,8 @@ extern "C" void func_8011B05C(MiniMapSelf* self) {
     }
 
     // Minimap 'timg' pane: pin to the current battle target position.
-    MiniMapB05CIf* pic = (MiniMapB05CIf*)(
-        (MiniMapB05CMgr*)self->m0C->m10)->vfFind(&lbl_eu_804FE1FC[0x20A], 1);
+    nw4r::lyt::Pane* pic =
+        ((nw4r::lyt::Pane*)self->m0C->m10)->FindPaneByName(&lbl_eu_804FE1FC[0x20A], true);
     if (pic != NULL) {
         if (cf::CfGameManager::getInstance()->func_800821F8() != NULL) {
             MiniMapObj* tgt = (MiniMapObj*)(
@@ -2376,13 +2359,6 @@ s32 func_8011C2E8() {
     return ((-v) | v) >> 31;
 }
 
-// Cast-only SI for the minimap sub-object virtual calls (slots 0x2C/0x38)
-struct MiniMapIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void vf2C(void* a, u32 b);
-    virtual void _v030(); virtual void _v034(); virtual void vf38(void* a);
-};
 extern "C" s32 func_8011C2FC(void) {
     void* g = (void*)lbl_eu_80663FB0;
     if (!g) return;
@@ -2390,18 +2366,28 @@ extern "C" s32 func_8011C2FC(void) {
     ((u8*)g)[0x7c] = 3;
     ((u8*)g)[0x7d] = 0;
     if (*(void**)((u8*)g + 0x70)) {
-        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf2C(*(void**)((u8*)g + 0x78), 0);
-        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf2C(*(void**)((u8*)g + 0x74), 1);
-        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf38(0);
+        nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)*(void**)((u8*)g + 0x70);
+        lay->SetAnimationEnable(
+            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0x78), false);
+        lay->SetAnimationEnable(
+            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0x74), true);
+        lay->Animate(0);
     }
     ((u8*)g)[0xa8] = 3;
     ((u8*)g)[0xa9] = 0;
     if (*(void**)((u8*)g + 0x9c)) {
-        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf2C(*(void**)((u8*)g + 0xa4), 0);
-        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf2C(*(void**)((u8*)g + 0xa0), 1);
-        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf38(0);
+        nw4r::lyt::Layout* lay2 = (nw4r::lyt::Layout*)*(void**)((u8*)g + 0x9c);
+        lay2->SetAnimationEnable(
+            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0xa4), false);
+        lay2->SetAnimationEnable(
+            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0xa0), true);
+        lay2->Animate(0);
     }
 }
+
+// (The former MiniMapIf pad -- vt+2C/38 -- was retail's unmangled
+// nw4r::lyt::Layout virtuals SetAnimationEnable/Animate: layout+0x2C = 0,
+// anim enable at +0x20, animate at +0x38.)
 
 void func_8011C400()
 {

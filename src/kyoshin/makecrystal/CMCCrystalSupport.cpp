@@ -1,5 +1,7 @@
+#define IWORK_EVENT_INLINE_DTOR
 #include <types.h>
 #include <nw4r/lyt.h>
+#include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 
 extern "C" {
@@ -22,13 +24,14 @@ u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
 void func_80138078__FUl(u32);
 }
 
-// Retail vtable lbl_eu_80536770 proves this derives IWorkEvent (dtor @+0x08,
-// then WorkEvent1..31 / OnFileEvent / OnPauseTrigger). NOT inherited here on
-// purpose: any TU deriving IWorkEvent pulls a weak __dt__10IWorkEventFv stub
-// into its object, and retail's CMCCrystalSupport.o does not have one (checked
-// via nm). The ctor writes lbl_eu_80536770 explicitly, which carries the real
-// base tree; see .scratch/CDeviceFontVtblView-handoff.md sibling notes.
-class __declspec(novtable) CMCCrystalSupport {
+// Retail vtable lbl_eu_80536770: RTTI lbl_eu_80662898, dtor @+0x08, then the
+// full IWorkEvent tree (WorkEvent1..31, OnFileEvent, OnPauseTrigger) -- so
+// CMCCrystalSupport derives IWorkEvent. novtable + explicit label write in the
+// ctor, same shape as CMCCrystalList / CMCCrystalInfo. IWORK_EVENT_INLINE_DTOR
+// elides the base-dtor call so __dt__17CMCCrystalSupportFv stays 0x40 bytes
+// (retail shape); the extra weak __dt__10IWorkEventFv is link-deduped and
+// documented in IWorkEvent.hpp.
+class __declspec(novtable) CMCCrystalSupport : public IWorkEvent {
 public:
     virtual ~CMCCrystalSupport();
 

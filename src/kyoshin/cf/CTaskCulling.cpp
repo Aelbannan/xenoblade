@@ -89,7 +89,7 @@ void CTaskCulling::func_801A2BD0(unsigned long r3){
     }
 }
 
-    UNKTYPE* CTaskCulling::func_801A2C04(){
+    UNKTYPE* CTaskCulling::getOccBuffer(){
         if(lbl_eu_80664328 == nullptr) return nullptr;
         return lbl_eu_80664328->unk94;
     }

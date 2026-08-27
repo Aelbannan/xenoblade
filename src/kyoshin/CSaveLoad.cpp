@@ -170,7 +170,7 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
 // optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair
 #pragma push
 #pragma optimize_for_size on
-void CSLCur::func_8028EA74() {
+void CSLCur::createLayout() {
     // Create layout, then bind two anim transforms and finish via layout vtable
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &mField8,
@@ -553,7 +553,7 @@ CSaveLoad::~CSaveLoad() {
 }
 #pragma optimize_for_size off
 
-void CSaveLoad::func_8028F23C() {
+void CSaveLoad::loadSaveData() {
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
     func_801F34F4(mScrollbar);
@@ -641,7 +641,7 @@ void func_8028F4AC(CSaveLoad* self) {
     ((CCur18Obj*)((char*)self + 0x40))->vf3();
     func_8022B7F4(&self->mSysWinD4);
     func_8028EE68((UnkSlot4Ptr*)((char*)self + 0x110));
-    ((UnkClass_8045F564*)((char*)self + 0x04))->func_8045F778();
+    ((UnkClass_8045F564*)((char*)self + 0x04))->deleteRegion();
     lbl_eu_806649F4 = nullptr;
 }
 
@@ -1894,7 +1894,7 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     self->mField122 = 1;
     self->mField120 = 1;
     self->mFileHandle = 0;
-    ((UnkClass_8045F564*)((char*)self + 0x04))->func_8045F810();
+    ((UnkClass_8045F564*)((char*)self + 0x04))->validateHeap();
 
     // Allocate three 0x9C00-byte buffers from MEM2 (size written as
     // 0x10000-0x6400 to reproduce retail's lis/subi pair)
@@ -2433,7 +2433,7 @@ extern "C" void func_80291B30() {
 
 // Despite Fv mangling, receives (self, val) with val in r4 -
 // the value is checked against the [0x28, 0x3e) window.
-extern "C" void func_80291B18__Q22cf7CfAwardFv(cf::CfAward*, int val) {
+extern "C" void processAward__Q22cf7CfAwardFv(cf::CfAward*, int val) {
     if (val < 0x28) return;
     if (val >= 0x3e) return;
     func_80291B30();

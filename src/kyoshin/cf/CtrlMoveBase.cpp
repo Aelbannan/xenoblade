@@ -265,7 +265,7 @@ haveOk:
         goto fail;
     {
         ml::CVec3* pos = getPos(self);
-        if (func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
                                                  lbl_eu_806665A0,
                                                  lbl_eu_806665A0, 1) == 0)
             goto fail;
@@ -627,7 +627,7 @@ haveOk:
     int ok2;
     if (ok != 0) {
         ml::CVec3* pos2 = getPos(self);
-        ok2 = (func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos2,
+        ok2 = (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos2,
                                                     &goal, lbl_eu_806665A0,
                                                     lbl_eu_806665A0, 1) != 0);
     } else {
@@ -690,7 +690,7 @@ haveOk:
         goto ret0;
     {
         ml::CVec3* pos = getPos(self);
-        if (func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
                                                   lbl_eu_806665A0,
                                                   lbl_eu_806665A0, flag) != 0)
             return 1;

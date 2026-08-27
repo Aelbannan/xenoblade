@@ -3265,10 +3265,20 @@ namespace lyt {
  * typeinfo name string (27 chars + NUL, zero-filled to 0x28). Defined here so
  * the bytes land at the end of this TU's .data exactly like retail.
  ******************************************************************************/
-// Sentinel byte 0x01 keeps this out of .bss (MWCC folds all-zero init);
-// UNIT_RULES zero_data_range scrubs it back to zeros.
-extern "C" __declspec(section ".data") char lbl_8054D578_pad[0x20] = {
+// Retail tail from 0xC50 onward: 6 symbols that were previously mis-ordered.
+// Decomp had pad(0x20) + gui::Interface(0x28) at 0xC50/0xC70 with extra vtables
+// at 0xC98/0xCE0, while retail has the sequence below at 0xC50..0xD18.
+// Defining them explicitly in retail order makes the bytes and symbols match.
+extern "C" __declspec(section ".data") const unsigned char lbl_8054D4F0[0x10] = {0};
+extern "C" __declspec(section ".data") char lbl_8054D500[0x23] = "homebutton::HomeButtonEventHandler";
+extern "C" __declspec(section ".data") const unsigned char lbl_8054D524[0xC] = {0};
+extern "C" __declspec(section ".data") const unsigned char lbl_8054D530[0x18] = {0};
+extern "C" __declspec(section ".data") char lbl_8054D548[0x1E] = "homebutton::gui::EventHandler";
+extern "C" __declspec(section ".data") const unsigned char lbl_8054D568[0x50] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0x68,0x6F,0x6D,0x65,0x62,0x75,0x74,0x74,
+    0x6F,0x6E,0x3A,0x3A,0x67,0x75,0x69,0x3A,0x3A,0x49,0x6E,0x74,0x65,0x72,0x66,0x61,
+    0x63,0x65,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
-char lbl_8054D598_typestr[0x28] = "homebutton::gui::Interface";

@@ -1004,7 +1004,14 @@ def harness_targets(
     return candidates
 
 
-def validate_targets(config: CoopConfig) -> List[str]:
+def validate_targets(config: CoopConfig, *, check_certificates: bool = True) -> List[str]:
+    """Validate registry schema and status vocabularies.
+
+    ``check_certificates=False`` skips equivalence-certificate staleness
+    checks (a separate revalidation concern; see
+    ``equivalence_certificate_migration_report``) so the schema gate can run
+    independently of certificate refreshes.
+    """
     data = load_targets_document(config)
     errors: List[str] = []
     if not isinstance(data.get("schema_version"), int):
@@ -1059,8 +1066,13 @@ def validate_targets(config: CoopConfig) -> List[str]:
         for called_id in called:
             if called_id not in known_ids:
                 errors.append(f"targets[{index}] calls unknown target id {called_id!r}")
-        # Certificates are acceptance evidence only for EQUIVALENT_MATCH.
-        # FULL_MATCH / downgraded rows may retain historical certificates.
+    if not check_certificates:
+        return errors
+    # Certificates are acceptance evidence only for EQUIVALENT_MATCH.
+    # FULL_MATCH / downgraded rows may retain historical certificates.
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
         if row.get("status") == "EQUIVALENT_MATCH" and "equivalence_certificate" in row:
             error = equivalence_certificate_error(row, rows_by_id)
             if error:

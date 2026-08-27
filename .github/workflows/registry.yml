@@ -1,0 +1,42 @@
+# Registry gate
+#
+# Validates the target registry schema (status/workflow vocabularies, ids,
+# identities, callgraph references) and the freshness of the generated README
+# status block. Pure stdlib over committed files — no build, no objdiff, no
+# retail image. Certificate staleness is a separate revalidation concern and
+# is deliberately NOT gated here (see run.py targets validate for the full
+# check).
+
+name: Registry
+
+on:
+  push:
+    paths:
+      - "tools/coop/targets.json"
+      - "tools/coop/lib/targets.py"
+      - "tools/coop/readme_status.py"
+      - "tools/coop/registry_check.py"
+      - "README.md"
+      - ".github/workflows/registry.yml"
+  pull_request:
+    paths:
+      - "tools/coop/targets.json"
+      - "tools/coop/lib/targets.py"
+      - "tools/coop/readme_status.py"
+      - "tools/coop/registry_check.py"
+      - "README.md"
+      - ".github/workflows/registry.yml"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Registry schema + README status block
+        run: python tools/coop/registry_check.py

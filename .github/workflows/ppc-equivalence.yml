@@ -34,8 +34,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
+        # 3.13 — matches the repo venv; the engine's concrete evaluator calls
+        # math.fma (stdlib since 3.13), which 3.12 lacks.
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
           cache-dependency-path: tools/ppc_equivalence/requirements.lock
 

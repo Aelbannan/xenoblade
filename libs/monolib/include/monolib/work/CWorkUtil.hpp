@@ -6,7 +6,7 @@
 
 class CWorkUtil{
 public:
-    static UnkStruct_80438AF0_3* func_80438AF0(UnkStruct_80438AF0* arg0);
+    static UnkStruct_80438AF0_3* getData(UnkStruct_80438AF0* arg0);
     static CWorkThread* getWorkThread(WORK_ID wid);
     static void dispTree(const CWorkThread* pThread, int indent = 0);
     static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);

@@ -38,7 +38,7 @@ void* func_8016FE34(void* obj);
 void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
 void* func_8047CE7C__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
 int   func_8047DE14__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
-int   func_8047DD4C__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
+int   walkPathCheck__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
 // getInstance__Q22cf14CBattleManagerFv comes from CfGameManager.hpp
 // (extern "C" CBattleManagerView* form) - do not redeclare here.
 f32 SinFIdx__Q24nw4r4mathFf(f32);
@@ -607,7 +607,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         if (okT != 0) {
             if (func_8047DE14__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                     lbl_eu_80667B60, lbl_eu_80667B60) != 0) {
-                if (func_8047DD4C__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
+                if (walkPathCheck__17UnkClass_8047D2ACFv(self->mTask, (Vec*)&self->mPos,
                         &out, lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
                     return;
                 }
@@ -811,7 +811,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
     if (self->mBase30 != 0) {
         ml::CVec3* tp = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
                             ->getPosition();
-        if (func_8047DD4C__17UnkClass_8047D2ACFv(self->mBase30, (Vec*)tp, (Vec*)goalPtr,
+        if (walkPathCheck__17UnkClass_8047D2ACFv(self->mBase30, (Vec*)tp, (Vec*)goalPtr,
                 lbl_eu_80667B60, lbl_eu_80667B60, 1) != 0) {
             // Contact: slide along the surface normal toward the goal.
             self->mFlags4C &= ~0x01000000u;
@@ -945,7 +945,7 @@ extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) {
             } else {
                 ok = 1;
             }
-            if (ok && func_8047DD4C__17UnkClass_8047D2ACFv(self->mTask,
+            if (ok && walkPathCheck__17UnkClass_8047D2ACFv(self->mTask,
                     (Vec*)&self->mPos, &self->mVec54,
                     lbl_eu_80667B60, lbl_eu_80667B60, 1) == 0) {
                 self->mFlags4C |= 1u;

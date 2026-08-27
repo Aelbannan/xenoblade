@@ -7,7 +7,13 @@
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
-struct CfObjIf {
+// Foreign sub-object at mSubObj38 (CfObject-family helper). Its vtable slots
+// at 0x08 (release with flag), 0x2C (attach parent), 0x9C-0xAC and
+// 0xB4/0xC4/0xD0 are called by the CfObjectEff member functions. The true
+// class of this sub-object lives outside CfObjectEff (like PcSub4VtIf on
+// CfObjectPc), so this stays a small named iface on the owner - the
+// honest in-tree name is not known here, so keep a descriptive local view.
+struct CfObjectEffSub38If {
     virtual void _v0008(int flag);
     virtual void _v000C();
     virtual void _v0010();
@@ -61,6 +67,23 @@ struct CfObjIf {
     virtual void vf00D0();
 };
 
+// Minimal view for the ctor's slot-0x5C dispatch (CfObject UVF3).
+// CfObject.hpp declares UVF3 as `void(UnkClass_80082D90*)` but the retail
+// ctor slot-0x5C call carries no argument (the stub is empty). A base-name
+// call would require a mismatched signature, so this view stays until that
+// header's signature is corrected - it is the single remaining this-view
+// pad for the primary chain, documented here.
+struct CfObjectEffCtorIf {
+    virtual void _f08(); virtual void _f0C(); virtual void _f10();
+    virtual void _f14(); virtual void _f18(); virtual void _f1C();
+    virtual void _f20(); virtual void _f24(); virtual void _f28();
+    virtual void _f2C(); virtual void _f30(); virtual void _f34();
+    virtual void _f38(); virtual void _f3C(); virtual void _f40();
+    virtual void _f44(); virtual void _f48(); virtual void _f4C();
+    virtual void _f50(); virtual void _f54(); virtual void _f58();
+    virtual void f5C();  // slot 0x5C
+};
+
 namespace cf {
 CfObjectEff::CfObjectEff() {
     // The retail base-ctor chain (CObjectState/CObjectParam/CfObject) is
@@ -94,12 +117,15 @@ CfObjectEff::CfObjectEff() {
     v->field_88 = 0;
     v->field_8C = 0;
     v->field_8E = 0;
-    reinterpret_cast<CfObjectEffIf*>(this)->_f5C();
+    reinterpret_cast<CfObjectEffCtorIf*>(this)->f5C();
     // Derived ctor: switch to the CfObjectEff vtable and initialize the
     // effect slots, then register with the game manager's flag check.
+    // The second-base (CfObjectEffSub) vptr lives at +0x90 - write the
+    // retail secondary-group label through that sub-object (the field
+    // mSubObj90 was the old hand-rolled store at the same offset).
     mFlags68 |= 0x100000;
     *(void**)this = lbl_eu_80528870;
-    mSubObj90 = &lbl_eu_80528870[0x178];
+    *reinterpret_cast<void**>(static_cast<cf::CfObjectEffSub*>(this)) = &lbl_eu_80528870[0x178];
     mChildEff = nullptr;
     mField98 = nullptr;
     mField9C = nullptr;
@@ -125,7 +151,9 @@ namespace cf {
 CfObject::~CfObject() {
     // Reset the vtable and run the slot-0x68 cleanup; MWCC auto-emits the
     // null guard, the vtable store and the delete-flag guard around it.
-    reinterpret_cast<CfObjectEffIf*>(this)->_f68();
+    // Slot +0x68 is CfObject_UnkVirtualFunc6 (void() - matches the retail
+    // devirtualized call through the just-stored base vtable).
+    this->CfObject_UnkVirtualFunc6();
 }
 } // namespace cf
 
@@ -139,11 +167,11 @@ bool CfObjectEff::func_800AC7CC() {
 extern "C" u32 func_800AC7FC__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)((u8*)self + 0x94) != 0; }
 void CfObjectEff::func_800AC810() {
     if (mChildEff != nullptr) {
-        // Parent for the effect detach is this+0x90; retail null-guards the
-        // offset so a null this passes 0 to func_804E3D48.
+        // Parent for the effect detach is this+0x90 as CfObjectEffSub*;
+        // retail null-guards the offset so a null this passes 0.
         u8* parent = reinterpret_cast<u8*>(this);
         if (this != nullptr) {
-            parent = reinterpret_cast<u8*>(this) + 0x90;
+            parent = reinterpret_cast<u8*>(static_cast<cf::CfObjectEffSub*>(this));
         }
         func_804E3D48(mChildEff, parent);
         func_804E3CCC(mChildEff);
@@ -160,16 +188,16 @@ namespace cf {
 // Detaches `obj` from either the 0x9C or 0xA0 slot when the active sub-object
 // is set: tears the sub-object down, clears the slot and sets flag 0x40.
 extern "C" bool func_800AC990__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* obj) {
-    if (self->getSub188() != 0) {
+    if (self->func_800AC7FC() != 0) {
         if (self->mField9C == obj) {
-            self->destroy190();
+            self->func_800AC810();
             self->mField9C = 0;
             u32 flags = self->mFlags68;
             self->mFlags68 = flags | 0x40;
             return true;
         }
         if (self->mFieldA0 == obj) {
-            self->destroy190();
+            self->func_800AC810();
             self->mFieldA0 = 0;
             u32 flags = self->mFlags68;
             self->mFlags68 = flags | 0x40;
@@ -181,8 +209,8 @@ extern "C" bool func_800AC990__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* o
 // Retail symbol func_800ACA58__Q22cf11CfObjectEffFv (void params in the name)
 // but the body consumes an object pointer in r4 - forced-name form.
 extern "C" bool func_800ACA58__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* arg) {
-    if (self->getSub188() != 0 && arg == self->mField98) {
-        self->destroy190();
+    if (self->func_800AC7FC() != 0 && arg == self->mField98) {
+        self->func_800AC810();
         u32 flags = self->mFlags68;
         self->mField9C = 0;
         self->mField98 = 0;
@@ -193,7 +221,7 @@ extern "C" bool func_800ACA58__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
 }
 void CfObjectEff::func_800ACAE8() {
     if (mSubObj38 != nullptr)
-        reinterpret_cast<CfObjIf*>(mSubObj38)->_v00A8();
+        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00A8();
 }
 // Retail symbol func_800ACB08__Q22cf11CfObjectEffFv (void params in the name)
 // but the body consumes an object pointer in r4 - forced-name form.
@@ -202,14 +230,14 @@ extern "C" void func_800ACB08__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
         // Redundant nested check on the same loaded value mirrors retail's two
         // beq targets (MWCC keeps both branches).
         if (self->mSubObj38 != 0) {
-            reinterpret_cast<CfObjIf*>(self->mSubObj38)->_v0008(1);
+            reinterpret_cast<CfObjectEffSub38If*>(self->mSubObj38)->_v0008(1);
         }
         self->mSubObj38 = 0;
     }
     self->mSubObj38 = arg;
     if (arg != 0) {
-        reinterpret_cast<CfObjIf*>(arg)->_v002C(self);
-        reinterpret_cast<CfObjIf*>(self->mSubObj38)->_v00A0();
+        reinterpret_cast<CfObjectEffSub38If*>(arg)->_v002C(self);
+        reinterpret_cast<CfObjectEffSub38If*>(self->mSubObj38)->_v00A0();
     }
 }
 // Retail symbol func_800ACBA4__Q22cf11CfObjectEffFv (void params in the name)
@@ -370,8 +398,9 @@ namespace cf {
 // name) but the body consumes a float scale argument in f1 - forced-name form.
 extern "C" void func_800ACE60__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) {
     // Scale the value by the global factor, then dispatch through vtable
-    // slot 0xC4 (CfObject_UnkVirtualFunc29).
-    reinterpret_cast<CfObjectEffIf*>(self)->setScale(value * lbl_eu_8066A210);
+    // slot 0xC4 (CfObject_UnkVirtualFunc29 - float scale, matches the
+    // retail occupant ACDFC(float) at that slot).
+    self->CfObject_UnkVirtualFunc29(value * lbl_eu_8066A210);
 }
 float CfObjectEff::func_800ACE78() {
     float result = CfObject_UnkVirtualFunc31();
@@ -575,11 +604,14 @@ void CfObjectEff::func_800AD3A4() {
         (this->*lbl_eu_80528858[mCount8E])();
     }
     if (mSubObj38 != nullptr) {
-        reinterpret_cast<CfObjIf*>(mSubObj38)->_v00A4();
+        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00A4();
     }
     if (mChildEff != nullptr) {
         // Sync the child's flag bit 14 (0x4000) with slot-0x160's status
-        // word. The flag halfword is read through the volatile raw-u16 view;
+        // word. That slot (CfObject_UnkVirtualFunc68's occupant at +0x160 in
+        // the complete-object table) is CfObjectEff::func_800AD4A4's
+        // address, but CfObject.hpp declares it with a placeholder void()
+        // signature, so the view stays until that header is corrected.
         // `active` is materialized before the opaque virtual call, so MWCC
         // keeps the neg/or/srwi booleanize idiom and compares with xor.
         // Bitfield read converted to bool: MWCC emits the extrwi +
@@ -635,8 +667,13 @@ void func_800AD4B0(u8* self) {
     EffChainNode* node = mgr->sentinel->next;
     while (node != mgr->sentinel) {
         EffChainNode* next = node->next;
+        // The dynamic_cast target is the CfObject base (lbl_eu_806618F0) at
+        // offset 0, so the result pointer is the complete CfObjectEff*.
+        // Slot +0x198 is CfObjectEff's own appended virtual
+        // func_800AC990 (+0x198) - call it directly on the derived type
+        // (composite offset via the primary vptr, unadjusted this).
         void* obj = __dynamic_cast(node->object, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
-        if (reinterpret_cast<cf::CfObjectEffVtable198If*>(obj)->func198(self) != 0) {
+        if (static_cast<cf::CfObjectEff*>(obj)->func_800AC990(self) != 0) {
             node = next;
         } else {
             node = node->next;
@@ -698,10 +735,11 @@ namespace cf {
 // the live-object check), then drops the child and sets flag 0x40.
 extern "C" void func_800AD68C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* arg) {
     // Parent for the effect detach is this+0x90; retail null-guards the
-    // offset so a null this passes 0 to func_804E3D48.
+    // offset so a null this passes 0 to func_804E3D48. With the real MI tree
+    // that handle is this+0x90 as CfObjectEffSub*.
     u8* parent = reinterpret_cast<u8*>(self);
     if (self != nullptr) {
-        parent = reinterpret_cast<u8*>(self) + 0x90;
+        parent = reinterpret_cast<u8*>(static_cast<cf::CfObjectEffSub*>(self));
     }
     func_804E3D48(self->mChildEff, parent);
     if (self->mFieldB0 != nullptr) {
@@ -721,14 +759,15 @@ extern "C" void func_800AD68C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
     self->mFlags68 = flags | 0x40;
 }
 CfObjectEff::~CfObjectEff() {
-    // novtable suppresses MWCC's implicit vtable store, so write both vtable
-    // pointers explicitly (derived vtable at +0x0, its +0x178 secondary at
-    // +0x90); MWCC then devirtualizes the slot-0x68 destroy against the stored
-    // vtable (reusing the lis/addi register) and auto-inlines the base dtor
-    // (null guard + CfObject vtable + destroy) plus the delete flag guard.
+    // novtable suppresses MWCC's implicit vtable stores, so write both
+    // vtable pointers explicitly (derived vtable at +0x0, its +0x178
+    // secondary at +0x90 via the Sub base). MWCC then devirtualizes the
+    // slot-0x68 destroy against the stored vtable (reusing the lis/addi
+    // register) and auto-inlines the base dtors (null guards + CfObject
+    // vtable + destroy) plus the delete flag guard.
     *(void**)this = lbl_eu_80528870;
-    mSubObj90 = &lbl_eu_80528870[0x178];
-    reinterpret_cast<CfObjectEffIf*>(this)->_f68();
+    *reinterpret_cast<void**>(static_cast<cf::CfObjectEffSub*>(this)) = &lbl_eu_80528870[0x178];
+    this->CfObject_UnkVirtualFunc6();
 }
 // Retail symbol name is func_800AD818__Q22cf11CfObjectEffFv (void params in the
 // name) but the body consumes a mask argument in r4 - forced-name form.
@@ -764,13 +803,13 @@ void* func_800AD860(void* obj) {
     return 0;
 }
 
-extern "C" void func_800ACCD4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
+extern "C" void func_800ACCD4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc19(); }
 
-extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00B4(); }
+extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc25(); }
 
-extern "C" void func_800AD830__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00D0(); }
+extern "C" void func_800AD830__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc32(); }
 
-extern "C" void func_800AD840__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }
+extern "C" void func_800AD840__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjectEffSub38If*>(self)->vf00C4(); }
 
 
 namespace cf {
@@ -780,24 +819,24 @@ void CfObjectEff::func_800AC86C() {
         mFieldB0 = nullptr;
     }
     if (mSubObj38 != nullptr) {
-        reinterpret_cast<CfObjIf*>(mSubObj38)->_v00AC();
+        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00AC();
         if (mSubObj38 != nullptr) {
             // Redundant nested check on the reloaded value mirrors retail's
             // two beq targets (MWCC keeps both branches).
             if (mSubObj38 != nullptr) {
-                reinterpret_cast<CfObjIf*>(mSubObj38)->_v0008(1);
+                reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v0008(1);
             }
             mSubObj38 = nullptr;
         }
     }
-    if (getSub188() != nullptr) {
+    if (func_800AC7FC() != 0) {
         if (mField9C != nullptr) {
             reinterpret_cast<CfObjectEffVtable1BCIf*>(mField9C)->func1BC(this);
         }
         if (mFieldA0 != nullptr) {
             reinterpret_cast<CfObjectEffVtable1BCIf*>(mFieldA0)->func1BC(this);
         }
-        destroy190();
+        func_800AC810();
     }
     mField70 = 0;
     mFlags68 &= 0x40000000;

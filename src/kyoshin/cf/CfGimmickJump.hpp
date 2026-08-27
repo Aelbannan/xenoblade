@@ -1,8 +1,25 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/object/CfObject.hpp"
 
 namespace cf {
+
+class CfGimmickJump;
+
+// Work object returned by func_800817BC (CfGameManager's per-gimmick
+// manager object). Retail factory builds it as a CfObject-derived with
+// vtable lbl_eu_80528600 (cf::CfObjectColl) or similar; the only slots
+// used here are +0x9C setPosition (CfObject_UnkVirtualFunc19) and
+// +0xC4 setHeight (CfObject_UnkVirtualFunc29, float). The back-pointer
+// at +0xB0 is the CfObject::mSubObjB0 field (0xB0) reused as the
+// owning gimmick link.
+class __declspec(novtable) CfGimmickWork : public CfObject {
+public:
+    // CfObject is 0x70; gap to 0xB0 back-pointer
+    u8 _gap70[0x40];
+    CfGimmickJump* field_B0; // +0xB0 back-pointer to owning gimmick
+};
 
 struct CfGimmickJumpVec3 {
     f32 x;
@@ -36,7 +53,7 @@ public:
     /* 0x6E */ u16 field6E;
     /* 0x70 */ u8 lod[4];
     /* 0x74 */ u32 flags;
-    /* 0x78 */ void* linkedObject;
+    /* 0x78 */ CfGimmickWork* linkedObject;
     /* 0x7C */ void* effect;
     /* 0x80 */ u16 soundHandle;
     /* 0x82 */ u16 gimmickType;

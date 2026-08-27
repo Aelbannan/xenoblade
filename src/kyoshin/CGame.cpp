@@ -82,11 +82,11 @@ CGame* CGame::getInstance() {
     return spInstance;
 }
 
-bool CGame::func_8003933C() {
+bool CGame::isEventReady() {
     return func_80164910() == 0;
 }
 
-void CGame::func_80039364() {
+void CGame::recreateGame() {
     if (spInstance == nullptr) {
         GameMain();
     } else if (CGameRestart::spInstance == nullptr) {
@@ -164,7 +164,7 @@ void CGame::wkRender() {
 // scanlines from efbHeight and offsetting Y by mLetterboxBorder-1.
 // In 16:9 (wide==true), use the full framebuffer dimensions.
 // @param wide true = 16:9 content, false = 4:3 content with letterbox borders
-void CGame::func_800395F4(bool wide) {
+void CGame::setLetterbox(bool wide) {
     CGame* self;
     s32 height;
 
@@ -231,7 +231,7 @@ bool CGame::wkStandbyLogin() {
 
     mView->unk444 = CVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    func_800395F4(CDeviceSC::isWideAspectRatio());
+    setLetterbox(CDeviceSC::isWideAspectRatio());
     CDeviceGX::updateVerticalFilter(VFILTER_NONE);
     CTaskManager::Reset();
     CTaskGame::create(mView, this, 1);

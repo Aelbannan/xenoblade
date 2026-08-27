@@ -63,23 +63,23 @@ void func_80068A80() {
 // func_80068AA4 - get singleton and call func_800694B0
 extern "C" void func_80068AA4() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_800694B0();
+    mgr->updateScript();
 }
 
 // func_80068AC8 - get singleton and call func_8006953C
 void func_80068AC8() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_8006953C();
+    mgr->resetScripts();
 }
 
 // func_80068AEC - get singleton and load slot 0
 void func_80068AEC(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068B20(name);
+    mgr->loadSlotZero(name);
 }
 
 // CfScriptManager::func_80068B20 - forward slot 0 (== this) + name to loader
-__declspec(noinline) void CfScriptManager::func_80068B20(const char* name) {
+__declspec(noinline) void CfScriptManager::loadSlotZero(const char* name) {
     func_80068ECC(&mScripts[0], name);
 }
 
@@ -498,7 +498,7 @@ void CfScriptManager::init() {
 // loaded (waitCount 0/1), dispatch its state handler through the retail ptmf
 // table lbl_eu_80526DD0 ({waitLoad, update}); then run the VM unless the game
 // manager says we are in a menu/frozen state.
-__declspec(noinline) void CfScriptManager::func_800694B0() {
+__declspec(noinline) void CfScriptManager::updateScript() {
     for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 
@@ -513,7 +513,7 @@ __declspec(noinline) void CfScriptManager::func_800694B0() {
 }
 
 // CfScriptManager::func_8006953C - cleanup: reset slots 0 and 1, then re-init VM.
-void CfScriptManager::func_8006953C() {
+void CfScriptManager::resetScripts() {
     // Reset slot 0
     CfScript& s0 = mScripts[0];
     if (s0.mFileHandle != nullptr) {

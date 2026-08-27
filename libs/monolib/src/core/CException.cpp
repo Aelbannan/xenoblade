@@ -187,7 +187,7 @@ extern "C" void* __dt__10CExceptionFv(CException* self, int flag) {
 }
 
 // Type check function
-extern "C" bool func_80457C8C__10CExceptionFv(CException* self) {
+extern "C" bool isFadedIn__10CExceptionFv(CException* self) {
     extern const f32 lbl_eu_8066A484;
     return lbl_eu_8066A484 == self->mAlpha;
 }

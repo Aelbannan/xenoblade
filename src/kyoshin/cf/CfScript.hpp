@@ -104,7 +104,8 @@ public:
     // Script loading thunks for each slot.
     // noinline: these are retail `bl`-thunks (forward this+name to func_80068ECC);
     // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
-    void __declspec(noinline) func_80068B20(const char* name);  // load slot 0 (this == &mScripts[0])
+    void __declspec(noinline) loadSlotZero(const char* name);  // load slot 0 (this == &mScripts[0])
+    void func_80068B20(const char* n) { loadSlotZero(n); } // compat
     void __declspec(noinline) func_80068B94(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
@@ -121,8 +122,10 @@ public:
     void func_80068DD0();  // reset slot 2
 
     // Main update and exec
-    void __declspec(noinline) func_800694B0();
-    void func_8006953C();
+    void __declspec(noinline) updateScript();
+    void resetScripts();
+    void func_800694B0() { updateScript(); } // compat
+    void func_8006953C() { resetScripts(); } // compat
 };
 
 } // namespace cf

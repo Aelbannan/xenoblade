@@ -190,7 +190,7 @@ public:
 // Title "to attack" help hook: caches whether the A / Z buttons are held.
 class CHelp_ToAttack {
 public:
-    int func_802B7A90();
+    int updateState();
 
     u8 pad00[0x0C];  // 0x00-0x0B
     u8 field_0xC;    // 0x0C - cached A-button state

@@ -25,7 +25,7 @@
 #define ADLER_DO8(buf, i) ADLER_DO4(buf, i); ADLER_DO4(buf, i + 4);
 #define ADLER_DO16(buf)   ADLER_DO8(buf, 0); ADLER_DO8(buf, 8);
 
-extern "C" u32 func_80460308__17UnkClass_80460308Fv(u32 adler, const u8* buf, u32 len)
+extern "C" u32 adler32__17UnkClass_80460308Fv(u32 adler, const u8* buf, u32 len)
 {
     u32 sum2;
     u32 n;

@@ -9,8 +9,9 @@ class CFileHandle;
 class CSLCur {
 public:
     CSLCur();
-    void func_8028EA74();
-    // Retail defines func_8028EEC0 as an unmangled C-linkage helper, not a member.
+    void createLayout();
+    void func_8028EA74() { createLayout(); } // compat
+    // Retail defines func_8028EEC0
 
     // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
     void* mField0;    // 0x00
@@ -32,7 +33,8 @@ class CSaveLoad {
 public:
     CSaveLoad();
     virtual ~CSaveLoad();
-    void func_8028F23C();
+    void loadSaveData();
+    void func_8028F23C() { loadSaveData(); } // compat
     u8 func_8028F664();
     u8 func_8028FEC4();
 
@@ -348,7 +350,7 @@ extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" u8 func_80141BA0(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void* self);
+extern "C" void validateHeap__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_8022B9B4(void*, u32, int);

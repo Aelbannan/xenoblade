@@ -738,7 +738,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
 // object, and if either cached button state says "held" while the live query
 // (func_80174C98) reports otherwise, return 1 (state changed). Otherwise
 // re-query both buttons (A = 0x7, Z = 0x800), store the results, return 0.
-int cf::CHelp_ToAttack::func_802B7A90() {
+int cf::CHelp_ToAttack::updateState() {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     cf::CHelpBattleObj* battleObj = func_800BFC68(player);
     u32 valA;

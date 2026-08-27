@@ -798,18 +798,18 @@ extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPoo
 // retail reloc names exactly.
 
 // Foreign words referenced by the blocks below (defined in monolibdata2 /
-// other TUs). func_8048CF58__12CScnItemPoolFv is this TU's own member — the
+// other TUs). cleanupACPool__12CScnItemPoolFv is this TU's own member — the
 // extern "C" spelling matches its C++ mangled symbol exactly.
 extern "C" {
 extern u32 lbl_eu_80663938[];  // RTTI locator ti(CScnItemPool) (.sdata)
 extern u32 lbl_eu_80663618[];  // RTTI locator ti(reslist<CScnItem*>) (.sdata)
 extern u32 lbl_eu_80663940[];  // RTTI locator (reslist<CScnItem*> base-list head)
 extern u32 lbl_eu_80663948[];  // RTTI locator ti(_reslist_base<CScnItem*>) (.sdata)
-extern void func_8048D01C__12CScnItemPoolFv();
-extern void func_8048D014__12CScnItemPoolFv();
+extern void vicbDtorThunk__12CScnItemPoolFv();
+extern void vicbCleanupAC__12CScnItemPoolFv();
 extern void viBeforeDrawDone__11CDeviceVICbFv();
 extern void viBeginFrame__11CDeviceVICbFv();
-extern void func_8048CF58__12CScnItemPoolFv();
+extern void cleanupACPool__12CScnItemPoolFv();
 }
 
 // [.rodata] 0x80523F18 (0xD + 3 align pad): CScnItemPool RTTI class-name
@@ -841,11 +841,11 @@ extern "C" u32 lbl_eu_8056E488[41] = {
     (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
     // CDeviceVICb sub-vtable group (this -4)
     (u32)&lbl_eu_80663938, 0xFFFFFFFC,
-    (u32)&func_8048D01C__12CScnItemPoolFv,
+    (u32)&vicbDtorThunk__12CScnItemPoolFv,
     (u32)&viBeforeDrawDone__11CDeviceVICbFv,
-    (u32)&func_8048D014__12CScnItemPoolFv,
+    (u32)&vicbCleanupAC__12CScnItemPoolFv,
     (u32)&viBeginFrame__11CDeviceVICbFv,
-    (u32)&func_8048CF58__12CScnItemPoolFv,
+    (u32)&cleanupACPool__12CScnItemPoolFv,
 };
 
 // [.data] 0x8056E52C-0x8056E540 (0x14): RTTI base-list block

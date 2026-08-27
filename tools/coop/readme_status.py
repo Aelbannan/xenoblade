@@ -28,6 +28,19 @@ BEGIN = "<!-- BEGIN GENERATED COOP STATUS -->"
 END = "<!-- END GENERATED COOP STATUS -->"
 
 
+def _row_bytes(target) -> int:
+    """Catalogued byte size of a registry row (hex ``size`` string or int)."""
+    size = target.extra.get("size")
+    if size is None:
+        return 0
+    if isinstance(size, int):
+        return size
+    try:
+        return int(str(size), 16) if str(size).lower().startswith("0x") else int(str(size), 10)
+    except (TypeError, ValueError):
+        return 0
+
+
 def generate_block(config: CoopConfig) -> str:
     targets = load_targets(config)
     buildable = sum(1 for t in targets if t.buildable)
@@ -35,6 +48,18 @@ def generate_block(config: CoopConfig) -> str:
     full = sum(1 for t in accepted if t.status == "FULL_MATCH")
     equivalent = sum(1 for t in accepted if t.status == "EQUIVALENT_MATCH")
     active = sum(1 for t in targets if t.workflow_status == "ACTIVE")
+
+    # Byte-weighted progress: accepted bytes over all catalogued function bytes
+    # (the count table above inflates progress because tiny functions dominate
+    # the target count; these rows keep byte share honest).
+    sized = [t for t in targets if t.kind == "function" and _row_bytes(t) > 0]
+    total_bytes = sum(_row_bytes(t) for t in sized)
+    full_bytes = sum(_row_bytes(t) for t in accepted if t.status == "FULL_MATCH")
+    equiv_bytes = sum(_row_bytes(t) for t in accepted if t.status == "EQUIVALENT_MATCH")
+    accepted_bytes = full_bytes + equiv_bytes
+
+    def pct(n: int, d: int) -> str:
+        return f"{100.0 * n / d:.1f}%" if d else "n/a"
 
     lines = [
         BEGIN,
@@ -47,6 +72,10 @@ def generate_block(config: CoopConfig) -> str:
         f"| Targets (registry) | {len(targets)} |",
         f"| Buildable | {buildable} |",
         f"| Accepted | {len(accepted)} (`FULL_MATCH` {full} · `EQUIVALENT_MATCH` {equivalent}) |",
+        f"| Accepted bytes | {accepted_bytes} / {total_bytes} ({pct(accepted_bytes, total_bytes)}) "
+        f"of catalogued function bytes |",
+        f"| — `FULL_MATCH` bytes | {full_bytes} ({pct(full_bytes, total_bytes)}) |",
+        f"| — `EQUIVALENT_MATCH` bytes | {equiv_bytes} ({pct(equiv_bytes, total_bytes)}) |",
         f"| Active (in progress) | {active} |",
         "",
         END,

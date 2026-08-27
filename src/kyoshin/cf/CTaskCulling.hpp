@@ -29,7 +29,7 @@ namespace cf{
         virtual void cbRenderBefore();
 
         static void func_801A2BD0(u32 r3);
-        static UNKTYPE* func_801A2C04();
+        static UNKTYPE* getOccBuffer();
         static void func_801A2C94();
         static void func_801A2CAC();
 

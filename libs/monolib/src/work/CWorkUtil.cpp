@@ -15,7 +15,7 @@ extern "C" const char lbl_eu_805224C0[8] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 
 #pragma pop
 #endif
 
-UnkStruct_80438AF0_3* CWorkUtil::func_80438AF0(UnkStruct_80438AF0* arg0){
+UnkStruct_80438AF0_3* CWorkUtil::getData(UnkStruct_80438AF0* arg0){
     return arg0->unk4->unk0;
 }
 

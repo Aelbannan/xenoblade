@@ -581,7 +581,7 @@ CWorkThread* CWorkThread::getWorkThread(WORK_ID wid){
     return CWorkThreadSystem::sWorkThreads[wid];
 }
 
-void CWorkThread::func_804385CC(u32){}
+void CWorkThread::setWorkParam(u32){}
 
 void CWorkThread::wkTimeoutInit(){
     (void)getInstance__12CDeviceClockFv();

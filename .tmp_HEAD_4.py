@@ -1847,10 +1847,7 @@ UNIT_RULES: dict[str, UnitRules] = {
     "code_804E36DC.o": UnitRules(
         # pool-coupled: local .sdata2 pool -> CGXCache pool symbols (lbl_eu_8066Axxx).
         pool_patterns=(
-            # unsigned 2^52 int->f32 magic: retail references it as
-            # lbl_eu_8066B2F0 (nw4r_data.s blob; the former A390 mapping was
-            # a stale mine — retail code_804E36DC.s has no A390 refs).
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066B2F0"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A390"),
             (struct.pack(">I", 0x00000000), "lbl_eu_8066A378"),
             (struct.pack(">I", 0x3F800000), "lbl_eu_8066A380"),
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A388"),
@@ -2127,13 +2124,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_805273C8"),
         ),
         extern_data_sections=(".sdata2",),
-    ),
-    "CMenuCollepedia.o": UnitRules(
-        # retail's CMenuCollepedia dtor calls the game-side CProcess dtor
-        # wrapper __dt__800FED0C (unit .s has 3 refs, zero __dt__8CProcessFv);
-        # MWCC canonicalizes any CProcess-dtor-shaped extern name against the
-        # declared virtual ~CProcess, so the rename can't be done in source.
-        exact_renames=(("__dt__8CProcessFv", "__dt__800FED0C"),),
     ),
     "CtrlMoveBase.o": UnitRules(
         # Lone zero-word float slot -> lbl_eu_806665A0 (site correspondence).
@@ -3273,12 +3263,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # both objects; __AIVersion's .sdata reloc must carry the retail name.
         exact_renames=(("@395", "@364"),),
     ),
-    "AX.o": UnitRules(
-        # RVL SDK version-string dissolve (same pattern as ai.o): the banner
-        # literal is anon @339 in retail; MWCC spells it s_AXVersionStr.
-        # __AXVersion's .sdata reloc must carry the retail name.
-        exact_renames=(("s_AXVersionStr", "@339"),),
-    ),
     "AXCL.o": UnitRules(
         # retail .bss slice (__AXCommandList) is 32-byte aligned; MWCC emits 8.
         set_data_align=((".bss", 32),),
@@ -3796,10 +3780,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         retarget_relocs=((".data", 0x24, "lbl_eu_806635D8"),),
         exact_renames=(
             ("__vt__27TChildListHeader<8CProcess>", "lbl_eu_8056BB84"),
-            # __sinit_\CProcess_cpp's HA/LO pair references the first .bss
-            # object via the local ...bss.0 label; retail's split names that
-            # blob @582.
-            ("...bss.0", "@582"),
         ),
         drop_data_range=((".sdata", 0x8, 0x10),),
         drop_data_tail=((".rodata", 0x1B),),
@@ -3891,16 +3871,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             # CWorkRoot range). The 13 .text refs resolve at link.
             ("spInstance__Q217CWorkRootThreadNS15CWorkRootThread", "spInstance__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread"),
         ),
-        # Retail GC'd three MWCC-only text orphans: dummy1 (a source-side
-        # isRunning-emission forcing helper retail never had) and the
-        # reslist/_reslist_base dtors (strong copies live in CWorkThread.o;
-        # any surviving refs resolve there via UNDEF, same as retail).
-        drop_text_symbols=("dummy1__9CWorkRootFP11CWorkThread",),
-        drop_text_symbols_as_undef=(
-            "__dt__23reslist<P11CWorkThread>Fv",
-            "__dt__29_reslist_base<P11CWorkThread>Fv",
-        ),
-        repack_after_drop=16,
     ),
     "CScriptCode.o": UnitRules(
         # Class now derives from CWorkThread with out-of-line virtuals, so MWCC
@@ -5500,11 +5470,25 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_8066A164"),             # 0.0f
             (struct.pack(">I", 0x3F000000), "lbl_eu_8066A170"),             # 0.5f
         ),
-        # (retarget_relocs REMOVED 2026-08-26: source now binds every one of these
-        # directly via extern "C" (floats) and extern "C" blob u8 defs; the
-        # old hardcoded .text offsets (0x94..0x21F8) drift whenever emission
-        # order changes and used to corrupt whichever functions now occupy those
-        # offsets, e.g. AdjustCursor<w> +0x4c0 fmuls and __ct__<w>'s lfs sites.)
+        retarget_relocs=(
+            # statics (SDA21) and guards (SDA21) -> monolibdata1.s sbss
+            (".text", 0x94, "lbl_eu_8066A164"),
+            (".text", 0x9C, "lbl_eu_8066A160"),
+            (".text", 0xA4, "lbl_eu_80665564"),
+            (".text", 0x2194, "lbl_eu_80665568"),
+            (".text", 0x21A0, "lbl_eu_80665560"),
+            (".text", 0x21B4, "lbl_eu_80665560"),
+            (".text", 0x21C4, "lbl_eu_80665568"),
+            (".text", 0x21C8, "lbl_eu_80665569"),
+            (".text", 0x21D4, "lbl_eu_80665564"),
+            (".text", 0x21E8, "lbl_eu_80665564"),
+            (".text", 0x21F8, "lbl_eu_80665569"),
+            # TagProcessorBase vtables (ADDR16_HA/LO) -> nw4r_data.s .bss
+            (".text", 0x21AE, "@3592_80653EC8"),
+            (".text", 0x21BA, "@3592_80653EC8"),
+            (".text", 0x21E2, "@3992_80653ED4"),
+            (".text", 0x21EE, "@3992_80653ED4"),
+        ),
         extern_data_sections=(".sdata", ".sdata2", ".bss", ".sbss"),
         drop_text_symbols=(
             "__dt__Q34nw4r2ut4RectFv",
@@ -6426,10 +6410,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__Q34nw4r3snd18SoundArchivePlayer", "lbl_eu_8056ABE0"),
             ("__vt__Q44nw4r3snd18SoundArchivePlayer17SeqNoteOnCallback", "lbl_eu_8056AC20"),
             ("__vt__Q44nw4r3snd6detail9MmlParser", "lbl_eu_8056AAB0"),
-            # Ctor member vptr stores: retail references the blob copies under
-            # these labels (2026-08 drift on __ct__ / NoteOn sites).
-            ("__vt__Q34nw4r3snd18SoundArchivePlayer11WsdCallback", "lbl_eu_8056AC10"),
-            ("__vt__Q44nw4r3snd6detail20MmlSeqTrackAllocator", "lbl_eu_8056AAD0"),
         ),
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A050"),
@@ -6569,12 +6549,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
             (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
             (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
-        ),
-        exact_renames=(
-            # GetAnmResult's inlined-detail 0.0f pools to the A68 copy, but
-            # retail loads lbl_eu_80669E78 at that site (content-equal dup;
-            # no other site in this TU references A68).
-            ("lbl_eu_80669A68", "lbl_eu_80669E78"),
         ),
         extern_data_sections=(".sdata2",),
     ),
@@ -6878,41 +6852,29 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2", ".data", ".rodata"),
     ),
 
-    # g3d dcc trio (maya/xsi/3dsmax): each TU now DEFINES its two retail
-    # dispatch tables (lbl_eu_8051D6C0/D6DC, D6F8/D714, D730/D74C -- blob
-    # .rodata 0x220-0x2AC, 7 entries each in reverse declaration order). The
-    # in-TU definitions give -ipa file real references to the 14 anon-namespace
-    # TexSrtMtx/ProductTexSrtMtx functions, replacing the former
-    # DECOMP_FORCEACTIVE emitters entirely. History: ((used)) is ignored by
-    # this MWCC, #pragma force_active does not stop -ipa file DCE (verified
+    # g3d dcc trio (maya/xsi/3dsmax): each TU keeps a DECOMP_FORCEACTIVE
+    # emitter as its ONLY compile-time anchor for the 14 anon-namespace
+    # TexSrtMtx/ProductTexSrtMtx functions, which retail reaches solely through
+    # the nw4r_data.s dispatch tables lbl_eu_8051D6C0/lbl_eu_8051D6DC (+xsi/
+    # 3dsmax equivalents). Without the emitter -ipa file dead-strips all 14
+    # ('not written yet'; attempts 61552/61553): ((used)) is ignored by this
+    # MWCC, #pragma force_active does not stop -ipa file DCE (verified
     # 13/14 stripped), external linkage would change the @unnamed@g3d_*_cpp@
-    # mangled names the blob tables relocate against, and exact-name stub
-    # drops silently disarmed whenever __LINE__ drifted. extern_data_sections
-    # strips the TU .rodata copies and converts the six symbols to UNDEF so
-    # they resolve to the nw4r_data.s blob definitions at link (g3d_anmclr
-    # vtable pattern); data gate sees empty-vs-empty. Verified byte-neutral
-    # for every function including CalcTexMtx_* (hexdiff --all identical to
-    # the stub-based build; maya/xsi/3dsmax 2026-08 session).
-    # g3d dcc trio (maya/xsi/3dsmax): each TU defines its two retail dispatch
-    # tables (lbl_eu_8051D6C0/D6DC, D6F8/D714, D730/D74C -- nw4r_data.s .rodata
-    # 0x220-0x2AC, 7 entries each in reverse declaration order). The in-TU
-    # definitions give -ipa file real references to the 14 anon-namespace
-    # TexSrtMtx/ProductTexSrtMtx functions, replacing the old DECOMP_FORCEACTIVE
-    # emitters entirely ((used) and #pragma force_active are both ignored by
-    # -ipa file DCE; external linkage would break the @unnamed@g3d_*_cpp@
-    # mangled names). extern_data_sections then strips the TU .rodata copies
-    # and converts the six symbols to UNDEF so they resolve to the nw4r_data.s
-    # blob definitions at link (g3d_anmclr vtable pattern); the data gate sees
-    # empty-vs-empty. Verified byte-neutral for every function including
-    # CalcTexMtx_* (hexdiff --all identical to the stub-based build).
+    # mangled names the blob tables relocate against, and an in-TU copy of the
+    # tables would move data ownership out of nw4r_data.s. The emitter itself
+    # is retail-absent (+0xFC/+0x140/+0x100 split overflow); drop it here like
+    # CNBanner/CDeviceGX/CGame_wkStandbyLogin/CWorkSystemCache.
+    # NOTE: stub symbol names embed the emitter's CLOSING-PAREN line number;
+    # the trailing-* prefix match tolerates that drift. Still keep the emitter
+    # invocation stable where practical.
     "g3d_maya.o": UnitRules(
-        extern_data_sections=(".rodata",),
+        drop_text_symbols=("FORCEACTIVEg3d_maya_cpp*",),
     ),
     "g3d_xsi.o": UnitRules(
-        extern_data_sections=(".rodata",),
+        drop_text_symbols=("FORCEACTIVEg3d_xsi_cpp*",),
     ),
     "g3d_3dsmax.o": UnitRules(
-        extern_data_sections=(".rodata",),
+        drop_text_symbols=("FORCEACTIVEg3d_3dsmax_cpp*",),
     ),
 
     "g3d_scnroot.o": UnitRules(

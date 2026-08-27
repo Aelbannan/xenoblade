@@ -55,7 +55,7 @@ public:
     virtual void CObjectState_UnkVirtualFunc8();    // +0x24
     virtual void CObjectState_UnkVirtualFunc9();    // +0x28
     virtual void CObjectState_UnkVirtualFunc10();   // +0x2C
-    virtual void CObjectState_UnkVirtualFunc11();   // +0x30
+    virtual void* CObjectState_UnkVirtualFunc11();   // +0x30
     virtual void CObjectState_UnkVirtualFunc12();   // +0x34
     virtual void CObjectState_UnkVirtualFunc13();   // +0x38
 };

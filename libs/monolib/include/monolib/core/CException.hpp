@@ -18,7 +18,7 @@ public:
     CException(const char* pName, CWorkThread* pParent);
     virtual ~CException();
     
-    bool func_80457C8C();
+    bool isFadedIn();
     static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
     CException* func_80457EB0();
     void* func_80457ED4(u32 r4);

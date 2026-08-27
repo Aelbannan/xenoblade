@@ -127,144 +127,7 @@ struct MenuBpsPaneXlate {
     f32 field_0x34;
 };
 
-// Cast-only ifaces: MWCC virtual dispatch uses r12 (retail), unlike function-pointer
-// loads that color the vptr temp as r4. Never constructed.
-// Minimal dispatch surface for actor vtable slot +0x200
-// (CActorParam_UnkVirtualFunc91). Retail returns u32 (the impl in
-// CfGameManager.cpp reads the u32 at this+0x1608), but the shared
-// CActorParam.hpp declares the slot void and must not be edited here.
-// Everything else this TU dispatches on the actor folds onto the named
-// cf::CActorParam virtuals. MWCC (RTTI on) places the first declared
-// virtual at +0x8, hence the filler slots.
-struct MenuBpsActorVfunc91If {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual void _v160();
-    virtual void _v164();
-    virtual void _v168();
-    virtual void _v16C();
-    virtual void _v170();
-    virtual void _v174();
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual void _v188();
-    virtual void _v18C();
-    virtual void _v190();
-    virtual void _v194();
-    virtual void _v198();
-    virtual void _v19C();
-    virtual void _v1A0();
-    virtual void _v1A4();
-    virtual void _v1A8();
-    virtual void _v1AC();
-    virtual void _v1B0();
-    virtual void _v1B4();
-    virtual void _v1B8();
-    virtual void _v1BC();
-    virtual void _v1C0();
-    virtual void _v1C4();
-    virtual void _v1C8();
-    virtual void _v1CC();
-    virtual void _v1D0();
-    virtual void _v1D4();
-    virtual void _v1D8();
-    virtual void _v1DC();
-    virtual void _v1E0();
-    virtual void _v1E4();
-    virtual void _v1E8();
-    virtual void _v1EC();
-    virtual void _v1F0();
-    virtual void _v1F4();
-    virtual void _v1F8();
-    virtual void _v1FC();
-    virtual u32 vf200(); // +0x200
-};
+
 
 
 
@@ -644,9 +507,7 @@ void CMenuBattlePlayerState::Init() {
                 if (slot.unk22C < zeroF2) {
                     slot.unk22C = slot.unk224;
                 }
-                // +0x200 stays on MenuBpsActorVfunc91If (hot-header typing).
-                slot.unk218 = slot.unk21C =
-                    reinterpret_cast<MenuBpsActorVfunc91If*>(actor)->vf200();
+                slot.unk218 = slot.unk21C = actor->CActorParam_UnkVirtualFunc91();
                 slot.unk210 = static_cast<u32>(
                     actor->CActorParam_UnkVirtualFunc37());
                 slot.unk214 = static_cast<u32>(
@@ -812,7 +673,7 @@ after_bit21:
         hp_clean:
             slot->unk210 = hp;
             slot->unk214 = maxHp;
-            slot->unk218 = reinterpret_cast<MenuBpsActorVfunc91If*>(actor)->vf200();
+            slot->unk218 = actor->CActorParam_UnkVirtualFunc91();
             slot->unk220 = hpRatio;
 
             {

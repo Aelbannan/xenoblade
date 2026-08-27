@@ -531,13 +531,39 @@ struct CfObjectEffSourceSubIf {
     virtual u32 func40(void* obj);  // slot 0x40
 };
 
-class __declspec(novtable) CfObjectEff : public CfObject {
+// Real second-base interface of CfObjectEff (recovered from the retail
+// vtable group): the complete-object vtable lbl_eu_80528870 carries a second
+// group at +0x178 whose header is {typeinfo lbl_eu_80661970, offset-to-top
+// -0x90}, i.e. a polymorphic base sub-object living at object offset +0x90.
+// Its only virtual besides the destructor is func_800AD68C (the teardown
+// whose slot 0x1BC destinations take the owner pointer) - the adjusting
+// thunks at +0x180/+0x184 (func_800AD858/func_800AD850, `subi r3,r3,-0x90;
+// b ...`) are its complete/deleting destructor entries and the +0x184 thunk
+// pointing at the appended REAL at +0x18C. External effect-system code
+// receives this+0x90 handles (func_804E3D48/func_804E3D0C parent arguments).
+// US symbols carry no class name (JP typestr/hierarchy not available in this
+// fork), so the interface keeps a descriptive name; CfObjectEff's own eight
+// virtuals then append after this base's group, landing at +0x188..+0x1A4
+// exactly as the retail table shows.
+class __declspec(novtable) CfObjectEffSub {
 public:
-    u32 mField70;                // 0x70 - packed type/id (top 5 bits = type, func_800AD060)
+    virtual ~CfObjectEffSub() {}
+    virtual void func_800AD68C(u8* arg) = 0;
+};
+
+// Head sub-object: everything through +0x8F. The fields at +0x70..+0x8F are
+// CfObjectEff-specific but must precede the CfObjectEffSub vptr at +0x90,
+// so they live on this intermediate class (same trick as CHelpPrefix).
+class __declspec(novtable) CfObjectEffPrefix : public CfObject {
+public:
+    u32 mField70;   // 0x70 - packed type/id (top 5 bits = type, func_800AD060)
     u8 _pad74[0x8C - 0x74];
-    u16 mCount8C;                // 0x8C - effect count (func_800AD060 passes count-1)
-    u16 mCount8E;                // 0x8E - ptmf-table dispatch counter (func_800AD3A4)
-    u8* mSubObj90;               // 0x90 - secondary vtable (CfObjectEff vtable + 0x178)
+    u16 mCount8C;   // 0x8C - effect count (func_800AD060 passes count-1)
+    u16 mCount8E;   // 0x8E - ptmf-table dispatch counter (func_800AD3A4)
+};
+
+class __declspec(novtable) CfObjectEff : public CfObjectEffPrefix, public CfObjectEffSub {
+public:
     CfObjectEffChild* mChildEff;  // 0x94
     u8* mField98;            // 0x98 - object (cleared with mField9C in func_800ACA58)
     u8* mField9C;            // 0x9C - object (func_800ACF78)
@@ -553,17 +579,11 @@ public:
     u8* mFieldBC;            // 0xBC - effect manager override (func_800AD060)
 
     CfObjectEff();
-    void CfObject_UnkVirtualFunc29();
     bool func_800AC7CC();
-    void func_800AC7FC();
-    void func_800AC810();
     void func_800AC86C();
-    void func_800AC990();
-    void func_800ACA58();
     void func_800ACAE8();
     void func_800ACB08();
     void func_800ACBA4();
-    void func_800ACBCC();
     void func_800ACC3C();
     void func_800ACC94();
     void func_800ACCD4();
@@ -579,17 +599,19 @@ public:
     void func_800ACF50() const;
     void func_800AD3A4();
     int func_800AD4A4();
-    void func_800AD68C();
     virtual ~CfObjectEff();
-    // CfObjectEff-specific vtable slots beyond CfObject's last (0x174).
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual u8* getSub188();    // vtable 0x188 - returns the active sub-object
-    virtual void _v18C();
-    virtual void destroy190();    // vtable 0x190 - tears down the sub-object
-    void func_800AD818();
+    // CfObjectEff's own virtuals. With the CfObjectEffSub second base they
+    // append after the sub's vtable group (header + dtor-thunk pair at
+    // +0x178..+0x184), landing at the retail slots +0x188..+0x1A4:
+    virtual u32 func_800AC7FC();              // +0x188 - active-sub-object check
+    virtual void func_800AD68C(u8* arg) override; // +0x18C - teardown (overrides Sub)
+    virtual void func_800AC810();             // +0x190 - detach child effect
+    virtual void func_800ACF50(bool flag);    // +0x194
+    virtual bool func_800AC990(u8* obj);      // +0x198 - detach partner
+    virtual bool func_800ACA58(u8* arg);      // +0x19C - detach bound object
+    virtual void func_800ACBCC(int flag);     // +0x1A0
+    virtual bool func_800AD818(u16 flags);    // +0x1A4 - flag test
+    void func_800AD830();
     void func_800AD830();
     void func_800AD840();
     void func_800ACE44();

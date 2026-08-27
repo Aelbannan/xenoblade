@@ -1042,8 +1042,8 @@ def cmd_targets_status(
     return 0
 
 
-def cmd_targets_validate(config: CoopConfig) -> int:
-    errors = validate_targets(config)
+def cmd_targets_validate(config: CoopConfig, *, schema_only: bool = False) -> int:
+    errors = validate_targets(config, check_certificates=not schema_only)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
@@ -2323,7 +2323,14 @@ def main() -> int:
     p_targets_status.add_argument("--kind", default="function")
     p_targets_status.add_argument("--format", choices=["markdown", "json"], default="markdown")
     p_targets_status.add_argument("--output", type=Path)
-    p_targets_sub.add_parser("validate", help="Validate registry identities and status vocabularies")
+    p_targets_validate = p_targets_sub.add_parser(
+        "validate", help="Validate registry identities and status vocabularies"
+    )
+    p_targets_validate.add_argument(
+        "--schema-only",
+        action="store_true",
+        help="skip equivalence-certificate staleness checks (schema gate)",
+    )
     p_targets_sub.add_parser(
         "sync-attempts",
         help="Migrate each target's latest attempts.jsonl result into current registry state",
@@ -2634,7 +2641,7 @@ def main() -> int:
             output_format=args.format,
         )
     if args.command == "targets" and args.targets_cmd == "validate":
-        return cmd_targets_validate(config)
+        return cmd_targets_validate(config, schema_only=args.schema_only)
     if args.command == "targets" and args.targets_cmd == "sync-attempts":
         return cmd_targets_sync_attempts(config)
     if args.command == "targets" and args.targets_cmd == "sync-calls":

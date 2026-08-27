@@ -115,7 +115,7 @@ CTalkWindow* __ct__CTalkWindow(CTalkWindow* _this, u32 arg1, u32 arg2,
 // ---------------------------------------------------------------------------
 void func_8012D8C0(CTalkWindow* self) {
     f32 frame = lbl_eu_80667284;
-    if (func_80137444(self->field_88, frame) == 0) return;
+    if (advanceAnimTransform(self->field_88, frame) == 0) return;
     if (self->field_B4 != 0) {
         if (code80135FDC_getByte_64058() == 0) {
             if (findObjectById(self->field_68) != 0) {
@@ -198,7 +198,7 @@ void func_8012DA6C(CTalkWindow* self) {
         self->mpLayout->SetAnimationEnable(self->field_94, true);
         reinterpret_cast<CTalkAnimFrame*>(self->field_94)->mFrame =
             lbl_eu_80667280;
-        func_80138078(0x2b);
+        playUISound(0x2b);
         self->field_B0 = 4;
     } else if (state == 0 || self->field_65 != 0 || self->field_66 != 0) {
         // Page-advance path: clear the pending flag, run the character-voice
@@ -235,13 +235,13 @@ void func_8012DA6C(CTalkWindow* self) {
             lbl_eu_80667280;
         switch (self->field_A4) {
         case 0:
-            func_80138078(0x2a);
+            playUISound(0x2a);
             break;
         case 1:
-            func_80138078(0x73);
+            playUISound(0x73);
             break;
         case 3:
-            func_80138078(0x75);
+            playUISound(0x75);
             break;
         default:
             break;
@@ -257,7 +257,7 @@ void func_8012DA6C(CTalkWindow* self) {
         }
     }
 
-    func_80137444(self->field_8C, lbl_eu_80667284);
+    advanceAnimTransform(self->field_8C, lbl_eu_80667284);
 }
 
 // ---------------------------------------------------------------------------
@@ -562,7 +562,7 @@ p2done:;
 //  - Font binding order: retail loads GetRootPane() BEFORE calling
 //    getFontInfo(1, layout) (hoist into its own statement).
 //  - The lbl_eu_804FFCA4 blob base is materialised once into r30 before the
-//    five func_80136F08 calls, then rematerialised (r30/r28/r27/r30 again)
+//    five bindLayoutAnimTransform calls, then rematerialised (r30/r28/r27/r30 again)
 //    at each section boundary after Animate() - the source likely redeclares
 //    a base pointer per scope rather than sharing one.
 //  - Member calls on reinterpret_cast<UnkClass_8045F564*> (createRegion /
@@ -633,17 +633,17 @@ void CTalkWindow::Init() {
         // message / corner panes.
         field_A4 = tagProc->field_0x816;
 
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &mpLayout, func_801355F4(), &lbl_eu_804FFCA4[0xc]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_88, func_801355F4(), &lbl_eu_804FFCA4[0x23]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_8C, func_801355F4(), &lbl_eu_804FFCA4[0x3d]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_90, func_801355F4(), &lbl_eu_804FFCA4[0x58]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_94, func_801355F4(), &lbl_eu_804FFCA4[0x73]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mpLayout, &field_98, func_801355F4(), &lbl_eu_804FFCA4[0x92]);
 
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
@@ -724,7 +724,7 @@ void CTalkWindow::Init() {
             0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
         func_801355F4()->GetResource(
             0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
-        func_80138078(0x29);
+        playUISound(0x29);
 
         // Mode-specific page setup (retail keeps the type==0 guard as dead
         // code: type is always 7 on this path).
@@ -739,7 +739,7 @@ void CTalkWindow::Init() {
                         0x74696d67, &lbl_eu_804FFCA4[0x147], 0);
                     func_801355F4()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x161], 0);
-                    func_80138078(0x29);
+                    playUISound(0x29);
                 } else if (field_A4 == 1) {
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag &= ~1;
@@ -754,7 +754,7 @@ void CTalkWindow::Init() {
                         FindPaneByName(&lbl_eu_804FFCA4[0x11e], 1))->mFlag &= ~1;
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x12c], 1))->mFlag &= ~1;
-                    func_80138078(0x72);
+                    playUISound(0x72);
                 } else if (field_A4 == 3) {
                     reinterpret_cast<CTalkWinPane*>(mpLayout->GetRootPane()->
                         FindPaneByName(&lbl_eu_804FFCA4[0x13b], 1))->mFlag |= 1;
@@ -764,7 +764,7 @@ void CTalkWindow::Init() {
                         0x74696d67, &lbl_eu_804FFCA4[0x1af], 0);
                     func_801355F4()->GetResource(
                         0x74696d67, &lbl_eu_804FFCA4[0x1c9], 0);
-                    func_80138078(0x74);
+                    playUISound(0x74);
                 }
             }
             if ((opt & 0x1) != 0) {
@@ -821,7 +821,7 @@ void CTalkWindow::Move() {
         func_8012DA6C(this);
         break;
     case 3:
-        if (func_80137444(field_90, lbl_eu_80667284) != 0) {
+        if (advanceAnimTransform(field_90, lbl_eu_80667284) != 0) {
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
                 render = reinterpret_cast<IScnRender*>(&mScnRender);
@@ -832,7 +832,7 @@ void CTalkWindow::Move() {
         }
         break;
     case 4: {
-        if (func_80137444(field_94, lbl_eu_80667284) == 0) break;
+        if (advanceAnimTransform(field_94, lbl_eu_80667284) == 0) break;
         mpLayout->SetAnimationEnable(field_90, false);
         mpLayout->SetAnimationEnable(field_94, false);
         mpLayout->SetAnimationEnable(field_88, false);
@@ -855,7 +855,7 @@ void CTalkWindow::Move() {
         break;
     }
     case 5:
-        if (func_80137444(field_98, lbl_eu_80667284) != 0) {
+        if (advanceAnimTransform(field_98, lbl_eu_80667284) != 0) {
             mpLayout->SetAnimationEnable(field_90, false);
             mpLayout->SetAnimationEnable(field_94, false);
             mpLayout->SetAnimationEnable(field_88, false);
@@ -941,7 +941,7 @@ void CTalkWindow::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 

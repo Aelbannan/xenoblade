@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/menu/CMenuTutorialList.hpp"
-#include "kyoshin/CTutorial.hpp"       // func_80138078 (retail func_80138078__FUl)
+#include "kyoshin/CTutorial.hpp"       // playUISound (retail playUISound__FUl)
 #include "kyoshin/code_80135FDC.hpp"   // func_80136190 string-format helper
 #include "kyoshin/CTaskGame.hpp"       // CTaskGame::getInstance / isFlag01Set
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad
@@ -131,7 +131,7 @@ body:
         if (func_800FEDF8() != 0) {
             func_800FF914();
         }
-        func_80138078(6);
+        playUISound(6);
         mFlag = 4;
         mField54 = 1;
     }
@@ -224,7 +224,7 @@ void func_802AC520(CMenuTutorialList* self) {
                 func_801C412C(&self->mTitleAHelp);
                 func_802AD308((CTutorialList*)self->mTutorialList);
                 self->mFlag = 1;
-                func_80138078(0x6d);
+                playUISound(0x6d);
             }
         }
     }

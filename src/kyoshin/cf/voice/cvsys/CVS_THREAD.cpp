@@ -24,10 +24,10 @@ struct CVoiceVf167Res {
 };
 
 // C++-mangled imports (MWCC emits findObjectById__Fi /
-// func_800BFC68__FPQ22cf12CfObjectMove, matching the retail symbols).
+// getCfObjectPc__FPQ22cf12CfObjectMove, matching the retail symbols).
 namespace cf { class CfObjectMove; }
 void* findObjectById(int id);
-void* func_800BFC68(cf::CfObjectMove* objMove);
+void* getCfObjectPc(cf::CfObjectMove* objMove);
 // Battle-state helpers (retail unmangled C-ABI symbols).
 extern "C" int func_80146148(int value);
 extern "C" int func_80146300(u32 id, u32 flag);
@@ -358,7 +358,7 @@ extern "C" __declspec(noinline) int func_802A3FD4(CVoiceHandle* self) {
     // First dispatch of the target-state virtual: its +0x04 actor id goes
     // through the actor-source lookup and CfObjectMove resolution.
     res = ((CVoiceVTV*)self)->voiceTarget();
-    actor = (cf::CfObjectMove*)func_800BFC68(
+    actor = (cf::CfObjectMove*)getCfObjectPc(
         (cf::CfObjectMove*)findObjectById(res->field_04));
     if (actor == NULL)
         return -1;

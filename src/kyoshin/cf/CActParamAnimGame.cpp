@@ -16,11 +16,11 @@
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
     *(void**)self = (void*)lbl_eu_80526458;
-    self->field_4EC = 0;
-    self->field_4F0 = 0;
-    self->field_530 = 0;
+    *(u32*)((u8*)self + 0x4EC) = 0;
+    *(u32*)((u8*)self + 0x4F0) = 0;
+    *(u16*)((u8*)self + 0x530) = 0;
     ((cf::CActParamAnimGameVtE0*)self)->vE0();
-    self->field_4E8 = arg;
+    *(cf::CActParamAnimGameLink**)((u8*)self + 0x4E8) = arg;
     return self;
 }
 
@@ -28,9 +28,9 @@ cf::CActParamAnimGame::CActParamAnimGame() {
     // Base ctor (__ct__13CActParamAnimFv) runs first; the retail vtable is
     // stored manually because the class is __declspec(novtable).
     *(void**)this = (void*)lbl_eu_80526458;
-    field_4EC = 0;
-    field_4F0 = 0;
-    field_530 = 0;
+    *(u32*)((u8*)this + 0x4EC) = 0;
+    *(u32*)((u8*)this + 0x4F0) = 0;
+    *(u16*)((u8*)this + 0x530) = 0;
     ((CActParamAnimGameVtE0*)this)->vE0();
 }
 
@@ -53,19 +53,21 @@ void cf::CActParamAnimGame::func_8005A524() {
     func_8004B114();
     // sdata2 constants written inline (const-float globals hoist the loads at
     // retail's position and allocate retail's FPR coloring, MWCC_CASES
-    // SDA-const hoist / FPR-coloring rules).
-    field_4E8 = 0;
-    field_4F4 = 0;
-    field_4F8 = lbl_eu_80666040;
-    field_500 = lbl_eu_80666044;
-    field_508 = lbl_eu_80666044;
-    field_50C = lbl_eu_80666048;
-    field_52C = 0;
-    field_504 = lbl_eu_80666048;
-    field_532 = 0;
-    field_534 = 0;
-    field_536 = 2;
-    field_538 = 0;
+    // SDA-const hoist / FPR-coloring rules). Use raw offsets for retail
+    // layout (+0x36C larger base in decomp would shift class-member
+    // displacements).
+    *(void**)((u8*)this + 0x4E8) = 0;
+    *(void**)((u8*)this + 0x4F4) = 0;
+    *(f32*)((u8*)this + 0x4F8) = lbl_eu_80666040;
+    *(f32*)((u8*)this + 0x500) = lbl_eu_80666044;
+    *(f32*)((u8*)this + 0x508) = lbl_eu_80666044;
+    *(f32*)((u8*)this + 0x50C) = lbl_eu_80666048;
+    *(u32*)((u8*)this + 0x52C) = 0;
+    *(f32*)((u8*)this + 0x504) = lbl_eu_80666048;
+    *(u16*)((u8*)this + 0x532) = 0;
+    *(u16*)((u8*)this + 0x534) = 0;
+    *(u16*)((u8*)this + 0x536) = 2;
+    *(u16*)((u8*)this + 0x538) = 0;
 }
 
 // Stubs for retail C-linkage functions that func_8005D2C4 tail-calls; kept

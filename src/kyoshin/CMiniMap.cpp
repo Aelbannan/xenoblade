@@ -132,7 +132,7 @@ u32 func_8003B1EC(void*);
 void __dt__80043E88(void* holder, int);
 void func_800F4A98(void* list, u32 type, u32 filter);
 void* __ct__800FB044(void* list, f32, void* obj, int);
-void* func_800BFC68__FPQ22cf12CfObjectMove(void* obj);
+void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 void* func_800B6CF8(int);
 void* func_800B6C58();
 void* func_800B6BEC();
@@ -255,9 +255,9 @@ bool CMMClock::OnFileEvent(CEventFile* pEventFile) {
         u8* data = (u8*)mFileHandle->getData();
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, &lbl_eu_804FE1FC[0xE9]);
-        func_80136E84(&mLayout, mAccessor, &lbl_eu_804FE1FC[0xED]);
-        func_80136F08(mLayout, &mAnimTrans0, mAccessor, &lbl_eu_804FE1FC[0x105]);
-        func_80136F08(mLayout, &mAnimTrans1, mAccessor, &lbl_eu_804FE1FC[0x126]);
+        buildLayout(&mLayout, mAccessor, &lbl_eu_804FE1FC[0xED]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans0, mAccessor, &lbl_eu_804FE1FC[0x105]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mAccessor, &lbl_eu_804FE1FC[0x126]);
         mLayout->SetAnimationEnable(mAnimTrans1, false);
         mLayout->SetAnimationEnable(mAnimTrans0, true);
         mLayout->Animate(0);
@@ -300,11 +300,11 @@ bool CMiniMap::OnFileEvent(CEventFile* pEventFile) {
         u16 row = lbl_eu_8052C740[rowIdx];
         char buf[0x40];
         sprintf(buf, &lbl_eu_804FE1FC[0x219], row);
-        func_80136E84(&mLayout0C, mAccessor, buf);
+        buildLayout(&mLayout0C, mAccessor, buf);
         sprintf(buf, &lbl_eu_804FE1FC[0x239], row);
-        func_80136F08(mLayout0C, &mAnimTrans0, mAccessor, buf);
+        bindLayoutAnimTransform(mLayout0C, &mAnimTrans0, mAccessor, buf);
         sprintf(buf, &lbl_eu_804FE1FC[0x25C], row);
-        func_80136F08(mLayout0C, &mAnimTrans1, mAccessor, buf);
+        bindLayoutAnimTransform(mLayout0C, &mAnimTrans1, mAccessor, buf);
 
         mLayout0C->SetAnimationEnable(mAnimTrans1, false);
         mLayout0C->SetAnimationEnable(mAnimTrans0, true);
@@ -655,7 +655,7 @@ extern "C" void __declspec(noinline) func_80118058(CMiniMap* self) {
             self->mLayout0C = 0;
         }
     }
-    func_80139124(self->mAccessor);
+    releaseArcResourceAccessor(self->mAccessor);
     ((UnkClass_8045F564*)&self->m824)->func_8045F778();
     ((UnkClass_8045F564*)&self->m834)->func_8045F778();
     func_801390E0((CFileHandle**)&self->mSub.mPtr04);
@@ -690,7 +690,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
 
     if (!self->m0C) return;
     if (!cf::CfGameManager::getPlayer(0)) return;
-    obj = (MiniMapObj*)func_800BFC68__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
+    obj = (MiniMapObj*)getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
     func_80043D90(&holder);
     list = (MiniMapEnumList*)func_80043F18(&holder);
     func_800F4A98(list, 0xB00, 0);
@@ -1960,7 +1960,7 @@ void CMenuMiniMap2::Term() {
         delete mClock.mLayout;
         mClock.mLayout = 0;
     }
-    func_80139124(mClock.mAccessor);
+    releaseArcResourceAccessor(mClock.mAccessor);
     mClock.mUnk1C.func_8045F778();
     func_80118058(&mMiniMap);
     lbl_eu_80663FB0 = 0;
@@ -2061,7 +2061,7 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
     switch (self->field_0x18) {
     case 1:
         // Fade-in done -> switch to the loop animation.
-        if (func_80137444(self->mAnimTrans0, lbl_eu_806670A4) != 0) {
+        if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_806670A4) != 0) {
             self->field_0x18 = 2;
             self->field_0x19 = 1;
             self->mLayout0C->SetAnimationEnable(self->mAnimTrans0, false);
@@ -2078,7 +2078,7 @@ extern "C" void __declspec(noinline) func_80117C30(CMiniMap* self) {
         break;
     case 4:
         // Fade-in finished: bind the shared 'timg' picture onto 'panemapmark'.
-        if (func_80137444(self->mAnimTrans1, lbl_eu_806670A4) != 0) {
+        if (advanceAnimTransform(self->mAnimTrans1, lbl_eu_806670A4) != 0) {
             self->field_0x18 = 6;
             void* res =
                 self->mAccessor->GetResource(0x74696D67, &lbl_eu_804FE1FC[0x1E7], 0);
@@ -2203,7 +2203,7 @@ void CMenuMiniMap2::Move() {
         case 1: {
             u16 a;
             u16 b;
-            if (func_80137444(mClock.mAnimTrans0, lbl_eu_806670A4) != 0) {
+            if (advanceAnimTransform(mClock.mAnimTrans0, lbl_eu_806670A4) != 0) {
                 mClock.field_0x18 = 2;
                 mClock.field_0x19 = 1;
                 mClock.mLayout->SetAnimationEnable(mClock.mAnimTrans0, 0);
@@ -2279,10 +2279,10 @@ void CMenuMiniMap2::cbRenderBefore() {
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
     if (mClock.mLayout != 0) {
-        func_80137038(mClock.mLayout, &drawInfo, 0, 1);
+        drawLayout(mClock.mLayout, &drawInfo, 0, 1);
     }
     if (mMiniMap.mLayout0C != 0 && mMiniMap.mFlag1B != 0) {
-        func_80137038(mMiniMap.mLayout0C, &drawInfo, 0, 1);
+        drawLayout(mMiniMap.mLayout0C, &drawInfo, 0, 1);
     }
 }
 

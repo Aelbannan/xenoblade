@@ -24,16 +24,16 @@ extern const double lbl_eu_80668608;
 // Shop window arc file path string (split1 .rodata).
 extern "C" char lbl_eu_8050A62C[];
 // Animate the attached anim-transform forward to a frame (returns true when done).
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Animate the attached anim-transform in reverse (returns true when done).
 // Retail symbol is unmangled (C linkage).
 extern "C" {
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 }
 // Draw a nw4r layout with the given draw info.
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Fire a per-window sound/effect event by id.
-void func_80138078(u32);
+void playUISound(u32);
 // Sum the translate of a pane and its ancestors into an output VEC3. C-ABI.
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 

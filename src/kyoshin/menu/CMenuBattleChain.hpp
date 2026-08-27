@@ -101,7 +101,7 @@ extern u32 __ptmf_null[3];
 extern char lbl_eu_8051088C[];
 // Anim-frame reset constant (sdata2 float pool).
 extern const f32 lbl_eu_80668CB0;
-// Anim "finished" threshold passed to func_80137444 / func_80137510.
+// Anim "finished" threshold passed to advanceAnimTransform / func_80137510.
 extern const f32 lbl_eu_80668CB4;
 
 // cbRenderBefore flag (.sbss); bit 0x200000 gates CMenuBattleChain::Move.
@@ -184,8 +184,8 @@ extern u32 lbl_eu_80662DC4;
 extern u32 lbl_eu_80662DC8;
 extern u32 lbl_eu_80662DCC;
 
-// Font-pane helper (retail mangled name func_801355A0__Fv).
-u32 func_801355A0();
+// Font-pane helper (retail mangled name getPackedFont__Fv).
+u32 getPackedFont();
 
 // lyt DrawInfo lifetime helpers (retail pre-mangled symbol names).
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);

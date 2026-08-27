@@ -9,7 +9,7 @@
 // Global-scope LOD distance-cull helper (defined in UnkClass_8046368C.cpp).
 // Returns non-zero when the distance range [a, b] straddles the shared LOD
 // distance limit (lbl_eu_806657B8).
-s32 func_8046451C(s32 a, s32 b);
+s32 isLodRangeStraddlesLimit(s32 a, s32 b);
 
 // LOD render-state helpers defined in sibling LOD TUs.  The retail symbol map
 // keeps their C++ mangled names, so plain global-scope declarations with the
@@ -17,9 +17,9 @@ s32 func_8046451C(s32 a, s32 b);
 s32 func_80464128(u32 arg);
 s32 func_804642BC(s32 a, u32 b);
 s32 func_804643D8(s32 a, s32 b, s32 da, s32 db);
-void func_80465314(s32 value);
+void selectLodTexCoord(s32 value);
 void func_80463C24(s32 index, s32 offset, const f32 (*mtx)[3][4]);
-void func_8046406C(s32 count);
+void bindLodVertexArrays(s32 count);
 
 // Scene-resource current-data getter (monolib/src/scn/code_804BC9EC.cpp).
 // C linkage so the 0-arg call emits the retail name unmangled (a C++ 0-arg

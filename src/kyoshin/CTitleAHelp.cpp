@@ -85,7 +85,7 @@ void CTitleAHelp::func_801C3FF0() {
 void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
-    func_80137038(mLayout, drawInfo, 0, 1);
+    drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 void CTitleAHelp::func_801C40A0() {
@@ -95,7 +95,7 @@ void CTitleAHelp::func_801C40A0() {
         delete mLayout;
         mLayout = nullptr;
     }
-    func_80139124(mArcResourceAccessor);
+    releaseArcResourceAccessor(mArcResourceAccessor);
     unk4.func_8045F778();
 }
 
@@ -286,7 +286,7 @@ extern "C" void func_801C4760(CTitleAHelp* self) {
 }
 
 extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
-    if(func_80137444(self->mAnimTrans20, 1.0f)) {
+    if(advanceAnimTransform(self->mAnimTrans20, 1.0f)) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans20, 0);
         self->mLayout->SetAnimationEnable(self->mAnimTrans24, 1);
         self->unk2c = 2;
@@ -294,7 +294,7 @@ extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
 }
 
 extern "C" void __declspec(noinline) func_801C47F8(CTitleAHelp* self) {
-    if(func_80137444(self->mAnimTrans24, 1.0f)) {
+    if(advanceAnimTransform(self->mAnimTrans24, 1.0f)) {
         self->unk2c = 3;
         self->unk36 = 1;
         self->unk37 = 0;
@@ -335,9 +335,9 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
         mArcResourceAccessor = CLibLayout::createArcResourceAccessor();
         mArcResourceAccessor->Attach(data, &lbl_eu_805054BC[0x88]);
 
-        func_80136E84(&mLayout, mArcResourceAccessor, &lbl_eu_805054BC[0x8c]);
-        func_80136F08(mLayout, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805054BC[0x9f]);
-        func_80136F08(mLayout, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805054BC[0xb5]);
+        buildLayout(&mLayout, mArcResourceAccessor, &lbl_eu_805054BC[0x8c]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans20, mArcResourceAccessor, &lbl_eu_805054BC[0x9f]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans24, mArcResourceAccessor, &lbl_eu_805054BC[0xb5]);
 
         // Retail loads the root pane (layout + 0x10) before the font call and
         // keeps it live across func_8013676C.

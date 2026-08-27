@@ -183,7 +183,7 @@ void func_8027336C(CKizunaTalkList* self) {
 // cursor when the list is visible.
 void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
     if (self->mState84 != 0) {
-        func_80137038(self->mpLayout20, pDrawInfo, 0, 1);
+        drawLayout(self->mpLayout20, pDrawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, (void*)pDrawInfo);
         func_801D20B0(&self->mCursor, (void*)pDrawInfo);
     }
@@ -203,7 +203,7 @@ void func_8027346C(CKizunaTalkList* self) {
         ((void (*)(void*, int))((void**)self->mpLayout20)[0x08 / 4])(self->mpLayout20, 1);
         self->mpLayout20 = NULL;
     }
-    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mUnknown1C);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mUnknown1C);
     self->mUnknown1C = 0;
 
     // Cursor virtual slot 0x0c/4 on the embedded cursor.
@@ -506,7 +506,7 @@ void func_802735F0(CKizunaTalkList* self) {
         func_80273AD0(self);
         func_801D216C(&self->mCursor, 0);
         func_801F369C(&self->mScrollBar);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     }
 }
 
@@ -535,7 +535,7 @@ void func_80273654(CKizunaTalkList* self) {
     func_80273B30(self);
     func_802740E4(self);
     func_801F3850(&self->mScrollBar, (u16)self->mUnknown8A);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_80273710(CKizunaTalkList* self) {
@@ -562,7 +562,7 @@ void func_80273710(CKizunaTalkList* self) {
     func_80273B30(self);
     func_802740E4(self);
     func_801F3850(&self->mScrollBar, (u16)self->mUnknown8A);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_802737E0(CKizunaTalkList* self) {
@@ -584,7 +584,7 @@ void func_802737E0(CKizunaTalkList* self) {
     func_80273B30(self);
     func_802740E4(self);
     func_801F3850(&self->mScrollBar, (u16)self->mUnknown8A);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_8027387C(CKizunaTalkList* self) {
@@ -608,20 +608,20 @@ void func_8027387C(CKizunaTalkList* self) {
     func_80273B30(self);
     func_802740E4(self);
     func_801F3850(&self->mScrollBar, (u16)self->mUnknown8A);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 extern "C" __declspec(noinline) void func_80273938(CKizunaTalkList* self) {
     // Advance the entry-show animation; when it completes, step the state
     // machine forward (retail func_80273938).
-    if (func_80137444(self->mpAnim24, lbl_eu_806689D4) != 0) {
+    if (advanceAnimTransform(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 2;
         func_80273AD0(self);
     }
 }
 
 extern "C" __declspec(noinline) void func_80273984(CKizunaTalkList* self) {
-    if (func_80137444(self->mpAnim28, 2.0f) != 0) {
+    if (advanceAnimTransform(self->mpAnim28, 2.0f) != 0) {
         self->mState85 = 3;
         func_802740E4(self);
         self->mNeedsRebuild = 1;
@@ -848,9 +848,9 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc((nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, fileData, &strBase[0x1c9]);
 
         // Create the layout and its two animation transforms.
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&this->mpLayout20, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1cd]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim24, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1e2]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim28, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1fa]);
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&this->mpLayout20, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1cd]);
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim24, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1e2]);
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(this->mpLayout20, &this->mpAnim28, (nw4r::lyt::ArcResourceAccessor*)this->mUnknown1C, &strBase[0x1fa]);
 
         // Bind the font pane onto the layout.
         void* rootPane = *(void**)((char*)this->mpLayout20 + 0x10);
@@ -891,7 +891,7 @@ bool CKizunaTalkList::OnFileEvent(CEventFile* pEventFile) {
         // Shared-archive hit: release the previously buffered shared file data.
         CFileHandle* fh2 = (CFileHandle*)this->mUnknown18;
         void* data2 = fh2->getData();
-        func_8003AA78__5CBdatFUlPv(2, data2);
+        setBdatEntry__5CBdatFUlPv(2, data2);
         func_8003AA34();
         lbl_eu_806648B8 = (void*)getFP__FPCc(&lbl_eu_8050E990[0x217]);
         func_802741B0(this);

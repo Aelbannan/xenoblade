@@ -1474,7 +1474,7 @@ void CMenuPTState::Move() {
                     func_801FA4F4(&field_0x80);
                     if (func_800FEDF8() != 0) {
                         func_800FF914();
-                        func_80138078(6);
+                        playUISound(6);
                     }
                     field_0x6C6C = 3;
                 }

@@ -18,10 +18,10 @@ extern "C" void* func_80157C4C(u32 index, s16 value);
 static inline void* func_80157C4C_1(u32 id) { return func_80157C4C(0, (s16)id); }
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
 char* func_80136190(char*, char*, u32);
 extern "C" char* func_8013639C(void*, char*);
@@ -183,8 +183,8 @@ void func_801D4AE0(CItemBoxInfo* info, char* arg1, char* arg2) {
 #pragma optimize_for_size on
 void func_801D4BDC(CItemBoxInfo* info, u8 arg2, u8 arg3) {
     if (info->state.layout != 0) {
-        func_80136910((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x17d], arg2);
-        func_80136910((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x188], arg3);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x17d], arg2);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x188], arg3);
     }
 }
 #pragma pop
@@ -204,7 +204,7 @@ void func_801D421C(CItemBoxInfo* info) {
 
 void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
     if (info->state.active != 0) {
-        func_80137038((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
+        drawLayout((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
     }
 }
 
@@ -259,8 +259,8 @@ void func_801D4174(CItemBoxInfo* info) {
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124(info->state.arcResourceAccessor);
-    func_80139124(info->state.resource);
+    releaseArcResourceAccessor(info->state.arcResourceAccessor);
+    releaseArcResourceAccessor(info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
     info->state.memRegion1.func_8045F778();
@@ -302,7 +302,7 @@ void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
 #pragma auto_inline off
 extern "C" void func_801D4C9C(CItemBoxInfo* info) {
     float arg = lbl_eu_80668010;
-    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, true);
         info->state.state = 2;
@@ -310,7 +310,7 @@ extern "C" void func_801D4C9C(CItemBoxInfo* info) {
 }
 
 extern "C" void func_801D4D18(CItemBoxInfo* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
@@ -819,8 +819,8 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     char* lbl = func_80136190(&base[0x130], &base[0x139], 0xb);
     ((ml::FixStr<32>*)&text)->format(&base[0x254], local.s2C, lbl, local.s2E);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, &base[0x25b], text.mString, 0);
-    func_80136910((nw4r::lyt::Layout*)info->state.layout, &base[0x267], (u8)local.s30);
-    func_80136910((nw4r::lyt::Layout*)info->state.layout, &base[0x273], (u8)local.s32);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &base[0x267], (u8)local.s30);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, &base[0x273], (u8)local.s32);
     char* str7f = func_80136190(&base[0x130], &base[0x139], 0x7f);
     char* str80 = func_80136190(&base[0x130], &base[0x139], 0x80);
     if (local.s34 != 0) {
@@ -1005,9 +1005,9 @@ void func_801D6394(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x25b, base + 0x2aa, 0);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x286, base + 0x2aa, 0);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x292, base + 0x2aa, 0);
-    func_80136910((nw4r::lyt::Layout*)info->state.layout, base + 0x267, recAny.rec.v[0]);
-    func_80136910((nw4r::lyt::Layout*)info->state.layout, base + 0x273, recAny.rec.v[1]);
-    func_80136910((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, recAny.rec.v[2]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x267, recAny.rec.v[0]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x273, recAny.rec.v[1]);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, recAny.rec.v[2]);
     u32 v1 = func_801361E8((u32)lbl_eu_806640F8, base + 0x1eb, (u16)func_80139358(itemId));
     char* s1;
     switch ((u8)v1) {
@@ -2187,8 +2187,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
-    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
@@ -4373,56 +4373,56 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         state.arcResourceAccessor = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        func_80136E84(&state.layout, acc, &lbl_eu_805063BC[0x535]);
-        func_80136F08(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
-        func_80136F08(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
+        buildLayout(&state.layout, acc, &lbl_eu_805063BC[0x535]);
+        bindLayoutAnimTransform(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
+        bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
         func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
 
         // Seed the label textboxes with the shared text object.
         char* text = func_801355BC();
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x17d], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6d2], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x188], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x17d], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6d2], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x188], (u32)text);
 
         state.layout->SetAnimationEnable(state.animTransform2, false);
         state.layout->SetAnimationEnable(state.animTransform1, true);
@@ -4565,8 +4565,8 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
                       func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 6), 0);
         func_80136B4C((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x6d2],
                       func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 9), 0);
-        func_80136910((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], 0);
-        func_80136910((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], 0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x17d], 0);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)state.layout, &lbl_eu_805063BC[0x188], 0);
         func_80124270(root->FindPaneByName(&lbl_eu_805063BC[0x193], true), 1);
 
         // Cache the slot panes at +0x40..+0x8C for the renderer (retail keeps
@@ -4763,7 +4763,7 @@ void func_801E12E0(CItemBoxInfo2* info) {
 
 void drawItemBox2Layout(CItemBoxInfo2* info, nw4r::lyt::DrawInfo* drawInfo) {
     if (info->state.active != 0) {
-        func_80137038((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
+        drawLayout((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
     }
 }
 
@@ -4785,8 +4785,8 @@ void func_801E13F8(CItemBoxInfo2* info) {
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124(info->state.arcResourceAccessor);
-    func_80139124(info->state.resource);
+    releaseArcResourceAccessor(info->state.arcResourceAccessor);
+    releaseArcResourceAccessor(info->state.resource);
     info->state.memRegion1.func_8045F778();
     info->state.memRegion2.func_8045F778();
 }
@@ -4884,7 +4884,7 @@ void func_801E174C(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
 #pragma push
 #pragma auto_inline off
 extern "C" void func_801E17EC(CItemBoxInfo2* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), lbl_eu_80668010) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), lbl_eu_80668010) != 0) {
         ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
         ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
         *(u32*)((u8*)info + 0x94) = 2;
@@ -4892,7 +4892,7 @@ extern "C" void func_801E17EC(CItemBoxInfo2* info) {
 }
 
 extern "C" void func_801E1868(CItemBoxInfo2* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
@@ -6340,8 +6340,8 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
-    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
@@ -7741,53 +7741,53 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         state.arcResourceAccessor = acc;
         acc->Attach(data, &lbl_eu_805063BC[0x531]);
-        func_80136E84(&state.layout, acc, &lbl_eu_805063BC[0x535]);
-        func_80136F08(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
-        func_80136F08(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
+        buildLayout(&state.layout, acc, &lbl_eu_805063BC[0x535]);
+        bindLayoutAnimTransform(state.layout, &state.animTransform1, acc, &lbl_eu_805063BC[0x54a]);
+        bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
         func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
 
         // Seed the label textboxes with the shared text object.
         char* text = func_801355BC();
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
-        func_801368C0(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x25b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x267], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x273], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x286], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x292], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x29e], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x45a], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x466], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4a7], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x57f], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x58b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x597], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5a3], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5af], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5be], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5cd], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x143], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4e3], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x4f0], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5dc], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5e9], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x5f6], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x603], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x610], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x61d], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x62a], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x637], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x644], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x651], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x65e], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x66b], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x678], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x685], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x692], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x69f], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6ac], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6b9], (u32)text);
+        setLayoutTextBoxFont(state.layout, &lbl_eu_805063BC[0x6c6], (u32)text);
 
         state.layout->SetAnimationEnable(state.animTransform2, false);
         state.layout->SetAnimationEnable(state.animTransform1, true);

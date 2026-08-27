@@ -608,7 +608,7 @@ extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 // System-window open query + sound helpers (Move, state 3).
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
-void func_80138078(u32 id); // UI sound (C++-mangled retail name)
+void playUISound(u32 id); // UI sound (C++-mangled retail name)
 
 // CfGameManager pre-mangled imports (same convention as CPartyStateWin.hpp:
 // verbatim retail symbols, real argument shapes observed at call sites).

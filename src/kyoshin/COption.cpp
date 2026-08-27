@@ -19,9 +19,9 @@ extern const float lbl_eu_80668C18;
 extern const float lbl_eu_80668C1C;
 extern char lbl_eu_805103D8[];
 
-void func_80138078(u32);
+void playUISound(u32);
 
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
@@ -49,7 +49,7 @@ extern "C" void __declspec(noinline) func_8029C0C4(COption* self) {
 // inactive, run the shared cursor routine, and hide both pane labels.
 extern "C" void func_8029C14C(COption* self) {
     f32 target = lbl_eu_80668C10;
-    if (func_80137444(self->mpAnimTrans1, target) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans1, target) != 0) {
         self->mActive = 0;
         func_801D21CC(self);
         nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x50, true);
@@ -63,7 +63,7 @@ extern "C" void func_8029C14C(COption* self) {
 #pragma optimize_for_size on
 void func_8029C5C8(COption* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(self->mSubObj), drawInfo, 0, 1);
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(self->mSubObj), drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);
         if (CSysWin_getUnk34(self->mSysWin) == 0) {
             if (self->field_0x2E == 0) {
@@ -89,7 +89,7 @@ void func_8029C66C(COption* self) {
         delete layout;
         mem->mpLayout = 0;
     }
-    func_80139124(mem->mArcAcc);
+    releaseArcResourceAccessor(mem->mArcAcc);
     mem->mArcAcc = 0;
     func_801F35DC(&self->mScrollBar);
     reinterpret_cast<CCursor18*>(&self->mSubCur1)->vf3();
@@ -126,7 +126,7 @@ void func_8029C7A8(COption* self) {
                         self->field_0x31 = 1;
                     }
                     func_8029E254(self);
-                    func_80138078(1);
+                    playUISound(1);
                 }
             } else if (self->field_0x2E == 0) {
                 self->field_0x2C = self->field_0x2C - 1;
@@ -142,7 +142,7 @@ void func_8029C7A8(COption* self) {
                 func_8029E254(self);
                 s8 selIdx = self->field_0x2D;
                 func_801F3850(&self->mScrollBar, (u16)selIdx);
-                func_80138078(1);
+                playUISound(1);
             }
         }
     }
@@ -161,7 +161,7 @@ void func_8029C8C4(COption* self) {
                         self->field_0x31 = 0;
                     }
                     func_8029E254(self);
-                    func_80138078(1);
+                    playUISound(1);
                 }
             } else if (self->field_0x2E == 0) {
                 self->field_0x2C = self->field_0x2C + 1;
@@ -177,7 +177,7 @@ void func_8029C8C4(COption* self) {
                 func_8029E254(self);
                 s8 selIdx = self->field_0x2D;
                 func_801F3850(&self->mScrollBar, (u16)selIdx);
-                func_80138078(1);
+                playUISound(1);
             }
         }
     }
@@ -204,7 +204,7 @@ extern "C" void func_8029C9E8(COption* self) {
             func_8029E254(self);
             func_801F3850(self->mScrollBar, (u16)self->field_0x2D);
         }
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -233,7 +233,7 @@ void func_8029CABC(COption* self) {
             s8 selIdx = self->field_0x2D;
             func_801F3850(&self->mScrollBar, (u16)selIdx);
         }
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -262,7 +262,7 @@ extern "C" void func_8029CC30(COption* self) {
         func_801F369C(&self->mScrollBar);
         func_801D216C(&self->mSubCur1, 0);
         func_801D216C(&self->mSubCur2, 0);
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -284,9 +284,9 @@ extern "C" void func_8029CC9C(COption* self) {
                     u8 flag = self->field_0x31;
                     self->field_0x33 = 0;
                     if ((s8)flag == 0) {
-                        func_80138078(3);
+                        playUISound(3);
                     } else {
-                        func_80138078(6);
+                        playUISound(6);
                     }
                     self->field_0xFC = 0;
                 }
@@ -299,7 +299,7 @@ extern "C" void func_8029CC9C(COption* self) {
                     func_8029E254(self);
                     self->field_0x2F = func_8029D7E8(self);
                 }
-                func_80138078(3);
+                playUISound(3);
             }
         }
     }
@@ -310,7 +310,7 @@ extern "C" void func_8029CC9C(COption* self) {
 // system window busy and active, advance to state 7/10 (arg==0 only); when
 // the window is idle and 0x2E mode is set, clear it (arg==0 only); otherwise
 // when the config changed (func_8029E3F8), reload the three config-panel
-// messages into the window and set state 6. The single func_80138078(6)
+// messages into the window and set state 6. The single playUISound(6)
 // tail is shared by the 0x2E-clear and config-change paths (retail jumps to
 // it with `b .L_8029F64C`). stmw/lmw frame needs optimize_for_size.
 #pragma optimize_for_size on
@@ -327,7 +327,7 @@ void func_8029CDB0(COption* self, int arg) {
             func_801D216C(&self->mSubCur3, 0);
             self->field_0x33 = 1;
             self->field_0xFC = 0;
-            func_80138078(6);
+            playUISound(6);
         }
         return;
     }
@@ -355,7 +355,7 @@ void func_8029CDB0(COption* self, int arg) {
             self->field_0x32 = 1;
         }
     }
-    func_80138078(6);
+    playUISound(6);
 }
 #pragma optimize_for_size off
 
@@ -376,7 +376,7 @@ extern "C" void func_8029CF7C(COption* self) {
         func_8022BF6C(self->mSysWin, s2, s3);
         func_8022BFC8(reinterpret_cast<CSysWin*>(self->mSysWin), 0);
         func_8022B8B8(self->mSysWin);
-        func_80138078(3);
+        playUISound(3);
     }
 }
 #pragma optimize_for_size off
@@ -392,7 +392,7 @@ extern "C" u8 func_8029D054(COption* self) {
 // Finish the option-panel animation at +0x20: when it has reached the target
 // frame, set state 2 and run the shared tail handler func_8029E1CC.
 extern "C" void __declspec(noinline) func_8029D0C0(COption* self) {
-    if (func_80137444(self->mAnimTransform20, lbl_eu_80668C10)) {
+    if (advanceAnimTransform(self->mAnimTransform20, lbl_eu_80668C10)) {
         self->field_0x29 = 2;
         func_8029E1CC(self);
     }
@@ -401,7 +401,7 @@ extern "C" void __declspec(noinline) func_8029D0C0(COption* self) {
 // Check if an animation transform has finished; if so, finalize state
 // and activate sub-cursors before calling the shared tail handler.
 extern "C" void __declspec(noinline) func_8029D10C(COption* self) {
-    if (func_80137444(self->mAnimTransform24, lbl_eu_80668C10) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform24, lbl_eu_80668C10) != 0) {
         self->field_0x29 = 3;
         self->field_0x2B = 1;
         func_801D216C(&self->mSubCur1, 1);
@@ -1004,9 +1004,9 @@ bool COption::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
         mem->mArcAcc = createArcResourceAccessor__10CLibLayoutFv();
         mem->mArcAcc->Attach(fileData, &lbl_eu_805103D8[0xff]);
-        func_80136E84(&mem->mpLayout, mem->mArcAcc, &lbl_eu_805103D8[0x103]);
-        func_80136F08(mem->mpLayout, &mem->mAnim0, mem->mArcAcc, &lbl_eu_805103D8[0x11a]);
-        func_80136F08(mem->mpLayout, &mem->mAnim1, mem->mArcAcc, &lbl_eu_805103D8[0x134]);
+        buildLayout(&mem->mpLayout, mem->mArcAcc, &lbl_eu_805103D8[0x103]);
+        bindLayoutAnimTransform(mem->mpLayout, &mem->mAnim0, mem->mArcAcc, &lbl_eu_805103D8[0x11a]);
+        bindLayoutAnimTransform(mem->mpLayout, &mem->mAnim1, mem->mArcAcc, &lbl_eu_805103D8[0x134]);
 
         // Bind the font: take the layout root pane, ask the font object for its
         // pane, and push it back onto the root.
@@ -1058,9 +1058,9 @@ extern "C" void sinit_8029E7D8(){
 // optimize_for_size (same shape as ~COption / func_8029C5C8).
 #pragma optimize_for_size on
 extern "C" void func_8029BF68(COption* self) {
-    func_80136E84(&self->mpLayout, self->mArcResAcc, lbl_eu_805103D8);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_805103D8[0x18]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_805103D8[0x35]);
+    buildLayout(&self->mpLayout, self->mArcResAcc, lbl_eu_805103D8);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_805103D8[0x18]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_805103D8[0x35]);
     self->mpLayout->UnbindAllAnimation();
     func_801D21CC(self);
     func_80124270(self->mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_805103D8[0x50], true), 0);

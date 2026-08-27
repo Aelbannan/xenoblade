@@ -40,15 +40,15 @@ void func_8022BFC8(CMCGetItemBoxSysWin*, int);
 void func_8022B8B8(CMCGetItemBoxSysWin*);
 }
 // C++-linkage (mangled) retail symbols.
-void func_80136910(nw4r::lyt::Layout*, char*, u8);   // func_80136910__FPQ34nw4r3lyt6LayoutPcUc
-void func_80138078(u32);                             // func_80138078__FUl
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
+void playUISound(u32);                             // playUISound__FUl
 int getItemBoxState(CItemBoxInfo*);                    // getItemBoxState__FP12CItemBoxInfo (retail call sites compare the full 32-bit return)
-u32 func_80137444(nw4r::lyt::AnimTransform*, float); // func_80137444__FPQ34nw4r3lyt13AnimTransformf
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf
 // Plain-C++ imports for the targets below. MWCC emits the Itanium-mangled
 // reloc names at the call sites; the acceptance gate compares reloc sites
 // (offset+type) only, not names.
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  func_800A9D90();   // retail reloc is unmangled
 extern "C" void func_801D4054(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void func_801D4154(CItemBoxInfo*);   // retail reloc is unmangled
@@ -549,7 +549,7 @@ void func_80297AAC(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->field_4C == 0) return;
     if (self->field_4D == 0) return;
     func_801D4154((CItemBoxInfo*)self->itemBox);
-    func_80137038(self->layout40, di, 0, 1);
+    drawLayout(self->layout40, di, 0, 1);
     u8 active = self->sub_314.limit ? self->sub_314.limit : 1;
     if (active > 1) func_801D20B0(&self->subObj_70, di);
     func_801D20B0(&self->subObj_58, di);
@@ -566,10 +566,10 @@ void func_80297AAC(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
 void func_80297B68(CMCGetItemBox* self) {
     getEntry__5CBdatFUl(2);
     getEntry__5CBdatFUl(5);
-    func_801390E0__FPP11CFileHandle(&self->fileHandle1);
-    func_801390E0__FPP11CFileHandle(&self->fileHandle2);
-    func_801390E0__FPP11CFileHandle(&self->fileHandle3);
-    func_801390E0__FPP11CFileHandle(&self->fileHandle4);
+    closeFileHandle__FPP11CFileHandle(&self->fileHandle1);
+    closeFileHandle__FPP11CFileHandle(&self->fileHandle2);
+    closeFileHandle__FPP11CFileHandle(&self->fileHandle3);
+    closeFileHandle__FPP11CFileHandle(&self->fileHandle4);
     self->field_4C = 0;
     if (self->memManagerPtr != 0) {
         mtl::MemManager::deallocate(self->memManagerPtr);
@@ -581,8 +581,8 @@ void func_80297B68(CMCGetItemBox* self) {
         }
         self->layout40 = 0;
     }
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc1);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc2);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc1);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->arcAcc2);
     void* o = self->objAt50;
     self->arcAcc1 = 0;
     self->arcAcc2 = 0;
@@ -654,7 +654,7 @@ void func_80297E18(CMCGetItemBox* self) {
     func_801D216C(&self->subObj_70, 0);
     func_801D216C(&self->subObj_88, 0);
     advanceItemBoxState__FP12CItemBoxInfo((CItemBoxInfo*)self->itemBox);
-    func_80138078(0x6);
+    playUISound(0x6);
 }
 
 // Move the cursor / page selection. Cursor mode walks the row backwards for a
@@ -688,7 +688,7 @@ extern "C" void func_80297E90(CMCGetItemBox* self) {
         func_802999B0(self);
         func_802998C8(self);
     }
-    func_80138078(0x1);
+    playUISound(0x1);
 }
 #pragma pop
 
@@ -724,7 +724,7 @@ void func_80297FB4(CMCGetItemBox* self) {
         func_802999B0(self);
         func_802998C8(self);
     }
-    func_80138078(0x1);
+    playUISound(0x1);
 }
 #pragma pop
 
@@ -765,7 +765,7 @@ void func_802980DC(CMCGetItemBox* self) {
             func_802998C8(self);
         }
     }
-    func_80138078(0x1);
+    playUISound(0x1);
 }
 #pragma pop
 
@@ -806,7 +806,7 @@ void func_80298228(CMCGetItemBox* self) {
             func_802998C8(self);
         }
     }
-    func_80138078(0x1);
+    playUISound(0x1);
 }
 
 // Increment the sub counter, refresh helper widgets, and play a sound when the
@@ -825,7 +825,7 @@ extern "C" __declspec(noinline) void func_80298378(CMCGetItemBox* self) {
     // u8-local select: assigning the ternary to a u8 makes MWCC materialize
     // the zero-extension (clrlwi) at the join before the compare (retail).
     u8 lim = x->limit != 0 ? x->limit : 1;
-    if (lim != 1) func_80138078(0xa);
+    if (lim != 1) playUISound(0xa);
 }
 #pragma pop
 
@@ -842,7 +842,7 @@ extern "C" __declspec(noinline) void func_802983E4(CMCGetItemBox* self) {
     // select); the u8-local select makes MWCC forget the byte load was
     // zero-extended, keeping the redundant clrlwi/cmpli pair at the join.
     u8 lim = x->limit != 0 ? x->limit : 1;
-    if (lim != 1) func_80138078(0xa);
+    if (lim != 1) playUISound(0xa);
 }
 #pragma pop
 
@@ -859,7 +859,7 @@ void func_80298450(CMCGetItemBox* self) {
             self->mField303 = 0;
             func_801D216C(&self->subObj_58, 1);
             func_801D216C(&self->subObj_A0, 0);
-            func_80138078(0x6);
+            playUISound(0x6);
         }
     }
 }
@@ -979,9 +979,9 @@ void func_80298614(CMCGetItemBox* self) {
             u8 tmp[12];
             func_801CB9D8((u32*)tmp, arr->table, v);
             (*(void(**)(void*, void*))((void**)&self->subObj_A0)[4])(&self->subObj_A0, (void*)tmp);
-            func_80138078(2);
+            playUISound(2);
         } else {
-            func_80138078(5);
+            playUISound(5);
         }
     }
 }
@@ -998,7 +998,7 @@ u32 func_80298850(CMCGetItemBox* self) {
 // Open the item box: advance the second layout animation and, once it has
 // finished, initialise the state/widgets and refresh the cursor.
 extern "C" __declspec(noinline) void func_80298938(CMCGetItemBox* self) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->field_4D = 3;
         self->mField55 = 1;
         func_801D216C(&self->subObj_58, 1);
@@ -1010,7 +1010,7 @@ extern "C" __declspec(noinline) void func_80298938(CMCGetItemBox* self) {
 // Advance the first layout animation; when it has finished, enable the two
 // anim transforms on the layout and move to state 2.
 extern "C" __declspec(noinline) void func_802988BC(CMCGetItemBox* self) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->animTrans1, lbl_eu_80668BF0) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, true);
         self->field_4D = 2;
@@ -1278,7 +1278,7 @@ extern "C" __declspec(noinline) void func_80299530(CMCGetItemBox* self, u16 arg,
     {
         char* tbl = lbl_eu_8050FF8C;
         int count = sub->limit == 0 ? 1 : sub->limit;
-        func_80136910((nw4r::lyt::Layout*)self->layout40, &tbl[0x17b], (u8)count);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->layout40, &tbl[0x17b], (u8)count);
     }
     // Retail reloads the layout/root pane before every FindPaneByName call
     // (no root local), keeping pressure at 3 callee-saved registers.
@@ -1330,7 +1330,7 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
         }
         // Retail computes counter+1 separately at each use (memory reload
         // across the intervening virtual call), not as a shared temp.
-        func_80136910(self->layout40, &lbl_eu_8050FF8C[0x1b0], (u8)(sub->counter + 1));
+        setLayoutTextBoxNumber(self->layout40, &lbl_eu_8050FF8C[0x1b0], (u8)(sub->counter + 1));
         // Retail evaluates the pane find first (result held in a volatile
         // reg across the pos computation), then builds/stores the VEC3.
         nw4r::lyt::Pane* pagePane =
@@ -1450,11 +1450,11 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         this->arcAcc1 = CLibLayout::createArcResourceAccessor();
         this->arcAcc1->Attach(fileData, &lbl_eu_8050FF8C[0x206]);
 
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &this->layout40, this->arcAcc1, &lbl_eu_8050FF8C[0x20a]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             this->layout40, &this->animTrans1, this->arcAcc1, &lbl_eu_8050FF8C[0x221]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             this->layout40, &this->animTrans2, this->arcAcc1, &lbl_eu_8050FF8C[0x23b]);
 
         // Bind the loaded font's pane into the layout root. Retail keeps the
@@ -1464,18 +1464,18 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         void* fontData = ((CDeviceFontVt9*)font)->getResource();
         func_8013676C(rootPane, (u32)fontData);
 
-        u32 w = (u32)func_801355A0();
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x17b], w);
+        u32 w = (u32)getPackedFont();
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x1b0], w);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x17b], w);
 
         // Stamp every item-slot text pane with the loaded character set.
         u32 sh = (u32)func_801355BC();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_8050FF8C[0x16e], i);
-            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, buf, sh);
+            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, buf, sh);
         }
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x25a], sh);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(this->layout40, &lbl_eu_8050FF8C[0x25a], sh);
 
         this->layout40->SetAnimationEnable(this->animTrans2, false);
         this->layout40->SetAnimationEnable(this->animTrans1, true);
@@ -1563,7 +1563,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // Retail folds the first lookup's offset directly into lis/addi, then
         // caches the table base for the remaining lookups.
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x29f]) == 0) {
-            func_8003AA78__5CBdatFUlPv(2, fileData);
+            setBdatEntry__5CBdatFUlPv(2, fileData);
         }
         func_8003AA34();
         lbl_eu_80664A18 = getFP__FPCc(&lbl_eu_8050FF8C[0x29f]);
@@ -1580,7 +1580,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         this->memManagerPtr = (u8*)fileData;
         func_8003AA34();
         if (getFP__FPCc(&lbl_eu_8050FF8C[0x119]) == 0) {
-            func_8003AA78__5CBdatFUlPv(5, this->memManagerPtr);
+            setBdatEntry__5CBdatFUlPv(5, this->memManagerPtr);
         }
         func_8003AA34();
         lbl_eu_80664A20 = getFP__FPCc(&lbl_eu_8050FF8C[0x119]);

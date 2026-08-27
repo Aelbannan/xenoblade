@@ -281,7 +281,7 @@ void func_8029BBB0(CMenuOption* self) {
         func_801C412C((CTitleAHelp*)self->mTitleAHelp);
         func_8029CB9C((COption*)self->mOption);
         self->mState = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 

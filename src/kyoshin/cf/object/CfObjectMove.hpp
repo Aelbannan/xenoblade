@@ -149,7 +149,9 @@ extern "C" void func_8004B4A4(void* target, f32 value);
 // CfObject member; the retail symbol is Fv but the body reads r4 as a
 // position vector). extern "C" keeps the call-site reloc at the unmangled
 // retail name (CfObject_UnkVirtualFunc26 forwards its hidden r4 through).
-extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self, const ml::CVec3* vec);
+extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self,
+                                                           ml::CVec3* pos,
+                                                           float scale);
 // Base +0x178 forced-name implementation (defined in CfObjectModel.cpp as the
 // CfObjectModel member; the retail symbol is Fv). CfObjectModel_UnkVirtualFunc1
 // (CfObjectMove) calls it before tearing down its own state.
@@ -444,10 +446,10 @@ namespace cf {
     void CfObject_UnkVirtualFunc49();
     void CfObject_UnkVirtualFunc64(int flag);
     void CfObject_UnkVirtualFunc65();
-    void CfObject_UnkVirtualFunc19();
-    CfObjectMove* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
-    void CfObject_UnkVirtualFunc25();
-    void CfObject_UnkVirtualFunc26(u32 value, float amount);
+    void CfObject_UnkVirtualFunc19(const ml::CVec3* vec);
+    void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
+    void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale);
+    void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount);
     u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc30();

@@ -21,8 +21,8 @@ extern "C" void func_80258F5C(float* dst, const float* a, const float* b);
 extern "C" void func_80258F80(float* dst, const float* src, float scale);
 
 // --- C-linkage / mangled-symbol callees used by the target functions ---
-// func_80137444 is C++-linkage (mangled retail), func_80137510 / func_80231848 /
-// copyVEC2 are unmangled in retail (extern "C"), and func_80136E84 is referenced
+// advanceAnimTransform is C++-linkage (mangled retail), func_80137510 / func_80231848 /
+// copyVEC2 are unmangled in retail (extern "C"), and buildLayout is referenced
 // by its mangled retail identifier (see CSaveLoad for the same pattern).
 extern const float lbl_eu_80668828;
 extern const float lbl_eu_80668834;
@@ -42,7 +42,7 @@ extern u32 lbl_eu_80668838;
 extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
-void func_80138078(u32 number);
+void playUISound(u32 number);
 
 // Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84
 // (declaration moved to CKizunagram.hpp C-linkage imports).
@@ -161,9 +161,9 @@ extern "C" __declspec(noinline) void func_80257F44(UnkKizunaSelf57D90* self) {
 // attach its anim transform at +0x0C, then publish both via the layout's
 // vtable slots 11 / 14.
 extern "C" __declspec(noinline) void func_80257E58(UnkKizunaSelf57E58* self) {
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         (nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         (nw4r::lyt::Layout*)self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0x3f);
     self->field8->slot11((u32)self->field0C, 1);
     self->field8->slot14(0);
@@ -177,10 +177,10 @@ extern "C" __declspec(noinline) void func_802580CC(UnkKizunaLineBuild* self) {
     char nameBuf[0x20];
     char* str = lbl_eu_8050CB20;
 
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         (nw4r::lyt::Layout**)&self->layout,
         (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x5c);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         (nw4r::lyt::Layout*)self->layout, &self->anim,
         (nw4r::lyt::ArcResourceAccessor*)self->acc, str + 0x70);
 
@@ -546,7 +546,7 @@ extern "C" void func_80258F80(float* dst, const float* src, float scale) {
 }
 #endif
 
-__declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
+extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self) {
     if (self->field0C != 0) {
         if (func_80259DE8(reinterpret_cast<UnkKizunaSelf59DE8*>(self))) {
             if (func_8025A11C(reinterpret_cast<UnkKizunaSelfA11C*>(self))) {
@@ -634,7 +634,7 @@ extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf59B18* self) {
 
 // Set an anim child state flag (1), publish it to the object at +0x0C's
 // vtable slot 8, then write the shared "idle" float constant at +0x40.
-void func_80259228(UnkKizunaSelf59228* self) {
+extern "C" __declspec(noinline) void func_80259228(UnkKizunaSelf59228* self) {
     self->field14 = 1;
     self->field15 = 0;
     self->field0C->target8(self->field10);
@@ -727,7 +727,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
             }
             if (self->field3C == 0) {
                 self->field3C = 1;
-                func_80138078(0x7b);
+                playUISound(0x7b);
             }
             return 1;
         } else {
@@ -761,7 +761,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf5949C* self) {
         self->field24 = 1;
         if (played == 0) {
             self->field3C = 1;
-            func_80138078(0x7b);
+            playUISound(0x7b);
         }
         return 1;
     }
@@ -879,7 +879,7 @@ extern "C" __declspec(noinline) void func_80259B18(UnkKizunaSelf59B18* self) {
 // Countdown advance: tick the +0x40 timer; when it reaches the limit switch to
 // mode 2 and publish via the mid object's slots 7/11. Then scale the remaining
 // time into the "line" pane result's byte at +0xB8 and mark it visible.
-void func_80259C5C(UnkKizunaSelf59C5C* self) {
+extern "C" __declspec(noinline) void func_80259C5C(UnkKizunaSelf59C5C* self) {
     self->field40 = self->field40 + lbl_eu_80668834;
     if (self->field40 >= lbl_eu_80668848) {
         self->field14 = 2;
@@ -930,7 +930,7 @@ extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf59394* self,
 // extern "C" + noinline keeps same-TU callers (CKizunagram::OnFileEvent)
 // emitting retail's unmangled `bl` without inlining.
 extern "C" __declspec(noinline) void func_80257AFC(UnkKizunaSelfAFC* self) {
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20);
     UnkKizunaLCBRes57AFC* res =
         ((UnkKizunaLayoutSub57AFC*)self->field8)->field10->slot15(lbl_eu_8050CB20 + 0x13, 1);
@@ -942,7 +942,7 @@ extern "C" __declspec(noinline) void func_80257AFC(UnkKizunaSelfAFC* self) {
 // entry, build a textured Picture pane (0xf0-byte allocation from the layout
 // heap), position/name it, attach it to the current-line parent pane, and
 // tint it when appropriate. Returns true once the cursor passes the row limit.
-__declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
+extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
     UnkKizunaMgr* mgr = reinterpret_cast<UnkKizunaMgr*>(lbl_eu_80664098);
     u16 limit = (u16)(func_8003B1EC(mgr) - 0x64);
     // Unsigned 64-bit subtract; its high word gates the legacy tint below.
@@ -1030,7 +1030,7 @@ __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self) {
 __declspec(noinline) void func_80257EE0(UnkKizunaSelf57EE0* self) {
     if (self->field8) {
         if (self->field10 == 0) {
-            func_80137444(self->field0C, lbl_eu_80668834);
+            advanceAnimTransform(self->field0C, lbl_eu_80668834);
         }
         self->field8->callSlot14(0);
     }
@@ -1066,7 +1066,7 @@ extern "C" __declspec(noinline) u16 func_8025AA38(UnkKizunaSelf5949C* self,
 }
 
 // retail: if (field26) { field34=1; field36=field26; field38=const }
-extern "C" void func_8025AAE0(void* self) {
+extern "C" __declspec(noinline) void func_8025AAE0(void* self) {
     u16 v = *(u16*)((char*)self + 0x26);
     if (v != 0) {
         *(u8*)((char*)self + 0x34) = 1;
@@ -1075,7 +1075,7 @@ extern "C" void func_8025AAE0(void* self) {
     }
 }
 
-void func_8025AB04(UnkKizunaSelfAB* self) {
+extern "C" __declspec(noinline) void func_8025AB04(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668860) {
@@ -1089,7 +1089,7 @@ void func_8025AB04(UnkKizunaSelfAB* self) {
     }
 }
 
-void func_8025AB84(UnkKizunaSelfAB* self) {
+extern "C" __declspec(noinline) void func_8025AB84(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
     self->field38 = f;
     if (f >= lbl_eu_80668864) {
@@ -1276,21 +1276,21 @@ CKizunaInfo::~CKizunaInfo() {}
 // values and 6 localized labels, then reset the +0x18 counter.
 // extern "C" + noinline for OnFileEvent's unmangled call shape (see func_80257AFC).
 extern "C" __declspec(noinline) void func_8025B670(UnkKizunaSelfB670* self) {
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
     nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
     u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
     func_8013676C(rootPane, fontResult);
     u32 val = func_801355BC();
-    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
-    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
-    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb79, val);
-    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb87, val);
+    setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
+    setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
+    setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb79, val);
+    setLayoutTextBoxFont(self->field8, lbl_eu_8050CB20 + 0xb87, val);
     self->field8->UnbindAllAnimation();
     func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb95,
                   func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xb), 0);
@@ -1509,7 +1509,7 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
     func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbf2, heartLabel, 0);
 
     // Encounter counter, both names, formatted "current/max" heart counts.
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
         self->field8, lbl_eu_8050CB20 + 0xb87,
         (u8)func_80136254(mgr, lbl_eu_8050CB20 + 0xca9, v));
     func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbfd,
@@ -1532,7 +1532,7 @@ extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* selfArg,
 // the child at +0x08 (slots 14/8 with the transform id, slots 7/11 with
 // the +0x10 transform and a 1 flag).
 extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
         self->field14 = 2;
         self->field16 = 1;
         self->field8->target14(0);
@@ -1543,7 +1543,7 @@ extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {
 }
 
 extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
-    if (func_80137444(self->field10, lbl_eu_80668834) != 0) {
+    if (advanceAnimTransform(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 3, publish via the child.
         self->field14 = 3;
         self->field15 = 1;
@@ -1635,18 +1635,18 @@ void func_8025C510(UnkKizunaSelfC510* self) {
 // the three conditional sub-layouts.
 void func_8025C61C(UnkKizunaSelfC61C* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field74 != 0) {
-        func_80137038(self->field74, drawInfo, 0, 1);
+        drawLayout(self->field74, drawInfo, 0, 1);
     }
     if (self->field38 != 0) {
         if (self->field39 == 3 || self->field39 == 6) {
             if (self->fieldDD != 0 && self->field8E != 0 && self->field54 != 0) {
-                func_80137038(self->field54, drawInfo, 0, 1);
+                drawLayout(self->field54, drawInfo, 0, 1);
             }
             if (self->fieldB4 != 0) {
-                func_80137038(self->fieldB4, drawInfo, 0, 1);
+                drawLayout(self->fieldB4, drawInfo, 0, 1);
             }
             if (self->fieldC8 != 0) {
-                func_80137038(self->fieldC8, drawInfo, 0, 1);
+                drawLayout(self->fieldC8, drawInfo, 0, 1);
             }
         }
     }
@@ -1663,8 +1663,8 @@ void func_8025C6F0(UnkKizunaSelfC6F0* self) {
     func_80259098((UnkKizunaSelf59B18*)&self->sub68);
     func_80257F44(&self->subAC);
     func_80257D90(&self->subC0);
-    func_80139124(self->field30);
-    func_80139124(self->field34);
+    releaseArcResourceAccessor(self->field30);
+    releaseArcResourceAccessor(self->field34);
     self->mRegA.func_8045F778();
     self->mRegB.func_8045F778();
 }
@@ -1705,7 +1705,7 @@ void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
         func_80259280(&self->sub68);
         func_80257F9C(&self->subAC, 0xff);
         if (arg4 != 0) {
-            func_80138078(6);
+            playUISound(6);
         }
     }
 }
@@ -1815,7 +1815,7 @@ void func_8025CAB4(UnkKizunaDisp* self) {
 // the embedded func_80259344 sub at +0x68) on vtable slot 14, rebuild the
 // two-word pair, and copy it into the +0xB4 object's child.
 void func_8025CAE4(UnkKizunaSelfCAE4* self) {
-    func_80137444(self->field78, lbl_eu_80668834);
+    advanceAnimTransform(self->field78, lbl_eu_80668834);
     ((UnkKizunaObjSlot14*)self->sub.field0C)->callSlot14(0);
     UnkKizunaPair p = func_80259344(&self->sub);
     func_80231848(self->fieldB4->field10, &p);
@@ -1842,7 +1842,7 @@ extern "C" u8 func_8025CBC4(CKizunagramState* self) {
 
 
 // retail: lfs f0,const; li r0,0; stb 0x34; sth 0x36; stfs 0x38
-extern "C" void func_8025AC04(void* self) {
+extern "C" __declspec(noinline) void func_8025AC04(void* self) {
     *(u8*)((char*)self + 0x34) = 0;
     *(u16*)((char*)self + 0x36) = 0;
     *(float*)((char*)self + 0x38) = lbl_eu_80668828;
@@ -2354,7 +2354,7 @@ void func_8025C580(UnkKizunaSelfC580* self) {
 
 // Countdown timer at +0x40: decrement; when it hits zero reset the state
 // bytes, then publish the remaining scaled count into the slot-15 pane result.
-void func_80259D44(UnkKizunaSelf59D44* self) {
+extern "C" __declspec(noinline) void func_80259D44(UnkKizunaSelf59D44* self) {
     self->field40 = self->field40 - lbl_eu_80668834;
     if (self->field40 <= lbl_eu_80668828) {
         self->field14 = 4;

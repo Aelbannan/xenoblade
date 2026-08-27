@@ -466,8 +466,8 @@ extern u32 lbl_eu_80663E28;
 // ---------------------------------------------------------------------------
 namespace cf {
 class CfObjectActor;   // forward (reslist element type only)
-class CfObjectPc;      // forward (func_800BFC68 return type, used via cast)
-class CfObjectMove;    // forward (func_800BFC68 param type, getPlayer return)
+class CfObjectPc;      // forward (getCfObjectPc return type, used via cast)
+class CfObjectMove;    // forward (getCfObjectPc param type, getPlayer return)
 
 // Partial view of cf::CBattleManager (full header kyoshin/cf/CBattleManager.hpp).
 class CBattleManager {
@@ -498,11 +498,11 @@ public:
     static bool isFlag01Set();
 };
 
-// findObjectById(BOOL)/func_800BFC68(CfObjectMove*) declared (not extern "C")
+// findObjectById(BOOL)/getCfObjectPc(CfObjectMove*) declared (not extern "C")
 // - MWCC's own C++ mangling matches the retail linker names
-// (findObjectById__Fi / func_800BFC68__FPQ22cf12CfObjectMove).
+// (findObjectById__Fi / getCfObjectPc__FPQ22cf12CfObjectMove).
 extern void* findObjectById(int);
-extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
 // is not includable here due to the concurrent func_8049603C/A8 conflict).
 extern "C" void* func_800FE68C();
@@ -520,8 +520,8 @@ void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
 extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData);
 extern "C" void func_801127B0(CMenuEnemyState* self);
 // Menu sound effect for the enemy-menu (plain C++ so MWCC mangles the retail
-// name func_80138078__FUl).
-extern void func_80138078(u32);
+// name playUISound__FUl).
+extern void playUISound(u32);
 void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor);
 extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2);
 extern "C" {
@@ -734,15 +734,15 @@ after_bit21:
                     goto draw_next;
                 }
                 if (p.panelType != 0) {
-                    func_80137038(unk74, &drawInfo, 0, 1);
+                    drawLayout(unk74, &drawInfo, 0, 1);
                 }
                 {
                     int drawFlag = (p.panelType == 0) ? 0 : 1;
                     drawFlag = (drawFlag == 0) ? 1 : 0;
-                    func_80137038(p.layout2, &drawInfo, drawFlag, 1);
+                    drawLayout(p.layout2, &drawInfo, drawFlag, 1);
                 }
                 if (p.drawLayout0Flag == 0) {
-                    func_80137038(p.layout1, &drawInfo, 0, 1);
+                    drawLayout(p.layout1, &drawInfo, 0, 1);
                 }
             draw_next:
                 i++;
@@ -750,7 +750,7 @@ after_bit21:
         }
 
         if (selectCursor.field44 != 0) {
-            func_80137038(selectCursor.layout1C, &drawInfo, 0, 1);
+            drawLayout(selectCursor.layout1C, &drawInfo, 0, 1);
         }
     }
 done:
@@ -874,7 +874,7 @@ after_bit21:
     // Retail pre-loop materialization (80110A88..AA4): pc call, then
     // f30/r30/f31/r29/f28/r28/r27/r31 - declare in that dependence order.
     cf::CfObjectPc* pc =
-        func_800BFC68(cf::CfGameManager::getPlayer(0));
+        getCfObjectPc(cf::CfGameManager::getPlayer(0));
     f32 animMarker = lbl_eu_80666FEC;
     f32 distThresh = lbl_eu_80667014;
     nw4r::math::VEC3 scratch;
@@ -1123,12 +1123,12 @@ after_bit21:
         }
     }
 
-    func_80137444(unk78, lbl_eu_80666FE8);
+    advanceAnimTransform(unk78, lbl_eu_80666FE8);
     unk74->Animate(0);
 
     switch (selectCursor.field44) {
     case 1:
-        if (func_80137444(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
+        if (advanceAnimTransform(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
             selectCursor.byte40 = 1;
             selectCursor.field44 = 2;
         }
@@ -1140,7 +1140,7 @@ after_bit21:
         }
         break;
     case 4:
-        if (func_80137444(selectCursor.anim24, lbl_eu_80666FE8) != 0) {
+        if (advanceAnimTransform(selectCursor.anim24, lbl_eu_80666FE8) != 0) {
             reinterpret_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = lbl_eu_80666FEC;
             selectCursor.layout1C->Animate(0);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim24, false);
@@ -1174,13 +1174,13 @@ void func_8010EB44(CPcSelectCursor* self) {
 
     // Retail reloads field18 (the arc accessor) and layout1C per call instead
     // of caching them in locals, so each is re-loaded from the object.
-    func_80136E84(&self->layout1C,
+    buildLayout(&self->layout1C,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
                   &lbl_eu_804FDBF8[0x10]);
-    func_80136F08(self->layout1C, &self->anim20,
+    bindLayoutAnimTransform(self->layout1C, &self->anim20,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
                   &lbl_eu_804FDBF8[0x2c]);
-    func_80136F08(self->layout1C, &self->anim24,
+    bindLayoutAnimTransform(self->layout1C, &self->anim24,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field18),
                   &lbl_eu_804FDBF8[0x4b]);
 
@@ -1515,7 +1515,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         if (lastId == 0) {
             panel->visible = 0;
             self->field82C = lastId;
-            func_80138078(0x58);
+            playUISound(0x58);
             return;
         }
         if (self->field82C == lastId) return;
@@ -1681,7 +1681,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         self->field7D8 = lbl_eu_80667038;
         self->field7DC = 0;
         self->field7E0 = 0;
-        func_80138078(0x59);
+        playUISound(0x59);
     } else {
         // Hidden: clear the old matching panel entry, then re-register.
         if (lastId == 0) {
@@ -1849,7 +1849,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         self->field7D8 = lbl_eu_80667038;
         self->field7DC = 0;
         self->field7E0 = 0;
-        func_80138078(0x57);
+        playUISound(0x57);
     }
 }
 
@@ -2012,7 +2012,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
     if (panel->unk1D == 0) return;
 
-    cf::CfObjectPc* pc = func_800BFC68(cf::CfGameManager::getPlayer(0));
+    cf::CfObjectPc* pc = getCfObjectPc(cf::CfGameManager::getPlayer(0));
     if (pc == NULL) return;
     // Retail keeps this value in r29 and later reuses the same register for
     // the unk24 difference (subf r29,r29,r0), so one variable serves both.
@@ -2859,7 +2859,7 @@ void CMenuEnemyState::Init() {
         panelData.unk48 = zero;
 
         // ---- layout1 arc + panes ----
-        func_80136E84(pLayout1,
+        buildLayout(pLayout1,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
                       &lbl_eu_804FDBF8[0xb8]);
         func_80137B44(*pLayout1, &lbl_eu_804FDBF8[0xd3], colD3);
@@ -2929,7 +2929,7 @@ void CMenuEnemyState::Init() {
 
         // ---- layout2 arc + panes ----
         nw4r::lyt::Layout** pLayout2 = &panel->layout2;
-        func_80136E84(pLayout2,
+        buildLayout(pLayout2,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
                       &lbl_eu_804FDBF8[0x12e]);
 
@@ -2971,10 +2971,10 @@ void CMenuEnemyState::Init() {
     }
 
     // ---- main menu layout ----
-    func_80136E84(&unk74,
+    buildLayout(&unk74,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
                   &lbl_eu_804FDBF8[0x173]);
-    func_80136F08(unk74, &unk78,
+    bindLayoutAnimTransform(unk74, &unk78,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
                   &lbl_eu_804FDBF8[0x190]);
 
@@ -2983,8 +2983,8 @@ void CMenuEnemyState::Init() {
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
     func_8013676C(rootPane, reinterpret_cast<MenuFontView*>(fontObj)->m24());
 
-    func_801368C0(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());
-    func_801368C0(unk74, &lbl_eu_804FDBF8[0x1bb], func_801355D8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());
+    setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], func_801355D8());
 
     unk74->SetAnimationEnable(unk78, true);
     reinterpret_cast<AnimTransformOverlay*>(unk78)->field10 = lbl_eu_80666FEC;

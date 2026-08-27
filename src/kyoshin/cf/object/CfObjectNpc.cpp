@@ -211,7 +211,7 @@ void CfObjectNpc::loadIconType() {
 }
 
 // 0x800C0368
-s16 CfObjectNpc::func_800BF920() {
+s16 CfObjectNpc::getRltMeet() {
     if (mRltMeet == -1) {
         func_8003AA34();
         void* fp = getFP__FPCc((const char*)this + 0x78);
@@ -230,7 +230,7 @@ s16 CfObjectNpc::func_800BF920() {
  * Returns the NPC icon type byte.
  * This value comes from the icon_type BDAT column and is stored at offset 0x71C.
  */
-u8 CfObjectNpc::func_800BF984() {
+u8 CfObjectNpc::getIconType() {
     return mIconType;
 }
 

@@ -10,7 +10,7 @@
 
 // CfObjectPc.hpp (read-only) currently fails to compile due to an internal
 // virtual-override mismatch (CActorParam_UnkVirtualFunc86 return type); only
-// the incomplete type is needed here (func_800BFC68 pointer arithmetic).
+// the incomplete type is needed here (getCfObjectPc pointer arithmetic).
 namespace cf {
 class CfObjectPc;
 }
@@ -122,7 +122,7 @@ void func_800BFBF4(cf::CfObjectObj* self, u16 id) {
 // us-800c06b0  - find the containing CfObjectPc for a CfObjectMove subobject.
 // The CfObjectMove subobject lives at +0x3E9C inside CfObjectPc, so the reverse
 // offset recovers the outer object. Only valid when the flag is set.
-cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove) {
+cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove) {
     if (objMove != 0 && (objMove->unk64 & 0x2) != 0) {
         // Dead null-guard: return objMove as a raw address (never taken here) so
         // MWCC emits `beqlr cr1` without any class-base adjustment.

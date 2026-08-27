@@ -2,11 +2,13 @@
 
 // Shared nw4r .sdata2 float constants (retail references these; retail
 // ut_CharWriter.o has .sdata2 size 0 -- no TU-local pool entries).
-extern f32 lbl_eu_8066A140;  // 0.0f
-extern f32 lbl_eu_8066A144;  // 1.0f
-extern f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
-extern f32 lbl_eu_8066A150;  // 0.5f
-extern f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
+extern const f32 lbl_eu_8066A140;  // 0.0f
+extern const f32 lbl_eu_8066A144;  // 1.0f
+extern const f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
+extern const f32 lbl_eu_8066A150;  // 0.5f
+extern const f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
+extern "C" nw4r::ut::CharWriter::LoadingTexture lbl_eu_80653EB8;
+#define mLoadingTexture lbl_eu_80653EB8
 
 // int -> f32 conversion matching retail: plain builtin cast. Retail rounds
 // single (fsubs against the shared signed magic); the manual union form makes
@@ -152,13 +154,13 @@ f32 CharWriter::Print(u16 ch) {
 
     if (mIsWidthFixed) {
         f32 margin =
-            (mFixedWidth - ConvF32U(glyph.widths.charWidth) * mScale.x) *
+            (mFixedWidth - ConvF32S(glyph.widths.charWidth) * mScale.x) *
             lbl_eu_8066A150;
         width = mFixedWidth;
-        left = margin + ConvF32U(glyph.widths.left) * mScale.x;
+        left = margin + ConvF32S(glyph.widths.left) * mScale.x;
     } else {
-        width = ConvF32U(glyph.widths.charWidth) * mScale.x;
-        left = ConvF32U(glyph.widths.left) * mScale.x;
+        width = ConvF32S(glyph.widths.charWidth) * mScale.x;
+        left = ConvF32S(glyph.widths.left) * mScale.x;
     }
 
     PrintGlyph(mCursorPos.x + left, mCursorPos.y, mCursorPos.z, glyph);

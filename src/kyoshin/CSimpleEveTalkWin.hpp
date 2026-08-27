@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include "monolib/work/CProcess.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
@@ -14,42 +15,32 @@ class CScn;
  * CSimpleEveTalkWin - simple event-talk window process (singleton factory
  * func_801A20DC).
  *
- * Layout-compatible with CProcess (vtable at +0x10) and an IUIWindow-ish
- * callback region, but deliberately NON-polymorphic (plain struct, same idiom
- * as CSystemWindow): the retail object lays the CProcess base out explicitly
- * at +0x00 and drives the CProcess base + mMemRegion destruction by hand in
- * ~CSimpleEveTalkWin, so a C++ CProcess base would make MWCC emit extra vptr
- * stores / duplicate subobject destruction that the retail ctor/dtor do not
- * have.
+ * REFACTORED to real bases: retail's 0x801A29B4/B4/C4 are compiler thunks
+ * (subi r3,-off; b impl), not hand-written `self-0x6c` wrappers. The previous
+ * plain-struct + manual `mProcHead/mVtable/mProcTail/mWorkEvent/mScnRender`
+ * hid the inheritance and forced `((void(*)(void*))__dt__…)(self-off)` spoofs.
+ *
+ * Layout is now faithful: CProcess at 0x00 (vtable at 0x10), then the
+ * intermediate storage that pushes the two interface bases to their retail
+ * offsets, then the bases themselves. The intermediate storage is factored
+ * into CSimpleEveTalkWinPre so the bases land at 0x6C/0x70 and the compiler
+ * emits the thunks for us.
  *
  * Field layout (from ctor / Term / cbRenderBefore ASM):
- *   0x00  CProcess storage (vtable at +0x10, written twice by the ctor: the
- *         temp IUIWindow vtable, then the composite vtable)
- *   0x3C  two null pointer-to-member-function callback slots
- *   0x54  nw4r layout (drawn by cbRenderBefore, deleted by Term)
+ *   0x00  CProcess base (vtable at 0x10, written twice by ctor)
+ *   0x3C  two null ptmf slots
+ *   0x54  nw4r layout
  *   0x60  index, init -1
  *   0x67  active flag, init 1
- *   0x68  message text id/pointer (ctor arg; init 0 then overwritten)
- *   0x6C  IWorkEvent vtable slot (composite vtable + 0x24)
- *   0x70  IScnRender vtable slot (composite vtable + 0xac)
- *   0x74  UnkClass_8045F564 layout-build region
- *   0x84  owning CScn (ctor arg)
- *   0x88  tag-processor object (0x840-byte heap block; deleted via vtable in
- *         Term, viewed as AnimTransform* so the delete goes through its vtable
- *         dtor slot like the retail code)
- *   0x8C  3 layout animations (built by Init; page-state machine in Move /
- *         func_801A2624)
- *   0xA8  message buffer pointer (ctor arg)
- *   0xAC  ctor byte arg
- *   0xAD  window state (1 intro / 2 advance / 3 close; init 1)
- *   0xAE  page-animation state (4..7; init 4)
+ *   0x68  message id
+ *   0x6C  IWorkEvent base (vtable = compVt+0x24) — thunk -0x6C
+ *   0x70  IScnRender base (vtable = compVt+0xac) — thunks -0x70
+ *   0x74  UnkClass_8045F564 region
+ *   ...
  */
-struct CSimpleEveTalkWin {
-    u8    mProcHead[0x10];              // 0x00 CProcess storage head
-    u32   mVtable;                      // 0x10 CProcess vtable slot
-    u8    mProcTail[0x28];              // 0x14 CProcess storage tail
-    u32   ptmf0[3];                     // 0x3C null pointer-to-member-function
-    u32   ptmf1[3];                     // 0x48 null pointer-to-member-function
+struct CSimpleEveTalkWinPre : CProcess {
+    u32   ptmf0[3];                     // 0x3C null ptmf
+    u32   ptmf1[3];                     // 0x48 null ptmf
     nw4r::lyt::Layout* mpLayout;        // 0x54
     u32   field_58;                     // 0x58
     u32   field_5C;                     // 0x5C
@@ -58,28 +49,28 @@ struct CSimpleEveTalkWin {
     u8    field_65;                     // 0x65
     u8    field_66;                     // 0x66
     u8    field_67;                     // 0x67 (init 1)
-    u32   field_68;                     // 0x68 message text id/pointer
-    u32   mWorkEvent;                   // 0x6C IWorkEvent vtable slot
-    u32   mScnRender;                   // 0x70 IScnRender vtable slot
-    u8    mMemRegion[0x10];             // 0x74 UnkClass_8045F564 storage (raw
-                                        //      buffer: retail drives its
-                                        //      ctor/dtor via C-linkage calls)
+    u32   field_68;                     // 0x68 message id
+    // 0x6C follows as base subobject
+};
+
+struct CSimpleEveTalkWin : CSimpleEveTalkWinPre, IWorkEvent, IScnRender {
+    u8    mMemRegion[0x10];             // 0x74 UnkClass_8045F564 storage
     CScn* mScene;                       // 0x84 owning scene
-    nw4r::lyt::AnimTransform* field_88; // 0x88 tag processor (0x840 heap block)
-    nw4r::lyt::AnimTransform* field_8C; // 0x8C layout animation 1
-    nw4r::lyt::AnimTransform* field_90; // 0x90 layout animation 2
-    nw4r::lyt::AnimTransform* field_94; // 0x94 layout animation 3
+    nw4r::lyt::AnimTransform* field_88; // 0x88 tag processor
+    nw4r::lyt::AnimTransform* field_8C; // 0x8C anim 1
+    nw4r::lyt::AnimTransform* field_90; // 0x90 anim 2
+    nw4r::lyt::AnimTransform* field_94; // 0x94 anim 3
     u8    _98[0xA8 - 0x98];             // 0x98
     u8*   mMsgBuf;                      // 0xA8 message buffer
-    u8    field_AC;                     // 0xAC (ctor arg)
+    u8    field_AC;                     // 0xAC ctor arg
     u8    field_AD;                     // 0xAD (init 1)
     u8    field_AE;                     // 0xAE (init 4)
 
-    ~CSimpleEveTalkWin();
+    ~CSimpleEveTalkWin() override;
     void Init();
     void Term();
     void Move();
-    void cbRenderBefore();
+    void cbRenderBefore() override;
 };
 
 // --- Local opaque views used by Init / Move / func_801A2624 / func_801A2190.

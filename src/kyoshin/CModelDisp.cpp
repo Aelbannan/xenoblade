@@ -279,7 +279,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             __dt__80043E88(&holder, -1);
             continue;
         }
-        CModelDispActor* actor = func_800BFC68(slot->field_04);
+        CModelDispActor* actor = getCfObjectPc(slot->field_04);
         // Retail tests actor twice: once branching on the pointer itself,
         // once materializing ok via the subic/subfe carry trick.
         int ok = actor != NULL;
@@ -518,7 +518,7 @@ void func_801FCBF4(CModelDisp* self, CModelDispParent* param, s32 enable,
             if (((CModelDispEnumList*)func_80043F18(&holder))->field_620 >= 1) {
                 CModelDispSlot* slot = func_800F6EC0((CModelDispEnumList*)func_80043F18(&holder), 0);
                 if (slot->field_04 != NULL) {
-                    CModelDispActor* actor = func_800BFC68(slot->field_04);
+                    CModelDispActor* actor = getCfObjectPc(slot->field_04);
                     CModelDispNameParam* res = NULL; // name param from the lookup
                     s32 flag = 0;                    // slot kind for the rebinder
                     // Retail compiles both dispatches as switch statements

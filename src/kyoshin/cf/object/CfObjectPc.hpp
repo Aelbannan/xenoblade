@@ -7,7 +7,7 @@
 
 extern UNKTYPE* findObjectById(BOOL r3);
 extern UNKTYPE* func_800AD860(UNKTYPE* r3);
-extern UNKTYPE* func_800C1228(UNKTYPE* r3);
+extern UNKTYPE* getValidObject(UNKTYPE* r3);
 
 // Retail data labels referenced by the CfObjectPc methods.
 extern void* lbl_eu_806640DC;   // .sbss bdat file pointer (arts list)
@@ -269,7 +269,7 @@ struct CfPcCAIBlock {
     u32 field_210;
 };
 
-// Object examined by func_800C1228: flags word at +0x64; bit 0x4000 marks
+// Object examined by getValidObject: flags word at +0x64; bit 0x4000 marks
 // the object as valid (returned as-is), otherwise NULL is returned.
 struct FlagsObj800C1228 {
     u8 _0[0x64];
@@ -309,7 +309,7 @@ namespace cf {
         inline UNKTYPE* unkInline2(){
             BOOL thing2 = CObjectParam_UnkVirtualFunc5();
             UNKTYPE* idk2 = findObjectById(thing2);
-            return func_800C1228(idk2);
+            return getValidObject(idk2);
         }
 
         //0x0: vtable

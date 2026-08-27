@@ -17,7 +17,7 @@ struct CfObjectImplPcSubObj {
 
 namespace cf {
 
-class CfObjectMove;  // forward decl (func_800BFC68 signature)
+class CfObjectMove;  // forward decl (getCfObjectPc signature)
 
 // ---------------------------------------------------------------------------
 // vtable dispatch views (never instantiated; no vtables emitted).
@@ -1022,7 +1022,7 @@ u8* func_8009D7E4(u8* info, int a);
 // C++-mangled imports (plain declarations let MWCC append the retail
 // mangling from the parameter types).
 bool isGlobalCamFlagSet(int mask);                      // isGlobalCamFlagSet__Fi
-cf::CfObjectImplPc18* func_800BFC68(cf::CfObjectMove* objMove);  // func_800BFC68__FPQ22cf12CfObjectMove
+cf::CfObjectImplPc18* getCfObjectPc(cf::CfObjectMove* objMove);  // getCfObjectPc__FPQ22cf12CfObjectMove
 // (findObjectById__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 
 // sdata2 constants used by func_800CA294 / func_800C86E8 / func_800C9A20 /

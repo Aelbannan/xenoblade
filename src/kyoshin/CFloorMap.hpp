@@ -364,7 +364,7 @@ struct CFloorMapLayoutData {
 };
 
 // Layout-init view for func_80244764: layout pointer at +0x00 with the arc
-// resource accessor right behind it at +0x04 (func_80136E84 takes
+// resource accessor right behind it at +0x04 (buildLayout takes
 // &layout/accessor pair, then GetRootPane reads layout+0x10).
 struct CFloorMapLayoutData0 {
     nw4r::lyt::Layout* layout;                // +0x00
@@ -666,7 +666,7 @@ extern "C" void func_8022B7F4(void* sysWin);       // CSysWin teardown
 // C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
 // the retail symbols, same scheme as CItemBoxInfo.hpp).
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // Cast-only view of nw4r::lyt::Layout for the deleting-destructor dispatch at
 // vtable slot 2 (+0x08 after the RTTI prefix); arg 1 in r4 (see
@@ -679,8 +679,8 @@ extern "C" void func_801F3540(void* scrollBar);   // CScrollBar per-frame update
 extern "C" void func_801D202C(void* cursor);      // CCur18 per-frame update
 extern "C" void func_8022B748(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
-// retail symbol keeps the C++ mangled name func_80137444__FPQ34nw4r3lyt13AnimTransformf.
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+// retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // Linked list of marker objects returned by func_800B6CF8/func_800B6C58/
 // func_800B6BEC (same layout as CMiniMap's MiniMapList): head sentinel at
@@ -783,11 +783,11 @@ extern "C" void* func_800B6BEC();
 extern "C" void* func_80193804();
 extern "C" void func_80141DC4(float*, int = 0);
 
-// C-linkage UI helper imports. func_80136E84/func_80136F08 keep their retail
+// C-linkage UI helper imports. buildLayout/bindLayoutAnimTransform keep their retail
 // mangled names through MWCC's natural C++ mangling; the flat-named helpers
 // need extern "C" so MWCC does not append a parameter suffix.
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 // C-linkage name/label helpers from code_80135FDC.cpp. func_80136190 builds
 // a pane name from a format string, a base string and an index (JP retail
@@ -806,8 +806,8 @@ extern "C" void* func_80137E7C(void*, const char*, void*);
 extern "C" u32 func_8009CF8C(u32);
 
 // Flat C-ABI imports used by the map-cursor functions (retail symbols are
-// unmangled). func_80138078 keeps C++ linkage so MWCC emits the retail
-// mangled name func_80138078__FUl.
+// unmangled). playUISound keeps C++ linkage so MWCC emits the retail
+// mangled name playUISound__FUl.
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" u32 func_80248558(void*);
@@ -825,7 +825,7 @@ extern "C" void* func_80248920(void*, const char*, f32, f32, void*, const char*)
 extern "C" void func_8024577C(void*, u16);
 extern "C" void func_802452C4(void*);
 extern "C" void func_8024B4CC(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
-extern void func_80138078(u32);
+extern void playUISound(u32);
 
 // C-ABI imports used by the floor-map update functions (retail plain names).
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
@@ -850,7 +850,7 @@ extern "C" CFloorMapGimmickGlobal* getUnk80664658();
 extern "C" void func_801F3670(void*, const float*);
 extern "C" void func_801F36BC(void*, int, int);
 extern "C" void func_8022C1B4(nw4r::math::VEC3*, void*, u8);
-extern "C" void func_801390E0__FPP11CFileHandle(CFileHandle**);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle**);
 extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern "C" int atoi(const char*);
 

@@ -161,7 +161,7 @@ __declspec(noinline) void func_8029F82C(CSkipTimer2* self, u8 arg) {
 #pragma push
 #pragma auto_inline off
 void func_8029F504(CSkipTimer2* self) {
-    if (func_80137444(self->mAnimTransform, lbl_eu_80668C30) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_80668C30) != 0) {
         self->mField21 = 2;
         self->mField23 = 1;
     }
@@ -292,7 +292,7 @@ extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
 #pragma push
 #pragma auto_inline off
 extern "C" void func_802A0234(CSkipTimer* self) {
-    if (func_80137444(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
         self->mField29 = 2;
         func_802A05E4(self);
         // Intermediate local: retail keeps the action id in r0 across the
@@ -534,9 +534,9 @@ void func_8029FCDC(CSkipTimer* self) {
 #pragma optimize_for_size on
 void func_8029FDBC(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField28 == 0) return;
-    func_80137038(self->mLayout2, drawInfo, 0, 1);
+    drawLayout(self->mLayout2, drawInfo, 0, 1);
     if (reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0])->mField20 != 0) {
-        func_80137038(
+        drawLayout(
             reinterpret_cast<nw4r::lyt::Layout*>(
                 reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0])->mField18),
             drawInfo, 0, 1);
@@ -555,7 +555,7 @@ void func_8029FE30(CSkipTimer* self) {
         self->mLayout2 = 0;
     }
     func_8029F2FC(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
-    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
+    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
     self->mLayout = 0;
     func_8022B7F4(&self->mSysWinData[0]);
     self->mMemRegion.func_8045F778();
@@ -587,7 +587,7 @@ void func_8029FF24(CSkipTimer* self) {
     self->mField2C = t;
     if (t > 0x17) self->mField2C = 0;
     func_802A041C(self);
-    func_80138078__FUl(0x22);
+    playUISound__FUl(0x22);
 }
 
 // func_8029FF98 (CSkipTimer): retreat the switch key (wrap down) + cue sound.
@@ -598,7 +598,7 @@ void func_8029FF98(CSkipTimer* self) {
     self->mField2C = t;
     if (t < 0) self->mField2C = 0x17;
     func_802A041C(self);
-    func_80138078__FUl(0x22);
+    playUISound__FUl(0x22);
 }
 
 void func_802A0008(u8* obj) {
@@ -616,7 +616,7 @@ void func_802A0028(CSkipTimer* self) {
     self->mField2B = 0;
     sub->mField21 = 3;
     sub->mField23 = 0;
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 // func_802A005C (CSkipTimer): confirm/cancel handler while in state 3.
@@ -636,7 +636,7 @@ extern "C" void func_802A005C(CSkipTimer* self) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
         }
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else {
         self->mField29 = 6;
         self->mField2B = 0;
@@ -644,7 +644,7 @@ extern "C" void func_802A005C(CSkipTimer* self) {
         func_8022B9B4(&self->mSysWinData[0], msg, 0);
         func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWinData[0]), 1);
         func_8022B8B8(&self->mSysWinData[0]);
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     }
 }
 
@@ -663,10 +663,10 @@ void func_802A0148(CSkipTimer* self) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
         }
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else {
         self->mActive = 1;
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     }
 }
 
@@ -784,12 +784,12 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
         mLayout = reinterpret_cast<nw4r::lyt::Layout*>(CLibLayout::createArcResourceAccessor());
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout)
             ->Attach(fileData, &lbl_eu_80510568[0xc8]);
-        func_80136E84(&mLayout2, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
+        buildLayout(&mLayout2, reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
                       &lbl_eu_80510568[0xcc]);
-        func_80136F08(mLayout2, &mAnimTransform20,
+        bindLayoutAnimTransform(mLayout2, &mAnimTransform20,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
                       &lbl_eu_80510568[0xe5]);
-        func_80136F08(mLayout2, &mAnimTransform24,
+        bindLayoutAnimTransform(mLayout2, &mAnimTransform24,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mLayout),
                       &lbl_eu_80510568[0x101]);
         func_802A055C(this);
@@ -858,15 +858,15 @@ __declspec(noinline) void func_8029F168(CSkipTimer2* self) {
     Class_8045F858 regionHost(&self->mMemRegion);
     // No cached accessor temp: retail reloads mParent (+0x14) for each build
     // call, keeping only the string-pool base and self in callee-saved regs.
-    func_80136E84(reinterpret_cast<nw4r::lyt::Layout**>(&self->mField18),
+    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&self->mField18),
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mParent),
                   &lbl_eu_80510568[0xc]);
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
                   &self->mAnimTransform,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mParent),
                   &lbl_eu_80510568[0x25]);
     func_8029F7A4(self);
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18),
                   &lbl_eu_80510568[0x41], func_801355D8());
     nw4r::lyt::Pane* pane = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
                                 ->GetRootPane()

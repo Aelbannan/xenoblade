@@ -21,9 +21,9 @@ void func_801F20F0(CItemBoxLine* self, u32 itemData);
 void func_801F2298(CItemBoxLine* self, u32 itemData);
 int func_801F2880(u32 unused, u32 key);
 
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // ============================================================================
@@ -53,7 +53,7 @@ void func_801ED97C(void* self) {
     func_801D216C(p + 0xa0, 0);
     advanceItemBox2State__FP13CItemBoxInfo2(p + 0xd0);
     func_801F369C(p + 0x310);
-    if (!p[0x39e]) func_80138078__FUl(6);
+    if (!p[0x39e]) playUISound__FUl(6);
 }
 
 // ============================================================================
@@ -71,7 +71,7 @@ void func_801EF050(void* self) {
     func_801F0030(self);
     func_801F0488(self);
     func_801F3850(p + 0x310, *(unsigned short*)(p + 0x38e));
-    func_80138078__FUl(2);
+    playUISound__FUl(2);
 }
 
 u8 func_801ED800(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
@@ -531,9 +531,9 @@ extern "C" u32 func_801EC9E0(void* self, unsigned int itemData) {
 // ============================================================================
 void func_801ECC10(CItemBoxLine* self) {
     char* pool = lbl_eu_805071B0;
-    func_80136E84(&self->field08, self->field04, pool + 0x121);
-    func_80136F08(self->field08, &self->field0C, self->field04, pool + 0x139);
-    func_80136F08(self->field08, &self->field10, self->field04, pool + 0x156);
+    buildLayout(&self->field08, self->field04, pool + 0x121);
+    bindLayoutAnimTransform(self->field08, &self->field0C, self->field04, pool + 0x139);
+    bindLayoutAnimTransform(self->field08, &self->field10, self->field04, pool + 0x156);
     self->field08->UnbindAllAnimation();
     func_801D21CC(self);
 }
@@ -634,7 +634,7 @@ void func_801ED3E8(CItemBoxLine* self) {
 void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field4C == 0) return;
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(&self->mInfo2D0[0], drawInfo);
-    func_80137038(self->field40, drawInfo, 0, 1);    // "line not busy" flag: both the tab-name cursor and the num-select idle.
+    drawLayout(self->field40, drawInfo, 0, 1);    // "line not busy" flag: both the tab-name cursor and the num-select idle.
     int noBusy = 0;
     if (func_801D2ED8(&self->mCurB8) == 0 && func_801EB020(&self->mNumSel) == 0) noBusy = 1;
     if (noBusy != 0) {
@@ -684,8 +684,8 @@ void func_801ED618(CItemBoxLine* self) {
         }
         self->field40 = 0;
     }
-    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field38));
-    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field3C));
+    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field38));
+    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field3C));
     CItemBoxLineDtorView* obj54 = self->field54;
     if (obj54 != 0) {
         if (obj54 != 0) {
@@ -777,7 +777,7 @@ void func_801EDA6C(CItemBoxLine* self) {
     func_801F061C((void*)self, 0);
     func_801EFFC4((void*)self);
     func_801F071C((void*)self);
-    func_80138078__FUl(0x70);
+    playUISound__FUl(0x70);
     func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
@@ -808,7 +808,7 @@ void func_801EDB80(CItemBoxLine* self) {
     func_801F061C((void*)self, 1);
     func_801EFFC4((void*)self);
     func_801F071C((void*)self);
-    func_80138078__FUl(0x70);
+    playUISound__FUl(0x70);
     func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
 
@@ -839,7 +839,7 @@ void func_801EDC94(CItemBoxLine* self) {
             func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
             reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
         }
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (self->field3A0 != 0) {
@@ -894,7 +894,7 @@ void func_801EDC94(CItemBoxLine* self) {
         func_801F0488(self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -921,7 +921,7 @@ void func_801EDF40(CItemBoxLine* self) {
                 u8 tmp[12];
                 func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
                 reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
-                func_80138078__FUl(1);
+                playUISound__FUl(1);
             }
         }
         return;
@@ -982,7 +982,7 @@ void func_801EDF40(CItemBoxLine* self) {
         func_801F0488(self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -1010,7 +1010,7 @@ void func_801EE228(CItemBoxLine* self) {
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
         reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (func_801EB020(&self->mNumSel) != 0) {
@@ -1023,7 +1023,7 @@ void func_801EE228(CItemBoxLine* self) {
         }
         func_801EB04C(&self->mNumSel, (u8)self->field392);
         func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     } else {
         if (self->unk38C == -1) {
             func_801EDB80((void*)self);
@@ -1044,7 +1044,7 @@ void func_801EE228(CItemBoxLine* self) {
         func_801F0030((void*)self);
         func_801F0488((void*)self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     }
 }
 #pragma pop
@@ -1074,7 +1074,7 @@ void func_801EE448(CItemBoxLine* self) {
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
         reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (func_801EB020(&self->mNumSel) != 0) {
@@ -1088,7 +1088,7 @@ void func_801EE448(CItemBoxLine* self) {
         }
         func_801EB04C(&self->mNumSel, (u8)self->field392);
         func_801EB064(&self->mNumSel, self->field392 * func_801EC260((void*)tabs, idx));
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (self->unk38C == -1) {
@@ -1113,7 +1113,7 @@ void func_801EE448(CItemBoxLine* self) {
     func_801F0030((void*)self);
     func_801F0488((void*)self);
     func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -1140,13 +1140,13 @@ void func_801EE684(CItemBoxLine* self) {
                 func_801D216C(&self->mCur70, 1);
             }
             func_801D216C(&self->mCur88, 0);
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         } else {
             if (func_801EB020(&self->mNumSel) == 0) return;
             if (func_801EB028(&self->mNumSel) == 0) return;
             func_801EB178(&self->mNumSel);
             self->field50 = 8;
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
     }
 }
@@ -1191,12 +1191,12 @@ void func_801EE788(CItemBoxLine* self) {
         func_801F0488(self);
         func_801EB178(&self->mNumSel);
         self->field50 = 8;
-        func_80138078__FUl(0x2f);
+        playUISound__FUl(0x2f);
         return;
     }
     if (func_801EC3B0(tabs, key) == 0) return;
     if (func_801EC23C(tabs, key) != 0) {
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
         return;
     }
     if (func_801EC284(reinterpret_cast<CIBLTabFull*>(tabs), key) == 0) {
@@ -1216,7 +1216,7 @@ void func_801EE788(CItemBoxLine* self) {
         func_8022B9B4(&self->mSysWin, (u32)text, 0);
         func_8022BFC8(&self->mSysWin, 1);
         func_8022B8B8(&self->mSysWin);
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
         return;
     }
     // Armed page: name-format tabs probe availability through func_801F2880,
@@ -1252,13 +1252,13 @@ void func_801EE788(CItemBoxLine* self) {
     }
     if (unavailable) {
         self->unk39E = 1;
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else {
         func_8022B90C(&self->mSysWin, 0);
         func_8022B9B4(&self->mSysWin, (u32)text, 0);
         func_8022BFC8(&self->mSysWin, 1);
         func_8022B8B8(&self->mSysWin);
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
     }
 }
 #pragma pop
@@ -1363,7 +1363,7 @@ void func_801EECE8(CItemBoxLine* self) {
     func_801E174C(tmp, self->mInfo2D0, self->field39F);
     reinterpret_cast<CIBLCur70View*>(&self->mCurB8)->vf02(tmp);
     func_801EFFC4(static_cast<void*>(self));
-    func_80138078__FUl(0xa);
+    playUISound__FUl(0xa);
 }
 
 // ============================================================================
@@ -1383,7 +1383,7 @@ void func_801EED6C(void* self) {
     func_801E174C(tmp, p + 0xd0, p[0x39f]);
     reinterpret_cast<CIBLCur70View*>(p + 0xb8)->vf02(tmp);
     func_801EFFC4(self);
-    func_80138078__FUl(0xa);
+    playUISound__FUl(0xa);
 }
 
 // ============================================================================
@@ -1446,9 +1446,9 @@ void func_801EEDF8(CItemBoxLine* self) {
         CIBLVec3 vec;
         func_801CB9D8(&vec, page2->pageWords180, sel);
         reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
-        func_80138078__FUl(2);
+        playUISound__FUl(2);
     } else {
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
     }
 }
 #pragma pop
@@ -1482,7 +1482,7 @@ u8 func_801EF0EC(CItemBoxLine* self) {
 // animation on it and enable it on +0x48 (intro -> loop), entering state 2.
 // ============================================================================
 void func_801EF1E4(CItemBoxLine* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field44, lbl_eu_80668114) != 0) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field44, lbl_eu_80668114) != 0) {
         self->field40->SetAnimationEnable(self->field44, false);
         self->field40->SetAnimationEnable(self->field48, true);
         self->field50 = 2;
@@ -1494,7 +1494,7 @@ void func_801EF1E4(CItemBoxLine* self) {
 // and re-format/push the tab name overlay.
 // ============================================================================
 void func_801EF260(CItemBoxLine* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field48, lbl_eu_80668114) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field48, lbl_eu_80668114) == 0) return;
     self->field50 = 3;
     self->unk59 = 1;
     func_801F0488(self);
@@ -2073,8 +2073,8 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     char* nameB = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0xb);
     str.format(&lbl_eu_805071B0[0x5ca], (u16)v23, nameB, (u16)v22);
     func_80136B4C(self->field40, &lbl_eu_805071B0[0x4a6], str.mString, 0);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], c);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], d);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], c);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], d);
     char* n7f = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x7f);
     char* n80 = func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x80);
     if (e != 0) {
@@ -2140,9 +2140,9 @@ void func_801F183C(CItemBoxLine* self, u32 itemData) {
     u8 a = func_801361E8(table, &lbl_eu_805071B0[0x59e], kind);
     u8 b = func_801361E8(table, &lbl_eu_805071B0[0x5a6], kind);
     u8 c = func_801361E8(table, &lbl_eu_805071B0[0x5d8], kind);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], a);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], b);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4e2], c);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4ca], a);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4d6], b);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x4e2], c);
 
     // Slot-name format ladder (kind selector). The range check and the three
     // equality tests each branch to their case body; the bodies sit after the
@@ -2209,7 +2209,7 @@ selDone:
 #pragma optimize_for_size on
 void func_801F08B4(CItemBoxLine* self, u32 itemData) {
     func_801F0A58((void*)self, itemData);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x3e6], func_80158068(itemData));
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x3e6], func_80158068(itemData));
     switch ((int)self->tabEntries[(s8)self->field6D]) {
     case 2:
     case 4:
@@ -2525,12 +2525,12 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
             createArcResourceAccessor__10CLibLayoutFv();
         this->field38 = (CItemBoxLineResView*)acc;
         acc->Attach(data, &lbl_eu_805071B0[0x70d]);
-        func_80136E84(&this->field40, (nw4r::lyt::ArcResourceAccessor*)this->field38,
+        buildLayout(&this->field40, (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       &lbl_eu_805071B0[0x711]);
-        func_80136F08(this->field40, &this->field44,
+        bindLayoutAnimTransform(this->field40, &this->field44,
                       (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       &lbl_eu_805071B0[0x728]);
-        func_80136F08(this->field40, &this->field48,
+        bindLayoutAnimTransform(this->field40, &this->field48,
                       (nw4r::lyt::ArcResourceAccessor*)this->field38,
                       &lbl_eu_805071B0[0x742]);
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
@@ -2543,7 +2543,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         for (u8 i = 1; i <= 7; i++) {
             char buf[0x20];
             sprintf(buf, &lbl_eu_805071B0[0x3aa], i);
-            func_801368C0(this->field40, buf, (u32)text);
+            setLayoutTextBoxFont(this->field40, buf, (u32)text);
         }
         this->field40->SetAnimationEnable(this->field48, false);
         this->field40->SetAnimationEnable(this->field44, true);
@@ -2566,22 +2566,22 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
 
         // Bind the line text into the sixteen label panes.
         char* text2 = func_801355BC();
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4a6], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4ca], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4d6], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4b2], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4be], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x4e2], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x549], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x555], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x3e6], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x76b], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x775], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x77f], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x789], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x793], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x79d], (u32)text2);
-        func_801368C0(this->field40, &lbl_eu_805071B0[0x7a7], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4a6], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4ca], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4d6], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4b2], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4be], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x4e2], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x549], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x555], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x3e6], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x76b], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x775], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x77f], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x789], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x793], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x79d], (u32)text2);
+        setLayoutTextBoxFont(this->field40, &lbl_eu_805071B0[0x7a7], (u32)text2);
 
         // Per-kind slot name providers (index into the shared name table).
         func_80136B4C(this->field40, &lbl_eu_805071B0[0x443],

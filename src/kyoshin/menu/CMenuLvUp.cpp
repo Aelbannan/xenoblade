@@ -46,18 +46,18 @@ void CMenuLvUp::Init() {
         CMenuLvUpEntry* entry = &mEntries[i];
 
         nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-        func_80136E84(&entry->field_0x00, accessor, &lbl_eu_8050EC70[0xa]);
+        buildLayout(&entry->field_0x00, accessor, &lbl_eu_8050EC70[0xa]);
         accessor = func_801355F4();
-        func_80136F08(entry->field_0x00, &entry->field_0x04, accessor,
+        bindLayoutAnimTransform(entry->field_0x00, &entry->field_0x04, accessor,
                       &lbl_eu_8050EC70[0x21]);
         entry->field_0x00->SetAnimationEnable(entry->field_0x04, true);
         entry->field_0x04->SetFrame(resetFrame);
         entry->field_0x00->Animate(0);
 
         accessor = func_801355F4();
-        func_80136E84(&entry->field_0x08, accessor, &lbl_eu_8050EC70[0x3b]);
+        buildLayout(&entry->field_0x08, accessor, &lbl_eu_8050EC70[0x3b]);
         accessor = func_801355F4();
-        func_80136F08(entry->field_0x08, &entry->field_0x0C, accessor,
+        bindLayoutAnimTransform(entry->field_0x08, &entry->field_0x0C, accessor,
                       &lbl_eu_8050EC70[0x54]);
         entry->field_0x08->SetAnimationEnable(entry->field_0x0C, true);
         entry->field_0x0C->SetFrame(resetFrame);
@@ -122,13 +122,13 @@ void CMenuLvUp::Move() {
 
             switch (entry->field_0x14) {
             case 1:
-                if (func_80137444(entry->field_0x04, lbl_eu_80668A04) != 0) {
+                if (advanceAnimTransform(entry->field_0x04, lbl_eu_80668A04) != 0) {
                     entry->field_0x14 = 3;
                     entry->field_0x04->SetFrame(resetFrame);
                 }
                 break;
             case 2:
-                if (func_80137444(entry->field_0x0C, lbl_eu_80668A04) != 0) {
+                if (advanceAnimTransform(entry->field_0x0C, lbl_eu_80668A04) != 0) {
                     entry->field_0x14 = 3;
                     entry->field_0x0C->SetFrame(resetFrame);
                 }
@@ -173,8 +173,8 @@ void CMenuLvUp::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     for (u8 i = 0; i < 3; i++) {
-        func_80137038(mEntries[i].field_0x00, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
-        func_80137038(mEntries[i].field_0x08, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+        drawLayout(mEntries[i].field_0x00, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+        drawLayout(mEntries[i].field_0x08, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     }
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
@@ -326,7 +326,7 @@ void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
             continue;
         case 1:
             entry->field_0x14 = 1;
-            func_80138078(0x4a);
+            playUISound(0x4a);
             func_802A2E68((int)entry->field_0x10);
             break;
         case 2:
@@ -349,7 +349,7 @@ void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
             entry->field_0x08->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
                 ->SetVisible(false);
-            func_80138078(0x93);
+            playUISound(0x93);
             break;
         case 3:
             entry->field_0x14 = 2;
@@ -371,7 +371,7 @@ void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
             entry->field_0x08->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
                 ->SetVisible(true);
-            func_80138078(0x78);
+            playUISound(0x78);
             break;
         case 4:
             entry->field_0x14 = 2;
@@ -393,7 +393,7 @@ void func_802764A0(CMenuLvUp* self, CMenuLvUpEntry* entry) {
             entry->field_0x08->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050EC70[0x9f], true)
                 ->SetVisible(false);
-            func_80138078(0x92);
+            playUISound(0x92);
             break;
         }
         entry->field_0x15 = *slot;

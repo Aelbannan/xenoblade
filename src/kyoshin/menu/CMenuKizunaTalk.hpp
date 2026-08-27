@@ -203,11 +203,11 @@ extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
 extern "C" void func_8022C1B4(void* out, void* syswin, u8 sel);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
 extern "C" int func_8006A6D0();
-extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();
 
 // Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
-int func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
+int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 
 #include "kyoshin/CItemBoxGrid.hpp"
 // func_801361E8 comes from CItemBoxGrid.hpp's wide-view (u32) decl - the

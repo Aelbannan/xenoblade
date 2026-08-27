@@ -373,7 +373,7 @@ extern "C" {
     void setMoviePause__7CLibCriFv(CLibCri* self, u32 arg);
     REvtMgrView* getGimmickListHead__Q22cf13CfGameManagerFv();
     REvtMgrView* getGimmickList__Q22cf13CfGameManagerFv();
-    REvtActor* func_800BFC68__FPQ22cf12CfObjectMove(REvtActor* obj);
+    REvtActor* getCfObjectPc__FPQ22cf12CfObjectMove(REvtActor* obj);
     REvtActor* getEffOwner____FPv(REvtActor* obj);
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void activateLOD__8CTaskLODFv(s16 taskID);

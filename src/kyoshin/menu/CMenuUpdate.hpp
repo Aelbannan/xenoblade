@@ -164,7 +164,7 @@ extern "C" void __dt__10IScnRenderFv(void*, int);
 extern "C" void __dt__10IWorkEventFv(void*, int);
 // One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
-// func_80136F08 call left in r4.
+// bindLayoutAnimTransform call left in r4.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void __dt__9IUIWindowFv(void*, int);
 extern "C" void __ct__8CProcessFv(void*);
@@ -181,7 +181,7 @@ extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 // One-arg form: retail emits 'li r3,1; bl' with no r4 setup - the second
 // (Layout*) argument arrives as the &mAnim2 pointer the preceding
-// func_80136F08 call left in r4.
+// bindLayoutAnimTransform call left in r4.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
@@ -189,12 +189,12 @@ extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* func_801355F4();
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
 extern "C" void func_8013676C(void*, void*);
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
-extern "C" bool func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
+extern "C" bool advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
 extern "C" void func_80137E7C(void*, const char*, void*);
 extern "C" void func_80137B44(void*, const char*, int);
 extern "C" void func_80136B4C(void*, const char*, void*, int);
@@ -202,7 +202,7 @@ extern "C" void func_80136B4C(void*, const char*, void*, int);
 extern "C" u16 func_80136254(void*, const char*, int);
 extern "C" u16 func_8013606C(const char*, const char*, int);
 // func_80136190: declared with char* return in code_80135FDC.hpp (caller-tuned)
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" bool func_80135898();
 extern "C" void func_80133A08(u32);
 extern "C" void func_801347EC(u32);

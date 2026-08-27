@@ -565,21 +565,21 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, 
 extern "C" u32 func_800A9D90();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
 extern "C" char* func_8013639C(const void*, const void*, int); // BDAT row string lookup
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" u8 func_801361E8(u32, const char*, u32);
 // func_8013606C/8013600C take byte-keyed lookups: retail masks the 3rd arg
 // to 8 bits at the call site, so the param is u8.
@@ -678,15 +678,15 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 extern "C" char* func_801355BC(void);
-extern "C" void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+extern "C" void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" char* func_80138F78(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80124270(void*, u32);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" void func_8023B430(CArtsInfo* self);

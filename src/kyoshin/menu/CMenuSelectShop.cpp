@@ -177,7 +177,7 @@ void CMenuSelectShop::Init() {
 
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf2();
 
-    func_80138078__FUl(0x29);
+    playUISound__FUl(0x29);
 
     void* render = this;
     if (this) render = &mOcc70;
@@ -321,7 +321,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         s32 v = (s32)self->mSelIndex - 1;
         self->mSelIndex = (u32)v;
         if (v < 0) self->mSelIndex = 2;
-        func_80138078(1);
+        playUISound(1);
         func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
     } else if (cancelButton != 0) {
@@ -330,7 +330,7 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         s32 v = (s32)self->mSelIndex + 1;
         self->mSelIndex = (u32)v;
         if (v > 2) self->mSelIndex = 0;
-        func_80138078(1);
+        playUISound(1);
         func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
     } else if (okButton != 0) {
@@ -338,11 +338,11 @@ extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
         switch ((s32)self->mSelIndex) {
         case 0:
             func_80134024(self->mFieldD0);
-            func_80138078(3);
+            playUISound(3);
             break;
         case 1:
             func_80134100();
-            func_80138078(3);
+            playUISound(3);
             break;
         case 2:
             self->mState = 3;

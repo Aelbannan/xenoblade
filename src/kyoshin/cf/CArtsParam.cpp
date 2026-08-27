@@ -112,19 +112,16 @@ namespace cf {
     CArtsParam lbl_80577580;
 
     CAttackParam::CAttackParam(){
-        // implicit vptr store (lbl_eu_8052F610 -> +0x84) happens first;
-        // the hook call dispatches virtually through it (r12 idiom)
+        unk84 = lbl_eu_8052F610;
         unk0 = 0;
         unk20 = 0;
         unk78 = 0;
-        CAttackParam_UnkVirtualFunc1();
+        ((AttackParamSlot*)unk84)[2](this);
     }
 
     CArtsParam::CArtsParam(){
-        // implicit base ctor (inlined) runs first, then the derived vptr
-        // swap (lbl_eu_8052F5E8 -> +0x84); body calls the +0x08 hook
-        // virtually, reloading the swapped vptr through the member
-        CAttackParam_UnkVirtualFunc1();
+        unk84 = lbl_eu_8052F5E8;
+        ((AttackParamSlot*)unk84)[2](this);
     }
 
     void CArtsParam::CArtsParam_UnkVirtualFunc1(){
@@ -692,3 +689,4 @@ void cf::CArtsParam::vtableFunc3(u8 val) {
     u8* o = *(u8**)((u8*)this + 0x88);
     if (o) *(u8*)((u8*)o + 0) = val;
 }
+

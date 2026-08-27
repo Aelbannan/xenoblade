@@ -142,8 +142,8 @@ bool isGlobalCamFlagSet__Fi(UNKWORD r3);
 void* func_801355F4();
 }
 
-extern u32 func_801355A0();
-extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+extern u32 getPackedFont();
+extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 // C++-mangled retail helper findObjectById__Fi (actor id -> action source).
 void* findObjectById(int id);typedef u32* (*GetU32Fn)(void*);
 typedef int (*GetIntFn)(void*);
@@ -229,12 +229,12 @@ void CUIBattleManager::Move() {
 
     mtl::MemManager::getHandleMEM2();
 
-    if ((unk82 & 1) != 0 && func_801355A0() != 0) {
+    if ((unk82 & 1) != 0 && getPackedFont() != 0) {
         unk82 &= ~1;
         func_8012F5F8();
     }
 
-    if ((unk82 & 2) != 0 && func_801355A0() != 0) {
+    if ((unk82 & 2) != 0 && getPackedFont() != 0) {
         unk82 &= 0xfd;
         if (lbl_eu_80664048 != NULL) {
             if (func_801355F4() == NULL) {
@@ -262,7 +262,7 @@ void CUIBattleManager::Move() {
         }
     }
 
-    if ((unk82 & 8) != 0 && func_801355A0() != 0) {
+    if ((unk82 & 8) != 0 && getPackedFont() != 0) {
         unk82 &= 0xf7;
         if (lbl_eu_80664048 != NULL) {
             if (func_801355F4() == NULL) {
@@ -289,7 +289,7 @@ void CUIBattleManager::Move() {
         }
     }
 
-    if ((unk82 & 0x10) != 0 && func_801355A0() != 0) {
+    if ((unk82 & 0x10) != 0 && getPackedFont() != 0) {
         unk82 &= 0xef;
         if (lbl_eu_80664048 != NULL) {
             // Retail: cntlzw/srwi zero-test on func_8009CF8C(0x3357).
@@ -318,7 +318,7 @@ void CUIBattleManager::Move() {
         }
     }
 
-    if ((unk82 & 0x20) != 0 && func_801355A0() != 0) {
+    if ((unk82 & 0x20) != 0 && getPackedFont() != 0) {
         unk82 &= 0xdf;
         if (lbl_eu_80664048 != NULL) {
             if (func_801355F4() == NULL) {
@@ -438,7 +438,7 @@ void CUIBattleManager::Move() {
                     flagObj = actor->field_3F60;
                     if (flagObj != NULL &&
                         (((CUIBattleFlagObj*)flagObj)->field_530 & 1) == 0) {
-                        objPc = func_800BFC68(player);
+                        objPc = getCfObjectPc(player);
                         handle = vslot<GetIntFn>(objPc, 0x4C)(objPc);
                         if (handle == 0) {
                             lbl_eu_8066404C = NULL;
@@ -719,11 +719,11 @@ extern "C" void __dt__8012E534(CUIBattleManager* self) {
         self->mFaceTex[i][0] = NULL;
         self->mFaceTex[i][1] = NULL;
         self->mFaceTex[i][2] = NULL;
-        func_80139124(self->mFaceAccessor[i]);
-        func_80139124(self->mFileArtsPcBusy[i]);
+        releaseArcResourceAccessor(self->mFaceAccessor[i]);
+        releaseArcResourceAccessor(self->mFileArtsPcBusy[i]);
     }
-    func_80139124(self->mFileArtsSysDone);
-    func_80139124(self->mFileArtsElemDone);
+    releaseArcResourceAccessor(self->mFileArtsSysDone);
+    releaseArcResourceAccessor(self->mFileArtsElemDone);
     reinterpret_cast<CUIBattleChild*>(self->unk7C)->SetRemove();
     // Unlink every child node without destroying items, then reset the list.
     // Retail re-spells mStartNodePtr on every access (no caching).

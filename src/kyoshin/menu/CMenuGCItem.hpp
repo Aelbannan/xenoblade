@@ -91,7 +91,7 @@ extern "C" void func_801CABC8(CItemBoxGrid* self);
 extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801CAE9C(CItemBoxGrid* self);
 extern "C" int GetField61(CItemBoxGrid* self);
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 extern "C" int func_8013BE50();
 
 // CW-mangled ctors/dtors referenced at the retail call sites (extern "C" stops

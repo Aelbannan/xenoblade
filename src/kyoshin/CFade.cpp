@@ -33,7 +33,7 @@ __declspec(noinline) void func_802445F0(CFade* self) {
 // noinline keeps the retail `bl` instead of inlining the body into
 // func_802443E8. C linkage via CFade.hpp declarations (see above).
 __declspec(noinline) void func_80244558(CFade* self) {
-    if (func_80137444(self->mAnimTrans, lbl_eu_80668750) == 0) return;
+    if (advanceAnimTransform(self->mAnimTrans, lbl_eu_80668750) == 0) return;
     self->mFadeState = 2;
     self->mVisible = 1;
 }
@@ -78,8 +78,8 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         mArcResAcc->Attach(data, &str[0x17]);
 
         // Load the fade layout and its animation transform.
-        func_80136E84(&mLayout, mArcResAcc, &str[0x1B]);
-        func_80136F08(mLayout, &mAnimTrans, mArcResAcc, &str[0x2B]);
+        buildLayout(&mLayout, mArcResAcc, &str[0x1B]);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcResAcc, &str[0x2B]);
 
         // Enable the animation and kick off the first frame.
         mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -143,7 +143,7 @@ void CFade::func_802443E8() {
 void CFade::func_80244460(nw4r::lyt::DrawInfo* drawInfo) {
     if (mIsLoaded == 0) return;
     if (mFadeState == 0) return;
-    func_80137038(mLayout, drawInfo, 0, 1);
+    drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 // unload, freeing the file handle, layout and arc resources.
@@ -155,7 +155,7 @@ void CFade::func_8024448C() {
         delete layout;
         mLayout = nullptr;
     }
-    func_80139124(mArcResAcc);
+    releaseArcResourceAccessor(mArcResAcc);
     mArcResAcc = nullptr;
     mMemRegion.func_8045F778();
 }

@@ -13,8 +13,9 @@
 #include <nw4r/math/math_types.h>
 #include <nw4r/ut/ut_Font.h>
 
+#include "monolib/math/CVec3.hpp"
 #include "monolib/math/CMat34.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 class CScn;
@@ -46,29 +47,29 @@ void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 // C linkage so calls bind to the literal mangled identifier (declaring them
 // as C++ functions would re-derive the same mangling, but the extern "C" +
 // mangled-identifier form is what the definitions in code_80135FDC.cpp use).
-void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
-void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
+void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 }
 
 // Retail symbols that ARE the mangled C++ names stay C++-linkage. Declare the
-// UNMANGLED identifier so MWCC mangles func_80137038 to the retail symbol
-// (func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii); declaring the
+// UNMANGLED identifier so MWCC mangles drawLayout to the retail symbol
+// (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii); declaring the
 // pre-mangled name here would double-mangle it (see CEquipItemBox.hpp).
 // The extern "C" + mangled-identifier declarations above serve the pre-mangled
 // call sites (CMenuUpdate, CMCCrystalSupport, CMCEffStart, CPcKizunagram); the
 // unmangled forms below serve the (majority) unmangled call sites. Both bind
 // to the same retail symbols.
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
+void closeFileHandle(CFileHandle**);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // Retail symbols are unmangled (C linkage) -- keep them extern "C" so calls
 // bind to the unmangled name, not an Itanium-mangled re-derivation.
@@ -86,7 +87,7 @@ void func_80139A18(void*, void*, void*, void*);
 extern "C" int func_8013BE50();
 extern "C" u8 code80135FDC_getByte_64077();
 
-// Frame object returned by func_8049626C as consumed by func_80137038: the
+// Frame object returned by func_8049626C as consumed by drawLayout: the
 // view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).

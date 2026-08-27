@@ -4,6 +4,13 @@
 #include <types.h>
 #include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+namespace cf {
+class UnkClass_80082D90;
+class CfObjectPc {
+public:
+    void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
+};
+}
 
 namespace ml {
 #pragma dont_inline on
@@ -203,6 +210,7 @@ struct SceneCDA8View {
 
 extern "C" s32 lbl_eu_80663E00;
 extern "C" u8 lbl_eu_80663E34;
+extern "C" bool isAnyMenuOpen__9CMainMenuFv();
 extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(
     s32 playerIndex, bool requireFlag);
 extern "C" bool func_8007BAE4();
@@ -216,7 +224,7 @@ extern "C" void updateCameraState__Q22cf13CfGameManagerFv(
         return;
     }
     if (cf::CfGameManager::isSceneLoading() &&
-        func_800FF778__9CMainMenuFv()) {
+        isAnyMenuOpen__9CMainMenuFv()) {
         lbl_eu_80663E00 = 15;
         return;
     }
@@ -496,7 +504,7 @@ extern "C" ItemListManager* getListB28__Fv();
 extern "C" void func_800B06C8();
 extern "C" void func_800620F0();
 extern "C" void func_8016FC0C(bool enable);
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(
     void* object);
 extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
     if (!lbl_eu_80663E70) {
@@ -539,7 +547,7 @@ extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv() {
     Unk80EE4Data* object;
     ItemListNode* node = manager->sentinel->next;
     while (node != manager->sentinel) {
-        object = (Unk80EE4Data*)func_800BFC68__FPQ22cf12CfObjectMove(node->object);
+        object = (Unk80EE4Data*)getCfObjectPc__FPQ22cf12CfObjectMove(node->object);
         if (object != nullptr) {
             object->vfunc_0xA8(true);
             object->vfunc_0xB8();
@@ -1205,7 +1213,8 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
     cf::CfGameManager::getInstance();
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != nullptr) {
-        player->CfObject_UnkVirtualFunc26(value, lbl_eu_8066654C);
+        player->CfObject_UnkVirtualFunc26(
+            reinterpret_cast<const ml::CVec3*>(value), lbl_eu_8066654C);
         player->CfObject_UnkVirtualFunc33(amount);
         return player;
     }
@@ -2559,7 +2568,7 @@ extern "C" void resetBattleGauge__Q22cf13CfGameManagerFv() {
         if (data != nullptr) {
             cf::CfObject* object = func_8006E5A4(cameraManager);
             if (object != nullptr) {
-                object->CfObject_UnkVirtualFunc3(data);
+                reinterpret_cast<cf::CfObjectPc*>(object)->CfObject_UnkVirtualFunc3(data);
             }
         }
     }
@@ -2951,7 +2960,7 @@ extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
     *getPlayerSlotPtr__Q22cf13CfGameManagerFv(manager->unk94, 0) = player;
 
     Unk82C48Object* object = static_cast<Unk82C48Object*>(
-        func_800BFC68__FPQ22cf12CfObjectMove(player));
+        getCfObjectPc__FPQ22cf12CfObjectMove(player));
     void* resource = CfRes_getE14();
     void* system = func_800FE68C();
     func_800FDE4C(system, object, resource);

@@ -989,7 +989,7 @@ void cf::CTaskREvent::Move() {
             REvtListNode* n = gf->list->first;
             while (n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first) {
                 REvtActor* item = n->item;
-                if (func_800BFC68__FPQ22cf12CfObjectMove(item) != 0) {
+                if (getCfObjectPc__FPQ22cf12CfObjectMove(item) != 0) {
                     REvtGateObj* gate = item->field_0x3F34;
                     if (gate != 0 && (gate->field_0x7A4 & 0x10) != 0) {
                         battleFade = 1;
@@ -1006,7 +1006,7 @@ void cf::CTaskREvent::Move() {
             for (REvtListNode* n = gf->list->first;
                  n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
-                REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
+                REvtActor* mv = getCfObjectPc__FPQ22cf12CfObjectMove(n->item);
                 if (mv != 0) mv->mSub.vfn88(lbl_eu_80667640);
             }
             REvtMgrView* gf2 = getGimmickList__Q22cf13CfGameManagerFv();
@@ -1030,7 +1030,7 @@ void cf::CTaskREvent::Move() {
             for (REvtListNode* n = gf->list->first;
                  n != getGimmickListHead__Q22cf13CfGameManagerFv()->list->first;
                  n = n->next) {
-                REvtActor* mv = func_800BFC68__FPQ22cf12CfObjectMove(n->item);
+                REvtActor* mv = getCfObjectPc__FPQ22cf12CfObjectMove(n->item);
                 if (mv != 0) mv->mSub.vfn88(lbl_eu_80667628);
             }
             REvtMgrView* gf2 = getGimmickList__Q22cf13CfGameManagerFv();

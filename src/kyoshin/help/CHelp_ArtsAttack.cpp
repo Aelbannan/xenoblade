@@ -3,12 +3,12 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
-extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 
 namespace cf {
 
 u32 CHelp_ArtsAttack::checkHelpCondition() {
-    CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
+    CfObjectPc* objPc = getCfObjectPc(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
         PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(objPc) + 4);

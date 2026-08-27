@@ -138,25 +138,7 @@ public:
     f32 GetFontAscent() const;
     f32 GetFontDescent() const;
 
-private:
-    struct ColorMapping {
-        Color min; // at 0x0
-        Color max; // at 0x4
-    };
-
-    struct VertexColor {
-        Color lu; // at 0x0
-        Color ru; // at 0x4
-        Color ld; // at 0x8
-        Color rd; // at 0xC
-    };
-
-    struct TextColor {
-        Color start;                 // at 0x0
-        Color end;                   // at 0x4
-        GradationMode gradationMode; // at 0x8
-    };
-
+public:
     struct TextureFilter {
         GXTexFilter atSmall; // at 0x0
         GXTexFilter atLarge; // at 0x4
@@ -180,6 +162,25 @@ private:
             slot = GX_TEXMAP_NULL;
             texture = NULL;
         }
+    };
+
+private:
+    struct ColorMapping {
+        Color min; // at 0x0
+        Color max; // at 0x4
+    };
+
+    struct VertexColor {
+        Color lu; // at 0x0
+        Color ru; // at 0x4
+        Color ld; // at 0x8
+        Color rd; // at 0xC
+    };
+
+    struct TextColor {
+        Color start;                 // at 0x0
+        Color end;                   // at 0x4
+        GradationMode gradationMode; // at 0x8
     };
 
     static const u32 DEFAULT_COLOR_MAPPING_MIN = 0x00000000;

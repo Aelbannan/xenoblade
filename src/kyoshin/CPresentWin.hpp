@@ -113,4 +113,4 @@ void func_8022E744(CPresentWin* self);
 void func_8022E254(CPresentWin* self);
 u8 func_8022E868(CPresentWin* self, u32 r4);
 }
-void func_80138078(u32); // mangles to func_80138078__FUl
+void playUISound(u32); // mangles to playUISound__FUl

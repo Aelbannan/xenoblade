@@ -64,7 +64,19 @@ def main() -> int:
                 errors["no-objects"] += 1
                 continue
             left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
-            if not _byte_identical_with_relocs(left, right):
+            canonical = None
+            try:
+                from tools.coop.lib.equivalence_check import (
+                    _canonical_symbols_for_unit,
+                    _ensure_reloc_map_fresh,
+                )
+                if _ensure_reloc_map_fresh(project, unit):
+                    canonical = _canonical_symbols_for_unit(unit_name)
+            except Exception:
+                canonical = None
+            if not _byte_identical_with_relocs(
+                left, right, canonical_symbols=canonical,
+            ):
                 stale.append(row)
         except (ElfSymbolError, FileNotFoundError, KeyError, ValueError) as exc:
             errors[type(exc).__name__] += 1

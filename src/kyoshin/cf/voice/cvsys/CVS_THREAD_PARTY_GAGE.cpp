@@ -65,9 +65,9 @@ void func_802A82D4(CVS_THREAD_PARTY_GAGE* self) {
     const u32* p = lbl_eu_80539C54;
     v0 = *p++;
     CVoiceHandle* member = self->partyMember;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state1 = *p++;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state2 = *p;
 
     if (member != NULL && ((CVoiceVTV*)member)->idle() == 0) {
         // Choose the voice ID based on the gauge-change threshold level.
@@ -110,9 +110,9 @@ void func_802A83CC(CVS_THREAD_PARTY_GAGE* self) {
     u32 v0;
     const u32* p = lbl_eu_80539C60;
     v0 = *p++;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state1 = *p++;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_PARTY_GAGE_raw*)self)->state2 = *p;
 
     // Declarations hoisted above the gotos (MWCC forbids jumping past an
     // initialized declaration).

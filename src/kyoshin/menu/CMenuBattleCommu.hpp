@@ -39,7 +39,7 @@ public:
 };
 
 // Font-handle object returned by CDeviceFont::getFontInfo: vtable +0x24
-// yields the font handle passed to func_801368C0.
+// yields the font handle passed to setLayoutTextBoxFont.
 class CBattleCommuFontObj {
 public:
     virtual void vf08();              // +0x08
@@ -190,5 +190,5 @@ extern u32 lbl_eu_80663E28;                 // global state flags (bit 21 = even
 extern const void* lbl_eu_80661C60;         // RTTI typeinfo (actor source type)
 extern const void* lbl_eu_80661BE8;         // RTTI typeinfo (actor dest type)
 
-// UI sound effect cue (mangles to func_80138078__FUl).
-void func_80138078(u32);
+// UI sound effect cue (mangles to playUISound__FUl).
+void playUISound(u32);

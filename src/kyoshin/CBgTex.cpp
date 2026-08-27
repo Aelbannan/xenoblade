@@ -34,28 +34,28 @@ void CBgTex::func_801C3A24() {
 
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
     if (regionId == 0x19) {
-        func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
+        buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
     } else if (regionId == 0x1A) {
-        func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
+        buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
     } else {
         switch (func_801372B4(regionId)) {
         case 1:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
             break;
         case 2:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
             break;
         case 3:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
             break;
         case 4:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
             break;
         case 5:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
             break;
         case 0:
-            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            buildLayout(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
             break;
         default:
             break;
@@ -125,7 +125,7 @@ void CBgTex::func_801C3D54() {
 void CBgTex::func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo) {
     if (mLayoutReady == false)
         return;
-    func_80137038(mLayout, drawInfo, 0, 1);
+    drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 void CBgTex::func_801C3D9C() {
@@ -138,7 +138,7 @@ void CBgTex::func_801C3D9C() {
         mLayout = nullptr;
     }
     if (lbl_eu_80664460 <= 0) {
-        func_80139124(lbl_eu_80664464);
+        releaseArcResourceAccessor(lbl_eu_80664464);
         lbl_eu_80664464 = nullptr;
     }
     mMemRegion.func_8045F778();

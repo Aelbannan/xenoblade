@@ -252,7 +252,7 @@ struct CModelDispFilterTbl {
     u32 slot[3];
 };
 
-// Actor container (func_800BFC68 result): CfObjectMove embedded at +0x3E9C.
+// Actor container (getCfObjectPc result): CfObjectMove embedded at +0x3E9C.
 struct CModelDispActor {
     u8 _00[0x3E9C];
     u8 move[0x3F08 - 0x3E9C]; // embedded CfObjectMove (vtable at +0)
@@ -432,7 +432,7 @@ extern "C" u32 func_801F9894(CModelDispFileCtx* ctx, u32 size);
 extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
-extern "C" void func_801390E0__FPP11CFileHandle(CFileHandle** handlePtr);
+extern "C" void closeFileHandle__FPP11CFileHandle(CFileHandle** handlePtr);
 extern "C" void func_804CC1BC(void* mgr, void* data);
 extern "C" void func_804CC1D8(void* arg, void* data); // (manager, buffer): the
 // buffer rides in r4 from the null-check load - keeps the check color r4.
@@ -480,5 +480,5 @@ extern "C" void __construct_array(void*, void*, void*, int, int);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);
 extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-// C++-mangled import: func_800BFC68(cf::CfObjectMove*) => func_800BFC68__FPQ22cf12CfObjectMove.
-CModelDispActor* func_800BFC68(cf::CfObjectMove* move);
+// C++-mangled import: getCfObjectPc(cf::CfObjectMove*) => getCfObjectPc__FPQ22cf12CfObjectMove.
+CModelDispActor* getCfObjectPc(cf::CfObjectMove* move);

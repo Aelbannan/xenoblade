@@ -327,15 +327,15 @@ public:
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80138078__FUl(u32);
+extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" void playUISound__FUl(u32);
 // NOTE: func_80124270 is intentionally NOT promoted to this header. Parallel
 // TU conversions declare it with conflicting signatures in their own headers
 // (CItemBoxInfo.hpp: `(void*, void*)` vs CMCGetItemBox.hpp: `(nw4r::lyt::Pane*,
 // u32)`), so a shared declaration here would add a third voice to that live
 // conflict in TUs that include both headers (CModelDispMakeCrystal.cpp). It
 // stays local to CMCEffStart.cpp (the defining TU).
-extern "C" u32 func_801355A0__Fv();
+extern "C" u32 getPackedFont__Fv();
 
 // Retail string pool (SDA-data base for pooled string literals).
 extern "C" char lbl_eu_805095EC[];

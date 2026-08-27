@@ -211,7 +211,7 @@ extern "C" void func_801C412C(CTitleAHelp* self);      // hide prompt
 extern "C" int func_801ED774(CItemBoxLine* self);      // line ready query
 extern "C" void func_801ED864(CItemBoxLine* self);     // finish line load
 extern "C" void func_801CAA6C(CItemBoxGrid* self);     // finish grid setup
-extern "C" void func_80138078__FUl(u32 op);            // global menu-op kicker
+extern "C" void playUISound__FUl(u32 op);            // global menu-op kicker
 
 // Factory support (retail unmangled symbols; sibling-menu-TU scheme).
 extern "C" void __ct__8CProcessFv(CMenuItemExchange* _this);

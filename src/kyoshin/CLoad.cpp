@@ -17,13 +17,13 @@ extern const float lbl_eu_80668DF4;
 extern char lbl_eu_80510CC8[];
 
 // nw4r layout animation helpers (retail names; resolved by symbol tooling).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 u8 func_802AE6AC(CLoad* self) { return self->field_2B; }
 
@@ -59,11 +59,11 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
         mAccessor->Attach(data, &lbl_eu_80510CC8[0x17]);
 
         // field_2D selects the language-specific resource names.
-        func_80136E84(&mLayout, mAccessor,
+        buildLayout(&mLayout, mAccessor,
                       (field_2D != 0) ? &lbl_eu_80510CC8[0x1B] : &lbl_eu_80510CC8[0x2D]);
-        func_80136F08(mLayout, &mAnimTrans0, mAccessor,
+        bindLayoutAnimTransform(mLayout, &mAnimTrans0, mAccessor,
                       (field_2D != 0) ? &lbl_eu_80510CC8[0x3F] : &lbl_eu_80510CC8[0x54]);
-        func_80136F08(mLayout, &mAnimTrans1, mAccessor,
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mAccessor,
                       (field_2D != 0) ? &lbl_eu_80510CC8[0x69] : &lbl_eu_80510CC8[0x80]);
 
         // Fade-in on mAnimTrans0 first; mAnimTrans1 stays bound but disabled.
@@ -124,7 +124,7 @@ __attribute__((noinline)) void func_802AE560(CLoad* self) {
             func_802AE7EC(self);
             break;
         case 2:
-            func_80137444(self->mAnimTrans1, lbl_eu_80668DF0);
+            advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668DF0);
             break;
         case 3:
             func_802AE894(self);
@@ -140,7 +140,7 @@ void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mIsLoaded == 0 || self->field_29 == 0)
         return;
     if (self->mAnimStep != 0)
-        func_80137038(self->mLayout, drawInfo, 0, 1);
+        drawLayout(self->mLayout, drawInfo, 0, 1);
 }
 
 // Tear down the loaded layout, accessor and mem region.
@@ -154,7 +154,7 @@ void func_802AE62C(CLoad* self) {
         delete self->mLayout;
         self->mLayout = nullptr;
     }
-    func_80139124(self->mAccessor);
+    releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = nullptr;
     self->mMemRegion.func_8045F778();
 }
@@ -183,7 +183,7 @@ void func_802AE758(CLoad* self) {
 
 // Step 1 -> 2: fade-in finished; swap to mAnimTrans1 held on its last frame.
 void func_802AE7EC(CLoad* self) {
-    if (func_80137444(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
+    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668DF0) == 0) {
         return;
     }
     self->mAnimStep = 2;

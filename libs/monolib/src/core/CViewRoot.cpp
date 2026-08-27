@@ -522,7 +522,7 @@ void CViewRoot::func_80442C68() {
         &reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr)[slot2]);
 }
 
-void CViewRoot::updateCache() {
+void CViewRoot::updateViewRoot() {
     s32 sum0;
     s32 slot0;
     s32 sum1;

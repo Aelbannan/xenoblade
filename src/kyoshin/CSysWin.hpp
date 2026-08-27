@@ -25,10 +25,10 @@ extern u32 lbl_eu_80536510[];
 extern char lbl_eu_8050A478[];
 
 // C-linkage CSysWin helper imports used by CSysWin.cpp. MWCC does not mangle
-// global-scope data, so the data symbol needs no extern "C"; func_80138078 is
-// declared with C++ linkage so MWCC mangles it to the retail func_80138078__FUl.
+// global-scope data, so the data symbol needs no extern "C"; playUISound is
+// declared with C++ linkage so MWCC mangles it to the retail playUISound__FUl.
 extern const f32 lbl_eu_806685F0;  // .sdata2 float (layout animation duration)
-void func_80138078(u32);     // UI sound effect (func_80138078__FUl)
+void playUISound(u32);     // UI sound effect (playUISound__FUl)
 
 // C-linkage member-destructor/ctor imports used by the free-function dtor and
 // ctor below (retail emits the unmangled names at the call sites).

@@ -204,7 +204,7 @@ void func_802A1610(){
         // action source (unk230) as a node.
         if (!(lbl_eu_80663E24 & 0x00400000)) {
             cf::CVoiceBFC68* br =
-                (cf::CVoiceBFC68*)func_800BFC68__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
+                (cf::CVoiceBFC68*)getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
             if (br != 0) {
                 cf::CVoiceEdge* edge = (cf::CVoiceEdge*)br->field_3ED4;
                 if (edge != 0 && ((cf::CVoiceEdgeIf*)edge)->fn_40(0x800) == 0) {

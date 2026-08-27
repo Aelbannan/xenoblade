@@ -133,8 +133,8 @@ extern "C" void func_801D216C(void* pCur, u8 val);
 extern "C" void func_801D202C(CBaseCur* pCur);
 extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v);
 extern "C" int func_8023FEDC(void (*pCallback)(void*, unsigned int, unsigned char));
-// Menu-cursor SFX cue (mangles to func_80138078__FUl).
-void func_80138078(u32);
+// Menu-cursor SFX cue (mangles to playUISound__FUl).
+void playUISound(u32);
 // Cursor-position builder (retail calls it via bl, so keep it out of line).
 extern "C" void __declspec(noinline) func_802B6CBC(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val);
 
@@ -162,7 +162,7 @@ namespace cf {
 
 class CfObjectMove;
 
-// +0x04 battle sub-object of a func_800BFC68 result (CfObjectPc): its vtable
+// +0x04 battle sub-object of a getCfObjectPc result (CfObjectPc): its vtable
 // +0x30 virtual (declared index 10 with the 2-entry RTTI prefix) returns a
 // word holder whose first word is the actor id queried by func_80174C98.
 class CHelpBattleSub4 {
@@ -180,7 +180,7 @@ public:
     virtual u32* vf30() = 0;  // index 10 -> vtable offset 0x30
 };
 
-// Minimal view of a func_800BFC68 result (CfObjectPc): only +0x04 used.
+// Minimal view of a getCfObjectPc result (CfObjectPc): only +0x04 used.
 class CHelpBattleObj {
 public:
     u8 pad00[0x4];                  // 0x00
@@ -201,5 +201,5 @@ public:
 
 // Convert a CfObjectMove to its containing battle object (declared in
 // CfObjectObj.cpp); C++ linkage mangles to the retail name
-// func_800BFC68__FPQ22cf12CfObjectMove.
-cf::CHelpBattleObj* func_800BFC68(cf::CfObjectMove* objMove);
+// getCfObjectPc__FPQ22cf12CfObjectMove.
+cf::CHelpBattleObj* getCfObjectPc(cf::CfObjectMove* objMove);

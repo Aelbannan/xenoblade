@@ -223,12 +223,12 @@ bool CMenuArtsSelect_isCreated();
 void* findObjectById(int id);
 
 // Layout build helper - retail emits the mangled nw4r form
-// func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc,
+// buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc,
 // so declare it as a normal C++ function to let MWCC mangle it (NOT inside
 // extern "C").
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 
 // Layout draw helper - retail emits the mangled nw4r form
-// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii, so declare it as
+// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii, so declare it as
 // a normal C++ function to let MWCC mangle it (NOT inside extern "C").
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);

@@ -316,7 +316,7 @@ body:
         if (func_800FEDF8()) {
             func_800FF914();
         }
-        func_80138078(6);
+        playUISound(6);
         mState = 0xa;
         mField54 = 1;
     }
@@ -426,7 +426,7 @@ extern "C" void func_8011CD6C(CMenuQuestLog* self) {
                     func_801C412C(&self->mTitleAHelp);
                     func_80227CDC(&self->mQstLogList);
                     self->mState = 1;
-                    func_80138078(0x6d);
+                    playUISound(0x6d);
                 }
             }
         }

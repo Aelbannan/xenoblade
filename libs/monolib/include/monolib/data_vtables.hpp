@@ -79,6 +79,7 @@ extern "C" void wkUpdate__11CWorkThreadFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+extern "C" void handleExceptionRetry__11CWorkThreadFUl(unsigned int);
 
 // CWorkThread-slot overrides referenced by the per-class vtables.
 extern "C" void wkStandbyLogin__5CViewFv();

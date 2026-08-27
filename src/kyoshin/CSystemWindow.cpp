@@ -189,7 +189,7 @@ void CSystemWindow::Move() {
         if (confirmBtn != 0) {
             mState = 3;
             func_8022B8E4(&mSysWin[0]);
-            func_80138078(3);
+            playUISound(3);
         }
         break;
     }

@@ -76,8 +76,8 @@ extern "C" CSysWin* __dt__7CSysWinFv(CSysWin* _this, int flags) {
 
 // TEMP PROBE: two-register function to test save order codegen.
 extern "C" void probe_2reg(CSysWin* self, int kind) {
-    func_80137038(self->mLayout, 0, kind, 1);
-    func_80137038(self->mLayout, 0, kind, 2);
+    drawLayout(self->mLayout, 0, kind, 1);
+    drawLayout(self->mLayout, 0, kind, 2);
 }
 
 // us-8022de64 - set the two window label texts from the shared
@@ -86,13 +86,13 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 // under the unit's -O4,p flags (see MWCC_CASES #16).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80138078__FUl(u32);
-// retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail func_80138078(0xE) }
+extern "C" void playUISound__FUl(u32);
+// retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail playUISound(0xE) }
 extern "C" void func_8022B8E4(void* self) {
     if (*(u8*)((char*)self + 0x35) == 2) {
         *(u8*)((char*)self + 0x35) = 3;
         *(u8*)((char*)self + 0x36) = 0;
-        func_80138078__FUl(0xE);
+        playUISound__FUl(0xE);
     }
 }
 
@@ -130,7 +130,7 @@ extern "C" void func_8022C1B4(nw4r::math::VEC3* out, CSysWin* window, int idx) {
 #pragma dont_inline on
 extern "C" void func_8022C258(CSysWin* self) {
     const f32 duration = lbl_eu_806685F0;
-    if (func_80137444(self->mAnimTrans, duration) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans, duration) != 0) {
         self->field_35 = 2;
         self->field_36 = 1;
     }
@@ -249,8 +249,8 @@ bool CSysWin::OnFileEvent(CEventFile* pEventFile) {
     mTagProcessor = tag;
     mArcAccessor = createArcResourceAccessor__10CLibLayoutFv();
     mArcAccessor->Attach(archive, &lbl_eu_8050A478[0x117]);
-    func_80136E84(&mLayout, mArcAccessor, &lbl_eu_8050A478[0x11b]);
-    func_80136F08(mLayout, &mAnimTrans, mArcAccessor, &lbl_eu_8050A478[0x134]);
+    buildLayout(&mLayout, mArcAccessor, &lbl_eu_8050A478[0x11b]);
+    bindLayoutAnimTransform(mLayout, &mAnimTrans, mArcAccessor, &lbl_eu_8050A478[0x134]);
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     u8* font = (u8*)CDeviceFont::getFontInfo(1, mLayout);
     typedef u32 (*FontVFn)(void*);
@@ -308,7 +308,7 @@ extern "C" void func_8022B748(CSysWin* self) {
 extern "C" void func_8022B7C8(CSysWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_34 == 0) return;
     if (self->field_35 == 0) return;
-    return func_80137038(self->mLayout, drawInfo, 0, 1);
+    return drawLayout(self->mLayout, drawInfo, 0, 1);
 }
 
 // us-8022d62c - tear down the window layout and free its resources.
@@ -325,7 +325,7 @@ extern "C" void func_8022B7F4(CSysWin* self) {
         delete layout;
         self->mLayout = 0;
     }
-    func_80139124(self->mArcAccessor);
+    releaseArcResourceAccessor(self->mArcAccessor);
     self->mArcAccessor = 0;
     if (self->mTagProcessor != 0) {
         delete self->mTagProcessor;
@@ -342,7 +342,7 @@ extern "C" void func_8022B8B8(CSysWin* self) {
     self->field_35 = 1;
     self->field_36 = 0;
     self->field_34 = 1;
-    return func_80138078(0xd);
+    return playUISound(0xd);
 }
 
 // us-8022d744 - switch the window's visible pane for the given kind:

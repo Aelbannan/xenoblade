@@ -357,7 +357,42 @@ extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
 void func_8016742C(void* dstV, void* srcV) {
     CInfoCfObjSysWin* dst = (CInfoCfObjSysWin*)dstV;
     const CInfoCfObjSysWin* src = (const CInfoCfObjSysWin*)srcV;
-    dst->body = src->body;
+    u8 t28 = src->body.field_28;
+    u32 t04 = src->body.field_04;
+    u32 t08 = src->body.field_08;
+    u32 t0C = src->body.field_0C;
+    u32 t10 = src->body.field_10;
+    u32 t14 = src->body.field_14;
+    u32 t18 = src->body.field_18;
+    u32 t1C = src->body.field_1C;
+    u32 t20 = src->body.field_20;
+    u32 t24 = src->body.field_24;
+    u32 t2C = src->body.field_2C;
+    u32 t30 = src->body.field_30;
+    u8 t34 = src->body.field_34;
+    u8 t35 = src->body.field_35;
+    u8 t36 = src->body.field_36;
+    u8 t37 = src->body.field_37;
+    u8 t38 = src->body.field_38;
+    u8 t39 = src->body.field_39;
+    dst->body.field_04 = t04;
+    dst->body.field_08 = t08;
+    dst->body.field_0C = t0C;
+    dst->body.field_10 = t10;
+    dst->body.field_14 = t14;
+    dst->body.field_18 = t18;
+    dst->body.field_1C = t1C;
+    dst->body.field_20 = t20;
+    dst->body.field_24 = t24;
+    dst->body.field_28 = t28;
+    dst->body.field_2C = t2C;
+    dst->body.field_30 = t30;
+    dst->body.field_34 = t34;
+    dst->body.field_35 = t35;
+    dst->body.field_36 = t36;
+    dst->body.field_37 = t37;
+    dst->body.field_38 = t38;
+    dst->body.field_39 = t39;
 }
 
 // Copy the 0x44C0-byte info-screen object (vtable slot included) region by
@@ -458,7 +493,7 @@ void CMenuItem::Move() {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
             }
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
             mState = 4;
             mPrefix[0x50] = 1;
         }
@@ -473,7 +508,7 @@ void CMenuItem::Move() {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
             mState = 1;
-            func_80138078__FUl(0x6d);
+            playUISound__FUl(0x6d);
         }
         break;
     case 1:

@@ -101,7 +101,7 @@ extern u32 func_801355BC();
 extern u32 func_801355D8();
 }
 
-extern void func_80138078(u32);
+extern void playUISound(u32);
 
 extern "C" {
 extern s16 lbl_eu_80663F30[4];
@@ -195,22 +195,22 @@ void CMenuBattlePlayerState::Init() {
             CMenuBattlePlayerStateSlot& slot = mSlots[i];
 
             accessor = CUICfManager::func_801355F4();
-            func_80136E84(&slot.unk00, accessor, tbl + 0x10E);
+            buildLayout(&slot.unk00, accessor, tbl + 0x10E);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136F08(slot.unk00, &slot.unk04, accessor, tbl + 0x12E);
+            bindLayoutAnimTransform(slot.unk00, &slot.unk04, accessor, tbl + 0x12E);
 
             slot.unk00->SetAnimationEnable(slot.unk04, true);
             slot.unk04->SetFrame(0.0f);
             slot.unk00->Animate(0);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136E84(&slot.unk08, accessor, tbl + 0x151);
+            buildLayout(&slot.unk08, accessor, tbl + 0x151);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136F08(slot.unk08, &slot.unk0C, accessor, tbl + 0x174);
-            func_80136F08(slot.unk08, &slot.unk10, accessor, tbl + 0x19A);
-            func_80136F08(slot.unk08, &slot.unk14, accessor, tbl + 0x1C5);
+            bindLayoutAnimTransform(slot.unk08, &slot.unk0C, accessor, tbl + 0x174);
+            bindLayoutAnimTransform(slot.unk08, &slot.unk10, accessor, tbl + 0x19A);
+            bindLayoutAnimTransform(slot.unk08, &slot.unk14, accessor, tbl + 0x1C5);
 
             slot.unk08->SetAnimationEnable(slot.unk10, false);
             slot.unk08->SetAnimationEnable(slot.unk14, false);
@@ -219,10 +219,10 @@ void CMenuBattlePlayerState::Init() {
             slot.unk08->Animate(0);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136E84(&slot.unk18, accessor, tbl + 0x1F0);
+            buildLayout(&slot.unk18, accessor, tbl + 0x1F0);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136F08(slot.unk18, &slot.unk1C, accessor, tbl + 0x210);
+            bindLayoutAnimTransform(slot.unk18, &slot.unk1C, accessor, tbl + 0x210);
 
             {
                 nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
@@ -231,8 +231,8 @@ void CMenuBattlePlayerState::Init() {
             }
             {
                 u32 fontAccessor = func_801355D8();
-                func_801368C0(slot.unk18, tbl + 0x233, fontAccessor);
-                func_801368C0(slot.unk18, tbl + 0x23C, fontAccessor);
+                setLayoutTextBoxFont(slot.unk18, tbl + 0x233, fontAccessor);
+                setLayoutTextBoxFont(slot.unk18, tbl + 0x23C, fontAccessor);
             }
 
             {
@@ -270,25 +270,25 @@ void CMenuBattlePlayerState::Init() {
             slot.unk25C = 7;
 
             accessor = CUICfManager::func_801355F4();
-            func_80136E84(&slot.unk20, accessor, tbl + 0x2BB);
+            buildLayout(&slot.unk20, accessor, tbl + 0x2BB);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136F08(slot.unk20, &slot.unk24, accessor, tbl + 0x2DE);
+            bindLayoutAnimTransform(slot.unk20, &slot.unk24, accessor, tbl + 0x2DE);
 
             slot.unk20->SetAnimationEnable(slot.unk24, true);
             slot.unk24->SetFrame(0.0f);
             slot.unk20->Animate(0);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136E84(&slot.unk28, accessor, tbl + 0x304);
+            buildLayout(&slot.unk28, accessor, tbl + 0x304);
 
             accessor = CUICfManager::func_801355F4();
-            func_80136F08(slot.unk28, &slot.unk2C, accessor, tbl + 0x323);
-            func_80136F08(slot.unk28, &slot.unk30, accessor, tbl + 0x347);
-            func_80136F08(slot.unk28, &slot.unk34, accessor, tbl + 0x36D);
-            func_80136F08(slot.unk28, &slot.unk38, accessor, tbl + 0x392);
-            func_80136F08(slot.unk28, &slot.unk3C, accessor, tbl + 0x3B6);
-            func_80136F08(slot.unk28, &slot.unk40, accessor, tbl + 0x3DC);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk2C, accessor, tbl + 0x323);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk30, accessor, tbl + 0x347);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk34, accessor, tbl + 0x36D);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk38, accessor, tbl + 0x392);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk3C, accessor, tbl + 0x3B6);
+            bindLayoutAnimTransform(slot.unk28, &slot.unk40, accessor, tbl + 0x3DC);
 
             slot.unk28->UnbindAllAnimation();
             slot.unk28->BindAnimation(slot.unk2C);
@@ -372,11 +372,11 @@ void CMenuBattlePlayerState::Init() {
                 *reinterpret_cast<MenuBpsSlotInit*>(&slot.unk74) = init;
             }
 
-            func_80136E84(&slot.unk78,
+            buildLayout(&slot.unk78,
                            static_cast<nw4r::lyt::ArcResourceAccessor*>(
                                slot.unk74),
                            tbl + 0xA2);
-            func_80136F08(slot.unk78, &slot.unk7C,
+            bindLayoutAnimTransform(slot.unk78, &slot.unk7C,
                            static_cast<nw4r::lyt::ArcResourceAccessor*>(
                                slot.unk74),
                            tbl + 0xBC);
@@ -460,10 +460,10 @@ void CMenuBattlePlayerState::Init() {
             Class_8045F858 scoped2(&unk7D0);
             mtl::MemManager::setMemInitFlag(false);
 
-            func_80136E84(&unk7E4, accessor, tbl + 0x12);
-            func_80136F08(unk7E4, &unk7E8, accessor, tbl + 0x30);
-            func_80136F08(unk7E4, &unk7EC, accessor, tbl + 0x51);
-            func_80136F08(unk7E4, &unk7F0, accessor, tbl + 0x72);
+            buildLayout(&unk7E4, accessor, tbl + 0x12);
+            bindLayoutAnimTransform(unk7E4, &unk7E8, accessor, tbl + 0x30);
+            bindLayoutAnimTransform(unk7E4, &unk7EC, accessor, tbl + 0x51);
+            bindLayoutAnimTransform(unk7E4, &unk7F0, accessor, tbl + 0x72);
 
             unk7E4->SetAnimationEnable(unk7EC, false);
             unk7E4->SetAnimationEnable(unk7F0, false);
@@ -770,8 +770,8 @@ after_bit21:
                 func_8010D4B0(this, slot, i);
                 break;
             case 1: {
-                u32 a = func_80137444(slot->unk04, lbl_eu_80666F90);
-                u32 b = func_80137444(slot->unk1C, lbl_eu_80666F90);
+                u32 a = advanceAnimTransform(slot->unk04, lbl_eu_80666F90);
+                u32 b = advanceAnimTransform(slot->unk1C, lbl_eu_80666F90);
                 slot->unk25C = (slot->unk25C & ~0x300u) | 0xC0u;
                 if (a != 0 && b != 0) {
                     slot->unk244 = 2;
@@ -820,7 +820,7 @@ after_bit21:
 
         switch (static_cast<s32>(unk7F8)) {
         case 1:
-            if (func_80137444(unk7E8, lbl_eu_80666F90) != 0) {
+            if (advanceAnimTransform(unk7E8, lbl_eu_80666F90) != 0) {
                 unk7F4 = 1;
                 unk7F8 = 2;
                 unk7E4->SetAnimationEnable(unk7E8, false);
@@ -830,7 +830,7 @@ after_bit21:
             }
             break;
         case 2:
-            func_80137444(unk7F0, lbl_eu_80666F90);
+            advanceAnimTransform(unk7F0, lbl_eu_80666F90);
             break;
         case 3:
             if (func_80137510(unk7E8, lbl_eu_80666F90) !=
@@ -840,7 +840,7 @@ after_bit21:
             }
             break;
         case 4:
-            if (func_80137444(unk7EC, lbl_eu_80666F90) != 0) {
+            if (advanceAnimTransform(unk7EC, lbl_eu_80666F90) != 0) {
                 unk7EC->SetFrame(lbl_eu_80666F94);
                 unk7E4->Animate(0);
                 unk7E4->SetAnimationEnable(unk7EC, false);
@@ -879,7 +879,7 @@ after_bit21:
             unk7C4 = t;
             if (t >= lbl_eu_80666FC4) {
                 if (unk7C8 == 0) {
-                    func_80138078(0x9a);
+                    playUISound(0x9a);
                 }
                 unk7C8 = 1;
             }
@@ -930,26 +930,26 @@ after_bit21:
                 continue;
             }
 
-            func_80137038(slot.unk00, &drawInfo, 0, (slot.unk25C & 0x40) != 0);
+            drawLayout(slot.unk00, &drawInfo, 0, (slot.unk25C & 0x40) != 0);
 
             if (slot.unk25C & 0x100) {
-                func_80137038(slot.unk08, &drawInfo, 0, 1);
+                drawLayout(slot.unk08, &drawInfo, 0, 1);
             }
             if (slot.unk25C & 0x200) {
-                func_80137038(slot.unk28, &drawInfo, 0, 1);
+                drawLayout(slot.unk28, &drawInfo, 0, 1);
             }
-            func_80137038(slot.unk18, &drawInfo, 0, (slot.unk25C & 0x880) != 0);
+            drawLayout(slot.unk18, &drawInfo, 0, (slot.unk25C & 0x880) != 0);
             if (slot.unk25C & 0x400) {
-                func_80137038(slot.unk20, &drawInfo, 0, 1);
+                drawLayout(slot.unk20, &drawInfo, 0, 1);
             }
 
             if (slot.unk78 != NULL && slot.unk80 != 0) {
-                func_80137038(slot.unk78, &drawInfo, 0, 1);
+                drawLayout(slot.unk78, &drawInfo, 0, 1);
             }
         }
 
         if (unk7F8 != 0) {
-            func_80137038(unk7E4, &drawInfo, 0, 1);
+            drawLayout(unk7E4, &drawInfo, 0, 1);
         }
     }
 done:
@@ -1470,7 +1470,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
 // width (quantized through lbl_eu_804FD6E0), advances mode/prev snapshots,
 // toggles the party/tension star panes by HP state, resets the tension anims
 // and re-arms the per-slot state machine. `index` nonzero suppresses the
-// func_80138078(0x99) jingle on first activation.
+// playUISound(0x99) jingle on first activation.
 // ---------------------------------------------------------------------------
 void func_8010D4B0(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot, u32 index) {
@@ -1584,7 +1584,7 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
     slot->unk18->SetAnimationEnable(slot->unk1C, true);
     slot->unk244 = 1;
     if (index == 0) {
-        func_80138078(0x99);
+        playUISound(0x99);
     }
 }
 // ---------------------------------------------------------------------------
@@ -1788,7 +1788,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                             (flashB->flagsBB & static_cast<u8>(~0x01)) |
                             0x01;
                         if (!func_8017FD44()) {
-                            func_80138078(0x63);
+                            playUISound(0x63);
                         }
                     } else if (delta > 0) {
                         MenuBpsPaneFlagsView* flashA =
@@ -1804,7 +1804,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
                                     tbl + 0x43b, true));
                         flashB->flagsBB &= static_cast<u8>(~0x01);
                         if (!func_8017FD44()) {
-                            func_80138078(0x64);
+                            playUISound(0x64);
                         }
                     }
                     if (delta != 0) {
@@ -1821,7 +1821,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
 
     if (slot->unk25C & 0x40000000) {
         slot->unk25C = slot->unk25C | 0x400;
-        if (func_80137444(slot->unk24, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk24, lbl_eu_80666F90) != 0) {
             reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk24)->frame =
                 lbl_eu_80666F94;
             slot->unk25C = slot->unk25C & ~0x40000000u;
@@ -1847,7 +1847,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 7:
         changed1 = 1;
-        if (func_80137444(slot->unk0C, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk0C, lbl_eu_80666F90) != 0) {
             if (slot->unk220 <= lbl_eu_80666FE4) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
@@ -1877,7 +1877,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 8:
         changed1 = 1;
-        if (func_80137444(slot->unk10, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk10, lbl_eu_80666F90) != 0) {
             if (slot->unk220 <= lbl_eu_80666FE4) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk0C, false);
@@ -1905,7 +1905,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0xa:
         changed1 = 1;
-        if (func_80137444(slot->unk14, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk14, lbl_eu_80666F90) != 0) {
             if (slot->unk220 > lbl_eu_80666FE0) {
                 slot->unk08->SetAnimationEnable(
                     slot->unk10, false);
@@ -1976,7 +1976,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0xC:
         changed2 = 1;
-        if (func_80137444(slot->unk2C, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk2C, lbl_eu_80666F90) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk30;
             lay->Animate(0);
@@ -1991,7 +1991,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0xD:
         changed2 = 1;
-        func_80137444(slot->unk30, lbl_eu_80666F90);
+        advanceAnimTransform(slot->unk30, lbl_eu_80666F90);
         // Retail evaluates the gate as a skip-chain: any failed condition
         // falls straight through to the bind sequence; only all-pass plus
         // hp > 0 jumps past it.
@@ -2015,14 +2015,14 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0xE:
         changed2 = 1;
-        if (func_80137444(slot->unk34, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk34, lbl_eu_80666F90) != 0) {
             slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
         break;
     case 0xF:
         changed2 = 1;
-        if (func_80137444(slot->unk38, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk38, lbl_eu_80666F90) != 0) {
             nw4r::lyt::Layout* lay = slot->unk28;
             nw4r::lyt::AnimTransform* anm = slot->unk3C;
             lay->Animate(0);
@@ -2037,7 +2037,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0x10:
         changed2 = 1;
-        func_80137444(slot->unk3C, lbl_eu_80666F90);
+        advanceAnimTransform(slot->unk3C, lbl_eu_80666F90);
         // Same skip-chain gate as case 0xD, keyed on mode 0.
         if (slot->unk230 == 0 && slot->unk240 == 0 && self->unk7C8 == 0) {
             if (slot->unk220 > lbl_eu_80666F94) {
@@ -2059,7 +2059,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
         break;
     case 0x11:
         changed2 = 1;
-        if (func_80137444(slot->unk40, lbl_eu_80666F90) != 0) {
+        if (advanceAnimTransform(slot->unk40, lbl_eu_80666F90) != 0) {
             slot->unk28->UnbindAllAnimation();
             slot->unk254 = 0xB;
         }
@@ -2073,7 +2073,7 @@ extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
 
     if (slot->unk78 != NULL) {
         if (slot->unk80 == 1) {
-            if (func_80137444(slot->unk7C, lbl_eu_80666F90) != 0) {
+            if (advanceAnimTransform(slot->unk7C, lbl_eu_80666F90) != 0) {
                 slot->unk80 = 2;
                 reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk7C)->frame =
                     lbl_eu_80666F94;

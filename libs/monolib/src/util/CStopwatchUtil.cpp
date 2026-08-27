@@ -3,10 +3,13 @@
 #include <revolution/OS.h>
 #include <cstring>
 
-// Retail owns the stopwatch entry table in monolibdata1.s (.data) as the
-// unnamed symbol lbl_eu_80657238 (0x280 = 16 entries); declare it extern so
-// this TU emits no data.
-extern "C" CStopwatchUtil::StopwatchEntry lbl_eu_80657238[16];
+// Absorbed from monolibdata1e: retail .bss 0x80657238-0x806574B8
+// (0x280 = 16 StopwatchEntry). MWCC treats bare
+// `extern "C" T name[N];` as a declaration (UNDEF); the braced
+// linkage-specification form emits the .bss definition.
+extern "C" {
+CStopwatchUtil::StopwatchEntry lbl_eu_80657238[16];
+}
 
 void CStopwatchUtil::initialize(){
     //Mark each entry as empty

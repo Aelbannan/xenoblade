@@ -402,7 +402,7 @@ extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self) {
                 func_801C412C(&self->mTitleAHelp);
                 func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
                 self->mState = 1;
-                func_80138078__FUl(0x6d);
+                playUISound__FUl(0x6d);
             }
         }
     }
@@ -472,7 +472,7 @@ extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self) {
         if ((pad->mHeldFlags & 0x1000) &&
             func_801ED808(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) == 0 &&
             code80135FDC_getByte_64077() > 1) {
-            if (self->mFloat6FC > lbl_eu_80667A24) func_80138078__FUl(2);
+            if (self->mFloat6FC > lbl_eu_80667A24) playUISound__FUl(2);
             self->mFloat6FC = lbl_eu_80667A20;
             func_801EECE0(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine), 1);
             if (pad->mTurboFlags & 0x2001) {

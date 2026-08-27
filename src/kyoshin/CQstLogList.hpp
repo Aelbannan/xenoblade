@@ -226,10 +226,10 @@ extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 extern "C" u32 func_8009CF8C(u32);
 
 // C++ free functions - MWCC mangles these to the retail names
-// (func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii,
-// func_80138078__FUl).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80138078(u32);          // UI sound effect
+// (drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii,
+// playUISound__FUl).
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void playUISound(u32);          // UI sound effect
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 extern char lbl_eu_80509AB4[];  // string pool (split1 .rodata)

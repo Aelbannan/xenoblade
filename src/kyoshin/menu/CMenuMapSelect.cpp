@@ -87,8 +87,8 @@ void func_801C41E8(CTitleAHelp* self, u8 arg);
 // CTitleAHelp help-bar text reset (retail-unmangled name).
 extern "C" void func_801C414C(CTitleAHelp* self);
 
-// C++-linkage helper (retail emits the mangled form func_80138078__FUl).
-void func_80138078(unsigned long op);
+// C++-linkage helper (retail emits the mangled form playUISound__FUl).
+void playUISound(unsigned long op);
 
 // ---------------------------------------------------------------------------
 // Byte-range shim over the CProcess header + PTMF zone, so the factory
@@ -232,7 +232,7 @@ void CMenuMapSelect::func_80242368() {
         // Cancel/back: fade out and leave the world map.
         func_80244518(&this->mFade);
         this->mState = 4;
-        func_80138078(3);
+        playUISound(3);
     } else if (triggerBit2 != 0) {
         // Show help overlay.
         func_801C414C(&this->mTitleAHelp);
@@ -250,7 +250,7 @@ void CMenuMapSelect::func_80242368() {
         // Confirm selection.
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078(6);
+            playUISound(6);
         }
         this->mState = 11;
     }
@@ -339,7 +339,7 @@ void func_80242A28(CMenuMapSelect* self) {
             } else if (func_8024F784(&self->mFloorMap) == 0) {
                 func_80244518(&self->mFade);
                 self->mState = 8;
-                func_80138078(6);
+                playUISound(6);
             } else {
                 func_8024EE50(&self->mFloorMap);
             }
@@ -359,7 +359,7 @@ void func_80242A28(CMenuMapSelect* self) {
             if (func_8024F784(&self->mFloorMap) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
-                    func_80138078(6);
+                    playUISound(6);
                 }
                 self->mState = 11;
             } else {
@@ -407,7 +407,7 @@ void func_80242A28(CMenuMapSelect* self) {
             } else if (func_8024F784(&self->mFloorMap) == 0) {
                 func_80244518(&self->mFade);
                 self->mState = 8;
-                func_80138078(6);
+                playUISound(6);
             } else {
                 func_8024EE50(&self->mFloorMap);
             }
@@ -415,7 +415,7 @@ void func_80242A28(CMenuMapSelect* self) {
                    func_8024F784(&self->mFloorMap) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x4f);
             if (self->mTimer > lbl_eu_8066872C) {
-                func_80138078(2);
+                playUISound(2);
             }
             self->mTimer = lbl_eu_80668728;
             func_8024F5C4(&self->mFloorMap, 1);
@@ -428,7 +428,7 @@ void func_80242A28(CMenuMapSelect* self) {
             if (func_8024F784(&self->mFloorMap) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
-                    func_80138078(6);
+                    playUISound(6);
                 }
                 self->mState = 11;
             } else {

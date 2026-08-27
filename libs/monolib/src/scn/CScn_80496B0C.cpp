@@ -770,7 +770,7 @@ extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child, u32
 // bindings, evicts the oldest overflow binding when full, fills the slot from
 // the animation resource, attaches it to the chr blend, then shifts the
 // slot-stack and notifies the model listeners.
-u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
+u32 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
                   CScnItemAnim* tag, u32 value, u32 flag) {
     if (value == 0) {
         // Release every current binding of this child. The slot view is a

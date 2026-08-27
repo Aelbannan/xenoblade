@@ -54,10 +54,10 @@ void CMenuFade::Init() {
     Class_8045F858 regionGuard(&mLayoutMem);
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    func_80136E84(&mLayout, accessor, lbl_eu_804FDEA8 + 0xa);
+    buildLayout(&mLayout, accessor, lbl_eu_804FDEA8 + 0xa);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimDefault, accessor, lbl_eu_804FDEA8 + 0x18);
+    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_804FDEA8 + 0x18);
 
     mLayout->SetAnimationEnable(mAnimDefault, true);
 

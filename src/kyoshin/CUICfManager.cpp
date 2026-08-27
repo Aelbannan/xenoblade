@@ -80,8 +80,8 @@ void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
 void func_8009D414(cf::IFlagEvent*);
-void func_801390E0__FPP11CFileHandle(CFileHandle**);
-void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+void closeFileHandle__FPP11CFileHandle(CFileHandle**);
+void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
 // with the adjusted `this`, so it is referenced through the flat retail name.
 void __dt__12CUICfManagerFv(CUICfManager*);
@@ -218,13 +218,13 @@ void CUICfManager::Init() {
 }
 
 void CUICfManager::Term() {
-    func_801390E0__FPP11CFileHandle(&mFileHandle);
+    closeFileHandle__FPP11CFileHandle(&mFileHandle);
 
     mtl::MemManager::deallocate(mPackedFont60.Destroy());
     mtl::MemManager::deallocate(mPackedFont9C.Destroy());
     mtl::MemManager::deallocate(mPackedFontD8.Destroy());
 
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(mArcResourceAccessor);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(mArcResourceAccessor);
     mArcResourceAccessor = NULL;
     unk118 = -1;
 
@@ -324,7 +324,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
     int st = func_801359AC((u8*)singleton);
     if (st != 0) {
         if (st == 2) {
-            func_80138078(5);
+            playUISound(5);
         }
         return 1;
     }
@@ -348,7 +348,7 @@ int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
     }
     CUICfGlobalSettings* g = getUnk80664658();
     if ((g->field_214 & 0x40000) != 0) {
-        func_80138078(5);
+        playUISound(5);
         return 1;
     }
     // Best-known shape: 4-insn residual is an F0/F1 rename in this tail
@@ -375,8 +375,8 @@ u8 lbl_eu_805000A8[];
 u16 lbl_eu_804FFFDC[];
 }
 
-// C++ mangling -> retail `func_8013B428__FUl`.
-void func_8013B428(u32);
+// C++ mangling -> retail `incrementEventCounter__FUl`.
+void incrementEventCounter(u32);
 
 void CUICfManager::func_80133324(int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
@@ -455,7 +455,7 @@ range_221_607: {
         goto id_check;
     id_body:
         if ((u16)idTable.ids[i] == target) {
-            func_8013B428(0xb9);
+            incrementEventCounter(0xb9);
             goto end;
         }
         i++;
@@ -570,29 +570,29 @@ range_7fc_804: {
 
 case_7fc:
     if (a1 == 0x64) {
-        func_8013B428(0xc8);
+        incrementEventCounter(0xc8);
         goto end;
     }
     if (a1 >= 0x32) {
-        func_8013B428(0xc7);
+        incrementEventCounter(0xc7);
         goto end;
     }
     if (a1 >= 1) {
-        func_8013B428(0xc6);
+        incrementEventCounter(0xc6);
     }
     goto end;
 
 case_7fd:
     if (a1 == 0x96) {
-        func_8013B428(0xc5);
+        incrementEventCounter(0xc5);
         goto end;
     }
     if (a1 >= 0x64) {
-        func_8013B428(0xc4);
+        incrementEventCounter(0xc4);
         goto end;
     }
     if (a1 >= 0x32) {
-        func_8013B428(0xc3);
+        incrementEventCounter(0xc3);
     }
     goto end;
 
@@ -600,27 +600,27 @@ range_22_27:
     if (a1 < 0xfa0) {
         goto end;
     }
-    func_8013B428((u8)(id + 0x81));
+    incrementEventCounter((u8)(id + 0x81));
     if (a1 < 0x1f40) {
         goto end;
     }
-    func_8013B428(0xa8);
-    func_8013B428(0xa9);
+    incrementEventCounter(0xa8);
+    incrementEventCounter(0xa9);
     goto end;
 
 range_609_797:
     if (a2 == 0) {
         if (a1 > 0) {
-            func_8013B428(0x9f);
-            func_8013B428(0xa0);
-            func_8013B428(0xa1);
-            func_8013B428(0xa2);
+            incrementEventCounter(0x9f);
+            incrementEventCounter(0xa0);
+            incrementEventCounter(0xa1);
+            incrementEventCounter(0xa2);
         }
     }
     if (a1 < 5) {
         goto end;
     }
-    func_8013B428(0x9e);
+    incrementEventCounter(0x9e);
     goto end;
 
 end:
@@ -1234,7 +1234,7 @@ void CUICfManager_setFlags(int value){
     CUICfManager* manager = static_cast<CUICfManager*>(lbl_eu_80664054);
     manager->setFlagState(value != 0);
 }
-void* func_801355A0__Fv() {
+void* getPackedFont__Fv() {
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : (void*)((char*)m + 0x60);
 }
@@ -2331,7 +2331,7 @@ extern "C" u32 func_80133770() {
         if (st != 0) {
             if ((lbl_eu_80663E24 & 0x40000000u) == 0) {
                 if (func_8009CF8C(0x20) > 4 && st == 2) {
-                    func_80138078(5);
+                    playUISound(5);
                 }
             }
             return 0;

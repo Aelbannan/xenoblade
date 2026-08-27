@@ -690,7 +690,7 @@ void func_8016DDE8(cf::CfResReloadImpl* self) {
     notifyDetach_(self->field_00);
     if (self->field_0C != 0) {
         self->field_0C = 0;
-        self->field_0A = -1;
+        *(s16*)&self->field_0A = -1;
     }
 }
 

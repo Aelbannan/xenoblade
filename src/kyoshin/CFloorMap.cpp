@@ -36,7 +36,7 @@ extern "C" void* createPicture__10CLibLayoutFv();
 extern "C" void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 
 // Draw helpers used by CFloorMap::Draw and related functions
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void func_801F35B0(void* scrollBar, void* drawInfo);
 extern "C" void func_8022B7C8(void* sysWin, void* drawInfo);
 extern "C" void func_801D20B0(void* cursor, void* drawInfo);
@@ -272,7 +272,7 @@ void func_8024577C(void* self, u16 val) {
         i++;
     }
     if (oldA != (s8)cur->field_0A || oldB != (s8)cur->field_0B)
-        func_80138078(1);
+        playUISound(1);
 }
 
 // Rebuild the floor-name entries from the current floor table, set the
@@ -519,7 +519,7 @@ void func_80245DF8(void* self) {
 // a same-TU empty definition lets MWCC prove the call is a no-op and elide
 // it, dropping the retail `bl` from every caller. The undefined extern
 // resolves to the retail address via config/<region>/symbols.txt at link
-// time (same mechanism as the func_80136E84 family).
+// time (same mechanism as the buildLayout family).
 
 // operator delete(void*) (retail unmangled C symbol); declared at file scope
 // because MWCC rejects function-local extern "C" declarations.
@@ -587,7 +587,7 @@ void func_80246330(CFloorMapLayoutBlock* self) {
     for (u32 i = 0; i < 20; i++) {
         self->slots[i].layout = NULL;
         self->slots[i].posY = 0;
-        func_80136E84(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
+        buildLayout(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
         nw4r::lyt::Layout* lay = self->slots[i].layout;
         CFloorMapFontView* font =
             (CFloorMapFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
@@ -2959,10 +2959,10 @@ void func_8024C1FC(void* self) {
         if (p->mLayout32D4 != 0 && p->field_32E5 != 0) {
             switch (p->field_32E4) {
             case 0:
-                func_80137444((nw4r::lyt::AnimTransform*)p->mLayout32DC, lbl_eu_80668760);
+                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32DC, lbl_eu_80668760);
                 break;
             case 1:
-                if (func_80137444((nw4r::lyt::AnimTransform*)p->mLayout32E0, lbl_eu_80668760)) {
+                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32E0, lbl_eu_80668760)) {
                     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, false);
                     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, true);
                     ((nw4r::lyt::AnimTransform*)p->mLayout32DC)->SetFrame(lbl_eu_80668764);
@@ -2976,10 +2976,10 @@ void func_8024C1FC(void* self) {
         if (p->field_204 != 0 && p->mLayout32EC != 0 && p->field_32FD != 0) {
             switch (p->field_32FC) {
             case 0:
-                func_80137444((nw4r::lyt::AnimTransform*)p->mLayout32F4, lbl_eu_80668760);
+                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32F4, lbl_eu_80668760);
                 break;
             case 1:
-                if (func_80137444((nw4r::lyt::AnimTransform*)p->mLayout32F8, lbl_eu_80668760)) {
+                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout32F8, lbl_eu_80668760)) {
                     ((nw4r::lyt::Layout*)p->mLayout32EC)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32F8, false);
                     ((nw4r::lyt::Layout*)p->mLayout32EC)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32F4, true);
                     ((nw4r::lyt::AnimTransform*)p->mLayout32F4)->SetFrame(lbl_eu_80668764);
@@ -2995,10 +2995,10 @@ void func_8024C1FC(void* self) {
         if (floor->field_514 != 0 && p->mLayout3304 != 0 && p->field_3315 != 0) {
             switch (p->field_3314) {
             case 0:
-                func_80137444((nw4r::lyt::AnimTransform*)p->mLayout330C, lbl_eu_80668760);
+                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout330C, lbl_eu_80668760);
                 break;
             case 1:
-                if (func_80137444((nw4r::lyt::AnimTransform*)p->mLayout3310, lbl_eu_80668760)) {
+                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3310, lbl_eu_80668760)) {
                     ((nw4r::lyt::Layout*)p->mLayout3304)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3310, false);
                     ((nw4r::lyt::Layout*)p->mLayout3304)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout330C, true);
                     ((nw4r::lyt::AnimTransform*)p->mLayout330C)->SetFrame(lbl_eu_80668764);
@@ -3012,10 +3012,10 @@ void func_8024C1FC(void* self) {
         if (p->mLayout331C != 0 && p->field_332D != 0) {
             switch (p->field_332C) {
             case 0:
-                func_80137444((nw4r::lyt::AnimTransform*)p->mLayout3324, lbl_eu_80668760);
+                advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3324, lbl_eu_80668760);
                 break;
             case 1:
-                if (func_80137444((nw4r::lyt::AnimTransform*)p->mLayout3328, lbl_eu_80668760)) {
+                if (advanceAnimTransform((nw4r::lyt::AnimTransform*)p->mLayout3328, lbl_eu_80668760)) {
                     ((nw4r::lyt::Layout*)p->mLayout331C)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3328, false);
                     ((nw4r::lyt::Layout*)p->mLayout331C)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout3324, true);
                     ((nw4r::lyt::AnimTransform*)p->mLayout3324)->SetFrame(lbl_eu_80668764);
@@ -3037,24 +3037,24 @@ void func_8024C8F8(void* self, void* drawInfo) {
     if (!p->field_40) return;
     if (!p->field_41) return;
     if (p->mLayout130)
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout130), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout130), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (p->mLayout138)
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout138), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout138), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (p->mLayout140)
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout140), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout140), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (p->mLayouts150[0].mPtr) {
         for (u8 i = 0; i < p->field_1F0; i++) {
             void* s = *(void**)((u8*)p + i * 8 + 0x150);
-            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(s), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(s), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         }
     }
     if (p->field_208) {
         if (p->mLayout1FC)
-            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->mLayout32D4 && p->field_32E5)
-            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32D4), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32D4), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->field_204 && p->mLayout32EC && p->field_32FD)
-            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32EC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32EC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if ((s8)p->field_206 >= 0) {
             int cond;
             if (!p->mLayout32D4) {
@@ -3069,17 +3069,17 @@ void func_8024C8F8(void* self, void* drawInfo) {
                 s8 idx = (s8)p->field_205;
                 if (*(u8*)((u8*)p + idx * 0x30C + 0x514)) {
                     if (p->mLayout3304 && p->field_3315)
-                        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3304), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+                        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3304), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
                 }
             }
         }
         if (p->mLayout331C && p->field_332D)
-            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+            drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
     if (p->field_208)
         func_801F35B0((void*)&p->mScrollBar, drawInfo);
     if (p->field_333C && p->mLayout3334)
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     func_8022B7C8((void*)&p->mSysWinB8, drawInfo);
     func_8022B7C8((void*)&p->mSysWinF4, drawInfo);
     if ((s8)p->field_5C >= 0)
@@ -3112,8 +3112,8 @@ void func_8024CB94(CFloorMapFull* p) {
         }
 
         // Release both arc resource accessors and the two scratch regions.
-        func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_34));
-        func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_38));
+        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_34));
+        releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(p->field_38));
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x04)->func_8045F778();
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->func_8045F778();
 
@@ -3239,7 +3239,7 @@ void func_8024CE68(void* self) {
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
     p->field_32E4 = 1;
-    func_801390E0__FPP11CFileHandle((CFileHandle**)&p->field_2C);
+    closeFileHandle__FPP11CFileHandle((CFileHandle**)&p->field_2C);
 
     u8 lang = FM_FLOOR(p)->field_20C;
     if (lang == 0) lang = 1;
@@ -3279,7 +3279,7 @@ void func_8024CE68(void* self) {
 
     sprintf(fname, msgTbl + 0x4D8, func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, lang)));
     p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
-    func_80138078(0xC);
+    playUISound(0xC);
 }
 #undef FM_FLOOR
 
@@ -3348,7 +3348,7 @@ void func_8024D23C(void* self) {
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32DC, false);
     ((nw4r::lyt::Layout*)p->mLayout32D4)->SetAnimationEnable((nw4r::lyt::AnimTransform*)p->mLayout32E0, true);
     p->field_32E4 = 1;
-    func_801390E0__FPP11CFileHandle((CFileHandle**)&p->field_2C);
+    closeFileHandle__FPP11CFileHandle((CFileHandle**)&p->field_2C);
 
     u8 v26 = ((CFloorMapFloorBlock*)((u8*)p + (s8)p->field_205 * 0x30C))->field_20C;
     if (v26 == 0) v26 = 1;
@@ -3384,7 +3384,7 @@ void func_8024D23C(void* self) {
     char fname[0x20];
     sprintf(fname, &lbl_eu_8050BEA8[0x4D8], func_80138F78((u16)func_80136254((const void*)lbl_eu_8066479C, key, v26)));
     p->field_2C = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)getHandleMEM2__Q23mtl10MemManagerFv(), fname, p, 0, 0);
-    func_80138078(0xA);
+    playUISound(0xA);
 }
 
 // Per-frame map update: when the syswin cursor is active, step the cursor
@@ -3424,7 +3424,7 @@ void func_8024D614(void* self) {
         nw4r::math::VEC3 curOut;
         func_8022C1B4(&curOut, &p->mSysWinB8, p->field_5C);
         ((CCur18View*)&p->mCursor)->v02(&curOut);
-        func_80138078(1);
+        playUISound(1);
         return;
     }
 
@@ -3523,7 +3523,7 @@ divides:
     p->field_41 = 2;
     p->field_4C = pos.x / lbl_eu_806687A0;
     p->field_50 = pos.y / lbl_eu_806687A0;
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Per-frame map update for the world-map view: when the syswin cursor is
@@ -3550,7 +3550,7 @@ void func_8024DA0C(void* self) {
 
         func_8022C1B4(&cursorOut, &p->mSysWinB8, p->field_5C);
         ((CCur18View*)&p->mCursor)->v02(&cursorOut);
-        func_80138078(1);
+        playUISound(1);
         return;
     }
 
@@ -3644,7 +3644,7 @@ void func_8024DA0C(void* self) {
     p->field_41 = 2;
     p->field_4C = pos.x / lbl_eu_806687A0;
     p->field_50 = pos.y / lbl_eu_806687A0;
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Per-frame map-down handler: when the cursor is not active, step the row
@@ -3796,7 +3796,7 @@ void func_8024DE08(CFloorMapFull* p) {
     p->field_41 = 2;
     p->field_4C = vec.x / lbl_eu_806687A0;
     p->field_50 = vec.y / lbl_eu_806687A0;
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Scroll the floor-map cursor view down to the selected row: reset the
@@ -3907,7 +3907,7 @@ void func_8024E2BC(void* self) {
     ((CFloorMapFull*)self)->field_41 = 2;
     ((CFloorMapFull*)self)->field_4C = pos.x / lbl_eu_806687A0;
     ((CFloorMapFull*)self)->field_50 = pos.y / lbl_eu_806687A0;
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Scroll the map view down: step the cursor position toward the lower bound
@@ -4082,9 +4082,9 @@ void func_8024EE50(void* self) {
                 rows = 0;
             }
             p->field_5A = rows;
-            func_80138078(0x1D);
+            playUISound(0x1D);
         } else {
-            func_80138078(6);
+            playUISound(6);
         }
         func_801D216C(&p->mCursor, 0);
         func_8022B8E4(&p->mSysWinB8);
@@ -4128,7 +4128,7 @@ void func_8024EE50(void* self) {
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8(&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
-        func_80138078(5);
+        playUISound(5);
         return;
     }
 
@@ -4138,7 +4138,7 @@ void func_8024EE50(void* self) {
         func_8022B9B4(&p->mSysWinF4, name, 0);
         func_8022BFC8(&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
-        func_80138078(5);
+        playUISound(5);
         return;
     }
 
@@ -4159,7 +4159,7 @@ void func_8024EE50(void* self) {
     func_801D216C(&p->mCursor, 1);
     p->field_58 = 1;
     p->field_208 = 1;
-    func_80138078(3);
+    playUISound(3);
 }
 
 // Select the floor-table file pointer for map id `id` (29 ids, string offsets
@@ -4221,13 +4221,13 @@ void func_8024F55C(void* self) {
     extern int CSysWin_isActive(void*);
     extern void func_801D216C(void*, int);
     extern void func_8022B8E4(void*);
-    extern void func_80138078(unsigned long);
+    extern void playUISound(unsigned long);
     u8* p = (u8*)self;
     if (p[0x58] && CSysWin_isActive(p + 0xB8)) {
         func_801D216C(p + 0xA0, 0);
         func_8022B8E4(p + 0xB8);
         p[0x58] = 0;
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -4536,14 +4536,14 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         this->layout_130 = 0;
         this->field_134 = this->field_34;
-        func_80136E84((nw4r::lyt::Layout**)&this->layout_130,
+        buildLayout((nw4r::lyt::Layout**)&this->layout_130,
                       (nw4r::lyt::ArcResourceAccessor*)this->field_34, &lbl_eu_8050BEA8[0x49b]);
 
         this->layout_140 = 0;
         this->field_144 = this->field_34;
         this->field_148 = 0;
         this->field_14C = 0;
-        func_80136E84((nw4r::lyt::Layout**)&this->layout_140,
+        buildLayout((nw4r::lyt::Layout**)&this->layout_140,
                       (nw4r::lyt::ArcResourceAccessor*)this->field_34, &lbl_eu_8050BEA8[0x24d]);
 
         // Row-marker panes: a base pane appended to the map layout's zoom
@@ -4706,7 +4706,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
         this->layout_138 = 0;
         this->field_13C = this->field_38;
-        func_80136E84((nw4r::lyt::Layout**)&this->layout_138,
+        buildLayout((nw4r::lyt::Layout**)&this->layout_138,
                       (nw4r::lyt::ArcResourceAccessor*)this->field_13C,
                       (const char*)mapNames[lbl_eu_80664798 - 1]);
 
@@ -4891,8 +4891,8 @@ extern "C" void __ct__8024507C(void* self) {
     CFloorMapCtorView* cv = (CFloorMapCtorView*)self;
     CFloorMapWidgets* wv = (CFloorMapWidgets*)self;
 
-    // Layout load: func_80136E84(&this->layout@+0, accessor=this->[+4], path=&lbl[267])
-    func_80136E84(&cv->layout, cv->accessor, &lbl_eu_8050BEA8[267]);
+    // Layout load: buildLayout(&this->layout@+0, accessor=this->[+4], path=&lbl[267])
+    buildLayout(&cv->layout, cv->accessor, &lbl_eu_8050BEA8[267]);
 
     // Font bind onto the loaded layout's root pane.
     nw4r::lyt::Layout* layout = cv->layout;
@@ -4988,7 +4988,7 @@ void sinit_80250CB4() {
 // 0x17/0x1F and the row index (0xB..0x14), and func_80136B4C updates the
 // pane addressed by the string at 0x24 + 9*(row-0xB).
 void func_80244764(CFloorMapLayoutData0* self) {
-    func_80136E84(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
+    buildLayout(&self->layout, self->accessor, &lbl_eu_8050BEA8[0]);
 
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
@@ -5021,9 +5021,9 @@ void func_80244764(CFloorMapLayoutData0* self) {
 // decorative panes, and start the two animation transforms.
 void func_80244944(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
@@ -5043,9 +5043,9 @@ void func_80244944(void* self) {
 // decorative panes (0x100 / 0xCE / 0xD9), and start the two animations.
 void func_80244AE8(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
@@ -5064,9 +5064,9 @@ void func_80244AE8(void* self) {
 // decorative panes, and start the two animation transforms.
 void func_80244C60(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
@@ -5084,9 +5084,9 @@ void func_80244C60(void* self) {
 
 void func_80244DD8(void* self) {
     CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
-    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
-    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
-    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+    buildLayout(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    bindLayoutAnimTransform(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);

@@ -64,7 +64,7 @@ extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u3
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u32 enable);
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void func_801C414C(CTitleAHelp* self);

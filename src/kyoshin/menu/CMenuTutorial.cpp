@@ -303,7 +303,7 @@ void func_8029A668(CMenuTutorial* self) {
         func_801C412C(&self->mTitleAHelp);
         func_8029ACC4(&self->mTutorial);
         self->mIsInitialised = 1;
-        func_80138078(0x6d);
+        playUISound(0x6d);
     }
 }
 

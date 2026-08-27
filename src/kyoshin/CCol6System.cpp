@@ -459,7 +459,7 @@ void CCol6Hint::Term() {
         mAnimHost = 0;
     }
 
-    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
+    releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
     lbl_eu_80664234 = 0;
 }
@@ -479,13 +479,13 @@ void CCol6Hint::Move() {
     switch (mState) {
         case 0:
             mState = 1;
-            func_80138078(0x6d);
+            playUISound(0x6d);
             break;
 
         case 1:
             // Wait for the out anim to finish, then swap both anims and
             // kick the scroll bar in (open sound).
-            if (func_80137444(mField90, lbl_eu_80667558) == 0) break;
+            if (advanceAnimTransform(mField90, lbl_eu_80667558) == 0) break;
             mAnimHost->setAnim(mField90, 0);
             mAnimHost->setAnim(mField94, 1);
             mState = 2;
@@ -501,7 +501,7 @@ void CCol6Hint::Move() {
         case 2:
             // Scroll bar fully in: label the pane with the player index and
             // position the cursor between the label panes.
-            if (func_80137444(mField94, lbl_eu_80667558) == 0) break;
+            if (advanceAnimTransform(mField94, lbl_eu_80667558) == 0) break;
             if (func_801F3668(&mScrollBar) == 0) break;
             mState = 3;
             func_801D216C(&mCur18, 1);
@@ -646,7 +646,7 @@ draw:
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
+    drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
                   reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), 0, 1);
     func_801F35B0(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     func_801D20B0(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
@@ -686,16 +686,16 @@ extern "C" IUIWindow* func_8015DCD0(CProcess* pParent, CScn* pScene) {
 extern "C" void func_8015DD4C(CCol6Hint* self) {
     // Build the layout into the +0x54 slot and load the two anim transforms
     // (the +0x54 anim host IS the layout object).
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         reinterpret_cast<nw4r::lyt::Layout**>(&self->mAnimHost),
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C),
         &lbl_eu_80502050[0x46]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
         &self->mField90,
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C),
         &lbl_eu_80502050[0x56]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         reinterpret_cast<nw4r::lyt::Layout*>(self->mAnimHost),
         &self->mField94,
         reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C),
@@ -839,7 +839,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
         self->mState = 4;
         func_801D216C(&self->mCur18, 0);
         func_801F369C(&self->mScrollBar);
-        func_80138078(3);
+        playUISound(3);
     } else if (down) {
         self->mState = 4;
         func_801D216C(&self->mCur18, 0);
@@ -851,7 +851,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
             self->mField120 = (u8)(self->mField11C - 1);
             self->mField121 = 0;
         }
-        func_80138078(6);
+        playUISound(6);
     } else if (sels) {
         // Row down with wrap: decrement the row pair, wrapping to the
         // (mField11C-based) page end when both go negative.
@@ -905,7 +905,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
-        func_80138078(1);
+        playUISound(1);
     } else if (down2) {
         // Row up with wrap: increment the row pair, resetting to 0/0 when the
         // page end is reached.
@@ -957,7 +957,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
-        func_80138078(1);
+        playUISound(1);
     } else if (confirm) {
         // Page down: jump one page back with wrap.
         if (self->mField11C >= 5) {
@@ -1005,7 +1005,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
-        func_80138078(1);
+        playUISound(1);
     } else if (up2) {
         // Page up: jump one page forward with wrap.
         if (self->mField11C >= 5) {
@@ -1057,7 +1057,7 @@ extern "C" void func_8015E0BC(CCol6Hint* self) {
                           ->mpRootPane);
         reinterpret_cast<CCol6Cur18View*>(self->mCur18)->vf04(&vec);
         func_801F3850(&self->mScrollBar, (u16)(s8)self->mField121);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -1302,7 +1302,7 @@ void CCol6System::Term() {
         mpLayout = 0;
     }
 
-    func_80139124(mArcAccessor);
+    releaseArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
     lbl_eu_80664238 = 0;
@@ -1353,12 +1353,12 @@ body:
     switch (mFieldA4) {
     case 0:
         mFieldA4 = 1;
-        func_80138078(0x6d);
+        playUISound(0x6d);
         break;
 
     case 1:
         // Out anim finished: swap the pair and open the box.
-        if (func_80137444(mAnim90, lbl_eu_80667558) == 0) break;
+        if (advanceAnimTransform(mAnim90, lbl_eu_80667558) == 0) break;
         mFieldA4 = 2;
         reinterpret_cast<CCol6AnimHostView*>(mpLayout)
             ->setAnim(mAnim98, 0);
@@ -1372,7 +1372,7 @@ body:
 
     case 2:
         // In anim finished: position the player-selection cursor.
-        if (func_80137444(mAnim94, lbl_eu_80667558) == 0) break;
+        if (advanceAnimTransform(mAnim94, lbl_eu_80667558) == 0) break;
         mFieldA4 = 3;
         updateCursorPos();
         break;
@@ -1407,7 +1407,7 @@ body:
 
     case 6:
         // Second-layer out anim: switch to the box anim and reset the cursor.
-        if (func_80137444(mAnim98, lbl_eu_80667558) == 0) break;
+        if (advanceAnimTransform(mAnim98, lbl_eu_80667558) == 0) break;
         mFieldA4 = 7;
         reinterpret_cast<CCol6AnimHostView*>(mpLayout)
             ->setAnim(mAnim90, 0);
@@ -1427,7 +1427,7 @@ body:
 
     case 8:
         // Box anim done: resolve target.
-        if (func_80137444(mAnim9C, lbl_eu_80667558) == 0) break;
+        if (advanceAnimTransform(mAnim9C, lbl_eu_80667558) == 0) break;
         mIndex = 0xff;
         mFlag64 = 1;
         break;
@@ -1858,7 +1858,7 @@ draw:
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
     if (mFlagA1 == 0) {
-        func_80137038(mpLayout, &drawInfo, 0, 1);
+        drawLayout(mpLayout, &drawInfo, 0, 1);
         func_801D20B0(&mCur1, &drawInfo);
         func_8022B7C8(&mSysWin1, &drawInfo);
         func_801D20B0(&mCur2, &drawInfo);
@@ -1892,18 +1892,18 @@ extern "C" IUIWindow* func_801602F4(CProcess* pParent, CScn* pScene) {
 extern "C" void func_80160370(CCol6System* self) {
     self->mPadA5[0] = 0;
 
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mpLayout, self->mArcAccessor, &lbl_eu_80502050[0x46]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mAnim90, self->mArcAccessor,
         &lbl_eu_80502050[0x56]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mAnim94, self->mArcAccessor,
         &lbl_eu_80502050[0x69]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mAnim98, self->mArcAccessor,
         &lbl_eu_80502050[0xdc]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mAnim9C, self->mArcAccessor,
         &lbl_eu_80502050[0xf1]);
 
@@ -1917,27 +1917,27 @@ extern "C" void func_80160370(CCol6System* self) {
     // If the font value is present, label all 21 count panes with it.
     u32 fontVal = func_801355BC();
     if (fontVal != 0) {
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x105], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x10f], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x11d], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x12b], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x135], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x13f], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x149], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x153], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x161], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x16f], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x17d], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x18b], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x199], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1a4], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1af], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1c0], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1d1], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1e2], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x1f3], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x204], fontVal);
-        func_801368C0(self->mpLayout, &lbl_eu_80502050[0x212], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x105], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x10f], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x11d], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x12b], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x135], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x13f], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x149], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x153], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x161], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x16f], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x17d], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x18b], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x199], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1a4], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1af], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1c0], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1d1], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1e2], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x1f3], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x204], fontVal);
+        setLayoutTextBoxFont(self->mpLayout, &lbl_eu_80502050[0x212], fontVal);
     }
 
     // Start the four anims (setAnim at +0x2C) and tick once (+0x38).
@@ -2021,7 +2021,7 @@ extern "C" void func_80160370(CCol6System* self) {
         u32 c = func_8009CF8C(i + 0x7fe);
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], idx);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf, c);
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf, c);
         sprintf(buf, &lbl_eu_80502050[0x26a], idx);
         func_80136B4C(self->mpLayout, buf, s46, 0);
         sprintf(buf, &lbl_eu_80502050[0x275], idx);
@@ -2056,10 +2056,10 @@ extern "C" void func_80160370(CCol6System* self) {
                   0);
 
     // Player counts on the two slots.
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
                                             func_8009CF8C(0x7fc));
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
                                             func_8009CF8C(0x7fd));
 
@@ -2085,7 +2085,7 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
     for (s32 i = 0; i < 4; i++) {
         char buf[0x20];
         sprintf(buf, &lbl_eu_80502050[0x25e], i + 1);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf,
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout, buf,
                                                 func_8009CF8C(i + 0x7fe));
     }
 
@@ -2099,12 +2099,12 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
             u32 n = (u32)(f + playerIdx * 5 + 1);
             u16 id = func_8013606C(&lbl_eu_80502050[0x2cc],
                                    &lbl_eu_80502050[0x2dd], n);
-            func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
                 self->mpLayout, &lbl_eu_80502050[0x1a4], id * 100);
             char* s3 = func_80136190(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
             func_80136B4C(self->mpLayout, &lbl_eu_80502050[0x199], s3, 0);
-            func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
                 self->mpLayout, &lbl_eu_80502050[0x212], func_801571FC());
             char* s4 = func_80136190(&lbl_eu_80502050[0x2e3],
                                      &lbl_eu_80502050[0x9], 3);
@@ -2131,10 +2131,10 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
                     u8 v = (u8)func_8013600C(&lbl_eu_80502050[0x2cc], bufC8,
                                              n);
                     func_80136B4C(self->mpLayout, buf148, name, 0);
-                    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+                    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                                             buf128, v);
                     u32 cnt = func_80158068(id2);
-                    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+                    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                                             buf108, cnt);
                 } else {
                     func_80136B4C(self->mpLayout, buf148,
@@ -2303,7 +2303,7 @@ void func_80161178(CCol6System* self) {
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim98, 1);
             func_80160A6C(self, 0);
-            func_80138078(0x6d);
+            playUISound(0x6d);
         } else {
             // Other players: switch the anim pair.
             self->mFieldA4 = 4;
@@ -2318,7 +2318,7 @@ void func_80161178(CCol6System* self) {
         }
         func_801D216C(&self->mCur1, 0);
         if (self->mPadA5[0] == 2) self->mPadA5[0] = 3;
-        func_80138078(3);
+        playUISound(3);
     } else if (down) {
         self->mFieldA4 = 4;
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
@@ -2331,7 +2331,7 @@ void func_80161178(CCol6System* self) {
             ->setAnim(self->mAnim94, 1);
         func_801D216C(&self->mCur1, 0);
         self->mPadA5[0] = 3;
-        func_80138078(6);
+        playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 2).
         self->mPadA5[0] = self->mPadA5[0] - 1;
@@ -2363,7 +2363,7 @@ void func_80161178(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     } else if (confirm != 0) {
         // Player index up (wrap to 0).
         self->mPadA5[0] = self->mPadA5[0] + 1;
@@ -2395,7 +2395,7 @@ void func_80161178(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -2431,7 +2431,7 @@ void func_8016169C(CCol6System* self) {
             reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
                 ->setAnim(self->mAnim98, 1);
             func_801D216C(&self->mCur1, 0);
-            func_80138078(3);
+            playUISound(3);
         } else if (func_8009CF8C(pid + 0x7fe) < 5) {
             if (func_80161024(self) != 0) {
                 // Fill window 1 with the player's box name and open it.
@@ -2448,9 +2448,9 @@ void func_8016169C(CCol6System* self) {
                 func_8022B8B8(&self->mSysWin1);
                 func_801D216C(&self->mCur1, 1);
                 self->mFieldA4 = 0xa;
-                func_80138078(3);
+                playUISound(3);
             } else {
-                func_80138078(5);
+                playUISound(5);
             }
         } else {
             // Box full: show the window-2 message.
@@ -2460,7 +2460,7 @@ void func_8016169C(CCol6System* self) {
             func_8022BFC8(&self->mSysWin2, 1);
             func_8022B8B8(&self->mSysWin2);
             self->mFieldA4 = 0x1d;
-            func_80138078(5);
+            playUISound(5);
         }
     } else if (down) {
         self->mFieldA4 = 9;
@@ -2473,7 +2473,7 @@ void func_8016169C(CCol6System* self) {
         reinterpret_cast<CCol6AnimHostView*>(self->mpLayout)
             ->setAnim(self->mAnim98, 1);
         func_801D216C(&self->mCur1, 0);
-        func_80138078(6);
+        playUISound(6);
     } else if (sels) {
         // Player index down (wrap to 4) and refresh the box.
         self->mPadA5[0] = self->mPadA5[0] - 1;
@@ -2506,7 +2506,7 @@ void func_8016169C(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     } else if (confirm != 0) {
         // Player index up (wrap to 0) and refresh the box.
         self->mPadA5[0] = self->mPadA5[0] + 1;
@@ -2539,7 +2539,7 @@ void func_8016169C(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -2592,7 +2592,7 @@ void func_80161C5C(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     } else if (confirm != 0) {
         // Scroll the slot counter up (wrap to 0).
         self->mPadA5[1] = self->mPadA5[1] + 1;
@@ -2624,19 +2624,19 @@ void func_80161C5C(CCol6System* self) {
                 reinterpret_cast<CCol6LayoutView*>(self->mpLayout)->mpRootPane);
             reinterpret_cast<CCol6Cur18View*>(&self->mCur1)->vf04(&vec);
         }
-        func_80138078(1);
+        playUISound(1);
     } else if (up) {
         // Open the box for the current player (reset cursor 2).
         self->mFieldA4 = 0xc;
         func_801D216C(&self->mCur2, 0);
         func_8022B8E4(&self->mSysWin1);
-        func_80138078(3);
+        playUISound(3);
     } else if (down) {
         self->mFieldA4 = 0xc;
         self->mPadA5[1] = 1;
         func_801D216C(&self->mCur2, 0);
         func_8022B8E4(&self->mSysWin1);
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -2899,10 +2899,10 @@ extern "C" void func_80162000(CCol6System* self) {
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x474], n);
 
     // Player counts on the two slots.
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x10f],
                                             func_8009CF8C(0x7fc));
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mpLayout,
                                             &lbl_eu_80502050[0x11d],
                                             func_8009CF8C(0x7fd));
 

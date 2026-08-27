@@ -86,13 +86,13 @@ void CMenuBattleMode::Init() {
     Class_8045F858 regionGuard(&mLayoutMem);
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    func_80136E84(&mLayout, accessor, lbl_eu_80503D80 + 0x10);
+    buildLayout(&mLayout, accessor, lbl_eu_80503D80 + 0x10);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimDefault, accessor, lbl_eu_80503D80 + 0x29);
+    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_80503D80 + 0x29);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimLabel, accessor, lbl_eu_80503D80 + 0x45);
+    bindLayoutAnimTransform(mLayout, &mAnimLabel, accessor, lbl_eu_80503D80 + 0x45);
 
     mLayout->SetAnimationEnable(mAnimLabel, false);
     mLayout->SetAnimationEnable(mAnimDefault, true);
@@ -271,7 +271,7 @@ run:
     }
 
     case 1:
-        if (func_80137444(mAnimDefault, lbl_eu_80667C84)) {
+        if (advanceAnimTransform(mAnimDefault, lbl_eu_80667C84)) {
             mLayout->SetAnimationEnable(mAnimDefault, false);
             mLayout->SetAnimationEnable(mAnimLabel, true);
             mAnimLabel->SetFrame(lbl_eu_80667C80);
@@ -280,7 +280,7 @@ run:
         break;
 
     case 2: {
-        func_80137444(mAnimLabel, lbl_eu_80667C84);
+        advanceAnimTransform(mAnimLabel, lbl_eu_80667C84);
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
         if (player == 0) {
             break;
@@ -341,6 +341,6 @@ draw:
     {
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038(mLayout, &drawInfo, 0, 1);
+        drawLayout(mLayout, &drawInfo, 0, 1);
     }
 }

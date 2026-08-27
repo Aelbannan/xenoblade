@@ -31,11 +31,11 @@ struct UnkClass_804645CC {
     void func_80464B84();
     void updateLodState();
     void refreshLodView();
-    void func_80465704();
+    void setLodFadeAlpha();
     void resetLodFlags();
-    void func_80465730();
-    void func_8046577C();
-    void func_804657E4();
+    void scaleLodFadeAlpha();
+    void setLodColorFactor();
+    void setLodDepthScale();
     void func_80465BC0();
 };
 }
@@ -56,7 +56,7 @@ void LOD::UnkClass_804645CC::updateLodState() {
     GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
 
-void func_80465314(s32 value) {
+void selectLodTexCoord(s32 value) {
     if (lbl_eu_806657D0 == value) {
         return;
     }
@@ -473,14 +473,14 @@ void LOD::UnkClass_804645CC::func_80465BC0() {}
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker
 // names explicit and model those values as ordinary C++ parameters.
-void func_80465704(s32 value) {
+void setLodFadeAlpha(s32 value) {
     lbl_eu_80665814 = value;
     lbl_eu_806657E8 |= 2;
 }
 
 // Scale the pending colour value: convert s32 to f32, scale, and round back to s32.
-// (retail free function func_80465730__Ff)
-void func_80465730(f32 scale) {
+// (retail free function scaleLodFadeAlpha__Ff)
+void scaleLodFadeAlpha(f32 scale) {
     s32 value = lbl_eu_80665814;
     f32 fv = (f32)value;
     lbl_eu_806657E8 |= 2;
@@ -488,8 +488,8 @@ void func_80465730(f32 scale) {
 }
 
 // 0xFF clears the colourfulness flag; otherwise record the colour and its alpha
-// divisor (6) into the shared state. (retail free function func_8046577C__Fl)
-void func_8046577C(s32 value) {
+// divisor (6) into the shared state. (retail free function setLodColorFactor__Fl)
+void setLodColorFactor(s32 value) {
     if (value == 0xFF) {
         lbl_eu_806657E8 &= 0xFFFFFFFB;
         lbl_eu_80665804 = 0;
@@ -501,7 +501,7 @@ void func_8046577C(s32 value) {
     lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
 }
 
-extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv(s16 value) {
+extern "C" void setLodDepthScale__Q23LOD17UnkClass_804645CCFv(s16 value) {
     s16 local = value;
     OSs16tof32(&local, &lbl_eu_806657E4);
 }

@@ -66,7 +66,7 @@ extern "C" void func_801FD304(CPartyState* self) {
         self->field_0x4C = 2;
     }
     func_801FD8F8((CPartyState*)self);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Selection page-up / right input: clamp the current member index against
@@ -92,7 +92,7 @@ extern "C" void func_801FD3D4(CPartyState* self) {
         self->field_0x4C = 1;
     }
     func_801FD8F8((CPartyState*)self);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Party-select cancel (page-back): reset the highlight slot, refresh, and cue
@@ -103,7 +103,7 @@ extern "C" void func_801FD48C(CPartyState* self) {
         self->field_0x4E = 1;
         self->field_0x4D = -1;
         func_801FD8F8(self);
-        func_80138078(3);
+        playUISound(3);
         return;
     }
     u8 cur = self->field_0x4C;
@@ -113,24 +113,24 @@ extern "C" void func_801FD48C(CPartyState* self) {
     if ((s8)cur == 0) {
         CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(highlight));
         if (data->field_0x176C == 1) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
     } else if ((s8)highlight == 0) {
         CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(cur));
         if (data->field_0x176C == 1) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
     }
     func_801FE0C8(self);
     func_801FD8F8(self);
-    func_80138078(0x11);
+    playUISound(0x11);
     return;
 same:
     self->field_0x4D = -1;
     func_801FD8F8(self);
-    func_80138078(6);
+    playUISound(6);
 }
 
 u32 CPartyState::func_801FD580() {
@@ -142,7 +142,7 @@ u32 CPartyState::func_801FD580() {
 extern "C" void func_801FD594(void* self) {
     *(s8*)((u8*)self + 0x4D) = -1;
     func_801FD8F8((CPartyState*)self);
-    func_80138078(6);
+    playUISound(6);
 }
 
 extern "C" int func_801FD5C4(void* self) {
@@ -164,7 +164,7 @@ extern "C" void func_801FD604(CPartyState* self) {
     if ((s8)highlight < 0) {
         self->field_0x4D = self->field_0x4C;
         func_801FD8F8(self);
-        func_80138078(2);
+        playUISound(2);
         return;
     }
     u8 cur = self->field_0x4C;
@@ -174,24 +174,24 @@ extern "C" void func_801FD604(CPartyState* self) {
     if ((s8)cur == 0) {
         CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(highlight));
         if (data->field_0x176C == 1) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
     } else if ((s8)highlight == 0) {
         CPartyCharData* data = (CPartyCharData*)func_8009EC9C(func_801392B4(cur));
         if (data->field_0x176C == 1) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
     }
     func_801FE0C8(self);
     func_801FD8F8(self);
-    func_80138078(0x11);
+    playUISound(0x11);
     return;
 same:
     self->field_0x4D = -1;
     func_801FD8F8(self);
-    func_80138078(6);
+    playUISound(6);
 }
 
 // Refresh the party-select cursor: format each slot's pane name, look up the
@@ -231,7 +231,7 @@ extern "C" __declspec(noinline) void func_801FD8F8(CPartyState* self) {
 // func_801FCFF4; -inline auto would otherwise inline them into the switch.
 extern "C" __declspec(noinline) void func_801FD6F0(CPartyState* self) {
     float target = lbl_eu_80668218;
-    if (func_80137444(self->mAnimTrans1, target) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans1, target) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTrans1, false);
         self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
         self->field_0x2C = 2;
@@ -264,7 +264,7 @@ CPartyState::~CPartyState() {
 // Intro-animation finish handler: when the +0x24 anim transform reaches the
 // target frame, move to state 3, show the cursor, and run the shared tail.
 extern "C" __declspec(noinline) void func_801FD76C(CPartyState* self) {
-    if (func_80137444(self->mAnimTrans0, lbl_eu_80668218) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans0, lbl_eu_80668218) != 0) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
         func_801D216C(&self->mCur22, 1);
@@ -290,7 +290,7 @@ extern "C" void func_801FD1BC(CPartyState* self) {
         self->field_0x31 = 0;
         func_801D2BFC(&self->mCur22, 0xff);
         if (self->field_0x4E == 0) {
-            func_80138078(6);
+            playUISound(6);
         }
     }
 }
@@ -310,7 +310,7 @@ extern "C" void func_801FD220(CPartyState* self) {
         self->field_0x4C = (u8)(cur - 1);
     }
     func_801FD8F8((CPartyState*)self);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Selection confirm: swap the party member at the highlight slot (0x4D) with
@@ -439,9 +439,9 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         sprintf(buf78, strs + 0x10, slotByte);
         func_80136A1C(self->mLayout, buf78, buf58, 0);
         sprintf(buf78, strs + 0x23, slotByte);
-        func_80136910(self->mLayout, buf78, v1);
+        setLayoutTextBoxNumber(self->mLayout, buf78, v1);
         sprintf(buf78, strs + 0x36, slotByte);
-        func_80136910(self->mLayout, buf78, v2);
+        setLayoutTextBoxNumber(self->mLayout, buf78, v2);
         sprintf(buf78, strs + 0x49, slotByte);
         func_80136B4C(self->mLayout, buf78, v5, 0);
         sprintf(buf78, strs + 0x5b, slotByte);
@@ -568,9 +568,9 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
         mArcResAcc = CLibLayout::createArcResourceAccessor();
         mArcResAcc->Attach(fileData, strs + 0x13c);
-        func_80136E84(&mLayout, mArcResAcc, strs + 0x140);
-        func_80136F08(mLayout, &mAnimTrans1, mArcResAcc, strs + 0x150);
-        func_80136F08(mLayout, &mAnimTrans0, mArcResAcc, strs + 0x163);
+        buildLayout(&mLayout, mArcResAcc, strs + 0x140);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans1, mArcResAcc, strs + 0x150);
+        bindLayoutAnimTransform(mLayout, &mAnimTrans0, mArcResAcc, strs + 0x163);
 
         // Bind the font: root pane + font object slot 7, push back onto root.
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -579,21 +579,21 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
 
         u32 textVal = (u32)func_801355BC();
         if (textVal != 0) {
-            func_801368C0(mLayout, strs + 0x100, textVal);
-            func_801368C0(mLayout, strs + 0x10d, textVal);
-            func_801368C0(mLayout, strs + 0x17b, textVal);
-            func_801368C0(mLayout, strs + 0x189, textVal);
+            setLayoutTextBoxFont(mLayout, strs + 0x100, textVal);
+            setLayoutTextBoxFont(mLayout, strs + 0x10d, textVal);
+            setLayoutTextBoxFont(mLayout, strs + 0x17b, textVal);
+            setLayoutTextBoxFont(mLayout, strs + 0x189, textVal);
             for (u8 i = 1; i <= 7; i++) {
                 sprintf(buf68, strs + 0x196, i);
-                func_801368C0(mLayout, buf68, textVal);
+                setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x10, i);
-                func_801368C0(mLayout, buf68, func_801355D8());
+                setLayoutTextBoxFont(mLayout, buf68, func_801355D8());
                 sprintf(buf68, strs + 0x1a8, i);
-                func_801368C0(mLayout, buf68, func_801355D8());
+                setLayoutTextBoxFont(mLayout, buf68, func_801355D8());
                 sprintf(buf68, strs + 0x23, i);
-                func_801368C0(mLayout, buf68, textVal);
+                setLayoutTextBoxFont(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x36, i);
-                func_801368C0(mLayout, buf68, textVal);
+                setLayoutTextBoxFont(mLayout, buf68, textVal);
             }
         }
         mLayout->SetAnimationEnable(mAnimTrans0, false);
@@ -683,7 +683,7 @@ extern "C" void func_801FCFF4(CPartyState* self) {
 
 // Layout render (retail mangled name; declared per code_80135FDC.hpp). The
 // cursor draw helper is declared in CEquipItemBox.hpp.
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Render the party list when the visible flag is set: draw the bound layout
 // with the given draw info (projection off, calc mtx on), then draw the
@@ -691,7 +691,7 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 #pragma optimize_for_size on
 extern "C" void func_801FD0A0(CPartyState* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
-        func_80137038(self->mLayout, drawInfo, 0, 1);
+        drawLayout(self->mLayout, drawInfo, 0, 1);
         func_801D20B0(&self->mCur22, drawInfo);
     }
 }
@@ -725,7 +725,7 @@ extern "C" void func_801FD290(CPartyState* self) {
         }
     }
     func_801FD8F8((CPartyState*)self);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Teardown: release the file handle, destroy the bound layout, release the
@@ -740,7 +740,7 @@ extern "C" void func_801FD0F4(CPartyState* self) {
         delete layout;
         self->mLayout = 0;
     }
-    func_80139124(self->mArcResAcc);
+    releaseArcResourceAccessor(self->mArcResAcc);
     reinterpret_cast<CPartyStateCur*>(&self->mCur22)->checkDeactivate();
     self->mMemRegion.func_8045F778();
 }

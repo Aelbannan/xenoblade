@@ -61,9 +61,9 @@ extern "C" {
     extern int tryUpdateJobPriority__11CDeviceFileFP11CFileHandlei(void*, int);
     extern int setHandleParam__11CDeviceFileFP11CFileHandleUl(void*, u32);
     extern int isStandbyReady__11CDeviceFileFv(void);
-    extern void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
-    extern void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-    extern void func_801390E0__FPP11CFileHandle(void**);
+    extern void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
+    extern void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+    extern void closeFileHandle__FPP11CFileHandle(void**);
     extern int labs(int);
 }
 

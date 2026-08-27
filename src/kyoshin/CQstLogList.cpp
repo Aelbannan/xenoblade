@@ -78,7 +78,7 @@ void func_80227EC8(CQstLogList* self) {
         func_80228B10(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Quest-log page up. With the sort menu open, page up through its options;
@@ -106,7 +106,7 @@ void func_80227FC0(CQstLogList* self) {
         func_80228B10(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Quest-log page down. With the sort menu open, page down through its
@@ -138,7 +138,7 @@ void func_8022807C(CQstLogList* self) {
         func_80228B10(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 extern "C" void func_80228C98(CQstLogList* self);
@@ -160,7 +160,7 @@ void func_80228164(CQstLogList* self) {
         self->mSortDescending = 0;
         func_80228C98(self);
         func_80228B10(self);
-        func_80138078(6);
+        playUISound(6);
     } else {
         // Four live values here (self/pool base/root/pane1) drive the
         // retail r28-r31 allocation.
@@ -178,7 +178,7 @@ void func_80228164(CQstLogList* self) {
         func_801D3330(&self->mSortMenuData);
         self->mSortDescending = 1;
         func_80228B10(self);
-        func_80138078(2);
+        playUISound(2);
     }
 }
 #pragma pop
@@ -197,7 +197,7 @@ __declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
         func_80228C98(self);
         func_80228B10(self);
         if (flag == 0) {
-            func_80138078(6);
+            playUISound(6);
         }
     }
 }
@@ -209,7 +209,7 @@ extern "C" u32 func_80228394() { extern u32 lbl_eu_80664730; return lbl_eu_80664
 extern "C" __declspec(noinline) void func_802283A0(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim0;
-    if (func_80137444(anim, frame) != 0) {
+    if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x174 = 2;
         func_80228544(self);
     }
@@ -218,7 +218,7 @@ extern "C" __declspec(noinline) void func_802283A0(CQstLogList* self) {
 extern "C" __declspec(noinline) void func_802283EC(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim1;
-    if (func_80137444(anim, frame) != 0) {
+    if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x174 = 3;
         func_801D216C(&self->mCur18[0], 1);
         func_80228B10(self);
@@ -520,9 +520,9 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
         (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
     mArcResAcc->Attach(mFileHandle->getData(), &s[0x11e]);
 
-    func_80136E84(&mpLayout, mArcResAcc, &s[0x122]);
-    func_80136F08(mpLayout, &mpAnim0, mArcResAcc, &s[0x135]);
-    func_80136F08(mpLayout, &mpAnim1, mArcResAcc, &s[0x14b]);
+    buildLayout(&mpLayout, mArcResAcc, &s[0x122]);
+    bindLayoutAnimTransform(mpLayout, &mpAnim0, mArcResAcc, &s[0x135]);
+    bindLayoutAnimTransform(mpLayout, &mpAnim1, mArcResAcc, &s[0x14b]);
 
     // Bind the font handle into the layout's root pane.
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
@@ -703,7 +703,7 @@ int CQstLogList::OnFileEvent(CEventFile* event) {
 #pragma optimize_for_size on
 void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x170 != 0) {
-        func_80137038(self->mpLayout, drawInfo, 0, 1);
+        drawLayout(self->mpLayout, drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);
         func_801D31F8(&self->mSortMenuData, drawInfo);
         func_801D20B0(&self->mCur18[0], drawInfo);
@@ -720,7 +720,7 @@ extern "C" void func_80227BD8(CQstLogList* self) {
         delete self->mpLayout;
         self->mpLayout = 0;
     }
-    func_80139124(self->mArcResAcc);
+    releaseArcResourceAccessor(self->mArcResAcc);
     reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf03();
     func_801F35DC(&self->mScrollBar);
     func_801D3258(&self->mSortMenuData);
@@ -764,7 +764,7 @@ extern "C" void func_802282F8(CQstLogList* self) {
             self->mSortEnabled = 0;
         }
     }
-    func_80138078(3);
+    playUISound(3);
 }
 
 // Per-frame update while the quest-log list is loaded: run the active open/
@@ -805,7 +805,7 @@ void func_80227D78(CQstLogList* self, int flag) {
         func_801D216C(&self->mCur18[0], 0);
         func_801F369C(&self->mScrollBar);
         if (flag != 0) {
-            func_80138078(6);
+            playUISound(6);
         }
     }
 }
@@ -842,7 +842,7 @@ void func_80227DE8(CQstLogList* self) {
         func_80228B10(self);
         func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 #pragma push

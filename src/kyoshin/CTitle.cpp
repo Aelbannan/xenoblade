@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/CTitle.hpp"
-#include "kyoshin/code_80135FDC.hpp" // func_80136E84 / func_80136F08 layout+anim builders
+#include "kyoshin/code_80135FDC.hpp" // buildLayout / bindLayoutAnimTransform layout+anim builders
 
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getPlayer
 #include "kyoshin/help/CHelp_Talk.hpp"  // func_80174C98
@@ -55,10 +55,10 @@ CTitleLogo::~CTitleLogo() {}
 // noinline: retail keeps bl from OnFileEvent, so the call must survive;
 extern "C" __declspec(noinline) void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     self->mAccessor = arcResAcc;
-    func_80136E84(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0]);
-    func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x13]);
-    func_80136F08(self->mLayout, &self->mAnimTrans1, self->mAccessor, &lbl_eu_80513628[0x29]);
-    func_80136F08(self->mLayout, &self->mAnimTrans2, self->mAccessor, &lbl_eu_80513628[0x41]);
+    buildLayout(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x13]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, &lbl_eu_80513628[0x29]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, &lbl_eu_80513628[0x41]);
     self->mLayout->UnbindAllAnimation();
 }
 #pragma optimize_for_size off
@@ -81,7 +81,7 @@ body:
     self->mLayout->Animate(0);
 }
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
+extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
 extern "C" void func_801D20B0(void*, void*);
 extern "C" __declspec(noinline) void func_802B64AC(void* self, void* drawInfo) {  // noinline: retail keeps bl from func_802B74A8
@@ -91,7 +91,7 @@ extern "C" __declspec(noinline) void func_802B64AC(void* self, void* drawInfo) {
     }
     return;
 call:
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
         logo->mLayout, drawInfo, 0, 1);
 }
 
@@ -141,9 +141,9 @@ void func_802B6660() {}
 
 // When the +0xC layout is visible, raise the +0x1A state to 2, run the
 // +0x6C hook, and set the +0x19 flag.
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" void func_802B6664(void* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
         *((u8*)self + 0x1A) = 2;
         func_802B67BC((CTitleLogo*)self);
         *((u8*)self + 0x19) = 1;
@@ -151,12 +151,12 @@ extern "C" void func_802B6664(void* self) {
 }
 
 
-extern "C" void func_802B66B8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void func_802B66B8(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 // Logo state step: when animation 2 finishes, reset the state machine,
 // rebind the intro animation, and clear/set the phase flags.
 extern "C" void func_802B66C4(CTitleLogo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
         self->field_0x1A = 0;
         func_802B6724(self);
         self->field_0x18 = 0;
@@ -225,13 +225,13 @@ extern "C" __declspec(noinline) void func_802B6970(CTitleMenu* self, nw4r::lyt::
     GXColorS10 colorA;
     char* strs = lbl_eu_80513628;
     self->mAccessor = arcResAcc;
-    func_80136E84(&self->mLayout, self->mAccessor, &strs[0x58]);
-    func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &strs[0x6b]);
-    func_80136F08(self->mLayout, &self->mAnimTrans1, self->mAccessor, &strs[0x88]);
-    func_80136F08(self->mLayout, &self->mAnimTrans2, self->mAccessor, &strs[0xa7]);
-    func_80136F08(self->mLayout, &self->mAnimTrans3, self->mAccessor, &strs[0xc4]);
-    func_80136F08(self->mLayout, &self->mAnimTrans4, self->mAccessor, &strs[0xda]);
-    func_80136F08(self->mLayout, &self->mAnimTrans5, self->mAccessor, &strs[0xf2]);
+    buildLayout(&self->mLayout, self->mAccessor, &strs[0x58]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans0, self->mAccessor, &strs[0x6b]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans1, self->mAccessor, &strs[0x88]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans2, self->mAccessor, &strs[0xa7]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans3, self->mAccessor, &strs[0xc4]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans4, self->mAccessor, &strs[0xda]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimTrans5, self->mAccessor, &strs[0xf2]);
     self->mLayout->UnbindAllAnimation();
     if ((lbl_eu_80663E28 & 0x40000000) != 0) {
         // MWCC evaluates args right-to-left: colorA is built first.
@@ -264,7 +264,7 @@ extern "C" __declspec(noinline) void func_802B6B08(void* self, void* drawInfo) {
     }
     return;
 call:
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
         menu->mLayout, drawInfo, 0, 1);
 }
 
@@ -362,18 +362,18 @@ void func_802B6DF4() {}
 // Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
 // second phase.
 extern "C" void func_802B6DF8(void* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
         *((u8*)self + 0x26) = 2;
         func_802B6FFC((CTitleLogo*)self);
         *((u8*)self + 0x25) = 1;
     }
 }
 
-extern "C" void func_802B6E4C(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
+extern "C" void func_802B6E4C(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 // When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
 extern "C" void func_802B6E58(CTitleMenu* self) {
-    if (func_80137444(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
         self->field_0x24 = 0;
         self->field_0x25 = 1;
     }
@@ -382,19 +382,19 @@ extern "C" void func_802B6E58(CTitleMenu* self) {
 // Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
 // layout and the shared anim-visibility test.
 extern "C" void func_802B6EA4(void* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
         *((u8*)self + 0x26) = 5;
         func_802B71C4((CTitleLogo*)self);
         *((u8*)self + 0x25) = 1;
     }
 }
 
-extern "C" void func_802B6EF8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
+extern "C" void func_802B6EF8(void* self) { advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
 
 // Menu state step: when animation 5 finishes, reset the state machine,
 // run the menu intro hook, and clear/set the phase flags.
 extern "C" void func_802B6F04(CTitleMenu* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
         self->field_0x26 = 0;
         func_802B712C(self);
         self->field_0x24 = 0;
@@ -542,7 +542,7 @@ extern "C" void func_802B74F4(CTitle* self) {
     func_802B64DC(&self->mLogo);
     func_802B6B38(&self->mMenu);
     reinterpret_cast<CCur18View*>(&self->mCur[0])->vf03();
-    func_80139124(self->mAccessor);
+    releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
     self->mMemRegion.deleteRegion();
     lbl_eu_80664C38 = 0;
@@ -603,7 +603,7 @@ void func_802B7650(CTitle* self) {
         nw4r::math::VEC3 pos;
         func_802B6CBC(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -618,7 +618,7 @@ void func_802B76D4(CTitle* self) {
         nw4r::math::VEC3 pos;
         func_802B6CBC(&pos, &self->mMenu, self->field_0x25);
         reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(&pos);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -635,9 +635,9 @@ int func_802B775C(CTitle* self) {
         result = 1;
     }
     if (result != 0) {
-        func_80138078(5);
+        playUISound(5);
     } else {
-        func_80138078(4);
+        playUISound(4);
     }
     return self->field_0x25 == 0;
 }
@@ -740,7 +740,7 @@ bool CTitle::OnFileEvent(CEventFile* pEventFile) {
 // re-query both buttons (A = 0x7, Z = 0x800), store the results, return 0.
 int cf::CHelp_ToAttack::updateState() {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    cf::CHelpBattleObj* battleObj = func_800BFC68(player);
+    cf::CHelpBattleObj* battleObj = getCfObjectPc(player);
     u32 valA;
     u32 valB;
     u32 valC;

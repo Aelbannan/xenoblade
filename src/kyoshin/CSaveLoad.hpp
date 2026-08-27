@@ -41,7 +41,7 @@ public:
     // +0x00: vtable (implicit)
     char _pad_04[0x14 - 0x04];                         // 0x04-0x13
     CFileHandle* mFileHandle;                            // 0x14 - file handle from readFile
-    nw4r::lyt::ArcResourceAccessor* mArcAccessor;       // 0x18 - arc resource accessor (passed to func_80139124)
+    nw4r::lyt::ArcResourceAccessor* mArcAccessor;       // 0x18 - arc resource accessor (passed to releaseArcResourceAccessor)
     nw4r::lyt::Layout* mLayout;                         // 0x1C - layout for animation control
     nw4r::lyt::AnimTransform* mAnimTransA;              // 0x20 - animation transform A
     nw4r::lyt::AnimTransform* mAnimTransB;              // 0x24 - animation transform B

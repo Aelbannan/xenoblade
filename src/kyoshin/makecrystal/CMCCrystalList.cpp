@@ -18,18 +18,18 @@
 // calls the 2-argument form of func_8013639C, which that header declares with
 // three parameters. Linkage/signatures mirror the retail symbols exactly.
 extern u32 lbl_eu_806640D8;
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 extern "C" void func_801390E0(CFileHandle**);
-extern "C" void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+extern "C" void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbols for these layout builders are unmangled - C linkage keeps
 // the call relocs bound to the retail names.
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Retail symbol for this helper is the unmangled name - keep C linkage.
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" {
@@ -155,8 +155,8 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
         delete self->mLayout;
         self->mLayout = nullptr;
     }
-    func_80139124(self->mArcResAccessor);
-    func_80139124(self->mArcResAccessor2);
+    releaseArcResourceAccessor(self->mArcResAccessor);
+    releaseArcResourceAccessor(self->mArcResAccessor2);
     self->mArcResAccessor = nullptr;
     self->mArcResAccessor2 = nullptr;
     self->mMemRegion1.func_8045F778();
@@ -166,7 +166,7 @@ extern "C" void __dt__80222984(CMCCrystalList* self) {
 void CMCCrystalList::func_80222964(nw4r::lyt::DrawInfo* drawInfo)
 {
     if (mState != 0) {
-        func_80137038(*reinterpret_cast<nw4r::lyt::Layout**>(reinterpret_cast<unsigned char*>(this) + 0x34), drawInfo, 0, 1);
+        drawLayout(*reinterpret_cast<nw4r::lyt::Layout**>(reinterpret_cast<unsigned char*>(this) + 0x34), drawInfo, 0, 1);
     }
 }
 
@@ -241,7 +241,7 @@ void func_80222B14(CMCCrystalList* self, u32 idx, u32 id, u8 countArg) {
     sprintf(buf, &lbl_eu_805092C0[0x3b], slot);
     func_80136B4C(self->mLayout, buf, name, 0);
     sprintf(buf, &lbl_eu_805092C0[0x4c], slot);
-    func_80136910(self->mLayout, buf, countArg);
+    setLayoutTextBoxNumber(self->mLayout, buf, countArg);
     sprintf(buf, &lbl_eu_805092C0[0x5e], slot);
     char* desc = func_80136190(&lbl_eu_805092C0[0x6f], &lbl_eu_805092C0[0x36], 0x21);
     func_80136B4C(self->mLayout, buf, desc, 0);
@@ -454,11 +454,11 @@ void func_80223334(CMCCrystalList* self)
     self->mLayout->Animate(0);
 }
 
-// Retail 0x802233AC: wait for anim trans 1 (via func_80137444) to finish,
+// Retail 0x802233AC: wait for anim trans 1 (via advanceAnimTransform) to finish,
 // then enter state 2 and run func_80223754.
 extern "C" void __declspec(noinline) func_802233AC(CMCCrystalList* self)
 {
-    if (func_80137444(self->mAnimTrans1, lbl_eu_80668544)) {
+    if (advanceAnimTransform(self->mAnimTrans1, lbl_eu_80668544)) {
         self->mStateIdx = 2;
         func_80223754(self);
     }
@@ -467,7 +467,7 @@ extern "C" void __declspec(noinline) func_802233AC(CMCCrystalList* self)
 // Retail 0x802233F8: wait for anim trans 2 to finish, then activate state 3.
 extern "C" void __declspec(noinline) func_802233F8(CMCCrystalList* self)
 {
-    if (func_80137444(self->mAnimTrans2, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans2, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -527,7 +527,7 @@ extern "C" void __declspec(noinline) func_802234E4(CMCCrystalList* self)
 // Retail 0x80223530: wait for anim trans 3 to finish, then activate state 3.
 extern "C" void __declspec(noinline) func_80223530(CMCCrystalList* self)
 {
-    if (func_80137444(self->mAnimTrans3, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans3, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -543,11 +543,11 @@ extern "C" void __declspec(noinline) func_8022357C(CMCCrystalList* self)
     }
 }
 
-// Retail 0x802235C8: wait for anim trans 4 (via func_80137444) to finish,
+// Retail 0x802235C8: wait for anim trans 4 (via advanceAnimTransform) to finish,
 // then activate state 3.
 extern "C" void __declspec(noinline) func_802235C8(CMCCrystalList* self)
 {
-    if (func_80137444(self->mAnimTrans4, lbl_eu_80668544) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans4, lbl_eu_80668544) != 0) {
         self->mStateIdx = 3;
         self->mIsActive = 1;
     }
@@ -632,16 +632,16 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         mArcResAccessor = CLibLayout::createArcResourceAccessor();
         mArcResAccessor->Attach(fileData, &lbl_eu_805092C0[0x19e]);
 
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &mLayout, mArcResAccessor, &lbl_eu_805092C0[0x1a2]);
 
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTrans1, mArcResAccessor, &lbl_eu_805092C0[0x1b9]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTrans2, mArcResAccessor, &lbl_eu_805092C0[0x1d3]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTrans3, mArcResAccessor, &lbl_eu_805092C0[0x1f2]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTrans4, mArcResAccessor, &lbl_eu_805092C0[0x20f]);
         func_80136FA0(mLayout, &mAnimRes5, mArcResAccessor, &lbl_eu_805092C0[0x22b]);
 
@@ -659,9 +659,9 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {
                 sprintf(buf, &lbl_eu_805092C0[0x4c], i);
-                func_801368C0(mLayout, buf, sh);
+                setLayoutTextBoxFont(mLayout, buf, sh);
                 sprintf(buf, &lbl_eu_805092C0[0x5e], i);
-                func_801368C0(mLayout, buf, sh);
+                setLayoutTextBoxFont(mLayout, buf, sh);
             }
         }
 

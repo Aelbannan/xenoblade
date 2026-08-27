@@ -159,25 +159,25 @@ void CMenuBattleDamage::Init() {
         nw4r::lyt::ArcResourceAccessor* acc;
 
         acc = func_801355F4();
-        func_80136E84(&e.mLayout0, acc, lbl_eu_804FD524 + 0x12);
+        buildLayout(&e.mLayout0, acc, lbl_eu_804FD524 + 0x12);
         acc = func_801355F4();
-        func_80136F08(e.mLayout0, &e.mAnim0, acc, lbl_eu_804FD524 + 0x2d);
+        bindLayoutAnimTransform(e.mLayout0, &e.mAnim0, acc, lbl_eu_804FD524 + 0x2d);
         acc = func_801355F4();
-        func_80136F08(e.mLayout0, &e.mAnim1, acc, lbl_eu_804FD524 + 0x4c);
+        bindLayoutAnimTransform(e.mLayout0, &e.mAnim1, acc, lbl_eu_804FD524 + 0x4c);
         acc = func_801355F4();
-        func_80136F08(e.mLayout0, &e.mAnim2, acc, lbl_eu_804FD524 + 0x6b);
+        bindLayoutAnimTransform(e.mLayout0, &e.mAnim2, acc, lbl_eu_804FD524 + 0x6b);
 
         {
             nw4r::lyt::Pane* root = e.mLayout0->GetRootPane();
-            u32 font = func_801355A0();
+            u32 font = getPackedFont();
             func_8013676C(root, font);
         }
         e.mLayout0->UnbindAllAnimation();
 
         acc = func_801355F4();
-        func_80136E84(&e.mLayout1, acc, lbl_eu_804FD524 + 0x8a);
+        buildLayout(&e.mLayout1, acc, lbl_eu_804FD524 + 0x8a);
         acc = func_801355F4();
-        func_80136F08(e.mLayout1, &e.mAnim3, acc, lbl_eu_804FD524 + 0xa2);
+        bindLayoutAnimTransform(e.mLayout1, &e.mAnim3, acc, lbl_eu_804FD524 + 0xa2);
 
         {
             nw4r::lyt::Pane* root = e.mLayout1->GetRootPane();
@@ -318,7 +318,7 @@ void CMenuBattleDamage::Move() {
             // Lifetime expired: show the pane, and free the slot once the
             // anim finishes. Retail re-derives the root pane here.
             layout->GetRootPane()->SetVisible(true);
-            if (func_80137444(anim, lbl_eu_80666F6C) != 0) {
+            if (advanceAnimTransform(anim, lbl_eu_80666F6C) != 0) {
                 e.mActive = 0;
                 _pad776[0] -= 1;
             }
@@ -397,7 +397,7 @@ body:
         }
         nw4r::lyt::Layout* layout =
             (e.field_32 != 0) ? e.mLayout0 : e.mLayout1;
-        func_80137038(layout, &drawInfo, 0, 1);
+        drawLayout(layout, &drawInfo, 0, 1);
     }
 }
 
@@ -612,19 +612,19 @@ extern "C" void func_8010ACC4(CMenuBattleDamageQueue* self) {
             continue;
         }
         self->mFlag = 1;
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
                                                 lbl_eu_804FD720 + 0xe1,
                                                 s.mVal0);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
                                                 lbl_eu_804FD720 + 0xe9,
                                                 s.mVal1);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout,
                                                 lbl_eu_804FD720 + 0xf0,
                                                 s.mVal2);
         s.mVal0 = 0;
         s.mVal1 = 0;
         s.mVal2 = 0;
-        func_80138078(0xad);
+        playUISound(0xad);
         return;
     }
     self->mFlag = 0;

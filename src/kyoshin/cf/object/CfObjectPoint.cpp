@@ -241,12 +241,16 @@ done:
     return;
 }
 
-void CfObjectPoint::notifyChildUpdate() {
-    if (mSubObj38 == nullptr) return;
-    ((CfObject*)mSubObj38)->CfObject_UnkVirtualFunc22();
-}
-
 } // namespace cf
+
+// Retail Fv: callers leave r4 = vec for UVF22 on mSubObj38 (bctr thunk).
+extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
+    cf::CfObjectPoint* self, const ml::CVec3* vec) {
+    if (self->mSubObj38 == nullptr)
+        return;
+    reinterpret_cast<cf::CfObject*>(self->mSubObj38)
+        ->CfObject_UnkVirtualFunc22(vec);
+}
 
 // Forced-name form: the retail symbols setChildPoint/16F4/171C end in a
 // decompiler-guessed "Fv" (the bodies consume r4/f1/f2 arguments), and the

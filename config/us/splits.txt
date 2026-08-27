@@ -3295,10 +3295,6 @@ RVL_SDK/src/revolution/wud/WUDHidHost.c:
 	.text       start:0x8037ED60 end:0x8037F350 align:16
 	.data	start:0x8055fd90 end:0x80560027
 
-criware_data.s:
-	.rodata     start:0x80515788 end:0x8051D4A0
-	.data	start:0x80560028 end:0x80568f34
-	.bss        start:0x805DFDA8 end:0x8061A4D8
 
 nw4r_data.s:
 	.rodata     start:0x8051D4A0 end:0x80522410
@@ -3315,45 +3311,63 @@ RVL_SDK/src/revolution/wud/debug_msg.c:
 CriWare/src/adx/adxf/adx_fini.c:
 	.text       start:0x8037F3A0 end:0x8037F4F8
 
+	.bss        start:0x805dfda8 end:0x805dfdb0
+	.rodata        start:0x80515788 end:0x805157e0
 CriWare/src/adx/adxf/adx_fs.c:
 	.text       start:0x8037F4F8 end:0x803822E8
 
+	.bss        start:0x805dfdb0 end:0x805e26b0
+	.rodata        start:0x805157e0 end:0x80515fb8
 CriWare/src/adx/adxf/adx_fcch.c:
 	.text       start:0x803822E8 end:0x803822EC
 
 CriWare/src/adx/adxt/adx_fsvr.c:
 	.text       start:0x803822EC end:0x803823E4
 
+	.bss        start:0x805e26b0 end:0x805e26c8
 CriWare/src/adx/adxt/adx_inis.c:
 	.text       start:0x803823E4 end:0x80382690
 
+	.bss        start:0x805e26c8 end:0x805e26d4
+	.rodata        start:0x80515fb8 end:0x805160b8
 CriWare/src/adx/adxt/adx_lsc.c:
 	.text       start:0x80382690 end:0x803826F8
 
 CriWare/src/adx/adxt/adx_mng.c:
 	.text       start:0x803826F8 end:0x80382798
 
+	.data        start:0x80560028 end:0x80560030
 CriWare/src/adx/adxt/adx_sfa.c:
 	.text       start:0x80382798 end:0x803827C0
 
 CriWare/src/adx/adxt/adx_sjd.c:
 	.text       start:0x803827C0 end:0x80383CC8
 
+	.rodata        start:0x805160b8 end:0x80516148
 CriWare/src/adx/adxt/adx_stmc.c:
 	.text       start:0x80383CC8 end:0x80385390
 
+	.data        start:0x80560030 end:0x80560040
+	.rodata        start:0x80516148 end:0x805161a0
 CriWare/src/adx/adxt/adx_tlk2.c:
 	.text       start:0x80385390 end:0x803855A0
 
+	.rodata        start:0x805161a0 end:0x805162d0
 CriWare/src/adx/adxt/adx_tlk.c:
 	.text       start:0x803855A0 end:0x803878BC
 
+	.bss        start:0x805e26d4 end:0x805e4f70
+	.data        start:0x80560040 end:0x80560048
+	.rodata        start:0x805162d0 end:0x80516a88
 CriWare/src/adx/adxt/adx_tsvr.c:
 	.text       start:0x803878BC end:0x803888A8
 
+	.bss        start:0x805e4f70 end:0x805e4f80
+	.rodata        start:0x80516a88 end:0x80516b20
 CriWare/src/adx/adxt/adx_xpnd.c:
 	.text       start:0x803888A8 end:0x80388C90
 
+	.bss        start:0x805e4f80 end:0x805e5348
 CriWare/src/adx/adxt/adx_amp.c:
 	.text       start:0x80388C90 end:0x80388EA8
 
@@ -3363,15 +3377,20 @@ CriWare/src/adx/adxt/adx_bahx.c:
 CriWare/src/adx/adxt/adx_baif.c:
 	.text       start:0x80388F78 end:0x80389B08
 
+	.rodata        start:0x80516b20 end:0x80516b30
 CriWare/src/adx/adxt/adx_bsc.c:
 	.text       start:0x80389B08 end:0x8038B640
 
+	.bss        start:0x805e5348 end:0x805e6378
+	.data        start:0x80560048 end:0x80560050
 CriWare/src/adx/adxt/adx_bwav.c:
 	.text       start:0x8038B640 end:0x8038C628
 
+	.data        start:0x80560050 end:0x805620d8
 CriWare/src/adx/adxt/adx_crs.c:
 	.text       start:0x8038C628 end:0x8038C690
 
+	.bss        start:0x805e6378 end:0x805e6380
 CriWare/src/adx/adxt/adx_dcd5.c:
 	.text       start:0x8038C690 end:0x8038CD48
 
@@ -3381,9 +3400,11 @@ CriWare/src/adx/adxt/adx_dcd.c:
 CriWare/src/adx/adxt/adx_errs.c:
 	.text       start:0x8038D40C end:0x8038D8EC
 
+	.bss        start:0x805e6380 end:0x805e64a8
 CriWare/src/adx/ahx/ahx_ftbl.c:
 	.text       start:0x8038D8EC end:0x8038D918
 
+	.data        start:0x805620d8 end:0x805620e0
 CriWare/src/adx/ahx/ahx_link.c:
 	.text       start:0x8038D918 end:0x8038DC50
 
@@ -3396,117 +3417,171 @@ CriWare/src/adx/ahx/ahx_mwin2_c.c:
 CriWare/src/adx/ahx/ahx_sbf2.c:
 	.text       start:0x8038F608 end:0x8038F6CC
 
+	.data        start:0x805620e0 end:0x805629a0
 CriWare/src/adx/ahx/ahx_sbf.c:
 	.text       start:0x8038F6CC end:0x8038FA00
 
+	.bss        start:0x805e64a8 end:0x805e64c0
 CriWare/src/adx/ahx/ahx_sjd.c:
 	.text       start:0x8038FA00 end:0x803901C4
 
+	.bss        start:0x805e64c0 end:0x805e64c8
 CriWare/src/adx/ahx/ahx_wtbl.c:
 	.text       start:0x803901C4 end:0x803901F0
 
+	.data        start:0x805629a0 end:0x80565aa8
 CriWare/src/adx/ahx/adx_hdr.c:
 	.text       start:0x803901F0 end:0x80390548
 
 CriWare/src/adx/ahx/ahx_atbl.c:
 	.text       start:0x80390548 end:0x803905A0
 
+	.data        start:0x80565aa8 end:0x80565ab8
 CriWare/src/adx/ahx/ahx_bsr.c:
 	.text       start:0x803905A0 end:0x80390C64
 
 CriWare/src/adx/ahx/ahx_cmn.c:
 	.text       start:0x80390C64 end:0x80390C84
 
+	.bss        start:0x805e64c8 end:0x805e64d0
 CriWare/src/adx/ahx/ahx_dcd.c:
 	.text       start:0x80390C84 end:0x80392748
 
+	.bss        start:0x805e64d0 end:0x805e66e0
+	.data        start:0x80565ab8 end:0x80565b30
+	.rodata        start:0x80516b30 end:0x80517640
 CriWare/src/adx/cricfg/cfg_lib.c:
 	.text       start:0x80392748 end:0x803927FC
 
+	.bss        start:0x805e66e0 end:0x805e66e8
 CriWare/src/adx/cvfs/cri_cvfs.c:
 	.text       start:0x803927FC end:0x80393B8C
 
+	.bss        start:0x805e66e8 end:0x805e6b70
+	.rodata        start:0x80517640 end:0x805181f0
 CriWare/src/adx/gcci/gcci.c:
 	.text       start:0x80393B8C end:0x803949AC
 
+	.bss        start:0x805e6b70 end:0x805e7c30
+	.data        start:0x80565b30 end:0x80565b98
+	.rodata        start:0x805181f0 end:0x80518418
 CriWare/src/adx/gcci/gcci_sub.c:
 	.text       start:0x803949AC end:0x803949B8
 
 CriWare/src/adx/lsc/lsc_err.c:
 	.text       start:0x803949B8 end:0x80394AB0
 
+	.bss        start:0x805e7c30 end:0x805e7d38
 CriWare/src/adx/lsc/lsc_ini.c:
 	.text       start:0x80394AB0 end:0x80394BC4
 
+	.bss        start:0x805e7d38 end:0x805ec440
+	.rodata        start:0x80518418 end:0x80518420
 CriWare/src/adx/lsc/lsc_svr.c:
 	.text       start:0x80394BC4 end:0x80394F58
 
+	.rodata        start:0x80518420 end:0x80518478
 CriWare/src/adx/lsc/lsc.c:
 	.text       start:0x80394F58 end:0x80395A0C
 
+	.bss        start:0x805ec440 end:0x805ec450
+	.rodata        start:0x80518478 end:0x80518840
 CriWare/src/adx/lsc/lsc_crs.c:
 	.text       start:0x80395A0C end:0x80395A1C
 
 CriWare/src/adx/mfci/mfci.c:
 	.text       start:0x80395A1C end:0x8039669C
 
+	.bss        start:0x805ec450 end:0x805ece48
+	.data        start:0x80565b98 end:0x80565c00
+	.rodata        start:0x80518840 end:0x80518a58
 CriWare/src/adx/sj/sj_mem.c:
 	.text       start:0x8039669C end:0x803974BC
 
+	.bss        start:0x805ece48 end:0x805ed2d0
+	.data        start:0x80565c00 end:0x80565c30
+	.rodata        start:0x80518a58 end:0x80518bb8
 CriWare/src/adx/sj/sj_rbf.c:
 	.text       start:0x803974BC end:0x80398810
 
+	.bss        start:0x805ed2d0 end:0x805f1ad8
+	.data        start:0x80565c30 end:0x80565c60
+	.rodata        start:0x80518bb8 end:0x80518df0
 CriWare/src/adx/sj/sj_uni.c:
 	.text       start:0x80398810 end:0x803997D4
 
+	.bss        start:0x805f1ad8 end:0x805f26e0
+	.data        start:0x80565c60 end:0x80565c90
+	.rodata        start:0x80518df0 end:0x80518f50
 CriWare/src/adx/sj/sj_utl.c:
 	.text       start:0x803997D4 end:0x80399A3C
 
+	.data        start:0x80565c90 end:0x80565e50
 CriWare/src/adx/sj/sj_crs.c:
 	.text       start:0x80399A3C end:0x80399B08
 
+	.bss        start:0x805f26e0 end:0x805f26f0
 CriWare/src/adx/sj/sj_err.c:
 	.text       start:0x80399B08 end:0x80399B0C
 
 CriWare/src/adx/svm/svm.c:
 	.text       start:0x80399B0C end:0x8039AD88
 
+	.bss        start:0x805f26f0 end:0x805f2af8
+	.rodata        start:0x80518f50 end:0x80519108
 CriWare/src/adx/adxt/adx_bsps.c:
 	.text       start:0x8039AD88 end:0x8039B2E8
 
+	.rodata        start:0x80519108 end:0x80519110
 CriWare/src/adx/adxt/adx_bau.c:
 	.text       start:0x8039B2E8 end:0x8039C310
 
+	.data        start:0x80565e50 end:0x80566050
+	.rodata        start:0x80519110 end:0x8051914c
 CriWare/src/adx/wiirna/rna_crs.c:
 	.text       start:0x8039C310 end:0x8039C318
 
 CriWare/src/adx/wiirna/rna_err.c:
 	.text       start:0x8039C318 end:0x8039C384
 
+	.bss        start:0x805f2af8 end:0x805f2c00
 CriWare/src/adx/wiirna/ax_rna.c:
 	.text       start:0x8039C384 end:0x8039DD7C
 
+	.bss        start:0x805f2c00 end:0x805f3a50
+	.data        start:0x80566050 end:0x805660d0
+	.rodata        start:0x8051914c end:0x805196d0
 CriWare/src/adx/adxt/srcwii/adx_mwii.c:
 	.text       start:0x8039DD7C end:0x8039E5F4
 
+	.bss        start:0x805f3a50 end:0x805fdda0
+	.rodata        start:0x805196d0 end:0x80519744
 CriWare/src/adx/adxt/srcwii/adx_suwii.c:
 	.text       start:0x8039E5F4 end:0x8039E6C4
 
+	.rodata        start:0x80519744 end:0x80519750
 CriWare/src/adx/adxt/srcwii/adx_rnawii.c:
 	.text       start:0x8039E6C4 end:0x8039E76C
 
 CriWare/src/adx/std/cri_crw_std.c:
 	.text       start:0x8039E76C end:0x8039EB5C
 
+	.bss        start:0x805fdda0 end:0x805fddc0
+	.rodata        start:0x80519750 end:0x805197b0
 CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c:
 	.text       start:0x8039EB5C end:0x8039EF4C
 
+	.bss        start:0x805fddc0 end:0x805ff1c8
+	.rodata        start:0x805197b0 end:0x80519818
 CriWare/src/sofdec/cft/cft_common.c:
 	.text       start:0x8039EF4C end:0x8039EF60
 
+	.bss        start:0x805ff1c8 end:0x805ff1d0
+	.rodata        start:0x80519818 end:0x80519870
 CriWare/src/sofdec/mwply/mwsfdfrm.c:
 	.text       start:0x8039EF60 end:0x803A02BC
 
+	.rodata        start:0x80519870 end:0x80519b90
 CriWare/src/sofdec/mwply/mwsfdrna.c:
 	.text       start:0x803A02BC end:0x803A02CC
 
@@ -3516,9 +3591,12 @@ CriWare/src/sofdec/mwply/mwsfdrsc.c:
 CriWare/src/sofdec/mwply/mwsfdsl.c:
 	.text       start:0x803A02D4 end:0x803A0F7C
 
+	.data        start:0x805660d0 end:0x80567298
+	.rodata        start:0x80519b90 end:0x80519ec8
 CriWare/src/sofdec/mwply/mwsfdsvm.c:
 	.text       start:0x803A0F7C end:0x803A122C
 
+	.bss        start:0x805ff1d0 end:0x805ff2e0
 CriWare/src/sofdec/mwply/mwstm.c:
 	.text       start:0x803A122C end:0x803A1328
 
@@ -3528,48 +3606,62 @@ CriWare/src/sofdec/mwply/mwsfdsee.c:
 CriWare/src/sofdec/mwply/mwsfdsfx.c:
 	.text       start:0x803A1330 end:0x803A20C0
 
+	.rodata        start:0x80519ec8 end:0x8051a3c0
 CriWare/src/sofdec/mwply/mwsfdcre.c:
 	.text       start:0x803A20C0 end:0x803A41C0
 
+	.rodata        start:0x8051a3c0 end:0x8051aaa8
 CriWare/src/sofdec/mwply/mwsfdlib.c:
 	.text       start:0x803A41C0 end:0x803A48DC
 
+	.bss        start:0x805ff2e0 end:0x80602a00
+	.rodata        start:0x8051aaa8 end:0x8051b190
 CriWare/src/sofdec/mwply/mwsfdply.c:
 	.text       start:0x803A48DC end:0x803A54AC
 
+	.rodata        start:0x8051b190 end:0x8051b7b0
 CriWare/src/sofdec/mwply/mwsfdset.c:
 	.text       start:0x803A54AC end:0x803A5A18
 
+	.rodata        start:0x8051b7b0 end:0x8051be68
 CriWare/src/sofdec/mwply/mwsfdsvr.c:
 	.text       start:0x803A5A18 end:0x803A693C
 
+	.rodata        start:0x8051be68 end:0x8051bf28
 CriWare/src/sofdec/mwply/mwsfdsst.c:
 	.text       start:0x803A693C end:0x803A7128
 
+	.bss        start:0x80602a00 end:0x80602a10
 CriWare/src/sofdec/mwply/mwsfx_Y84C44.c:
 	.text       start:0x803A7128 end:0x803A71C4
 
 CriWare/src/sofdec/mwply/code_803A3AE4.c:
 	.text       start:0x803A71C4 end:0x803A7330
 
+	.rodata        start:0x8051bf28 end:0x8051bfc0
 CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:
 	.text       start:0x803A7330 end:0x803A7710
 
+	.rodata        start:0x8051bfc0 end:0x8051c080
 CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c:
 	.text       start:0x803A7710 end:0x803A7DA8
 
+	.rodata        start:0x8051c080 end:0x8051c088
 CriWare/src/sofdec/sfdcore/mpv/mpv_cmc.c:
 	.text       start:0x803A7DA8 end:0x803A7EA0
 
 CriWare/src/sofdec/sfdcore/mpv/mpv_dec.c:
 	.text       start:0x803A7EA0 end:0x803A90A4
 
+	.rodata        start:0x8051c088 end:0x8051c090
 CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c:
 	.text       start:0x803A90A4 end:0x803A9288
 
+	.rodata        start:0x8051c090 end:0x8051c190
 CriWare/src/sofdec/sfdcore/mpv/mpv_emp.c:
 	.text       start:0x803A9288 end:0x803A98E0
 
+	.rodata        start:0x8051c190 end:0x8051c1d8
 CriWare/src/sofdec/sfdcore/mpv/mpv_err.c:
 	.text       start:0x803A98E0 end:0x803A9A30
 
@@ -3582,39 +3674,55 @@ CriWare/src/sofdec/sfdcore/mpv/mpv_get.c:
 CriWare/src/sofdec/sfdcore/mpv/mpv_hdec.c:
 	.text       start:0x803A9E88 end:0x803AB68C
 
+	.rodata        start:0x8051c1d8 end:0x8051c200
 CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:
 	.text       start:0x803AB68C end:0x803AC184
 
+	.rodata        start:0x8051c200 end:0x8051c2a8
 CriWare/src/sofdec/sfdcore/mpv/mpv_mc.c:
 	.text       start:0x803AC184 end:0x803ACE78
 
+	.data        start:0x80567298 end:0x805672b8
+	.rodata        start:0x8051c2a8 end:0x8051c2b8
 CriWare/src/sofdec/sfdcore/mpv/mpv_vlc.c:
 	.text       start:0x803ACE78 end:0x803AFBC8
 
+	.bss        start:0x80602a10 end:0x806046b8
+	.rodata        start:0x8051c2b8 end:0x8051c368
 CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c:
 	.text       start:0x803AFBC8 end:0x803B15B0
 
 CriWare/src/sofdec/sfdcore/mpv/mpv_mcy.c:
 	.text       start:0x803B15B0 end:0x803B273C
 
+	.data        start:0x805672b8 end:0x805672d8
+	.rodata        start:0x8051c368 end:0x8051c378
 CriWare/src/sofdec/sfdcore/mpv/mpv_m2v.c:
 	.text       start:0x803B273C end:0x803B276C
 
 CriWare/src/sofdec/sfdcore/mpv/mpvabdec.c:
 	.text       start:0x803B276C end:0x803BCE64
 
+	.data        start:0x805672d8 end:0x80567ed8
+	.rodata        start:0x8051c378 end:0x8051c388
 CriWare/src/sofdec/sfdcore/mpv/mpv_slice.c:
 	.text       start:0x803BCE64 end:0x803BD250
 
 CriWare/src/sofdec/sfdcore/dct/dct_ac.c:
 	.text       start:0x803BD250 end:0x803BD574
 
+	.bss        start:0x806046b8 end:0x80604ac0
+	.rodata        start:0x8051c388 end:0x8051c3b0
 CriWare/src/sofdec/sfdcore/dct/dct_isr.c:
 	.text       start:0x803BD574 end:0x803BDF28
 
+	.bss        start:0x80604ac0 end:0x80606dc8
+	.rodata        start:0x8051c3b0 end:0x8051c430
 CriWare/src/sofdec/sfdcore/dct/dct_ver.c:
 	.text       start:0x803BDF28 end:0x803BDF50
 
+	.bss        start:0x80606dc8 end:0x80606dd8
+	.rodata        start:0x8051c430 end:0x8051c488
 CriWare/src/sofdec/sfdcore/memcpy/mcp_not.c:
 	.text       start:0x803BDF50 end:0x803BDF54
 
@@ -3630,18 +3738,25 @@ CriWare/src/sofdec/sfdcore/mps/mps_get.c:
 CriWare/src/sofdec/sfdcore/mps/mps_lib.c:
 	.text       start:0x803BF4E0 end:0x803BFAB0
 
+	.bss        start:0x80606dd8 end:0x80606de8
+	.rodata        start:0x8051c488 end:0x8051c4e0
 CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c:
 	.text       start:0x803BFAB0 end:0x803C10C8
 
+	.bss        start:0x80606de8 end:0x80606e10
+	.rodata        start:0x8051c4e0 end:0x8051c550
 CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c:
 	.text       start:0x803C10C8 end:0x803C1500
 
+	.rodata        start:0x8051c550 end:0x8051c590
 CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c:
 	.text       start:0x803C1500 end:0x803C25C0
 
+	.bss        start:0x80606e10 end:0x80606e18
 CriWare/src/sofdec/sfdcore/sfd/code_803BFD20.c:
 	.text       start:0x803C25C0 end:0x803C25D8
 
+	.bss        start:0x80606e18 end:0x80606e20
 CriWare/src/sofdec/sfdcore/sfd/sfd_con.c:
 	.text       start:0x803C25D8 end:0x803C28FC
 
@@ -3651,6 +3766,7 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c:
 CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c:
 	.text       start:0x803C3310 end:0x803C36E8
 
+	.rodata        start:0x8051c590 end:0x8051cc20
 CriWare/src/sofdec/sfdcore/sfd/sfd_mem.c:
 	.text       start:0x803C36E8 end:0x803C3798
 
@@ -3660,6 +3776,7 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c:
 CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c:
 	.text       start:0x803C570C end:0x803CA4A0
 
+	.bss        start:0x80606e20 end:0x80619bb0
 CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf.c:
 	.text       start:0x803CA4A0 end:0x803CB49C
 
@@ -3669,6 +3786,7 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_pl2.c:
 CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c:
 	.text       start:0x803CB938 end:0x803CE16C
 
+	.data        start:0x80567ed8 end:0x80568ea0
 CriWare/src/sofdec/sfdcore/sfd/sfd_pts.c:
 	.text       start:0x803CE16C end:0x803CE5A0
 
@@ -3681,36 +3799,49 @@ CriWare/src/sofdec/sfdcore/sfd/sfd_set.c:
 CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c:
 	.text       start:0x803CF034 end:0x803D0D9C
 
+	.bss        start:0x80619bb0 end:0x80619bc8
+	.data        start:0x80568ea0 end:0x80568f10
+	.rodata        start:0x8051cc20 end:0x8051cc98
 CriWare/src/sofdec/sfdcore/sfd/sfd_trn.c:
 	.text       start:0x803D0D9C end:0x803D1400
 
 CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c:
 	.text       start:0x803D1400 end:0x803D1648
 
+	.rodata        start:0x8051cc98 end:0x8051ccd8
 CriWare/src/sofdec/sfdcore/sfd/sfd_vom.c:
 	.text       start:0x803D1648 end:0x803D180C
 
+	.rodata        start:0x8051ccd8 end:0x8051cd18
 CriWare/src/sofdec/sfdcore/sfd/sfd_tmr.c:
 	.text       start:0x803D180C end:0x803D1A94
 
+	.bss        start:0x80619bc8 end:0x80619bd0
 CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c:
 	.text       start:0x803D1A94 end:0x803D29E0
 
+	.bss        start:0x80619bd0 end:0x80619be8
+	.rodata        start:0x8051cd18 end:0x8051cec0
 CriWare/src/sofdec/sfdcore/sfd/sfd_seeki.c:
 	.text       start:0x803D29E0 end:0x803D2AF4
 
+	.rodata        start:0x8051cec0 end:0x8051cee0
 CriWare/src/sofdec/sfdcore/sfh/sfh_local.c:
 	.text       start:0x803D2AF4 end:0x803D2E40
 
 CriWare/src/sofdec/sfdcore/sfh/sfh_main.c:
 	.text       start:0x803D2E40 end:0x803D35A8
 
+	.bss        start:0x80619be8 end:0x80619bf0
 CriWare/src/sofdec/sfdcore/sfh/sfh_ver1.c:
 	.text       start:0x803D35A8 end:0x803D53CC
 
+	.data        start:0x80568f10 end:0x80568f34
+	.rodata        start:0x8051cee0 end:0x8051cf00
 CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c:
 	.text       start:0x803D53CC end:0x803D6AA4
 
+	.rodata        start:0x8051cf00 end:0x8051cf20
 CriWare/src/sofdec/sfdcore/uty/cmptime.c:
 	.text       start:0x803D6AA4 end:0x803D6AD4
 
@@ -3729,24 +3860,33 @@ CriWare/src/sofdec/sfdcore/uty/muldivr.c:
 CriWare/src/sofdec/sfdcore/uty/uty_tmr.c:
 	.text       start:0x803D6DC0 end:0x803D6F2C
 
+	.bss        start:0x80619bf0 end:0x80619c00
+	.rodata        start:0x8051cf20 end:0x8051cf28
 CriWare/src/sofdec/sfx/sfx_set.c:
 	.text       start:0x803D6F2C end:0x803D70DC
 
+	.rodata        start:0x8051cf28 end:0x8051cf38
 CriWare/src/sofdec/sfx/sfx_cnv.c:
 	.text       start:0x803D70DC end:0x803D7E64
 
+	.rodata        start:0x8051cf38 end:0x8051d178
 CriWare/src/sofdec/sfx/sfx_inf.c:
 	.text       start:0x803D7E64 end:0x803D7E6C
 
 CriWare/src/sofdec/sfx/sfx_lib.c:
 	.text       start:0x803D7E6C end:0x803D825C
 
+	.bss        start:0x80619c00 end:0x8061a138
+	.rodata        start:0x8051d178 end:0x8051d218
 CriWare/src/sofdec/sfx/sfx_alp.c:
 	.text       start:0x803D825C end:0x803D8408
 
+	.bss        start:0x8061a138 end:0x8061a260
 CriWare/src/sofdec/sfx/sfx_zmv.c:
 	.text       start:0x803D8408 end:0x803D964C
 
+	.bss        start:0x8061a260 end:0x8061a4d0
+	.rodata        start:0x8051d218 end:0x8051d448
 CriWare/src/sofdec/sfx/sfx_sud.c:
 	.text       start:0x803D964C end:0x803D9650
 
@@ -3756,6 +3896,8 @@ CriWare/src/sofdec/sfx/sfx_cnv_to_Y84C44.c:
 CriWare/src/sofdec/sud/sud_lib.c:
 	.text       start:0x803D96F0 end:0x803D9884
 
+	.bss        start:0x8061a4d0 end:0x8061a4d8
+	.rodata        start:0x8051d448 end:0x8051d4a0
 nw4r/src/db/db_console.cpp:
 	.text       start:0x803D9884 end:0x803D9958
 
@@ -4529,9 +4671,6 @@ monolib/src/work/CProcess.cpp:
 	.data      start:0x8056bb60 end:0x8056bb90
 	.sbss      start:0x80665628 end:0x80665630
 
-monolibdata1e.cpp:
-	.bss        start:0x80657238 end:0x806574B8
-
 monolib/src/util/CDoubleListNode.cpp:
 	.text       start:0x80448F10 end:0x80449078
 	.data      start:0x8056bb90 end:0x8056bba0
@@ -4555,6 +4694,7 @@ monolib/src/util/CStopwatchUtil.cpp:
 	extab       start:0x8001CAA8 end:0x8001CAC0
 	extabindex  start:0x800348D0 end:0x800348F4
 	.text       start:0x80449F44 end:0x8044A23C
+	.bss        start:0x80657238 end:0x806574B8
 
 monolib/src/device/CDeviceRemotePad.cpp:
 	extab       start:0x8001CAC0 end:0x8001CAE8

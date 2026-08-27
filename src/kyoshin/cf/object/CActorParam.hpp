@@ -527,7 +527,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc48();  //0x154
         virtual float CActorParam_UnkVirtualFunc49();  //0x158
         virtual void CActorParam_UnkVirtualFunc50();  //0x15C
-        virtual void CActorParam_UnkVirtualFunc51();  //0x160
+        virtual float CActorParam_UnkVirtualFunc51();  //0x160
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53();  //0x168
         virtual void CActorParam_UnkVirtualFunc54();  //0x16C

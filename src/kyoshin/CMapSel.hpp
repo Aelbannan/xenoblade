@@ -157,7 +157,7 @@ extern "C" char* func_80138F78(u32);
 // Cursor position helper: fill output with the point derived from two panes.
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void func_80138078__FUl(u32);               // UI sound effect
+extern "C" void playUISound__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" void func_80124270(void*, u32);

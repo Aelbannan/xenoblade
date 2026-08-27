@@ -1,19 +1,22 @@
 // Translation unit for kyoshin/plugin/pluginCfs
 // Plugin script functions for the CFS (Common File System / script) subsystem.
 
-// Retail calls func_8015783C with a full-width character id (no truncation
-// mask at call sites); CfGameManager.hpp declares its dataId param as u16,
+// Retail calls func_8015783C/func_80157948 with a full-width character id (no truncation
+// mask at call sites); CfGameManager.hpp declares dataId as u16,
 // which forces a rlwinm mask on every call and trips the illegal-overload
-// rule if redeclared alongside. Rename the header form out of the way for
-// this TU and declare the retail (int,int,int) shape instead.
+// rule if redeclared alongside. Rename the header forms out of the way for
+// this TU and declare the retail (int) shapes instead.
 #define func_8015783C func_8015783C_u16hdr
+#define func_80157948 func_80157948_u16hdr
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #undef func_8015783C
+#undef func_80157948
 extern "C" void* func_8015783C(int mappedIndex, int dataId, int slot);
+extern "C" void* func_80157948(int charId, int slot);
 
 // Retail passes the character id to func_8015783C untruncated; the
 // CfGameManager.hpp declaration takes u16, which would force a rlwinm mask

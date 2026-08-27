@@ -151,7 +151,7 @@ extern "C" void func_802AD3A0(CTutorialList* self) {
         func_802ADC88(self);
         func_801D216C(&self->mGap2C[0], 0);
         func_801F369C(&self->mScrollBar);
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -194,7 +194,7 @@ extern "C" void func_802AD404(CTutorialList* self) {
         func_802ADE18(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // func_802AD514 - page up (alt): same gate shape as func_802AD404 but with
@@ -232,7 +232,7 @@ extern "C" void func_802AD514(CTutorialList* self) {
         func_802ADE18(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // func_802AD638 - page down: advance one page while the sort menu is busy;
@@ -267,7 +267,7 @@ extern "C" void func_802AD638(CTutorialList* self) {
     func_802ADE18(self);
     func_801F3850(&self->mScrollBar, self->mField17A);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // func_802AD728 - page down (alt): busy path wheels the menu forward; idle
@@ -307,7 +307,7 @@ extern "C" void func_802AD728(CTutorialList* self) {
         func_802ADE18(self);
         func_801F3850(&self->mScrollBar, self->mField17A);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 struct CTutorialWindowIds;
@@ -369,7 +369,7 @@ extern "C" void func_802AD858(CTutorialList* self) {
         func_801D3408(&self->mSortMenu84[0]);
         func_802ADFA8(self);
         func_802ADE18(self);
-        func_80138078(6);
+        playUISound(6);
         return;
     }
     nw4r::math::VEC3 pos;
@@ -387,7 +387,7 @@ extern "C" void func_802AD858(CTutorialList* self) {
     nw4r::math::VEC3 curPos;
     func_801D3454(&curPos, &self->mSortMenu84[0]);
     ((CTutorialCurView*)self->mGap2C)->vf2(&curPos);
-    func_80138078(2);
+    playUISound(2);
 }
 
 // Tail-calls CSortMenu::func_801D3320 on the embedded sort menu (+0x84).
@@ -404,7 +404,7 @@ extern "C" __declspec(noinline) void func_802AD98C(CTutorialList* self, int arg)
     func_802ADFA8(self);
     func_802ADE18(self);
     if (arg == 0) {
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -424,7 +424,7 @@ extern "C" void func_802ADA0C(CTutorialList* self) {
     func_801F3850(&self->mScrollBar, self->mField17A);
     func_802AD98C(self, 1);
     func_802ADCE8(self);
-    func_80138078(3);
+    playUISound(3);
 }
 
 extern "C" int func_802ADAB8(void* self) {
@@ -435,7 +435,7 @@ extern "C" int func_802ADAB8(void* self) {
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
 // frame (bound in .sdata2) -> latch the state byte and run the follow-up.
 extern "C" __declspec(noinline) void func_802ADAE8(CTutorialList* self) {
-    if (func_80137444(self->mAnim24, lbl_eu_80668DE4) != 0) {
+    if (advanceAnimTransform(self->mAnim24, lbl_eu_80668DE4) != 0) {
         self->mState175 = 2;
         func_802ADC88(self);
         func_801F367C(&self->mScrollBar);
@@ -443,7 +443,7 @@ extern "C" __declspec(noinline) void func_802ADAE8(CTutorialList* self) {
 }
 
 extern "C" __declspec(noinline) void func_802ADB3C(CTutorialList* self) {
-    if (func_80137444(self->mAnim28, lbl_eu_80668DE4) != 0) {
+    if (advanceAnimTransform(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 3;
         func_802ADE18(self);
         self->mInitialized = 1;
@@ -575,12 +575,12 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
             (nw4r::lyt::ArcResourceAccessor*)mField1C, fileData,
             &lbl_eu_80510B78[0xb2]);
 
-        func_80136E84(&mLayout20, (nw4r::lyt::ArcResourceAccessor*)mField1C,
+        buildLayout(&mLayout20, (nw4r::lyt::ArcResourceAccessor*)mField1C,
                       &lbl_eu_80510B78[0xb6]);
-        func_80136F08(mLayout20, &mAnim24,
+        bindLayoutAnimTransform(mLayout20, &mAnim24,
                       (nw4r::lyt::ArcResourceAccessor*)mField1C,
                       &lbl_eu_80510B78[0xcf]);
-        func_80136F08(mLayout20, &mAnim28,
+        bindLayoutAnimTransform(mLayout20, &mAnim28,
                       (nw4r::lyt::ArcResourceAccessor*)mField1C,
                       &lbl_eu_80510B78[0xeb]);
 
@@ -665,7 +665,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
     if (mField18 == event->mFileHandle) {
         // Shared archive hit: release its buffered data into the BDAT layer.
         void* data2 = ((CFileHandle*)mField18)->getData();
-        func_8003AA78__5CBdatFUlPv(4, data2);
+        setBdatEntry__5CBdatFUlPv(4, data2);
         func_8003AA34();
         lbl_eu_80664BF0 = (u32)getFP__FPCc(&lbl_eu_80510B78[0x143]);
         mField18 = 0;
@@ -742,7 +742,7 @@ extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_802AD188(CTutorialList* self,
                               nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField174 != 0) {
-        func_80137038(self->mLayout20, drawInfo, 0, 1);
+        drawLayout(self->mLayout20, drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);
         func_801D31F8(&self->mSortMenu84[0], drawInfo);
         func_801D20B0(&self->mGap2C[0], drawInfo);
@@ -761,7 +761,7 @@ extern "C" void func_802AD1F4(CTutorialList* self) {
         delete self->mLayout20;
         self->mLayout20 = 0;
     }
-    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mField1C);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mField1C);
     lbl_eu_80664BF0 = 0;
     ((CTutorialCurView*)self->mGap2C)->vf1();
     func_801F35DC(&self->mScrollBar);

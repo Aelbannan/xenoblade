@@ -12,7 +12,7 @@ void func_8025D688(CPcKizunaCur* self);
 extern "C" CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p);
 
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // String base for the affinity-chart layout paths (targets add byte offsets).
 extern char lbl_eu_8050D868[];
@@ -30,9 +30,9 @@ extern const float lbl_eu_80668894;
 extern const float lbl_eu_80668878;
 
 // Layout / file helpers with C++ (mangled) retail names.
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
@@ -46,7 +46,7 @@ u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 
 extern "C" void __declspec(noinline) func_8025D704(CPcKizunaCur* self) {
-    if (func_80137444(self->mpAnim1, lbl_eu_8066887C) == 0) return;
+    if (advanceAnimTransform(self->mpAnim1, lbl_eu_8066887C) == 0) return;
     self->mField14 = 0;
     self->mField15 = 1;
     self->mpLayout->SetAnimationEnable(self->mpAnim1, false);
@@ -59,7 +59,7 @@ extern "C" void __declspec(noinline) func_8025D610(CPcKizunaCur* self) {
     if (self->mpLayout == 0) return;
     switch (self->mField14) {
     case 0:
-        func_80137444(self->mpAnim0, lbl_eu_8066887C);
+        advanceAnimTransform(self->mpAnim0, lbl_eu_8066887C);
         break;
     case 1:
         func_8025D704(self);
@@ -100,10 +100,10 @@ extern "C" void __declspec(noinline) func_8025D688(CPcKizunaCur* self) {
 void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mStateByte1 == 0) return;
     if (self->mStateByte2 == 0) return;
-    func_80137038(self->mLayout, drawInfo, 0, 1);
+    drawLayout(self->mLayout, drawInfo, 0, 1);
     nw4r::lyt::Layout* cursorLayout = ((CPcKizunaCur*)self->mKizunaCur)->mpLayout;
     if (cursorLayout != 0) {
-        func_80137038(cursorLayout, drawInfo, 0, 1);
+        drawLayout(cursorLayout, drawInfo, 0, 1);
     }
 }
 
@@ -115,7 +115,7 @@ extern "C" void func_8025D9C4(CPcKizunagram* self) {
         delete self->mLayout;
         self->mLayout = 0;
     }
-    func_80139124(self->mArcRes);
+    releaseArcResourceAccessor(self->mArcRes);
     self->mMemRegion.func_8045F778();
 }
 
@@ -175,7 +175,7 @@ void func_8025DA50(CPcKizunagram* self) {
     if (self->mStateByte2 != 0) return;
     self->mStateByte2 = 1;
     self->mIsOpen = 0;
-    func_80138078__FUl(0x6d);
+    playUISound__FUl(0x6d);
 }
 
 // Close the affinity-chart window: from the open state (2) go to closing (3),
@@ -187,39 +187,39 @@ void func_8025DA78(CPcKizunagram* self) {
     func_80124270(((CPcKizunaCur*)self->mKizunaCur)->mpLayout->GetRootPane()
                       ->FindPaneByName(lbl_eu_8050D868 + 0x50, true),
                   0);
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 void func_8025DAE8(CPcKizunagram* self) {
     func_8025E3A4(self, 1);
     func_8025E4A4(self);
     func_8025DCFC(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_8025DB30(CPcKizunagram* self) {
     func_8025E3A4(self, 0);
     func_8025E4A4(self);
     func_8025DCFC(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_8025DB78(CPcKizunagram* self) {
     func_8025E3A4(self, 1);
     func_8025E4A4(self);
     func_8025DCFC(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 void func_8025DBC0(CPcKizunagram* self) {
     func_8025E3A4(self, 0);
     func_8025E4A4(self);
     func_8025DCFC(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 extern "C" void __declspec(noinline) func_8025DC08(CPcKizunagram* self) {
-    if (func_80137444(self->mAnimTransform, lbl_eu_8066887C) == 0) return;
+    if (advanceAnimTransform(self->mAnimTransform, lbl_eu_8066887C) == 0) return;
     self->mStateByte2 = 2;
     self->mIsOpen = 1;
     func_8025E4A4(self);
@@ -399,7 +399,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         }
 
         char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
     }
@@ -410,11 +410,11 @@ void func_8025E0D8(CPcKizunagram* self) {
 // transforms, enable the idle anim, pin down two named panes, then reset the
 // root pane scale. noinline: retail callers (OnFileEvent) emit a real bl.
 extern "C" void __declspec(noinline) func_8025D4E4(CPcKizunaCur* self) {
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mpLayout, self->mAccessor, lbl_eu_8050D868 + 0x00);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mpAnim0, self->mAccessor, lbl_eu_8050D868 + 0x18);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mpLayout, &self->mpAnim1, self->mAccessor, lbl_eu_8050D868 + 0x35);
     self->mpLayout->SetAnimationEnable(self->mpAnim1, false);
     self->mpLayout->SetAnimationEnable(self->mpAnim0, true);
@@ -579,7 +579,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         }
 
         char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
     }
@@ -634,9 +634,9 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         mtl::MemManager::setMemInitFlag(false);
         mArcRes = createArcResourceAccessor__10CLibLayoutFv();
         mArcRes->Attach(fileData, &lbl_eu_8050D868[0x279]);
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &mLayout, mArcRes, &lbl_eu_8050D868[0x27d]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mAnimTransform, mArcRes, &lbl_eu_8050D868[0x293]);
 
         // Bind the font handle into the layout's root pane.

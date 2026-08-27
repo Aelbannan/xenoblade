@@ -314,7 +314,7 @@ void func_8013676C(void*, u32);
 // Pre-mangled u8-param name declared with a u32 3rd arg: retail passes the
 // full slot word with no rlwinm truncation at the call site (the callee only
 // reads the low byte), so the declaration must not force a u32->u8 mask.
-void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
+void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*,
                                               u32);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
@@ -330,15 +330,15 @@ const char* func_eu_802B145C();
 }
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
-void func_80138078(u32 op);  // func_80138078__FUl
-u32 func_801355A0();        // func_801355A0__Fv
+void playUISound(u32 op);  // playUISound__FUl
+u32 getPackedFont();        // getPackedFont__Fv
 CMenuBattleDamageActor* findObjectById(int id);  // findObjectById__Fi
-u32 func_80137444(nw4r::lyt::AnimTransform*, float); // func_80137444__FPQ34nw4r3lyt13AnimTransformf
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
                    const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 
 // Shared data symbols (global-scope plain externs keep the unmangled names).

@@ -68,10 +68,10 @@ extern "C" void* __dt__802531C4(void* self, int dealloc_flag) {
 // us-80255440
 // Initialize CCollepedia layout: load layout, bind animations, position panes
 void func_80253204(CCollepedia* this_) {
-    func_80136E84(&this_->field_8,
+    buildLayout(&this_->field_8,
         (nw4r::lyt::ArcResourceAccessor*)this_->field_4,
         &lbl_eu_8050C6E8[0x00]);
-    func_80136F08(this_->field_8, &this_->field_c_ptr,
+    bindLayoutAnimTransform(this_->field_8, &this_->field_c_ptr,
         (nw4r::lyt::ArcResourceAccessor*)this_->field_4,
         &lbl_eu_8050C6E8[0x18]);
 
@@ -102,7 +102,7 @@ void func_80253204(CCollepedia* this_) {
 extern "C" __declspec(noinline) void func_802532FC(CBaseCur* this_) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mVisible == 0) {
-        func_80137444(this_->mpAnimTrans0, lbl_eu_80668800);
+        advanceAnimTransform(this_->mpAnimTrans0, lbl_eu_80668800);
     }
     this_->mpLayout->Animate(0);
 }
@@ -110,7 +110,7 @@ extern "C" __declspec(noinline) void func_802532FC(CBaseCur* this_) {
 // us-80257984
 // Check if animation at field_3C is done, then disable/enable animations and set state
 extern "C" __declspec(noinline) void func_80255748(CCollepedia* this_) {
-    if (func_80137444(this_->field_3C, lbl_eu_80668800) != 0) {
+    if (advanceAnimTransform(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_38->SetAnimationEnable(this_->field_44, false);
         this_->field_38->SetAnimationEnable(this_->field_3C, false);
         this_->field_38->SetAnimationEnable(this_->field_40, true);
@@ -122,7 +122,7 @@ extern "C" __declspec(noinline) void func_80255748(CCollepedia* this_) {
 extern "C" __declspec(noinline) void func_80253360(CBaseCur* this_, nw4r::lyt::DrawInfo* drawInfo) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mActive == 0) return;
-    func_80137038(this_->mpLayout, drawInfo, 0, 1);
+    drawLayout(this_->mpLayout, drawInfo, 0, 1);
 }
 
 // noinline: retail callers (func_80254C04) invoke this out-of-line
@@ -182,8 +182,8 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
 #pragma push
 #pragma optimize_for_size on
 void func_802534F0(CLPPageSetup* pg) {
-    func_80136E84(&pg->mpLayout, pg->mpAccessor, &lbl_eu_8050C6E8[0x4d]);
-    func_80136F08(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, &lbl_eu_8050C6E8[0x66]);
+    buildLayout(&pg->mpLayout, pg->mpAccessor, &lbl_eu_8050C6E8[0x4d]);
+    bindLayoutAnimTransform(pg->mpLayout, &pg->mpAnimTrans, pg->mpAccessor, &lbl_eu_8050C6E8[0x66]);
 
     // Bind the device font: root pane first (retail loads it before the
     // CDeviceFont call), then fetch the font handle from vtable slot 9.
@@ -193,8 +193,8 @@ void func_802534F0(CLPPageSetup* pg) {
     func_8013676C(rootPane, fontHandle);
 
     char* tagStr = (char*)func_801355BC();
-    func_801368C0(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
-    func_801368C0(pg->mpLayout, &lbl_eu_8050C6E8[0x92], (u32)tagStr);
+    setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x82], (u32)tagStr);
+    setLayoutTextBoxFont(pg->mpLayout, &lbl_eu_8050C6E8[0x92], (u32)tagStr);
 
     pg->mpLayout->SetAnimationEnable(pg->mpAnimTrans, true);
     pg->mpLayout->Animate(0);
@@ -270,7 +270,7 @@ extern "C" __declspec(noinline) void func_8025385C(CCollepedia* this_) {
     stateBytes[0] = 1;
     stateBytes[1] = 0;
     stateBytes[2] = 1;
-    func_80138078__FUl(0xD);
+    playUISound__FUl(0xD);
 }
 
 // Return byte at +0xD from a sub-array entry (indexed by arg)
@@ -295,7 +295,7 @@ extern "C" __declspec(noinline) void func_80253888(CCollepedia* this_) {
     if (stateBytes[0] != 2) return;
     stateBytes[0] = 3;
     stateBytes[1] = 0;
-    func_80138078__FUl(0xE);
+    playUISound__FUl(0xE);
 }
 
 // Set two named panes (0x82, 0x92) on the layout at field_4
@@ -303,8 +303,8 @@ extern "C" __declspec(noinline) void func_80253888(CCollepedia* this_) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" void func_802538B0(CCollepedia* this_, unsigned char arg) {
-    func_80136910(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
-    func_80136910(this_->field_4, &lbl_eu_8050C6E8[0x92], arg);
+    setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
+    setLayoutTextBoxNumber(this_->field_4, &lbl_eu_8050C6E8[0x92], arg);
 }
 #pragma pop
 
@@ -340,7 +340,7 @@ extern "C" void func_80253970(CCollepedia* this_, LayoutContainer* container, in
 // Check if anim transform is finished; if so, set state to 2
 // field_8 is a Layout* but used as AnimTransform* in this context
 extern "C" __declspec(noinline) void func_80253A14(CCollepedia* self) {
-    if (func_80137444(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_8), lbl_eu_80668800) != 0) {
+    if (advanceAnimTransform(reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_8), lbl_eu_80668800) != 0) {
         u8* stateBytes = reinterpret_cast<u8*>(&self->field_c_ptr);
         stateBytes[0] = 2;
         stateBytes[1] = 1;
@@ -912,7 +912,7 @@ extern "C" void func_80254A20(CCollepedia* this_) {
         break;
     case 3:
         // Keep polling the intro anim transform until it finishes
-        func_80137444(this_->field_44, lbl_eu_80668800);
+        advanceAnimTransform(this_->field_44, lbl_eu_80668800);
         break;
     case 4:
         func_80255894(this_);
@@ -976,11 +976,11 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
     if (this_->field_48 == 0) return;
     if (this_->field_49 == 0) return;
     
-    func_80137038(this_->field_38, drawInfo, 0, 1);
+    drawLayout(this_->field_38, drawInfo, 0, 1);
     func_80253360((CBaseCur*)((u8*)this_ + 0x6c), drawInfo);
     
     if (this_->field_28F0 != NULL) {
-        func_80137038(this_->field_28F0, drawInfo, 0, 1);
+        drawLayout(this_->field_28F0, drawInfo, 0, 1);
     }
     
     func_801D20B0((CBaseCur*)((u8*)this_ + 0x54), drawInfo);
@@ -993,9 +993,9 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void func_80254C04(CCollepedia* this_) {
     getEntry__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle(&this_->field_24);
-    func_801390E0__FPP11CFileHandle(&this_->field_28);
-    func_801390E0__FPP11CFileHandle(&this_->field_2C);
+    closeFileHandle__FPP11CFileHandle(&this_->field_24);
+    closeFileHandle__FPP11CFileHandle(&this_->field_28);
+    closeFileHandle__FPP11CFileHandle(&this_->field_2C);
 
     this_->field_48 = 0;
     func_80253794(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
@@ -1008,8 +1008,8 @@ void func_80254C04(CCollepedia* this_) {
     }
 
     // Release arc resource accessors
-    func_80139124(this_->field_30);
-    func_80139124(this_->field_34);
+    releaseArcResourceAccessor(this_->field_30);
+    releaseArcResourceAccessor(this_->field_34);
 
     // Free heap object at +0x4C via its virtual deleting dtor
     if (this_->field_4C != 0) {
@@ -1074,7 +1074,7 @@ void func_80254D8C(CCollepedia* this_) {
     this_->field_38->SetAnimationEnable(this_->field_3C, false);
     this_->field_38->SetAnimationEnable(this_->field_40, true);
 
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 #pragma push
@@ -1106,7 +1106,7 @@ void func_80254E64(CCollepedia* this_) {
         func_8025629C(this_);
     }
 
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -1137,7 +1137,7 @@ void func_80254F2C(CCollepedia* this_) {
         func_8025629C(this_);
     }
 
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -1163,7 +1163,7 @@ void func_80255000(CCollepedia* this_) {
         func_8025629C(this_);
     }
 
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // us-802572f0
@@ -1188,7 +1188,7 @@ void func_802550B4(CCollepedia* this_) {
         func_8025629C(this_);
     }
 
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 #pragma push
@@ -1212,7 +1212,7 @@ extern "C" void func_8025516C(CCollepedia* this_) {
 
     func_80255F98(this_);
     func_8025629C(this_);
-    func_80138078__FUl(10);
+    playUISound__FUl(10);
 }
 #pragma pop
 
@@ -1235,7 +1235,7 @@ extern "C" void func_80255210(CCollepedia* this_) {
 
     func_80255F98(this_);
     func_8025629C(this_);
-    func_80138078__FUl(10);
+    playUISound__FUl(10);
 }
 #pragma pop
 
@@ -1274,7 +1274,7 @@ void func_802552B4(CCollepedia* this_) {
     func_801D216C(&this_->field_54[0x30], 0);
     this_->field_49 = 8;
     this_->field_51 = 0;
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 // us-802575e8
@@ -1319,20 +1319,20 @@ void func_802553AC(CCollepedia* this_) {
             u32 cat = func_8025418C(&this_->field_E8, this_->field_D9);
             // Switch range-check covers 0..8; case 8 is empty (fanfare only)
             switch (cat) {
-            case 0: func_80138078__FUl(0x4B); break;
-            case 1: func_80138078__FUl(0x4C); break;
-            case 2: func_80138078__FUl(0x4D); break;
-            case 3: func_80138078__FUl(0x4E); break;
-            case 4: func_80138078__FUl(0x4F); break;
-            case 5: func_80138078__FUl(0x50); break;
-            case 6: func_80138078__FUl(0x51); break;
+            case 0: playUISound__FUl(0x4B); break;
+            case 1: playUISound__FUl(0x4C); break;
+            case 2: playUISound__FUl(0x4D); break;
+            case 3: playUISound__FUl(0x4E); break;
+            case 4: playUISound__FUl(0x4F); break;
+            case 5: playUISound__FUl(0x50); break;
+            case 6: playUISound__FUl(0x51); break;
             case 7:
-            case 8: func_80138078__FUl(0x52); break;
+            case 8: playUISound__FUl(0x52); break;
             }
-            func_8013B428__FUl(0x84);
+            incrementEventCounter__FUl(0x84);
         } else {
             // Detail page confirm: schedule sound 6 instead.
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
 
         func_80253888(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
@@ -1364,7 +1364,7 @@ void func_802553AC(CCollepedia* this_) {
     func_801D216C(&this_->field_54, 0);
     this_->field_49 = 6;
     this_->field_51 = 0;
-    func_80138078__FUl(3);
+    playUISound__FUl(3);
 }
 #pragma pop
 
@@ -1397,7 +1397,7 @@ extern "C" u32 func_802556DC(CCollepedia* this_) {
 // Check if animation at field_40 is done; if so, set state, init sub-object, switch animations
 __declspec(noinline)
 void func_802557E0(CCollepedia* this_) {
-    if (func_80137444(this_->field_40, lbl_eu_80668800) != 0) {
+    if (advanceAnimTransform(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_49 = 3;
         this_->field_51 = 1;
         func_801D216C(&this_->field_54, 1);
@@ -1511,8 +1511,8 @@ __declspec(noinline) void func_80255B60(CCollepedia* this_) {
     func_8022BFC8((CSysWin*)&this_->field_9C, 1);
     func_8022B8B8(&this_->field_9C);
 
-    func_8013B428__FUl(0x85);
-    func_8013B428__FUl(0x86);
+    incrementEventCounter__FUl(0x85);
+    incrementEventCounter__FUl(0x86);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     func_801895EC();
@@ -1622,8 +1622,8 @@ void func_8025641C(CCollepedia* this_) {
         }
     }
 
-    func_80136910(this_->field_38, &lbl_eu_8050C6E8[0x306], count);
-    func_80136910(this_->field_38, &lbl_eu_8050C6E8[0x284], 1);
+    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x306], count);
+    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], 1);
 }
 #pragma pop
 
@@ -1655,7 +1655,7 @@ static double clpConvS32ToF64(s32 x) {
 extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
     char buf[0x18];
     u8 idx = (u8)(this_->_E9[0] + 1); // retail reads the index byte unsigned
-    func_80136910(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
+    setLayoutTextBoxNumber(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
 
     // Move the cursor pane right by one slot width from the saved position.
     // The int->double step references the shared 2^52 pool entry explicitly.
@@ -1790,20 +1790,20 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         field_30 = createArcResourceAccessor__10CLibLayoutFv();
         field_30->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
 
-        func_80136E84(&field_38, field_30, &lbl_eu_8050C6E8[0x31f]);
-        func_80136F08(field_38, &field_3C, field_30, &lbl_eu_8050C6E8[0x335]);
-        func_80136F08(field_38, &field_40, field_30, &lbl_eu_8050C6E8[0x34e]);
-        func_80136F08(field_38, &field_44, field_30, &lbl_eu_8050C6E8[0x36c]);
+        buildLayout(&field_38, field_30, &lbl_eu_8050C6E8[0x31f]);
+        bindLayoutAnimTransform(field_38, &field_3C, field_30, &lbl_eu_8050C6E8[0x335]);
+        bindLayoutAnimTransform(field_38, &field_40, field_30, &lbl_eu_8050C6E8[0x34e]);
+        bindLayoutAnimTransform(field_38, &field_44, field_30, &lbl_eu_8050C6E8[0x36c]);
 
         // Bind the device font into every text pane via the root pane.
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         u32 fontHandle = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
         func_8013676C(field_38->GetRootPane(), fontHandle);
 
-        char* tagStr = (char*)func_801355A0();
-        func_801368C0(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);
-        func_801368C0(field_38, &lbl_eu_8050C6E8[0x306], (u32)tagStr);
-        func_801368C0(field_38, &lbl_eu_8050C6E8[0x2a8], (u32)tagStr);
+        char* tagStr = (char*)getPackedFont();
+        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);
+        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x306], (u32)tagStr);
+        setLayoutTextBoxFont(field_38, &lbl_eu_8050C6E8[0x2a8], (u32)tagStr);
 
         field_38->SetAnimationEnable(field_40, false);
         field_38->SetAnimationEnable(field_44, false);
@@ -1893,7 +1893,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
     if (field_2C == pEventFile->mFileHandle) {
         void* data = reinterpret_cast<CFileHandle*>(field_2C)->getData();
-        func_8003AA78__5CBdatFUlPv(2, data);
+        setBdatEntry__5CBdatFUlPv(2, data);
 
         // Resolve the two message files used by the item/quest name lookups.
         func_8003AA34();

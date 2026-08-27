@@ -361,7 +361,7 @@ CMenuMapSelectSC* func_802514D4(CProcess* parent, CProcess* arg) {
         return 0;
     }
 
-    func_80138078(4);
+    playUISound(4);
     // Use the ctor's return value (constructors return self) so MWCC keeps
     // the object pointer in r3 across the call instead of spilling it.
     CMenuMapSelectSC* obj = (CMenuMapSelectSC*)mtl::MemManager::allocate(
@@ -412,7 +412,7 @@ extern "C" void func_80251628(CMenuMapSelectSC* self) {
         func_801C41E8(&self->mTitleAHelp, 0);
         func_801C412C(&self->mTitleAHelp);
         func_8024BE1C(&self->mFloorMap);
-        func_80138078(0x6d);
+        playUISound(0x6d);
         func_80244538(&self->mFade);
         self->mState = 3;
     }
@@ -483,7 +483,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
             } else if (func_8024F784(&self->mFloorMap) == 0) {
                 func_80244518(&self->mFade);
                 self->mState = 5;
-                func_80138078(6);
+                playUISound(6);
             } else {
                 func_8024EE50(&self->mFloorMap);
             }
@@ -491,7 +491,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
             if (func_8024F784(&self->mFloorMap) == 0) {
                 func_80244518(&self->mFade);
                 self->mState = 5;
-                func_80138078(6);
+                playUISound(6);
             }
         } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
             func_8024D614(&self->mFloorMap);
@@ -553,7 +553,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
             func_8024F784(&self->mFloorMap) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x4f);
             if (self->mTimer > lbl_eu_806687C4) {
-                func_80138078(2);
+                playUISound(2);
             }
             self->mTimer = lbl_eu_806687C0;
             func_8024F5C4(&self->mFloorMap, 1);
@@ -576,7 +576,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
                 } else if (func_8024F784(&self->mFloorMap) == 0) {
                     func_80244518(&self->mFade);
                     self->mState = 5;
-                    func_80138078(6);
+                    playUISound(6);
                 } else {
                     func_8024EE50(&self->mFloorMap);
                 }
@@ -584,7 +584,7 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
                 if (func_8024F784(&self->mFloorMap) == 0) {
                     func_80244518(&self->mFade);
                     self->mState = 5;
-                    func_80138078(6);
+                    playUISound(6);
                 }
             } else if ((pad->mTurboPressButtonFlags & 0x4) != 0) {
                 func_8024D614(&self->mFloorMap);

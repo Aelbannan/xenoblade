@@ -216,9 +216,9 @@ void CMenuGetItem::Init() {
         char* base = lbl_eu_805018D0;
 
         // Build the layout and its first anim transform from the arc resource.
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &mLayout, func_801355F4(), &base[0xd]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             mLayout, &mField_78, func_801355F4(), &base[0x26]);
 
         // Bind the font: push the font object's pane back onto the root pane.
@@ -342,7 +342,7 @@ void CMenuGetItem::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 

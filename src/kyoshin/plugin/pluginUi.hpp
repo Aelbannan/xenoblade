@@ -127,7 +127,7 @@ void func_800F4A98(void* list, int type, int value);
 void* func_800F6EC0(void* list, int index);
 void* func_800451D8(u32 cls, void* param);
 u8 code80135FDC_getByte_64059();
-void func_80138078__FUl(u32 op);
+void playUISound__FUl(u32 op);
 void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
 int func_8009CF8C(int index);
 void func_8009D018(int index, int value);

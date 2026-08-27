@@ -134,7 +134,7 @@ void CMenuGCItem::Move() {
             func_801C412C(&mTitleAHelp);
             func_801CB28C(&mItemBoxGrid);
             mState = 1;
-            func_80138078__FUl(0x6d);
+            playUISound__FUl(0x6d);
         }
         break;
     case 1:

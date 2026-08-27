@@ -456,7 +456,7 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 func_801355BC();
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" u32 func_8003B1EC(void*);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);

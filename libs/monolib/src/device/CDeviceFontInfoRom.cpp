@@ -18,9 +18,9 @@ public:
 
     static CDeviceFontInfoRom* create();
 
-    // Returns a pointer to the embedded RomFont (non-const / const).
-    nw4r::ut::RomFont* getRomFont() { return &mRomFont; }
-    const nw4r::ut::RomFont* getRomFont() const { return &mRomFont; }
+    // Returns a pointer to the embedded RomFont (non-const / const wrapper).
+    nw4r::ut::RomFont* getRomFont();
+    const nw4r::ut::RomFont* getRomFontConst();
 
     const char* getFontTexture(const char* str, void** texOut, u32* xOut,
                               u32* yOut, u32* widthOut);
@@ -155,10 +155,10 @@ int CDeviceFontInfoRom::isStateReady(void) {
 }
 
 // ---- func_804537F0 (0x804578C0) - returns &mRomFont (non-const) ----
-// (inline in the class definition above)
+nw4r::ut::RomFont* CDeviceFontInfoRom::getRomFont() { return &mRomFont; }
 
-// ---- func_804537F8 (0x804578C8) - returns &mRomFont (const) ----
-// (inline in the class definition above)
+// ---- func_804537F8 (0x804578C8) - returns &mRomFont (const wrapper) ----
+const nw4r::ut::RomFont* CDeviceFontInfoRom::getRomFontConst() { return &mRomFont; }
 
 // ---- func_80453800 (0x804578D0) - returns mFontInfo->cellHeight ----
 u16 CDeviceFontInfoRom::getCellHeight() {

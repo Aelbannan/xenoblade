@@ -302,56 +302,10 @@ struct CfObjectEffCtorView {
     u16 field_8E;      // 0x8E
 };
 
-// Slots +0xBC (CfObject_UnkVirtualFunc27) is now base-name: void* arg
-// matches retail, so AD060's vfBC is this->CfObject_UnkVirtualFunc27(...).
-// Slots +0x3C/+0x9C/+0xDC remain views: their retail callees take
-// (void*), (void*) and (float) while the placeholder base decls are void(),
-// so those views stay until the hot headers are corrected.
-struct CfObjectEffOwnerIf {
-    virtual void _f08(); virtual void _f0C(); virtual void _f10();
-    virtual void _f14(); virtual void _f18(); virtual void _f1C();
-    virtual void _f20(); virtual void _f24(); virtual void _f28();
-    virtual void _f2C(); virtual void _f30(); virtual void _f34();
-    virtual void _f38(); virtual void vf3C(void* arg);
-    virtual void _f40(); virtual void _f44(); virtual void _f48();
-    virtual void _f4C(); virtual void _f50(); virtual void _f54();
-    virtual void _f58(); virtual void _f5C(); virtual void _f60();
-    virtual void _f64(); virtual void _f68(); virtual void _f6C();
-    virtual void _f70(); virtual void _f74(); virtual void _f78();
-    virtual void _f7C(); virtual void _f80(); virtual void _f84();
-    virtual void _f88(); virtual void _f8C(); virtual void _f90();
-    virtual void _f94(); virtual void _f98(); virtual void vf9C(void* arg);
-    virtual void _fA0(); virtual void _fA4(); virtual void _fA8();
-    virtual void _fAC(); virtual void _fB0(); virtual void _fB4();
-    virtual void _fB8(); virtual void vfBC(void* arg);
-    virtual void _fC0(); virtual void _fC4(); virtual void _fC8();
-    virtual void _fCC(); virtual void _fD0(); virtual void _fD4();
-    virtual void _fD8(); virtual void vfDC(float value);
-};
-
-// Slot +0xB4 is CfObject_UnkVirtualFunc25 (void) - the retail occupant
-// ACCE4 is reached via the direct base call `CfObject::UVF25()` inside
-// ACCE4 itself, while ACD5C's `moveB4(arr,scale)` two-arg dispatch at the
-// same offset uses a view. The two-arg form cannot share the slot's
-// placeholder signature, so the view stays.
-struct CfObjectEffMoveIf {
-    virtual void _f08(); virtual void _f0C(); virtual void _f10();
-    virtual void _f14(); virtual void _f18(); virtual void _f1C();
-    virtual void _f20(); virtual void _f24(); virtual void _f28();
-    virtual void _f2C(); virtual void _f30(); virtual void _f34();
-    virtual void _f38(); virtual void _f3C(); virtual void _f40();
-    virtual void _f44(); virtual void _f48(); virtual void _f4C();
-    virtual void _f50(); virtual void _f54(); virtual void _f58();
-    virtual void _f5C(); virtual void _f60(); virtual void _f64();
-    virtual void _f68(); virtual void _f6C(); virtual void _f70();
-    virtual void _f74(); virtual void _f78(); virtual void _f7C();
-    virtual void _f80(); virtual void _f84(); virtual void _f88();
-    virtual void _f8C(); virtual void _f90(); virtual void _f94();
-    virtual void _f98(); virtual void _f9C(); virtual void _fA0();
-    virtual void _fA4(); virtual void _fA8(); virtual void _fAC();
-    virtual void _fB0();
-    virtual void moveB4(const float* vec, float scale);  // vtable 0xB4
-};
+// Slot +0xBC (CfObject_UnkVirtualFunc27) is base-name: void* arg matches retail.
+// Slots +0x3C/+0x9C/+0xB4/+0xDC now take retail arity on CObjectParam/CfObject
+// (const char* / const ml::CVec3* / (ml::CVec3*, float) / float), so OwnerIf /
+// MoveIf pads were deleted; call sites use this->method(...).
 
 // Minimal view of the effect-source objects (BDAT/CfRes entries) used by
 // createEffect_: the +0xC word gates the 0x10/0x11 types, and +0x2C is a

@@ -165,7 +165,7 @@ void func_80097134(cf::CtrlPc* self) {
     int dispatched;
 
     self->mField4 = 0;
-    obj = (CtrlPlayerObj*)func_800BFC68(cf::CfGameManager::getPlayer(0));
+    obj = (CtrlPlayerObj*)getCfObjectPc(cf::CfGameManager::getPlayer(0));
     // Global gate: either cutscene-ish bit set -> skip everything but the tail.
     if (((lbl_eu_80663E24 & 0x02000000) | (lbl_eu_80663E24 & 0x400)) != 0) {
         return;
@@ -300,7 +300,7 @@ void func_80097598(cf::CtrlPc* self) {
         return;
     }
 
-    obj = (CtrlPlayerObj*)func_800BFC68(cf::CfGameManager::getPlayer(0));
+    obj = (CtrlPlayerObj*)getCfObjectPc(cf::CfGameManager::getPlayer(0));
     if (self->mField5C->mSub3E9C.v01(0x200) != 0) {
         self->mField4 |= 8;
     } else if (self->mField5C->mSub3E9C.v01(0x100) != 0 &&
@@ -458,7 +458,7 @@ void func_80097C74(cf::CtrlPc* self) {
             self->mField5C->mField3F60->mField4EC &= ~4;
         }
     }
-    obj = (CtrlPlayerObj*)func_800BFC68(cf::CfGameManager::getPlayer(0));
+    obj = (CtrlPlayerObj*)getCfObjectPc(cf::CfGameManager::getPlayer(0));
     p = self->mField5C;
     v6 = *p->mField4->vf30();
     if (func_80174C98(p, &v6, 0x800) == 0) {

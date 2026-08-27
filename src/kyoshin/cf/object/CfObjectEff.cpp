@@ -298,13 +298,16 @@ extern "C" void setEffPosVec___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, const
 
 } // namespace cf
 
-// Retail symbol func_800ACCE4__Q22cf11CfObjectEffFv is Fv-mangled but the
-// body consumes a position-vector pointer in r4 - defined at global scope so
-// MWCC's mangled name still contains the retail symbol as a prefix.
-// Non-const on purpose: MWCC must assume the child stores may alias src,
-// which pins both word loads above the stores (retail scheduling).
-void func_800ACCE4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, cf::CfObjectEffU32Vec3* src) {
-    self->CfObject::CfObject_UnkVirtualFunc25();
+// ACCE4 is Eff's UVF25 override: forward to the base implementation with the
+// same (pos, scale) ABI, then copy into the child.
+extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self,
+                                                           ml::CVec3* pos,
+                                                           float scale);
+void func_800ACCE4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
+                                         cf::CfObjectEffU32Vec3* src,
+                                         float scale) {
+    CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
+        self, reinterpret_cast<ml::CVec3*>(src), scale);
     // x's zero-init is dead (overwritten below) but fixes its slot as the
     // first-created local; the visible loads all stay inside the copy block.
     u32 x = 0;
@@ -328,7 +331,8 @@ extern "C" void moveEffOfs_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float
     arr[0] = a;
     arr[1] = lbl_eu_80666960;
     arr[2] = b;
-    reinterpret_cast<cf::CfObjectEffMoveIf*>(self)->moveB4(arr, lbl_eu_80666964);
+    self->CfObject_UnkVirtualFunc25(reinterpret_cast<ml::CVec3*>(arr),
+                                    lbl_eu_80666964);
 }
 
 // Retail symbol setEffRotVec___Q22cf11CfObjectEffFv (void params in the name)
@@ -533,9 +537,10 @@ void createEffect_(cf::CfObjectEff* self) {
         }
         self->mField98 = static_cast<u8*>(bdat);
         if (self->mChildEff != 0) {
-            reinterpret_cast<cf::CfObjectEffOwnerIf*>(self)->vf9C(&self->mPos3C);
+            self->CfObject_UnkVirtualFunc19(
+                reinterpret_cast<const ml::CVec3*>(&self->mPos3C));
             self->CfObject_UnkVirtualFunc27(reinterpret_cast<u8*>(self) + 0x48);
-            reinterpret_cast<cf::CfObjectEffOwnerIf*>(self)->vfDC(self->mFloat60);
+            self->CfObject_UnkVirtualFunc35(self->mFloat60);
             // The child may have been torn down by the slot calls above;
             // retail re-checks it before each partner write. The partner and
             // source-object loads are hoisted above the guard so MWCC emits
@@ -558,7 +563,8 @@ void createEffect_(cf::CfObjectEff* self) {
             }
             self->mFieldA0 = reinterpret_cast<u8*>(work);
             void* result = func_804E3CFC(self->mChildEff);
-            reinterpret_cast<cf::CfObjectEffOwnerIf*>(self)->vf3C(result);
+            self->CObjectParam_UnkVirtualFunc1(
+                reinterpret_cast<const char*>(result));
             self->mFieldB4 = 1;
             u8* parent = reinterpret_cast<u8*>(self);
             if (self != 0) parent = reinterpret_cast<u8*>(self) + 0x90;
@@ -783,9 +789,20 @@ void* getEffOwner__(void* obj) {
     return 0;
 }
 
-extern "C" void callVirt19_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc19(); }
+// Eff UVF22 (+0xA8): pure forward to UVF19. MWCC keeps r4 live → 0x10-byte
+// bctr thunk (retail callVirt19).
+extern "C" void callVirt19_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
+                                                    const ml::CVec3* vec) {
+    self->CfObject_UnkVirtualFunc19(vec);
+}
 
-extern "C" void callVirt25_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc25(); }
+// Eff UVF26 (+0xB8): pure forward to UVF25. MWCC keeps r4/f1 live → 0x10-byte
+// bctr thunk (retail callVirt25).
+extern "C" void callVirt25_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
+                                                    ml::CVec3* pos,
+                                                    float scale) {
+    self->CfObject_UnkVirtualFunc25(pos, scale);
+}
 
 extern "C" void callVirt32_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc32(); }
 

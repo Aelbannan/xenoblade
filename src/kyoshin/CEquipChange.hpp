@@ -100,8 +100,8 @@ public:
 extern "C" int func_80203138(CEquipChange* self);
 extern "C" int func_802031A0(CEquipChange* self);
 
-// C++ linkage so MWCC mangles to the retail symbol func_80137444__FPQ34nw4r3lyt13AnimTransformf.
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+// C++ linkage so MWCC mangles to the retail symbol advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // Cast-only view of the layout object at field_34 (vtable slot 11 = +0x2C,
 // method (arg, mode)). A real virtual call makes MWCC load the vtable into
@@ -576,7 +576,7 @@ extern "C" void func_80043D90(void*);
 extern "C" void* func_80043F18(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* objMove);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" int func_80287D58(CEquipItemBox* box);

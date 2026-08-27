@@ -115,7 +115,7 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 void __dt__9IUIWindowFv(void* self, int flags);
 void __dl__FPv(void* p);
-// Unmangled in retail (unlike func_80137444's mangled form).
+// Unmangled in retail (unlike advanceAnimTransform's mangled form).
 u32 func_80137510(nw4r::lyt::AnimTransform* anim, float f1);
 // Layout/message/input helpers used by the file-load completion handler.
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
@@ -138,10 +138,10 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 }
 
 // C++-linkage helpers (retail symbols are their MWCC-mangled forms).
-u32 func_80137444(nw4r::lyt::AnimTransform* anim, float f1);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float f1);
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep

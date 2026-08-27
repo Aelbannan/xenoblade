@@ -277,13 +277,13 @@ extern "C" const void* lbl_eu_80661BE8;   // __dynamic_cast dst typeinfo
 // In-TU function, C-linkage so the call reloc is the retail name.
 extern "C" void* func_80098694(cf::CtrlPc* self);
 extern "C" u32 func_80098B74(int index);
-// func_800BFC68(CfObjectMove*) (retail mangled name
-// func_800BFC68__FPQ22cf12CfObjectMove); proper C++ decl so MWCC emits the
+// getCfObjectPc(CfObjectMove*) (retail mangled name
+// getCfObjectPc__FPQ22cf12CfObjectMove); proper C++ decl so MWCC emits the
 // retail reloc. Returns the player object (CtrlPlayerObj layout at +0x4).
 namespace cf {
 class CfObjectMove;
 }
-CtrlPlayerObj* func_800BFC68(cf::CfObjectMove* objMove);
+CtrlPlayerObj* getCfObjectPc(cf::CfObjectMove* objMove);
 
 // Global-scope data arrays (MWCC does not mangle global variable names).
 extern u32 lbl_eu_80527E98[];

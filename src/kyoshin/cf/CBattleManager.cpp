@@ -722,7 +722,7 @@ extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" s32 func_8015B130(s32 a, u16 b);
 extern "C" s32 func_801B1C5C(void);
 extern "C" void func_802A30DC(void* pc, s32 v);
-extern void func_800BFC68(cf::CfObjectMove* moveObj);
+extern void getCfObjectPc(cf::CfObjectMove* moveObj);
 
 static const f32 k0_0f = 0.0f;     // lbl_eu_80666DDC
 static const f32 k0_01f = 0.01f;   // lbl_eu_80666DD8
@@ -3472,7 +3472,7 @@ extern "C" s32 func_800EC918(
             eventWorkspace.case260PlayerEvent.field_30 =
                 copyBattleEvent(eventWorkspace.case260PlayerEvent,
                                 eventWorkspace.case260ActorEvent) | 0x4;
-            func_800BFC68(getObjectMove(pc));
+            getCfObjectPc(getObjectMove(pc));
             switch (rand() % 4) {                      // bl rand ; %4 idiom
             case 0: {                                  // .L_800F32A0 knockback
                 s32 k = (s32)(0.5f * vcall_f(pc, SLOT_VF12C));  // f30 = 0.5 (80666DE8)
@@ -4409,7 +4409,7 @@ struct DA0A4_Block {
     u32 w84[13];                   // 0x84..0xBB
 };
 
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void*);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void*);
 extern "C" void func_802A1C68(void*);
 extern "C" void func_802773EC(void*, void*);
 extern "C" void func_802A2EEC(void*);
@@ -4475,7 +4475,7 @@ void func_800DA0A4(void* self_, void* actor_) {
     // Dispatch target: actor flag bit1 selects the arts-data path.
     void* action;
     if (actor->flags_3F00 & 0x02) {
-        DA0A4_Actor* artsOwner = (DA0A4_Actor*)func_800BFC68__FPQ22cf12CfObjectMove(
+        DA0A4_Actor* artsOwner = (DA0A4_Actor*)getCfObjectPc__FPQ22cf12CfObjectMove(
             actor ? (void*)&actor->moveSub : (void*)actor);
         if (sub->field_04 != 0) {
             action = (void*)sub->field_04;

@@ -347,7 +347,7 @@ __declspec(noinline) void CSysWinScenarioLog::cbRenderBefore() {
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
-    func_80137038(mpLayout,
+    drawLayout(mpLayout,
                   reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(
         reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
@@ -381,7 +381,7 @@ void CSysWinScenarioLog::Move() {
             func_8027EA6C(this);
             break;
         case 1:
-            if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(mpAnim, lbl_eu_80668AD0) != 0) {
+            if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(mpAnim, lbl_eu_80668AD0) != 0) {
                 mState = 2;
             }
             break;
@@ -395,8 +395,8 @@ void CSysWinScenarioLog::Move() {
             }
             if (pressed) {
                 mState = 3;
-                func_80138078__FUl(6);
-                func_80138078__FUl(0xE);
+                playUISound__FUl(6);
+                playUISound__FUl(0xE);
             }
             break;
         }
@@ -428,7 +428,7 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self) {
         return;
     }
     self->mState = 1;
-    func_80138078__FUl(0xd);
+    playUISound__FUl(0xd);
     // (u32) cast pins the extern "C" decl (pluginUi.hpp's C++ int overload
     // would otherwise mangle the reloc to func_8009CF8C__Fi).
     u16 maxId = (u16)func_8009CF8C((u32)0x20);
@@ -1545,9 +1545,9 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
         self->mField94 = (nw4r::lyt::Layout*)tag;
         self->mpAccessor = createArcResourceAccessor__10CLibLayoutFv();
         self->mpAccessor->Attach(fileData, &lbl_eu_8050EE24[0xb1]);
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &self->mpLayout, self->mpAccessor, &lbl_eu_8050EE24[0xb5]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             self->mpLayout, &self->mpAnim, self->mpAccessor, &lbl_eu_8050EE24[0xce]);
         nw4r::lyt::Pane* rootPane = self->mpLayout->GetRootPane();
         void* fontObj = CDeviceFont::getFontInfo(1, self->mpLayout);
@@ -1564,7 +1564,7 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
     }
     if (self->mFileHandle78 == data) {
         void* fileData78 = self->mFileHandle78->getData();
-        func_8003AA78__5CBdatFUlPv(2, fileData78);
+        setBdatEntry__5CBdatFUlPv(2, fileData78);
         func_8003AA34();
         lbl_eu_8066490C = (u32)getFP__FPCc(&lbl_eu_8050EE24[0xea]);
         self->mFileHandle78 = 0;
@@ -1634,7 +1634,7 @@ void CSysWinScenarioLog::Term() {
         }
         mField94 = 0;
     }
-    func_80139124(mpAccessor);
+    releaseArcResourceAccessor(mpAccessor);
     mpAccessor = 0;
     lbl_eu_8066490C = 0;
     mMemRegion.func_8045F778();

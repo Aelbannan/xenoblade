@@ -94,7 +94,7 @@ __attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
     float step = lbl_eu_80668150;
     self->mAnimOffset += step;
     if (self->mAnimOffset < lbl_eu_80668154) return;
-    if (func_80137444(self->mAnimTransform, step)) {
+    if (advanceAnimTransform(self->mAnimTransform, step)) {
         self->mState = 2;
         self->mActive = 1;
     }
@@ -127,8 +127,8 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, path + 0x21);
-        func_80136E84(&mLayout, mAccessor, path + 0x25);
-        func_80136F08(mLayout, &mAnimTransform, mAccessor, path + 0x36);
+        buildLayout(&mLayout, mAccessor, path + 0x25);
+        bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor, path + 0x36);
         mLayout->SetAnimationEnable(mAnimTransform, true);
         mLayout->Animate(0);
 
@@ -172,7 +172,7 @@ void CScrollBar::func_801F34F4() {
 /* Draw the layout once it is ready and the scroll bar is active. */
 void CScrollBar::func_801F35B0(nw4r::lyt::DrawInfo* drawInfo) {
     if (mReady != 0 && mState != 0) {
-        func_80137038(mLayout, drawInfo, 0, 1);
+        drawLayout(mLayout, drawInfo, 0, 1);
     }
 }
 
@@ -187,7 +187,7 @@ void func_801F35DC(CScrollBar* self) {
         delete self->mLayout;
         self->mLayout = 0;
     }
-    func_80139124(self->mAccessor);
+    releaseArcResourceAccessor(self->mAccessor);
     self->mAccessor = 0;
     self->mMemRegion.func_8045F778();
 }

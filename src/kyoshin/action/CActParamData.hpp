@@ -170,7 +170,6 @@ struct CActParamCopyDst2830 {
 struct CActParamCopySrc080C {
     u8 _pad00[0x08];
     float mFloat08;       // 0x08
-    u8 _pad0C[0x0C - 0x0C];
     u8 mByte0C;           // 0x0C
 };
 

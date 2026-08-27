@@ -220,10 +220,10 @@ body:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038(mLayout1, &drawInfo, 0, 1);
-        func_80137038(mLayout2, &drawInfo, 0, 1);
+        drawLayout(mLayout1, &drawInfo, 0, 1);
+        drawLayout(mLayout2, &drawInfo, 0, 1);
         if (mField_A0 != 0) {
-            func_80137038(mLayout3, &drawInfo, 0, 1);
+            drawLayout(mLayout3, &drawInfo, 0, 1);
         }
     }
 }
@@ -301,7 +301,7 @@ int func_8017FD4C(CMenuZeal* self) {
                 result = 1;
                 sound = 0xa9;
             }
-            func_80138078(sound);
+            playUISound(sound);
             self->mField_A1 = 1;
             self->mField_BC = 0;
             self->mField_C4 = 6;
@@ -309,7 +309,7 @@ int func_8017FD4C(CMenuZeal* self) {
         }
     }
 
-    func_80138078(0xaa);
+    playUISound(0xaa);
     self->mField_A1 = 1;
     self->mField_BC = 0;
     self->mField_C4 = 6;

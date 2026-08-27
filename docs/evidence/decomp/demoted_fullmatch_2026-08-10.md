@@ -121,7 +121,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-800d64e4 | kyoshin/cf/CtrlAct | `func_800D59FC` | func_800D59FC | 0x800D64E4 |
 | us-8027ced4 | kyoshin/cf/chain/CChainActorList | `__ct__Q22cf15CChainActorListFv` | cf::CChainActorList::CChainActorList() | 0x8027CED4 |
 | us-8029638c | kyoshin/cf/chain/CChainCombo | `__ct__Q22cf11CChainComboFv` | cf::CChainCombo::CChainCombo() | 0x8029638C |
-| us-8014b2fc | kyoshin/cf/object/CAIAction | `func_8014A8F8__Fv` | func_8014A8F8() | 0x8014B2FC |
+| us-8014b2fc | kyoshin/cf/object/CAIAction | `clearAIActionTable__Fv` | func_8014A8F8() | 0x8014B2FC |
 | us-8017ea9c | kyoshin/cf/object/CActorParam | `CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv` | cf::CActorParam::CActorParam_UnkVirtualFunc58() | 0x8017EA9C |
 | us-8017eaa8 | kyoshin/cf/object/CActorParam | `CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv` | cf::CActorParam::CActorParam_UnkVirtualFunc64() | 0x8017EAA8 |
 | us-800af3c0 | kyoshin/cf/object/CfObjectEne | `CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv` | cf::CActorParam::CActorParam_UnkVirtualFunc114() | 0x800AF3C0 |

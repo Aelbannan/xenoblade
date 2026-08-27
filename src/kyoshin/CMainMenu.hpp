@@ -81,7 +81,8 @@ public:
     void Init();
     void Term();
     void cbRenderBefore();
-    int isMenuOpen();
+    int isAnyMenuOpen();
+    inline int isMenuOpen() { return isAnyMenuOpen(); }
     void func_800FEB14(float* pos);
 
     // CProcess layout (inherited, 0x00-0x3C):
@@ -186,6 +187,7 @@ extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
 extern "C" bool isMenuOpen__9CMainMenuFv();
+extern "C" bool isAnyMenuOpen__9CMainMenuFv();
 
 // Menu singleton/state guards (defined in their owning menu TUs)
 extern "C" u32 func_80167A18();   // item menu active (CMenuItem.cpp)
@@ -230,8 +232,8 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void* _this);
 
 // Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
-extern "C" int func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80138078__FUl(u32);
+extern "C" int advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" void playUISound__FUl(u32);
 extern "C" void func_801D216C(void* cur, u8 flag);
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 

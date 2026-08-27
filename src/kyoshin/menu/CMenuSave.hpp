@@ -98,7 +98,7 @@ extern "C" void func_8028F4AC(CSaveLoad* self);
 extern "C" void func_8028F6DC(CSaveLoad* self);
 extern "C" void func_80240420();
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 
 // Additional C-ABI imports used by the Move/cbRenderBefore/Init handlers
 // (retail symbols are unmangled / non-namespace, so C linkage is required).
@@ -126,7 +126,7 @@ extern "C" void func_8028F7D0(CSaveLoad* self);
 extern "C" void func_8028F904(CSaveLoad* self);
 extern "C" void func_8028FA54(CSaveLoad* self);
 extern "C" void func_8028FB20(CSaveLoad* self);
-extern "C" void func_8028F23C__9CSaveLoadFv(CSaveLoad* self);
+extern "C" void loadSaveData__9CSaveLoadFv(CSaveLoad* self);
 extern "C" int func_800FEDF8();
 extern "C" void func_800FF914();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);

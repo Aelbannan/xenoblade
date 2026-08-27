@@ -755,7 +755,7 @@ void CWorkThread::wkStandby(){
             }
         }
     }else{
-        if(wkStandbyExceptionRetry(mExceptionWorkID)){
+        if(handleExceptionRetry(mExceptionWorkID)){
             // Inlined getWorkThread(WORK_ID): sbss table lookup.
             CWorkThread* pExceptionThread = nullptr;
             if(mExceptionWorkID != INVALID_WORK_ID){
@@ -817,6 +817,8 @@ bool CWorkThread::wkStandbyLogout(){
     return true;
 }
 
+bool CWorkThread::handleExceptionRetry(unsigned long) {}
+
 void CWorkThread::wkUpdate(){}
 
 #pragma dont_inline on
@@ -873,7 +875,7 @@ IWorkEventVtbl lbl_eu_8056B110 = {
     (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
     (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CWorkThreadFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    (u32)&wkStandbyLogout__11CWorkThreadFv, (u32)&handleExceptionRetry__11CWorkThreadFUl,
 };
 
 // sAllocHandle (mtl::ALLOC_HANDLE, initialized to INVALID_HANDLE 0xFFFFFFFF)

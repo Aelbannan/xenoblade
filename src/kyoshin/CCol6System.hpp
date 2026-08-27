@@ -351,10 +351,10 @@ class CCol6Fade;
 // C++-linkage (mangled retail symbols) declared with the unmangled identifier
 // so MWCC derives the retail mangled name (moved from code_80135FDC.hpp, which
 // this unit no longer includes).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage imports (retail symbols are unmangled - keep linkage verbatim)
 extern "C" {
@@ -447,17 +447,17 @@ int sprintf(char*, const char*, ...);                                // stdio (C
 }
 
 // Layout-build / font helpers whose retail symbols are already mangled
-// (func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc
+// (buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc
 // etc.); declare with the full mangled name so the call-site relocs bind
 // verbatim (same convention as CItemBoxGrid.hpp / CTalkWindow.hpp).
 extern "C" {
-void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
     const char* arcName);
-void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnim,
     nw4r::lyt::ArcResourceAccessor* accessor, char* animName);
-void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout* layout,
+void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout* layout,
                                             char* paneName, u8 value);
 void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
@@ -465,13 +465,13 @@ void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
 
 // C++-linkage (mangled retail symbols) anim/layout helpers - MUST stay
 // outside the extern "C" block so MWCC mangles them (retail reloc names
-// func_80137444__FPQ34nw4r3lyt13AnimTransformf / func_80138078__FUl).
+// advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf / playUISound__FUl).
 // NOTE: func_80137510 is NOT in this group - retail keeps the bare unmangled
 // symbol, so it is declared extern "C" below.
-void func_801368C0(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
-int func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
+void setLayoutTextBoxFont(nw4r::lyt::Layout* layout, char* paneName, u32 value); // code_80135FDC.cpp (mangled __FPQ34nw4r3lyt6LayoutPcUl)
+int advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" int func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
-void func_80138078(u32 soundId);
+void playUISound(u32 soundId);
 
 // Split1 .rodata string pool (arc paths / layout region names / format strings).
 extern char lbl_eu_80502050[];

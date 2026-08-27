@@ -263,7 +263,7 @@ void CMenuLandTelop::Move() {
         }
         case 3:
             // Banner finished animating in: consume the next queued entry.
-            if (func_80137444(field_88, lbl_eu_806673CC)) {
+            if (advanceAnimTransform(field_88, lbl_eu_806673CC)) {
                 if (func_801453B8(this) != 0) return;
                 field_64 = 1;
             }
@@ -279,11 +279,11 @@ void CMenuLandTelop::Move() {
                 field_98 = func_8014A2A0();
                 if (field_98 != 0 && func_8014A2B4() == 0) return;
             }
-            func_80138078(0x8b);
+            playUISound(0x8b);
             field_90 = 1;
             break;
         case 1:
-            if (func_80137444(field_88, lbl_eu_806673CC)) field_90 = 2;
+            if (advanceAnimTransform(field_88, lbl_eu_806673CC)) field_90 = 2;
             break;
         case 2:
             field_94 = field_94 + lbl_eu_806673CC;
@@ -319,7 +319,7 @@ void CMenuLandTelop::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(field_54, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(field_54, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -446,9 +446,9 @@ void func_8014548C(CMenuLandTelop* self) {
 
     switch (self->field_8E) {
     case 0:
-        func_80136E84(&self->field_54, func_801355F4(),
+        buildLayout(&self->field_54, func_801355F4(),
                       &lbl_eu_80501720[0x68]);
-        func_80136F08(self->field_54, &self->field_88, func_801355F4(),
+        bindLayoutAnimTransform(self->field_54, &self->field_88, func_801355F4(),
                       &lbl_eu_80501720[0x81]);
 
         // Retail re-derives the root pane inline for every lookup.
@@ -513,9 +513,9 @@ void func_8014548C(CMenuLandTelop* self) {
         }
         break;
     case 1: // field_8E == 1
-        func_80136E84(&self->field_54, func_801355F4(),
+        buildLayout(&self->field_54, func_801355F4(),
                       &lbl_eu_80501720[0x11b]);
-        func_80136F08(self->field_54, &self->field_88, func_801355F4(),
+        bindLayoutAnimTransform(self->field_54, &self->field_88, func_801355F4(),
                       &lbl_eu_80501720[0x134]);
 
         self->field_54->GetRootPane()

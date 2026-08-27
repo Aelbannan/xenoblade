@@ -519,7 +519,8 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     vec.x = p[0];
     vec.y = p[1];
     vec.z = p[2];
-    obj->CfObject_UnkVirtualFunc26((u32)&vec, lbl_eu_80665C40);
+    obj->CfObject_UnkVirtualFunc26(reinterpret_cast<const ml::CVec3*>(&vec),
+                                   lbl_eu_80665C40);
     if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
         func_800BDB4C(obj);
     }
@@ -530,9 +531,12 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     return 0;
 }
 
-extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self) {
-    // Dispatch the "action start" hook, then mark the object as interacted.
-    self->CfObject_UnkVirtualFunc19();
+// Base UVF26: forward the position vector into UVF19, then mark interacted.
+extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self,
+                                                           const ml::CVec3* vec,
+                                                           float amount) {
+    (void)amount;
+    self->CfObject_UnkVirtualFunc19(vec);
     self->mFlags68 |= 0x100;
 }
 
@@ -1845,7 +1849,12 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
                 }
             }
             if (followTarget) {
-                child = ((cf::CfObject*)followTarget)->CfObject_UnkVirtualFunc22();
+                // Retail leaves r4 = followTarget into UVF22, then takes the
+                // post-call r3 (still self) as the bindPartner child.
+                cf::CfObject* ft = (cf::CfObject*)followTarget;
+                ft->CfObject_UnkVirtualFunc22(
+                    reinterpret_cast<const ml::CVec3*>(ft));
+                child = ft;
             }
         }
     }

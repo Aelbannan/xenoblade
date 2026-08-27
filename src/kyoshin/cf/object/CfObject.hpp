@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CObjectParam.hpp"
+#include "monolib/math/CVec3.hpp"
 
 namespace cf {
     class UnkClass_80082D90;
@@ -31,14 +32,21 @@ namespace cf {
         virtual void* CfObject_UnkVirtualFunc16(float value);     //0x90
         virtual void CfObject_UnkVirtualFunc17();     //0x94
         virtual void CfObject_UnkVirtualFunc18();     //0x98
-        virtual void CfObject_UnkVirtualFunc19();     //0x9C
+        // Retail bodies read r4 as a position vector (setEffPosVec_ /
+        // Model/Move/ocUnit UVF19). Fv linker names are uneducated.
+        virtual void CfObject_UnkVirtualFunc19(const ml::CVec3* vec); //0x9C
         virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
-        virtual CfObject* CfObject_UnkVirtualFunc22();     //0xA8 (returns this: impl leaves r3=self)
+        // Same ABI as UVF19 (copy vec into +0x3C). Eff's override is a pure
+        // forward to UVF19 (callVirt19); Model/Move override with extra work.
+        virtual void CfObject_UnkVirtualFunc22(const ml::CVec3* vec); //0xA8
         virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
-        virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
+        // Retail ground-snap / moveEffOfs: (pos, scale) in r4/f1.
+        virtual void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale); //0xB4
+        // Forwards to UVF19 (base) or UVF25 (Eff callVirt25). First arg is a
+        // position vector (u32 casts at call sites are pointers).
+        virtual void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27(void* src);     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
@@ -47,8 +55,10 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
         virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
         virtual float CfObject_UnkVirtualFunc34();     //0xD8
-        virtual void CfObject_UnkVirtualFunc35();     //0xDC
-        virtual void CfObject_UnkVirtualFunc36();     //0xE0
+        // Retail setEffScale_ / Coll UVF35: float in f1 -> +0x60.
+        virtual void CfObject_UnkVirtualFunc35(float value); //0xDC
+        // Retail: lfs f1,0x60(r3); blr — scale getter used to feed UVF35.
+        virtual float CfObject_UnkVirtualFunc36();     //0xE0
         virtual void CfObject_UnkVirtualFunc37();     //0xE4
         virtual void CfObject_UnkVirtualFunc38();     //0xE8
         virtual void CfObject_UnkVirtualFunc39();     //0xEC

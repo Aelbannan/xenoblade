@@ -107,7 +107,7 @@ void func_801C412C(CTitleAHelp* self);
 void func_801C414C(CTitleAHelp* self);
 void func_801C40A0(CTitleAHelp* self);
 void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
-void func_80138078__FUl(u32 op);
+void playUISound__FUl(u32 op);
 int func_8013BE50();
 void func_800453EC(CScn* scene);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);

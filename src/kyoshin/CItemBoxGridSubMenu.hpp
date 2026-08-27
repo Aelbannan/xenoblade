@@ -42,7 +42,7 @@ struct CItemBoxGridSubMenu {
 void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" char lbl_eu_805084BC[];
 extern "C" const float lbl_eu_80668300; // 80.0f
 extern "C" const float lbl_eu_80668304; // 0.0f
@@ -52,7 +52,7 @@ extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
 extern "C" const double lbl_eu_806682F8;
-extern "C" u32 func_801355A0__Fv();
+extern "C" u32 getPackedFont__Fv();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+extern "C" void drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);

@@ -886,9 +886,9 @@ extern "C" void code80135FDC_postIncByte_64080();
 extern "C" void getEntry__5CBdatFUl(u32);
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
-// func_801390E0__FPP11CFileHandle / func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor).
+// closeFileHandle__FPP11CFileHandle / releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor).
 void func_801390E0(CFileHandle** handle);
-void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // Float thresholds used by func_8027EF50's player-range check.
 extern "C" f32 lbl_eu_80668AE0;
@@ -913,7 +913,7 @@ extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, void* res);
 extern "C" char* func_80138F78(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* __ct__CTagProcessor(void* self);
@@ -921,10 +921,10 @@ extern "C" u32 getAllocHandle__10CLibLayoutFv();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
     const char* name);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 
@@ -936,9 +936,9 @@ extern "C" double lbl_eu_80668AD8;
 // CSysWinScenarioLog::Move helpers.
 extern "C" int func_8013BE50();
 extern "C" s32  func_8029A658();
-extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" u32  advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" int  isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;
@@ -954,6 +954,6 @@ extern "C" void __declspec(noinline) func_8027EEF4(u32 self);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
-void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
+void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int arg2, int arg3);
 extern "C" u32 func_800A9D90();

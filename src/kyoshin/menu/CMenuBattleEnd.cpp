@@ -120,16 +120,16 @@ void CMenuBattleEnd::Init() {
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 
     accessor = func_801355F4();
-    func_80136E84(&mLayout, accessor, &lbl_eu_8050E6F8[0xf]);
+    buildLayout(&mLayout, accessor, &lbl_eu_8050E6F8[0xf]);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnim88, accessor, (char*)&lbl_eu_8050E6F8[0x28]);
+    bindLayoutAnimTransform(mLayout, &mAnim88, accessor, (char*)&lbl_eu_8050E6F8[0x28]);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnim8C, accessor, (char*)&lbl_eu_8050E6F8[0x48]);
+    bindLayoutAnimTransform(mLayout, &mAnim8C, accessor, (char*)&lbl_eu_8050E6F8[0x48]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u32 fontResult = func_801355A0();
+    u32 fontResult = getPackedFont();
     func_8013676C(rootPane, fontResult);
 
     mLayout->UnbindAllAnimation();
@@ -137,13 +137,13 @@ void CMenuBattleEnd::Init() {
     switch (mMode) {
     case 1:
         mAnim90 = mAnim88;
-        func_80136910(mLayout, &lbl_eu_8050E6F8[0x68], (u8)mParam);
-        func_80136910(mLayout, &lbl_eu_8050E6F8[0x74], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x68], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x74], (u8)mParam);
         break;
     case 2:
         mAnim90 = mAnim8C;
-        func_80136910(mLayout, &lbl_eu_8050E6F8[0x80], (u8)mParam);
-        func_80136910(mLayout, &lbl_eu_8050E6F8[0x8c], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x80], (u8)mParam);
+        setLayoutTextBoxNumber(mLayout, &lbl_eu_8050E6F8[0x8c], (u8)mParam);
         break;
     default:
         break;
@@ -153,7 +153,7 @@ void CMenuBattleEnd::Init() {
         mLayout->BindAnimation(mAnim90);
         mLayout->SetAnimationEnable(mAnim90, true);
         mLayout->Animate(0);
-        func_80138078(0x2c);
+        playUISound(0x2c);
     }
 
     {
@@ -209,7 +209,7 @@ void CMenuBattleEnd::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
@@ -242,7 +242,7 @@ extern "C" CMenuBattleEnd* func_8026F8B0(CProcess* parent, CScn* scene, u8 mode,
 // reaches the target, drain the next queued entry (if any) to the screen.
 // ---------------------------------------------------------------------------
 extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
-    if (func_80137444(obj->mAnim90, lbl_eu_80668990) == 0) return;
+    if (advanceAnimTransform(obj->mAnim90, lbl_eu_80668990) == 0) return;
 
     obj->mLayout->Animate(0);
     obj->mLayout->UnbindAnimation(obj->mAnim90);
@@ -259,13 +259,13 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
         switch (e->flag) {
         case 1:
             obj->mAnim90 = obj->mAnim88;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x68], e->param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x74], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x68], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x74], e->param);
             break;
         case 2:
             obj->mAnim90 = obj->mAnim8C;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x80], e->param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x8c], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x80], e->param);
+            setLayoutTextBoxNumber(obj->mLayout, &lbl_eu_8050E6F8[0x8c], e->param);
             break;
         default:
             break;
@@ -277,7 +277,7 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
             obj->mLayout->Animate(0);
             e->flag = 0;
             e->param = 0;
-            func_80138078(0x2c);
+            playUISound(0x2c);
             return;
         }
     }

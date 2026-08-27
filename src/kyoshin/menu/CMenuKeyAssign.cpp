@@ -67,7 +67,7 @@ void CMenuKeyAssign::Init() {
     mtl::MemManager::setMemInitFlag(false);
 
     // Build the layout from the arc resource.
-    func_80136E84(&mLayout, func_801355F4(), &lbl_eu_804FDEE8[0xf]);
+    buildLayout(&mLayout, func_801355F4(), &lbl_eu_804FDEE8[0xf]);
 
     // Bind the font: push the font object's pane back onto the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -583,7 +583,7 @@ void CMenuKeyAssign::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 

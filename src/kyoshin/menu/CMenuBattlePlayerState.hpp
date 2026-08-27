@@ -140,7 +140,7 @@ public:
     UnkClass_8045F564 unk64; // 0x64
     CMenuBattlePlayerStateSlot mSlots[3]; // 0x74
     f32 unk7C4; // 0x7c4: full-HP hold timer
-    u8 unk7C8; // 0x7c8: once-guard for func_80138078(0x9a)
+    u8 unk7C8; // 0x7c8: once-guard for playUISound(0x9a)
     u8 unk7C9; // 0x7c9: cbRenderBefore early-out gate (skip render when nonzero)
     u8 pad7CA[0x7CC - 0x7CA];
     char* unk7CC; // 0x7cc: retail embeds lbl_eu_8052C42C

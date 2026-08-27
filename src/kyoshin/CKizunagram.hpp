@@ -1033,16 +1033,16 @@ struct UnkKizunaSelf5949C {
 
 // Same-TU callees (retail links these unmangled).
 extern "C" bool func_802592D8(UnkKizunaSelf592D8* self);
-void func_80258F9C(UnkKizunaSelf58F9C* self);
+extern "C" __declspec(noinline) void func_80258F9C(UnkKizunaSelf58F9C* self);
 // Same-TU callees used by func_80258F9C / the display-reset family.
-bool func_80259DE8(UnkKizunaSelf59DE8* self);
+extern "C" __declspec(noinline) bool func_80259DE8(UnkKizunaSelf59DE8* self);
 extern "C" bool func_8025A11C(UnkKizunaSelfA11C* self);
-extern "C" void func_8025AAE0(void* self);
-void func_8025AB04(UnkKizunaSelfAB* self);
-void func_8025AB84(UnkKizunaSelfAB* self);
-extern "C" void func_8025AC04(void* self);
-void func_80259C5C(UnkKizunaSelf59C5C* self);
-void func_80259D44(UnkKizunaSelf59D44* self);
+extern "C" __declspec(noinline) void func_8025AAE0(void* self);
+extern "C" __declspec(noinline) void func_8025AB04(UnkKizunaSelfAB* self);
+extern "C" __declspec(noinline) void func_8025AB84(UnkKizunaSelfAB* self);
+extern "C" __declspec(noinline) void func_8025AC04(void* self);
+extern "C" __declspec(noinline) void func_80259C5C(UnkKizunaSelf59C5C* self);
+extern "C" __declspec(noinline) void func_80259D44(UnkKizunaSelf59D44* self);
 extern "C" void func_80257EE0(UnkKizunaSelf57EE0* self);
 extern "C" void func_80257B6C(UnkKizunaSelf57B6C* self);
 extern "C" void func_8025CC88(void* self);

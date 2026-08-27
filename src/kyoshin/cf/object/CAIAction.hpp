@@ -116,12 +116,12 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
                                                               cf::CAIActionSlot* inA,
                                                               cf::CAIActionExport* inB);
 
-extern void func_8014A86C(void*);
-extern void func_8014A8F8();
+extern void initAIActionTable(void*);
+extern void clearAIActionTable();
 
 // .sbss object at 0x806641B0 - pointer to the AI action config table
 // (u16 entry count at +0, variable-length entries at +2). Walked by
-// func_8015396C; cleared by func_8014A8F8.
+// func_8015396C; cleared by clearAIActionTable.
 extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* findObjectById(int);        // C++ linkage -> findObjectById__Fi
 

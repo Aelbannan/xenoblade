@@ -333,8 +333,8 @@ void code80135FDC_postIncByte_64080();
 void code80135FDC_setByte_6405B();
 void getEntry__5CBdatFUl(u32);
 void func_80137924(void*, void*, void*, void*);
-void func_80138078__FUl(u32);
-void func_8013B428__FUl(u32);
+void playUISound__FUl(u32);
+void incrementEventCounter__FUl(u32);
 void func_8009D018(u32 owner, u32 flag);
 u32 func_8009CF8C(u32 resourceId);
 void func_8013D55C(char* msg, int a, int b);
@@ -356,7 +356,7 @@ extern "C" void* func_801355BC(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // BDAT archive attach helpers (func_8012278C common-archive branch).
-void func_8003AA78__5CBdatFUlPv(u32, void*);
+void setBdatEntry__5CBdatFUlPv(u32, void*);
 
 // Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the

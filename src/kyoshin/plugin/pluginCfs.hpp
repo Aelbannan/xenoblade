@@ -68,6 +68,7 @@ public:
     virtual void vf_F0() = 0; virtual void vf_F4() = 0;
     virtual void vf_F8() = 0; virtual void vf_FC() = 0;
     virtual void vf_100() = 0; virtual void vf_104() = 0;
+    virtual void vf_108() = 0; virtual void vf_10C() = 0;
     virtual void* getTask();   // vtable slot 0x110 (RTTI consumes slots 0,4)
 };
 

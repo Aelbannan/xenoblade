@@ -192,10 +192,10 @@ int setTrust(VMThread* pThread) {
     int state = 0;
     if (arg4 > 0) {
         state = 0xac;
-        func_80138078__FUl(0x34);
+        playUISound__FUl(0x34);
     } else if (arg4 < 0) {
         state = 0xae;
-        func_80138078__FUl(0x36);
+        playUISound__FUl(0x36);
     }
 
     // Clamp both slot indices into [0, 2].

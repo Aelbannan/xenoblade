@@ -58,7 +58,7 @@ public:
     bool OnFileEvent(CEventFile* pEventFile);
 
     // Draw the tutorial layout when the active flag is set (tail-calls
-    // func_80137038).
+    // drawLayout).
     void func_8029ABB8(nw4r::lyt::DrawInfo* drawInfo);
     // Idempotent start: mark state 1 and fire the 0x8 UI event once.
     void func_8029ACC4();
@@ -114,11 +114,11 @@ public:
 };
 
 // Layout draw helper (retail reloc is the mangled
-// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii).
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Fire a per-window sound/effect event by id (retail reloc
-// func_80138078__FUl; declared with C++ linkage so MWCC mangles it).
-void func_80138078(u32);
+// playUISound__FUl; declared with C++ linkage so MWCC mangles it).
+void playUISound(u32);
 // .sdata2 animation-frame bound shared by the tutorial widget animators.
 extern const float lbl_eu_80668C08;
 
@@ -128,23 +128,23 @@ extern char lbl_eu_80510290[];
 // Shared loaded-BDAT pointer used by the tutorial data loader.
 extern u32 lbl_eu_80664A30;
 
-// Font/sound helpers (retail reloc func_801355A0__Fv; C++ linkage so MWCC
+// Font/sound helpers (retail reloc getPackedFont__Fv; C++ linkage so MWCC
 // mangles the free function).
-u32 func_801355A0();
+u32 getPackedFont();
 
 // Layout text-setter helper: retail reloc is the literal mangled name
-// func_80136910__FPQ34nw4r3lyt6LayoutPcUc; callers see an int-width third
+// setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc; callers see an int-width third
 // parameter (a u8 parameter makes MWCC emit an unsigned-mask argument path
 // that retail does not use).
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*,
                                                         char*, int);
 
 // Remaining helpers from the func_80135FDC translation unit (same signatures
 // as code_80135FDC.hpp so the mangled/unmangled reloc names are unchanged).
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_80137E7C(void*, void*, void*);
 
 // Unmangled retail callees - C ABI. The retail reloc names for these are the
@@ -154,11 +154,11 @@ extern "C" void func_8029B05C(CTutorial* pTutorial);
 
 
 // Layout build helpers (retail relocs are the mangled C++ names).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*,
                    const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 // Root-pane font bind (retail reloc is the literal unmangled name).
 extern "C" void func_8013676C(void*, u32);
 // BDAT field reader (retail reloc is the literal unmangled name).

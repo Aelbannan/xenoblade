@@ -113,7 +113,7 @@ void func_8021A780(CMCCrystalInfo* self)
 void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     if (self->mEnabled) {
-        func_80137038(
+        drawLayout(
             (nw4r::lyt::Layout*)self->mLayout, drawInfo, 0, 1);
     }
 }
@@ -130,8 +130,8 @@ void func_8021A860(CMCCrystalInfo* self)
         delete layout;
         self->mLayout = 0;
     }
-    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor);
-    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mField30);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mField30);
     self->mMemRegion1.func_8045F778();
     self->mMemRegion2.func_8045F778();
 }
@@ -235,7 +235,7 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
     // Slot number text + element image index, coloured with the second pair.
     sprintf(buf, &lbl_eu_80508DF8[0x4c], idx);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
     func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
@@ -335,7 +335,7 @@ void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
 
 __declspec(noinline) void func_8021AF74(CMCCrystalInfo* self)
 {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 2;
         return func_8021B5B4(self);
     }
@@ -343,7 +343,7 @@ __declspec(noinline) void func_8021AF74(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021AFC0(CMCCrystalInfo* self)
 {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 3;
         self->mField51 = 1;
     }
@@ -367,7 +367,7 @@ __declspec(noinline) void func_8021B058(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021B0A4(CMCCrystalInfo* self)
 {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
         self->mField51 = 1;
         self->mState = 0;
     }
@@ -375,7 +375,7 @@ __declspec(noinline) void func_8021B0A4(CMCCrystalInfo* self)
 
 __declspec(noinline) void func_8021B0F0(CMCCrystalInfo* self)
 {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
         self->mField51 = 1;
         self->mState = 3;
     }
@@ -457,7 +457,7 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItem
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
         func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, slots.names[i], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        func_80136910((nw4r::lyt::Layout*)self->mLayout, buf, slots.flags[i]);
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->mLayout, buf, slots.flags[i]);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
         char* s = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
         func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
@@ -554,23 +554,23 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         ((nw4r::lyt::ArcResourceAccessor*)mArcResAccessor)
             ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
 
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             (nw4r::lyt::Layout**)&mLayout,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x194]);
 
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)mLayout,
             (nw4r::lyt::AnimTransform**)&mAnimTransform1,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ab]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)mLayout,
             (nw4r::lyt::AnimTransform**)&mAnimTransform2,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1c5]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)mLayout,
             (nw4r::lyt::AnimTransform**)&mAnimTransform3,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1e4]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)mLayout,
             (nw4r::lyt::AnimTransform**)&mAnimTransform4,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
@@ -586,21 +586,21 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // If a character set is loaded, stamp every text pane with it.
         u32 sh = func_801355BC();
         if (sh != 0) {
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x226], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x232], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x23e], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x24a], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x255], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x260], sh);
-            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x26b], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x226], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x232], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x23e], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x24a], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x255], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x260], sh);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x26b], sh);
             char buf[0x20];
             for (u8 i = 1; i <= 8; i++) {
                 sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
-                func_801368C0((nw4r::lyt::Layout*)mLayout, buf, sh);
+                setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, buf, sh);
                 sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
-                func_801368C0((nw4r::lyt::Layout*)mLayout, buf, sh);
+                setLayoutTextBoxFont((nw4r::lyt::Layout*)mLayout, buf, sh);
             }
         }
 

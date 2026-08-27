@@ -1977,7 +1977,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/coli/code_804A6C60.cpp"),
             Object(NonMatching, "monolib/src/coli/CColiProc.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804B2FF0.cpp"),
-            Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp", mw_version="GC/3.0a5.2"),  # EXPERIMENT(us-804bbf30): retail bit-set schedule (lwzx before slw, single li r3,1) not reproduced under default flags
+            Object(NonMatching, "monolib/src/coli/code_804B59C8.cpp"),
             Object(NonMatching, "monolib/src/coli/code_804BAE10.cpp"),
             Object(NonMatching, "monolib/src/scn/code_804BC9EC.cpp"),
             Object(NonMatching, "monolib/src/scn/code_804BD8E8.cpp"),
@@ -2032,9 +2032,11 @@ config.libs = [
         "asm_dir": config.out_path() / "asm",
         "objects": [
             Object(Matching, "split1.s"),
-            Object(Matching, "criware_data.s"),
+            # criware_data.s absorbed into owning CriWare TUs (plan:
+            # .scratch/criware_data_plan.json); splits ranges moved 2026-08-28.
             Object(Matching, "nw4r_data.s"),
-                                    Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
+            # monolibdata1e absorbed into monolib/src/util/CStopwatchUtil.cpp
+            # (lbl_eu_80657238 .bss 0x80657238-0x806574B8)
         ],
     },
 ]
@@ -2072,9 +2074,10 @@ config.progress_categories = [
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`
 config.progress_report_args = [
-    # Marks relocations as mismatching if the target value is different
-    # Default is "functionRelocDiffs=none", which is most lenient
-    # "--config functionRelocDiffs=data_value",
+    # Marks relocations as mismatching if the target value is different.
+    # Must match coop.json so report.json / ninja progress agree with cycle.
+    "--config",
+    "functionRelocDiffs=data_value",
 ]
 
 if args.mode == "configure":

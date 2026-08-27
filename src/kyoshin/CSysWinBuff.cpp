@@ -70,7 +70,7 @@ extern "C" void* __dt__11CSysWinBuffFv(CSysWinBuff* _this, int flags) {
 extern "C" bool func_80274A84(CSysWinBuff* self, CEventFile* pEventFile) {
     if (self->mFileHandle == pEventFile->mFileHandle) {
         void* data = self->mFileHandle->getData();
-        func_8003AA78__5CBdatFUlPv(2, data);
+        setBdatEntry__5CBdatFUlPv(2, data);
         func_8003AA34();
         lbl_eu_806648E4 = (u32)getFP__FPCc(&lbl_eu_8050EBC4[0x22]);
         self->mFileHandle = 0;

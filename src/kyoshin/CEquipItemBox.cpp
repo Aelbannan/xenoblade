@@ -27,7 +27,7 @@ extern "C" void* func_80157C4C(u8, s16);
 // u32 form is declared here to avoid a call-site mask. Kept local like
 // func_80157C4C (the sibling headers disagree on the signature).
 extern "C" void func_801D47D4(CItemBoxInfo*, u16, void*, u32);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Pane-visibility helpers (C-ABI retail symbols; declared in CEquipItemBox.hpp
 // with extern "C" so MWCC emits the plain names).
@@ -1266,9 +1266,9 @@ void* __dt__80285954(void* self, int mode) {
 
 // func_80285994 (us-80287e18): layout-cursor setup. Retail calls (relocs now
 // resolved -- the old comment's "MetroTRK/undecompiled-TU" blocker is stale):
-//   1. func_80136E84(&mpLayout, mArcResAcc, "mf00_reg00_curs07.brlyt")
-//   2. func_80136F08(mpLayout, &mpAnimTrans0, mArcResAcc, "..._roop.brlan")
-//   3. func_80136F08(mpLayout, &mpAnimTrans1, mArcResAcc, "..._on.brlan")
+//   1. buildLayout(&mpLayout, mArcResAcc, "mf00_reg00_curs07.brlyt")
+//   2. bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, "..._roop.brlan")
+//   3. bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, "..._on.brlan")
 //   4. virtual slot 36 (vtable+0x24) on mpLayout
 //   5. func_80285B70(cur)
 // The name strings are pooled at lbl_eu_8050EFDC+0x97/0xAF/0xCC.
@@ -1285,14 +1285,14 @@ struct CEIBCurLayoutVt {
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_80285994(CEIBCur* cur) {
-    func_80136E84((nw4r::lyt::Layout**)&cur->mpLayout,
+    buildLayout((nw4r::lyt::Layout**)&cur->mpLayout,
                   (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
                   &lbl_eu_8050EFDC[0x97]);
-    func_80136F08((nw4r::lyt::Layout*)cur->mpLayout,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)cur->mpLayout,
                   (nw4r::lyt::AnimTransform**)&cur->mpAnimTrans0,
                   (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
                   &lbl_eu_8050EFDC[0xAF]);
-    func_80136F08((nw4r::lyt::Layout*)cur->mpLayout,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)cur->mpLayout,
                   (nw4r::lyt::AnimTransform**)&cur->mpAnimTrans1,
                   (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
                   &lbl_eu_8050EFDC[0xCC]);
@@ -1307,7 +1307,7 @@ void CEIBCur::func_80285A18() {
     if (mpLayout == nullptr) return;
     switch (mVisible) {
     case 0:
-        func_80137444((nw4r::lyt::AnimTransform*)mpAnimTrans0, lbl_eu_80668B28);
+        advanceAnimTransform((nw4r::lyt::AnimTransform*)mpAnimTrans0, lbl_eu_80668B28);
         break;
     case 1:
         func_80285B24();
@@ -1322,7 +1322,7 @@ extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
     if (layout == nullptr) return;
     if (self->mActive == 0) return;
-    func_80137038(layout, drawInfo, 0, 1);
+    drawLayout(layout, drawInfo, 0, 1);
 }
 #pragma pop
 
@@ -1349,7 +1349,7 @@ extern "C" __declspec(noinline) void func_80285ABC(CEIBCur* self) {
 void CEIBCur::func_80285B24() {
     // Advance the layout's animation; when the animation finishes, hide the
     // cursor and update the page state.
-    if (func_80137444((nw4r::lyt::AnimTransform*)mpAnimTrans1, lbl_eu_80668B28) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)mpAnimTrans1, lbl_eu_80668B28) != 0) {
         mVisible = 0;
         func_80285B70(this);
     }
@@ -1385,12 +1385,12 @@ extern "C" __declspec(noinline) void* __dt__80285C44(void* self, int mode) {
     return self;
 }
 
-// Bind the cursor's layout and entry animation (func_80136E84/F08), position
+// Bind the cursor's layout and entry animation (buildLayout/F08), position
 // the two named panes at their .sdata2 offsets, unbind all layout animations,
 // then hand the cursor to the deactivation helper (func_80285B70).
 extern "C" void func_80285C84(CEIBCur* self) {
-    func_80136E84((nw4r::lyt::Layout**)&self->mpLayout, (nw4r::lyt::ArcResourceAccessor*)self->mArcResAcc, &lbl_eu_8050EFDC[0xe7]);
-    func_80136F08((nw4r::lyt::Layout*)self->mpLayout, (nw4r::lyt::AnimTransform**)&self->mpAnimTrans0, (nw4r::lyt::ArcResourceAccessor*)self->mArcResAcc, &lbl_eu_8050EFDC[0xff]);
+    buildLayout((nw4r::lyt::Layout**)&self->mpLayout, (nw4r::lyt::ArcResourceAccessor*)self->mArcResAcc, &lbl_eu_8050EFDC[0xe7]);
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->mpLayout, (nw4r::lyt::AnimTransform**)&self->mpAnimTrans0, (nw4r::lyt::ArcResourceAccessor*)self->mArcResAcc, &lbl_eu_8050EFDC[0xff]);
 
     float vec1[3];
     float vec2[3];
@@ -1581,7 +1581,7 @@ extern "C" void func_80286264(CEquipItemBox* self) {
 extern "C" void func_80286340(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->unk_40 == 0) return;
     if (self->unk_41 == 0) return;
-    func_80137038(self->field_38, drawInfo, 0, 1);
+    drawLayout(self->field_38, drawInfo, 0, 1);
     func_801D31F8(&self->_padSortMenu[0], drawInfo);
     u8 v = self->field_2026[0x35b];
     u8 x = (v != 0) ? v : 1;
@@ -1609,16 +1609,16 @@ extern "C" void func_80286340(CEquipItemBox* self, nw4r::lyt::DrawInfo* drawInfo
 // then tear down the embedded cursors, sort menu and both system windows.
 extern "C" void func_80286454(CEquipItemBox* self) {
     getEntry__5CBdatFUl(5);
-    func_801390E0__FPP11CFileHandle(&self->field_24);
-    func_801390E0__FPP11CFileHandle(&self->field_28);
-    func_801390E0__FPP11CFileHandle(&self->field_2C);
+    closeFileHandle__FPP11CFileHandle(&self->field_24);
+    closeFileHandle__FPP11CFileHandle(&self->field_28);
+    closeFileHandle__FPP11CFileHandle(&self->field_2C);
     self->unk_40 = 0;
     if (self->field_38) {
         delete self->field_38;
         self->field_38 = 0;
     }
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_30);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_34);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_30);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_34);
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0]);
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
     func_80285ABC((CEIBCur*)((u8*)self + 0x44));
@@ -1679,7 +1679,7 @@ void CEquipItemBox::func_802866E8() {
     unk_1fe = 0;
     func_80289E70(this);
     unk_40 = 1;
-    func_80138078__FUl(0x6d);
+    playUISound__FUl(0x6d);
 }
 
 // Close the box when the entry animation (unk_41 == 2) has finished: reset
@@ -1693,7 +1693,7 @@ void CEquipItemBox::func_80286740() {
     unk_43 = 0;
     unk_58 = 0;
     pagecur[0x14] = 0;
-    func_80138078__FUl(0x6);
+    playUISound__FUl(0x6);
     nw4r::lyt::Pane* pane =
         field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (pane != 0) {
@@ -1713,7 +1713,7 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
         self->unk_374 = val;
         if ((s8)(u8)val < 0) self->unk_374 = 1;
         func_80289CC0(self);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
 
@@ -1758,7 +1758,7 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
             func_80289AA4(self);
         }
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Down/confirm handler: page the syswin sub-window forward, finish the sort
@@ -1772,7 +1772,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
             self->unk_374 = v;
             if ((s8)v > 1) self->unk_374 = 0;
             func_80289CC0(self);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
         return;
     }
@@ -1782,7 +1782,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             func_801D3454(&tmp, &self->_padSortMenu[0]);
             ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
             return;
         }
         // Scroll finished: retail falls through to the name-pane dispatch.
@@ -1805,7 +1805,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
         func_801CB9D8(&tmp2, arr,
                       (u8)((s8)self->unk_377 + (s8)self->unk_376 * 4));
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     u8 v = self->unk_1f5 + 1;
@@ -1815,7 +1815,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
     }
     func_80289CC0(self);
     func_80289AA4(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Up/back handler: mirror of func_802869B4 - pages backward through the
@@ -1829,7 +1829,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             func_801D3454(&tmp, &self->_padSortMenu[0]);
             ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
         return;
     }
@@ -1851,7 +1851,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         func_801CB9D8(&tmp2, arr,
                       (u8)(self->unk_377 + (s8)self->unk_376 * 4));
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if ((s8)self->unk_1f5 == -1) {
@@ -1873,7 +1873,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         func_80289CC0(self);
         func_80289AA4(self);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Equip-box button dispatch (down/confirm handler): while both system windows
@@ -1892,7 +1892,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp;
         func_801D3454(&tmp, &self->_padSortMenu[0]);
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (self->unk_375 != 0) {
@@ -1911,7 +1911,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         func_801CB9D8(&tmp2, arr, (u8)(self->unk_377 + (s8)self->unk_376 * 4));
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if ((s8)self->unk_1f5 == -1) {
@@ -1932,7 +1932,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
         func_80289CC0(self);
         func_80289AA4(self);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma pop
 
@@ -1954,7 +1954,7 @@ __declspec(noinline) void CEquipItemBox::func_80286F6C() {
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
-        func_80138078__FUl(0xa);
+        playUISound__FUl(0xa);
     }
 }
 #pragma pop
@@ -1975,7 +1975,7 @@ extern "C" __declspec(noinline) void func_80287024(CEquipItemBox* self) {
     u8 c = grid->_pad2003;
     u8 v = (c != 0) ? c : 1;
     if (v != 1) {
-        func_80138078__FUl(0xa);
+        playUISound__FUl(0xa);
     }
 }
 
@@ -1993,7 +1993,7 @@ extern "C" void func_802870DC(CEquipItemBox* self) {
         self->unk_58 = 1;
         func_801D216C(&self->ccur18[0], 0);
         func_801D3408(&self->_padSortMenu[0]);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         return;
     }
     if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
@@ -2014,7 +2014,7 @@ extern "C" void func_802870DC(CEquipItemBox* self) {
     func_801D216C(&self->ccur18[0], 1);
     func_801D3330(&self->_padSortMenu[0]);
     self->unk_1f6 = 0;
-    func_80138078__FUl(2);
+    playUISound__FUl(2);
 }
 #pragma pop
 
@@ -2059,7 +2059,7 @@ extern "C" void func_80287250(CEquipItemBox* self, int param) {
         self->unk_378 = 0;
     }
     if (param == 0) {
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     }
 }
 #pragma pop
@@ -2214,7 +2214,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
             }
         }
         if (found == 0) {
-            func_80138078__FUl(5);
+            playUISound__FUl(5);
             return;
         }
         u8 sel = list->field_D8;
@@ -2228,13 +2228,13 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
         func_801CB9D8(&tmp, &list->field_00[0], sel);
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
         self->unk_378 = 1;
-        func_80138078__FUl(2);
+        playUISound__FUl(2);
         return;
     }
     // Invisible pane: show it (unless syswin2 is busy), then sound state 2.
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
     func_80124270(pane, 1);
-    func_80138078__FUl(2);
+    playUISound__FUl(2);
 }
 #pragma pop
 
@@ -2354,7 +2354,7 @@ extern "C" u32 func_80288544(CEquipItemBox* self) {
 
 // us-8028ab5c: guarded teardown -- skips while the sort/syswin sub-objects are
 // busy; on success flags unk_1f5 = -1 and runs the close sequence
-// (func_80289CC0, func_80289AA4, func_80138078(2)).
+// (func_80289CC0, func_80289AA4, playUISound(2)).
 extern "C" void func_802886D8(CEquipItemBox* self) {
     if ((s8)self->unk_1f5 == -1) return;
     if (self->unk_375 != 0) return;
@@ -2364,7 +2364,7 @@ extern "C" void func_802886D8(CEquipItemBox* self) {
     self->unk_1f5 = -1;
     func_80289CC0(self);
     func_80289AA4(self);
-    func_80138078__FUl(2);
+    playUISound__FUl(2);
 }
 
 // State probe used by the HUD/button layer: returns a code describing what
@@ -2452,7 +2452,7 @@ extern "C" int func_80288948(CEquipItemBox* self) {
 // Play the entry animation at 0x3C; when it completes mark the cursors active.
 extern "C" __declspec(noinline) void func_802889C0(CEquipItemBox* self) {
     float f = lbl_eu_80668B28;
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->field_3C, f) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->field_3C, f) != 0) {
         self->unk_41 = 2;
         self->unk_43 = 1;
         self->unk_58 = 1;
@@ -2761,7 +2761,7 @@ extern "C" __declspec(noinline) void func_80289500(CEquipItemBox* self, int a) {
     func_801D47D4((CItemBoxInfo*)self->unk_20c, self->unk_1fc, item2, 1);
     func_801D4AE0((CItemBoxInfo*)self->unk_20c, 1, func_80283350(grid, idx2));
     u32 x = func_80282D60(grid);
-    func_80136910(self->field_38, &lbl_eu_8050EFDC[0x27c], (u8)x);
+    setLayoutTextBoxNumber(self->field_38, &lbl_eu_8050EFDC[0x27c], (u8)x);
     func_80289754(self);
     func_80289AA4(self);
     func_80289E70(self);
@@ -2793,7 +2793,7 @@ void CEquipItemBox::func_80289754() {
             nw4r::lyt::Pane* p = field_38->GetRootPane()->FindPaneByName(buf1, true);
             func_80124270(p, (u8)i < pages);
         }
-        func_80136910(field_38, &lbl_eu_8050EFDC[0x29b], (u8)((u8)grid->idx + 1));
+        setLayoutTextBoxNumber(field_38, &lbl_eu_8050EFDC[0x29b], (u8)((u8)grid->idx + 1));
         nw4r::lyt::Pane* cur =
             field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x2a4], true);
         // Move the cursor pane: start from the base position at +0x200 and
@@ -3013,7 +3013,7 @@ extern "C" __declspec(noinline) void func_8028A0E0(CEquipItemBox* self) {
     }
     func_8028A5D8(self, 0);
     func_80289500(self, 0);
-    func_80138078__FUl(0x70);
+    playUISound__FUl(0x70);
 }
 #pragma pop
 
@@ -3028,7 +3028,7 @@ extern "C" __declspec(noinline) void func_8028A160(CEquipItemBox* self) {
     }
     func_8028A5D8(self, 1);
     func_80289500(self, 0);
-    func_80138078__FUl(0x70);
+    playUISound__FUl(0x70);
 }
 
 // Rebuild the sort-menu page list after a page change: for each of the 6 page
@@ -3351,8 +3351,8 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     char* str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xb);
     sprintf(buf, base + 0x618, rateA, str, rateB);
     func_80136A1C(self->field_38, base + 0x522, buf, 0);
-    func_80136910(self->field_38, base + 0x546, (u8)name72);
-    func_80136910(self->field_38, base + 0x552, (u8)name7a);
+    setLayoutTextBoxNumber(self->field_38, base + 0x546, (u8)name72);
+    setLayoutTextBoxNumber(self->field_38, base + 0x552, (u8)name7a);
     char* n1 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
     char* n2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x80);
     if ((u8)name61) {
@@ -3424,10 +3424,10 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     nameA = func_801361E8(g, base + 0x72, kind2);
     nameB = func_801361E8(g, base + 0x7a, kind2);
     nameC = func_801361E8(g, base + 0x82, kind2);
-    func_80136910(self->field_38, base + 0x546, (u8)nameA);
-    func_80136910(self->field_38, base + 0x552, (u8)nameB);
-    func_80136910(self->field_38, base + 0x55e, (u8)nameC);
-    // Retail reloads lbl_eu_806640F8 here: the three func_80136910 calls
+    setLayoutTextBoxNumber(self->field_38, base + 0x546, (u8)nameA);
+    setLayoutTextBoxNumber(self->field_38, base + 0x552, (u8)nameB);
+    setLayoutTextBoxNumber(self->field_38, base + 0x55e, (u8)nameC);
+    // Retail reloads lbl_eu_806640F8 here: the three setLayoutTextBoxNumber calls
     // above are opaque, so the global must not be cached across them.
     u32 v = func_801361E8(lbl_eu_806640F8, base + 0x17, func_80139358(kind));
     u8 b = (u8)v;
@@ -3767,7 +3767,7 @@ extern "C" int func_8028CBCC(CEquipItemBox* self) {
             CEquipItemBoxMoveEntryView* entry =
                 (CEquipItemBoxMoveEntryView*)func_800F6EC0(list, 0);
             if (entry != 0 && entry->field_4 != 0) {
-                void* moveObj = func_800BFC68__FPQ22cf12CfObjectMove(entry);
+                void* moveObj = getCfObjectPc__FPQ22cf12CfObjectMove(entry);
                 if (kindByte != 3) {
                     // Clear the item from the owning party member's slots.
                     u8 cat = func_801392B4(slot);
@@ -3863,19 +3863,19 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_30 = createArcResourceAccessor__10CLibLayoutFv();
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_30, buf, base + 0x71f);
-        func_80136E84(&field_38, field_30, base + 0x723);
-        func_80136F08(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
+        buildLayout(&field_38, field_30, base + 0x723);
+        bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
         func_8013676C(root, (void*)((CEquipItemBoxFontView*)font)->f9());
-        char* msg = func_801355A0();
-        func_801368C0(field_38, base + 0x29b, (u32)msg);
-        func_801368C0(field_38, base + 0x27c, (u32)msg);
+        char* msg = getPackedFont();
+        setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
+        setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
         char* msg2 = func_801355BC();
         for (u8 i = 1; i <= 0x1e; i++) {
             char buf2[0x20];
             sprintf(buf2, base + 0x219, i);
-            func_801368C0(field_38, buf2, (u32)msg2);
+            setLayoutTextBoxFont(field_38, buf2, (u32)msg2);
         }
         field_38->SetAnimationEnable((nw4r::lyt::AnimTransform*)field_3C, true);
         field_38->Animate(0);
@@ -3952,17 +3952,17 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         __dt__6CCur18Fv(tempCur, -1);
         ((CEquipItemBoxCurMemberView*)&ccur18[0])->vfSlot8();
         char* msg3 = func_801355BC();
-        func_801368C0(field_38, base + 0x522, (u32)msg3);
-        func_801368C0(field_38, base + 0x546, (u32)msg3);
-        func_801368C0(field_38, base + 0x552, (u32)msg3);
-        func_801368C0(field_38, base + 0x52e, (u32)msg3);
-        func_801368C0(field_38, base + 0x53a, (u32)msg3);
-        func_801368C0(field_38, base + 0x55e, (u32)msg3);
-        func_801368C0(field_38, base + 0x5f2, (u32)msg3);
-        func_801368C0(field_38, base + 0x5fe, (u32)msg3);
-        func_801368C0(field_38, base + 0x5af, (u32)msg3);
-        func_801368C0(field_38, base + 0x5be, (u32)msg3);
-        func_801368C0(field_38, base + 0x5cd, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x552, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x52e, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x53a, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x55e, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x5f2, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x5fe, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x5af, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x5be, (u32)msg3);
+        setLayoutTextBoxFont(field_38, base + 0x5cd, (u32)msg3);
         func_80136B4C(field_38, base + 0x4bf, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xa), 0);
         func_80136B4C(field_38, base + 0x4ca, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xd), 0);
         func_80136B4C(field_38, base + 0x4d5, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x11), 0);
@@ -4030,7 +4030,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         fh3->field_4 = 0;
         func_8003AA34();  // retail passes no args (r3 stale from the field_2C load)
         if (getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]) == 0) {
-            func_8003AA78__5CBdatFUlPv(5, buf3);
+            setBdatEntry__5CBdatFUlPv(5, buf3);
         }
         lbl_eu_806649E0 = getFP__FPCc(&lbl_eu_8050EFDC[0x7b9]);
         func_80288AC0(this);

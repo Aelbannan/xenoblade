@@ -270,8 +270,8 @@ extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_8050FF8C[];
 extern "C" void* lbl_eu_806640EC;  // declared u32 in CCollepedia.hpp, void* in CItemBoxLine.hpp -> kept void*
 extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBoxLine.hpp -> kept void*
@@ -322,19 +322,19 @@ extern "C" u8   func_801361E8(u32, const char*, u32);
 extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_80137E7C(void*, const char*, void*);
 extern "C" void func_8013676C(void*, u32);
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void func_8003AA34();
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* __ct__CTagProcessor(void*);
 extern "C" void* getAllocHandle__10CLibLayoutFv(void);
 extern "C" u32  func_801355BC();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void* getFP__FPCc(const char*);
-// C++-linkage (Itanium-mangled retail symbol func_801355A0__Fv).
-u32 func_801355A0();
+// C++-linkage (Itanium-mangled retail symbol getPackedFont__Fv).
+u32 getPackedFont();
 
 /* 28-byte message-format helper table read by func_80296FC0's '%2' handler
    (indexed by the item's kind byte). */

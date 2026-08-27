@@ -553,11 +553,8 @@ void ScnObjGather::Sort() {
 }
 
 void ScnObjGather::Sort(LessThanFunc pOpaFunc, LessThanFunc pXluFunc) {
-    // Retail instantiates the reference-comparator sort here.
-    std::sort<ScnObj**, LessThanFunc&>(mpArrayOpa, mpArrayOpa + mNumScnObjOpa,
-                                       pOpaFunc);
-    std::sort<ScnObj**, LessThanFunc&>(mpArrayXlu, mpArrayXlu + mNumScnObjXlu,
-                                       pXluFunc);
+    std::sort(mpArrayOpa, mpArrayOpa + mNumScnObjOpa, pOpaFunc);
+    std::sort(mpArrayXlu, mpArrayXlu + mNumScnObjXlu, pXluFunc);
 }
 
 void ScnObjGather::DrawOpa(ResMdlDrawMode* pForceMode) {

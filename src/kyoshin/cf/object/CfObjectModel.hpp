@@ -203,8 +203,9 @@ namespace cf {
     void CfObject_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc8();
     void CfObject_UnkVirtualFunc63();
-    void CfObject_UnkVirtualFunc19();
-    CfObjectModel* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
+    void CfObject_UnkVirtualFunc19(const ml::CVec3* vec);
+    // UVF22 sets position (same ABI as UVF19); r3 stays self after the call.
+    void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
     void CfObject_UnkVirtualFunc20();
     u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);
@@ -227,8 +228,10 @@ namespace cf {
     void CfObject_UnkVirtualFunc24();
     void CfObject_UnkVirtualFunc28();
     float CfObject_UnkVirtualFunc31();
-    void CfObject_UnkVirtualFunc35();
-    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc35(float value);
+    void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale);
+    void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount);
+    float CfObject_UnkVirtualFunc36();
     void CfObject_UnkVirtualFunc72();
     };
     // Vtable view of the CfObject-family sub-object at CfObjectModel+0x38

@@ -85,8 +85,8 @@ public:
 };
 } // namespace cf
 
-// UI sound effect (func_80138078__FUl).
-void func_80138078(u32 op);
+// UI sound effect (playUISound__FUl).
+void playUISound(u32 op);
 // func_802124AC helper: init the CBgTex sub-object and arm the state byte.
 // (declared extern "C" above — retail symbol is unmangled)
 
@@ -351,7 +351,7 @@ void CMenuMakeCrystal::Move() {
         if (btn != 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
-                func_80138078(6);
+                playUISound(6);
             }
             st->state = 3;
         }

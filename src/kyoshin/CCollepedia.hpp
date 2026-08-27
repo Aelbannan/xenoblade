@@ -269,7 +269,7 @@ extern "C" const float lbl_eu_806687FC;
 extern "C" const float lbl_eu_80668810;
 extern "C" const float lbl_eu_80668814;
 extern "C" const double lbl_eu_80668818;
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
@@ -296,12 +296,12 @@ extern "C" void func_8022B8B8(void*);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8009EC18(u16, u32);
 extern "C" u32 func_801587E8(u16);
 extern "C" void func_80158118(void*, u16, u32);
-extern "C" void func_8013B428__FUl(u32);
+extern "C" void incrementEventCounter__FUl(u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -324,13 +324,13 @@ extern "C" u32 func_801392E4(u16);                       // item kind lookup
 extern "C" u32 func_8009CF8C(u32);                       // unlock-flag lookup
 extern "C" void* lbl_eu_806640A0;                        // bdat table A
 extern "C" u32 lbl_eu_80664184;                          // default category id
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);  // BDAT archive release
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);  // BDAT archive release
 extern "C" void* func_8003AA34();                        // BDAT table unload
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
     nw4r::lyt::Layout*);                                 // CDeviceFont helper
-// Shared tag string; retail symbol is the MANGLED func_801355A0__Fv, so this
+// Shared tag string; retail symbol is the MANGLED getPackedFont__Fv, so this
 // import must keep C++ linkage (MWCC appends __Fv).
-void* func_801355A0();
+void* getPackedFont();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // CLibLayout accessor
 extern "C" void* func_801355BC();                           // shared tag string
 // Verbatim-mangled import: the real retail CfGameManager controller-type check

@@ -378,10 +378,10 @@ void* __ct__CTagProcessor(void* self);
 u32 getAllocHandle__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
-void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,
     const char* name);
-void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor, char* name);
 CTalkWinPose* func_80496264(CScn* scene, int index);
@@ -391,11 +391,11 @@ void func_8049B59C(nw4r::math::VEC3* out, CTalkWinPose* pose,
 
 // C++-linkage imports (retail emits the mangled forms).
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
-void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
+void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 void* findObjectById(int id);
-u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
-void func_80138078(unsigned long id);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform* anim, float frame);
+void playUISound(unsigned long id);
 
 // The CTalkWindow ctor is a C-ABI global (retail `__ct__CTalkWindow`, no
 // class-length mangling); defined in CTalkWindow.cpp - the factory
@@ -413,7 +413,7 @@ extern char lbl_eu_8052DFA8[]; // CTalkWindow composite vtable (.data)
 extern char lbl_eu_804FFCA4[]; // shared rodata string blob (pane names)
 extern const char* lbl_eu_8052DF70[]; // per-page pane-name table (.data)
 extern f32 lbl_eu_80667278;    // Init tag-proc message scale
-extern f32 lbl_eu_80667284;    // anim frame target (func_80137444)
+extern f32 lbl_eu_80667284;    // anim frame target (advanceAnimTransform)
 extern f32 lbl_eu_80667280;    // 0.0
 extern f32 lbl_eu_8066727C;    // func_8012D3D8 neg-x scale factor
 // func_8012CD38 projection / clamp constants.

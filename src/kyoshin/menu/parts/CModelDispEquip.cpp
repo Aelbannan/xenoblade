@@ -162,7 +162,7 @@ extern "C" void func_801FF82C(CModelDispEquip* self) {
 extern "C" void func_801FF874(CModelDispEquip* self) {
     waitForDrawDone__9CDeviceVIFv();
     for (u8 i = 0; i < 9; i++) {
-        func_801390E0__FPP11CFileHandle(&self->fileSlots[i].handle);
+        closeFileHandle__FPP11CFileHandle(&self->fileSlots[i].handle);
     }
     func_801FFBC4(self, &self->actParamHolder);
     for (u8 i = 0; i < 9; i++) {
@@ -175,7 +175,7 @@ extern "C" void func_801FF874(CModelDispEquip* self) {
             slot->data = 0;
         }
     }
-    func_801390E0__FPP11CFileHandle(&self->modelFileHandle);
+    closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
     u8* md = self->modelData;
     if (md != NULL) {
         func_804CC1D8(lbl_eu_8065FC18, md);
@@ -368,7 +368,7 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
             self->fileSlots[i].data = 0;
         }
     }
-    func_801390E0__FPP11CFileHandle(&self->modelFileHandle);
+    closeFileHandle__FPP11CFileHandle(&self->modelFileHandle);
     // Nested re-tests: each condition reloads modelData from memory.
     if (self->modelData != 0) {
         func_804CC1D8(lbl_eu_8065FC18, self->modelData);
@@ -410,7 +410,7 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
         CModelDispSlot* slot = func_800F6EC0(func_80043F18(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
-            CModelDispActor* actor = func_800BFC68(cfMove);
+            CModelDispActor* actor = getCfObjectPc(cfMove);
             int ready = actor != 0;
             u32 m = 0;
             if (actor != 0) {
@@ -933,7 +933,7 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
         CModelDispSlot* slot = func_800F6EC0(func_80043F18(&lh), 0);
         cf::CfObjectMove* cfMove = slot->field_04;
         if (cfMove != 0) {
-            CModelDispActor* actor = func_800BFC68(cfMove);
+            CModelDispActor* actor = getCfObjectPc(cfMove);
             // Retail initializes res (r5) before idx (r30).
             CModelDispNameParam* res = 0;
             int idx = 0;

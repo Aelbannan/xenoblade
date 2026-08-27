@@ -427,7 +427,7 @@ __declspec(noinline) void func_801BEE74(CMenuItemExchange* self) {
         func_801ED864(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine));
         func_801CAA6C(&self->mItemBoxGrid);
         self->field_5118 = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 
@@ -468,7 +468,7 @@ __declspec(noinline) void func_801BF348(CMenuItemExchange* self) {
             func_801C416C(&self->mTitleAHelp);
             func_801CB28C(&self->mItemBoxGrid);
             self->field_5118 = 5;
-            func_80138078__FUl(0x6d);
+            playUISound__FUl(0x6d);
         }
     }
 }

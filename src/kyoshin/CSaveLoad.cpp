@@ -40,8 +40,8 @@
 
 // External function declarations
 extern "C" void func_801F369C(void*);  // retail symbol is unmangled (CItemBoxLine/COption/CSortMenu.hpp pattern)
-void func_80138078(u32);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void playUISound(u32);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // func_80137510 declared in code_80135FDC.hpp
 extern const float lbl_eu_80668B68;
 extern const float lbl_eu_80668B6C;
@@ -157,11 +157,11 @@ struct UnkPtrHolder {
 // it extern "C" so the call reloc inside func_8028EC28 resolves unmangled.
 
 // Declarations for functions called by initLayout
-void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout,
     nw4r::lyt::ArcResourceAccessor* accessor,
     const char* name);
-void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* layout,
     nw4r::lyt::AnimTransform** ppAnimTrans,
     nw4r::lyt::ArcResourceAccessor* accessor,
@@ -172,18 +172,18 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
 #pragma optimize_for_size on
 void CSLCur::createLayout() {
     // Create layout, then bind two anim transforms and finish via layout vtable
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &mField8,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
         (const char*)&lbl_eu_8050F7CC);
 
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mField8,
         (nw4r::lyt::AnimTransform**)&mFieldC,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
         (char*)&lbl_eu_8050F7CC[0x18]);
 
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mField8,
         (nw4r::lyt::AnimTransform**)&mField10,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
@@ -205,7 +205,7 @@ extern "C" __declspec(noinline) void func_8028EAF8(UnkPtrHolder* self) {
     goto end;
 
 case0:
-    func_80137444((nw4r::lyt::AnimTransform*)self->mField0C, lbl_eu_80668B68);
+    advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mField0C, lbl_eu_80668B68);
     goto end;
 
 case1:
@@ -230,16 +230,16 @@ extern "C" void func_8028E9E0(int /*unused*/, int index, u8 value) {
     ((u8*)lbl_eu_806649F0 + index)[0xE] = value;
 }
 
-void func_80137038(
+void drawLayout(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-// Render layout with null + active guards; tail-calls func_80137038
+// Render layout with null + active guards; tail-calls drawLayout
 // noinline: retail keeps this out-of-line (called from func_8028F3D4).
 extern "C" __declspec(noinline) void func_8028EB70(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mField8;
     if (layout == nullptr) return;
     if (self->mField14 == 0) return;
-    func_80137038(layout, drawInfo, 0, 1);
+    drawLayout(layout, drawInfo, 0, 1);
 }
 
 extern "C" __declspec(noinline) void func_8028EB9C(UnkPtrHolder* self) {
@@ -274,7 +274,7 @@ extern "C" void func_8028EC04(void* arg1, const void* arg2) {
 #pragma dont_inline on
 extern "C" void func_8028EC28(UnkPtrHolder* self) {
     const float f = lbl_eu_80668B68;
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mField10, f) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->mField10, f) != 0) {
         self->mField15 = 0;
         // Use function pointer to prevent inlining
         void (*fn)(UnkPtrHolder*) = func_8028EC74;
@@ -337,10 +337,10 @@ public:
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_8028ED70(UnkED70_Struct* s) {
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &s->mLayout, s->mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
     
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
     
     // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
@@ -400,7 +400,7 @@ extern "C" __declspec(noinline) void func_8028EEC0(CSLCur* self) {
 }
 extern "C" void func_8028EED8(CSLCur* cur) {
     const float f = lbl_eu_80668B68;
-    if (func_80137444((nw4r::lyt::AnimTransform*)cur->mField8, f) != 0) {
+    if (advanceAnimTransform((nw4r::lyt::AnimTransform*)cur->mField8, f) != 0) {
         cur->mFieldC = 2;
         cur->mFieldE = 1;
     }
@@ -577,7 +577,7 @@ void CSaveLoad::loadSaveData() {
 extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField120 == 0) return;
 
-    func_80137038(self->mLayout, drawInfo, 0, 1);
+    drawLayout(self->mLayout, drawInfo, 0, 1);
     func_801F35B0(self->mScrollbar, drawInfo);
 
     // Cursor pane is only drawn while both windows are idle
@@ -595,7 +595,7 @@ extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
     // Sub-layout pointer stored inside the second CSysWin block (+0x114)
     nw4r::lyt::Layout* subLayout = *(nw4r::lyt::Layout**)((char*)&self->mSysWinD4 + 0x40);
     if (subLayout != nullptr) {
-        func_80137038(subLayout, drawInfo, 0, 1);
+        drawLayout(subLayout, drawInfo, 0, 1);
     }
 }
 #pragma pop
@@ -619,7 +619,7 @@ void func_8028F4AC(CSaveLoad* self) {
         self->mLayout = nullptr;
     }
     
-    func_80139124(self->mArcAccessor);
+    releaseArcResourceAccessor(self->mArcAccessor);
     
     if (self->mField130 != nullptr) {
         mtl::MemManager::deallocate(self->mField130);
@@ -708,7 +708,7 @@ extern "C" void func_8028F774(CSaveLoad* p) {
     ((void (*)(CSaveLoad*))func_80290844)(p);
     p->mField3C = 0;
     func_801F369C(p->mScrollbar);
-    func_80138078(6);
+    playUISound(6);
 }
 #pragma optimize_for_size off
 
@@ -730,7 +730,7 @@ void func_8028F7D0(CSaveLoad* self) {
         }
         
         func_802908A4(self);
-        func_80138078(1);
+        playUISound(1);
         return;
     }
     
@@ -765,7 +765,7 @@ void func_8028F7D0(CSaveLoad* self) {
 normalPath:
     func_802908A4(self);
     func_801F3850(self->mScrollbar, self->mField126);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Handle cursor down/right movement in save/load screen.
@@ -785,7 +785,7 @@ void func_8028F904(CSaveLoad* self) {
         }
         
         func_802908A4(self);
-        func_80138078(1);
+        playUISound(1);
         return;
     }
     
@@ -818,7 +818,7 @@ void func_8028F904(CSaveLoad* self) {
 updatePath:
     func_802908A4(self);
     func_801F3850(self->mScrollbar, self->mField126);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Handle cursor movement: if global count >= 3, move cursor back by 3 positions
@@ -848,7 +848,7 @@ void func_8028FA54(CSaveLoad* p) {
 
     func_802908A4(p);
     func_801F3850(p->mScrollbar, p->mField126);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Page-down / advance the save-slot cursor by one entry (wraps every 3 rows).
@@ -884,7 +884,7 @@ extern "C" void func_8028FB20(CSaveLoad* self) {
 
     func_802908A4(self);
     func_801F3850(self->mScrollbar, self->mField126);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Handle window state transitions for save/load screen.
@@ -899,9 +899,9 @@ void func_8028FC18(CSaveLoad* self) {
     if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
         if (CSysWin_isActive(&self->mSysWin98) != 0) {
             if ((s8)self->mField128 == 0) {
-                func_80138078(3);
+                playUISound(3);
             } else {
-                func_80138078(6);
+                playUISound(6);
                 self->mField12C = 0;
             }
             func_8022B8E4(&self->mSysWin98);
@@ -918,7 +918,7 @@ void func_8028FC18(CSaveLoad* self) {
             if (self->mField12C != 0) {
                 self->mField12C = 0;
             }
-            func_80138078(3);
+            playUISound(3);
         }
         return;
     }
@@ -953,7 +953,7 @@ common:
     func_8022B8B8(&self->mSysWin98);
     self->mField128 = 1;
     self->mField121 = 6;
-    func_80138078(3);
+    playUISound(3);
 }
 #pragma pop
 
@@ -992,7 +992,7 @@ void func_8028FECC(CSaveLoad* self) {
     self->mField128 = 1;
     self->mField12C = 1;
     self->mField121 = 6;
-    func_80138078(3);
+    playUISound(3);
 }
 #pragma optimize_for_size off
 
@@ -1020,7 +1020,7 @@ int func_8028FFD4(CSaveLoad* p) {
 }
 
 extern "C" __declspec(noinline) void func_80290094(CSaveLoad* p) {
-    if (func_80137444(p->mAnimTransA, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(p->mAnimTransA, lbl_eu_80668B68) != 0) {
         p->mField121 = 2;
         // Use function pointer to prevent inlining
         void (*fn)(CSaveLoad*) = func_80290844;
@@ -1029,7 +1029,7 @@ extern "C" __declspec(noinline) void func_80290094(CSaveLoad* p) {
 }
 
 extern "C" __declspec(noinline) void func_802900E0(CSaveLoad* p) {
-    if (func_80137444(p->mAnimTransB, lbl_eu_80668B68) != 0) {
+    if (advanceAnimTransform(p->mAnimTransB, lbl_eu_80668B68) != 0) {
         p->mField121 = 3;
         p->mField3C = 1;
         func_802908A4(p);
@@ -1128,7 +1128,7 @@ extern "C" __declspec(noinline) void func_8029022C(CSaveLoad* self) {
         lbl_eu_80662AD0 = 3;
     }
 
-    func_80138078(0x80);
+    playUISound(0x80);
 }
 #pragma pop
 
@@ -1233,7 +1233,7 @@ clear12E:
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
         func_8022B8B8(&self->mSysWinD4);
-        func_80138078(0x7A);
+        playUISound(0x7A);
         return;
     }
 
@@ -1244,7 +1244,7 @@ clear12E:
         func_8022B8B8(&self->mSysWinD4);
         lbl_eu_80662ACC = (u32)(s8)self->mField124;
         self->mField12D = 1;
-        func_80138078(0x28);
+        playUISound(0x28);
         return;
     }
 
@@ -1260,7 +1260,7 @@ clear12E:
     func_8022BFC8(&self->mSysWinD4, 1);
     func_8022B8B8(&self->mSysWinD4);
     lbl_eu_80662ACC = (u32)(s8)self->mField124;
-    func_80138078(0x28);
+    playUISound(0x28);
 }
 #pragma pop
 
@@ -1759,11 +1759,11 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
         accessor, fileData, (const char*)&strBase[0x22e]);
 
     // Create layout and both animation transforms
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
 
     // Font setup: root pane -> font object -> apply font to pane
@@ -1775,32 +1775,32 @@ int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     // Japanese-only caption strings applied to fixed pane names
     char* capJp = (char*)func_801355D8();
     if (capJp != nullptr) {
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x27f], (u32)capJp);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x288], (u32)capJp);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x295], (u32)capJp);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x29e], (u32)capJp);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2ab], (u32)capJp);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2b4], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x27f], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x288], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x295], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x29e], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2ab], (u32)capJp);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2b4], (u32)capJp);
     }
 
     // Localized caption strings applied to fifteen fixed pane names
     char* capLoc = (char*)func_801355BC();
     if (capLoc != nullptr) {
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x30a], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x316], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x322], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x32d], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x33b], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x347], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x353], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x35f], (u32)capLoc);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x36a], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2c1], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2cd], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2d9], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2e5], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2f0], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x2fe], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x30a], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x316], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x322], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x32d], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x33b], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x347], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x353], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x35f], (u32)capLoc);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(self->mLayout, (char*)&strBase[0x36a], (u32)capLoc);
     }
 
     // Function-pointer casts keep MWCC from inlining these same-TU helpers

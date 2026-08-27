@@ -144,7 +144,7 @@ u8 func_80157CD0(u16);
 // clrlwi), so the call-site type is u8 despite the CItem.cpp def using u32;
 // the arg is passed raw (mr r3, rN) so the visible param is u32.
 u8 func_80158068(u32);
-// func_80136910 is declared by the included code_80135FDC.hpp / unit header.
+// setLayoutTextBoxNumber is declared by the included code_80135FDC.hpp / unit header.
 // Retail passes the raw id to func_801392E4 without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
 u32 func_801392E4(u32);
@@ -378,9 +378,9 @@ void CMenuGetItemMulti::Init() {
     }
     mFileHandle = CDeviceFile::readFile(memHandle, &lbl_eu_80504A3C[0x12], workEvent, 0, 0);
 
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &mLayout, func_801355F4(), &lbl_eu_80504A3C[0x2e]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim, func_801355F4(), &lbl_eu_80504A3C[0x47]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
@@ -390,30 +390,30 @@ void CMenuGetItemMulti::Init() {
 
     u32 font = func_801355BC();
     if (font != 0) {
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
 
         font = func_801355BC();
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x8b], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x97], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xa3], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xaf], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xbb], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xc7], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xd3], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xdf], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xeb], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xf7], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x103], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x10f], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x11b], font);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x127], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x8b], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x97], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xa3], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xaf], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xbb], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xc7], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xd3], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xdf], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xeb], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x63], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x6d], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x77], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x81], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0xf7], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x103], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x10f], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x11b], font);
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(mLayout, &lbl_eu_80504A3C[0x127], font);
 
     CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
         mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x63], true));
@@ -922,10 +922,10 @@ body:
         if (CSysWin_isReady(&mSystemWindow[0]) == 0) break;
         if (lbl_eu_80664418 == 0) break;
         field_1F8 = 1;
-        func_80138078__FUl(0x2d);
+        playUISound__FUl(0x2d);
         break;
     case 1:  // opening animation: position the cursor on the active item
-        if (func_80137444(mAnim, lbl_eu_80667E10) == 0) break;
+        if (advanceAnimTransform(mAnim, lbl_eu_80667E10) == 0) break;
         func_801D216C(&mCursor, 1);
         {
             char buf[32];
@@ -1003,7 +1003,7 @@ body:
         if (CSysWin_isActive(&mSystemWindow[0]) == 0) break;
         if ((s8)field_1F4 == 0) {
             field_1F8 = 3;
-            func_80138078__FUl(0x89);
+            playUISound__FUl(0x89);
         } else {
             func_801D216C(&mCursor, 1);
             field_1F8 = 2;
@@ -1097,7 +1097,7 @@ int func_801B45A0(CMenuGetItemMulti* self, CEventFile* event) {
         self->field_208 = reinterpret_cast<u32>(data);
         func_8003AA34();
         if (getFP__FPCc(&lbl_eu_80504A3C[0x3e5]) == 0) {
-            func_8003AA78__5CBdatFUlPv(5, reinterpret_cast<u8*>(self->field_208));
+            setBdatEntry__5CBdatFUlPv(5, reinterpret_cast<u8*>(self->field_208));
         }
         lbl_eu_80664418 = reinterpret_cast<u32>(getFP__FPCc(&lbl_eu_80504A3C[0x3e5]));
         self->mFileHandle = 0;
@@ -1128,7 +1128,7 @@ body:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038(mLayout, &drawInfo, 0, 1);
+        drawLayout(mLayout, &drawInfo, 0, 1);
         func_8022B7C8(&mSystemWindow[0], &drawInfo);
         func_801D20B0(&mCursor, &drawInfo);
     }
@@ -1669,7 +1669,7 @@ void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
         // Inline ternary: branches compute into the arg register (r3), the
         // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
         u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
-        func_80136910(self->mLayout, &lbl_eu_80504A3C[0xeb], func_80158068(id));
+        setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xeb], func_80158068(id));
         // Arms kept uncast: with the u8-typed helper return the ternary is
         // signed-typed, which keeps MWCC's clrlwi+cmpwi dispatch chain.
         u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
@@ -1826,8 +1826,8 @@ __declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2,
     char* midText = func_80136190(&lbl_eu_80504A3C[0x1c1], &lbl_eu_80504A3C[0x182], 11);
     str.format(&lbl_eu_80504A3C[0x527], (u16)w1, midText, (u16)w2);
     func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x8b], str.mString, 0);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v97);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)va3);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v97);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)va3);
 
     // Two more formatted lines: when the lookup byte is set they show the
     // 127/128 rank strings, otherwise the raw byte value.
@@ -1934,16 +1934,16 @@ __declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenu
     // Cache the item-window font pointer in a saved register (retail keeps it
     // in r24 across the pane calls); the rank block below re-reads the global.
     // Results stay full-width (retail saves each with a plain mr; the byte
-    // mask happens only when passed as the u8 arg of func_80136910).
+    // mask happens only when passed as the u8 arg of setLayoutTextBoxNumber).
     u32 itemFont = lbl_eu_806640F8;
     func_801392E4(arg2);
     u32 tableId = func_80139358(arg2);
     u32 v1 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f0], (u16)tableId);
     u32 v2 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x4f8], (u16)tableId);
     u32 v3 = func_801361E8(itemFont, &lbl_eu_80504A3C[0x53a], (u16)tableId);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v1);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)v2);
-    func_80136910(self->mLayout, &lbl_eu_80504A3C[0xc7], (u8)v3);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0x97], (u8)v1);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xa3], (u8)v2);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xc7], (u8)v3);
 
     // Rank-category name for the slotted-item list header. Retail keeps the
     // raw lookup result in a saved reg AND takes a byte view once: the
@@ -2078,7 +2078,7 @@ void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
     u16 v = func_80136254(lbl_eu_806640D8, &lbl_eu_80504A3C[0x554], (u16)itemId2);
     char* rankText = func_80136190(&lbl_eu_80504A3C[0x558], &lbl_eu_80504A3C[0x182], 0xf);
     if (arg3 != 0) {
-        func_80136910(self->mLayout, &lbl_eu_80504A3C[0xdf],
+        setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80504A3C[0xdf],
                       CItem_initItemImplInstances(arg3)->vf90(arg3));
     } else {
         func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0xdf],
@@ -2566,7 +2566,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
         }
         if ((s8)self->mMaxVisibleItems == 5) {
             if (self->mHasSpecialItem != 0) {
-                func_80138078__FUl(5);
+                playUISound__FUl(5);
                 return;
             }
             // Retail materializes the string-pool base once (r30) and offsets
@@ -2586,7 +2586,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             return;
         }
         self->field_1F8 = 4;
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
         return;
     }
 
@@ -2623,7 +2623,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             func_80137924(&pos, pane, refPane, self->mLayout->GetRootPane());
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
         }
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         return;
     }
 
@@ -2698,7 +2698,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             func_80137924(&pos, pane, refPane, self->mLayout->GetRootPane());
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
         }
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
 
@@ -2773,7 +2773,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
             func_80137924(&pos, pane, refPane, self->mLayout->GetRootPane());
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
         }
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
 
@@ -2833,7 +2833,7 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                 }
             }
             if (found == 0) {
-                func_80138078__FUl(5);
+                playUISound__FUl(5);
                 return;
             }
             self->field_20C = 1;
@@ -2848,11 +2848,11 @@ __declspec(noinline) void func_801B82E8(CMenuGetItemMulti* self) {
                 pos = self->mRankSlotPos[sel2];
             }
             reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&pos);
-            func_80138078__FUl(2);
+            playUISound__FUl(2);
             return;
         }
         if (CSysWin_getUnk34(&self->mSystemWindow[0]) == 0) {
-            func_80138078__FUl(5);
+            playUISound__FUl(5);
         }
     }
 }
@@ -2963,7 +2963,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         if (self->mVisibleItemCount == 0) {
             func_801D216C(&self->mCursor, 0);
             self->field_1F8 = 3;
-            func_80138078__FUl(0x89);
+            playUISound__FUl(0x89);
         } else {
             self->field_1F8 = 2;
         }
@@ -3003,7 +3003,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
             if (self->mVisibleItemCount == 0) {
                 func_801D216C(&self->mCursor, 0);
                 self->field_1F8 = 3;
-                func_80138078__FUl(0x89);
+                playUISound__FUl(0x89);
             } else {
                 self->field_1F8 = 2;
             }
@@ -3089,7 +3089,7 @@ __declspec(noinline) void func_801B8E2C(CMenuGetItemMulti* self) {
         if (self->mVisibleItemCount == 0) {
             func_801D216C(&self->mCursor, 0);
             self->field_1F8 = 3;
-            func_80138078__FUl(0x89);
+            playUISound__FUl(0x89);
         } else {
             self->field_1F8 = 2;
         }
@@ -3181,7 +3181,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_80137924(&out, pane, refPane, self->mLayout->GetRootPane());
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0xa;
         func_8022B8E4(&self->mSystemWindow[0]);
@@ -3202,7 +3202,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
         func_80137924(&out, pane, refPane, self->mLayout->GetRootPane());
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
         self->field_1F4 = 1;
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     } else if (maskHeld) {
         self->field_1F4 = self->field_1F4 - 1;
         if ((s8)self->field_1F4 < 0) {
@@ -3211,7 +3211,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
         if ((s8)self->field_1F4 > 1) {
@@ -3220,7 +3220,7 @@ void func_801B9C1C(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     }
 }
 
@@ -3267,7 +3267,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_80137924(&out, pane, refPane, self->mLayout->GetRootPane());
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else if (down) {
         self->field_1F8 = 0x7;
         func_8022B8E4(&self->mSystemWindow[0]);
@@ -3287,7 +3287,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_80137924(&out, pane, refPane, self->mLayout->GetRootPane());
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     } else if (maskHeld) {
         self->field_1F4 = self->field_1F4 - 1;
         if ((s8)self->field_1F4 < 0) {
@@ -3296,7 +3296,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     } else if (curHeld) {
         self->field_1F4 = self->field_1F4 + 1;
         if ((s8)self->field_1F4 > 1) {
@@ -3305,7 +3305,7 @@ void func_801B9864(CMenuGetItemMulti* self) {
         nw4r::math::VEC3 out;
         func_8022C1B4(&out, &self->mSystemWindow[0], self->field_1F4);
         reinterpret_cast<CMenuGetItemMultiCur*>(&self->mCursor)->vfn4(&out);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     }
 }
 

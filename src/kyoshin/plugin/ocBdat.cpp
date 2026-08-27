@@ -149,10 +149,9 @@ void* CBdat::clearEntries() {
     return table;
 }
 
-void* CBdat::func_8003AA78(u32 idx, void* p) {
+void CBdat::setBdatEntry(u32 idx, void* p) {
     lbl_eu_805705D0[idx] = p;
     func_eu_8003B720(p);
-    return p;
 }
 
 void CBdat::getEntry(u32 idx) {

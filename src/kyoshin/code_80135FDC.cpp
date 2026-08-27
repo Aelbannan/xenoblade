@@ -1650,8 +1650,8 @@ extern "C" char* func_8013902C(const char* key) {
     return &lbl_eu_80573BB0[0];
 }
 
-void func_801390E0__FPP11CFileHandle(void** handlePtr) {
-    extern void cancel__11CDeviceFileFP11CFileHandle(void*);
+extern "C" void cancel__11CDeviceFileFP11CFileHandle(void*);
+void closeFileHandle__FPP11CFileHandle(CFileHandle** handlePtr) {
     if (*handlePtr) {
         cancel__11CDeviceFileFP11CFileHandle(*handlePtr);
         *handlePtr = 0;

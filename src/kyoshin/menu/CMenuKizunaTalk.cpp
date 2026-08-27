@@ -95,8 +95,8 @@ void CMenuKizunaTalk::Init() {
 void CMenuKizunaTalk::Term() {
     waitForDrawDone__9CDeviceVIFv();
     getEntry__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle(reinterpret_cast<void**>(&mFile1));
-    func_801390E0__FPP11CFileHandle(reinterpret_cast<void**>(&mFile2));
+    closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile1));
+    closeFileHandle__FPP11CFileHandle(reinterpret_cast<void**>(&mFile2));
 
     mScene->removeRenderCB(this);
 
@@ -110,7 +110,7 @@ void CMenuKizunaTalk::Term() {
         mLayout = 0;
     }
 
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(mArcAccessor);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(mArcAccessor);
     mArcAccessor = 0;
     func_8022B7F4(&mSysWin[0]);
 
@@ -237,7 +237,7 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
         if (self->mLayout == 0) {
             return;
         }
-        func_80138078__FUl(0xd);
+        playUISound__FUl(0xd);
         break;
     case 2:
         if (CSysWin_isReady(&self->mSysWin[0]) == 0) {
@@ -271,7 +271,7 @@ void func_801BD228(CMenuKizunaTalk* self) {
         }
         break;
     case 1:
-        if (func_80137444(self->mAnim, lbl_eu_80667E68) != 0) {
+        if (advanceAnimTransform(self->mAnim, lbl_eu_80667E68) != 0) {
             self->mFieldA0 = 3;
         }
         break;
@@ -320,25 +320,25 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
     case 0:
         if (left != 0) {
             self->mField60 = 2;
-            func_80138078__FUl(3);
+            playUISound__FUl(3);
             self->mFieldA0 = 4;
             func_8022B8E4(&self->mSysWin[0]);
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
             func_8022B8E4(&self->mSysWin[0]);
         }
         break;
     case 1:
         if (left != 0) {
             self->mField60 = 2;
-            func_80138078__FUl(3);
+            playUISound__FUl(3);
             self->mFieldA0 = 4;
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
         break;
     case 2:
@@ -346,7 +346,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             // Cancel: move the cursor page up (wrap below 0 to 1).
             self->mField9C = (s8)(self->mField9C - 1);
             if (self->mField9C < 0) self->mField9C = 1;
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
             u8 tmp[0xC];
             func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
@@ -354,7 +354,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             // Confirm: move the cursor page down (wrap over 1 to 0).
             self->mField9C = (s8)(self->mField9C + 1);
             if (self->mField9C > 1) self->mField9C = 0;
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
             u8 tmp[0xC];
             func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
@@ -363,9 +363,9 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             s8 page = self->mField9C;
             self->mField60 = page + 1;
             if (page == 0) {
-                func_80138078__FUl(0x37);
+                playUISound__FUl(0x37);
             } else {
-                func_80138078__FUl(3);
+                playUISound__FUl(3);
             }
             self->mFieldA0 = 4;
             func_8022B8E4(&self->mSysWin[0]);
@@ -373,7 +373,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
         } else if (right != 0) {
             self->mField60 = 2;
             self->mFieldA0 = 4;
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
             func_8022B8E4(&self->mSysWin[0]);
             func_801D216C(&self->mCur[0], 0);
         }
@@ -468,9 +468,9 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
         self->mArcAccessor = acc;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(acc, data, &lbl_eu_80505118[0x7e]);
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             &self->mLayout, acc, &lbl_eu_80505118[0x82]);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             self->mLayout, &self->mAnim, acc, &lbl_eu_80505118[0x9b]);
 
         nw4r::lyt::Layout* layout = self->mLayout;
@@ -577,7 +577,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
     }
     if (self->mFile2 == handle) {
         void* data2 = self->mFile2->getData();
-        func_8003AA78__5CBdatFUlPv(2, data2);
+        setBdatEntry__5CBdatFUlPv(2, data2);
         func_8003AA34();
         lbl_eu_80664424 = (u8*)getFP__FPCc(&lbl_eu_80505118[0x1e5]);
         self->mFile2 = 0;

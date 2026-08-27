@@ -57,7 +57,7 @@ extern f32 lbl_eu_80667094;   // marker grid scale multiplier
 // the (f32) casts instead of emitting TU-local @N labels.
 extern const f64 lbl_eu_80667098;
 extern const f64 lbl_eu_806670A8;
-extern f32 lbl_eu_806670A4;   // clock anim frame target (func_80137444/80137510 arg)
+extern f32 lbl_eu_806670A4;   // clock anim frame target (advanceAnimTransform/80137510 arg)
 extern f32 lbl_eu_806670B0;   // ctor grid-scale multiplier
 extern f32 lbl_eu_806670B4;   // func_8011B05C SRT rotation constant
 extern f32 lbl_eu_806670BC;   // func_8011B05C scale factor
@@ -107,12 +107,12 @@ struct CMMGlobalGimmick {
 extern "C" CMMGlobalGimmick* getUnk80664658();
 
 // Cross-TU layout/BDAT helpers. Plain C++ declarations so MWCC re-derives the
-// retail mangled names (func_80136E84__FPP... / func_80137038__FPP... / ...).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+// retail mangled names (buildLayout__FPP... / drawLayout__FPP... / ...).
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (func_8003AA34 / getFP__FPCc).
 extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration

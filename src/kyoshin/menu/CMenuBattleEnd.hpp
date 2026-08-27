@@ -110,7 +110,7 @@ extern u32 lbl_eu_8052D238[];       // CMenuBattleEnd primary vtable
 extern u32 lbl_eu_80537AB0[];       // dispatch vtable cluster base
 extern char lbl_eu_8050E6F8[];      // layout/animation/pane name string table
 extern u32 __ptmf_null[];           // null member-function-pointer triple
-extern f32 lbl_eu_80668990;         // anim frame target for func_80137444
+extern f32 lbl_eu_80668990;         // anim frame target for advanceAnimTransform
 extern f32 lbl_eu_80668994;         // anim reset frame for SetFrame
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
@@ -127,8 +127,8 @@ void deleteRegion__17UnkClass_8045F564Fv(void*);
 }
 
 // C++-linkage helpers (retail symbols are their Itanium-mangled forms).
-u32 func_801355A0();
-void func_80138078(u32);
+u32 getPackedFont();
+void playUISound(u32);
 
 // .sbss globals shared with the retail binary (global-scope plain externs keep
 // the unmangled symbol; no extern "C" needed outside a namespace).

@@ -10,7 +10,7 @@ extern "C" void* func_8016FE34(void* r3);
 
 // Accessor teardown helper (code_80135FDC.cpp); retail symbol is the
 // Itanium-mangled name, so declare unmangled.
-void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
 
 // C-linkage imports used by the battle-manager constructor.
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);

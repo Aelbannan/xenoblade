@@ -165,7 +165,7 @@ extern "C" void func_801CAD8C(CItemBoxGrid* self, nw4r::lyt::DrawInfo* drawInfo)
 extern "C" void func_801C3FF0(CTitleAHelp* self);
 extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" int func_8013BE50();
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 
 // Subobject dtors (retail keeps the C++ mangled names) and the game-side
 // CProcess dtor wrapper (defined in CMainMenu.cpp).

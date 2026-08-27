@@ -107,7 +107,7 @@ extern "C" int func_801C4114(CTitleAHelp* self);
 extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" int func_8029C734(COption* self);
 extern "C" void func_8029CB9C(COption* self);
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 
 // Ctor/Init re-init helpers (retail-unmangled callee names - US strips
 // mangling for these __ct__/func_ helpers).

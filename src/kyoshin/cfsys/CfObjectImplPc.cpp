@@ -633,7 +633,7 @@ L_flags:
         // Empty list: chase the player's current target instead.
         cf::CfObjectImplPc18* player =
             reinterpret_cast<cf::CfObjectImplPc18*>(
-                func_800BFC68(cf::CfGameManager::getPlayer(0)));
+                getCfObjectPc(cf::CfGameManager::getPlayer(0)));
         cf::CfObjectImplPc18* tgt = reinterpret_cast<cf::CfObjectImplPc18*>(
             func_8016FE34((u8*)findObjectById((int)player->mSub.sf4C())));
         if (tgt != 0 && tgt->v2BC() == 0) {
@@ -688,7 +688,7 @@ void func_800C6F30(cf::CfObjectImplPc* self, int arg2, int arg3, int arg4)
     if (arg2 != 0 && (u32)arg2 != (u32)self->field_18->field_3F60) {
         return;
     }
-    cf::CfObjectImplPc18* battleObj = func_800BFC68((cf::CfObjectMove*)(
+    cf::CfObjectImplPc18* battleObj = getCfObjectPc((cf::CfObjectMove*)(
         self->field_18 != 0 ? (cf::CfObjectImplPc18*)((u8*)self->field_18 + 0x3E9C)
                             : (cf::CfObjectImplPc18*)0));
     char* name = 0;
@@ -1137,7 +1137,7 @@ void func_800C86E8(cf::CfObjectImplPc* self)
         self->field_18->mSub.sf50(listId);
         if (self->field_18->mSub.sf4C() == 0) {
             cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)func_8016FE34(
-                (u8*)findObjectById((int)func_800BFC68(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
+                (u8*)findObjectById((int)getCfObjectPc(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
             if (pobj == 0) {
                 return;
             }

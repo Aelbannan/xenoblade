@@ -26,8 +26,8 @@ extern void setEffectEnabled(u32 value);
 // header's C-linkage import block (getCurrentView/getInstance/func_80462D04/
 // func_80462D5C) conflicts with cf/CTaskREvent.hpp's caller-shape copies, so
 // this TU takes only these three signatures verbatim.
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 
 // Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
@@ -151,7 +151,7 @@ void CGame::wkRender() {
             GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
             nw4r::lyt::DrawInfo drawInfo;
             func_80137250(&drawInfo);
-            func_80137038(lbl_80666604, &drawInfo, 0, 1);
+            drawLayout(lbl_80666604, &drawInfo, 0, 1);
             CViewRoot::updateViewRoot();
         }
     }
@@ -245,7 +245,7 @@ bool CGame::wkStandbyLogin() {
         // +17: points past "CGameRestart".\0" → archive key within the ARC
         sArcResourceAccessor->Attach(handle.data, "CGameRestart" + 17);
         // +21: points past "CGameRestart".\0"arc" → "4_3mode.brlyt" layout name
-        func_80136E84(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
+        buildLayout(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
     }
 
     return CProc::wkStandbyLogin();

@@ -111,9 +111,9 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 }
 
 // C++-linkage helpers - MWCC mangles these to the retail symbols
-// func_80137250__FPQ34nw4r3lyt8DrawInfo / func_80138078__FUl.
+// func_80137250__FPQ34nw4r3lyt8DrawInfo / playUISound__FUl.
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
-void func_80138078(u32 op);
+void playUISound(u32 op);
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)

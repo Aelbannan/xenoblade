@@ -221,7 +221,7 @@ void* __dt__11CSysWinSaveFv(CSysWinSave* self, int flags);
 void* func_801355F4();
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
-void func_80138078__FUl(u32 op);
+void playUISound__FUl(u32 op);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void func_8022B9B4(void* syswin, void* str1, void* str2);

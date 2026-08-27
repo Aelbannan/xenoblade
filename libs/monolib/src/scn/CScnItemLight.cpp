@@ -21,7 +21,7 @@ extern u32 lbl_eu_8056DD08[];
 
 extern "C" void* func_804823A0(u8* self) { return (void*)((u8*)self + 0x11d8); }
 
-void __ct__CScnItemLightNw4r(void*, int);
+extern "C" void __ct__CScnItemLightNw4r(void*, int);
 extern "C" void func_80482398(u8* self, int val) {
     __ct__CScnItemLightNw4r(self, (s32)(s16)val);
 }

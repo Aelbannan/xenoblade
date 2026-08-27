@@ -206,7 +206,7 @@ namespace cf{
         CVoiceBattleNode* sentinel;   // +0x48
     };
 
-    // Result of func_800BFC68 (a move-converted object); +0x3ED4 is a pointer
+    // Result of getCfObjectPc (a move-converted object); +0x3ED4 is a pointer
     // to an object holding a vtable whose +0x40 slot is probed with 0x800.
     struct CVoiceEdge;
     struct CVoiceBFC68 {
@@ -349,7 +349,7 @@ extern "C" cf::CSoundNode* __ct__802A4870(int a);
 // (handle, actor) by func_802A216C.
 extern "C" cf::CSoundNode* __ct__802AFA80(void* handle, void* actor);
 // Convert a CfObjectMove to a battle-participant object.
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* self);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* self);
 // Create a battle-voice node from a voice-action source.
 extern "C" cf::CSoundNode* func_802B0344(void* src);
 // Current battle/field phase id.

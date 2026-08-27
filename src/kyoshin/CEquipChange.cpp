@@ -14,7 +14,7 @@
 // lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
 extern const float lbl_eu_806682A8;
 
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 extern "C" u8 func_801392B4(u32);
 extern "C" void* func_802052A8(CEquipChange* self);
 extern "C" int func_802031A0(CEquipChange* self);
@@ -320,7 +320,7 @@ void func_802024CC(CEquipChange* self) {
         func_801D47D4((CItemBoxInfo*)self->_padA4,
                       (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
                       func_802052A8(self), 1);
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 
@@ -338,7 +338,7 @@ void func_80202578(CEquipChange* self) {
         ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_3C, 0);
         ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_40, 0);
         ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_38, 1);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     }
 }
 
@@ -386,7 +386,7 @@ void func_80202644(CEquipChange* self) {
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
     int v38 = func_80203138(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
@@ -431,7 +431,7 @@ void func_80202790(CEquipChange* self) {
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
     int v38 = func_80203138(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
@@ -475,7 +475,7 @@ void func_802028E4(CEquipChange* self) {
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
     int v38 = func_80203138(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
@@ -516,7 +516,7 @@ void func_80202A70(CEquipChange* self) {
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), packed, a8, 1);
     int v38 = func_80203138(self);
     func_801D4260((CItemBoxInfo*)self->_padA4, (u8)v38);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 #pragma optimize_for_size off
 
@@ -558,7 +558,7 @@ void func_80202CCC(CEquipChange* self) {
         }
         // .L_80204A14
         if (func_802882A4(&self->mEquipItemBox) == 0) {
-            func_80138078__FUl(5);
+            playUISound__FUl(5);
             return;
         }
         // .L_80204A30
@@ -580,7 +580,7 @@ void func_80202CCC(CEquipChange* self) {
     if (data->field_176C == 1) {
         if ((u8)func_80203138(self) == 3)
             return;
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
         return;
     }
     if ((u8)func_80203138(self) == 3) {
@@ -597,7 +597,7 @@ void func_80202CCC(CEquipChange* self) {
     self->field_4D = 0;
     func_801D216C(self->_pad50, 0);
     func_801D216C(self->_pad68, 0);
-    func_80138078__FUl(3);
+    playUISound__FUl(3);
 }
 #pragma optimize_for_size off
 
@@ -745,12 +745,12 @@ int func_80203210(CEquipChange* self) {
         if (((CEquipEnumList*)func_80043F18(&holder))->field_0x620 >= 1) {
             CEquipEnumListSlot* slot = (CEquipEnumListSlot*)func_800F6EC0(func_80043F18(&holder), 0);
             if (slot->field_0x4 != 0) {
-                func_800BFDE0(func_800BFC68__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
+                func_800BFDE0(getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4), 0);
             }
         }
         __dt__80043E88(&holder, -1);
     }
-    func_80138078__FUl(0x76);
+    playUISound__FUl(0x76);
         return 1;
     }
     // (u8)cat == 3 - weapon-row path: resolve the sub-cursor, reject
@@ -766,7 +766,7 @@ int func_80203210(CEquipChange* self) {
     if (slot == 1)
         return 0;
     if (slot == 2) {
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
         return 2;
     }
     int r29;
@@ -810,7 +810,7 @@ int func_80203210(CEquipChange* self) {
     func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4), (u16)packed, func_802052A8(self), 1);
     if (func_802865A0(&self->mEquipItemBox) != 0)
         func_80287DB4(&self->mEquipItemBox, (u16)packed, 0, 1);
-    func_80138078__FUl(0x77);
+    playUISound__FUl(0x77);
     return 3;
 }
 #pragma optimize_for_size off
@@ -926,7 +926,7 @@ u8 func_80203C9C(CEquipChange* self) {
 // Target us-802059d8: when the 0x38 anim finishes, reset the three layout
 // slot animations via the 0x34 object's vtable[0x2C] hook and enter state 2.
 extern "C" void __declspec(noinline) func_80203CE0(CEquipChange* self) {
-    if (func_80137444(self->field_38, lbl_eu_806682A8) == 0)
+    if (advanceAnimTransform(self->field_38, lbl_eu_806682A8) == 0)
         return;
     ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_40, 0);
     ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_38, 0);
@@ -938,7 +938,7 @@ extern "C" void __declspec(noinline) func_80203CE0(CEquipChange* self) {
 // window (func_801D4B3C pack), drive the sub-cursor vtable[0x10] hook with the
 // packed buffer, close the sub-cursor, and reset state via func_802040FC.
 extern "C" void __declspec(noinline) func_80203D78(CEquipChange* self) {
-    if (func_80137444(self->field_3C, lbl_eu_806682A8) == 0)
+    if (advanceAnimTransform(self->field_3C, lbl_eu_806682A8) == 0)
         return;
     self->field_48 = 3;
     self->field_4D = 1;
@@ -975,7 +975,7 @@ extern "C" void __declspec(noinline) func_80203E98(CEquipChange* self) {
 // _savegpr_28 (opt-space prologue).
 #pragma optimize_for_size on
 extern "C" void __declspec(noinline) func_80203EE4(CEquipChange* self) {
-    if (func_80137444(self->field_40, lbl_eu_806682A8) == 0)
+    if (advanceAnimTransform(self->field_40, lbl_eu_806682A8) == 0)
         return;
     u8 f99 = self->field_99;
     int cur38 = func_80203138(self);
@@ -1510,10 +1510,10 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         setMemInitFlag__Q23mtl10MemManagerFb(false);
         field_2C = createArcResourceAccessor__10CLibLayoutFv();
         field_2C->Attach(data, &base[0x1FA]);
-        func_80136E84((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
-        func_80136F08((nw4r::lyt::Layout*)field_34, &field_38, field_2C, &base[0x20E]);
-        func_80136F08((nw4r::lyt::Layout*)field_34, &field_3C, field_2C, &base[0x221]);
-        func_80136F08((nw4r::lyt::Layout*)field_34, &field_40, field_2C, &base[0x239]);
+        buildLayout((nw4r::lyt::Layout**)&field_34, field_2C, &base[0x1FE]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_38, field_2C, &base[0x20E]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_3C, field_2C, &base[0x221]);
+        bindLayoutAnimTransform((nw4r::lyt::Layout*)field_34, &field_40, field_2C, &base[0x239]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)((CLayoutView*)(u32)field_34)->field_10;
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
             1, (nw4r::lyt::Layout*)field_34);
@@ -1522,12 +1522,12 @@ bool CEquipChange::OnFileEvent(CEventFile* file) {
         // Seed the label textboxes with the shared text object.
         char* text = func_801355BC();
         if (text != NULL) {
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x55], (u32)text);
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x60], (u32)text);
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x6A], (u32)text);
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x74], (u32)text);
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x7E], (u32)text);
-            func_801368C0((nw4r::lyt::Layout*)field_34, &base[0x88], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x55], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x60], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x6A], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x74], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x7E], (u32)text);
+            setLayoutTextBoxFont((nw4r::lyt::Layout*)field_34, &base[0x88], (u32)text);
         }
 
         ((CLayoutVtbl11*)(u32)field_34)->v9(field_3C, 0);
@@ -1895,7 +1895,7 @@ tail:
 extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_44 == 0)
         return;
-    func_80137038((nw4r::lyt::Layout*)self->field_34, drawInfo, 0, 1);
+    drawLayout((nw4r::lyt::Layout*)self->field_34, drawInfo, 0, 1);
     if (func_801D2ED8((CBaseCur*)self->field_80) == 0) {
         func_801D20B0((CBaseCur*)self->_pad50, drawInfo);
         func_801D20B0((CBaseCur*)self->_pad68, drawInfo);
@@ -1914,8 +1914,8 @@ extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo)
 // accessors and the 0x04 memory region, reset the three cursors, and close
 // the item info window + box.
 void func_8020228C(CEquipChange* self) {
-    func_801390E0__FPP11CFileHandle(&self->field_24);
-    func_801390E0__FPP11CFileHandle(&self->field_28);
+    closeFileHandle__FPP11CFileHandle(&self->field_24);
+    closeFileHandle__FPP11CFileHandle(&self->field_28);
     // Retail hoists the field_34 load above the field_44 store and reuses the
     // loaded pointer across the guarded destroy call - keeping it in a local
     // pins it to a volatile reg instead of forcing a second callee-saved.
@@ -1927,8 +1927,8 @@ void func_8020228C(CEquipChange* self) {
         self->field_34 = 0;
     }
     lbl_eu_80664698 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_2C);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_30);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_2C);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_30);
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0]);
     ((CCurVtblView*)((u8*)self + 0x50))->v1();
     ((CCurVtblView*)((u8*)self + 0x68))->v1();

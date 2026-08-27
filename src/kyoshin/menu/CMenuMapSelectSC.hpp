@@ -178,8 +178,8 @@ extern "C" void __dt__11CTitleAHelpFv(CTitleAHelp* _this, int flags);
 extern "C" void __dt__800FED0C(CProcess* _this, int flags);
 
 // C++-linkage helpers - retail emits the mangled forms
-// func_80138078__FUl / func_80137250__FPQ34nw4r3lyt8DrawInfo.
-void func_80138078(unsigned long op);
+// playUISound__FUl / func_80137250__FPQ34nw4r3lyt8DrawInfo.
+void playUISound(unsigned long op);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 // nw4r DrawInfo pre-mangled ct/dt names (retail emits the direct calls; a C++
 // local would virtual-dispatch its scope-exit destructor and bloat the body).

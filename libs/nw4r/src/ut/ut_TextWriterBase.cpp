@@ -7,7 +7,7 @@
 //   lbl_eu_80665564 (.sbss 0x4) = TextWriterBase<wchar_t>::mDefaultTagProcessor
 //                                 (TagProcessorBase<wchar_t>, vptr storage)
 //   lbl_eu_80665568 (.sbss 0x1) = __sinit__ init guard (char)
-//   lbl_eu_80665569 (.sbss 0x7) = __sinit__ init guard (wchar_t) — retail
+//   lbl_eu_80665569 (.sbss 0x7) = __sinit__ init guard (wchar_t) - retail
 //                                 recovered symbol size is 7 (1 used byte)
 // The template static members below stay defined so MWCC emits the retail
 // 0x84 __sinit_ (guarded construction + __register_global_object); the raw
@@ -38,10 +38,10 @@ namespace ut {
 // copies). extern "C" so the relocs bind straight to the retail nw4r_data.s
 // linker names (plain C++ decls inside the namespace mangle as
 // lbl_eu_8066A164__Q24nw4r2ut and need postprocess renames).
-extern "C" f32 lbl_eu_8066A160; // 0x7F7FFFFF (FLT_MAX)
-extern "C" f32 lbl_eu_8066A164; // 0.0f
-extern "C" f64 lbl_eu_8066A168; // 0x4330000080000000 (signed int->f32 magic)
-extern "C" f32 lbl_eu_8066A170; // 0.5f
+extern "C" const f32 lbl_eu_8066A160; // 0x7F7FFFFF (FLT_MAX)
+extern "C" const f32 lbl_eu_8066A164; // 0.0f
+extern "C" const f64 lbl_eu_8066A168; // 0x4330000080000000 (signed int->f32 magic)
+extern "C" const f32 lbl_eu_8066A170; // 0.5f
 
 // int -> f32 conversion matching retail (MWCC_CASES 7i): build the 2^52+x
 // double on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and
@@ -71,8 +71,8 @@ template <> TagProcessorBase<wchar_t>* GetDefaultTagProcessor<wchar_t>() {
 
 template <typename T>
 TextWriterBase<T>::TextWriterBase()
-    : mCharSpace(lbl_eu_8066A164),
-      mWidthLimit(lbl_eu_8066A160),
+    : mWidthLimit(lbl_eu_8066A160),
+      mCharSpace(lbl_eu_8066A164),
       mLineSpace(lbl_eu_8066A164),
       mTabWidth(4),
       mDrawFlag(0),

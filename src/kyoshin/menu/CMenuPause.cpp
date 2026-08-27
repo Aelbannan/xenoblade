@@ -37,8 +37,8 @@ void CMenuPause::Init() {
     __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
     mtl::MemManager::setMemInitFlag(false);
 
-    func_80136E84(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
-    func_80136F08(mLayout,
+    buildLayout(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
+    bindLayoutAnimTransform(mLayout,
                   reinterpret_cast<nw4r::lyt::AnimTransform**>(&mField80),
                   func_801355F4(), &lbl_eu_8050C5C8[0x24]);
 
@@ -123,7 +123,7 @@ void CMenuPause::Init() {
     }
 
     mState = 1;
-    func_80138078__FUl(0xd);
+    playUISound__FUl(0xd);
 
     mField74[0] = mField74[1] = mField74[2] = mField74[3] = 0; // field 0x74
 
@@ -183,7 +183,7 @@ body:
     switch (mState) {
     case 1:
         // Opening animation: tick it forward; when it finishes arms state 2.
-        if (func_80137444(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
+        if (advanceAnimTransform(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
                           lbl_eu_806687D8) != 0) {
             mState = 2;
         }
@@ -225,7 +225,7 @@ body:
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
         if (mLayout != NULL) {
-            func_80137038(mLayout, &drawInfo, 0, 1);
+            drawLayout(mLayout, &drawInfo, 0, 1);
         }
     }
 }
@@ -370,8 +370,8 @@ extern "C" void func_80252564(CMenuPause* p) {
         func_801BFB34(lbl_eu_806687DC, 0, 0xe, 0);
         p->mState = 3;
     } else if (second) {
-        func_80138078__FUl(6);
-        func_80138078__FUl(0xe);
+        playUISound__FUl(6);
+        playUISound__FUl(0xe);
         p->mState = 3;
     }
 }

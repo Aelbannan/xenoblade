@@ -147,6 +147,27 @@ extern "C" const char* func_80453468__18CDeviceFontInfoExtFv(CDeviceFontInfoExt*
 }
 extern "C" void create__18CDeviceFontInfoExtFv() {}
 
+extern "C" u32 lbl_eu_8056C740[0xF];
+
+extern "C" void __ct__Q34nw4r2ut10PackedFontFv(void* self);
+
+CDeviceFontInfoExt::CDeviceFontInfoExt() {
+    *(void**)this = lbl_eu_8056C740;
+    field_04 = 0;
+    *(u32*)((u8*)this + 0x08) = 0;
+    *(u32*)((u8*)this + 0x0C) = 0;
+    *(void**)((u8*)this + 0x18) = 0;
+    __ct__Q34nw4r2ut10PackedFontFv((u8*)this + 0x1C);
+    field_60 = 0;
+}
+    // Copy work area to fields
+    field_58 = *(u32*)(work + 0x10);
+    mMode = *(u16*)(work + 0x14);
+    mState = *(u16*)(work + 0x16);
+    *(u16*)((u8*)this + 0x14) = *(u16*)(work + 0x0F);
+    field_5C = *(u16*)(work + 0x0F);
+}
+
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // forward refs
 namespace D2Blob {

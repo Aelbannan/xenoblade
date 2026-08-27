@@ -33,7 +33,7 @@ public:
 };
 }
 
-extern u32 func_801355A0();
+extern u32 getPackedFont();
 
 void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
 extern "C" f32 func_800F4424(void*);
@@ -51,7 +51,7 @@ u32 func_800F4784(void*);
 void* func_800F477C(void*);
 int func_800F4648(void*);
 f32 func_800F42AC(void*);
-void func_80138078__FUl(u32);
+void playUISound__FUl(u32);
 void func_80139B5C(void*, const char*, u32);
 void func_80139BF4(void*, const char*, u32, u32);
 void func_80137F88(void*, void*);
@@ -182,7 +182,7 @@ static inline void menuVisionBegin(CMenuVisionEntry& entry) {
     entry.mAnim1->SetFrame(lbl_eu_80667DC0);
     entry.field_0x28 = 0;
     entry.mState = 1;
-    func_80138078__FUl(0x1C3);
+    playUISound__FUl(0x1C3);
 }
 
 static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
@@ -197,7 +197,7 @@ static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
     entry.mAnim1->SetFrame(lbl_eu_80667DC0);
     entry.field_0x28 = 0;
     entry.mState = 1;
-    func_80138078__FUl(0x1C3);
+    playUISound__FUl(0x1C3);
 }
 
 
@@ -432,7 +432,7 @@ void CMenuVision::cbRenderBefore() {
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     for (u8 i = 0; i < 6; i++) {
-        func_80137038(mEntries[i].mLayout,
+        drawLayout(mEntries[i].mLayout,
                       (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     }
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
@@ -875,7 +875,7 @@ extern "C" void func_801AD504(int flags) {
         } else {
             entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true)->SetVisible(true);
             if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || func_800F4648(battle) > 0) {
-                ((MenuVisionSetDamageText)func_80136910__FPQ34nw4r3lyt6LayoutPcUc)(
+                ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
                     entry.mLayout, (char*)(lbl_eu_80504268 + 0x1FB), func_800F4648(battle));
                 nw4r::math::VEC2 scale;
                 scale.x = lbl_eu_80667DD4;
@@ -1043,7 +1043,7 @@ extern "C" void func_801AD504(int flags) {
         } else if (value < 0) {
             value = 0;
         }
-        ((MenuVisionSetDamageText)func_80136910__FPQ34nw4r3lyt6LayoutPcUc)(
+        ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
             entry.mLayout, (char*)(lbl_eu_80504268 + 0x208), value);
         menuVisionBegin(entry);
 
@@ -1193,7 +1193,7 @@ L_continue:
         switch (e->mState) {
         case 1:
             // Intro anim (mAnim1) finished -> switch to the sustain phase.
-            if (func_80137444(e->mAnim1, lbl_eu_80667DC4)) {
+            if (advanceAnimTransform(e->mAnim1, lbl_eu_80667DC4)) {
                 e->mState = 2;
             }
             break;
@@ -1233,14 +1233,14 @@ L_continue:
 
         case 3:
             // mAnim2 finished -> idle.
-            if (func_80137444(e->mAnim2, lbl_eu_80667DC4)) {
+            if (advanceAnimTransform(e->mAnim2, lbl_eu_80667DC4)) {
                 e->mState = 0;
             }
             break;
 
         case 4:
             // mAnim4 finished -> idle.
-            if (func_80137444(e->mAnim4, lbl_eu_80667DC4)) {
+            if (advanceAnimTransform(e->mAnim4, lbl_eu_80667DC4)) {
                 e->mState = 0;
             }
             break;
@@ -1277,15 +1277,15 @@ void CMenuVision::Init() {
     for (u8 i = 0; i < 6; i++) {
         CMenuVisionEntry& e = mEntries[i];
 
-        func_80136E84(&e.mLayout, accessor, lbl_eu_80504268 + 0xb);
-        func_80136F08(e.mLayout, &e.mAnim1, accessor, lbl_eu_80504268 + 0x2b);
-        func_80136F08(e.mLayout, &e.mAnim2, accessor, lbl_eu_80504268 + 0x4e);
-        func_80136F08(e.mLayout, &e.mAnim3, accessor, lbl_eu_80504268 + 0x72);
-        func_80136F08(e.mLayout, &e.mAnim4, accessor, lbl_eu_80504268 + 0x9a);
-        func_80136F08(e.mLayout, &e.mAnim5, accessor, lbl_eu_80504268 + 0xc5);
-        func_80136F08(e.mLayout, &e.mAnim6, accessor, lbl_eu_80504268 + 0xef);
-        func_80136F08(e.mLayout, &e.mAnim7, accessor, lbl_eu_80504268 + 0x119);
-        func_80136F08(e.mLayout, &e.mAnim8, accessor, lbl_eu_80504268 + 0x13f);
+        buildLayout(&e.mLayout, accessor, lbl_eu_80504268 + 0xb);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim1, accessor, lbl_eu_80504268 + 0x2b);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim2, accessor, lbl_eu_80504268 + 0x4e);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim3, accessor, lbl_eu_80504268 + 0x72);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim4, accessor, lbl_eu_80504268 + 0x9a);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim5, accessor, lbl_eu_80504268 + 0xc5);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim6, accessor, lbl_eu_80504268 + 0xef);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim7, accessor, lbl_eu_80504268 + 0x119);
+        bindLayoutAnimTransform(e.mLayout, &e.mAnim8, accessor, lbl_eu_80504268 + 0x13f);
 
         // Disable anims 2-8, enable anim1, reset to frame 0
         e.mLayout->SetAnimationEnable(e.mAnim2, false);
@@ -1324,18 +1324,18 @@ void CMenuVision::Init() {
                 getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1));
             u32 fontVal = fontObj->getFontHandle();
 
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1b8, fontVal);
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1c5, fontVal);
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1d2, fontVal);
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1df, fontVal);
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ed, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1b8, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1c5, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1d2, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1df, fontVal);
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1ed, fontVal);
         } else if (i == 3) {
-            u32 val = func_801355A0();
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1fb, val);
+            u32 val = getPackedFont();
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x1fb, val);
         } else if (i == 5) {
-            u32 val = func_801355A0();
-            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x208, val);
+            u32 val = getPackedFont();
+            setLayoutTextBoxFont(e.mLayout, lbl_eu_80504268 + 0x208, val);
         }
     }
 
@@ -1359,9 +1359,9 @@ void func_801AFAD0(CMenuVision*, CMenuVisionEntry* entry) {
     // Cue-frame jingle once the timer lapses to the exact cue value.
     if (!(lbl_eu_80667DD8 == entry->mTimer)) {
     } else {
-        func_80138078__FUl(0x1c4);
+        playUISound__FUl(0x1c4);
     }
-    if (func_80137444(entry->mAnim7, lbl_eu_80667DC4)) {
+    if (advanceAnimTransform(entry->mAnim7, lbl_eu_80667DC4)) {
         entry->mState = 0;
     }
     if (!(reinterpret_cast<AnimFrameAccess*>(entry->mAnim7)->frame >= lbl_eu_80667DDC)) {

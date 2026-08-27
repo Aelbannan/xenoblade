@@ -44,7 +44,7 @@ extern "C" void func_801EB178(CNumSelect* self) {
     self->mpLayout->UnbindAllAnimation();
     self->mpLayout->BindAnimation(self->field_20);
     self->mpLayout->SetAnimationEnable(self->field_20, true);
-    func_80138078(0xe);
+    playUISound(0xe);
 }
 
 /* State step 4: bind the loop animation at +0x28, then reveal both number
@@ -92,7 +92,7 @@ extern "C" void func_801EB410(CNumSelect* self, int value) {
 
 // Fade-out step: once anim 0x20 reaches 1.0, swap in anim 0x24 and enable it.
 extern "C" void func_801EB49C(CNumSelect* self) {
-    if (func_80137444(self->field_20, lbl_eu_80668088)) {
+    if (advanceAnimTransform(self->field_20, lbl_eu_80668088)) {
         self->field_2F = 2;
         self->field_2E = 1;
         self->mpLayout->UnbindAllAnimation();
@@ -114,7 +114,7 @@ void func_801EB530(CNumSelect* self) {
 /* Restart the +0x28 animation from frame 0: unbind everything, attach anim
  * +0x24, rewind its frame, and advance the state machine to step 2. */
 extern "C" void func_801EB580(CNumSelect* self) {
-    if (func_80137444(self->field_28, lbl_eu_80668088) == 0) {
+    if (advanceAnimTransform(self->field_28, lbl_eu_80668088) == 0) {
         return;
     }
     self->field_28->SetFrame(lbl_eu_8066808C);
@@ -129,7 +129,7 @@ extern "C" void func_801EB580(CNumSelect* self) {
 
 // Identical body to func_801EB580 (retail duplicates it byte for byte).
 extern "C" void func_801EB644(CNumSelect* self) {
-    if (func_80137444(self->field_28, lbl_eu_80668088) == 0) {
+    if (advanceAnimTransform(self->field_28, lbl_eu_80668088) == 0) {
         return;
     }
     self->field_28->SetFrame(lbl_eu_8066808C);
@@ -160,17 +160,17 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
 
     field_18 = CLibLayout::createArcResourceAccessor();
     field_18->Attach(data, &lbl_eu_80506C14[0x7e]);
-    func_80136E84(&mpLayout, field_18, &lbl_eu_80506C14[0x82]);
-    func_80136F08(mpLayout, &field_20, field_18, &lbl_eu_80506C14[0x9b]);
-    func_80136F08(mpLayout, &field_24, field_18, &lbl_eu_80506C14[0xbd]);
-    func_80136F08(mpLayout, &field_28, field_18, &lbl_eu_80506C14[0xdb]);
+    buildLayout(&mpLayout, field_18, &lbl_eu_80506C14[0x82]);
+    bindLayoutAnimTransform(mpLayout, &field_20, field_18, &lbl_eu_80506C14[0x9b]);
+    bindLayoutAnimTransform(mpLayout, &field_24, field_18, &lbl_eu_80506C14[0xbd]);
+    bindLayoutAnimTransform(mpLayout, &field_28, field_18, &lbl_eu_80506C14[0xdb]);
 
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     func_8013676C(rootPane,
                   reinterpret_cast<CNumSelectFontView*>(fontObj)->vf7());
-    func_801368C0(mpLayout, &lbl_eu_80506C14[0x20], (u32)func_801355BC());
-    func_801368C0(mpLayout, &lbl_eu_80506C14[0x3d], (u32)func_801355BC());
+    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)func_801355BC());
+    setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)func_801355BC());
 
     mpLayout->UnbindAllAnimation();
     func_80124270(
@@ -252,7 +252,7 @@ CNumSelect::~CNumSelect() {}
 #pragma optimize_for_size off
 
 extern "C" void func_801EB04C(CNumSelect* self, u8 r4) {
-    func_80136910(self->mpLayout, &lbl_eu_80506C14[0x20], r4);
+    setLayoutTextBoxNumber(self->mpLayout, &lbl_eu_80506C14[0x20], r4);
 }
 
 // Loads the number-select brlyt archive into the MEM2 scratch region and
@@ -275,7 +275,7 @@ extern "C" void func_801EAED4(CNumSelect* self) {
         func_801EB49C(self);
         break;
     case 2:
-        func_80137444(self->field_24, lbl_eu_80668088);
+        advanceAnimTransform(self->field_24, lbl_eu_80668088);
         break;
     case 3:
         func_801EB530(self);
@@ -291,12 +291,12 @@ extern "C" void func_801EAED4(CNumSelect* self) {
 }
 
 // Draws the layout once the loaded file has been processed (field_2C gate).
-// Retail forwards its own r4 (drawInfo) through to func_80137038 untouched.
+// Retail forwards its own r4 (drawInfo) through to drawLayout untouched.
 void CNumSelect::func_801EAF7C(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_2C == 0) {
         return;
     }
-    func_80137038(mpLayout, drawInfo, 0, 1);
+    drawLayout(mpLayout, drawInfo, 0, 1);
 }
 
 /* Destructor helper: releases the file handle, destroys the layout through its
@@ -312,7 +312,7 @@ extern "C" void func_801EAF9C(CNumSelect* self) {
         }
         self->mpLayout = NULL;
     }
-    func_80139124(self->field_18);
+    releaseArcResourceAccessor(self->field_18);
     self->field_18 = NULL;
     self->mMemRegion.func_8045F778();
 }
@@ -347,7 +347,7 @@ extern "C" void func_801EB0D4(CNumSelect* self) {
     self->mpLayout->UnbindAllAnimation();
     self->mpLayout->BindAnimation(self->field_20);
     self->mpLayout->SetAnimationEnable(self->field_20, true);
-    func_80138078(0xd);
+    playUISound(0xd);
 }
 
 // Retail ctor stores the vtable label explicitly before constructing the

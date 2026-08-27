@@ -136,13 +136,13 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
     switch ((u32)self->field_0xE0) {
     case 0:
         // Enter: open sound + cursor-select state.
-        func_80138078__FUl(8);
+        playUISound__FUl(8);
         self->field_0xE0 = 1;
         break;
     case 1:
         // Cursor-select: once the intro animation finishes, set the current
         // cursor number (or its placeholder) and activate the cursor.
-        if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x80, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x80, lbl_eu_80666F18) == 0) {
             break;
         }
         // Strings hoisted above the branch like retail; MWCC colors the
@@ -172,7 +172,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         break;
     case 3:
         // Exit: once the close animation finishes, mark the menu idle.
-        if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x84, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x84, lbl_eu_80666F18) == 0) {
             break;
         }
         self->field_0x54 = 1;
@@ -200,7 +200,7 @@ extern "C" void func_800FEF4C(CMainMenu* self) {
         break;
     case 7:
         // Cursor-exit: like case 1 but driven by the exit animation.
-        if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x8C, lbl_eu_80666F18) == 0) {
+        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x8C, lbl_eu_80666F18) == 0) {
             break;
         }
         // Strings hoisted above the branch like case 1.
@@ -335,14 +335,14 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
 
     self->field_0x78 = createArcResourceAccessor__10CLibLayoutFv();
             self->field_0x78->Attach(fileData, &base[0x94]);
-            func_80136E84(&self->field_0x7C, self->field_0x78, &base[0x98]);
-            func_80136F08(self->field_0x7C, &self->field_0x80, self->field_0x78,
+            buildLayout(&self->field_0x7C, self->field_0x78, &base[0x98]);
+            bindLayoutAnimTransform(self->field_0x7C, &self->field_0x80, self->field_0x78,
                           &base[0xaf]);
-            func_80136F08(self->field_0x7C, &self->field_0x84, self->field_0x78,
+            bindLayoutAnimTransform(self->field_0x7C, &self->field_0x84, self->field_0x78,
                           &base[0xc9]);
-            func_80136F08(self->field_0x7C, &self->field_0x88, self->field_0x78,
+            bindLayoutAnimTransform(self->field_0x7C, &self->field_0x88, self->field_0x78,
                           &base[0xe4]);
-            func_80136F08(self->field_0x7C, &self->field_0x8C, self->field_0x78,
+            bindLayoutAnimTransform(self->field_0x7C, &self->field_0x8C, self->field_0x78,
                           &base[0x102]);
 
             // Bind the device font: ask the font object for its pane (vtable+0x24)
@@ -426,9 +426,9 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
 // VUpdate() override for the CBaseCur-derived class embedded at CMainMenu+0x90.
 // Loads the layout and two animation transforms, then initializes via func_801D21CC.
 extern "C" void func_800FEA88(CBaseCur* self) {
-    func_80136E84(&self->mpLayout, self->mArcResAcc, &lbl_eu_804FCEBC[0]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_804FCEBC[0x19]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_804FCEBC[0x37]);
+    buildLayout(&self->mpLayout, self->mArcResAcc, &lbl_eu_804FCEBC[0]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_804FCEBC[0x19]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_804FCEBC[0x37]);
     self->mpLayout->UnbindAllAnimation();
     func_801D21CC(self);
 }
@@ -450,7 +450,7 @@ void CMainMenu::cbRenderBefore() {
     // dtor call would emit a virtual dispatch.
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250(&drawInfo);
-    func_80137038(field_0x7C, &drawInfo, 0, 1);
+    drawLayout(field_0x7C, &drawInfo, 0, 1);
     func_801D20B0((char*)this + 0x90, &drawInfo);
     func_801D20B0((char*)this + 0xA8, &drawInfo);
 }
@@ -493,13 +493,13 @@ extern u32 lbl_eu_80663F18;
 
 // Returns 1 if isMenuOpen() is non-zero, else booleanizes lbl_eu_80663F18.
 extern "C" u32 func_800FF738(CMainMenu* self) {
-    if (isMenuOpen__9CMainMenuFv() != 0) {
+    if (isAnyMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
     return lbl_eu_80663F18 != 0 ? 1 : 0;
 }
 
-int CMainMenu::isMenuOpen() {
+int CMainMenu::isAnyMenuOpen() {
     // Menu-open gate: returns 1 while any menu screen is active (each callee
     // is a singleton/state guard), otherwise the tutorial-list state.
     if (func_80192BD0()) return 1;
@@ -522,7 +522,7 @@ int CMainMenu::isMenuOpen() {
 // Returns 1 if isMenuOpen() is non-zero, else checks the global CMainMenu
 // singleton's field_0xE0 for states 4 or 8 (active/invite).
 extern "C" u32 func_800FF8B0() {
-    if (isMenuOpen__9CMainMenuFv() != 0) {
+    if (isAnyMenuOpen__9CMainMenuFv() != 0) {
         return 1;
     }
     CMainMenu* menu = (CMainMenu*)(uintptr_t)lbl_eu_80663F18;
@@ -584,7 +584,7 @@ void func_800FF920(CMainMenu* self) {
         func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
         func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         func_801D216C(&self->_90[0], 0);
-        func_80138078__FUl(9);
+        playUISound__FUl(9);
         self->field_0xE0 = 3;
         return;
     }
@@ -654,7 +654,7 @@ void func_800FF920(CMainMenu* self) {
             func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
             func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
-        func_80138078__FUl(0x6a);
+        playUISound__FUl(0x6a);
         return;
     }
     if (up != 0) {
@@ -682,7 +682,7 @@ void func_800FF920(CMainMenu* self) {
             func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
             func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         }
-        func_80138078__FUl(0x6a);
+        playUISound__FUl(0x6a);
         return;
     }
     if (aPressed == 0) {
@@ -701,7 +701,7 @@ void func_800FF920(CMainMenu* self) {
         func_80136B4C(self->field_0x7C, base + 0x71, base + 0x89, 0);
         func_80136B4C(self->field_0x7C, base + 0x7c, base + 0x89, 0);
         func_801D216C(&self->_90[0], 0);
-        func_80138078__FUl(9);
+        playUISound__FUl(9);
         self->field_0xE0 = 3;
         return;
     }
@@ -709,7 +709,7 @@ void func_800FF920(CMainMenu* self) {
     // Confirm: reject unavailable entries, otherwise open the selected menu.
     u32 sel = self->field_0xC0;
     if (self->field_0xC8[sel] != 0) {
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
         return;
     }
     // Sub-menu open: reveal the four entries of the selected page (14 panes
@@ -722,7 +722,7 @@ void func_800FF920(CMainMenu* self) {
         // Header entries: activate the main cursor and enter screen-open state.
         func_801D2174((CBaseCur*)&self->_90[0]);
         self->field_0xE0 = 4;
-        func_80138078__FUl(0x6b);
+        playUISound__FUl(0x6b);
         return;
     case 1: {
         char* base = lbl_eu_804FCEBC;
@@ -746,7 +746,7 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
         self->field_0x88->SetFrame(lbl_eu_80666F1C);
         self->field_0xE0 = 5;
-        func_80138078__FUl(0x6c);
+        playUISound__FUl(0x6c);
         return;
     }
     case 2: {
@@ -771,7 +771,7 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
         self->field_0x88->SetFrame(lbl_eu_80666F1C);
         self->field_0xE0 = 5;
-        func_80138078__FUl(0x6c);
+        playUISound__FUl(0x6c);
         return;
     }
     case 4: {
@@ -796,7 +796,7 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
         self->field_0x88->SetFrame(lbl_eu_80666F1C);
         self->field_0xE0 = 5;
-        func_80138078__FUl(0x6c);
+        playUISound__FUl(0x6c);
         return;
     }
     case 5: {
@@ -821,7 +821,7 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
         self->field_0x88->SetFrame(lbl_eu_80666F1C);
         self->field_0xE0 = 5;
-        func_80138078__FUl(0x6c);
+        playUISound__FUl(0x6c);
         return;
     }
     case 6: {
@@ -846,7 +846,7 @@ void func_800FF920(CMainMenu* self) {
         self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
         self->field_0x88->SetFrame(lbl_eu_80666F1C);
         self->field_0xE0 = 5;
-        func_80138078__FUl(0x6c);
+        playUISound__FUl(0x6c);
         return;
     }
     default:
@@ -857,7 +857,7 @@ void func_800FF920(CMainMenu* self) {
 extern "C" void func_80100E14(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
     // the current (state, sub-state) pair, then park the state at 6 (idle).
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x88, lbl_eu_80666F18) == 0) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->field_0x88, lbl_eu_80666F18) == 0) {
         return;
     }
     self->field_0xC4 = 0;
@@ -937,7 +937,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
         func_801D216C(&self->_90[0], 1);
         func_801D216C(&self->subCur, 0);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         self->field_0xE0 = 7;
         return;
     }
@@ -1011,7 +1011,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
-        func_80138078__FUl(0x6a);
+        playUISound__FUl(0x6a);
         goto tail;
     }
     if (up != 0) {
@@ -1045,7 +1045,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
         ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
-        func_80138078__FUl(0x6a);
+        playUISound__FUl(0x6a);
         goto tail;
     }
     if (aPressed != 0) {
@@ -1061,7 +1061,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         default: idx = 0; break;
         }
         if (self->field_0xC8[(u8)idx + 7] != 0) {
-            func_80138078__FUl(5);
+            playUISound__FUl(5);
             return;
         }
         if (self->field_0xC0 == 6 && self->field_0xC4 == 0) {
@@ -1080,7 +1080,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
                     ->vfn_0x9C(&player->spot.field_0xC4->field_0x3B4[0]);
             }
         }
-        func_80138078__FUl(0x6b);
+        playUISound__FUl(0x6b);
         self->field_0xE0 = 8;
         func_801D2174((CBaseCur*)&self->subCur);
         goto tail;
@@ -1094,7 +1094,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         self->field_0x8C->SetFrame(lbl_eu_80666F1C);
         func_801D216C(&self->_90[0], 1);
         func_801D216C(&self->subCur, 0);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         self->field_0xE0 = 7;
     } else if (bPressed != 0) {
         func_8013D8A0();
@@ -1410,7 +1410,7 @@ void CMainMenu::Term() {
         delete field_0x7C;
         field_0x7C = 0;
     }
-    func_80139124(field_0x78);
+    releaseArcResourceAccessor(field_0x78);
     field_0x78 = 0;
     reinterpret_cast<UnkClass_8045F564*>(&_60[0])->func_8045F778();
     lbl_eu_80663F18 = 0;

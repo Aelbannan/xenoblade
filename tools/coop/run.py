@@ -856,6 +856,20 @@ def cmd_cycle(
             declared_return_value = cert_abi.get("declared_return")
 
     attempt_num = count_attempts(config.resolve(config.attempt_log), target.id) + 1
+    # When ELF identity issued a full-instruction-match cert, persist 100% even
+    # if objdiff under-scored (score-gap / null-symbol pairing). The cert is the
+    # source of truth for FULL_MATCH; writing the under-score recreated the
+    # mid-band FULL_MATCH integrity hole the audit flagged.
+    if (
+        evaluation.status == "FULL_MATCH"
+        and evaluation.equivalence_certificate
+        and evaluation.equivalence_certificate.get("evidence") == "full-instruction-match"
+    ):
+        persisted_match = 100.0
+    elif fn_match:
+        persisted_match = fn_match.match_percent
+    else:
+        persisted_match = unit_report.fuzzy_match_percent
     record = AttemptRecord(
         target_id=target.id,
         function=target.function,
@@ -863,7 +877,7 @@ def cmd_cycle(
         unit=unit.name,
         symbol=target.symbol,
         status=evaluation.status,
-        instruction_match=fn_match.match_percent if fn_match else unit_report.fuzzy_match_percent,
+        instruction_match=persisted_match,
         relocation_match=None,
         code_match_percent=unit_report.code_match_percent,
         data_match_percent=unit_report.data_match_percent,
@@ -1727,7 +1741,12 @@ def cmd_targets_recertify(
                     if row.get("id") != target.id:
                         continue
                     row["status"] = target.status
-                    if evaluation.fn_match and evaluation.fn_match.match_percent is not None:
+                    if (
+                        target.status == "FULL_MATCH"
+                        and certificate.get("evidence") == "full-instruction-match"
+                    ):
+                        row["instruction_match"] = 100.0
+                    elif evaluation.fn_match and evaluation.fn_match.match_percent is not None:
                         row["instruction_match"] = round(float(evaluation.fn_match.match_percent), 3)
                     if evaluation.equivalence.value:
                         row["equivalence_status"] = evaluation.equivalence.value

@@ -202,7 +202,7 @@ void CMenuSave::Init() {
     *(u8*)((u8*)this + 0x205)  = *(u8*)(tempSave + 0x14d);
     __dt__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(tempSave), -1);
 
-    func_8028F23C__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(mSaveLoad));
+    loadSaveData__9CSaveLoadFv(reinterpret_cast<CSaveLoad*>(mSaveLoad));
 
     // Register this screen as a render callback on the parent scene (the
     // `if (this)` is the MWCC idiom that splits mr r4,r31 / beq / addi r4,+0x58).
@@ -368,7 +368,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
                 }
-                func_80138078__FUl(6);
+                playUISound__FUl(6);
                 self->mState = 4;
                 self->mField54 = 1;
             }
@@ -403,7 +403,7 @@ extern "C" void func_8028E530(CMenuSave* self) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
                 }
-                func_80138078__FUl(6);
+                playUISound__FUl(6);
                 self->mState = 4;
                 self->mField54 = 1;
             }
@@ -460,6 +460,6 @@ extern "C" void func_8028E450(CMenuSave* self) {
         func_801C412C(&self->mTitleAHelp);
         func_8028F6DC(reinterpret_cast<CSaveLoad*>(self->mSaveLoad));
         self->mState = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }

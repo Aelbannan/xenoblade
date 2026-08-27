@@ -150,7 +150,7 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 // (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" u32 CSysWin_isReady(void*);
 
@@ -168,7 +168,7 @@ extern "C" void func_8022B8E4(void*);
 extern "C" u32 func_800FEDF8();
 extern "C" void func_800FF914();
 
-// Shared-arc font/text value feeding func_801368C0 (unmangled retail symbol).
+// Shared-arc font/text value feeding setLayoutTextBoxFont (unmangled retail symbol).
 extern "C" u32 func_801355D8();
 // Sub-controller layout rebind helper (unmangled retail symbol).
 extern "C" void func_8029F7A4(CSkipTimer2* self);

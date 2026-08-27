@@ -231,7 +231,7 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // C++-linkage imports (retail symbols are the Itanium-mangled forms).
 MenuLvUpActor* findObjectById(int id);
-void func_80138078(u32);   // UI sound effect (func_80138078__FUl)
+void playUISound(u32);   // UI sound effect (playUISound__FUl)
 
 // C-linkage data imports (retail names; global-scope plain externs keep the
 // unmangled symbol -- MWCC does not mangle global variables).
@@ -240,7 +240,7 @@ extern u32 lbl_eu_805380C8[];    // dispatch vtable cluster base
 extern u32 __ptmf_null[];        // null member-function-pointer triple
 extern char lbl_eu_8050EC70[];   // layout/animation name string table
 extern f32 lbl_eu_80668A00;      // anim frame reset value
-extern f32 lbl_eu_80668A04;      // anim frame target for func_80137444
+extern f32 lbl_eu_80668A04;      // anim frame target for advanceAnimTransform
 extern f32 lbl_eu_80668A08;      // screen-position post-scale offset x
 extern f32 lbl_eu_80668A0C;      // screen-position post-scale offset y
 extern f32 lbl_eu_80668A10;      // screen-position post-scale factor y

@@ -27,6 +27,7 @@ extern "C" void func_80195E5C(unsigned long a, float b);
 struct CfMapMineManager;
 extern "C" void func_80206BD4(CfMapMineManager* self);  // retail unmangled (defined extern "C" in CfMapMineManager.cpp)
 extern "C" void func_800B44A0(UnkClass_805764CC* self, void* arg); // retail unmangled
+extern "C" void* getEffOwner____FPv(void* data);
 extern void* func_800B61FFC();
 extern "C" void func_800B137C(void* self, unsigned long handle, unsigned long count);
 

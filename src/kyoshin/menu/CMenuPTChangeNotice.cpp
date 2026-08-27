@@ -97,8 +97,8 @@ extern "C" int func_8029348C(CMenuPTChangeNotice* self, CEventFile* evt) {
     self->mAccessor = CLibLayout::createArcResourceAccessor();
     self->mAccessor->Attach(data, &lbl_eu_8050FC20[0x14]);
 
-    func_80136E84(&self->mLayout90, self->mAccessor, &lbl_eu_8050FC20[0x18]);
-    func_80136F08(self->mLayout90, &self->mAnim94, self->mAccessor,
+    buildLayout(&self->mLayout90, self->mAccessor, &lbl_eu_8050FC20[0x18]);
+    bindLayoutAnimTransform(self->mLayout90, &self->mAnim94, self->mAccessor,
                   &lbl_eu_8050FC20[0x31]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -301,7 +301,7 @@ void stub_us_8029620c() {}
 // frame, switch the notice state to 2 (party-change applied).
 // ---------------------------------------------------------------------------
 extern "C" void func_80293C20(CMenuPTChangeNotice* self) {
-    if (func_80137444(self->mAnim94, lbl_eu_80668B90) != 0) {
+    if (advanceAnimTransform(self->mAnim94, lbl_eu_80668B90) != 0) {
         self->mField98 = 2;
     }
 }

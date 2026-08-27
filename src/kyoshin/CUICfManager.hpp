@@ -54,7 +54,7 @@ extern "C" int func_800FF738();  // matches CTaskGame.hpp
 extern "C" u32 func_801B481C();  // canonical u32 form (per CMenuGetItemMulti.cpp def / CVision.hpp)
 extern "C" int func_80293C10();  // matches CMenuQstCnt.hpp (int)
 extern "C" int func_8029A658();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
-void func_80138078(u32);         // mangles to func_80138078__FUl
+void playUISound(u32);         // mangles to playUISound__FUl
 class CSysWinBuff;
 extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
 extern "C" u32 func_8009CF8C(u32 resourceId);      // resource getter (CMiniMap.cpp)

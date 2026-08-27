@@ -2,7 +2,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
-extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
 extern int isGlobalCamFlagSet(int r3);
 
 // Retail layout shim: CObjectParam lives at offset 0x3E9C in CfObjectPc.
@@ -31,7 +31,7 @@ namespace cf{
     // and type-specific criteria via switch on unkC (1=simple, 2=enemy, 3=object).
     bool CHelp_Target::CHelp_UnkVirtualFunc3(){
         CfObjectMove* objMove = cf::CfGameManager::getPlayer(0);
-        CfObjectPc* objPc = func_800BFC68(objMove);
+        CfObjectPc* objPc = getCfObjectPc(objMove);
         if(cf::CfGameManager::isSceneLoading() != 0) return false;
         
         CfGameManager* gameMgr = CfGameManager::getInstance();
@@ -64,7 +64,7 @@ namespace cf{
             case 3:
             {
                 // Check object state flag at offset 0x91
-                resultObj = func_800C1228(findObjectById(retailObj->objectParam.CObjectParam_UnkVirtualFunc5()));
+                resultObj = getValidObject(findObjectById(retailObj->objectParam.CObjectParam_UnkVirtualFunc5()));
                 if(resultObj == nullptr) return false;
                 Object91View* objectView = static_cast<Object91View*>(resultObj);
                 if(objectView->unk91 == 0xC) break;

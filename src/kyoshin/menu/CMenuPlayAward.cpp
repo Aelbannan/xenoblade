@@ -6,8 +6,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-#include "kyoshin/CTutorial.hpp"     // func_80138078 (retail func_80138078__FUl)
-#include "kyoshin/code_80135FDC.hpp" // func_80137510 / func_80137444 (anim frame advance)
+extern "C" void playUISound__FUl(u32); // from CTutorial.hpp (C++ mangled playUISound__FUl); forward decl to avoid CTutorial/code_80135FDC extern "C" overload clash on func_801361E8/setLayoutTextBoxNumber
+inline void playUISound(u32 cue) { playUISound__FUl(cue); }
+#include "kyoshin/code_80135FDC.hpp" // func_80137510 / advanceAnimTransform (anim frame advance)
 #include "kyoshin/cf/CfGameManager.hpp" // cf::CfGameManager::getCurrentPad / getCfPadData
 #include "monolib/core/CPadManager.hpp" // CPad::mPressedButtonFlags
 #include "kyoshin/menu/CMenuPlayAward.hpp"
@@ -247,7 +248,7 @@ body:
     if (close != 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078(6);
+            playUISound(6);
         }
         mField1160 = 4;
         mField54 = 1;
@@ -331,7 +332,7 @@ void func_8027038C(CMenuPlayAward* self) {
         func_801C412C(&self->mTitleAHelp);
         func_80270F74(&self->mPlayAwardList);
         self->mField1160 = 1;
-        func_80138078(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -679,7 +680,7 @@ void func_80270D64(CPlayAwardList* self) {
 // (field_0x88 nonzero).
 void func_80270E04(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x88 != 0) {
-        func_80137038(self->mLayout20, drawInfo, 0, 1);
+        drawLayout(self->mLayout20, drawInfo, 0, 1);
         func_801F35B0(self->mScrollBar, drawInfo);
         func_801D20B0(self->mCursor, drawInfo);
     }
@@ -700,7 +701,7 @@ void func_80270E64(CPlayAwardList* self) {
         delete reinterpret_cast<CPlayAwardAttrObj*>(self->field_0x2C);
         self->field_0x2C = 0;
     }
-    func_80139124(self->mArcAccessor1C);
+    releaseArcResourceAccessor(self->mArcAccessor1C);
     reinterpret_cast<CCursor18*>(&self->mCursor)->vf3();
     func_801F35DC(self->mScrollBar);
     self->mMemRegion.func_8045F778();
@@ -764,7 +765,7 @@ void func_80271070(CPlayAwardList* self) {
         func_80271620(self);
         func_801D216C(self->mCursor, 0);
         func_801F369C(self->mScrollBar);
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -795,7 +796,7 @@ void func_802710D4(CPlayAwardList* self) {
     func_80271680(self);
     func_80271730(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Award-list cursor down: advance the scroll position, wrapping through the
@@ -828,7 +829,7 @@ void func_80271190(CPlayAwardList* self) {
     func_80271680(self);
     func_80271730(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Award-list scroll step: when the current page's entry count reaches 9,
@@ -852,7 +853,7 @@ void func_80271260(CPlayAwardList* self) {
     func_80271680(self);
     func_80271730(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Award-list cursor up: when the current page's entry count reaches 9,
@@ -882,7 +883,7 @@ void func_80271300(CPlayAwardList* self) {
     func_80271680(self);
     func_80271730(self);
     func_801F3850(self->mScrollBar, self->field_0x8E);
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Page-flip: increment the 0x90 page byte (wrapping 2 -> 0), stash the page
@@ -904,7 +905,7 @@ void func_802713BC(CPlayAwardList* self) {
     func_802717F8(self);
     func_80271680(self);
     func_80271730(self);
-    func_80138078(0xa);
+    playUISound(0xa);
 }
 
 // Page-flip helper: 0x67 when the 0x90 page byte is nonzero, else 0x66.
@@ -914,7 +915,7 @@ s32 func_80271468(CPlayAwardList* self) { return (self->field_0x90 != 0) + 0x66;
 // end, mark the list state as showing (2), run the page/scroll setup and
 // request the scroll bar scroll-in.
 void func_80271480(CPlayAwardList* self) {
-    if (func_80137444(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans24, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 2;
         func_80271620(self);
         func_801F367C(self->mScrollBar);
@@ -925,7 +926,7 @@ void func_80271480(CPlayAwardList* self) {
 // end, mark the list state as opening (3), run the page/scroll setup and set
 // the ready flag.
 void func_802714D4(CPlayAwardList* self) {
-    if (func_80137444(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
+    if (advanceAnimTransform(self->mAnimTrans28, lbl_eu_806689C0) != 0) {
         self->field_0x89 = 3;
         func_80271730(self);
         self->field_0x8B = 1;
@@ -1103,10 +1104,10 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         mArcAccessor1C = (nw4r::lyt::ArcResourceAccessor*)
             createArcResourceAccessor__10CLibLayoutFv();
         mArcAccessor1C->Attach(fileData, &lbl_eu_8050E7C0[0x127]);
-        func_80136E84(&mLayout20, mArcAccessor1C, &lbl_eu_8050E7C0[0x12b]);
-        func_80136F08(mLayout20, &mAnimTrans24, mArcAccessor1C,
+        buildLayout(&mLayout20, mArcAccessor1C, &lbl_eu_8050E7C0[0x12b]);
+        bindLayoutAnimTransform(mLayout20, &mAnimTrans24, mArcAccessor1C,
                       &lbl_eu_8050E7C0[0x13e]);
-        func_80136F08(mLayout20, &mAnimTrans28, mArcAccessor1C,
+        bindLayoutAnimTransform(mLayout20, &mAnimTrans28, mArcAccessor1C,
                       &lbl_eu_8050E7C0[0x154]);
 
         // Bind the shared font into the layout's root pane.
@@ -1116,7 +1117,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
         u32 fontResult = fontObj->getFontHandle();
         func_8013676C(rootPane, fontResult);
 
-        func_801368C0(mLayout20, &lbl_eu_8050E7C0[0x16f], func_801355BC());
+        setLayoutTextBoxFont(mLayout20, &lbl_eu_8050E7C0[0x16f], func_801355BC());
         func_802715C0(this);
         mLayout20->Animate(0);
 
@@ -1161,7 +1162,7 @@ bool CPlayAwardList::OnFileEvent(CEventFile* event) {
     if (mFileHandle2 == event->mFileHandle) {
         // Common archive finished: detach its buffer into the BDAT tables.
         void* fileData2 = mFileHandle2->getData();
-        func_8003AA78__5CBdatFUlPv(2, fileData2);
+        setBdatEntry__5CBdatFUlPv(2, fileData2);
         func_8003AA34();
         lbl_eu_806648A8 = getFP__FPCc(&lbl_eu_8050E7C0[0x183]);
         mFileHandle2 = 0;

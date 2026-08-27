@@ -251,23 +251,61 @@ def _current_engine_hash() -> str:
     return hash_engine_tree(_REPO_ROOT)
 
 
-def _byte_identical_with_relocs(left: FunctionBytes, right: FunctionBytes) -> bool:
-    """Byte-identical bodies AND matching relocation sites (r5 Finding 2).
+def _normalize_reloc_dest(
+    symbol: str | None,
+    canonical_symbols: dict[str, str] | None,
+) -> str | None:
+    """Canonical reloc destination, or ``None`` when the name is unusable.
+
+    Retail DOL-split objects often carry ``(null)`` reloc symbols. Those must
+    not fail a byte-identity check when offset/type/addend already agree
+    (verified: us-800d9c70). Named symbols go through the unit reloc map so
+    TU-local ``@N`` / ``instance$N`` equate to retail ``lbl_eu_*``.
+    """
+    if symbol is None or symbol in ("", "(null)"):
+        return None
+    if canonical_symbols and symbol in canonical_symbols:
+        return canonical_symbols[symbol]
+    return symbol
+
+
+def _byte_identical_with_relocs(
+    left: FunctionBytes,
+    right: FunctionBytes,
+    *,
+    canonical_symbols: dict[str, str] | None = None,
+) -> bool:
+    """Byte-identical bodies AND matching relocation destinations (r5 Finding 2).
 
     ``left.code == right.code`` alone is not sound: in ET_REL objects the
     instruction bytes at a relocation site hold a placeholder/addend, so a
-    ``bl wrong_function`` and ``bl right_function`` compare equal. The
-    relocatable bodies are only truly identical when the (offset, type)
-    multiset of relocations matches too. Symbol names are NOT compared:
-    retail DOL-split objects carry ``(null)`` reloc symbols where the decomp
-    side has real mangled names, so name comparison would false-negative on
-    legitimate FULL_MATCH pairs (verified: us-800d9c70 reloc sites match,
-    symbols differ ``(null)`` vs ``spInstance__...``)."""
+    ``bl wrong_function`` and ``bl right_function`` compare equal. Bodies are
+    only truly identical when each site agrees on (offset, type, addend) and,
+    when both sides have usable names, on the **canonical** destination.
+    ``(null)`` / empty retail names are wildcards for the name slot only —
+    type and addend still must match.
+    """
     if left.code != right.code:
         return False
-    left_sites = sorted((r.offset, r.relocation_type) for r in left.relocations)
-    right_sites = sorted((r.offset, r.relocation_type) for r in right.relocations)
-    return left_sites == right_sites
+    left_by_off = {int(r.offset): r for r in left.relocations}
+    right_by_off = {int(r.offset): r for r in right.relocations}
+    if set(left_by_off) != set(right_by_off):
+        return False
+    for offset, left_reloc in left_by_off.items():
+        right_reloc = right_by_off[offset]
+        if int(left_reloc.relocation_type) != int(right_reloc.relocation_type):
+            return False
+        left_addend = 0 if left_reloc.addend is None else int(left_reloc.addend)
+        right_addend = 0 if right_reloc.addend is None else int(right_reloc.addend)
+        if left_addend != right_addend:
+            return False
+        left_dest = _normalize_reloc_dest(left_reloc.symbol, canonical_symbols)
+        right_dest = _normalize_reloc_dest(right_reloc.symbol, canonical_symbols)
+        if left_dest is None or right_dest is None:
+            continue
+        if left_dest != right_dest:
+            return False
+    return True
 
 
 def _current_certifier_hash() -> str:
@@ -3358,7 +3396,20 @@ def certify_unit_symbol(
         # skip SMT prove: incomplete PS capability stubs / timeouts block certs
         # that parents need. Prefer prove only when bytes differ and a reviewed
         # hardware_profile is configured (MMIO/FIFO obligations).
-        bytes_identical = _byte_identical_with_relocs(left, right)
+        # Canonical reloc names must feed the byte-identity check too: otherwise
+        # ET_REL `bl` sites with the same placeholder bytes but different
+        # callees still mint full-instruction-match (audit P0 / score-gap).
+        identity_canonical: dict[str, str] | None = None
+        try:
+            if _ensure_reloc_map_fresh(project, unit):
+                _unit_name = getattr(unit, "name", None)
+                if _unit_name:
+                    identity_canonical = _canonical_symbols_for_unit(_unit_name)
+        except Exception:
+            identity_canonical = None
+        bytes_identical = _byte_identical_with_relocs(
+            left, right, canonical_symbols=identity_canonical,
+        )
         if not bytes_identical:
             # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).  The
             # witness must run before the SMT-first memory-bus block below,
@@ -3370,14 +3421,7 @@ def certify_unit_symbol(
             # value-equal pool-cookie drift (@N vs lbl_eu_*) that the mined
             # map exists to canonicalize (fail-closed when not fresh).
             witness_probe = None
-            witness_canonical: dict[str, str] | None = None
-            try:
-                if _ensure_reloc_map_fresh(project, unit):
-                    _unit_name = getattr(unit, "name", None)
-                    if _unit_name:
-                        witness_canonical = _canonical_symbols_for_unit(_unit_name)
-            except Exception:
-                witness_canonical = None
+            witness_canonical = identity_canonical
             if witness_enabled:
                 witness_probe = _try_renaming_witness(
                     project, symbol, left, right, target_id,

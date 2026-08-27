@@ -127,8 +127,8 @@ namespace cf {
         void updateNpcDialog();
         void func_800BF764();
         void loadIconType();
-        s16 func_800BF920();
-        u8 func_800BF984();
+        s16 getRltMeet();
+        u8 getIconType();
 
         // Reads the f32 returned by vtable slot 0x8C (declared void in the
         // base header, but retail leaves a scaled float in f1).

@@ -255,9 +255,9 @@ extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
 // int arg (same scheme as CSysWin.hpp / CMenuSkipTimer.hpp).
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 
-// UI sound effect (func_80138078__FUl). C++ linkage so MWCC emits the mangled
+// UI sound effect (playUISound__FUl). C++ linkage so MWCC emits the mangled
 // retail name.
-void func_80138078(u32);
+void playUISound(u32);
 
 // Sibling in this TU (retail unmangled name; extern "C" so the call site in
 // func_801FA59C binds to the retail symbol).
@@ -503,7 +503,7 @@ struct CPartyStateWinList {
 };
 struct CPartyStateWinListSlot {
     u8 _00[0x4];
-    cf::CfObjectMove* field_0x4;   // +0x4 (null-checked, passed to func_800BFC68)
+    cf::CfObjectMove* field_0x4;   // +0x4 (null-checked, passed to getCfObjectPc)
 };
 
 namespace cf { class CfObjectMove; }
@@ -516,7 +516,7 @@ extern "C" void func_80043D90(void*);
 extern "C" void* func_80043F18(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* objMove);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
 extern "C" void __dt__80043E88(void*, int);
 

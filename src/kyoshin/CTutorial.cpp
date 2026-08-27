@@ -5,8 +5,8 @@
 
 #include "kyoshin/CTutorial.hpp"
 
-// func_80136910 and friends are declared in CTutorial.hpp; the shared
-// code_80135FDC.hpp declaration of func_80136910 (u8 third parameter) is
+// setLayoutTextBoxNumber and friends are declared in CTutorial.hpp; the shared
+// code_80135FDC.hpp declaration of setLayoutTextBoxNumber (u8 third parameter) is
 // deliberately NOT included here - retail's caller saw an int-width
 // parameter, which changes MWCC's argument-extension codegen.
 
@@ -62,7 +62,7 @@ u8 CTutorial::func_8029ACBC() { return this->field_52; }
  * info) is passed straight through to the layout draw helper. */
 void CTutorial::func_8029ABB8(nw4r::lyt::DrawInfo* drawInfo) {
     if (field_44 != 0) {
-        func_80137038(mpLayout, drawInfo, 0, 1);
+        drawLayout(mpLayout, drawInfo, 0, 1);
     }
 }
 
@@ -72,7 +72,7 @@ void CTutorial::func_8029ACC4() {
     if (field_45 == 0) {
         field_45 = 1;
         field_47 = 0;
-        func_80138078(8);
+        playUISound(8);
     }
 }
 
@@ -91,7 +91,7 @@ u8 CTutorial::func_8029AE5C() {
 // Advance-anim start: disable anim0 / enable anim1, mark state 2, and re-bind
 // both transforms onto the layout before kicking an animation tick.
 void CTutorial::func_8029AE9C() {
-    if (func_80137444(mpAnimTrans0, lbl_eu_80668C08) != 0) {
+    if (advanceAnimTransform(mpAnimTrans0, lbl_eu_80668C08) != 0) {
         field_45 = 2;
         mpLayout->SetAnimationEnable(mpAnimTrans0, false);
         mpLayout->SetAnimationEnable(mpAnimTrans1, true);
@@ -105,7 +105,7 @@ CTutorial::~CTutorial() {}
 
 /* Advance-animation (0x40) reached the end frame: state 3, visible. */
 __declspec(noinline) void CTutorial::func_8029AF30() {
-    if (func_80137444(mpAnimTrans1, lbl_eu_80668C08) != 0) {
+    if (advanceAnimTransform(mpAnimTrans1, lbl_eu_80668C08) != 0) {
         field_45 = 3;
         field_47 = 1;
     }
@@ -136,8 +136,8 @@ __declspec(noinline) void CTutorial::func_8029B010() {
 void CTutorial::func_8029B124() {
     char buf[0x20];
     // Sign-extend before increment: retail computes extsb(field_50)+1.
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x82], field_51);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x79], field_50 + 1);
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(mpLayout, &lbl_eu_80510290[0x82], field_51);
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         sprintf(buf, &lbl_eu_80510290[0x8b], field_48, field_50 + 1);
     } else {
@@ -190,7 +190,7 @@ void CTutorial::func_8029B498() {
 // decrement it (u8-domain), clamp negatives to zero, then refresh.
 extern "C" void func_8029ADF8(CTutorial* self) {
     if (self->field_50 != 0)
-        func_80138078(8);
+        playUISound(8);
     u8 next = (u8)self->field_50 - 1;
     self->field_50 = (s8)next;
     if ((s8)next < 0)
@@ -230,10 +230,10 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         mAccessor0 = CLibLayout::createArcResourceAccessor();
         mAccessor0->Attach(arcData, &lbl_eu_80510290[0xc7]);
 
-        func_80136E84(&mpLayout, mAccessor0, &lbl_eu_80510290[0xcb]);
-        func_80136F08(mpLayout, &mpAnimTrans0, mAccessor0,
+        buildLayout(&mpLayout, mAccessor0, &lbl_eu_80510290[0xcb]);
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mAccessor0,
                       &lbl_eu_80510290[0xe2]);
-        func_80136F08(mpLayout, &mpAnimTrans1, mAccessor0,
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mAccessor0,
                       &lbl_eu_80510290[0xfc]);
 
         // Bind the shared font onto the root pane (retail loads the root pane
@@ -243,10 +243,10 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
                              CDeviceFont::getFontInfo(1, mpLayout))->sf9();
         func_8013676C(rootPane, fontResult);
 
-        u32 lang = func_801355A0();
+        u32 lang = getPackedFont();
         if (lang != 0) {
-            func_801368C0(mpLayout, &lbl_eu_80510290[0x79], lang);
-            func_801368C0(mpLayout, &lbl_eu_80510290[0x82], lang);
+            setLayoutTextBoxFont(mpLayout, &lbl_eu_80510290[0x79], lang);
+            setLayoutTextBoxFont(mpLayout, &lbl_eu_80510290[0x82], lang);
         }
 
         // Start paused on the rewind transform (anim0 enabled, anim1 not).
@@ -311,9 +311,9 @@ void CTutorial::func_8029ABD8() {
         }
         mpLayout = nullptr;
     }
-    func_80139124(mAccessor0);
+    releaseArcResourceAccessor(mAccessor0);
     mAccessor0 = nullptr;
-    func_80139124(mAccessor1);
+    releaseArcResourceAccessor(mAccessor1);
     mAccessor1 = nullptr;
     if (field_4C != nullptr) {
         mtl::MemManager::deallocate(field_4C);
@@ -382,7 +382,7 @@ void CTutorial::func_8029ACEC() {
         mpLayout->SetAnimationEnable(mpAnimTrans1, false);
         mpLayout->SetAnimationEnable(mpAnimTrans0, true);
         mpLayout->Animate(0);
-        func_80138078(9);
+        playUISound(9);
     }
 }
 // Page-navigation helper: mark complete when the counter already sits on the
@@ -398,6 +398,6 @@ void CTutorial::func_8029AD88() {
         field_50 = field_51 - 1;
     }
     func_8029B124();
-    func_80138078(8);
+    playUISound(8);
 }
 

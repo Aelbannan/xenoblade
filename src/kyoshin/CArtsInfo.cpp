@@ -36,7 +36,7 @@ extern u32 lbl_eu_806640F4;
 // declared in CArtsInfo.hpp; referenced by name so the conversion lfd's emit
 // retail SDA21 relocs instead of TU-local pool labels.
 
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Forward declarations for state machine functions (defined later in this TU).
 // func_802369C0/func_80236CF4 are extern "C": retail calls the C names (not
@@ -253,8 +253,8 @@ void func_8023587C(CArtsInfo* self) {
 void func_80235958(CArtsInfo* self, void* drawInfo) {
     if (self->field_0x40 == 0) return;
 
-    func_80137038(self->mpLayout1, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
-    func_80137038(self->mpLayout2, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    drawLayout(self->mpLayout1, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    drawLayout(self->mpLayout2, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
 
     s8 cursorActive = self->field_0x5A;
     if (cursorActive >= 0) {
@@ -268,8 +268,8 @@ void func_80235958(CArtsInfo* self, void* drawInfo) {
 __declspec(noinline) void func_802359CC(CArtsInfo* self) {
     getEntry__5CBdatFUl(2);
 
-    func_801390E0__FPP11CFileHandle(&self->field_0x14);
-    func_801390E0__FPP11CFileHandle(&self->field_0x18);
+    closeFileHandle__FPP11CFileHandle(&self->field_0x14);
+    closeFileHandle__FPP11CFileHandle(&self->field_0x18);
 
     self->field_0x40 = 0;
 
@@ -290,7 +290,7 @@ __declspec(noinline) void func_802359CC(CArtsInfo* self) {
     }
 
     // Cleanup arc resource accessor (field holds the pointer by value)
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
 
     // Call virtual cleanup on cursor (+0x0C)
     ((CArtsInfoCurView*)self->mCursor)->vf03();
@@ -382,7 +382,7 @@ void func_80235AE0(CArtsInfo* self) {
 
     func_80136A1C(self->mpLayout1, base + 0x47, buf, 0);
 
-    func_80138078__FUl(0x6D);
+    playUISound__FUl(0x6D);
 }
 #pragma optimize_for_size off
 
@@ -407,7 +407,7 @@ void func_80235D24(CArtsInfo* self) {
 
     self->mpLayout2->Animate(0);
 
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 // func_80235DD8 - state machine (state==9 -> 0xC)
@@ -495,7 +495,7 @@ u32 func_80235F50(CArtsInfo* self) {
 // .text:0x864, size 0xB4
 void func_80235F6C(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, f) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, f) == 0) return;
 
     // Real member calls so MWCC emits the retail r12 vtable dispatch.
     self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
@@ -510,7 +510,7 @@ void func_80235F6C(CArtsInfo* self) {
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f)) {
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f)) {
         self->field_0x44 = 3;
         self->field_0x49 = 1;
     }
@@ -541,7 +541,7 @@ void func_80236120(CArtsInfo* self) {
 // func_8023616C - animation state 4
 // .text:0xA64, size 0xB4
 void func_8023616C(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 7;
 
@@ -554,7 +554,7 @@ void func_8023616C(CArtsInfo* self) {
 // func_80236220 - animation state 5
 // .text:0xB18, size 0xB4
 void func_80236220(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 8;
 
@@ -567,7 +567,7 @@ void func_80236220(CArtsInfo* self) {
 // func_802362D4 - animation state 6
 // .text:0xBCC, size 0x60
 void func_802362D4(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
@@ -606,7 +606,7 @@ void func_80236408(CArtsInfo* self) {
 // func_80236454 - animation state 9
 // .text:0xD4C, size 0xB4
 void func_80236454(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
+    if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 0xB;
 
@@ -2509,11 +2509,11 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         field_0x1C = (int)createArcResourceAccessor__10CLibLayoutFv();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(arcData, &lbl_eu_8050B00C[0x2D6]);
 
-        func_80136E84(&mpLayout1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
-        func_80136F08(mpLayout1, &mpAnimTrans1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2F4]);
-        func_80136F08(mpLayout1, &mpAnimTrans2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x311]);
-        func_80136F08(mpLayout1, &mpAnimTrans3, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x333]);
-        func_80136F08(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
+        buildLayout(&mpLayout1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
+        bindLayoutAnimTransform(mpLayout1, &mpAnimTrans1, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2F4]);
+        bindLayoutAnimTransform(mpLayout1, &mpAnimTrans2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x311]);
+        bindLayoutAnimTransform(mpLayout1, &mpAnimTrans3, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x333]);
+        bindLayoutAnimTransform(mpLayout1, &mpAnimTrans4, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
 
         nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
@@ -2521,17 +2521,17 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         char* lang = func_801355BC();
         if (lang != 0) {
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[71], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[388], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[238], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[253], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[268], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[283], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[298], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[313], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[328], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[343], (u32)lang);
-            func_801368C0(mpLayout1, &lbl_eu_8050B00C[358], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[71], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[388], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[238], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[253], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[268], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[283], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[298], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[313], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[328], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[343], (u32)lang);
+            setLayoutTextBoxFont(mpLayout1, &lbl_eu_8050B00C[358], (u32)lang);
         }
         mpLayout1->SetAnimationEnable(mpAnimTrans2, false);
         mpLayout1->SetAnimationEnable(mpAnimTrans3, false);
@@ -2576,25 +2576,25 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
             }
         }
 
-        func_80136E84(&mpLayout2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
-        func_80136F08(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
-        func_80136F08(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x3DD]);
+        buildLayout(&mpLayout2, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x2DA]);
+        bindLayoutAnimTransform(mpLayout2, &mpAnimTrans5, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x356]);
+        bindLayoutAnimTransform(mpLayout2, &mpAnimTrans6, (nw4r::lyt::ArcResourceAccessor*)field_0x1C, &lbl_eu_8050B00C[0x3DD]);
 
         void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
         func_8013676C(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
                       reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
 
         if (lang != 0) {
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[253], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[268], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[283], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[298], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[313], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[328], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[343], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[358], (u32)lang);
-            func_801368C0(mpLayout2, &lbl_eu_8050B00C[373], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[253], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[268], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[283], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[298], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[313], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[328], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[343], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[358], (u32)lang);
+            setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[373], (u32)lang);
         }
         mpLayout2->SetAnimationEnable(mpAnimTrans6, false);
         mpLayout2->SetAnimationEnable(mpAnimTrans5, true);
@@ -2653,7 +2653,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
     if ((u32)field_0x18 == (u32)event->field_04) {
         CFileHandle* fh2 = (CFileHandle*)field_0x18;
         void* data = fh2->getData();
-        func_8003AA78__5CBdatFUlPv(2, data);
+        setBdatEntry__5CBdatFUlPv(2, data);
         func_8003AA34();
         field_0x4C = (int)getFP__FPCc(&lbl_eu_8050B00C[1054]);
         func_8003AA34();

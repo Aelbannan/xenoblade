@@ -229,7 +229,7 @@ extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self) {
         func_801C412C(&self->mTitleAHelp);
         func_801CB28C(&self->mItemBoxGrid);
         self->mState = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 

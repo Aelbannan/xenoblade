@@ -137,7 +137,7 @@ extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" void* func_801355F4();
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void __ct__CCur18(void*, void*);

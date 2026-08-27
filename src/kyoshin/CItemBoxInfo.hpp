@@ -11,10 +11,10 @@ namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcR
 namespace nw4r { namespace math { struct VEC3; } }
 
 // C++-mangled imports from code_80135FDC.cpp: the unmangled identifiers mangle
-// to the retail symbols func_801390E0__FPP11CFileHandle and
-// func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor (see CItemBoxLine.hpp).
+// to the retail symbols closeFileHandle__FPP11CFileHandle and
+// releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor (see CItemBoxLine.hpp).
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // Fake SI interface for the nw4r::lyt::Layout deleting-destructor dispatch at
 // vtable slot 2 (2 hidden RTTI prefix slots, so the first declared virtual is
@@ -127,7 +127,7 @@ struct CItemBoxInfoState {
     CFileHandle* fileHandle1;       // 0x24
     CFileHandle* fileHandle2;       // 0x28
     nw4r::lyt::ArcResourceAccessor* arcResourceAccessor;     // 0x2C - nw4r::lyt::ArcResourceAccessor
-    nw4r::lyt::ArcResourceAccessor* resource;                // 0x30 - second ArcResourceAccessor (released by func_80139124)
+    nw4r::lyt::ArcResourceAccessor* resource;                // 0x30 - second ArcResourceAccessor (released by releaseArcResourceAccessor)
     nw4r::lyt::Layout* layout;
     nw4r::lyt::AnimTransform* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
     nw4r::lyt::AnimTransform* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
@@ -558,9 +558,9 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" char* func_801355BC(void);
 extern "C" char* func_80138DA4(const char* msg);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 
 extern "C" u32 func_80138E90(u16);
 extern u32 lbl_eu_80664098;

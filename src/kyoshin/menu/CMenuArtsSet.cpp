@@ -82,7 +82,7 @@ struct CMenuArtsSetCtorShim {
 };
 
 // C++-linkage draw helper (mangles to the retail symbol).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Arts archive path string (accessed via sda21 small-data relocation).
 extern char lbl_eu_8050AC70[];
@@ -242,7 +242,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             } else if (func_8023390C((CMenuArtsSet*)&self->mList) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
-                    func_80138078__FUl(6);
+                    playUISound__FUl(6);
                 }
                 self->field360 = 4;
                 self->field54 = 1;
@@ -258,7 +258,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             // First C-down press: play a cue when the timer had ramped, then
             // reset it and re-arm the list for pointer-style input.
             if (self->field364 > lbl_eu_8066863C) {
-                func_80138078__FUl(2);
+                playUISound__FUl(2);
             }
             self->field364 = lbl_eu_80668638;
             func_802349F8((CMenuArtsSet*)&self->mList, 1);
@@ -333,7 +333,7 @@ extern "C" void func_8022F544(CMenuArtsSetCtorShim* self) {
             } else if (func_8023390C((CMenuArtsSet*)&self->mList) == 0) {
                 if (func_800FEDF8() != 0) {
                     func_800FF914();
-                    func_80138078__FUl(6);
+                    playUISound__FUl(6);
                 }
                 self->field360 = 4;
                 self->field54 = 1;
@@ -404,12 +404,12 @@ extern "C" __declspec(noinline) void func_8022FAD0(SArtsSub8022FA58* selfRaw) {
 
     func_80230374(selfRaw);
 
-    func_80136E84((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
+    buildLayout((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
                   lbl_eu_8050AC70);
     char* base = lbl_eu_8050AC70;
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
                   self->field_0x04, base + 0x18);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
                   self->field_0x04, base + 0x35);
     self->field_0x08->v11(self->field_0x10, 0);
     self->field_0x08->v11(self->field_0x0C, 1);
@@ -481,7 +481,7 @@ extern "C" __declspec(noinline) void func_8022FDF4(SArts2FDF4* self) {
 void func_80124270(void*, u32);
 
 // AnimTransform frame-check helper (defined in COption.cpp / CArtsInfo.cpp).
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // State-progression byte table (sdata, 8 bytes). Fixed-size decl: incomplete
 // array types are not sdata-eligible and force lis/addi instead of sda21.
 extern u8 lbl_eu_806628A8[8];
@@ -542,7 +542,7 @@ extern "C" __declspec(noinline) void func_8022FF00(SArtsSub8022FA58* self, int a
 // func_80230070 twin.)
 __declspec(noinline) void func_8022FF74(SArts2FF74* self) {
     float duration = lbl_eu_80668648;
-    func_80137444(self->field_0x0C, duration);
+    advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x16 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
@@ -563,7 +563,7 @@ __declspec(noinline) void func_8022FF74(SArts2FF74* self) {
 // C-linkage + noinline: func_8022FDF4 keeps a real bl (retail never inlines).
 extern "C" __declspec(noinline) void func_80230070(SArts30070* self) {
     float duration = lbl_eu_80668648;
-    if (func_80137444(self->field_0x10, duration) != 0) {
+    if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
@@ -668,7 +668,7 @@ extern "C" __declspec(noinline) void func_80230160(SArtsSub8022FA58* self) {
     SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(id);
     char* buf = func_80136190(lbl_eu_8050AC70 + 0x50, lbl_eu_8050AC70 + 0x5b,
                               0x18);
-    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+    setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
         (nw4r::lyt::Layout*)self->field_0x00, lbl_eu_8050AC70 + 0x6f,
         root->mObj17C.v128());
     func_80136B4C((nw4r::lyt::Layout*)self->field_0x00, lbl_eu_8050AC70 + 0x100,
@@ -709,22 +709,22 @@ extern "C" void* __dt__80230484(void* self, int flags) {
 // panes (v13 at +0x3C) then refresh the cursor drivers (func_802316F8).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802304C4(SArts304C4* self) {
-    func_80136E84((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
+    buildLayout((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
                   lbl_eu_8050AC70 + 0x109);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
                   self->field_0x04, lbl_eu_8050AC70 + 0x122);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
                   self->field_0x04, lbl_eu_8050AC70 + 0x140);
     self->field_0x08->v11(self->field_0x10, 0);
     self->field_0x08->v11(self->field_0x0C, 1);
     self->field_0x08->v14(0);
     func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x15C, 1), 0);
     func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x16A, 1), 0);
-    func_80136E84((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
+    buildLayout((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
                   lbl_eu_8050AC70 + 0x178);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x18,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x18,
                   self->field_0x04, lbl_eu_8050AC70 + 0x190);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x1C,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x1C,
                   self->field_0x04, lbl_eu_8050AC70 + 0x1AD);
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
@@ -778,8 +778,8 @@ void func_802306F0(SArts306F0* self) {
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802307A4(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x28 != 0) {
-        func_80137038(self->mLayout08, info, 0, 1);
-        func_80137038(self->mLayout14, info, 0, 1);
+        drawLayout(self->mLayout08, info, 0, 1);
+        drawLayout(self->mLayout14, info, 0, 1);
     }
 }
 #pragma pop
@@ -1028,7 +1028,7 @@ void func_80230FF0(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off);
         void* player = getPlayer__Q22cf13CfGameManagerFi(0);                   \
         if (player != 0) {                                                     \
             SArtsPlayerRefresh* pc =                                           \
-                (SArtsPlayerRefresh*)func_800BFC68__FPQ22cf12CfObjectMove(     \
+                (SArtsPlayerRefresh*)getCfObjectPc__FPQ22cf12CfObjectMove(     \
                     player);                                                   \
             if (pc != 0 && pc->field_3F28 == (self)->field_0x26) {             \
                 pc->vf32C();                                                   \
@@ -1339,7 +1339,7 @@ extern "C" __declspec(noinline) void func_802316F8(SArtsSub8022FA58* self) {
 // noinline: retail keeps real bl calls from the state machine.
 __declspec(noinline) void func_80231480(SArts31480* self) {
     float duration = lbl_eu_80668648;
-    func_80137444(self->field_0x0C, duration);
+    advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
@@ -1353,7 +1353,7 @@ __declspec(noinline) void func_80231480(SArts31480* self) {
 // 0x0C float, show the panes, and bump the 0x23/0x24 state.
 __declspec(noinline) void func_8023150C(SArts3150C* self) {
     float duration = lbl_eu_80668648;
-    if (func_80137444(self->field_0x10, duration) != 0) {
+    if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
@@ -1368,7 +1368,7 @@ __declspec(noinline) void func_8023150C(SArts3150C* self) {
 // 0x24 state is bumped to 3 instead of 1.
 __declspec(noinline) void func_802315BC(SArts315BC* self) {
     float duration = lbl_eu_80668648;
-    func_80137444(self->field_0x18, duration);
+    advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
         self->field_0x14->v11(self->field_0x18, 0);
         self->field_0x14->v11(self->field_0x1C, 1);
@@ -1383,7 +1383,7 @@ __declspec(noinline) void func_802315BC(SArts315BC* self) {
 // pointees, and mark state 0x24=0 / busy 0x23=1.
 __declspec(noinline) void func_80231648(SArts31648* self) {
     float duration = lbl_eu_80668648;
-    if (func_80137444(self->field_0x1C, duration) != 0) {
+    if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
@@ -1459,11 +1459,11 @@ extern "C" void* __dt__80231A08(void* self, int flags) {
 // each layout's SArts3CObj to (0,0) via func_80231848, then refresh the
 // cursor drivers (func_80232B88).
 extern "C" __declspec(noinline) void func_80231A48(SArts304C4* self) {
-    func_80136E84((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
+    buildLayout((nw4r::lyt::Layout**)&self->field_0x08, self->field_0x04,
                   lbl_eu_8050AC70 + 0x109);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x0C,
                   self->field_0x04, lbl_eu_8050AC70 + 0x122);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x08, &self->field_0x10,
                   self->field_0x04, lbl_eu_8050AC70 + 0x140);
     self->field_0x08->v11(self->field_0x10, 0);
     self->field_0x08->v11(self->field_0x0C, 1);
@@ -1472,11 +1472,11 @@ extern "C" __declspec(noinline) void func_80231A48(SArts304C4* self) {
     func_80124270(self->field_0x08->field_0x10->v13(lbl_eu_8050AC70 + 0x210, 1), 0);
     SArtsVec2 v1 = {lbl_eu_80668658, lbl_eu_80668658};
     func_80231848((CMenuArtsSet*)self->field_0x08->field_0x10, &v1);
-    func_80136E84((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
+    buildLayout((nw4r::lyt::Layout**)&self->field_0x14, self->field_0x04,
                   lbl_eu_8050AC70 + 0x178);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x18,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x18,
                   self->field_0x04, lbl_eu_8050AC70 + 0x190);
-    func_80136F08((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x1C,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)self->field_0x14, &self->field_0x1C,
                   self->field_0x04, lbl_eu_8050AC70 + 0x1AD);
     self->field_0x14->v11(self->field_0x1C, 0);
     self->field_0x14->v11(self->field_0x18, 1);
@@ -1535,8 +1535,8 @@ void func_80231CB4(SArts306F0* self) {
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80231D68(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x12E != 0) {
-        func_80137038(self->mLayout08, info, 0, 1);
-        func_80137038(self->mLayout14, info, 0, 1);
+        drawLayout(self->mLayout08, info, 0, 1);
+        drawLayout(self->mLayout14, info, 0, 1);
     }
 }
 #pragma pop
@@ -1777,7 +1777,7 @@ extern "C" __declspec(noinline) u16 func_80232370(SArts322BC* self, int key) {
             u16 v = func_8013606C(lbl_eu_8050AC70 + 0x21E, lbl_eu_8050AC70 + 0x22D, row[2] + 1);
             sprintf(buf, lbl_eu_8050AC70 + 0x233, row[1]);
             u32 raw = func_8013600C(lbl_eu_8050AC70 + 0x23C, buf, self->field_0x26);
-            s32 prod = (int)(u16)v * (int)(u8)raw;
+            s32 prod = (int)(u8)raw * (int)(u16)v;
             if (prod > 0) prod /= 100;
             result = (u16)prod;
         } else {
@@ -1788,7 +1788,7 @@ extern "C" __declspec(noinline) u16 func_80232370(SArts322BC* self, int key) {
                     u16 v = func_8013606C(lbl_eu_8050AC70 + 0x21E, lbl_eu_8050AC70 + 0x22D, row[2] + 1);
                     sprintf(buf, lbl_eu_8050AC70 + 0x233, row[1]);
                     u32 raw = func_8013600C(lbl_eu_8050AC70 + 0x23C, buf, self->field_0x26);
-                    s32 prod = (int)(u16)v * (int)(u8)raw;
+                    s32 prod = (int)(u8)raw * (int)(u16)v;
                     if (prod > 0) prod /= 100;
                     result = (u16)prod;
                     break;
@@ -1964,7 +1964,7 @@ extern "C" __declspec(noinline) void func_80232888(SArts32888* self) {
 // Twin of func_80231480 (same 0x08/0x0C/0x10 driver layout).
 extern "C" __declspec(noinline) void func_80232910(SArts31480* self) {
     float duration = lbl_eu_80668648;
-    func_80137444(self->field_0x0C, duration);
+    advanceAnimTransform(self->field_0x0C, duration);
     if (self->field_0x23 == 0) {
         self->field_0x08->v11(self->field_0x0C, 0);
         self->field_0x08->v11(self->field_0x10, 1);
@@ -1978,7 +1978,7 @@ extern "C" __declspec(noinline) void func_80232910(SArts31480* self) {
 // float, show the 0x14 pane, and mark state 0x24=2 / busy 0x23=1.
 extern "C" __declspec(noinline) void func_8023299C(SArts3150C* self) {
     float duration = lbl_eu_80668648;
-    if (func_80137444(self->field_0x10, duration) != 0) {
+    if (advanceAnimTransform(self->field_0x10, duration) != 0) {
         self->field_0x08->v11(self->field_0x10, 0);
         self->field_0x08->v11(self->field_0x0C, 1);
         self->field_0x0C->field_0x10 = lbl_eu_8066864C;
@@ -1992,7 +1992,7 @@ extern "C" __declspec(noinline) void func_8023299C(SArts3150C* self) {
 // Twin of func_802315BC (offset-0x14 driver layout, state bump to 3).
 extern "C" __declspec(noinline) void func_80232A4C(SArts315BC* self) {
     float duration = lbl_eu_80668648;
-    func_80137444(self->field_0x18, duration);
+    advanceAnimTransform(self->field_0x18, duration);
     if (self->field_0x23 == 0) {
         self->field_0x14->v11(self->field_0x18, 0);
         self->field_0x14->v11(self->field_0x1C, 1);
@@ -2004,7 +2004,7 @@ extern "C" __declspec(noinline) void func_80232A4C(SArts315BC* self) {
 // Twin of func_80231648 (identical body, separate retail symbol).
 extern "C" __declspec(noinline) void func_80232AD8(SArts31648* self) {
     float duration = lbl_eu_80668648;
-    if (func_80137444(self->field_0x1C, duration) != 0) {
+    if (advanceAnimTransform(self->field_0x1C, duration) != 0) {
         self->field_0x14->v11(self->field_0x1C, 0);
         self->field_0x14->v11(self->field_0x18, 1);
         self->field_0x18->field_0x10 = lbl_eu_8066864C;
@@ -2116,7 +2116,7 @@ extern "C" __declspec(noinline) void func_80232C78(SArts327B0* selfRaw) {
                 pct /= 100;
             }
             sprintf(buf, base + 0x28a, i + 9);
-            func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
+            setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(
                 (nw4r::lyt::Layout*)self->field_0x00, buf, pct);
             char* txt = func_80136190(
                 base + 0x50, base + 0x5b, 0x18);
@@ -2355,7 +2355,7 @@ void func_8023359C(CMenuArtsSet* self) {
 void func_80233674(CMenuArtsSet* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x28 == 0) return;
     if (self->field_0x2C == 0) return;
-    func_80137038((nw4r::lyt::Layout*)self->field_0x1C, info, 0, 1);
+    drawLayout((nw4r::lyt::Layout*)self->field_0x1C, info, 0, 1);
     func_801F35B0(&self->field_0x34, info);
     u8 v = 0;
     if (CSysWin_getUnk34(&self->mSubObjE8) == 0) {
@@ -2368,7 +2368,7 @@ void func_80233674(CMenuArtsSet* self, nw4r::lyt::DrawInfo* info) {
     self->mSubObj148.field_0x28 = v;
     self->field_0x2A2 = v;
     if (self->mSubObj124.field_0x15 != 0) {
-        func_80137038((nw4r::lyt::Layout*)self->mSubObj124.field_0x08, info, 0, 1);
+        drawLayout((nw4r::lyt::Layout*)self->mSubObj124.field_0x08, info, 0, 1);
     }
     func_802307A4((SArtsDrawBox*)&self->mSubObj148, info);
     func_80231D68((SArtsDrawBox*)((u8*)&self->mSubObj148 + 0x2C), info);
@@ -2394,7 +2394,7 @@ void func_80233760(CMenuArtsSet* self) {
         }
         self->field_0x1C = 0;
     }
-    func_80139124(self->field_0x18);
+    releaseArcResourceAccessor(self->field_0x18);
     self->field_0x18 = 0;
     self->mMemRegion.func_8045F778();
     func_801F35DC(&self->field_0x34);
@@ -2451,7 +2451,7 @@ __declspec(noinline) void func_802339D4(CMenuArtsSet* self) {
     self->field_0x196 = 0;
     func_80232B88((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
     func_80235AC0(&self->mSubObj74);
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 #pragma optimize_for_size off
 
@@ -2470,7 +2470,7 @@ __declspec(noinline) void func_80233A50(CMenuArtsSet* self) {
     if (func_80235F50(&self->mSubObj74) != 0) {
         if (func_80235A98(&self->mSubObj74) != 0) {
             func_80235EF0(&self->mSubObj74);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
         return;
     }
@@ -2492,7 +2492,7 @@ __declspec(noinline) void func_80233A50(CMenuArtsSet* self) {
             func_80231DD0(&self->mList174);
             func_80235124(self);
         }
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
@@ -2510,7 +2510,7 @@ __declspec(noinline) void func_80233A50(CMenuArtsSet* self) {
         func_80231DD0(&self->mList174);
         func_80235124(self);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Arts-menu cursor-down handler: mirror of func_80233A50, but the arts-info
@@ -2523,7 +2523,7 @@ __declspec(noinline) void func_80233C08(CMenuArtsSet* self) {
     if (func_80235F50(&self->mSubObj74) != 0) {
         if (func_80235A98(&self->mSubObj74) != 0) {
             func_80235F14(&self->mSubObj74);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
         return;
     }
@@ -2545,7 +2545,7 @@ __declspec(noinline) void func_80233C08(CMenuArtsSet* self) {
             func_80231E8C(&self->mList174);
             func_80235124(self);
         }
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
         return;
     }
     if (self->mSubObj148.field_0x22 != 0) {
@@ -2563,7 +2563,7 @@ __declspec(noinline) void func_80233C08(CMenuArtsSet* self) {
         func_80231E8C(&self->mList174);
         func_80235124(self);
     }
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Cursor-up handler: when the arts info and syswin are idle and the list is
@@ -2593,7 +2593,7 @@ __declspec(noinline) void func_80233DC0(CMenuArtsSet* self) {
     func_80231F60((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
     func_80235124(self);
 L_Sound:
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Cursor-down handler: mirror of func_80233DC0 but stepping the arts cursor
@@ -2620,7 +2620,7 @@ __declspec(noinline) void func_80233E9C(CMenuArtsSet* self) {
     func_80232000((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C));
     func_80235124(self);
 L_Sound:
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 // Arts-menu idle/advance handler: dispatch on the sub-object busy states.
@@ -2650,7 +2650,7 @@ __declspec(noinline) void func_80233F78(CMenuArtsSet* self) {
             self->field_0x196 = 0;
             func_80232B88((SArts327B0*)&self->mList174);
         }
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         return;
     }
     if (self->mSubObj148.field_0x27 != 0) {   // absolute 0x16F busy flag
@@ -2658,7 +2658,7 @@ __declspec(noinline) void func_80233F78(CMenuArtsSet* self) {
         if (self->field_0x196 != 0) {
             func_8023080C(&self->mSubObj148, 0);
         }
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         return;
     }
     if (self->field_0x2A6 != 0) {
@@ -2671,7 +2671,7 @@ __declspec(noinline) void func_80233F78(CMenuArtsSet* self) {
             self->field_0x2A6 = 0;
             func_80235124(self);
     }
-    func_80138078__FUl(6);
+    playUISound__FUl(6);
 }
 
 // Arts-menu per-frame advance: dispatch on the help-window / arts-info /
@@ -2688,7 +2688,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
         if (CSysWin_isActive(&self->mSubObjE8) != 0) {
             func_8022B8E4(&self->mSubObjE8);
             self->field_0x2A6 = 0;
-            func_80138078__FUl(3);
+            playUISound__FUl(3);
         }
         return;
     }
@@ -2708,10 +2708,10 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                                   func_80232370(&self->mList174, -1));
                     func_802324C4(&self->mList174, -1);
                 }
-                func_80138078__FUl(0x96);
+                playUISound__FUl(0x96);
                 func_80235DD8(&self->mSubObj74);
             } else {
-                func_80138078__FUl(6);
+                playUISound__FUl(6);
                 func_80235D24(&self->mSubObj74);
             }
             self->field_0x2A6 = 0;
@@ -2728,12 +2728,12 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
         // u32 cursor: masked once on assignment, compared directly after.
         u32 cur = func_802322BC(&self->mList174);
         if (cur == (u8)func_80231014(&self->mSubObj148)) {
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
             return;
         }
         func_80230D74(&self->mSubObj148, func_802322BC(&self->mList174));
         func_80235124(self);
-        func_80138078__FUl(0x15);
+        playUISound__FUl(0x15);
         return;
     }
     if (((SArts34C84*)self)->field_0x16F != 0) {   // abs 0x16F busy flag
@@ -2759,10 +2759,10 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
         func_80232B88((SArts327B0*)&self->mList174);
         if (matched == 0) {
             func_80235124(self);
-            func_80138078__FUl(0x15);
+            playUISound__FUl(0x15);
             return;
         }
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
         return;
     }
     if (self->field_0x2A6 != 0) {
@@ -2773,7 +2773,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
         self->field_0x2A6 = 0;
         func_80230D74(&self->mSubObj148, func_802322BC(&self->mList174));
         func_80235124(self);
-        func_80138078__FUl(0x15);
+        playUISound__FUl(0x15);
         return;
     }
     if (((SArts34D14*)self)->field_0x16A != 0) {
@@ -2821,7 +2821,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
                 func_8022B8B8((CSysWin*)&self->mSubObjE8);
             }
         }
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
         return;
     }
     // Duplicated tail for key -1 (retail does not share this chain).
@@ -2859,7 +2859,7 @@ __declspec(noinline) void func_802340C4(CMenuArtsSet* self) {
             func_8022B8B8((CSysWin*)&self->mSubObjE8);
         }
     }
-    func_80138078__FUl(3);
+    playUISound__FUl(3);
 }
 #pragma optimize_for_size off
 
@@ -2880,7 +2880,7 @@ __declspec(noinline) void func_802346BC(CMenuArtsSet* self) {
     v = func_8023040C((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     func_802320C0((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
     func_80235124(self);
-    func_80138078__FUl(10);
+    playUISound__FUl(10);
 }
 
 // Twin of func_802346BC but stepping the cursor with func_8022FE90
@@ -2901,7 +2901,7 @@ __declspec(noinline) void func_80234780(CMenuArtsSet* self) {
     v = func_8023040C((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
     func_802320C0((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
     func_80235124(self);
-    func_80138078__FUl(10);
+    playUISound__FUl(10);
 }
 
 // Arts-list confirm: when the menu is idle and the current arts entry
@@ -2927,7 +2927,7 @@ void func_80234844(CMenuArtsSet* self) {
     func_802308B0((SArts308B0View*)&self->mSubObj148, v);
     func_802320C0((SArts322BC*)((u8*)&self->mSubObj148 + 0x2C), v);
     func_80235124(self);
-    func_80138078__FUl(0xA);
+    playUISound__FUl(0xA);
 }
 #pragma optimize_for_size off
 
@@ -2948,9 +2948,9 @@ __declspec(noinline) void func_80234928(CMenuArtsSet* self) {
     // dead index register left over from the (v == 1) test.
     if (v == 1 && lbl_eu_806628A8[0] == 0) return;
     if (func_80231014(&self->mSubObj148) != 0) {
-        func_80138078__FUl(0x77);
+        playUISound__FUl(0x77);
     } else {
-        func_80138078__FUl(5);
+        playUISound__FUl(5);
     }
     func_80230D74(&self->mSubObj148, 0);
     func_80235124(self);
@@ -3013,14 +3013,14 @@ __declspec(noinline) void func_80234A94(CMenuArtsSet* self) {
             func_80232B88((SArts327B0*)&self->mList174);
             if (matched == 0) {
                 func_80235124(self);
-                func_80138078__FUl(0x15);
+                playUISound__FUl(0x15);
             } else {
-                func_80138078__FUl(6);
+                playUISound__FUl(6);
             }
             return;
         }
         func_802313E0((SArts313E0*)&self->mSubObj148);
-        func_80138078__FUl(2);
+        playUISound__FUl(2);
         return;
     }
     if (self->field_0x2A1 != 0) {
@@ -3031,19 +3031,19 @@ __declspec(noinline) void func_80234A94(CMenuArtsSet* self) {
         cur = func_802322BC(&self->mList174);
         u8 r = func_80231014(&self->mSubObj148);
         if (r == cur) {
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
             return;
         }
         func_80230D74(&self->mSubObj148, func_802322BC(&self->mList174));
         func_80235124(self);
-        func_80138078__FUl(0x15);
+        playUISound__FUl(0x15);
         return;
     }
     func_80232888((SArts32888*)&self->mList174);
     func_8023080C(&self->mSubObj148, 1);
     func_80231464(&self->mSubObj148);
     func_80235124(self);
-    func_80138078__FUl(2);
+    playUISound__FUl(2);
 }
 #pragma optimize_for_size off
 
@@ -3122,7 +3122,7 @@ extern "C" __declspec(noinline) u32 func_80234D68(CMenuArtsSet* self) {
 // both list sub-panels with the current entry, scroll the bar in with the
 // 3-float init vector, then kick the scrollbar tick.
 void func_80234EB8(CMenuArtsSet* self) {
-    if (func_80137444(self->field_0x20, lbl_eu_80668648) == 0) return;
+    if (advanceAnimTransform(self->field_0x20, lbl_eu_80668648) == 0) return;
     self->field_0x1C->v11(self->field_0x20, 0);
     self->field_0x1C->v11(self->field_0x24, 1);
     self->field_0x2C = 2;
@@ -3137,7 +3137,7 @@ void func_80234EB8(CMenuArtsSet* self) {
 }
 
 extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
-    if (func_80137444(self->field_0x24, lbl_eu_80668648) != 0) {
+    if (advanceAnimTransform(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
         self->mField31 = 1;
         func_8023080C(&self->mSubObj148, 1);
@@ -3249,11 +3249,11 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     field_0x18 = createArcResourceAccessor__10CLibLayoutFv();
     Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(field_0x18, fileData,
                                                    lbl_eu_8050AC70 + 0x2D9);
-    func_80136E84((nw4r::lyt::Layout**)&field_0x1C, field_0x18,
+    buildLayout((nw4r::lyt::Layout**)&field_0x1C, field_0x18,
                   lbl_eu_8050AC70 + 0x2DD);
-    func_80136F08((nw4r::lyt::Layout*)field_0x1C, &field_0x20, field_0x18,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)field_0x1C, &field_0x20, field_0x18,
                   lbl_eu_8050AC70 + 0x2F7);
-    func_80136F08((nw4r::lyt::Layout*)field_0x1C, &field_0x24, field_0x18,
+    bindLayoutAnimTransform((nw4r::lyt::Layout*)field_0x1C, &field_0x24, field_0x18,
                   lbl_eu_8050AC70 + 0x314);
     SArts3CObj* pane = field_0x1C->field_0x10;
     u32 fontHandle = ((SDevFontV*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
@@ -3262,29 +3262,29 @@ int CArtsList::OnFileEvent(CEventFile* pEventFile) {
     func_8013676C(pane, fontHandle);
     void* text = func_801355BC();
     if (text != 0) {
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x6F, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x336, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x33F, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x348, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x351, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x35A, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x100, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x363, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x36C, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x375, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x37E, (u32)text);
-        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
+        setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl((nw4r::lyt::Layout*)field_0x1C,
                                                 lbl_eu_8050AC70 + 0x387, (u32)text);
     }
     field_0x1C->v11(field_0x24, 0);

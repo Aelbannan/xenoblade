@@ -745,3 +745,9 @@ s32 lbl_eu_806659D4;
 u8 lbl_eu_806659D8[8];
 CNReqtaskSaveVtbl* lbl_eu_806659E0;
 s8 lbl_eu_806659E4;    // retail 1B at +0x14 (signed: read back via extsb.)
+u8 gap_10_806659E5_sbss; // retail pad byte 0 (hidden gap)
+u8 gap_10_806659E6_sbss; // retail pad byte 1
+u8 gap_10_806659E7_sbss; // retail pad byte 2
+
+
+

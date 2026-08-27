@@ -150,8 +150,8 @@ extern "C" void __dt__800FED0C(CProcess* _this, int flags);
 extern "C" CMenuKizunagram* __ct__CMenuKizunagram(CMenuKizunagram* self, int a, int b);
 extern "C" CMenuKizunagram* __dt__15CMenuKizunagramFv(CMenuKizunagram* _this, int flags);
 
-// C++-linkage helper - retail emits the mangled form func_80138078__FUl.
-void func_80138078(unsigned long op);
+// C++-linkage helper - retail emits the mangled form playUISound__FUl.
+void playUISound(unsigned long op);
 
 // Scene/task-system helpers (retail-unmangled callee names).
 extern "C" void waitForDrawDone__9CDeviceVIFv();

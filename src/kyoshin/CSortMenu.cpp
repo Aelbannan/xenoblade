@@ -132,7 +132,7 @@ extern "C" void func_801D3160(CSortMenu* _this) {
 // ============================================================================
 extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
     if (_this->field_0x28 == 0) return;
-    func_80137038(_this->mpLayout, drawInfo, 0, 1);
+    drawLayout(_this->mpLayout, drawInfo, 0, 1);
     if (_this->mCount > 5) {
         func_801F35B0((u8*)_this + 0x2C, drawInfo);
     }
@@ -149,7 +149,7 @@ extern "C" void func_801D3258(CSortMenu* _this) {
         delete _this->mpLayout;
         _this->mpLayout = NULL;
     }
-    func_80139124(_this->mArcResAcc);
+    releaseArcResourceAccessor(_this->mArcResAcc);
     _this->mArcResAcc = NULL;
     deleteRegion__17UnkClass_8045F564Fv((u8*)_this + 0x04);
     func_801F35DC((u8*)_this + 0x2C);
@@ -447,7 +447,7 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 // func_801D3878: State 1 handler - opening animation
 // ============================================================================
 extern "C" __declspec(noinline) void func_801D3878(CSortMenu* _this) {
-    if (func_80137444(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
+    if (advanceAnimTransform(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 2;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, true);
@@ -459,7 +459,7 @@ extern "C" __declspec(noinline) void func_801D3878(CSortMenu* _this) {
 // func_801D390C: State 2 handler - wait for anim1
 // ============================================================================
 extern "C" __declspec(noinline) void func_801D390C(CSortMenu* _this) {
-    if (func_80137444(_this->mpAnimTrans1, 1.0f) != 0) {
+    if (advanceAnimTransform(_this->mpAnimTrans1, 1.0f) != 0) {
         _this->field_0x2A = 3;
         _this->field_0x2B = 1;
     }
@@ -540,9 +540,9 @@ int CSortMenu::OnFileEvent(CEventFile* event) {
         mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
         mArcResAcc->Attach(fileData, s + 0x49);
 
-        func_80136E84(&mpLayout, mArcResAcc, s + 0x4d);
-        func_80136F08(mpLayout, &mpAnimTrans0, mArcResAcc, s + 0x63);
-        func_80136F08(mpLayout, &mpAnimTrans1, mArcResAcc, s + 0x7c);
+        buildLayout(&mpLayout, mArcResAcc, s + 0x4d);
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans0, mArcResAcc, s + 0x63);
+        bindLayoutAnimTransform(mpLayout, &mpAnimTrans1, mArcResAcc, s + 0x7c);
 
         // Root pane sits at Layout + 0x10 (direct field access, not a virtual
         // call). Retail order: load mpLayout, materialize the font-id constant,

@@ -171,7 +171,7 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
     }
 }
 
-void func_8014A8F8__Fv() {
+void clearAIActionTable__Fv() {
     lbl_eu_806641B0 = 0;
 }
 void func_8014AA10(void* obj, unsigned int value) {
@@ -536,7 +536,7 @@ void func_801537E0(void* self) {
 // Loads the AI config table pointer into lbl_eu_806641B0 and walks the
 // variable-length entries once (copying each art name to a scratch buffer),
 // so that later lookups can rely on the cached table pointer.
-void func_8014A86C(void* tableArg) {
+void initAIActionTable(void* tableArg) {
     cf::CAIActionTable* table = (cf::CAIActionTable*)tableArg;
     lbl_eu_806641B0 = table;
     u32 raw = table->count;

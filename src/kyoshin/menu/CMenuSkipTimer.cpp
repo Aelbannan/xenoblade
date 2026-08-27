@@ -234,7 +234,7 @@ void CMenuSkipTimer::Move() {
         if (func_802A01F0(&mTimerData) == 0) {
             if (func_800FEDF8() != 0) {
                 func_800FF914();
-                func_80138078__FUl(6);
+                playUISound__FUl(6);
             }
             mFlag3 = 4;
             mFlag1 = 1;
@@ -317,7 +317,7 @@ extern "C" void func_8029EE68(CMenuSkipTimer* self) {
         func_801C412C(&self->mTitleAHelp);
         func_802A0008(&self->mTimerData);
         self->mFlag3 = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 

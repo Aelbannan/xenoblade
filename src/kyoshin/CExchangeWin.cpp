@@ -14,7 +14,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 extern void func_80137924(void*, void*, void*, void*);
-extern void func_80138078(u32);
+extern void playUISound(u32);
 extern const float lbl_eu_80668610;
 
 
@@ -54,12 +54,12 @@ extern "C" void func_8022D0A4(CExchangeWin* self) {
     self->_26 = 1;
     self->field_27 = 0;
     self->field_24 = 1;
-    func_80138078(0xd);
+    playUISound(0xd);
 }
 
 extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     float f = lbl_eu_80668610;
-    if (func_80137444(self->mAnimTransform, f)) {
+    if (advanceAnimTransform(self->mAnimTransform, f)) {
         self->_26 = 2;
         self->field_27 = 1;
     }
@@ -102,8 +102,8 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     mAccessor = CLibLayout::createArcResourceAccessor();
     mAccessor->Attach(arcData, &lbl_eu_8050A740[0x5b]);
 
-    func_80136E84(&mLayout, mAccessor, &lbl_eu_8050A740[0x5f]);
-    func_80136F08(mLayout, &mAnimTransform, mAccessor,
+    buildLayout(&mLayout, mAccessor, &lbl_eu_8050A740[0x5f]);
+    bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor,
                   &lbl_eu_8050A740[0x78]);
 
     // Bind the shared font: root pane first (retail loads it into r29 before
@@ -182,7 +182,7 @@ extern "C" void func_8022D0D0(CExchangeWin* self) {
     }
     s->_26 = 3;
     s->field_27 = 0;
-    func_80138078(0xe);
+    playUISound(0xe);
 }
 extern "C" void func_8022D19C(CExchangeWin* self, char* text1, char* text2) {
     func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
@@ -238,7 +238,7 @@ extern "C" void func_8022CFEC(CExchangeWin* self, nw4r::lyt::DrawInfo* drawInfo)
     if (s->_26 == 0) {
         return;
     }
-    func_80137038(s->mLayout, drawInfo, 0, 1);
+    drawLayout(s->mLayout, drawInfo, 0, 1);
 }
 
 // func_8022D018 - teardown: releases file handle, destroys the layout,
@@ -250,6 +250,6 @@ extern "C" void func_8022D018(CExchangeWin* self) {
         delete self->mLayout;
         self->mLayout = NULL;
     }
-    func_80139124(self->mAccessor);
+    releaseArcResourceAccessor(self->mAccessor);
     self->mMemRegion.func_8045F778();
 }

@@ -6,10 +6,10 @@
 #include "monolib/device/CDeviceFont.hpp"
 extern "C" void func_80137924(void*, void*, void*, void*);
 
-// C-linkage pseudo-imports for this TU (func_80138078__FUl, lbl_eu_805084BC,
-// the lbl_eu_806683xx sdata2 constants, func_801355A0__Fv,
+// C-linkage pseudo-imports for this TU (playUISound__FUl, lbl_eu_805084BC,
+// the lbl_eu_806683xx sdata2 constants, getPackedFont__Fv,
 // isClassicController__Q22cf13CfGameManagerFv, func_801355F4,
-// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
+// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
 // "C-linkage imports" section of kyoshin/CItemBoxGridSubMenu.hpp.
 
 extern void* lbl_eu_80535750[];
@@ -81,7 +81,7 @@ void CItemBoxGridSubMenu::func_80208368() {
     mIsOpened = 0;
     mSelectedIdx = 0;
     mIsVisible = 1;
-    func_80138078__FUl(13);
+    playUISound__FUl(13);
 }
 
 void CItemBoxGridSubMenu::func_8020844C() {
@@ -176,16 +176,16 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mAccessor = accessor;
 
-    func_80136E84(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
-    func_80136F08(self->mLayout, &self->mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
+    buildLayout(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
+    bindLayoutAnimTransform(self->mLayout, &self->mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
 
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
     u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
     func_8013676C(root, fontVal);
 
-    u32 color = func_801355A0__Fv();
-    func_801368C0(self->mLayout, &lbl_eu_805084BC[0x35], color);
+    u32 color = getPackedFont__Fv();
+    setLayoutTextBoxFont(self->mLayout, &lbl_eu_805084BC[0x35], color);
 
     self->mLayout->BindAnimation(self->mAnimDefault);
     self->mLayout->Animate(0);
@@ -242,7 +242,7 @@ void func_80208838(CItemBoxGridSubMenu* self) {
 }
 
 void func_80208844(CItemBoxGridSubMenu* self) {
-    if (func_80137444(self->mAnimDefault, 1.0f) != 0) {
+    if (advanceAnimTransform(self->mAnimDefault, 1.0f) != 0) {
         self->mAnimState = 2;
         self->mIsOpened = 1;
     }
@@ -258,17 +258,17 @@ extern "C" void func_80208890(void* self) {
         *((u8*)self + 0x20) = 0;
     }
 }
-// retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail func_80138078(0xE) }
+// retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail playUISound(0xE) }
 extern "C" void func_802083A4(void* self) {
     if (*(u8*)((char*)self + 0x22) == 2) {
         *(u8*)((char*)self + 0x22) = 3;
         *(u8*)((char*)self + 0x21) = 0;
-        func_80138078__FUl(0xE);
+        playUISound__FUl(0xE);
     }
 }
 
-// retail: if (field_20) tail func_80137038(*(self+8), drawInfo passthrough, 0, 1)
+// retail: if (field_20) tail drawLayout(*(self+8), drawInfo passthrough, 0, 1)
 extern "C" void func_802082D0(u8* self, void* drawInfo){
     if (self[0x20] == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), drawInfo, 0, 1);
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), drawInfo, 0, 1);
 }

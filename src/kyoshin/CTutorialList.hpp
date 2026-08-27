@@ -4,7 +4,7 @@
 #include <nw4r/lyt.h>
 
 #include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, func_801F367C
-#include "kyoshin/code_80135FDC.hpp"  // func_80137510, func_80137444, func_80136190, func_80136B4C
+#include "kyoshin/code_80135FDC.hpp"  // func_80137510, advanceAnimTransform, func_80136190, func_80136B4C
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, func_802A77E8/802A330C/802A3D54
 
 /* CTutorialList -- tutorial list widget.
@@ -71,8 +71,8 @@ extern "C" void func_801D216C(void*, int);
 // Device/memory helper (retail unmangled C symbol).
 extern "C" int func_800A9D90();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-// UI sound: retail symbol is the C++-mangled func_80138078__FUl.
-void func_80138078(u32);
+// UI sound: retail symbol is the C++-mangled playUISound__FUl.
+void playUISound(u32);
 
 // Sort-menu sub-object helpers (retail unmangled C symbols; same declarations
 // as CItemBoxGrid.hpp / CMCCrystalBox.hpp, declared here to avoid pulling
@@ -145,7 +145,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 extern "C" u32 func_8003B1EC(void* fp);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 // .sdata2 int->float conversion magic double (0x4330000000000000) referenced

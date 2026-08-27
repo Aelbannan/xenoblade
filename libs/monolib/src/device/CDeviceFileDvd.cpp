@@ -209,7 +209,6 @@ struct CFileHandle {
     s32 field_0x10;          //0x10 (read progress)
     u32 field_0x14;          //0x14 (alloc handle)
     u32 field_0x18[4];       //0x18 (fallback alloc handles)
-    u8 field_0x20[0x28 - 0x20];
     IWorkEvent* field_0x28;  //0x28 (event receiver)
     u8 field_0x2C[0x30 - 0x2C];
     s32* field_0x30;         //0x30 (out: data ptr)

@@ -441,7 +441,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
     } else {
         func_800A7094(pos, &probe, 0x4a05, scale, lbl_eu_80666A68);
     }
-    self->CfObject_UnkVirtualFunc19();
+    self->CfObject_UnkVirtualFunc19(&probe);
 }
 
 // Retail symbol is Fv (no params) but the body consumes two floats in f1/f2 -
@@ -452,7 +452,7 @@ void CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     arr[1] = lbl_eu_80666A80;
     arr[0] = a;
     arr[2] = b;
-    reinterpret_cast<cf::CfObjectVtB4*>(self)->mB4(arr, lbl_eu_80666A84);
+    self->CfObject_UnkVirtualFunc25(reinterpret_cast<ml::CVec3*>(arr), lbl_eu_80666A84);
 }
 
 // Return a pointer-typed word: the sub-object's derived value +0xB8, or
@@ -856,7 +856,10 @@ u32 cf::CfObjectModel::CfObjectModel_UnkVirtualFunc8() {
 // in the base vtable layout) when a sub-object is present.
 void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc7() {
     if (mSubObj98 != 0) {
-        ((cf::CfObject*)mSubObj98)->CfObject_UnkVirtualFunc25();
+        // Sub-object is itself a CfObject; snap using its +0x3C position.
+        cf::CfObject* sub = reinterpret_cast<cf::CfObject*>(mSubObj98);
+        sub->CfObject_UnkVirtualFunc25(
+            reinterpret_cast<ml::CVec3*>(&sub->mPos3C), lbl_eu_80666A84);
     }
 }
 

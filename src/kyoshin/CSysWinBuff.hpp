@@ -195,7 +195,7 @@ void __dt__7CSysWinFv(void* syswin, int flags);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void getEntry__5CBdatFUl(u32 value);
-void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+void setBdatEntry__5CBdatFUlPv(u32 value, void* data);
 void func_8003AA34();
 void* getFP__FPCc(const char* name);
 u8 func_8013B980();
@@ -228,6 +228,6 @@ char* func_8013639C(void* obj, const char* key, u16 id);
 }
 
 // C++-linkage helpers (MWCC mangles the plain names to the retail forms
-// func_801390E0__FPP11CFileHandle / func_80137250__FPQ34nw4r3lyt8DrawInfo).
+// closeFileHandle__FPP11CFileHandle / func_80137250__FPQ34nw4r3lyt8DrawInfo).
 void func_801390E0(CFileHandle** handle);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);

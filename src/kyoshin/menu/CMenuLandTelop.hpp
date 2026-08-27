@@ -165,7 +165,7 @@ const char* func_80145AA8(int index);
 
 // C++-linkage helpers (retail symbols are their mangled forms).
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
-void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
+void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 
 // nw4r DrawInfo pre-mangled ct/dt names (retail emits the direct calls; a
@@ -224,8 +224,8 @@ u32 func_80122450();                      // quest-menu gate
 unsigned int func_80124B78();             // system-menu gate
 }
 
-// C++-linkage import (retail symbol is the mangled func_80138078__FUl).
-void func_80138078(u32 cue);
+// C++-linkage import (retail symbol is the mangled playUISound__FUl).
+void playUISound(u32 cue);
 
 // Global data imports (sbss/rodata; MWCC does not mangle global-scope data).
 extern CLandTelopGlobal* lbl_eu_806641A0;

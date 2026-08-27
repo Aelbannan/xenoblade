@@ -27,7 +27,7 @@ struct QstMenuData {
     f32 mValue90;                               // 0x90
 };
 
-extern void func_80138078(u32);
+extern void playUISound(u32);
 
 // The quest-info buffer func_80226FAC / func_802270CC maintain.
 struct QstData {
@@ -197,9 +197,9 @@ extern "C" CMenuQstCnt* __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
 }
 #pragma pop
 
-// C++-linkage retail symbol (func_801355A0__Fv): returns a u32 message/flag
+// C++-linkage retail symbol (getPackedFont__Fv): returns a u32 message/flag
 // value used to fill the text fields below.
-u32 func_801355A0();
+u32 getPackedFont();
 
 void CMenuQstCnt::Init() {
     // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame);
@@ -215,9 +215,9 @@ void CMenuQstCnt::Init() {
     Class_8045F858 regionGuard(
         reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 
-    func_80136E84(&mLayout, func_801355F4(),
+    buildLayout(&mLayout, func_801355F4(),
                   &lbl_eu_80509A10[0xc]);
-    func_80136F08(mLayout, &mAnim88, func_801355F4(),
+    bindLayoutAnimTransform(mLayout, &mAnim88, func_801355F4(),
                   (char*)&lbl_eu_80509A10[0x25]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -228,9 +228,9 @@ void CMenuQstCnt::Init() {
     func_8013676C(rootPane, fontResult);
 
     // First three text fields are filled straight from the message table.
-    func_801368C0(mLayout, &lbl_eu_80509A10[0x41], func_801355A0());
-    func_801368C0(mLayout, &lbl_eu_80509A10[0x4d], func_801355A0());
-    func_801368C0(mLayout, &lbl_eu_80509A10[0x59], func_801355A0());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x41], getPackedFont());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x4d], getPackedFont());
+    setLayoutTextBoxFont(mLayout, &lbl_eu_80509A10[0x59], getPackedFont());
 
     func_80136B4C(mLayout, &lbl_eu_80509A10[0x64], &lbl_eu_80509A10[0x73], 0);
     func_80136B4C(mLayout, &lbl_eu_80509A10[0x74], &lbl_eu_80509A10[0x73], 0);
@@ -352,7 +352,7 @@ void CMenuQstCnt::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
@@ -420,15 +420,15 @@ void invalidateQstFlag() {
 // (not mid-load) and the input state allows it, play the sound and set state 1.
 void func_80226BBC(QstMenuData* self) {
     if (func_80144FF0() == 0 || cf::CfGameManager::isSceneLoading() || func_80145030()) {
-        func_80138078(0x1f);
+        playUISound(0x1f);
         self->mState8C = 1;
     }
 }
 
 // Advance the open/close animation at 0x88 by one frame; when it finishes the
-// animation (func_80137444 returns 1), move to state 2.
+// animation (advanceAnimTransform returns 1), move to state 2.
 void func_80226C18(QstMenuData* self) {
-    if (func_80137444(self->mAnim88, 1.0f) != 0) {
+    if (advanceAnimTransform(self->mAnim88, 1.0f) != 0) {
         self->mState8C = 2;
     }
 }
@@ -514,8 +514,8 @@ void func_80226E54(CMenuQstCnt* self) {
         s = (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
     }
     func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
-    func_80136910(self->mLayout, &lbl_eu_80509A10[0x41], self->mSelEntry.f4);
-    func_80136910(self->mLayout, &lbl_eu_80509A10[0x4d], self->mSelEntry.f5);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x41], self->mSelEntry.f4);
+    setLayoutTextBoxNumber(self->mLayout, &lbl_eu_80509A10[0x4d], self->mSelEntry.f5);
 }
 
 QstData* func_80226FAC(QstData* self) {

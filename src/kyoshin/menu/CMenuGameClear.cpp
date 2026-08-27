@@ -190,7 +190,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
         self->mField70 = 4;
         func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
         func_801D216C(&self->mCursor[0], 0);
-        func_80138078(3);
+        playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
@@ -198,7 +198,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
         reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
-        func_80138078(1);
+        playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
             self->mField71 = 0;
@@ -206,7 +206,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
         reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 
@@ -232,7 +232,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
         self->mField70 = 8;
         func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
         func_801D216C(&self->mCursor[0], 0);
-        func_80138078(3);
+        playUISound(3);
     } else if (down != 0) {
         if (--self->mField71 < 0) {
             self->mField71 = 1;
@@ -240,7 +240,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
         reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
-        func_80138078(1);
+        playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
             self->mField71 = 0;
@@ -248,7 +248,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
         reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 

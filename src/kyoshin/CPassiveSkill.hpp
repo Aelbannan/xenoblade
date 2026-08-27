@@ -368,7 +368,7 @@ struct UI_PassiveSkillStep {
 // (retail .sdata2 float; value resolved at link time).
 extern const float lbl_eu_80668904;
 
-// Frame value passed to func_80137444/func_80137510 by the cursor steps
+// Frame value passed to advanceAnimTransform/func_80137510 by the cursor steps
 // (retail .sdata2 float; value resolved at link time).
 extern const float lbl_eu_80668900;
 
@@ -496,7 +496,7 @@ public:
 // CItemBoxGrid.hpp / COption.hpp).
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 
-// Character/party name-text value pushed into layout panes by func_801368C0
+// Character/party name-text value pushed into layout panes by setLayoutTextBoxFont
 // (retail symbol unmangled; same convention as CPartyState.hpp).
 extern "C" u32 func_801355BC();
 
@@ -694,7 +694,7 @@ extern "C" void* func_80043F18(void*);
 extern "C" void __dt__80043E88(void*, int);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" CPSkillEnumListSlot* func_800F6EC0(void*, u32);
-extern "C" cf::CfObjectMove* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
+extern "C" cf::CfObjectMove* getCfObjectPc__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
 extern "C" void func_800BFDE0(cf::CfObjectMove* move, u32 flag);
 
 // 5-byte category filter copied from the .sdata2 constants by func_8026CE30:

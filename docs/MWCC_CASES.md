@@ -8426,7 +8426,7 @@ src→r4, byte-identical. Reversible: src-first declaration re-swaps the colors.
 
 ## kyoshin code_80135FDC — sprintf format from message table (US)
 
-**func_80136910 (us-8013748c, 100% FULL_MATCH):** retail `sprintf` uses the message-table format `lbl_eu_80500664 + 7` (`lis r6 @ha; addi r6; addi r4, r6, 7`), NOT a `"%d"` literal — the literal emits a different rodata reloc and 17 structural mismatches. When a sprintf/format call's format operand is `addi rX, rBase, imm`, the format string lives at a table offset: write `sprintf(buf, &lbl_eu_80500664[7], ...)`. Same table: `func_80139CEC` uses `&lbl_eu_80500664[0x1F9]`.
+**setLayoutTextBoxNumber (us-8013748c, 100% FULL_MATCH):** retail `sprintf` uses the message-table format `lbl_eu_80500664 + 7` (`lis r6 @ha; addi r6; addi r4, r6, 7`), NOT a `"%d"` literal — the literal emits a different rodata reloc and 17 structural mismatches. When a sprintf/format call's format operand is `addi rX, rBase, imm`, the format string lives at a table offset: write `sprintf(buf, &lbl_eu_80500664[7], ...)`. Same table: `func_80139CEC` uses `&lbl_eu_80500664[0x1F9]`.
 
 ## LODMemMan func_8046DA64 — declared u8* self local beats CSE-hoist of +0xCC (FULL_MATCH)
 
@@ -9212,9 +9212,9 @@ The `||` chains (`a || a || a`) emit `beq; beq; bne body; b out` (the last disju
 
 ## kyoshin CEquipItemBox func_80285994 (us-80287e18) — stale-blob comment recovery + `#pragma optimize_for_size` triggers the stmw frame (FULL_MATCH)
 
-Layout-cursor setup: `func_80136E84(&mpLayout, mArcResAcc, str); func_80136F08(mpLayout, &mpAnimTrans0/1, mArcResAcc, str); vtable+0x24 on mpLayout; func_80285B70(cur)`. Two reusable levers:
+Layout-cursor setup: `buildLayout(&mpLayout, mArcResAcc, str); bindLayoutAnimTransform(mpLayout, &mpAnimTrans0/1, mArcResAcc, str); vtable+0x24 on mpLayout; func_80285B70(cur)`. Two reusable levers:
 
-1. **Re-read the retail relocs before trusting a "blocked" source comment.** The stub's comment claimed the call targets were undecompiled (0x8040708C etc.) and the strings were "MetroTRK message fragments" — both WRONG. The actual relocs name `func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc`, `func_80136F08__F...` and `func_80285B70`; the string base is `lbl_eu_8050EFDC` and the offsets (+0x97/+0xAF/+0xCC) point at layout/animation resource names ("mf00_reg00_curs07.brlyt" etc.). Reference the strings as `&lbl_eu_8050EFDC[0x97]` (extern "C" array) so the reloc base+addend match retail; string literals pool at @stringBase with different offsets.
+1. **Re-read the retail relocs before trusting a "blocked" source comment.** The stub's comment claimed the call targets were undecompiled (0x8040708C etc.) and the strings were "MetroTRK message fragments" — both WRONG. The actual relocs name `buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc`, `bindLayoutAnimTransform__F...` and `func_80285B70`; the string base is `lbl_eu_8050EFDC` and the offsets (+0x97/+0xAF/+0xCC) point at layout/animation resource names ("mf00_reg00_curs07.brlyt" etc.). Reference the strings as `&lbl_eu_8050EFDC[0x97]` (extern "C" array) so the reloc base+addend match retail; string literals pool at @stringBase with different offsets.
 2. **`#pragma optimize_for_size on` around a function whose retail saves r30-r31 with `stmw r30, 8(sp)`** — the default -O4,p emits two separate `stw r31,12(sp); stw r30,8(sp)` (0x8c vs retail 0x84, 27 structural cascade from the 1-instruction shift). optimize_for_size switches to the stmw/lmw pair → 100.0%, size exact. (Also: virtual slot 36 = vtable+0x24 = 7th declared virtual under -RTTI on — the CItemBoxGrid cast-only-interface pattern; a plain `(*(void***)p)[9]` call emits lwz r5-base instead of lwz r12.)
 
 ## kyoshin cf CVision dtor (us-801a4e94) — vptr-store reloc naming + address-split base for guarded member clears (FULL_MATCH)
@@ -10676,3 +10676,39 @@ intermediate forms do not break the coalescing.
 - Result:    func_80197538 97.4% -> 98.3% (9 -> 6 swaps); func_80197DE8 79.5% -> 81.5% (41 -> 37 swaps)
 - Confidence: repo_proven (two independent functions, one build each)
 - Applies to/a.k.a.: any indexed table-scan loop with id/key + walk-pointer + counter volatile trio; pair with the ABI-boundary witness caveat (swaps touching r4/r5 at call sites still need FULL_MATCH)
+
+## nw4r/ut CharWriter + TextWriterBase ctors — SDA float constant hoisting via `extern const` (GC/3.0a5.2, 99%→100%)
+- Symptom:   `__ct__Q34nw4r2ut10CharWriterFv` 83.1% (10 structural + 13 reg_swap, lfs f0 delayed from +0x000c to +0x005c, second lfs at +0x01dc swapped) and `__ct__Q34nw4r2ut17TextWriterBase<w>Fv` 33.3% (11 structural +5 reg_swap, mWidthLimit stored as 0.0 instead of FLT_MAX, missing lfs f1) — both ctors' SDA21 float loads not hoisted above the first `bl`
+- Cause:     SDA21 float globals declared as plain `extern f32/f64 lbl_eu_...` are treated as mutable memory by MWCC; the scheduler cannot hoist the `lfs` above a `bl` that might clobber the global. Retail declares them `const` (read-only .sdata2) and the scheduler hoists the load to the prologue. Same root as the kyoshin `extern const float` hoist (CArtsInfo) but in the opposite direction (load position, not store order)
+- Fix:       declare the SDA21 float pool globals as `extern const f32/f64 lbl_eu_...` (`lbl_eu_8066A140 0.0f, lbl_eu_8066A144 1.0f, lbl_eu_8066A148/158 magics, lbl_eu_8066A160 FLT_MAX, lbl_eu_8066A164 0.0f` etc). For TextWriterBase also fix initializer order to declaration order `mWidthLimit, mCharSpace, mLineSpace` (retail initializer list is declaration-order; the swapped `mCharSpace,mWidthLimit` order in the initial decomp made MWCC store 0.0 to mWidthLimit). Also replace the non-SJIS em dash in the file header comment that made `sjiswrap` emit “Shift JIS encoding errors” and could mask the const fix
+- Result:    `__ct__Q34nw4r2ut10CharWriterFv` 83.1% → 100.0% (0 structural, 0 reg_swap, 3 reloc name drifts for `mLoadingTexture`→`lbl_eu_80653EB8` remain, FULL_MATCH-only due to `bl`), `__ct__Q34nw4r2ut17TextWriterBase<w>Fv` 33.3% → 100.0% FULL_MATCH (witness-certified, 0 structural, 0 reg_swap, size 0x5c exact, split still OVER by 304 bytes due to other functions)
+- Evidence:  us-80431878 (libs/nw4r/src/ut/ut_CharWriter.cpp), us-80433038 (libs/nw4r/src/ut/ut_TextWriterBase.cpp) — both GC/3.0a5.2, cflags_nw4r `-O4,p -inline auto -ipa file`
+
+## nw4r/ut CharWriter ctor — `mLoadingTexture` reloc drift via public `LoadingTexture` + `mLoadingTexture→lbl_eu_80653EB8` macro (GC/3.0a5.2, CODE_MATCH→FULL_MATCH)
+- Symptom:   `__ct__Q34nw4r2ut10CharWriterFv` 100% instructions but 3 `R_PPC_ADDR16_HA/LO` drifts `mLoadingTexture__Q34nw4r2ut10CharWriter → lbl_eu_80653EB8` (retail bss at 0x80653EB8, hbm variant; decomp bss size 0). `hexdiff` 0/0/0x220, `cycle` CODE_MATCH 99.9% due to `bl` (witness FULL_MATCH-only) + reloc gate
+- Cause:     `mLoadingTexture` is a private static `CharWriter::LoadingTexture`; MWCC emits `R_PPC_ADDR16_HA/LO` to the mangled `mLoadingTexture__...` symbol, retail expects the unmangled `lbl_eu_80653EB8` bss label from `nw4r_data.s` (monolibdata1 dissolve, .bss 0x805CA150 hbm range). `extern "C"` alias not possible while `LoadingTexture` is private (`10140 undefined` / 3.7% regression via anonymous `struct {u32 slot;void* texture;}` Hack)
+- Fix:       make `TextureFilter` + `LoadingTexture` `public` in `ut_CharWriter.h` (move definitions before `ColorMapping`; keep `mLoadingTexture` as `static LoadingTexture` private member), then in `ut_CharWriter.cpp` declare `extern "C" CharWriter::LoadingTexture lbl_eu_80653EB8;` and `#define mLoadingTexture lbl_eu_80653EB8` after the `extern const f32` pool decls. All `mLoadingTexture.Reset()` / `LoadTexture` / `mLoadingTexture = ...` sites now emit `lbl_eu_80653EB8` relocs with identical `lis r7,ha / addi r6,r7,lo / stw` sequence
+- Result:    100.0% FULL_MATCH, `cycle` semantic-certified `b6f2a0e65c28334821d41916731fc6a60175b2b13fd9ae25955183cc64323a59`, reloc drift 0, size 0x220 exact
+- Evidence:  us-80431878 (libs/nw4r/src/ut/ut_CharWriter.cpp / libs/nw4r/include/nw4r/ut/ut_CharWriter.h) — GC/3.0a5.2, `cflags_nw4r -O4,p -ipa file`
+
+## monolibdata1e absorb → CStopwatchUtil (Wii/1.1, data MATCH)
+
+- Symptom:   last monolib catch-all blob (`src/monolibdata1e.cpp`, Matching
+  `retail_data`) held a single 0x280 `.bss` symbol `lbl_eu_80657238` while
+  `CStopwatchUtil.cpp` only `extern`'d it; goal is absorb into the owning TU
+  so the blob can leave `configure.py`.
+- Cause:     MWCC treats bare `extern "C" T name[N];` (no braces / no
+  initializer) as a **declaration** → ELF `SHN_UNDEF`, no `.bss`. The braced
+  form `extern "C" { T name[N]; }` (or `= {}`) emits the definition. Nested
+  `CStopwatchUtil::StopwatchEntry` works inside the braces.
+- Fix:       define `extern "C" { CStopwatchUtil::StopwatchEntry lbl_eu_80657238[16]; }`
+  in `libs/monolib/src/util/CStopwatchUtil.cpp`; move
+  `.bss start:0x80657238 end:0x806574B8` onto that unit in `config/us/splits.txt`;
+  remove `Object(Matching, "monolibdata1e.cpp")` from `configure.py` and delete
+  `src/monolibdata1e.cpp`. Keep existing `UNIT_RULES` `.sdata2` pool drop.
+- Result:    `data diff main/monolib/src/util/CStopwatchUtil` → `VERDICT: MATCH`
+  (`.bss` 0x280 align 8); `.text` size still 0x2F8 exact vs retail.
+- Applies to/a.k.a.: any absorb that turns a soft-extern into a TU-local
+  definition under MWCC — always use braced `extern "C" { ... }` or an
+  initializer; verify with elftools that the symbol is DEFINED before trusting
+  `data diff` (stale `.o` / missing ninja rebuild will lie).

@@ -16,7 +16,7 @@ struct PaneTranslateMirror {
 
 // SDA21 float constants referenced by the anim-completion callbacks (retail
 // symbol names; the sentinel is the completion-check value passed to
-// func_80137444 / func_80137510).
+// advanceAnimTransform / func_80137510).
 extern const float lbl_eu_80668470;  // anim sentinel constant used by completion checks
 extern float lbl_eu_8066845C;
 extern float lbl_eu_80668474;
@@ -546,21 +546,21 @@ extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80124270(void*, u32);   // pane visibility setter
 // OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
-// linkage; func_801355A0 / isClassicController__Q22cf13CfGameManagerFv use the
+// linkage; getPackedFont / isClassicController__Q22cf13CfGameManagerFv use the
 // plain C++ forms that re-derive the retail mangled names.
 extern "C" u32 func_801355BC();
 extern "C" void* func_801355F4();   // shared timg resource accessor
-// C++ linkage so MWCC mangles to the retail func_801355A0__Fv.
-u32 func_801355A0();
+// C++ linkage so MWCC mangles to the retail getPackedFont__Fv.
+u32 getPackedFont();
 extern "C" u16 func_8013606C(const void*, const void*, u32);
 extern "C" void func_8013676C(void*, u32);   // bind font pane onto root
-extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void func_8018B0FC(void*, void*);   // cursor copy (func_801D24E8 sibling)
 extern "C" void func_801D24E8(void*, void*, void*);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
@@ -593,8 +593,8 @@ extern "C" void __ct__CMCCrystalInfo(void*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void**);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void**);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_80139198(u32);
 extern "C" void func_801D3258(void*);
@@ -667,8 +667,8 @@ extern "C" unsigned short func_8013A7D0(unsigned char, unsigned char);
 // Wide-param view of the pane-number setter used by the window-kind refresh:
 // retail masks the u16 crystal id into the argument register (clrlwi 16), so
 // this TU saw a u16 parameter. Literal mangled identifier links to the same
-// symbol as func_80136910.
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
+// symbol as setLayoutTextBoxNumber.
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;

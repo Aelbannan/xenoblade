@@ -27,8 +27,8 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CMenuPTGauge::Init` (`asm_Init_CMenuPTGauge.s`)
 - Frame `-0x20`; `getHandleMEM2` → `createRegion(this+0x64, handle, 0x1200, lbl_eu_805039C8, 0)`
-- Stack `Class_8045F858` over region; `func_801355F4` + `func_80136E84` into `this+0x74` with string `lbl_eu_805039C8+0xd`
-- Five `func_80136F08` into `+0x78/+0x7C/+0x80/+0x84/+0x88` with string offsets `+0x29/+0x48/+0x6F/+0x96/+0xB7`
+- Stack `Class_8045F858` over region; `func_801355F4` + `buildLayout` into `this+0x74` with string `lbl_eu_805039C8+0xd`
+- Five `bindLayoutAnimTransform` into `+0x78/+0x7C/+0x80/+0x84/+0x88` with string offsets `+0x29/+0x48/+0x6F/+0x96/+0xB7`
 - Font path: layout `+0x10` root, `CDeviceFont::func_80452C10(1)` + vt+0x24 → `func_8013676C`; layout vt calls `+0x38(0)`, `+0x24`, `+0x1C(anim78)`, `+0x2C(anim78,1)`
 - `addRenderCB(this->unk60, this ? this+0x5C : this, 0xA, 0)`; `func_8045F810(region)`; dtor stack helper
 - Extend hpp: declare `Init()`; fields `+0x5C` IScnRender/this-adjust, `+0x60` CScn*, `+0x64` UnkClass_8045F564 region, anim slots through `+0x88`

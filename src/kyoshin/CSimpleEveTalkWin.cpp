@@ -29,7 +29,7 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
                                                       u8* msgBuf, u8 flag) {
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(_this));
 
-    _this->mVtable = (u32)lbl_eu_8052D238;
+    *reinterpret_cast<u32*>((char*)_this + 0x10) = (u32)lbl_eu_8052D238;
 
     // Copy the null member-function pointer into both callback slots. The
     // composite vtable is materialized once here (its +0x24/+0xac interface
@@ -62,9 +62,9 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
     _this->field_67 = 1;
     _this->field_68 = 0;
 
-    _this->mVtable = compVt;
-    _this->mWorkEvent = evtVt;
-    _this->mScnRender = scnVt;
+    *reinterpret_cast<u32*>((char*)_this + 0x10) = compVt;
+    *reinterpret_cast<u32*>((char*)_this + 0x6C) = evtVt;
+    *reinterpret_cast<u32*>((char*)_this + 0x70) = scnVt;
 
     __ct__17UnkClass_8045F564Fv(
         reinterpret_cast<UnkClass_8045F564*>(_this->mMemRegion));
@@ -135,12 +135,12 @@ void CSimpleEveTalkWin::Init() {
         return;
     }
 
-    func_80136E84(&mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
-    func_80136F08(mpLayout, &field_8C, func_801355F4(),
+    buildLayout(&mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
+    bindLayoutAnimTransform(mpLayout, &field_8C, func_801355F4(),
                   &lbl_eu_80503E14[0x2b]);
-    func_80136F08(mpLayout, &field_90, func_801355F4(),
+    bindLayoutAnimTransform(mpLayout, &field_90, func_801355F4(),
                   &lbl_eu_80503E14[0x47]);
-    func_80136F08(mpLayout, &field_94, func_801355F4(),
+    bindLayoutAnimTransform(mpLayout, &field_94, func_801355F4(),
                   &lbl_eu_80503E14[0x6a]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -215,7 +215,7 @@ void CSimpleEveTalkWin::Init() {
     mpLayout->Animate(0);
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mScnRender);
+        render = static_cast<IScnRender*>(this);
     }
     mScene->addRenderCB(render, 0xa, 0);
     ((UnkClass_8045F564*)mMemRegion)->func_8045F810();
@@ -233,7 +233,7 @@ void CSimpleEveTalkWin::Move() {
     case 1:
         // Intro animation finished: play the message voice, then cross-fade
         // to the cursor animation set and enter the advance state.
-        if (func_80137444(field_8C, lbl_eu_80667CB0) != 0) {
+        if (advanceAnimTransform(field_8C, lbl_eu_80667CB0) != 0) {
             void* src = findObjectById(field_68);
             if (src != 0) {
                 reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
@@ -255,7 +255,7 @@ void CSimpleEveTalkWin::Move() {
             CDeviceVI::waitForDrawDone();
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
-                render = reinterpret_cast<IScnRender*>(&mScnRender);
+                render = static_cast<IScnRender*>(this);
             }
             mScene->removeRenderCB(render);
             field_64 = 1;
@@ -273,7 +273,7 @@ void CSimpleEveTalkWin::Term() {
         CDeviceVI::waitForDrawDone();
         IScnRender* render = reinterpret_cast<IScnRender*>(this);
         if (this != 0) {
-            render = reinterpret_cast<IScnRender*>(&mScnRender);
+            render = static_cast<IScnRender*>(this);
         }
         mScene->removeRenderCB(render);
         lbl_eu_80664320 = 0;
@@ -306,7 +306,7 @@ void CSimpleEveTalkWin::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
 }
 
@@ -394,12 +394,12 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
     owner->field_90 = 0;
     owner->field_94 = 0;
 
-    func_80136E84(&owner->mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
-    func_80136F08(owner->mpLayout, &owner->field_8C, func_801355F4(),
+    buildLayout(&owner->mpLayout, func_801355F4(), &lbl_eu_80503E14[0x12]);
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_8C, func_801355F4(),
                   &lbl_eu_80503E14[0x2b]);
-    func_80136F08(owner->mpLayout, &owner->field_90, func_801355F4(),
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_90, func_801355F4(),
                   &lbl_eu_80503E14[0x47]);
-    func_80136F08(owner->mpLayout, &owner->field_94, func_801355F4(),
+    bindLayoutAnimTransform(owner->mpLayout, &owner->field_94, func_801355F4(),
                   &lbl_eu_80503E14[0x6a]);
 
     // Bind the font and hand the loaded font object over to the root pane.
@@ -521,7 +521,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
             self->field_AE = 5;
             break;
         case 5:
-            if (func_80137444(self->field_90, lbl_eu_80667CB0) != 0) {
+            if (advanceAnimTransform(self->field_90, lbl_eu_80667CB0) != 0) {
                 self->mpLayout->SetAnimationEnable(self->field_8C, 0);
                 self->mpLayout->SetAnimationEnable(self->field_90, 0);
                 self->mpLayout->SetAnimationEnable(self->field_94, 1);
@@ -530,7 +530,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
             }
             break;
         case 6:
-            func_80137444(self->field_94, lbl_eu_80667CB0);
+            advanceAnimTransform(self->field_94, lbl_eu_80667CB0);
             break;
         case 7:
             if (func_80137510(self->field_90, lbl_eu_80667CB0) != 0) {
@@ -566,14 +566,22 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
     }
 }
 
+// Thunks — now real-base, no manual arithmetic.
+// Retail thunks are compiler-generated `this`-adjustment for the
+// IWorkEvent@0x6C / IScnRender@0x70 subobjects. With real bases the
+// `static_cast<Derived*>(base)` carries the -0x6C/-0x70 delta and MWCC
+// emits `subi r3,off; b impl` without us writing `self-0x6c`.
 void func_801A29B4(u8* self) {
-    reinterpret_cast<CSimpleEveTalkWin*>(self - 0x6c)->~CSimpleEveTalkWin();
+    IWorkEvent* base = reinterpret_cast<IWorkEvent*>(self);
+    static_cast<CSimpleEveTalkWin*>(base)->~CSimpleEveTalkWin();
 }
 
 void func_801A29BC(u8* self) {
-    reinterpret_cast<CSimpleEveTalkWin*>(self - 0x70)->cbRenderBefore();
+    IScnRender* base = reinterpret_cast<IScnRender*>(self);
+    static_cast<CSimpleEveTalkWin*>(base)->cbRenderBefore();
 }
 
 void func_801A29C4(u8* self) {
-    reinterpret_cast<CSimpleEveTalkWin*>(self - 0x70)->~CSimpleEveTalkWin();
+    IScnRender* base = reinterpret_cast<IScnRender*>(self);
+    static_cast<CSimpleEveTalkWin*>(base)->~CSimpleEveTalkWin();
 }

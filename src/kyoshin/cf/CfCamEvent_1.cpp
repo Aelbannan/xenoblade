@@ -527,7 +527,7 @@ CfCamEventManager::~CfCamEventManager() {
     lbl_eu_80663DF0 = 0;
 }
 
-// Release all three effect slots: virtual-delete any non-null slot and clear
+// Release all three effect slots:
 // the pointer. The redundant second pointer test mirrors MWCC's `delete`
 // expansion (retail emits three beq against one cmpwi).
 void func_800754C0(CfCamEventManager* self) {

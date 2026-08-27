@@ -8,6 +8,8 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+extern const float lbl_eu_80666A84;
+
 // Retail data + dtor imports for the D1 (the header declares the virtual
 // dtor; the symbol is provided by the freestanding definition below).
 extern "C" { extern char lbl_eu_80529128[]; }
@@ -437,7 +439,8 @@ extern "C" void setMapScale__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f
 extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task) {
     cf::CfObject* model = *reinterpret_cast<cf::CfObject**>(&self->field_0x90[8]);
     if (model != 0) {
-        model->CfObject_UnkVirtualFunc25();
+        model->CfObject_UnkVirtualFunc25(
+            reinterpret_cast<ml::CVec3*>(&model->mPos3C), lbl_eu_80666A84);
     }
     UnkMapSubF0* sub = &self->field_0xF0;
     if (sub != 0) {

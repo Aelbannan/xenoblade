@@ -96,14 +96,14 @@ extern "C" void func_80294638(CSysWinSave* self) {
         self->mFlagDC = 3;
         func_8022B8E4(&self->mSysWin[0]);
         func_801D216C(&self->mCur18[0], 0);
-        func_80138078__FUl(3);
+        playUISound__FUl(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         self->mFlagDC = 3;
         func_8022B8E4(&self->mSysWin[0]);
         func_801D216C(&self->mCur18[0], 0);
         self->mFlagDD = 1;
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         self->mFlagDD = self->mFlagDD - 1;
@@ -111,7 +111,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         self->mFlagDD = self->mFlagDD + 1;
@@ -119,7 +119,7 @@ extern "C" void func_80294638(CSysWinSave* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        playUISound__FUl(1);
     }
 }
 

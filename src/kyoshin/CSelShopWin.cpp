@@ -132,7 +132,7 @@ void CSelShopWin::func_8022C7C0() {
 void CSelShopWin::func_8022C830(nw4r::lyt::DrawInfo* drawInfo) {
     if (mIsLayoutBuilt == 0) return;
     if (mAnimState == 0) return;
-    return func_80137038(mLayout, drawInfo, 0, 1);
+    return drawLayout(mLayout, drawInfo, 0, 1);
 }
 
 /* Tear down the shop window layout and free its resources. */
@@ -143,7 +143,7 @@ void CSelShopWin::func_8022C85C() {
         delete mLayout;
         mLayout = nullptr;
     }
-    func_80139124(mAccessor);
+    releaseArcResourceAccessor(mAccessor);
     mMemRegion.func_8045F778();
 }
 
@@ -163,14 +163,14 @@ void CSelShopWin::func_8022C8E0() {
     if (mAnimState != 0) return;
     mAnimState = 1;
     mAnimActive = 0;
-    return func_80138078(0xd);
+    return playUISound(0xd);
 }
 
 void CSelShopWin::func_8022C908() {
     if (mAnimState != 2) return;
     mAnimState = 3;
     mAnimActive = 0;
-    return func_80138078(0xe);
+    return playUISound(0xe);
 }
 
 #pragma push
@@ -192,7 +192,7 @@ extern "C" void func_8022C930(nw4r::math::VEC3* pOutPos, CSelShopWin* window, in
 #pragma auto_inline off
 extern "C" void func_8022C9D4(CSelShopWin* self) {
     float f = lbl_eu_80668600;
-    if (func_80137444(self->mAnimTransform, f) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform, f) != 0) {
         self->mAnimState = 2;
         self->mAnimActive = 1;
     }
@@ -228,8 +228,8 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(false);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(archive, &lbl_eu_8050A62C[0x3b]);
-        func_80136E84(&mLayout, mAccessor, &lbl_eu_8050A62C[0x3f]);
-        func_80136F08(mLayout, &mAnimTransform, mAccessor, &lbl_eu_8050A62C[0x58]);
+        buildLayout(&mLayout, mAccessor, &lbl_eu_8050A62C[0x3f]);
+        bindLayoutAnimTransform(mLayout, &mAnimTransform, mAccessor, &lbl_eu_8050A62C[0x58]);
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
         ShopFontView* fontObj =

@@ -114,10 +114,10 @@ void initLodTables__Q23LOD17CLODCacheManagerSFv(void*);
 void* func_8046323C__Q23LOD17CLODCacheManagerSFv(void*);
 void selectCubicLookup__Q23LOD17UnkClass_8046368CFv(void);
 void selectLinearLookup__Q23LOD17UnkClass_8046368CFv(void);
-void func_80465704(s32);
+void setLodFadeAlpha(s32);
 void resetLodFlags__Q23LOD17UnkClass_804645CCFv(void);
-void func_80465730(f32);
-void func_8046577C(s32);
+void scaleLodFadeAlpha(f32);
+void setLodColorFactor(s32);
 void func_8006BEC0(void*);
 
 // ---------------------------------------------------------------------------
@@ -388,7 +388,7 @@ extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 
     lbl_eu_806657A0 = p->f1A;
     lbl_eu_806657A8 = p->f0C;
-    func_8046577C(p->f0E);
+    setLodColorFactor(p->f0E);
 
     if (p->flags & 0x1000) {
         lbl_eu_806657BC = p->f1E;
@@ -443,7 +443,7 @@ extern "C" s32 dispatchLodPick__Q23LOD17UnkClass_8046368CFv(const LodPickObj* ob
 // ===========================================================================
 // us-80467f5c  func_80463F8C  (conditional scalar updates, args in f1..f3)
 // ===========================================================================
-void func_80463F8C(f32 a, f32 b, f32 c) {
+void setLodFadeScalars(f32 a, f32 b, f32 c) {
     if (lbl_eu_8066A5F4 != a) {
         lbl_eu_80658038[0] = a;
         lbl_eu_806657B0 |= 0x8;
@@ -495,9 +495,9 @@ return_zero:
 }
 
 // ===========================================================================
-// us-8046803c  func_8046406C  (register vertex arrays with GX)
+// us-8046803c  bindLodVertexArrays  (register vertex arrays with GX)
 // ===========================================================================
-void func_8046406C(s32 count) {
+void bindLodVertexArrays(s32 count) {
     if (!(lbl_eu_806657B0 & 0x2)) {
         lbl_eu_806657B0 |= 0x2;
         GXSetArray(GX_VA_CLR0, lbl_eu_80665774, 4);
@@ -530,7 +530,7 @@ s32 func_80464128(u32 arg) {
             return 1;
         }
         if (v != 0xFF) {
-            func_80465704(v);
+            setLodFadeAlpha(v);
         }
     }
 
@@ -544,13 +544,13 @@ s32 func_80464128(u32 arg) {
             if (lbl_eu_8066A5F8 == cur) {
                 return 1;
             }
-            func_80465730(lbl_eu_8066A5F8 - cur);
+            scaleLodFadeAlpha(lbl_eu_8066A5F8 - cur);
             return 0;
         }
         if ((arg & 0x60) == 0x60) {
             f32 cur = lbl_eu_80658038[2];
             if (lbl_eu_8066A5F8 != cur) {
-                func_80465730(cur);
+                scaleLodFadeAlpha(cur);
             }
             return 0;
         }
@@ -562,13 +562,13 @@ s32 func_80464128(u32 arg) {
                     if (lbl_eu_8066A5F8 == cur) {
                         return 1;
                     }
-                    func_80465730(lbl_eu_8066A5F8 - cur);
+                    scaleLodFadeAlpha(lbl_eu_8066A5F8 - cur);
                     return 0;
                 }
                 if (arg & (0x20u << i)) {
                     f32 cur = lbl_eu_80658038[i];
                     if (lbl_eu_8066A5F8 != cur) {
-                        func_80465730(cur);
+                        scaleLodFadeAlpha(cur);
                     }
                     return 0;
                 }
@@ -605,7 +605,7 @@ s32 func_804642BC(s32 a, u32 b) {
             union { double d; u32 w[2]; } m1, m2;
             m1.w[0] = 0x43300000u; m1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
             m2.w[0] = 0x43300000u; m2.w[1] = b ^ 0x80000000u;
-            func_80465730((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
             return 0;
         }
         if ((s32)lbl_eu_806657C0 == a) {
@@ -619,7 +619,7 @@ s32 func_804642BC(s32 a, u32 b) {
             union { double d; u32 w[2]; } n1, n2;
             n1.w[0] = 0x43300000u; n1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
             n2.w[0] = 0x43300000u; n2.w[1] = b ^ 0x80000000u;
-            func_80465730(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
+            scaleLodFadeAlpha(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
             return 0;
         }
         return 1;
@@ -643,7 +643,7 @@ s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
     if (a <= lim) {
         if (da != 0 && a + da > lim) {
             s32 over = a + da - lim;
-            func_80465704(255 - (over * 255) / da);
+            setLodFadeAlpha(255 - (over * 255) / da);
         } else {
             resetLodFlags__Q23LOD17UnkClass_804645CCFv();
         }
@@ -654,7 +654,7 @@ s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
     }
     if (db != 0 && b - db < lim) {
         s32 under = b - lim;
-        func_80465704((under * 255) / db);
+        setLodFadeAlpha((under * 255) / db);
     } else {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
@@ -669,12 +669,12 @@ ordered:
     }
     if (da != 0 && a + da > lim) {
         s32 over2 = a + da - lim;
-        func_80465704(255 - (over2 * 255) / da);
+        setLodFadeAlpha(255 - (over2 * 255) / da);
         return 0;
     }
     if (db != 0 && b - db < lim) {
         s32 under2 = b - lim;
-        func_80465704((under2 * 255) / db);
+        setLodFadeAlpha((under2 * 255) / db);
         return 0;
     }
     resetLodFlags__Q23LOD17UnkClass_804645CCFv();
@@ -682,9 +682,9 @@ ordered:
 }
 
 // ===========================================================================
-// us-804684ec  func_8046451C  (does [a,b] straddle the distance limit?)
+// us-804684ec  isLodRangeStraddlesLimit  (does [a,b] straddle the distance limit?)
 // ===========================================================================
-s32 func_8046451C(s32 a, s32 b) {
+s32 isLodRangeStraddlesLimit(s32 a, s32 b) {
     s32 lim;
     if (a <= b) {
         goto ordered;

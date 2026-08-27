@@ -197,7 +197,7 @@ __declspec(noinline) void func_80264470(UI_PassiveSkillInit* self) {
 // discarded), then disable the +0x8 transform, enable and rewind the +0xC one,
 // set the mode byte, and show the +0x14/+0x10 pane depending on the +0x1A flag.
 __declspec(noinline) void func_802644D4(UI_PassiveSkillInit* self) {
-    func_80137444(self->field_8, lbl_eu_80668900);
+    advanceAnimTransform(self->field_8, lbl_eu_80668900);
     if (self->field_19 != 0) {
         return;
     }
@@ -217,7 +217,7 @@ __declspec(noinline) void func_802644D4(UI_PassiveSkillInit* self) {
 // transform, clear the mode byte, set the active flag, then hide the
 // +0x10/+0x14 panes.
 __declspec(noinline) void func_80264588(UI_PassiveSkillInit* self) {
-    if (func_80137444(self->field_C, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_C, lbl_eu_80668900) != 0) {
         self->field_4->SetAnimationEnable(self->field_C, 0);
         self->field_4->SetAnimationEnable(self->field_8, 1);
         self->field_8->SetFrame(lbl_eu_80668904);
@@ -267,18 +267,18 @@ __declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}
 // r29-r31 _savegpr_29 frame retail uses needs optimize_for_size.
 #pragma optimize_for_size on
 void func_802646E8(UI_CPassiveSkillInfo* self) {
-    func_80136E84(&self->field_8,
+    buildLayout(&self->field_8,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
                   &lbl_eu_8050DC20[0xc7]);
-    func_80136F08(self->field_8,
+    bindLayoutAnimTransform(self->field_8,
                   reinterpret_cast<nw4r::lyt::AnimTransform**>(&self->field_C),
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
                   &lbl_eu_8050DC20[0xdc]);
-    func_80136F08(self->field_8,
+    bindLayoutAnimTransform(self->field_8,
                   reinterpret_cast<nw4r::lyt::AnimTransform**>(&self->field_10),
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
                   &lbl_eu_8050DC20[0xf4]);
-    func_80136F08(self->field_8, &self->field_14,
+    bindLayoutAnimTransform(self->field_8, &self->field_14,
                   reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
                   &lbl_eu_8050DC20[0x111]);
     // Bind the font handle into the layout's root pane.
@@ -287,12 +287,12 @@ void func_802646E8(UI_CPassiveSkillInfo* self) {
     func_8013676C(rootPane, font->vf7());
     u32 textVal = func_801355BC();
     if (textVal != 0) {
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x139], textVal);
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x145], textVal);
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x154], textVal);
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x160], textVal);
-        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x16c], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x139], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x145], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x154], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x160], textVal);
+        setLayoutTextBoxFont(self->field_8, &lbl_eu_8050DC20[0x16c], textVal);
     }
     self->field_8->SetAnimationEnable(
         reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_10), 0);
@@ -420,14 +420,14 @@ extern "C" __declspec(noinline) void func_80264BE4(UI::CPassiveSkillInfo* self, 
     if (self->mpLayout == 0) {
         return;
     }
-    func_80137038(self->mpLayout, drawInfo, 0, 1);
+    drawLayout(self->mpLayout, drawInfo, 0, 1);
     if (self->field_1B == 0) {
         return;
     }
     if (self->field_38 == 0) {
         return;
     }
-    func_80137038(self->field_24, drawInfo, 0, 1);
+    drawLayout(self->field_24, drawInfo, 0, 1);
 }
 #pragma optimize_for_size off
 
@@ -806,7 +806,7 @@ extern "C" __declspec(noinline) void func_80266250(UI::CPassiveSkillCur* self, n
 // animation, bind the first anim transform, then unbind and re-enable the
 // second one.
 __declspec(noinline) void func_80266294(UI::CPassiveSkillCur* self) {
-    if (func_80137444(self->mpAnimTrans0, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_80668900) != 0) {
         self->field_18 = 2;
         self->field_1A = 1;
         self->mpLayout->Animate(0);
@@ -819,7 +819,7 @@ __declspec(noinline) void func_80266294(UI::CPassiveSkillCur* self) {
 // Cursor step: when the second anim transform's frame check succeeds, set the
 // step state to 3, advance the layout animation, and unbind the transform.
 __declspec(noinline) void func_80266344(UI::CPassiveSkillCur* self) {
-    if (func_80137444(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
         self->field_18 = 3;
         self->field_19 = 1;
         self->mpLayout->Animate(0);
@@ -857,7 +857,7 @@ __declspec(noinline) void func_80266470(UI::CPassiveSkillCur* self) {
 // the step state to 3, advance the layout animation and unbind the transform;
 // then copy the anim transform's current frame into the +0x1C float.
 __declspec(noinline) void func_802664EC(UI_CPassiveSkillInfo* self) {
-    if (func_80137444(self->field_14, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_14, lbl_eu_80668900) != 0) {
         self->field_18 = 3;
         self->field_19 = 1;
         self->field_8->Animate(0);
@@ -989,7 +989,7 @@ void func_80266950(UI::CPassiveSkillLine* self, u8 index) {
         char* text2 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
         func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x145], text2, 0);
     } else {
-        func_80136910(self->field_8, &lbl_eu_8050DC20[0x145], id);
+        setLayoutTextBoxNumber(self->field_8, &lbl_eu_8050DC20[0x145], id);
     }
     char* text3 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x10);
     func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x35f], text3, 0);
@@ -1148,7 +1148,7 @@ extern "C" __declspec(noinline) void func_80267360(u8* selfRaw) {
         func_80269004(self);
         break;
     case 2:
-        func_80137444(self->field_14, lbl_eu_80668900);
+        advanceAnimTransform(self->field_14, lbl_eu_80668900);
         break;
     case 3:
         func_8026916C(self);
@@ -1214,13 +1214,13 @@ extern "C" __declspec(noinline) void func_80267484(UI::CPassiveSkillLine* self,
     if (self->field_8 == 0) {
         return;
     }
-    func_80137038(self->field_8, drawInfo, 0, 1);
-    func_80137038(self->field_18, drawInfo, 0, 1);
+    drawLayout(self->field_8, drawInfo, 0, 1);
+    drawLayout(self->field_18, drawInfo, 0, 1);
     u8 state = self->field_E8;
     if ((u8)(state + 0xFC) <= 4 || (u8)(state + 0xFF) <= 1) {
         for (u8 row = 0; row < 5; row++) {
             for (u8 col = 0; col < 5; col++) {
-                func_80137038(self->cells[row][col].mpLayout, drawInfo, 0, 1);
+                drawLayout(self->cells[row][col].mpLayout, drawInfo, 0, 1);
             }
         }
     }
@@ -1228,7 +1228,7 @@ extern "C" __declspec(noinline) void func_80267484(UI::CPassiveSkillLine* self,
     if (self->mInfo.field_38 == 0 && self->mInfo.field_54 != 0 &&
         CSysWin_getUnk34(self->mInfo.field_54) == 0 &&
         self->mInfo.field_3C.field_8 != 0) {
-        func_80137038(self->mInfo.field_3C.field_8, drawInfo, 0, 1);
+        drawLayout(self->mInfo.field_3C.field_8, drawInfo, 0, 1);
     }
     if (self->mInfo.field_54 != 0) {
         func_8022B7C8(self->mInfo.field_54, drawInfo);
@@ -1419,7 +1419,7 @@ __declspec(noinline) void func_80267BA0(UI::CPassiveSkillLine* self) {
     self->field_FE = 0;
     func_8026BB60(self);
     func_8026C4A4(self);
-    func_80138078(0xA);
+    playUISound(0xA);
 }
 #pragma optimize_for_size off
 
@@ -1450,7 +1450,7 @@ extern "C" __declspec(noinline) void func_80267C44(UI::CPassiveSkillLine* self) 
     self->field_FE = 0;
     func_8026BB60(self);
     func_8026C4A4(self);
-    func_80138078(0xA);
+    playUISound(0xA);
 }
 #pragma optimize_for_size off
 
@@ -1469,7 +1469,7 @@ void func_80267CE0(UI::CPassiveSkillLine* self) {
             nw4r::math::VEC3 pos;
             func_8022C1B4(&pos, self->mInfo.field_54, self->field_11D);
             reinterpret_cast<CCur18View*>(&self->mCur)->vf04(&pos);
-            func_80138078(1);
+            playUISound(1);
         }
         return;
     }
@@ -1495,7 +1495,7 @@ void func_80267CE0(UI::CPassiveSkillLine* self) {
         }
         func_8026C4A4(self);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Menu-cursor up (retail func_80267E2C): mirror of func_80267CE0 with
@@ -1513,7 +1513,7 @@ extern "C" __declspec(noinline) void func_80267E2C(u8* self) {
             nw4r::math::VEC3 pos;
             func_8022C1B4(&pos, line->mInfo.field_54, line->field_11D);
             reinterpret_cast<CCur18View*>(&line->mCur)->vf04(&pos);
-            func_80138078(1);
+            playUISound(1);
         }
         return;
     }
@@ -1539,7 +1539,7 @@ extern "C" __declspec(noinline) void func_80267E2C(u8* self) {
         }
         func_8026C4A4(line);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Menu-cursor right / tab-next (retail func_80267F88): when the embedded
@@ -1650,7 +1650,7 @@ void func_80267F88(UI::CPassiveSkillLine* self) {
         }
         func_8026C4A4(self);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Menu-cursor left / tab-prev (retail func_80268250): mirror of
@@ -1760,7 +1760,7 @@ __declspec(noinline) void func_80268250(UI::CPassiveSkillLine* self) {
         }
         func_8026C4A4(self);
     }
-    func_80138078(1);
+    playUISound(1);
 }
 
 // Menu-close dispatch for the +0x28 line sub-object: when the embedded syswin
@@ -1774,10 +1774,10 @@ __declspec(noinline) void func_80268518(UI::CPassiveSkillLine* self) {
     }
     if (self->field_E8 == 5) {
         func_80269808(self);
-        func_80138078(0x6d);
+        playUISound(0x6d);
     } else if (self->field_E8 == 0xC) {
         func_80269924(self);
-        func_80138078(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -1834,7 +1834,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                     slot->byte14 |= 1;
                     func_80280E9C((u8*)blob);
                     func_80269B14(self);
-                    func_80138078(0x93);
+                    playUISound(0x93);
                 } else if (self->field_11E == 1) {
                     // Learn-all flow: walk the grid column entries, find the
                     // field_FD-th non-matching entry, and pay its SP cost.
@@ -1862,7 +1862,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                                     func_8026BB60(self);
                                     costLo = 0;
                                     freeFlag = (slot->byte14 & 1) == 0;
-                                    func_80138078(0x77);
+                                    playUISound(0x77);
                                 }
                                 break;
                             }
@@ -1878,7 +1878,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                         3, ch, costLo, freeFlag, self->field_FE);
                 }
             } else {
-                func_80138078(6);
+                playUISound(6);
             }
             func_801D216C(&self->mCur, 0);
             func_8022B8E4(self->mInfo.field_54);
@@ -1892,12 +1892,12 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
         CPSkillBlobCost* blob = reinterpret_cast<CPSkillBlobCost*>(
             (u8*)func_8009EC9C(ch) + 0x3534);
         if ((s8)self->field_F5 == (s32)blob->costs[5]) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
         func_8025EE7C(blob, (s8)self->field_F5);
         func_80269D20(self);
-        func_80138078(0x12);
+        playUISound(0x12);
         return;
     }
     if (self->field_E8 == 12) {
@@ -1907,17 +1907,17 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                 return;
             }
             func_80269A18(self);
-            func_80138078(3);
+            playUISound(3);
             return;
         }
-        func_80138078(5);
+        playUISound(5);
         return;
     }
     if (self->field_E8 != 15) {
         return;
     }
     if (func_8026CC34(reinterpret_cast<UI_CPassiveSkill*>(self)) == 0) {
-        func_80138078(5);
+        playUISound(5);
         return;
     }
     {
@@ -1950,7 +1950,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
                 func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
                 func_8022B8B8(self->mInfo.field_54);
                 func_801D216C(&self->mCur, 0);
-                func_80138078(3);
+                playUISound(3);
                 return;
             }
             self->field_11F = 0;
@@ -1961,7 +1961,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
             slot2->byte14 |= 1;
             func_80280E9C((u8*)blob);
             func_80269B14(self);
-            func_80138078(0x93);
+            playUISound(0x93);
             return;
         }
         // Empty slot: acquire without the message flow.
@@ -1972,7 +1972,7 @@ extern "C" __declspec(noinline) void func_80268594(u8* selfRaw) {
         slot->byte14 |= 1;
         func_80280E9C((u8*)blob);
         func_80269B14(self);
-        func_80138078(0x93);
+        playUISound(0x93);
     }
     return;
 }
@@ -1987,14 +1987,14 @@ extern "C" __declspec(noinline) void func_80268BA8(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
         if (CSysWin_isActive(self->mInfo.field_54) != 0) {
-            func_80138078(6);
+            playUISound(6);
             func_801D216C(&self->mCur, 0);
             func_8022B8E4(self->mInfo.field_54);
         }
     } else {
         if (self->field_E8 == 15) {
             func_80269B14(self);
-            func_80138078(6);
+            playUISound(6);
         }
     }
 }
@@ -2062,11 +2062,11 @@ extern "C" __declspec(noinline) void func_80268C38(void* selfRaw) {
         u32 cost = *reinterpret_cast<const u32*>(entry + 0x3D4);
         u8 learnedBit = *(entry + 0x3E8) & 1;
         if (learnedBit == 0) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
         if (cost == 0) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
         u16 msgId =
@@ -2120,7 +2120,7 @@ extern "C" __declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self) 
     if (CSysWin_isActive(self->mInfo.field_54) == 0) {
         return;
     }
-    func_80138078(6);
+    playUISound(6);
     func_801D216C(&self->mCur, 0);
     func_8022B8E4(self->mInfo.field_54);
 }
@@ -2142,7 +2142,7 @@ extern "C" __declspec(noinline) void func_80268FEC(void* self){
 // stw pairs).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80269004(UI::CPassiveSkillLine* self) {
-    if (func_80137444(self->field_C, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_C, lbl_eu_80668900) != 0) {
         self->field_E8 = 5;
         self->field_E9 = 1;
         self->field_8->Animate(0);
@@ -2196,7 +2196,7 @@ extern "C" __declspec(noinline) void func_80269220(UI::CPassiveSkillLine* self) 
         func_8026C4A4(self);
         func_802640B8(&self->mInfo.field_3C, 0xff);
     }
-    if (func_80137444(self->field_10, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_10, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_8->Animate(0);
             self->field_8->UnbindAnimation(self->field_10);
@@ -2214,7 +2214,7 @@ extern "C" __declspec(noinline) void func_80269220(UI::CPassiveSkillLine* self) 
 // transform, then run the line update tail. C linkage so the emitted symbol
 // is the plain retail name.
 extern "C" __declspec(noinline) void func_802692E0(UI::CPassiveSkillLine* self) {
-    if (func_80137444(self->field_1C, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_1C, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_E8 = 0xC;
             self->field_E9 = 1;
@@ -2317,7 +2317,7 @@ extern "C" __declspec(noinline) void func_80269638(UI::CPassiveSkillLine* self) 
         func_8026C4A4(self);
         func_802640B8(&self->mInfo.field_3C, 0xff);
     }
-    if (func_80137444(self->field_10, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_10, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_8->Animate(0);
             self->field_8->UnbindAnimation(self->field_10);
@@ -2332,7 +2332,7 @@ extern "C" __declspec(noinline) void func_80269638(UI::CPassiveSkillLine* self) 
 // transform, then run the line update tail. C linkage so the emitted symbol
 // is the plain retail name.
 extern "C" __declspec(noinline) void func_802696D8(UI::CPassiveSkillLine* self) {
-    if (func_80137444(self->field_1C, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->field_1C, lbl_eu_80668900) != 0) {
         if (self->mInfo.field_19 != 0) {
             self->field_E8 = 0xC;
             self->field_E9 = 1;
@@ -3428,7 +3428,7 @@ __declspec(noinline) void func_8026CE30(UI::CPassiveSkillLine* self) {
             CPSkillEnumListSlot* slot = func_800F6EC0(func_80043F18(&holder), 0);
             cf::CfObjectMove* move = slot->move;
             if (move != 0) {
-                cf::CfObjectMove* m = func_800BFC68__FPQ22cf12CfObjectMove(move);
+                cf::CfObjectMove* m = getCfObjectPc__FPQ22cf12CfObjectMove(move);
                 if (m != 0) {
                     func_800BFDE0(m, 0);
                 }
@@ -3759,8 +3759,8 @@ extern "C" void func_8026D8FC(UI_CPassiveSkill* self, u8* arg2) {
 // Callee declarations (retail plain/mangled names; also declared in
 // CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_800A13C4(void*, u32);
 extern "C" void func_8022B7F4(void*);
@@ -3771,12 +3771,12 @@ extern "C" void func_8022B7F4(void*);
 // object, then clear each character's skill-blob pointer (rows 1..8).
 extern "C" void func_8026D920(UI::CPassiveSkill* self) {
     getEntry__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle(&self->field_18);
-    func_801390E0__FPP11CFileHandle(&self->field_1C);
+    closeFileHandle__FPP11CFileHandle(&self->field_18);
+    closeFileHandle__FPP11CFileHandle(&self->field_1C);
     self->field_24 = 0;
     func_802675D8(&self->mLine);
     func_8022B7F4(&self->mSysWin);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
+    releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
     self->field_20 = 0;
     deleteRegion__17UnkClass_8045F564Fv(&self->mUnk8);
     for (u8 i = 1; i <= 8; i++) {
@@ -3829,7 +3829,7 @@ void func_8026DA88(UI_CPassiveSkill* self) {
         self->field_25 = 3;
         self->field_27 = 0;
         func_80267B08(reinterpret_cast<UI::CPassiveSkillLine*>(self->_pad28));
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -3987,9 +3987,9 @@ void CPassiveSkill::OnFileEvent() {}
 // frame retail uses needs optimize_for_size.
 #pragma optimize_for_size on
 void func_80263F30(UI::CPassiveSkillCur* self) {
-    func_80136E84(&self->mpLayout, self->mArcResAcc, lbl_eu_8050DC20);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x18]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x35]);
+    buildLayout(&self->mpLayout, self->mArcResAcc, lbl_eu_8050DC20);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x18]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x35]);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, 0);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, 1);
     self->mpLayout->Animate(0);
@@ -4005,7 +4005,7 @@ void func_80263FE8(UI::CPassiveSkillCur* self) {
     }
     switch (self->mActive) {
     case 0:
-        func_80137444(self->mpAnimTrans0, lbl_eu_80668900);
+        advanceAnimTransform(self->mpAnimTrans0, lbl_eu_80668900);
         break;
     case 1:
         func_80264140(self);
@@ -4049,7 +4049,7 @@ extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* 
 // back to mpAnimTrans0 and rewind its frame. extern C so func_80263FE8's call
 // reloc is the plain retail name; noinline keeps the retail `bl`.
 extern "C" __declspec(noinline) void func_80264140(UI::CPassiveSkillCur* self) {
-    if (func_80137444(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
         self->mActive = 0;
         self->mVisible = 1;
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, 0);
@@ -4080,9 +4080,9 @@ __declspec(noinline) void func_802641D0(UI_PassiveSkillInit* self, u32 arg) {
 // func_80264204` call from func_802646E8.
 #pragma optimize_for_size on
 __declspec(noinline) void func_80264204(UI_PassiveSkillLayoutInit* self) {
-    func_80136E84(&self->mpLayout, self->mArcResAcc, &lbl_eu_8050DC20[0x50]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x68]);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x85]);
+    buildLayout(&self->mpLayout, self->mArcResAcc, &lbl_eu_8050DC20[0x50]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x68]);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x85]);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, 0);
     self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, 1);
     self->mpLayout->Animate(0);
@@ -4121,7 +4121,7 @@ extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 class CEventFile;
 
 // UI::CPassiveSkill file-event handler (retail
@@ -4227,7 +4227,7 @@ extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* sel
     {
         void* fh2 = (void*)self->field_1C;
         *(void**)((u8*)fh2 + 4) = 0;
-        func_8003AA78__5CBdatFUlPv(2, 0);
+        setBdatEntry__5CBdatFUlPv(2, 0);
         func_8003AA34();
         lbl_eu_80664880 = getFP__FPCc(&lbl_eu_8050DC20[0xa24]);
         func_8003AA34();

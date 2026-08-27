@@ -830,10 +830,10 @@ __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                     s32 sound = 0;
                     if (v28 > 0) {
                         sound = (type == 1) ? 0xc6 : 0xac;
-                        func_80138078(0x34);
+                        playUISound(0x34);
                     } else if (v28 < 0) {
                         sound = (type == 1) ? 0xc8 : 0xae;
-                        func_80138078(0x36);
+                        playUISound(0x36);
                     }
                     if (tsrc != 0)
                         func_800451D8(sound, tsrc);

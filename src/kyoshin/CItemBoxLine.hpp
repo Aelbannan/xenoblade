@@ -357,7 +357,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);   // bind font pane data to root
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* func_801355BC(void);                      // line text string
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();  // cursor accessor (CCur unit)
 extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
@@ -378,10 +378,10 @@ extern "C" int CSysWin_isActive(void*);
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_8022C1B4(void*, void*, u8);
 extern "C" void func_801F369C(void*);
-extern "C" void func_80138078__FUl(unsigned int);
+extern "C" void playUISound__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_801E174C(void*, void*, unsigned int);
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_801393CC(u32);
 extern "C" u32 func_801392E4(u32);
@@ -448,10 +448,10 @@ extern "C" void func_801F071C(void*);
 
 // Layout/anim builders (code_80135FDC unit) used by func_801ECC10. The
 // unmangled C++ forms mangle to the retail symbols
-// (func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc /
-// func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+// (buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc /
+// bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc).
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // Cursor deactivation tail handler (CCur unit) - genuine C-ABI helper.
 extern "C" void func_801D21CC(void*);
 
@@ -522,9 +522,9 @@ extern "C" void func_8022B8B8(void*);
 extern "C" u32 func_801D3C74(void*, u32);
 
 // Layout/anim builders + text/table helpers declared by the code_80135FDC unit.
-// func_80136910 is a C++ function (mangled retail name); the text helpers are
+// setLayoutTextBoxNumber is a C++ function (mangled retail name); the text helpers are
 // C-ABI (plain retail names).
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" char* func_8013639C(void*, char*);
@@ -541,10 +541,10 @@ extern "C" void func_801EB178(void*);
 
 // --- teardown helpers called by func_801ED618 (retail plain names) ---
 extern "C" void func_801EAF9C(CNumSelectFull*);          // num-select destroy
-// C++ mangling reproduces the retail names func_801390E0__FPP11CFileHandle /
-// func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor.
+// C++ mangling reproduces the retail names closeFileHandle__FPP11CFileHandle /
+// releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor.
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_801E13F8(CItemBoxInfo2*);           // info2 destroy
 extern "C" void func_801F35DC(CScrollBar*);              // scrollbar destroy
 extern "C" void func_8022B7F4(CSysWinFull*);             // syswin destroy

@@ -15,7 +15,7 @@ CPresentWin::~CPresentWin() {
 void func_8022DAD8(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField30 == 0) return;
     if (self->mField37 == 0) return;
-    func_80137038(self->mpLayout, drawInfo, 0, 1);
+    drawLayout(self->mpLayout, drawInfo, 0, 1);
 }
 
 u8 func_8022DB6C(CPresentWin* self) { return self->mField30; }
@@ -28,7 +28,7 @@ void func_8022DD68(CPresentWin* self) {
     if (self->mField37 != 2) return;
     self->mField37 = 3;
     self->mField38 = 0;
-    func_80138078(0xe);
+    playUISound(0xe);
 }
 
 // Retail uses the -O4,s shape (_savegpr_29 at only 3 saved GPRs).
@@ -96,11 +96,11 @@ void func_8022DD90(CPresentWin* self) {
 
     // Rank sound + collection bookkeeping (skipped entirely for a 0 result).
     if ((s8)res >= 1) {
-        func_80138078(0x34);
+        playUISound(0x34);
     } else if ((s8)res == 0) {
         goto tail;
     } else {
-        func_80138078(0x36);
+        playUISound(0x36);
     }
     {
         u8 idxA = func_8022E868(self, self->mField32);
@@ -227,7 +227,7 @@ extern "C" u8 func_8022E4FC(CPresentWin* self) { return func_8022E868(self, self
 extern "C" u8 func_8022E504(CPresentWin* self) { return func_8022E868(self, self->mField33); }
 
 extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
-    if (func_80137444(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
     }
@@ -247,7 +247,7 @@ extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self) {
 // Frame-update handler: when animTrans1 finishes, switch to state 2, enable
 // both animations, show the window and reset the two labelled panes.
 extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
-    if (func_80137444(self->mpAnimTrans1, lbl_eu_8066862C) != 0) {
+    if (advanceAnimTransform(self->mpAnimTrans1, lbl_eu_8066862C) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
         self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, false);
@@ -403,7 +403,7 @@ void func_8022DB7C(CPresentWin* self) {
             func_80124288(pane, src);
         }
     }
-    func_80138078(0xd);
+    playUISound(0xd);
 }
 #pragma pop
 
@@ -426,9 +426,9 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     // String-pool base kept in a callee-saved register by retail.
     char* pool = lbl_eu_8050A84C;
 
-    func_80136E84(&self->mpLayout, accessor, pool);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mAccessor, pool + 0x19);
-    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mAccessor, pool + 0x35);
+    buildLayout(&self->mpLayout, accessor, pool);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans0, self->mAccessor, pool + 0x19);
+    bindLayoutAnimTransform(self->mpLayout, &self->mpAnimTrans1, self->mAccessor, pool + 0x35);
 
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mpLayout);
     u32 fontResult = ((CPresentFontView*)fontObj)->sf9();

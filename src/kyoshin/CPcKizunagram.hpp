@@ -227,8 +227,8 @@ extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id);
 extern "C" void* getFP__FPCc(const char* path);
 extern "C" u32 func_8003B1EC(void*);
 
-// Sound / effect helper (C-linkage retail symbol func_80138078__FUl).
-extern "C" void func_80138078__FUl(u32 arg);
+// Sound / effect helper (C-linkage retail symbol playUISound__FUl).
+extern "C" void playUISound__FUl(u32 arg);
 
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -242,9 +242,9 @@ extern "C" u32 lbl_eu_806688A8;
 extern "C" u32 lbl_eu_806688AC;
 
 // nw4r layout/animation loaders used by the cursor init (func_8025D4E4).
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** dst, nw4r::lyt::ArcResourceAccessor* acc, const char* name);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout* lay, nw4r::lyt::AnimTransform** dst, nw4r::lyt::ArcResourceAccessor* acc, char* name);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
@@ -281,8 +281,8 @@ extern "C" const u32 lbl_eu_806688A0;
 extern "C" const u32 lbl_eu_806688A4;
 // u16-param view: retail passes the affinity value with only a clrlwi 16
 // (no low-byte mask at the call site), so this TU saw a u16 parameter.
-// Literal mangled identifier links to the same symbol as func_80136910.
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
+// Literal mangled identifier links to the same symbol as setLayoutTextBoxNumber.
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u16);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void func_80124270(void*, u32);
 

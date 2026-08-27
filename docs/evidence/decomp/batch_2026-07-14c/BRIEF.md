@@ -53,7 +53,7 @@ Retail asm for each symbol is in this directory (`asm_*.s`).
 
 ### `CUICfManager::Term` (`asm_Term_CUICfManager.s`)
 - Frame `-0x10`; teardown: `func_801390E0(&this->unk114)`; three× `PackedFont::Destroy` + `MemManager::deallocate` at `+0x60/+0x9C/+0xD8`
-- `func_80139124(unk5C)`; clear `unk5C`; set `*(this+0x118)=-1`
+- `releaseArcResourceAccessor(unk5C)`; clear `unk5C`; set `*(this+0x118)=-1`
 - IFlagEvent path: if this nonzero, `r31=this+0x58`; `func_8009D0B4()` then `func_8009D514(r31)`
 - `*(unk144+0x39)=1`; clear **`lbl_eu_80664054@sda21`**
 - Create stub `.cpp` implementing only what is needed for this symbol + necessary linkage; declare missing helpers `extern`

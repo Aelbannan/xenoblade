@@ -99,11 +99,11 @@ void OnBdatFileUnloaded(void* pData, u32 length) {
 }
 
 void OnAidatFileLoaded(void* pData, u32 length){
-    func_8014A86C(pData);
+    initAIActionTable(pData);
 }
 
 void OnAidatFileUnloaded(void* pData, u32 length){
-    func_8014A8F8();
+    clearAIActionTable();
 }
 
 void OnHbmstopFileLoaded(void* pData, u32 length){

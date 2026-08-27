@@ -270,7 +270,7 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" void* func_8016FE34(void* r3);
-// Shared-arc text value (unmangled retail symbol); feeds func_801368C0.
+// Shared-arc text value (unmangled retail symbol); feeds setLayoutTextBoxFont.
 extern "C" u32 func_801355D8();
 // 4-short colour pairs read off a pane (unmangled retail symbol).
 extern "C" FourShorts func_801397AC(void*, u32);

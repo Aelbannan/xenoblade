@@ -3,17 +3,17 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/math/MTRand.hpp"
 
-extern u32 func_801355A0();
-extern void func_80138078(u32);
-extern void func_8013B428(u32);
+extern u32 getPackedFont();
+extern void playUISound(u32);
+extern void incrementEventCounter(u32);
 
-// func_80137038's retail symbol is the Itanium-mangled name
-// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii. Declaring the
+// drawLayout's retail symbol is the Itanium-mangled name
+// drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii. Declaring the
 // short name with C++-linkage here makes the compiler mangle it to exactly
 // that retail symbol (see pre-mangled decl in code_80135FDC.hpp). Do NOT use
 // extern "C" (lint forbids it for non-lbl_ relocs) nor the pre-mangled name
 // (that would double-mangle).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
     *(void**)this = (void*)lbl_eu_80535F48;
@@ -33,15 +33,15 @@ CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
 CMCCylinderGauge::~CMCCylinderGauge() {}
 
 void CMCCylinderGauge::init() {
-    func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry01_gage.brlyt");
+    buildLayout(&mLayout, mArcResourceAccessor, "mf10_cry01_gage.brlyt");
 
-    func_80136F08(mLayout, &mAnimTransC, mArcResourceAccessor, "mf10_cry01_gage_in.brlan");
-    func_80136F08(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry01_gage_up.brlan");
-    func_80136F08(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry01_gage_full.brlan");
-    func_80136F08(mLayout, &mAnimTrans18, mArcResourceAccessor, "mf10_cry01_gage_out.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTransC, mArcResourceAccessor, "mf10_cry01_gage_in.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry01_gage_up.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry01_gage_full.brlan");
+    bindLayoutAnimTransform(mLayout, &mAnimTrans18, mArcResourceAccessor, "mf10_cry01_gage_out.brlan");
 
-    func_801368C0(mLayout, "txt_sylinder", func_801355A0());
-    func_80136910(mLayout, "txt_sylinder", unk25);
+    setLayoutTextBoxFont(mLayout, "txt_sylinder", getPackedFont());
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 
     unk28 = 0.0f;
     bindInAnim();
@@ -72,7 +72,7 @@ void CMCCylinderGauge::update() {
 
 void CMCCylinderGauge::draw(nw4r::lyt::DrawInfo* pDrawInfo) {
     if (this->unk1c != 0) {
-        func_80137038(this->mLayout, pDrawInfo, 0, 1);
+        drawLayout(this->mLayout, pDrawInfo, 0, 1);
     }
 }
 
@@ -127,7 +127,7 @@ void CMCCylinderGauge::addFillValue(float arg) {
 
 void CMCCylinderGauge::decrementLevel() {
     unk25 -= 1;
-    func_80136910(mLayout, "txt_sylinder", unk25);
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 }
 
 u8 CMCCylinderGauge::getLevel() {
@@ -140,11 +140,11 @@ u8 CMCCylinderGauge::getLevel() {
 
 void CMCCylinderGauge::setLevel(u8 arg) {
     unk25 = arg;
-    func_80136910(mLayout, "txt_sylinder", unk25);
+    setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
 }
 
 void CMCCylinderGauge::updateIn() {
-    if(func_80137444(mAnimTransC, 1.0f) == 0) {
+    if(advanceAnimTransform(mAnimTransC, 1.0f) == 0) {
         return;
     }
     unk24 = true;
@@ -170,7 +170,7 @@ void CMCCylinderGauge::updateFill() {
         if(unk28 >= 1.0f) {
             if(unk25 < 9) {
                 unk25++;
-                func_80136910(mLayout, "txt_sylinder", unk25);
+                setLayoutTextBoxNumber(mLayout, "txt_sylinder", unk25);
                 unk28--;
                 if(unk28 < 0.0f) {
                     unk28 = 0.0f;
@@ -178,10 +178,10 @@ void CMCCylinderGauge::updateFill() {
                 unk20 = 4;
                 bindFullAnim();
                 mAnimTrans14->SetFrame(0.0f);
-                func_80138078(0xb1);
+                playUISound(0xb1);
             } else {
                 unk28 = 1.0f;
-                func_8013B428(0x80);
+                incrementEventCounter(0x80);
             }
         }
     }
@@ -190,14 +190,14 @@ void CMCCylinderGauge::updateFill() {
 }
 
 void CMCCylinderGauge::updateOut() {
-    if(func_80137444(mAnimTrans18, 1.0f) == 0) {
+    if(advanceAnimTransform(mAnimTrans18, 1.0f) == 0) {
         return;
     }
     unk24 = true;
 }
 
 void CMCCylinderGauge::updateFull() {
-    if(func_80137444(mAnimTrans14, 1.0f) == 0) {
+    if(advanceAnimTransform(mAnimTrans14, 1.0f) == 0) {
         return;
     }
     unk20 = 2;

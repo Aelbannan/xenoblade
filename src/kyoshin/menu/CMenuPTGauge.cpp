@@ -57,7 +57,7 @@ extern u32 __ptmf_null[3];     // runtime ptmf.o null member-fn descriptor
 int func_8013BE50(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
 }
 
-extern void func_80138078(u32);
+extern void playUISound(u32);
 
 typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32); // PTMF: (s32 partyVal) -> void
 extern CMenuPTGaugePtmf lbl_eu_805323F8[]; // Dispatch table for mActionIdx (3 entries: default, special, chain)
@@ -82,22 +82,22 @@ void CMenuPTGauge::Init() {
     nw4r::lyt::ArcResourceAccessor* accessor;
 
     accessor = func_801355F4();
-    func_80136E84(&mLayout, accessor, lbl_eu_805039C8 + 0xd);
+    buildLayout(&mLayout, accessor, lbl_eu_805039C8 + 0xd);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimDefault, accessor, lbl_eu_805039C8 + 0x29);
+    bindLayoutAnimTransform(mLayout, &mAnimDefault, accessor, lbl_eu_805039C8 + 0x29);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimOpen, accessor, lbl_eu_805039C8 + 0x48);
+    bindLayoutAnimTransform(mLayout, &mAnimOpen, accessor, lbl_eu_805039C8 + 0x48);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimClose, accessor, lbl_eu_805039C8 + 0x6f);
+    bindLayoutAnimTransform(mLayout, &mAnimClose, accessor, lbl_eu_805039C8 + 0x6f);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimIdle, accessor, lbl_eu_805039C8 + 0x96);
+    bindLayoutAnimTransform(mLayout, &mAnimIdle, accessor, lbl_eu_805039C8 + 0x96);
 
     accessor = func_801355F4();
-    func_80136F08(mLayout, &mAnimSpecial, accessor, lbl_eu_805039C8 + 0xb7);
+    bindLayoutAnimTransform(mLayout, &mAnimSpecial, accessor, lbl_eu_805039C8 + 0xb7);
 
     // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
     // CDeviceFont::getFontInfo(1, layout) returns an object whose vt+0x24
@@ -206,11 +206,11 @@ after_bit21:
                 }
             }
         }
-        func_80138078(0xa0); // SE: gauge open
+        playUISound(0xa0); // SE: gauge open
         break;
     }
     case 1: {
-        if (func_80137444(mAnimDefault, lbl_eu_806679EC) != 0) {
+        if (advanceAnimTransform(mAnimDefault, lbl_eu_806679EC) != 0) {
             mPhase = 2;
         }
         break;
@@ -239,7 +239,7 @@ after_bit21:
                 mLayout->UnbindAllAnimation();
                 mLayout->BindAnimation(mAnimDefault);
                 mLayout->SetAnimationEnable(mAnimDefault, true);
-                func_80138078(0xa1); // SE: gauge close
+                playUISound(0xa1); // SE: gauge close
                 break;
             }
         }
@@ -345,7 +345,7 @@ after_bit21:
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE); // disable Z compare, always pass
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038(mLayout, &drawInfo, 0, 1);
+        drawLayout(mLayout, &drawInfo, 0, 1);
     }
 done:
     ;
@@ -580,7 +580,7 @@ void func_80187858(CMenuPTGauge* self) {
 }
 void func_80187958(CMenuPTGauge* self, s32 partyVal) {
     // Advance the special animation one frame (result unused).
-    func_80137444(self->mAnimSpecial, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimSpecial, lbl_eu_806679EC);
 
     // Chain gate (shared with Move case 2): when the chain counter is 5,
     // keep the special animation running and skip the reset below.
@@ -644,7 +644,7 @@ after_five:
 }
 void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
     // Advance the close animation one frame (result unused).
-    func_80137444(self->mAnimClose, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimClose, lbl_eu_806679EC);
 
     // Manual signed-int -> double conversion (MWCC_PATTERNS 7i): build the
     // 0x4330000080000000 bit pattern so the fsubs names the shared .sdata2
@@ -666,7 +666,7 @@ void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
         self->mAnimIdle->SetFrame(lbl_eu_806679E0);
         self->mLayout->Animate(0);
-        func_80138078(0x66); // SE
+        playUISound(0x66); // SE
     } else {
         if (partyVal < 200) {
             self->mGaugeBase = 1;
@@ -701,7 +701,7 @@ void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
         self->mAnimOpen->SetFrame(lbl_eu_806679E0);
         self->mLayout->Animate(0);
-        func_80138078(0x65); // SE
+        playUISound(0x65); // SE
     }
 }
 // Entry-action dispatch entry: re-seed the open animation to frame 1, then
@@ -710,7 +710,7 @@ void func_80187A88(CMenuPTGauge* self, s32 partyVal) {
 void func_80187B70(CMenuPTGauge* self, s32 partyVal) {
     // Retail seeds this frame through the out-of-line helper, not the inline
     // SetFrame accessor.
-    func_80137444(self->mAnimOpen, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimOpen, lbl_eu_806679EC);
     // The 0x43300000-magic blob (lbl_eu_806679F0) in retail is MWCC's own
     // s32->double cast correction constant, not a source subtraction.
     if ((float)partyVal >= lbl_eu_80667A00) {
@@ -721,7 +721,7 @@ void func_80187B70(CMenuPTGauge* self, s32 partyVal) {
         self->mLayout->SetAnimationEnable(self->mAnimClose, true);
         self->mAnimClose->SetFrame(lbl_eu_806679E0);
         self->mLayout->Animate(0);
-        func_80138078(0x65); // SE
+        playUISound(0x65); // SE
     } else {
         if (partyVal < 100) {
             self->mGaugeBase = 0;
@@ -757,7 +757,7 @@ void func_80187778(CMenuPTGauge* self, s32 partyVal) {
 // animation from frame 0.
 void func_80187E28(CMenuPTGauge* self, s32 partyVal) {
     // Advance the idle animation one frame (result unused).
-    func_80137444(self->mAnimIdle, lbl_eu_806679EC);
+    advanceAnimTransform(self->mAnimIdle, lbl_eu_806679EC);
 
     if (partyVal < 300) {
         self->mGaugeBase = 2;

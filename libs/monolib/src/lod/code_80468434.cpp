@@ -62,10 +62,10 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
         mtx = (const nw4r::math::MTX34*)&lbl_eu_806583E0[0][0][0];
     }
 
-    func_80465314(h->field_0x6);
+    selectLodTexCoord(h->field_0x6);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
-    func_8046406C(texCount);
+    bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
 
@@ -364,10 +364,10 @@ u16* func_80469B5C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     // Visible: upload the matrix slot and set up colour/texcoord state.
     func_80463C24((s32)h->field_0xE >> 1, h->field_0xF,
                   (const f32 (*)[3][4])&h->field_0x18);
-    func_80465314(h->field_0x6);
+    selectLodTexCoord(h->field_0x6);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
-    func_8046406C(texCount);
+    bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
     f32 zero = lbl_eu_8066A64C;
@@ -470,10 +470,10 @@ u16* func_80469620__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     // Visible: upload the matrix slot and set up colour/texcoord state.
     func_80463C24((s32)h->field_0xE >> 1, h->field_0xF,
                   (const f32 (*)[3][4])&h->field_0x18);
-    func_80465314(h->field_0x6);
+    selectLodTexCoord(h->field_0x6);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
-    func_8046406C(texCount);
+    bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
     f32 zero = lbl_eu_8066A64C;
@@ -598,10 +598,10 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
         mtx = (const nw4r::math::MTX34*)&lbl_eu_806583E0[0][0][0];
     }
 
-    func_80465314(h->field_0x6);
+    selectLodTexCoord(h->field_0x6);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(h->field_0x4);
     s32 texCount = h->field_0x6 >> 8;
-    func_8046406C(texCount);
+    bindLodVertexArrays(texCount);
 
     u32 count = h->field_0x2;
     f32 zero = lbl_eu_8066A64C;
@@ -673,7 +673,7 @@ u16* func_80469138__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 u8* cullLodRecordA__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u8* result = &self->records[0].field_0x24;
     if ((self->records[0].field_0x16 & 0x2) != 0) {
-        if (func_8046451C(self->records[0].field_0x2 * 0x3c,
+        if (isLodRangeStraddlesLimit(self->records[0].field_0x2 * 0x3c,
                           self->records[0].field_0x4 * 0x3c) != 0) {
             *out = 1;
         }
@@ -690,7 +690,7 @@ u8* cullLodRecordA__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 u8* cullLodRecordB__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u8* result = &self->records[2].field_0x0;
     if ((self->records[0].field_0x16 & 0x2) != 0) {
-        if (func_8046451C(self->records[0].field_0x2 * 0x3c,
+        if (isLodRangeStraddlesLimit(self->records[0].field_0x2 * 0x3c,
                           self->records[0].field_0x4 * 0x3c) != 0) {
             *out = 1;
         }
@@ -710,7 +710,7 @@ u8* cullLodRecordB__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 u16* cullLodEntry__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     u16* result = (u16*)((u32)self + (self->records[0].field_0x2 * 0x2c + 0x1c));
     if ((self->records[0].field_0x1 & 0x2) != 0) {
-        if (func_8046451C(self->records[0].field_0x8 * 0x3c,
+        if (isLodRangeStraddlesLimit(self->records[0].field_0x8 * 0x3c,
                           self->records[0].field_0xA * 0x3c) != 0) {
             *out = 1;
         }
@@ -731,7 +731,7 @@ u16* cullLodEntryAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* o
     // value as the add's first operand (retail: add r5, r5, r3).
     u16* result = (u16*)((u32)self + (self->records[0].field_0x2 * 0x2c + 0x48));
     if ((self->records[0].field_0x1 & 0x2) != 0) {
-        if (func_8046451C(self->records[0].field_0x8 * 0x3c,
+        if (isLodRangeStraddlesLimit(self->records[0].field_0x8 * 0x3c,
                           self->records[0].field_0xA * 0x3c) != 0) {
             *out = 1;
         }
@@ -850,7 +850,7 @@ u8* renderLodBatch__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     } else {
         resetLodFlags__Q23LOD17UnkClass_804645CCFv();
     }
-    func_80465314(self->records[0].field_0x8);
+    selectLodTexCoord(self->records[0].field_0x8);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
     setCurrentMtxCached__Q23LOD17UnkClass_80466348Fv(self->records[0].field_0x14 + 3);
     GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
@@ -893,7 +893,7 @@ u8* renderLodBatchAlt__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
     func_80463C24((s32)self->records[0].field_0x18 >> 1,
                   self->records[0].field_0x19,
                   (const f32 (*)[3][4])&self->records[0].field_0x1C);
-    func_80465314(self->records[0].field_0x8);
+    selectLodTexCoord(self->records[0].field_0x8);
     func_8046534C__Q23LOD17UnkClass_804645CCFv(self->records[0].field_0xA);
     GXCallDisplayList(lbl_eu_8066576C + self->records[0].field_0xC,
                       self->records[0].field_0x10);

@@ -38,7 +38,7 @@ struct UnkClass_80466348 {
     void tevStageTexKonstC0();
     void tevStageTexKonstSubC0();
     void tevStageTexMulC0();
-    void func_804668F0();
+    void tevStageTexAlpha();
     void tevStageTexKonstOnly();
     void tevStageTexRascReg0();
     void tevStageTexRascReg1();
@@ -46,7 +46,7 @@ struct UnkClass_80466348 {
     void tevStageC0C1TexAlpha();
     void tevStageC0TexAlphaBlend();
     void tevStageKonstTexReg1();
-    void func_80466E3C();
+    void tevStageRascTexC0();
     void tevStageRascTexSubC0();
     void setupVtxDescPosNrmClrTex2();
     void setupVtxDescPnPosClrTex();
@@ -264,7 +264,7 @@ u32 tevStageTexMulC0(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
 
 // TEV combiner: texel-alpha * texel colour, alpha = TEXA; output
 // register/scale from the caller.
-u32 func_804668F0(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+u32 tevStageTexAlpha(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
     GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXA, GX_CC_TEXC, GX_CC_ZERO);
     GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
     GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
@@ -348,7 +348,7 @@ u32 tevStageKonstTexReg1(GXTevStageID self, u32, GXTevScale scale, GXTevKColorSe
 
 // TEV combiner: texel * raster + C0 colour, alpha = A0; output
 // register/scale from the caller.
-u32 func_80466E3C(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+u32 tevStageRascTexC0(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
     GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_C0);
     GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
     GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
@@ -863,7 +863,7 @@ extern "C" void tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv();
-extern "C" void func_804668F0__Q23LOD17UnkClass_80466348Fv();
+extern "C" void tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv();
@@ -871,7 +871,7 @@ extern "C" void tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv();
-extern "C" void func_80466E3C__Q23LOD17UnkClass_80466348Fv();
+extern "C" void tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setupVtxDescPosTex__Q23LOD17UnkClass_80466348Fv();
 extern "C" void setupVtxDescPosClrTex__Q23LOD17UnkClass_80466348Fv();
@@ -915,6 +915,6 @@ extern u32 lbl_eu_8056D7A8[118];
 
 // [.data] 0x258 bytes align 8
 extern "C" LodTexCoordSetup lbl_eu_8056D728[13] = { (LodTexCoordSetup)&setupVtxDescPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosNrmClrTex2__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPosClrIndexed__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmTex3__Q23LOD17UnkClass_80466348Fv, (LodTexCoordSetup)&setupVtxDescPnPosNrmClrTex3__Q23LOD17UnkClass_80466348Fv };
-u32 lbl_eu_8056D75C[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&func_804668F0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&func_80466E3C__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareAlways__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe80__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe1__Q23LOD17UnkClass_80466348Fv, 0x00000000 };
+u32 lbl_eu_8056D75C[19] = { (u32)&tevStageTexRasc__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexC0AlphaA0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexMulC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexKonstOnly__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageTexRascReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1Tex__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0C1TexAlpha__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageC0TexAlphaBlend__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageKonstTexReg1__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexC0__Q23LOD17UnkClass_80466348Fv, (u32)&tevStageRascTexSubC0__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareAlways__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe80__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaCompareGe1__Q23LOD17UnkClass_80466348Fv, 0x00000000 };
 u32 lbl_eu_8056D7A8[118] = { (u32)&setTexGenMtx2x4Field__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Nrm__Q23LOD17UnkClass_80466348Fv, (u32)&setTexGenMtx3x4Pos__Q23LOD17UnkClass_80466348Fv, (u32)&loadTexMtxAndSetGen__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeNone__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeBlend__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeAdd__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeReplace__Q23LOD17UnkClass_80466348Fv, (u32)&setBlendModeSubtract__Q23LOD17UnkClass_80466348Fv, 0x00000000, (u32)&setAmbColorScaled1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorDirect__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaled2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorAlphaSimple__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorScaledAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha1__Q23LOD17UnkClass_80466348Fv, (u32)&func_80467E14__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorWithAlpha2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite1__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite2__Q23LOD17UnkClass_80466348Fv, (u32)&setAmbColorComposite3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg2__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx2__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx1__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegReg3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanRegVtx3__Q23LOD17UnkClass_80466348Fv, (u32)&setColorChanDisable__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanReg__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, (u32)&setAlphaChanVtx__Q23LOD17UnkClass_80466348Fv, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0x00000002, 0x00000002, 0xFFFFFFFF, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374, 0x65785F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F, 0x72657370, 0x6C74745F, 0x61632E68, 0x00000000, 0x00000000 };
 

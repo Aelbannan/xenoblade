@@ -307,7 +307,7 @@ void CMenuKizunaTalkList::Move() {
     if (cancel != 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
         mState = 4;
         mUnknown54 = 1;
@@ -384,7 +384,7 @@ void func_80272498(CMenuKizunaTalkList* self) {
         func_801C412C(&self->mTitleAHelp);
         func_80273564(&self->mKizunaTalkList);
         self->mState = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
     }
 }
 

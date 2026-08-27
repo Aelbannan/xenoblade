@@ -735,7 +735,7 @@ void CMenuMapSelect::Move() {
         func_801C412C(&mTitleHelp);
         func_802436CC(&mMapSel);
         mState = 1;
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
         func_8013EC6C(1, 0);
         func_804962A0(mScn, 0);
         break;
@@ -769,7 +769,7 @@ void CMenuMapSelect::Move() {
         }
         func_801C41E8(&mTitleHelp, 0);
         func_8024BE1C(&mFloorMap);
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
         func_80244538(&mFade);
         mState = 6;
         break;

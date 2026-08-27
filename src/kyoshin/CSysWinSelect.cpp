@@ -193,7 +193,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         func_8022B8E4(&self->mSysWin[0]);
         self->field_60 = (s8)self->mCursorSel + 1;
         func_801D216C(&self->mCur18[0], 0);
-        func_80138078(3);
+        playUISound(3);
     } else if (up != 0) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
@@ -201,7 +201,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078(1);
+        playUISound(1);
     } else if (down != 0) {
         // Down: move the cursor down one row, wrapping over 1 to 0.
         self->mCursorSel = (u8)(self->mCursorSel + 1);
@@ -209,7 +209,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078(1);
+        playUISound(1);
     }
 }
 

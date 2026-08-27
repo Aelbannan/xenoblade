@@ -78,6 +78,7 @@ extern "C" void func_8006CC0C();
 extern "C" float func_8016E9CC();
 extern "C" void func_80189390(const void* text);
 extern "C" void func_8006A03C(u32 first, u32 second, u32 third);
+extern "C" void dispatchLODArgs__8CTaskLODFv(u16 first, u16 second, u16 third);
 extern "C" void func_80068AA4();
 extern "C" void func_801BF9A4();
 extern "C" int isFlag01Set__9CTaskGameFv();
@@ -840,7 +841,7 @@ void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
 }
 u32 cf::CfGameManager::getEnabledInputFlags() {
     if (isSceneLoading()) {
-        if (func_800FF778__9CMainMenuFv() || getInstance__11CSysWinBuffFv() != nullptr ||
+        if (isAnyMenuOpen__9CMainMenuFv() || getInstance__11CSysWinBuffFv() != nullptr ||
             isInitialized__10CMenuPauseFv()) {
             return 0xFFFFFFFF;
         }
@@ -975,8 +976,11 @@ void cf::CfGameManager::dispatchObjectFunc23() {
     field_0x4->CfObject_UnkVirtualFunc23();
 }
 
-void cf::CfGameManager::dispatchObjectFunc19() {
-    field_0x4->CfObject_UnkVirtualFunc19();
+// Retail Fv symbol: callers leave r4 = vec for UVF19; forced-name form keeps
+// the Fv linker name while forwarding the live argument.
+extern "C" void dispatchObjectFunc19__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, const ml::CVec3* vec) {
+    self->field_0x4->CfObject_UnkVirtualFunc19(vec);
 }
 
 #pragma dont_inline on
@@ -2305,7 +2309,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
     ItemListNode* node = list->sentinel->next;
     while (node != list->sentinel) {
         Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
-            func_800BFC68__FPQ22cf12CfObjectMove(node->object));
+            getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
         if (object != nullptr) {
             object->vfunc_0xA8(true);
             object->vfunc_0xB8();
@@ -2573,7 +2577,7 @@ void cf::CfGameManager::func_80085FB8() {
         ItemListNode* node = list->sentinel->next;
         while (node != list->sentinel) {
             Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
-                func_800BFC68__FPQ22cf12CfObjectMove(node->object));
+                getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
             if (object != nullptr) {
                 object->vfunc_0xA8(true);
                 object->vfunc_0xB8();

@@ -23,7 +23,7 @@ extern "C" void func_802296E0(CQstLogInfo* self) {
         self->field_0x34 = 1;
         self->mField39 = 0;
         func_802298A0(self);
-        func_80138078(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -34,7 +34,7 @@ extern "C" void func_80229724(CQstLogInfo* self) {
         self->field_0x34 = 4;
         self->mField39 = 0;
         func_80229900(self);
-        func_80138078(6);
+        playUISound(6);
     }
 }
 
@@ -72,7 +72,7 @@ CQstLogInfo::CQstLogInfo() {
 extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x24;
-    if (func_80137444(anim, frame) != 0) {
+    if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x34 = 2;
         func_80229900(self);
     }
@@ -83,7 +83,7 @@ extern "C" __declspec(noinline) void func_80229770(CQstLogInfo* self) {
 extern "C" __declspec(noinline) void func_802297BC(CQstLogInfo* self) {
     f32 frame = lbl_eu_80668590;
     nw4r::lyt::AnimTransform* anim = self->field_0x28;
-    if (func_80137444(anim, frame) != 0) {
+    if (advanceAnimTransform(anim, frame) != 0) {
         self->field_0x34 = 3;
         self->mField39 = 1;
     }
@@ -156,7 +156,7 @@ extern "C" __declspec(noinline) void func_80229620(CQstLogInfo* self) {
         delete (CTagProcessor*)self->field_0x2C;
         self->field_0x2C = 0;
     }
-    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->field_0x1C);
+    releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->field_0x1C);
     self->mMemRegion.func_8045F778();
 }
 
@@ -523,14 +523,14 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
             func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
                           func_80136190(&lbl_eu_8050A0B4[0x8c],
                                         &lbl_eu_8050A0B4[0x7f], 0x33), 0);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
             return;
         }
         u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
         u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
-        func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
-        func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
+        setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
+        setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
         u32 odd = v & 1;
         for (u8 i = 0; i < 3; i++) {
             if (odd) {
@@ -604,22 +604,22 @@ extern "C" __declspec(noinline) void func_8022A904(CQstLogInfo* self,
                                         &lbl_eu_8050A0B4[0x7f], 0x32), 0);
             u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
             u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
             return;
         }
         if (kind == 1) {
             func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x22d],
                           func_80136190(&lbl_eu_8050A0B4[0x8c],
                                         &lbl_eu_8050A0B4[0x7f], 0x33), 0);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
-            func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], 0);
+            setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], 0);
             return;
         }
         u16 a = func_80136254(table, &lbl_eu_8050A0B4[0x24d], key);
         u16 b = func_80136254(table, &lbl_eu_8050A0B4[0x258], key);
-        func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
-        func_80136910(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
+        setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x238], b * 10);
+        setLayoutTextBoxNumber(self->mUnk20, &lbl_eu_8050A0B4[0x243], a * 10);
         u32 odd = v & 1;
         for (u8 i = 0; i < 3; i++) {
             if (v == 1) {
@@ -768,12 +768,12 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
         field_0x1C = (u32)createArcResourceAccessor__10CLibLayoutFv();
         ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->Attach(
             fileData, &lbl_eu_8050A0B4[0x36a]);
-        func_80136E84(&mUnk20, (nw4r::lyt::ArcResourceAccessor*)field_0x1C,
+        buildLayout(&mUnk20, (nw4r::lyt::ArcResourceAccessor*)field_0x1C,
                       &lbl_eu_8050A0B4[0x36e]);
-        func_80136F08(mUnk20, &field_0x24,
+        bindLayoutAnimTransform(mUnk20, &field_0x24,
                       (nw4r::lyt::ArcResourceAccessor*)field_0x1C,
                       &lbl_eu_8050A0B4[0x381]);
-        func_80136F08(mUnk20, &field_0x28,
+        bindLayoutAnimTransform(mUnk20, &field_0x28,
                       (nw4r::lyt::ArcResourceAccessor*)field_0x1C,
                       &lbl_eu_8050A0B4[0x397]);
 
@@ -783,9 +783,9 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
 
         char* questName = func_801355BC();
         if (questName != 0) {
-            func_801368C0(mUnk20, &lbl_eu_8050A0B4[0x238], (u32)questName);
-            func_801368C0(mUnk20, &lbl_eu_8050A0B4[0x3b2], (u32)questName);
-            func_801368C0(mUnk20, &lbl_eu_8050A0B4[0x243], (u32)questName);
+            setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x238], (u32)questName);
+            setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x3b2], (u32)questName);
+            setLayoutTextBoxFont(mUnk20, &lbl_eu_8050A0B4[0x243], (u32)questName);
         }
         func_80136B4C(mUnk20, &lbl_eu_8050A0B4[0x3b2],
                       func_80136190(&lbl_eu_8050A0B4[0x291],
@@ -821,8 +821,8 @@ int CQstLogInfo::OnFileEvent(CEventFile* event) {
 }
 #pragma optimize_for_size off
 
-// retail: if (mUnk30) tail func_80137038(mUnk20, drawInfo passthrough, 0, 1)
+// retail: if (mUnk30) tail drawLayout(mUnk20, drawInfo passthrough, 0, 1)
 void func_80229600(CQstLogInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mUnk30 == 0) return;
-    func_80137038(self->mUnk20, drawInfo, 0, 1);
+    drawLayout(self->mUnk20, drawInfo, 0, 1);
 }

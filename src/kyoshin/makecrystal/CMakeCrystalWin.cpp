@@ -134,7 +134,7 @@ void func_80212BE8(CMakeCrystalWin* self) {
                 func_801C412C(&self->mTitleAHelp);
                 func_80214700(&self->mCrystalBox);
                 self->field_4360 = 1;
-                func_80138078__FUl(0x6d);
+                playUISound__FUl(0x6d);
             }
         }
     }

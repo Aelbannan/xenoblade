@@ -157,7 +157,7 @@ void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 int func_8013BE50();
 void* func_801355F4();
-void func_80138078(u32 op);
+void playUISound(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // Sibling CSystemWindow subobject dtor / render callback, addressed by the

@@ -166,16 +166,16 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
     Class_8045F858 stackObj(&obj->mMemRegion);
 
     void* accessor = func_801355F4();
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void*)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void*)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
 
     accessor = func_801355F4();
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
 
     accessor = func_801355F4();
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
     // One-arg call: retail carries &mAnim2 into r4 from the preceding
-    // func_80136F08 argument setup instead of recomputing it here.
+    // bindLayoutAnimTransform argument setup instead of recomputing it here.
     u8* font = (u8*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 result2 = ((CMenuUpdateFontView*)font)->getHandle();
     func_8013676C((void*)getField10((u8*)obj->mLayout), (void*)result2);
@@ -253,7 +253,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
 
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(obj->mLayout, &drawInfo, 0, 1);
+    drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(obj->mLayout, &drawInfo, 0, 1);
     // No explicit dtor: the implicit member destruction emits the retail's
     // single __dt__ call (an explicit call would double it).
 }
@@ -805,7 +805,7 @@ extern "C" int func_80143F78(void* self) {
 // func_80144070
 extern "C" __declspec(noinline) void func_80144070(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    func_80138078__FUl(0x1F);
+    playUISound__FUl(0x1F);
     obj->mMode = 1;
 }
 
@@ -878,7 +878,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
         if (pad->mPressedButtonFlags & 0x200) {
             if (code80135FDC_getByte_64059() || func_80135898() || func_80122450() ||
                 func_80226B94()) {
-                func_80138078__FUl(5);
+                playUISound__FUl(5);
             } else {
                 CfRes_getE14();
                 f32 v = func_801443E4();
@@ -896,7 +896,7 @@ extern "C" __declspec(noinline) void func_801440A8(void* self) {
                 }
             }
         }
-        if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(obj->mActiveAnim, lbl_eu_806673C4))
+        if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(obj->mActiveAnim, lbl_eu_806673C4))
             obj->mMode = 2;
     }
 }

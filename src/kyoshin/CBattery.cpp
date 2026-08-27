@@ -42,7 +42,7 @@ void CBattery::updateLayout() {
 void CBattery::drawBattery(void* param) {
     if (mDrawn == 0 || mLayoutReady == 0)
         return;
-    func_80137038(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
+    drawLayout(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
 }
 
 __declspec(noinline) void CBattery::releaseLayout() {
@@ -54,7 +54,7 @@ __declspec(noinline) void CBattery::releaseLayout() {
         delete layout;
         mLayout = nullptr;
     }
-    func_80139124(mAccessor);
+    releaseArcResourceAccessor(mAccessor);
     mAccessor = nullptr;
     mMemRegion.func_8045F778();
 }
@@ -108,7 +108,7 @@ bool CBattery::OnFileEvent(CEventFile* pEventFile) {
         mtl::MemManager::setMemInitFlag(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, lbl_eu_8051399C + 0x26);
-        func_80136E84(&mLayout, mAccessor, lbl_eu_8051399C + 0x2A);
+        buildLayout(&mLayout, mAccessor, lbl_eu_8051399C + 0x2A);
         onLayoutReady();
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();

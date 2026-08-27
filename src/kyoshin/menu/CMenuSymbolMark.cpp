@@ -41,11 +41,11 @@ extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*);
 extern "C" char* func_8013639C(void*, const char*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void* func_801355BC();
-extern "C" void* func_801355A0();
+extern "C" void* getPackedFont();
 extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 // Naturally-mangled retail helpers (MWCC emits these exact symbols).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void __ct__8CProcessFv(void* self);
 extern "C" __declspec(noinline) void func_8011E778(
@@ -107,9 +107,9 @@ struct CMenuGimmickGlobal { u8 mPad[0x214]; u32 field_214; };
 extern "C" CMenuGimmickGlobal* getUnk80664658();
 extern u32 lbl_eu_80663E28;
 // C++-linkage helpers - retail emits the mangled forms
-// func_80137250__FPQ34nw4r3lyt8DrawInfo / func_80137038__FPQ34nw4r3lyt6Layout...
+// func_80137250__FPQ34nw4r3lyt8DrawInfo / drawLayout__FPQ34nw4r3lyt6Layout...
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
-void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
+void drawLayout(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
                    int a, int b);
 // Pre-mangled DrawInfo ctor/dtor (raw-storage construction); extern "C" so
 // MWCC keeps the retail symbol verbatim instead of appending the signature.
@@ -243,13 +243,13 @@ void CMenuSymbolMark::Init() {
                            (const char*)&lbl_eu_804FE720[0x53], 0);
     Class_8045F858 regionGuard(&mUnkClass);
     for (u32 i = 0; i < 16; i++) {
-        func_80136E84((nw4r::lyt::Layout**)&mEntries[i].layout, func_801355F4(),
+        buildLayout((nw4r::lyt::Layout**)&mEntries[i].layout, func_801355F4(),
                       (const char*)&lbl_eu_804FE720[0x63]);
         // Re-read the layout pointer at every use so nothing spans the virtual
         // calls (retail reloads the slot from the entry base each time).
         ((nw4r::lyt::Layout*)mEntries[i].layout)->Animate();
         func_8013676C(((nw4r::lyt::Layout*)mEntries[i].layout)->GetRootPane(),
-                      (u32)func_801355A0());
+                      (u32)getPackedFont());
     }
     mField_274 = 1;
     // The `if (this)` idiom splits the IScnRender subobject address
@@ -521,7 +521,7 @@ cont:
         }
         SymbolMarkEntry& entry = mEntries[(u8)i];
         if (entry.flag0 != 0) {
-            func_80137038((nw4r::lyt::Layout*)entry.layout,
+            drawLayout((nw4r::lyt::Layout*)entry.layout,
                           (nw4r::lyt::DrawInfo*)&drawInfo[0], entry.flag2, 1);
         }
     }
@@ -569,7 +569,7 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
             diff.z = delta.z;
             s32 frames = (s32)PSVECMag(&diff);
             const char* S = (const char*)&lbl_eu_804FE720[0];
-            func_80136910((nw4r::lyt::Layout*)entry->layout, (char*)S + 0x14,
+            setLayoutTextBoxNumber((nw4r::lyt::Layout*)entry->layout, (char*)S + 0x14,
                           frames);
             SymbolMarkRenderItem* item = self->mRenderItem;
             if (item == 0 || item->state70 == 0) {
@@ -582,7 +582,7 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
                               (char*)S + 0x1b, 0);
                 return;
             }
-            func_80136910((nw4r::lyt::Layout*)item->state70, (char*)S + 0x14,
+            setLayoutTextBoxNumber((nw4r::lyt::Layout*)item->state70, (char*)S + 0x14,
                           frames);
             return;
         }
@@ -2148,7 +2148,7 @@ restore:
         u8 drawInfo[0x54];
         __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
         func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-        func_80137038((nw4r::lyt::Layout*)mLayout,
+        drawLayout((nw4r::lyt::Layout*)mLayout,
                       (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
         __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
     }
@@ -2215,7 +2215,7 @@ void CArrow3D::Init() {
         }
         mAlignedData = aligned;
     }
-    func_80136E84((nw4r::lyt::Layout**)&mLayout, func_801355F4(), S);
+    buildLayout((nw4r::lyt::Layout**)&mLayout, func_801355F4(), S);
     nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)mLayout;
     func_8013676C(lay->GetRootPane(), (u32)func_801355BC());
     func_80136B4C(lay, (char*)S + 0x14, (char*)S + 0x1b, 0);

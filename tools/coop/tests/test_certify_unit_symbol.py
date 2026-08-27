@@ -338,6 +338,74 @@ class FullMatchCertWithoutSmtTests(unittest.TestCase):
             "reloc sites differ — must not count as byte-identical",
         )
 
+    def test_byte_identical_with_differing_reloc_callees_does_not_certify(self) -> None:
+        """Same placeholder bytes + same reloc type/offset, different callee names
+        must not count as byte-identical (ET_REL bl hole / audit P0).
+        """
+        from tools.coop.lib.equivalence_check import _byte_identical_with_relocs
+        from tools.ppc_equivalence.elf_symbols import FunctionBytes, FunctionRelocation
+        from pathlib import Path
+
+        code = bytes.fromhex("48000001 4e800020")  # bl + blr placeholders
+        left = FunctionBytes(
+            name=_SYMBOL,
+            path=Path("retail.o"),
+            code=code,
+            base=0x80001000,
+            value=0,
+            size=len(code),
+            section_index=1,
+            section_name=".text",
+            symbol_type=2,
+            relocations=(
+                FunctionRelocation(offset=0, relocation_type=10, symbol="foo", addend=0),
+            ),
+        )
+        right = FunctionBytes(
+            name=_SYMBOL,
+            path=Path("decomp.o"),
+            code=code,
+            base=0x80001000,
+            value=0,
+            size=len(code),
+            section_index=1,
+            section_name=".text",
+            symbol_type=2,
+            relocations=(
+                FunctionRelocation(offset=0, relocation_type=10, symbol="bar", addend=0),
+            ),
+        )
+        self.assertFalse(
+            _byte_identical_with_relocs(left, right),
+            "different callees must fail identity",
+        )
+        self.assertTrue(
+            _byte_identical_with_relocs(
+                left, right, canonical_symbols={"bar": "foo"},
+            ),
+            "canonical map must equate decomp bar -> retail foo",
+        )
+        null_right = FunctionBytes(
+            name=_SYMBOL,
+            path=Path("decomp.o"),
+            code=code,
+            base=0x80001000,
+            value=0,
+            size=len(code),
+            section_index=1,
+            section_name=".text",
+            symbol_type=2,
+            relocations=(
+                FunctionRelocation(
+                    offset=0, relocation_type=10, symbol="(null)", addend=0,
+                ),
+            ),
+        )
+        self.assertTrue(
+            _byte_identical_with_relocs(left, null_right),
+            "(null) retail reloc name is a wildcard when site/type/addend match",
+        )
+
     def test_pure_reg_swap_certifies_through_certify_unit_symbol(self) -> None:
         """r6 F2: certify_unit_symbol END-TO-END certifies a pure
         non-byte-identical register-renaming pair with

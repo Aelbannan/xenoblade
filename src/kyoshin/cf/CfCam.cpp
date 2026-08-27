@@ -2604,9 +2604,9 @@ void func_8006FD3C(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
 // d is a named local so MWCC keeps lbl_eu_80666330 in a saved FPR (f31)
 // across the scaleByGlobal calls, like retail.
 void func_8006FFA8(cf::CfCamFollow* self, float* outA, float* outB) {
+    f32 d = lbl_eu_80666330;
     *outB = lbl_eu_80663DD4;
     *outA = lbl_eu_80663DD8;
-    f32 d = lbl_eu_80666330;
     if (func_8006C6B4((int)self, 0x40) != 0) {
         *outA = scaleByGlobal(-d);
     } else if (func_8006C6B4((int)self, 0x20000) != 0) {

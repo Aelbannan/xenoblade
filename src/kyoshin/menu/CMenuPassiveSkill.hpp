@@ -314,7 +314,7 @@ extern "C" void __dt__800FED0C(CProcess* self, int flags);
 
 // cf pad enable/disable (retail pre-mangled name), sound-op helper.
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
-extern "C" void func_80138078__FUl(u32 op);
+extern "C" void playUISound__FUl(u32 op);
 
 // Scene-active gate + TaskGame queries used by cbRenderBefore.
 extern "C" int func_8013BE50();

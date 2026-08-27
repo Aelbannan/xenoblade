@@ -50,16 +50,16 @@ extern "C" void* lbl_eu_80538704[];
 extern "C" void* lbl_eu_805386EC[];
 
 /* Layout draw w/ visible flag. Retail symbol IS the mangled name; declare
-   with C++ linkage so MWCC mangles func_80137038 to the retail symbol. */
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+   with C++ linkage so MWCC mangles drawLayout to the retail symbol. */
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Bind a named pane to a resource (code_80135FDC unit, 3-arg form). */
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 
 /* Layout/anim builders (code_80135FDC unit). C++ linkage so MWCC mangles
    the unmangled identifiers to the retail names. */
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* CEIBPageCur - page-cursor subclass of CEIBCur, overrides vtable.
    Ctor is C-ABI like __ct__CEIBCur (retail symbol __ct__CEIBPageCur, no
@@ -316,12 +316,12 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
-// Font/line text providers: func_801355A0 is the retail MANGLED name (C++
+// Font/line text providers: getPackedFont is the retail MANGLED name (C++
 // linkage), the other two are plain C-ABI names.
-char* func_801355A0();
+char* getPackedFont();
 extern "C" char* func_801355BC();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" u16 func_8013606C(const void*, const void*, u16);
 extern "C" CEquipItemBoxFourShorts func_80139658(void*, void*, u32);
@@ -333,7 +333,7 @@ extern "C" void func_801FA220(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
 // Bdat table slot written by the field_2C file handler.
 extern void* lbl_eu_806649E0;
@@ -574,7 +574,7 @@ extern "C" void func_801D216C(void*, int);
 extern "C" u32 func_801D32DC(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_80139198(void*);
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" u8 func_801392B4(u32);
 extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
 extern "C" void func_80288AC0(CEquipItemBox* self);
@@ -622,8 +622,8 @@ extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" void getEntry__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
+extern "C" void releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void deleteRegion__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
@@ -684,8 +684,8 @@ struct CEquipItemBoxKind3View {
 extern "C" void func_801D4AE0(CItemBoxInfo* info, int arg2, void* arg3);
 extern "C" u8 func_801EF034(const u8*, unsigned int);
 extern "C" u32 func_801D4260(CItemBoxInfo* info, u8 arg2);
-// Layout text/visibility bind (retail mangled func_80136910__FPQ34nw4r3lyt6LayoutPcUc).
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+// Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // Same-TU grid helper (retail plain name; defined in this .cpp).
 extern "C" u8 func_80282D60(CEquipItemGrid* grid);
 // Same-TU dispatch helpers used by func_8028345C (defined in this .cpp).
@@ -786,7 +786,7 @@ extern "C" u32 func_8009CF8C(u32);
 extern "C" int func_801D37F4(void*);
 extern "C" u8 func_801D3808(void*);
 extern "C" u8 func_801D3810(void*);
-extern "C" void func_8013B428(u32);
+extern "C" void incrementEventCounter(u32);
 extern u32 lbl_eu_80668B3C;
 extern u16 lbl_eu_80668B40;
 // 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
@@ -848,7 +848,7 @@ extern "C" void* func_80043F18(void*);
 extern "C" void func_800F4A98(void*, u32, u32);
 extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void func_800BFDE0(void* obj, u32 arg);
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* obj);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* obj);
 extern "C" void __dt__80043E88(void*, int);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of

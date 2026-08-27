@@ -146,5 +146,5 @@ int isClassicController__Q22cf13CfGameManagerFv(int arg);
 // pluginUi.hpp's extern "C" func_80136190 clashes with code_80135FDC.hpp's).
 void* func_800451D8(u32 cls, void* param);
 
-// UI sound effect (mangles to func_80138078__FUl).
-void func_80138078(u32 op);
+// UI sound effect (mangles to playUISound__FUl).
+void playUISound(u32 op);

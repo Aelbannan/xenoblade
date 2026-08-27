@@ -198,7 +198,7 @@ extern u32 lbl_eu_80663E28;
 extern f32 lbl_eu_80667E14;
 extern f64 lbl_eu_80667E18;
 
-// Anim frame target used by Move's open/close states (func_80137444 /
+// Anim frame target used by Move's open/close states (advanceAnimTransform /
 // func_80137510 argument), plus the rank-window size/position constants
 // func_801B6184 scales the item window by.
 extern f32 lbl_eu_80667E10;
@@ -256,7 +256,7 @@ struct CfGameManagerTermFields {
 // C-ABI imports (retail emits these unmangled). The .sbss/.rodata labels each
 // interacts with are noted on the decl.
 extern "C" void func_8003AA34();                    // bdat refresh (paired with the lbl_eu_80504A3C fp lookup)
-extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, u8* data);
+extern "C" void setBdatEntry__5CBdatFUlPv(u32 value, u8* data);
 extern "C" void getEntry__5CBdatFUl(u32 value);
 extern "C" u8 func_8013B980();                      // flag reset alongside code80135FDC_getByte_64080
 extern "C" u8 code80135FDC_getByte_64080();
@@ -297,9 +297,9 @@ extern "C" void func_800B7320(u32 obj);             // action-source teardown (T
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                                nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
 // UI sound effect (retail pre-mangled name).
-extern "C" void func_80138078__FUl(u32 sound);
+extern "C" void playUISound__FUl(u32 sound);
 // Rank-item pane text setter (retail symbol is the C++-mangled name).
-void func_80136910(nw4r::lyt::Layout* layout, char* paneName, u8 value);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout* layout, char* paneName, u8 value);
 // Retail ctor symbol is the unmangled `__ct__CMenuGetItemMulti` (constructs
 // the singleton stored in lbl_eu_80664414); 8 reg args + a byte on the stack.
 extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 c,

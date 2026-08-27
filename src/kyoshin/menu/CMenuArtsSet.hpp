@@ -783,7 +783,7 @@ public:
     void* _vtable;                       // 0x00
     UnkClass_8045F564 mMemRegion;        // 0x04-0x13
     CFileHandle* field_0x14;             // 0x14 file handle (func_801390E0)
-    nw4r::lyt::ArcResourceAccessor* field_0x18; // 0x18 (func_80139124)
+    nw4r::lyt::ArcResourceAccessor* field_0x18; // 0x18 (releaseArcResourceAccessor)
     SArts1C* field_0x1C;                 // 0x1C
     nw4r::lyt::AnimTransform* field_0x20; // 0x20
     nw4r::lyt::AnimTransform* field_0x24; // 0x24
@@ -976,10 +976,10 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(void*, u32);
 extern "C" void* func_801355BC();
-extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
-extern "C" void func_80138078__FUl(u32);
+extern "C" void playUISound__FUl(u32);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC(void*);
 // Arts-slot re-arm ctor (CtrlObjectParam.cpp; plain-C retail symbol).
@@ -987,9 +987,9 @@ extern "C" void __ct__8009F8B8(void* self);
 // Actor-param refresh + player resolution tail of func_80230D74.
 extern "C" void func_800A13C4(void* self, u32 flag);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* objMove);
+extern "C" void* getCfObjectPc__FPQ22cf12CfObjectMove(void* objMove);
 
-// Player object returned by func_800BFC68 in func_80230D74's tail: the u16
+// Player object returned by getCfObjectPc in func_80230D74's tail: the u16
 // player id at +0x3F28 must equal the sub-object's 0x26 character id, then
 // the refresh virtual at vtable +0x32C runs. With the 2-entry RTTI header,
 // vtable +0x32C is declared index 201.
@@ -1070,7 +1070,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, int);
 // Mangled retail symbol declared directly so the third argument stays a
 // full register (retail passes the raw manager value without truncation).
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
+extern "C" void setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, int);
 
 extern "C" void func_80230160(SArtsSub8022FA58* self);
 extern "C" void func_802316F8(SArtsSub8022FA58* self);
@@ -1194,13 +1194,13 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" u8 func_801392B4(u32);
 extern "C" void func_80139198(u32);
 // File-handle / arc-accessor teardown; retail symbols are the mangled C++
-// names (func_801390E0__FPP11CFileHandle etc.) so declare C++-linkage.
+// names (closeFileHandle__FPP11CFileHandle etc.) so declare C++-linkage.
 void func_801390E0(CFileHandle** self);
-void func_80139124(nw4r::lyt::ArcResourceAccessor* self);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* self);
 // Layout/anim binding helpers (code_80135FDC.cpp). C++ linkage: MWCC mangles
-// func_80136E84/func_80136F08 to the retail names (func_80136E84__FPPQ...).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+// buildLayout/bindLayoutAnimTransform to the retail names (buildLayout__FPPQ...).
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
 extern "C" void func_802359CC(CArtsInfo* self);
 // CSysWinFull teardown (defined in CSysWin.cpp, C symbol).

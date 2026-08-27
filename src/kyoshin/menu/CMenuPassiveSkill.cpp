@@ -395,7 +395,7 @@ extern "C" void func_80263954(CMenuPassiveSkill* self) {
         func_8026DA4C(self->mPassiveSkill);
         self->field_2AC = 1;
 
-        func_80138078__FUl(0x6d);
+        playUISound__FUl(0x6d);
 
         u8 curState = func_8026DB74(self->mPassiveSkill);
         func_801C41E8(&self->mTitleAHelp, curState);
@@ -487,7 +487,7 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
             // Reset the idle timer (sound op 2 when it had run past the F4
             // threshold), re-arm the state byte and handle the turbo masks.
             if (self->field_2B0 > lbl_eu_806688F4) {
-                func_80138078__FUl(2);
+                playUISound__FUl(2);
             }
             self->field_2B0 = lbl_eu_806688F0;
             UI_CPassiveSkill_setByte180(self->mPassiveSkill, 1);
@@ -569,7 +569,7 @@ extern "C" void func_80263E4C(CMenuPassiveSkill* self) {
     if (UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34((UI_CPassiveSkill*)self->mPassiveSkill) == 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
         self->field_2AC = 4;
         self->field_54 = 1;

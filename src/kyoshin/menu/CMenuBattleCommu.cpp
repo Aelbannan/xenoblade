@@ -112,40 +112,40 @@ void CMenuBattleCommu::Init() {
     Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion));
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    func_80136E84(reinterpret_cast<nw4r::lyt::Layout**>(&mField74), accessor,
+    buildLayout(reinterpret_cast<nw4r::lyt::Layout**>(&mField74), accessor,
                   lbl_eu_805047FC + 0x10);
 
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField78,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField78,
                   accessor, lbl_eu_805047FC + 0x2c);
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField7C,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField7C,
                   accessor, lbl_eu_805047FC + 0x4b);
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField80,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField80,
                   accessor, lbl_eu_805047FC + 0x71);
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField84,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField84,
                   accessor, lbl_eu_805047FC + 0x99);
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField88,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField88,
                   accessor, lbl_eu_805047FC + 0xc0);
     accessor = func_801355F4();
-    func_80136F08(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField8C,
+    bindLayoutAnimTransform(reinterpret_cast<nw4r::lyt::Layout*>(mField74), &mField8C,
                   accessor, lbl_eu_805047FC + 0xe0);
 
     CBattleCommuFontObj* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
     u32 fontHandle = font->getFontHandle();
 
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x107, fontHandle);
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x112, fontHandle);
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x11d, fontHandle);
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x128, fontHandle);
-    func_801368C0(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+    setLayoutTextBoxFont(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                   lbl_eu_805047FC + 0x133, fontHandle);
 
     mField74->SetAnimationEnable(mField7C, false);
@@ -275,7 +275,7 @@ draw:
     {
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
+        drawLayout(reinterpret_cast<nw4r::lyt::Layout*>(mField74),
                       &drawInfo, 0, 1);
     }
 }
@@ -328,7 +328,7 @@ void func_801B0E88() {
     // The virtual calls above may alias the global, so re-read the singleton
     // for the final store (retail reloads it).
     lbl_eu_80664390->mField90 = 6;
-    func_80138078(0x3f);
+    playUISound(0x3f);
 }
 
 // Singleton active check: true when the instance exists and its +0x90 state
@@ -548,7 +548,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
     self->mField74->SetAnimationEnable(self->mField8C, false);
     self->mField74->SetAnimationEnable(self->mField78, true);
     self->mField78->SetFrame(lbl_eu_80667DE0);
-    func_80138078(0x60);
+    playUISound(0x60);
     self->mField90 = 1;
 }
 
@@ -558,7 +558,7 @@ void func_801B0FB0(CMenuBattleCommu* self) {
 // keeps the commu up.
 // ---------------------------------------------------------------------------
 void func_801B1618(CMenuBattleCommu* self) {
-    if (func_80137444(self->mField80, lbl_eu_80667DE4) == 0) {
+    if (advanceAnimTransform(self->mField80, lbl_eu_80667DE4) == 0) {
         return;
     }
 

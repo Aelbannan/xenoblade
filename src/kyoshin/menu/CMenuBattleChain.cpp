@@ -128,21 +128,21 @@ void CMenuBattleChain::Init() {
     mRegion.createRegion(mem2, 0x4000, base, 0);
     Class_8045F858 regionGuard(&mRegion);
 
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+    buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &mLayout, func_801355F4(), &base[0x11]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim0, func_801355F4(), &base[0x2a]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim1, func_801355F4(), &base[0x46]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim2, func_801355F4(), &base[0x64]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim3, func_801355F4(), &base[0x87]);
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         mLayout, &mAnim4, func_801355F4(), &base[0xaa]);
 
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    func_8013676C(rootPane, func_801355A0());
+    func_8013676C(rootPane, getPackedFont());
 
     mLayout->UnbindAllAnimation();
     mLayout->UnbindAllAnimation();
@@ -199,7 +199,7 @@ void CMenuBattleChain::Move() {
         func_802AA588(this);
         break;
     case 1:
-        if (func_80137444(mAnim0, lbl_eu_80668CB4) != 0) {
+        if (advanceAnimTransform(mAnim0, lbl_eu_80668CB4) != 0) {
             mField9C = 2;
             mAnim1->SetFrame(lbl_eu_80668CB0);
             mLayout->UnbindAllAnimation();
@@ -209,14 +209,14 @@ void CMenuBattleChain::Move() {
         }
         break;
     case 2:
-        if (func_80137444(mAnim1, lbl_eu_80668CB4) != 0) {
+        if (advanceAnimTransform(mAnim1, lbl_eu_80668CB4) != 0) {
             mField9C = 3;
         }
         break;
     case 3:
         break;
     case 4:
-        if (func_80137444(mAnim2, lbl_eu_80668CB4) != 0) {
+        if (advanceAnimTransform(mAnim2, lbl_eu_80668CB4) != 0) {
             mField9C = 5;
             mAnim3->SetFrame(lbl_eu_80668CB0);
             mLayout->UnbindAllAnimation();
@@ -228,12 +228,12 @@ void CMenuBattleChain::Move() {
         }
         break;
     case 5:
-        if (func_80137444(mAnim3, lbl_eu_80668CB4) != 0) {
+        if (advanceAnimTransform(mAnim3, lbl_eu_80668CB4) != 0) {
             mField9C = 3;
         }
         break;
     case 6:
-        if (func_80137444(mAnim4, lbl_eu_80668CB4) != 0) {
+        if (advanceAnimTransform(mAnim4, lbl_eu_80668CB4) != 0) {
             mField9C = 0;
         }
         break;
@@ -273,7 +273,7 @@ body:
     u8 drawInfoBuf[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
     func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]));
-    func_80137038(mLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), 0, 1);
+    drawLayout(mLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), 0, 1);
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfoBuf[0]), -1);
 }
 
@@ -498,8 +498,8 @@ extern "C" void func_802AAC78(CMenuBattleChain* self) {
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x115], true)->SetVisible(true);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x124], true)->SetVisible(false);
         self->mLayout->GetRootPane()->FindPaneByName(&base[0x133], true)->SetVisible(true);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0xf4], self->mField9E);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0x133], self->mField9E);
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0xf4], self->mField9E);
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, &base[0x133], self->mField9E);
     }
 }
 

@@ -560,4 +560,4 @@ extern u32 lbl_eu_80663E28;
 // carries a conflicting __ct__CSysWin declaration, so they are declared here).
 extern u32 func_800FEDF8();
 extern void func_800FF914();
-extern void func_80138078__FUl(u32);
+extern void playUISound__FUl(u32);

@@ -14,13 +14,13 @@
 #include <string.h>
 #include <nw4r/lyt.h>
 
-// Retail symbols: func_80137444 keeps the mangled C++ name, but func_80137510
+// Retail symbols: advanceAnimTransform keeps the mangled C++ name, but func_80137510
 // is the unmangled C name (per retail relocs).
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
-void func_80138078(u32);
+void playUISound(u32);
 
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Layout-anim helpers: retail emits out-of-line `bl` calls to these from the
 // anim-completion callbacks; MWCC -O4,p would otherwise inline them into the
@@ -76,7 +76,7 @@ void func_80218018(CMCCrystalBox* self) {
     if (self->field_14A0 == 0) {
         func_80213570(d, self->field_14EC[(s8)self->field_14F2]);
     }
-    func_80136910((nw4r::lyt::Layout*)self->subObjPtrs[5],
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->subObjPtrs[5],
                   lbl_eu_8050888C + 0x12e, d->limit != 0 ? d->limit : 1);
     func_802180B4(self);
     func_80218460(self);
@@ -538,7 +538,7 @@ void func_802142C4(CMCCrystalBox* self) {
     case 0: break;
     case 1: func_80216B7C(self); break;
     case 2: func_80216BC8(self); break;
-    case 3: func_80137444(self->subObjPtrs[8], lbl_eu_80668470); break;
+    case 3: advanceAnimTransform(self->subObjPtrs[8], lbl_eu_80668470); break;
     case 4: func_80216C3C(self); break;
     case 5: func_80216C88(self); break;
     case 6: func_80219464(self); self->unk64 = 7; break;
@@ -566,7 +566,7 @@ void func_802142C4(CMCCrystalBox* self) {
     func_8022B748((u8*)self + 0x290);
 }
 
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Retail 0x80216260: draw the crystal box sub-views.
 // stmw r30 frame + r30-before-r31 copy order are the -O4,s shapes (pragma).
@@ -574,7 +574,7 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80214408(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->unk60 == 0) return;
     if (self->unk64 == 0) return;
-    func_80137038((nw4r::lyt::Layout*)self->subObjPtrs[5], di, 0, 1);
+    drawLayout((nw4r::lyt::Layout*)self->subObjPtrs[5], di, 0, 1);
     func_8021A840((u8*)self + 0x1ec, di);
     func_801D31F8((u8*)self + 0xfc, di);
     u8 lim = self->data.limit;
@@ -597,9 +597,9 @@ void func_80214408(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
 // resources, then destroys every placed member sub-object.
 void func_802144F4(CMCCrystalBox* self) {
     getEntry__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[0]);
-    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[1]);
-    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[2]);
+    closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[0]);
+    closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[1]);
+    closeFileHandle__FPP11CFileHandle((void**)&self->subObjPtrs[2]);
 
     if (self->unk60 != 0) {
         nw4r::lyt::AnimTransform* layout = self->subObjPtrs[5];
@@ -612,8 +612,8 @@ void func_802144F4(CMCCrystalBox* self) {
             }
             self->subObjPtrs[5] = 0;
         }
-        func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[3]);
-        func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[4]);
+        releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[3]);
+        releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor(self->subObjPtrs[4]);
         deleteRegion__17UnkClass_8045F564Fv((u8*)self + 0x4);
         deleteRegion__17UnkClass_8045F564Fv((u8*)self + 0x14);
         func_801D3258((u8*)self + 0xfc);
@@ -709,7 +709,7 @@ void func_8021488C(CMCCrystalBox* self) {
     func_801F369C((u8*)self + 0x250);
     func_8021A93C((u8*)self + 0x1ec);
     func_8021922C(self);
-    func_80138078(0x6d);
+    playUISound(0x6d);
 }
 
 void func_8021492C(CMCCrystalBox* self) {
@@ -723,7 +723,7 @@ void func_8021492C(CMCCrystalBox* self) {
     func_801D216C((u8*)self + 0xb4, 0);
     func_8021A960((u8*)self + 0x1ec);
     func_802191A4(self);
-    func_80138078(0x6d);
+    playUISound(0x6d);
 }
 
 void func_802149C4(CMCCrystalBox* self) {
@@ -771,7 +771,7 @@ void func_80214A54(CMCCrystalBox* self) {
         func_80218B10(self);
         func_8021852C(self);
         func_801F3850((u8*)self + 0x250, (u16)(s8)self->unk1502);
-        func_80138078(1);
+        playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: scroll up one entry and move the cursor.
         // Distinct expression shapes per call keep MWCC from merging the
@@ -780,7 +780,7 @@ void func_80214A54(CMCCrystalBox* self) {
         char buf[12];
         func_801D3454(buf, (u8*)&self->pad_6C[0x90]);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
-        func_80138078(1);
+        playUISound(1);
     } else {
         if (self->unk2D1 != 0) return;
         // One guard condition wrapping the step body: retail's short-circuit
@@ -805,7 +805,7 @@ void func_80214A54(CMCCrystalBox* self) {
             func_8021852C(self);
             func_80218460(self);
             func_80218B10(self);
-            func_80138078(1);
+            playUISound(1);
         }
     }
 }
@@ -843,7 +843,7 @@ void func_80214C7C(CMCCrystalBox* self) {
         func_80218B10(self);
         func_8021852C(self);
         func_801F3850((u8*)self + 0x250, (u16)(s8)self->unk1502);
-        func_80138078(1);
+        playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: scroll down one entry and move the cursor.
         func_801D3698((u8*)self + 0xfc);
@@ -852,7 +852,7 @@ void func_80214C7C(CMCCrystalBox* self) {
         // self+offset address computations into callee-saved registers.
         func_801D3454(buf, (u8*)&self->pad_6C[0x90]);
         ((CCurVf10*)&self->pad_6C[0x30])->vf_08(buf);
-        func_80138078(1);
+        playUISound(1);
     } else {
         // All guards share one condition: retail's short-circuit chain jumps
         // into the step code (beq/blt) or over it to the exit (trailing `b`).
@@ -876,7 +876,7 @@ void func_80214C7C(CMCCrystalBox* self) {
             func_8021852C(self);
             func_80218460(self);
             func_80218B10(self);
-            func_80138078(1);
+            playUISound(1);
         }
     }
 }
@@ -909,7 +909,7 @@ void func_80214EBC(CMCCrystalBox* self) {
         func_80218B10(self);
         func_8021852C(self);
         func_801F3850(&self->pad_250[0], (u16)self->unk1502s);
-        func_80138078(1);
+        playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: page up one page and move the cursor.
         func_801D3724((u8*)self + 0xfc);
@@ -918,7 +918,7 @@ void func_80214EBC(CMCCrystalBox* self) {
         // self+0xFC address computations into callee-saved registers.
         func_801D3454(buf, (u8*)&self->pad_6C[0x90]);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
-        func_80138078(1);
+        playUISound(1);
     } else {
         // retail tests the raw byte here (no sign extension)
         if (self->unk2D1 != 0) {
@@ -934,7 +934,7 @@ void func_80214EBC(CMCCrystalBox* self) {
                     self->unk2D4 = g - 1;
                 }
                 func_802194EC(self);
-                func_80138078(1);
+                playUISound(1);
             } else if ((s8)self->unk2D3 == 1) {
                 if ((u8)g <= 2) return;
                 // int temps: retail masks after the store (clrlwi+extsb)
@@ -953,7 +953,7 @@ void func_80214EBC(CMCCrystalBox* self) {
                 func_802194EC(self);
                 self->unk64 = 11;
                 func_80219348(self);
-                func_80138078(1);
+                playUISound(1);
             }
         } else {
             // Item cursor path: skip the -2 sentinel; at -1 the countdown
@@ -979,7 +979,7 @@ void func_80214EBC(CMCCrystalBox* self) {
                     func_80218460(self);
                     func_80218B10(self);
                 }
-                func_80138078(1);
+                playUISound(1);
             }
         }
     }
@@ -1016,14 +1016,14 @@ void func_80215144(CMCCrystalBox* self) {
         func_80218B10(self);
         func_8021852C(self);
         func_801F3850((u8*)self + 0x250, (u16)(s8)self->unk1502);
-        func_80138078(1);
+        playUISound(1);
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: page down one page and move the cursor.
         func_801D377C((u8*)self + 0xfc);
         char buf[12];
         func_801D3454(buf, (u8*)self + 0xfc);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
-        func_80138078(1);
+        playUISound(1);
     } else {
         if (self->unk2D1 == 0) {
             // Item cursor path: at -1 reload the list, otherwise -0x2CC
@@ -1045,7 +1045,7 @@ void func_80215144(CMCCrystalBox* self) {
                     func_80218460(self);
                     func_80218B10(self);
                 }
-                func_80138078(1);
+                playUISound(1);
             } else {
                 func_80216614(self);
                 func_8021852C(self);
@@ -1063,7 +1063,7 @@ void func_80215144(CMCCrystalBox* self) {
                     self->unk2D4 = 0;
                 }
                 func_802194EC(self);
-                func_80138078(1);
+                playUISound(1);
             } else if ((s8)self->unk2D3 == 1) {
                 if ((u8)g <= 2) return;
                 u8 v = (u8)(self->unk2D5 + 1);
@@ -1083,7 +1083,7 @@ void func_80215144(CMCCrystalBox* self) {
                 func_802194EC(self);
                 self->unk64 = 11;
                 func_80219348(self);
-                func_80138078(1);
+                playUISound(1);
             }
         }
     }
@@ -1099,7 +1099,7 @@ void func_80215408(CMCCrystalBox* self) {
     func_802180B4(self);
     func_80218460(self);
     func_80218B10(self);
-    func_80138078(0xa);
+    playUISound(0xa);
 }
 
 void func_80215490(CMCCrystalBox* self) {
@@ -1112,7 +1112,7 @@ void func_80215490(CMCCrystalBox* self) {
     func_802180B4(self);
     func_80218460(self);
     func_80218B10(self);
-    func_80138078(0xa);
+    playUISound(0xa);
 }
 // Retail 0x80217370: open/close the sort sub-menu. When a sub-menu is active
 // (unk2CE) it is closed; otherwise the sort menu is opened: two layout panes
@@ -1132,7 +1132,7 @@ void func_80215518(CMCCrystalBox* self) {
         func_801D216C((u8*)self + 0x9c, 0);
         func_801D3408(&self->sortMenu);
         self->unk2CE = 0;
-        func_80138078(6);
+        playUISound(6);
     } else {
         if (func_801D3328(&self->sortMenu) == 0) return;
         char* base = lbl_eu_8050888C;
@@ -1152,7 +1152,7 @@ void func_80215518(CMCCrystalBox* self) {
         func_801D3330(&self->sortMenu);
         self->unk2CE = 1;
         self->unk2CF = 0;
-        func_80138078(3);
+        playUISound(3);
     }
 }
 #pragma optimize_for_size off
@@ -1279,7 +1279,7 @@ void func_802156C0(CMCCrystalBox* self, int a) {
                           ->vf_3C(lbl_eu_8050888C + 0x7c, 1),
                       selTable[0x20] < 2);
     }
-    if (a != 0) func_80138078(6);
+    if (a != 0) playUISound(6);
 }
 #pragma optimize_for_size off
 
@@ -1579,7 +1579,7 @@ void func_80216614(CMCCrystalBox* self) {
 
     func_80219994(self, 0);
     func_80218018(self);
-    func_80138078(0x70);
+    playUISound(0x70);
 }
 
 void func_80216698(CMCCrystalBox* self) {
@@ -1595,7 +1595,7 @@ void func_80216698(CMCCrystalBox* self) {
 
     func_80219994(self, 1);
     func_80218018(self);
-    func_80138078(0x70);
+    playUISound(0x70);
 }
 
 // Retail 0x8021B7EC: refresh the two countdown labels. Picks the pair of
@@ -1724,7 +1724,7 @@ void func_80216850(CMCCrystalBox* self) {
         // No window: only open it when a crystal exists at the current slot.
         if (func_8021384C(&self->data,
                           (u8)(self->unk2CC + (u8)self->unk2CD * 10)) == 0) {
-            func_80138078(5);
+            playUISound(5);
             return;
         }
     }
@@ -1751,7 +1751,7 @@ void func_80216850(CMCCrystalBox* self) {
             func_801D216C((u8*)self + 0xe4, 0);
             return;
         }
-        func_80138078(5);
+        playUISound(5);
         return;
     }
 
@@ -1762,7 +1762,7 @@ void func_80216850(CMCCrystalBox* self) {
     self->unk1502 = 0;
     func_8021852C(self);
     func_80218B10(self);
-    func_80138078(2);
+    playUISound(2);
 }
 #pragma optimize_for_size off
 
@@ -1793,20 +1793,20 @@ void func_80216AEC(CMCCrystalBox* self) {
     func_8021852C(self);
     func_80218460(self);
     func_80218B10(self);
-    func_80138078(0x2);
+    playUISound(0x2);
 }
 
 // Retail 0x802189D4: when sub-object 6's animation finishes, enter state 2
 // and play back animation 7.
 __declspec(noinline) void func_80216B7C(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[6], lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(self->subObjPtrs[6], lbl_eu_80668470) != 0) {
         self->unk64 = 2;
         func_80219094(self);
     }
 }
 
 __declspec(noinline) void func_80216BC8(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[7], lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(self->subObjPtrs[7], lbl_eu_80668470) == 0) return;
     self->unk64 = 3;
     func_8021911C(self);
     self->unk69 = 1;
@@ -1832,7 +1832,7 @@ __declspec(noinline) void func_80216C88(CMCCrystalBox* self) {
 }
 
 __declspec(noinline) void func_80216CE0(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[14], lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(self->subObjPtrs[14], lbl_eu_80668470) == 0) return;
     self->unk69 = 1;
     self->unk64 = 0;
     func_801D216C((u8*)self + 0x6c, 0);
@@ -1841,14 +1841,14 @@ __declspec(noinline) void func_80216CE0(CMCCrystalBox* self) {
 // Retail 0x80218B90: when sub-object 9's animation finishes, enter state 9
 // and play back animation 10.
 __declspec(noinline) void func_80216D38(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[9], lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(self->subObjPtrs[9], lbl_eu_80668470) != 0) {
         self->unk64 = 9;
         func_8021922C(self);
     }
 }
 
 __declspec(noinline) void func_80216D84(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[10], lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(self->subObjPtrs[10], lbl_eu_80668470) == 0) return;
     self->unk69 = 1;
     func_8021852C(self);
     self->unk64 = 3;
@@ -1856,20 +1856,20 @@ __declspec(noinline) void func_80216D84(CMCCrystalBox* self) {
 
 // Retail 0x80218C30: when sub-object 11's animation finishes, enter state 3.
 __declspec(noinline) void func_80216DD8(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[11], lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(self->subObjPtrs[11], lbl_eu_80668470) != 0) {
         self->unk64 = 3;
     }
 }
 
 __declspec(noinline) void func_80216E1C(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[12], lbl_eu_80668470) == 0) return;
+    if (advanceAnimTransform(self->subObjPtrs[12], lbl_eu_80668470) == 0) return;
     self->unk64 = 3;
     self->subObjPtrs[12]->SetFrame(lbl_eu_8066845C);
 }
 
 // Retail 0x80218CC4: when sub-object 13's animation finishes, enter state 3.
 __declspec(noinline) void func_80216E6C(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[13], lbl_eu_80668470) != 0) {
+    if (advanceAnimTransform(self->subObjPtrs[13], lbl_eu_80668470) != 0) {
         self->unk64 = 3;
     }
 }
@@ -2330,7 +2330,7 @@ void func_802180B4(CMCCrystalBox* self) {
                               buf, 1),
                           n < active);
         }
-        func_80136910((nw4r::lyt::Layout*)self->subObjPtrs[5],
+        setLayoutTextBoxNumber((nw4r::lyt::Layout*)self->subObjPtrs[5],
                       lbl_eu_8050888C + 0x14d, (u8)(d->current + 1));
         nw4r::lyt::Pane* pane =
             ((CrystalBoxSubObj5*)self->subObjPtrs[5])->layout->vf_3C(
@@ -2874,7 +2874,7 @@ __declspec(noinline) void func_802194EC(CMCCrystalBox* self) {
         u8 d5 = (u8)func_801392B4(self->unk2D5);
         u16 id = func_8013A7D0(d4, d5);
         // u16-param view: retail emits clrlwi 16 on the id argument here.
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->subObjPtrs[5],
+        setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->subObjPtrs[5],
                                                 lbl_eu_8050888C + 0x257, id);
         // Rank message thresholds (1000/2000/3000/5000/10001).
         const char* s = 0;
@@ -3074,43 +3074,43 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         subObjPtrs[3] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
         ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3])
             ->Attach(data, lbl_eu_8050888C + 0x37f);
-        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
             (nw4r::lyt::Layout**)&subObjPtrs[5],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x383);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[6],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x39a);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[7],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x3b4);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[8],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x3d3);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[9],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x3f3);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[10],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x40e);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[11],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x42d);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[12],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x44c);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[13],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x46c);
-        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
             (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[14],
             (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
             lbl_eu_8050888C + 0x48b);
@@ -3122,28 +3122,28 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
         func_8013676C(rootPane, fontHandle);
         // Row/column count labels from the two shared counters.
-        u32 cnt = func_801355A0();
+        u32 cnt = getPackedFont();
         if (cnt != 0) {
-            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                 (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x14d, cnt);
-            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                 (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x12e, cnt);
-            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                 (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x365, cnt);
         }
         u32 cnt2 = func_801355BC();
         if (cnt2 != 0) {
             for (u8 i = 1; i <= 30; i++) {
                 sprintf(buf, lbl_eu_8050888C + 0x102, i);
-                func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                     (nw4r::lyt::Layout*)subObjPtrs[5], buf, cnt2);
             }
             for (u8 i = 1; i <= 8; i++) {
                 sprintf(buf, lbl_eu_8050888C + 0x11e, i);
-                func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                     (nw4r::lyt::Layout*)subObjPtrs[5], buf, cnt2);
             }
-            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+            setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(
                 (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x257, cnt2);
         }
 
@@ -3323,7 +3323,7 @@ bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
         void* data3 = fh3->getData();
         func_8003AA34();
         if (getFP__FPCc(lbl_eu_8050888C + 0x541) == 0) {
-            func_8003AA78__5CBdatFUlPv(2, data3);
+            setBdatEntry__5CBdatFUlPv(2, data3);
         }
         func_8003AA34();
         lbl_eu_806646D0 = (unsigned long)getFP__FPCc(lbl_eu_8050888C + 0x550);

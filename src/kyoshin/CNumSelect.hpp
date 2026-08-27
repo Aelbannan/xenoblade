@@ -76,10 +76,10 @@ public:
 };
 
 // code_80135FDC layout-build helpers (retail mangled C++ names).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**,
                    nw4r::lyt::ArcResourceAccessor*, char*);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
 
 // Retail-unmangled C-ABI imports used by OnFileEvent.
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
@@ -96,18 +96,18 @@ extern "C" int isClassicController__Q22cf13CfGameManagerFv(int arg);
 extern const double lbl_eu_80668090;
 
 // Draw helper (retail symbol keeps its C++ mangling).
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Resource release / anim helpers (C++-mangled imports; see CItemBoxInfo.hpp).
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain func_80137510), so keep C linkage.
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Retail symbol is unmangled (plain func_80124270), so keep C linkage.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-void func_80138078(u32);
+void playUISound(u32);
 extern const f32 lbl_eu_80668088;
 extern const f32 lbl_eu_8066808C;
 

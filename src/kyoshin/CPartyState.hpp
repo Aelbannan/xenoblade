@@ -140,12 +140,12 @@ public:
 
 /* ---- imports (declared here, never locally in the .cpp) ---- */
 
-// UI sound effect; retail symbol is the C++ mangled func_80138078__FUl.
-void func_80138078(u32);
+// UI sound effect; retail symbol is the C++ mangled playUISound__FUl.
+void playUISound(u32);
 
 // nw4r anim-transform frame checker; retail symbol is the C++ mangled
-// func_80137444__FPQ34nw4r3lyt13AnimTransformf.
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+// advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
+u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
 // nw4r anim-transform frame checker; retail symbol is unmangled (C linkage).
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -154,7 +154,7 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // canonical declarations in code_80135FDC.hpp, which conflicts with
 // CEquipItemBox.hpp's func_80136190 in this TU).
 void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage helpers from other units (retail symbols are unmangled).
 // func_801D216C / func_80139198 are declared in CEquipItemBox.hpp.
@@ -191,10 +191,10 @@ extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void func_80124270(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void setLayoutTextBoxFont(nw4r::lyt::Layout*, char*, u32);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 
 // Slot-pane byte counter getter (unmangled retail symbol).
 extern "C" u8 code80135FDC_getByte_6407E();

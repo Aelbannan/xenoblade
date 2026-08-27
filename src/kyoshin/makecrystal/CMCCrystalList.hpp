@@ -17,7 +17,7 @@ class ArcResourceAccessor;
 // vtable at lbl_eu_80535F80
 extern "C" void* lbl_eu_80535F80[];
 
-// Anim-completion sentinel float passed to func_80137444/func_80137510
+// Anim-completion sentinel float passed to advanceAnimTransform/func_80137510
 // (retail .sdata2 constants at 0x80668544 / 0x80668548).
 extern const float lbl_eu_80668544;
 extern const float lbl_eu_80668548;

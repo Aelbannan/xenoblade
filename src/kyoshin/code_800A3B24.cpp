@@ -1093,7 +1093,7 @@ int func_800A7094(ml::CVec3* a, ml::CVec3* b, ml::CVec3* c, float f, float g) {
     ml::CVec3 d2c;
     ml::CVec3 d1;      // b - tmp68
     ml::CVec3 d1c;
-    int result = func_804BE398(b, c, 0, 0, -f, g);
+    int result = func_804BE398(b, (int)(uintptr_t)c, 0, 0, -f, g);
     if (result != 0) {
         func_804BE4B4(&tmp68, 0);
         func_804BE4E0(&tmp74, 0);
@@ -1142,12 +1142,12 @@ int func_800A72E0(const ml::CVec3* self, ml::CVec3* arg2, ml::CVec3* arg3, float
     ml::CVec3 d2c;
     ml::CVec3 d1;
     ml::CVec3 d1c;
-    int result1 = func_804BE398(arg2, arg3, 0, 0, f1, f2);
+    int result1 = func_804BE398(arg2, (int)(uintptr_t)arg3, 0, 0, f1, f2);
     if (result1 != 0) {
         func_804BE4B4(&tmp74, 0);
         func_804BE4E0(&tmp80, 0);
     }
-    int result2 = func_804BE398(arg2, arg3, 0, 0, -f1, f2);
+    int result2 = func_804BE398(arg2, (int)(uintptr_t)arg3, 0, 0, -f1, f2);
     if (result2 != 0) {
         func_804BE4B4(&tmp68, 0);
         func_804BE4E0(&tmp80, 0);

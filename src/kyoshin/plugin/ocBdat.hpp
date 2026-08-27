@@ -65,7 +65,7 @@ class CBdat {
 public:
     static void* func_8003AA34();
     static void* clearEntries();
-    static void* func_8003AA78(u32, void*);
+    static void setBdatEntry(u32, void*);
     static void getEntry(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static u32 func_8003B1EC(void* pData);

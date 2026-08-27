@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQuestWindow.hpp"
-#include "kyoshin/code_80135FDC.hpp"              // func_80137444 (anim frame wait)
+#include "kyoshin/code_80135FDC.hpp"              // advanceAnimTransform (anim frame wait)
 #include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::setInputDisableTime
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
 // Implicit-r3 form: retail call sites that do NOT set r3 (the def in
@@ -110,10 +110,10 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
         self->field_0x90 = (CQuestWinRes*)tag;
         self->field_0x94 = createArcResourceAccessor__10CLibLayoutFv();
         self->field_0x94->Attach(fileData, &lbl_eu_804FEC84[0xd]);
-        func_80136E84(&self->mpLayout, self->field_0x94, &lbl_eu_804FEC84[0x11]);
-        func_80136F08(self->mpLayout, &self->mAnimA, self->field_0x94,
+        buildLayout(&self->mpLayout, self->field_0x94, &lbl_eu_804FEC84[0x11]);
+        bindLayoutAnimTransform(self->mpLayout, &self->mAnimA, self->field_0x94,
                       &lbl_eu_804FEC84[0x29]);
-        func_80136F08(self->mpLayout, &self->mAnimB, self->field_0x94,
+        bindLayoutAnimTransform(self->mpLayout, &self->mAnimB, self->field_0x94,
                       &lbl_eu_804FEC84[0x44]);
 
         // Bind the font handle into the layout's root pane.
@@ -124,9 +124,9 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
 
         char* fontStr = (char*)func_801355BC();
         if (fontStr != 0) {
-            func_801368C0(self->mpLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
-            func_801368C0(self->mpLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);
-            func_801368C0(self->mpLayout, &lbl_eu_804FEC84[0x77], (u32)fontStr);
+            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
+            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);
+            setLayoutTextBoxFont(self->mpLayout, &lbl_eu_804FEC84[0x77], (u32)fontStr);
         }
         char* s =
             func_80136190(&lbl_eu_804FEC84[0x7f], &lbl_eu_804FEC84[0x88], 3);
@@ -177,7 +177,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
     }
     if (self->field_0x8C == evt) {
         u8* fileData = (u8*)self->field_0x8C->getData();
-        func_8003AA78__5CBdatFUlPv(2, fileData);
+        setBdatEntry__5CBdatFUlPv(2, fileData);
         func_8003AA34();
         self->field_0xD0 =
             (u32)getFP__FPCc(lbl_eu_8052CFF4[func_80138138(self->field_B8)]);
@@ -204,7 +204,7 @@ void CQuestWindow::cbRenderBefore() {
     u8 drawInfo[0x54];
     __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
-    func_80137038(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    drawLayout(mpLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
     if (field_0xC0 >= 0) {
         func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     }
@@ -312,7 +312,7 @@ CQuestWindow* func_80122B2C(CProcess* parent, u32 arg1, u32 arg2, u32 arg3) {
 // frame, then run the layout's anim switch (func_801242FC), show the cursor
 // at +0xA0 and mark the window running (state byte +0xBC = 2).
 void func_80122BB0(QuestWinObj* self) {
-    if (func_80137444(self->mAnimA, lbl_eu_80667140) != 0) {
+    if (advanceAnimTransform(self->mAnimA, lbl_eu_80667140) != 0) {
         func_801242FC(self);
         func_801D216C(&self->mCursor, 1);
         self->field_0xBC = 2;
@@ -336,7 +336,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
                                      : ((pad->field_04 >> 4) & 1);
         if (confirm != 0) {
             func_8012429C(self);
-            func_80138078__FUl(3);
+            playUISound__FUl(3);
             self->field_0xBC = 3;
             func_801D216C(&self->mCursor, 0);
         }
@@ -361,7 +361,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
             if (self->field_0xC0 >= 0) {
                 self->field_0xC0 = 0;
                 self->field_0x60 = 1;
-                func_80138078__FUl(3);
+                playUISound__FUl(3);
                 self->field_0xBC = 3;
                 func_801D216C(&self->mCursor, 0);
                 func_8012429C(self);
@@ -370,12 +370,12 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
             self->field_0xC0 = self->field_0xC0 - 1;
             if (self->field_0xC0 < 0) self->field_0xC0 = 0;
             func_8012435C(self);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         } else if (dRight != 0) {
             self->field_0xC0 = self->field_0xC0 + 1;
             if (self->field_0xC0 > 0) self->field_0xC0 = 0;
             func_8012435C(self);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
     } else {
         CPadView* pad = (CPadView*)getCfPadData__Q22cf13CfGameManagerFv();
@@ -400,7 +400,7 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
                 if (self->field_0xC0 != 0) {
                     code80135FDC_setByte_6405B();
                 }
-                func_80138078__FUl(3);
+                playUISound__FUl(3);
                 self->field_0xBC = 3;
                 func_801D216C(&self->mCursor, 0);
                 func_8012429C(self);
@@ -409,15 +409,15 @@ __attribute__((noinline)) void func_80122C08(QuestWinObj* self) {
             self->field_0xC0 = self->field_0xC0 - 1;
             if (self->field_0xC0 < 1) self->field_0xC0 = 1;
             func_8012435C(self);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         } else if (dRight != 0) {
             self->field_0xC0 = self->field_0xC0 + 1;
             if (self->field_0xC0 > 1) self->field_0xC0 = 0;
             func_8012435C(self);
-            func_80138078__FUl(1);
+            playUISound__FUl(1);
         }
     }
-    func_80137444(self->mAnimB, lbl_eu_80667140);
+    advanceAnimTransform(self->mAnimB, lbl_eu_80667140);
 }
 
 // ---------------------------------------------------------------------------
@@ -469,11 +469,11 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     u8 r = func_801361E8(lbl_eu_80573D18[func_80138138(self->field_B8)],
                          &lbl_eu_804FEC84[0xa2], self->field_B8);
     if (r == 0 || r == 3) {
-        func_8013B428__FUl(0xb4);
-        func_8013B428__FUl(0xb5);
-        func_8013B428__FUl(0xb6);
-        func_8013B428__FUl(0xb7);
-        func_8013B428__FUl(0xb8);
+        incrementEventCounter__FUl(0xb4);
+        incrementEventCounter__FUl(0xb5);
+        incrementEventCounter__FUl(0xb6);
+        incrementEventCounter__FUl(0xb7);
+        incrementEventCounter__FUl(0xb8);
     }
     if (self->field_B8 - 0x100 <= 4) {
         func_8009D018(self->field_B8 + 0x704, 2);
@@ -596,11 +596,11 @@ void func_801231C4(CQuestWindow* self) {
         if (vcd == 1) {
             s = func_80136190(&base[0x14a], &base[0x88], 0x33);
             func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
-            func_80136910(self->mpLayout, &base[0x61], 0);
-            func_80136910(self->mpLayout, &base[0x77], 0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
         } else {
-            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
-            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
             ml::FixStr<32> buf2(false);
             buf2.mString[0] = 0;
             buf2.mLength = 0;
@@ -653,16 +653,16 @@ void func_801231C4(CQuestWindow* self) {
         if (vcd == 3) {
             s = func_80136190(&base[0x14a], &base[0x88], 0x32);
             func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
-            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
-            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
         } else if (vcd == 1) {
             s = func_80136190(&base[0x14a], &base[0x88], 0x33);
             func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
-            func_80136910(self->mpLayout, &base[0x61], 0);
-            func_80136910(self->mpLayout, &base[0x77], 0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], 0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], 0);
         } else {
-            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
-            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x61], self->field_0xE0);
+            setLayoutTextBoxNumber(self->mpLayout, &base[0x77], self->field_0xDC);
             ml::FixStr<32> buf2(false);
             buf2.mString[0] = 0;
             buf2.mLength = 0;
@@ -784,7 +784,7 @@ void func_801231C4(CQuestWindow* self) {
                     func_8013DB6C(4, pid, v27b & 0xFF, v30 & 0xFFFF);
                     if ((v30 & 0xFFFF) != 0) {
                         self->field_0xCC = (u32)c26;
-                        func_80138078__FUl(0x34);
+                        playUISound__FUl(0x34);
                     }
                 }
             }
@@ -802,11 +802,11 @@ void func_801231C4(CQuestWindow* self) {
             func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
         }
         func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
-        func_80138078__FUl(0x19);
+        playUISound__FUl(0x19);
     } else {
         func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
         func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
-        func_80138078__FUl(0x1c);
+        playUISound__FUl(0x1c);
         self->field_0xC0 = 0;
     }
     IScnRender* render = reinterpret_cast<IScnRender*>(self);
@@ -977,7 +977,7 @@ void CQuestWindow::Term() {
         delete field_0x90;
         field_0x90 = 0;
     }
-    func_80139124(field_0x94);
+    releaseArcResourceAccessor(field_0x94);
     field_0x94 = 0;
     lbl_eu_80663FD4 = 0;
     mMemRegion.func_8045F778();

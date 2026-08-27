@@ -579,7 +579,7 @@ extern "C" __declspec(noinline) void func_801FA59C(CPartyStateWin* self) {
         func_801FC11C(reinterpret_cast<CModelDisp*>(&self->_pad50));
         self->field_6BE4 = 0x1;
         func_801FBC7C(self);
-        func_80138078(0x6D);
+        playUISound(0x6D);
     }
 }
 
@@ -731,7 +731,7 @@ extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {
 // vs Wii controller layout, selected by isClassicController): each chain tests a
 // list of flag combinations and either opens a system window (string ids
 // 0x84/0x85/0x8A via func_8022B9B4/8022BFC8/8022B8B8 + state 0xD), arms a
-// display state (0x8/0xA/0xB/0xC/0x10), or plays a sound (func_80138078).
+// display state (0x8/0xA/0xB/0xC/0x10), or plays a sound (playUISound).
 // The shared tail refreshes the title help from the sys-win state or the
 // equip-change result.
 extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
@@ -762,7 +762,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             }
             func_801FF98C(&self->mModelDispEquip);
             self->field_6BE4 = 0xB;
-            func_80138078(0xA);
+            playUISound(0xA);
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x04000000) != 0 &&
@@ -781,7 +781,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             }
             func_801FF98C(&self->mModelDispEquip);
             self->field_6BE4 = 0xA;
-            func_80138078(0xA);
+            playUISound(0xA);
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
@@ -792,7 +792,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 goto tail;
             }
             if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
-                func_80138078(0x5);
+                playUISound(0x5);
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                               0);
@@ -870,7 +870,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                     goto tail;
                 }
                 if (v != 3) {
-                    func_80138078(0x5);
+                    playUISound(0x5);
                     u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
                     if (w == 0x296 || w == 0x2A0) {
                         func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
@@ -899,7 +899,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 self->field_6BE4 = 0x10;
                 func_801FF98C(&self->mModelDispEquip);
-                func_80138078(0x2);
+                playUISound(0x2);
                 goto tail;
             }
             if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
@@ -916,7 +916,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
             func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
             func_80202424(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
             if (self->field_6BE8 > lbl_eu_806681DC) {
-                func_80138078(0x2);
+                playUISound(0x2);
             }
             self->field_6BE8 = lbl_eu_806681D8;
             func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
@@ -933,7 +933,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 }
                 func_801FF98C(&self->mModelDispEquip);
                 self->field_6BE4 = 0xB;
-                func_80138078(0xA);
+                playUISound(0xA);
                 goto tail;
             }
             if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
@@ -949,7 +949,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 }
                 func_801FF98C(&self->mModelDispEquip);
                 self->field_6BE4 = 0xA;
-                func_80138078(0xA);
+                playUISound(0xA);
                 goto tail;
             }
             goto tail;
@@ -962,7 +962,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 goto tail;
             }
             if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
-                func_80138078(0x5);
+                playUISound(0x5);
                 func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
                               func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
                               0);
@@ -1040,7 +1040,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                     goto tail;
                 }
                 if (v != 3) {
-                    func_80138078(0x5);
+                    playUISound(0x5);
                     u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
                     if (w == 0x296 || w == 0x2A0) {
                         func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
@@ -1069,7 +1069,7 @@ extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
                 func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
                 self->field_6BE4 = 0x10;
                 func_801FF98C(&self->mModelDispEquip);
-                func_80138078(0x2);
+                playUISound(0x2);
                 goto tail;
             }
             if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
@@ -1178,7 +1178,7 @@ extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
                     func_800F6EC0(func_80043F18(&holder), 0));
                 if (slot->field_0x4 != 0) {
                     func_800BFDE0(
-                        func_800BFC68__FPQ22cf12CfObjectMove(slot->field_0x4),
+                        getCfObjectPc__FPQ22cf12CfObjectMove(slot->field_0x4),
                         0);
                 }
             }
@@ -1313,15 +1313,15 @@ helpBlock:
     func_801C473C(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
                   (u32)(func_801C411C(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) == 0));
     if (func_801C411C(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) != 0) {
-        func_80138078(0xd);
+        playUISound(0xd);
     } else {
-        func_80138078(0xe);
+        playUISound(0xe);
     }
     return;
 armBlock:
     self->field_6BE4 = 0x13;
     func_801FF98C(&self->mModelDispEquip);
-    func_80138078(0x2);
+    playUISound(0x2);
 }
 
 // us-801fd89c | func_801FBBE0

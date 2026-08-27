@@ -95,7 +95,7 @@ body:
             if (func_800FEDF8() != 0) {
                 func_800FF914();
             }
-            func_80138078(6);
+            playUISound(6);
             field_0x21C = 8;
             field_0x54 = 1;
         }
@@ -270,7 +270,7 @@ void func_802573B8(CMenuKizunagram* self) {
         func_802AE758(&self->mLoad);
         func_80244538(&self->mFade);
         self->field_0x21C = 3;
-        func_80138078(0x6d);
+        playUISound(0x6d);
     }
 }
 
@@ -348,9 +348,9 @@ merged:
         self->field_0x21D = (self->field_0x21D ^ 1) != 0;
         func_8025CC70(&self->mSub98);
         if (self->field_0x21D != 0) {
-            func_80138078(0xd);
+            playUISound(0xd);
         } else {
-            func_80138078(0xe);
+            playUISound(0xe);
         }
     } else if (cursorA != 0) {
         func_8025CAE4(&self->mSub98);

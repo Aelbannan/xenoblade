@@ -233,7 +233,7 @@ extern "C" void __declspec(noinline) func_802434A0(CMapSel* self) {
 
 /* func_80243560 - Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
-void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 /* Retail uses an stmw/lmw r30 frame; the scoped size-optimization pragma is
    what selects that shape under -O4,p (also fixes the param copy order). */
@@ -241,7 +241,7 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 #pragma optimize_for_size on
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
-        func_80137038(self->mLayout, drawInfo, 0, 1);
+        drawLayout(self->mLayout, drawInfo, 0, 1);
         func_801F35B0(self->mScrollBar, drawInfo);
         func_801D20B0(self->mCursor, drawInfo);
     }
@@ -268,7 +268,7 @@ extern "C" void __declspec(noinline) func_802435CC(CMapSel* self) {
         mtl::MemManager::deallocate(self->mAllocatedMem);
         self->mAllocatedMem = nullptr;
     }
-    func_80139124(self->mArcAccessor);
+    releaseArcResourceAccessor(self->mArcAccessor);
     reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion[0])->func_8045F778();
     func_801F35DC(self->mScrollBar);
     reinterpret_cast<CMapSelCurObj*>(&self->mCursor[0])->vfUpdate();
@@ -315,7 +315,7 @@ extern "C" void func_8024371C(CMapSel* self) {
         *(u8*)((u8*)self + 0x31) = 4;
         *(u8*)((u8*)self + 0x33) = 0;
         func_801D216C((u8*)self + 0x74, 0);
-        func_80138078__FUl(6);
+        playUISound__FUl(6);
     }
 }
 
@@ -351,7 +351,7 @@ extern "C" void __declspec(noinline) func_80243768(CMapSel* self) {
     s8 cur = self->mSelX;
     func_801F3850(self->mScrollBar, (u16)cur);
     func_80243FC4(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 /* func_80243838 - Move the selection right one column. Wraps from the bottom
@@ -383,7 +383,7 @@ extern "C" void __declspec(noinline) func_80243838(CMapSel* self) {
     func_80244020(self);
     func_801F3850(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 /* func_8024391C - Move the selection left/up by one column of 10 (mirror of
@@ -407,7 +407,7 @@ extern "C" void __declspec(noinline) func_8024391C(CMapSel* self) {
     func_80244020(self);
     func_801F3850(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 /* func_802439CC - Move the selection down one row (grid has 10 columns;
@@ -436,7 +436,7 @@ extern "C" void __declspec(noinline) func_802439CC(CMapSel* self) {
     func_80244020(self);
     func_801F3850(self->mScrollBar, self->mSelX);
     func_80243FC4(self);
-    func_80138078__FUl(1);
+    playUISound__FUl(1);
 }
 
 u8 func_80243A9C(CMapSelFull* self){
@@ -449,7 +449,7 @@ u8 func_80243A9C(CMapSelFull* self){
    enable both animations, mark the widget visible (state 2), and configure
    the scrollbar for the current selection. mGridData[0x20] is the map count. */
 extern "C" void __declspec(noinline) func_80243ABC(CMapSel* self) {
-    if (func_80137444(self->mAnimTransform1, lbl_eu_8066873C) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform1, lbl_eu_8066873C) != 0) {
         self->mLayout->SetAnimationEnable(self->mAnimTransform1, false);
         self->mLayout->SetAnimationEnable(self->mAnimTransform2, true);
         self->mState = 2;
@@ -470,7 +470,7 @@ extern "C" void __declspec(noinline) func_80243ABC(CMapSel* self) {
    mAnimTransform2 finishes, move to state 3 (transitioning out), flag +0x33,
    reset the cursor and refresh its grid position. */
 extern "C" void __declspec(noinline) func_80243B88(CMapSel* self) {
-    if (func_80137444(self->mAnimTransform2, lbl_eu_8066873C) != 0) {
+    if (advanceAnimTransform(self->mAnimTransform2, lbl_eu_8066873C) != 0) {
         self->mState = 3;
         self->mFlag33 = 1;
         func_801D216C(&self->mCursor[0], 1);
@@ -617,9 +617,9 @@ bool CMapSel::OnFileEvent(CEventFile* event) {
         mtl::MemManager::setMemInitFlag(false);
         mArcAccessor = CLibLayout::createArcResourceAccessor();
         mArcAccessor->Attach(fileData, base + 0x9f);
-        func_80136E84(&mLayout, mArcAccessor, base + 0xa3);
-        func_80136F08(mLayout, &mAnimTransform1, mArcAccessor, base + 0xbb);
-        func_80136F08(mLayout, &mAnimTransform2, mArcAccessor, base + 0xd6);
+        buildLayout(&mLayout, mArcAccessor, base + 0xa3);
+        bindLayoutAnimTransform(mLayout, &mAnimTransform1, mArcAccessor, base + 0xbb);
+        bindLayoutAnimTransform(mLayout, &mAnimTransform2, mArcAccessor, base + 0xd6);
 
         // Bind the font: take the layout root pane, ask the font object for
         // its pane, and push it back onto the root.

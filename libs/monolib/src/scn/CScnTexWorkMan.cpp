@@ -319,7 +319,7 @@ extern "C" void func_804902D8(void* self, void* arg) {
     }
 }
 
-void viAfterDrawDone__14CScnTexWorkManFv(void) {}
+void onViAfterDrawDone__14CScnTexWorkManFv(void) {}
 
 int lbl_eu_806658F8;
 
@@ -848,7 +848,7 @@ L_okChild:
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace TWMBlob {
 extern "C" void __dt__14CScnTexWorkManFv();
-extern "C" void viAfterDrawDone__14CScnTexWorkManFv();
+extern "C" void onViAfterDrawDone__14CScnTexWorkManFv();
 extern "C" void __dt__16CScnVirtualLightFv();
 extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
 extern "C" void viBeginFrame__11CDeviceVICbFv();
@@ -858,7 +858,7 @@ extern "C" u32 lbl_eu_806639C0;
 
 // lbl_eu_8056E7D0 (24B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7D0[6] = {
-    (u32)&lbl_eu_806639B0, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::viAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
+(u32)&lbl_eu_806639B0, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::onViAfterDrawDone__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
 };
 // lbl_eu_8056E7E8 (16B) vtable/ptrs
 extern "C" u32 lbl_eu_8056E7E8[4] = {

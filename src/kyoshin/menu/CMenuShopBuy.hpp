@@ -294,7 +294,7 @@ extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg);
 // Other retail-named helpers.
 // unsigned int (not u32 = unsigned long): must match CItemBoxLine.hpp's
 // declaration so the two extern "C" redeclarations merge.
-extern "C" void func_80138078__FUl(unsigned int op);
+extern "C" void playUISound__FUl(unsigned int op);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(u8 enable);
 // CScn.hpp pulls broken monolib umbrella headers (kyoshin headers already
 // define an opaque CScn), so the render-callback removal is called through

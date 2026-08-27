@@ -329,7 +329,7 @@ extern "C" void func_80252DD8(CMenuCollepedia* self) {
             func_802556DC(&self->mCollepedia) == 0) {
             func_801C41E8(&self->mTitleAHelp, 0x52);
             if (self->mTimer > lbl_eu_806687E4) {
-                func_80138078__FUl(2);
+                playUISound__FUl(2);
             }
             self->mTimer = lbl_eu_806687E0;
             if (turbo & 0x2001) {
@@ -388,7 +388,7 @@ void func_80253128(CMenuCollepedia* self) {
     if (func_802556DC(&self->mCollepedia) == 0) {
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078__FUl(6);
+            playUISound__FUl(6);
         }
         self->mState = 4;
         self->mField54 = 1;

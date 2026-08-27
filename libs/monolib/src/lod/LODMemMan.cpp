@@ -2028,7 +2028,7 @@ void func_8046EDD0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task, int value
 }
 
 // ---------------------------------------------------------------------------
-// getElementState: when the LOD system is enabled, return the +0x1E byte of the
+// getElementState:
 // first element matching `task`, or 0.
 // ---------------------------------------------------------------------------
 u8 getElementState__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int task) {

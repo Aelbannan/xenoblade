@@ -5,10 +5,8 @@
 
 namespace cf {
 
-    // Plain field storage (0x84 bytes, no vptr). Declaring the data in a
-    // non-polymorphic base makes MWCC place CAttackParam's own vptr AFTER
-    // the fields, at +0x84 - the retail layout (lbl_eu_8052F610 vtable).
-    class CAttackParamData {
+    //size: 0x88
+    class CAttackParam {
     public:
         u8 unk0;
         u8 unk4[0x20 - 0x4];
@@ -54,17 +52,11 @@ namespace cf {
         u32 unk78;
         float unk7C;
         float unk80;
-    };
+        void* unk84;   // 0x84 - raw vtable (slot 3 = +0x0C hook, read by UnkVirtualFunc4)
 
-    //size: 0x88
-    class CAttackParam : public CAttackParamData {
-    public:
         CAttackParam();
 
-        // First declared virtual -> vtable byte +0x08 under -RTTI (two
-        // hidden RTTI words at 0/4). The ctors install the class vptr at
-        // +0x84 and dispatch here through it (r12 idiom).
-        virtual void CAttackParam_UnkVirtualFunc1();
+        void CAttackParam_UnkVirtualFunc1();
         void CAttackParam_UnkVirtualFunc2();
         void CAttackParam_UnkVirtualFunc3(u8 r4);
         void CAttackParam_UnkVirtualFunc4();
@@ -89,7 +81,7 @@ namespace cf {
         UNKTYPE* unk88;
 
         CArtsParam();
-        virtual void CArtsParam_UnkVirtualFunc1();   // overrides base slot +0x08
+        void CArtsParam_UnkVirtualFunc1();
         u8 CArtsParam_UnkVirtualFunc2();
         void CArtsParam_UnkVirtualFunc3(u8 r4);
         void vtableFunc3(u8 val);
@@ -107,10 +99,6 @@ namespace cf {
         };
 
         _sArtsSet();
-        // Declared (no inline body): the retail vtable lives in the shared
-        // data split (lbl_eu_8052F5D8), so this TU must NOT emit __vt__/RTTI.
-        // The body is defined in CArtsSet.cpp as the retail-named free
-        // function _sArtsSet_UnkVirtualFunc1__Q22cf9_sArtsSetFv.
         virtual void _sArtsSet_UnkVirtualFunc1();
     };
 

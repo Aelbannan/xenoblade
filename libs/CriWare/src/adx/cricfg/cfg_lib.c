@@ -1,8 +1,8 @@
 #include <harness_catalog.h>
 #include <string.h>
 
-extern s32 lbl_eu_805E66E0;
-extern s32 lbl_eu_805E66E4;
+s32 lbl_eu_805E66E0;
+s32 lbl_eu_805E66E4;
 
 /* Search the 16-byte config entries; returns the matching entry or NULL. */
 static inline char *cfg_find_key(int count, const char *key, char *p) {

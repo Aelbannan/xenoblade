@@ -13,8 +13,11 @@ struct CFT_YCCConsts {
     float k5;   /* +0x14 B scale */
     f64   bias; /* +0x18 itof bias */
 };
-extern float lbl_eu_805197B0[];  /* YCbCr conversion constants + f64 conversion bias */
-extern float lbl_eu_805FDDC0[];  /* output lookup tables (5 tables of 256 floats) */
+__declspec(section ".rodata") __attribute__((aligned(8))) float lbl_eu_805197B0[26] = {
+    1.1643835, 0.5, -0.39160714, 2.0172322, 1.5960267, -0.81281245, 176.0, -0.0, 255.0, 1.164, 2.017, -0.392, 0.0, -0.813, 1.596, 16.0, 2.3181818, 251.0, 176.0, 0.0, -18.130136, 68.0, 4.6363635, 247.0, 2.2972972, 0.0
+};
+
+float lbl_eu_805FDDC0[0x502];
 
 /* Y84C44 word-packing from an (A) and (B) chroma source word.
  * Expressed with byte shifts so MWCC collapses them into rlwimi chains. */

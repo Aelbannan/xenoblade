@@ -4,7 +4,7 @@ extern int UTY_IsTmrVoid(s32);
 extern u64 UTY_GetTmrUnit(void);
 extern u64 UTY_GetTmr(void);
 
-extern u32 lbl_eu_80619BC8[2];  /* timer base (hi/lo) */
+u32 lbl_eu_80619BC8[2];  /* timer base (hi/lo) - .bss 0x80619BC8 size 0x8 */
 extern u32 lbl_eu_80606E38[];   /* SFD work area */
 
 /* SFTMR_GetTmr: get current timer value as 64-bit */

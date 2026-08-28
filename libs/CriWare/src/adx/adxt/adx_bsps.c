@@ -198,7 +198,7 @@ void ADXB_ExecOneSpsd(struct AdxBsp* self)
 }
 
 s32 memcmp(const void* s1, const void* s2, size_t n);
-extern const u8 lbl_eu_80519108[4];
+__declspec(section ".rodata") __attribute__((aligned(8))) const u8 lbl_eu_80519108[8] = {0x53,0x50,0x53,0x44,0x00,0x00,0x00,0x00};
 s32 ADXB_CheckSpsd(const void* buf) {
     return memcmp(buf, lbl_eu_80519108, 4) == 0 ? 1 : 0;
 }

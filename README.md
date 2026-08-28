@@ -69,11 +69,11 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19300 |
 | Buildable | 19300 |
-| Accepted | 15936 (`FULL_MATCH` 15703 · `EQUIVALENT_MATCH` 233) |
-| Accepted bytes | 2253936 / 4929516 (45.7%) of catalogued function bytes |
-| — `FULL_MATCH` bytes | 2224924 (45.1%) |
+| Accepted | 15912 (`FULL_MATCH` 15679 · `EQUIVALENT_MATCH` 233) |
+| Accepted bytes | 2246456 / 4929516 (45.6%) of catalogued function bytes |
+| — `FULL_MATCH` bytes | 2217444 (45.0%) |
 | — `EQUIVALENT_MATCH` bytes | 29012 (0.6%) |
-| Active (in progress) | 3312 |
+| Active (in progress) | 3339 |
 
 <!-- END GENERATED COOP STATUS -->
 

@@ -23,10 +23,10 @@ typedef struct RNAErrHandler {
 } RNAErrHandler;
 
 // Registered error callback (0x805F2AF8).
-extern void (*lbl_eu_805F2AF8)(u32, char*);
+void (*lbl_eu_805F2AF8)(u32, char*);
 
 // Callback argument word + message buffer (0x805F2AFC, 0x104 bytes).
-extern u32 lbl_eu_805F2AFC[65];
+u32 lbl_eu_805F2AFC[65];
 
 // Register the error callback and its argument word.
 void RNAERR_EntryErrFunc(u32 fn, u32 arg) {

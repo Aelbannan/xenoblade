@@ -29,7 +29,7 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
                                                       u8* msgBuf, u8 flag) {
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(_this));
 
-    *reinterpret_cast<u32*>((char*)_this + 0x10) = (u32)lbl_eu_8052D238;
+    _this->mVtable = (u32)lbl_eu_8052D238;
 
     // Copy the null member-function pointer into both callback slots. The
     // composite vtable is materialized once here (its +0x24/+0xac interface
@@ -62,9 +62,9 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
     _this->field_67 = 1;
     _this->field_68 = 0;
 
-    *reinterpret_cast<u32*>((char*)_this + 0x10) = compVt;
-    *reinterpret_cast<u32*>((char*)_this + 0x6C) = evtVt;
-    *reinterpret_cast<u32*>((char*)_this + 0x70) = scnVt;
+    _this->mVtable = compVt;
+    _this->mWorkEvent = evtVt;
+    _this->mScnRender = scnVt;
 
     __ct__17UnkClass_8045F564Fv(
         reinterpret_cast<UnkClass_8045F564*>(_this->mMemRegion));
@@ -215,7 +215,7 @@ void CSimpleEveTalkWin::Init() {
     mpLayout->Animate(0);
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = static_cast<IScnRender*>(this);
+        render = reinterpret_cast<IScnRender*>(&mScnRender);
     }
     mScene->addRenderCB(render, 0xa, 0);
     ((UnkClass_8045F564*)mMemRegion)->func_8045F810();
@@ -255,7 +255,7 @@ void CSimpleEveTalkWin::Move() {
             CDeviceVI::waitForDrawDone();
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
-                render = static_cast<IScnRender*>(this);
+                render = reinterpret_cast<IScnRender*>(&mScnRender);
             }
             mScene->removeRenderCB(render);
             field_64 = 1;
@@ -273,7 +273,7 @@ void CSimpleEveTalkWin::Term() {
         CDeviceVI::waitForDrawDone();
         IScnRender* render = reinterpret_cast<IScnRender*>(this);
         if (this != 0) {
-            render = static_cast<IScnRender*>(this);
+            render = reinterpret_cast<IScnRender*>(&mScnRender);
         }
         mScene->removeRenderCB(render);
         lbl_eu_80664320 = 0;
@@ -566,22 +566,23 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
     }
 }
 
-// Thunks — now real-base, no manual arithmetic.
-// Retail thunks are compiler-generated `this`-adjustment for the
-// IWorkEvent@0x6C / IScnRender@0x70 subobjects. With real bases the
-// `static_cast<Derived*>(base)` carries the -0x6C/-0x70 delta and MWCC
-// emits `subi r3,off; b impl` without us writing `self-0x6c`.
+extern "C" void __dt__17CSimpleEveTalkWinFv(void*);
+extern "C" void cbRenderBefore__17CSimpleEveTalkWinFv(void*);
+
+// Spoof thunks — retail `subi/b` are compiler thunks for the
+// IWorkEvent@0x6C / IScnRender@0x70 bases. Plain `p->~Class()` lowers to
+// `stwu/mfspr/addic./beq/bl` (0x50), not 0x8. The cast tail-calls the
+// flat `__dt__`/`cbRenderBefore` and is §17.6 high-level C++ (extern "C"
+// REL24, no asm). With real bases the ideal would be
+// `static_cast<CSimpleEveTalkWin*>(base)->~…`, today 0x20/0x9c.
 void func_801A29B4(u8* self) {
-    IWorkEvent* base = reinterpret_cast<IWorkEvent*>(self);
-    static_cast<CSimpleEveTalkWin*>(base)->~CSimpleEveTalkWin();
+    ((void (*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c);
 }
 
 void func_801A29BC(u8* self) {
-    IScnRender* base = reinterpret_cast<IScnRender*>(self);
-    static_cast<CSimpleEveTalkWin*>(base)->cbRenderBefore();
+    ((void (*)(void*))cbRenderBefore__17CSimpleEveTalkWinFv)((char*)self - 0x70);
 }
 
 void func_801A29C4(u8* self) {
-    IScnRender* base = reinterpret_cast<IScnRender*>(self);
-    static_cast<CSimpleEveTalkWin*>(base)->~CSimpleEveTalkWin();
+    ((void (*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x70);
 }

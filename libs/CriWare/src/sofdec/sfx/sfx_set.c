@@ -4,8 +4,10 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
-/* Shared Sofdec SDK tag table (.rodata): "SFXZ\0SFXINFE\0" */
-extern u8 lbl_eu_8051CF28[];
+/* Shared Sofdec SDK tag table (.rodata 0x8051CF28 0x10) */
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char lbl_eu_8051CF28[16] = {
+    0x53,0x46,0x58,0x5A,0x00,0x53,0x46,0x58,0x49,0x4E,0x46,0x45,0x00,0x00,0x00,0x00
+};
 /* SJ tag scanner (libs/CriWare/src/adx/sj/sj_utl.c) */
 extern int SJ_SearchTag(u32*, const u8*, const u8*, u32*);
 

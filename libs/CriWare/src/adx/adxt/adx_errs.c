@@ -6,6 +6,9 @@
 #include <string.h>
 #include "lbls_criware.hpp"
 
+u8 lbl_eu_805E6380[264];
+char lbl_eu_805E6488[32];
+
 // Cross-TU imports (C linkage). No shared CriWare header declares these yet;
 // sibling units (svm.c, adx_fs.c, adx_tlk2.c) use the same local-extern style.
 extern void SVM_CallErr(const char* msg, ...);

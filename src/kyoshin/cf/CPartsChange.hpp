@@ -3,6 +3,10 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (owner)
+// Forward decls for folded fake vtables (real defs included in .cpp)
+namespace cf { class CObjectState; class CfObject; class CActorParam; class CfObjectActor; }
+struct PcSub4VtIf;
+struct CfWordView;
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 

@@ -10,7 +10,10 @@ extern int memcmp(const void *, const void *, unsigned long);
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
 extern char *strstr(const char *, const char *);
-extern char lbl_eu_8051CEE0[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051CEE0[32] = {
+    0x53,0x6F,0x66,0x64,0x65,0x63,0x53,0x74,0x72,0x65,0x61,0x6D,0x20,0x20,0x20,0x20,
+    0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x56,0x65,0x72,0x2E,0x00,0x00,0x00
+};
 
 int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2);
 int criware_803D2C98(u32 pic_rate_code);

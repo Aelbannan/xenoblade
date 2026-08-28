@@ -6,24 +6,45 @@
 #include <cstring>
 
 namespace cf {
-    //size: 0x80
-    // Vtable at 0x70 is manually managed; no implicit C++ vtable at 0x00.
-    class CChainActor {
-    public:
+    struct CChainActorData {
         u32 unk0;
-        CChainTemp mChainTemp; //0x4
-        u16 unk6C;              //0x6C
-        u8 _pad6E[2];           //0x6E
-        u32 mVTable;            //0x70: vtable pointer (manually managed, non-standard ABI)
+        CChainTemp mChainTemp;
+        u16 unk6C;
+        u8 _pad6E[2];
+    };
+    // CChainActorData is 0x70 bytes (4 + 0x68 + 2 +2)
 
-        CChainActor() : unk6C(0) {
-            unk0 = 0;
-        }
+    struct CChainActorVtbl { void* slots[30]; };
+    extern "C" CChainActorVtbl lbl_eu_80538290;
+
+    class __declspec(novtable) CChainActor : public CChainActorData {
+    public:
+        // vptr at 0x70 (after base), retail table at lbl_eu_80538290
+        u8 mChainEffectRaw[0xC]; // 0x74
+
+        CChainActor();
         ~CChainActor();
 
-        //0x74: raw storage at retail -- the retail dtor never calls a
-        // CChainEffect dtor here (region is unmanaged; keep as bytes so
-        // MWCC does not emit the member-destroy call).
-        u8 mChainEffectRaw[0xC];
+        // 17 virtuals to reach +0x48 (dt + 14 dummies + _vf44 + vf48) – rest of table beyond 0x48 is manual (0x4C..0x74)
+        virtual void _vf0C();
+        virtual void _vf10();
+        virtual void _vf14();
+        virtual void _vf18();
+        virtual void _vf1C();
+        virtual void _vf20();
+        virtual void _vf24();
+        virtual void _vf28();
+        virtual void _vf2C();
+        virtual void _vf30();
+        virtual void _vf34();
+        virtual void _vf38();
+        virtual void _vf3C();
+        virtual int _vf44(void* arg);
+        virtual int vf48(void* arg);
+
+        CChainActorVtbl*& vtbl() { return *reinterpret_cast<CChainActorVtbl**>(reinterpret_cast<u8*>(this) + 0x70); }
+        CChainActorVtbl* vtbl() const { return *reinterpret_cast<CChainActorVtbl*const*>(reinterpret_cast<const u8*>(this) + 0x70); }
+        u32& mVTable() { return *reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x70); }
+        const u32& mVTable() const { return *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + 0x70); }
     };
 }

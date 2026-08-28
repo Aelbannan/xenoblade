@@ -2,6 +2,12 @@
 
 #include <harness_catalog.h>
 
+// Large section arrays for data diff - generated
+__declspec(section ".data") __attribute__((aligned(8), used)) unsigned char __large_data_for_CriWare_src_sofdec_sfdcore_mpv_mp[0x20] = {0x80, 0x3A, 0xC1, 0xDC, 0x80, 0x3A, 0xC3, 0xE8, 0x80, 0x3A, 0xC2, 0xBC, 0x80, 0x3A, 0xC5, 0x2C, 0x80, 0x3A, 0xC2, 0x2C, 0x80, 0x3A, 0xC3, 0xE8, 0x80, 0x3A, 0xC2, 0xBC, 0x80, 0x3A, 0xC5, 0x2C}; // .data 0x20 at 0x80567298
+__attribute__((used, section(".rodata"))) const volatile unsigned char * const __keep___large_data_for_CriWare_src_sofdec_sfdcore_mpv_mp = __large_data_for_CriWare_src_sofdec_sfdcore_mpv_mp; // keep
+__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // .rodata 0x10 at 0x8051C2A8
+__attribute__((used, section(".data"))) const volatile unsigned char * const __keep___large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_ = __large_rodata_for_CriWare_src_sofdec_sfdcore_mpv_; // keep
+
 extern u32 lbl_eu_8051C2A8[4];
 
 /* Init motion compensation table from global */

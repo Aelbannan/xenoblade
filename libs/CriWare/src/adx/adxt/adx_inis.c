@@ -3,7 +3,12 @@
 
 #include <harness_catalog.h>
 #include <string.h>
+#define lbl_eu_805E26C8 lbl_eu_805E26C8_dummy
 #include <adx/adxt/adx_inis.hpp>
+#undef lbl_eu_805E26C8
+u8 lbl_eu_805E26C8[12];
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80515FB8[88] = "\nADXT/WII Ver.10.94 Build:Oct 28 2009 21:11:20\n\x00" "Append: MW4302 WII30Jul2008Patch04\n\x00" "\x00\x00\x00\x00";
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80516010[168] = "adxt_exec_tsvr\x00" "adxt_exec_fssvr\x00" "adxt_exec_main_thrd\x00" "E2006100201: ADXT_Finish function has been executed before initialization.\x00" "E2005041230: ADXT handle is still active.";
 
 // Forward declarations for SVM functions
 s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
@@ -78,7 +83,7 @@ int adxt_exec_fssvr(void) {
 // One-time initialization of all ADX subsystems.
 // Uses a refcount so repeated calls are no-ops until ADXT_Finish matches.
 void ADXT_Init(void) {
-    struct AdxInisContext* const ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* const ctx = (struct AdxInisContext*)&lbl_eu_805E26C8;
 
     ctx->field_0x18 = (u8*)lbl_eu_80515FB8;
     criCrw_GetVersion();
@@ -125,7 +130,7 @@ void ADXT_Init(void) {
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
     const char* str;
-    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* ctx = (struct AdxInisContext*)&lbl_eu_805E26C8;
     struct AdxInisHandle* hndl;
     s32 i;
 

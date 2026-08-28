@@ -2,13 +2,16 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+extern int mpvcdec_IntraBlocksInt1(void* self);
+extern int mpvcdec_NintraBlocksInt1(void* self);
+__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_8051C080[2] = { (void*)mpvcdec_IntraBlocksInt1, (void*)mpvcdec_NintraBlocksInt1 };
+
 #include <string.h>
 
 extern void fn_803A7770(void);
 extern void fn_803BDF3C(void* a, s32 b);
 extern void DCT_IsrInit(void);
 extern void DCT_IsrInitScaleTbl(void* tbl);
-extern u32 lbl_eu_8051C080;
 extern volatile u32 lbl_eu_80602A68[];
 extern volatile u32 lbl_eu_80602A6C[];
 

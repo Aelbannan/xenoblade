@@ -450,7 +450,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
     void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale);
     void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount);
-    u32 CfObject_UnkVirtualFunc23();
+    ml::CVec3* CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc30();
     void CfObject_UnkVirtualFunc32();

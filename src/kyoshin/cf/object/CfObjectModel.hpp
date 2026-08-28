@@ -207,7 +207,7 @@ namespace cf {
     // UVF22 sets position (same ABI as UVF19); r3 stays self after the call.
     void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
     void CfObject_UnkVirtualFunc20();
-    u32 CfObject_UnkVirtualFunc23();
+    ml::CVec3* CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();

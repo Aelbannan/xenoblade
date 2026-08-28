@@ -6,8 +6,8 @@
 /* Ref-count + lock state live in the retail .bss slice owned by criware_data.s
  * (lbl_eu_805E6378/lbl_eu_805E637C at 0x805E6378); this TU owns no data in
  * retail, so declare extern (defining them here would add a bogus .bss). */
-extern volatile s32 lbl_eu_805E637C;
-extern s32 lbl_eu_805E6378;
+s32 lbl_eu_805E6378;
+volatile s32 lbl_eu_805E637C;
 
 void ADXCRS_Init(void) {
     ++lbl_eu_805E637C;

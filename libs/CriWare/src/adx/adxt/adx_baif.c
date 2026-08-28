@@ -57,7 +57,7 @@ out:
     ;
 }
 
-extern char lbl_eu_80516B20[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char lbl_eu_80516B20[0x10] = {0x46,0x4F,0x52,0x4D,0x00,0x41,0x49,0x46,0x46,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
 int ADXB_CheckAiff(void* self) {
     if (memcmp(self, lbl_eu_80516B20, 4) == 0 && memcmp((u8*)self + 8, lbl_eu_80516B20 + 5, 4) == 0)

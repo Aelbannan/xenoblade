@@ -33,7 +33,7 @@ struct ADXT_FsSvrGlobals {
 };
 
 // Declare the global struct at the retail address.
-extern struct ADXT_FsSvrGlobals lbl_eu_805E26B0;
+struct ADXT_FsSvrGlobals lbl_eu_805E26B0;
 
 // Wrapper that enters/leaves the ADX critical section around adxt_ExecFsSvr.
 void ADXT_ExecFsSvr() {

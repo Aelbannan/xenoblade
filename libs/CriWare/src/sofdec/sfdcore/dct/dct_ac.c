@@ -1,11 +1,12 @@
 #include <harness_catalog.h>
+__declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051C388[4] = {0.3535533905932738,0.5,0.39269908169872414,4503601774854144};
+__declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051C3A8 = 0;
+__attribute__((aligned(4))) u32 lbl_eu_806046B8[1];
+__attribute__((aligned(8))) double lbl_eu_806046C0[128];
+
 #include <math.h>
 
 extern char *DCT_GetVerStr(void);
-extern u32 lbl_eu_806046B8[];     /* BSS: [0]=verstr ptr, [1..0x40]=row table, [0x41..]=trans table */
-extern double lbl_eu_8051C388[];  /* rodata: [0]=scale i==0, [1]=0.5, [2]=pi/8, [3]=itof bias */
-extern double lbl_eu_8051C3A8;    /* rodata: IDCT rounding bias (0.0) */
-extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
 
 /* Initialize DCT coefficient tables.
  * For each (i,j): val = scale * cos(pi/8 * i * (j + 0.5)).

@@ -1,4 +1,12 @@
 #include <harness_catalog.h>
+__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051C488[22] = {
+    0x0A435249,0x204D5053,0x2F574949,0x20566572,0x2E322E30,0x36372042,0x75696C64,0x3A4F6374,0x20323820,0x32303039,0x2031313A,0x33373A35,
+    0x330A0041,0x7070656E,0x643A204D,0x57343330,0x32205749,0x4933304A,0x756C3230,0x30385061,0x74636830,0x340A0000
+};
+__attribute__((aligned(4))) u32 lbl_eu_80606DD8;
+__attribute__((aligned(4))) u32 lbl_eu_80606DDC[1];
+__attribute__((aligned(4))) u32 lbl_eu_80606DE0[2];
+
 
 extern int UTY_MemsetDword(u32 *, u32, int);
 extern void MPSDEC_Init(void);
@@ -9,10 +17,6 @@ extern int MPSDEC_DecHdMpeg1(void);
 
 void *mpslib_InitHn(u32 *entry);
 
-extern u32 lbl_eu_8051C488[];
-extern u32 lbl_eu_80606DD8;
-extern u32 lbl_eu_80606DDC[];
-extern u32 lbl_eu_80606DE0[];
 
 /* MPS global state:
  *   lbl_eu_80606DD8: default error handler (set by MPS_Init)

@@ -7,7 +7,7 @@
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
 void* memset(void* s, int c, size_t n);
-extern u8 lbl_eu_8061A138[0x128];
+u8 lbl_eu_8061A138[0x128]; /* .bss 0x8061A138 size 0x128 */
 void SFXA_Init(void) {
     memset(lbl_eu_8061A138, 0, 0x128);
     ((SFXAlphaState*)lbl_eu_8061A138)->needsUpdate = 8;

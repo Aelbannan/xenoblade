@@ -1,8 +1,10 @@
 #include <harness_catalog.h>
 
+// Absorbed from criware_data (retail bytes) - generated
+__declspec(section ".rodata") __attribute__((aligned(8))) s16 lbl_eu_8051C190[0x24] = {0, 257, 771, 515, 772, 516, 773, 517, 1799, 1543, 2824, 2568, 2312, 2056, 1800, 1544, 5898, 5642, 5386, 5130, 4874, 4618, 8971, 8715, 8459, 8203, 7947, 7691, 7435, 7179, 6923, 6667, 6411, 6155, 3851, 2059}; // off 0x0
+
 /* MPEG start-code type lookup (16-bit entries: low byte = bit length of the
  * value read at index `count`, high byte = the expected value). */
-extern s16 lbl_eu_8051C190[];
 
 extern int MPV_CheckDelim(const u8 *buf);
 extern const u8 *MPV_SearchDelim(const u8 *start, int count, int flags);

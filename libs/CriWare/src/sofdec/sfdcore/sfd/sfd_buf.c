@@ -4,6 +4,10 @@
 
 #include <harness_catalog.h>
 
+// Absorbed from criware_data (retail bytes) - generated
+__attribute__((aligned(8))) void * lbl_eu_80606E10; // bss off 0x0 (scalar, spec 0x4)
+void * lbl_eu_80606E14; // bss off 0x4 (scalar, spec 0x4)
+
 /* External function declarations */
 extern void *SJRBF_Create(void *pool_mem, u32 buf_size, u32 xtr_size);
 extern void *SJMEM_Create(void *pool_mem, u32 flags);
@@ -18,8 +22,6 @@ extern void SFLIB_UnlockCs(void *cs);
 extern s32 SFTRN_CallTrtTrif(void *self, int idx, int funcIdx, int *arg4, int arg5);
 
 /* Global buffer object pointers (set by SFBUF_Init) */
-extern void *lbl_eu_80606E10; /* ring buffer object */
-extern void *lbl_eu_80606E14; /* memory buffer object */
 
 /* Forward declarations for internal functions */
 static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,

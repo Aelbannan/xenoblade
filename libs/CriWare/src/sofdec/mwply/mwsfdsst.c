@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+__attribute__((aligned(8))) SstCoreTblEntry lbl_eu_80602A00[2];
+
 
 /* ---- Shared types for the Sofdec SST (stream set) subsystem ---- */
 
@@ -54,7 +56,6 @@ typedef struct SstCoreTblEntry {
     s32 refcount;                                  /* 0x04 */
 } SstCoreTblEntry;
 
-extern SstCoreTblEntry lbl_eu_80602A00[];
 
 /* SST (stream set) handle: also the array element at MWSFDPLY+0x5d8 with a
  * stride of 0x28. */

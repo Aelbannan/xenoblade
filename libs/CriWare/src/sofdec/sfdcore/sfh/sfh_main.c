@@ -3,7 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_80619BE8;
+u32 lbl_eu_80619BE8;
+static u32 _lbl_eu_80619BE8_pad; /* pad to 0x8 */
 
 /* SFH runtime context - 0x18 bytes */
 typedef struct SFHContext {

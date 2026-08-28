@@ -1,4 +1,11 @@
 #include <harness_catalog.h>
+__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051BFC0[48] = {
+    0xFFFF7FFF,0x3FFF1FFF,0x0FFF07FF,0x03FF01FF,0x00FF007F,0x003F001F,0x000F0007,0x00030001,0x00010810,0x0902030A,0x11182019,0x120B0405,
+    0x0C131A21,0x28302922,0x1B140D06,0x070E151C,0x232A3138,0x39322B24,0x1D160F17,0x1E252C33,0x3A3B342D,0x261F272E,0x353C3D36,0x2F373E3F,
+    0x08101316,0x1A1B1D22,0x10101618,0x1B1D2225,0x13161A1B,0x1D222226,0x16161A1B,0x1D222528,0x161A1B1D,0x20232830,0x1A1B1D20,0x2328303A,
+    0x1A1B1D22,0x262E3845,0x1B1D2326,0x2E384553,0x05040303,0x02020202,0x01010101,0x01010101,0x00000000,0x00000000,0x00000000,0x00000000
+};
+
 #include <string.h>
 
 /* MPEG video bitstream decoder context (retail offsets).
@@ -24,7 +31,6 @@ typedef struct MPVBDEC_WORK {
 extern int UTY_MemcpyDword(u32 *, const u32 *, int);
 extern void MPVABDEC_Init(void);
 
-extern u32 lbl_eu_8051BFC0[];  /* reference tables */
 extern u32 lbl_eu_80602A10[];  /* work area */
 extern u32 lbl_eu_80604660[];
 extern u32 lbl_eu_8060465C[];

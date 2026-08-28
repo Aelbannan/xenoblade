@@ -8102,15 +8102,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     # so their rules were removed; the units data-match raw.)
 
     "mwsfdcre.o": UnitRules(
-        # Retail keeps the int->float conversion bias double
-        # lbl_eu_8051A3C0 (0x4330000080000000) in criware_data.s .rodata;
-        # this TU pools it locally as @438 (unused, @ha/@l ref in
-        # mwsfcre_CalcWorkStmBuf at 803A2108). Rename then strip.
-        data_pool_patterns=(
-            (".rodata", struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8051A3C0"),
-        ),
-        globalize_symbols=("lbl_eu_8051A3C0",),
-        extern_data_sections=(".rodata",),
+        drop_data_range=((".rodata", 0x6E8, 0x6F4),),
+    ),
+
+    "ax_rna.o": UnitRules(
+        drop_data_range=((".rodata", 4, 8), (".rodata", 0x584, 0x58B), (".bss", 0xE50, 0xE54)),
+        set_data_align=((".rodata", 4),),
     ),
 
     "mwsfdply.o": UnitRules(
@@ -8121,7 +8118,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".rodata", struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8051B198"),
         ),
         globalize_symbols=("lbl_eu_8051B198",),
-        extern_data_sections=(".rodata",),
     ),
 
     "mpv_mc.o": UnitRules(
@@ -8234,7 +8230,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x15E, 0x68),
             (".text", 0x182, 0x68),
         ),
-        extern_data_sections=(".rodata",),
     ),
     "sfd_adxt.o": UnitRules(
         # SFADXT_SetSpeed's (double)speed/(double)base casts pool a local
@@ -8262,7 +8257,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x1B66, 0x30),
             (".text", 0x1B72, 0x30),
         ),
-        extern_data_sections=(".rodata",),
+        drop_data_tail=((".rodata", 0x78),),
     ),
     "sfh_ver1.o": UnitRules(
         # criware_803D2C98's 9-way pic-rate switch jumptable (@1074, 0x24
@@ -8274,21 +8269,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data",),
     ),
     "sfx_zmv.o": UnitRules(
-        # Both .rodata anchors resolve to local 0 = the hi-magic; retail
-        # only ever lfd's lbl_eu_8051D220@l disp 0 (sites 803D8A98/
-        # 803D8C54). @563..@633 pool copies are unreferenced residue.
-        data_pool_patterns=(
-            (".rodata", struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8051D220"),
-        ),
-        exact_renames=(("...rodata.0", "lbl_eu_8051D220"),),
-        globalize_symbols=("lbl_eu_8051D220",),
-        extern_data_sections=(".rodata",),
+        drop_data_range=((".rodata", 0x8, 0x38),),
     ),
     "sfx_cnv.o": UnitRules(
         # SFXCNV_MakeCcirFromY's {0.5f, 1.164f, hi-magic} pool maps 1:1
         # onto the dedicated blob labels lbl_eu_8051CF38/3C/40 (retail
         # lfs/lfd sites 803D734C-803D735C read exactly these three).
-        # (.data jumptable + error strings were fixed at source level.)
         data_pool_patterns=(
             (".rodata", struct.pack(">I", 0x3F000000), "lbl_eu_8051CF38"),
             (".rodata", struct.pack(">I", 0x3F94FDF4), "lbl_eu_8051CF3C"),
@@ -8299,7 +8285,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             "lbl_eu_8051CF3C",
             "lbl_eu_8051CF40",
         ),
-        extern_data_sections=(".rodata", ".data"),
+        extern_data_sections=(".data",),
     ),
     # ------------------------------------------------------------------
     # kyoshin data-dissolve batch 2 (main/kyoshin game units; retail data
@@ -8643,7 +8629,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".sdata", 0),
         ),
     ),
-
+    "adx_suwii.o": UnitRules(
+        set_data_align=((".rodata", 4),),
+    ),
 }
 
 

@@ -4,7 +4,8 @@
 #include <harness_catalog.h>
 
 void* memset(void* s, int c, size_t n);
-extern char lbl_eu_805E4F80[];
+unsigned char lbl_eu_805E4F80[0x3C0];
+unsigned char lbl_eu_805E5340[8];
 void ADXPD_Init(void) {
     memset(lbl_eu_805E4F80, 0, 0x3c0);
 }
@@ -128,7 +129,6 @@ void ADXPD_Reset(void* self) {
 
 u32 ADXPD_GetNumBlk(void* self) { return *(u32*)((u8*)self + 0x10); }
 
-extern u32 lbl_eu_805E5340;
 extern int ADX_DecodeMono4(const u8* in, int nblocks, s16* out, s16* prev,
                            s16 c1, s16 c2, s16* hist, s16 scale, s16 pitch);
 extern int ADX_DecodeSte4(const u8* in, int nblocks, s16* out1, s16* prev1,
@@ -162,7 +162,7 @@ void ADXPD_ExecHndl(void* self) {
             t = (r & 1) ^ sign;
             *(s32*)((u8*)self + 16) = r;
             if (t - sign == 1) {
-                lbl_eu_805E5340 = 1;
+                *(u32*)lbl_eu_805E5340 = 1;
             }
         }
         *(s32*)((u8*)self + 12) = 3;

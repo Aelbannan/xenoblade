@@ -3,25 +3,24 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_805E64B8;
-void AHXDCD_SetupFtbl(u32 val) { lbl_eu_805E64B8 = val; }
+unsigned char lbl_eu_805E64A8[4];
+unsigned char lbl_eu_805E64AC[4];
+unsigned char lbl_eu_805E64B0[8];
+unsigned char lbl_eu_805E64B8[4];
+unsigned char lbl_eu_805E64BC[4];
+void AHXDCD_SetupFtbl(u32 val) { *(u32*)lbl_eu_805E64B8 = val; }
 
-extern u32 lbl_eu_805E64BC;
-void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
+void AHXDCD_SetupWtbl(u32 val) { *(u32*)lbl_eu_805E64BC = val; }
 
-extern u32 lbl_eu_805E64B0;
-
-// MWCC literal-pool constants (retail .rodata @ 0x80517560): the SBF window
-// scale factor 2147483648.0f plus an adjacent 0.0f pool entry.
-const float lbl_eu_80517560[2] = {2147483648.0f, 0.0f};
+extern const float lbl_eu_80517560[];
 
 void ahxsbf_init_filter(void);
 
 void AHXSBF_Init(void) {
-    if (lbl_eu_805E64B0 == 0) {
+    if (*(u32*)lbl_eu_805E64B0 == 0) {
         ahxsbf_init_filter();
     }
-    lbl_eu_805E64B0++;
+    (*(u32*)lbl_eu_805E64B0)++;
 }
 
 /* SBF filter workspace (bss @ 0x805E64A8).
@@ -40,10 +39,8 @@ typedef struct AhxSbfWork {
     void* wtbl;
 } AhxSbfWork;
 
-extern AhxSbfWork lbl_eu_805E64A8;
-
 void ahxsbf_init_filter(void) {
-    AhxSbfWork* w = &lbl_eu_805E64A8;
+    AhxSbfWork* w = (AhxSbfWork*)&lbl_eu_805E64A8;
     u8* dst;
     u8* adst;
     u8* src;
@@ -78,17 +75,15 @@ void ahxsbf_init_filter(void) {
 }
 
 void AHXSBF_Finish(void) {
-    lbl_eu_805E64B0--;
+    (*(u32*)lbl_eu_805E64B0)--;
 }
-
-extern u32 lbl_eu_805E64AC;
 
 AhxSbfWork* AHXSBF_Create(AhxSbfWork* self, u32 size) {
     memset(self, 0, size);
     self->unk08 = 64;
     self->dstW = (void*)64;
-    self->ftbl = (void*)*(u32*)&lbl_eu_805E64AC;
-    self->flag = *(u32*)&lbl_eu_805E64A8;
+    self->ftbl = (void*)*(u32*)lbl_eu_805E64AC;
+    self->flag = *(u32*)lbl_eu_805E64A8;
     *(u8*)self = 1;
     return self;
 }

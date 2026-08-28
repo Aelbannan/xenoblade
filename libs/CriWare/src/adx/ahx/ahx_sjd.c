@@ -29,7 +29,7 @@ typedef struct AHXSJD {
 extern volatile u32 lbl_eu_80517598;
 // Kept non-volatile so MWCC allocates the address temporaries in the same
 // order as retail (r3=counter base, r4=flag base) in AHXSJD_Init.
-extern s32 lbl_eu_805E64C0;
+unsigned char lbl_eu_805E64C0[8];
 
 extern void AHXTBL_GetAtblInfo(u32*, u32*);
 extern void AHXTBL_GetMtblInfo(u32*, u32*);
@@ -67,7 +67,7 @@ void AHXSJD_Init(void) {
     f = lbl_eu_80517598;
     f = lbl_eu_80517598;
 
-    if (lbl_eu_805E64C0 == 0) {
+    if (*(s32*)lbl_eu_805E64C0 == 0) {
         AHXTBL_GetAtblInfo(&i0, &i1);
         AHXSJD_SetupAtbl(i0, i1);
         AHXTBL_GetMtblInfo(&i0, &i1);
@@ -78,14 +78,14 @@ void AHXSJD_Init(void) {
         AHXSJD_SetupWtbl(i0, i1);
         AHXDCD_Init();
     }
-    ++lbl_eu_805E64C0;
+    (*(s32*)lbl_eu_805E64C0)++;
 }
 
 void AHXSJD_Finish(void) {
-    if (lbl_eu_805E64C0 == 1) {
+    if (*(s32*)lbl_eu_805E64C0 == 1) {
         AHXDCD_Finish();
     }
-    --lbl_eu_805E64C0;
+    (*(s32*)lbl_eu_805E64C0)--;
 }
 
 void* AHXSJD_Create(void* allocator, s32 numChannels, void* chanInfo, s32 bufSize, s32 extraSize) {

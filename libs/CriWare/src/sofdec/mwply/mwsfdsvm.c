@@ -2,6 +2,12 @@
 // SVM server API glue for the Sofdec movie player (MWSFSVM).
 
 #include <harness_catalog.h>
+__attribute__((aligned(4))) u32 lbl_eu_805FF1D0;
+__attribute__((aligned(4))) u32 lbl_eu_805FF1D4;
+__attribute__((aligned(4))) u32 lbl_eu_805FF1D8;
+__attribute__((aligned(4))) u32 lbl_eu_805FF1DC;
+__attribute__((aligned(8))) char lbl_eu_805FF1E0[256];
+
 #include <string.h>
 #include <stdarg.h>
 
@@ -17,10 +23,6 @@ void SVM_CallErr1(const char* msg);
 /* Registered callback slots shared with mwsfdlib.c, zeroed by
  * MWSFSVM_Init: +0x00 spare, +0x04 id-callback function,
  * +0x08 idle callback svr id, +0x0C main callback svr id. */
-extern u32 lbl_eu_805FF1D0;
-extern u32 lbl_eu_805FF1D4;
-extern u32 lbl_eu_805FF1D8;
-extern u32 lbl_eu_805FF1DC;
 
 /* Zero the SVM server callback table after bringing up the server. */
 void MWSFSVM_Init(void) {
@@ -88,7 +90,6 @@ extern TraceCb* lbl_eu_805FF3A0;
 extern TraceRec lbl_eu_80566AC8;
 
 /* Shared 256-byte scratch buffer for formatted error messages. */
-extern char lbl_eu_805FF1E0[256];
 
 /* Format a message into the shared scratch buffer and report it:
  * enter-trace -> SVM error hook -> exit-trace.

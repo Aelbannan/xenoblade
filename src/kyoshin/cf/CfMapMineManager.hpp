@@ -2,67 +2,43 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "monolib/math/CVec3.hpp"
 class UnkClass_800821F8;
-class CItemImplInstances;
 
-// Cast-only vtable interfaces for the CItemImplInstances object returned by
-// CItem_initItemImplInstances(item). MWCC prepends 2 RTTI header entries, so the
-// first virtual sits at vtable+0x08.
-struct CItemInstVt1C {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C(void* item);  // vtable+0x1C
-};
-struct CItemInstVt50 {
-    virtual u32 _v08(void* item);
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual char* _v20(void* item);  // item name getter
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50(void* item, int slot, int value);  // vtable+0x50
-};
-struct CItemInstVt68 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68(void* item, int slot, int value);  // vtable+0x68
+// Real ItemImpl class that owns the slots at 0x08/0x1C/0x20/0x50/0x68.
+// Retail vtables at lbl_eu_8052F770 (cf::ItemPurifyKessyouImpl) etc show
+// the method list IS the original virtuals.  Size 0xA0 = 38 virtuals.
+// We declare the full prefix so each slot lands at its retail offset:
+// 0x1C = 5th virtual, 0x50 = 18th, 0x68 = 24th.  Do NOT combine scene/item
+// into one mega-If; this is the Item hierarchy only.
+class __declspec(novtable) CItemImpl {
+public:
+    virtual u32 vf08(void* item);                 // 0x08
+    virtual void vf0C();                          // 0x0C
+    virtual void vf10();                          // 0x10
+    virtual void vf14();                          // 0x14
+    virtual void vf18();                          // 0x18
+    virtual void vf1C(void* item);                // 0x1C  slot 1C
+    virtual char* vf20(void* item);               // 0x20
+    virtual void vf24();                          // 0x24
+    virtual void vf28();                          // 0x28
+    virtual void vf2C();                          // 0x2C
+    virtual void vf30();                          // 0x30
+    virtual void vf34();                          // 0x34
+    virtual void vf38();                          // 0x38
+    virtual void vf3C();                          // 0x3C
+    virtual void vf40();                          // 0x40
+    virtual void vf44();                          // 0x44
+    virtual void vf48();                          // 0x48
+    virtual void vf4C();                          // 0x4C
+    virtual void vf50(void* item, int slot, int value); // 0x50  slot 50
+    virtual void vf54();                          // 0x54
+    virtual void vf58();                          // 0x58
+    virtual void vf5C();                          // 0x5C
+    virtual void vf60();                          // 0x60
+    virtual void vf64();                          // 0x64
+    virtual void vf68(void* item, int slot, int value); // 0x68  slot 68
 };
 
 // ---------------------------------------------------------------------------

@@ -39,36 +39,31 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-// Cast-only interface for the vtable tail-call thunk: the vptr sits at
-// +0x70 (data ends 0x6E, MWCC places the vptr after the members, like
-// RemoteSpk's vptr at 0x1F0). 16 pad virtuals + vf48: with 2 hidden RTTI
-// slots, vf48 lands at vtable slot 0x48. vf48 takes ONE explicit arg
-// (this = self is implicit) — retail passes (self, *arg) = (r3, r4).
-struct CChainActorPcVt48 {
-    u32 unk0;          // 0x00
-    u8  pad4[0x68];    // 0x04..0x6C
-    u16 unk6C;         // 0x6C
-    u8  pad6E[2];      // 0x6E
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void vf48(void* arg);
-};
-extern "C" void func_8028246C(void* self, void* arg) {
-    ((CChainActorPcVt48*)self)->vf48(*(void**)arg);
+// Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
+// Slot +0x48 (index 18 overall, vt offset 0x48) is vf48: int(void* p) – owned by cf::CChainActorPc (leaf override of base A9FC).
+// Thunk at +0x44 (func_8028246C) forwards via this->vf48(*(void**)arg).
+namespace cf {
+CChainActorPc::CChainActorPc() { vtbl() = &lbl_eu_805384E0; }
+CChainActorPc::~CChainActorPc() {}
+void CChainActorPc::_vf0C() {}
+void CChainActorPc::_vf10() {}
+void CChainActorPc::_vf14() {}
+void CChainActorPc::_vf18() {}
+void CChainActorPc::_vf1C() {}
+void CChainActorPc::_vf20() {}
+void CChainActorPc::_vf24() {}
+void CChainActorPc::_vf28() {}
+void CChainActorPc::_vf2C() {}
+void CChainActorPc::_vf30() {}
+void CChainActorPc::_vf34() {}
+void CChainActorPc::_vf38() {}
+void CChainActorPc::_vf3C() {}
+void CChainActorPc::_vf40() {}
+int CChainActorPc::_vf44(void* arg) { return this->vf48(*(void**)arg); }
+int CChainActorPc::vf48(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
+}
+extern "C" void func_8028246C(cf::CChainActorPc* self, void* arg) {
+    self->vf48(*(void**)arg);
 }
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
@@ -113,11 +108,11 @@ void func_80281958(cf::CChainActorPc* self) {
     CChainBigObj* big = (CChainBigObj*)self->unk0;
     func_80279B34(self);
     if (!(self->unk6C & 1)) goto tail_check;
-    if (((int(*)(u8*))((u8**)self->mVTable)[16])((u8*)self) == 0) goto state5_check;
-    if (((int(*)(u8*))((u8**)self->mVTable)[26])((u8*)self) != 0) goto state5_check;
-    ((void(*)(u8*, u8*))((u8**)self->mVTable)[27])((u8*)self, func_80282380(self));
+    if (((int(*)(u8*))((u8**)self->mVTable())[16])((u8*)self) == 0) goto state5_check;
+    if (((int(*)(u8*))((u8**)self->mVTable())[26])((u8*)self) != 0) goto state5_check;
+    ((void(*)(u8*, u8*))((u8**)self->mVTable())[27])((u8*)self, func_80282380(self));
 state5_check:
-    if (((int(*)(u8*))((u8**)self->mVTable)[22])((u8*)self) != 5) goto state6_check;
+    if (((int(*)(u8*))((u8**)self->mVTable())[22])((u8*)self) != 5) goto state6_check;
     if (func_80148778((u8*)big + 8, 0xf0)) {
         if (func_80148778((u8*)big + 8, 0xf0)) {
             ((void(*)(u8*, int))(*(u8***)((u8*)big + 8))[8])((u8*)big + 8, 0xf0);
@@ -149,7 +144,7 @@ state5_check:
         }
     }
 state6_check:
-    if (((int(*)(u8*))((u8**)self->mVTable)[22])((u8*)self) != 6) goto store_455a;
+    if (((int(*)(u8*))((u8**)self->mVTable())[22])((u8*)self) != 6) goto store_455a;
     if (func_80148778((u8*)big + 8, 0xf8)) {
         if (func_80148778((u8*)big + 8, 0xf8)) {
             ((void(*)(u8*, int))(*(u8***)((u8*)big + 8))[8])((u8*)big + 8, 0xf8);
@@ -205,7 +200,7 @@ void func_80281CF0(cf::CChainActorPc* self, int arg) {
         u8** vt = *(u8***)((u8*)big + 8);
         ((void(*)(u8*, int))vt[8])(obj, 0xeb);
     }
-    int state = ((int(*)(u8*))((u8**)self->mVTable)[22])((u8*)self);
+    int state = ((int(*)(u8*))((u8**)self->mVTable())[22])((u8*)self);
     int cond;
     if (state == 4) goto state4;
     cond = 0;
@@ -272,7 +267,7 @@ extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
 extern "C" int func_80281FA0(cf::CChainActorPc* self, void* arg) {
     // Call vtable entry 29: check some active/in-battle condition
     // Residual: vtable double-load stages in r5 vs retail r12 chain.
-    int (*vfunc)(void*) = ((int(**)(void*))self->mVTable)[29];
+    int (*vfunc)(void*) = ((int(**)(void*))self->mVTable())[29];
     if (vfunc(self) != 0) return 0;
     // Check battle-manager flag 0xf8 on this->unk0 + 8
     if (func_80148778((void*)(self->unk0 + 8), 0xf8) != 0) return 0;

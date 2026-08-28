@@ -15,13 +15,43 @@ extern s32 UTY_CmpTime(s32 a, s32 b, s32 c, s32 d);
 /* External globals */
 extern char lbl_eu_80606E38[];   /* SFD work area */
 extern void* lbl_eu_80606E34;    /* callback table pointer */
-extern char lbl_eu_80568EA0[];   /* callback struct */
 extern u32 lbl_eu_8051CBF8[];    /* fps denominator table */
-extern u32 lbl_eu_8051CC20[];    /* tc2time function table */
-extern u32 lbl_eu_80619BB0[];    /* debug globals */
-extern u32 lbl_eu_80619BB8[];    /* debug globals */
-extern u32 lbl_eu_80619BBC[];    /* debug globals */
-extern u32 lbl_eu_80619BC0[];    /* debug globals */
+extern char lbl_eu_8051C888[];
+extern char lbl_eu_8051C628[];
+extern char lbl_eu_8051C89C[];
+extern char lbl_eu_8051C8A4[];
+
+/* Absorbed .bss 0x80619BB0-0x80619BC8 (0x18) */
+__attribute__((aligned(8))) u32 lbl_eu_80619BB0[2];
+u32 lbl_eu_80619BB8[1];
+u32 lbl_eu_80619BBC[1];
+__attribute__((aligned(8))) u32 lbl_eu_80619BC0[2];
+
+/* Absorbed .data 0x80568EA0 (0x70) */
+__declspec(section ".data") __attribute__((aligned(8))) const unsigned int lbl_eu_80568EA0[28] = {
+    (unsigned int)lbl_eu_8051C888, 0, 3, 0, 0xB, (unsigned int)lbl_eu_8051C628, 0, 4,
+    (unsigned int)lbl_eu_8051C89C, 0, 4, (unsigned int)lbl_eu_8051C8A4, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+/* Absorbed .rodata 0x8051CC20 (0x78) - function table + float constants */
+void sftim_Tc2Time23N(s32, void*, s32*, s32*, s32);
+void sftim_Tc2Time23D(s32, void*, s32*, s32*, s32);
+void sftim_Tc2TimeN(s32, void*, s32*, s32*, s32);
+void sftim_Tc2Time29N(s32, void*, s32*, s32*, s32);
+void sftim_Tc2Time29D(s32, void*, s32*, s32*, s32);
+void sftim_Tc2Time59N(s32, void*, s32*, s32*, s32);
+void sftim_Tc2Time59D(s32, void*, s32*, s32*, s32);
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl_eu_8051CC20[30] = {
+    0, 0,
+    (unsigned int)sftim_Tc2Time23N, (unsigned int)sftim_Tc2Time23D,
+    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
+    (unsigned int)sftim_Tc2Time29N, (unsigned int)sftim_Tc2Time29D,
+    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
+    (unsigned int)sftim_Tc2Time59N, (unsigned int)sftim_Tc2Time59D,
+    (unsigned int)sftim_Tc2TimeN, (unsigned int)sftim_Tc2TimeN,
+    0x3ECCCCCD, 0x3F000000, 0x3F800000, 0x3F400000, 0x3F8CCCCD, 0x3FC00000, 0x400CCCCD, 0x401CCCCD, 0x40300000, 0x40600000, 0x43300000, 0x80000000
+};
 
 /* Forward declarations for function pointers */
 s32 sftim_GetTimeNone(void* self, s32* out1, s32* out2);

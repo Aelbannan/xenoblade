@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_80560028;
+__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80560028[2] = {0xFFFFFFFF, 0};
 
-void ADXMNG_SetFramework(u32 val) { lbl_eu_80560028 = val; }
+void ADXMNG_SetFramework(u32 val) { lbl_eu_80560028[0] = val; }
 
 extern int ADXM_IsSetupThrd(void);
 extern void SVM_ExecSvrVint(void);
@@ -19,14 +19,14 @@ extern void SVM_ExecSvrFs(void);
 
 int ADXMNG_CallMainServerFunctions(void) {
     s32 state;
-    if ((s32)lbl_eu_80560028 == -1) {
+    if ((s32)lbl_eu_80560028[0] == -1) {
         s32 r = ADXM_IsSetupThrd();
         state = 1;
         if (r == 1) {
             state = 2;
         }
     } else {
-        state = lbl_eu_80560028;
+        state = lbl_eu_80560028[0];
     }
     if (state == 1) goto case1;
     if (state == 2) goto case2;

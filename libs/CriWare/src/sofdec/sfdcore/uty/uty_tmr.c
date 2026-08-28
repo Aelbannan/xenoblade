@@ -9,11 +9,11 @@
 #include <harness_catalog.h>
 
 // Config key string ("..." rodata) and the timer state block anchors.
-extern char lbl_eu_8051CF20[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051CF20[8] = "TMR_CH";
 extern s32 CRICFG_Read(const char* key, s32* out);
-extern s32 lbl_eu_80619BF0;
-extern s32 lbl_eu_80619BF4;
-extern u32 lbl_eu_80619BF8[2];
+s32 lbl_eu_80619BF0; /* .bss 0x80619BF0 size 0x4 */
+s32 lbl_eu_80619BF4; /* .bss 0x80619BF4 size 0x4 */
+u32 lbl_eu_80619BF8[2]; /* .bss 0x80619BF8 size 0x8 */
 
 struct UtyTmrPair {
     u32 active;  // 0x08

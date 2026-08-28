@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern char lbl_eu_80516A88[];
+__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80516A88[0x98] = "E8101201 adxt_trap_entry: not enough data\x00" "E9081001 adxt_stat_decinfo: can't play this number of channels\x00" "E02080842 adxt_ExecHndl: parameter error\x00";
 
 // Forward declarations for external functions
 void ADXCRS_Enter(void);
@@ -311,7 +311,7 @@ extern void ADXAMP_SetSfreq(ADXAMP_State* amp, s32 sfreq);
 extern void ADXERR_ItoA2(s32 val1, s32 val2, char* buf, s32 bufSize);
 extern void ADXERR_CallErrFunc2_(char* msg, char* buf);
 // Optional observer invoked once decode parameters are configured
-extern void (*lbl_eu_805E4F70)(ADXT_Tsvr* tsvr, s32 sfreq, s32 nchan, s32 total);
+void (*lbl_eu_805E4F70)(ADXT_Tsvr* tsvr, s32 sfreq, s32 nchan, s32 total);
 extern int ADXT_GetNumChan(ADXT_Tsvr* self);
 
 /**
@@ -503,8 +503,8 @@ void adxt_stat_prep(ADXT_Tsvr* self) {
 
 // Global variables referenced in ASM (likely debug/communication)
 // These need to be declared for proper linking
-extern u32 lbl_eu_805E4F74;
-extern u32 lbl_eu_805E4F78;
+u32 lbl_eu_805E4F74;
+u32 lbl_eu_805E4F78;
 
 /**
  * Handles streaming playback state machine for ADXT.
@@ -643,8 +643,8 @@ void adxt_stat_playing(ADXT_Tsvr* self) {
 }
 
 // Error message data referenced by the null-handle error path
-extern char lbl_eu_80516A88[];
-extern u32 lbl_eu_805E4F7C;
+
+u32 lbl_eu_805E4F7C;
 extern int ADXERR_CallErrFunc1_(char* msg);
 extern int ADXT_GetStat(ADXT_Tsvr* self);
 extern int ADXSTM_GetStat(ADXSTM_State* stm);

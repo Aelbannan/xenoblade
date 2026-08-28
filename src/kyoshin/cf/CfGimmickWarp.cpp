@@ -8,25 +8,14 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+// PcSub4VtIf is the owner for *(player+4) slot 0x30 (defined inline to avoid
+// header overload conflicts; matches CfObjectPc.hpp's PcSub4VtIf).
 
-struct WarpData;
 struct WarpObject;
 
-struct WarpVec3 {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct WarpVec4 {
-    f32 x;
-    f32 y;
-    f32 z;
-    f32 w;
-};
-
 /* The game stores a twelve-byte MWCC pointer-to-member-function table. */
-typedef void (WarpData::*WarpStateProc)();
+typedef void (cf::CfGimmickWarp::*WarpStateProc)();
 typedef int (*WarpJumpProc)(WarpVec3*, const WarpVec3*, WarpVec3*);
 
 struct WarpColumns {
@@ -54,258 +43,62 @@ struct WarpObject {
     u8 pad00[0x8c];
     u8 field_8c[0x90 - 0x8c]; /* sub-record passed to func_80199810 */
     u8 pad90[0xB0 - 0x90];
-    WarpData* owner;
+    cf::CfGimmickWarp* owner;
 };
 
-/* This is the portion of a player object used by this translation unit. */
+typedef cf::CfGimmickWarp WarpData;
+
+// Owner-named view for *(player+4): cf::CfObjectPc sub-object at +4, slot 0x30.
+// This is PcSub4VtIf from CfObjectPc.hpp (owner CfObjectPc, not Warp).
+class PcSub4VtIf {
+public:
+    virtual void _q008(); virtual void _q00C(); virtual void _q010();
+    virtual void _q014(); virtual void _q018(); virtual void _q01C();
+    virtual void _q020(); virtual void _q024(); virtual void _q028();
+    virtual void _q02C();
+    virtual void* _q030();
+};
+
+// Forward-declare player layout helpers (retail player is cf::CfObjectPc / CfObjectMove).
 struct WarpPlayerHead {
     void* vtable;
     void* subObject;
     u8 pad08[0x3E94];
 };
-
 struct WarpPlayerTail {
     void* vtable;
 };
-
 struct WarpPlayer : WarpPlayerHead, WarpPlayerTail {
 };
 
-/* Cast-only interfaces retain the retail vtable offsets without inventing
- * storage or a second object hierarchy. */
-struct WarpPlayerSubIf {
-    virtual void v00();
-    virtual void v04();
-    virtual void v08();
-    virtual void v0c();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1c();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2c();
-    virtual u32* v30();
-};
+// Tiny owner-named views for foreign sub-objects.
+// PcSub4VtIf is the owner for *(player+4) slot 0x30 (see CfObjectPc.hpp / CHelp_ArtsAttack).
+// CfObject head slots (+0xA8/+0xC8/+0x168) are now folded onto the hot header
+// cf::CfObject (syncCollVectors / CfObject_UnkVirtualFunc30 / CfObject_UnkVirtualFunc70)
+// after fixing the arity in CfObject.hpp, so no local CfObjectHeadIf is needed.
 
-struct WarpPlayerHeadIf {
-    virtual void v00();
-    virtual void v04();
-    virtual void v08();
-    virtual void v0c();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1c();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2c();
-    virtual void v30();
-    virtual void v34();
-    virtual void v38();
-    virtual void v3c();
-    virtual void v40();
-    virtual void v44();
-    virtual void v48();
-    virtual void v4c();
-    virtual void v50();
-    virtual void v54();
-    virtual void v58();
-    virtual void v5c();
-    virtual void v60();
-    virtual void v64();
-    virtual void v68();
-    virtual void v6c();
-    virtual void v70();
-    virtual void v74();
-    virtual void v78();
-    virtual void v7c();
-    virtual void v80();
-    virtual void v84();
-    virtual void v88();
-    virtual void v8c();
-    virtual void v90();
-    virtual void v94();
-    virtual void v98();
-    virtual void v9c();
-    virtual void va0();
-    virtual void va4();
-    virtual void va8(const WarpVec3*);
-    virtual void vac();
-    virtual void vb0();
-    virtual void vb4();
-    virtual void vb8();
-    virtual void vbc();
-    virtual void vc0();
-    virtual void vc4();
-    virtual void vc8(f32);
-    virtual void vcc();
-    virtual void vd0();
-    virtual void vd4();
-    virtual void vd8();
-    virtual void vdc();
-    virtual void ve0();
-    virtual void ve4();
-    virtual void ve8();
-    virtual void vec();
-    virtual void vf0();
-    virtual void vf4();
-    virtual void vf8();
-    virtual void vfc();
-    virtual void v100();
-    virtual void v104();
-    virtual void v108();
-    virtual void v10c();
-    virtual void v110();
-    virtual void v114();
-    virtual void v118();
-    virtual void v11c();
-    virtual void v120();
-    virtual void v124();
-    virtual void v128();
-    virtual void v12c();
-    virtual void v130();
-    virtual void v134();
-    virtual void v138();
-    virtual void v13c();
-    virtual void v140();
-    virtual void v144();
-    virtual void v148();
-    virtual void v14c();
-    virtual void v150();
-    virtual void v154();
-    virtual void v158();
-    virtual void v15c();
-    virtual void v160();
-    virtual void v164();
-    virtual void v168(f32);
-};
-
-struct WarpPlayerTailIf {
-    virtual void v00();
-    virtual void v04();
-    virtual void v08(u32);
-    virtual int v0c(u32);
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1c();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2c();
-    virtual void v30();
-    virtual void v34();
-    virtual void v38();
-    virtual void v3c();
-    virtual void v40();
-    virtual void v44();
-    virtual void v48();
-    virtual void v4c();
-    virtual void v50();
-    virtual void v54();
-    virtual void v58();
-    virtual void v5c();
-    virtual void v60();
-    virtual void v64();
-    virtual void v68();
-    virtual void v6c();
-    virtual void v70();
-    virtual void v74();
-    virtual void v78();
-    virtual void v7c();
-    virtual void v80();
-    virtual void v84();
-    virtual void v88();
-    virtual void v8c();
-    virtual void v90();
-    virtual void v94();
-    virtual void v98();
-    virtual void v9c();
-    virtual void va0();
-    virtual void va4();
-    virtual void va8();
-    virtual void vac();
-    virtual void vb0();
-    virtual void vb4();
-    virtual void vb8();
-    virtual void vbc();
-    virtual void vc0();
-    virtual void vc4();
-    virtual void vc8();
-    virtual void vcc();
-    virtual void vd0();
-    virtual void vd4();
-    virtual void vd8();
-    virtual void vdc();
-    virtual void ve0();
-    virtual void ve4();
-    virtual void ve8();
-    virtual void vec();
-    virtual void vf0();
-    virtual void vf4();
-    virtual void vf8();
-    virtual void vfc();
-    virtual void v100();
-    virtual void v104();
-    virtual void v108();
-    virtual void v10c();
-    virtual WarpObject* v110();
-};
-
-struct WarpVirtualIf {
-    virtual void v00();
-    virtual void v04();
-    virtual void v08();
-    virtual void v0c();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1c();
-    virtual void v20();
-};
-
-struct WarpData {
-    void* vtable;                         // 0x00
-    WarpVec3 position;                    // 0x04
-    WarpVec3 rotation;                    // 0x10
-    WarpVec3 scale;                       // 0x1c
-    u8 basePad28[0x38];                   // 0x28
-    u32 stateIndex;                       // 0x60
-    u16 rowId;                            // 0x64
-    u16 configFlags;                      // 0x66
-    u16 unk68;                            // 0x68
-    u16 resourceId;                       // 0x6a
-    u16 minValue;                         // 0x6c
-    u16 maxValue;                         // 0x6e
-    u8 lod[4];                            // 0x70
-    u32 flags;                            // 0x74
-    WarpObject* object7c;                 // 0x78
-    WarpObject* object7cState;            // 0x7c
-    u16 soundHandle;                      // 0x80
-    u16 typeId;                           // 0x82
-    WarpVec3 destination;                 // 0x84
-    WarpVec3 destination2;                // 0x90
-    WarpVec3 destination3;                // 0x9c
-    u8 derivedPadA8[0x38];                // 0xa8
-    u32 dispatchIndex;                    // 0xe0
-    u16 unkE4;                            // 0xe4
-    u8 flagE6;                             // 0xe6
-    u8 flagE7;                             // 0xe7
-    u16 unkE8;                            // 0xe8
-    s16 unkEA;                            // 0xea
-    s16 unkEC;                            // 0xec
-    u16 unkEE;                            // 0xee
-    u16 unkF0;                            // 0xf0
-    u8 padF2[4];                          // 0xf2
-    u16 state;                            // 0xf6
-    u16 phase;                            // 0xf8
-    f32 timer;                            // 0xfc
-    WarpObject* object100;                // 0x100
-    WarpObject* object104;                // 0x104
-    WarpObject* object108;                // 0x108
+// Owner: cf::CfObjectPc secondary (v08@0x08, v0c@0x0C, v110@0x110).
+class CfObjectPcTailIf {
+public:
+    virtual void v08(u32); // +0x08
+    virtual int v0c(u32); // +0x0C
+    virtual void _010(); virtual void _014(); virtual void _018(); virtual void _01C();
+    virtual void _020(); virtual void _024(); virtual void _028(); virtual void _02C();
+    virtual void _030(); virtual void _034(); virtual void _038(); virtual void _03C();
+    virtual void _040(); virtual void _044(); virtual void _048(); virtual void _04C();
+    virtual void _050(); virtual void _054(); virtual void _058(); virtual void _05C();
+    virtual void _060(); virtual void _064(); virtual void _068(); virtual void _06C();
+    virtual void _070(); virtual void _074(); virtual void _078(); virtual void _07C();
+    virtual void _080(); virtual void _084(); virtual void _088(); virtual void _08C();
+    virtual void _090(); virtual void _094(); virtual void _098(); virtual void _09C();
+    virtual void _0A0(); virtual void _0A4(); virtual void _0A8(); virtual void _0AC();
+    virtual void _0B0(); virtual void _0B4(); virtual void _0B8(); virtual void _0BC();
+    virtual void _0C0(); virtual void _0C4(); virtual void _0C8(); virtual void _0CC();
+    virtual void _0D0(); virtual void _0D4(); virtual void _0D8(); virtual void _0DC();
+    virtual void _0E0(); virtual void _0E4(); virtual void _0E8(); virtual void _0EC();
+    virtual void _0F0(); virtual void _0F4(); virtual void _0F8(); virtual void _0FC();
+    virtual void _100(); virtual void _104(); virtual void _108(); virtual void _10C();
+    virtual WarpObject* v110(); // +0x110
 };
 
 extern "C" {
@@ -342,24 +135,20 @@ void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
 int func_8020A5DC(WarpData*);
 int func_8020A87C(WarpData*, WarpObject*);
 void func_8020A484(u16);
-// getResourceFromTable__Q22cf13CfGameManagerFv is declared no-arg below (retail
-// leaves its r4 stale at the func_8020D824 call site; MWCC keeps caller r4
-// untouched for arg-less decls).
 int func_8020971C(int);
 int func_80209754(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
-u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);  // matches code_801862C0.hpp
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 void func_80209F5C();
 void func_80209FB8();
 void func_80209FE4();
 void func_8020A124(f32);
-// Retail call site passes the raw flags word (parameter is unused there).
 void func_8020A1DC(u32 flags);
 void func_801BFED0(int, u16, int);
-extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);  // canonical form (CTaskGameEff.hpp)
+extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void func_8006CC4C();
 void setChildB59__(WarpObject*, int);
-extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);  // matches CfObjectImplMove.hpp via harness
-extern "C" void func_804BE4B4(void* out, int a);  // matches CfObjectImplMove.hpp via harness
+extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
+extern "C" void func_804BE4B4(void* out, int a);
 u16 func_80208C48(u16, const WarpVec3*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
@@ -370,18 +159,12 @@ void __dt__Q22cf9CfGimmickFv(WarpData*, int);
 void __dl__FPv(void*);
 }
 
-static WarpPlayer* playerFromTail(WarpPlayerTail* tail) {
-    if (tail == 0) {
-        return 0;
-    }
-    return static_cast<WarpPlayer*>(tail);
+static inline WarpPlayer* playerFromRaw(void* raw) {
+    if (raw == 0) return 0;
+    return reinterpret_cast<WarpPlayer*>(reinterpret_cast<u8*>(raw) - 0x3E9C);
 }
-
-static WarpPlayerTail* playerTail(WarpPlayer* player) {
-    if (player == 0) {
-        return 0;
-    }
-    return static_cast<WarpPlayerTail*>(player);
+static inline WarpPlayerTail* playerTail(WarpPlayer* player) {
+    return reinterpret_cast<WarpPlayerTail*>(reinterpret_cast<u8*>(player) + 0x3E9C);
 }
 
 static void clearObject(WarpObject*& object) {
@@ -410,48 +193,9 @@ struct BattleMgrWarpState {
     s16 chainValue;                  /* 0x20c8 */
 };
 
-static void preparePlayers(WarpData* self) {
-    self->flags &= ~1u;
-    WarpObject* first = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
-    self->object7c = first;
-    if (first != 0) {
-        WarpPlayerTail* p0 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(0);
-        bindPartnerO_(first, p0, 0);
-    }
-
-    WarpObject* second = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
-    self->object100 = second;
-    if (second != 0) {
-        WarpPlayerTail* p1 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(1);
-        bindPartnerO_(second, p1, 0);
-    }
-
-    WarpObject* third = (WarpObject*)createBattleActor__Q22cf13CfGameManagerFv(self->flagE7, 0);
-    self->object104 = third;
-    if (third != 0) {
-        WarpPlayerTail* p2 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(2);
-        bindPartnerO_(third, p2, 0);
-    }
-
-    if (self->object7c != 0) {
-        self->object7c->owner = self;
-    }
-    if (self->object100 != 0) {
-        self->object100->owner = self;
-    }
-    if (self->object104 != 0) {
-        self->object104->owner = self;
-    }
-
-    if (self->unkE8 != 0) {
-        func_8020A484(self->unkE8);
-    }
-    self->flags |= 1;
-}
-
 extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
     __ct__cf_CfGimmick(self);
-    self->vtable = &lbl_eu_805359B0;
+    *(void**)self = (void*)lbl_eu_805359B0;
     self->typeId = 4;
 
     void* manager = func_8003AA34();
@@ -501,7 +245,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
         self->flags |= 0x80;
     }
 
-    reinterpret_cast<WarpVirtualIf*>(self)->v20();
+    self->unk_20();
 
     self->state = 0;
     self->phase = 0;
@@ -514,7 +258,7 @@ extern "C" void __ct__cf_CfGimmickWarp(WarpData* self, u16 rowId) {
 
 extern "C" void* __dt__Q22cf13CfGimmickWarpFv(WarpData* self, int deleteFlag) {
     if (self != 0) {
-        self->vtable = (void*)lbl_eu_805359B0;
+        *(void**)self = (void*)lbl_eu_805359B0;
         func_80208EE4(self);
         func_8020A434((WarpObject*)((u8*)self + 0x7c));
         func_8020A434((WarpObject*)((u8*)self + 0x108));
@@ -595,7 +339,6 @@ extern "C" void func_8020D824(WarpData* self) {
         getResourceFromTable__Q22cf13CfGameManagerFv(self->unkEE) < self->unkF0) {
         return;
     }
-    /* NOTE: retail passes r3 = the lhz-loaded unkE4 value here (no mr self) */
     if (self->unkE4 != 0 && func_8020971C(self->unkE4) == 0) {
         return;
     }
@@ -615,12 +358,12 @@ extern "C" void func_8020D998(WarpData* self) {
         if ((self->configFlags & 1) != 0) {
             func_80209F5C();
             func_80209FB8();
-            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
-                WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
-                u32 value = *sub->v30();
+                PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
+                u32 value = *static_cast<u32*>(sub->_q030());
                 if (func_80174C98(player, &value, 0x803) != 0) {
-                    WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+                    CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
                     if (!tail->v0c(0x200)) {
                         tail->v08(0x200);
                     }
@@ -630,8 +373,6 @@ extern "C" void func_8020D998(WarpData* self) {
                 }
             }
 
-            /* Teleport requested: tear down the previous warp objects and
-               re-create one per active player. */
             self->state = 5;
             if (self->flagE7 != 0) {
                 if (self->object7c != 0) {
@@ -697,12 +438,12 @@ extern "C" void func_8020D998(WarpData* self) {
         if ((self->flagE6 & 1) != 0) {
             func_80209F5C();
             func_80209FB8();
-            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
-                WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
-                u32 value = *sub->v30();
+                PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
+                u32 value = *static_cast<u32*>(sub->_q030());
                 if (func_80174C98(player, &value, 0x803) != 0) {
-                    WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+                    CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
                     if (!tail->v0c(0x200)) {
                         tail->v08(0x200);
                     }
@@ -775,7 +516,6 @@ extern "C" void func_8020D998(WarpData* self) {
 }
 
 extern "C" void func_8020DF04(WarpData* self) {
-    /* A warp request is valid only during the battle-manager window. */
     bool valid;
     u8 phase = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->phase;
     if (phase >= 1 && phase <= 0x18) {
@@ -811,12 +551,12 @@ extern "C" void func_8020DF04(WarpData* self) {
 
     func_80209F5C();
     func_80209FB8();
-    WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+    WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
-        WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
-        u32 value = *sub->v30();
+        PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
+        u32 value = *static_cast<u32*>(sub->_q030());
         if (func_80174C98(player, &value, 0x803) != 0) {
-            WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+            CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
             if (!tail->v0c(0x200)) {
                 tail->v08(0x200);
             }
@@ -826,8 +566,6 @@ extern "C" void func_8020DF04(WarpData* self) {
         }
     }
 
-    /* Teleport requested: tear down the previous warp objects and
-       re-create one per active player. */
     self->state = 5;
     if (self->flagE7 != 0) {
         if (self->object7c != 0) {
@@ -911,51 +649,27 @@ extern "C" void func_8020E27C(WarpData* self) {
         func_801BFED0(1, self->soundHandle, 0xa);
         self->soundHandle = 0;
     }
-    /* retail stores state before rewriting the flag word */
     u32 flags = self->flags;
     self->state = 1;
     self->flags = flags & ~1u;
 }
 
-/* Control-block header that precedes each player record by 0x3E9C bytes
-   inside the enclosing entity; +0x04 holds the status interface whose
-   vtable slot 0x30 reports the player state word checked below. */
-struct WarpCtlStateIf {
-    virtual void q00();
-    virtual void q04();
-    virtual void q08();
-    virtual void q0c();
-    virtual void q10();
-    virtual void q14();
-    virtual void q18();
-    virtual void q1c();
-    virtual void q20();
-    virtual void q24();
-    virtual u32* q30();
-};
-
-struct WarpCtlHeader {
-    u8 pad00[4];
-    WarpCtlStateIf* subIf; // 0x04
-};
-
 extern "C" void func_8020E3F0(WarpData* self) {
-    WarpCtlHeader* ctl;
     bool allReady = true;
     for (int i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
-        ctl = (WarpCtlHeader*)player;
+        WarpPlayerTail* tailView = reinterpret_cast<WarpPlayerTail*>(player);
+        WarpPlayerHead* ctl = reinterpret_cast<WarpPlayerHead*>(tailView);
         if (ctl != 0) {
-            /* The control block header sits 0x3E9C bytes in front of the
-               player record inside the same enclosing entity. */
-            ctl = (WarpCtlHeader*)((char*)player - 0x3E9C);
+            ctl = reinterpret_cast<WarpPlayerHead*>(reinterpret_cast<char*>(player) - 0x3E9C);
         }
         if (ctl == 0) {
             continue;
         }
-        u32 stateA = *ctl->subIf->q30();
+        PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(ctl) + 4);
+        u32 stateA = *static_cast<u32*>(sub->_q030());
         if (func_80174C98(ctl, &stateA, 8) == 0) {
-            u32 stateB = *ctl->subIf->q30();
+            u32 stateB = *static_cast<u32*>(sub->_q030());
             if (func_80174C98(ctl, &stateB, 7) == 0) {
                 continue;
             }
@@ -1045,7 +759,7 @@ extern "C" void func_8020E704(WarpData* self) {
         self->flags &= ~2u;
         func_8006CC4C();
 
-        WarpPlayer* first = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+        WarpPlayer* first = playerFromRaw(cf::CfGameManager::getPlayer(0));
         WarpVec3 centre;
         f32 distance;
         if (first != 0) {
@@ -1056,8 +770,6 @@ extern "C" void func_8020E704(WarpData* self) {
             distance = (f32)self->unkEC * lbl_eu_8066A210;
         }
 
-        /* Effect placement: nudge a copy of the centre point and query the
-           effect manager before repositioning player 0. */
         WarpVec3 adjusted;
         adjusted.x = lbl_eu_806683C8;
         adjusted.y = lbl_eu_806683DC;
@@ -1072,12 +784,12 @@ extern "C" void func_8020E704(WarpData* self) {
         }
 
         if (first != 0) {
-            reinterpret_cast<WarpPlayerHeadIf*>(first)->va8(&centre);
-            reinterpret_cast<WarpPlayerHeadIf*>(first)->vc8(distance);
+            reinterpret_cast<cf::CfObject*>(first)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&centre));
+            reinterpret_cast<cf::CfObject*>(first)->CfObject_UnkVirtualFunc30(distance);
         }
 
         for (int i = 1; i < 3; ++i) {
-            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
+            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(i));
             if (player == 0) {
                 continue;
             }
@@ -1087,23 +799,22 @@ extern "C" void func_8020E704(WarpData* self) {
                           lbl_eu_806683DC, lbl_eu_806683C8);
             WarpVec3 out4c;
             if (func_8019876C(&out68, &out4c) != 0) {
-                reinterpret_cast<WarpPlayerHeadIf*>(player)->va8(&out4c);
-                reinterpret_cast<WarpPlayerHeadIf*>(player)->vc8(distance);
-                WarpObject* object = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player))->v110();
+                reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&out4c));
+                reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc30(distance);
+                WarpObject* object = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C)->v110();
                 if (object != 0) {
                     func_80199810(object->field_8c, &centre);
                 }
             }
         }
 
-        WarpPlayerTailIf* manager = reinterpret_cast<WarpPlayerTailIf*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
+        CfObjectPcTailIf* manager = reinterpret_cast<CfObjectPcTailIf*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
         if (manager != 0) {
             manager->v0c(0);
         }
         self->state = 7;
         self->timer = lbl_eu_806683D0;
     } else {
-        /* First entry: arm the warp timer and trigger the area transition. */
         self->timer = lbl_eu_806683E4;
         self->flags |= 2;
         WarpVec4 area;
@@ -1115,17 +826,12 @@ extern "C" void func_8020E704(WarpData* self) {
     }
 }
 
-/* Post-warp settle state: arms the transition request once the warp timer
-   expires, then tears down and rebuilds the per-player warp markers before
-   handing off to the next state. */
 extern "C" void func_8020EA2C(WarpData* self) {
     func_80209F5C();
     func_80209FB8();
 
     u32 flags = self->flags;
     if ((flags & 2) == 0) {
-        /* Transition not yet requested: count down and fire the area
-           transition request once the timer hits zero. */
         f32 limit = lbl_eu_806683C8;
         self->timer -= func_80496288(lbl_eu_80663E14);
         if (self->timer <= limit) {
@@ -1146,7 +852,6 @@ extern "C" void func_8020EA2C(WarpData* self) {
     if ((flags & 4) == 0) {
         if (t > lbl_eu_806683CC) {
             if (t > lbl_eu_806683D4 || (flags & 8) != 0) {
-                /* still settling */
             } else {
                 if (self->flagE7 != 0) {
                     clearObject(self->object7c);
@@ -1188,23 +893,18 @@ extern "C" void func_8020EA2C(WarpData* self) {
                 self->flags |= 8;
             }
         } else {
-            /* First frame past the warp threshold: latch the warp-fired flag
-               and notify the manager (retail passes the pre-update flags). */
             u32 cur = self->flags;
             self->flags = cur | 4;
             func_8020A1DC(cur);
         }
-        /* Reset every active player's warp camera/state parameter. */
         for (int i = 0; i < 3; ++i) {
-            WarpPlayerHeadIf* player = (WarpPlayerHeadIf*)cf::CfGameManager::getPlayer(i);
+            cf::CfObject* player = reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getPlayer(i));
             if (player != 0) {
-                player->v168(lbl_eu_806683E8);
+                player->CfObject_UnkVirtualFunc70(lbl_eu_806683E8);
             }
         }
     }
 
-    /* Once fully settled (timer exhausted and marker rebuild done, bit0
-       cleared), advance to state 8 keeping only the low five flag bits. */
     if (self->timer > lbl_eu_806683C8) {
         return;
     }

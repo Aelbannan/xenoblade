@@ -1,6 +1,13 @@
 // Decompiled CriWare Sofdec sfd_mpv module.
 #include <harness_catalog.h>
 
+// Absorbed from criware_data (retail bytes) - generated
+__attribute__((aligned(8))) unsigned char __bss_fill_0[0xCD8]; // filler gap at 0x0 for .bss
+u32 lbl_eu_80607AF8; // bss off 0xCD8 (scalar, spec 0x12020)
+unsigned char __bss_fill_1[0x1201C]; // filler gap at 0xCDC for .bss
+u32 lbl_eu_80619B18; // bss off 0x12CF8 (scalar, spec 0x8)
+unsigned char __bss_fill_2[0x94]; // trailing filler for .bss
+
 // ---------------------------------------------------------------------------
 // Local view of the SFMPV handle tail (pic-user-buffer output area).
 // Used so the store below emits a plain stw displacement (no address CSE).
@@ -163,8 +170,6 @@ void sfmpv_ErrFn(s32 val, u32 err);
 s32 fn_803C34F8(s32 val, u32 err_code);
 
 // Global data
-extern u32 lbl_eu_80607AF8;
-extern u32 lbl_eu_80619B18;
 extern void* lbl_eu_80606E34;
 extern u32 lbl_eu_8051C4E0;
 extern u32 lbl_eu_8051C940[];

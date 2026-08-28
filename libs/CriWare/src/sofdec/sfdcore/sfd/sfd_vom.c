@@ -86,3 +86,24 @@ void SFVOM_AddRead(void* self, u32 a, u32 b) {
 }
 
 int SFVOM_Seek(void) { return 0x0; }
+
+/* Absorbed .rodata 0x8051CCD8 (0x40) : dispatch table for VOM unit */
+__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_8051CCD8[16] = {
+    (void*)SFVOM_Init,
+    (void*)SFVOM_Finish,
+    (void*)SFVOM_ExecServer,
+    (void*)SFVOM_Create,
+    (void*)SFVOM_Destroy,
+    (void*)SFVOM_RequestStop,
+    (void*)SFVOM_Start,
+    (void*)SFVOM_Stop,
+    (void*)SFVOM_Pause,
+    (void*)SFVOM_GetWrite,
+    (void*)SFVOM_AddWrite,
+    (void*)SFVOM_GetRead,
+    (void*)SFVOM_AddRead,
+    (void*)SFVOM_Seek,
+    0,
+    0,
+};
+

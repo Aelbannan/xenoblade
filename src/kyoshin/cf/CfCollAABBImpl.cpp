@@ -1,5 +1,6 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollAABBImpl.hpp"
+#include "kyoshin/cf/object/CfObjectColl.hpp"
 #include "monolib/math.hpp"
 #include "monolib/core/CDrawGX.hpp"
 #include <nw4r/math.h>
@@ -7,10 +8,15 @@
 
 // Render an AABB debug box: builds a Y-axis rotation matrix from the shape's
 // angle plus its world position, then draws the min/max cube through CDrawGX.
-// Unused opaque context parameter is left unnamed (retail mangles this
-// function's parameter types into its symbol name, so the type must stay).
-void func_800AAE24(void*, cf::CfCollAABBImpl* aabb) {
-    // Retail keeps the raw angle live in f30 across both trig calls.
+// The AABB data (angle at 0x14C, flag at 0x94, vectors at 0xD8/0xE4/0xF0) lives
+// in the CfObjectColl union; the CfCollAABBImpl struct is a view onto that
+// memory. Position is fetched via cf::CfObject::GetPosition (virtual at +0xAC,
+// lbl_eu_80528600) on the CfObjectColl.
+
+extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
+    // View coll memory as AABB data.
+    cf::CfCollAABBImpl* aabb = reinterpret_cast<cf::CfCollAABBImpl*>(coll);
+
     float angle = aabb->mAngle;
     float sinVal = nw4r::math::SinFIdx(lbl_eu_80666928 * angle);
     float cosVal = nw4r::math::CosFIdx(lbl_eu_80666928 * angle);
@@ -29,10 +35,9 @@ void func_800AAE24(void*, cf::CfCollAABBImpl* aabb) {
     mat.m[2][2] = cosVal;
     mat.m[2][3] = lbl_eu_80666910;
 
-    // world position via virtual func at vtable 0xAC
-    mat.replaceTranslation(*aabb->GetPos());
+    // world position via CfObject virtual at +0xAC
+    mat.replaceTranslation(*coll->CfObject_UnkVirtualFunc23());
 
-    // line color chosen by mode flag at 0x94
     ml::CCol4 lineCol;
     if (aabb->field_94 == 1) {
         ml::CCol4 tmp;
@@ -55,7 +60,9 @@ void func_800AAE24(void*, cf::CfCollAABBImpl* aabb) {
 }
 
 // Render AABB collision shape into a collision query context.
-// r4 is the AABB collision shape; r3 (unused) and r5/r6 pass through to func_800A5FE8.
-extern "C" void func_800AAFF4(void* r3, cf::CfCollAABBImpl* aabb, void* query, void* result) {
+// r4 is the CfObjectColl carrying AABB data; r3 (unused, the CfCollImpl this)
+// is ignored. Tail-calls func_800A5FE8.
+extern "C" void func_800AAFF4(void* /*ctx*/, cf::CfObjectColl* coll, void* query, void* result) {
+    cf::CfCollAABBImpl* aabb = reinterpret_cast<cf::CfCollAABBImpl*>(coll);
     func_800A5FE8(query, &aabb->mMin, &aabb->mMax, &aabb->mCenter, result);
 }

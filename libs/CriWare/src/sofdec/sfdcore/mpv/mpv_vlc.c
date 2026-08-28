@@ -5,23 +5,33 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_8051C2B8[];
-extern u16 lbl_eu_80602FF8[];
-extern u8 lbl_eu_80603400[];
-extern u8 lbl_eu_80603488[];
-extern u8 lbl_eu_80603510[];
-extern u16 lbl_eu_80603618[];
-extern u16 lbl_eu_80603660[];
-extern u16 lbl_eu_806036A8[];
-extern u16 lbl_eu_80603728[];
-extern u16 lbl_eu_80603928[];
-extern u16 lbl_eu_806039A8[];
-extern u16 lbl_eu_80603AA8[];
-extern u16 lbl_eu_80603AE8[];
-extern u16 lbl_eu_80603BE8[];
-extern u8 lbl_eu_80603C28[];
-extern u8 lbl_eu_80604028[];
-extern u32 lbl_eu_80604428[];
+// Absorbed from criware_data (retail bytes) - generated
+__attribute__((aligned(8))) unsigned char __bss_fill_0[0x5E8]; // filler gap at 0x0 for .bss
+u16 lbl_eu_80602FF8[0x200]; // bss off 0x5E8
+unsigned char __bss_fill_1[0x8]; // filler gap at 0x9E8 for .bss
+u8 lbl_eu_80603400[0x80]; // bss off 0x9F0
+unsigned char __bss_fill_2[0x8]; // filler gap at 0xA70 for .bss
+u8 lbl_eu_80603488[0x80]; // bss off 0xA78
+unsigned char __bss_fill_3[0x8]; // filler gap at 0xAF8 for .bss
+u8 lbl_eu_80603510[0x100]; // bss off 0xB00
+unsigned char __bss_fill_4[0x8]; // filler gap at 0xC00 for .bss
+u16 lbl_eu_80603618[0x20]; // bss off 0xC08
+unsigned char __bss_fill_5[0x8]; // filler gap at 0xC48 for .bss
+u16 lbl_eu_80603660[0x20]; // bss off 0xC50
+unsigned char __bss_fill_6[0x8]; // filler gap at 0xC90 for .bss
+u16 lbl_eu_806036A8[0x40]; // bss off 0xC98
+u16 lbl_eu_80603728[0x100]; // bss off 0xD18
+u16 lbl_eu_80603928[0x40]; // bss off 0xF18
+u16 lbl_eu_806039A8[0x80]; // bss off 0xF98
+u16 lbl_eu_80603AA8[0x20]; // bss off 0x1098
+u16 lbl_eu_80603AE8[0x80]; // bss off 0x10D8
+u16 lbl_eu_80603BE8[0x20]; // bss off 0x11D8
+u8 lbl_eu_80603C28[0x400]; // bss off 0x1218
+u8 lbl_eu_80604028[0x400]; // bss off 0x1618
+u32 lbl_eu_80604428[0x80]; // bss off 0x1A18
+unsigned char __bss_fill_7[0x90]; // trailing filler for .bss
+__declspec(section ".rodata") __attribute__((aligned(8))) u32 lbl_eu_8051C2B8[0x2C] = {0x12011101, 0x10010F01, 0x03060210, 0x020F020E, 0x020D020C, 0x020B011F, 0x011E011D, 0x011C011B, 0x28002700, 0x26002500, 0x24002300, 0x22002100, 0x20000E01, 0x0D010C01, 0x0B010A01, 0x09010801, 0x1F001E00, 0x1D001C00, 0x1B001A00, 0x19001800, 0x17001600, 0x15001400, 0x13001200, 0x11001000, 0x020A0209, 0x03050403, 0x05020701, 0x06010F00, 0x0E000D00, 0x0C00011A, 0x01190118, 0x01170116, 0x0B000208, 0x03040A00, 0x04020207, 0x01150114, 0x09000113, 0x01120501, 0x03030800, 0x02060111, 0x01100205, 0x07000302, 0x0401010F, 0x010E0204}; // off 0x0
+
 
 extern int UTY_MemcpyDword(u32 *dst, const u32 *src, u32 n);
 

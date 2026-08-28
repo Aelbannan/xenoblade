@@ -11,7 +11,10 @@ extern int memcmp(const void *, const void *, unsigned long);
 extern void *memset(void *, int, unsigned long);
 extern void *memcpy(void *, const void *, unsigned long);
 extern char *strstr(const char *, const char *);
-extern char lbl_eu_8051CF00[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_8051CF00[32] = {
+    0x53,0x6F,0x66,0x64,0x65,0x63,0x53,0x74,0x72,0x65,0x61,0x6D,0x32,0x20,0x20,0x20,
+    0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x56,0x65,0x72,0x2E,0x00,0x00,0x00
+};
 extern int SFH_AnlyNumElemAud(void *, int *);
 extern int SFH_AnlyNumElemVid(void *, int *);
 
@@ -124,7 +127,7 @@ int VER2_IsSfdHeader(void *work, int *out) {
     int c;
 
     *out = 0;
-    sig = lbl_eu_8051CF00;
+    sig = (char*)lbl_eu_8051CF00;
     if (memcmp(*(u8 **)((u8 *)work + 4) + 0x20, sig, 0x18) != 0) {
         *(s32 *)work = -1;
         return 0;

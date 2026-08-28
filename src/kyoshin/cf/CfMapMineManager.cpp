@@ -89,95 +89,11 @@ struct CfMapMineManager {
     MineSoundTimer mSnd[16]; // 0x4D4..0x554
 };
 
-// Virtual interface view of the spawned scene object.
-// setPosition sits at retail vtable offset 0x9C; unk158 at 0x158.
-struct MineSceneObjectIf {
-    virtual void v008();
-    virtual void v00C();
-    virtual void v010();
-    virtual void v014();
-    virtual void v018();
-    virtual void v01C();
-    virtual void v020();
-    virtual void v024();
-    virtual void v028();
-    virtual void v02C();
-    virtual void v030();
-    virtual void v034();
-    virtual void v038();
-    virtual void v03C();
-    virtual void v040();
-    virtual void v044();
-    virtual void v048();
-    virtual void v04C();
-    virtual void v050();
-    virtual void v054();
-    virtual void v058();
-    virtual void v05C();
-    virtual void v060();
-    virtual void v064();
-    virtual void v068();
-    virtual void v06C();
-    virtual void v070();
-    virtual void v074();
-    virtual void v078();
-    virtual void v07C();
-    virtual void v080();
-    virtual void v084();
-    virtual void v088();
-    virtual void v08C();
-    virtual void v090();
-    virtual void v094();
-    virtual void v098();
-    virtual void setPosition(void* position);
-    virtual void unk0A0();
-    virtual void unk0A4();
-    virtual void unk0A8();
-    virtual void* unk0AC();
-    virtual void unk0B0();
-    virtual void unk0B4();
-    virtual void unk0B8();
-    virtual void unk0BC();
-    virtual void unk0C0();
-    virtual void unk0C4();
-    virtual void unk0C8();
-    virtual void unk0CC();
-    virtual void unk0D0();
-    virtual void unk0D4();
-    virtual void unk0D8();
-    virtual void unk0DC();
-    virtual void unk0E0();
-    virtual void unk0E4();
-    virtual void unk0E8();
-    virtual void unk0EC();
-    virtual void unk0F0();
-    virtual void unk0F4();
-    virtual void unk0F8();
-    virtual void unk0FC();
-    virtual void unk100();
-    virtual void unk104();
-    virtual void unk108();
-    virtual void unk10C();
-    virtual void unk110();
-    virtual void unk114();
-    virtual void unk118();
-    virtual void unk11C();
-    virtual void unk120();
-    virtual void unk124();
-    virtual void unk128();
-    virtual void unk12C();
-    virtual void unk130();
-    virtual void unk134();
-    virtual void unk138();
-    virtual void unk13C();
-    virtual void unk140();
-    virtual void unk144();
-    virtual void unk148();
-    virtual void unk14C();
-    virtual void unk150();
-    virtual void unk154();
-    virtual void unk158(int flag);
-};
+// MineSceneObjectIf was a fake vtable pad. Retail tables at
+// lbl_eu_80528600 (CfObjectColl) and lbl_eu_805294E0 (CfObject base)
+// show setPosition at 0x9C = CfObject_UnkVirtualFunc19,
+// unk0AC at 0xAC = CfObject_UnkVirtualFunc23, and unk158 at 0x158 =
+// CfObject_UnkVirtualFunc66.  Use the real cf::CfObject hierarchy.
 
 // ---------------------------------------------------------------------------
 // Small helpers (high-level; inlined at -O4)
@@ -673,8 +589,8 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
         name.mLen = strlen(nm);
         strcpy(name.mText, nm);
         func_800C13FC(obj, &name, 0xC);
-        ((MineSceneObjectIf*)obj)->unk158(1);
-        ((MineSceneObjectIf*)obj)->setPosition(&pt->mPosX);
+        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc66(1);
+        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc19((const ml::CVec3*)&pt->mPosX);
         ((MineSceneObjData*)obj)->unk90 = 0;
     }
 
@@ -745,7 +661,7 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
     void* obj = createNpcActor__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
     bindPartnerO_(obj, player, 0);
-    ((MineSceneObjectIf*)obj)->setPosition(pos);
+    ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc19((const ml::CVec3*)pos);
 }
 
 // ---------------------------------------------------------------------------
@@ -1074,8 +990,8 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     }
 
     func_801583E0(item);
-    CItemImplInstances* impl = (CItemImplInstances*)CItem_initItemImplInstances(item);
-    ((CItemInstVt1C*)impl)->_v1C(item);
+    CItemImpl* impl = (CItemImpl*)CItem_initItemImplInstances(item);
+    impl->vf1C(item);
 
     u8 colA;
     u8 colB;
@@ -1120,10 +1036,10 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
     u8 hi = lbl_eu_80662750[rangeIdx * 2 + 1];
 
     for (int k = 0; k < 4; k++) {
-        CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(item);
-        ((CItemInstVt50*)im)->_v50(item, k, 0);
-        CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(item);
-        ((CItemInstVt68*)im2)->_v68(item, k, 0);
+        CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(item);
+        im->vf50(item, k, 0);
+        CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(item);
+        im2->vf68(item, k, 0);
     }
 
     // Rare drops allow up to 4 items, normal drops only 2 (need at least 1).
@@ -1167,10 +1083,10 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
             }
             if (dup == 0) {
                 u16 qty = mtRand__Q22ml4mathFii(lo, hi);
-                CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(item);
-                ((CItemInstVt50*)im)->_v50(item, got, itemId);
-                CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(item);
-                ((CItemInstVt68*)im2)->_v68(item, got, qty);
+                CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(item);
+                im->vf50(item, got, itemId);
+                CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(item);
+                im2->vf68(item, got, qty);
                 *dst++ = itemId;
                 got++;
                 if (got >= limit) {
@@ -1218,7 +1134,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     // Player position (virtual getter at vtable+0xAC); Y gets a small offset.
     f32 pos[3];
     {
-        void* pv = ((MineSceneObjectIf*)player)->unk0AC();
+        void* pv = (void*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
         pos[0] = ((f32*)pv)[0];
         pos[1] = ((f32*)pv)[1] + lbl_eu_806682E8;
         pos[2] = ((f32*)pv)[2];
@@ -1336,8 +1252,8 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     // Push a message into the ring buffer (evicting the oldest when full).
     char msgText[0x40];
     msgText[0] = 0;
-    CItemImplInstances* im = (CItemImplInstances*)CItem_initItemImplInstances(&drop);
-    const char* nm = ((CItemInstVt50*)im)->_v20(&drop);
+    CItemImpl* im = (CItemImpl*)CItem_initItemImplInstances(&drop);
+    const char* nm = im->vf20(&drop);
     u32 msgLen = strlen(nm);
     strcpy(msgText, nm);
     f32 msgTime = lbl_eu_806682F4;
@@ -1370,8 +1286,8 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     else if (cval == 0x32) queueEventId__Q22cf13CfGameManagerFv(0x71);
     else if (cval == 0x1F4) queueEventId__Q22cf13CfGameManagerFv(0x72);
 
-    CItemImplInstances* im2 = (CItemImplInstances*)CItem_initItemImplInstances(&drop);
-    u32 rarity = ((CItemInstVt50*)im2)->_v08(&drop);
+    CItemImpl* im2 = (CItemImpl*)CItem_initItemImplInstances(&drop);
+    u32 rarity = im2->vf08(&drop);
     if ((rarity & 0xFFFF) >= 5) {
         queueEventId__Q22cf13CfGameManagerFv(0x76);
     }

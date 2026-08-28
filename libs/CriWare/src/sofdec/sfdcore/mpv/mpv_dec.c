@@ -6,6 +6,13 @@
 // VLC tables are pointer variables in .bss filled at MPVVLC_Init time.
 
 #include <harness_catalog.h>
+__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051C088[0x6] = {
+    0x32,0x2E,0x30,0x36,0x37,0x00
+};
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char gap_06_8051C08E_rodata[0x2] = {
+    0x00,0x00
+};
+
 
 typedef struct MpvSjChunk {
     const u8* p;    /* 0x00 */
@@ -72,7 +79,6 @@ typedef struct MpvDec {
     s32 da8;                   /* 0xda8 */
 } MpvDec;
 
-extern char lbl_eu_8051C088[];
 extern int strcmp(const char* a, const char* b);
 
 /* VLC table pointer variables (filled by mpv_vlc.c init code). */

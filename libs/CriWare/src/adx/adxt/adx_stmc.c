@@ -10,7 +10,7 @@ extern volatile s32 lbl_eu_805E4EE8;
 
 /* Retail error-string pool (lbl_eu_80516148): both cvFsOpen failure paths
  * pass the same "E02110501 adxstmf_stat_exec: can't open " message. */
-extern char lbl_eu_80516148[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80516148[88] = "E02110501 adxstmf_stat_exec: can't open \x00" "E05072801 adxstmf_stat_exec: can't open \x00";
 
 typedef struct {
     /* 0x00 */ u8 active;
@@ -55,7 +55,8 @@ typedef struct {
     /* 0x08 */ s32 extCount;
 } ADXSTMConfig;
 
-extern ADXSTMConfig lbl_eu_80560030;
+__declspec(section ".data") __attribute__((aligned(8))) ADXSTMConfig lbl_eu_80560030 = {24,24,16};
+__declspec(section ".data") __attribute__((aligned(8))) volatile u32 _pad_8056003C = 0;
 
 static inline s32 div_s2048(u32 val) {
     return (s32)val >> 11;

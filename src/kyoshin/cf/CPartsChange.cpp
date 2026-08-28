@@ -17,6 +17,12 @@
 #include "kyoshin/cf/CPartsChange.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+// Hot-header includes for folded vtables (only the needed small headers)
+#include "kyoshin/cf/object/CObjectState.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
+// Minimal local decl for heavy vtable to avoid overload clash (real def in CfObjectActor)
+namespace cf { class CfObjectActor { public: virtual float CfObjectActor_UnkVirtualFunc6(); }; }
 
 using cf::CfPartyInfo;
 using cf::CfPartyInfoSortKey;
@@ -100,7 +106,7 @@ cf::CPartsChange::~CPartsChange() {}
 // pattern, MWCC_CASES line 840).
 static inline int findNameEntry(CPartsChange* self, u32 count, const char* name) {
     for (int j = 0; (u32)j < count; j++) {
-        if (strstr(self->mField08->vf24(j), name) != 0)
+        if (strstr(((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc8(j), name) != 0)
             return j;
     }
     return -1;
@@ -115,7 +121,7 @@ void func_80192E80(CPartsChange* self, u8 r4, PartsChangeIf* obj) {
         if (self->mField08 == 0) {
             result = -1;
         } else {
-            u32 count = self->mField08->vf20();
+            u32 count = ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc7();
             // FixStr(false)'s ctor emits no stores, so the visible ctor
             // store pairs land in retail order: str's pair first, then
             // num's pair right before the itoa call.
@@ -149,22 +155,22 @@ void func_80192F94(CPartsChange* self) {
         u8 c = self->mData[i];
         if (c == 0xff) continue;
         if (hit) {
-            self->mField08->vf30(c, 0);
+            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 0);
         } else {
-            if (self->mField08->vf34(c)) hit = 1;
+            if (((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc12(c)) hit = 1;
         }
     }
     if (hit) return;
     for (u32 i = 0; i < 0x20; i++) {
         u8 c = self->mData[i];
         if (c != 0xff) {
-            self->mField08->vf30(c, 1);
+            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 1);
             return;
         }
     }
 }
 
-// Party-change slot update: when the change list is active, force-apply every
+// Party-change slot update:
 // non-0xff slot entry (vf30(c, 0)), then apply the indexed entry with the
 // given flag. When the list is active, the indexed entry exists and the flag
 // is 0, scan for the first other non-0xff entry and force-apply it with
@@ -175,18 +181,18 @@ void func_801930A0(CPartsChange* self, u32 idx, u32 flag) {
         if (self->mField04 == 0 && self->mField2C != 0 && self->mField08 != 0) {
             for (u32 i = 0; i < 0x20; i++) {
                 u8 c = self->mData[i];
-                if (c != 0xff) self->mField08->vf30(c, 0);
+                if (c != 0xff) ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 0);
             }
         }
         u8 c = self->mData[idx];
         if (c != 0xff) {
-            self->mField08->vf30(c, flag);
+            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, flag);
             if (self->mField04 == 0 && flag == 0) {
                 for (u32 i = 0; i < 0x20; i++) {
                     u8 c2 = self->mData[i];
                     if (c2 == 0xff) continue;
                     if (i == idx) continue;
-                    self->mField08->vf30(c2, 1);
+                    ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c2, 1);
                     break;
                 }
             }
@@ -907,14 +913,14 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
         u32 v2 = getBdatStringColumnValue(bdat, lbl_eu_80503C48 + 0x54, arg3);
         r28 = *(const u16*)&v2;
     }
-    CfPlayerVtACIf* player = (CfPlayerVtACIf*)getPlayer__Q22cf13CfGameManagerFi(0);
-    int ok = func_800B99BC(player->vfAC(), &local14, 1, (src->field_1E >> 6) & 1,
+    cf::CfObject* player = (cf::CfObject*)getPlayer__Q22cf13CfGameManagerFi(0);
+    int ok = func_800B99BC(player->CfObject_UnkVirtualFunc23(), &local14, 1, (src->field_1E >> 6) & 1,
                            &local18, &local8, lbl_eu_80667B08 + mgr->field_B268);
     if (src->field_20 & 0x10) {
         ok = 1;
     } else if (src->field_20 & 0x40) {
         f32 thresh = lbl_eu_80667B0C * lbl_eu_80663ED0;
-        ml::CVec3* p2 = player->vfAC();
+        ml::CVec3* p2 = player->CfObject_UnkVirtualFunc23();
         ok = ml::math::abs(p2->y - local14.y) < thresh;
     }
     if (!ok) return 0;
@@ -1373,7 +1379,7 @@ extern "C" int func_801953E8(CfPartsElemArray* arr, CfPartsElem4C* elem, u8* fla
                                     f32 s2 = *(f32*)((CfActorAccessors*)sub)->func_80195AEC();
                                     f32 sum = s2 + s1;
                                     u32 dir = sub->func_80195AE4();
-                                    f32 base = obj->vt->fn_0x5B4(obj);
+                                    f32 base = ((cf::CfObjectActor*)obj)->CfObjectActor_UnkVirtualFunc6();
                                     ml::CVec3 vec34;
                                     func_8004B79C(&vec34, subIf->vfAC());
                                     CfPartyInfo info;
@@ -2100,7 +2106,7 @@ void func_80196E04(CfPartsManager* mgr, f32 f) {
                         posLocal.x = srcPos->x;
                         posLocal.y = srcPos->y;
                         posLocal.z = srcPos->z;
-                        obj->vt->fn_0x5B4(obj);
+                        ((cf::CfObjectActor*)obj)->CfObjectActor_UnkVirtualFunc6();
                         f44 = obj->field_44D8;
                         func_80198710(&info, &posLocal, f44 + f44, speed,
                                       col34, slotIdx);
@@ -2476,9 +2482,9 @@ spawn:
         v.y = pos->y;
         v.z = pos->z;
         v.y += lbl_eu_80667AE8;
-        ((CfSpawnIf*)obj)->vf9C(&v.x);
-        ((CfSpawnIf*)obj)->vfC4(f);
-        ((CfSpawnIf*)obj)->vfDC(lbl_eu_80667B24);
+        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc19((const ml::CVec3*)&v.x);
+        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc29(f);
+        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc35(lbl_eu_80667B24);
         obj->field_73C = id;
         func_800B71CC(obj);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, lbl_eu_80662528[w], 0, 0, lbl_eu_80667AD0);
@@ -2563,7 +2569,7 @@ extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int
             if (flag && opt1 == 0 && opt2 != 0) {
                 u16 part = tbl->field_9A;
                 u32 objId = actor->field_3F10;
-                f32 f = actor->vt->fn_0x5B4(actor);
+                f32 f = ((cf::CfObjectActor*)actor)->CfObjectActor_UnkVirtualFunc6();
                 ml::CVec3* pos =
                     (ml::CVec3*)((cf::CfResPcParentVtIf*)&actor->mSubVt)->_v0AC();
                 func_80197C6C(f, objId, part, pos, 1);
@@ -2573,7 +2579,7 @@ extern "C" void func_80197DE8(CfPartsManager* mgr, CfPartsChgObjFull* actor, int
         if (id == 0 && flag && opt1 == 0 && opt2 != 0) {
             u16 part = actor->field_3F28;
             u32 objId = actor->field_3F10;
-            f32 f = actor->vt->fn_0x5B4(actor);
+            f32 f = ((cf::CfObjectActor*)actor)->CfObjectActor_UnkVirtualFunc6();
             ml::CVec3* pos =
                 (ml::CVec3*)((cf::CfResPcParentVtIf*)&actor->mSubVt)->_v0AC();
             func_80197C6C(f, objId, part, pos, 0);

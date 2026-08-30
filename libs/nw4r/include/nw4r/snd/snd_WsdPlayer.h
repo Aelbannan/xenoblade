@@ -28,7 +28,7 @@ public:
 
         virtual bool GetWaveSoundData(WaveSoundInfo* pSoundInfo,
                                       WaveSoundNoteInfo* pNoteInfo,
-                                      WaveData* pWaveData, const void* pWsdData,
+                                      WaveInfo* pWaveData, const void* pWsdData,
                                       int index, int noteIndex,
                                       u32 callbackArg) const = 0; // at 0xC
     };

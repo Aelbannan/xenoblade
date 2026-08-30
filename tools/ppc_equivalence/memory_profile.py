@@ -31,7 +31,7 @@ PROFILES_REQUIRING_RANGES = PROFILES_RANGE_CONSTRAINED
 MEMORY_PROFILE_VIOLATION = InvalidReason.MEMORY_PROFILE_VIOLATION
 
 
-@dataclass(slots=True)
+@dataclass()
 class MemoryEnvironment:
     profile: MemoryProfile = MemoryProfile.ASSUMED_ORDINARY_RAM
     ranges: list[tuple[int, int]] = field(default_factory=list)

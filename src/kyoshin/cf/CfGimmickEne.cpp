@@ -14,10 +14,14 @@
 #include "monolib/math/CMat34.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"  // func_80496288 scene delta-time
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CArtsSet.hpp"
+#include "kyoshin/cf/CArtsParam.hpp"
 
+using cf::CActorParam;
+using cf::CArtsSet;
+using cf::CArtsParam;
 using cf::CfGimmickEne;
-using cf::CfGimmickEneActor;
-using cf::CfGimmickEneActorVt;
 using cf::CfGimmickEneScnProc;
 using cf::CfGimmickEneSceneState;
 
@@ -154,8 +158,8 @@ void func_8026E5BC() {}
 // actor's arts slots for the configured arts id and cache the match.
 // ---------------------------------------------------------------------------
 
-void func_8026E5C0(CfGimmickEne* self, CfGimmickEneActor* actor) {
-    if (self->field_84 != actor->field_3F28) {
+extern "C" void func_8026E5C0(CfGimmickEne* self, CActorParam* actor) {
+    if (self->field_84 != *(u16*)((u8*)actor + 0x3F28)) {
         return;
     }
     self->field_B4 = actor;
@@ -164,9 +168,9 @@ void func_8026E5C0(CfGimmickEne* self, CfGimmickEneActor* actor) {
         return;
     }
     for (int i = 0; i < 8; i++) {
-        u16 res = func_80153CAC(self->field_B4->getArtsSet(), (s16)i);
+        int res = func_80153CAC((CArtsSet*)self->field_B4->CActorParam_UnkVirtualFunc122(), (s16)i);
         if (res != 0 && res == self->field_86) {
-            self->field_B8 = getArtsParamByIdx(self->field_B4->getArtsSet(), i);
+            self->field_B8 = getArtsParamByIdx((CArtsSet*)self->field_B4->CActorParam_UnkVirtualFunc122(), i);
         }
     }
 }
@@ -176,7 +180,7 @@ void func_8026E5C0(CfGimmickEne* self, CfGimmickEneActor* actor) {
 // active flag and fire the outro sound if configured.
 // ---------------------------------------------------------------------------
 
-void func_8026E678(CfGimmickEne* self, CfGimmickEneActor* actor) {
+extern "C" void func_8026E678(CfGimmickEne* self, CActorParam* actor) {
     if (actor == self->field_B4) {
         self->field_B4 = 0;
         self->field_74 &= 0xFFFFFFBF;
@@ -267,10 +271,10 @@ void func_8026EBA8(CfGimmickEne* self) {
 
     // Compare the actor's current arts value (vtable 0x128) against the
     // arts id scaled by a constant and the actor's factor (vtable 0x12C).
-    f32 factor = ((CfGimmickEneActorVt*)self->field_B4)->vf12C();
+    f32 factor = self->field_B4->CActorParam_UnkVirtualFunc38();
     f32 artsF = lbl_eu_8066897C * (f32)self->field_86;
     f32 limit = artsF * factor;
-    f32 value = ((CfGimmickEneActorVt*)self->field_B4)->vf128();
+    f32 value = self->field_B4->CActorParam_UnkVirtualFunc37();
     if (value > limit) {
         return;
     }

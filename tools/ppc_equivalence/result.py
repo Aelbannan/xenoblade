@@ -86,7 +86,7 @@ SUPPORTED_FUSED_INPUT_DOMAINS: frozenset[str] = frozenset({
 })
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class FloatingPointDomain:
     rounding_modes: tuple[str, ...] = ("nearest-even",)
     require_ni_zero: bool = True
@@ -316,7 +316,7 @@ RESULT_FORMAT = 24
 MASKING_SEMANTICS = "per-implementation-independent-v1"
 
 
-@dataclass(slots=True)
+@dataclass()
 class PrivateStackInfo:
     enabled_on_all_terminal_paths: bool
     disabled_reasons: list[str] = field(default_factory=list)
@@ -330,7 +330,7 @@ class PrivateStackInfo:
         }
 
 
-@dataclass(slots=True)
+@dataclass()
 class MemoryScope:
     comparison: str = "touched-byte-extensional"
     masking_semantics: str = MASKING_SEMANTICS
@@ -424,7 +424,7 @@ class ProofStatus(str, Enum):
     INTERNAL_ERROR = "internal_error"
 
 
-@dataclass(slots=True)
+@dataclass()
 class ProofResult:
     status: ProofStatus
     architecture_model: str = ARCHITECTURE_MODEL

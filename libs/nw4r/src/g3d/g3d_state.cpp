@@ -2058,3 +2058,14 @@ void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 } // namespace detail
 } // namespace g3d
 } // namespace nw4r
+
+// Absorbed data for g3d_state: sdata, rodata, bss, sbss
+// sdata 0x80663468 (8) + rodata 0x8051D660 (48) + bss/sbss pads to reach retail sizes
+extern "C" const char lbl_eu_8061FA20[];
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663468 = 0xFFFFFFFF;
+extern "C" __declspec(section ".sdata") u32 lbl_eu_8066346C = (u32)lbl_eu_8061FA20;
+extern "C" __declspec(section ".rodata") const unsigned char lbl_eu_8051D660[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
+__declspec(align(8)) unsigned char bss_pad_g3d_state_bss[0x1108];
+__declspec(align(8)) u32 sbss_pad1; __declspec(align(8)) u32 sbss_pad2; __declspec(align(8)) u32 sbss_pad3;
+__declspec(align(8)) u32 sbss_pad4; __declspec(align(8)) u32 sbss_pad5;
+

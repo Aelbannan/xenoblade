@@ -80,12 +80,12 @@ struct CfGimmickElvData;
 namespace cf {
 class CfGimmickLock;
 class CfGimmickEne;
-struct CfGimmickEneActor;
+class CActorParam;
 }
 extern "C" void func_8020B264(CfGimmickElvData* self, int show);
 extern "C" void func_8020CAAC(cf::CfGimmickLock* self);
-extern "C" void func_8026E5C0(cf::CfGimmickEne* self, cf::CfGimmickEneActor* actor);
-extern "C" void func_8026E678(cf::CfGimmickEne* self, cf::CfGimmickEneActor* actor);
+extern "C" void func_8026E5C0(cf::CfGimmickEne* self, cf::CActorParam* actor);
+extern "C" void func_8026E678(cf::CfGimmickEne* self, cf::CActorParam* actor);
 extern "C" int func_8020D368(cf::CfGimmickLock* self, void* target);
 
 // Teardown / spawn helpers used by the lifecycle functions below.
@@ -568,7 +568,7 @@ void func_801F4CE4(CGimmickGlobal* self) {
 
 // Bind an actor to the enemy (type-7) gimmicks in the [0x200, 0x204) range;
 // iteration stops at the first non-enemy gimmick.
-void func_801F4D50(CGimmickGlobal* self, cf::CfGimmickEneActor* actor) {
+void func_801F4D50(CGimmickGlobal* self, cf::CActorParam* actor) {
     if (self->mFlags & 0x4) {
         for (s32 i = self->field_0x200; i < self->field_0x204; i++) {
             CGimmickEntry* g = self->mGimmicks[i];
@@ -581,7 +581,7 @@ void func_801F4D50(CGimmickGlobal* self, cf::CfGimmickEneActor* actor) {
 
 // Unbind the actor from the enemy (type-7) gimmicks starting at field_0x200;
 // iteration stops at the first non-enemy gimmick.
-void func_801F4DDC(CGimmickGlobal* self, cf::CfGimmickEneActor* actor) {
+void func_801F4DDC(CGimmickGlobal* self, cf::CActorParam* actor) {
     if (self->mFlags & 0x4) {
         for (s32 i = self->field_0x200; i < self->mGimmickCount; i++) {
             CGimmickEntry* g = self->mGimmicks[i];

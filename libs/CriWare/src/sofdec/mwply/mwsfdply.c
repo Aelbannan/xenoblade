@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 __declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B190 = 0.8;
-__declspec(section ".rodata") __attribute__((aligned(8))) const double lbl_eu_8051B198 = 4503601774854144;
+__declspec(section ".rodata") __attribute__((aligned(8))) double lbl_eu_8051B198 = 4503601774854144.0;
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051B1A0[0x610] = {
     0x45,0x32,0x30,0x30,0x31,0x30,0x37,0x30,0x33,0x46,0x20,0x6D,
     0x77,0x50,0x6C,0x79,0x53,0x66,0x64,0x53,0x74,0x61,0x6E,0x64,
@@ -542,13 +542,12 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
 }
 
 int MWSFPLY_SetFlowLimit(void *h) {
-    // The scale double IS lbl_eu_8051B190 (retail relocs on the lis/lfd pair;
-    // the older comment claiming 8051B170 was wrong - 0x8051B198 holds the
-    // 2^52 conversion magic, referenced via the builtin (double)(s32) cast).
-    // Referencing the named extern emits the retail relocs (the raw-address
-    // form inlined lis 0x8052/lfd -0x4E90 with no reloc).
-    MWSFD_SetFlowLimit(h,
-        (u32)(s32)(lbl_eu_8051B190 * (double)*(s32 *)((u8 *)h + 0x50C)));
+    s32 v = *(s32 *)((u8 *)h + 0x50C);
+    union { u32 w[2]; double d; } u;
+    u.w[0] = 0x43300000;
+    u.w[1] = (u32)v ^ 0x80000000;
+    double dv = u.d - lbl_eu_8051B198;
+    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * dv));
 }
 
 int mwPlyChkSupply(void *h) {

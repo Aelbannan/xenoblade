@@ -1,9 +1,16 @@
 #include <nw4r/lyt.h>
 
-// Retail vtable label (data object in nw4r_data.s). The class is novtable, so
-// the ctor stores this label explicitly (keeps the ctor reloc byte-identical
-// to retail while emitting no local .data vtable copy).
-extern "C" unsigned char lbl_eu_80569CA0[];
+// Retail vtable lbl_eu_80569CA0 (0x18) now owned by this TU (absorbed from
+// nw4r_data.s). The class is novtable, so the ctor stores this label
+// explicitly; we emit the retail vtable here with relocs.
+extern "C" void __dt__Q34nw4r3lyt16ResourceAccessorFv();
+extern "C" void* GetFont__Q34nw4r3lyt16ResourceAccessorFPCc();
+extern "C" {
+__declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_80569CA0[6] = {
+    nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt16ResourceAccessorFv, nullptr,
+    (const void*)&GetFont__Q34nw4r3lyt16ResourceAccessorFPCc, nullptr
+};
+}
 
 namespace nw4r {
 namespace lyt {

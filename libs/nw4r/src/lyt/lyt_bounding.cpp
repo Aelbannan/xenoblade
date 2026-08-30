@@ -7,6 +7,8 @@ namespace lyt {
 // (the C-linkage ctor definition emits the 0xC dead-init placeholder; the
 // object itself lives in the shared pool in the retail split).
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665498(&lbl_eu_80665470);
+// Pad .sbss to retail 8B - add 4-byte dummy in .sbss (small data, goes to .sbss)
+char lyt_bounding_sbss_pad[4];
 
 Bounding::Bounding(const res::Bounding* pRes, const ResBlockSet& rBlockSet)
     : Pane(pRes) {

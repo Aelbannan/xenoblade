@@ -333,67 +333,7 @@ struct CActParamAnimObjVt14 {
     virtual int f14();  // +0x14
 };
 
-// Vtable-view for the +0xE8 dispatch in func_80052934 (56 filler user
-// virtuals after two RTTI slots, then the dispatch target).
-struct CActParamAnimVtE8 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f03();
-    virtual int f04();
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();
-    virtual int f23();
-    virtual int f24();
-    virtual int f25();
-    virtual int f26();
-    virtual int f27();
-    virtual int f28();
-    virtual int f29();
-    virtual int f30();
-    virtual int f31();
-    virtual int f32();
-    virtual int f33();
-    virtual int f34();
-    virtual int f35();
-    virtual int f36();
-    virtual int f37();
-    virtual int f38();
-    virtual int f39();
-    virtual int f40();
-    virtual int f41();
-    virtual int f42();
-    virtual int f43();
-    virtual int f44();
-    virtual int f45();
-    virtual int f46();
-    virtual int f47();
-    virtual int f48();
-    virtual int f49();
-    virtual int f50();
-    virtual int f51();
-    virtual int f52();
-    virtual int f53();
-    virtual int f54();
-    virtual int f55();
-    virtual int dispatchE8(const ml::CVec3* v);  // +0xE8
-};
+// Deleted fake view CActParamAnimVtE8 - folded onto CActParamAnim::initAnimBlendVectors (vt+0xE8)
 
 // Cast-only interface for the owner object at +0x08: MWCC places the first
 // user virtual at vt+0x08 (two RTTI entries at vt+0x00/0x04), so the 4th
@@ -414,70 +354,7 @@ struct CActParamAnimOwnerIf {
     u32 field24;    // +0x24 (func_8004D950 stores it to field4C8)
 };
 
-// Vtable-view for func_8004BDCC's self dispatches at +0x18 (void) and
-// +0xF0 (void): 4 filler user virtuals, the +0x18 target, 53 more fillers,
-// then the +0xF0 target.
-struct CActParamAnimVt18F0 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f03();
-    virtual void dispatch18();  // +0x18
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();
-    virtual int f23();
-    virtual int f24();
-    virtual int f25();
-    virtual int f26();
-    virtual int f27();
-    virtual int f28();
-    virtual int f29();
-    virtual int f30();
-    virtual int f31();
-    virtual int f32();
-    virtual int f33();
-    virtual int f34();
-    virtual int f35();
-    virtual int f36();
-    virtual int f37();
-    virtual int f38();
-    virtual int f39();
-    virtual int f40();
-    virtual int f41();
-    virtual int f42();
-    virtual int f43();
-    virtual int f44();
-    virtual int f45();
-    virtual int f46();
-    virtual int f47();
-    virtual int f48();
-    virtual int f49();
-    virtual int f50();
-    virtual int f51();
-    virtual int f52();
-    virtual int f53();
-    virtual int f54();
-    virtual int f55();
-    virtual int f56();
-    virtual int f57();
-    virtual void dispatchF0();  // +0xF0
-};
+// Deleted fake view CActParamAnimVt18F0 - folded onto CActParamAnim::clearAnimState (vt+0x18)
 
 // Vtable-view for the attached sub-object dispatches in func_8004BDCC:
 // +0x64 takes the eff id word, +0x68 returns a handle stored to +0x4E4.
@@ -509,215 +386,83 @@ struct CActParamAnimObjVt6468 {
     virtual int dispatch68();               // +0x68
 };
 
-// Vtable-view for the +0x14 dispatch in func_8004FFBC: with two hidden RTTI
-// slots the 3rd user virtual (index 3) sits at vt+0x14 and returns a float.
-struct CActParamAnimVt14 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual f32 f03();  // +0x14
-};
+// Deleted fake view CActParamAnimVt14 - folded onto CActParamAnim::getAttachedAnimRate (vt+0x14)
 
-// Vtable-view for the +0x0C dispatch in func_8004FCE0: the second user
-// virtual (vt+0x0C after two RTTI slots) returns a float that is compared
-// against lbl_eu_80665EF0.
-struct CActParamAnimVt0C {
-    virtual int f00();
-    virtual f32 f01();  // +0x0C
-};
+// Deleted fake view CActParamAnimVt0C - folded onto CActParamAnim::getAttachedAnimTime (vt+0x0C)
 
-// Vtable-view for the +0xE4 dispatch in func_8004CF00 (55 filler user
-// virtuals, then the dispatch target at vt+0xE4).
-struct CActParamAnimVtE4 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f03();
-    virtual int f04();
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();
-    virtual int f23();
-    virtual int f24();
-    virtual int f25();
-    virtual int f26();
-    virtual int f27();
-    virtual int f28();
-    virtual int f29();
-    virtual int f30();
-    virtual int f31();
-    virtual int f32();
-    virtual int f33();
-    virtual int f34();
-    virtual int f35();
-    virtual int f36();
-    virtual int f37();
-    virtual int f38();
-    virtual int f39();
-    virtual int f40();
-    virtual int f41();
-    virtual int f42();
-    virtual int f43();
-    virtual int f44();
-    virtual int f45();
-    virtual int f46();
-    virtual int f47();
-    virtual int f48();
-    virtual int f49();
-    virtual int f50();
-    virtual int f51();
-    virtual int f52();
-    virtual int f53();
-    virtual int f54();
-    virtual int dispatchE4();  // +0xE4
-};
+// Deleted fake view CActParamAnimVtE4 - folded onto CActParamAnim::func_80052934 (vt+0xE4)
 
-// Vtable-view for the +0xEC dispatch in func_8004FE58 (57 filler user
-// virtuals, then the dispatch target at vt+0xEC).
-struct CActParamAnimVtEC {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f03();
-    virtual int f04();
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();
-    virtual int f23();
-    virtual int f24();
-    virtual int f25();
-    virtual int f26();
-    virtual int f27();
-    virtual int f28();
-    virtual int f29();
-    virtual int f30();
-    virtual int f31();
-    virtual int f32();
-    virtual int f33();
-    virtual int f34();
-    virtual int f35();
-    virtual int f36();
-    virtual int f37();
-    virtual int f38();
-    virtual int f39();
-    virtual int f40();
-    virtual int f41();
-    virtual int f42();
-    virtual int f43();
-    virtual int f44();
-    virtual int f45();
-    virtual int f46();
-    virtual int f47();
-    virtual int f48();
-    virtual int f49();
-    virtual int f50();
-    virtual int f51();
-    virtual int f52();
-    virtual int f53();
-    virtual int f54();
-    virtual int f55();
-    virtual int f56();
-    virtual int dispatchEC();  // +0xEC
-};
+// Deleted fake view CActParamAnimVtEC - folded onto CActParamAnim::func_8004FFBC (vt+0xEC)
 
-// Vtable-view for the +0x80 dispatch in func_8004D194. With two hidden RTTI
-// slots at vt+0x00/0x04 the first user virtual sits at vt+0x08, so slot 0x80
-// is the 30th user virtual (30 filler virtuals, then the dispatch target). A
-// real virtual call through the cast emits retail's lwz r12,0 / lwz r12,0x80
-// / mtctr / bcctrl (manual ((void**)vt)[0x80/4] indexing emits a scratch
-// register instead - MWCC_REF vtable dispatch).
-struct CActParamAnimVt80 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f03();
-    virtual int f04();
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();
-    virtual int f23();
-    virtual int f24();
-    virtual int f25();
-    virtual int f26();
-    virtual int f27();
-    virtual int f28();
-    virtual int f29();
-    virtual int dispatch80(u32 arg);  // +0x80
-};
+// Deleted fake view CActParamAnimVt80 - folded onto CActParamAnim::calcAnimBlendWeight (vt+0x80)
 
-class CActParamAnim {
+class __declspec(novtable) CActParamAnim {
 public:
     CActParamAnim();
     virtual ~CActParamAnim();
-    void func_8004B114();
-    void func_8004D2F8();
-    void func_8004D4AC();
-    void func_8004D950();
-    void func_8004DAE0();
-    void func_8004DDD0();
-    void func_8004DF9C();
-    void func_8004E168();
-    void func_8004E334();
-    void func_8004E828();
+    virtual float getAttachedAnimTime();
+    virtual float getAttachedAnimScale();
+    virtual float getAttachedAnimRate();
+    virtual void clearAnimState();
+    virtual void func_8004D194();
+    virtual void func_8004DDD0();
+    virtual void func_8004DF9C();
+    virtual void func_8004E168();
+    virtual void func_8004E334();
+    virtual void func_8004E500();
+    virtual void func_8004E828();
+    virtual void func_8004D2F8();
+    virtual void func_8004D4AC();
+    virtual void func_8004E694();
+    virtual void func_8004D650();
+    virtual void __vt_48();
+    virtual void func_8004D7EC();
+    virtual void func_8004D950();
+    virtual void func_8004E9EC();
+    virtual void func_8004ECF4() const;
+    virtual void func_8004F1E4();
+    virtual void func_8004F334();
+    virtual void func_8004F884();
+    virtual int func_8004FAB4(u32 param);
+    virtual void func_8004FCE0();
+    virtual void func_8004FE58();
+    virtual void func_80050744();
+    virtual void __vt_78();
+    virtual int func_80050890(u32 a, u32 b);
+    virtual void calcAnimBlendWeight(u32 arg);
+    virtual int func_80050C50(u32 a, u32 b);
+    virtual void func_80050DB0();
+    virtual void func_80050F5C();
+    virtual void func_800510FC();
+    virtual void func_800512A8();
+    virtual void func_80051448();
+    virtual void func_8004F484();
+    virtual int func_8004F5FC(u32 a, u32 b);
+    virtual bool isAnimFrameActive();
+    virtual bool isAnimTransActive();
+    virtual bool isAnimUpdateActive();
+    virtual bool isAnimScaleActive();
+    virtual bool isAnimRotateActive();
+    virtual bool isAnimEffectActive();
+    virtual void func_800516C0();
+    virtual void func_80051584();
+    virtual void func_8004DAE0();
+    virtual void func_800517FC();
+    virtual void func_8005194C();
+    virtual bool isAnimChainActive();
+    virtual bool isAnimLoopActive();
+    virtual bool isAnimMotionActive();
+    virtual bool isAnimBlendActive();
+    virtual void func_8004B114();
+    virtual void func_80052934(const ml::CVec3* v);
+    virtual void initAnimBlendVectors(const ml::CVec3* v);
+    virtual void func_8004FFBC();
+    virtual void __vt_F0();
+    // Legacy non-virtual wrappers (kept for compatibility, now virtual above)
     // func_8004E9EC is a forced-name free function (retail mangles it as a
     // member but the body reads r3-r5 / f1-f2); see CActParamAnim.cpp.
-    void func_8004ECF4() const;
-    void func_8004F484();
-    int func_8004FAB4(u32 param);
-    void func_8004FCE0();
-    void func_8004FE58();
-    void func_8004FFBC();
-    void func_80050890();
-    void func_80050DB0();
-    void func_800510FC();
-    void func_80052934();
 
-    // Converted free functions → members
+    // Converted free functions → members (non-virtual helpers)
     void* getChild();
     float getBlendWeight();
     int checkFlag(int mask);
@@ -729,10 +474,7 @@ public:
     void copyVec3To3C0(const float* src);
     void setVec3Y(float val);
     int checkAnimFlag();
-    float getAttachedAnimTime();
-    float getAttachedAnimRate();
     void callObjUpdate();
-    float getAttachedAnimScale();
     int callObjFunc(void* param);
     void* getNextChainObj();
     void setBlendFlag(int param);
@@ -741,8 +483,6 @@ public:
     void setAnimCounter(int value);
     void* getEffObj();
     void clearEffObj();
-    void clearAnimState();
-    void func_8004F884();
     void resetVec3Y();
     void setActiveFlag(s32 param);
     void startAnimA();
@@ -757,16 +497,6 @@ public:
     u32 testAndClearFlag18();
     void mulVec3Y(float param_2);
     int getChainInt();
-    bool isAnimBlendActive();
-    bool isAnimMotionActive();
-    bool isAnimLoopActive();
-    bool isAnimChainActive();
-    bool isAnimEffectActive();
-    bool isAnimRotateActive();
-    bool isAnimScaleActive();
-    bool isAnimUpdateActive();
-    bool isAnimTransActive();
-    bool isAnimFrameActive();
 
 private:
     u8 _pad_04[0x08];      // +0x04..+0x0B

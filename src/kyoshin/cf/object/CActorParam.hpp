@@ -477,10 +477,10 @@ namespace cf {
     public:
         CActorParam(UNKTYPE* r4, UNKTYPE* r5);
     #pragma region vtable
-        virtual void CActorParam_UnkVirtualFunc1();   //0x98
-        virtual void CActorParam_UnkVirtualFunc2();   //0x9C
+        virtual const char* CActorParam_UnkVirtualFunc1();   //0x98
+        virtual void* CActorParam_UnkVirtualFunc2();   //0x9C
         virtual void CActorParam_UnkVirtualFunc3();   //0xA0
-        virtual void CActorParam_UnkVirtualFunc4();   //0xA4
+        virtual void CActorParam_UnkVirtualFunc4(void* arts);   //0xA4
         virtual void CActorParam_UnkVirtualFunc5();   //0xA8
         virtual void CActorParam_UnkVirtualFunc6();   //0xAC
         virtual void CActorParam_UnkVirtualFunc7();   //0xB0

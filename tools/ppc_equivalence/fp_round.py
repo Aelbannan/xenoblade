@@ -28,7 +28,7 @@ BINARY64_EXP_BITS: Final[int] = 11
 BINARY64_EXP_BIAS: Final[int] = 1023
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FpFormat:
     """Target IEEE-754 encoding parameters."""
 
@@ -64,7 +64,7 @@ FORMAT_BINARY64 = FpFormat(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RoundGRS:
     """Guard, round, and sticky bits from the last rounding step."""
 
@@ -74,7 +74,7 @@ class RoundGRS:
     discarded_nonzero: bool
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RoundOutcome:
     """Result of one format-directed rounding step."""
 

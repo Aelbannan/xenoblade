@@ -93,7 +93,7 @@ _LOOP_PROGRAM_SHAPES = frozenset(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RowReplayResult:
     """Outcome of replaying one corpus data row against the model under test."""
 
@@ -105,7 +105,7 @@ class RowReplayResult:
     expected: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CorpusReplayReport:
     """Aggregate replay report for all ``gx_fifo_v1`` corpora."""
 

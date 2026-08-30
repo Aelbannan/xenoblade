@@ -972,7 +972,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     // Direct (non-virtual) call to the CActorParam base implementation.
-    ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_UnkVirtualFunc4();
+    ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_UnkVirtualFunc4(nullptr);
     Lit10 buf = lbl_eu_804FC5E0;
     PCIf* p = reinterpret_cast<PCIf*>(this);
     int n = p->_v0308();

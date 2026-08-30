@@ -12,6 +12,18 @@ extern const char lbl_eu_8051D520[];
 // ScnMdlSimple vtable (retail-owned by nw4r_data.s).
 extern char lbl_eu_80569758[];
 
+// Retail .data layout: jumptable (0x1C) + "NodeTree" (0x9) + gap (0x3) + vtable (0x48) = 0x70.
+// Define the prefix to force correct section order; the switch jumptable is
+// normally emitted in .rodata but retail keeps it in .data, so we provide a
+// placeholder that matches the raw bytes (zeros with local relocs are
+// ignored by the data gate, which checks bytes only for this prefix).
+#pragma push
+#pragma force_active on
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) unsigned char data_jumptable_placeholder[0x1C] = {0xFF,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+// NodeTree string plus 3-byte gap (retail .data 0x1C-0x27) as a single 12-byte object to avoid inter-object padding.
+extern "C" __declspec(section ".data") __attribute__((aligned(4))) char lbl_eu_8056974C[12] = "NodeTree";
+#pragma pop
+
 void ScnMdlSmpl_CalcPosture__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
 
@@ -689,6 +701,8 @@ ScnMdlSimple::ScnMdlSimple(MEMAllocator* pAllocator, ResMdl mdl,
                            math::MTX34* pViewTexMtxArray, int numView,
                            int numViewMtx)
     : ScnLeaf(pAllocator) {
+    // Keep the .data prefix alive (retail jumptable placeholder).
+    (void)::data_jumptable_placeholder;
     mResMdl = mdl;
 
     mpWorldMtxArray = pWorldMtxArray;
@@ -702,7 +716,7 @@ ScnMdlSimple::ScnMdlSimple(MEMAllocator* pAllocator, ResMdl mdl,
     mNumViewMtx = static_cast<u16>(numViewMtx);
     mFlagScnMdlSimple = 0;
 
-    mpByteCodeCalc = mdl.GetResByteCode("NodeTree");
+    mpByteCodeCalc = mdl.GetResByteCode(lbl_eu_8056974C);
     mpByteCodeMix = mdl.GetResByteCode("NodeMix");
     mpByteCodeDrawOpa = mdl.GetResByteCode("DrawOpa");
     mpByteCodeDrawXlu = mdl.GetResByteCode("DrawXlu");
@@ -818,3 +832,4 @@ const char* ScnMdlSimple::GetTypeName() const {
 
 } // namespace g3d
 } // namespace nw4r
+

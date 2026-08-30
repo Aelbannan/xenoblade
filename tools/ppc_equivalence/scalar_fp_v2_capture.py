@@ -59,7 +59,7 @@ _CAPTURE_OBS = struct.Struct(">IIQII")  # magic, pad, fpr7, fpscr, cr
 _CAPTURE_OBS_SIZE = _CAPTURE_OBS.size
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CaptureTarget:
     corpus_file: str
     row_id: str
@@ -71,7 +71,7 @@ class CaptureTarget:
     expected: dict[str, Any]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CaptureResult:
     row_id: str
     corpus_file: str

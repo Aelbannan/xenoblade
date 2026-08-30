@@ -1,6 +1,6 @@
 [User] You are a NEW subagent of chat "Is this audit reasonable?" (parent 9aef6020). Do not talk to or reuse the old takeover workers. Skip any assigned id whose current targets.json instruction_match is already 100. Release stale midband claims if you find them on your units, then claim with your owner id.
 
-You are a Xenoblade Chronicles Wii decomp matching agent on the private/downstream co-op fork at /Users/ahmedelbannan/Ahmed/xenoblade.
+You are a Xenoblade Chronicles Wii decomp matching agent on the private/downstream co-op fork at /Users/ahmed/projects/xenoblade.
 
 ## Mission
 Close these 62 mid-band registry rows to **FULL_MATCH at 100% static** (prefer FULL_MATCH over EQUIVALENT_MATCH). They are already labelled FULL_MATCH but their persisted objdiff `instruction_match` is in (0, 100). That is a real residual, not the 0% null-symbol reporting artifact.
@@ -119,8 +119,8 @@ Prefer FULL_MATCH (100% static + relocs + split-size). EQUIVALENT_MATCH only if 
 
 Start now with the smallest assigned function.
 [Thought] Let me start by reading the SKILL.md and the detail file.
-[Read] /Users/ahmedelbannan/Ahmed/xenoblade/.agents/skills/xenoblade-decomp/SKILL.md
-[Shell] cat /Users/ahmedelbannan/Ahmed/xenoblade/.scratch/midband_batch_06_detail.tsv
+[Read] /Users/ahmed/projects/xenoblade/.agents/skills/xenoblade-decomp/SKILL.md
+[Shell] cat /Users/ahmed/projects/xenoblade/.scratch/midband_batch_06_detail.tsv
 [Thought] Let me read PLAN.md §§2, 3, 17 quickly (maybe just skim relevant sections), and check targets status. Start with smallest: us-80461498 (0x8, 97.5) getInstance CLibHbm. Also several 0x8 functions at 97.5.
 
 Note the mission says these are labelled FULL_MATCH but instruction_match in (0,100). Interesting — 97.5% for an 8-byte function is odd. Let's start.
@@ -178,8 +178,8 @@ Fix options in CfObjectActor.cpp: avoid re-declaring with different signature. T
 Check whether CfObjectActor.cpp uses anything else from CfMapItemManager.hpp. Also check what CfObjectActor.hpp declares (comment says func_80174B4C declared there in LOCAL 5-arg form?). Line src/kyoshin/cf/object/CfObjectActor.hpp:42 comment. Let me read it.
 [Shell] sed -n 30,60p src/kyoshin/cf/object/CfObjectActor.hpp; echo ===; grep -n "CfMapItemManager\|func_80174\|func_800B708C\|CBattleManagerApi" src/kyoshin/cf/object/CfObjectActor.cpp
 [Thought] The .cpp uses CfMapItemManager.hpp only... let me check what it uses from it. The .cpp uses func_80174C98 and func_800B708C (from code_802B8A3C.hpp). Does it use anything from CfMapItemManager.hpp? Let me check git history — was this compiling before? Check `git log --oneline -3` and `git diff HEAD` for these files.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade git log --oneline -5 -- src/kyoshin/cf/CfMapItemManager.hpp 2>/dev/null | cat echo === git diff HEAD --stat -- include/kyoshin/cf/CfMapItemManager.hpp src/ky...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade; git log --oneline -5 -- src/kyoshin/cf/CfMapItemManager.hpp | cat
+[Shell] cd /Users/ahmed/projects/xenoblade git log --oneline -5 -- src/kyoshin/cf/CfMapItemManager.hpp 2>/dev/null | cat echo === git diff HEAD --stat -- include/kyoshin/cf/CfMapItemManager.hpp src/ky...
+[Shell] cd /Users/ahmed/projects/xenoblade; git log --oneline -5 -- src/kyoshin/cf/CfMapItemManager.hpp | cat
 [Thought] Git log is blocked. OK, avoid git commands. Just fix the source directly.
 
 Check what CfMapItemManager.hpp contains and whether CfObjectActor.cpp uses anything else from it besides the conflicting decl. The .cpp includes it — maybe for types like CfMapItemManager? Let me read CfMapItemManager.hpp fully (it's short?) and check usage in CfObjectActor.cpp.

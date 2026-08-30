@@ -59,7 +59,7 @@ _COMPARE_OPS = frozenset({"fcmpu", "fcmpo"})
 _CONVERT_OPS = frozenset({"frsp"})
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RowReplayResult:
     """Outcome of replaying one corpus data row."""
 
@@ -71,7 +71,7 @@ class RowReplayResult:
     expected: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CorpusReplayReport:
     """Aggregate replay report for all corpora."""
 

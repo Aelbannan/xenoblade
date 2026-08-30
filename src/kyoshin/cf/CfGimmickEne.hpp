@@ -22,114 +22,9 @@ namespace cf {
 
 class CArtsSet;
 class CArtsParam;
+class CActorParam;
 class CfGimmickEne;
 struct CfGimmickEneSceneState;
-
-// Actor object bound by the enemy gimmick (CActorParam-family battle object).
-// The vtable slot at 0x27C returns the actor's CArtsSet; the u16 at 0x3F28 is
-// the actor's character id.
-struct CfGimmickEneActor {
-    void** vtable;                  // 0x00
-    u8 pad04[0x3F28 - 0x04];        // 0x04..0x3F27
-    u16 field_3F28;                 // 0x3F28 - character id
-
-    // vtable slot 0x27C (index 159) -> CArtsSet*
-    CArtsSet* getArtsSet() {
-        return reinterpret_cast<CArtsSet* (*)(CfGimmickEneActor*)>(vtable[0x27C / 4])(this);
-    }
-
-    // vtable slot 0x12C (index 75) -> f32 (arts damage/recovery factor)
-    f32 vf12C() {
-        return reinterpret_cast<f32 (*)(CfGimmickEneActor*)>(vtable[0x12C / 4])(this);
-    }
-
-    // vtable slot 0x128 (index 74) -> f32 (current arts value)
-    f32 vf128() {
-        return reinterpret_cast<f32 (*)(CfGimmickEneActor*)>(vtable[0x128 / 4])(this);
-    }
-};
-
-// Cast-only SI iface over the bound actor's battle vtable (never constructed).
-// MWCC virtual dispatch emits the retail lwz r12 / lwz r12,off(r12) pattern,
-// while function-pointer vtable loads color the vptr temp r4/r5 (see
-// CMenuBattlePlayerState.cpp MenuBpsActorIf). RTTI on: the first declared
-// virtual lands at vtable +0x8, so placeholders fill 0x8..0x124.
-struct CfGimmickEneActorVt {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual f32 vf128();   // 0x128 - current arts value
-    virtual f32 vf12C();   // 0x12C - arts damage/recovery factor
-};
 
 // Minimal view of the scene object (CScn-family); +0x8C holds the active
 // scene-state object.
@@ -181,7 +76,7 @@ public:
     /* 0xAA */ u16 dispatchIdx;     // index into the lbl_eu_80537A20 dispatch table
     /* 0xAC */ f32 field_AC;        // running timer
     /* 0xB0 */ f32 field_B0;
-    /* 0xB4 */ CfGimmickEneActor* field_B4;  // bound actor
+    /* 0xB4 */ CActorParam* field_B4;  // bound actor (CActorParam family, retail offset 0x3F28 holds char id)
     /* 0xB8 */ CArtsParam* field_B8;         // matched arts param
     /* 0xBC */ nw4r::g3d::ScnProc* field_BC;  // ScnProc marker node
 };
@@ -279,9 +174,9 @@ extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* scene, unsigned int index);
 // Gimmick-state setter on the CfGimmickGlobal (sound/event dispatcher).
 extern void func_801F4B68(int value, int id);
 
-// CArtsSet helpers (the arts set pointer comes from CfGimmickEneActor::getArtsSet()).
+// CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_UnkVirtualFunc122()).
 extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);
-extern unsigned short func_80153CAC(const void* artsSet, int index);
+extern int func_80153CAC(const void* artsSet, int index);
 
 // Same-TU call targets (scaffold stubs).
 extern void func_8026E6E4(cf::CfGimmickEne* self);

@@ -49,7 +49,7 @@ public:
         return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    void SetPlayerPriority(int priority);
 
     virtual bool IsAttachedTempSpecialHandle(); // at 0x5C
     virtual void DetachTempSpecialHandle();     // at 0x60

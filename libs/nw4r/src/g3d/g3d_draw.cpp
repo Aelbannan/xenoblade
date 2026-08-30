@@ -9,9 +9,11 @@
 // instantiated the MSL implementation in this TU (sort<...> and the
 // __sort132 median-of-3 helper), so define the templates here to get the
 // same instantiated symbols (sort<PQ54...MdlZ, ...> and __sort132<...>).
-// Retail stores the rotating pivot counter in an sdata global defined in
-// this TU (retail linker name lbl_eu_8066347C).
-int lbl_eu_8066347C = 0;
+// Absorbed retail sdata (lbl_eu_80663478/4C, -4)
+extern "C" {
+__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663478 = -4;
+__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_8066347C = -4;
+}
 
 namespace std {
 

@@ -14,7 +14,67 @@ extern int ADXSTM_Start(void *);
 extern int ADXSTM_GetStat(void *);
 extern int ADXSTM_ReleaseFileNw(void *);
 
-extern char lbl_eu_80518478[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_80518478[0xE6] = {
+    0x45323030, 0x35303132, 0x3830313A, 0x20496E76,
+    0x616C6964, 0x20706172, 0x616D6574, 0x65723D73,
+    0x6A20284C, 0x53435F43, 0x72656174, 0x65290A00,
+    0x45323030, 0x35303132, 0x3830323A, 0x204E6F74,
+    0x20656E6F, 0x75676820, 0x696E7374, 0x616E6365,
+    0x20284C53, 0x435F4372, 0x65617465, 0x290A0045,
+    0x32303035, 0x30313238, 0x30373A20, 0x496E7661,
+    0x6C696420, 0x70617261, 0x6D657465, 0x72206C73,
+    0x633D4E55, 0x4C4C0A00, 0x45323030, 0x35303132,
+    0x3830353A, 0x20496E76, 0x616C6964, 0x20706172,
+    0x616D6574, 0x6572206C, 0x73633D4E, 0x554C4C0A,
+    0x00453230, 0x30353031, 0x32383033, 0x3A20496E,
+    0x76616C69, 0x64207061, 0x72616D65, 0x74657220,
+    0x6C73633D, 0x4E554C4C, 0x0A004532, 0x30303530,
+    0x31323830, 0x343A2049, 0x6E76616C, 0x69642070,
+    0x6172616D, 0x65746572, 0x20666E61, 0x6D653D25,
+    0x730A0045, 0x32303035, 0x30313238, 0x30363A20,
+    0x496E7661, 0x6C696420, 0x70617261, 0x6D657465,
+    0x72206C73, 0x633D4E55, 0x4C4C0A00, 0x45323030,
+    0x35303132, 0x3830383A, 0x20496E76, 0x616C6964,
+    0x20706172, 0x616D6574, 0x6572206C, 0x73633D4E,
+    0x554C4C0A, 0x00453230, 0x30353031, 0x32383039,
+    0x3A20496E, 0x76616C69, 0x64207061, 0x72616D65,
+    0x74657220, 0x6C73633D, 0x4E554C4C, 0x0A004532,
+    0x30303530, 0x31323831, 0x303A2049, 0x6E76616C,
+    0x69642070, 0x6172616D, 0x65746572, 0x206C7363,
+    0x3D4E554C, 0x4C0A0045, 0x32303035, 0x30313238,
+    0x31313A20, 0x496E7661, 0x6C696420, 0x70617261,
+    0x6D657465, 0x72206C73, 0x633D4E55, 0x4C4C0A00,
+    0x45323030, 0x35303132, 0x3831323A, 0x20496E76,
+    0x616C6964, 0x20706172, 0x616D6574, 0x6572206E,
+    0x6F3D2564, 0x0A004532, 0x30303530, 0x31323831,
+    0x333A2049, 0x6E76616C, 0x69642070, 0x6172616D,
+    0x65746572, 0x206C7363, 0x3D4E554C, 0x4C0A0045,
+    0x32303035, 0x30313238, 0x31343A20, 0x43616E20,
+    0x6E6F7420, 0x66696E64, 0x20737472, 0x65616D20,
+    0x4944203D, 0x25640A00, 0x45323030, 0x35303132,
+    0x3831353A, 0x20496E76, 0x616C6964, 0x20706172,
+    0x616D6574, 0x6572206C, 0x73633D4E, 0x554C4C0A,
+    0x00453230, 0x30353031, 0x32383136, 0x3A204361,
+    0x6E206E6F, 0x74206669, 0x6E642073, 0x74726561,
+    0x6D204944, 0x203D2564, 0x0A004532, 0x30303530,
+    0x31323831, 0x373A2049, 0x6E76616C, 0x69642070,
+    0x6172616D, 0x65746572, 0x206C7363, 0x3D4E554C,
+    0x4C0A0045, 0x32303035, 0x30313238, 0x31383A20,
+    0x43616E20, 0x6E6F7420, 0x66696E64, 0x20737472,
+    0x65616D20, 0x4944203D, 0x25640A00, 0x45323030,
+    0x35303132, 0x3831393A, 0x20496E76, 0x616C6964,
+    0x20706172, 0x616D6574, 0x6572206C, 0x73633D4E,
+    0x554C4C0A, 0x00453230, 0x30353031, 0x32383230,
+    0x3A20496E, 0x76616C69, 0x64207061, 0x72616D65,
+    0x74657220, 0x6D696E5F, 0x76616C3D, 0x25640A00,
+    0x45323030, 0x35303132, 0x3832313A, 0x20496E76,
+    0x616C6964, 0x20706172, 0x616D6574, 0x6572206C,
+    0x73633D4E, 0x554C4C0A, 0x00453230, 0x30353031,
+    0x32383232, 0x3A20496E, 0x76616C69, 0x64207061,
+    0x72616D65, 0x74657220, 0x6C73633D, 0x4E554C4C,
+    0x0A000000, 0x00000000
+};
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80518810[0x30] = "\nMFCI/WII Ver.1.23 Build:Oct 28 2009 21:11:24\n";
 extern u8 lbl_eu_805E7D40[];
 
 #define LSE_MAX   0x20
@@ -79,7 +139,7 @@ void *lsc_Create(void *handle) {
     LscEntry *entry;
 
     if (handle == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478);
+        LSC_CallErrFunc_((const char*)lbl_eu_80518478);
         return NULL;
     }
 
@@ -94,7 +154,7 @@ void *lsc_Create(void *handle) {
     }
 
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x30);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x30));
     } else {
         memset(entry, 0, LSE_SIZE);
         entry->hndl = handle;
@@ -121,7 +181,7 @@ void LSC_Destroy(LscEntry *entry) {
     if (entry != NULL) {
         LSC_Enter();
         if (entry == NULL) {
-            LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
+            LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x5F));
         } else {
             if (entry->stm != NULL) {
                 ADXSTM_Stop(entry->stm);
@@ -132,7 +192,7 @@ void LSC_Destroy(LscEntry *entry) {
                 entry->f2c = 0;
                 LSC_Enter();
                 if (entry == NULL) {
-                    LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+                    LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x88));
                 } else if ((s8)entry->stat == 0) {
                     entry->cur = 0;
                     entry->idx = 0;
@@ -179,13 +239,13 @@ int lsc_EntryFileRange(LscEntry *e, char *fname, int off_lo, int off_hi, int siz
     u32 len;
 
     if (e == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0xB1);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0xB1));
         return -1;
     }
     if (e->num >= 0x10)
         return -1;
     if (fname == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0xDA);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0xDA));
         return -1;
     }
 
@@ -226,13 +286,13 @@ void LSC_Start(void *entry) {
 
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x103);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x103));
     } else {
         LSC_LockCrs(&crs);
         if ((s8)e[0x01] != 0) {
             LSC_Enter();
             if (entry == NULL) {
-                LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
+                LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x5F));
             } else {
                 if (*(void **)((u8 *)entry + 0x28) != NULL) {
                     ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
@@ -243,7 +303,7 @@ void LSC_Start(void *entry) {
                     *(s32 *)((u8 *)entry + 0x2C) = 0;
                     LSC_Enter();
                     if (entry == NULL) {
-                        LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+                        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x88));
                     } else if ((s8)((u8 *)entry)[0x01] == 0) {
                         *(s32 *)((u8 *)entry + 0x1C) = 0;
                         *(s32 *)((u8 *)entry + 0x20) = 0;
@@ -267,7 +327,7 @@ void LSC_Start(void *entry) {
 void LSC_Stop(void *entry) {
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x5F));
     } else {
         if (*(void **)((u8 *)entry + 0x28) != NULL) {
             ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
@@ -278,7 +338,7 @@ void LSC_Stop(void *entry) {
             *(s32 *)((u8 *)entry + 0x2C) = 0;
             LSC_Enter();
             if (entry == NULL) {
-                LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+                LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x88));
             } else if ((s8)((u8 *)entry)[0x01] == 0) {
                 *(s32 *)((u8 *)entry + 0x1C) = 0;
                 *(s32 *)((u8 *)entry + 0x20) = 0;
@@ -294,7 +354,7 @@ void LSC_Stop(void *entry) {
 void LSC_Pause(void *entry, int pause) {
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x12C);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x12C));
     } else if (pause == 1) {
         ((u8 *)entry)[0x04] = 1;
     } else {
@@ -325,7 +385,7 @@ int LSC_GetStat(void *entry) {
     int r;
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x155);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x155));
         r = -1;
     } else {
         r = *(s8 *)((u8 *)entry + 0x01);
@@ -338,7 +398,7 @@ int LSC_GetNumStm(void *entry) {
     int r;
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x17E);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x17E));
         r = -1;
     } else {
         r = *(s32 *)((u8 *)entry + 0x24);
@@ -350,16 +410,16 @@ int LSC_GetNumStm(void *entry) {
 void LSC_SetFlowLimit(void *entry, int limit) {
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x2EC);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x2EC));
     } else if (limit < 0 || limit > *(s32 *)((u8 *)entry + 0x18)) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x315, limit);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x315), limit);
     } else {
         *(s32 *)((u8 *)entry + 0x14) = limit;
     }
     LSC_Leave();
 }
 
-extern u32 lbl_eu_805EC440[];
+u32 lbl_eu_805EC440[4];
 
 // LSC_CallStatFunc: dispatch to the stat hook. The void* return + `return h`
 // null path are REQUIRED for retail codegen: the return-value liveness keeps
@@ -381,7 +441,7 @@ void *LSC_CallStatFunc(void *h) {
 void LSC_SetLpFlg(void *entry, int flag) {
     LSC_Enter();
     if (entry == NULL) {
-        LSC_CallErrFunc_(lbl_eu_80518478 + 0x369);
+        LSC_CallErrFunc_((const char*)(lbl_eu_80518478 + 0x369));
     } else {
         ((u8 *)entry)[0x03] = (u8)flag;
     }

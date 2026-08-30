@@ -10,7 +10,7 @@ from tools.ppc_equivalence.model import concrete_state
 from tools.ppc_equivalence.semantics import ConcreteOps, execute_cfg
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FixtureObservation:
     result: int
     gpr: tuple[int, ...]

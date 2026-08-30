@@ -25,7 +25,7 @@ from .fp_round import (
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class LoadStoreBitOutcome:
     """Bit-level load/store transform with optional memory metadata."""
 

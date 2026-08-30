@@ -55,8 +55,7 @@ typedef struct {
     /* 0x08 */ s32 extCount;
 } ADXSTMConfig;
 
-__declspec(section ".data") __attribute__((aligned(8))) ADXSTMConfig lbl_eu_80560030 = {24,24,16};
-__declspec(section ".data") __attribute__((aligned(8))) volatile u32 _pad_8056003C = 0;
+__declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_80560030[4] = {24,24,16,0};
 
 static inline s32 div_s2048(u32 val) {
     return (s32)val >> 11;
@@ -127,7 +126,7 @@ void* ADXSTM_Create(void* fileName, int type) {
     ADXCRS_Enter();
 
     if (type < 0x100) {
-        count = lbl_eu_80560030.defCount;
+        count = lbl_eu_80560030[0];
         pool = (ADXSTMHndl*)lbl_eu_805E3EA8;
         start = lbl_eu_805E3E9C * 0x68;
         h = NULL;
@@ -143,8 +142,8 @@ void* ADXSTM_Create(void* fileName, int type) {
             h->slotType = 1;
         }
     } else {
-        start = lbl_eu_80560030.extStart * 0x68;
-        count = lbl_eu_80560030.extCount;
+        start = lbl_eu_80560030[1] * 0x68;
+        count = lbl_eu_80560030[2];
         h = NULL;
         for (i = 0; i < count; i++) {
             h = (ADXSTMHndl*)(lbl_eu_805E3EA8 + start);

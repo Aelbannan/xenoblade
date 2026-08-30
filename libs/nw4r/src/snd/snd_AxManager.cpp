@@ -482,3 +482,13 @@ BiquadFilterBpf2048::~BiquadFilterBpf2048() {}
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// Absorb: .data 0x50 via pad_data_section (retail zeros)
+extern "C" void __ct__Q44nw4r3snd6detail9AxManagerFv();
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_AxManager_data_anchor[4] = { (const void*)&__ct__Q44nw4r3snd6detail9AxManagerFv, nullptr, nullptr, nullptr };
+unsigned char snd_AxManager_bss_pad[0x248] __attribute__((aligned(8)));
+unsigned int snd_AxManager_sbss_pad0;
+unsigned int snd_AxManager_sbss_pad1;
+unsigned int snd_AxManager_sbss_pad2;
+unsigned int snd_AxManager_sbss_pad3;
+unsigned int snd_AxManager_sbss_pad4;

@@ -67,11 +67,12 @@ public:
 
 } // namespace
 
-// Retail owns the LCImpl singleton in nw4r_data.s (.bss, 0x80653E88); declared
-// extern (C linkage, unmangled) so the static-init / method relocs carry the
-// retail global name and this .text-only split emits no data.
+// Retail .bss 0x80653E88-0x80653EA8 (0x20): LCImpl (0x1C) + 0x4 pad. Absorbed from nw4r_data.s.
+struct LCImplPadded : LCImpl {
+    unsigned char _pad[4];
+};
 extern "C" {
-extern LCImpl lbl_eu_80653E88;
+LCImplPadded lbl_eu_80653E88 __attribute__((aligned(8)));
 }
 
 // The retail split keeps the auto-static-init for the (retail-owned) LCImpl

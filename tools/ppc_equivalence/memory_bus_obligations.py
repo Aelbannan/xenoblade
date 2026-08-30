@@ -95,7 +95,7 @@ def memory_bus_coverage_policies(memory_bus: MemoryBus) -> dict[str, Any]:
     return coverage
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RomImageBinding:
     """Minimal ROM image handle for ``rom_image_*`` constraint helpers."""
 

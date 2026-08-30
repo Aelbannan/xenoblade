@@ -13,16 +13,23 @@ inline void InitSeqPlayer() {
 }
 } // namespace detail
 
-// Retail NW4R_SND version slot (sdata lbl_eu_806634E8, an 8-byte blob whose
-// first word points at the "<< NW4R - SND ... >>" string in the data blob);
-// declared extern so this TU defines no .sdata/.data version data. The
-// NW4R_LIB_VERSION macro would pool a local copy of the string.
-extern "C" const char* lbl_eu_806634E8;
-
-// Retail name for the sTaskThread static (bss lbl_eu_80638910, 0x330). The
-// definition must stay in this TU so MWCC emits the retail auto-__sinit_
-// (it constructs + dtor-registers the object through the retail labels).
 extern "C" {
+__declspec(section ".data") __attribute__((aligned(8))) const unsigned char lbl_eu_8056AC30[0x48] = {
+    0x3c, 0x3c, 0x20, 0x4e, 0x57, 0x34, 0x52, 0x20, 0x20, 0x20, 0x20, 0x2d, 0x20, 0x53, 0x4e, 0x44,
+    0x20, 0x09, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x20, 0x20, 0x20, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x3a,
+    0x20, 0x4e, 0x6f, 0x76, 0x20, 0x32, 0x30, 0x20, 0x32, 0x30, 0x30, 0x38, 0x20, 0x30, 0x33, 0x3a,
+    0x34, 0x30, 0x3a, 0x30, 0x30, 0x20, 0x28, 0x30, 0x78, 0x34, 0x31, 0x39, 0x39, 0x5f, 0x36, 0x30,
+    0x38, 0x33, 0x31, 0x29, 0x20, 0x3e, 0x3e, 0x00
+};
+__declspec(section ".sdata") __attribute__((aligned(4))) const char* lbl_eu_806634E8[2] = { (const char*)lbl_eu_8056AC30, nullptr };
+}
+
+// Retail bss companions for this TU (the large work buffer and the cookie)
+extern "C" {
+char lbl_eu_80638900[0x10];
+char lbl_eu_80638C40[0x16E00];
+bool lbl_eu_80665508;
+int lbl_eu_8066550C;
 detail::TaskThread lbl_eu_80638910;
 }
 
@@ -46,7 +53,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
 
     lbl_eu_80665508 = true;
 
-    OSRegisterVersion(lbl_eu_806634E8);
+    OSRegisterVersion(lbl_eu_806634E8[0]);
 
     detail::AxManager::GetInstance().Init();
 

@@ -766,3 +766,6 @@ ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(const void* pBuffer,
     *pSize = size;
     return offset + 3;
 }
+
+// Absorb: pad .sbss 0x1->0x8
+unsigned int snd_MmlParser_sbss_pad;

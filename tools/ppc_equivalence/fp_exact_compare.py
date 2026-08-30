@@ -21,7 +21,7 @@ from .fp_exact_util import (
 from .fp_fpscr import FPSCR_VE, FPSCR_VXSNAN, FPSCR_VXVC
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CompareOutcome:
     """Compare side effects beyond ``ScalarFPOutcome``."""
 

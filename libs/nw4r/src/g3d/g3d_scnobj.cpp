@@ -9,6 +9,9 @@
 // sda21 relocs carry the retail symbol name.
 extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
 
+// Absorbed rodata for scnobj: TypeName "ScnObj" (retail .rodata 0x8051D768, 0x10).
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const ::nw4r::g3d::G3dObj::ResNameDataT<7> lbl_eu_8051D768 = {7, "ScnObj"};
+
 namespace nw4r {
 namespace g3d {
 
@@ -711,3 +714,4 @@ const char* ScnGroup::GetTypeName() const {
 }
 } // namespace g3d
 } // namespace nw4r
+

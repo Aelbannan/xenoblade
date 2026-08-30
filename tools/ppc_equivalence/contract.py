@@ -6,14 +6,14 @@ from .abi_shape import AbiShape
 from .spr import AUX_SPR_NAME_INDEX, AUX_SPR_OBSERVABLES
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Observable:
     kind: str
     name: str
     index: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class EquivalenceContract:
     observables: tuple[Observable, ...]
     timeout_ms: int = 10_000

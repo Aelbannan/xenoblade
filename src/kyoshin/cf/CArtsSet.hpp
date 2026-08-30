@@ -65,6 +65,13 @@ namespace cf {
     struct _sAttackSet {
     };
 
+    // ── Retail record tail at +0x84 (polymorphic view, vptr at +0x84) ────
+    // The 0x84-byte data base places the vptr at +0x84; first virtual (slot 8)
+    // is the per-record init (CAttackParam/CArtsParam override).
+    struct CAttackParamTailIf {
+        virtual void vtInit(); // vtable offset 8
+    };
+
     //size: 0x334
     class CAttackSet : _sAttackSet {
     public:

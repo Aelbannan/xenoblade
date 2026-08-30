@@ -31,6 +31,10 @@ state should be "no SKILL.md loaded" — load it on demand, not up front.
 
 - Submit LLM-assisted matching upstream; commit `orig/`, `main.dol`, RELs, or disc assets; or decompile to asm/registers outside the §17.6 PS backend.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so launch it outside the restricted process.
+- **Treat the repo root as sacred** — do not dump scratch files, downloads, binaries, zip archives,
+  ad-hoc scripts, notes, or other tmp junk into `/` (e.g. `ninja`, `ninja.zip`, one-off logs).
+  Use `/tmp`, a gitignored scratch dir, or delete when done. Leave the root layout unchanged unless
+  the task explicitly requires a root-level project file.
 
 ## More commands
 

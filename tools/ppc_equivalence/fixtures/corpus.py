@@ -13,7 +13,7 @@ CODE_BASE = 0x80018000
 BLR_WORD = BLR
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FixtureCase:
     id: str
     tags: tuple[str, ...]

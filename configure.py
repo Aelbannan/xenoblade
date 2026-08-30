@@ -1779,7 +1779,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/ut/ut_LockedCache.cpp"),
             Object(NonMatching, "nw4r/src/ut/ut_Font.cpp"),
             Object(NonMatching, "nw4r/src/ut/ut_RomFont.cpp"),
-            Object(NonMatching, "nw4r/src/ut/ut_ResFontBase.cpp"),
+            Object(NonMatching, "nw4r/src/ut/ut_ResFontBase.cpp", extra_cflags=["-sdata", "0", "-sdata2", "0", "-align", "4"]),
             Object(NonMatching, "nw4r/src/ut/ut_ResFont.cpp"),
             Object(NonMatching, "nw4r/src/ut/ut_ArchiveFontBase.cpp"),
             Object(NonMatching, "nw4r/src/ut/ut_PackedFont.cpp"),
@@ -2034,7 +2034,8 @@ config.libs = [
             Object(Matching, "split1.s"),
             # criware_data.s absorbed into owning CriWare TUs (plan:
             # .scratch/criware_data_plan.json); splits ranges moved 2026-08-28.
-            Object(Matching, "nw4r_data.s"),
+            # nw4r_data.s absorbed into owning nw4r/nw4hbm TUs (plan:
+            # .scratch/nw4r_data_plan.json); splits ranges moved 2026-08-29.
             # monolibdata1e absorbed into monolib/src/util/CStopwatchUtil.cpp
             # (lbl_eu_80657238 .bss 0x80657238-0x806574B8)
         ],

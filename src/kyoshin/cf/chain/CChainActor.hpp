@@ -20,10 +20,8 @@ namespace cf {
     class __declspec(novtable) CChainActor : public CChainActorData {
     public:
         // vptr at 0x70 (after base), retail table at lbl_eu_80538290
-        u8 mChainEffectRaw[0xC]; // 0x74
-
         CChainActor();
-        ~CChainActor();
+        virtual ~CChainActor();
 
         // 17 virtuals to reach +0x48 (dt + 14 dummies + _vf44 + vf48) – rest of table beyond 0x48 is manual (0x4C..0x74)
         virtual void _vf0C();
@@ -39,8 +37,11 @@ namespace cf {
         virtual void _vf34();
         virtual void _vf38();
         virtual void _vf3C();
+        virtual void _vf40();
         virtual int _vf44(void* arg);
         virtual int vf48(void* arg);
+
+        u8 mChainEffectRaw[0xC]; // 0x74
 
         CChainActorVtbl*& vtbl() { return *reinterpret_cast<CChainActorVtbl**>(reinterpret_cast<u8*>(this) + 0x70); }
         CChainActorVtbl* vtbl() const { return *reinterpret_cast<CChainActorVtbl*const*>(reinterpret_cast<const u8*>(this) + 0x70); }

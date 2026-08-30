@@ -243,22 +243,6 @@ struct CEmoteModelObj {
     u32 field_7A8;   // +0x7A8
 };
 
-// Guest-flag word at +0x100 of the game-manager core object returned by
-// cf::CfGameManager::getGameSubManager().
-struct CGameMgrCoreFlagsIf {
-    u8 _pad[0x100];
-    u32 field_100;   // +0x100
-};
-
-// View of the parent object stored in CREvtModelMap::mPtr1C (a CREvtModel):
-// the packed map token sits at +0x20, a task/state field at +0x30.
-struct CREvtModelParentIf {
-    u8 _pad[0x20];
-    u32 mPacked;     // +0x20
-    u8 _pad2[0xC];   // 0x24-0x2F
-    s32 mField30;    // +0x30
-};
-
 // Flattened layout of the retail CREvtModelMap object. The retail class
 // inherits cf::CREvtObj / CREvtModel / IWorkEvent; the base headers are
 // declared with a member-function-pointer field whose compiled size (16

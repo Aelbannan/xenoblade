@@ -5,7 +5,7 @@ import struct
 # For US version: need to figure out file offset from VA
 
 # Let's try reading the DOL directly
-dol_path = "/Users/ahmedelbannan/Ahmed/xenoblade/build/us/main.dol"
+dol_path = "/Users/ahmed/projects/xenoblade/build/us/main.dol"
 
 with open(dol_path, "rb") as f:
     data = f.read()

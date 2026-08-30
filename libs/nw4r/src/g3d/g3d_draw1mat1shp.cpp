@@ -9,6 +9,9 @@
 
 #include <cmath>
 
+// Absorbed retail rodata (sChanIDs, lbl_eu_8051D690, .rodata 0x10)
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned int lbl_eu_8051D690[4] = {0, 2, 1, 3};
+
 namespace nw4r {
 namespace g3d {
 
@@ -240,9 +243,9 @@ void Draw1Mat1ShpDirectly(ResMat mat, ResShp shp, const math::MTX34* pViewPos,
         chan.GXGetChanMatColor(GX_COLOR0, &matColor[0]);
         chan.GXGetChanMatColor(GX_COLOR1, &matColor[1]);
 
-        static const GXChannelID sChanIDs[4] = {
-            GX_COLOR0, GX_ALPHA0, GX_COLOR1, GX_ALPHA1,
-        };
+        // sChanIDs is global in retail (lbl_eu_8051D690, .rodata 0x10)
+        extern const GXChannelID lbl_eu_8051D690[4];
+        const GXChannelID* sChanIDs = lbl_eu_8051D690;
         for (int i = 0; i < 4; i++) {
             GXAttnFn attn;
             chan.GXGetChanCtrl(sChanIDs[i], &chanInfo[i][0], NULL, NULL,

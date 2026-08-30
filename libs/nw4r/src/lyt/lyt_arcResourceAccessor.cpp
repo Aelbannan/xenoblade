@@ -4,10 +4,18 @@
 
 #include <cstring>
 
-// Retail vtable label (data object in nw4r_data.s). The class is novtable, so
-// the ctor stores this label explicitly (keeps the ctor relocs byte-identical
-// to retail while emitting no local .data vtable copy).
-extern "C" unsigned char lbl_eu_80569CB8[];
+// Retail vtable lbl_eu_80569CB8 (0x18) now owned by this TU (absorbed).
+extern "C" void __dt__Q34nw4r3lyt19ArcResourceAccessorFv();
+extern "C" void* GetResource__Q34nw4r3lyt19ArcResourceAccessorFUlPCcPUl();
+extern "C" void* GetFont__Q34nw4r3lyt19ArcResourceAccessorFPCc();
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_80569CB8[6] = {
+    nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt19ArcResourceAccessorFv,
+    (const void*)&GetResource__Q34nw4r3lyt19ArcResourceAccessorFUlPCcPUl,
+    (const void*)&GetFont__Q34nw4r3lyt19ArcResourceAccessorFPCc, nullptr
+};
+// .sdata
+// code below and renamed to lbl_eu_806634C8/CC via data_pool_patterns; the
+// section is kept (extern removed) so the retail 8B layout is preserved.
 
 namespace {
 // Retail schedules the derived vptr store inside the member-init phase

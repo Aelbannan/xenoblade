@@ -109,7 +109,7 @@ GX_FIFO_V1_TEST_MODULES: tuple[str, ...] = (
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RolloutStage:
     """One ordered allowlist-expansion stage of the GX FIFO Tier-A rollout."""
 
@@ -378,7 +378,7 @@ def check_gx_fifo_test_modules_importable() -> tuple[bool, list[str]]:
     return (not failures, failures)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ReadinessCheck:
     name: str
     ok: bool
@@ -386,7 +386,7 @@ class ReadinessCheck:
     details: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ReadinessReport:
     schema_version: int
     infrastructure_ready: bool

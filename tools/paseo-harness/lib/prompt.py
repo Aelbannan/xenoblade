@@ -3,8 +3,14 @@
 Deliberately compact: agents are told to read big docs LAZILY (only when a
 mismatch is actually observed) instead of pre-loading AGENTS.md + PLAN.md +
 MWCC_PATTERNS.md into context where they are re-billed every turn.
+
+Fake-vtable / pad-cleanup subagents: use `fake_vt_playbook.build_fake_vt_prompt`
+(or `PLAYBOOK`) — owning-class / hot headers (`CfObjectEne` / `CActorParam` /
+`CfObjectPc` / …) are in scope; no dummy `_vNNN` lists; no passthrough views.
 """
 from .common import ROOT
+from .fake_vt_playbook import PLAYBOOK as FAKE_VT_PLAYBOOK  # noqa: F401 — re-export
+from .fake_vt_playbook import build_fake_vt_prompt  # noqa: F401 — re-export
 
 
 def build_prompt(batch, *, section, worktree_path=None, branch=None,

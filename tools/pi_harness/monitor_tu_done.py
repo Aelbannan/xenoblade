@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import datetime, timezone
 
-ROOT = "/Users/ahmedelbannan/Ahmed/xenoblade"
+ROOT = "/Users/ahmed/projects/xenoblade"
 LEDGER = os.path.join(ROOT, "build/pi-harness/ledger.jsonl")
 RUNLOG = os.path.join(ROOT, "build/pi-harness/run-20260810-135336.log")
 OUT = os.path.join(ROOT, "build/pi-harness/monitor_tu_done.log")

@@ -5,8 +5,8 @@ The extra register in decomp — maybe the `limit` variable or the `addr` struct
 The 7th reg... the retail's `v` (voice) is loaded fresh per iteration into r3 (caller). Mine — after the voice-reload fix, `AXSetVoiceState(*(void**)((u8*)self + i*4 + 8), 1)` reloads ✓. So my decomp should also use r3 for voice. Hmm.
 
 Let me count the decomp's saved regs from the earlier diff: `stmw r25, 36(sp)` — r25-r31 = 7 regs. Retail: `stmw r26, 24(sp)` = 6. The extra one is r25. What's in r25? Maybe the `limit` value or... Let me look at the decomp prologue.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | awk '/0x00000A14/,/0x00000A70/' | h...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | grep -n "stmw\|li r25\|or r25\|li r...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | awk '/0x00000A14/,/0x00000A70/' | h...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | grep -n "stmw\|li r25\|or r25\|li r...
 [Thought] Now I see:
 - Retail (line 7-8): stmw r26; mr r26, r3 (self=r26); ...
 - Decomp (line 109-111): stmw r26; mr r29, r3 (self=r29); mr r30, r4 (sw=r30).
@@ -105,7 +105,7 @@ So the cur value is in r0 (caller-saved) — NOT a callee-saved variable. My `s3
 Hmm — the ternary. The retail shape [bne → extract; li -1] — the if/else I have now. If I inline without the cur var:
 
 Actually — my current source already computes cur into the local and the if/else structure matches retail's shape (the diff showed the branch shapes matched — 6 structural all colors). The issue is just the register colors of the OTHER variables. The cur variable — is it in a callee-saved reg in my decomp? Let me check the decomp prologue fully.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | sed -n '109,140p'
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/wiirna/ax_rna --symbol AXRNA_SetPlaySw --no-build --asm 2>&1 | sed -n '109,140p'
 [Thought] Now I see the decomp's allocation:
 - self=r29, sw=r30 (assigned at prologue)
 - cur in r0 (transient ✓)
@@ -139,20 +139,20 @@ Let me now write the final report. Actually — before that, let me spend a mome
 Actually, let me try: remove the `hi`/`lo` locals and compute directly into the struct? No — the retail keeps them in callee-saved regs.
 
 Let me try: `u16 ratio_hi = (u16)(sfreq / 32000);` etc. Hmm — the u16 cast might change allocation. Let me try quickly.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && python3 - <<'EOF' import subprocess src = open('libs/CriWare/src/adx/wiirna/ax_rna.c').read() old = """ *(s32*)((u8*)self + 0x1c) = sfreq; hi = sfreq / 32...
+[Shell] cd /Users/ahmed/projects/xenoblade && python3 - <<'EOF' import subprocess src = open('libs/CriWare/src/adx/wiirna/ax_rna.c').read() old = """ *(s32*)((u8*)self + 0x1c) = sfreq; hi = sfreq / 32...
 Let me verify the final state and write the report:
 [Thought] Let me do the final wrap-up. First, let me verify the accepted targets are fully recorded, then write the final report. Let me also check that no stray .scratch files or build artifacts are uncommitted.
 
 Let me also quickly release the claims I made on targets that weren't accepted (the claim command created claim entries). Actually — the claims: us-8039d9f8 (SetOutVol — ACCEPTED, claim fine), us-8039c388 (Init), us-8039d7f8 (ExecServer), us-8039c93c (Destroy) — all accepted. The SetOutVol claim was re-claimed (the first claim was in the initial cycle attempt). Fine.
 
 Let me write the final report now.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "^ M (config/|README|assets/|docs/|tools/coop/cri_orchestrator|tools/coop/lib/renaming|tools/coop/retail|tools/coop/tests|to...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -vE "^ M (config/|README|assets/|docs/|tools/coop/cri_orchestrator|tools/coop/lib/renaming|tools/coop/retail|tools/coop/tests|to...
 [Thought] The remaining modified files are other agents' work (equivalence_check.py, postprocess_reloc_names.py, targets.json — concurrent edits). My files are all committed. The untracked files are orchestrator artifacts.
 
 Wait — tools/coop/targets.json is modified — that's other agents' concurrent edits (or the file I restored). I verified earlier it matches HEAD after my restore... let me not touch it — other agents are actively working on it.
 
 Let me do a final verification of the accepted targets and their certs, then write the report. Let me also record the claims status.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 -c " import json with open('tools/coop/targets.json') as f: data = json.load(f) ids = ['us-8039c388','us-8039d7f8','us-8039c93c','us-803...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 -c " import json with open('tools/coop/targets.json') as f: data = json.load(f) ids = ['us-8039c388','us-8039d7f8','us-8039c93c','us-803...
 All work is committed. Here is the final report:
 
 ---

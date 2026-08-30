@@ -129,7 +129,7 @@ class FPDeliveryClass(str, Enum):
     DEFERRED = "deferred"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class PendingFPException:
     """Deferred FP program-interrupt state (Phase 8)."""
 
@@ -139,7 +139,7 @@ class PendingFPException:
     delivery_class: FPDeliveryClass
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FPTrapDeliveryPlan:
     """Concrete vs imprecise trap delivery under live FPSCR + MSR."""
 
@@ -193,7 +193,7 @@ _fp_enabled_exception_reraise: ContextVar[bool] = ContextVar(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FPTrapDecision:
     """Concrete trap / writeback policy derived from an ``FPOutcome``."""
 

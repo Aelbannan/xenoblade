@@ -895,9 +895,15 @@ site (`u32 func_802B7D00` -> `func_802B7CBC`). Talk's +0x20 call is
 `func_802B7CE4`, not a Talk-only `vf20` (that would land at +0x24).
 
 Subagents: copy the **Fake vtables -> real classes** flow above, using this
-CHelp tree as the template. Hexdiff `--brief` per step; do not fleet onto
-`CfObjectEne` / `CActorParam` until that TU's table dump + owning-class
-mangling are in the write-up.
+CHelp tree as the template. Hexdiff `--brief` per step.
+
+**Owning-class / hot headers are in scope.** If retail puts a slot on
+`CfObjectEne` / `CActorParam` / `CfObjectPc` / `CfObject` / etc., edit that
+header: dump the table, put the real virtual with retail arity, call
+`obj->method(...)`, delete the TU-local pad. Hexdiff the TU **and** other
+units that include the header; revert if mismatch counts rise. Still forbidden:
+growing `_vNNN` dummy lists, no-arg passthrough views of already-widened slots,
+and inventing a differently-named virtual that appends instead of overriding.
 
 **Actor/move deep vtable slots (r12):**
 

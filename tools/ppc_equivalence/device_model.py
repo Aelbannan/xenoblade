@@ -28,13 +28,13 @@ class AccessOutcome(str, Enum):
     OUT_OF_RANGE = "out-of-range"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class DeviceReadResult:
     outcome: AccessOutcome
     value: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class DeviceWriteResult:
     outcome: AccessOutcome
 
@@ -63,7 +63,7 @@ class DeviceModel(ABC):
         """Deep-copy mutable device state for isolated bus executions."""
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RegisterSpec:
     """Static metadata for one register slot in a ``RegisterBankDevice``."""
 

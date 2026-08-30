@@ -56,12 +56,12 @@ namespace cf {
         virtual void* CBattleState_UnkVirtualFunc1();  //0x8 (returns the owner object)
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
         virtual int CBattleState_UnkVirtualFunc3();  //0x10
-        virtual void CBattleState_UnkVirtualFunc4();  //0x14
+        virtual void CBattleState_UnkVirtualFunc4(int val);  //0x14 - takes int 0x35 in CtrlObjectParam (retail li r4,0x35)
         virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
         virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_UnkVirtualFunc7(u32 id);  //0x20 (retail fake-Fv ABI passes id in r4)
         virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
-        virtual void CBattleState_UnkVirtualFunc9();  //0x28
+        virtual void CBattleState_UnkVirtualFunc9(int index);  //0x28
         virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
         virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
         virtual void CBattleState_UnkVirtualFunc12(); //0x34
@@ -79,7 +79,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
         virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
-        virtual void CBattleState_UnkVirtualFunc27(); //0x70
+        virtual void* CBattleState_UnkVirtualFunc27(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(); //0x7C

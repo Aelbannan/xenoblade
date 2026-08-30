@@ -286,3 +286,6 @@ void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }
+
+// Absorb: pad .sbss 0x4->0x8 (typeInfo 4 + pad 4 = retail 8)
+unsigned int snd_SeqSound_sbss_pad;

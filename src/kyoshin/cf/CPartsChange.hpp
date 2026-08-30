@@ -173,18 +173,25 @@ extern u8 lbl_eu_80532AE4[];
 // ctor (__ct__80193270) after the inlined _reslist_base ctor's vtable store.
 extern u8 lbl_eu_80532ACC[];
 
-// Vtable interface of the object stored at CPartsChange::mField08
-// (func_80192F94 / func_80192E80): -RTTI's two leading vtable slots land the
-// first declared virtual at +8, so the 6 dummies pin vf20 to +0x20 and vf24
-// to +0x24 (func_80192E80's count/name queries), the next two dummies keep
-// vf30 at +0x30 and vf34 at +0x34 (func_80192F94's apply/accept calls).
-struct PartsChangeIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual u32 vf20();
-    virtual const char* vf24(int idx);
-    virtual void _v028(); virtual void _v02C(); virtual void vf30(u8 a, u32 b);
-    virtual int vf34(u8 a);
+// Real vtable for the object stored at CPartsChange::mField08
+// Retail table dump (lbl_eu_80532A70 group, JP __vt__Q22cf8CPartsDB) shows
+// RTTI at +0x00, 0 at +0x04, then 13 entries: the four slots at +0x20/+0x24/
+// +0x30/+0x34 are the party-change DB queries (getCount, getName, apply,
+// isAcceptable). Owning class is cf::CPartsDB (novtable, no .data). The six
+// leading slots and the two at +0x28/+0x2C are Unk placeholders to pin the
+// retail offsets (no _v dummies). Former pad PartsChangeIf deleted; all
+// call sites now use this->method on the owning class.
+namespace cf {
+class __declspec(novtable) CPartsDB {
+public:
+    virtual void Unk_08(); virtual void Unk_0C(); virtual void Unk_10(); virtual void Unk_14();
+    virtual void Unk_18(); virtual void Unk_1C(); virtual u32 getCount();
+    virtual const char* getName(int idx);
+    virtual void Unk_28(); virtual void Unk_2C(); virtual void apply(u8 a, u32 b);
+    virtual int isAcceptable(u8 a);
 };
+}
+typedef cf::CPartsDB PartsChangeIf;
 
 // Format string used by func_80192E80's FixStr<16>::format call (.rodata:
 // 0x80503BFC) and the .sdata prefix-string pointer passed as its first
@@ -246,7 +253,7 @@ public:
     virtual ~CPartsChange();
 
     /* 0x04 */ u8 mField04;
-    /* 0x08 */ PartsChangeIf* mField08;
+    /* 0x08 */ CPartsDB* mField08;
     /* 0x0C */ u8 mData[0x20];
     /* 0x2C */ u8 mField2C;
 };
@@ -343,29 +350,13 @@ struct CfActorList {
 };
 
 // Object created by func_800B957C (func_80197C6C): dispatched virtual slots at
-// 0x9C / 0xC4 / 0xDC and the party id at +0x73C. A real virtual class (rather
-// than a fn-pointer table) so MWCC emits the retail vtable dispatch (vtable
-// and slot both land in r12). -RTTI's two leading vtable slots land the first
-// declared virtual at +8.
-struct CfSpawnIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void vf9C(const f32* v);   // 0x9C (position set)
-    virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8(); virtual void _v0AC();
-    virtual void _v0B0(); virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC();
-    virtual void _v0C0(); virtual void vfC4(f32 f);          // 0xC4 (float arg)
-    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-    virtual void _v0D8(); virtual void vfDC(f32 f);          // 0xDC (float arg)
-};
+// 0x9C / 0xC4 / 0xDC and the party id at +0x73C. Folded onto the owning class
+// cf::CfObject (real tree, no pad). Retail vtables for CfObject at those
+// offsets are UVF19(const CVec3*), UVF29(float), UVF35(float) — the three
+// slots used here. The fake CfSpawnIf is deleted; the dispatch now goes via
+// this->CfObject_UnkVirtualFunc19/29/35 on the CfObject base.
 struct CfSpawnObj {
-    CfSpawnIf* vt;        // 0x00
+    cf::CfObject* vt;        // 0x00 — real CfObject base
     u8 pad_04[0x73C - 0x04];
     /* 0x73C */ u32 field_73C;
 };

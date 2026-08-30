@@ -23,14 +23,14 @@ public:
     /* vtable 0x0C */ virtual void vfunc_0C();
     /* vtable 0x10 */ virtual void vfunc_10();           // cleanup virtual
     /* vtable 0x14 */ virtual void vfunc_14();
-    /* vtable 0x18 */ virtual void vfunc_18();
+    /* vtable 0x18 */ virtual bool isBusy(); // vfunc_18
     /* vtable 0x1C */ virtual void vfunc_1C();
-    /* vtable 0x20 */ virtual void vfunc_20();
+    /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
     /* vtable 0x24 */ virtual void vfunc_24();
-    /* vtable 0x28 */ virtual void vfunc_28();
+    /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28
     /* vtable 0x2C */ virtual void vfunc_2C();
-    /* vtable 0x30 */ virtual void vfunc_30(int r4);     // called from func_801727DC
-    /* vtable 0x34 */ virtual void vfunc_34();
+    /* vtable 0x30 */ virtual void onEvent(unsigned int visible); // vfunc_30
+    /* vtable 0x34 */ virtual bool reset(); // vfunc_34
     /* vtable 0x38 */ virtual void vfunc_38(int r4);     // called from func_801729F0
     /* vtable 0x3C */ virtual void vfunc_3C();           // cleanup for destructor
 

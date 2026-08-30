@@ -145,7 +145,7 @@ def ni_force_single_result_bits(bits: int, *, ni: bool) -> int:
     return bits
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FpOracleFlags:
     """Sticky exception indicators the oracle may eventually model."""
 
@@ -165,7 +165,7 @@ class FpOracleFlags:
         }
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class FpOracleResult:
     """Bit-exact oracle output for one scalar FP operation."""
 

@@ -2071,7 +2071,7 @@ SoundArchivePlayer::SeqNoteOnCallback::NoteOn(detail::SeqPlayer* pSeqPlayer,
 
 bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
     detail::WaveSoundInfo* pSoundInfo, detail::WaveSoundNoteInfo* pNoteInfo,
-    detail::WaveData* pWaveData, const void* pWsdData, int index, int noteIndex,
+    detail::WaveInfo* pWaveData, const void* pWsdData, int index, int noteIndex,
     u32 callbackArg) const {
 
     u32 fileId = callbackArg;

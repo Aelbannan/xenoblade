@@ -1,14 +1,14 @@
 work that I don't have time for. Let me record the state and wrap up the session.
 
 Let me record UTY_MulDivRound64 and criware_8039B4E0 (also in-progress at 3%) as active/in-progress, and do a final status check + commit.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - << 'PYEOF' from tools.coop.lib.attempts import AttemptRecord, append_attempt from pathlib import Path recs = [ ("us-803d6c68", "UTY_Mu...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - << 'PYEOF' from tools.coop.lib.attempts import AttemptRecord, append_attempt from pathlib import Path recs = [ ("us-803d6c68", "UTY_Mu...
 Let me verify configure.py is clean and no other units broke:
 [Thought] Now let me run a final verification that the whole repo still builds (my changes are in the working tree — the committed version was verified at commit time). Let me also double check the configure.py is clean (I reverted my flag experiments) and verify no other unit broke.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff configure.py | head -5; echo "=== configure.py clean ==="; .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_errs --all --no-build...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for u in CriWare/src/sofdec/sud/sud_lib CriWare/src/adx/sj/sj_utl CriWare/src/adx/cricfg/cfg_lib CriWare/src/sofdec/sfdcore/sfd/sfd_aoap CriWare/src/sofde...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff configure.py | head -5; echo "=== configure.py clean ==="; .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_errs --all --no-build...
+[Shell] cd /Users/ahmed/projects/xenoblade && for u in CriWare/src/sofdec/sud/sud_lib CriWare/src/adx/sj/sj_utl CriWare/src/adx/cricfg/cfg_lib CriWare/src/sofdec/sfdcore/sfd/sfd_aoap CriWare/src/sofde...
 All units pass size budget. Let me commit the final records:
 [Thought] All my units pass the split-size budget. Let me do a final check on the sfd_set unit (the accepted SFD_SetCond) and verify the target registry, then commit the final state.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add docs/evidence/decomp/attempts.jsonl libs/CriWare/src/sofdec/sfdcore/uty/muldivr.c && git commit -m "cri: record muldivr/cri_crw_std in-progress st...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add docs/evidence/decomp/attempts.jsonl libs/CriWare/src/sofdec/sfdcore/uty/muldivr.c && git commit -m "cri: record muldivr/cri_crw_std in-progress st...
 Let me try the "val local" trick for the li-float (documented in KB) on SFAOAP_Create:
 [Thought] Committed. Now let me try to squeeze more work in with the remaining time. Let me reconsider — the targets that could reach acceptance with more work:
 
@@ -87,7 +87,7 @@ ctx->active = err;    // hmm — err in r3? or r0?
 return 0;
 ```
 The `err` local — MWCC might keep it in r3... let me try this in SFH_IsSfdHeader. And also for SFAOAP_Create (the same li-float!). Let me test on SFAOAP first (simpler).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - << 'PYEOF' import subprocess src = open('libs/CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c').read() variants = { 'g': '''int SFAOAP_Creat...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - << 'PYEOF' import subprocess src = open('libs/CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c').read() variants = { 'g': '''int SFAOAP_Creat...
 [Thought] Still 89.5% — the li-float is a hard fixed point. Let me restore the clean version and move on. 
 
 Given my remaining time, let me try the SFH_IsSfdHeader error-path li-float with the val-local... actually — let me first restore SFAOAP and then try one SFH variant.
@@ -97,7 +97,7 @@ Actually — let me reconsider my time. I've accepted 1 target. Let me see if I 
 Actually — let me try one thing on the MWSST_Destroy (2 structural, the li-float): the KB said ruled out. Skip.
 
 Let me restore SFAOAP, then try the SFH error-path val-local, then wrap up.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - << 'PYEOF' p = 'libs/CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c' s = open(p).read() s = s[:s.index('int SFAOAP_Create')] + '''int SFAOA...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - << 'PYEOF' p = 'libs/CriWare/src/sofdec/sfdcore/sfd/sfd_aoap.c' s = open(p).read() s = s[:s.index('int SFAOAP_Create')] + '''int SFAOA...
 [Thought] Still 2 structural. The li-float family is stubborn. Let me revert the errval change (it didn't help) and keep the clean version.
 
 Actually — wait — let me check if the errval variant at least didn't HURT (98.2% same). Let me revert to the clean version and move on. Let me also try the SFH error path with a goto-based structure or the `#pragma` — no, those are documented fails.
@@ -123,19 +123,19 @@ No — the error path returns 0 and the success returns 1.
 What if the error path uses a shared return... hmm.
 
 OK — let me just revert and finalize. Time to wrap up.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - << 'PYEOF' p = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_main.c' s = open(p).read() s = s.replace(''' int isValid; s32 errval = -1;''',...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - << 'PYEOF' p = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_main.c' s = open(p).read() s = s.replace(''' int isValid; s32 errval = -1;''',...
 [Thought] Reverted to the clean 98.2%. Let me do the final commit and then produce the final report. Let me also do a final verification of the SFD_SetCond accepted state and a final targets status.
 
 Actually — let me also quickly check: is there anything I should verify about the claim state? The batch said claims are per-target; the accepted SFD_SetCond — should I release the claim? The workflow says "release the claim and do not edit the same function concurrently" after cycle passes. Let me release it.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py targets release us-803cec5c --owner cri-b17 2>&1 | tail -1; git add -u libs/CriWare/src/sofdec/sfdcore/sfh/sfh_main.c ...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add tools/coop/targets.json && git commit -m "cri: release SFD_SetCond claim" 2>&1 | head -2; git log --oneline -3
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/run.py targets release us-803cec5c --owner cri-b17 2>&1 | tail -1; git add -u libs/CriWare/src/sofdec/sfdcore/sfh/sfh_main.c ...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add tools/coop/targets.json && git commit -m "cri: release SFD_SetCond claim" 2>&1 | head -2; git log --oneline -3
 [Thought] Wait — the "revert li-float probe variants" commit showed "Your branch is ahead..." with no commit — the sfd_aoap/sfh_main revert — let me check if those changes are committed. The `git add -u ... && git commit` — the output shows "On branch main / Your branch is ahead" — that means the commit DIDN'T happen (nothing to commit — the files might be identical to the committed version). Let me check.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "sfh_main|sfd_aoap|adx_errs|adx_hdr|sud_lib|sj_utl|cfg_lib|lsc_ini|uty_tmr|sfx_set|muldivr|attempts" | head
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "sfh_main|sfd_aoap|adx_errs|adx_hdr|sud_lib|sj_utl|cfg_lib|lsc_ini|uty_tmr|sfx_set|muldivr|attempts" | head
 All committed. Let me get the final batch status:
 [Thought] All clean — the sfh_main/sfd_aoap reverts were identical to the committed state (the variants were reverted back to the committed versions).
 
 Now let me do a final verification of the whole batch state and write the final report. Let me get the final status of all 23 targets.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 -c " import json with open('tools/coop/targets.json') as f: data = json.load(f) targets = data if isinstance(data, list) else data.get('...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 -c " import json with open('tools/coop/targets.json') as f: data = json.load(f) targets = data if isinstance(data, list) else data.get('...
 Let me do a final verification of the git state and my attempts records:
 [Thought] The registry statuses are stale for several targets I improved (SUD_SearchSudDat at 87.5%, SJ_SearchTag at 96.2%, CRICFG_Read at 51%, etc. — the registry still shows NOT_STARTED since I only cycled SFD_SetCond). The registry reflects the LAST cycle per target. Since I didn't cycle the others (they're stalled), the registry keeps their old statuses.
 
@@ -146,11 +146,11 @@ Actually — let me update the registry for the key improved targets so the orch
 Actually — wait — the instructions say "do NOT spend a cycle on it" for callee-blocked targets. SJ_SearchTag's callee (strncmp) IS accepted — it's not callee-blocked, just not fully matched. Hmm — cycling it would log the attempt and show CODE_MATCH... Let me skip — the attempts.jsonl has the records, and the out-of-band pass will read them.
 
 Let me now write the final report. Actually — first let me double-check that the attempts.jsonl records are all in order and the git tree is clean.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -c "^ M"; echo "=== my batch records in attempts.jsonl ==="; tail -40 docs/evidence/decomp/attempts.jsonl | .venv/bin/python3 -c...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -c "^ M"; echo "=== my batch records in attempts.jsonl ==="; tail -40 docs/evidence/decomp/attempts.jsonl | .venv/bin/python3 -c...
 [Thought] All 23 targets have records in attempts.jsonl (22 ACTIVE + 1 FULL_MATCH for SFD_SetCond). The git tree has 27 modified files (other agents' work + possibly my leftover — let me verify my files are all committed).
 
 Let me verify no MY files are left uncommitted.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "CriWare/src/(sofdec/(sud|sj|cricfg|sfdcore/sfd/sfd_set|sfdcore/sfd/sfd_aoap|sfdcore/sfh|sfdcore/uty|sfx/sfx_set)|adx/(adxt/a...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "CriWare/src/(sofdec/(sud|sj|cricfg|sfdcore/sfd/sfd_set|sfdcore/sfd/sfd_aoap|sfdcore/sfh|sfdcore/uty|sfx/sfx_set)|adx/(adxt/a...
 All work committed. Here's the final report:
 
 ---

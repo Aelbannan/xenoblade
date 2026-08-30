@@ -48,7 +48,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicFifoEvent:
     """One bounded FIFO read or write event."""
 
@@ -59,7 +59,7 @@ class SymbolicFifoEvent:
     event_index: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicFifoWrite:
     """One bounded FIFO write event (legacy write-only view)."""
 
@@ -74,7 +74,7 @@ class SymbolicFifoWrite:
         return cls(addr=event.addr, width=event.width, value=event.value)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RepeatedEmission:
     """Summarized CTR-loop FIFO write emission (one iteration template group)."""
 
@@ -83,7 +83,7 @@ class RepeatedEmission:
     writes: tuple[SymbolicFifoEvent, ...]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicEventTrace:
     """Bounded event-stream trace for one ``gxfifo-stream`` device."""
 
@@ -251,7 +251,7 @@ class SymbolicEventTrace:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicTraceCompareResult:
     """Outcome of comparing two bounded symbolic FIFO traces."""
 

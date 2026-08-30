@@ -139,3 +139,7 @@ const nw4r::ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
 
 } // namespace lyt
 } // namespace nw4r
+
+// Pad .sbss to retail 0x10 (retail 0x10, decomp 0x4) - need second object lbl_eu_80665488 (8) plus pad 4
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488(&lbl_eu_80665470);
+extern "C" __attribute__((used)) char lyt_picture_sbss_pad[4];

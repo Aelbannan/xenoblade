@@ -11,11 +11,11 @@ The AHXDCD_* targets blocked by AHXBSR_GetBitStm (us-803909f4 — OTHER unit, CL
 Hmm — wait — but actually, should I record "blocker" attempts for all of these? The instructions say: "if a target has indirect calls, unresolved callees, or called_functions not yet FULL_MATCH/EQUIVALENT_MATCH, record the blocker in attempts.jsonl and move to the next target — do NOT spend a cycle on it."
 
 Let me record the callee-blocked notes for the remaining batch targets compactly. Let me do them in one batch script.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && python3 - <<'EOF' import json, datetime blockers = { "us-803850ac": ("ADXSTM_ExecServer", "callee-blocked: ADXSTMF_ExecHndl (us-80384d68, in-batch, blocke...
+[Shell] cd /Users/ahmed/projects/xenoblade && python3 - <<'EOF' import json, datetime blockers = { "us-803850ac": ("ADXSTM_ExecServer", "callee-blocked: ADXSTMF_ExecHndl (us-80384d68, in-batch, blocke...
 Now let me verify all three units still build and check the final unit states:
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && ninja build/us/src/CriWare/src/adx/adxt/adx_stmc.o build/us/src/CriWare/src/sofdec/sfx/sfx_cnv.o build/us/src/CriWare/src/adx/ahx/ahx_dcd.o 2>&1 | tail -3
+[Shell] cd /Users/ahmed/projects/xenoblade && ninja build/us/src/CriWare/src/adx/adxt/adx_stmc.o build/us/src/CriWare/src/sofdec/sfx/sfx_cnv.o build/us/src/CriWare/src/adx/ahx/ahx_dcd.o 2>&1 | tail -3
 [Thought] All three units build. Now let me check the unit-wide states to make sure I haven't regressed anything, and verify the accepted targets remain at 100%.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_stmc --all --no-build 2>&1 | grep -E "%" | head -35
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_stmc --all --no-build 2>&1 | grep -E "%" | head -35
 [Thought] The adx_stmc unit is in good shape:
 - My accepted targets: ReleaseFile ✓, IsOpened ✓, GetStat ✓, Stop ✓, SetSj ✓ — all 100%.
 - SetupHandleMember: 70.6% (was 8.8%) — improved.
@@ -26,7 +26,7 @@ Now let me verify all three units still build and check the final unit states:
 Hmm — wait — ExecServer is 93.9% with 2 structural 0 reg_swap — interesting — the s8 stat field helped it. It's callee-blocked (ExecHndl + SVM_TestAndSet) though.
 
 Now let me check the sfx_cnv and ahx_dcd units.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfx/sfx_cnv --all --no-build 2>&1 | grep -E "%" | head -16; echo ===; .venv/bin/python3 tools/c...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfx/sfx_cnv --all --no-build 2>&1 | grep -E "%" | head -16; echo ===; .venv/bin/python3 tools/c...
 No regressions. Verifying configure.py is clean and checking git status:
 [Thought] Good — no regressions from my changes (the sfx_cnv and ahx_dcd units have the same partial states as before, plus my improvements: SFX_IsMergeField 100%, MakeCftSrcBuf 84.3%, MakeDstBufInf 8.2%→same, SKG 13.1%).
 
@@ -47,12 +47,12 @@ Now — commit. Let me review my changed files:
 - configure.py — hmm — did I leave any flag changes? Let me check — I reverted all the flag experiments. Let me verify configure.py is clean (no diff from my changes).
 
 Let me check git status.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --stat configure.py libs/CriWare/src/sofdec/sfx/sfx_types.h libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c libs/CriWa...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff configure.py; echo "==="; git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | head -30
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff --stat configure.py libs/CriWare/src/sofdec/sfx/sfx_types.h libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c libs/CriWa...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff configure.py; echo "==="; git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | head -30
 [Thought] WAIT — the configure.py diff is EMPTY (the "===" shows the sfx_types diff immediately) — so configure.py has NO diff from my changes!? — but the git diff --stat showed "configure.py | 2 +-" — hmm — the diff --stat included configure.py but the direct `git diff configure.py` shows nothing? — that's contradictory... — OH — the diff --stat output listed configure.py with "2 +-" — but the direct diff shows nothing — hmm — maybe the configure.py change is from ANOTHER agent (the sj_mem.c change I saw earlier — from another agent's working tree). My flag experiments were all reverted ✓.
 
 And the sfx_types.h diff — the SFXHandleState struct — that's NOT my change!! I only changed SFXDstBufInf. The SFXHandleState changes (field_0x34, width, height) — hmm — that's ANOTHER agent's change (or a previous state in the working tree). Wait — the diff shows SFXHandleState was changed — by whom? — the git diff compares the WORKING TREE vs HEAD — the changes could be from another agent or pre-existing. Let me check the full sfx_types.h diff to see if MY SFXDstBufInf change is there.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | grep -A8 "SFXDstBufInf"; echo "==="; git log --oneline -1 -- libs/CriWare/src/sofdec/sfx/sfx_types.h; g...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | grep -A8 "SFXDstBufInf"; echo "==="; git log --oneline -1 -- libs/CriWare/src/sofdec/sfx/sfx_types.h; g...
 [Thought] The SFXDstBufInf section doesn't appear in the diff — meaning MY change to SFXDstBufInf was reverted to the HEAD state ✓ (I reverted it back). The SFXHandleState diff is from ANOTHER agent's work (the file was modified by another agent's commit a0dee2f75 + their working-tree changes).
 
 Hmm — wait — the sfx_types.h working tree has SFXHandleState changes NOT from me — those belong to another agent (the "SFX_ShiftYccPtrByPix" work). If I commit sfx_types.h, I'd commit THEIR changes too! I should NOT commit sfx_types.h (my change was reverted; the remaining diff is another agent's).
@@ -65,7 +65,7 @@ Wait — but sfx_cnv.c — let me check if MY changes to sfx_cnv.c depend on the
 - adx_stmc.c ✓ (mine)
 - ahx_dcd.c ✓ (mine)
 - sfx_cnv.c — hmm — let me check the diff to see if it's all mine.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_cnv.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | head -40
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_cnv.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | head -40
 [Thought] The sfx_cnv.c diff is all my changes (IsMergeField goto-chain, MakeCcirFromY, MakeCftSrcBuf, MakeDstBufInf). Good — sfx_cnv.c is mine.
 
 Now — let me commit: adx_stmc.c, ahx_dcd.c, sfx_cnv.c, attempts.jsonl. NOT sfx_types.h (other agent) and NOT configure.py (other agent).
@@ -73,12 +73,12 @@ Now — let me commit: adx_stmc.c, ahx_dcd.c, sfx_cnv.c, attempts.jsonl. NOT sfx
 Wait — but the sfx_cnv.c commit depends on the working-tree sfx_types.h for compilation — if the other agent reverts their header changes, my .c might not compile... — but that's the standard co-op risk; my .c changes don't USE the changed struct fields (SFXHandleState) — let me verify quickly that my functions don't reference the SFXHandleState fields... My functions: SFX_IsMergeField (uses SFXConvertState, SFXStmInf), MakeCcirFromY (u8*), MakeCftSrcBuf (SFXCnvSrcBuf, SFXStmInf), MakeDstBufInf (SFXDstBufInf, SFXStmInf). The SFXStmInf fields — were any changed by the other agent? The diff showed SFXHandleState only. SFXStmInf — let me not worry; the header changes are additive-renames mostly.
 
 Let me now do the commit. First let me review the full adx_stmc.c diff briefly to make sure nothing unintended slipped in.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/adx/adxt/adx_stmc.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | grep -E "^[-+]" | grep -cE "s8 stat|(s8)h->closing == 0|for \(;;\)...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/adx/ahx/ahx_dcd.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c docs/evidence/decomp/attempts.jsonl ...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git commit -m "cri: match adx_stmc/sfx_cnv batch cri-05 — accept IsOpened, GetStat (s8 stat field), SetSj, Stop, ReleaseFile, IsMergeField (FULL_MATCH); r...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff libs/CriWare/src/adx/adxt/adx_stmc.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | grep -E "^[-+]" | grep -cE "s8 stat|(s8)h->closing == 0|for \(;;\)...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/adx/ahx/ahx_dcd.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c docs/evidence/decomp/attempts.jsonl ...
+[Shell] cd /Users/ahmed/projects/xenoblade && git commit -m "cri: match adx_stmc/sfx_cnv batch cri-05 — accept IsOpened, GetStat (s8 stat field), SetSj, Stop, ReleaseFile, IsMergeField (FULL_MATCH); r...
 Committed. Final target state check:
 [Thought] Committed. Now let me review the final target states for the report. Let me get the current status of all 30 batch targets.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && python3 - <<'EOF' import json d = json.load(open('tools/coop/targets.json')) t = d['targets'] batch = ["us-803844a8","us-803d7324","us-80390c84","us-80384...
+[Shell] cd /Users/ahmed/projects/xenoblade && python3 - <<'EOF' import json d = json.load(open('tools/coop/targets.json')) t = d['targets'] batch = ["us-803844a8","us-803d7324","us-80390c84","us-80384...
 All work committed. Final report:
 
 ---

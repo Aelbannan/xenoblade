@@ -345,7 +345,7 @@ void Pane::AnimateSelf(u32 option) {
 }
 
 void Pane::BindAnimation(AnimTransform* pAnimTrans, bool recursive, bool disable) {
-    pAnimTrans->Bind(this, recursive);
+    pAnimTrans->Bind(this, recursive, disable);
 }
 
 void Pane::UnbindAnimation(AnimTransform* pAnimTrans, bool recursive) {
@@ -506,3 +506,68 @@ const nw4r::ut::detail::RuntimeTypeInfo* Pane::GetRuntimeTypeInfo() const {
 
 } // namespace lyt
 } // namespace nw4r
+
+// ABSORB 2026-08-29: lyt_pane now owns .data ranges from lyt_group (0x10),
+// lyt_layout (0x40), and shared Picture/TextBox vtables (0x78/0x88) that were
+// previously in the blob. Emit them here with retail labels and relocs.
+extern "C" void __dt__Q34nw4r3lyt5GroupFv();
+extern "C" void __dt__Q34nw4r3lyt6LayoutFv();
+extern "C" void Build__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor();
+extern "C" void CreateAnimTransform__Q34nw4r3lyt6LayoutFv();
+extern "C" void CreateAnimTransform__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor();
+extern "C" void CreateAnimTransform__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor();
+extern "C" void BindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform();
+extern "C" void UnbindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform();
+extern "C" void UnbindAllAnimation__Q34nw4r3lyt6LayoutFv();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransformb();
+extern "C" void CalculateMtx__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Draw__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Animate__Q34nw4r3lyt6LayoutFUl();
+extern "C" void GetLayoutRect__Q34nw4r3lyt6LayoutCFv();
+extern "C" void __dt__Q34nw4r3lyt7PictureFv();
+extern "C" void* GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv();
+extern "C" void CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void DrawSelf__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Animate__Q34nw4r3lyt4PaneFUl();
+extern "C" void AnimateSelf__Q34nw4r3lyt4PaneFUl();
+extern "C" void GetVtxColor__Q34nw4r3lyt7PictureCFUl();
+extern "C" void SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color();
+extern "C" void GetColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetColorElement__Q34nw4r3lyt4PaneFUlUc();
+extern "C" void GetVtxColorElement__Q34nw4r3lyt7PictureCFUl();
+extern "C" void SetVtxColorElement__Q34nw4r3lyt7PictureFUlUc();
+extern "C" void FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb();
+extern "C" void UnbindAllAnimation__Q34nw4r3lyt4PaneFb();
+extern "C" void UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb();
+extern "C" void GetMaterialNum__Q34nw4r3lyt4PaneCFv();
+extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFv();
+extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFUl();
+extern "C" void LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Append__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap();
+extern "C" void __dt__Q34nw4r3lyt7TextBoxFv();
+extern "C" void* GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv();
+extern void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo__FPQ34nw4r3lyt7TextBoxRCQ34nw4r3lyt8DrawInfo();
+extern "C" void DrawSelf__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void GetTextColor__Q34nw4r3lyt7TextBoxCFUl();
+extern "C" void SetVtxColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color();
+extern "C" void GetVtxColorElement__Q34nw4r3lyt7TextBoxCFUl();
+extern "C" void SetVtxColorElement__Q34nw4r3lyt7TextBoxFUlUc();
+extern "C" void AllocStringBuffer__Q34nw4r3lyt7TextBoxFUs();
+extern "C" void FreeStringBuffer__Q34nw4r3lyt7TextBoxFv();
+extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUs();
+extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUsUs();
+extern "C" {
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569968[4] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt5GroupFv, nullptr };
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569978[16] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt6LayoutFv, (const void*)&Build__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFv, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor, (const void*)&BindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform, (const void*)&UnbindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform, (const void*)&UnbindAllAnimation__Q34nw4r3lyt6LayoutFv, (const void*)&SetAnimationEnable__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransformb, (const void*)&CalculateMtx__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt6LayoutFUl, (const void*)&GetLayoutRect__Q34nw4r3lyt6LayoutCFv, nullptr };
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_805699B8[30] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt7PictureFv, (const void*)&GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv, (const void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&DrawSelf__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt4PaneFUl, (const void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl, (const void*)&GetVtxColor__Q34nw4r3lyt7PictureCFUl, (const void*)&SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color, (const void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&GetVtxColorElement__Q34nw4r3lyt7PictureCFUl, (const void*)&SetVtxColorElement__Q34nw4r3lyt7PictureFUlUc, (const void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb, (const void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb, (const void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb, (const void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl, (const void*)&LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Append__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap };
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569A30[34] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt7TextBoxFv, (const void*)&GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv, (const void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&DrawSelf__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt4PaneFUl, (const void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl, (const void*)&GetTextColor__Q34nw4r3lyt7TextBoxCFUl, (const void*)&SetVtxColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color, (const void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&GetVtxColorElement__Q34nw4r3lyt7TextBoxCFUl, (const void*)&SetVtxColorElement__Q34nw4r3lyt7TextBoxFUlUc, (const void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb, (const void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb, (const void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb, (const void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl, (const void*)&LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo__FPQ34nw4r3lyt7TextBoxRCQ34nw4r3lyt8DrawInfo, (const void*)&AllocStringBuffer__Q34nw4r3lyt7TextBoxFUs, (const void*)&FreeStringBuffer__Q34nw4r3lyt7TextBoxFv, (const void*)&SetString__Q34nw4r3lyt7TextBoxFPCwUs, (const void*)&SetString__Q34nw4r3lyt7TextBoxFPCwUsUs, nullptr };
+}
+extern "C" __attribute__((used)) char lyt_pane_sbss_pad[4];

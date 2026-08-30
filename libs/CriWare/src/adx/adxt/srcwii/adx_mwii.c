@@ -18,8 +18,10 @@ extern void SVM_Init(void);
 extern void SVM_SetCbLock(void* cb, void* ctx);
 extern void SVM_SetCbUnlock(void* cb, void* ctx);
 extern void SVM_SetCbBdr(s32 idx, void* fn, void* ctx);
-extern char lbl_eu_805196D4[];
-extern volatile u32 lbl_eu_805196D0;
+extern char lbl_eu_805196A0[];
+__declspec(section ".rodata") __attribute__((aligned(8))) const void* lbl_eu_805196D0 = lbl_eu_805196A0;
+__declspec(section ".rodata") __attribute__((aligned(1))) const char lbl_eu_805196D4[49] = "1060102: Internal Error: adxm_goto_mwidle_border";
+__declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80519708[60] = "\nADXWIISDK Ver.30Jul2008Patch04 Build:Oct 28 2009 21:11:25\n";
 
 // Callback pair stored in the framework state (fn at 0x68, context at 0x6C).
 struct AdxMwCb {
@@ -98,7 +100,12 @@ struct AdxmBase {
     u8 field_stack_0x4028[0x2000];  // 0x4028 fs thread stack (top = base+0x6028)
     u8 field_stack_0x6028[0x2000];  // 0x6028 mwidle thread stack (top = base+0x8028)
 };
-extern struct AdxmBase lbl_eu_805F3A50;
+__attribute__((aligned(8))) unsigned char adx_mwii_bss[0xA350];
+#define lbl_eu_805F3A50 (*(struct AdxmBase*)adx_mwii_bss)
+#define lbl_eu_805F3A54 (*(u32*)(adx_mwii_bss+0x4))
+#define lbl_eu_805FBA78 (*(OSThread**)(adx_mwii_bss+0x8028))
+#define lbl_eu_805FBA7C (*(u32*)(adx_mwii_bss+0x802C))
+#define lbl_eu_805FDD9C (*(s32*)(adx_mwii_bss+0xA34C))
 
 void ADXM_WaitVsync(void) { VIWaitForRetrace(); }
 
@@ -248,8 +255,6 @@ void adxm_mwidle_proc(void) {
 
 void ADXM_SetCbErr(void) { SVM_SetCbErr(); }
 
-extern OSThread* lbl_eu_805FBA78;
-extern u32 lbl_eu_805FBA7C;
 
 // Create the four worker threads (safe / vsync / fs / mwidle). Each thread's
 // stack top is the *end* of a dedicated stack buffer inside the framework state.
@@ -341,12 +346,10 @@ void ADXM_SetupThrd(u8* arg) {
 }
 
 
-extern u32 lbl_eu_805F3A54;
 u32 ADXM_IsSetupThrd(void) {
     return (lbl_eu_805F3A54 != 0) ? 1 : 0;
 }
 
-extern s32 lbl_eu_805FDD9C;
 s32 ADXM_ShutdownFramework(void) {
     s32 result = 1;
     s32 state = lbl_eu_805FDD9C;

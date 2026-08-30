@@ -21,6 +21,8 @@ public:
 } // namespace snd
 } // namespace nw4r
 
+class CResLookup;
+
 namespace cf {
 
 // Forward decl (needed by the vtable struct below).
@@ -53,27 +55,6 @@ struct CfResParentObjIf {
     virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
     virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
     virtual void _v088(int arg);  // vtable offset 0x88
-};
-
-// field_2C view used by func_8016D688: the +0x18/+0x1C/+0x28/+0x30/+0x40
-// slots each take the owning entry as r4 (retail `mr r4, r31` before each
-// dispatch) and the +0x18/+0x1C results are stored to parent +0x90/+0x94.
-struct CfResEntryIf2 {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual u8* _v018(CfResLookupEntry* entry);  // vtable offset 0x18
-    virtual u8* _v01C(CfResLookupEntry* entry);  // vtable offset 0x1C
-    virtual void _v020();
-    virtual void _v024();
-    virtual int _v028(CfResLookupEntry* entry);  // vtable offset 0x28
-    virtual void _v02C();
-    virtual u8* _v030(CfResLookupEntry* entry);  // vtable offset 0x30
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual int _v040(CfResLookupEntry* entry);  // vtable offset 0x40
 };
 
 // Parent object referenced at +0x00 of CfResReloadImpl; the flag words at
@@ -137,72 +118,62 @@ struct CfResParentVtIf {
     virtual void _v17C();  // vtable offset 0x17C - dispatched by func_8016D3F8
 };
 
-// Cast-only fake SI interface for the secondary vtable at +0x10 (see
-// MWCC_CASES "double-hop thunks"): the non-polymorphic Shift base puts the
-// vptr at object+0x10, so a virtual call emits `lwz r12,0x10(r3);
-// lwz r12,slot(r12); mtctr; bctr` with `this` staying at the object base.
-struct CfResReloadShift {
-    u8 field_00[0x10];
+// Prefix pushing vptr to +0x10 (CHelp pattern). Base CfResImpl defines the
+// 0x00-0x0E prefix; the vptr follows at +0x10, then the 0x14 tail.
+struct CfResReloadImplPrefix {
+    /* 0x00 */ CfResReloadParent* field_00; // parent/reference pointer
+    /* 0x04 */ f32 field_04;                // timer or delay float
+    /* 0x08 */ u16 field_08;                // type/category (also PMTF index)
+    /* 0x0A */ u16 field_0A;                // state/param (-1 = invalid)
+    /* 0x0C */ u16 field_0C;                // counter
+    /* 0x0E */ s16 field_0E;                // state (-1 = invalid)
 };
 
-struct CfResReloadVtIf : CfResReloadShift {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();  // vtable offset 0x28 - dispatched by func_8016DE68
-    virtual void _v02C();
-    virtual void _v030();
-    virtual int _v034(int);  // vtable offset 0x34 - called with (this, 1) by func_8016CF24
+struct CfResReloadImplVtbl {
+    void* slots[27]; // RTTI + 0 + 25 virtuals (0x6C)
 };
 
-// Resource reload implementation.
-// Manages reloading of resources with a timer and state tracking.
-// Inherits from CfResImpl (base class defines fields 0x00-0x13).
-struct CfResReloadImpl {
-    /* 0x00 */ CfResReloadParent* field_00;   // parent/reference pointer
-    /* 0x04 */ f32 field_04;                  // timer or delay float
-    /* 0x08 */ u16 field_08;                  // type/category (also PMTF index in func_8016DE8C)
-    /* 0x0A */ u16 field_0A;                  // state/param (-1 = invalid; lha by callers)
-    /* 0x0C */ u16 field_0C;                  // counter
-    /* 0x0E */ s16 field_0E;                  // state/param (-1 = invalid)
-    /* 0x10 */ void* field_10;  // secondary vtable pointer (via CfResReloadVtIf cast)
-    /* 0x14 */ u32 field_14[2];               // work buffer (2 words)
-    /* 0x1C */ s16 field_1C;                  // reload count/state (lha by func_8016D3F8)
-    /* 0x1E */ u8 field_1E;                   // flags
-    /* 0x1F */ u8 field_1F;                   // flags
+// Real class tree for cf::CfResReloadImpl (retail lbl_eu_80530FF0, JP
+// __vt__Q22cf15CfResReloadImpl is not emitted; US/EU lbl_eu_80530FF0 is
+// 0x6C: RTTI + 0 + 25 slots). novtable: TU has no .data vtable, ctor
+// writes lbl_eu_80530FF0 at +0x10 like CToken / CHelp.
+class __declspec(novtable) CfResReloadImpl : public CfResReloadImplPrefix {
+public:
+    // 25 virtuals in retail order (offset 0x08 .. 0x68)
+    virtual ~CfResReloadImpl();                 // 0x08
+    virtual void func_8016DE8C();               // 0x0C - PMTF dispatch
+    virtual void func_8016D240();               // 0x10
+    virtual void func_8016CE3C();               // 0x14
+    virtual int func_8016CE5C();                // 0x18 - in-use test
+    virtual void func_8016DCE4();               // 0x1C
+    virtual int func_8016CF1C();                // 0x20 - type id (12)
+    virtual void func_800BC2DC();               // 0x24 - base CfResImpl slot
+    virtual void func_8016DDE8();               // 0x28 - reset
+    virtual void func_eu_8016F1C4();            // 0x2C
+    virtual void func_8016DED4();               // 0x30
+    virtual u32 func_8016CFBC(int index);       // 0x34 - work word getter
+    virtual void func_800BEA38();               // 0x38
+    virtual void func_800BED64();               // 0x3C
+    virtual void func_800BEE30();               // 0x40
+    virtual void func_800BC3AC();               // 0x44
+    virtual int func_8016D2FC(int arg2);        // 0x48
+    virtual int func_8016D390(int arg2);        // 0x4C
+    virtual void func_8016CD5C();               // 0x50
+    virtual void func_8016CFDC(int arg2, int arg3, float f1, float f2, int priority); // 0x54
+    virtual void func_8016D0C0(int arg2, int arg3); // 0x58
+    virtual void func_8016D144(int arg2, int arg3, int arg4); // 0x5C
+    virtual int func_8016D1D8();                // 0x60
+    virtual int func_8016DECC();                // 0x64 - sub-type id (1)
+    virtual int func_8016CF24();                // 0x68 - random byte
 
-    // vtable slot 6: returns a resource type identifier (12 for reload impl)
-    int func_8016CF1C();
+    void*& vtbl() {
+        return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10);
+    }
 
-    // vtable slot 23: returns a resource sub-type identifier (1 for reload impl)
-    int func_8016DECC();
-};
-
-// Interface for the object behind CfResLookupEntry::field_2C: its vtable slot
-// at +0x40 reports whether the resource is currently in use (func_8016CE5C).
-struct CfResEntryObjIf {
-    virtual void _v000();
-    virtual void _v004();
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual int _v040();  // vtable offset 0x40 - in-use test
+    /* 0x14 */ u32 field_14[2]; // work buffer (2 words)
+    /* 0x1C */ s16 field_1C;    // reload count/state
+    /* 0x1E */ u8 field_1E;     // flags
+    /* 0x1F */ u8 field_1F;     // flags
 };
 
 // Entry returned by the CfRes table lookup func_80062EC4 (indexed by the
@@ -212,7 +183,7 @@ struct CfResLookupEntry {
     /* 0x00 */ u32 field_00;  // flags (bit 0x800 = present, bit 0x1000 = sound)
     /* 0x04 */ u8* field_04;  // resource pointer (compared against parent +0x70)
     u8 field_08[0x24];        // 0x08..0x2B
-    /* 0x2C */ CfResEntryObjIf* field_2C;  // resource object (virtual +0x40 in-use test)
+    /* 0x2C */ ::CResLookup* field_2C;  // resource object (virtual +0x40 in-use test)
     u8 field_30[0x2];         // 0x30..0x31
     /* 0x32 */ u8 field_32;   // attribute id
 };
@@ -311,7 +282,7 @@ extern "C" void func_800BBB50(cf::CfObjectModel* self);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResReloadParent* parent, u8* handle);
-extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
+// func_800AA33C is declared in IResInfo.hpp (ml::FixStr version)
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
@@ -366,8 +337,8 @@ extern const double lbl_eu_806676C0;
 extern float lbl_eu_806676BC;    // func_8018896C second float arg
 
 // Secondary-interface vtable stored at +0x10 by the constructor (.data).
-// Typed-object declaration (CfResPcImpl pattern): the ctor stores &symbol.
-extern cf::CfResReloadVtIf lbl_eu_80530FF0;
+// Typed-object declaration (CHelp pattern): the ctor stores &symbol.
+extern cf::CfResReloadImplVtbl lbl_eu_80530FF0;
 // Delay/timer float seeded by the constructor (.sdata2). const -> readonly
 // sdata2 pool: lets MWCC hoist the lfs above the member stores (CArtsInfo
 // pattern).

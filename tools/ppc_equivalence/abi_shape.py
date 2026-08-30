@@ -12,7 +12,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Mapping
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class AbiShape:
     """Signature / live-out hints that may omit half of a dual return or an
     unused outgoing argument register at selected exit kinds.

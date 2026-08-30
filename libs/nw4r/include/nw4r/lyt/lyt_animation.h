@@ -139,7 +139,7 @@ public:
                              ResourceAccessor* pAccessor,
                              u16 animNum) = 0; // at 0x10
 
-    virtual void Bind(Pane* pPane, bool recursive) = 0; // at 0x14
+    virtual void Bind(Pane* pPane, bool recursive, bool unk) = 0; // at 0x14 (retail Panebb = Pane*,bool,bool)
     virtual void Bind(Material* pMaterial, bool param) = 0; // at 0x18 (retail mangling ...8Materialb)
 
     virtual void Animate(u32 idx, Pane* pPane) = 0;         // at 0x1C
@@ -190,7 +190,7 @@ public:
                              ResourceAccessor* pAccessor,
                              u16 animNum); // at 0x10
 
-    virtual void Bind(Pane* pPane, bool recursive); // at 0x14
+    virtual void Bind(Pane* pPane, bool recursive, bool unk); // at 0x14 (retail Panebb)
     virtual void Bind(Material* pMaterial, bool param); // at 0x18 (retail mangling ...8Materialb)
 
     virtual void Animate(u32 idx, Pane* pPane);         // at 0x1C

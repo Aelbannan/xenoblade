@@ -2,21 +2,15 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
+
+class CResLookup;
 
 namespace cf {
 
 class CfGameManager;
 class CfObjectMove;
 
-// Minimal CfBdat view for this TU (see the include note in CfResPcImpl.cpp:
-// the full header's s32/int clash with code_801862C0.hpp blocks compilation
-// here). Same member signatures as cf/CfBdat.hpp.
-class CfBdat {
-public:
-    static u32 func_801422A8(u32 param1);
-    static const char* getBdatStringEntry(u16 index);
-    static void resetMapBdatFileDataPointers();
-};
 
 // Resource object behind the lookup entry's +0x2C slot (the "child" passed
 // to func_80065CA4 by func_8018D0C4).
@@ -31,7 +25,7 @@ struct CfResPcLookupEntry {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u8* field_04;
     u8 field_08[0x2C - 0x08];
-    /* 0x2C */ CfResPcEntryObj* field_2C;
+    /* 0x2C */ CResLookup* field_2C;
 };
 
 // 0x3C-byte resource-table entry returned by func_80062C28: an array base
@@ -41,7 +35,7 @@ struct CfResPcTableEntry {
     /* 0x00 */ u32 field_00;
     /* 0x04 */ u8* field_04;
     u8 field_08[0x2C - 0x08];
-    /* 0x2C */ CfResPcEntryObj* field_2C;
+    /* 0x2C */ CResLookup* field_2C;
     u8 field_30[0x3C - 0x30];
 };
 
@@ -52,38 +46,9 @@ struct CfResPcC4Obj {
     /* 0x4EC */ u32 field_4EC;
 };
 
-// Cast-only vtable view of the object behind lookup-entry field_2C (its own
-// vptr sits at +0x00): slot +0x08 builds the resource from (entry, slot),
-// slot +0x40 reports whether it is still in use (entry). Dummies pin the
-// offsets.
-struct CfResPcEntryObjIf {
-    virtual u8* _v008(CfResPcLookupEntry* entry, u32 slot);  // vtable offset 0x08
-    virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C();
-    virtual int _v040(CfResPcLookupEntry* entry);  // vtable offset 0x40
-};
 
-// Cast-only vtable view of the object stored at parent+0x98: slot +0xC4
-// installs a model (resource handle, bdat string, flag). Dummies pin the
-// offsets.
-struct CfResPc98ObjIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060();
-    virtual void _v064(int arg);  // vtable offset 0x64 (dispatched by func_8018DE8C with 0)
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0();
-    virtual int _v0C4(u8* res, u32 bdat, u32 arg);  // vtable offset 0xC4
-};
+
+
 
 // Object created by func_80489A60 and stored at parent+0x6F8 / +0x6FC:
 // vtable at +0x00, flag word at +0x64 (bit 1 tested by func_8018E7E4),
@@ -95,37 +60,10 @@ struct CfResPcResObj {
     /* 0x7A4 */ u32 field_7A4;
 };
 
-// Cast-only vtable view of the +0x6F8 / +0x6FC objects: slot +0x48 (no-arg
-// form) and slot +0x9C (model load with two args). Dummies pin the offsets.
-struct CfResPcResObjVtIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048();  // vtable offset 0x48
-    virtual void _v04C(); virtual void _v050(); virtual void _v054(); virtual void _v058();
-    virtual void _v05C(); virtual void _v060(); virtual void _v064(); virtual void _v068();
-    virtual void _v06C(); virtual void _v070(); virtual void _v074(); virtual void _v078();
-    virtual void _v07C(); virtual void _v080(); virtual void _v084(); virtual void _v088();
-    virtual void _v08C(); virtual void _v090(); virtual void _v094(); virtual void _v098();
-    virtual void _v09C(int a, int b);  // vtable offset 0x9C
-};
-
-// Same interface as CfResPcResObjVtIf but slot +0x48 takes a float (used
-// with lbl_eu_80667A60 by the alternate branch of func_8018E7E4).
-struct CfResPcResObjVtIf2 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(float f1);  // vtable offset 0x48
-    virtual void _v04C(); virtual void _v050(); virtual void _v054(); virtual void _v058();
-    virtual void _v05C(); virtual void _v060(); virtual void _v064(); virtual void _v068();
-    virtual void _v06C(); virtual void _v070(); virtual void _v074(); virtual void _v078();
-    virtual void _v07C(); virtual void _v080(); virtual void _v084(); virtual void _v088();
-    virtual void _v08C(); virtual void _v090(); virtual void _v094(); virtual void _v098();
-    virtual void _v09C(int a, int b);  // vtable offset 0x9C
-};
+// Model objects at parent+0x6F8/+0x6FC are CScnItemModel (created by
+// func_80489A60 in monolib/src/scn/CScnItemModel.cpp). Use CScnItemModel
+// virtuals directly: vfunc48(float) at +0x48, vfunc9C(u32,u32) at +0x9C.
+// ResModelIf / ResModelIfF pads deleted.
 
 // Object stored at parent+0x700: the first word is a handle pointer
 // (null-checked after the entry-build dispatch by func_8018E7E4).
@@ -133,23 +71,7 @@ struct CfResPc700Obj {
     /* 0x00 */ u8* field_00;
 };
 
-// Cast-only vtable view of the object stored at parent+0x38: slot +0xB0 is
-// dispatched by func_8018E7E4 after the slot cleanup. Dummies pin the
-// offsets.
-struct CfResPc38ObjIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC();
-    virtual void _v0B0();  // vtable offset 0xB0
-};
+
 
 // Stack view of the CMcaFile object constructed by __ct__CMcaFile in
 // func_8018E7E4: vptr at +0x00, payload pointers at +0x08 / +0x0C (the
@@ -206,7 +128,7 @@ struct CfResPcPosTable {
 // import block.)
 struct CfResPcParent {
     u8 field_00[0x38];             // 0x00..0x37 (incl. the vptr)
-    /* 0x38 */ CfResPc38ObjIf* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4)
+    /* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4) -> CfObject_UnkVirtualFunc24
     u8 field_3C[0x64 - 0x3C];
     /* 0x64 */ u32 field_64;       // flags (bit 1 = 0x2 tested by func_8018D0C4, bit 31 = 0x80000000 tested by func_eu_8018E19C)
     /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by func_8018CF08/CF90)
@@ -218,7 +140,7 @@ struct CfResPcParent {
     /* 0x8E */ u16 field_8E;       // cleared by the ctor when a parent is present
     /* 0x90 */ u32 field_90;       // cleared by func_8018CB3C
     /* 0x94 */ u32 field_94;       // cleared by func_8018CB3C
-    /* 0x98 */ CfResPc98ObjIf* field_98;  // model object (vtable slot +0xC4 dispatched by func_8018E7E4)
+    /* 0x98 */ void* field_98;  // model object (vtable slot +0xC4 dispatched by func_8018E7E4)
     /* 0x9C */ u32 field_9C;       // model handle (func_800584B8 result, written by func_8018DE8C)
     u8 field_A0[0xC4 - 0xA0];      // 0xA0..0xC3
     /* 0xC4 */ CfResPcC4Obj* field_C4;  // sub-object (flag word at +0x4EC folded by func_8018DE8C)
@@ -230,7 +152,7 @@ struct CfResPcParent {
     /* 0x6DC */ CfResPcLookupEntry* field_6DC;  // active lookup entry
     /* 0x6E0 */ u32 field_6E0;
     u8 field_6E4[0x6F8 - 0x6E4];   // 0x6E4..0x6F7
-    /* 0x6F8 */ CfResPcResObj* field_6F8[2];  // model objects (+0x6F8 / +0x6FC, built from entry_d's +0x08 slot)
+    /* 0x6F8 */ CScnItemModel* field_6F8[2];  // CScnItemModel (+0x6F8 / +0x6FC)
     /* 0x700 */ CfResPc700Obj* field_700; // entry-build result (handle pointer at +0x00)
     /* 0x704 */ u32 field_704;     // cleared by func_8018CB3C
     /* 0x708 */ u32 field_708;     // resource handle (written by func_8018DE8C)
@@ -319,51 +241,58 @@ struct CfResPcCharData {
     /* 0x18 */ u16 field_18;
 };
 
-class CfResPcImpl;
-
-// Non-polymorphic base pushing the secondary vtable to +0x10 (double-hop
-// thunk pattern, MWCC_CASES): casting self to CfResPcVtIf and calling a
-// virtual emits `lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctrl` with
-// `this` staying at the object base. lbl_eu_80532774 (stored at +0x10 by
-// the ctor) is the vtable itself.
-struct CfResPcVtShift {
-    u8 field_00[0x10];
+// Prefix pushing vptr to +0x10 (CHelp / CfResReloadImpl pattern):
+// base holds 0x00-0x0E, vptr follows at +0x10, then the 0x14 tail.
+struct CfResPcImplPrefix {
+    /* 0x00 */ CfResPcParent* field_00; // parent/reference pointer
+    /* 0x04 */ f32 field_04;
+    /* 0x08 */ u16 field_08; // handler index (selected by func_8018EEF0)
+    /* 0x0A */ s16 field_0A; // state (-1 = invalid)
+    /* 0x0C */ u16 field_0C;
+    /* 0x0E */ s16 field_0E; // state (-1 = invalid)
 };
 
-struct CfResPcVtIf : CfResPcVtShift {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028();              // vtable offset 0x28 (dispatched by func_eu_8018E19C)
-    virtual void _v02C();
-    virtual void _v030(int a, int b);  // vtable offset 0x30 (dispatched by func_8018D290 with (0, arg2))
-    virtual int _v034(int arg);        // vtable offset 0x34 (dispatched by func_eu_8018E19C)
-    virtual int _v038();               // vtable offset 0x38 (dispatched by func_8018D65C, result to func_80063994)
-    virtual void _v03C(int a, int b);  // vtable offset 0x3C (dispatched by func_8018D79C with (j, v))
-    virtual void _v040(); virtual void _v044(); virtual void _v048();
-    virtual void _v04C(int a);         // vtable offset 0x4C (dispatched by func_8018D79C with r30)
-    virtual void _v050(int a);         // vtable offset 0x50 (dispatched by func_8018D79C with the packed token)
+struct CfResPcImplVtbl {
+    void* slots[27];
 };
 
-// 0x44-byte resource object. Layout recovered from the retail ctor
-// (__ct__cf_CfResPcImpl: stfs +4, sth +8, sth +0xA, ...) and the getter/
-// setter pair func_8018D134 / func_8018D510 (8-slot table at +0x14).
-// The +0x00 slot holds the parent object reference (same head layout as
-// CfResReloadImpl; func_8018D0C4 / func_8018CF08 / func_8018CF90 deref it).
-class CfResPcImpl {
+// Real class tree for cf::CfResPcImpl (retail lbl_eu_80532774, 0x6C:
+// RTTI + 0 + 25 slots). novtable: TU has no .data vtable, ctor writes
+// lbl_eu_80532774 at +0x10 like CToken / CHelp.
+class __declspec(novtable) CfResPcImpl : public CfResPcImplPrefix {
 public:
     CfResPcImpl();
-    ~CfResPcImpl();
+    virtual ~CfResPcImpl();                 // 0x08
+    virtual void func_8018EEF0();           // 0x0C
+    virtual void func_8018D570();           // 0x10
+    virtual int func_8018CB14();            // 0x14
+    virtual void func_800BE9AC();           // 0x18
+    virtual void func_8016CD64();           // 0x1C
+    virtual int func_8018CB34();            // 0x20
+    virtual void func_8018E69C();           // 0x24
+    virtual void func_8018CB3C();           // 0x28
+    virtual void func_eu_8018E19C();        // 0x2C
+    virtual void func_8018D510(int idx, u32 value); // 0x30
+    virtual u32 func_8018D134(int idx);     // 0x34
+    virtual int func_8018D00C();            // 0x38
+    virtual int func_8018D3F0(u32 arg2, u32 arg3); // 0x3C
+    virtual void func_8018D65C(int arg2);   // 0x40
+    virtual void func_8018D0C4();           // 0x44
+    virtual void func_8018D288(u32 a, u32 b); // 0x48
+    virtual int func_8018D290(int arg2);    // 0x4C
+    virtual int func_8018D354(int arg2);    // 0x50
+    virtual void func_8018CD9C(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
+    virtual void func_8018CE70(int arg2, int arg3); // 0x58
+    virtual void func_8018CF08(int arg2, int arg3, int arg4); // 0x5C
+    virtual int func_8018CF90();            // 0x60
+    virtual int func_8016CD54();            // 0x64
+    virtual int func_800BF30C();            // 0x68
 
-    /* 0x00 */ CfResPcParent* field_00;  // parent/reference object
-    /* 0x04 */ f32 field_04;
-    /* 0x08 */ u16 field_08;  // handler index (selected by func_8018EEF0)
-    /* 0x0A */ s16 field_0A;  // state (-1 = invalid; lha by callers)
-    /* 0x0C */ u16 field_0C;
-    /* 0x0E */ s16 field_0E;  // state (-1 = invalid; lha by func_8018CF08/CF90)
-    /* 0x10 */ CfResPcVtIf* field_10;  // secondary vtable pointer (lbl_eu_80532774)
-    /* 0x14 */ u32 field_14[8];  // 8-slot table (get/set by func_8018D134 / func_8018D510)
+    void*& vtbl() { return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10); }
+
+    /* 0x14 */ u32 field_14[8]; // 8-slot table (get/set by func_8018D134 / func_8018D510)
     /* 0x34 */ u32 field_34;
-    /* 0x38 */ s16 field_38;  // state (-1 = invalid; lha by func_eu_8018E19C)
+    /* 0x38 */ s16 field_38; // state (-1 = invalid; lha by func_eu_8018E19C)
     /* 0x3A */ s16 field_3A;
     /* 0x3C */ s16 field_3C;
     /* 0x3E */ u16 field_3E;
@@ -472,59 +401,7 @@ struct CfResPcEntry38 {
     /* 0x3A */ s16 field_3A;
 };
 
-// Vtable-proxy for the player object that embeds CfResPcParent at +0x3E9C
-// (the parent pointer minus 0x3E9C recovers the player base; CfObjectMove
-// lives at +0x3E9C inside CfObjectPc). Slot +0x2BC is dispatched by
-// func_8018EE18 (nonzero return = resource still in use). Dummy slots pin
-// the offsets (-RTTI's two leading vtable slots land the first declared
-// virtual at +8).
-struct CfResPcPlayerVtIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-    virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-    virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-    virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-    virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-    virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-    virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-    virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-    virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-    virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-    virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
-    virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
-    virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
-    virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
-    virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-    virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4();
-    virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
-    virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
-    virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
-    virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
-    virtual void _v208(); virtual void _v20C(); virtual void _v210(); virtual void _v214();
-    virtual void _v218(); virtual void _v21C(); virtual void _v220(); virtual void _v224();
-    virtual void _v228(); virtual void _v22C(); virtual void _v230(); virtual void _v234();
-    virtual void _v238(); virtual void _v23C(); virtual void _v240(); virtual void _v244();
-    virtual void _v248(); virtual void _v24C(); virtual void _v250(); virtual void _v254();
-    virtual void _v258(); virtual void _v25C(); virtual void _v260(); virtual void _v264();
-    virtual void _v268(); virtual void _v26C(); virtual void _v270(); virtual void _v274();
-    virtual void _v278(); virtual void _v27C(); virtual void _v280(); virtual void _v284();
-    virtual void _v288(); virtual void _v28C(); virtual void _v290(); virtual void _v294();
-    virtual void _v298(); virtual void _v29C(); virtual void _v2A0(); virtual void _v2A4();
-    virtual void _v2A8(); virtual void _v2AC(); virtual void _v2B0(); virtual void _v2B4();
-    virtual void _v2B8();
-    virtual int _v2BC();  // vtable offset 0x2BC (dispatched by func_8018EE18)
-};
+
 
 // Player object that embeds the CfResPcParent at +0x3E9C (the parent
 // reference stored in CfResPcImpl::field_00). func_8018EE18 recovers the
@@ -534,58 +411,7 @@ struct CfResPcPlayerBase {
     /* 0x3E9C */ CfResPcParent field_3E9C;
 };
 
-// Vtable-proxy for the parent object (a CfObject-derived instance): the
-// vptr sits at parent+0x00; slot +0x74 is dispatched by func_8018CF08 /
-// func_8018CF90 (nonzero return = live resource). Dummy slots pin the
-// offsets (-RTTI's two leading vtable slots land the first declared
-// virtual at +8).
-struct CfResPcParentVtIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070();
-    virtual int _v074();  // vtable offset 0x74
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8();
-    virtual nw4r::math::VEC3* _v0AC();  // vtable offset 0xAC - returns the player position (3 floats)
-    virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(nw4r::math::VEC3* pos, float f1);  // vtable offset 0xB8 - position the player
-    virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-    virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-    virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-    virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-    virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-    virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-    virtual void _v128(); virtual void _v12C(); virtual void _v130();
-    virtual void _v134(float value);  // vtable offset 0x134 (dispatched by func_8018DE8C)
-    virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-    virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-    virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-    virtual void _v168(float value);  // vtable offset 0x168 (dispatched by func_8018DE8C)
-    virtual void _v16C(); virtual void _v170(); virtual void _v174();
-    virtual void _v178();  // vtable offset 0x178 (dispatched by func_8018CB3C)
-    virtual void _v17C();  // vtable offset 0x17C (dispatched by func_8018CB3C)
-    virtual void _v180(); virtual void _v184(); virtual void _v188(); virtual void _v18C();
-    virtual void _v190(); virtual void _v194(); virtual void _v198(); virtual void _v19C();
-    virtual void _v1A0(); virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC();
-    virtual void _v1B0(); virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC();
-    virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8();
-    virtual void _v1CC();  // vtable offset 0x1CC (dispatched by func_8018CB3C)
-    virtual void _v1D0(int a);  // vtable offset 0x1D0 (dispatched by func_8018D3F0 with arg3)
-    virtual void _v1D4(float value);  // vtable offset 0x1D4 (dispatched by func_8018DE8C with a scaled float)
-    virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0();
-    virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0();
-    virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC(); virtual void _v200();
-    virtual void _v204(); virtual void _v208(); virtual void _v20C(); virtual void _v210();
-    virtual void _v214();
-    virtual void _v218();  // vtable offset 0x218 (dispatched by func_8018E7E4)
-};
+
 } // namespace cf
 
 // Forward decl so the C-ABI import below can name the type.
@@ -598,7 +424,7 @@ typedef void (cf::CfResPcImpl::*CfResPcImplPMF)();
 extern CfResPcImplPMF lbl_eu_80532730[4];
 
 // Secondary vtable for CfResPcImpl, stored at +0x10 by the ctor (.data).
-extern cf::CfResPcVtIf lbl_eu_80532774;
+extern cf::CfResPcImplVtbl lbl_eu_80532774;
 
 // Float seed written to +0x04 by the ctor (.sdata2). Declared const so MWCC
 // treats the pool load as a constant and hoists the lfs above the frame
@@ -613,7 +439,7 @@ extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, in
 // CtrlObjectParam.cpp / code_8018F8D8.cpp / CfGameManagerUnityHelpers.hpp).
 // extern "C" keeps the call-site relocs at the plain retail names (same
 // convention as CfResReloadImpl.hpp / the existing func_80069ACC below).
-extern "C" void func_80065CA4(cf::CfResPcEntryObj* child, cf::CfResPcLookupEntry* parent);
+extern "C" void func_80065CA4(CResLookup* child, cf::CfResPcLookupEntry* parent);
 extern "C" void func_80066714(cf::CfResPcLookupEntry* entry, bool cleanup);
 extern "C" ::CfFileEventIdsView* func_8009D5FC();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
@@ -726,7 +552,6 @@ extern "C" int CfRes_getD80Flag();
 class CMcaFile;
 extern "C" void __ct__CMcaFile(CMcaFile* self, void* data);
 extern "C" void* func_80495EAC(void* global, void* data, void* buf);
-extern "C" void func_804838DC(void* obj, u32 arg);
 
 // Area-id table walked by func_8018F63C (8 x 8-byte entries, .data).
 extern cf::CfResPcAreaEntry lbl_eu_805327F8[8];
@@ -749,12 +574,8 @@ extern "C" void func_8048472C(void* obj, const char* name);
 extern "C" void func_804831C4(void* obj, u8* handle);
 extern "C" void* func_80495E8C(u32 global, u32 id, int a, int b);
 extern "C" char* func_800AA5C0(void* handle);
-extern "C" void func_800BB618(cf::CfResPcParent* parent, int arg);
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
-extern "C" void func_800BCFA0(cf::CfResPcParent* parent);
 extern "C" int func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5);
-extern "C" void func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
-                              float f1, float f2, float f3, float f4, float f5);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 

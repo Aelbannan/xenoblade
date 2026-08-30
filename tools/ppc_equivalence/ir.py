@@ -28,7 +28,7 @@ KNOWN_DATA_RELOCATION_TYPES = frozenset({
 })
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RelocationRef:
     """Solver-independent logical relocation attached to one instruction field.
 
@@ -331,7 +331,7 @@ SUPPORTED_OPCODES = frozenset(
 ) | SUPPORTED_FP_OPCODES
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Instruction:
     address: int
     raw: int

@@ -1,5 +1,36 @@
 #include <nw4r/ut.h>
 
+// Absorbed .data 0x8056AE6C-0x8056AF34 (0xC8) + .sdata 0x806634F8 (0x2)
+// Retail layout: __vt__RomFont (0x5C) + __vt__Font (0x5C) + gap (0x4) + lbl_eu_8056AF28 (0xC)
+extern "C" {
+void __dt__Q34nw4r2ut7RomFontFv();
+void GetWidth__Q34nw4r2ut7RomFontCFv();
+void GetHeight__Q34nw4r2ut7RomFontCFv();
+void GetAscent__Q34nw4r2ut7RomFontCFv();
+void GetDescent__Q34nw4r2ut7RomFontCFv();
+void GetBaselinePos__Q34nw4r2ut7RomFontCFv();
+void GetCellHeight__Q34nw4r2ut7RomFontCFv();
+void GetCellWidth__Q34nw4r2ut7RomFontCFv();
+void GetMaxCharWidth__Q34nw4r2ut7RomFontCFv();
+void GetType__Q34nw4r2ut7RomFontCFv();
+void GetTextureFormat__Q34nw4r2ut7RomFontCFv();
+void GetLineFeed__Q34nw4r2ut7RomFontCFv();
+void GetDefaultCharWidths__Q34nw4r2ut7RomFontCFv();
+void SetDefaultCharWidths__Q34nw4r2ut7RomFontFRCQ34nw4r2ut10CharWidths();
+void SetAlternateChar__Q34nw4r2ut7RomFontFUs();
+void SetLineFeed__Q34nw4r2ut7RomFontFi();
+void GetCharWidth__Q34nw4r2ut7RomFontCFUs();
+void GetCharWidths__Q34nw4r2ut7RomFontCFUs();
+void GetGlyph__Q34nw4r2ut7RomFontCFPQ34nw4r2ut5GlyphUs();
+void HasGlyph__Q34nw4r2ut7RomFontCFUs();
+void GetEncoding__Q34nw4r2ut7RomFontCFv();
+void __dt__Q34nw4r2ut4FontFv();
+void ReadNextCharCP1252__Q34nw4r2ut14CharStrmReaderFv();
+__attribute__((section(".data"), aligned(4))) const void* romfont_data[50] = {
+    (void*)0, (void*)0, (void*)&__dt__Q34nw4r2ut7RomFontFv, (void*)&GetWidth__Q34nw4r2ut7RomFontCFv, (void*)&GetHeight__Q34nw4r2ut7RomFontCFv, (void*)&GetAscent__Q34nw4r2ut7RomFontCFv, (void*)&GetDescent__Q34nw4r2ut7RomFontCFv, (void*)&GetBaselinePos__Q34nw4r2ut7RomFontCFv, (void*)&GetCellHeight__Q34nw4r2ut7RomFontCFv, (void*)&GetCellWidth__Q34nw4r2ut7RomFontCFv, (void*)&GetMaxCharWidth__Q34nw4r2ut7RomFontCFv, (void*)&GetType__Q34nw4r2ut7RomFontCFv, (void*)&GetTextureFormat__Q34nw4r2ut7RomFontCFv, (void*)&GetLineFeed__Q34nw4r2ut7RomFontCFv, (void*)&GetDefaultCharWidths__Q34nw4r2ut7RomFontCFv, (void*)&SetDefaultCharWidths__Q34nw4r2ut7RomFontFRCQ34nw4r2ut10CharWidths, (void*)&SetAlternateChar__Q34nw4r2ut7RomFontFUs, (void*)&SetLineFeed__Q34nw4r2ut7RomFontFi, (void*)&GetCharWidth__Q34nw4r2ut7RomFontCFUs, (void*)&GetCharWidths__Q34nw4r2ut7RomFontCFUs, (void*)&GetGlyph__Q34nw4r2ut7RomFontCFPQ34nw4r2ut5GlyphUs, (void*)&HasGlyph__Q34nw4r2ut7RomFontCFUs, (void*)&GetEncoding__Q34nw4r2ut7RomFontCFv, (void*)0, (void*)0, (void*)&__dt__Q34nw4r2ut4FontFv, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0xFFFFFFFF, (void*)&ReadNextCharCP1252__Q34nw4r2ut14CharStrmReaderFv
+};
+}
+
 namespace nw4r {
 namespace ut {
 

@@ -51,7 +51,7 @@ SOURCE_ASSUMED = "assumed-ordinary-ram"
 SOURCE_INCOMPLETE = "incomplete"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class MemoryAccessObligation:
     """One memory access under a path condition for coverage discharge."""
 

@@ -11,7 +11,7 @@ using nw4r::g3d::Fog;
 // gpCullingFrustum (declared in g3d_scnobj.h) is defined in g3d_scnobj.cpp;
 // the retail linker name is lbl_eu_80665468 (sbss). Reference the retail name
 // directly so the SDA21 relocs match retail.
-extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
+
 
 // MWCC's <algorithm> doesn't declare std::sort (same pattern as g3d_draw.cpp);
 // the retail nw4r build instantiated the full MSL implementation in this TU.
@@ -24,7 +24,13 @@ extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
 //     side is looped on, keeping the recursion depth bounded.
 // Pivot rotation counter shared by the ScnObj sort instantiations in this TU
 // (retail linker name lbl_eu_8066348C).
-int lbl_eu_8066348C = 0;
+extern "C" {
+__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663480 = 0x20;
+__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_80663484 = 0x20;
+__declspec(section ".sdata") __attribute__((aligned(8))) int lbl_eu_80663488 = -4;
+__declspec(section ".sdata") __attribute__((aligned(4))) int lbl_eu_8066348C = -4;
+}
+extern "C" __attribute__((aligned(8))) unsigned char lbl_eu_80665468[8] = {0};
 
 namespace std {
 
@@ -438,9 +444,9 @@ void ScnRoot::GatherDrawScnObj() {
                camera.ref().projNear, camera.ref().projFar, mtx);
     }
 
-    lbl_eu_80665468 = &fr;
+    *(::nw4r::math::FRUSTUM**)lbl_eu_80665468 = &fr;
     G3dProc(G3DPROC_GATHER_SCNOBJ, 0, mpCollection);
-    lbl_eu_80665468 = NULL;
+    *(::nw4r::math::FRUSTUM**)lbl_eu_80665468 = NULL;
 }
 
 void ScnRoot::DrawOpa() {
@@ -503,7 +509,7 @@ nw4r::g3d::IScnObjGather::CullingStatus ScnObjGather::Add(ScnObj* pObj, bool opa
     // If culling is active, cull against the global frustum; an object that
     // is fully outside is rejected outright, fully inside is recorded so the
     // caller can skip per-object tests later.
-    if (lbl_eu_80665468 != NULL) {
+    if (*(::nw4r::math::FRUSTUM**)lbl_eu_80665468 != NULL) {
         u32 option;
         pObj->GetScnObjOption(ScnObj::OPTID_ENABLE_CULLING, &option);
         if (option != 0) {
@@ -511,7 +517,7 @@ nw4r::g3d::IScnObjGather::CullingStatus ScnObjGather::Add(ScnObj* pObj, bool opa
             pObj->GetBoundingVolume(ScnObj::BOUNDINGVOLUME_AABB_WORLD, &aabb);
 
             math::IntersectionResult result =
-                lbl_eu_80665468->IntersectAABB_Ex(&aabb);
+                (*(::nw4r::math::FRUSTUM**)lbl_eu_80665468)->IntersectAABB_Ex(&aabb);
             if (result == math::INTERSECTION_OUTSIDE) {
                 return CULLINGSTATUS_OUTSIDE;
             }
@@ -610,4 +616,4 @@ const char* ScnRoot::GetTypeName() const {
 
 
 } // namespace g3d
-} // namespace nw4r
+} // namespace nw4r}

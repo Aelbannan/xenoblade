@@ -5,7 +5,7 @@ Wait — that means a PREVIOUS agent already did the num/den fix and it got comm
 I'm going around in circles. Let me check the ACTUAL timeline: the hexdiff of sfd_tim at session start (my --all --no-build) showed SFTIM_IsStagnant 32.8% | 25 structural. Then I edited (num/den) → 96.5% | 0 structural. If HEAD has the num/den form and the working tree == HEAD now... then the hexdiff NOW would show 0 structural ✓ (it does — the recent cycle showed 96.5%). And git diff = 0 because... 
 
 OH!!! I finally get it. The HEAD commit ca16562e8 (00:26) — was committed DURING my session (00:26) — it's a checkpoint commit made by the orchestrator/user that INCLUDED the working tree state — but the stat shows... let me check ca16562e8's stat!
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat ca16562e8 | head -25
+[Shell] cd /Users/ahmed/projects/xenoblade && git show --stat ca16562e8 | head -25
 The orchestrator swept my early work at 00:26. My remaining uncommitted work is the sfx_zmv/mpv_umc reconstruction. Committing:
 [Thought] ca16562e8 (00:26) DID include sfd_tim.c (17 lines changed) — it was a sweep commit by the orchestrator/user that included other agents' (and possibly my early) work. The 17-line change to sfd_tim.c = the num/den fix... which means the num/den fix was made by ME at ~00:20 (my edit) and SWEPT UP at 00:26?! But my edit was at... let me look at the timeline again — my session started, I read files, claimed 37 targets (that took a while), then the first sfd_tim hexdiff, then the IsStagnant analysis and edit. The cycle attempt #4 for IsStagnant happened around... the timestamp on my early cycle (us-803d0b9c attempt #3) — the attempts.jsonl shows "2026-08-03T16:16:54" (UTC) = 00:16 +08:00! So my CalcCycleFromFps cycle was at 00:16 local. And ca16562e8 at 00:26 — AFTER my CalcCycleFromFps cycle and my IsStagnant edit!
 
@@ -14,28 +14,28 @@ So the timeline: the orchestrator made a sweep commit at 00:26 that INCLUDED my 
 Interesting — so the orchestrator is auto-committing my work periodically. That means: my CURRENT uncommitted changes are ONLY what I did after 00:26: the sfx_zmv reconstruction, mpv_umc reconstruction, and the later attempts.jsonl entries. And the configure.py sj_mem.c change — hmm — wait, ca16562e8 ALSO changed sj_mem.c (257 lines!) — so the configure.py sj_mem.c Wii/1.1 change... let me check: is configure.py's sj_mem.c change part of the pre-00:26 state? My /tmp/configure.py.bak2 (00:44) had it, and git HEAD's configure.py — let me check if HEAD has the sj_mem.c Wii/1.1.
 
 Actually — this explains everything. The sweep commit at 00:26 grabbed the working tree. So the CURRENT uncommitted changes are mine (post-00:26) + other agents' (post-00:26). Let me just commit MY files now.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/sofdec/sfx/sfx_zmv.c libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c docs/evidence/decomp/attempts.jsonl tools/coop/targets.json &&...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --cached --stat && git commit -m "cri: match CriWare batch cri-02 (sfx_zmv Make*/SetTag/Create, mpv_umc fn_*/OneReadMb/OneMakeMb/PpicSkipped reco...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/sofdec/sfx/sfx_zmv.c libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c docs/evidence/decomp/attempts.jsonl tools/coop/targets.json &&...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff --cached --stat && git commit -m "cri: match CriWare batch cri-02 (sfx_zmv Make*/SetTag/Create, mpv_umc fn_*/OneReadMb/OneMakeMb/PpicSkipped reco...
 [Thought] Committed (attempts.jsonl only had 1 line staged — the batch-cycle logs were already swept or the stall notes... wait — I appended 24 stall notes. Let me check they're in the commit — the stat shows only 1 line for attempts.jsonl. Hmm — the 24 stall notes I appended — where are they? Let me check the file. Maybe the sweep commit at 01:11 (e74263879) already grabbed them (it was at 01:11, my stall notes were appended ~01:05). Let me verify.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -c "batch cri-02" docs/evidence/decomp/attempts.jsonl; git log --oneline -2; grep -c "stall_note" docs/evidence/decomp/attempts.jsonl
+[Shell] cd /Users/ahmed/projects/xenoblade && grep -c "batch cri-02" docs/evidence/decomp/attempts.jsonl; git log --oneline -2; grep -c "stall_note" docs/evidence/decomp/attempts.jsonl
 [Thought] The 24 "batch cri-02" stall notes are in the working tree but NOT in my commit (the staged attempts.jsonl had only 1 line — the batch-cycle logs were in the pre-staged state). Wait — the commit says 1 line for attempts.jsonl but the file has 24 "batch cri-02" entries... Let me check: the commit stat showed "attempts.jsonl | 1 +" — only 1 line added. But I appended 24 stall notes AND the batch-cycle runs appended ~10 more. Let me check if those are committed or still working-tree.
 
 Hmm — actually, the batch-cycle runs (InitCbpSub1 etc.) logged attempts BEFORE the 00:26 sweep? No — those were at ~00:50+. Let me just check the current git state and commit the remaining attempts.jsonl entries.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && g...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl && tail -1 docs/evidence/decomp/attempts.jsonl | head -c 200; echo; grep -c '"stall_note": true' do...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && g...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl && tail -1 docs/evidence/decomp/attempts.jsonl | head -c 200; echo; grep -c '"stall_note": true' do...
 [Thought] The attempts.jsonl is being concurrently appended by OTHER agents (the last line is sfmpv_SearchDelim — not mine). My 24 stall notes — let me verify they're in the committed version and check where the concurrent writes left things. The file is shared append-only; other agents keep appending. My stall notes ARE in the file (grep found "batch cri-02" = 24). The uncommitted diff is other agents' new entries — I should NOT commit those (they'll commit their own). Let me verify my stall notes are in the committed history.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show HEAD:docs/evidence/decomp/attempts.jsonl | grep -c "batch cri-02"; git log --oneline -1 -- docs/evidence/decomp/attempts.jsonl
+[Shell] cd /Users/ahmed/projects/xenoblade && git show HEAD:docs/evidence/decomp/attempts.jsonl | grep -c "batch cri-02"; git log --oneline -1 -- docs/evidence/decomp/attempts.jsonl
 All committed. Let me gather the final status of all 37 batch targets:
 [Thought] My 24 stall notes are committed. The current working-tree diff on attempts.jsonl is other agents' concurrent entries (not mine — leave them).
 
 Now let me verify the final states of my batch targets for the report. Let me get the current status of all 37 targets.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) by_id = {t['id']: t for t in data['targets']} batch...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) by_id = {t['id']: t for t in data['targets']} batch...
 [Thought] Final state gathered. Note: mpvumc_PpicSkipMb shows NOT_STARTED (my stub definition was committed? — hmm, the stub `void mpvumc_PpicSkipMb(s32* sizes, u8* sub1, u8* sub2);` is a FORWARD DECLARATION without a definition — the target still shows NOT_STARTED which is accurate).
 
 Wait — I need to double-check one thing: the committed mpv_umc.c has `mpvumc_PpicSkipMb` as a forward declaration only — so the .o doesn't emit it — consistent with NOT_STARTED. And MPVUMC_BpicSkipped/BiMakeMb still stubs. MPVUMC_PpicSkipped — wait, it shows NOT_STARTED?? I wrote a full body for it! Let me check — the status shows NOT_STARTED with no match. Hmm — did my body get committed? Let me check the file.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -n "void MPVUMC_PpicSkipped" libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/mpv/...
+[Shell] cd /Users/ahmed/projects/xenoblade && grep -n "void MPVUMC_PpicSkipped" libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/mpv/...
 [Thought] MPVUMC_PpicSkipped HAS a body (33.3%) — the targets.json "NOT_STARTED" is stale because my last cycle for it was before... wait, I never cycled us-803b0b10. The status in targets.json reflects the last cycle — which for us-803b0b10 was... it shows NOT_STARTED. The hexdiff shows the body compiles. The targets.json status updates only happen on cycle. Let me run cycle on us-803b0b10 to log it properly. Actually — the cycle would show the current state. Let me do that quickly, plus check that the earlier commits are complete.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803b0b10 --hypothesis "skip-MB advance + PpicSkipMb loop (callee-blocked on PpicSkipMb stub)" --next-change "...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803b0b10 --hypothesis "skip-MB advance + PpicSkipMb loop (callee-blocked on PpicSkipMb stub)" --next-change "...
 [Thought] MPVUMC_PpicSkipped: 81.4% fuzzy, HIGH_MATCH — the objdiff fuzzy is much higher than the hexdiff % (33.3% hexdiff vs 81.4% objdiff). So its semantics are close.
 
 Now let me finalize. The batch is complete in terms of my work. Summary of what happened:
@@ -49,9 +49,9 @@ Hmm — let me reconsider whether I missed any FULL_MATCH opportunity... The sfd
 Let me commit the last cycle's targets.json change and write the final report.
 
 Actually — one more check: the batch rules say "Cycle and commit targets once accepted" — since none were accepted, I have no acceptance commits. My commits are the reconstruction + stall notes. Let me commit the final targets.json update (the PpicSkipped cycle).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add tools/coop/targets.json && git commit -m "cri: record MPVUMC_PpicSkipped cycle state (81.4%, callee-blocked)" 2>&1 | tail -1 && git log --oneline -4
+[Shell] cd /Users/ahmed/projects/xenoblade && git add tools/coop/targets.json && git commit -m "cri: record MPVUMC_PpicSkipped cycle state (81.4%, callee-blocked)" 2>&1 | tail -1 && git log --oneline -4
 [Thought] All committed. Let me do a final verification that my units still build cleanly, and verify the final git state is clean of my pending changes.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "sfx_zmv|mpv_umc|sfd_tim|attempts" ; ninja -f build.ninja build/us/src/CriWare/src/sofdec/sfx/sfx_zmv.o build/us/src/CriWare/...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "sfx_zmv|mpv_umc|sfd_tim|attempts" ; ninja -f build.ninja build/us/src/CriWare/src/sofdec/sfx/sfx_zmv.o build/us/src/CriWare/...
 All units build clean; my work is committed. Here's the final report.
 
 ---

@@ -217,8 +217,8 @@ extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv(cf::CfObje
     CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(self, arg, a, b, c);
 }
 // cf::CfObjectActor vtable thunks (retail: this-adjust + tail-branch)
-extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
-    CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv((char*)self + 0x3e9c);
+extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
+    return (const char*)CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv((char*)self + 0x3e9c);
 }
 extern "C" void destroyActorParam__Q22cf13CfObjectActorFv(void* self) {
     __dt__Q22cf13CfObjectActorFv((char*)self - 0x3e9c);
@@ -570,8 +570,9 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
 // CfObjectActor's override of the CActorParam virtual (slot 0xA4): queries
 // the +0x04 sub-object's vtable slot +0x30 for the actor-id word, then pokes
 // the move subobject's status chain when the id matches the query.
-void cf::CfObjectActor::CActorParam_UnkVirtualFunc4() {
-    CActorParam::CActorParam_UnkVirtualFunc6();
+void cf::CfObjectActor::CActorParam_UnkVirtualFunc4(void* arts) {
+    (void)arts;
+    CActorParam::CActorParam_UnkVirtualFunc6(0);
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(this)->field_0x04)->vf30();
     u32 id = *idPtr;
     if (func_80174C98(this, (int*)&id, 0x1c) != 0) {

@@ -102,120 +102,7 @@ extern "C" void* func_8009ECB0(void);
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern "C" void func_8009D018(u32 destination, u32 value);
 
-// Cast-only interfaces. RTTI slots (offset 0x0/0x4) are omitted, so each
-// virtual lands at its retail vtable offset (dtor slot at 0x8).
-struct CAnimOwnerIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual CAnimOwnerIf* _v03C(u32 a, u32 b);  // 0x3C
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void* _v068();  // 0x68
-};
-
-struct CAnimListOwnerIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void* _v058();  // 0x58
-    virtual void _v05C();
-    virtual void _v060();
-    virtual u8 _v064();     // 0x64
-    virtual void _v068();
-    virtual void* _v06C(u32 idx);  // 0x6C
-};
-
-struct CAnimItemIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void* _v024(void* arg);  // 0x24 — returns the found item/result
-};
-
-struct CPlayerIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual nw4r::math::VEC3* _v0AC();  // 0xAC
-};
+// Real class tree recovered from retail vtables (see header).
 
 struct FourShorts { s16 a, b, c, d; };
 
@@ -1066,21 +953,18 @@ extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
 
 extern "C" void func_80137B44(void* a, u32 b, u32 c) {
     if (a == NULL) return;
-    void* obj = *(void**)((u8*)a + 0x10);
-    void** vt = *(void***)obj;
-    void* result =
-        ((void*(*)(void*, u32, u32))vt[0x3C / 4])(obj, b, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
+    CAnimTargetIf37038* result = (CAnimTargetIf37038*)owner->FindAnim(b, 1);
     if (result == NULL) return;
 
-    void** vt2 = *(void***)result;
     u32 v0 = c;
     u32 v1 = c;
     u32 v2 = c;
     u32 v3 = c;
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 0, &v0);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 2, &v2);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 1, &v1);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 3, &v3);
+    result->Set(0, &v0);
+    result->Set(2, &v2);
+    result->Set(1, &v1);
+    result->Set(3, &v3);
 }
 
 extern "C" void func_80137C1C(void* obj, u32 value) {
@@ -1097,21 +981,18 @@ extern "C" void func_80137C1C(void* obj, u32 value) {
 
 extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
     if (a == NULL) return;
-    void* obj = *(void**)((u8*)a + 0x10);
-    void** vt = *(void***)obj;
-    void* result =
-        ((void*(*)(void*, u32, u32))vt[0x3C / 4])(obj, b, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
+    CAnimTargetIf37038* result = (CAnimTargetIf37038*)owner->FindAnim(b, 1);
     if (result == NULL) return;
 
-    void** vt2 = *(void***)result;
     u32 v0 = c;
     u32 v1 = c;
     u32 v2 = d;
     u32 v3 = d;
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 0, &v0);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 2, &v2);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 1, &v1);
-    ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 3, &v3);
+    result->Set(0, &v0);
+    result->Set(2, &v2);
+    result->Set(1, &v1);
+    result->Set(3, &v3);
 }
 
 extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
@@ -1129,14 +1010,14 @@ extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
 
 extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
     if (a == NULL) return;
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)a + 0x10);
-    void* res = owner->_v03C(b, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
+    void* res = owner->FindAnim(b, 1);
     if (res == NULL) return;
     if (palette == NULL) return;
 
     // res is an anim-owner object; its 0x68 vtable slot returns the material
     nw4r::lyt::Material* mat =
-        (nw4r::lyt::Material*)((CAnimOwnerIf*)res)->_v068();
+        (nw4r::lyt::Material*)((CAnmOwner*)res)->GetAnmData();
 
     nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
     if (mat->GetTextureNum() == 0) {
@@ -1851,14 +1732,14 @@ extern "C" char* func_801394D4(const char* name) {
 }
 
 extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    CAnimOwnerIf* cur = owner->_v03C((u32)arg2, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
+    CAnmOwner* cur = owner->FindAnim((u32)arg2, 1);
     if (cur == 0) {
         FourShorts r;
         r.a = 0; r.b = 0; r.c = 0; r.d = 0;
         return r;
     }
-    u8* data = (u8*)cur->_v068();
+    u8* data = (u8*)cur->GetAnmData();
     if (data == NULL) {
         FourShorts r;
         r.a = 0; r.b = 0; r.c = 0; r.d = 0;
@@ -1874,10 +1755,10 @@ extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
     return r;
 }
 
-extern "C" FourShorts func_801397AC(CAnimOwnerIf* owner, u32 idx) {
+extern "C" FourShorts func_801397AC(CAnmOwner* owner, u32 idx) {
     FourShorts r = {0, 0, 0, 0};
     if (owner == NULL) return r;
-    u8* data = (u8*)owner->_v068();
+    u8* data = (u8*)owner->GetAnmData();
     if (data != NULL) {
         if (idx >= 3) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
@@ -1893,11 +1774,11 @@ extern "C" FourShorts func_801397AC(CAnimOwnerIf* owner, u32 idx) {
 }
 
 extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    CAnimOwnerIf* res = owner->_v03C((u32)arg2, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
+    CAnmOwner* res = owner->FindAnim((u32)arg2, 1);
     if (res == 0) return;
     if (res == 0) return;
-    u8* data = (u8*)res->_v068();
+    u8* data = (u8*)res->GetAnmData();
     if (data == NULL) return;
     if (idx >= 3) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
@@ -1918,9 +1799,9 @@ extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
     d[3] = tb;
 }
 
-extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
+extern "C" void func_8013996C(CAnmOwner* owner, void* src, u32 idx) {
     if (owner == NULL) return;
-    u8* data = (u8*)owner->_v068();
+    u8* data = (u8*)owner->GetAnmData();
     if (data == NULL) return;
     if (idx >= 3) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
@@ -1942,11 +1823,11 @@ extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
 }
 
 extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    CAnimOwnerIf* res = owner->_v03C((u32)arg2, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
+    CAnmOwner* res = owner->FindAnim((u32)arg2, 1);
     if (res == NULL) return;
     if (res == NULL) return;
-    s16* data = (s16*)res->_v068();
+    s16* data = (s16*)res->GetAnmData();
     if (data == NULL) return;
     s16* s1 = (s16*)src1;
     s16* s2 = (s16*)src2;
@@ -1960,9 +1841,9 @@ extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
     data[15] = s2[3];
 }
 
-extern "C" void func_80139AC8(CAnimOwnerIf* owner, void* src1, void* src2) {
+extern "C" void func_80139AC8(CAnmOwner* owner, void* src1, void* src2) {
     if (owner == NULL) return;
-    s16* data = (s16*)owner->_v068();
+    s16* data = (s16*)owner->GetAnmData();
     if (data == NULL) return;
     s16* s1 = (s16*)src1;
     s16* s2 = (s16*)src2;
@@ -1977,8 +1858,8 @@ extern "C" void func_80139AC8(CAnimOwnerIf* owner, void* src1, void* src2) {
 }
 
 extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    void* result = owner->_v03C((u32)arg2, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
+    void* result = owner->FindAnim((u32)arg2, 1);
     // Retail emits THREE beq's on the same null test (dead-duplicated-test
     // family); the direct goto-gate with the tripled condition reproduces it.
     if (result == NULL) goto out;
@@ -2001,8 +1882,8 @@ out:
 }
 
 extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
-    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    void* result = owner->_v03C((u32)arg2, 1);
+    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
+    void* result = owner->FindAnim((u32)arg2, 1);
     // Retail emits the null test three times (three beq to the epilogue).
     if (result != NULL) {
         if (result != NULL) {
@@ -2545,8 +2426,8 @@ extern "C" void func_8013ACFC() {
     // struct assignment: retail's copy is an inline mtctr/lwzu/stwu loop
     XBMapTable1 t1 = *(const XBMapTable1*)&tbl[0x418];
 
-    CPlayerIf* pif = (CPlayerIf*)player;
-    nw4r::math::VEC3* pos = pif->_v0AC();
+    cf::CfObject* pif = (cf::CfObject*)player;
+    nw4r::math::VEC3* pos = (nw4r::math::VEC3*)pif->CfObject_UnkVirtualFunc23();
     f32 sx = pos->x / scale * lbl_eu_80667344;
     f32 sy = pos->y;
     f32 sz = pos->z / scale * lbl_eu_80667344;
@@ -2799,15 +2680,15 @@ extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080; }
 // direct item list / vt58 slot, recursing into child lists. The retail returns
 // the raw call result (nonzero) rather than a literal 1.
 extern "C" void* func_8013B9AC(void* self, void* arg) {
-    CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
+    CAnmList* owner = (CAnmList*)self;
     void* anchor;
     void* current;
-    void* found = owner->_v058();
+    void* found = owner->GetAnmRoot();
     if (found != 0) return found;
-    u8 n = owner->_v064();
+    u8 n = owner->GetCount();
     for (u8 i = 0; i < n; i++) {
-        CAnimItemIf* item = (CAnimItemIf*)owner->_v06C(i);
-        void* r = item->_v024(arg);
+        CAnmItem* item = (CAnmItem*)owner->GetItem(i);
+        void* r = item->Find(arg);
         if (r != 0) return r;
     }
     anchor = (u8*)self + 0x14;
@@ -2830,15 +2711,15 @@ extern "C" void* func_8013B9AC(void* self, void* arg) {
 }
 
 extern "C" void func_8013BAD8(void* self, void* arg, f32 val) {
-    CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
-    void* r0 = owner->_v058();
+    CAnmList* owner = (CAnmList*)self;
+    void* r0 = owner->GetAnmRoot();
     if (r0 != 0) {
         *(f32*)(*(u32*)((u8*)r0 + 8) + 0x10) = val;
     }
-    u8 n = owner->_v064();
+    u8 n = owner->GetCount();
     for (u8 i = 0; i < n; i++) {
-        CAnimItemIf* item = (CAnimItemIf*)owner->_v06C(i);
-        if (item->_v024(arg) != 0) {
+        CAnmItem* item = (CAnmItem*)owner->GetItem(i);
+        if (item->Find(arg) != 0) {
             *(f32*)(*(u32*)((u8*)item + 8) + 0x10) = val;
         }
     }

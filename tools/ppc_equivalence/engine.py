@@ -109,7 +109,7 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
     )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CalleeContractValidation:
     valid: bool
     required_reads: frozenset[str]

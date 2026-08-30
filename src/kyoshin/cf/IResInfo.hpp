@@ -31,17 +31,17 @@ public:
     virtual u32 getFlags();                              // vtable +0xC - state flags (masked with 0x18E / 0x10000)
     virtual ~CResLookup();                               // vtable +0x10 (unused)
     virtual void* vfunc01();                             // vtable +0x14 (unused)
-    virtual void* vfunc02();                             // vtable +0x18 (unused)
-    virtual void* vfunc03();                             // vtable +0x1C (unused)
+    virtual u8* _v018(void* entry);                      // vtable +0x18
+    virtual u8* _v01C(void* entry);                      // vtable +0x1C
     virtual void* vfunc04();                             // vtable +0x20 (unused)
     virtual void* vfunc05();                             // vtable +0x24 (unused)
-    virtual void* vfunc06();                             // vtable +0x28 (unused)
+    virtual int _v028(void* entry);                      // vtable +0x28
     virtual void* vfunc07();                             // vtable +0x2C (unused)
-    virtual void* vfunc08();                             // vtable +0x30 (unused)
+    virtual u8* _v030(void* entry);                      // vtable +0x30
     virtual void* vfunc09();                             // vtable +0x34 (unused)
     virtual void* vfunc0A();                             // vtable +0x38 (unused)
     virtual void* vfunc0B(void* entry);                  // vtable +0x3C - resolution probe (1 arg)
-    virtual void* vfunc0C(void* entry);                  // vtable +0x40 - resolution probe (1 arg)
+    virtual int _v040(void* entry);                      // vtable +0x40
 };
 
 // 0x3C-byte resource record operated on by the IResInfo accessors.

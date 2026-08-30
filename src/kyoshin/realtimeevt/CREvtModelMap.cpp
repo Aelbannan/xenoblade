@@ -155,7 +155,7 @@ extern "C" CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
     // Unpack the parent's packed token; retail derefs mPtr1C unconditionally
     // (the base ctor always stored the parent there).
     u32 out0, out1, out2, out3;
-    func_800AA318(((CREvtModelParentIf*)self->mPtr1C)->mPacked, &out0, &out1, &out2, &out3);
+    func_800AA318(*(u32*)((char*)self->mPtr1C + 0x20), &out0, &out1, &out2, &out3);
 
     if (out0 == 1) {
         // Guest model: install the guest action table and publish as visible.
@@ -187,7 +187,7 @@ extern "C" CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
 
         func_8016BC1C(self);
 
-        if (((CREvtModelParentIf*)self->mPtr1C)->mField30 != 0) {
+        if (*(s32*)((char*)self->mPtr1C + 0x30) != 0) {
             self->mFlags |= 0x30;
         }
     }
@@ -647,9 +647,9 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             if (func_80180978()) {
-                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::getGameSubManager())->field_100 &= ~4;
+                *(u32*)((char*)cf::CfGameManager::getGameSubManager() + 0x100) &= ~4;
             } else if (visible) {
-                ((CGameMgrCoreFlagsIf*)cf::CfGameManager::getGameSubManager())->field_100 |= 4;
+                *(u32*)((char*)cf::CfGameManager::getGameSubManager() + 0x100) |= 4;
             }
         }
     }
@@ -762,9 +762,9 @@ set_guest_flags:
         s32 isZero = (func_80180990() == 0);
         cf::CfGameManager* m3 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (isZero) {
-            ((CGameMgrCoreFlagsIf*)m3)->field_100 |= 0x10;
+            *(u32*)((char*)m3 + 0x100) |= 0x10;
         } else {
-            ((CGameMgrCoreFlagsIf*)m3)->field_100 &= ~0x10;
+            *(u32*)((char*)m3 + 0x100) &= ~0x10;
         }
     }
 }

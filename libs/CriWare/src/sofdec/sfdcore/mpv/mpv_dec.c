@@ -6,11 +6,9 @@
 // VLC tables are pointer variables in .bss filled at MPVVLC_Init time.
 
 #include <harness_catalog.h>
-__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051C088[0x6] = {
-    0x32,0x2E,0x30,0x36,0x37,0x00
-};
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char gap_06_8051C08E_rodata[0x2] = {
-    0x00,0x00
+// Retail .rodata 0x8051C088-0x8051C090 (8 B): "2.067" + 2-byte pad (balign 8)
+__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051C088[0x8] = {
+    0x32,0x2E,0x30,0x36,0x37,0x00,0x00,0x00
 };
 
 

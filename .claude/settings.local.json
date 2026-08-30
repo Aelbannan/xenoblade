@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import sys,json; [print\\(json.loads\\(l\\)['target_id'], '|', json.loads\\(l\\)['function'], '|', json.loads\\(l\\)['status'], '|', json.loads\\(l\\).get\\('instruction_match'\\)\\) for l in sys.stdin]\")",
+      "Bash(python3 -c ' *)",
+      "Bash(kill -9 15233 15533)",
+      "Bash(pkill -9 -f ninja)",
+      "Bash(python3 configure.py --version us --map)",
+      "Bash(ninja -C build/us monolib/src/core/CViewRectDataCore.cpp.o)",
+      "Bash(ninja monolib/src/core/CViewRectDataCore.cpp.o)",
+      "Bash(python3 tools/coop/run.py diff monolib/src/core/CViewRectDataCore.cpp --symbol func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16)",
+      "Bash(jobs)",
+      "Bash(/opt/homebrew/bin/objdiff-cli diff *)",
+      "Bash(/Users/ahmed/projects/xenoblade/build/tools/objdiff-cli diff *)",
+      "Bash(/Users/ahmed/projects/xenoblade/build/tools/objdiff-cli --help)"
+    ]
+  }
+}

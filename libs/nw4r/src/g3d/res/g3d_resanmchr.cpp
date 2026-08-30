@@ -793,10 +793,14 @@ typedef void (*GetAnmResultFunc)(nw4r::g3d::ChrAnmResult*,
 
 using namespace nw4r::g3d;
 
-static const GetAnmResultFunc gGetAnmResultTable[8] = {
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const GetAnmResultFunc lbl_eu_8051D500[8] = {
     GetAnmResult_,  GetAnmResult_S,  GetAnmResult_R, GetAnmResult_SR,
     GetAnmResult_T, GetAnmResult_ST, GetAnmResult_RT, GetAnmResult_SRT,
 };
+#define gGetAnmResultTable lbl_eu_8051D500
+
+// Absorbed ResName string (AnmObjVis)
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const G3dObj::ResNameDataT<10> lbl_eu_8051D520 = {10, "AnmObjVis"};
 
 namespace nw4r {
 namespace g3d {
@@ -1018,5 +1022,3 @@ void ChrAnmResult::SetTranslate(const math::VEC3* pTrans) {
 
 } // namespace g3d
 } // namespace nw4r
-
-

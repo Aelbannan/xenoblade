@@ -720,6 +720,9 @@ const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const 
 // Retail symbol for BasicSound::SetAmbientInfo(const AmbientInfo&); the header
 // does not declare it (read-only this session), so define the mangled name as
 // a C-linkage free function with an explicit self pointer.
+// Absorb: pad .sbss 0x4->0x8
+unsigned int snd_BasicSound_sbss_pad;
+
 extern "C" void
 SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
     nw4r::snd::detail::BasicSound* self,

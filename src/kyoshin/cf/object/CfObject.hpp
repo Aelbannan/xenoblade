@@ -57,12 +57,12 @@ namespace cf {
         virtual float CfObject_UnkVirtualFunc34();     //0xD8
         // Retail setEffScale_ / Coll UVF35: float in f1 -> +0x60.
         virtual void CfObject_UnkVirtualFunc35(float value); //0xDC
-        // Retail: lfs f1,0x60(r3); blr — scale getter used to feed UVF35.
+        // Retail: lfs f1,0x60(r3); blr - scale getter used to feed UVF35.
         virtual float CfObject_UnkVirtualFunc36();     //0xE0
         virtual void CfObject_UnkVirtualFunc37();     //0xE4
         virtual void CfObject_UnkVirtualFunc38();     //0xE8
         virtual void CfObject_UnkVirtualFunc39();     //0xEC
-        virtual void CfObject_UnkVirtualFunc40();     //0xF0
+        virtual float CfObject_UnkVirtualFunc40();     //0xF0
         virtual void CfObject_UnkVirtualFunc41();     //0xF4
         virtual void CfObject_UnkVirtualFunc42();     //0xF8
         virtual void CfObject_UnkVirtualFunc43();     //0xFC
@@ -79,7 +79,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc54();     //0x128
         virtual void CfObject_UnkVirtualFunc55();     //0x12C
         virtual float CfObject_UnkVirtualFunc56();     //0x130
-        virtual void CfObject_UnkVirtualFunc57();     //0x134
+        virtual void CfObject_UnkVirtualFunc57(float value);     //0x134
         virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59();     //0x13C
         virtual void CfObject_UnkVirtualFunc60();     //0x140
@@ -94,7 +94,9 @@ namespace cf {
         virtual int CfObject_UnkVirtualFunc68(); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
         virtual void CfObject_UnkVirtualFunc70(float value); //0x168
-        virtual void CfObject_UnkVirtualFunc71();     //0x16C
+        // Retail: return float in f1 (Model reads +0xA0; Coll returns const).
+        // CfResPcImpl forwards that into CScnItemModel::vfunc48.
+        virtual float CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual void CfObject_UnkVirtualFunc73();     //0x174
 

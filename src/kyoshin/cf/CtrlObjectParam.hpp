@@ -2,6 +2,9 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/CArtsSet.hpp"
+#include "kyoshin/cf/object/CObjectParam.hpp"
+#include "kyoshin/CItemBoxInfo.hpp"
 #include "monolib/util/FixStr.hpp"   // ml::FixStr<64> for the func_800AA33C import
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue (defining TU: ocBdat.cpp)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
@@ -66,7 +69,7 @@ extern "C" u32 func_80142074(u32 arg1, u32 arg2, u32 arg3);                     
 
 extern "C" u32 func_80141E90(u32 param1, int param2, u32 param3, u32 param4);   // CfBdat.cpp
 
-extern "C" void func_80175A50(u8* value, u8* obj);                              // CActorParam.cpp
+extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);                              // CActorParam.cpp
 
 // Three args: actor (r3, already the lookup result at retail call sites),
 // f32 (f1) and u32 (r4). A 2-arg (f32, u32) declaration would put the u32
@@ -271,15 +274,6 @@ namespace cf {
         u8  field_119[8];       // +0x119..+0x120
     };
 
-    // ── func_8009DBF4 dispatch: vtable slot 0x14 on the sub-object at +0x184 ──
-    // MWCC emits 2 leading vtable entries, so declared index N lands at slot
-    // (N+2)*4: _v14 (index 3) sits at 0x14.
-    struct CtrlObjectParamVt014If {
-        virtual void _v08();
-        virtual void _v0C();
-        virtual void _v10();
-        virtual void _v14(int val);
-    };
 
     // ── func_800A03F4 view: type id + arts key + flags + CActorParam ───────
     struct CtrlObjectParamArtsInitView {
@@ -301,10 +295,6 @@ namespace cf {
         u8  vtable[4];          // +0x0C (vtable pointer)
     };
 
-    // ── func_800A03F4 dispatch: vtable slot 0x8 ────────────────────────────
-    struct CtrlObjectParamVt008If {
-        virtual void _v08();
-    };
 
     // ── func_800A03F4 view: arts column-name buffer (two prefix words) ─────
     // The third byte of the first word is overwritten with the digit char.
@@ -368,16 +358,6 @@ namespace cf {
         u32 field_3DA0;          // +0x3DA0
     };
 
-    // ── func_8009EF9C dispatch: vtable slot 0x3C on the +0x34FC object ─────
-    // Declared index N lands at vtable offset (N+2)*4, so _v034 (index 13)
-    // hits retail slot 0x3C. The +0x34FC word is the object's vtable pointer.
-    struct CtrlObjectParamVt34FCIf {
-        virtual void _v000(); virtual void _v004(); virtual void _v008(); virtual void _v00C();
-        virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-        virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-        virtual void _v030();
-        virtual void _v034(u32 value);   // vtable offset 0x3C
-    };
 
     // ── func_800A145C view: type id + arts row/level keys + CActorParam ────
     struct CtrlObjectParamArtsLearnView {
@@ -492,57 +472,6 @@ namespace cf {
     };
 
     // ── func_800A1370 dispatch: vtable slot 0x28C ─────────────────────────
-    // A real C++ virtual call at vtable offset 0x28C reproduces the retail
-    // lwz r12,0(r3) / lwz r12,0x28C(r12) / mtctr / bctrl sequence (same
-    // shape as the PCIf interface in CfObjectPc.cpp). The class is only used
-    // through reinterpret_cast for calling — never instantiated, so no
-    // vtable is emitted.
-    struct CtrlObjectParamVt028CIf {
-        virtual void _v000(); virtual void _v004(); virtual void _v008(); virtual void _v00C();
-        virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-        virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-        virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual void _v03C();
-        virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-        virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-        virtual void _v060(); virtual void _v064(); virtual void _v068(); virtual void _v06C();
-        virtual void _v070(); virtual void _v074(); virtual void _v078(); virtual void _v07C();
-        virtual void _v080(); virtual void _v084(); virtual void _v088(); virtual void _v08C();
-        virtual void _v090(); virtual void _v094(); virtual void _v098(); virtual void _v09C();
-        virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8(); virtual void _v0AC();
-        virtual void _v0B0(); virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC();
-        virtual void _v0C0(); virtual void _v0C4(); virtual void _v0C8(); virtual void _v0CC();
-        virtual void _v0D0(); virtual void _v0D4(); virtual void _v0D8(); virtual void _v0DC();
-        virtual void _v0E0(); virtual void _v0E4(); virtual void _v0E8(); virtual void _v0EC();
-        virtual void _v0F0(); virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC();
-        virtual void _v100(); virtual void _v104(); virtual void _v108(); virtual void _v10C();
-        virtual void _v110(); virtual void _v114(); virtual void _v118(); virtual void _v11C();
-        virtual void _v120(); virtual void _v124(); virtual void _v128(); virtual void _v12C();
-        virtual void _v130(); virtual void _v134(); virtual void _v138(); virtual void _v13C();
-        virtual void _v140(); virtual void _v144(); virtual void _v148(); virtual void _v14C();
-        virtual void _v150(); virtual void _v154(); virtual void _v158(); virtual void _v15C();
-        virtual void _v160(); virtual void _v164(); virtual void _v168(); virtual void _v16C();
-        virtual void _v170(); virtual void _v174(); virtual void _v178(); virtual void _v17C();
-        virtual void _v180(); virtual void _v184(); virtual void _v188(); virtual void _v18C();
-        virtual void _v190(); virtual void _v194(); virtual void _v198(); virtual void _v19C();
-        virtual void _v1A0(); virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC();
-        virtual void _v1B0(); virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC();
-        virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8(); virtual void _v1CC();
-        virtual void _v1D0(); virtual void _v1D4(); virtual void _v1D8(); virtual void _v1DC();
-        virtual void _v1E0(); virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC();
-        virtual void _v1F0(); virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC();
-        virtual void _v200(); virtual void _v204(); virtual void _v208(); virtual void _v20C();
-        virtual void _v210(); virtual void _v214(); virtual void _v218(); virtual void _v21C();
-        virtual void _v220(); virtual void _v224(); virtual void _v228(); virtual void _v22C();
-        virtual void _v230(); virtual void _v234(); virtual void _v238(); virtual void _v23C();
-        virtual void _v240(); virtual void _v244(); virtual void _v248(); virtual void _v24C();
-        virtual void _v250(); virtual void _v254(); virtual void _v258(); virtual void _v25C();
-        virtual void _v260(); virtual void _v264(); virtual void _v268(); virtual void _v26C();
-        virtual void _v270(); virtual void _v274(); virtual void _v278();
-        virtual void* _v27C();   // arts-set accessor (used by func_800A145C)
-        virtual void _v280();
-        virtual u8* _v028C();
-    };
-
     // ── func_800A3998 view: arts list ─────────────────────────────────────
     // Linked list of rows; the type tag at +0x00 selects the handling:
     // 0x1111 = arts row (count at +0x04), 0xAAAA = pass-through, else abort.
@@ -679,81 +608,6 @@ namespace cf {
         u32 field_04;                        // +0x04 (selection bound)
     };
 
-    // ── func_800A3304/8009DB28 dispatch: item-impl vtable slots 0x10/0x48 ──
-    // Real C++ virtual calls on the object returned by
-    // CItem_initItemImplInstances. MWCC emits 2 leading vtable entries
-    // (offset-to-top + typeinfo), so declared index N lands at vtable offset
-    // (N+2)*4: _v10 at 0x10 (index 2), _v48 at 0x48 (index 16).
-    struct CtrlObjectParamItemImplIf {
-        virtual void _v08(); virtual void _v0C(); virtual void _v10(void* arg);
-        virtual void _v14(); virtual void _v18(); virtual void _v1C();
-        virtual void _v20(); virtual void _v24(); virtual void _v28();
-        virtual void _v2C(); virtual void _v30(); virtual void _v34();
-        virtual void _v38(); virtual void _v3C(); virtual void _v40();
-        virtual void _v44();
-        virtual void _v48(void* arg);
-    };
-
-    // ── func_8009DFC8 dispatch: vtable slots 0xA4 / 0xA8 ───────────────────
-    // Real C++ virtual calls at vtable offsets 0xA4/0xA8 through the param
-    // embedded at +0x17C reproduce the retail lwz r12,0x17C / lwz r12,0xA4
-    // dispatch sequences (same shape as the PCIf interface in CfObjectPc.cpp).
-    // Only used through reinterpret_cast for calling - never instantiated.
-    struct CtrlObjectParamVt0A8If {
-        // MWCC emits 2 leading vtable entries (offset-to-top + typeinfo), so a
-        // virtual declared at index N lands at vtable offset (N+2)*4: the two
-        // slots below (declared indices 39/40) hit retail slots 0xA4 / 0xA8.
-        virtual void _v000(); virtual void _v004(); virtual void _v008(); virtual void _v00C();
-        virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-        virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-        virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual void _v03C();
-        virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-        virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-        virtual void _v060(); virtual void _v064(); virtual void _v068(); virtual void _v06C();
-        virtual void _v070(); virtual void _v074(); virtual void _v078(); virtual void _v07C();
-        virtual void _v080(); virtual void _v084(); virtual void _v088(); virtual void _v08C();
-        virtual void _v090(); virtual void _v094(); virtual void _v098();
-        virtual void _v0A4(cf::CtrlObjectParamActorOwner* self);
-        virtual void _v0A8(int val);
-    };
-
-    // ── func_800A11A4 dispatch: item-impl vtable slot 0x28 ────────────────
-    // Real C++ virtual call at vtable offset 0x28 through the object returned
-    // by CItem_initItemImplInstances. Declared index N lands at vtable offset
-    // (N+2)*4 (two hidden typeinfo entries), so _v028 (index 8) sits at 0x28.
-    struct CtrlObjectParamVt028If {
-        virtual void _v08(); virtual void _v0C(); virtual void _v10();
-        virtual void _v14(); virtual void _v18(); virtual void _v1C();
-        virtual void _v20(); virtual void _v24();
-        virtual u16 _v028(void* item, const char* str);
-    };
-
-    // ── func_800A30E4 dispatch: item-impl vtable slots 0x2C / 0x30 ────────
-    // Row fetch (0x2C, index 9) and row-count probe (0x30, index 10) on the
-    // object returned by CItem_initItemImplInstances.
-    struct CtrlObjectParamVt02CIf {
-        virtual void _v000(); virtual void _v004(); virtual void _v008();
-        virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020();
-        virtual void* _v028(void* item, int index);   // offset 0x2C
-        virtual u16 _v02C(void* item);                // offset 0x30
-    };
-
-    // ── func_800A30E4 dispatch: sub-object at +0x184, vtable slot 0x6C ────
-    // The CActorParam-relative sub-object at +8 drives a slot-0x6C call with
-    // the stack arts table as argument (both for the entry and the actor).
-    struct CtrlObjectParamVt06CIf {
-        virtual void _v000(); virtual void _v004(); virtual void _v008();
-        virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020();
-        virtual void _v024(); virtual void _v028(); virtual void _v02C();
-        virtual void _v030(); virtual void _v034(); virtual void _v038();
-        virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050();
-        virtual void _v054(); virtual void _v058(); virtual void _v05C();
-        virtual void _v060();
-        virtual void _v064(void* table);              // offset 0x6C
-    };
 
     // ── func_800A11A4 view: s16/u16 fields + CActorParam at +0x17C ────────
     // Reads shortArr[5] at +0x26, the s16 display fields at +0xD4/+0xD6 and
@@ -779,76 +633,6 @@ namespace cf {
         u16 field_E6;              // +0xE6
         u8  pad_E8[0x17C - 0xE8];
         CActorParam mParam;        // +0x17C (vtable)
-    };
-
-    // ── func_8009F6D4 dispatch: vtable slots 0xA4..0x304 ──────────────────
-    // Real C++ virtual calls at vtable offsets 0xA4/0xAC/0xB0/0xB8/0x28C/
-    // 0x2F4/0x2FC/0x304 through the actor (func_800B8B94) or the embedded
-    // CActorParam at +0x17C. Declared index N lands at (N+2)*4; the arg-
-    // taking slots below reproduce the retail li r4, imm before bctrl.
-    struct CtrlObjectParamVt0A4If {
-        virtual void _v000(); virtual void _v004(); virtual void _v008(); virtual void _v00C();
-        virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-        virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-        virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual void _v03C();
-        virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-        virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-        virtual void _v060(); virtual void _v064(); virtual void _v068(); virtual void _v06C();
-        virtual void _v070(); virtual void _v074(); virtual void _v078(); virtual void _v07C();
-        virtual void _v080(); virtual void _v084(); virtual void _v088(); virtual void _v08C();
-        virtual void _v090(); virtual void _v094(); virtual void _v098();
-        virtual void _v0A4(void* self);
-        virtual void _v0A8(int val);
-        virtual void _v0AC(int val);
-        virtual void _v0B0();
-        virtual void _v0B4();
-        virtual void _v0B8();
-        virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4(); virtual void _v0C8();
-        virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4(); virtual void _v0D8();
-        virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4(); virtual void _v0E8();
-        virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4(); virtual void _v0F8();
-        virtual void _v0FC(); virtual void _v100(); virtual void _v104(); virtual void _v108();
-        virtual void _v10C(); virtual void _v110(); virtual void _v114(); virtual void _v118();
-        virtual void _v11C(); virtual void _v120(); virtual void _v124(); virtual void _v128();
-        virtual void _v12C(); virtual void _v130(); virtual void _v134(); virtual void _v138();
-        virtual void _v13C(); virtual void _v140(); virtual void _v144(); virtual void _v148();
-        virtual void _v14C(); virtual void _v150(); virtual void _v154(); virtual void _v158();
-        virtual void _v15C(); virtual void _v160(); virtual void _v164(); virtual void _v168();
-        virtual void _v16C(); virtual void _v170(); virtual void _v174(); virtual void _v178();
-        virtual void _v17C(); virtual void _v180(); virtual void _v184(); virtual void _v188();
-        virtual void _v18C(); virtual void _v190(); virtual void _v194(); virtual void _v198();
-        virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4(); virtual void _v1A8();
-        virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4(); virtual void _v1B8();
-        virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8();
-        virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4(); virtual void _v1D8();
-        virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4(); virtual void _v1E8();
-        virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4(int value, int a, int b); virtual void _v1F8();
-        virtual void _v1FC(); virtual void _v200(); virtual void _v204(); virtual void _v208();
-        virtual void* _v20C(); virtual void _v210(); virtual void _v214(); virtual void _v218();
-        virtual void _v21C(); virtual void _v220(); virtual void* _v224(); virtual void _v228();
-        virtual void _v22C(); virtual void _v230(); virtual void _v234(); virtual void _v238();
-        virtual void _v23C(); virtual void _v240(); virtual void _v244(); virtual void _v248();
-        virtual void _v24C(); virtual void _v250(); virtual void _v254(); virtual void _v258();
-        virtual void _v25C(); virtual void _v260(); virtual void _v264(); virtual void _v268();
-        virtual void _v26C(); virtual void _v270(); virtual void _v274(); virtual void _v278();
-        virtual void _v27C(); virtual void _v280(); virtual void _v284(); virtual void _v288();
-        virtual u8* _v028C();
-        virtual void _v0290(); virtual void _v0294(); virtual void _v0298(); virtual void _v029C();
-        virtual void _v02A0(); virtual void _v02A4(); virtual void _v02A8(); virtual void _v02AC();
-        virtual void _v02B0(); virtual void _v02B4(); virtual void _v02B8(); virtual void _v02BC();
-        virtual void _v02C0(); virtual void _v02C4(); virtual void _v02C8(); virtual void _v02CC();
-        virtual void _v02D0(); virtual void _v02D4(); virtual void _v02D8(); virtual void _v02DC();
-        virtual void _v02E0(); virtual void _v02E4(); virtual void _v02E8(); virtual void _v02EC();
-        virtual void _v02F0();
-        virtual void* _v02F4();
-        virtual void _v02F8();
-        virtual void _v02FC(int val);
-        virtual void _v0300();
-        virtual void _v0304(int val);
-        virtual void _v0308(); virtual void _v030C(); virtual void _v0310(); virtual void _v0314();
-        virtual void _v0318(); virtual void _v031C(); virtual void _v0320(); virtual void _v0324();
-        virtual void _v0328();
-        virtual void _v032C();
     };
 
     // ── func_8009F6D4 view: u16 type id at +0, CActorParam at +0x17C ──────

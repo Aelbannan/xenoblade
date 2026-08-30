@@ -52,7 +52,7 @@ Hmm — this is close to what I have. The difference: the ringObj==NULL check st
 The fundamental question: can MWCC be coaxed into keeping the SetErr results in r3? I've tried 12+ variants on this function's allocation. This is a hard Chaitin soft-cap. 
 
 DECISION: revert InitRingSj's return changes? NO — the return value is REQUIRED for the caller semantics (SFBUF_InitHn checks it). The current state: 0x170 (over per-function but within the unit split budget), 81.2% objdiff. Hmm — actually wait — let me re-check the objdiff fuzzy after the return changes. The hexdiff is 38%; earlier the cycle said 81.2% (before return changes). Let me cycle again to see the current fuzzy... Actually — the size went from exact 0x164 to 0x170 — the fuzzy probably dropped a bit. Let me cycle to get the number.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803c176c --hypothesis "return int (0/err) for caller semantics; direct-return attempt vs err-gate" --next-cha...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803c176c --hypothesis "return int (0/err) for caller semantics; direct-return attempt vs err-gate" --next-cha...
 Let me verify my unit edits didn't regress other functions, and check current extern state:
 [Thought] Wait — the cycle says match 81.5% size 0x164 — but the hexdiff --no-build said 0x170?! The cycle REBUILT (the object was stale in my --no-build read). After a fresh build, the size is 0x164 (exact!) and 81.5%. The --no-build reads were showing a stale object from before... hmm — no wait — the cycle rebuilds with the CURRENT source. So the current source compiles to 0x164/81.5%. The hexdiff --no-build showed 0x170 — because that object was from... hmm — the hexdiff --all earlier (which BUILT) showed 0x170 for InitRingSj. But the cycle now says 0x164. The difference: the cycle and the hexdiff build the same object... unless the hexdiff --all output was showing the object built BEFORE my last edit... no — the --all BUILT fresh.
 
@@ -107,7 +107,7 @@ Let me also double check that I didn't break any OTHER function in my units with
 4. sfd_buf.c — sfbuf_InitRingSj (return int), SFBUF_InitHn (signature), SFBUF_SetSupplySj, SFBUF_VfrmAddRead, fn_803C1CAC.
 
 Let me verify the current adx_tsvr.c extern state and make sure the whole unit still builds & the OTHER functions in the unit are unaffected (adxt_stat_playing, criware_eu_803878BC, ADXT_ExecHndl were FULL_MATCH).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -n "ADXSTM_SetEos\|ADXSTM_Seek" libs/CriWare/src/adx/adxt/adx_tsvr.c && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_tsvr --all -...
+[Shell] cd /Users/ahmed/projects/xenoblade && grep -n "ADXSTM_SetEos\|ADXSTM_Seek" libs/CriWare/src/adx/adxt/adx_tsvr.c && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_tsvr --all -...
 [Thought] The adx_tsvr unit:
 - criware_80385320 ✓ FULL_MATCH
 - adxt_stat_playing ✓ 100% (unaffected by the s8 state change!)
@@ -121,12 +121,12 @@ Hmm — adxt_eos_entry decomp is 0xbc vs retail 0xc0 — the extsh missing. OK.
 Also — hmm — I notice adxt_eos_entry's decomp is STILL 0xbc (4 short). And the extern is s16. Fine — the stall note covers it.
 
 Now let me verify the mwsfdply/mwsfdsvr units are fine.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdply --all --no-build 2>&1 | tail -4 && .venv/bin/python3 tools/coop/hexdiff.py CriWa...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdply --all --no-build 2>&1 | tail -4 && .venv/bin/python3 tools/coop/hexdiff.py CriWa...
 Units healthy. Now record all callee-blocked targets' blockers:
 [Thought] Both units are healthy. mwlSfdSleepDecSvr is now 100% (part of the 11/18).
 
 Now let me record the blockers for the callee-blocked targets. Let me write them all in one go.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/evidence/decomp/attempts.jsonl <<'EOF' {"target_id": "us-803a4dbc", "function": "mwPlyStartSj", "region": "us", "unit": "main/CriWare/src/sofd...
+[Shell] cd /Users/ahmed/projects/xenoblade && cat >> docs/evidence/decomp/attempts.jsonl <<'EOF' {"target_id": "us-803a4dbc", "function": "mwPlyStartSj", "region": "us", "unit": "main/CriWare/src/sofd...
 All 23 blockers recorded. Check git status and prepare the commit:
 [Thought] All 23 blockers recorded. Now let me:
 1. Check git status of my files.
@@ -141,7 +141,7 @@ My changed files:
 - tools/coop/targets.json (updated by cycle/claim commands)
 
 Let me check git status for my files and diff to make sure nothing unintended.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "adx_tsvr|mwsfdply|mwsfdsvr|sfd_buf|attempts.jsonl|targets.json|coop" | head -12 && echo ==== && git diff --stat libs/CriWare...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "adx_tsvr|mwsfdply|mwsfdsvr|sfd_buf|attempts.jsonl|targets.json|coop" | head -12 && echo ==== && git diff --stat libs/CriWare...
 mwsfdply.c is back to clean (edits reverted). Commit my work (excluding other agents' orchestrator files):
 [Thought] Good — mwsfdply.c is NOT modified anymore (my MWSFPLY_SetFlowLimit edits were reverted to the original). My modified files:
 - libs/CriWare/src/adx/adxt/adx_tsvr.c
@@ -157,14 +157,14 @@ The instructions: "Commit only your own work (git add your files, git commit)." 
 Let me verify the targets.json diff only contains my changes (claims + 2 acceptances)... it's a big shared file — my claims touched 32 targets (owner=cri-b12). Let me just commit my stuff. Also — I should double check I haven't left the claims in a weird state — the claims are fine (owner cri-b12).
 
 Let me do the commit.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/adx/adxt/adx_tsvr.c libs/CriWare/src/sofdec/mwply/mwsfdsvr.c libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c docs/evidence/decomp/a...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/adx/adxt/adx_tsvr.c libs/CriWare/src/sofdec/mwply/mwsfdsvr.c libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c docs/evidence/decomp/a...
 Committed. Final verification of all 33 targets:
 [Thought] Committed. Now let me do a final verification of the batch status:
 1. Check the two accepted targets are ACCEPTED in the registry.
 2. Verify all 33 targets' final status for the report.
 
 Let me run a final status check.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for t in us-803a523c us-803c2394 us-803a4dbc us-80387904 us-803c1cac us-80387b24 us-803a6878 us-803c18d0 us-803a5b1c us-803a66fc us-803a537c us-803c249c u...
+[Shell] cd /Users/ahmed/projects/xenoblade && for t in us-803a523c us-803c2394 us-803a4dbc us-80387904 us-803c1cac us-80387b24 us-803a6878 us-803c18d0 us-803a5b1c us-803a66fc us-803a537c us-803c249c u...
 [Thought] The final state:
 - **ACCEPTED**: us-803a66fc mwlSfdSleepDecSvr (FULL_MATCH), us-803884dc criware_80385320 (FULL_MATCH)
 - **ACTIVE HIGH_MATCH**: us-803c2394 SFBUF_VfrmAddRead (92%), us-80387904 adxt_trap_entry_lps (55%), us-803c1cac fn_803C1CAC (94.1%), us-80387b24 adxt_eos_entry (72.9%), us-803c176c sfbuf_InitRingSj (81.5%), us-803c1af8 SFBUF_SetSupplySj (76.9%), us-803c15a0 SFBUF_InitHn (92.6%)
@@ -178,7 +178,7 @@ Hmm — the registry "match" values are somewhat stale for the targets I didn't 
 One more consideration: the task says the report should list per-target final status. The statuses I'll report from the actual hexdiff measurements.
 
 Also — let me double-check the git status is clean for my files (nothing left uncommitted that's mine).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "cri_orchestrator|retail_reloc_map|targets.certs" | head -8
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -vE "cri_orchestrator|retail_reloc_map|targets.certs" | head -8
 All my work is committed; remaining modified files belong to other agents. Final report:
 
 ---

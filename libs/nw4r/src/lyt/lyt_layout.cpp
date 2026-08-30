@@ -483,7 +483,9 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 } // namespace lyt
 } // namespace nw4r
 
-// Retail Layout::BindAnimationAuto. Defined as a global-scope literal-mangled
+extern "C" __attribute__((used)) char lyt_layout_sbss_pad[4];
+
+// Retail Layout::BindAnimationAuto
 // function because the retail vtable entry returns bool while the header
 // declares void (same pattern as the other literal-mangled symbols above).
 extern "C" bool BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(

@@ -11,21 +11,21 @@ Hmm — actually — WAIT. There IS something important here: if the initial wor
 So the initial working tree WAS different from HEAD (msg_* version) but git status didn't show it... IMPOSSIBLE unless the status output was truncated. Let me just accept it and move on — the final state is verified by the cycle results.
 
 Let me check the adx_tlk.c diff to make sure it's only my adxt_GetTime change.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/adx/adxt/adx_tlk.c | head -80
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff libs/CriWare/src/adx/adxt/adx_tlk.c | head -80
 The diff is exactly my intended semantic corrections. Let me commit the accepted work:
 [Thought] The adx_tlk.c diff is exactly my adxt_GetTime semantic corrections. Good. Now let me commit. But first — let me reconsider whether I should keep the `svr` local in the committed version. The svr local gives 15.8% (better than inline 9.6%). It's semantically correct. Keep it.
 
 Let me also double check the sj_mem.c diff one more time and then commit everything.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/adx/sj/sj_mem.c libs/CriWare/src/adx/sj/sj_rbf.c libs/CriWare/src/adx/adxt/adx_tlk.c configure.py docs/evidence/decomp/attempts.j...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/adx/sj/sj_mem.c libs/CriWare/src/adx/sj/sj_rbf.c libs/CriWare/src/adx/adxt/adx_tlk.c configure.py docs/evidence/decomp/attempts.j...
 [Thought] Committed (a878881ca). The commit includes my 7 files (configure.py, attempts.jsonl, adx_tlk.c, sj_mem.c, sj_rbf.c, targets.json — and config/us/symbols.txt? — the status showed "M config/us/symbols.txt" staged — hmm — did I stage that? The git add listed only 6 files... but the commit says 7 files changed. The `git add` command added 6 files, but symbols.txt shows as staged ("M " with M in first column). Hmm — the git add output — wait, I see "M  config/us/symbols.txt" — the first column M = staged. I didn't add it explicitly... OH — maybe it was already staged from a previous operation, or the git add... no — git add only stages listed paths. Let me check — the `git status --short` output shows "M  config/us/symbols.txt" (staged) — this must have been staged BEFORE my commit — maybe by another agent or a pre-commit hook. Hmm — the pre-commit hook (bash .githooks/install.sh — refresh README status) might stage things. Or another agent staged it.
 
 The commit went through with 7 files. Let me check if symbols.txt is a file I should worry about — it's a config file. Hmm — the commit message says 7 files. If symbols.txt was accidentally included... Let me check what changed in it. Actually — let me not panic — let me check the commit contents.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat HEAD | head -12; git show HEAD -- config/us/symbols.txt | head -20
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat HEAD | tail -6; echo ===; git show HEAD -- config/us/symbols.txt | head -10; echo "=== is symbols.txt in commit?"; git show HEAD --name-on...
+[Shell] cd /Users/ahmed/projects/xenoblade && git show --stat HEAD | head -12; git show HEAD -- config/us/symbols.txt | head -20
+[Shell] cd /Users/ahmed/projects/xenoblade && git show --stat HEAD | tail -6; echo ===; git show HEAD -- config/us/symbols.txt | head -10; echo "=== is symbols.txt in commit?"; git show HEAD --name-on...
 [Thought] The commit has 7 files: README.md, assets/progress-map.svg (from the pre-commit hook — it refreshes the README status), configure.py, attempts.jsonl, adx_tlk.c, sj_mem.c, targets.json. Wait — sj_rbf.c is NOT in the commit (no diff vs HEAD — correct!). And symbols.txt is NOT in the commit (it was staged but... hmm — the commit shows README.md + progress-map.svg — those are the pre-commit hook's auto-refresh — the hook runs and stages them). Hmm — the hook adds README/progress — acceptable (auto-generated status).
 
 Wait — symbols.txt shows as "M " (staged) in the status output but isn't in the commit... Let me recheck — the status output BEFORE the commit showed "M  config/us/symbols.txt" — staged. But the commit doesn't include it. That means it was staged AFTER the commit? No — the status was BEFORE the commit... hmm — the status was run as part of the same command chain (git status --short | head -10 THEN git commit). The status showed symbols.txt staged — then the commit — but symbols.txt not in the commit. That's odd. UNLESS the pre-commit hook (which ran during the commit) UNSTAGED it or the git add I ran didn't include it and it was staged by... hmm — actually the "M " (staged) marker — let me check the current status now.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "symbols|README|progress" ; git stash list | head -2
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "symbols|README|progress" ; git stash list | head -2
 Commit done (7 files — sj_rbf.c had no diff vs HEAD as its fixes were already committed). Let me run final cycles to officially record the near-match states:
 [Thought] The commit went through with my 7 files (README/progress-map were regenerated by the pre-commit hook — those are auto-generated status files, fine to include). symbols.txt is currently " M" (unstaged modified) — it wasn't in my commit (the "M " staged marker earlier must have been a transient state from another agent's concurrent git operation). Good — symbols.txt is another agent's file; I did NOT commit it. ✓
 
@@ -51,11 +51,11 @@ What about `self->vtable` LAST? — retail stores vtable 2nd. No.
 Hmm — what if the store block's scheduling is influenced by the ERROR BLOCKS' content — e.g., the err1 message base lis being hoisted... The err1 block: `lis r5 (msg base); addi r3, sp, 8; addi r5; li r4, 64; addi r31, r5, 12 (suffix); addi r5, r5, 39; bl strcpy`. The retail's store block has `lis r5 (err_func)` at +0xDC — and the err1's `lis r5 (msg base)` at +0x114 (0x214+...). Two different lis r5's. The scheduling of the store-block's err_func lis...
 
 I've spent a lot on this. Let me do a FINAL check: run the cycle on sjmem_Create to see the exact outcome (maybe the witness handles it better than I think). It'll fail — but let me confirm and log it properly. Actually — the rules say record and move on for these. The cycle attempt logs automatically. Let me just run the cycle once to get the official status recorded.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803967a4 --hypothesis "pointer-walk loop + i==0x20 flag-reuse + suffix + Wii/1.1; 3 structural store-block ro...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803967a4 --hypothesis "pointer-walk loop + i==0x20 flag-reuse + suffix + Wii/1.1; 3 structural store-block ro...
 [Thought] sjmem_Create: 93.4% fuzzy, HIGH_MATCH, witness didn't apply — recorded. Size PASS.
 
 Now let me verify the final batch status and update claims. Let me check all 32 targets' current status.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json data = json.load(open('tools/coop/targets.json')) targets = data if isinstance(data, list) else data.get('targets'...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json data = json.load(open('tools/coop/targets.json')) targets = data if isinstance(data, list) else data.get('targets'...
 19/32 accepted. Let me release all my claims and commit the final state:
 [Thought] 19/32 accepted (all FULL_MATCH). The remaining 13 are:
 - 12 blocked (callee-blocked or soft-capped with gates) — recorded.
@@ -72,8 +72,8 @@ Now — let me finalize:
 Actually — should I release the claims? The skill says "release the claim and do not edit the same function concurrently" after acceptance. Let me release the accepted ones. The blocked ones — keep claimed or release? The batch says "record the blocker in attempts.jsonl and move to the next target" — releasing is cleaner. Let me release all 32 (accepted ones are done; blocked ones documented).
 
 Hmm — actually — the claim release: `targets release <target-id> --owner cri-b10`. Let me release all of mine.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for t in us-80386678 us-80396a24 us-80396bbc us-803973f8 us-803977d4 us-803984d8 us-8039859c us-80398660 us-80396958 us-80397708 us-803979a4 us-80396ae8 u...
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && git commit -m "cri: record cri-10 blockers + release claims (adx_tlk chain, sjmem s...
+[Shell] cd /Users/ahmed/projects/xenoblade && for t in us-80386678 us-80396a24 us-80396bbc us-803973f8 us-803977d4 us-803984d8 us-8039859c us-80398660 us-80396958 us-80397708 us-803979a4 us-80396ae8 u...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && git commit -m "cri: record cri-10 blockers + release claims (adx_tlk chain, sjmem s...
 [Thought] Committed. Now let me do a final verification:
 1. The unit builds are green (hexdiff --all passes).
 2. Final batch summary.
@@ -81,7 +81,7 @@ Hmm — actually — the claim release: `targets release <target-id> --owner cri
 Let me run a final sanity check on the three units and produce the final report. Also — let me double-check that I haven't left any broken state in the sj_mem/sj_rbf/adx_tlk sources (the last hexdiff runs passed, so they build).
 
 Let me also verify the git log is clean (my 2 commits) and there's nothing else of mine uncommitted.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git log --oneline -3; echo ===; git status --short | grep -vE "RVL_SDK|^ M (docs/ppc|tools/coop/cri)|^ M libs/CriWare/src/adx/(adxt/(adx_bau|adx_bsc|adx_b...
+[Shell] cd /Users/ahmed/projects/xenoblade && git log --oneline -3; echo ===; git status --short | grep -vE "RVL_SDK|^ M (docs/ppc|tools/coop/cri)|^ M libs/CriWare/src/adx/(adxt/(adx_bau|adx_bsc|adx_b...
 All done. Final state verified. Here's the final report:
 
 ## FINAL REPORT — batch cri-10 (32 targets)

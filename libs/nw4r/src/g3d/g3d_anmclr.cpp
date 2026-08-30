@@ -252,3 +252,7 @@ void __dt__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 void GetTypeName__Q34nw4r3g3d12AnmObjMatClrCFv(){}
 
 extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjMatClrCFv(void) { return (void*)lbl_eu_8051D530; }
+
+
+
+

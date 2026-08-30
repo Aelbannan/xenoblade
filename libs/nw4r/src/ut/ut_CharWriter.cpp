@@ -7,7 +7,8 @@ extern const f32 lbl_eu_8066A144;  // 1.0f
 extern const f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
 extern const f32 lbl_eu_8066A150;  // 0.5f
 extern const f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
-extern "C" nw4r::ut::CharWriter::LoadingTexture lbl_eu_80653EB8;
+unsigned char lbl_eu_80653EA8[0x10] __attribute__((aligned(8)));
+nw4r::ut::CharWriter::LoadingTexture lbl_eu_80653EB8 __attribute__((aligned(8)));
 #define mLoadingTexture lbl_eu_80653EB8
 
 // int -> f32 conversion matching retail: plain builtin cast. Retail rounds
@@ -56,10 +57,8 @@ void SetupGXCommon() {
 namespace nw4r {
 namespace ut {
 
-// NOTE: mLoadingTexture is NOT defined here -- retail ut_CharWriter.o has .bss
-// size 0; the retail object lives in the nw4hbm CharWriter range (.bss
-// 0x805CA150, a separate library variant). The header's static member stays
-// declared; references emit UNDEF relocs that the coordinator resolves.
+// Retail ut_CharWriter.o .bss 0x80653EA8-0x80653EC8 (0x20): lbl_eu_80653EA8 (0x10)
+// and mLoadingTexture (0x10). Absorbed from nw4r_data.s.
 CharWriter::CharWriter()
     : mAlpha(255), mIsWidthFixed(false), mFixedWidth(lbl_eu_8066A140),
       mFont(NULL) {

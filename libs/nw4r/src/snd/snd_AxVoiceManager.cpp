@@ -202,3 +202,6 @@ void AxVoiceManager::FreeAllReservedAxVoice() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// Absorb: pad .sbss 0x1->0x8
+unsigned int snd_AxVoiceManager_sbss_pad;

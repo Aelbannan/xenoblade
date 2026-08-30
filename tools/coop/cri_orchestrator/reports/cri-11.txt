@@ -7,7 +7,7 @@ The SKILL EXPLICITLY allows cycling a callee-blocked target to land FULL_MATCH! 
 Given the tension, and that adxm_fs_proc is a GUARANTEED acceptance (100% static → auto certificate, no probe, no callee gate), I'll cycle it. The risk is minimal (a ~3-min cycle, no probe). The benefit: a 4th acceptance. This aligns with the SKILL's explicit exception.
 
 Let me cycle adxm_fs_proc.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-8039e034 --hypothesis "volatile store on final field_0x9E4 write forces retail epilogue LR-first restore orde...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-8039e034 --hypothesis "volatile store on final field_0x9E4 write forces retail epilogue LR-first restore orde...
 **adxm_fs_proc ACCEPTED — 4/38!** Let me commit and check the exact fuzzy threshold in the cycle code.
 [Thought] **adxm_fs_proc ACCEPTED (FULL_MATCH)** — 4/38! The cycle accepted it with the auto certificate despite the callee being CLAIMED (the full-instruction-match path doesn't need the callee tree).
 
@@ -29,7 +29,7 @@ OK — let me look at the create_base_thread / goto walls differently: what if t
 Let me accept the current state and commit. Then write the final report.
 
 Actually — hold on — let me reconsider the fuzzy threshold question by looking at what the cycle ACTUALLY requires. The SKILL says "EQUIVALENT_MATCH (function fuzzy ≥ 50% and ppc_equivalence proves EQUIVALENT...)". Let me check the cycle code for the exact threshold — if the threshold is lower (like ≥50% is just the SMT gate), maybe my 25.5% targets could... no — 25.5% < 50% regardless. Let me check the actual gate in the code to be sure.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -rn "50" tools/coop/lib/*.py tools/ppc_equivalence/*.py 2>/dev/null | grep -iE "fuzzy|equival" | head -5; git add libs/CriWare/src/adx/adxt/srcwii/ad...
+[Shell] cd /Users/ahmed/projects/xenoblade && grep -rn "50" tools/coop/lib/*.py tools/ppc_equivalence/*.py 2>/dev/null | grep -iE "fuzzy|equival" | head -5; git add libs/CriWare/src/adx/adxt/srcwii/ad...
 Confirmed 50% threshold. Let me do a final verification of all my units' states.
 [Thought] The threshold is confirmed: EQUIVALENT_MATCH_MIN_PERCENT = 50.0. So the stuck targets (25.5%, 18.3%, 16.5%) are below the threshold and can't be accepted even out-of-band. They'll need more work in future sessions.
 
@@ -49,26 +49,26 @@ What if the field is accessed via TWO chained offsets: `*((u32*)((u8*)base + 0x1
 OK — the p16 wall is genuinely hard (documented). Let me accept the state.
 
 Let me now also double-check: did I leave the adx_mwii.c file in a clean state (the goto function has the correct semantics)? Let me verify the final state of the key files and do a final unit check.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/srcwii/adx_mwii --all --no-build 2>&1 | tail -20
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdfrm --all --no-build 2>&1 | tail -17
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/srcwii/adx_mwii --all --no-build 2>&1 | tail -20
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdfrm --all --no-build 2>&1 | tail -17
 All units clean. Let me get the final registry status for the report.
 [Thought] All units are in a clean, improved state:
 - adx_mwii: 10/18 fully matched (was 9 — added adxm_fs_proc). adxm_lock 100%, adxm_fs_proc 100%.
 - mwsfdfrm: 5/13 fully matched (was 3 — added mwsffrm_SetPicUsrInf + criware_8039CD7C). ChangeSettingSyncPlayback 96.8% (hexdiff) / 98.3% (cycle metric).
 
 Now — the remaining batch targets. Let me write the final report. Let me first double-check the current target statuses in the registry.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) targets = data if isinstance(data, list) else data....
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) targets = data if isinstance(data, list) else data....
 [Thought] 4 targets accepted. Let me also verify the attempts.jsonl has all the required blocker entries (35 + the adxm_fs_proc cycle log + the ADXSJD_Create stall). And check git status is clean of my files.
 
 Let me also do a final sanity check on my earlier commits — did the pre-commit hook's README/progress-map updates get committed (they're from my commits — that's expected behavior).
 
 Let me verify git status.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "adx_mwii|mwsfdfrm|adx_sjd|configure.py|attempts" ; echo "=== my commits:"; git log --oneline -6 | grep -E "cri-11"
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --stat docs/evidence/decomp/attempts.jsonl; git diff docs/evidence/decomp/attempts.jsonl | grep "^+" | grep -o '"target_id"[=: ]*"[^"]*"' | sort ...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -E "adx_mwii|mwsfdfrm|adx_sjd|configure.py|attempts" ; echo "=== my commits:"; git log --oneline -6 | grep -E "cri-11"
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff --stat docs/evidence/decomp/attempts.jsonl; git diff docs/evidence/decomp/attempts.jsonl | grep "^+" | grep -o '"target_id"[=: ]*"[^"]*"' | sort ...
 [Thought] The remaining attempts.jsonl diff is 2 entries from OTHER agents (us-803d1db0, us-803d1e90 — sfd functions, not mine). My work is all committed. Let me leave those (they're other agents' concurrent work).
 
 Let me verify the mwsffrm_ChangeSettingSyncPlayback cycle log and the stall notes are in the committed attempts.jsonl.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -c "cri-11" docs/evidence/decomp/attempts.jsonl; grep "us-8039ff6c\|us-8039e034" docs/evidence/decomp/attempts.jsonl | tail -3 | cut -c1-120
+[Shell] cd /Users/ahmed/projects/xenoblade && grep -c "cri-11" docs/evidence/decomp/attempts.jsonl; grep "us-8039ff6c\|us-8039e034" docs/evidence/decomp/attempts.jsonl | tail -3 | cut -c1-120
 Let me record the reusable volatile-epilogue breakthrough in MWCC_CASES (per the SKILL).
 [Thought] All the evidence is recorded (35 cri-11 blocker entries + the stall notes + cycle logs).
 
@@ -96,10 +96,10 @@ Notable discoveries to record in MWCC_CASES (per the SKILL — "append new patte
 3. The mwsfdfrm unit being Wii/1.1 (KB had evidence via SVM_Init).
 
 Let me append the volatile-epilogue pattern to MWCC_CASES — it's a reusable breakthrough (fixed 2 functions).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -5 docs/MWCC_CASES.md; grep -n "### CriWare adx_mwii" docs/MWCC_CASES.md | head -3
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_M...
+[Shell] cd /Users/ahmed/projects/xenoblade && tail -5 docs/MWCC_CASES.md; grep -n "### CriWare adx_mwii" docs/MWCC_CASES.md | head -3
+[Shell] cd /Users/ahmed/projects/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_M...
 [Thought] The commit included 5 files — hmm — the MWCC_CASES + 4 others? The pre-commit hook probably refreshed README/progress-map, and attempts.jsonl might have gotten swept in. Let me check what got committed — if other agents' attempts.jsonl lines got swept in, that's a problem (the 2 lines from us-803d1db0/us-803d1e90).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show HEAD --stat | tail -7
+[Shell] cd /Users/ahmed/projects/xenoblade && git show HEAD --stat | tail -7
 [Thought] Hmm — my commit 9d88c96d3 (the fs_proc acceptance) shows "3 files changed" earlier — and now the docs commit shows 5 files including `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c` (29 lines!) and targets.json — those are OTHER agents' changes! My `git add docs/MWCC_CASES.md` staged only that file, but the pre-commit hook or... wait — the commit shows sfd_tst.c + targets.json + attempts.jsonl (2 lines) + certs — those got SWEPT into my commit!
 
 How? The pre-commit hook might run `git add` on everything (refresh README status) — the AGENTS.md said the pre-commit hook refreshes README. If the hook does `git add -A` or similar, it sweeps ALL staged+unstaged changes into the commit! That's what happened — sfd_tst.c (another agent's in-flight work), targets.json, certs — all committed under my message.
@@ -111,7 +111,7 @@ Hmm — the alternative (leaving them uncommitted) would risk them being lost. A
 Let me verify the current working tree is clean of MY files, and check whether the sfd_tst.c agent's work is intact (it is — committed). I'll note this in the report.
 
 Let me check the current git status.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | head -20; cat .githooks/pre-commit 2>/dev/null | head -15
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | head -20; cat .githooks/pre-commit 2>/dev/null | head -15
 All work is committed. Here's the final report.
 
 ---

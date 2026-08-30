@@ -678,3 +678,65 @@ const nw4r::ut::detail::RuntimeTypeInfo* Window::GetRuntimeTypeInfo() const {
 
 } // namespace lyt
 } // namespace nw4r
+
+// ABSORB: Bounding vtable (0x78) was in lyt_bounding.o's .data but is linked into lyt_window's 0x140 slice (0xC8-0x140)
+extern "C" void __dt__Q34nw4r3lyt8BoundingFv();
+extern "C" void* GetRuntimeTypeInfo__Q34nw4r3lyt8BoundingCFv();
+extern "C" void CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void DrawSelf__Q34nw4r3lyt8BoundingFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Animate__Q34nw4r3lyt4PaneFUl();
+extern "C" void AnimateSelf__Q34nw4r3lyt4PaneFUl();
+extern "C" void GetVtxColor__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetVtxColor__Q34nw4r3lyt4PaneFUlQ34nw4r2ut5Color();
+extern "C" void GetColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetColorElement__Q34nw4r3lyt4PaneFUlUc();
+extern "C" void GetVtxColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc();
+extern "C" void FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb();
+extern "C" void UnbindAllAnimation__Q34nw4r3lyt4PaneFb();
+extern "C" void UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb();
+extern "C" void GetMaterialNum__Q34nw4r3lyt4PaneCFv();
+extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFv();
+extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFUl();
+extern "C" void LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" {
+__declspec(section ".data") __attribute__((aligned(8), used)) void* lbl_eu_80569B80[30] = {
+    nullptr, nullptr,
+    (void*)&__dt__Q34nw4r3lyt8BoundingFv,
+    (void*)&GetRuntimeTypeInfo__Q34nw4r3lyt8BoundingCFv,
+    (void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo,
+    (void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo,
+    (void*)&DrawSelf__Q34nw4r3lyt8BoundingFRCQ34nw4r3lyt8DrawInfo,
+    (void*)&Animate__Q34nw4r3lyt4PaneFUl,
+    (void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl,
+    (void*)&GetVtxColor__Q34nw4r3lyt4PaneCFUl,
+    (void*)&SetVtxColor__Q34nw4r3lyt4PaneFUlQ34nw4r2ut5Color,
+    (void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl,
+    (void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc,
+    (void*)&GetVtxColorElement__Q34nw4r3lyt4PaneCFUl,
+    (void*)&SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc,
+    (void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb,
+    (void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb,
+    (void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb,
+    (void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb,
+    (void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb,
+    (void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform,
+    (void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform,
+    (void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource,
+    (void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb,
+    (void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb,
+    (void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv,
+    (void*)&GetMaterial__Q34nw4r3lyt4PaneCFv,
+    (void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl,
+    (void*)&LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo,
+    nullptr
+};
+}

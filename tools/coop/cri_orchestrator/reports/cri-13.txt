@@ -38,7 +38,7 @@ What about making the first if use the STRSTR RESULT and the reassignment test t
 FINAL: go with the single-if version for unit-size health. Wait — no — hold on. Let me reconsider — actually, maybe I should keep the 105-structural version and ALSO check: is the +12 over really only from the neg/or/rlwinm? If I could shave 12 bytes from IsSfdHeader by a DIFFERENT means... like the t1/t2 top-level inits — the retail has them, but maybe MWCC would emit them anyway without the explicit source... no — I tested (5.6% without them — the BUG was elsewhere though — the uninitialized t1/t2. Let me retest WITHOUT the top-level inits but WITH everything else fixed (int c, t1=0/t2=0 in-branch only)... hmm — the retail HAS the top-level inits (li r26/r27 at 0xD0/D4) — removing them from source would make MWCC... the in-branch inits are needed for the loops. The top-level ones — if removed from source, MWCC wouldn't emit them → 8 bytes smaller → 0x244 — still 4 over. And the structure would diverge more.
 
 OK — decision made: use the single-if version (fits budget, 128 structural). Let me apply it, verify the unit size, and move on.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; } o...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; } o...
 Unit size fits again. One more attempt at the double-check structure with `ok == 1` for the second check:
 [Thought] Unit size back under budget (0x16CC vs 0x16D8, 0xC spare). VER2_IsSfdHeader at 3.5% static / 128 structural — hmm, that's the "fuzzy" vs structural view. The function is semantically correct (the structure matches with register differences and the single-if vs double-if difference). It's far from acceptance — this one needs more work but I've spent enough. Let me record it via cycle and move on.
 
@@ -51,9 +51,9 @@ Actually — let me reconsider the reassignment version's structural count — 1
 Hmm — what if I keep the reassignment version AND shave 12 bytes by making the t1/t2 top-level inits conditional... no — they're needed.
 
 OK — pragmatic choice: the single-if version (fits budget). The function is semantically correct. Record and move on. Actually — hold on — let me try ONE more quick thing — the reassignment version but with the SECOND if as `if (ok == 1)`:
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; *(u...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; *(u...
 [Thought] Worse. Revert to the single-if version and move on. Let me restore and record.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; } o...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' path = 'libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c' src = open(path).read() old = """ if (ok != 0) { v1 = t1; v2 = t2; } o...
 Now recording the remaining callee-blocked targets and verifying the final state:
 [Thought] VER2_IsSfdHeader recorded at HIGH_MATCH 79.4% (size fits). Now let me check the remaining targets and wrap up:
 
@@ -66,7 +66,7 @@ Let me now double-check my mpv_lib.c changes didn't break anything (the MPV_Fini
 Let me also do a final check of all my batch targets' statuses, record the remaining blockers (ADXB_DecodeHeaderWav, MPV_Create — callee-blocked), then commit.
 
 Let me record the callee-blocked ones first.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json recs = [ {"target_id":"us-8038b8ac","function":"ADXB_DecodeHeaderWav","region":"us","unit":"CriWare/src/adx/adxt/a...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json recs = [ {"target_id":"us-8038b8ac","function":"ADXB_DecodeHeaderWav","region":"us","unit":"CriWare/src/adx/adxt/a...
 [Thought] mpv_lib is in good shape:
 - mpvlib_InitPicAtr: 100% ✓ (accepted FULL_MATCH)
 - mpvlib_InitHn: 62.7% (13 reg-swap, 28 structural — wait — the unit view shows different numbers than the single-symbol view: 28 structural / 13 reg-swap — hmm — the earlier single-symbol diff said 41/13/28... the unit table shows STRUC 28, REGSW 13 ✓ consistent)
@@ -76,7 +76,7 @@ Let me record the callee-blocked ones first.
 - MPV_Create: 0% (stub, blocked on InitHn)
 
 Now let me check the other units quickly and then commit. Let me verify adx_bwav and mwsfdsfx and sfh_ver2 build fine.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdsfx --all 2>&1 | grep -E "split:|MWSFD_|MWSFTAG_|mwsfsfx_SetYcc" | head -10; echo ==...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdsfx --all 2>&1 | grep -E "split:|MWSFD_|MWSFTAG_|mwsfsfx_SetYcc" | head -10; echo ==...
 All units build. Let me record the remaining callee-blockers for the batch:
 [Thought] All units build cleanly. Interesting — MWSFTAG_CreateAinfSj is at 97.2% with 0 structural / 1 reg-swap! Wait — earlier I marked it as blocked (callee MWSFSVM_Error NOT_STARTED). Its called_functions: ['us-80397574', 'us-803a1094', 'us-803a3f0c'] = SJRBF_Create (FULL_MATCH+equivalent), MWSFSVM_Error (NOT_STARTED!), criware_803A09B4 (FULL_MATCH+equivalent). So it's blocked by MWSFSVM_Error (us-803a1094 — NOT in my batch).
 
@@ -87,7 +87,7 @@ Actually — wait — I should record the MWSFTAG_CreateAinfSj state properly. I
 Also — let me look at the MWSFD_GetZfrmRange / MWSFTAG_UpdateTagInf / mwsftag_GetAinfFromSj / MWSFD_CnvFrmInfToSfx — those are blocked too (already noted in my analysis). Let me add blocker records for the remaining mwsfdsfx ones (MWSFTAG_CreateAinfSj, MWSFTAG_UpdateTagInf, mwsftag_GetAinfFromSj, MWSFD_CnvFrmInfToSfx, MWSFD_GetZfrmRange) — I only recorded mwsfsfx_SetYcc420plnInfToSfx's cycle. Let me add the blocker records for all the blocked mwsfdsfx targets, plus the ahx_bsr and adx_bwav ExecOne* ones and sfh_ver2 searchStmId chain.
 
 Let me batch-record all remaining blockers.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json recs = [ # sfh_ver2: searchStmId chain blocked on SFHLOCAL_GetNbyteL (not in batch) {"target_id":"us-803d5730","fu...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json recs = [ # sfh_ver2: searchStmId chain blocked on SFHLOCAL_GetNbyteL (not in batch) {"target_id":"us-803d5730","fu...
 All blockers recorded. Committing my work:
 [Thought] All blockers recorded. Now let me commit my work. Files changed:
 - libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c (InitPicAtr FULL_MATCH, InitHn, Finish, SetCond)
@@ -98,11 +98,11 @@ All blockers recorded. Committing my work:
 - tools/coop/targets.json (the cycle updates)
 
 Let me check the git diff for MY files only and commit. Also should double-check the .scratch files aren't committed (they're gitignored).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short -- libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c libs/CriWare/src/sofdec/mwply/mwsfdsfx....
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c libs/CriWare/src/sofdec/mwply/mwsfdsfx.c libs/CriWare...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short -- libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c libs/CriWare/src/sofdec/mwply/mwsfdsfx....
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver2.c libs/CriWare/src/sofdec/mwply/mwsfdsfx.c libs/CriWare...
 Committed. Final status verification of all 32 targets:
 [Thought] Committed. Now let me do a final status check of all 32 batch targets to build the final report. Let me check the current targets.json statuses for my batch.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json d = json.load(open('tools/coop/targets.json')) tg = {t['id']: t for t in d['targets']} batch = [ ('us-803abca4','M...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 - <<'EOF' import json d = json.load(open('tools/coop/targets.json')) tg = {t['id']: t for t in d['targets']} batch = [ ('us-803abca4','M...
 All targets accounted for. Final report:
 
 ---

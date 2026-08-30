@@ -329,3 +329,6 @@ ml::FixStr<32> lbl_eu_80661850;
 // low byte used) so the section totals retail's 8 bytes ===
 CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
 u8 lbl_eu_80665A94;
+u8 gap_10_80665A95_sbss;
+u8 gap_10_80665A96_sbss;
+u8 gap_10_80665A97_sbss;

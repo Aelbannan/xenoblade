@@ -43,13 +43,13 @@ struct CItemBoxSubRecord {
 struct CItemImplVt {
     virtual u32 _v08(void* item);  // vtable+0x08 (raw slot 2)
     virtual void _v0C();
-    virtual void _v10();
+    virtual void _v10(void* item);
     virtual void _v14();
     virtual void _v18();
     virtual void _v1C();
     virtual void* _v20(void* item);  // vtable+0x20 (raw slot 8)
     virtual void _v24();
-    virtual void _v28();
+    virtual u16 _v28(void* item, const char* str);
     virtual CItemBoxSubRecord* _v2C(void* item, u32 i);  // vtable+0x2C (raw slot 11)
     virtual u8 _v30(void* item);                         // vtable+0x30 (raw slot 12)
     virtual void _v34();
@@ -57,7 +57,7 @@ struct CItemImplVt {
     virtual void _v3C();
     virtual s16 _v40(void* item, u32 i);                 // vtable+0x40 (raw slot 16)
     virtual void _v44();
-    virtual void _v48();
+    virtual void _v48(void* item);
     virtual u16 _v4C(void* item, u32 i);  // vtable+0x4C (raw slot 19)
     virtual void _v50();
     virtual u16 _v54(void* item);    // vtable+0x54 (raw slot 21) - equip category

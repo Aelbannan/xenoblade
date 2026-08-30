@@ -41,7 +41,7 @@ fi
 MAIN_REAL="$(git -C "$WORKTREE_ROOT" worktree list | awk 'NR==1{print $1}')"
 
 BRANCH="bench/$MODEL"
-WT="/Users/ahmedelbannan/Ahmed/xenoblade-bench-$MODEL"
+WT="/Users/ahmed/projects/xenoblade-bench-$MODEL"
 
 if git -C "$WORKTREE_ROOT" rev-parse --verify -q "$BRANCH" >/dev/null; then
     echo "error: branch '$BRANCH' already exists" >&2

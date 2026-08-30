@@ -1,5 +1,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/object/CObjectParam.hpp"
+#include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
@@ -157,8 +159,8 @@ namespace cf {
     }
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc1() {
-    ((void (*)(void*))(*(void***)this->unk15DC)[0x10])(this->unk15DC);
+const char* cf::CActorParam::CActorParam_UnkVirtualFunc1() {
+    return static_cast<const char*>(reinterpret_cast<cf::CObjectParam*>(this->unk15DC)->CObjectParam_UnkVirtualFunc2());
 }
 int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) { return 0x0; }
 struct If11C {
@@ -399,24 +401,6 @@ void CActorParam_UnkVirtualFunc21__Q22cf11CActorParamFv(void* self, float val) {
 
 
 namespace {
-struct F175SrcVt {
-    virtual void* _v008(); virtual void* _v00C(); virtual void* _v010(); virtual void* _v014();
-    virtual void* _v018(); virtual void* _v01C(); virtual void* _v020(); virtual void* _v024();
-    virtual void* _v028(); virtual void* _v02C(); virtual void* _v030(); virtual void* _v034();
-    virtual void* _v038(); virtual void* _v03C(); virtual void* _v040(); virtual void* _v044();
-    virtual void* _v048(); virtual void* _v04C(); virtual void* _v050(); virtual void* _v054();
-    virtual void* _v058(); virtual void* _v05C(); virtual void* _v060(); virtual void* _v064();
-    virtual void* _v068(); virtual void* _v06C(); virtual void* _v070(); virtual void* _v074();
-    virtual void* _v078(); virtual void* _v07C(); virtual void* _v080(); virtual void* _v084();
-    virtual void* _v088(); virtual void* _v08C(); virtual void* _v090(); virtual void* _v094();
-    virtual void* _v098();
-};
-struct F175Unk15DCVt {
-    virtual void f08(); virtual void f0C(); virtual void f10(); virtual void f14();
-    virtual void f18(); virtual void f1C(); virtual void f20(); virtual void f24();
-    virtual void f28(); virtual void f2C(); virtual void f30(); virtual void f34();
-    virtual void f38(); virtual void f3C(void*);
-};
 struct F175ElemBase {
     char name[0x20]; u32 len; u32 f24; u16 f28; u8 f2A, f2B;
     f32 f2C, f30; s16 f34, f36; u32 f38; u16 f3C; u8 f3E; u16 f40;
@@ -433,8 +417,8 @@ struct F175ElemB : F175ElemBase { u32 tail84; };
 #define F175_PAIR(lo, hi) { u32 tl = *(u32*)((u8*)src + (lo)); u32 th = *(u32*)((u8*)src + (hi)); *(u32*)((u8*)dst + (hi)) = th; *(u32*)((u8*)dst + (lo)) = tl; }
 
 void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src) {
-    void* arg = reinterpret_cast<F175SrcVt*>(src)->_v098();
-    reinterpret_cast<F175Unk15DCVt*>(dst->unk15DC)->f3C(arg);
+    const char* arg = src->CActorParam_UnkVirtualFunc1();
+    reinterpret_cast<cf::CObjectParam*>(dst->unk15DC)->CObjectParam_UnkVirtualFunc1(arg);
     F175_CP(0x15E4, u32); F175_CP(0x15E8, f32); F175_CP(0x15EC, u32);
     F175_CP(0x15F4, u8); F175_CP(0x15F8, f32); F175_CP(0x15FC, f32);
     F175_CP(0x1600, u32); F175_CP(0x1604, u32); F175_CP(0x1608, u32);

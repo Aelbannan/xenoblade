@@ -71,7 +71,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RegisterMasks:
     """Bitmasks derived from immutable ``RegisterSpec`` metadata."""
 
@@ -81,7 +81,7 @@ class RegisterMasks:
     read_clear: int
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicRegisterBankState:
     """Per-register bitvector state for one register-bank device."""
 
@@ -107,7 +107,7 @@ class SymbolicRegisterBankState:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicAccessResult:
     """Result of a symbolic register-bank load or store."""
 
@@ -125,7 +125,7 @@ class UnsupportedAccessStatus(str, Enum):
     UNKNOWN = "unknown"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class UnsupportedAccessQuery:
     """Result of querying ``path_condition ∧ ¬supported`` (never assumed)."""
 
@@ -353,7 +353,7 @@ def symbolic_write(
     )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class MmioTouchEvidence:
     """One MMIO touch extracted from a terminal path (obligation/evidence)."""
 
@@ -365,7 +365,7 @@ class MmioTouchEvidence:
     register_offset: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RegisterBankObservability:
     """Observable register-bank snapshot for one device."""
 
@@ -603,7 +603,7 @@ def build_register_bank_extensional_obligation(
     return block
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicBusState:
     """Per-path symbolic MMIO device state carried on ``MachineState``."""
 
@@ -654,7 +654,7 @@ class SymbolicBusState:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class SymbolicBusAccessOutcome:
     """Result of one SymbolicOps MMIO/FIFO access attempt."""
 

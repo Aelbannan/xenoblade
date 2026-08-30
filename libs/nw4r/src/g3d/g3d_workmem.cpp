@@ -5,9 +5,7 @@ namespace g3d {
 namespace detail {
 namespace workmem {
 
-// Retail work-memory arena (nw4r_data.s lbl_eu_8061FB00, .bss 0x18000).
-// Reference the shared retail buffer instead of defining a TU-local arena so
-// the unit emits no .bss; the getters keep the retail lis/addi relocs.
+// Absorbed retail work-memory arena (lbl_eu_8061FB00, .bss 0x18000)
 extern "C" union {
     u8 mem[WORKMEM_SIZE]; // at 0x0
     struct {
@@ -18,7 +16,8 @@ extern "C" union {
     MdlZ mdlZ[WORKMEM_NUMMDLZ];                       // at 0x0
     math::_MTX34 skinningMtx[WORKMEM_NUMSKINNINGMTX]; // at 0x0
     math::_MTX34 bbMtx[WORKMEM_NUMBBMTX];             // at 0x0
-} lbl_eu_8061FB00;
+} lbl_eu_8061FB00 __attribute__((aligned(8))) = {};
+
 
 math::VEC3* GetScaleTemporary() {
     return static_cast<math::VEC3*>(lbl_eu_8061FB00.tmpScale);

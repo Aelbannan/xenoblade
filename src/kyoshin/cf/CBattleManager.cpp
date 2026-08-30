@@ -20,12 +20,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/math/CVec3.hpp"
 
-struct BMIf {
-    virtual void _v008(); virtual void _v00C(); virtual void vf0010();
-    virtual void* _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(void* arg);
-    virtual void vf0024();
-};
+// BMIf removed: CVision real vt used via mVision.
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 // (func_800BB618/func_800BCFA0/getUnk80664658/BasicSound + the C-ABI import
@@ -409,11 +404,13 @@ void* func_800EA3AC(void* self, void* val) {
     notfound:
     return nullptr;
 }
-extern "C" void func_800EA410(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0010(); }
+extern "C" void func_800EA410(u8* self) { ((cf::CBattleManager*)self)->mVision.vt_10(); }
+struct CVisionIf14 {
+    virtual void _00(); virtual void _04(); virtual void vf10(); virtual void* vf14();
+};
 void* cf::CBattleManager::func_800EA420() {
     if (lbl_eu_80663F00 != nullptr) {
-        // Call virtual function at vtable offset 0x14 (BMIf::_v014) on mVision at offset 0x219c
-        return reinterpret_cast<BMIf*>((u8*)this + 0x219c)->_v014();
+        return reinterpret_cast<CVisionIf14*>((u8*)this + 0x219c)->vf14();
     }
     return nullptr;
 }
@@ -443,7 +440,7 @@ void cf::CBattleManager::func_800EA470() {
     func_800EA484(this, lbl_eu_80666DD4, unk8C);
 }
 #pragma schedule on
-extern "C" void func_800EA998(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
+extern "C" void func_800EA998(u8* self) { ((cf::CBattleManager*)self)->mVision.vt_24(); }
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
 // The callers below pass ABI-compatible args; the typed definition follows.
 // (unmangled), so they must be declared extern "C" for reloc-name matching.
@@ -3863,8 +3860,13 @@ extern "C" s32 func_800EC918(
 
 // Thunk: dispatch through secondary vtable at +0x8, calling vtable[0x20] on
 // the sub-object, passing (subobj, arg).
+struct CfActorSub8If {
+    virtual void _00(); virtual void _04(); virtual void _08(); virtual void _0C();
+    virtual void _10(); virtual void _14();
+    virtual void vf20(void* arg);
+};
 void func_800F3958(void* ignored, void* self, void* arg) {
-    reinterpret_cast<BMIf*>((u8*)self + 8)->_v020(arg);
+    reinterpret_cast<CfActorSub8If*>((u8*)self + 8)->vf20(arg);
 }
 unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }

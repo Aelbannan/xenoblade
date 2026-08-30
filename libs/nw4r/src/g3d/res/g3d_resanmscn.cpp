@@ -1,14 +1,15 @@
 #include <nw4r/g3d.h>
 
+
+nw4r::g3d::ResNameData27 lbl_eu_805690E0 ALIGN(8) = {14, "LightSet(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569100 ALIGN(8) = {15, "AmbLights(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569120 ALIGN(8) = {12, "Lights(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569140 ALIGN(8) = {10, "Fogs(NW4R)"};
+nw4r::g3d::ResNameData27 lbl_eu_80569160 ALIGN(8) = {13, "Cameras(NW4R)"};
+
 namespace nw4r {
 namespace g3d {
 namespace {
-
-NW4R_G3D_RESFILE_NAME_DEF(LightSet, "LightSet(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(AmbLights, "AmbLights(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(Lights, "Lights(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(Fog, "Fogs(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(Camera, "Cameras(NW4R)");
 
 // Name passed first so the name temp is built before the dic temp.
 // Each top-level lookup yields a nested resource dictionary.
@@ -18,7 +19,7 @@ inline ResDicData* GetDicData(const ResAnmScn& scn, ResName name) {
 }
 
 ResLightSet GetResLightSetImpl(const ResAnmScn& scn, int idx) {
-    ResDicData* pDicData = GetDicData(scn, ResName(&ResNameData_LightSet));
+    ResDicData* pDicData = GetDicData(scn, ResName(&lbl_eu_805690E0));
 
     if (pDicData != NULL) {
         return ResLightSet(ResDic(pDicData)[idx]);
@@ -30,7 +31,7 @@ ResLightSet GetResLightSetImpl(const ResAnmScn& scn, int idx) {
 ResAnmAmbLight GetResAnmAmbLightImpl(const ResAnmScn& scn, int idx) {
     ResDicData* pDicData =
         static_cast<ResDicData*>(ResDic(scn.ofs_to_obj<ResDic>(
-            scn.ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)]);
+            scn.ref().toScnTopLevelDic))[ResName(&lbl_eu_80569100)]);
 
     if (pDicData != NULL) {
         return ResAnmAmbLight(ResDic(pDicData)[idx]);
@@ -42,7 +43,7 @@ ResAnmAmbLight GetResAnmAmbLightImpl(const ResAnmScn& scn, int idx) {
 ResAnmLight GetResAnmLightImpl(const ResAnmScn& scn, int idx) {
     ResDicData* pDicData =
         static_cast<ResDicData*>(ResDic(scn.ofs_to_obj<ResDic>(
-            scn.ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)]);
+            scn.ref().toScnTopLevelDic))[ResName(&lbl_eu_80569120)]);
 
     if (pDicData != NULL) {
         return ResAnmLight(ResDic(pDicData)[idx]);
@@ -54,7 +55,7 @@ ResAnmLight GetResAnmLightImpl(const ResAnmScn& scn, int idx) {
 ResAnmFog GetResAnmFogImpl(const ResAnmScn& scn, int idx) {
     ResDicData* pDicData =
         static_cast<ResDicData*>(ResDic(scn.ofs_to_obj<ResDic>(
-            scn.ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)]);
+            scn.ref().toScnTopLevelDic))[ResName(&lbl_eu_80569140)]);
 
     if (pDicData != NULL) {
         return ResAnmFog(ResDic(pDicData)[idx]);
@@ -66,7 +67,7 @@ ResAnmFog GetResAnmFogImpl(const ResAnmScn& scn, int idx) {
 ResAnmCamera GetResAnmCameraImpl(const ResAnmScn& scn, int idx) {
     ResDicData* pDicData =
         static_cast<ResDicData*>(ResDic(scn.ofs_to_obj<ResDic>(
-            scn.ref().toScnTopLevelDic))[ResName(&ResNameData_Camera)]);
+            scn.ref().toScnTopLevelDic))[ResName(&lbl_eu_80569160)]);
 
     if (pDicData != NULL) {
         return ResAnmCamera(ResDic(pDicData)[idx]);
@@ -79,19 +80,19 @@ ResAnmCamera GetResAnmCameraImpl(const ResAnmScn& scn, int idx) {
 
 bool ResAnmScn::HasResAnmAmbLight() const {
     return ResDic(ofs_to_obj<ResDic>(
-               ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)] !=
+               ref().toScnTopLevelDic))[ResName(&lbl_eu_80569100)] !=
            NULL;
 }
 
 bool ResAnmScn::HasResAnmLight() const {
     return ResDic(ofs_to_obj<ResDic>(
-               ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)] != NULL;
+               ref().toScnTopLevelDic))[ResName(&lbl_eu_80569120)] != NULL;
 }
 
 u32 ResAnmScn::GetResLightSetNumEntries() const {
     ResDic dic(ofs_to_obj<ResDic>(ref().toScnTopLevelDic));
     ResDicData* pResLightSetDicData =
-        static_cast<ResDicData*>(dic[ResName(&ResNameData_LightSet)]);
+        static_cast<ResDicData*>(dic[ResName(&lbl_eu_805690E0)]);
 
     if (pResLightSetDicData != NULL) {
         return ResDic(pResLightSetDicData).GetNumData();
@@ -103,7 +104,7 @@ u32 ResAnmScn::GetResLightSetNumEntries() const {
 ResAnmAmbLight ResAnmScn::GetResAnmAmbLight(const ResName name) const {
     ResDic dic(ofs_to_obj<ResDic>(ref().toScnTopLevelDic));
     ResDicData* pResAnmAmbLightDicData =
-        static_cast<ResDicData*>(dic[ResName(&ResNameData_AmbLights)]);
+        static_cast<ResDicData*>(dic[ResName(&lbl_eu_80569100)]);
 
     if (pResAnmAmbLightDicData != NULL) {
         return ResAnmAmbLight(ResDic(pResAnmAmbLightDicData)[name]);
@@ -118,7 +119,7 @@ ResAnmAmbLight ResAnmScn::GetResAnmAmbLight(u32 idx) const {
 
 ResAnmLight ResAnmScn::GetResAnmLight(const ResName name) const {
     ResDicData* pResAnmLightDicData = static_cast<ResDicData*>(ResDic(
-        ofs_to_obj<ResDic>(ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)]);
+        ofs_to_obj<ResDic>(ref().toScnTopLevelDic))[ResName(&lbl_eu_80569120)]);
 
     if (pResAnmLightDicData != NULL) {
         return ResAnmLight(ResDic(pResAnmLightDicData)[name]);
@@ -233,7 +234,7 @@ namespace g3d {
 u32 ResAnmScn::GetResAnmAmbLightNumEntries() const {
     ResDicData* pDicData = static_cast<ResDicData*>(ResDic(
         ofs_to_obj<ResDic>(
-            ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)]);
+            ref().toScnTopLevelDic))[ResName(&lbl_eu_80569100)]);
 
     if (pDicData != NULL) {
         return ResDic(pDicData).GetNumData();
@@ -245,7 +246,7 @@ u32 ResAnmScn::GetResAnmAmbLightNumEntries() const {
 u32 ResAnmScn::GetResAnmLightNumEntries() const {
     ResDicData* pDicData = static_cast<ResDicData*>(ResDic(
         ofs_to_obj<ResDic>(
-            ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)]);
+            ref().toScnTopLevelDic))[ResName(&lbl_eu_80569120)]);
 
     if (pDicData != NULL) {
         return ResDic(pDicData).GetNumData();
@@ -260,7 +261,7 @@ ResAnmFog ResAnmScn::GetResAnmFog(u32 idx) const {
 
 u32 ResAnmScn::GetResAnmFogNumEntries() const {
     ResDicData* pDicData = static_cast<ResDicData*>(ResDic(
-        ofs_to_obj<ResDic>(ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)]);
+        ofs_to_obj<ResDic>(ref().toScnTopLevelDic))[ResName(&lbl_eu_80569140)]);
 
     if (pDicData != NULL) {
         return ResDic(pDicData).GetNumData();
@@ -275,7 +276,7 @@ ResAnmCamera ResAnmScn::GetResAnmCamera(u32 idx) const {
 
 u32 ResAnmScn::GetResAnmCameraNumEntries() const {
     ResDicData* pDicData = static_cast<ResDicData*>(ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_Camera)]);
+        ref().toScnTopLevelDic))[ResName(&lbl_eu_80569160)]);
 
     if (pDicData != NULL) {
         return ResDic(pDicData).GetNumData();

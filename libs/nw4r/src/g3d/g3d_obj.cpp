@@ -37,5 +37,19 @@ void G3dObj::Destroy() {
     delete this;
 }
 
+extern "C" void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj();
+extern "C" void __dt__Q34nw4r3g3d6G3dObjFv();
+extern "C" void GetTypeObj__Q34nw4r3g3d6G3dObjCFv();
+extern "C" void GetTypeName__Q34nw4r3g3d6G3dObjCFv();
+extern "C" __declspec(section ".data") void* lbl_eu_805695B0[8] = {
+    nullptr, nullptr,
+    (void*)&IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj,
+    nullptr,
+    (void*)&__dt__Q34nw4r3g3d6G3dObjFv,
+    (void*)&GetTypeObj__Q34nw4r3g3d6G3dObjCFv,
+    (void*)&GetTypeName__Q34nw4r3g3d6G3dObjCFv,
+    nullptr
+};
+
 } // namespace g3d
 } // namespace nw4r

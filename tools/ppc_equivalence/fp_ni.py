@@ -79,7 +79,7 @@ class NiFlushKind(str, Enum):
     STORE_OPERAND = "store-operand"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class NiOpcodePolicy:
     """Per-opcode NI operand/result flush policy."""
 

@@ -676,6 +676,11 @@ const u16 Util::RemoteFilterCoefTable[COEF_TABLE_SIZE][IIR_COEF_COUNT] = {
     // clang-format on
 };
 
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_805223E0[12] = {
+    0x00500064, 0x008000A0, 0x00C80100, 0x01400190, 0x01F40280, 0x032003E8,
+    0x05000640, 0x07D00A00, 0x0C800FA0, 0x14001900, 0x1F402800, 0x32003E80
+};
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r

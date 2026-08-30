@@ -179,7 +179,7 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
     WaveSoundNoteInfo waveSoundNoteInfo;
     if (!pCallback->GetWaveSoundData(
             &mWaveSoundInfo, &waveSoundNoteInfo,
-            reinterpret_cast<WaveData*>(&waveData), GetWsdDataAddress(),
+            reinterpret_cast<WaveInfo*>(&waveData), GetWsdDataAddress(),
             mWsdIndex, 0, callbackArg)) {
         return false;
     }

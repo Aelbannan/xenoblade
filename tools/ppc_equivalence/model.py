@@ -21,14 +21,14 @@ class InvalidReason(Enum):
     MEMORY_PROFILE_VIOLATION = 10
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class XerState:
     ca: Any
     ov: Any
     so: Any
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ConcreteMemory:
     default: int = 0
     bytes: tuple[tuple[int, int], ...] = ()
@@ -47,7 +47,7 @@ class ConcreteMemory:
         return ConcreteMemory(self.default, tuple(sorted(items.items())))
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class MachineState:
     gpr: tuple[Any, ...]
     fpr: tuple[Any, ...]

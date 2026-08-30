@@ -46,7 +46,7 @@ _BROADWAY_MIDPOINT_MASK: Final[int] = 0x000000001FFFFFFF
 _BROADWAY_MIDPOINT_PATTERN: Final[int] = 0x0000000010000000
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ExactFusedOutcome:
     """Bit-exact fused op result (mirrors ``FpOracleResult`` fields)."""
 

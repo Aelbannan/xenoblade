@@ -2,6 +2,9 @@
 
 #include <cstring>
 
+// Retail .sbss2 0x8066B550 size 0x8 (DefaultBlackColor zero-fill) — force section size
+extern "C" __declspec(section ".sdata2") const int _sbss2_lyt_material_dummy[2] = {0, 0};
+
 namespace nw4hbm {
 namespace ut {
 
@@ -232,6 +235,7 @@ namespace lyt {
  *
  ******************************************************************************/
 Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
+    (void)::_sbss2_lyt_material_dummy[0];
     // Init() (inlined; retail nw4hbm has no Material::Init symbol)
     mTevCols[TEVCOLOR_REG0] = DefaultBlackColor;
     mTevCols[TEVCOLOR_REG1] = DefaultWhiteColor;

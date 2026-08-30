@@ -12,7 +12,7 @@ class RegionKind(str, Enum):
     UNMAPPED = "unmapped"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Region:
     start: int
     end: int
@@ -49,7 +49,7 @@ class Region:
             raise ValueError("device_id is only valid for MMIO regions")
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class RangeClassification:
     """Result of classifying a byte range [start, start + width)."""
 
@@ -58,7 +58,7 @@ class RangeClassification:
     regions: tuple[Region, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class AddressSpace:
     regions: tuple[Region, ...]
 

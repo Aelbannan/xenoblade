@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class DeviceSpecification:
     """Static identity of one MMIO device attached to the bus."""
 
@@ -76,7 +76,7 @@ class DeviceSpecification:
         return payload
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class BusSpecification:
     """Immutable address-space + device-theory identity for a memory bus."""
 

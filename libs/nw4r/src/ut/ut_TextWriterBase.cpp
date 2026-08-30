@@ -1,5 +1,13 @@
 #include <nw4r/ut.h>
 
+// Absorbed .bss 0x80653EC8 (12) + 0x80653ED4 (12) + .sbss 0x80665560-0x80665570 (0x10)
+unsigned char lbl_eu_80653EC8[12] __attribute__((aligned(4)));
+unsigned char lbl_eu_80653ED4[12] __attribute__((aligned(4)));
+
+
+// Absorbed .bss 0x80653EC8-0x80653EE0 (0x18) + .sbss 0x80665560-0x80665570 (0x10)
+
+
 // Retail .sbss data owned by this TU (monolibdata1 blob dissolve; the auto
 // __sinit__ below constructs the tag-processor objects and reads the guards):
 //   lbl_eu_80665560 (.sbss 0x4) = TextWriterBase<char>::mDefaultTagProcessor

@@ -6,6 +6,27 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
+extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
+
+class CResLookup {
+public:
+    virtual void* getResourceBase(void* entry, int arg);
+    virtual u32 getFlags();
+    virtual ~CResLookup();
+    virtual void* vfunc01();
+    virtual u8* _v018(void* entry);
+    virtual u8* _v01C(void* entry);
+    virtual void* vfunc04();
+    virtual void* vfunc05();
+    virtual int _v028(void* entry);
+    virtual void* vfunc07();
+    virtual u8* _v030(void* entry);
+    virtual void* vfunc09();
+    virtual void* vfunc0A();
+    virtual void* vfunc0B(void* entry);
+    virtual int _v040(void* entry);
+};
+
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
@@ -25,7 +46,7 @@ cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* self, cf::CfR
     self->field_0A = (u16)invalid;
     self->field_0C = (u16)zero;
     self->field_0E = invalid;
-    self->field_10 = &lbl_eu_80530FF0;
+    *(void**)((u8*)self + 0x10) = (void*)&lbl_eu_80530FF0;
     self->field_1C = 3;
     self->field_1E = 0;
     self->field_1F = 0;
@@ -58,7 +79,7 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
         if (e->field_04 == q->field_70) {
             // slot +0x40 takes the owning entry as r4 (same convention as
             // func_8016D688's CfResEntryIf2 dispatches)
-            if (((cf::CfResEntryIf2*)e->field_2C)->_v040(e) != 0) {
+            if (e->field_2C->_v040(e) != 0) {
                 return 1;
             }
         }
@@ -78,7 +99,7 @@ int getTypeId() { return 12; }
 // nonzero, hashes the value (multiply-high + correction) into field_1F.
 // Returns the byte, or 1 when it is zero.
 int func_8016CF24(cf::CfResReloadImpl* self) {
-    int v = ((cf::CfResReloadVtIf*)self)->_v034(1);
+    int v = self->func_8016CFBC(1);
     if (self->field_1F == 0 && v != 0) {
         unsigned int h = func_80063A60(v);
         if (h != 0) {
@@ -216,7 +237,7 @@ void func_8016D240(cf::CfResReloadImpl* self) {
         return;
     }
     for (int i = 0; i < 2; i++) {
-        int v = ((cf::CfResReloadVtIf*)self)->_v034(i);
+        int v = self->func_8016CFBC(i);
         if (v != 0) {
             cf::DeviceSearchEntry* e = func_80068928((u8*)inst, (u32)v, 0x59, 0x61);
             if (e != 0) {
@@ -313,7 +334,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
         self->field_1C--;
         return;
     }
-    int v = ((cf::CfResReloadVtIf*)self)->_v034(1);
+    int v = self->func_8016CFBC(1);
     u8* inst = (u8*)CfRes_getInstanceField();
     if (inst == 0) {
         return;
@@ -362,7 +383,7 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
             self->field_0A = (u16)sp8;
             self->field_00->field_6C |= 0x30;
             self->field_08 = 1;
-            ((cf::CfResReloadVtIf*)self)->_v010();
+            self->func_8016D240();
             found->field_0C = 0;
         }
     }
@@ -395,21 +416,21 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     int ok = 1;
     u32 f6c = self->field_00->field_6C;
     if ((f6c & 0x2) != 0) {
-        ((cf::CfResReloadVtIf*)self)->_v028();
+        self->func_8016DDE8();
         return;
     }
     if (entry->field_04 != self->field_00->field_70) {
-        ((cf::CfResReloadVtIf*)self)->_v028();
+        self->func_8016DDE8();
         CfRes_stub_63990();
         notifyDetach_(self->field_00);
         return;
     }
     if ((f6c & 0x2) != 0) {  // redundant re-test, kept for byte-identity (cr1)
-        ((cf::CfResReloadVtIf*)self)->_v028();
+        self->func_8016DDE8();
         return;
     }
     if (f6c & 0x20) {
-        if (((cf::CfResEntryIf2*)entry->field_2C)->_v040(entry) == 0) {
+        if (entry->field_2C->_v040(entry) == 0) {
             ok = 0;
         }
     }
@@ -449,7 +470,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     setMemInitFlag__Q23mtl10MemManagerFb(false);
     if (self->field_00->field_6C & 0x20) {
         if (self->field_00->field_98 == 0) {
-            u8* slot18 = ((cf::CfResEntryIf2*)entry->field_2C)->_v018(entry);
+            u8* slot18 = entry->field_2C->_v018(entry);
             self->field_00->field_90 = slot18;
             u8* h = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
             func_800BBADC(self->field_00, h);
@@ -468,14 +489,14 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             wp[0] = 0;
             work.tail = 0;
             func_800AA33C(wp, entry->field_04, 1, 0);
-            u8* slot1C = ((cf::CfResEntryIf2*)entry->field_2C)->_v01C(entry);
+            u8* slot1C = entry->field_2C->_v01C(entry);
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
             self->field_00->field_9C =
                 func_800584B8((u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)work.buf);
         }
     }
-    if (((cf::CfResEntryIf2*)entry->field_2C)->_v028(entry) != 0) {
+    if (entry->field_2C->_v028(entry) != 0) {
         self->field_00->field_6DC = entry;
         cf::CfResReloadParent* par = self->field_00;
         if (par->field_64 & 0x8) {
@@ -502,7 +523,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (lbl_eu_80663E24 & 0x40000) {
         func_800BE824(self->field_00, 0);
     } else if (self->field_00->field_C4 != 0) {
-        u8* slot30 = ((cf::CfResEntryIf2*)entry->field_2C)->_v030(entry);
+        u8* slot30 = entry->field_2C->_v030(entry);
         if (slot30 != 0) {
             func_804B0A6C(self->field_00->field_60C, slot30);
         }
@@ -532,7 +553,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
     }
     }
-    ((cf::CfResReloadVtIf*)self)->_v01C();
+    self->func_8016DCE4();
 }
 
 // Periodic reload tick: dispatches the +0x28 secondary-interface slot when
@@ -546,7 +567,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
 // +0x64 bit 27, upgraded by the +0xC4 sub-object's +0x0C bits 16/6.
 extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
     if (self->field_00->field_6C & 0x2) {
-        ((cf::CfResReloadVtIf*)self)->_v028();
+        self->func_8016DDE8();
     }
     if (self->field_08 == 0) {
         return;
@@ -702,7 +723,7 @@ void func_eu_8016F1C4(cf::CfResReloadImpl* self) {
     if (v >= 0) {
         func_eu_80063174(v, self->field_00->field_70);
     }
-    ((cf::CfResReloadVtIf*)self)->_v028();
+    self->func_8016DDE8();
 }
 
 // Early-return unless the parent's +0x6C flag bit 1 (0x2) is set, then
@@ -711,7 +732,7 @@ void func_8016DE68(cf::CfResReloadImpl* self) {
     if (!(self->field_00->field_6C & 0x2)) {
         return;
     }
-    ((cf::CfResReloadVtIf*)self)->_v028();
+    self->func_8016DDE8();
 }
 
 // PMTF dispatch: u16 field_08 selects one of the 4 member pointers in

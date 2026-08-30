@@ -51,13 +51,13 @@ class BusOutcome(str, Enum):
     READ_ONLY = "read-only"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class BusReadResult:
     outcome: BusOutcome
     value: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class BusWriteResult:
     outcome: BusOutcome
 

@@ -94,7 +94,7 @@ class ScalarFPExactV2ProductionError(RuntimeError):
     """Raised when production switch preconditions are not met."""
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ReadinessCheck:
     """One infrastructure readiness probe."""
 
@@ -104,7 +104,7 @@ class ReadinessCheck:
     details: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ReadinessReport:
     """Aggregate Phase 12 production-switch readiness (plumbing, not promotion)."""
 
@@ -133,7 +133,7 @@ class ReadinessReport:
         }
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ProductionGate:
     """One gate required before the scalar FP exact v2 production switch."""
 
@@ -143,7 +143,7 @@ class ProductionGate:
     details: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ProductionSwitchChecklist:
     """Checklist returned by production-switch gate evaluation (scaffold only)."""
 

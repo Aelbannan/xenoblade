@@ -18,7 +18,7 @@ _DEFAULT_LOOKBACK = 12
 TripExpr = Union["TripConstant", "TripEntryReg", "TripAnd", "TripLshr", "TripAdd", "TripCountdown"]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripConstant:
   value: int
 
@@ -26,7 +26,7 @@ class TripConstant:
     object.__setattr__(self, "value", int(self.value) & 0xFFFFFFFF)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripEntryReg:
   reg: int
 
@@ -37,13 +37,13 @@ class TripEntryReg:
     object.__setattr__(self, "reg", reg)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripAnd:
   left: TripExpr
   right: TripExpr
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripLshr:
   left: TripExpr
   shift: int
@@ -55,13 +55,13 @@ class TripLshr:
     object.__setattr__(self, "shift", shift)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripAdd:
   left: TripExpr
   right: TripExpr
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TripCountdown:
   """Do-while countdown trip (doc 30 Phase C2).
 

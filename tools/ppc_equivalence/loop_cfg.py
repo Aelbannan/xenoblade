@@ -10,14 +10,14 @@ from .ir import Instruction, Opcode
 _BRANCH_OPCODES = frozenset({Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR})
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class BasicBlock:
     start_pc: int
     end_pc: int
     instructions: tuple[Instruction, ...]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class NaturalLoop:
     header_pc: int
     back_edge: tuple[int, int]
@@ -25,7 +25,7 @@ class NaturalLoop:
     latch_pc: int
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class LoopCfgAnalysis:
     blocks: tuple[BasicBlock, ...]
     predecessors: dict[int, frozenset[int]]

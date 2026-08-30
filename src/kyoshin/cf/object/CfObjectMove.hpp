@@ -126,8 +126,9 @@ extern const float lbl_eu_80666ACC;
 namespace cf {
 class CfBdat {
 public:
-    static void* func_801422A8(u32 param1);
+    static u32 func_801422A8(u32 param1);
     static const char* getBdatStringEntry(u16 index);
+    static void resetMapBdatFileDataPointers();
 };
 }  // namespace cf
 // Retail sbss bdat globals used by func_800BCFA0.
@@ -374,8 +375,8 @@ namespace cf {
         //vtable 1 (CfObjectMove)
         virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
         virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
-        virtual void CfObjectMove_UnkVirtualFunc3();  //0x1D0
-        virtual void CfObjectMove_UnkVirtualFunc4();  //0x1D4
+        virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
+        virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
         virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
         virtual void CfObjectMove_UnkVirtualFunc6();  //0x1DC
         virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
@@ -386,7 +387,7 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
         virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
         virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
-        virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
+        virtual int CfObjectMove_UnkVirtualFunc15(); //0x200
         virtual void CfObjectMove_UnkVirtualFunc16(); //0x204
         virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
         virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
@@ -474,7 +475,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc37();
     void CfObject_UnkVirtualFunc38();
     void CfObject_UnkVirtualFunc39();
-    void CfObject_UnkVirtualFunc40();
+    float CfObject_UnkVirtualFunc40();
     void CfObject_UnkVirtualFunc42();
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
@@ -781,7 +782,7 @@ namespace cf {
     public:
         virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
         virtual void mBC(); virtual void mC0();
-        virtual void mC4(void* animModel, u32 name, u32 flag);  // vtable +0xC4
+        virtual int mC4(u8* res, u32 bdat, u32 arg);  // vtable +0xC4 (real arity: res ptr, bdat string, flag; returns int)
         virtual void mC8(void* animModel);  // vtable +0xC8
     };
     // Vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning

@@ -29,6 +29,10 @@ class Project:
     def ninja_bin(self) -> str:
         if self.config.ninja:
             return str(self.config.ninja)
+        # Prefer a local ./ninja wrapper (make-based) for hexdiff when system ninja is missing
+        local = self.root / "ninja"
+        if local.is_file():
+            return str(local)
         return shutil.which("ninja") or "ninja"
 
     def objdiff_bin(self) -> str:

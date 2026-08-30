@@ -90,6 +90,9 @@ const char* AnmScn::GetTypeName() const {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScnRes")> lbl_eu_8051D630 = {sizeof("AnmScnRes"), "AnmScnRes"};
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D640 = {7, "G3dObj"};
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<11> lbl_eu_8051D650 = {7, "AnmObj"};
+
 bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
     return other == TypeObj(lbl_eu_8051D630) ? true
          : other == TypeObj(lbl_eu_8051D620) ? true

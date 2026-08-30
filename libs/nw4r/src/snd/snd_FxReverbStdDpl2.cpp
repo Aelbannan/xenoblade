@@ -344,3 +344,7 @@ extern "C" void OnChangeOutputMode__Q34nw4r3snd15FxReverbStdDpl2Fv(FxReverbStdDp
 
 } // namespace snd
 } // namespace nw4r
+
+// Absorb: .data 0x28 via pad_data_section (retail zeros)
+extern "C" void* __ct__Q34nw4r3snd15FxReverbStdDpl2Fv;
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_FxReverbStdDpl2_data_anchor[4] = { (const void*)&__ct__Q34nw4r3snd15FxReverbStdDpl2Fv, nullptr, nullptr, nullptr };

@@ -106,13 +106,13 @@ cf::CPartsChange::~CPartsChange() {}
 // pattern, MWCC_CASES line 840).
 static inline int findNameEntry(CPartsChange* self, u32 count, const char* name) {
     for (int j = 0; (u32)j < count; j++) {
-        if (strstr(((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc8(j), name) != 0)
+        if (strstr(self->mField08->getName(j), name) != 0)
             return j;
     }
     return -1;
 }
 
-void func_80192E80(CPartsChange* self, u8 r4, PartsChangeIf* obj) {
+void func_80192E80(CPartsChange* self, u8 r4, cf::CPartsDB* obj) {
     if (obj == 0) return;
     self->mField08 = obj;
     self->mField04 = r4;
@@ -121,7 +121,7 @@ void func_80192E80(CPartsChange* self, u8 r4, PartsChangeIf* obj) {
         if (self->mField08 == 0) {
             result = -1;
         } else {
-            u32 count = ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc7();
+            u32 count = self->mField08->getCount();
             // FixStr(false)'s ctor emits no stores, so the visible ctor
             // store pairs land in retail order: str's pair first, then
             // num's pair right before the itoa call.
@@ -155,16 +155,16 @@ void func_80192F94(CPartsChange* self) {
         u8 c = self->mData[i];
         if (c == 0xff) continue;
         if (hit) {
-            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 0);
+            self->mField08->apply(c, 0);
         } else {
-            if (((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc12(c)) hit = 1;
+            if (self->mField08->isAcceptable(c)) hit = 1;
         }
     }
     if (hit) return;
     for (u32 i = 0; i < 0x20; i++) {
         u8 c = self->mData[i];
         if (c != 0xff) {
-            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 1);
+            self->mField08->apply(c, 1);
             return;
         }
     }
@@ -181,18 +181,18 @@ void func_801930A0(CPartsChange* self, u32 idx, u32 flag) {
         if (self->mField04 == 0 && self->mField2C != 0 && self->mField08 != 0) {
             for (u32 i = 0; i < 0x20; i++) {
                 u8 c = self->mData[i];
-                if (c != 0xff) ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, 0);
+                if (c != 0xff) self->mField08->apply(c, 0);
             }
         }
         u8 c = self->mData[idx];
         if (c != 0xff) {
-            ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c, flag);
+            self->mField08->apply(c, flag);
             if (self->mField04 == 0 && flag == 0) {
                 for (u32 i = 0; i < 0x20; i++) {
                     u8 c2 = self->mData[i];
                     if (c2 == 0xff) continue;
                     if (i == idx) continue;
-                    ((cf::CObjectState*)self->mField08)->CObjectState_UnkVirtualFunc11(c2, 1);
+                    self->mField08->apply(c2, 1);
                     break;
                 }
             }

@@ -13,7 +13,11 @@
 // Retail data imports (defined in nw4r_data.o; the shared header does not
 // declare them, so they live here).
 extern char lbl_eu_805697E8[]; // ScnMdlExpand vtable
-extern u32 lbl_eu_806634A8;  // invalid node-ID marker (0xFFFFFFFF)
+// lbl_eu_806634A8 now defined below as sdata
+
+// Absorbed sdata
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) const unsigned int lbl_eu_806634A8[2] = {0xFFFFFFFF, 0x00000000};
+
 namespace nw4r {
 namespace g3d {
 
@@ -53,7 +57,7 @@ ScnMdlExpand::~ScnMdlExpand() {
 // marker (0xFFFFFFFF).
 bool Insert__Q34nw4r3g3d12ScnMdlExpandFUlPQ34nw4r3g3d6ScnObj(ScnMdlExpand* self, u32 idx,
                                                             ScnObj* pObj) {
-    u32 invalidNodeID = lbl_eu_806634A8; // invalid node-ID marker
+    u32 invalidNodeID = lbl_eu_806634A8[0]; // invalid node-ID marker
     bool inserted = self->ScnGroup::Insert(idx, pObj);
     if (inserted) {
         for (u32 i = reinterpret_cast<ScnMdlExpandLayout*>(self)->Size() - 1; i > idx;
@@ -176,7 +180,7 @@ Construct__Q34nw4r3g3d12ScnMdlExpandFP12MEMAllocatorPUlUlPQ34nw4r3g3d12ScnMdlSim
         // All node IDs start as the invalid marker; the global cannot be
         // cached across iterations because the stores may alias it.
         for (i = 0; i < numChildren; i++) {
-            pObj->mpNodeIDArray[i] = lbl_eu_806634A8;
+            pObj->mpNodeIDArray[i] = lbl_eu_806634A8[0];
         }
 
         // Attach the freshly made group as a child of its owner model.
@@ -235,7 +239,7 @@ void G3dProc__Q34nw4r3g3d12ScnMdlExpandFUlUlPv(ScnMdlExpand* self, u32 task,
             u32 nodeID = lay->mpNodeIDArray[i];
             u32 childParam = param;
 
-            if (nodeID != lbl_eu_806634A8) {
+            if (nodeID != lbl_eu_806634A8[0]) {
                 ScnObj* pChild = (*lay)[i];
                 math::MTX34 mtx;
 

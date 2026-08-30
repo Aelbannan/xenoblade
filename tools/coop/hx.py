@@ -11,7 +11,7 @@ no_build = "--no-build" in sys.argv
 cmd = [".venv/bin/python3", "tools/coop/hexdiff.py", unit, "--symbol", sym, "--json"]
 if no_build:
     cmd.append("--no-build")
-out = subprocess.run(cmd, capture_output=True, text=True, cwd="/Users/ahmedelbannan/Ahmed/xenoblade")
+out = subprocess.run(cmd, capture_output=True, text=True, cwd="/Users/ahmed/projects/xenoblade")
 try:
     start = out.stdout.index("{")
     d = json.loads(out.stdout[start:])

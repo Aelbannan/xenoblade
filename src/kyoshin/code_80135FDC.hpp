@@ -17,6 +17,8 @@
 #include "monolib/math/CMat34.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include <nw4r/lyt/lyt_material.h>
 
 class CScn;
 
@@ -168,6 +170,80 @@ public:
     virtual void v18();
     virtual void v1C();
     virtual void Set(u32 idx, void* value);
+};
+
+// Real class tree recovered from retail vtables.
+// Retail vtables are large (0x68/0x6C); intermediate slots are kept as named placeholders
+// so the dispatched slots land at their retail offsets.
+struct __declspec(novtable) CAnmOwner {
+public:
+    virtual void vf08();
+    virtual void vf0C();
+    virtual void vf10();
+    virtual void vf14();
+    virtual void vf18();
+    virtual void vf1C();
+    virtual void vf20();
+    virtual void vf24();
+    virtual void vf28();
+    virtual void vf2C();
+    virtual void vf30();
+    virtual void vf34();
+    virtual void vf38();
+    virtual CAnmOwner* FindAnim(u32 id, u32 flag); // 0x3C
+    virtual void vf40();
+    virtual void vf44();
+    virtual void vf48();
+    virtual void vf4C();
+    virtual void vf50();
+    virtual void vf54();
+    virtual void vf58();
+    virtual void vf5C();
+    virtual void vf60();
+    virtual void vf64();
+    virtual void* GetAnmData(); // 0x68
+};
+
+struct __declspec(novtable) CAnmList {
+public:
+    virtual void vf08();
+    virtual void vf0C();
+    virtual void vf10();
+    virtual void vf14();
+    virtual void vf18();
+    virtual void vf1C();
+    virtual void vf20();
+    virtual void vf24();
+    virtual void vf28();
+    virtual void vf2C();
+    virtual void vf30();
+    virtual void vf34();
+    virtual void vf38();
+    virtual void vf3C();
+    virtual void vf40();
+    virtual void vf44();
+    virtual void vf48();
+    virtual void vf4C();
+    virtual void vf50();
+    virtual void vf54();
+    virtual void* GetAnmRoot(); // 0x58
+    virtual void vf5C();
+    virtual void vf60();
+    virtual u8 GetCount(); // 0x64
+    virtual void vf68();
+    virtual void* GetItem(u32 idx); // 0x6C
+};
+
+struct __declspec(novtable) CAnmItem {
+public:
+    virtual void vf08();
+    virtual void vf0C();
+    virtual void vf10();
+    virtual void vf14();
+    virtual void vf18();
+    virtual void vf1C();
+    virtual void vf20();
+    virtual void* Find(void* arg); // 0x24
 };
 
 // ---------------------------------------------------------------------------

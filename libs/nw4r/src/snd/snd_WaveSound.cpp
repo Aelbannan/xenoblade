@@ -84,3 +84,6 @@ const nw4r::ut::detail::RuntimeTypeInfo* WaveSound::GetRuntimeTypeInfo() const {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// ABSORB pad - make raw BSS/SBSS sizes match retail
+unsigned char absorb_pad_snd_WaveSound_sbss_4[0x4];

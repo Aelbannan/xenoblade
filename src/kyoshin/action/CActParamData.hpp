@@ -25,7 +25,7 @@ struct CActParamDataSub {
     void* mPtr14;       // 0x14: returned by getSubObjPtr
 };
 
-class CActParamData {
+class __declspec(novtable) CActParamData {
 public:
     static void buildVTable();
     static void func_80057CDC();

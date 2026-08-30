@@ -10,7 +10,7 @@ extern const f32 lbl_eu_80669D68;    // 0.0f
 extern const f64 lbl_eu_80669D70;    // 0x4330000080000000 (signed int->f32 magic)
 extern const f32 lbl_eu_80669D78;    // 0.5f
 extern const f32 lbl_eu_80669D7C;    // 1.0f
-extern wchar_t lbl_eu_806634C0[2]; // L"\n" literal pool (.sdata)
+extern "C" wchar_t lbl_eu_806634C0[2] = { 0x000A, 0 }; // L"\n" literal pool (.sdata)
 
 // int -> f32 conversion matching retail: build the 2^52+x double on the stack
 // (high word = 0x43300000, low word = x ^ 0x80000000) and subtract the shared

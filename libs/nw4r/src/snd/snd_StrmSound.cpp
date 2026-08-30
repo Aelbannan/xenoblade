@@ -224,3 +224,6 @@ const nw4r::ut::detail::RuntimeTypeInfo* StrmSound::GetRuntimeTypeInfo() const {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// ABSORB pad - make raw BSS/SBSS sizes match retail
+unsigned char absorb_pad_snd_StrmSound_sbss_4[0x4];

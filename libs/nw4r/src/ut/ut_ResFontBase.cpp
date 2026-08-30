@@ -1,5 +1,49 @@
 #include <nw4r/ut.h>
 
+// Absorbed .data 0x8056AF34-0x8056B0E0 (0x1AC): vtables + jumptable. Retail bytes via relocs.
+extern "C" {
+void __dt__Q44nw4r2ut6detail11ResFontBaseFv();
+void __dt__Q34nw4r2ut7ResFontFv();
+void __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv();
+void __dt__Q34nw4r2ut10PackedFontFv();
+void GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetType__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv();
+void GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv();
+void SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths();
+void SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs();
+void SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi();
+void GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs();
+void GetCharWidths__Q44nw4r2ut6detail11ResFontBaseCFUs();
+void GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs();
+void GetGlyph__Q44nw4r2ut6detail11ResFontBaseCFPQ34nw4r2ut5GlyphUs();
+void GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs();
+void HasGlyph__Q44nw4r2ut6detail11ResFontBaseCFUs();
+void HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs();
+void GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv();
+void StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl();
+__attribute__((section(".data"), aligned(4))) unsigned int resfontbase_data[107] = {
+    0, 0, (unsigned int)&__dt__Q44nw4r2ut6detail11ResFontBaseFv, (unsigned int)&GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetType__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths, (unsigned int)&SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs, (unsigned int)&SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi, (unsigned int)&GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetCharWidths__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetGlyph__Q44nw4r2ut6detail11ResFontBaseCFPQ34nw4r2ut5GlyphUs, (unsigned int)&HasGlyph__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv,
+    0, 0, (unsigned int)&__dt__Q34nw4r2ut7ResFontFv, (unsigned int)&GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetType__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths, (unsigned int)&SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs, (unsigned int)&SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi, (unsigned int)&GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetCharWidths__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetGlyph__Q44nw4r2ut6detail11ResFontBaseCFPQ34nw4r2ut5GlyphUs, (unsigned int)&HasGlyph__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv, 0,
+    0, 0, (unsigned int)&__dt__Q44nw4r2ut6detail15ArchiveFontBaseFv, (unsigned int)&GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetType__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths, (unsigned int)&SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs, (unsigned int)&SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi, (unsigned int)&GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetGlyph__Q44nw4r2ut6detail11ResFontBaseCFPQ34nw4r2ut5GlyphUs, (unsigned int)&HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv, 0,
+    (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x84), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x98), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0xAC), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0xC4), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0xD8), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0xEC), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x13C), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x190), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x150), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x100), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x114), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x1A0), (unsigned int)((char*)&StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl + 0x128),
+    0, 0, (unsigned int)&__dt__Q34nw4r2ut10PackedFontFv, (unsigned int)&GetWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetAscent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDescent__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetBaselinePos__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellHeight__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetCellWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetMaxCharWidth__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetType__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetTextureFormat__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetLineFeed__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&GetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseCFv, (unsigned int)&SetDefaultCharWidths__Q44nw4r2ut6detail11ResFontBaseFRCQ34nw4r2ut10CharWidths, (unsigned int)&SetAlternateChar__Q44nw4r2ut6detail11ResFontBaseFUs, (unsigned int)&SetLineFeed__Q44nw4r2ut6detail11ResFontBaseFi, (unsigned int)&GetCharWidth__Q44nw4r2ut6detail11ResFontBaseCFUs, (unsigned int)&GetCharWidths__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs, (unsigned int)&HasGlyph__Q44nw4r2ut6detail15ArchiveFontBaseCFUs, (unsigned int)&GetEncoding__Q44nw4r2ut6detail11ResFontBaseCFv
+};
+#define lbl_eu_8056AF34 ((void*)resfontbase_data)
+#define lbl_eu_8056AF90 ((void*)(resfontbase_data + 23))
+#define lbl_eu_8056AFF0 ((void*)(resfontbase_data + 47))
+#define jumptable_eu_8056B050 ((void*)(resfontbase_data + 71))
+#define lbl_eu_8056B084 ((void*)(resfontbase_data + 84))
+}
+
 namespace nw4r {
 namespace ut {
 namespace detail {

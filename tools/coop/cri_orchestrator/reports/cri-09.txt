@@ -5,7 +5,7 @@ Hmm — actually — let me try ONE more thing on sfadxt_SetAdxtHd's add swap. T
 What if the SECOND term x comes from a MEMORY LOAD in the expression — `(x * 8 + conv->f10 * conv->fc) / 16` — where the second term re-loads?? — that would emit the loads... the retail's r4 = x (the mullw result — CSE'd). Hmm.
 
 OK — final answer on that: out-of-band. Let me finalize. Let me make sure my work is committed and write the final report.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "^( M|M )" | head -5; git status --short | grep -E "mpv_hdec|sfd_adxt|adx_fs|attempts" ; git log --oneline -4
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -vE "^( M|M )" | head -5; git status --short | grep -E "mpv_hdec|sfd_adxt|adx_fs|attempts" ; git log --oneline -4
 Let me append the key MWCC breakthroughs to the reference doc:
 [Thought] Interesting — the git log shows OTHER agents' commits (cri-15, cri-11, MWCC_CASES) — other agents are working concurrently. My commits (f648cfefc, ebcb92468) are in the log. Good — my work is committed.
 
@@ -21,8 +21,8 @@ Let me now also update MWCC_CASES with the key breakthroughs I found (per the sk
 5. The `(p & ~3) + ((((p - a) * 8) + 7) >> 3) + 4 - p` size formula with `a = p & ~3` — the subf-based CSE.
 
 Let me append these to MWCC_CASES.md. Then write the final report.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -30 docs/MWCC_CASES.md
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p) Batch cri...
+[Shell] cd /Users/ahmed/projects/xenoblade && tail -30 docs/MWCC_CASES.md
+[Shell] cd /Users/ahmed/projects/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p) Batch cri...
 I have limited context remaining. Let me gather the final per-target state for the report:
 [Thought] Committed. Now let me use my remaining context for one more valuable attempt. Let me reconsider what could reach FULL_MATCH with limited effort:
 
@@ -255,7 +255,7 @@ Actually — hold on, let me reconsider the acceptance accounting once more. Let
 So 3 new acceptances this session. 
 
 Let me write the final report now. Let me gather the final state for the report — per-target status with the current hexdiff percentages.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for u in CriWare/src/sofdec/sfdcore/mpv/mpv_hdec CriWare/src/sofdec/sfdcore/sfd/sfd_adxt CriWare/src/adx/adxf/adx_fs; do .venv/bin/python3 tools/coop/hexd...
+[Shell] cd /Users/ahmed/projects/xenoblade && for u in CriWare/src/sofdec/sfdcore/mpv/mpv_hdec CriWare/src/sofdec/sfdcore/sfd/sfd_adxt CriWare/src/adx/adxf/adx_fs; do .venv/bin/python3 tools/coop/hexd...
 I've reached the practical limit of this session. Here's my final report:
 
 ---

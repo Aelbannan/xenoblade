@@ -18,7 +18,6 @@ void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][2] = lbl_eu_80669CB0;
     pMtx->m[1][3] = lbl_eu_80669CB4 - rSrt.Sv;
 }
-
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 r = rSrt.R;
     f32 fidx = lbl_eu_80669CB8 * r;

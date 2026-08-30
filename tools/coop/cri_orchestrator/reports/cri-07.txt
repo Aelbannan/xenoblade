@@ -1,9 +1,9 @@
 s of MY files and make sure they're in the best-known state, and that I don't commit mpv_hdec.c or other agents' files.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --stat libs/CriWare/src/sofdec/sfdcore/sfh/sfh_local.c libs/CriWare/src/sofdec/sfx/sfx_alp.c libs/CriWare/src/sofdec/sfdcore/dct/dct_ac.c | tail ...
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff --stat libs/CriWare/src/sofdec/sfdcore/sfh/sfh_local.c libs/CriWare/src/sofdec/sfx/sfx_alp.c libs/CriWare/src/sofdec/sfdcore/dct/dct_ac.c | tail ...
 [Thought] The sfh_local.c still has the p[i--] version (my probe J experiment — I thought I reverted it, but the revert was to the committed state which... wait — the committed state had the plain while with i--; the current has p[i--]. Let me revert it to the committed (best-known) version — the p[i--] was 54 structural vs the committed's 44. Let me restore.
 
 Also let me verify the sfx_alp.c and dct_ac.c diffs are the intended best-known states.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git checkout libs/CriWare/src/sofdec/sfdcore/sfh/sfh_local.c && git diff libs/CriWare/src/sofdec/sfx/sfx_alp.c | head -40; echo "=== dct ==="; git diff li...
+[Shell] cd /Users/ahmed/projects/xenoblade && git checkout libs/CriWare/src/sofdec/sfdcore/sfh/sfh_local.c && git diff libs/CriWare/src/sofdec/sfx/sfx_alp.c | head -40; echo "=== dct ==="; git diff li...
 [Thought] The diffs look good:
 - sfx_alp.c: the SFXA_Create for-loop + return-state form (best-known).
 - dct_ac.c: the improved DCT_AcInit (correct constants, matching prologue).
@@ -11,24 +11,24 @@ Also let me verify the sfx_alp.c and dct_ac.c diffs are the intended best-known 
 - ahx_sbf.c: the previous session's init_filter refactor + AHXSBF_Create (committed form).
 
 Let me verify the final states of all my target files build and check the svm.c diff + ahx_sbf.c diff are clean.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/adx/svm/svm.c | head -50; echo "=== ahx_sbf ==="; git diff libs/CriWare/src/adx/ahx/ahx_sbf.c | head -20
+[Shell] cd /Users/ahmed/projects/xenoblade && git diff libs/CriWare/src/adx/svm/svm.c | head -50; echo "=== ahx_sbf ==="; git diff libs/CriWare/src/adx/ahx/ahx_sbf.c | head -20
 All files in best-known states. Let me verify builds and commit.
 [Thought] The svm.c diff is consistent (the direct-access refactor for the ExecSvr functions + the base/cnt locals for Vsync). The ahx_sbf.c diff is the previous session's init_filter refactor (kept — it's the best-known 7-structural state).
 
 Hmm — wait — the svm.c diff shows SVM_ExecSvrVsync has `SvmSvrEntry* base = ctrl->svr_tbl[0]; SvmSvrEntry* p = base + 12; u32* cnt = ctrl->exec_counts;` — but my LAST version for Vsync was the DIRECT form... let me check what the current Vsync actually is — the diff shows base/cnt locals. Hmm — the diff is vs HEAD; my last edit to Vsync was... I applied the direct-access to all 8 via the python script — but Vsync was already direct (from an earlier edit), and the script's pattern `flag[(\d+)]` may have missed Vsync (which had the base/cnt form)... The current Vsync = base/cnt form. All give 27 structural — equivalent. Fine.
 
 Now — let me do a final verification: build all my modified units to make sure nothing is broken, then commit. Let me also double check the mpv_deli.c and memcpyd.c are clean (they were reverted).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "tools/coop|configure.py|attempts.jsonl|orig/|^ M (libs/CriWare/src/adx/ahx/ahx_sbf.c|libs/CriWare/src/adx/svm/svm.c|libs/Cr...
+[Shell] cd /Users/ahmed/projects/xenoblade && git status --short | grep -vE "tools/coop|configure.py|attempts.jsonl|orig/|^ M (libs/CriWare/src/adx/ahx/ahx_sbf.c|libs/CriWare/src/adx/svm/svm.c|libs/Cr...
 [Thought] Many other agents' files are modified — I must NOT commit those. My files: ahx_sbf.c, svm.c, dct_ac.c, sfx_alp.c, mpv_deli.c, memcpyd.c, sfh_local.c. Plus docs/evidence/decomp/attempts.jsonl (mine) and tools/coop/targets.json (mine — the cycle updates). And configure.py — modified but NOT by me (it was dirty at session start) — I should NOT commit it (I didn't change it).
 
 Wait — tools/coop/targets.json and targets.certs.jsonl.gz — the cycle runs updated those (mine). attempts.jsonl (mine). Let me verify my files build first.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for u in CriWare/src/adx/ahx/ahx_sbf CriWare/src/adx/svm/svm CriWare/src/sofdec/sfdcore/dct/dct_ac CriWare/src/sofdec/sfx/sfx_alp CriWare/src/sofdec/sfdco...
+[Shell] cd /Users/ahmed/projects/xenoblade && for u in CriWare/src/adx/ahx/ahx_sbf CriWare/src/adx/svm/svm CriWare/src/sofdec/sfdcore/dct/dct_ac CriWare/src/sofdec/sfx/sfx_alp CriWare/src/sofdec/sfdco...
 [Thought] Interesting — the sfh_local unit now shows 0x310 (was 0x35C) — the git checkout restored the committed version (0xFC GetNbyteL — wait — 0x310 vs retail 0x34C — the decomp is now SMALLER by 0x3C?! Hmm — the committed GetNbyteL was 0xFC... 0x310 = 784. The retail 0x34C = 844. Hmm — the committed version's GetNbyteL... wait — earlier the cycle said "decomp .text=0x35C — exceeds by 0x10" — NOW it's 0x310 (60 smaller)?! That means the git checkout restored something DIFFERENT — let me check — the checkout restored the committed sfh_local.c — but the committed version should give 0x35C (as before)... Hmm — OH WAIT — maybe another agent fixed their file and the UNIT's other functions (GetNbyteB/B64) changed... no — the unit is sfh_local.c only. Hmm — 0x310 vs 0x35C — a 76-byte difference. Let me check the current sfh_local state — did the checkout give the right file? Actually — the numbers changed because... let me just verify GetNbyteL's current state.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/sfh/sfh_local --all --no-build 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | head -10
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/sfh/sfh_local --all --no-build 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | head -10
 [Thought] The git checkout restored the COMMITTED version — which is the p[i--] form (0xB0, 54 structural — the probe J version)!! Not the simple-while (0xFC, 44 structural). Hmm — so the COMMITTED HEAD version was the p[i--] form? But the batch said cur=STRUCTURAL 61.8% — the 61.8% was the simple-while... Let me re-check: the committed file (git show HEAD) — I read it earlier: it had `r = (r << 8) | p[i]; i--;` (the simple while!). And the git checkout restored that... but the hexdiff shows 0xB0 (the p[i--] size)! 
 
 OH WAIT — the --no-build! The hexdiff used the STALE OBJECT (the last build was the p[i--] version). The checkout restored the source but the OBJECT wasn't rebuilt. Let me rebuild to verify.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/sfh/sfh_local --all 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | head -10
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/sfh/sfh_local --all 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | head -10
 All units verified. Committing my work.
 [Thought] OK — after the rebuild: GetNbyteL = 0xFC (the simple-while committed version, 44 structural) — the unit is 16 over (as before). The committed state is restored ✓.
 
@@ -49,7 +49,7 @@ tools/coop/targets.json — the cycle updated my targets' states. The task says 
 Hmm — actually — the git status at session start showed targets.json, targets.certs.jsonl.gz, attempts.jsonl, configure.py ALL modified (by the previous session/orchestrator). Committing them now includes those changes. Since the previous session was ALSO cri-b07 (me, continuing), those are my batch's changes. OK — commit them.
 
 Let me do the commit.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/adx/ahx/ahx_sbf.c libs/CriWare/src/adx/svm/svm.c libs/CriWare/src/sofdec/sfdcore/dct/dct_ac.c libs/CriWare/src/sofdec/sfx/sfx_alp...
+[Shell] cd /Users/ahmed/projects/xenoblade && git add libs/CriWare/src/adx/ahx/ahx_sbf.c libs/CriWare/src/adx/svm/svm.c libs/CriWare/src/sofdec/sfdcore/dct/dct_ac.c libs/CriWare/src/sofdec/sfx/sfx_alp...
 Let me verify the attempts log integrity and finalize.
 [Thought] The commit went through (9 files). The targets.json showed "MM" (staged + unstaged modifications) — the unstaged part is likely from other agents' concurrent activity. My commit captured my staged state.
 
@@ -142,7 +142,7 @@ Blocked (NOT SMT-eligible or callee-blocked):
 - ExecSvr×7, SVM_Lock/Unlock/SetCbErr/SetCbSvrWithString/SetCbSvrIdWithString/SetCbBdr/TestAndSet/svm_SetCbSvr/svm_SetCbSvrId/DelCbSvr, SFXA_MakeAlpLumiTbl: indirect calls — probe fails closed.
 
 Let me write the final report. Also — let me double-check the attempts.jsonl doesn't have any malformed lines (the JSONL appends).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 -c " import json bad = 0 ids = set() for i, line in enumerate(open('docs/evidence/decomp/attempts.jsonl')): line = line.strip() if not l...
+[Shell] cd /Users/ahmed/projects/xenoblade && .venv/bin/python3 -c " import json bad = 0 ids = set() for i, line in enumerate(open('docs/evidence/decomp/attempts.jsonl')): line = line.strip() if not l...
 All 30 targets covered, log valid, committed. Final report:
 
 ## FINAL REPORT — batch cri-07 (30 targets, 0 accepted in-session)

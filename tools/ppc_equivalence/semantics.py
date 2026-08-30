@@ -440,7 +440,7 @@ def _constrain_fused_exact_binary32(
     )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class CalleeContract:
     """Architectural dependency/effect summary for an already-matched callee."""
 
@@ -615,7 +615,7 @@ class WordOps(Protocol):
     def relocation_address(self, relocation: RelocationRef) -> Any: ...
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ConcreteOps:
     def const(self, value: int) -> int: return value & MASK32
     def bool(self, value: bool) -> bool: return value
@@ -4575,7 +4575,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
     return state
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Terminal:
     condition: Any
     state: MachineState

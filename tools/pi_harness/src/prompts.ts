@@ -29,7 +29,7 @@ export function buildBatchPrompt(opts: {
     "- **Before iterating on a target, search the MWCC knowledge base with `kb`**: `kb <symbol>` (sibling attempts + reference patterns with status/match%) and `kb <short mismatch terms> tag=<category>` for known codegen fixes. Use **`ctx <source>`** for struct layouts when the brief's headers aren't enough.\n" +
     toolsLine + "\n" +
     "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance (and you have no shell to run them with).\n" +
-    "- NEVER revert using git — other agents share this branch (and you have no shell).\n" +
+    "- NEVER TOUCH GIT — no git commands at all (status/diff/add/commit/checkout/reset/stash/restore/clean/pull/push/show/log/branch/worktree or wrappers). Leave the tree dirty; the human/harness owns git. Other agents share this branch.\n" +
     "- Put new or updated struct/class/enum type definitions into the corresponding `.hpp` header file, not the `.cpp` source. If a type is only used by this TU, put it in the unit's own header; if it's shared, use the appropriate shared header.\n" +
     "- Reminder: add comments to complicated code.\n" +
     "\n## Tool call budget\n" +
@@ -70,11 +70,13 @@ is already loaded — follow it (high-level C++ only, no asm/register tricks).
 Source files in scope:
 ${sourceFiles.map((f) => `- \`${f}\``).join("\n")}
 
-### 0. NEVER revert using git
+### 0. NEVER TOUCH GIT
 
-Other agents share this branch. Do NOT run \`git checkout\`, \`git reset\`,
-\`git restore\`, or any command that would revert or discard changes. If you
-need to undo your own edits, use the editor to make forward fixes.
+Other agents share this branch. Do NOT run any git command (\`git status\`,
+\`diff\`, \`add\`, \`commit\`, \`checkout\`, \`reset\`, \`stash\`, \`restore\`,
+\`clean\`, \`pull\`, \`push\`, \`show\`, \`log\`, \`branch\`, \`worktree\`, or
+wrappers). Leave the working tree dirty; the human/harness owns all git.
+If you need to undo your own edits, use the editor to make forward fixes.
 (This session's bash is constrained to the TU-final allowlist — git,
 \`cycle\`/\`batch-cycle\`, \`--smt\`/\`--linked\`, and plain \`run.py diff\` are
 blocked at the tool level. The \`hexdiff\`, \`kb\`, \`symbols\`, \`targets\`,

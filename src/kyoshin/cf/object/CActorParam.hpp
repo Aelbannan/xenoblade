@@ -481,8 +481,8 @@ namespace cf {
         virtual void* CActorParam_UnkVirtualFunc2();   //0x9C
         virtual void CActorParam_UnkVirtualFunc3();   //0xA0
         virtual void CActorParam_UnkVirtualFunc4(void* arts);   //0xA4
-        virtual void CActorParam_UnkVirtualFunc5();   //0xA8
-        virtual void CActorParam_UnkVirtualFunc6();   //0xAC
+        virtual void CActorParam_UnkVirtualFunc5(int flag);   //0xA8
+        virtual void CActorParam_UnkVirtualFunc6(int val);   //0xAC
         virtual void CActorParam_UnkVirtualFunc7();   //0xB0
         virtual void CActorParam_UnkVirtualFunc8();   //0xB4
         virtual void CActorParam_UnkVirtualFunc9();   //0xB8
@@ -510,42 +510,44 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc31();  //0x110
         virtual void CActorParam_UnkVirtualFunc32();  //0x114
         virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
-        virtual void CActorParam_UnkVirtualFunc34();  //0x11C
-        virtual void CActorParam_UnkVirtualFunc35();  //0x120
+        virtual void CActorParam_UnkVirtualFunc34(float value);  //0x11C
+        virtual void CActorParam_UnkVirtualFunc35(float value, int a, int b, int c);  //0x120
         virtual void CActorParam_UnkVirtualFunc36();  //0x124
         virtual float CActorParam_UnkVirtualFunc37();  //0x128
         virtual float CActorParam_UnkVirtualFunc38();  //0x12C
-        virtual void CActorParam_UnkVirtualFunc39();  //0x130
+        virtual float CActorParam_UnkVirtualFunc39();  //0x130
         virtual void CActorParam_UnkVirtualFunc40();  //0x134
-        virtual void CActorParam_UnkVirtualFunc41();  //0x138
-        virtual void CActorParam_UnkVirtualFunc42();  //0x13C
+        virtual void CActorParam_UnkVirtualFunc41(float val);  //0x138
+        virtual void CActorParam_UnkVirtualFunc42(float val);  //0x13C
         virtual void CActorParam_UnkVirtualFunc43();  //0x140
         virtual void CActorParam_UnkVirtualFunc44();  //0x144
         virtual void CActorParam_UnkVirtualFunc45();  //0x148
         virtual void CActorParam_UnkVirtualFunc46();  //0x14C
-        virtual void CActorParam_UnkVirtualFunc47();  //0x150
-        virtual void CActorParam_UnkVirtualFunc48();  //0x154
+        virtual void CActorParam_UnkVirtualFunc47(float val);  //0x150
+        virtual void CActorParam_UnkVirtualFunc48(float delta);  //0x154
         virtual float CActorParam_UnkVirtualFunc49();  //0x158
         virtual void CActorParam_UnkVirtualFunc50();  //0x15C
         virtual float CActorParam_UnkVirtualFunc51();  //0x160
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53();  //0x168
-        virtual void CActorParam_UnkVirtualFunc54();  //0x16C
+        virtual void CActorParam_UnkVirtualFunc54(int delta);  //0x16C
         virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
-        virtual void CActorParam_UnkVirtualFunc56();  //0x174
-        virtual void CActorParam_UnkVirtualFunc57();  //0x178
+        // int (not s16): Unk179 passes the getter result to Unk54 via mr r4,r3;
+        // s16 forces MWCC to insert extsh and breaks the 0x94 match.
+        virtual int CActorParam_UnkVirtualFunc56();  //0x174
+        virtual int CActorParam_UnkVirtualFunc57();  //0x178
         virtual void CActorParam_UnkVirtualFunc58();  //0x17C
         virtual void CActorParam_UnkVirtualFunc59();  //0x180
-        virtual void CActorParam_UnkVirtualFunc60();  //0x184
+        virtual void CActorParam_UnkVirtualFunc60(int delta);  //0x184
         virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
-        virtual void CActorParam_UnkVirtualFunc62();  //0x18C
-        virtual void CActorParam_UnkVirtualFunc63();  //0x190
+        virtual int CActorParam_UnkVirtualFunc62();  //0x18C
+        virtual int CActorParam_UnkVirtualFunc63();  //0x190
         virtual void CActorParam_UnkVirtualFunc64();  //0x194
         virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
-        virtual void CActorParam_UnkVirtualFunc66();  //0x19C
+        virtual float CActorParam_UnkVirtualFunc66();  //0x19C
         virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
         virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
-        virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
+        virtual float CActorParam_UnkVirtualFunc69();  //0x1A8
         virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
         virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
         virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
@@ -558,7 +560,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
         virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
         virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
-        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc82();  //0x1DC
         virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
         virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
         virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
@@ -566,15 +568,15 @@ namespace cf {
         virtual u32 CActorParam_UnkVirtualFunc87();  //0x1F0
         virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
         virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
-        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc90(void* arg);  //0x1FC
         virtual u32 CActorParam_UnkVirtualFunc91();  //0x200
-        virtual void CActorParam_UnkVirtualFunc92();  //0x204
+        virtual void CActorParam_UnkVirtualFunc92(const void* src);  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
         virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
         virtual void CActorParam_UnkVirtualFunc95();  //0x210
         virtual void CActorParam_UnkVirtualFunc96();  //0x214
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
-        virtual void CActorParam_UnkVirtualFunc98();  //0x21C
+        virtual void CActorParam_UnkVirtualFunc98(const void* src);  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
         virtual void* CActorParam_UnkVirtualFunc100(); //0x224
         virtual void CActorParam_UnkVirtualFunc101(); //0x228
@@ -602,14 +604,14 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc123(); //0x280
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
         virtual void* CActorParam_UnkVirtualFunc125(); //0x288
-        virtual void CActorParam_UnkVirtualFunc126(); //0x28C
+        virtual void* CActorParam_UnkVirtualFunc126(); //0x28C
         virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
         virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
         virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
-        virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
+        virtual u8 CActorParam_UnkVirtualFunc133(); //0x2A8
         virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
         virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
         virtual void CActorParam_UnkVirtualFunc136(); //0x2B4
@@ -629,11 +631,11 @@ namespace cf {
         virtual void* CActorParam_UnkVirtualFunc150(); //0x2EC
         virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
         virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
-        virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
+        virtual void CActorParam_UnkVirtualFunc153(int arg); //0x2F8
         virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
         virtual void CActorParam_UnkVirtualFunc155(); //0x300
         virtual void CActorParam_UnkVirtualFunc156(); //0x304
-        virtual void CActorParam_UnkVirtualFunc157(); //0x308
+        virtual int CActorParam_UnkVirtualFunc157(); //0x308
         virtual void CActorParam_UnkVirtualFunc158(); //0x30C
         virtual void CActorParam_UnkVirtualFunc159(); //0x310
         virtual void CActorParam_UnkVirtualFunc160(); //0x314
@@ -651,10 +653,10 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc172(); //0x344
         virtual void CActorParam_UnkVirtualFunc173(); //0x348
         virtual void CActorParam_UnkVirtualFunc174(); //0x34C
-        virtual void CActorParam_UnkVirtualFunc175(); //0x350
-        virtual void CActorParam_UnkVirtualFunc176(); //0x354
-        virtual void CActorParam_UnkVirtualFunc177(); //0x358
-        virtual void CActorParam_UnkVirtualFunc178(); //0x35C
+        virtual void CActorParam_UnkVirtualFunc175(float dt); //0x350
+        virtual void CActorParam_UnkVirtualFunc176(float f1); //0x354
+        virtual void CActorParam_UnkVirtualFunc177(float dt); //0x358
+        virtual int CActorParam_UnkVirtualFunc178(); //0x35C
         virtual void CActorParam_UnkVirtualFunc179(); //0x360
         virtual void CActorParam_UnkVirtualFunc180(); //0x364
         virtual void CActorParam_UnkVirtualFunc181(); //0x368

@@ -405,31 +405,45 @@ extern "C" CTalkWindow* __ct__CTalkWindow(CTalkWindow* self, u32 arg1,
                                           u32 arg4, u32 arg5);
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern u32 lbl_eu_80664044;    // talk-window instance counter (Term decrements)
 extern u32 lbl_eu_80663E28;    // cbRenderBefore flag (.sbss)
 extern u32 __ptmf_null[3];     // null pointer-to-member-function constant
-extern char lbl_eu_8052D238[]; // temp base vtable (written before composite)
-extern char lbl_eu_8052DFA8[]; // CTalkWindow composite vtable (.data)
-extern char lbl_eu_804FFCA4[]; // shared rodata string blob (pane names)
-extern const char* lbl_eu_8052DF70[]; // per-page pane-name table (.data)
-extern f32 lbl_eu_80667278;    // Init tag-proc message scale
-extern f32 lbl_eu_80667284;    // anim frame target (advanceAnimTransform)
-extern f32 lbl_eu_80667280;    // 0.0
-extern f32 lbl_eu_8066727C;    // func_8012D3D8 neg-x scale factor
+extern char lbl_eu_8052D238[]; // temp base vtable
+extern "C" unsigned char __data_blob[];
+extern "C" unsigned char __rodata_blob[];
+extern "C" unsigned char __sdata_blob[];
+extern "C" unsigned char __sdata2_blob[];
+extern "C" unsigned char __bss_blob[];
+extern "C" unsigned char __sbss_blob[];
+
+#define lbl_eu_8052DFA8 ((char*)&__data_blob[0x38])
+#define lbl_eu_8052E068 ((char*)&__data_blob[0xF8])
+#define lbl_eu_8052E0A8 ((char*)&__data_blob[0x138])
+#define lbl_eu_804FFCA4 ((char*)&__rodata_blob[0x0C])
+#define lbl_eu_8052DF70 ((const char**)&__data_blob[0x00])
+#define lbl_eu_80662170 ((char*)&__sdata_blob[0x00])
+#define lbl_eu_80667268 ((char*)&__sdata2_blob[0x00])
+#define lbl_eu_80667270 ((char*)&__sdata2_blob[0x08])
+#define lbl_eu_80667278 (*((f32*)&__sdata2_blob[0x10]))
+#define lbl_eu_8066727C (*((f32*)&__sdata2_blob[0x14]))
+#define lbl_eu_80667280 (*((f32*)&__sdata2_blob[0x18]))
+#define lbl_eu_80667284 (*((f32*)&__sdata2_blob[0x1C]))
+#define lbl_eu_80667288 (*((f32*)&__sdata2_blob[0x20]))
+#define lbl_eu_8066728C (*((f32*)&__sdata2_blob[0x24]))
+#define lbl_eu_80667290 (*((f32*)&__sdata2_blob[0x28]))
+#define lbl_eu_80667294 (*((f32*)&__sdata2_blob[0x2C]))
+#define lbl_eu_80667298 (*((f32*)&__sdata2_blob[0x30]))
+#define lbl_eu_8066729C (*((f32*)&__sdata2_blob[0x34]))
+#define lbl_eu_806672A0 (*((f32*)&__sdata2_blob[0x38]))
+#define lbl_eu_806672A4 (*((f32*)&__sdata2_blob[0x3C]))
+#define lbl_eu_806672A8 (*((f32*)&__sdata2_blob[0x40]))
+#define lbl_eu_806672AC (*((f32*)&__sdata2_blob[0x44]))
+#define lbl_eu_806672B0 (*((f32*)&__sdata2_blob[0x48]))
+#define lbl_eu_806672B4 (*((f32*)&__sdata2_blob[0x4C]))
+#define lbl_eu_806672B8 (*((f32*)&__sdata2_blob[0x50]))
+#define lbl_eu_806672BC (*((f32*)&__sdata2_blob[0x54]))
+#define lbl_eu_806672C0 (*((f32*)&__sdata2_blob[0x58]))
+#define lbl_eu_806672C4 (*((f32*)&__sdata2_blob[0x5C]))
+#define lbl_eu_80573A70 ((f32*)&__bss_blob[0x00])
+#define lbl_eu_80664040 (*((u8*)&__sbss_blob[0x00]))
+#define lbl_eu_80664044 (*((u32*)&__sbss_blob[0x04]))
 // func_8012CD38 projection / clamp constants.
-extern f32 lbl_eu_80667288;
-extern f32 lbl_eu_8066728C;
-extern f32 lbl_eu_80667290;    // scale multiplier
-extern f32 lbl_eu_80667294;
-extern f32 lbl_eu_80667298;
-extern f32 lbl_eu_8066729C;
-extern f32 lbl_eu_806672A0;
-extern f32 lbl_eu_806672A4;
-extern f32 lbl_eu_806672A8;
-extern f32 lbl_eu_806672AC;    // func_8012D3D8 layout offset
-extern f32 lbl_eu_806672B0;    // func_8012D3D8 scale divisor
-extern f32 lbl_eu_806672B4;    // func_8012D3D8 y offset (panes 7/8)
-extern f32 lbl_eu_806672B8;    // func_8012D3D8 pane-10 y offset
-extern f32 lbl_eu_806672BC;    // func_8012D3D8 pane-11 y offset
-extern u8 lbl_eu_80664040;     // Init page-flag byte (.sbss)
-extern f32 lbl_eu_80573A70[48]; // func_8012CD38 page-position table

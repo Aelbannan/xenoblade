@@ -481,7 +481,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfCollAABBImpl.cpp"),
             Object(Matching, "kyoshin/cf/CfCollCylinderImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollCapsuleImpl.cpp"),
-            Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp"),
+            Object(NonMatching, "kyoshin/cf/object/CfObjectColl.cpp", extra_cflags=["-RTTI off"]),
             Object(NonMatching, "kyoshin/cf/object/CfObjectEff.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectEne.cpp"),
             Object(NonMatching, "kyoshin/code_800B06A4.cpp", mw_version="GC/3.0a5.2"),  # retail: GC/3.0a5.2 (func_800B67CC range check keeps two cmpli/bclr blocks; Wii/1.1 folds to (u8)(val-1)<=23). NOTE 2026-08-25 rematch probe: reslist ctor family/__dt__800B0AF4/func_800B66BC only go byte-clean under Wii/1.x (.scratch/reslist_probe7 + triage b06a4_triage_{GC,W11}.json), but Wii/1.1 regresses accepted FULL_MATCHes func_800B15A4 (0->108), func_800B8920 (0->20), func_800B31F8 (0->9), func_800B67CC (0->4); full sweep .scratch/version_sweep.py shows NO available version satisfies both families - TU split by mw_version is the next angle
@@ -2031,7 +2031,9 @@ config.libs = [
         "progress_category": "data",
         "asm_dir": config.out_path() / "asm",
         "objects": [
-            Object(Matching, "split1.s"),
+            # split1.s absorbed into owning kyoshin TUs (plan:
+            # .scratch/split1_plan.json); splits re-applied 2026-08-31 from
+            # /tmp/split1_absorb/splits.txt after a git-restore wipe.
             # criware_data.s absorbed into owning CriWare TUs (plan:
             # .scratch/criware_data_plan.json); splits ranges moved 2026-08-28.
             # nw4r_data.s absorbed into owning nw4r/nw4hbm TUs (plan:

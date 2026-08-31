@@ -19,6 +19,21 @@ extern "C" void* getInstance__Q22cf14CBattleManagerFv();
 
 namespace cf { class CBattleManager; }
 
+// Thin shared iface for CBattleManager vtable slot +0x28 (func_800885F0 /
+// mask probe). Same layout as BMVtIf828 in CBattleManager.hpp; kept here so
+// caller TUs need not include the heavy manager header.
+struct BMVtIf828 {
+    virtual void v000() = 0;
+    virtual void v001() = 0;
+    virtual void v002() = 0;
+    virtual void v003() = 0;
+    virtual void v004() = 0;
+    virtual void v005() = 0;
+    virtual void v006() = 0;
+    virtual void v007() = 0;
+    virtual s32 v008(u32 mask) = 0;   // slot 0x28
+};
+
 // Per-frame battle-manager update (retail-unmangled func_800D9354, defined
 // in kyoshin/cf/CBattleManager.cpp). One shared import; the singleton getter
 // above already returns void*, so callers bind without casts.

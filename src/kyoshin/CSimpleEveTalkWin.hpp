@@ -18,7 +18,7 @@ class CScn;
  *   subi r3,r3,-0x6c   ; b __dt__17CSimpleEveTalkWinFv
  *   subi r3,r3,-0x70   ; b cbRenderBefore__17CSimpleEveTalkWinFv
  *   subi r3,r3,-0x70   ; b __dt__17CSimpleEveTalkWinFv
- * next to the vtable. They are not hand-written `self-0x6c` wrappers —
+ * next to the vtable. They are not hand-written `self-0x6c` wrappers   
  * they are MWCC `this`-adjustment thunks for the IWorkEvent@0x6C and
  * IScnRender@0x70 subobjects. With `struct CSimpleEveTalkWin { CProcess at 0,
  *   IWorkEvent at 0x6C, IScnRender at 0x70 }` MWCC would emit them for free.
@@ -31,8 +31,8 @@ class CScn;
  * If we make `CSimpleEveTalkWin : CProcess, IWorkEvent, IScnRender`,
  * `CSimpleEveTalkWinPre` (CProcess +0x30 bytes ptmf/layout) pushes the bases
  * to the right offsets (Pre=0x6C, IWorkEvent@0x6C, IScnRender@0x70, then
- * `mMemRegion`@0x74 → total 0xB0, as retail), but MWCC then also auto-generates
- * its own thunks and prologue (saves, vtable init, D2→D1 inline) which blows
+ * `mMemRegion`@0x74    total 0xB0, as retail), but MWCC then also auto-generates
+ * its own thunks and prologue (saves, vtable init, D2  1 inline) which blows
  * `__ct__`/`__dt__`/`Init`/`Move`/`Term` from 8/12 to 4/12 matches and thunks
  * from 0x8 to 0x20/0x9c (`hexdiff --all` 0x1324 vs 0x1170, +440B).
  *
@@ -41,7 +41,7 @@ class CScn;
  * the thunks as tail calls. `p->~Class()` lowers to a null-checked outline
  * (`stwu/mfspr/addic./beq/bl`, 0x50) not the retail `subi/b`. The spoof
  * `((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self-off)` is
- * high-level C++ per §17.6 (`extern "C"` flat name → REL24, no asm/register)
+ * high-level C++ per   17.6 (`extern "C"` flat name    REL24, no asm/register)
  * and is the repo idiom (CSysWinSave, CCol6Invite, CTaskREvent etc.). With
  * real bases the ideal is:
  *   void func_801A29B4(IWorkEvent* self){ static_cast<CSimpleEveTalkWin*>(self)->~CSimpleEveTalkWin(); }

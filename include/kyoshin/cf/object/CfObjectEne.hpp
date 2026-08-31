@@ -100,44 +100,6 @@ struct CfActorObj89CView {
 // 0x00), slots +0x1DC (no-arg) and +0x1FC (r4 arg), dispatched by
 // CActorParam_UnkVirtualFunc88. Dummy slots pin the offsets (the first
 // declared virtual lands at vtable+0x08).
-class CfActorParamVt1DC {
-public:
-    virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
-    virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
-    virtual void _d028(); virtual void _d02C(); virtual void _d030(); virtual void _d034();
-    virtual void _d038(); virtual void _d03C(); virtual void _d040(); virtual void _d044();
-    virtual void _d048(); virtual void _d04C(); virtual void _d050(); virtual void _d054();
-    virtual void _d058(); virtual void _d05C(); virtual void _d060(); virtual void _d064();
-    virtual void _d068(); virtual void _d06C(); virtual void _d070(); virtual void _d074();
-    virtual void _d078(); virtual void _d07C(); virtual void _d080(); virtual void _d084();
-    virtual void _d088(); virtual void _d08C(); virtual void _d090(); virtual void _d094();
-    virtual void _d098(); virtual void _d09C(); virtual void _d0A0(); virtual void _d0A4();
-    virtual void _d0A8(); virtual void _d0AC(); virtual void _d0B0(); virtual void _d0B4();
-    virtual void _d0B8(); virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4();
-    virtual void _d0C8(); virtual void _d0CC(); virtual void _d0D0(); virtual void _d0D4();
-    virtual void _d0D8(); virtual void _d0DC(); virtual void _d0E0(); virtual void _d0E4();
-    virtual void _d0E8(); virtual void _d0EC(); virtual void _d0F0(); virtual void _d0F4();
-    virtual void _d0F8(); virtual void _d0FC(); virtual void _d100(); virtual void _d104();
-    virtual void _d108(); virtual void _d10C(); virtual void _d110(); virtual void _d114();
-    virtual void _d118(); virtual void _d11C(); virtual void _d120(); virtual void _d124();
-    virtual void _d128(); virtual void _d12C(); virtual void _d130(); virtual void _d134();
-    virtual void _d138(); virtual void _d13C(); virtual void _d140(); virtual void _d144();
-    virtual void _d148(); virtual void _d14C(); virtual void _d150(); virtual void _d154();
-    virtual void _d158(); virtual void _d15C(); virtual void _d160(); virtual void _d164();
-    virtual void _d168(); virtual void _d16C(); virtual void _d170(); virtual void _d174();
-    virtual void _d178(); virtual void _d17C(); virtual void _d180(); virtual void _d184();
-    virtual void _d188(); virtual void _d18C(); virtual void _d190(); virtual void _d194();
-    virtual void _d198(); virtual void _d19C(); virtual void _d1A0(); virtual void _d1A4();
-    virtual void _d1A8(); virtual void _d1AC(); virtual void _d1B0(); virtual void _d1B4();
-    virtual void _d1B8(); virtual void _d1BC(); virtual void _d1C0(); virtual void _d1C4();
-    virtual void _d1C8(); virtual void _d1CC(); virtual void _d1D0(); virtual void _d1D4();
-    virtual void _d1D8();
-    virtual void vf1DC();          // vtable +0x1DC (no-arg dispatch)
-    virtual void _d1E0(); virtual void _d1E4(); virtual void _d1E8(); virtual void _d1EC();
-    virtual void _d1F0(); virtual void _d1F4(); virtual void _d1F8();
-    virtual void vf1FC(void* arg); // vtable +0x1FC (dispatch with r4 arg)
-};
-
 // Absolute-offset views of CActorParam byte fields used by the CfObjectEne
 // CActorParam getter/setter stubs. The CActorParam member block is +8 shifted
 // by the base-class layout (see CActorParamGaugeView in CActorParam.hpp), so
@@ -213,50 +175,85 @@ struct CActorParam17ECView {
         u32 vt3E9C;          // +0x3E9C CfObjectMove subobject vtable (+0x37C)
     };
 
-    // Cast-only fake SI for the +0x3E9C CfObjectMove subobject vtable
-    // (CfResReloadVtIf-style shift base). The dtor dispatches slot +0x68 and
-    // func_800ADB2C slot +0x158 through a REAL virtual call on the holder's
-    // subobject: MWCC then folds the vptr load (lwz r12, 0x3E9C(rX)) and
-    // re-materializes the adjusted this (addi r3, rX, 0x3E9C) per call - the
-    // retail shape (MWCC_CASES CfObjectActor_UnkVirtualFunc3/4). A manual
-    // function-pointer dispatch CSEs the subobject address into a
-    // callee-saved register and grows the frame instead. RTTI 8-byte vtable
-    // header: slot 0x68 = (0x68-8)/4 = 24 dummies, slot 0x158 = 84 dummies.
-    struct CfEneSubIf {
-        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
-        virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
-        virtual void _d028(); virtual void _d02C(); virtual void _d030(); virtual void _d034();
-        virtual void _d038(); virtual void _d03C(); virtual void _d040(); virtual void _d044();
-        virtual void _d048(); virtual void _d04C(); virtual void _d050(); virtual void _d054();
-        virtual void _d058(); virtual void _d05C(); virtual void _d060(); virtual void _d064();
-        virtual void vf68();             // vtable +0x68 (dtor dispatch)
-        virtual void _d06C(); virtual void _d070(); virtual void _d074(); virtual void _d078();
-        virtual void _d07C(); virtual void _d080(); virtual void _d084(); virtual void _d088();
-        virtual void _d08C(); virtual void _d090(); virtual void _d094(); virtual void _d098();
-        virtual void _d09C(); virtual void _d0A0(); virtual void _d0A4(); virtual void _d0A8();
-        virtual void _d0AC(); virtual void _d0B0(); virtual void _d0B4(); virtual void _d0B8();
-        virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4(); virtual void _d0C8();
-        virtual void _d0CC(); virtual void _d0D0(); virtual void _d0D4(); virtual void _d0D8();
-        virtual void _d0DC(); virtual void _d0E0(); virtual void _d0E4(); virtual void _d0E8();
-        virtual void _d0EC(); virtual void _d0F0(); virtual void _d0F4(); virtual void _d0F8();
-        virtual void _d0FC(); virtual void _d100(); virtual void _d104(); virtual void _d108();
-        virtual void _d10C(); virtual void _d110(); virtual void _d114(); virtual void _d118();
-        virtual void _d11C(); virtual void _d120(); virtual void _d124(); virtual void _d128();
-        virtual void _d12C(); virtual void _d130(); virtual void _d134(); virtual void _d138();
-        virtual void _d13C(); virtual void _d140(); virtual void _d144(); virtual void _d148();
-        virtual void _d14C(); virtual void _d150(); virtual void _d154();
-        virtual void vf158(int arg);     // vtable +0x158 (func_800ADB2C dispatch)
+    // +0x3E9C CfObjectMove primary-vtable SHAPE (Fake MI).
+    // Full CfObjectMove as second base CSEs the subobject address
+    // (frame +0x10); a thin novtable with the REAL slot names/arities
+    // keeps the folded `lwz r12, 0x3E9C(rX)` shape. Fillers pin
+    // offsets only - dispatched slots match CfObject/CObjectParam/
+    // CfObjectMove retail names.
+    class __declspec(novtable) CfObjectMoveVt {
+    public:
+        virtual void _008(); virtual void _00C(); virtual void _010(); virtual void _014();
+        virtual void _018(); virtual void _01C(); virtual void _020(); virtual void _024();
+        virtual void _028(); virtual void _02C(); virtual void _030(); virtual void _034();
+        virtual void _038();
+        virtual void CObjectParam_UnkVirtualFunc1(const char* name); //0x3C
+        virtual void _040(); virtual void _044(); virtual void _048(); virtual void _04C();
+        virtual void _050(); virtual void _054(); virtual void _058(); virtual void _05C();
+        virtual void _060();
+        virtual void CfObject_UnkVirtualFunc5();      //0x64
+        virtual void CfObject_UnkVirtualFunc6();      //0x68
+        virtual void _06C(); virtual void _070(); virtual void _074(); virtual void _078();
+        virtual void _07C();
+        virtual void CfObject_UnkVirtualFunc12();     //0x80
+        virtual void _084(); virtual void _088();
+        virtual float CfObject_UnkVirtualFunc15();    //0x8C
+        virtual void _090(); virtual void _094(); virtual void _098(); virtual void _09C();
+        virtual void _0A0(); virtual void _0A4(); virtual void _0A8(); virtual void _0AC();
+        virtual void _0B0(); virtual void _0B4(); virtual void _0B8(); virtual void _0BC();
+        virtual void _0C0(); virtual void _0C4(); virtual void _0C8(); virtual void _0CC();
+        virtual void _0D0(); virtual void _0D4(); virtual void _0D8(); virtual void _0DC();
+        virtual void _0E0(); virtual void _0E4(); virtual void _0E8(); virtual void _0EC();
+        virtual void _0F0(); virtual void _0F4(); virtual void _0F8(); virtual void _0FC();
+        virtual void _100(); virtual void _104(); virtual void _108(); virtual void _10C();
+        virtual void _110(); virtual void _114(); virtual void _118(); virtual void _11C();
+        virtual void _120(); virtual void _124(); virtual void _128(); virtual void _12C();
+        virtual void _130();
+        virtual void CfObject_UnkVirtualFunc57(float value); //0x134
+        virtual void _138();
+        virtual void CfObject_UnkVirtualFunc59(float value); //0x13C
+        virtual void _140(); virtual void _144(); virtual void _148(); virtual void _14C();
+        virtual void _150(); virtual void _154();
+        virtual void CfObject_UnkVirtualFunc66(int flag); //0x158
+        virtual void _15C(); virtual void _160(); virtual void _164(); virtual void _168();
+        virtual void _16C(); virtual void _170(); virtual void _174(); virtual void _178();
+        virtual void _17C(); virtual void _180(); virtual void _184(); virtual void _188();
+        virtual void _18C(); virtual void _190(); virtual void _194(); virtual void _198();
+        virtual void _19C(); virtual void _1A0(); virtual void _1A4(); virtual void _1A8();
+        virtual void _1AC(); virtual void _1B0(); virtual void _1B4(); virtual void _1B8();
+        virtual void _1BC(); virtual void _1C0(); virtual void _1C4(); virtual void _1C8();
+        virtual void _1CC(); virtual void _1D0();
+        virtual void CfObjectMove_UnkVirtualFunc4(float value); //0x1D4
     };
-
-    // Fake derived: CfEneSubIf is an INHERITED base at +0x3E9C, so a virtual
-    // call through the derived this reproduces the retail folded vptr load
-    // (lwz r12, 0x3E9C(rX)) plus the recomputed adjusted-this
-    // (addi r3, rX, 0x3E9C) per call (MWCC_CASES
-    // CfObjectActor_UnkVirtualFunc3/4).
-    struct CfEneSubPad {
+    struct CfEneMovePad {
         u8 _pad[0x3E9C];
     };
-    struct CfEneSubFake : CfEneSubPad, CfEneSubIf {};
+    struct CfEneMoveAt : CfEneMovePad, CfObjectMoveVt {};
+    struct CfEneMoveAtB : CfEneMovePad, CfObjectMoveVt {};
+    struct CfEneMoveAtC : CfEneMovePad, CfObjectMoveVt {};
+    struct CfEneMoveAtD : CfEneMovePad, CfObjectMoveVt {};
+
+    // Small +0x3E9C shape for updateEnemyBattleState / func_800AF870
+    // (slots +0x64/+0x80/+0x8C only). The full CfObjectMoveVt Fake MI
+    // CSEs the subobject address in that function; this compact shape
+    // restores the folded lwz. Method names = owning-class retail names.
+    class __declspec(novtable) CfObjectMoveVt64 {
+    public:
+        virtual void _s008(); virtual void _s00C(); virtual void _s010(); virtual void _s014();
+        virtual void _s018(); virtual void _s01C(); virtual void _s020(); virtual void _s024();
+        virtual void _s028(); virtual void _s02C(); virtual void _s030(); virtual void _s034();
+        virtual void _s038(); virtual void _s03C(); virtual void _s040(); virtual void _s044();
+        virtual void _s048(); virtual void _s04C(); virtual void _s050(); virtual void _s054();
+        virtual void _s058(); virtual void _s05C(); virtual void _s060();
+        virtual void CfObject_UnkVirtualFunc5();      //0x64
+        virtual void _s068(); virtual void _s06C(); virtual void _s070(); virtual void _s074();
+        virtual void _s078(); virtual void _s07C();
+        virtual void CfObject_UnkVirtualFunc12();     //0x80
+        virtual void _s084(); virtual void _s088();
+        virtual float CfObject_UnkVirtualFunc15();    //0x8C
+    };
+    struct CfEneMoveVt64 : CfEneMovePad, CfObjectMoveVt64 {};
+
 
     // CfResReloadImpl child pointer stored by the ctor at +0x3F4C.
     struct CfEneReloadSlot {
@@ -339,28 +336,30 @@ struct CActorParam17ECView {
         u8 field_0x8; // 0x8 (subobject base)
     };
 
-    // Fake MI for the +0x8 subobject dispatch (slot +0x14 m14 and +0x20
-    // m20): a real virtual call through the derived this folds the vptr load
-    // into `lwz r12, 8(rX)` and re-materializes the adjusted this (addi r3,
-    // rX, 8) - the retail shape (same scheme as CfEneSubFake).
+    // +0x8 CBattleState vtable SHAPE (Fake MI). Same CSE reason as
+    // CfObjectMoveVt - thin novtable with real CBattleState names.
+    class __declspec(novtable) CfBattleStateVt {
+    public:
+        virtual void _b008(); virtual void _b00C(); virtual void _b010();
+        virtual void CBattleState_UnkVirtualFunc4(int val); //0x14
+        virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry); //0x18
+        virtual void _b01C();
+        virtual void CBattleState_UnkVirtualFunc7(u32 id); //0x20
+        virtual void _b024(); virtual void _b028(); virtual void _b02C(); virtual void _b030();
+        virtual void _b034(); virtual void _b038(); virtual void _b03C(); virtual void _b040();
+        virtual void _b044(); virtual void _b048(); virtual void _b04C(); virtual void _b050();
+        virtual void _b054(); virtual void _b058(); virtual void _b05C(); virtual void _b060();
+        virtual void _b064(); virtual void _b068(); virtual void _b06C(); virtual void _b070();
+        virtual void _b074(); virtual void _b078();
+        virtual void CBattleState_UnkVirtualFunc30(u32 flags); //0x7C
+        virtual void _b080();
+        virtual void CBattleState_UnkVirtualFunc32(u32 flags); //0x84
+    };
     struct CfEneB8Pad {
         u8 _pad[0x8];
     };
-    class CfBattleVt14If {
-    public:
-        virtual void _d008(); virtual void _d00C(); virtual void _d010();
-        virtual void m14(int val); // vtable +0x14
-    };
-    struct CfEneB8V14 : CfEneB8Pad, CfBattleVt14If {};
-    struct CfEneB8V20 : CfEneB8Pad, cf::CfBattleVt20 {};
+    struct CfEneB8Battle : CfEneB8Pad, CfBattleStateVt {};
 
-    // Vtable slot +0x14 dispatch on the +0x8 subobject (retail folds the
-    // vptr load to `lwz r12, 0x8(rX)`; slot called with a 0x35 id arg).
-    typedef void (*CfEneB8Vt14Fn)(u8* self, int val);
-    struct CfEneB8Vt14Table {
-        u32 _pad[0x14 / 4]; // 0x00-0x13
-        CfEneB8Vt14Fn fn14; // 0x14
-    };
 
     // Flags/pointer fields touched by updateEnemyBattleState: the +0x3F34 target
     // pointer and the +0x7A4 flag word behind it.
@@ -512,34 +511,7 @@ struct CActorParam17ECView {
         virtual int m2BC(); // vtable +0x2BC
     };
 
-    // Vtable proxy for the +0x3E9C CfObjectMove subobject slots +0x64/+0x80
-    // (no-arg) and +0x8C (returns float), used by updateEnemyBattleState /
-    // func_800AF870. Dummy slots pin the offsets (same scheme as CfEneSubIf).
-    class CfEneSubVt64If {
-    public:
-        virtual void _s008(); virtual void _s00C(); virtual void _s010(); virtual void _s014();
-        virtual void _s018(); virtual void _s01C(); virtual void _s020(); virtual void _s024();
-        virtual void _s028(); virtual void _s02C(); virtual void _s030(); virtual void _s034();
-        virtual void _s038(); virtual void _s03C(); virtual void _s040(); virtual void _s044();
-        virtual void _s048(); virtual void _s04C(); virtual void _s050(); virtual void _s054();
-        virtual void _s058(); virtual void _s05C(); virtual void _s060();
-        virtual void m64();  // vtable +0x64
-        virtual void _s06C(); virtual void _s070(); virtual void _s074(); virtual void _s078();
-        virtual void _s07C(); virtual void _s080();
-        virtual void m80();  // vtable +0x80
-        virtual void _s084(); virtual void _s088();
-        virtual float m8C(); // vtable +0x8C (returns float)
-    };
-
-    // Fake derived for the +0x3E9C subobject (same scheme as CfEneSubFake).
-    struct CfEneSubVt64 : CfEneSubPad, CfEneSubVt64If {};
-    // Distinct derived types for the m8C/m80/m64 dispatch sites in
-    // updateEnemyBattleState so MWCC re-materializes the addi r3, rX, 0x3e9c (and
-    // folds the vptr load) per call instead of CSE-ing the subobject base
-    // into a callee-saved register (the known cross-call address CSE).
-    struct CfEneSubVt64b : CfEneSubPad, CfEneSubVt64If {};
-    struct CfEneSubVt64c : CfEneSubPad, CfEneSubVt64If {};
-
+    // --- CActorParam_UnkVirtualFunc123/120 record structs ---
     // --- CActorParam_UnkVirtualFunc123/120 record structs ---
     // The 0x84 field block copied verbatim per record by both loaders
     // (strcpy 'name' + strlen stored at +0x20, then the typed fields; the
@@ -1219,74 +1191,6 @@ struct CActorParam17ECView {
         virtual void vf5E0();                 // vtable +0x5E0
     };
 
-    // +0x8 CBattleState subobject vtable proxies (cf. CfBattleVt18): slots
-    // +0x7C/+0x84 take a u16 arg (func_800ADDA8 status flags).
-    class CfBattleVt7C {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078();
-        virtual void vf7C(u16 value);        // vtable +0x7C
-    };
-    class CfBattleVt84 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080();
-        virtual void vf84(u16 value);        // vtable +0x84
-    };
-
-    // +0x3E9C CfObjectMove subobject vtable proxy for func_800ADDA8: slots
-    // +0x3C (u32 arg), +0x134/+0x13C/+0x1D4 (float arg). Same folded-vptr
-    // scheme as CfEneSubIf.
-    class CfEneSubVt3CIf {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void vf3C(u32 value);        // vtable +0x3C
-        virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-        virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-        virtual void _v060(); virtual void _v064(); virtual void _v068(); virtual void _v06C();
-        virtual void _v070(); virtual void _v074(); virtual void _v078(); virtual void _v07C();
-        virtual void _v080(); virtual void _v084(); virtual void _v088(); virtual void _v08C();
-        virtual void _v090(); virtual void _v094(); virtual void _v098(); virtual void _v09C();
-        virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8(); virtual void _v0AC();
-        virtual void _v0B0(); virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC();
-        virtual void _v0C0(); virtual void _v0C4(); virtual void _v0C8(); virtual void _v0CC();
-        virtual void _v0D0(); virtual void _v0D4(); virtual void _v0D8(); virtual void _v0DC();
-        virtual void _v0E0(); virtual void _v0E4(); virtual void _v0E8(); virtual void _v0EC();
-        virtual void _v0F0(); virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC();
-        virtual void _v100(); virtual void _v104(); virtual void _v108(); virtual void _v10C();
-        virtual void _v110(); virtual void _v114(); virtual void _v118(); virtual void _v11C();
-        virtual void _v120(); virtual void _v124(); virtual void _v128(); virtual void _v12C();
-        virtual void _v130();
-        virtual void vf134(float value);     // vtable +0x134
-        virtual void _v138();
-        virtual void vf13C(float value);     // vtable +0x13C
-        virtual void _v140(); virtual void _v144(); virtual void _v148(); virtual void _v14C();
-        virtual void _v150(); virtual void _v154(); virtual void _v158(); virtual void _v15C();
-        virtual void _v160(); virtual void _v164(); virtual void _v168(); virtual void _v16C();
-        virtual void _v170(); virtual void _v174(); virtual void _v178(); virtual void _v17C();
-        virtual void _v180(); virtual void _v184(); virtual void _v188(); virtual void _v18C();
-        virtual void _v190(); virtual void _v194(); virtual void _v198(); virtual void _v19C();
-        virtual void _v1A0(); virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC();
-        virtual void _v1B0(); virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC();
-        virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8(); virtual void _v1CC();
-        virtual void _v1D0();
-        virtual void vf1D4(float value);     // vtable +0x1D4
-    };
-    struct CfEneSubVt3C : CfEneSubPad, CfEneSubVt3CIf {};
 };
 
 

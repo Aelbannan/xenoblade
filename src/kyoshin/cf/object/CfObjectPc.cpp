@@ -14,6 +14,9 @@
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// PCIf: leaf-slot view (CfObjectPc 0x5EC..0x608). CActorParam slots use
+// real methods; leaf slots stay on PCIf until the CfObjectActor primary
+// +8 shift vs retail is fixed. PcSub*: +0x3E9C Move subobject view.
 struct PCIf {
     virtual void _v0008();
     virtual void _v000C();
@@ -397,13 +400,14 @@ struct PCIf {
     virtual void vf05F4();
     virtual void vf05F8();
     virtual void vf05FC();
-    virtual void vf0600();
-    virtual void vf0604();
+    virtual void _v0600();
+    virtual void _v0604();
     virtual void vf0608(int a, int b, int c, int d, int e);
 };
 
-// Interface over the +0x3E9C subobject vtable (lbl_eu_80529DA0 + 0x37C
-// table): slots used by the CfObjectPc methods below.
+// +0x3E9C subobject (lbl_eu_80529DA0+0x37C). Kept for sites where
+// pcMove()->realMethod drops match (MWCC CSE / arity); playbook prefers
+// CfObjectMove virtuals - re-fold per-site when hexdiff allows.
 class PcSubVtIf {
 public:
     virtual void _p008(); virtual int _p00C(int flag); virtual void _p010(); virtual void _p014();
@@ -425,12 +429,12 @@ public:
     virtual void _p108(); virtual void _p10C(); virtual void _p110(); virtual void _p114();
     virtual void _p118(); virtual void _p11C(); virtual void _p120(); virtual void _p124();
     virtual void _p128(); virtual void _p12C(); virtual void _p130();
-    virtual void m134(float);   // +0x134
+    virtual void m134(float);
     virtual void _p138();
-    virtual void m13C(float);   // +0x13C
+    virtual void m13C(float);
     virtual void _p140(); virtual void _p144(); virtual void _p148();
     virtual void _p14C(); virtual void _p150(); virtual void _p154();
-    virtual void m158(int);     // +0x158
+    virtual void m158(int);
     virtual void _p15C(); virtual void _p160(); virtual void _p164(); virtual void _p168();
     virtual void _p16C(); virtual void _p170(); virtual void _p174(); virtual void _p178();
     virtual void _p17C(); virtual void _p180(); virtual void _p184(); virtual void _p188();
@@ -438,75 +442,24 @@ public:
     virtual void _p19C(); virtual void _p1A0(); virtual void _p1A4(); virtual void _p1A8();
     virtual void _p1AC(int flag, const char* text); virtual void _p1B0(); virtual void _p1B4(); virtual void _p1B8();
     virtual void _p1BC();
-    virtual void m1C0(int);     // +0x1C0
+    virtual void m1C0(int);
     virtual void _p1C4(); virtual void _p1C8(); virtual void _p1CC(); virtual void _p1D0();
-    virtual void m1D4(float);   // +0x1D4
+    virtual void m1D4(float);
     virtual void _p1D8(); virtual void _p1DC(); virtual void _p1E0(); virtual void _p1E4();
     virtual void _p1E8(); virtual void _p1EC(); virtual void _p1F0(); virtual void _p1F4();
     virtual void _p1F8(); virtual void _p1FC(); virtual void _p200(); virtual void _p204();
     virtual void _p208();
-    virtual int _p20C(int flag);   // +0x20C
-    virtual int _p210(int flag);   // +0x210
+    virtual int _p20C(int flag);
+    virtual int _p210(int flag);
 };
-// Fake-MI view: folds the vptr load into lwz r12, 0x3E9C(rX) and re-materializes
-// the adjusted this (addi r3, rX, 0x3E9C), matching retail.
 struct PcSubPad { u8 _pad[0x3E9C]; };
 struct PcSubFake : PcSubPad, PcSubVtIf {};
-// Distinct type with identical layout: spelling call sites through both types
-// keeps MWCC from CSE-ing the sub-object address into one temp (retail
-// re-materializes addi rX, rX, 0x3E9C at every call).
 struct PcSubPadB { u8 _pad[0x3E9C]; };
 struct PcSubFakeB : PcSubPadB, PcSubVtIf {};
-// Third spelling for three-site alternation.
 struct PcSubPadC { u8 _pad[0x3E9C]; };
 struct PcSubFakeC : PcSubPadC, PcSubVtIf {};
-// Member-subobject spellings: retail fuses the +0x3E9C adjust into the
-// vptr load (lwzu r12, 0x3E9C(r3)), which MWCC emits for member
-// subobject calls rather than cast-produced pointer temps.
 struct PcWrapA { u8 _pad[0x3E9C]; PcSubVtIf mSub; };
 struct PcWrapB { u8 _pad[0x3E9C]; PcSubVtIf mSub; };
-
-// Interface over the arts-data entry object embedded at +0x17C (its vtable
-// slot 0x20C fills the entry).
-class ArtsEntryVt20CIf {
-public:
-    virtual void _q008(); virtual void _q00C(); virtual void _q010(); virtual void _q014();
-    virtual void _q018(); virtual void _q01C(); virtual void _q020(); virtual void _q024();
-    virtual void _q028(); virtual void _q02C(); virtual void _q030(); virtual void _q034();
-    virtual void _q038(); virtual void _q03C(); virtual void _q040(); virtual void _q044();
-    virtual void _q048(); virtual void _q04C(); virtual void _q050(); virtual void _q054();
-    virtual void _q058(); virtual void _q05C(); virtual void _q060(); virtual void _q064();
-    virtual void _q068(); virtual void _q06C(); virtual void _q070(); virtual void _q074();
-    virtual void _q078(); virtual void _q07C(); virtual void _q080(); virtual void _q084();
-    virtual void _q088(); virtual void _q08C(); virtual void _q090(); virtual void _q094();
-    virtual void _q098(); virtual void _q09C(); virtual void _q0A0(); virtual void _q0A4();
-    virtual void _q0A8(); virtual void _q0AC(); virtual void _q0B0(); virtual void _q0B4();
-    virtual void _q0B8(); virtual void _q0BC(); virtual void _q0C0(); virtual void _q0C4();
-    virtual void _q0C8(); virtual void _q0CC(); virtual void _q0D0(); virtual void _q0D4();
-    virtual void _q0D8(); virtual void _q0DC(); virtual void _q0E0(); virtual void _q0E4();
-    virtual void _q0E8(); virtual void _q0EC(); virtual void _q0F0(); virtual void _q0F4();
-    virtual void _q0F8(); virtual void _q0FC(); virtual void _q100(); virtual void _q104();
-    virtual void _q108(); virtual void _q10C(); virtual void _q110(); virtual void _q114();
-    virtual void _q118(); virtual void _q11C(); virtual void _q120(); virtual void _q124();
-    virtual void _q128(); virtual void _q12C(); virtual void _q130(); virtual void _q134();
-    virtual void _q138(); virtual void _q13C(); virtual void _q140(); virtual void _q144();
-    virtual void _q148(); virtual void _q14C(); virtual void _q150(); virtual void _q154();
-    virtual void _q158(); virtual void _q15C(); virtual void _q160(); virtual void _q164();
-    virtual void _q168(); virtual void _q16C(); virtual void _q170(); virtual void _q174();
-    virtual void _q178(); virtual void _q17C(); virtual void _q180(); virtual void _q184();
-    virtual void _q188(); virtual void _q18C(); virtual void _q190(); virtual void _q194();
-    virtual void _q198(); virtual void _q19C(); virtual void _q1A0(); virtual void _q1A4();
-    virtual void _q1A8(); virtual void _q1AC(); virtual void _q1B0(); virtual void _q1B4();
-    virtual void _q1B8(); virtual void _q1BC(); virtual void _q1C0(); virtual void _q1C4();
-    virtual void _q1C8(); virtual void _q1CC(); virtual void _q1D0(); virtual void _q1D4();
-    virtual void _q1D8(); virtual void _q1DC(); virtual void _q1E0(); virtual void _q1E4();
-    virtual void _q1E8(); virtual void _q1EC(); virtual void _q1F0(); virtual void _q1F4();
-    virtual void _q1F8(); virtual void _q1FC(); virtual void _q200(); virtual void _q204();
-    virtual void _q208();
-    virtual u32 fill();         // +0x20C
-};
-struct ArtsEntryPad { u8 _pad[0x17C]; };
-struct ArtsEntryFake : ArtsEntryPad, ArtsEntryVt20CIf {};
 
 // +0x44A8 region u16 touched at the end of initialize.
 struct PcRegion44A8 {
@@ -515,40 +468,10 @@ struct PcRegion44A8 {
 };
 
 namespace cf {
-// Minimal view of CfObjectPoint for validatePointState: only the vtable layout
-// matters (retail dispatches slot 0x70 = CfObject_UnkVirtualFunc8). With RTTI
-// on, declared virtual N sits at vtable offset (N+2)*4, so 26 padding slots
-// put the callee at 0x70. The class is never instantiated in this TU, so the
-// padding virtuals need no definitions and no vtable is emitted.
-class CfObjectPoint {
+// CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_UnkVirtualFunc8
+// (deleted local _vNNN pad list). novtable - never constructed in this TU.
+class __declspec(novtable) CfObjectPoint : public CfObject {
 public:
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void CfObject_UnkVirtualFunc8();  // vtable offset 0x70
     int validatePointState();
 };
 }
@@ -577,7 +500,7 @@ cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
         res = (u8*)__ct__cf_CfResPcImpl(res, (cf::CfObjectMove*)parent);
     }
     ((CfObjectPcSubFields*)this)->mPtr3F4C = res;
-    reinterpret_cast<PCIf*>(this)->_v05D8();
+    this->enablePcFlag();
 }
 
 // Complete destructor (retail symbol __dt__Q22cf10CfObjectPcFv). Free-
@@ -588,11 +511,11 @@ cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
 cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) {
     if (self != 0) {
         u8* v = (u8*)lbl_eu_80529DA0;
-        ((cf::CfPcVt*)self)->vt0 = (u32)v;
-        ((cf::CfPcVt*)self)->vt8 = (u32)(v + 0xC);
-        ((cf::CfPcVt*)self)->vt3380 = (u32)(v + 0x36C);
-        ((cf::CfPcVt*)self)->vt3E9C = (u32)(v + 0x37C);
-        reinterpret_cast<PCIf*>(self)->_v05E0();
+        ((cf::CfActorVtSlots*)self)->vtPrimary = (u32)v;
+        ((cf::CfActorVtSlots*)self)->vtSecondary = (u32)(v + 0xC);
+        ((cf::CfActorVtSlots*)self)->vtAIAction = (u32)(v + 0x36C);
+        ((cf::CfActorVtSlots*)self)->vtMove = (u32)(v + 0x37C);
+        self->syncArtsEntry();
         // Retail re-checks self here (cmpwi/beq) before destroying the
         // CfObjectMove subobject and running the CAIAction block cleanup.
         if (self != 0) {
@@ -697,15 +620,15 @@ int cf::CfObjectPc::initialize() {
 void cf::CfObjectPc::CfObject_UnkVirtualFunc6() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::syncArtsEntry(); }
 
 void cf::CfObjectPc::syncArtsEntry() {
-    reinterpret_cast<PCIf*>(this)->_v00B0();
-    reinterpret_cast<PCIf*>(this)->_v00B8();
-    reinterpret_cast<PCIf*>(this)->_v0314();
+    CActorParam_UnkVirtualFunc7();
+    CActorParam_UnkVirtualFunc9();
+    CActorParam_UnkVirtualFunc160();
     // Look up the arts data object for this PC's index, then write the
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
     CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
-    func_80175A50(&artsData->field_0x17C,
-        reinterpret_cast<PCIf*>(this)->_v028C());
+    func_80175A50(reinterpret_cast<cf::CActorParam*>(&artsData->field_0x17C),
+        reinterpret_cast<cf::CActorParam*>(CActorParam_UnkVirtualFunc126()));
 }
 
 // NOTE: enablePcFlag is defined as the extern "C" wrapper below (not as a
@@ -734,12 +657,7 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     reinterpret_cast<PCIf*>(self)->vf05F4();
     // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
     // three calls below, but MWCC value-numbers the identical receiver
-    // conversions into one callee-saved temp (see MWCC_PATTERNS.md 7j
-    // negative result) - known unmatchable residual.
-    // NOTE: retail re-materializes addi r3, r30, 0x3E9C before EACH of the
-    // three calls below, but MWCC value-numbers the identical receiver
-    // conversions into one callee-saved temp regardless of spelling (MI-base
-    // cast, distinct types, member sub-object - all probed; see
+    // conversions into one callee-saved temp regardless of spelling (see
     // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
     ((PcSubFake*)self)->m134(lbl_eu_80666B18);
     ((PcSubFake*)self)->m13C(lbl_eu_80666B1C);
@@ -754,13 +672,12 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // even though the retail mangled name is arg-less. Small args delegate to the
 // base CfObjectMove implementation; larger ones forward a sub-object pointer
 // to func_800CA42C.
-void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int arg) {
-    if (arg < 0x2c) {
-        // CfObjectMove sub-object lives at this+0x3E9C (manual offset: the
-        // declared base-class sizes in the headers do not match the retail
-        // layout). Direct (non-virtual) call to the base implementation.
+void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
+    if ((int)a < 0x2c) {
+        // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
+        // r4-r8 stay live into the base UVF16 bctr thunk.
         u8* subObj = reinterpret_cast<u8*>(self) + 0x3e9c;
-        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_UnkVirtualFunc16();
+        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_UnkVirtualFunc16(a, b, c, d, e);
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
         if (obj != NULL) {
@@ -788,11 +705,12 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
         __ct__8009ED08(dest, itemId);
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
-        reinterpret_cast<PCIf*>(self)->_v021C(((ArtsEntryFake*)data)->fill());
+        self->CActorParam_UnkVirtualFunc98(
+            reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_UnkVirtualFunc94());
         // Copies the arts entry INTO this object's CActorParam (opposite
         // direction of syncArtsEntry).
-        func_80175A50(reinterpret_cast<u8*>(reinterpret_cast<PCIf*>(self)->_v028C()),
-            reinterpret_cast<u32>(&data->field_0x17C));
+        func_80175A50(reinterpret_cast<cf::CActorParam*>(self->CActorParam_UnkVirtualFunc126()),
+            reinterpret_cast<cf::CActorParam*>(&data->field_0x17C));
     }
 }
 
@@ -820,9 +738,7 @@ void applyArtsParam__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int param) {
 void cf::CfObjectPc::dispatchPlayerBranch() {
     // getPlayer(0) returns the player's CfObjectMove sub-object; compare it
     // against this object's CfObjectMove base (null-checked pointer adjust)
-    // and dispatch to the matching per-frame handler. Dispatches go through
-    // PCIf (fresh vtable class, retail slot offsets) because the shared base
-    // headers declare four extra virtuals.
+    // and dispatch to the matching per-frame handler.
     u8* target = (u8*)this;
     if (this != NULL) {
         target += 0x3E9C;
@@ -886,14 +802,16 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     void* st1;
     void* st2;
     void* st3;
-    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)((PcSub4Fake*)self)->_q030()), 0xE);
-    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)((PcSub4FakeB*)self)->_q030()), 0x803);
+    cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)self + 4);
+    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)s4a->CObjectState_UnkVirtualFunc11()), 0xE);
+    cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)self + 4);
+    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)s4b->CObjectState_UnkVirtualFunc11()), 0x803);
 
     int any = (chk1 | chk2) != 0;
     int dd = func_800C0DD4(self, any);
     if ((any | dd) != 0) {
         if (func_80148778((u8*)self + 8, 0x35)) {
-            ((PcSub8Fake*)self)->_s020(0x35);
+            reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc7(0x35);
         }
     } else {
         // Count entries in the battle-manager list at +0x48.
@@ -916,11 +834,11 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
             func_80148778((u8*)self + 8, 0x6c) ||
             func_80148778((u8*)self + 8, 0x6d)) {
             if (func_80148778((u8*)self + 8, 0x35)) {
-                ((PcSub8FakeB*)self)->_s020(0x35);
+                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc7(0x35);
             }
         } else {
             if (!func_80148778((u8*)self + 8, 0x35)) {
-                ((PcSub8FakeB*)self)->_s014(0x35);
+                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc4(0x35);
             }
         }
     }
@@ -930,7 +848,8 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     float scaled = func_80496288(lbl_eu_80663E14) * gauge;
     func_801765A4(self, scaled, 1);
 
-    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)((PcSub4FakeC*)self)->_q030()), 1);
+    cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
+    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)s4c->CObjectState_UnkVirtualFunc11()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
@@ -1013,11 +932,11 @@ u32 CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     // Arts count from the param object (vtable 0xFC); the arts table index is
     // count+1, capped at 99 entries. Returns 1 when over the cap.
     void* bdat = lbl_eu_806640DC;
-    u32 idx = reinterpret_cast<PCIf*>(self)->_v00FC() + 1;
+    u32 idx = self->CActorParam_UnkVirtualFunc26() + 1;
     if (idx > 0x63) return 1;
     u32 sval = getBdatStringColumnValue(bdat,
         (const char*)lbl_eu_804FC5EC + 0x34, idx);
-    return sval - reinterpret_cast<PCIf*>(self)->_v01E8();
+    return sval - self->CActorParam_UnkVirtualFunc85();
 }
 
 // Vtable caller supplies three args despite the arg-less Fv retail name.
@@ -1070,9 +989,9 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     bmCheck:
         if (inBattle != 0) goto actedDone;
         if (bm->field_0x20C8 != 0) goto actedDone;
-        void* state = ((PcSub4Fake*)self)->_q030();
+        void* state = ((CObjectStateFake4*)self)->CObjectState_UnkVirtualFunc11();
         if (func_80174C98(self, (int*)&state, 6) ||
-            (((state = ((PcSub4Fake*)self)->_q030()),
+            (((state = ((CObjectStateFake4B*)self)->CObjectState_UnkVirtualFunc11()),
                 func_80174C98(self, (int*)&state, 9)))) {
             func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
@@ -1092,7 +1011,8 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
         func_800A11A4((u8*)data, 1);
-        reinterpret_cast<PCIf*>(self)->_v0204(((ArtsEntryFake*)data)->fill());
+        reinterpret_cast<PCIf*>(self)->_v0204(
+            (u32)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_UnkVirtualFunc94());
         u32 gained = reinterpret_cast<PCIf*>(self)->_v01E8();
         u32 cur = f->field_0x1600;
         u32 total = (u32)spent + gained;
@@ -1217,7 +1137,11 @@ void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*
 // Tail-calls into initialize on the -0x3E9C adjusted this.
 void cf::CfObjectPc::CfObject_UnkVirtualFunc2() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::initialize(); }
 
-void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))handleMoveState__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+extern "C" void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) {
+    // Tail into handleMoveState with this adjusted; r4-r8 stay live for the
+    // five hidden args (retail Fv thunk is 0x8 bytes).
+    ((void (*)(void*))handleMoveState__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c);
+}
 
 
 void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
@@ -1244,3 +1168,26 @@ int cf::CfObjectPoint::validatePointState() {
 extern "C" void triggerActionRefreshA__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
 
 extern "C" void triggerActionRefreshB__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
+
+// absorb: split1 retail data sections
+// generated from retail spec (fixed pointers to zero for reloc)
+__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectPc_cpp_rodata[0x5C] __attribute__((used)) = {
+    0x74, 0x70, 0x5F, 0x61, 0x74, 0x6B, 0x00, 0x74, 0x70, 0x5F, 0x61, 0x72,
+    0x74, 0x73, 0x00, 0x74, 0x70, 0x5F, 0x61, 0x74, 0x6B, 0x64, 0x6D, 0x67,
+    0x00, 0x74, 0x70, 0x5F, 0x61, 0x72, 0x74, 0x73, 0x64, 0x6D, 0x67, 0x00,
+    0x77, 0x70, 0x6E, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00, 0x4A, 0x55, 0x68,
+    0x65, 0x61, 0x64, 0x00, 0x6C, 0x65, 0x76, 0x65, 0x6C, 0x5F, 0x65, 0x78,
+    0x70, 0x00, 0x6D, 0x61, 0x74, 0x5F, 0x6E, 0x6F, 0x00, 0x6D, 0x61, 0x70,
+    0x00, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6C, 0x00, 0x64, 0x6D,
+    0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectPc_cpp_sdata2[0x40] __attribute__((used)) = {
+    0x42, 0x00, 0xCC, 0xCD, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
+    0x00, 0x00, 0x00, 0x00, 0x42, 0x00, 0xCC, 0xCD, 0x3E, 0x1F, 0x01, 0x97,
+    0x41, 0x80, 0xCC, 0xCD, 0x3F, 0x80, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x3C, 0x23, 0xD7, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+

@@ -1,6 +1,22 @@
 // kyoshin/CSysWinSave - system window "save" process (singleton).
 
 #include "kyoshin/CSysWinSave.hpp"
+extern char lbl_eu_80668BA8[];
+extern char lbl_eu_80668BA4[];
+extern char lbl_eu_80668BA0[];
+extern char lbl_eu_80662B10[];
+extern char lbl_eu_80662B08[];
+extern char lbl_eu_80538A60[];
+extern char lbl_eu_805389A0[];
+extern char lbl_eu_80538994[];
+extern char lbl_eu_8050FD6C[];
+extern char lbl_eu_8050FD60[];
+extern char lbl_eu_8050FD50[];
+extern "C" {
+    int func_8008294C__Q22cf13CfGameManagerFv(int);
+    int func_80086F9C__Q22cf13CfGameManagerFv(int);
+    int func_80138078__FUl(unsigned long);
+}
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -22,20 +38,20 @@ void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveF
 
 void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 
-extern "C" void initChainGauge__FPv(float* self) {
+extern "C" void func_80294824__FPv(float* self) {
     float v = lbl_eu_80668BA0;
     self[0] = v;
     self[1] = v;
 }
 
-extern "C" void resetChainGauge__FPv(float* self) {
+extern "C" void func_80294834__FPv(float* self) {
     float v = lbl_eu_80668BA0;
     self[0] = v;
     self[1] = v;
 }
 
 // ---------------------------------------------------------------------------
-// func_80294844 (us-80296e40)
+// Target 1: func_80294844 (us-80296e40)
 // Write a base value to [out+0] and [out+4]. If the incoming parameter is
 // below the threshold A, additionally store a corrected value:
 //   corrected = C * (param - A) - A
@@ -64,7 +80,7 @@ extern "C" unsigned long func_80294624() {
 }
 
 // ---------------------------------------------------------------------------
-// func_80294638 - input handling for the save dialog's open state
+// Target 3: func_80294638 - input handling for the save dialog's open state
 // (called from Move while mFlagDC == 2). Reads the current cf pad data; the
 // two confirm/cancel triggers come from different button bits depending on
 // co-op vs single-player; an up/down D-pad input wraps the save-slot flag.
@@ -78,17 +94,16 @@ extern "C" void func_80294638(CSysWinSave* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
-    if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
-        // Co-op: confirm/D-pad row bits live at +17 over single-player.
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        in1     = (pad->field_04 >> 10) & 1;
+        in2     = (pad->field_04 >> 9) & 1;
+        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
         sels    = (pad->field_104 & 0x8004) != 0;
-        confirm = ((pad->field_104 & 0x10000) | (pad->field_104 & 0x8)) != 0;
-        in1     = (pad->field_04 >> 21) & 1;
-        in2     = (pad->field_04 >> 22) & 1;
     } else {
+        in1     = (pad->field_04 >> 27) & 1;
+        in2     = (pad->field_04 >> 26) & 1;
+        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
         sels    = (pad->field_104 & 0x8004) != 0;
-        confirm = ((pad->field_104 & 0x10000) | (pad->field_104 & 0x8)) != 0;
-        in1     = (pad->field_04 >> 4) & 1;
-        in2     = (pad->field_04 >> 5) & 1;
     }
 
     if (in1) {
@@ -96,41 +111,41 @@ extern "C" void func_80294638(CSysWinSave* self) {
         self->mFlagDC = 3;
         func_8022B8E4(&self->mSysWin[0]);
         func_801D216C(&self->mCur18[0], 0);
-        playUISound__FUl(3);
+        func_80138078__FUl(3);
     } else if (in2) {
         // Close the dialog, marking the save slot as re-selected.
         self->mFlagDC = 3;
         func_8022B8E4(&self->mSysWin[0]);
         func_801D216C(&self->mCur18[0], 0);
         self->mFlagDD = 1;
-        playUISound__FUl(6);
+        func_80138078__FUl(6);
     } else if (sels) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         self->mFlagDD = self->mFlagDD - 1;
         if (self->mFlagDD < 0) self->mFlagDD = 1;
-        u8 tmp[0xC];
+        u8 tmp[0x18];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        playUISound__FUl(1);
+        func_80138078__FUl(1);
     } else if (confirm) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         self->mFlagDD = self->mFlagDD + 1;
         if (self->mFlagDD > 1) self->mFlagDD = 0;
-        u8 tmp[0xC];
+        u8 tmp[0x18];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        playUISound__FUl(1);
+        func_80138078__FUl(1);
     }
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinSave::Init - register the render callback, create the
+// Target 1: CSysWinSave::Init - register the render callback, create the
 // scratch region (guarded by a Class_8045F858 RAII temp), then rebuild the
 // embedded CSysWin and CCur18 bodies by constructing stack temps and copying
 // their non-vtable fields into the embedded storage.
 // ---------------------------------------------------------------------------
 void CSysWinSave::Init() {
-    setPresentationFlag__Q22cf13CfGameManagerFv(true);
+    func_8008294C__Q22cf13CfGameManagerFv(true);
 
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
@@ -188,14 +203,14 @@ void CSysWinSave::Init() {
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinSave::Move - gate prefix (task busy / global render flag /
+// Target 2: CSysWinSave::Move - gate prefix (task busy / global render flag /
 // scene active), then a 4-state machine controlling the save dialog:
 //   0 load strings and ready the window; 1 wait active then update cursor;
 //   2 dispatch input to func_80294638; 3 closing transition.
 // ---------------------------------------------------------------------------
 void CSysWinSave::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::isFlag01Set() || (lbl_eu_80663E28 & 0x200000))
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
         return;
     if (func_8013BE50() == 0) return;
 
@@ -250,7 +265,7 @@ void CSysWinSave::Move() {
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinSave::Term (us-802967ec)
+// Target 2: CSysWinSave::Term (us-802967ec)
 // Wait for VI draw completion, release the CSysWin and its scratch region, run
 // the CCur18 cursor-update virtual, clear the singleton, detach the render
 // callback, and re-enable the cf load if the signed flag was set.
@@ -267,11 +282,11 @@ void CSysWinSave::Term() {
     mScene->removeRenderCB(render);
 
     if (mFlagDD != 0)
-        setPresentationFlag__Q22cf13CfGameManagerFv(false);
+        func_8008294C__Q22cf13CfGameManagerFv(false);
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinSave::~CSysWinSave (us-802965b4)
+// Target 3: CSysWinSave::~CSysWinSave (us-802965b4)
 // Complete-object destructor. Subobjects destroyed in reverse construction
 // order: CCur18@0xC4, CSysWin@0x88, UnkClass_8045F564@0x78, then the CProcess
 // base (guarded by the nested double null-check, an MWCC D2-inlined-into-D1
@@ -295,7 +310,7 @@ extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// CSysWinSave::cbRenderBefore (us-80296a3c)
+// Target 4: CSysWinSave::cbRenderBefore (us-80296a3c)
 // Gate prefix (task busy / global bit / scene-active) then draw the embedded
 // CSysWin and CCur18 cursor through a stack DrawInfo.
 // ---------------------------------------------------------------------------
@@ -306,7 +321,7 @@ void CSysWinSave::cbRenderBefore() {
     // chain keeps the body off the fallthrough so MWCC emits retail's
     // branch-over-branch: `bne end` for the first disjunct, `beq body; b end`
     // for the second (same scheme as CSysWinSelect::cbRenderBefore).
-    if (CTaskGame::isFlag01Set() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
     }
     goto end;
@@ -329,7 +344,7 @@ body:
 }
 
 // ---------------------------------------------------------------------------
-// __ct__802944D8 (us-80296ad4)
+// Target 5: __ct__802944D8 (us-80296ad4)
 // Allocate the CSysWinSave singleton (0xE0 bytes) from work memory, run the
 // CProcess ctor, lay out the IUIWindow + Move region by hand, then construct
 // the embedded UnkClass_8045F564 / CSysWin / CCur18 and register as a CProcess
@@ -351,13 +366,23 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
         shim->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Declaring the slot[1] temp first makes MWCC color it r0/r8 and
-        // slot[0] r3/r9, matching the retail load/store order.
-        // Copy the null member-function pointer into both callback slots
-        // (12-byte PTMF struct assignment, one per callback slot).
-        struct PTMF12 { u32 w[3]; };
-        *(PTMF12*)&obj->ptmf0[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
-        *(PTMF12*)&obj->ptmf1[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        // Retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
+        // intermediate locals to force the retail ordering. The uintptr_t
+        // round-trip keeps MWCC from constant-propagating the array address
+        // into the loads (which would fold @l into the [0] accesses).
+        u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
+        u32 ptmfWord1 = ptmf[1];
+        u32 ptmfWord0 = ptmf[0];
+        obj->ptmf0[0] = ptmfWord0;
+        obj->ptmf0[1] = ptmfWord1;
+        u32 ptmfWord2 = ptmf[2];
+        obj->ptmf0[2] = ptmfWord2;
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
+        obj->ptmf1[0] = ptmfWord0;
+        obj->ptmf1[1] = ptmfWord1;
+        ptmfWord2 = ptmf[2];
+        obj->ptmf1[2] = ptmfWord2;
 
         obj->field_54 = 0;
         obj->field_58 = 0;
@@ -385,3 +410,18 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
     reinterpret_cast<CProcess*>(obj)->Regist(registerParent, 0);
     return lbl_eu_80664A08;
 }
+
+// absorb: retail data (generated)
+__declspec(section ".rodata") char lbl_eu_8050FD50[0x10] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x43, 0x6f, 0x6d, 0x62, 0x6f, 0x00};
+__declspec(section ".rodata") char lbl_eu_8050FD60[0xc] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00};
+__declspec(section ".rodata") char lbl_eu_8050FD6C[0x1c] = {0x43, 0x53, 0x79, 0x73, 0x57, 0x69, 0x6e, 0x53, 0x61, 0x76, 0x65, 0x00, 0x4d, 0x4e, 0x55, 0x5f, 0x73, 0x79, 0x73, 0x6d, 0x65, 0x73, 0x00, 0x6e, 0x61, 0x6d, 0x65, 0x00};
+__declspec(section ".data") char lbl_eu_80538994[0xc] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805389A0[0xc0] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80538A60[0x40] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662B08[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662B10[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668BA0[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668BA4[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668BA8[0x8] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+CSysWinSave* lbl_eu_80664A08;
+ u32 _pad_80664A0C;

@@ -388,7 +388,7 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
         virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
         virtual int CfObjectMove_UnkVirtualFunc15(); //0x200
-        virtual void CfObjectMove_UnkVirtualFunc16(); //0x204
+        virtual void CfObjectMove_UnkVirtualFunc16(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
         virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
         virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
         virtual void CfObjectMove_UnkVirtualFunc19(); //0x210
@@ -457,10 +457,10 @@ namespace cf {
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
-    void CfObject_UnkVirtualFunc57();
+    void CfObject_UnkVirtualFunc57(float value);
     void* CObjectParam_UnkVirtualFunc2();
     void* CfObject_UnkVirtualFunc14(float value);
-    void CfObject_UnkVirtualFunc15();
+    float CfObject_UnkVirtualFunc15();
     void* CfObject_UnkVirtualFunc16(float value);
     void CfObject_UnkVirtualFunc17();
     void CfObjectModel_UnkVirtualFunc18();

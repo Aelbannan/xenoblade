@@ -3131,3 +3131,15 @@ simple_test:
                 *(u32*)((u8*)self + 0x15AC + wordOff)) != 0;
     }
 }
+
+// absorb: split1 retail data sections
+// generated from retail spec (fixed pointers to zero for reloc)
+__declspec(section ".sdata") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CBattleState_cpp_sdata[0x8] __attribute__((used)) = {
+    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CBattleState_cpp_sdata2[0x18] __attribute__((used)) = {
+    0x3F, 0x80, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0xF8, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x66, 0x66, 0x66
+};
+

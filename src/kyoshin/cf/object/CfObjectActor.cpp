@@ -10,6 +10,7 @@
 // kyoshin/cf/CfMapItemManager.hpp.
 extern "C" s32 func_80174C98(void* obj, void* outFlags, u32 id);
 extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
+extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(void* self, int val);
 
 namespace cf {
     /* TODO: find out what base class the static cast is
@@ -45,7 +46,7 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 // Forward declarations for thunks (extern "C" so MWCC emits the retail
 // unmangled symbol names exactly as written - no extra __FPv suffix).
 extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
-extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
+extern "C" const char* CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
 // Retail symbol is Fv; the real ABI passes (self, f1, r4). Delegates to the
 // CActorParam_UnkVirtualFunc35 vtable slot (+0x120, takes (float, int, int,
@@ -572,11 +573,28 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
 // the move subobject's status chain when the id matches the query.
 void cf::CfObjectActor::CActorParam_UnkVirtualFunc4(void* arts) {
     (void)arts;
-    CActorParam::CActorParam_UnkVirtualFunc6(0);
+    ::CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(this, 0);
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(this)->field_0x04)->vf30();
     u32 id = *idPtr;
     if (func_80174C98(this, (int*)&id, 0x1c) != 0) {
         func_800BE12C((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
     }
 }
+
+// absorb: split1 retail data sections
+// generated from retail object bytes (reloc-zeroed)
+__declspec(section ".data") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CfObjectActor_cpp_data[0x1C] __attribute__((used)) = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+    0x00, 0x00, 0x00, 0x00
+};
+
+__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectActor_cpp_sdata2[0x44] __attribute__((used)) = {
+    0x00, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x3F, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
+    0x42, 0x48, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x3F, 0x66, 0x66, 0x66, 0x3E, 0xB3, 0x33, 0x33
+};
 

@@ -276,7 +276,7 @@ extern "C" void __ct__cf_CfGimmick(void* self);
 // the two arrays below hold per-index column-name buffers whose second byte
 // the ctor overwrites with the 1-based slot digit ('1'+i).
 extern char lbl_eu_80507B60[];
-extern char* lbl_eu_80534F00[8];   // area-table column names (2 slots x 8)
+extern char lbl_eu_80534F00[0x20];   // area-table column names (2 slots x 8)
 extern char* lbl_eu_80534F20[10];  // step-table column names (5 slots x 10)
 
 // Gimmick sub-object initializers (CfGimmick.cpp family; holder receives

@@ -238,7 +238,7 @@ public:
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;   // .sbss mode flag; bit 0x01000000 gates the config re-sync lists
 // .sbss last-synced config byte (written by func_8029D278)
-extern u8 lbl_eu_80664A40;
+extern u8 lbl_eu_80664A40[8];
 // .data option text tables (size 0x154): u16 enable table at +0x00, u16 name
 // table at +0x2C, 12-byte-row u16 value table at +0x58, u8 label table at
 // +0x16C - read by func_8029D420.
@@ -250,8 +250,10 @@ extern "C" void func_8018B0FC(void* dest, void* src);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void* lbl_eu_805396D0[];
-extern void* lbl_eu_80539638[];             // COption vtable (stored at +0x00 by __ct__COption)
+extern unsigned char lbl_eu_80539638[];
+extern "C" unsigned char lbl_eu_805396D0[];
+extern unsigned char lbl_eu_805396C0[];
+extern unsigned char lbl_eu_805396E8[];
 
 // Sub-object constructors (retail C-linkage names; C linkage keeps the
 // __-prefixed names unmangled, so call sites bind to the retail relocs).

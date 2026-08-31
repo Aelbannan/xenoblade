@@ -2,6 +2,74 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern char lbl_eu_80668FC8[];
+extern char lbl_eu_80668FC4[];
+extern char lbl_eu_80668FC0[];
+extern char lbl_eu_80668FBC[];
+extern char lbl_eu_80668FB8[];
+extern char lbl_eu_80668FB4[];
+extern char lbl_eu_80668FB0[];
+extern char lbl_eu_80668FAC[];
+extern char lbl_eu_80668FA8[];
+extern char lbl_eu_80668FA4[];
+extern char lbl_eu_80668FA0[];
+extern char lbl_eu_80668F9C[];
+extern char lbl_eu_80668F98[];
+extern char lbl_eu_80668F94[];
+extern char lbl_eu_80668F90[];
+extern char lbl_eu_80668F8C[];
+extern char lbl_eu_80668F88[];
+extern char lbl_eu_80668F84[];
+extern char lbl_eu_80668F80[];
+extern char lbl_eu_80668F7C[];
+extern char lbl_eu_80668F78[];
+extern char lbl_eu_80668F74[];
+extern char lbl_eu_80668F70[];
+extern char lbl_eu_80668F6C[];
+extern char lbl_eu_80668F68[];
+extern char lbl_eu_80668F64[];
+extern char lbl_eu_80668F60[];
+extern char lbl_eu_80668F5C[];
+extern char lbl_eu_80668F58[];
+extern char lbl_eu_80668F54[];
+extern char lbl_eu_80668F50[];
+extern char lbl_eu_80668F4C[];
+extern char lbl_eu_80668F48[];
+extern char lbl_eu_80668F44[];
+extern char lbl_eu_80668F40[];
+extern char lbl_eu_80668F38[];
+extern char lbl_eu_80668F34[];
+extern char lbl_eu_80668F30[];
+extern char lbl_eu_80668F28[];
+extern char lbl_eu_80668F20[];
+extern char lbl_eu_80668F1C[];
+extern char lbl_eu_80668F18[];
+extern char lbl_eu_80668F14[];
+extern char lbl_eu_80668F10[];
+extern char lbl_eu_80668F0C[];
+extern char lbl_eu_80668F08[];
+extern char lbl_eu_80668F04[];
+extern char lbl_eu_80668F00[];
+extern char lbl_eu_80668EFC[];
+extern char lbl_eu_80668EF8[];
+extern char lbl_eu_80668EF0[];
+extern char lbl_eu_80668EEC[];
+extern char lbl_eu_80668EE8[];
+extern char lbl_eu_80668EE4[];
+extern char lbl_eu_80668EE0[];
+extern char lbl_eu_80668EDC[];
+extern char lbl_eu_80668ED8[];
+extern char lbl_eu_80668ED4[];
+extern char lbl_eu_80668ED0[];
+extern char lbl_eu_80668ECC[];
+extern char lbl_eu_80668EC8[];
+extern char lbl_eu_8053AEA0[];
+extern char lbl_eu_8053AE90[];
+extern char lbl_eu_805135A8[];
+extern char lbl_eu_80513598[];
+extern char lbl_eu_80513588[];
+extern char lbl_eu_80513580[];
+extern char lbl_eu_80513568[];
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfHikariItemManager.hpp"
@@ -996,7 +1064,7 @@ extern "C" __declspec(noinline) void func_802B4358(CfHikariItemRecord* self, con
 }
 
 extern "C" void func_802B4460(CfHikariItemRecord* self) {
-    extern unsigned long lbl_eu_80664C24;
+    extern char lbl_eu_80664C24[];
     ++lbl_eu_80664C24;
 }
 
@@ -1177,3 +1245,79 @@ void sinit_802B46E0() {
     r3[14] = lbl_eu_80668F70;
     r3[15] = lbl_eu_80668F70;
 }
+
+// absorb: retail data (generated)
+__declspec(section ".rodata") char lbl_eu_80513568[0x18] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x48, 0x69, 0x6b, 0x61, 0x72, 0x69, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
+__declspec(section ".rodata") char lbl_eu_80513580[0x7] = {0x48, 0x49, 0x4b, 0x41, 0x52, 0x49, 0x00};
+__declspec(section ".rodata") char lbl_eu_80513588[0x10] = {0x41, 0xa8, 0x00, 0x00, 0x42, 0x20, 0x00, 0x00, 0x3d, 0x43, 0x0c, 0x31, 0x3d, 0x57, 0x94, 0x36};
+__declspec(section ".rodata") char lbl_eu_80513598[0x10] = {0x41, 0x20, 0x00, 0x00, 0x42, 0x20, 0x00, 0x00, 0x3d, 0xcc, 0xcc, 0xcd, 0x3d, 0x08, 0x88, 0x89};
+__declspec(section ".rodata") char lbl_eu_805135A8[0x10] = {0x41, 0x20, 0x00, 0x00, 0x42, 0x20, 0x00, 0x00, 0x3d, 0xcc, 0xcc, 0xcd, 0x3d, 0x08, 0x88, 0x89};
+__declspec(section ".data") char lbl_eu_8053AE90[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_8053AEA0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EC8[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668ECC[0x4] = {0xff, 0xff, 0xff, 0xff};
+__declspec(section ".sdata2") char lbl_eu_80668ED0[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668ED4[0x4] = {0x3e, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668ED8[0x4] = {0xbe, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668EDC[0x4] = {0x3f, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EE0[0x4] = {0xbf, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EE4[0x4] = {0x3e, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EE8[0x4] = {0xbe, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EEC[0x4] = {0x3c, 0x23, 0xd7, 0x0a};
+__declspec(section ".sdata2") char lbl_eu_80668EF0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EF8[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668EFC[0x4] = {0x3d, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668F00[0x4] = {0x3f, 0xc0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F04[0x4] = {0x41, 0x20, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F08[0x4] = {0x41, 0x70, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F0C[0x4] = {0x40, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F10[0x4] = {0x45, 0x1c, 0x40, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F14[0x4] = {0x45, 0x84, 0x08, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F18[0x4] = {0x3f, 0x40, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F1C[0x4] = {0x3b, 0xa3, 0xd7, 0x0a};
+__declspec(section ".sdata2") char lbl_eu_80668F20[0x4] = {0x41, 0xa0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F28[0x8] = {0x40, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F30[0x4] = {0x43, 0x61, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F34[0x4] = {0x3e, 0x4c, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668F38[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F40[0x4] = {0x3c, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668F44[0x4] = {0x3f, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F48[0x4] = {0x3f, 0x66, 0x66, 0x66};
+__declspec(section ".sdata2") char lbl_eu_80668F4C[0x4] = {0x3f, 0x33, 0x33, 0x33};
+__declspec(section ".sdata2") char lbl_eu_80668F50[0x4] = {0xbe, 0x99, 0x99, 0x9a};
+__declspec(section ".sdata2") char lbl_eu_80668F54[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F58[0x4] = {0x3a, 0x83, 0x12, 0x6f};
+__declspec(section ".sdata2") char lbl_eu_80668F5C[0x4] = {0x3b, 0x03, 0x12, 0x6f};
+__declspec(section ".sdata2") char lbl_eu_80668F60[0x4] = {0x42, 0x20, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F64[0x4] = {0x3d, 0x4c, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668F68[0x4] = {0x3e, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668F6C[0x4] = {0x3e, 0xe6, 0x66, 0x66};
+__declspec(section ".sdata2") char lbl_eu_80668F70[0x4] = {0x43, 0x7f, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F74[0x4] = {0x42, 0xcc, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F78[0x4] = {0x42, 0xe4, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F7C[0x4] = {0x43, 0x1b, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F80[0x4] = {0x43, 0x15, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F84[0x4] = {0x43, 0x1d, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F88[0x4] = {0x42, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F8C[0x4] = {0x43, 0x2a, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F90[0x4] = {0x42, 0xc8, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F94[0x4] = {0x42, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F98[0x4] = {0x43, 0x48, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668F9C[0x4] = {0x43, 0x44, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FA0[0x4] = {0x43, 0x57, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FA4[0x4] = {0x43, 0x5a, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FA8[0x4] = {0x43, 0x16, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FAC[0x4] = {0x43, 0x7a, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FB0[0x4] = {0x42, 0xc0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FB4[0x4] = {0x43, 0x3e, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FB8[0x4] = {0x3f, 0xe0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FBC[0x4] = {0x3f, 0x40, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FC0[0x4] = {0x3d, 0xcc, 0xcc, 0xcd};
+__declspec(section ".sdata2") char lbl_eu_80668FC4[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668FC8[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sbss") char lbl_eu_80664C18[0x4];
+__declspec(section ".sbss") char lbl_eu_80664C1C[0x4];
+__declspec(section ".sbss") char lbl_eu_80664C20[0x4];
+__declspec(section ".sbss") char lbl_eu_80664C24[0x4];
+__declspec(section ".bss") char lbl_eu_80577680[0xd0];
+__declspec(section ".bss") char lbl_eu_80577750[0x40];

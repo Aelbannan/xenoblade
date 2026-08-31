@@ -2,9 +2,22 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern char lbl_eu_806681C8[];
+extern char lbl_eu_806681C0[];
+extern char lbl_eu_806681BC[];
+extern char lbl_eu_806681B8[];
+extern char lbl_eu_806681B4[];
+extern char lbl_eu_806681B0[];
+extern char lbl_eu_806681A8[];
+extern char lbl_eu_806681A4[];
+extern char lbl_eu_806681A0[];
+extern char lbl_eu_80534F20[];
+extern char lbl_eu_80534F00[];
+extern char lbl_eu_80534EB8[];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
+extern char lbl_eu_80534E70[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 using namespace cf;
@@ -160,8 +173,8 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
             func_804BCC30(getScnHandle__Fv(), lod);
         }
         attachLODObject__8CTaskLODFv(lod, 0);
-        removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
-        refreshLOD__8CTaskLODFv(lod, lbl_eu_806681A4);
+        removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
+        refreshLOD__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A4);
         *word |= bit;
     }
 
@@ -173,7 +186,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     int stepInit = 1;
     self->field_188 = 0;
     self->field_18C = 0;
-    self->field_180 = lbl_eu_806681A0;
+    self->field_180 = *(f32*)lbl_eu_806681A0;
     if ((self->field_15E & 0xC0) != 0) {
         if ((self->field_15E & 0x40) != 0) {
             self->field_74 |= 0x01000000;
@@ -480,7 +493,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             continue;
         if ((flags & 0x8) != 0) {
             if ((flags & 0x4) != 0)
-                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
+                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
             else
                 clearLODEntry__8CTaskLODFv(lod);
             attachLODObject__8CTaskLODFv(lod, 0);
@@ -496,7 +509,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             }
         } else {
             if ((flags & 0x4) != 0) {
-                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
+                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
                 detachLODObject__8CTaskLODFv(lod, 1);
                 if ((flags & 0x10) != 0) {
                     addLODEntry__8CTaskLODFv(lod, 0);
@@ -576,7 +589,7 @@ refresh:
 // task alpha via func_80462E3C. Returns 1 while any work remains active.
 //
 // The s16->f32 conversion of field_18A uses the direct cast so MWCC emits
-// the 0x43300000 double-slot + fsubs magic idiom (lbl_eu_806681A8).
+// the 0x43300000 double-slot + fsubs magic idiom (*(f32*)lbl_eu_806681A8).
 int func_801F634C(cf::CfGimmickObject* self) {
     if ((self->field_74 & 0x3F) != 0) {
         int result = 0;
@@ -585,7 +598,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
         // bit 0: +0x170 expiry (spawns the busy sound via func_80209F2C).
         if ((self->field_74 & 1) != 0) {
             self->field_170 -= delta;
-            if (self->field_170 <= lbl_eu_806681A0) {
+            if (self->field_170 <= *(f32*)lbl_eu_806681A0) {
                 self->field_74 &= ~1;
             } else {
                 func_80209F2C();
@@ -600,18 +613,18 @@ int func_801F634C(cf::CfGimmickObject* self) {
         if ((self->field_74 & 2) != 0) {
             f32 v = self->field_16C - delta;
             self->field_16C = v;
-            if (v <= lbl_eu_806681A0) {
+            if (v <= *(f32*)lbl_eu_806681A0) {
                 self->field_74 &= ~2;
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0)
                         refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                   lbl_eu_806681A4);
+                                                   *(f32*)lbl_eu_806681A4);
                 }
                 result = 1;
             } else {
-                if (v / (f32)self->field_18A < lbl_eu_806681A4) {
+                if (v / (f32)self->field_18A < *(f32*)lbl_eu_806681A4) {
                     f32 fade =
-                        lbl_eu_806681A4 - v / (f32)self->field_18A;
+                        *(f32*)lbl_eu_806681A4 - v / (f32)self->field_18A;
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
                             refreshLOD__8CTaskLODFv(self->field_70[i], fade);
@@ -620,7 +633,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
                             refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                       lbl_eu_806681A0);
+                                                       *(f32*)lbl_eu_806681A0);
                     }
                 }
                 result = 1;
@@ -633,13 +646,13 @@ int func_801F634C(cf::CfGimmickObject* self) {
             if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
                 f32 v = self->field_16C - delta;
                 self->field_16C = v;
-                if (v <= lbl_eu_806681A0) {
+                if (v <= *(f32*)lbl_eu_806681A0) {
                     self->field_74 &= ~4;
                     func_801F61B0(self, 0);
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
                             refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                       lbl_eu_806681A4);
+                                                       *(f32*)lbl_eu_806681A4);
                     }
                 } else {
                     f32 fade = v / (f32)self->field_18A;
@@ -659,10 +672,10 @@ int func_801F634C(cf::CfGimmickObject* self) {
         if ((self->field_74 & 8) != 0) {
             f32 v = self->field_174 - delta;
             self->field_174 = v;
-            if (v <= lbl_eu_806681A0) {
+            if (v <= *(f32*)lbl_eu_806681A0) {
                 self->field_74 &= ~8;
             } else {
-                f32 step = (v / lbl_eu_806681B4) * delta;
+                f32 step = (v / *(f32*)lbl_eu_806681B4) * delta;
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0) {
                         f32 cur = getLODDistance__8CTaskLODFv(self->field_70[i]);
@@ -682,14 +695,14 @@ int func_801F634C(cf::CfGimmickObject* self) {
         if ((self->field_74 & 0x10) != 0) {
             f32 v = self->field_178 - delta;
             self->field_178 = v;
-            if (v <= lbl_eu_806681A0) {
+            if (v <= *(f32*)lbl_eu_806681A0) {
                 u32 flags = self->field_74;
                 self->field_74 = flags & ~0x10;
                 if ((flags & 0x40000000) != 0) {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0) {
                             removeLODEntry__8CTaskLODFv(self->field_70[i],
-                                                       lbl_eu_806681A0);
+                                                       *(f32*)lbl_eu_806681A0);
                             attachLODObject__8CTaskLODFv(self->field_70[i], 0);
                         }
                     }
@@ -705,7 +718,7 @@ int func_801F634C(cf::CfGimmickObject* self) {
             func_8020A010();
             f32 v = self->field_17C - delta;
             self->field_17C = v;
-            if (v <= lbl_eu_806681A0)
+            if (v <= *(f32*)lbl_eu_806681A0)
                 self->field_74 &= ~0x20;
             result = 1;
             self->field_74 &= ~0x20000;
@@ -750,7 +763,7 @@ void func_801F6780(cf::CfGimmickObject* self) {
         func_80208EE4(self);
     } else if ((step->field_08 & 0x20) != 0) {
         if (self->field_78 != 0)
-            self->field_180 = lbl_eu_806681B8;
+            self->field_180 = *(f32*)lbl_eu_806681B8;
     }
     if ((step->field_08 & 1) != 0) {
         self->field_74 |= 0x80000;
@@ -801,13 +814,13 @@ void func_801F6780(cf::CfGimmickObject* self) {
         if (func_801BFABC(1) != 0) {
             if ((step->field_0E & 1) != 0) {
                 self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                    1, step->field_0A, 0, 0, lbl_eu_806681A4);
+                    1, step->field_0A, 0, 0, *(f32*)lbl_eu_806681A4);
             } else if ((step->field_0E & 0x20) != 0) {
                 self->field_80 =
-                    func_80208C60(step->field_0A, self->field_04, lbl_eu_806681BC);
+                    func_80208C60(step->field_0A, self->field_04, *(f32*)lbl_eu_806681BC);
             } else if ((step->field_0E & 0x40) != 0) {
                 self->field_80 =
-                    func_80208C60(step->field_0A, self->field_04, lbl_eu_806681B4);
+                    func_80208C60(step->field_0A, self->field_04, *(f32*)lbl_eu_806681B4);
             } else {
                 self->field_80 =
                     func_80208C48(step->field_0A, self->field_04);
@@ -853,7 +866,7 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
         u8 flags = frame->field_05;
         if ((flags & 0x4) != 0) {
             if ((flags & 0x2) != 0)
-                removeLODEntry__8CTaskLODFv(lod, lbl_eu_806681A0);
+                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
             else
                 clearLODEntry__8CTaskLODFv(lod);
             attachLODObject__8CTaskLODFv(lod, 0);
@@ -869,9 +882,9 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
             attachLODObject__8CTaskLODFv(lod, 0);
             if ((flags & 0x20) != 0) {
                 // Rebuild the LOD2 range across both registered LOD tasks.
-                constv = lbl_eu_806681A4;
+                constv = *(f32*)lbl_eu_806681A4;
                 self->field_74 |= 0x8;
-                self->field_174 = lbl_eu_806681B4;
+                self->field_174 = *(f32*)lbl_eu_806681B4;
                 int i;
                 u8* slot;
                 for (i = 0; i < 2; i++) {
@@ -941,12 +954,12 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 2:
         self->field_18A = 60;
@@ -955,12 +968,12 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 3:
         self->field_18A = 90;
@@ -969,12 +982,12 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 4:
         // Peer-busy gate written as a materialized 0/1 flag: retail builds
@@ -990,8 +1003,8 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
                         ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1011,8 +1024,8 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
                         ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1032,8 +1045,8 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
                         ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
+                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1111,7 +1124,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
         CfGimmickList* list = func_800B6BC8();
         CfGimmickListNode* node = list->head->next;
         int remaining = self->field_196;
-        f32 zero = lbl_eu_806681A0;
+        f32 zero = *(f32*)lbl_eu_806681A0;
         while (node != list->head) {
             // List objects point 0x3E9C into the player base; the null case
             // keeps the raw node object and dereferences the offset anyway.
@@ -1196,8 +1209,8 @@ done_reset:
 
 // func_801F75CC - countdown/activation step. While flag 0x4000 is set,
 // decrement +0x170 by the scene allocator's frame delta and keep returning 1
-// until it drops to lbl_eu_806681A0 (then clear 0x4000 and return 0).
-// Otherwise (re)start the countdown from lbl_eu_806681B8, play the entry
+// until it drops to *(f32*)lbl_eu_806681A0 (then clear 0x4000 and return 0).
+// Otherwise (re)start the countdown from *(f32*)lbl_eu_806681B8, play the entry
 // sound for the old handle, refresh the handle via func_80208C48 and return 1.
 int func_801F75CC(cf::CfGimmickObject* self) {
     if (self->field_158 != 0) {
@@ -1205,7 +1218,7 @@ int func_801F75CC(cf::CfGimmickObject* self) {
         u32 flags = self->field_74;
         if ((flags & 0x4000) != 0) {
             self->field_170 -= func_80496288(lbl_eu_80663E14);
-            if (self->field_170 > lbl_eu_806681A0)
+            if (self->field_170 > *(f32*)lbl_eu_806681A0)
                 return 1;
             self->field_74 &= ~0x4000;
         } else {
@@ -1213,7 +1226,7 @@ int func_801F75CC(cf::CfGimmickObject* self) {
             // group ahead of the independent timer store.
             u16 v = *(volatile u16*)&self->field_80;
             u32 f = *(volatile u32*)&self->field_74;
-            f32 c = lbl_eu_806681B8;
+            f32 c = *(f32*)lbl_eu_806681B8;
             self->field_74 = f | 0x4000;
             self->field_170 = c;
             if (v != 0xffff)
@@ -1237,12 +1250,12 @@ int func_801F75CC(cf::CfGimmickObject* self) {
 void func_801F76A8(cf::CfGimmickObject* self) {
     if ((self->field_74 & 0x40000) != 0 && (lbl_eu_806646BC & 0x8) == 0) {
         func_8020A6B0(&self->field_7C, (const CfGimmickVec3*)self->field_04,
-                      self->field_6A, lbl_eu_806681C8, 0, 0);
+                      self->field_6A, *(f32*)lbl_eu_806681C8, 0, 0);
         self->field_74 &= ~0x40000;
     } else {
         func_8020A434(&self->field_7C);
     }
-    if (self->field_180 != lbl_eu_806681A0) {
+    if (self->field_180 != *(f32*)lbl_eu_806681A0) {
         if (self->field_78 != 0) {
             // Bare-global constant uses keep MWCC's CSE pinning the limit
             // load to f0 (retail shape).
@@ -1251,19 +1264,19 @@ void func_801F76A8(cf::CfGimmickObject* self) {
             // load to f0 (retail shape).
             f32 v = self->field_180 - delta;
             self->field_180 = v;
-            if (v <= lbl_eu_806681A0) {
-                self->field_180 = lbl_eu_806681A0;
+            if (v <= *(f32*)lbl_eu_806681A0) {
+                self->field_180 = *(f32*)lbl_eu_806681A0;
                 func_80208EE4(self);
             } else {
                 f32 vec[4];
-                vec[3] = v / lbl_eu_806681B8;
-                vec[0] = lbl_eu_806681A4;
-                vec[1] = lbl_eu_806681A4;
-                vec[2] = lbl_eu_806681A4;
+                vec[3] = v / *(f32*)lbl_eu_806681B8;
+                vec[0] = *(f32*)lbl_eu_806681A4;
+                vec[1] = *(f32*)lbl_eu_806681A4;
+                vec[2] = *(f32*)lbl_eu_806681A4;
                 setChildV40__(self->field_78, vec);
             }
         } else {
-            self->field_180 = lbl_eu_806681A0;
+            self->field_180 = *(f32*)lbl_eu_806681A0;
         }
     }
     if ((self->field_74 & 0x100000) != 0) {
@@ -1274,16 +1287,16 @@ void func_801F76A8(cf::CfGimmickObject* self) {
                 self->field_74 &= ~0x400000;
                 if (lbl_eu_806646C0 == 0)
                     lbl_eu_806646C0 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                        1, 0xcb, 0, 0, lbl_eu_806681A4);
+                        1, 0xcb, 0, 0, *(f32*)lbl_eu_806681A4);
             } else if (self->field_192 == 3) {
                 self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                    1, self->field_190, 0, 0, lbl_eu_806681A4);
+                    1, self->field_190, 0, 0, *(f32*)lbl_eu_806681A4);
             } else if (self->field_192 == 2) {
                 self->field_80 =
-                    func_80208C60(self->field_190, self->field_04, lbl_eu_806681BC);
+                    func_80208C60(self->field_190, self->field_04, *(f32*)lbl_eu_806681BC);
             } else if (self->field_192 == 1) {
                 self->field_80 =
-                    func_80208C60(self->field_190, self->field_04, lbl_eu_806681B4);
+                    func_80208C60(self->field_190, self->field_04, *(f32*)lbl_eu_806681B4);
             } else {
                 self->field_80 = func_80208C48(self->field_190, self->field_04);
             }
@@ -1300,9 +1313,9 @@ void func_801F76A8(cf::CfGimmickObject* self) {
             CfGimmickSoundSlot* slot = func_801BFAE4(self->field_80);
             if (slot != 0) {
                 if ((lbl_eu_806646BC & 0x8) != 0) {
-                    slot->field_1C = lbl_eu_806681A0;
+                    slot->field_1C = *(f32*)lbl_eu_806681A0;
                 } else {
-                    slot->field_1C = lbl_eu_806681A4;
+                    slot->field_1C = *(f32*)lbl_eu_806681A4;
                     self->field_74 &= ~0x800000;
                 }
             } else {
@@ -1778,7 +1791,7 @@ int func_801F8658(cf::CfGimmickObject* self) {
         // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
         // Local + split flag-update mirrors retail's interleaved schedule.
         // Residual: the pooled magic double is anonymous (@sda21) in decomp
-        // vs retail's lbl_eu_806681C0 - needs a pool_patterns rename rule.
+        // vs retail's *(f32*)lbl_eu_806681C0 - needs a pool_patterns rename rule.
         u16 seed = self->field_15A;
         if (seed != 0) {
             u32 flags = self->field_74;
@@ -1829,7 +1842,7 @@ int func_801F879C(cf::CfGimmickObject* self) {
             // Named locals mirror func_801F75CC's matched countdown.
             f32 delta = func_80496288(lbl_eu_80663E14);
             f32 cur = self->field_17C - delta;
-            f32 limit = lbl_eu_806681A0;
+            f32 limit = *(f32*)lbl_eu_806681A0;
             self->field_17C = cur;
             if (cur > limit) {
                 if ((self->field_74 & 0x200) != 0 &&
@@ -1848,7 +1861,7 @@ int func_801F879C(cf::CfGimmickObject* self) {
             conv.w[1] = self->field_15C;
             conv.w[0] = 0x43300000;
             self->field_74 |= 0x80;
-            self->field_17C = (f32)(conv.d - lbl_eu_806681C0);
+            self->field_17C = (f32)(conv.d - *(f32*)lbl_eu_806681C0);
             if ((self->field_74 & 0x200) != 0 &&
                 (self->field_74 & 0x08000000) == 0)
                 func_8020A0CC();
@@ -2004,3 +2017,19 @@ int func_801F8BB8(cf::CfGimmickObject* self) {
     self->field_74 &= 0x7FFFFBFF;
     return 0;
 }
+
+// absorb: retail data (generated)
+__declspec(section ".data") char lbl_eu_80534E70[0x48] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80534EB8[0x48] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80534F00[0x20] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80534F20[0x28] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char jumptable_eu_80534F48[0x28] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681A0[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681A4[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681A8[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681B0[0x4] = {0x41, 0xa0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681B4[0x4] = {0x42, 0xf0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681B8[0x4] = {0x41, 0xf0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681BC[0x4] = {0x43, 0x70, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681C0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806681C8[0x8] = {0x40, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

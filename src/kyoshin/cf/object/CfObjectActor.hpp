@@ -321,6 +321,8 @@ namespace cf {
         virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
         virtual void _d028(); virtual void _d02C();
         virtual u32* vf30();  // vtable +0x30
+        virtual void _d034();
+        virtual void _v038(); // vtable +0x38
     };
 
     // u16/u32/s16 -> float conversion helper (CfMapEffectManager.hpp

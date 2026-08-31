@@ -895,7 +895,8 @@ site (`u32 func_802B7D00` -> `func_802B7CBC`). Talk's +0x20 call is
 `func_802B7CE4`, not a Talk-only `vf20` (that would land at +0x24).
 
 Subagents: copy the **Fake vtables -> real classes** flow above, using this
-CHelp tree as the template. Hexdiff `--brief` per step.
+CHelp tree as the template. Hexdiff `--brief` per step. **NEVER TOUCH GIT** —
+no git commands; leave the tree dirty for the human/harness.
 
 **Owning-class / hot headers are in scope.** If retail puts a slot on
 `CfObjectEne` / `CActorParam` / `CfObjectPc` / `CfObject` / etc., edit that

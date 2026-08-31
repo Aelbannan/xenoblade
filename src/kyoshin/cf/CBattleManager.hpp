@@ -452,21 +452,7 @@ struct D7D24_Obj {
     u32* field_B8;          // +0xB8 entry block
 };
 
-// Fake single-inheritance interface for the battle manager's vtable slot
-// 0x28 (func_800885F0, called with a u32 mask by func_800F3C6C). Under the
-// kyoshin -RTTI layout a declared virtual #k lands at byte offset (k+2)*4,
-// so the 9th declared virtual sits at 0x28. Never instantiated.
-struct BMVtIf828 {
-    virtual void v000() = 0;
-    virtual void v001() = 0;
-    virtual void v002() = 0;
-    virtual void v003() = 0;
-    virtual void v004() = 0;
-    virtual void v005() = 0;
-    virtual void v006() = 0;
-    virtual void v007() = 0;
-    virtual s32 v008(u32 mask) = 0;   // slot 0x28
-};
+// BMVtIf828 lives in CBattleManagerApi.hpp (single shared copy).
 
 // Fake single-inheritance interface for the battle-actor vtable slots
 // dispatched by func_800F3970: 0x2F8 (#188), 0x2FC (#189) and 0x304 (#191)

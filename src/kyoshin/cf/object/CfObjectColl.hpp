@@ -131,7 +131,7 @@ public:
     virtual void CfObject_UnkVirtualFunc56();       // +0x130
     virtual void CfObject_UnkVirtualFunc57();       // +0x134
     virtual void CfObject_UnkVirtualFunc58();       // +0x138
-    virtual void CfObject_UnkVirtualFunc59();       // +0x13C
+    virtual void CfObject_UnkVirtualFunc59(float value); // +0x13C
     virtual float CfObject_UnkVirtualFunc60();      // +0x140
     virtual void CfObject_UnkVirtualFunc61();       // +0x144
     virtual int CfObject_UnkVirtualFunc62();        // +0x148
@@ -168,7 +168,7 @@ public:
     virtual int isCollEnabled();       // +0x160
 };
 
-class CfObjectColl : public CfObjectPoint {
+class __declspec(novtable) CfObjectColl : public CfObjectPoint {
 public:
     ~CfObjectColl();                   // +0x54 most-derived destructor
     int resetCollTimer();               // +0x58

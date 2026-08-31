@@ -33,13 +33,6 @@ kyoshin/main.cpp:
 	.data       start:0x80524A80 end:0x80524B98
 	.sdata2     start:0x80665AB8 end:0x80665B80
 
-split1.s:
-	.rodata     start:0x804FA410 end:0x805139D8
-	.data       start:0x80524B98 end:0x8053B928
-	.bss        start:0x805704C8 end:0x80577790
-	.sdata      start:0x806618B0 end:0x80662F30
-	.sbss       start:0x80663D10 end:0x80664C40
-	.sdata2     start:0x80665B80 end:0x80669020
 
 PowerPC_EABI_Support/src/Runtime/New.cp:
 	.rodata	start:0x805139d8 end:0x805139e7
@@ -50,57 +43,96 @@ kyoshin/plugin/pluginDeb.cpp:
 	extabindex  start:0x800212BC end:0x800212D4
 	.text       start:0x8003A414 end:0x8003A498
 
+	.data        start:0x80524b98 end:0x80524bb8
+	.rodata        start:0x804fa410 end:0x804fa438
+	.sdata2        start:0x80665b80 end:0x80665b88
 kyoshin/plugin/pluginWait.cpp:
 	extab       start:0x800067E4 end:0x800067EC
 	extabindex  start:0x800212D4 end:0x800212E0
 	.text       start:0x8003A498 end:0x8003A58C
 
+	.data        start:0x80524bb8 end:0x80524bc8
+	.rodata        start:0x804fa438 end:0x804fa440
+	.sdata2        start:0x80665b88 end:0x80665b90
 kyoshin/plugin/ocBuiltin.cpp:
 	extab       start:0x800067EC end:0x80006804
 	extabindex  start:0x800212E0 end:0x80021304
 	.text       start:0x8003A58C end:0x8003A6F0
 
+	.data        start:0x80524bc8 end:0x80524c08
+	.rodata        start:0x804fa440 end:0x804fa470
+	.sdata2        start:0x80665b90 end:0x80665b98
 kyoshin/plugin/ocThread.cpp:
 	extab       start:0x80006804 end:0x8000683C
 	extabindex  start:0x80021304 end:0x80021358
 	.text       start:0x8003A6F0 end:0x8003A91C
 	.ctors      start:0x804F9FC8 end:0x804F9FCC
 
+	.bss        start:0x805704c8 end:0x805705d0
+	.data        start:0x80524c08 end:0x80524c70
+	.sdata2        start:0x80665b98 end:0x80665bd0
 kyoshin/plugin/ocMsg.cpp:
 	extab       start:0x8000683C end:0x800068B4
 	extabindex  start:0x80021358 end:0x8002140C
 	.text       start:0x8003A91C end:0x8003AE14
 
+	.data        start:0x80524c70 end:0x80524d90
+	.sdata2        start:0x80665bd0 end:0x80665c20
 kyoshin/plugin/ocBdat.cpp:
 	extab       start:0x800068B4 end:0x80006944
 	extabindex  start:0x8002140C end:0x800214E4
 	.text       start:0x8003AE14 end:0x8003C18C
 
+	.bss        start:0x805705d0 end:0x805708d0
+	.data        start:0x80524d90 end:0x80524e50
+	.rodata        start:0x804fa470 end:0x804fa4c0
+	.sbss        start:0x80663d10 end:0x80663d18
+	.sdata2        start:0x80665c20 end:0x80665c30
 kyoshin/plugin/ocUnit.cpp:
 	extab       start:0x80006944 end:0x80006BEC
 	extabindex  start:0x800214E4 end:0x800218E0
 	.text       start:0x8003C18C end:0x800406C0
 
+	.data        start:0x80524e50 end:0x80525498
+	.rodata        start:0x804fa4c0 end:0x804fa7e8
+	.sdata        start:0x806618b0 end:0x80661910
+	.sdata2        start:0x80665c30 end:0x80665d6c
 kyoshin/CTaskGame.cpp:
 	extab       start:0x80006BEC end:0x80006E78
 	extabindex  start:0x800218E0 end:0x80021C1C
 	.text       start:0x800406C0 end:0x80044704
 
+	.data        start:0x80525498 end:0x80525a00
+	.rodata        start:0x804fa7e8 end:0x804fa920
+	.sbss        start:0x80663d18 end:0x80663d40
+	.sdata        start:0x80661910 end:0x80661940
+	.sdata2        start:0x80665d6c end:0x80665d94
 kyoshin/cf/CTaskGameCf.cpp:
 	extab       start:0x80006E78 end:0x80006ED8
 	extabindex  start:0x80021C1C end:0x80021CAC
 	.text       start:0x80044704 end:0x80045058
 
+	.data        start:0x80525a00 end:0x80525be0
+	.rodata        start:0x804fa920 end:0x804fa948
+	.sdata        start:0x80661940 end:0x80661970
 kyoshin/CTaskGameEff.cpp:
 	extab       start:0x80006ED8 end:0x80006FA8
 	extabindex  start:0x80021CAC end:0x80021D90
 	.text       start:0x80045058 end:0x80045B00
 
+	.data        start:0x80525be0 end:0x80525cf0
+	.rodata        start:0x804fa948 end:0x804fa9d0
+	.sbss        start:0x80663d40 end:0x80663d48
+	.sdata        start:0x80661970 end:0x806619a0
+	.sdata2        start:0x80665d94 end:0x80665d98
 kyoshin/plugin/ocCfp.cpp:
 	extab       start:0x80006FA8 end:0x80006FE8
 	extabindex  start:0x80021D90 end:0x80021DF0
 	.text       start:0x80045B00 end:0x80045DB4
 
+	.data        start:0x80525cf0 end:0x80525d68
+	.rodata        start:0x804fa9d0 end:0x804fa9f0
+	.sdata2        start:0x80665d98 end:0x80665db8
 kyoshin/plugin/pluginMain.cpp:
 	extab       start:0x80006FE8 end:0x80006FF0
 	extabindex  start:0x80021DF0 end:0x80021DFC
@@ -111,100 +143,169 @@ kyoshin/plugin/pluginUi.cpp:
 	extabindex  start:0x80021DFC end:0x80021FC4
 	.text       start:0x80045E24 end:0x80046EC8
 
+	.data        start:0x80525d68 end:0x80525e98
+	.rodata        start:0x804fa9f0 end:0x804fac20
+	.sdata2        start:0x80665db8 end:0x80665df8
 kyoshin/plugin/pluginEve.cpp:
 	extab       start:0x80007130 end:0x800071C0
 	extabindex  start:0x80021FC4 end:0x8002209C
 	.text       start:0x80046EC8 end:0x8004785C
 
+	.data        start:0x80525e98 end:0x80525f98
+	.rodata        start:0x804fac20 end:0x804facf8
+	.sdata2        start:0x80665df8 end:0x80665e38
 kyoshin/plugin/pluginCfs.cpp:
 	extab       start:0x800071C0 end:0x800073C8
 	extabindex  start:0x8002209C end:0x800223A8
 	.text       start:0x8004785C end:0x8004B664
 
+	.data        start:0x80525f98 end:0x805261b8
+	.rodata        start:0x804facf8 end:0x804fb050
+	.sdata2        start:0x80665e38 end:0x80665e90
 kyoshin/plugin/pluginMath.cpp:
 	extab       start:0x800073C8 end:0x800073D0
 	extabindex  start:0x800223A8 end:0x800223B4
 	.text       start:0x8004B664 end:0x8004B700
 
+	.data        start:0x805261b8 end:0x805261c8
+	.rodata        start:0x804fb050 end:0x804fb058
+	.sdata2        start:0x80665e90 end:0x80665e9c
 kyoshin/action/CActParamAnim.cpp:
 	extab       start:0x800073D0 end:0x8000761C
 	extabindex  start:0x800223B4 end:0x80022708
 	.text       start:0x8004B700 end:0x80054044
 	.ctors      start:0x804F9FCC end:0x804F9FD0
 
+	.data        start:0x805261c8 end:0x80526338
+	.rodata        start:0x804fb058 end:0x804fb078
+	.sbss        start:0x80663d48 end:0x80663d58
+	.sdata        start:0x806619a0 end:0x806619b8
+	.sdata2        start:0x80665e9c end:0x80666038
 kyoshin/action/CActParamData.cpp:
 	extab       start:0x8000761C end:0x8000773C
 	extabindex  start:0x80022708 end:0x800228B8
 	.text       start:0x80054044 end:0x80058A7C
 
+	.data        start:0x80526338 end:0x80526348
+	.rodata        start:0x804fb078 end:0x804fb088
+	.sdata        start:0x806619b8 end:0x806619c0
 kyoshin/cf/CMcaFile.cpp:
 	extab       start:0x8000773C end:0x8000774C
 	extabindex  start:0x800228B8 end:0x800228D0
 	.text       start:0x80058A7C end:0x80058BE4
 
+	.data        start:0x80526348 end:0x80526354
+	.rodata        start:0x804fb088 end:0x804fb098
+	.sdata        start:0x806619c0 end:0x806619c8
 kyoshin/cf/CTaskEnvironment.cpp:
 	extab       start:0x8000774C end:0x800077CC
 	extabindex  start:0x800228D0 end:0x80022990
 	.text       start:0x80058BE4 end:0x8005A520
 	.ctors      start:0x804F9FD0 end:0x804F9FD4
 
+	.data        start:0x80526354 end:0x80526418
+	.rodata        start:0x804fb098 end:0x804fb0c8
+	.sbss        start:0x80663d58 end:0x80663d60
+	.sdata        start:0x806619c8 end:0x806619d8
 kyoshin/CTimeLightGrp.cpp:
 	extab       start:0x800077CC end:0x80007824
 	extabindex  start:0x80022990 end:0x800229E4
 	.text       start:0x8005A520 end:0x8005AA64
 
+	.data        start:0x80526418 end:0x80526458
+	.rodata        start:0x804fb0c8 end:0x804fb128
+	.sdata        start:0x806619d8 end:0x80661a08
+	.sdata2        start:0x80666038 end:0x80666040
 kyoshin/cf/CActParamAnimGame.cpp:
 	extab       start:0x80007824 end:0x80007924
 	extabindex  start:0x800229E4 end:0x80022B28
 	.text       start:0x8005AA64 end:0x800609B8
 
+	.data        start:0x80526458 end:0x80526560
+	.sbss        start:0x80663d60 end:0x80663d78
+	.sdata2        start:0x80666040 end:0x80666168
 kyoshin/plugin/pluginCam.cpp:
 	extab       start:0x80007924 end:0x800079C4
 	extabindex  start:0x80022B28 end:0x80022C18
 	.text       start:0x800609B8 end:0x80061BF4
 
+	.data        start:0x80526560 end:0x80526608
+	.rodata        start:0x804fb128 end:0x804fb1a8
+	.sdata2        start:0x80666168 end:0x806661e0
 kyoshin/cf/CTaskGameEffAfter.cpp:
 	extab       start:0x800079C4 end:0x800079EC
 	extabindex  start:0x80022C18 end:0x80022C54
 	.text       start:0x80061BF4 end:0x80061DE0
 
+	.data        start:0x80526608 end:0x80526690
+	.rodata        start:0x804fb1a8 end:0x804fb1d8
+	.sdata        start:0x80661a08 end:0x80661a20
 kyoshin/plugin/pluginPad.cpp:
 	extab       start:0x800079EC end:0x800079FC
 	extabindex  start:0x80022C54 end:0x80022C6C
 	.text       start:0x80061DE0 end:0x80061F70
 
+	.data        start:0x80526690 end:0x805266a8
+	.rodata        start:0x804fb1d8 end:0x804fb1e0
+	.sdata2        start:0x806661e0 end:0x806661f0
 kyoshin/cf/CfRes.cpp:
 	extab       start:0x800079FC end:0x80007D48
 	extabindex  start:0x80022C6C end:0x800230E0
 	.text       start:0x80061F70 end:0x800668A8
 
+	.data        start:0x805266a8 end:0x805268c8
+	.rodata        start:0x804fb1e0 end:0x804fb380
+	.sbss        start:0x80663d78 end:0x80663d88
+	.sdata        start:0x80661a20 end:0x80661ac0
+	.sdata2        start:0x806661f0 end:0x80666200
 kyoshin/cf/IResInfo.cpp:
 	extab       start:0x80007D48 end:0x80007E8C
 	extabindex  start:0x800230E0 end:0x800232A8
 	.text       start:0x800668A8 end:0x80069430
 
+	.data        start:0x805268c8 end:0x80526b30
+	.rodata        start:0x804fb380 end:0x804fb388
+	.sdata2        start:0x80666200 end:0x80666210
 kyoshin/cf/CfScript.cpp:
 	extab       start:0x80007E8C end:0x80007F88
 	extabindex  start:0x800232A8 end:0x800233F8
 	.text       start:0x80069430 end:0x8006A124
 	.ctors      start:0x804F9FD4 end:0x804F9FD8
 
+	.bss        start:0x805708d0 end:0x80570a2c
+	.data        start:0x80526b30 end:0x80526e80
+	.rodata        start:0x804fb388 end:0x804fb3d8
+	.sbss        start:0x80663d88 end:0x80663d90
+	.sdata        start:0x80661ac0 end:0x80661ad8
 kyoshin/cf/CfTaskMain.cpp:
 	extab       start:0x80007F88 end:0x80007FC4
 	extabindex  start:0x800233F8 end:0x80023434
 	.text       start:0x8006A124 end:0x8006A360
 
+	.data        start:0x80526e80 end:0x80526f98
+	.rodata        start:0x804fb3d8 end:0x804fb400
+	.sdata        start:0x80661ad8 end:0x80661ae8
 kyoshin/cf/CfTFile.cpp:
 	extab       start:0x80007FC4 end:0x8000806C
 	extabindex  start:0x80023434 end:0x80023530
 	.text       start:0x8006A360 end:0x8006B284
 	.ctors      start:0x804F9FD8 end:0x804F9FDC
 
+	.data        start:0x80526f98 end:0x80527048
+	.rodata        start:0x804fb400 end:0x804fb470
+	.sbss        start:0x80663d90 end:0x80663db0
+	.sdata        start:0x80661ae8 end:0x80661b00
+	.sdata2        start:0x80666210 end:0x80666268
 kyoshin/cf/CfCamEvent.cpp:
 	extab       start:0x8000806C end:0x800080E8
 	extabindex  start:0x80023530 end:0x800235CC
 	.text       start:0x8006B284 end:0x8006BE44
 
+	.data        start:0x80527048 end:0x80527208
+	.rodata        start:0x804fb470 end:0x804fb4d0
+	.sbss        start:0x80663db0 end:0x80663dc8
+	.sdata        start:0x80661b00 end:0x80661b28
+	.sdata2        start:0x80666268 end:0x8066629c
 kyoshin/cf/CfCamDirectionIntf.cpp:
 	extab       start:0x800080E8 end:0x800080F8
 	extabindex  start:0x800235CC end:0x800235E4
@@ -226,81 +327,137 @@ kyoshin/cf/CfCam.cpp:
 	.text       start:0x8006C0F8 end:0x800758E8
 	.ctors      start:0x804F9FDC end:0x804F9FE0
 
+	.bss        start:0x80570a2c end:0x80570c90
+	.data        start:0x80527208 end:0x80527260
+	.rodata        start:0x804fb4d0 end:0x804fb5d0
+	.sbss        start:0x80663dc8 end:0x80663df8
+	.sdata        start:0x80661b28 end:0x80661bb8
+	.sdata2        start:0x8066629c end:0x80666418
 kyoshin/cf/CfCamEvent_1.cpp:
 	extab       start:0x800083CC end:0x8000847C
 	extabindex  start:0x80023A04 end:0x80023B0C
 	.text       start:0x800758E8 end:0x8007CA94
 	.ctors      start:0x804F9FE0 end:0x804F9FE4
 
+	.bss        start:0x80570c90 end:0x80570ce0
+	.data        start:0x80527260 end:0x80527728
+	.rodata        start:0x804fb5d0 end:0x804fb7b0
+	.sdata        start:0x80661bb8 end:0x80661bc0
+	.sdata2        start:0x80666418 end:0x80666498
 kyoshin/cf/CfGameManager.cpp:
 	extab       start:0x8000847C end:0x80008B0C
 	extabindex  start:0x80023B0C end:0x800242D4
 	.text       start:0x8007CA94 end:0x80087F80
 	.ctors      start:0x804F9FE4 end:0x804F9FE8
 
+	.bss        start:0x80570ce0 end:0x80571810
+	.rodata        start:0x804fb7b0 end:0x804fb958
+	.sbss        start:0x80663df8 end:0x80663e80
+	.sdata        start:0x80661bc0 end:0x80661be0
+	.sdata2        start:0x80666498 end:0x80666590
 kyoshin/cf/CtrlEnemy.cpp:
 	extab       start:0x80008B0C end:0x80008BB4
 	extabindex  start:0x800242D4 end:0x8002434C
 	.text       start:0x80087F80 end:0x800892DC
 
+	.sdata2        start:0x80666590 end:0x8066659c
 kyoshin/cf/CtrlMoveBase.cpp:
 	extab       start:0x80008BB4 end:0x80008C1C
 	extabindex  start:0x8002434C end:0x800243E8
 	.text       start:0x800892DC end:0x8008AADC
 	.ctors      start:0x804F9FE8 end:0x804F9FEC
 
+	.bss        start:0x80571810 end:0x80571848
+	.data        start:0x80527728 end:0x80527830
+	.rodata        start:0x804fb958 end:0x804fb9d8
+	.sdata        start:0x80661be0 end:0x80661c30
+	.sdata2        start:0x8066659c end:0x806665c0
 kyoshin/cf/CtrlMoveEne.cpp:
 	extab       start:0x80008C1C end:0x80008D24
 	extabindex  start:0x800243E8 end:0x80024574
 	.text       start:0x8008AADC end:0x80094070
 
+	.data        start:0x80527830 end:0x80527a48
+	.rodata        start:0x804fb9d8 end:0x804fba58
+	.sdata        start:0x80661c30 end:0x80661c40
+	.sdata2        start:0x806665c0 end:0x80666698
 kyoshin/cf/CtrlNpc.cpp:
 	extab       start:0x80008D24 end:0x80008E04
 	extabindex  start:0x80024574 end:0x80024688
 	.text       start:0x80094070 end:0x80097274
 
+	.data        start:0x80527a48 end:0x80527b38
+	.rodata        start:0x804fba58 end:0x804fbbc8
+	.sdata2        start:0x80666698 end:0x80666718
 kyoshin/cf/CtrlPc.cpp:
 	extab       start:0x80008E04 end:0x80008F00
 	extabindex  start:0x80024688 end:0x8002476C
 	.text       start:0x80097274 end:0x800995BC
 
+	.data        start:0x80527b38 end:0x80527f88
+	.sdata2        start:0x80666718 end:0x80666730
 kyoshin/cf/CtrlRemote.cpp:
 	extab       start:0x80008F00 end:0x8000901C
 	extabindex  start:0x8002476C end:0x80024898
 	.text       start:0x800995BC end:0x8009DFDC
 
+	.bss        start:0x80571848 end:0x80572aa0
+	.data        start:0x80527f88 end:0x805280d8
+	.rodata        start:0x804fbbc8 end:0x804fbc28
+	.sbss        start:0x80663e80 end:0x80663e90
+	.sdata        start:0x80661c40 end:0x80661c78
+	.sdata2        start:0x80666730 end:0x80666770
 kyoshin/cf/CtrlObjectParam.cpp:
 	extab       start:0x8000901C end:0x80009184
 	extabindex  start:0x80024898 end:0x80024AB4
 	.text       start:0x8009DFDC end:0x800A43EC
 
+	.data        start:0x805280d8 end:0x805280e8
+	.rodata        start:0x804fbc28 end:0x804fbf60
+	.sdata2        start:0x80666770 end:0x806667d0
 kyoshin/code_800A3B24.cpp:
 	extab       start:0x80009184 end:0x8000925C
 	extabindex  start:0x80024AB4 end:0x80024BC8
 	.text       start:0x800A43EC end:0x800A7EC4
 
+	.bss        start:0x80572aa0 end:0x80572ac8
+	.data        start:0x805280e8 end:0x80528188
+	.sbss        start:0x80663e90 end:0x80663e98
+	.sdata2        start:0x806667d0 end:0x80666828
 kyoshin/code_800A75FC.cpp:
 	extab       start:0x8000925C end:0x800093A4
 	extabindex  start:0x80024BC8 end:0x80024DB4
 	.text       start:0x800A7EC4 end:0x800AA8D4
 	.ctors      start:0x804F9FEC end:0x804F9FF0
 
+	.bss        start:0x80572ac8 end:0x80572c80
+	.data        start:0x80528188 end:0x805283b0
+	.rodata        start:0x804fbf60 end:0x804fbf78
+	.sbss        start:0x80663e98 end:0x80663ec8
 kyoshin/code_800AA008.cpp:
 	extab       start:0x800093A4 end:0x800093C4
 	extabindex  start:0x80024DB4 end:0x80024DE4
 	.text       start:0x800AA8D4 end:0x800AB4A0
 	.ctors      start:0x804F9FF0 end:0x804F9FF4
 
+	.bss        start:0x80572c80 end:0x80572cc8
+	.data        start:0x805283b0 end:0x80528600
+	.rodata        start:0x804fbf78 end:0x804fc088
+	.sdata2        start:0x80666828 end:0x80666910
 kyoshin/cf/CfCollCircleImpl.cpp:
 	extab       start:0x800093C4 end:0x800093E4
 	extabindex  start:0x80024DE4 end:0x80024DFC
 	.text       start:0x800AB4A0 end:0x800AB5F4
 
+	.sdata2        start:0x80666910 end:0x8066692c
 kyoshin/cf/CfCollSphereImpl.cpp:
 	extab       start:0x800093E4 end:0x800093F4
 	extabindex  start:0x80024DFC end:0x80024E14
 	.text       start:0x800AB5F4 end:0x800AB6F0
 
+	.data        start:0x80528600 end:0x80528820
+	.rodata        start:0x804fc088 end:0x804fc0f8
+	.sdata        start:0x80661c78 end:0x80661ca0
 kyoshin/cf/CfCollAABBImpl.cpp:
 	extab       start:0x800093F4 end:0x8000940C
 	extabindex  start:0x80024E14 end:0x80024E20
@@ -311,11 +468,13 @@ kyoshin/cf/CfCollCylinderImpl.cpp:
 	extabindex  start:0x80024E20 end:0x80024E38
 	.text       start:0x800AB8DC end:0x800ABBB0
 
+	.sdata2        start:0x8066692c end:0x80666948
 kyoshin/cf/CfCollCapsuleImpl.cpp:
 	extab       start:0x8000941C end:0x80009424
 	extabindex  start:0x80024E38 end:0x80024E44
 	.text       start:0x800ABBB0 end:0x800ABC9C
 
+	.sdata2        start:0x80666948 end:0x80666958
 kyoshin/cf/object/CfObjectColl.cpp:
 	extab       start:0x80009424 end:0x800094E0
 	extabindex  start:0x80024E44 end:0x80024F40
@@ -326,68 +485,100 @@ kyoshin/cf/object/CfObjectEff.cpp:
 	extabindex  start:0x80024F40 end:0x80025048
 	.text       start:0x800ACEF8 end:0x800AE154
 
+	.data        start:0x80528820 end:0x80528870
+	.sdata2        start:0x80666958 end:0x80666968
 kyoshin/cf/object/CfObjectEne.cpp:
 	extab       start:0x800095E4 end:0x800096AC
 	extabindex  start:0x80025048 end:0x80025138
 	.text       start:0x800AE154 end:0x800B0F70
 
+	.sdata2        start:0x80666968 end:0x806669d8
 kyoshin/code_800B06A4.cpp:
 	extab       start:0x800096AC end:0x80009B44
 	extabindex  start:0x80025138 end:0x800257A4
 	.text       start:0x800B0F70 end:0x800BA38C
 	.ctors      start:0x804F9FF4 end:0x804F9FF8
 
+	.bss        start:0x80572cc8 end:0x805739e8
+	.data        start:0x80528870 end:0x80529100
+	.rodata        start:0x804fc0f8 end:0x804fc528
+	.sbss        start:0x80663ec8 end:0x80663ef8
+	.sdata        start:0x80661ca0 end:0x80661d08
+	.sdata2        start:0x806669d8 end:0x80666a38
 kyoshin/cf/object/CfObjectMap.cpp:
 	extab       start:0x80009B44 end:0x80009BC8
 	extabindex  start:0x800257A4 end:0x8002581C
 	.text       start:0x800BA38C end:0x800BB108
 
+	.data        start:0x80529100 end:0x80529128
+	.rodata        start:0x804fc528 end:0x804fc548
+	.sdata2        start:0x80666a38 end:0x80666a68
 kyoshin/cf/object/CfObjectModel.cpp:
 	extab       start:0x80009BC8 end:0x80009CEC
 	extabindex  start:0x8002581C end:0x800259B4
 	.text       start:0x800BB108 end:0x800BC56C
 
+	.data        start:0x80529128 end:0x80529690
+	.rodata        start:0x804fc548 end:0x804fc550
+	.sdata2        start:0x80666a68 end:0x80666a88
 kyoshin/cf/object/CfObjectMove.cpp:
 	extab       start:0x80009CEC end:0x80009F20
 	extabindex  start:0x800259B4 end:0x80025C18
 	.text       start:0x800BC56C end:0x800BFD48
 
+	.rodata        start:0x804fc550 end:0x804fc570
+	.sdata2        start:0x80666a88 end:0x80666ae0
 kyoshin/cf/object/CfObjectNpc.cpp:
 	extab       start:0x80009F20 end:0x80009F80
 	extabindex  start:0x80025C18 end:0x80025C6C
 	.text       start:0x800BFD48 end:0x800C03D4
 
+	.rodata        start:0x804fc570 end:0x804fc5b8
+	.sdata2        start:0x80666ae0 end:0x80666b08
 kyoshin/cf/object/CfObjectObj.cpp:
 	extab       start:0x80009F80 end:0x80009FD8
 	extabindex  start:0x80025C6C end:0x80025CB4
 	.text       start:0x800C03D4 end:0x800C06D8
 
+	.rodata        start:0x804fc5b8 end:0x804fc5ec
 kyoshin/cf/object/CfObjectPc.cpp:
 	extab       start:0x80009FD8 end:0x8000A0C0
 	extabindex  start:0x80025CB4 end:0x80025DD4
 	.text       start:0x800C06D8 end:0x800C1CBC
 
+	.rodata        start:0x804fc5ec end:0x804fc648
+	.sdata2        start:0x80666b08 end:0x80666b48
 kyoshin/cf/object/CfObjectPoint.cpp:
 	extab       start:0x8000A0C0 end:0x8000A114
 	extabindex  start:0x80025DD4 end:0x80025E34
 	.text       start:0x800C1CBC end:0x800C2224
 
+	.rodata        start:0x804fc648 end:0x804fc658
+	.sdata2        start:0x80666b48 end:0x80666b58
 kyoshin/cf/code_800C17DC.cpp:
 	extab       start:0x8000A114 end:0x8000A14C
 	extabindex  start:0x80025E34 end:0x80025E88
 	.text       start:0x800C2224 end:0x800C298C
 	.ctors      start:0x804F9FF8 end:0x804F9FFC
 
+	.bss        start:0x805739e8 end:0x80573a20
+	.data        start:0x80529690 end:0x8052a558
+	.sdata2        start:0x80666b58 end:0x80666b80
 kyoshin/cfsys/CfObjectImplWalker.cpp:
 	extab       start:0x8000A14C end:0x8000A2CC
 	extabindex  start:0x80025E88 end:0x80025F78
 	.text       start:0x800C298C end:0x800C63CC
 
+	.rodata        start:0x804fc658 end:0x804fc758
+	.sdata2        start:0x80666b80 end:0x80666bc8
 kyoshin/cfsys/CfObjectImplPc.cpp:
 	extab       start:0x8000A2CC end:0x8000A3DC
 	extabindex  start:0x80025F78 end:0x80026050
 	.text       start:0x800C63CC end:0x800CAF20
 
+	.data        start:0x8052a558 end:0x8052a7e8
+	.rodata        start:0x804fc758 end:0x804fc798
+	.sdata2        start:0x80666bc8 end:0x80666c08
 kyoshin/cfsys/CfObjectImplObj.cpp:
 	extab       start:0x8000A3DC end:0x8000A3FC
 	extabindex  start:0x80026050 end:0x80026080
@@ -398,227 +589,390 @@ kyoshin/cfsys/CfObjectImplNpc.cpp:
 	extabindex  start:0x80026080 end:0x800260B0
 	.text       start:0x800CB118 end:0x800CB37C
 
+	.data        start:0x8052a7e8 end:0x8052aa28
+	.rodata        start:0x804fc798 end:0x804fc7f8
+	.sdata2        start:0x80666c08 end:0x80666c60
 kyoshin/cfsys/CfObjectImplMove.cpp:
 	extab       start:0x8000A41C end:0x8000A50C
 	extabindex  start:0x800260B0 end:0x800261E8
 	.text       start:0x800CB37C end:0x800D0AB4
 
+	.data        start:0x8052aa28 end:0x8052ac98
+	.sdata2        start:0x80666c60 end:0x80666cd8
 kyoshin/cfsys/CfObjectImplEne.cpp:
 	extab       start:0x8000A50C end:0x8000A564
 	extabindex  start:0x800261E8 end:0x80026254
 	.text       start:0x800D0AB4 end:0x800D1BC4
 
+	.sdata        start:0x80661d08 end:0x80661d50
+	.sdata2        start:0x80666cd8 end:0x80666cf8
 kyoshin/cf/CtrlAct.cpp:
 	extab       start:0x8000A564 end:0x8000A664
 	extabindex  start:0x80026254 end:0x80026380
 	.text       start:0x800D1BC4 end:0x800D84EC
 	.ctors      start:0x804F9FFC end:0x804FA000
 
+	.bss        start:0x80573a20 end:0x80573a30
+	.data        start:0x8052ac98 end:0x8052b080
+	.rodata        start:0x804fc7f8 end:0x804fc828
+	.sbss        start:0x80663ef8 end:0x80663f00
+	.sdata2        start:0x80666cf8 end:0x80666dd0
 kyoshin/cf/CBattleManager.cpp:
 	extab       start:0x8000A664 end:0x8000AC20
 	extabindex  start:0x80026380 end:0x80026668
 	.text       start:0x800D84EC end:0x800F4D94
 
+	.data        start:0x8052b080 end:0x8052bd74
+	.rodata        start:0x804fc828 end:0x804fcc08
+	.sbss        start:0x80663f00 end:0x80663f08
+	.sdata        start:0x80661d50 end:0x80661d80
+	.sdata2        start:0x80666dd0 end:0x80666e90
 kyoshin/cf/code_800F42AC.cpp:
 	extab       start:0x8000AC20 end:0x8000AC48
 	extabindex  start:0x80026668 end:0x800266A4
 	.text       start:0x800F4D94 end:0x800F52B0
 
+	.sdata2        start:0x80666e90 end:0x80666eb8
 kyoshin/cf/CfObjectEnumList.cpp:
 	extab       start:0x8000AC48 end:0x8000AD54
 	extabindex  start:0x800266A4 end:0x80026818
 	.text       start:0x800F52B0 end:0x800FE25C
 
+	.bss        start:0x80573a30 end:0x80573a60
+	.data        start:0x8052bd74 end:0x8052bdd8
+	.rodata        start:0x804fcc08 end:0x804fcd30
+	.sbss        start:0x80663f08 end:0x80663f10
+	.sdata        start:0x80661d80 end:0x80661db0
+	.sdata2        start:0x80666eb8 end:0x80666ef8
 kyoshin/cf/CfObjectSelectorObj.cpp:
 	extab       start:0x8000AD54 end:0x8000ADD0
 	extabindex  start:0x80026818 end:0x80026878
 	.text       start:0x800FE25C end:0x800FF518
 	.ctors      start:0x804FA000 end:0x804FA004
 
+	.data        start:0x8052bdd8 end:0x8052bdf4
+	.sbss        start:0x80663f10 end:0x80663f18
+	.sdata        start:0x80661db0 end:0x80661db8
+	.sdata2        start:0x80666ef8 end:0x80666f18
 kyoshin/CMainMenu.cpp:
 	extab       start:0x8000ADD0 end:0x8000AF7C
 	extabindex  start:0x80026878 end:0x80026998
 	.text       start:0x800FF518 end:0x80102B08
 
+	.data        start:0x8052bdf4 end:0x8052be24
+	.rodata        start:0x804fcd30 end:0x804fd0d0
+	.sbss        start:0x80663f18 end:0x80663f20
+	.sdata        start:0x80661db8 end:0x80661dc8
+	.sdata2        start:0x80666f18 end:0x80666f28
 kyoshin/menu/CMenuArtsSelect.cpp:
 	extab       start:0x8000AF7C end:0x8000B114
 	extabindex  start:0x80026998 end:0x80026B0C
 	.text       start:0x80102B08 end:0x80109740
 
+	.data        start:0x8052be24 end:0x8052c200
+	.rodata        start:0x804fd0d0 end:0x804fd510
+	.sbss        start:0x80663f20 end:0x80663f24
+	.sdata        start:0x80661dc8 end:0x80661e10
+	.sdata2        start:0x80666f28 end:0x80666f68
 kyoshin/menu/CMenuBattleDamage.cpp:
 	extab       start:0x8000B114 end:0x8000B20C
 	extabindex  start:0x80026B0C end:0x80026BCC
 	.text       start:0x80109740 end:0x8010B880
 
+	.data        start:0x8052c200 end:0x8052c330
+	.rodata        start:0x804fd510 end:0x804fd6f4
+	.sbss        start:0x80663f24 end:0x80663f30
+	.sdata        start:0x80661e10 end:0x80661e18
+	.sdata2        start:0x80666f68 end:0x80666fa8
 kyoshin/menu/CMenuBattlePlayerState_ct.cpp:
 	extab       start:0x8000B20C end:0x8000B270
 	extabindex  start:0x80026BCC end:0x80026BD8
 	.text       start:0x8010B880 end:0x8010BE00
 
+	.data        start:0x8052c330 end:0x8052c438
+	.rodata        start:0x804fd6f4 end:0x804fd720
+	.sdata        start:0x80661e18 end:0x80661e28
 kyoshin/menu/CMenuBattlePlayerState.cpp:
 	extab       start:0x8000B270 end:0x8000B398
 	extabindex  start:0x80026BD8 end:0x80026C74
 	.text       start:0x8010BE00 end:0x8010F540
 	.ctors      start:0x804FA004 end:0x804FA008
 
+	.sbss        start:0x80663f30 end:0x80663f50
+	.sdata2        start:0x80666fa8 end:0x80666fe8
 kyoshin/menu/CMenuEnemyState.cpp:
 	extab       start:0x8000B398 end:0x8000B528
 	extabindex  start:0x80026C74 end:0x80026D94
 	.text       start:0x8010F540 end:0x801140BC
 	.ctors      start:0x804FA008 end:0x804FA00C
 
+	.bss        start:0x80573a60 end:0x80573a70
+	.data        start:0x8052c438 end:0x8052c540
+	.rodata        start:0x804fd720 end:0x804fde98
+	.sbss        start:0x80663f50 end:0x80663fa0
+	.sdata        start:0x80661e28 end:0x80661e38
+	.sdata2        start:0x80666fe8 end:0x80667078
 kyoshin/menu/CMenuFade.cpp:
 	extab       start:0x8000B528 end:0x8000B5D8
 	extabindex  start:0x80026D94 end:0x80026DE8
 	.text       start:0x801140BC end:0x8011492C
 
+	.rodata        start:0x804fde98 end:0x804fded8
+	.sbss        start:0x80663fa0 end:0x80663fa8
 kyoshin/menu/CMenuKeyAssign.cpp:
 	extab       start:0x8000B5D8 end:0x8000B6A8
 	extabindex  start:0x80026DE8 end:0x80026E6C
 	.text       start:0x8011492C end:0x80116AAC
 
+	.data        start:0x8052c540 end:0x8052c740
+	.rodata        start:0x804fded8 end:0x804fdfa8
+	.sbss        start:0x80663fa8 end:0x80663fb0
+	.sdata        start:0x80661e38 end:0x80661e48
+	.sdata2        start:0x80667078 end:0x80667088
 kyoshin/CMiniMap.cpp:
 	extab       start:0x8000B6A8 end:0x8000B938
 	extabindex  start:0x80026E6C end:0x80026F98
 	.text       start:0x80116AAC end:0x8011CF28
 	.ctors      start:0x804FA00C end:0x804FA010
 
+	.data        start:0x8052c740 end:0x8052cc10
+	.rodata        start:0x804fdfa8 end:0x804fe508
+	.sbss        start:0x80663fb0 end:0x80663fc0
+	.sdata        start:0x80661e48 end:0x80661e70
+	.sdata2        start:0x80667088 end:0x80667138
 kyoshin/menu/CMenuQuestLog.cpp:
 	extab       start:0x8000B938 end:0x8000BAF4
 	extabindex  start:0x80026F98 end:0x8002707C
 	.text       start:0x8011CF28 end:0x8011DE14
 
+	.data        start:0x8052cc10 end:0x8052cd50
+	.rodata        start:0x804fe508 end:0x804fe6f0
+	.sbss        start:0x80663fc0 end:0x80663fc8
+	.sdata        start:0x80661e70 end:0x80661e78
 kyoshin/menu/CMenuSymbolMark.cpp:
 	extab       start:0x8000BAF4 end:0x8000BC78
 	extabindex  start:0x8002707C end:0x800271A8
 	.text       start:0x8011DE14 end:0x80122C40
 
+	.data        start:0x8052cd50 end:0x8052cdf8
+	.rodata        start:0x804fe6f0 end:0x804fe710
+	.sbss        start:0x80663fc8 end:0x80663fd0
+	.sdata        start:0x80661e78 end:0x80661e88
 kyoshin/CQuestWindow.cpp:
 	extab       start:0x8000BC78 end:0x8000BE1C
 	extabindex  start:0x800271A8 end:0x80027298
 	.text       start:0x80122C40 end:0x801250C8
 
+	.data        start:0x8052cdf8 end:0x8052d278
+	.rodata        start:0x804fe710 end:0x804fef98
+	.sbss        start:0x80663fd0 end:0x80663fd8
+	.sdata        start:0x80661e88 end:0x80661ed8
+	.sdata2        start:0x80667138 end:0x80667180
 kyoshin/CSystemWindow.cpp:
 	extab       start:0x8000BE1C end:0x8000BEBC
 	extabindex  start:0x80027298 end:0x800272EC
 	.text       start:0x801250C8 end:0x8012565C
 
+	.sbss        start:0x80663fd8 end:0x80663fdc
 kyoshin/CSysWinSelect.cpp:
 	extab       start:0x8000BEBC end:0x8000BFA0
 	extabindex  start:0x800272EC end:0x80027358
 	.text       start:0x8012565C end:0x80125DEC
 
+	.data        start:0x8052d278 end:0x8052d378
+	.rodata        start:0x804fef98 end:0x804fefa8
+	.sbss        start:0x80663fdc end:0x80663fe0
+	.sdata        start:0x80661ed8 end:0x80661ee0
 kyoshin/CTagProcessor.cpp:
 	extab       start:0x8000BFA0 end:0x8000C284
 	extabindex  start:0x80027358 end:0x80027730
 	.text       start:0x80125DEC end:0x8012C710
 	.ctors      start:0x804FA010 end:0x804FA014
 
+	.data        start:0x8052d378 end:0x8052df70
+	.rodata        start:0x804fefa8 end:0x804ffc98
+	.sbss        start:0x80663fe0 end:0x80664040
+	.sdata        start:0x80661ee0 end:0x80662170
+	.sdata2        start:0x80667180 end:0x80667268
 kyoshin/CTalkWindow.cpp:
 	extab       start:0x8000C284 end:0x8000C354
 	extabindex  start:0x80027730 end:0x800277B4
 	.text       start:0x8012C710 end:0x8012EA60
 	.ctors      start:0x804FA014 end:0x804FA018
 
+	.bss        start:0x80573a70 end:0x80573b30
+	.data        start:0x8052df70 end:0x8052e0b4
+	.rodata        start:0x804ffc98 end:0x804ffe90
+	.sbss        start:0x80664040 end:0x80664048
+	.sdata        start:0x80662170 end:0x80662178
+	.sdata2        start:0x80667268 end:0x806672c8
 kyoshin/CUIBattleManager.cpp:
 	extab       start:0x8000C354 end:0x8000C460
 	extabindex  start:0x800277B4 end:0x800278D4
 	.text       start:0x8012EA60 end:0x80130A48
 
+	.data        start:0x8052e0b4 end:0x8052e294
+	.rodata        start:0x804ffe90 end:0x804fffc8
+	.sbss        start:0x80664048 end:0x80664050
+	.sdata        start:0x80662178 end:0x806621a8
 kyoshin/CUICfManager.cpp:
 	extab       start:0x8000C460 end:0x8000C7E0
 	extabindex  start:0x800278D4 end:0x80027BD4
 	.text       start:0x80130A48 end:0x80136AB0
 
+	.data        start:0x8052e294 end:0x8052e488
+	.rodata        start:0x804fffc8 end:0x80500108
+	.sbss        start:0x80664050 end:0x80664058
+	.sdata        start:0x806621a8 end:0x806621f0
+	.sdata2        start:0x806672c8 end:0x806672d8
 kyoshin/code_80135FDC.cpp:
 	extab       start:0x8000C7E0 end:0x8000CBC0
 	extabindex  start:0x80027BD4 end:0x80028024
 	.text       start:0x80136AB0 end:0x8013CA58
 
+	.bss        start:0x80573b30 end:0x80573c50
+	.data        start:0x8052e488 end:0x8052e5a0
+	.rodata        start:0x80500108 end:0x805008e0
+	.sbss        start:0x80664058 end:0x80664088
+	.sdata        start:0x806621f0 end:0x806621f8
+	.sdata2        start:0x806672d8 end:0x80667368
 kyoshin/CUIWindowManager.cpp:
 	extab       start:0x8000CBC0 end:0x8000CDF4
 	extabindex  start:0x80028024 end:0x800282DC
 	.text       start:0x8013CA58 end:0x80141E90
 	.ctors      start:0x804FA018 end:0x804FA01C
 
+	.bss        start:0x80573c50 end:0x80573d18
+	.data        start:0x8052e5a0 end:0x8052e6f0
+	.rodata        start:0x805008e0 end:0x80500f98
+	.sbss        start:0x80664088 end:0x80664090
+	.sdata        start:0x806621f8 end:0x80662228
 kyoshin/cf/CfBdat.cpp:
 	extab       start:0x8000CDF4 end:0x8000CE84
 	extabindex  start:0x800282DC end:0x800283B4
 	.text       start:0x80141E90 end:0x80142F60
 	.ctors      start:0x804FA01C end:0x804FA020
 
+	.data        start:0x8052e6f0 end:0x8052e7b0
+	.rodata        start:0x80500f98 end:0x805013b8
+	.sbss        start:0x80664090 end:0x80664128
+	.sdata        start:0x80662228 end:0x80662230
+	.sdata2        start:0x80667368 end:0x806673c8
 kyoshin/menu/CMenuUpdate.cpp:
 	extab       start:0x8000CE84 end:0x8000CF84
 	extabindex  start:0x800283B4 end:0x80028480
 	.text       start:0x80142F60 end:0x80144FAC
 
+	.data        start:0x8052e7b0 end:0x8052e8b0
+	.rodata        start:0x805013b8 end:0x80501710
+	.sdata        start:0x80662230 end:0x80662240
 kyoshin/menu/CMenuLandTelop.cpp:
 	extab       start:0x8000CF84 end:0x8000D054
 	extabindex  start:0x80028480 end:0x80028504
 	.text       start:0x80144FAC end:0x80146520
 
+	.data        start:0x8052e8b0 end:0x8052e9b0
+	.rodata        start:0x80501710 end:0x805018c0
+	.sdata        start:0x80662240 end:0x80662248
+	.sdata2        start:0x806673c8 end:0x80667400
 kyoshin/cf/object/CBattleState.cpp:
 	extab       start:0x8000D054 end:0x8000D0BC
 	extabindex  start:0x80028504 end:0x800285A0
 	.text       start:0x80146520 end:0x8014A184
 
+	.sdata        start:0x80662248 end:0x80662250
+	.sdata2        start:0x80667400 end:0x80667418
 kyoshin/menu/CMenuGetItem.cpp:
 	extab       start:0x8000D0BC end:0x8000D204
 	extabindex  start:0x800285A0 end:0x80028654
 	.text       start:0x8014A184 end:0x8014B270
 
+	.data        start:0x8052e9b0 end:0x8052eb40
+	.rodata        start:0x805018c0 end:0x80501978
+	.sdata        start:0x80662250 end:0x80662258
+	.sdata2        start:0x80667418 end:0x80667460
 kyoshin/cf/object/CAIAction.cpp:
 	extab       start:0x8000D204 end:0x8000D39C
 	extabindex  start:0x80028654 end:0x80028708
 	.text       start:0x8014B270 end:0x80154630
 
+	.data        start:0x8052eb40 end:0x8052f598
 kyoshin/cf/CArtsSet.cpp:
 	extab       start:0x8000D39C end:0x8000D3B4
 	extabindex  start:0x80028708 end:0x8002872C
 	.text       start:0x80154630 end:0x80154944
 
+	.bss        start:0x80573d18 end:0x80573e18
 kyoshin/cf/CArtsParam.cpp:
 	extab       start:0x8000D3B4 end:0x8000D41C
 	extabindex  start:0x8002872C end:0x80028798
 	.text       start:0x80154944 end:0x8015612C
 	.ctors      start:0x804FA020 end:0x804FA024
 
+	.rodata        start:0x80501978 end:0x80501a38
+	.sdata2        start:0x80667460 end:0x806674a0
 kyoshin/cf/CItem.cpp:
 	extab       start:0x8000D41C end:0x8000D684
 	extabindex  start:0x80028798 end:0x80028B34
 	.text       start:0x8015612C end:0x8015CAEC
 	.ctors      start:0x804FA024 end:0x804FA028
 
+	.bss        start:0x80573e18 end:0x80574090
+	.data        start:0x8052f598 end:0x8052fd08
+	.rodata        start:0x80501a38 end:0x80501df8
+	.sbss        start:0x80664128 end:0x80664228
+	.sdata        start:0x80662258 end:0x80662330
+	.sdata2        start:0x806674a0 end:0x80667530
 kyoshin/cf/CCharEffect.cpp:
 	extab       start:0x8000D684 end:0x8000D6EC
 	extabindex  start:0x80028B34 end:0x80028BD0
 	.text       start:0x8015CAEC end:0x8015DD8C
 
+	.data        start:0x8052fd08 end:0x8052fdb8
+	.rodata        start:0x80501df8 end:0x80501e48
+	.sbss        start:0x80664228 end:0x80664230
+	.sdata2        start:0x80667530 end:0x80667540
 kyoshin/cf/CCharEffectEne.cpp:
 	extab       start:0x8000D6EC end:0x8000D71C
 	extabindex  start:0x80028BD0 end:0x80028C18
 	.text       start:0x8015DD8C end:0x8015E188
 
+	.rodata        start:0x80501e48 end:0x80501ff0
 kyoshin/CCol6System.cpp:
 	extab       start:0x8000D71C end:0x8000DB08
 	extabindex  start:0x80028C18 end:0x80028E04
 	.text       start:0x8015E188 end:0x80165088
 
+	.data        start:0x8052fdb8 end:0x80530430
+	.rodata        start:0x80501ff0 end:0x80502768
+	.sbss        start:0x80664230 end:0x8066423c
+	.sdata        start:0x80662330 end:0x80662380
+	.sdata2        start:0x80667540 end:0x80667628
 kyoshin/CCol6Invite.cpp:
 	extab       start:0x8000DB08 end:0x8000DB18
 	extabindex  start:0x80028E04 end:0x80028E1C
 	.text       start:0x80165088 end:0x801652B8
 
+	.sbss        start:0x8066423c end:0x80664240
 kyoshin/cf/CTaskREvent.cpp:
 	extab       start:0x8000DB18 end:0x8000DD78
 	extabindex  start:0x80028E1C end:0x80028F78
 	.text       start:0x801652B8 end:0x801678C0
 
+	.data        start:0x80530430 end:0x805309b0
+	.rodata        start:0x80502768 end:0x80503020
+	.sbss        start:0x80664240 end:0x80664250
+	.sdata        start:0x80662380 end:0x80662398
+	.sdata2        start:0x80667628 end:0x80667650
 kyoshin/cf/CInfoCf.cpp:
 	extab       start:0x8000DD78 end:0x8000DE54
 	extabindex  start:0x80028F78 end:0x80029008
 	.text       start:0x801678C0 end:0x80168AAC
 
+	.data        start:0x805309b0 end:0x80530a30
+	.rodata        start:0x80503020 end:0x80503050
+	.sbss        start:0x80664250 end:0x80664260
+	.sdata        start:0x80662398 end:0x806623a8
 kyoshin/menu/CMenuItem.cpp:
 	extab       start:0x8000DE54 end:0x8000DEAC
 	extabindex  start:0x80029008 end:0x80029020
@@ -629,77 +983,138 @@ kyoshin/realtimeevt/CREvtMem.cpp:
 	extabindex  start:0x80029020 end:0x80029050
 	.text       start:0x80168DFC end:0x80169238
 
+	.sbss        start:0x80664260 end:0x80664268
+	.sdata2        start:0x80667650 end:0x80667658
 kyoshin/cf/CTaskREvtSequence.cpp:
 	extab       start:0x8000DECC end:0x8000E0C0
 	extabindex  start:0x80029050 end:0x80029248
 	.text       start:0x80169238 end:0x8016DB4C
 
+	.data        start:0x80530a30 end:0x80530f20
+	.rodata        start:0x80503050 end:0x80503100
+	.sbss        start:0x80664268 end:0x80664270
+	.sdata        start:0x806623a8 end:0x806623d0
+	.sdata2        start:0x80667658 end:0x80667690
 kyoshin/cf/CfResObjImpl.cpp:
 	extab       start:0x8000E0C0 end:0x8000E0F0
 	extabindex  start:0x80029248 end:0x80029290
 	.text       start:0x8016DB4C end:0x8016E11C
 
+	.data        start:0x80530f20 end:0x80530fc0
+	.rodata        start:0x80503100 end:0x80503128
+	.sbss        start:0x80664270 end:0x80664278
+	.sdata        start:0x806623d0 end:0x806623e0
+	.sdata2        start:0x80667690 end:0x80667698
 kyoshin/cf/CfResReloadImpl.cpp:
 	extab       start:0x8000E0F0 end:0x8000E1D0
 	extabindex  start:0x80029290 end:0x800293E0
 	.text       start:0x8016E11C end:0x80170104
 	.ctors      start:0x804FA028 end:0x804FA02C
 
+	.data        start:0x80530fc0 end:0x80531080
+	.rodata        start:0x80503128 end:0x80503230
+	.sbss        start:0x80664278 end:0x80664290
+	.sdata2        start:0x80667698 end:0x80667708
 kyoshin/cf/CfMapEffectManager.cpp:
 	extab       start:0x8000E1D0 end:0x8000E23C
 	extabindex  start:0x800293E0 end:0x80029464
 	.text       start:0x80170104 end:0x80171264
 
+	.rodata        start:0x80503230 end:0x80503300
+	.sbss        start:0x80664290 end:0x80664298
+	.sdata        start:0x806623e0 end:0x806623f0
+	.sdata2        start:0x80667708 end:0x80667738
 kyoshin/cf/object/CfObjectActor.cpp:
 	extab       start:0x8000E23C end:0x8000E2D4
 	extabindex  start:0x80029464 end:0x8002950C
 	.text       start:0x80171264 end:0x801739E0
 
+	.data        start:0x80531080 end:0x8053109c
+	.sdata2        start:0x80667738 end:0x8066777c
 kyoshin/realtimeevt/CREvtModel.cpp:
 	extab       start:0x8000E2D4 end:0x8000E370
 	extabindex  start:0x8002950C end:0x80029590
 	.text       start:0x801739E0 end:0x801745B0
 
+	.data        start:0x8053109c end:0x805316c0
+	.rodata        start:0x80503300 end:0x80503390
+	.sdata        start:0x806623f0 end:0x80662410
+	.sdata2        start:0x8066777c end:0x80667780
 kyoshin/cf/CfMapItemManager.cpp:
 	extab       start:0x8000E370 end:0x8000E400
 	extabindex  start:0x80029590 end:0x80029668
 	.text       start:0x801745B0 end:0x80176660
 
+	.data        start:0x805316c0 end:0x80531730
+	.rodata        start:0x80503390 end:0x80503438
+	.sdata        start:0x80662410 end:0x80662440
+	.sdata2        start:0x80667780 end:0x806677f0
 kyoshin/cf/object/CActorParam.cpp:
 	extab       start:0x8000E400 end:0x8000E5C0
 	extabindex  start:0x80029668 end:0x80029824
 	.text       start:0x80176660 end:0x80180190
 
+	.data        start:0x80531730 end:0x80531870
+	.rodata        start:0x80503438 end:0x80503448
+	.sdata2        start:0x806677f0 end:0x80667870
 kyoshin/menu/CMenuZeal.cpp:
 	extab       start:0x8000E5C0 end:0x8000E680
 	extabindex  start:0x80029824 end:0x80029890
 	.text       start:0x80180190 end:0x80181374
 
+	.data        start:0x80531870 end:0x80531ce8
+	.rodata        start:0x80503448 end:0x805036c8
+	.sbss        start:0x80664298 end:0x806642a8
+	.sdata        start:0x80662440 end:0x80662448
+	.sdata2        start:0x80667870 end:0x80667898
 kyoshin/realtimeevt/CREvtCamera.cpp:
 	extab       start:0x8000E680 end:0x8000E6E8
 	extabindex  start:0x80029890 end:0x800298F0
 	.text       start:0x80181374 end:0x80181DB4
 
+	.data        start:0x80531ce8 end:0x80531d10
+	.rodata        start:0x805036c8 end:0x80503718
+	.sbss        start:0x806642a8 end:0x806642b0
+	.sdata        start:0x80662448 end:0x80662458
+	.sdata2        start:0x80667898 end:0x806678c0
 kyoshin/realtimeevt/CREvtModelMap.cpp:
 	extab       start:0x8000E6E8 end:0x8000E7D4
 	extabindex  start:0x800298F0 end:0x80029974
 	.text       start:0x80181DB4 end:0x80182E64
 
+	.data        start:0x80531d10 end:0x80531e50
+	.rodata        start:0x80503718 end:0x80503748
+	.sbss        start:0x806642b0 end:0x806642b8
+	.sdata        start:0x80662458 end:0x80662460
+	.sdata2        start:0x806678c0 end:0x806678d0
 kyoshin/realtimeevt/CREvtModelObj.cpp:
 	extab       start:0x8000E7D4 end:0x8000E8B4
 	extabindex  start:0x80029974 end:0x80029A10
 	.text       start:0x80182E64 end:0x80184B40
 
+	.data        start:0x80531e50 end:0x80532084
+	.rodata        start:0x80503748 end:0x805037a8
+	.sbss        start:0x806642b8 end:0x806642c8
+	.sdata        start:0x80662460 end:0x80662468
+	.sdata2        start:0x806678d0 end:0x80667918
 kyoshin/realtimeevt/CREvtModelPc.cpp:
 	extab       start:0x8000E8B4 end:0x8000E968
 	extabindex  start:0x80029A10 end:0x80029AA0
 	.text       start:0x80184B40 end:0x80185F54
 
+	.data        start:0x80532084 end:0x805322c0
+	.rodata        start:0x805037a8 end:0x805037f0
+	.sdata        start:0x80662468 end:0x80662470
+	.sdata2        start:0x80667918 end:0x80667928
 kyoshin/realtimeevt/CREvtEffect.cpp:
 	extab       start:0x8000E968 end:0x8000EA04
 	extabindex  start:0x80029AA0 end:0x80029B0C
 	.text       start:0x80185F54 end:0x80186B18
 
+	.data        start:0x805322c0 end:0x80532314
+	.rodata        start:0x805037f0 end:0x80503818
+	.sdata        start:0x80662470 end:0x80662488
+	.sdata2        start:0x80667928 end:0x80667968
 kyoshin/realtimeevt/CREvtObj.cpp:
 	extab       start:0x8000EA04 end:0x8000EA14
 	extabindex  start:0x80029B0C end:0x80029B24
@@ -710,235 +1125,406 @@ kyoshin/plugin/pluginTime.cpp:
 	extabindex  start:0x80029B24 end:0x80029B3C
 	.text       start:0x80186BE8 end:0x80186C90
 
+	.data        start:0x80532314 end:0x80532360
+	.rodata        start:0x80503818 end:0x80503820
+	.sdata2        start:0x80667968 end:0x80667980
 kyoshin/plugin/pluginBtl.cpp:
 	extab       start:0x8000EA24 end:0x8000EAE4
 	extabindex  start:0x80029B3C end:0x80029C14
 	.text       start:0x80186C90 end:0x80187748
 
+	.data        start:0x80532360 end:0x805323f8
+	.rodata        start:0x80503820 end:0x805039b8
+	.sdata2        start:0x80667980 end:0x806679e0
 kyoshin/code_801862C0.cpp:
 	extab       start:0x8000EAE4 end:0x8000EB2C
 	extabindex  start:0x80029C14 end:0x80029C80
 	.text       start:0x80187748 end:0x80188388
 
+	.bss        start:0x80574090 end:0x80575798
+	.sbss        start:0x806642c8 end:0x806642d8
 kyoshin/menu/CMenuPTGauge.cpp:
 	extab       start:0x8000EB2C end:0x8000EC1C
 	extabindex  start:0x80029C80 end:0x80029D34
 	.text       start:0x80188388 end:0x801894C8
 
+	.data        start:0x805323f8 end:0x80532450
+	.rodata        start:0x805039b8 end:0x80503ab0
+	.sbss        start:0x806642d8 end:0x806642e0
+	.sdata2        start:0x806679e0 end:0x80667a08
 kyoshin/menu/code_80187F14.cpp:
 	extab       start:0x8000EC1C end:0x8000ECCC
 	extabindex  start:0x80029D34 end:0x80029E3C
 	.text       start:0x801894C8 end:0x8018B39C
 	.ctors      start:0x804FA02C end:0x804FA030
 
+	.bss        start:0x80575798 end:0x805757e0
+	.rodata        start:0x80503ab0 end:0x80503ad0
+	.sbss        start:0x806642e0 end:0x806642e8
+	.sdata        start:0x80662488 end:0x806624a8
+	.sdata2        start:0x80667a08 end:0x80667a20
 kyoshin/menu/CMenuSelectShop.cpp:
 	extab       start:0x8000ECCC end:0x8000EE10
 	extabindex  start:0x80029E3C end:0x80029EC0
 	.text       start:0x8018B39C end:0x8018BBDC
 
+	.data        start:0x80532450 end:0x80532650
+	.rodata        start:0x80503ad0 end:0x80503af0
+	.sbss        start:0x806642e8 end:0x806642f0
+	.sdata        start:0x806624a8 end:0x806624b0
 kyoshin/menu/CMenuShopSell.cpp:
 	extab       start:0x8000EE10 end:0x8000EF2C
 	extabindex  start:0x80029EC0 end:0x80029F44
 	.text       start:0x8018BBDC end:0x8018CC6C
 
+	.data        start:0x80532650 end:0x805326c0
+	.rodata        start:0x80503af0 end:0x80503b10
+	.sbss        start:0x806642f0 end:0x806642f8
+	.sdata        start:0x806624b0 end:0x806624b8
 kyoshin/menu/CMenuShopBuy.cpp:
 	extab       start:0x8000EF2C end:0x8000F048
 	extabindex  start:0x80029F44 end:0x80029FC8
 	.text       start:0x8018CC6C end:0x8018DBB0
 
+	.data        start:0x805326c0 end:0x80532730
+	.rodata        start:0x80503b10 end:0x80503b30
+	.sbss        start:0x806642f8 end:0x80664300
+	.sdata        start:0x806624b8 end:0x806624c0
+	.sdata2        start:0x80667a20 end:0x80667a30
 kyoshin/menu/code_8018C5FC.cpp:
 	extab       start:0x8000F048 end:0x8000F060
 	extabindex  start:0x80029FC8 end:0x80029FEC
 	.text       start:0x8018DBB0 end:0x8018DF78
 
+	.sdata2        start:0x80667a30 end:0x80667a40
 kyoshin/cf/CfResPcImpl.cpp:
 	extab       start:0x8000F060 end:0x8000F1A4
 	extabindex  start:0x80029FEC end:0x8002A190
 	.text       start:0x8018DF78 end:0x80190F20
 
+	.data        start:0x80532730 end:0x80532838
+	.rodata        start:0x80503b30 end:0x80503bd8
+	.sdata        start:0x806624c0 end:0x806624e0
+	.sdata2        start:0x80667a40 end:0x80667a70
 kyoshin/cf/code_8018F8D8.cpp:
 	extab       start:0x8000F1A4 end:0x8000F33C
 	extabindex  start:0x8002A190 end:0x8002A328
 	.text       start:0x80190F20 end:0x801941D4
 
+	.data        start:0x80532838 end:0x80532a38
+	.sbss        start:0x80664300 end:0x80664308
+	.sdata2        start:0x80667a70 end:0x80667aa8
 kyoshin/menu/CMenuPTState.cpp:
 	extab       start:0x8000F33C end:0x8000F3A0
 	extabindex  start:0x8002A328 end:0x8002A34C
 	.text       start:0x801941D4 end:0x80194504
 
+	.data        start:0x80532a38 end:0x80532aa8
+	.rodata        start:0x80503bd8 end:0x80503be8
+	.sdata        start:0x806624e0 end:0x806624e8
+	.sdata2        start:0x80667aa8 end:0x80667ab0
 kyoshin/cf/CPartsChange.cpp:
 	extab       start:0x8000F3A0 end:0x8000F564
 	extabindex  start:0x8002A34C end:0x8002A5D4
 	.text       start:0x80194504 end:0x8019AAE0
 
+	.data        start:0x80532aa8 end:0x80532b60
+	.rodata        start:0x80503be8 end:0x80503d10
+	.sbss        start:0x80664308 end:0x80664314
+	.sdata        start:0x806624e8 end:0x80662540
+	.sdata2        start:0x80667ab0 end:0x80667b60
 kyoshin/cf/CtrlMovePC.cpp:
 	extab       start:0x8000F564 end:0x8000F5F4
 	extabindex  start:0x8002A5D4 end:0x8002A6AC
 	.text       start:0x8019AAE0 end:0x801A0DAC
 
+	.data        start:0x80532b60 end:0x80532da8
+	.rodata        start:0x80503d10 end:0x80503d20
+	.sdata        start:0x80662540 end:0x80662548
+	.sdata2        start:0x80667b60 end:0x80667c58
 kyoshin/cf/CtrlMoveNpc.cpp:
 	extab       start:0x8000F5F4 end:0x8000F624
 	extabindex  start:0x8002A6AC end:0x8002A6F4
 	.text       start:0x801A0DAC end:0x801A156C
 
+	.bss        start:0x805757e0 end:0x80575918
+	.data        start:0x80532da8 end:0x80532dd0
+	.rodata        start:0x80503d20 end:0x80503d70
+	.sdata        start:0x80662548 end:0x80662550
+	.sdata2        start:0x80667c58 end:0x80667c80
 kyoshin/menu/CMenuBattleMode.cpp:
 	extab       start:0x8000F624 end:0x8000F6CC
 	extabindex  start:0x8002A6F4 end:0x8002A73C
 	.text       start:0x801A156C end:0x801A1BC0
 
+	.data        start:0x80532dd0 end:0x80532ee0
+	.rodata        start:0x80503d70 end:0x80503e00
+	.sbss        start:0x80664314 end:0x80664320
+	.sdata        start:0x80662550 end:0x80662560
+	.sdata2        start:0x80667c80 end:0x80667c88
 kyoshin/COccCulling.cpp:
 	extab       start:0x8000F6CC end:0x8000F748
 	extabindex  start:0x8002A73C end:0x8002A7A8
 	.text       start:0x801A1BC0 end:0x801A2F80
 	.ctors      start:0x804FA030 end:0x804FA034
 
+	.sdata2        start:0x80667c88 end:0x80667ca0
 kyoshin/CSimpleEveTalkWin.cpp:
 	extab       start:0x8000F748 end:0x8000F828
 	extabindex  start:0x8002A7A8 end:0x8002A814
 	.text       start:0x801A2F80 end:0x801A40EC
 
+	.data        start:0x80532ee0 end:0x80532fe0
+	.rodata        start:0x80503e00 end:0x80503f28
+	.sbss        start:0x80664320 end:0x80664328
+	.sdata        start:0x80662560 end:0x80662568
+	.sdata2        start:0x80667ca0 end:0x80667cd0
 kyoshin/cf/CTaskCulling.cpp:
 	extab       start:0x8000F828 end:0x8000F8FC
 	extabindex  start:0x8002A814 end:0x8002A88C
 	.text       start:0x801A40EC end:0x801A47F8
 	.ctors      start:0x804FA034 end:0x804FA038
 
+	.data        start:0x80532fe0 end:0x80533128
+	.rodata        start:0x80503f28 end:0x80503f60
+	.sbss        start:0x80664328 end:0x80664330
+	.sdata        start:0x80662568 end:0x80662578
 kyoshin/cf/CVision.cpp:
 	extab       start:0x8000F8FC end:0x8000FB44
 	extabindex  start:0x8002A88C end:0x8002AA18
 	.text       start:0x801A47F8 end:0x801AAA6C
 
+	.data        start:0x80533128 end:0x805333f8
+	.rodata        start:0x80503f60 end:0x80504078
+	.sdata2        start:0x80667cd0 end:0x80667d64
 kyoshin/code_801A929C.cpp:
 	extab       start:0x8000FB44 end:0x8000FB8C
 	extabindex  start:0x8002AA18 end:0x8002AA84
 	.text       start:0x801AAA6C end:0x801AC454
 
+	.sbss        start:0x80664330 end:0x80664338
+	.sdata2        start:0x80667d64 end:0x80667d90
 kyoshin/plugin/pluginSnd.cpp:
 	extab       start:0x8000FB8C end:0x8000FC1C
 	extabindex  start:0x8002AA84 end:0x8002AB5C
 	.text       start:0x801AC454 end:0x801AD518
 
+	.data        start:0x805333f8 end:0x80533490
+	.rodata        start:0x80504078 end:0x80504168
+	.sdata2        start:0x80667d90 end:0x80667db8
 kyoshin/plugin/pluginGame.cpp:
 	.text       start:0x801AD518 end:0x801AD534
 
+	.data        start:0x80533490 end:0x805334a0
+	.rodata        start:0x80504168 end:0x80504170
+	.sdata2        start:0x80667db8 end:0x80667dc0
 kyoshin/menu/CMenuVision.cpp:
 	extab       start:0x8000FC1C end:0x8000FCF4
 	extabindex  start:0x8002AB5C end:0x8002ABEC
 	.text       start:0x801AD534 end:0x801B1550
 	.ctors      start:0x804FA038 end:0x804FA03C
 
+	.data        start:0x805334a0 end:0x80533538
+	.rodata        start:0x80504170 end:0x805047e8
+	.sbss        start:0x80664338 end:0x80664390
+	.sdata        start:0x80662578 end:0x806625b8
+	.sdata2        start:0x80667dc0 end:0x80667de0
 kyoshin/menu/CMenuBattleCommu.cpp:
 	extab       start:0x8000FCF4 end:0x8000FDBC
 	extabindex  start:0x8002ABEC end:0x8002AC64
 	.text       start:0x801B1550 end:0x801B3194
 
+	.data        start:0x80533538 end:0x80533744
+	.rodata        start:0x805047e8 end:0x805049f8
+	.sbss        start:0x80664390 end:0x80664398
+	.sdata        start:0x806625b8 end:0x806625c8
+	.sdata2        start:0x80667de0 end:0x80667df4
 kyoshin/cf/CPcEffect07.cpp:
 	extab       start:0x8000FDBC end:0x8000FDF4
 	extabindex  start:0x8002AC64 end:0x8002ACB8
 	.text       start:0x801B3194 end:0x801B3E28
 
+	.data        start:0x80533744 end:0x80533788
+	.rodata        start:0x805049f8 end:0x80504a28
+	.sbss        start:0x80664398 end:0x806643a0
+	.sdata        start:0x806625c8 end:0x806625d8
+	.sdata2        start:0x80667df4 end:0x80667e00
 kyoshin/menu/CMenuGetItemMulti.cpp:
 	extab       start:0x8000FDF4 end:0x80010044
 	extabindex  start:0x8002ACB8 end:0x8002ADFC
 	.text       start:0x801B3E28 end:0x801BBA44
 	.ctors      start:0x804FA03C end:0x804FA040
 
+	.data        start:0x80533788 end:0x805338bc
+	.rodata        start:0x80504a28 end:0x805050b0
+	.sbss        start:0x806643a0 end:0x80664420
+	.sdata2        start:0x80667e00 end:0x80667e30
 kyoshin/cf/CSuddenCommu.cpp:
 	extab       start:0x80010044 end:0x80010170
 	extabindex  start:0x8002ADFC end:0x8002AF40
 	.text       start:0x801BBA44 end:0x801BE330
 	.ctors      start:0x804FA040 end:0x804FA044
 
+	.rodata        start:0x805050b0 end:0x805050e4
+	.sdata        start:0x806625d8 end:0x80662610
+	.sdata2        start:0x80667e30 end:0x80667e68
 kyoshin/menu/CMenuKizunaTalk.cpp:
 	extab       start:0x80010170 end:0x800102CC
 	extabindex  start:0x8002AF40 end:0x8002AFE8
 	.text       start:0x801BE330 end:0x801BF69C
 
+	.data        start:0x805338bc end:0x80533b98
+	.rodata        start:0x805050e4 end:0x80505310
+	.sbss        start:0x80664420 end:0x80664428
+	.sdata        start:0x80662610 end:0x80662620
+	.sdata2        start:0x80667e68 end:0x80667e8c
 kyoshin/menu/CMenuItemExchange.cpp:
 	extab       start:0x800102CC end:0x8001047C
 	extabindex  start:0x8002AFE8 end:0x8002B0D8
 	.text       start:0x801BF69C end:0x801C1064
 
+	.data        start:0x80533b98 end:0x80533c90
+	.rodata        start:0x80505310 end:0x80505338
+	.sbss        start:0x80664428 end:0x80664430
+	.sdata        start:0x80662620 end:0x80662628
 kyoshin/cf/CfSoundMan.cpp:
 	extab       start:0x8001047C end:0x800106E0
 	extabindex  start:0x8002B0D8 end:0x8002B2DC
 	.text       start:0x801C1064 end:0x801C331C
 	.ctors      start:0x804FA044 end:0x804FA048
 
+	.bss        start:0x80575918 end:0x80576538
+	.sbss        start:0x80664430 end:0x80664440
+	.sdata        start:0x80662628 end:0x80662630
+	.sdata2        start:0x80667e8c end:0x80667ea8
 kyoshin/cf/CfPadTask.cpp:
 	extab       start:0x800106E0 end:0x800107B8
 	extabindex  start:0x8002B2DC end:0x8002B36C
 	.text       start:0x801C331C end:0x801C45D8
 
+	.bss        start:0x80576538 end:0x80576550
+	.data        start:0x80533c90 end:0x80533d48
+	.rodata        start:0x80505338 end:0x80505360
+	.sbss        start:0x80664440 end:0x80664460
+	.sdata        start:0x80662630 end:0x80662648
+	.sdata2        start:0x80667ea8 end:0x80667ec0
 kyoshin/cf/code_801C2C14.cpp:
 	extab       start:0x800107B8 end:0x80010914
 	extabindex  start:0x8002B36C end:0x8002B3E4
 	.text       start:0x801C45D8 end:0x801C4F6C
 
+	.data        start:0x80533d48 end:0x80533d90
+	.sdata2        start:0x80667ec0 end:0x80667f08
 kyoshin/realtimeevt/CREvtLight.cpp:
 	extab       start:0x80010914 end:0x80010950
 	extabindex  start:0x8002B3E4 end:0x8002B420
 	.text       start:0x801C4F6C end:0x801C5338
 
+	.data        start:0x80533d90 end:0x80533db8
+	.rodata        start:0x80505360 end:0x80505370
+	.sdata        start:0x80662648 end:0x80662650
+	.sdata2        start:0x80667f08 end:0x80667f18
 kyoshin/CBgTex.cpp:
 	extab       start:0x80010950 end:0x800109AC
 	extabindex  start:0x8002B420 end:0x8002B468
 	.text       start:0x801C5338 end:0x801C5894
 
+	.data        start:0x80533db8 end:0x80533e60
+	.rodata        start:0x80505370 end:0x805054b0
+	.sbss        start:0x80664460 end:0x80664468
+	.sdata        start:0x80662650 end:0x80662658
+	.sdata2        start:0x80667f18 end:0x80667f30
 kyoshin/CTitleAHelp.cpp:
 	extab       start:0x800109AC end:0x80010A40
 	extabindex  start:0x8002B468 end:0x8002B510
 	.text       start:0x801C5894 end:0x801C6538
 	.ctors      start:0x804FA048 end:0x804FA04C
 
+	.data        start:0x80533e60 end:0x80534598
+	.rodata        start:0x805054b0 end:0x80505590
+	.sbss        start:0x80664468 end:0x80664488
+	.sdata        start:0x80662658 end:0x80662660
 kyoshin/CItemBoxGrid.cpp:
 	extab       start:0x80010A40 end:0x8001158C
 	extabindex  start:0x8002B510 end:0x8002BAA4
 	.text       start:0x801C6538 end:0x801D3A0C
 	.ctors      start:0x804FA04C end:0x804FA050
 
+	.data        start:0x80534598 end:0x80534828
+	.rodata        start:0x80505590 end:0x80505db8
+	.sbss        start:0x80664488 end:0x80664518
+	.sdata        start:0x80662660 end:0x80662680
+	.sdata2        start:0x80667f30 end:0x80667fa4
 kyoshin/CCur.cpp:
 	extab       start:0x8001158C end:0x800116CC
 	extabindex  start:0x8002BAA4 end:0x8002BC84
 	.text       start:0x801D3A0C end:0x801D49CC
 
+	.data        start:0x80534828 end:0x805349b8
+	.rodata        start:0x80505db8 end:0x805061f0
+	.sdata        start:0x80662680 end:0x806626c8
+	.sdata2        start:0x80667fa4 end:0x80667ff0
 kyoshin/CSortMenu.cpp:
 	extab       start:0x800116CC end:0x800117A0
 	extabindex  start:0x8002BC84 end:0x8002BD50
 	.text       start:0x801D49CC end:0x801D56C0
 
+	.data        start:0x805349b8 end:0x80534a68
+	.rodata        start:0x805061f0 end:0x805062e8
+	.sdata        start:0x806626c8 end:0x806626d0
+	.sdata2        start:0x80667ff0 end:0x80668008
 kyoshin/CItemBoxInfo.cpp:
 	extab       start:0x800117A0 end:0x80011B78
 	extabindex  start:0x8002BD50 end:0x8002C1A0
 	.text       start:0x801D56C0 end:0x801EC9BC
 	.ctors      start:0x804FA050 end:0x804FA054
 
+	.data        start:0x80534a68 end:0x80534bc0
+	.rodata        start:0x805062e8 end:0x80506c08
+	.sbss        start:0x80664518 end:0x806645d8
+	.sdata        start:0x806626d0 end:0x806626e0
+	.sdata2        start:0x80668008 end:0x80668088
 kyoshin/CNumSelect.cpp:
 	extab       start:0x80011B78 end:0x80011C1C
 	extabindex  start:0x8002C1A0 end:0x8002C260
 	.text       start:0x801EC9BC end:0x801ED6D0
 
+	.rodata        start:0x80506c08 end:0x80506d90
+	.sdata2        start:0x80668088 end:0x80668098
 kyoshin/CItemBoxLine.cpp:
 	extab       start:0x80011C1C end:0x80012294
 	extabindex  start:0x8002C260 end:0x8002C56C
 	.text       start:0x801ED6D0 end:0x801F50CC
 	.ctors      start:0x804FA054 end:0x804FA058
 
+	.data        start:0x80534bc0 end:0x80534da8
+	.rodata        start:0x80506d90 end:0x80507998
+	.sbss        start:0x806645d8 end:0x80664658
+	.sdata        start:0x806626e0 end:0x806626f8
+	.sdata2        start:0x80668098 end:0x80668138
 kyoshin/CScrollBar.cpp:
 	extab       start:0x80012294 end:0x80012308
 	extabindex  start:0x8002C56C end:0x8002C5E4
 	.text       start:0x801F50CC end:0x801F589C
 
+	.data        start:0x80534da8 end:0x80534e70
+	.rodata        start:0x80507998 end:0x80507b3c
+	.sdata        start:0x806626f8 end:0x80662700
+	.sdata2        start:0x80668138 end:0x80668158
 kyoshin/code_801F3BE0.cpp:
 	extab       start:0x80012308 end:0x800123A8
 	extabindex  start:0x8002C5E4 end:0x8002C6D4
 	.text       start:0x801F589C end:0x801F6C24
 
+	.sbss        start:0x80664658 end:0x80664660
+	.sdata2        start:0x80668158 end:0x806681a0
 kyoshin/cf/CfGimmickObject.cpp:
 	extab       start:0x800123A8 end:0x80012498
 	extabindex  start:0x8002C6D4 end:0x8002C800
 	.text       start:0x801F6C24 end:0x801FA970
 
+	.data        start:0x80534e70 end:0x80534f70
+	.sdata2        start:0x806681a0 end:0x806681d0
 kyoshin/cf/object/CfObjectTbox.cpp:
 	extab       start:0x80012498 end:0x800124D8
 	extabindex  start:0x8002C800 end:0x8002C824
@@ -949,297 +1535,527 @@ kyoshin/cf/CfResTboxImpl.cpp:
 	extabindex  start:0x8002C824 end:0x8002C860
 	.text       start:0x801FAAF0 end:0x801FAF94
 
+	.data        start:0x80534f70 end:0x80535204
+	.sbss        start:0x80664660 end:0x80664668
+	.sdata2        start:0x806681d0 end:0x806681d8
 kyoshin/CPartyStateWin.cpp:
 	extab       start:0x80012500 end:0x80012798
 	extabindex  start:0x8002C860 end:0x8002CA04
 	.text       start:0x801FAF94 end:0x801FDA84
 
+	.data        start:0x80535204 end:0x80535390
+	.rodata        start:0x80507b3c end:0x80507ce8
+	.sdata        start:0x80662700 end:0x80662720
+	.sdata2        start:0x806681d8 end:0x806681e8
 kyoshin/CModelDisp.cpp:
 	extab       start:0x80012798 end:0x80012884
 	extabindex  start:0x8002CA04 end:0x8002CAB8
 	.text       start:0x801FDA84 end:0x801FEB2C
 
+	.data        start:0x80535390 end:0x805353c8
+	.rodata        start:0x80507ce8 end:0x80507d08
+	.sdata        start:0x80662720 end:0x80662728
+	.sdata2        start:0x806681e8 end:0x80668218
 kyoshin/CPartyState.cpp:
 	extab       start:0x80012884 end:0x800129A0
 	extabindex  start:0x8002CAB8 end:0x8002CBF0
 	.text       start:0x801FEB2C end:0x802005E4
 
+	.data        start:0x805353c8 end:0x80535460
+	.rodata        start:0x80507d08 end:0x80507f20
+	.sdata        start:0x80662728 end:0x80662738
+	.sdata2        start:0x80668218 end:0x80668250
 kyoshin/plugin/pluginUnit.cpp:
 	extab       start:0x800129A0 end:0x80012A00
 	extabindex  start:0x8002CBF0 end:0x8002CC80
 	.text       start:0x802005E4 end:0x80201254
 
+	.data        start:0x80535460 end:0x805354c8
+	.rodata        start:0x80507f20 end:0x80507fd0
+	.sdata2        start:0x80668250 end:0x80668270
 kyoshin/menu/parts/CModelDispEquip.cpp:
 	extab       start:0x80012A00 end:0x80012B74
 	extabindex  start:0x8002CC80 end:0x8002CDF4
 	.text       start:0x80201254 end:0x8020377C
 	.ctors      start:0x804FA058 end:0x804FA05C
 
+	.bss        start:0x80576550 end:0x805765a0
+	.data        start:0x805354c8 end:0x805355b0
+	.rodata        start:0x80507fd0 end:0x80508068
+	.sdata        start:0x80662738 end:0x80662748
+	.sdata2        start:0x80668270 end:0x806682a0
 kyoshin/CEquipChange.cpp:
 	extab       start:0x80012B74 end:0x80012EB0
 	extabindex  start:0x8002CDF4 end:0x8002CFD4
 	.text       start:0x8020377C end:0x8020785C
 	.ctors      start:0x804FA05C end:0x804FA060
 
+	.data        start:0x805355b0 end:0x80535688
+	.rodata        start:0x80508068 end:0x805083c8
+	.sbss        start:0x80664668 end:0x806646a0
+	.sdata2        start:0x806682a0 end:0x806682b0
 kyoshin/cf/CfMapMineManager.cpp:
 	extab       start:0x80012EB0 end:0x80012F60
 	extabindex  start:0x8002CFD4 end:0x8002D0AC
 	.text       start:0x8020785C end:0x80209D20
 
+	.data        start:0x80535688 end:0x80535750
+	.rodata        start:0x805083c8 end:0x805084a8
+	.sbss        start:0x806646a0 end:0x806646b0
+	.sdata        start:0x80662748 end:0x80662778
+	.sdata2        start:0x806682b0 end:0x80668300
 kyoshin/CItemBoxGridSubMenu.cpp:
 	extab       start:0x80012F60 end:0x80012FA0
 	extabindex  start:0x8002D0AC end:0x8002D10C
 	.text       start:0x80209D20 end:0x8020A6C0
 
+	.data        start:0x80535750 end:0x805357e8
+	.rodata        start:0x805084a8 end:0x80508598
+	.sdata        start:0x80662778 end:0x80662784
+	.sdata2        start:0x80668300 end:0x80668320
 kyoshin/cf/CfGimmick.cpp:
 	extab       start:0x80012FA0 end:0x800130C8
 	extabindex  start:0x8002D10C end:0x8002D2C8
 	.text       start:0x8020A6C0 end:0x8020C9D8
 	.ctors      start:0x804FA060 end:0x804FA064
 
+	.bss        start:0x805765a0 end:0x80576658
+	.data        start:0x805357e8 end:0x80535844
+	.rodata        start:0x80508598 end:0x80508668
+	.sbss        start:0x806646b0 end:0x806646bc
+	.sdata        start:0x80662784 end:0x80662790
+	.sdata2        start:0x80668320 end:0x80668380
 kyoshin/cf/CfGimmickElv.cpp:
 	extab       start:0x800130C8 end:0x80013150
 	extabindex  start:0x8002D2C8 end:0x8002D358
 	.text       start:0x8020C9D8 end:0x8020E18C
 
+	.data        start:0x80535844 end:0x805358c8
+	.rodata        start:0x80508668 end:0x805086d8
+	.sdata2        start:0x80668380 end:0x806683a8
 kyoshin/cf/CfGimmickLock.cpp:
 	extab       start:0x80013150 end:0x8001322C
 	extabindex  start:0x8002D358 end:0x8002D3B8
 	.text       start:0x8020E18C end:0x8020F1F8
 
+	.rodata        start:0x805086d8 end:0x805086f8
+	.sdata        start:0x80662790 end:0x806627a0
+	.sdata2        start:0x806683a8 end:0x806683c8
 kyoshin/cf/CfGimmickWarp.cpp:
 	extab       start:0x8001322C end:0x800132C4
 	extabindex  start:0x8002D3B8 end:0x8002D460
 	.text       start:0x8020F1F8 end:0x80210D60
 
+	.data        start:0x805358c8 end:0x805359b0
+	.rodata        start:0x805086f8 end:0x80508728
+	.sdata2        start:0x806683c8 end:0x80668400
 kyoshin/cf/CfGimmickJump.cpp:
 	extab       start:0x800132C4 end:0x80013334
 	extabindex  start:0x8002D460 end:0x8002D4CC
 	.text       start:0x80210D60 end:0x802120BC
 
+	.data        start:0x805359b0 end:0x80535a18
+	.rodata        start:0x80508728 end:0x80508798
+	.sdata2        start:0x80668400 end:0x80668438
 kyoshin/cf/CfGimmickItem.cpp:
 	extab       start:0x80013334 end:0x8001339C
 	extabindex  start:0x8002D4CC end:0x8002D52C
 	.text       start:0x802120BC end:0x80212A78
 
+	.data        start:0x80535a18 end:0x80535a98
+	.rodata        start:0x80508798 end:0x80508810
+	.sdata        start:0x806627a0 end:0x806627c0
+	.sdata2        start:0x80668438 end:0x80668458
 kyoshin/makecrystal/CMenuMakeCrystal.cpp:
 	extab       start:0x8001339C end:0x80013488
 	extabindex  start:0x8002D52C end:0x8002D5B0
 	.text       start:0x80212A78 end:0x8021435C
 
+	.data        start:0x80535a98 end:0x80535b40
+	.rodata        start:0x80508810 end:0x80508828
+	.sbss        start:0x806646bc end:0x806646d0
+	.sdata        start:0x806627c0 end:0x806627d0
 kyoshin/makecrystal/CMakeCrystalWin.cpp:
 	extab       start:0x80013488 end:0x8001360C
 	extabindex  start:0x8002D5B0 end:0x8002D694
 	.text       start:0x8021435C end:0x802152E0
 
+	.data        start:0x80535b40 end:0x80535c20
+	.rodata        start:0x80508828 end:0x80508870
+	.sdata        start:0x806627d0 end:0x806627d8
 kyoshin/makecrystal/code_80213488.cpp:
 	extab       start:0x8001360C end:0x80013634
 	extabindex  start:0x8002D694 end:0x8002D6D0
 	.text       start:0x802152E0 end:0x80215710
 
+	.sdata2        start:0x80668458 end:0x80668470
 kyoshin/makecrystal/CMCCrystalBox.cpp:
 	extab       start:0x80013634 end:0x80013EAC
 	extabindex  start:0x8002D6D0 end:0x8002DA30
 	.text       start:0x80215710 end:0x8021C48C
 
+	.data        start:0x80535c20 end:0x80535c60
+	.rodata        start:0x80508870 end:0x80508de8
+	.sbss        start:0x806646d0 end:0x806646d8
+	.sdata2        start:0x80668470 end:0x80668498
 kyoshin/makecrystal/CMCCrystalInfo.cpp:
 	extab       start:0x80013EAC end:0x80013FD0
 	extabindex  start:0x8002DA30 end:0x8002DB5C
 	.text       start:0x8021C48C end:0x8021DAC8
 	.ctors      start:0x804FA064 end:0x804FA068
 
+	.data        start:0x80535c60 end:0x80535d90
+	.rodata        start:0x80508de8 end:0x805090d8
+	.sbss        start:0x806646d8 end:0x80664718
+	.sdata        start:0x806627d8 end:0x806627e8
+	.sdata2        start:0x80668498 end:0x806684a0
 kyoshin/makecrystal/CModelDispMakeCrystal.cpp:
 	extab       start:0x80013FD0 end:0x80014E88
 	extabindex  start:0x8002DB5C end:0x8002DEA4
 	.text       start:0x8021DAC8 end:0x80223CAC
 	.ctors      start:0x804FA068 end:0x804FA06C
 
+	.bss        start:0x80576658 end:0x80576670
+	.data        start:0x80535d90 end:0x80535f48
+	.rodata        start:0x805090d8 end:0x80509210
+	.sbss        start:0x80664718 end:0x80664720
+	.sdata        start:0x806627e8 end:0x806627f0
+	.sdata2        start:0x806684a0 end:0x80668544
 kyoshin/makecrystal/CMCCylinderGauge.cpp:
 	extab       start:0x80014E88 end:0x80014F00
 	extabindex  start:0x8002DEA4 end:0x8002DF58
 	.text       start:0x80223CAC end:0x80224580
 
+	.data        start:0x80535f48 end:0x80535f58
+	.rodata        start:0x80509210 end:0x805092b0
+	.sdata        start:0x806627f0 end:0x806627f8
 kyoshin/makecrystal/CMCCrystalList.cpp:
 	extab       start:0x80014F00 end:0x8001502C
 	extabindex  start:0x8002DF58 end:0x8002E090
 	.text       start:0x80224580 end:0x80225B80
 
+	.data        start:0x80535f58 end:0x80535f80
+	.rodata        start:0x805092b0 end:0x80509548
+	.sdata2        start:0x80668544 end:0x80668550
 kyoshin/makecrystal/CMCEffStart.cpp:
 	extab       start:0x8001502C end:0x800152AC
 	extabindex  start:0x8002E090 end:0x8002E450
 	.text       start:0x80225B80 end:0x802280F8
 
+	.data        start:0x80535f80 end:0x80536128
+	.rodata        start:0x80509548 end:0x80509a00
+	.sdata        start:0x806627f8 end:0x80662858
+	.sdata2        start:0x80668550 end:0x80668568
 kyoshin/menu/CMenuQstCnt.cpp:
 	extab       start:0x800152AC end:0x800153A4
 	extabindex  start:0x8002E450 end:0x8002E510
 	.text       start:0x802280F8 end:0x80229584
 
+	.data        start:0x80536128 end:0x80536228
+	.rodata        start:0x80509a00 end:0x80509aa8
+	.sbss        start:0x80664720 end:0x80664728
+	.sdata        start:0x80662858 end:0x80662860
+	.sdata2        start:0x80668568 end:0x80668584
 kyoshin/CQstLogList.cpp:
 	extab       start:0x800153A4 end:0x800155AC
 	extabindex  start:0x8002E510 end:0x8002E66C
 	.text       start:0x80229584 end:0x8022B228
 	.ctors      start:0x804FA06C end:0x804FA070
 
+	.bss        start:0x80576670 end:0x80576cc0
+	.data        start:0x80536228 end:0x80536320
+	.rodata        start:0x80509aa8 end:0x80509ab4
+	.sbss        start:0x80664728 end:0x80664740
+	.sdata        start:0x80662860 end:0x80662870
+	.sdata2        start:0x80668584 end:0x80668590
 kyoshin/CQstLogInfo.cpp:
 	extab       start:0x800155AC end:0x80015680
 	extabindex  start:0x8002E66C end:0x8002E774
 	.text       start:0x8022B228 end:0x8022D450
 
+	.data        start:0x80536320 end:0x80536510
+	.rodata        start:0x80509ab4 end:0x8050a478
+	.sdata        start:0x80662870 end:0x80662878
+	.sdata2        start:0x80668590 end:0x80668598
 kyoshin/CSysWin.cpp:
 	extab       start:0x80015680 end:0x8001571C
 	extabindex  start:0x8002E774 end:0x8002E828
 	.text       start:0x8022D450 end:0x8022E5AC
 
+	.data        start:0x80536510 end:0x805365a8
+	.rodata        start:0x8050a478 end:0x8050a620
+	.sdata        start:0x80662878 end:0x80662880
+	.sdata2        start:0x80668598 end:0x80668600
 kyoshin/CSelShopWin.cpp:
 	extab       start:0x8001571C end:0x80015788
 	extabindex  start:0x8002E828 end:0x8002E894
 	.text       start:0x8022E5AC end:0x8022ED68
 
+	.data        start:0x805365a8 end:0x80536640
+	.rodata        start:0x8050a620 end:0x8050a730
+	.sdata        start:0x80662880 end:0x80662888
+	.sdata2        start:0x80668600 end:0x80668610
 kyoshin/CExchangeWin.cpp:
 	extab       start:0x80015788 end:0x800157FC
 	extabindex  start:0x8002E894 end:0x8002E90C
 	.text       start:0x8022ED68 end:0x8022F464
 
+	.data        start:0x80536640 end:0x805366d8
+	.rodata        start:0x8050a730 end:0x8050a840
+	.sdata        start:0x80662888 end:0x80662890
+	.sdata2        start:0x80668610 end:0x80668628
 kyoshin/CPresentWin.cpp:
 	extab       start:0x800157FC end:0x80015874
 	extabindex  start:0x8002E90C end:0x8002E9C0
 	.text       start:0x8022F464 end:0x80230780
 
+	.rodata        start:0x8050a840 end:0x8050aa28
+	.sdata2        start:0x80668628 end:0x80668634
 kyoshin/makecrystal/CMCCrystalSupport.cpp:
 	extab       start:0x80015874 end:0x80015948
 	extabindex  start:0x8002E9C0 end:0x8002EA44
 	.text       start:0x80230780 end:0x80231300
 
+	.data        start:0x805366d8 end:0x80536878
+	.rodata        start:0x8050aa28 end:0x8050aaa8
+	.sdata        start:0x80662890 end:0x806628a8
+	.sdata2        start:0x80668634 end:0x80668648
 kyoshin/menu/CMenuArtsSet.cpp:
 	extab       start:0x80015948 end:0x80015DC0
 	extabindex  start:0x8002EA44 end:0x8002EE34
 	.text       start:0x80231300 end:0x80237600
 
+	.data        start:0x80536878 end:0x805369a0
+	.rodata        start:0x8050aaa8 end:0x8050b000
+	.sbss        start:0x80664740 end:0x80664748
+	.sdata        start:0x806628a8 end:0x806628b8
+	.sdata2        start:0x80668648 end:0x80668680
 kyoshin/CArtsInfo.cpp:
 	extab       start:0x80015DC0 end:0x8001608C
 	extabindex  start:0x8002EE34 end:0x8002F1F4
 	.text       start:0x80237600 end:0x8023DE1C
 	.ctors      start:0x804FA070 end:0x804FA074
 
+	.data        start:0x805369a0 end:0x80536b2c
+	.rodata        start:0x8050b000 end:0x8050b440
+	.sbss        start:0x80664748 end:0x80664768
+	.sdata        start:0x806628b8 end:0x806628c8
+	.sdata2        start:0x80668680 end:0x80668728
 kyoshin/cf/CfNandManager.cpp:
 	extab       start:0x8001608C end:0x800161E0
 	extabindex  start:0x8002F1F4 end:0x8002F35C
 	.text       start:0x8023DE1C end:0x802427CC
 	.ctors      start:0x804FA074 end:0x804FA078
 
+	.bss        start:0x80576cc0 end:0x80576cf8
+	.data        start:0x80536b2c end:0x80536cf8
+	.rodata        start:0x8050b440 end:0x8050b488
+	.sbss        start:0x80664768 end:0x80664790
+	.sdata        start:0x806628c8 end:0x806628d8
 kyoshin/code_802405F4.cpp:
 	extab       start:0x800161E0 end:0x80016338
 	extabindex  start:0x8002F35C end:0x8002F3EC
 	.text       start:0x802427CC end:0x802443D4
 
+	.data        start:0x80536cf8 end:0x80536d28
+	.sbss        start:0x80664790 end:0x80664798
 kyoshin/menu/CMenuMapSelect.cpp:
 	extab       start:0x80016338 end:0x800163C8
 	extabindex  start:0x8002F3EC end:0x8002F41C
 	.text       start:0x802443D4 end:0x80245264
 
+	.data        start:0x80536d28 end:0x80536d98
+	.rodata        start:0x8050b488 end:0x8050b498
+	.sdata        start:0x806628d8 end:0x806628e0
+	.sdata2        start:0x80668728 end:0x80668738
 kyoshin/CMapSel.cpp:
 	extab       start:0x800163C8 end:0x8001651C
 	extabindex  start:0x8002F41C end:0x8002F53C
 	.text       start:0x80245264 end:0x80246498
 
+	.data        start:0x80536d98 end:0x80536ea8
+	.rodata        start:0x8050b498 end:0x8050b5a0
+	.sdata        start:0x806628e0 end:0x806628e8
+	.sdata2        start:0x80668738 end:0x80668750
 kyoshin/CFade.cpp:
 	extab       start:0x8001651C end:0x80016580
 	extabindex  start:0x8002F53C end:0x8002F59C
 	.text       start:0x80246498 end:0x802468DC
 
+	.data        start:0x80536ea8 end:0x80536fb0
+	.rodata        start:0x8050b5a0 end:0x8050b798
+	.sdata        start:0x806628e8 end:0x806628f0
+	.sdata2        start:0x80668750 end:0x80668760
 kyoshin/CFloorMap.cpp:
 	extab       start:0x80016580 end:0x80016B18
 	extabindex  start:0x8002F59C end:0x8002F8B4
 	.text       start:0x802468DC end:0x80252F5C
 	.ctors      start:0x804FA078 end:0x804FA07C
 
+	.data        start:0x80536fb0 end:0x80537028
+	.rodata        start:0x8050b798 end:0x8050c590
+	.sbss        start:0x80664798 end:0x806647c0
+	.sdata2        start:0x80668760 end:0x806687c0
 kyoshin/menu/CMenuMapSelectSC.cpp:
 	extab       start:0x80016B18 end:0x80016C44
 	extabindex  start:0x8002F8B4 end:0x8002F950
 	.text       start:0x80252F5C end:0x80254030
 
+	.data        start:0x80537028 end:0x805371a0
+	.rodata        start:0x8050c590 end:0x8050c5b8
+	.sbss        start:0x806647c0 end:0x806647c8
+	.sdata        start:0x806628f0 end:0x80662920
+	.sdata2        start:0x806687c0 end:0x806687d0
 kyoshin/menu/CMenuPause.cpp:
 	extab       start:0x80016C44 end:0x80016CF4
 	extabindex  start:0x8002F950 end:0x8002F9A4
 	.text       start:0x80254030 end:0x8025487C
 
+	.data        start:0x805371a0 end:0x805372a0
+	.rodata        start:0x8050c5b8 end:0x8050c678
+	.sbss        start:0x806647c8 end:0x806647d0
+	.sdata        start:0x80662920 end:0x80662928
+	.sdata2        start:0x806687d0 end:0x806687e0
 kyoshin/menu/CMenuCollepedia.cpp:
 	extab       start:0x80016CF4 end:0x80016E20
 	extabindex  start:0x8002F9A4 end:0x8002FA40
 	.text       start:0x8025487C end:0x802553D4
 
+	.data        start:0x805372a0 end:0x80537310
+	.rodata        start:0x8050c678 end:0x8050c6a0
+	.sbss        start:0x806647d0 end:0x806647d8
+	.sdata        start:0x80662928 end:0x80662930
+	.sdata2        start:0x806687e0 end:0x806687f0
 kyoshin/CCollepedia.cpp:
 	extab       start:0x80016E20 end:0x800171D8
 	extabindex  start:0x8002FA40 end:0x8002FCE0
 	.text       start:0x802553D4 end:0x80258BA4
 
+	.data        start:0x80537310 end:0x80537480
+	.rodata        start:0x8050c6a0 end:0x8050caa8
+	.sbss        start:0x806647d8 end:0x806647e0
+	.sdata        start:0x80662930 end:0x80662940
+	.sdata2        start:0x806687f0 end:0x80668828
 kyoshin/menu/CMenuKizunagram.cpp:
 	extab       start:0x800171D8 end:0x800173E4
 	extabindex  start:0x8002FCE0 end:0x8002FDB8
 	.text       start:0x80258BA4 end:0x80259CC8
 
+	.data        start:0x80537480 end:0x80537520
+	.rodata        start:0x8050caa8 end:0x8050cac8
+	.sbss        start:0x806647e0 end:0x806647e8
+	.sdata        start:0x80662940 end:0x80662948
 kyoshin/CKizunagram.cpp:
 	extab       start:0x800173E4 end:0x80017688
 	extabindex  start:0x8002FDB8 end:0x80030088
 	.text       start:0x80259CC8 end:0x8025F5BC
 	.ctors      start:0x804FA07C end:0x804FA080
 
+	.data        start:0x80537520 end:0x80537618
+	.rodata        start:0x8050cac8 end:0x8050d848
+	.sbss        start:0x806647e8 end:0x80664860
+	.sdata        start:0x80662948 end:0x80662970
+	.sdata2        start:0x80668828 end:0x80668878
 kyoshin/CPcKizunagram.cpp:
 	extab       start:0x80017688 end:0x800177E0
 	extabindex  start:0x80030088 end:0x80030238
 	.text       start:0x8025F5BC end:0x80261C5C
 
+	.data        start:0x80537618 end:0x805376b8
+	.rodata        start:0x8050d848 end:0x8050db38
+	.sdata        start:0x80662970 end:0x80662980
+	.sdata2        start:0x80668878 end:0x806688b8
 kyoshin/code_8025FB10.cpp:
 	extab       start:0x800177E0 end:0x80017890
 	extabindex  start:0x80030238 end:0x800302D4
 	.text       start:0x80261C5C end:0x802655C8
 
+	.data        start:0x805376b8 end:0x805378b0
+	.sbss        start:0x80664860 end:0x80664878
+	.sdata        start:0x80662980 end:0x80662988
+	.sdata2        start:0x806688b8 end:0x80668900
 kyoshin/menu/CMenuPassiveSkill.cpp:
 	extab       start:0x80017890 end:0x800179C4
 	extabindex  start:0x800302D4 end:0x8003037C
 	.text       start:0x802655C8 end:0x8026632C
 
+	.data        start:0x805378b0 end:0x80537920
+	.rodata        start:0x8050db38 end:0x8050db60
+	.sbss        start:0x80664878 end:0x80664880
+	.sdata        start:0x80662988 end:0x80662990
 kyoshin/CPassiveSkill.cpp:
 	extab       start:0x800179C4 end:0x80017DB4
 	extabindex  start:0x8003037C end:0x8003085C
 	.text       start:0x8026632C end:0x802705F4
 
+	.data        start:0x80537920 end:0x805379fc
+	.rodata        start:0x8050db60 end:0x8050e690
+	.sbss        start:0x80664880 end:0x80664898
+	.sdata2        start:0x80668900 end:0x80668948
 kyoshin/cf/CfGimmickEne.cpp:
 	extab       start:0x80017DB4 end:0x80017E44
 	extabindex  start:0x8003085C end:0x800308F8
 	.text       start:0x802705F4 end:0x80271800
 
+	.data        start:0x805379fc end:0x80537a78
+	.rodata        start:0x8050e690 end:0x8050e6e8
+	.sdata        start:0x80662990 end:0x806629b8
+	.sdata2        start:0x80668948 end:0x80668990
 kyoshin/menu/CMenuBattleEnd.cpp:
 	extab       start:0x80017E44 end:0x80017F04
 	extabindex  start:0x800308F8 end:0x80030964
 	.text       start:0x80271800 end:0x8027212C
 
+	.data        start:0x80537a78 end:0x80537bb0
+	.rodata        start:0x8050e6e8 end:0x8050e790
+	.sbss        start:0x80664898 end:0x806648a0
+	.sdata        start:0x806629b8 end:0x806629c8
+	.sdata2        start:0x80668990 end:0x80668998
 kyoshin/menu/CMenuPlayAward.cpp:
 	extab       start:0x80017F04 end:0x800181DC
 	extabindex  start:0x80030964 end:0x80030B44
 	.text       start:0x8027212C end:0x80274258
 
+	.data        start:0x80537bb0 end:0x80537cb8
+	.rodata        start:0x8050e790 end:0x8050e958
+	.sbss        start:0x806648a0 end:0x806648b0
+	.sdata        start:0x806629c8 end:0x806629d8
+	.sdata2        start:0x80668998 end:0x806689c8
 kyoshin/menu/CMenuKizunaTalkList.cpp:
 	extab       start:0x800181DC end:0x800182F8
 	extabindex  start:0x80030B44 end:0x80030BC8
 	.text       start:0x80274258 end:0x80274B78
 
+	.data        start:0x80537cb8 end:0x80537d28
+	.rodata        start:0x8050e958 end:0x8050e980
+	.sbss        start:0x806648b0 end:0x806648b8
+	.sdata        start:0x806629d8 end:0x806629e0
 kyoshin/CKizunaTalkList.cpp:
 	extab       start:0x800182F8 end:0x800184B4
 	extabindex  start:0x80030BC8 end:0x80030D24
 	.text       start:0x80274B78 end:0x80276958
 	.ctors      start:0x804FA080 end:0x804FA084
 
+	.rodata        start:0x8050e980 end:0x8050ebb8
+	.sbss        start:0x806648b8 end:0x806648e0
+	.sdata2        start:0x806689c8 end:0x806689d8
 kyoshin/CSysWinBuff.cpp:
 	extab       start:0x800184B4 end:0x80018568
 	extabindex  start:0x80030D24 end:0x80030D78
 	.text       start:0x80276958 end:0x80276FAC
 
+	.data        start:0x80537d28 end:0x80537ed0
+	.rodata        start:0x8050ebb8 end:0x8050ebf0
+	.sbss        start:0x806648e0 end:0x80664900
+	.sdata        start:0x806629e0 end:0x806629f0
 kyoshin/cf/ICamControlRemote.cpp:
 	extab       start:0x80018568 end:0x800185B0
 	extabindex  start:0x80030D78 end:0x80030DE4
 	.text       start:0x80276FAC end:0x8027725C
 
+	.data        start:0x80537ed0 end:0x80537f98
+	.rodata        start:0x8050ebf0 end:0x8050ec48
+	.sdata        start:0x806629f0 end:0x80662a10
 kyoshin/cf/ICamControlGc.cpp:
 	extab       start:0x800185B0 end:0x800185D0
 	extabindex  start:0x80030DE4 end:0x80030E14
@@ -1255,36 +2071,57 @@ kyoshin/code_8027513C.cpp:
 	extabindex  start:0x80030E80 end:0x80030F28
 	.text       start:0x802775C0 end:0x80277E4C
 
+	.data        start:0x80537f98 end:0x80537fb0
+	.sdata2        start:0x806689d8 end:0x80668a00
 kyoshin/menu/CMenuLvUp.cpp:
 	extab       start:0x80018688 end:0x80018758
 	extabindex  start:0x80030F28 end:0x80030FAC
 	.text       start:0x80277E4C end:0x802790B4
 
+	.data        start:0x80537fb0 end:0x805381c8
+	.rodata        start:0x8050ec48 end:0x8050ed18
+	.sbss        start:0x80664900 end:0x80664908
+	.sdata        start:0x80662a10 end:0x80662a20
+	.sdata2        start:0x80668a00 end:0x80668a18
 kyoshin/cf/chain/CChain.cpp:
 	extab       start:0x80018758 end:0x800188C4
 	extabindex  start:0x80030FAC end:0x80031120
 	.text       start:0x802790B4 end:0x8027CED4
 
+	.data        start:0x805381c8 end:0x8053826c
+	.sdata        start:0x80662a20 end:0x80662a40
+	.sdata2        start:0x80668a18 end:0x80668a80
 kyoshin/cf/chain/CChainActorList.cpp:
 	extab       start:0x800188C4 end:0x80018ABC
 	extabindex  start:0x80031120 end:0x800312DC
 	.text       start:0x8027CED4 end:0x8027F258
 
+	.data        start:0x8053826c end:0x80538358
+	.rodata        start:0x8050ed18 end:0x8050ee10
+	.sdata        start:0x80662a40 end:0x80662a90
+	.sdata2        start:0x80668a80 end:0x80668a88
 kyoshin/cf/chain/CChainTime.cpp:
 	extab       start:0x80018ABC end:0x80018ADC
 	extabindex  start:0x800312DC end:0x8003130C
 	.text       start:0x8027F258 end:0x8027F56C
 
+	.sdata2        start:0x80668a88 end:0x80668a90
 kyoshin/cf/chain/CChainTimer.cpp:
 	extab       start:0x80018ADC end:0x80018B74
 	extabindex  start:0x8003130C end:0x80031390
 	.text       start:0x8027F56C end:0x80280934
 
+	.sdata2        start:0x80668a90 end:0x80668ad0
 kyoshin/CSysWinScenarioLog.cpp:
 	extab       start:0x80018B74 end:0x80018CF8
 	extabindex  start:0x80031390 end:0x80031504
 	.text       start:0x80280934 end:0x8028378C
 
+	.data        start:0x80538358 end:0x80538458
+	.rodata        start:0x8050ee10 end:0x8050ef20
+	.sbss        start:0x80664908 end:0x80664920
+	.sdata        start:0x80662a90 end:0x80662a98
+	.sdata2        start:0x80668ad0 end:0x80668ae8
 kyoshin/cf/chain/CChainActorEne.cpp:
 	extab       start:0x80018CF8 end:0x80018D40
 	extabindex  start:0x80031504 end:0x80031570
@@ -1295,280 +2132,460 @@ kyoshin/cf/chain/CChainActorPc.cpp:
 	extabindex  start:0x80031570 end:0x8003160C
 	.text       start:0x80283DA8 end:0x80284938
 
+	.sdata2        start:0x80668ae8 end:0x80668b00
 kyoshin/CEquipItemBox.cpp:
 	extab       start:0x80018DC0 end:0x800193A0
 	extabindex  start:0x8003160C end:0x80031AEC
 	.text       start:0x80284938 end:0x80290128
 	.ctors      start:0x804FA084 end:0x804FA088
 
+	.data        start:0x80538458 end:0x80538710
+	.rodata        start:0x8050ef20 end:0x8050f7a0
+	.sbss        start:0x80664920 end:0x806649e8
+	.sdata        start:0x80662a98 end:0x80662ac0
+	.sdata2        start:0x80668b00 end:0x80668b68
 kyoshin/menu/CMenuSave.cpp:
 	extab       start:0x800193A0 end:0x800194D0
 	extabindex  start:0x80031AEC end:0x80031B70
 	.text       start:0x80290128 end:0x80290C44
 
+	.data        start:0x80538710 end:0x80538780
+	.rodata        start:0x8050f7a0 end:0x8050f7c0
+	.sbss        start:0x806649e8 end:0x806649f0
+	.sdata        start:0x80662ac0 end:0x80662ac8
 kyoshin/CSaveLoad.cpp:
 	extab       start:0x800194D0 end:0x800198D0
 	extabindex  start:0x80031B70 end:0x80031E7C
 	.text       start:0x80290C44 end:0x8029573C
 	.ctors      start:0x804FA088 end:0x804FA08C
 
+	.bss        start:0x80576cf8 end:0x80576d08
+	.data        start:0x80538780 end:0x80538888
+	.rodata        start:0x8050f7c0 end:0x8050fbf0
+	.sbss        start:0x806649f0 end:0x80664a00
+	.sdata        start:0x80662ac8 end:0x80662af8
+	.sdata2        start:0x80668b68 end:0x80668b80
 kyoshin/menu/CMenuPTChangeNotice.cpp:
 	extab       start:0x800198D0 end:0x800199D8
 	extabindex  start:0x80031E7C end:0x80031F00
 	.text       start:0x8029573C end:0x8029638C
 
+	.data        start:0x80538888 end:0x80538988
+	.rodata        start:0x8050fbf0 end:0x8050fd50
+	.sbss        start:0x80664a00 end:0x80664a08
+	.sdata        start:0x80662af8 end:0x80662b08
+	.sdata2        start:0x80668b80 end:0x80668b98
 kyoshin/cf/chain/CChainCombo.cpp:
 	extab       start:0x800199D8 end:0x800199F8
 	extabindex  start:0x80031F00 end:0x80031F30
 	.text       start:0x8029638C end:0x802965B4
 
+	.data        start:0x80538988 end:0x80538994
+	.sdata2        start:0x80668b98 end:0x80668ba0
 kyoshin/CSysWinSave.cpp:
 	extab       start:0x800199F8 end:0x80019B1C
 	extabindex  start:0x80031F30 end:0x80031F84
 	.text       start:0x802965B4 end:0x80296E70
 
+	.data        start:0x80538994 end:0x80538aa0
+	.rodata        start:0x8050fd50 end:0x8050fd88
+	.sbss        start:0x80664a08 end:0x80664a10
+	.sdata        start:0x80662b08 end:0x80662b18
+	.sdata2        start:0x80668ba0 end:0x80668bb0
 kyoshin/realtimeevt/CREvtMovie.cpp:
 	extab       start:0x80019B1C end:0x80019B60
 	extabindex  start:0x80031F84 end:0x80031FCC
 	.text       start:0x80296E70 end:0x802972B0
 
+	.data        start:0x80538aa0 end:0x80538ac8
+	.rodata        start:0x8050fd88 end:0x8050fdb0
+	.sdata        start:0x80662b18 end:0x80662b20
 kyoshin/CTaskGamePic.cpp:
 	extab       start:0x80019B60 end:0x80019BF8
 	extabindex  start:0x80031FCC end:0x80032050
 	.text       start:0x802972B0 end:0x80297B60
 
+	.data        start:0x80538ac8 end:0x80538c00
+	.rodata        start:0x8050fdb0 end:0x8050fdd8
+	.sdata        start:0x80662b20 end:0x80662b30
+	.sdata2        start:0x80668bb0 end:0x80668bc8
 kyoshin/CTaskGameEvt.cpp:
 	extab       start:0x80019BF8 end:0x80019C50
 	extabindex  start:0x80032050 end:0x800320A4
 	.text       start:0x80297B60 end:0x80297E84
 
+	.data        start:0x80538c00 end:0x80538d28
+	.rodata        start:0x8050fdd8 end:0x8050fe00
+	.sdata        start:0x80662b30 end:0x80662b40
 kyoshin/cf/CHelpManager.cpp:
 	extab       start:0x80019C50 end:0x80019CB0
 	extabindex  start:0x800320A4 end:0x80032134
 	.text       start:0x80297E84 end:0x80299000
 	.ctors      start:0x804FA08C end:0x804FA090
 
+	.bss        start:0x80576d08 end:0x805772c8
+	.data        start:0x80538d28 end:0x80538f98
+	.rodata        start:0x8050fe00 end:0x8050ff18
+	.sdata        start:0x80662b40 end:0x80662bd8
+	.sdata2        start:0x80668bc8 end:0x80668bd0
 kyoshin/code_80296898.cpp:
 	extab       start:0x80019CB0 end:0x80019CC8
 	extabindex  start:0x80032134 end:0x80032158
 	.text       start:0x80299000 end:0x8029917C
 	.ctors      start:0x804FA090 end:0x804FA094
 
+	.bss        start:0x805772c8 end:0x80577308
 kyoshin/makecrystal/CMCGetItemBox.cpp:
 	extab       start:0x80019CC8 end:0x8001A0C8
 	extabindex  start:0x80032158 end:0x80032320
 	.text       start:0x8029917C end:0x8029C780
 
+	.rodata        start:0x8050ff18 end:0x80510250
+	.sbss        start:0x80664a10 end:0x80664a28
+	.sdata2        start:0x80668bd0 end:0x80668c08
 kyoshin/menu/CMenuTutorial.cpp:
 	extab       start:0x8001A0C8 end:0x8001A1B8
 	extabindex  start:0x80032320 end:0x800323A4
 	.text       start:0x8029C780 end:0x8029CFFC
 
+	.data        start:0x80538f98 end:0x80539230
+	.rodata        start:0x80510250 end:0x80510280
+	.sbss        start:0x80664a28 end:0x80664a38
+	.sdata        start:0x80662bd8 end:0x80662c50
 kyoshin/CTutorial.cpp:
 	extab       start:0x8001A1B8 end:0x8001A294
 	extabindex  start:0x800323A4 end:0x80032464
 	.text       start:0x8029CFFC end:0x8029DBC4
 
+	.sdata2        start:0x80668c08 end:0x80668c10
 kyoshin/menu/CMenuOption.cpp:
 	extab       start:0x8001A294 end:0x8001A3B0
 	extabindex  start:0x80032464 end:0x800324E8
 	.text       start:0x8029DBC4 end:0x8029E5B4
 
+	.data        start:0x80539230 end:0x80539338
+	.rodata        start:0x80510280 end:0x805103d8
+	.sbss        start:0x80664a38 end:0x80664a40
+	.sdata        start:0x80662c50 end:0x80662c60
 kyoshin/COption.cpp:
 	extab       start:0x8001A3B0 end:0x8001A654
 	extabindex  start:0x800324E8 end:0x800326C8
 	.text       start:0x8029E5B4 end:0x802A1040
 	.ctors      start:0x804FA094 end:0x804FA098
 
+	.bss        start:0x80577308 end:0x80577348
+	.data        start:0x80539338 end:0x80539780
+	.rodata        start:0x805103d8 end:0x80510530
+	.sbss        start:0x80664a40 end:0x80664a48
+	.sdata        start:0x80662c60 end:0x80662c70
+	.sdata2        start:0x80668c10 end:0x80668c30
 kyoshin/menu/CMenuSkipTimer.cpp:
 	extab       start:0x8001A654 end:0x8001A770
 	extabindex  start:0x800326C8 end:0x8003274C
 	.text       start:0x802A1040 end:0x802A1904
 
+	.data        start:0x80539780 end:0x805397f0
+	.rodata        start:0x80510530 end:0x80510550
+	.sbss        start:0x80664a48 end:0x80664a50
+	.sdata        start:0x80662c70 end:0x80662c78
 kyoshin/CSkipTimer.cpp:
 	extab       start:0x8001A770 end:0x8001A910
 	extabindex  start:0x8003274C end:0x800328E4
 	.text       start:0x802A1904 end:0x802A2F28
 	.ctors      start:0x804FA098 end:0x804FA09C
 
+	.data        start:0x805397f0 end:0x80539890
+	.rodata        start:0x80510550 end:0x80510690
+	.sbss        start:0x80664a50 end:0x80664a58
+	.sdata        start:0x80662c78 end:0x80662c90
+	.sdata2        start:0x80668c30 end:0x80668c50
 kyoshin/cf/chain/CChainEffect.cpp:
 	extab       start:0x8001A910 end:0x8001A928
 	extabindex  start:0x800328E4 end:0x80032908
 	.text       start:0x802A2F28 end:0x802A3230
 
+	.sdata2        start:0x80668c50 end:0x80668c58
 kyoshin/cf/voice/CCharVoice.cpp:
 	extab       start:0x8001A928 end:0x8001A960
 	extabindex  start:0x80032908 end:0x8003295C
 	.text       start:0x802A3230 end:0x802A3AF0
 
+	.rodata        start:0x80510690 end:0x805106d8
+	.sdata        start:0x80662c90 end:0x80662ca0
+	.sdata2        start:0x80668c58 end:0x80668c68
 kyoshin/cf/voice/CCharVoiceMan.cpp:
 	extab       start:0x8001A960 end:0x8001AB38
 	extabindex  start:0x8003295C end:0x80032BE4
 	.text       start:0x802A3AF0 end:0x802A61B4
 
+	.data        start:0x80539890 end:0x805398cc
+	.sbss        start:0x80664a58 end:0x80664a60
+	.sdata2        start:0x80668c68 end:0x80668ca0
 kyoshin/cf/voice/cvsys/CVS_THREAD.cpp:
 	extab       start:0x8001AB38 end:0x8001ABA0
 	extabindex  start:0x80032BE4 end:0x80032C80
 	.text       start:0x802A61B4 end:0x802A6FA4
 
+	.data        start:0x805398cc end:0x80539958
+	.rodata        start:0x805106d8 end:0x80510700
+	.sdata        start:0x80662ca0 end:0x80662cc8
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp:
 	extab       start:0x8001ABA0 end:0x8001ABEC
 	extabindex  start:0x80032C80 end:0x80032CBC
 	.text       start:0x802A6FA4 end:0x802A757C
 
+	.data        start:0x80539958 end:0x805399ec
+	.rodata        start:0x80510700 end:0x80510738
+	.sdata        start:0x80662cc8 end:0x80662ce8
 kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp:
 	extab       start:0x8001ABEC end:0x8001AC38
 	extabindex  start:0x80032CBC end:0x80032CF8
 	.text       start:0x802A757C end:0x802A7F64
 
+	.data        start:0x805399ec end:0x80539a30
 kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp:
 	extab       start:0x8001AC38 end:0x8001AC8C
 	extabindex  start:0x80032CF8 end:0x80032D40
 	.text       start:0x802A7F64 end:0x802A82BC
 
+	.data        start:0x80539a30 end:0x80539a68
 kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp:
 	extab       start:0x8001AC8C end:0x8001ACD8
 	extabindex  start:0x80032D40 end:0x80032D7C
 	.text       start:0x802A82BC end:0x802A8608
 
+	.data        start:0x80539a68 end:0x80539ae8
+	.rodata        start:0x80510738 end:0x80510780
+	.sdata        start:0x80662ce8 end:0x80662d00
 kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp:
 	extab       start:0x8001ACD8 end:0x8001AD44
 	extabindex  start:0x80032D7C end:0x80032DE8
 	.text       start:0x802A8608 end:0x802A91DC
 
+	.data        start:0x80539ae8 end:0x80539b58
 kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp:
 	extab       start:0x8001AD44 end:0x8001AD98
 	extabindex  start:0x80032DE8 end:0x80032E30
 	.text       start:0x802A91DC end:0x802A95B8
 
+	.data        start:0x80539b58 end:0x80539ba8
+	.rodata        start:0x80510780 end:0x80510798
+	.sdata        start:0x80662d00 end:0x80662d08
 kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp:
 	extab       start:0x8001AD98 end:0x8001ADE4
 	extabindex  start:0x80032E30 end:0x80032E6C
 	.text       start:0x802A95B8 end:0x802A9988
 
+	.data        start:0x80539ba8 end:0x80539bf8
+	.rodata        start:0x80510798 end:0x805107b0
+	.sdata        start:0x80662d08 end:0x80662d10
 kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp:
 	extab       start:0x8001ADE4 end:0x8001AE90
 	extabindex  start:0x80032E6C end:0x80032F38
 	.text       start:0x802A9988 end:0x802AA8A8
 
+	.data        start:0x80539bf8 end:0x80539c48
+	.rodata        start:0x805107b0 end:0x805107c8
+	.sdata        start:0x80662d10 end:0x80662d18
+	.sdata2        start:0x80668ca0 end:0x80668cb0
 kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp:
 	extab       start:0x8001AE90 end:0x8001AEE4
 	extabindex  start:0x80032F38 end:0x80032F80
 	.text       start:0x802AA8A8 end:0x802AAE00
 
+	.data        start:0x80539c48 end:0x80539c98
+	.rodata        start:0x805107c8 end:0x805107e8
+	.sdata        start:0x80662d18 end:0x80662d28
 kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp:
 	extab       start:0x8001AEE4 end:0x8001AF40
 	extabindex  start:0x80032F80 end:0x80032FD4
 	.text       start:0x802AAE00 end:0x802AB338
 
+	.data        start:0x80539c98 end:0x80539ce8
+	.rodata        start:0x805107e8 end:0x80510800
+	.sdata        start:0x80662d28 end:0x80662d30
 kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp:
 	extab       start:0x8001AF40 end:0x8001AF84
 	extabindex  start:0x80032FD4 end:0x80033004
 	.text       start:0x802AB338 end:0x802AB51C
 
+	.data        start:0x80539ce8 end:0x80539d20
+	.rodata        start:0x80510800 end:0x80510818
+	.sdata        start:0x80662d30 end:0x80662d38
 kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp:
 	extab       start:0x8001AF84 end:0x8001AFD0
 	extabindex  start:0x80033004 end:0x80033040
 	.text       start:0x802AB51C end:0x802ABA10
 
+	.data        start:0x80539d20 end:0x80539d70
+	.rodata        start:0x80510818 end:0x80510838
+	.sdata        start:0x80662d38 end:0x80662d40
 kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp:
 	extab       start:0x8001AFD0 end:0x8001B01C
 	extabindex  start:0x80033040 end:0x8003307C
 	.text       start:0x802ABA10 end:0x802ABDF8
 
+	.data        start:0x80539d70 end:0x80539db0
+	.rodata        start:0x80510838 end:0x80510858
+	.sdata        start:0x80662d40 end:0x80662d58
 kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp:
 	extab       start:0x8001B01C end:0x8001B068
 	extabindex  start:0x8003307C end:0x800330B8
 	.text       start:0x802ABDF8 end:0x802AC2C4
 
+	.data        start:0x80539db0 end:0x80539e00
+	.rodata        start:0x80510858 end:0x80510878
+	.sdata        start:0x80662d58 end:0x80662d70
 kyoshin/menu/CMenuBattleChain.cpp:
 	extab       start:0x8001B068 end:0x8001B170
 	extabindex  start:0x800330B8 end:0x80033190
 	.text       start:0x802AC2C4 end:0x802ADD28
 	.ctors      start:0x804FA09C end:0x804FA0A0
 
+	.data        start:0x80539e00 end:0x80539f48
+	.rodata        start:0x80510878 end:0x805109d0
+	.sbss        start:0x80664a60 end:0x80664be8
+	.sdata        start:0x80662d70 end:0x80662dd8
+	.sdata2        start:0x80668cb0 end:0x80668cb8
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp:
 	extab       start:0x8001B170 end:0x8001B1B4
 	extabindex  start:0x80033190 end:0x800331C0
 	.text       start:0x802ADD28 end:0x802AE278
 
+	.data        start:0x80539f48 end:0x8053a1e0
+	.rodata        start:0x805109d0 end:0x80510b10
+	.sdata        start:0x80662dd8 end:0x80662de0
+	.sdata2        start:0x80668cb8 end:0x80668dc8
 kyoshin/cf/CfGimmickSaveOff.cpp:
 	extab       start:0x8001B1B4 end:0x8001B1E0
 	extabindex  start:0x800331C0 end:0x800331E4
 	.text       start:0x802AE278 end:0x802AE4E8
 
+	.rodata        start:0x80510b10 end:0x80510b30
 kyoshin/menu/CMenuTutorialList.cpp:
 	extab       start:0x8001B1E0 end:0x8001B368
 	extabindex  start:0x800331E4 end:0x80033298
 	.text       start:0x802AE4E8 end:0x802AF314
 
+	.data        start:0x8053a1e0 end:0x8053a2a8
+	.rodata        start:0x80510b30 end:0x80510b68
+	.sbss        start:0x80664be8 end:0x80664bf0
+	.sdata        start:0x80662de0 end:0x80662df0
+	.sdata2        start:0x80668dc8 end:0x80668dd8
 kyoshin/CTutorialList.cpp:
 	extab       start:0x8001B368 end:0x8001B580
 	extabindex  start:0x80033298 end:0x80033418
 	.text       start:0x802AF314 end:0x802B0B74
 
+	.rodata        start:0x80510b68 end:0x80510cc8
+	.sbss        start:0x80664bf0 end:0x80664bf8
+	.sdata2        start:0x80668dd8 end:0x80668df0
 kyoshin/CLoad.cpp:
 	extab       start:0x8001B580 end:0x8001B5F4
 	extabindex  start:0x80033418 end:0x80033490
 	.text       start:0x802B0B74 end:0x802B11C0
 
+	.data        start:0x8053a2a8 end:0x8053a3d8
+	.rodata        start:0x80510cc8 end:0x80510d60
+	.sdata        start:0x80662df0 end:0x80662e00
+	.sdata2        start:0x80668df0 end:0x80668e00
 kyoshin/CNandData.cpp:
 	extab       start:0x8001B5F4 end:0x8001B60C
 	extabindex  start:0x80033490 end:0x800334B4
 	.text       start:0x802B11C0 end:0x802B12DC
 	.ctors      start:0x804FA0A0 end:0x804FA0A4
 
+	.bss        start:0x80577348 end:0x80577680
+	.data        start:0x8053a3d8 end:0x8053a420
+	.rodata        start:0x80510d60 end:0x80510e18
+	.sdata        start:0x80662e00 end:0x80662e10
 kyoshin/CErrMes.cpp:
 	extab       start:0x8001B60C end:0x8001B61C
 	extabindex  start:0x800334B4 end:0x800334CC
 	.text       start:0x802B12DC end:0x802B1634
 
+	.data        start:0x8053a420 end:0x8053a498
+	.rodata        start:0x80510e18 end:0x80513458
+	.sbss        start:0x80664bf8 end:0x80664c00
+	.sdata2        start:0x80668e00 end:0x80668ec8
 kyoshin/plugin/pluginHelp.cpp:
 	extab       start:0x8001B61C end:0x8001B634
 	extabindex  start:0x800334CC end:0x800334F0
 	.text       start:0x802B1634 end:0x802B177C
 
+	.data        start:0x8053a498 end:0x8053a4b8
+	.rodata        start:0x80513458 end:0x805134a8
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp:
 	extab       start:0x8001B634 end:0x8001B6D8
 	extabindex  start:0x800334F0 end:0x800335B0
 	.text       start:0x802B177C end:0x802B24F0
 
+	.data        start:0x8053a4b8 end:0x8053ac88
 kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp:
 	extab       start:0x8001B6D8 end:0x8001B73C
 	extabindex  start:0x800335B0 end:0x80033610
 	.text       start:0x802B24F0 end:0x802B2E40
 
+	.data        start:0x8053ac88 end:0x8053ad08
+	.rodata        start:0x805134a8 end:0x805134f0
+	.sdata        start:0x80662e10 end:0x80662e28
 kyoshin/menu/CMenuGCItem.cpp:
 	extab       start:0x8001B73C end:0x8001B838
 	extabindex  start:0x80033610 end:0x80033664
 	.text       start:0x802B2E40 end:0x802B3988
 
+	.data        start:0x8053ad08 end:0x8053ad78
+	.rodata        start:0x805134f0 end:0x80513510
+	.sbss        start:0x80664c00 end:0x80664c08
+	.sdata        start:0x80662e28 end:0x80662e30
 kyoshin/menu/CMenuGameClear.cpp:
 	extab       start:0x8001B838 end:0x8001B960
 	extabindex  start:0x80033664 end:0x800336C4
 	.text       start:0x802B3988 end:0x802B50A4
 
+	.data        start:0x8053ad78 end:0x8053ae90
+	.rodata        start:0x80513510 end:0x80513568
+	.sbss        start:0x80664c08 end:0x80664c18
+	.sdata        start:0x80662e30 end:0x80662e38
 kyoshin/cf/CfHikariItemManager.cpp:
 	extab       start:0x8001B960 end:0x8001BA00
 	extabindex  start:0x800336C4 end:0x80033778
 	.text       start:0x802B50A4 end:0x802B7310
 	.ctors      start:0x804FA0A4 end:0x804FA0A8
 
+	.bss        start:0x80577680 end:0x80577790
+	.data        start:0x8053ae90 end:0x8053aeb0
+	.rodata        start:0x80513568 end:0x805135b8
+	.sbss        start:0x80664c18 end:0x80664c28
+	.sdata2        start:0x80668ec8 end:0x80668fd0
 kyoshin/CUIErrMesWin.cpp:
 	extab       start:0x8001BA00 end:0x8001BB84
 	extabindex  start:0x80033778 end:0x800338C8
 	.text       start:0x802B7310 end:0x802B885C
 
+	.data        start:0x8053aeb0 end:0x8053b0b8
+	.rodata        start:0x805135b8 end:0x805135f0
+	.sbss        start:0x80664c28 end:0x80664c38
+	.sdata        start:0x80662e38 end:0x80662e50
 kyoshin/menu/CMenuTitle.cpp:
 	extab       start:0x8001BB84 end:0x8001BC00
 	extabindex  start:0x800338C8 end:0x80033940
 	.text       start:0x802B885C end:0x802B8D9C
 
+	.data        start:0x8053b0b8 end:0x8053b1f0
+	.rodata        start:0x805135f0 end:0x80513610
+	.sdata        start:0x80662e50 end:0x80662e60
+	.sdata2        start:0x80668fd0 end:0x80668fe0
 kyoshin/CTitle.cpp:
 	extab       start:0x8001BC00 end:0x8001BDF4
 	extabindex  start:0x80033940 end:0x80033B74
 	.text       start:0x802B8D9C end:0x802BA644
 
+	.data        start:0x8053b1f0 end:0x8053b378
+	.rodata        start:0x80513610 end:0x80513778
+	.sbss        start:0x80664c38 end:0x80664c40
+	.sdata        start:0x80662e60 end:0x80662e78
+	.sdata2        start:0x80668fe0 end:0x80669000
 kyoshin/help/CHelp.cpp:
 	extab       start:0x8001BDF4 end:0x8001BE04
 	extabindex  start:0x80033B74 end:0x80033B8C
@@ -1656,6 +2673,7 @@ kyoshin/help/CHelp_Pg.cpp:
 	extabindex  start:0x80033C58 end:0x80033C64
 	.text       start:0x802BB014 end:0x802BB074
 
+	.sdata2        start:0x80669000 end:0x80669008
 kyoshin/help/CHelp_CloseQuestMenu.cpp:
 	extab       start:0x8001BEBC end:0x8001BEC4
 	extabindex  start:0x80033C64 end:0x80033C70
@@ -1687,11 +2705,17 @@ kyoshin/code_802B8A3C.cpp:
 	extabindex  start:0x80033CA0 end:0x80033CDC
 	.text       start:0x802BB4AC end:0x802BB9E0
 
+	.data        start:0x8053b378 end:0x8053b880
+	.rodata        start:0x80513778 end:0x80513988
+	.sdata        start:0x80662e78 end:0x80662f28
 kyoshin/plugin/pluginVoice.cpp:
 	extab       start:0x8001BF30 end:0x8001BF38
 	extabindex  start:0x80033CDC end:0x80033CE8
 	.text       start:0x802BB9E0 end:0x802BBAD4
 
+	.data        start:0x8053b880 end:0x8053b890
+	.rodata        start:0x80513988 end:0x80513990
+	.sdata2        start:0x80669008 end:0x80669020
 kyoshin/code_802B9064.cpp:
 	extab       start:0x8001BF38 end:0x8001BF40
 	extabindex  start:0x80033CE8 end:0x80033CF4
@@ -1702,6 +2726,9 @@ kyoshin/CBattery.cpp:
 	extabindex  start:0x80033CF4 end:0x80033D3C
 	.text       start:0x802BBC58 end:0x802BC028
 
+	.data        start:0x8053b890 end:0x8053b928
+	.rodata        start:0x80513990 end:0x805139d8
+	.sdata        start:0x80662f28 end:0x80662f30
 PowerPC_EABI_Support/src/Runtime/__mem.c:
 	.init       start:0x80004000 end:0x80004380
 	.text       start:0x802BC028 end:0x802BC044

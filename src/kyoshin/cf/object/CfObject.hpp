@@ -28,7 +28,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc12();     //0x80
         virtual void CfObject_UnkVirtualFunc13();     //0x84
         virtual void* CfObject_UnkVirtualFunc14(float value);     //0x88
-        virtual void CfObject_UnkVirtualFunc15();     //0x8C
+        virtual float CfObject_UnkVirtualFunc15();    //0x8C (Move/Coll return float; retail Fv)
         virtual void* CfObject_UnkVirtualFunc16(float value);     //0x90
         virtual void CfObject_UnkVirtualFunc17();     //0x94
         virtual void CfObject_UnkVirtualFunc18();     //0x98
@@ -81,7 +81,7 @@ namespace cf {
         virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57(float value);     //0x134
         virtual u32* CfObject_UnkVirtualFunc58();     //0x138
-        virtual void CfObject_UnkVirtualFunc59();     //0x13C
+        virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
         virtual void CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61();     //0x144
         virtual void CfObject_UnkVirtualFunc62();     //0x148

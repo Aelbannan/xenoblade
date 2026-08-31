@@ -1,33 +1,36 @@
 #include "kyoshin/cf/CfGimmickJump.hpp"
+extern char lbl_eu_805359D4[];
+extern char lbl_eu_805359B0[];
+extern char lbl_eu_80508728[];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Warning string literals used by the jump pull-vector sanity check.
-extern const char lbl_eu_80526324[];
-extern const char lbl_eu_80526300[];
+extern char lbl_eu_80526324[];
+extern char lbl_eu_80526300[];
 
 namespace cf {
 
 extern "C" {
-extern void* lbl_eu_80535A18[];
+extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
-extern void* lbl_eu_80664138;
-extern const f32 lbl_eu_80668400;
-extern const f32 lbl_eu_80668404;
-extern const f32 lbl_eu_80668408;
-extern const f32 lbl_eu_8066840C;extern const f64 lbl_eu_80668410;
-extern const f64 lbl_eu_80668418;
-extern const f32 lbl_eu_80668420;
-extern const f32 lbl_eu_80668424;
-extern const f32 lbl_eu_80668428;
-extern const f32 lbl_eu_8066842C;
-extern const f32 lbl_eu_80668430;
-extern const f32 lbl_eu_8066A1F8;
-extern const f32 lbl_eu_8066A1FC;
-extern const f32 lbl_eu_8066A210;
+extern char lbl_eu_80664138[];
+extern char lbl_eu_80668400[];
+extern char lbl_eu_80668404[];
+extern char lbl_eu_80668408[];
+extern char lbl_eu_8066840C[];extern char lbl_eu_80668410[];
+extern char lbl_eu_80668418[];
+extern char lbl_eu_80668420[];
+extern char lbl_eu_80668424[];
+extern char lbl_eu_80668428[];
+extern char lbl_eu_8066842C[];
+extern char lbl_eu_80668430[];
+extern char lbl_eu_8066A1F8[];
+extern char lbl_eu_8066A1FC[];
+extern char lbl_eu_8066A210[];
 
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
@@ -109,7 +112,7 @@ public:
 
 extern "C" {
 extern void* jumptable_eu_80535830[];
-extern void* lbl_eu_805359E8[];
+extern char lbl_eu_805359E8[];
 }
 
 struct JumpActorData {
@@ -178,16 +181,16 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
     char* columns = lbl_eu_8050873C;
     u32 value = (u32)getBdatStringColumnValue(table, columns, row);
-    self->targetX = lbl_eu_80668400 * (f32)value;
+    self->targetX = *(f32*)lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 7, row);
-    self->targetY = lbl_eu_80668400 * (f32)value;
+    self->targetY = *(f32*)lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x0E, row);
-    self->targetZ = lbl_eu_80668400 * (f32)value;
+    self->targetZ = *(f32*)lbl_eu_80668400 * (f32)value;
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x15, row);
     self->targetAngle = lbl_eu_8066A210 * (f32)(s16)value;
-    if (self->targetX == lbl_eu_80668404 && self->targetY == lbl_eu_80668404 &&
-        self->targetZ == lbl_eu_80668404) {
+    if (self->targetX == *(f32*)lbl_eu_80668404 && self->targetY == *(f32*)lbl_eu_80668404 &&
+        self->targetZ == *(f32*)lbl_eu_80668404) {
         self->targetX = self->position.x;
         self->targetY = self->position.y;
         self->targetZ = self->position.z;
@@ -213,26 +216,26 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     self->jumpFlags = (u8)value;
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x46, row);
-    self->speed = lbl_eu_80668408 * (f32)(u8)value;
+    self->speed = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
     self->height = (f32)(u16)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
-    self->frameScale = lbl_eu_80668408 * (f32)(u8)value;
-    if (self->frameScale != lbl_eu_80668404) {
+    self->frameScale = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
+    if (self->frameScale != *(f32*)lbl_eu_80668404) {
         self->maxFrameScale = self->height / self->frameScale;
     } else {
-        self->maxFrameScale = lbl_eu_80668404;
+        self->maxFrameScale = *(f32*)lbl_eu_80668404;
     }
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x4F, row);
-    f32 minimum = lbl_eu_80668408 * (f32)(u8)value;
+    f32 minimum = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
     if (self->frameScale < minimum) {
         self->frameScale = minimum;
     } else {
-        self->frameScale += lbl_eu_8066840C;
+        self->frameScale += *(f32*)lbl_eu_8066840C;
     }
 
-    self->timer = lbl_eu_80668404;
+    self->timer = *(f32*)lbl_eu_80668404;
     self->motionState = 0;
     return self;
 }
@@ -266,7 +269,7 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
     if ((self->flags & 0x400) != 0) {
         if ((self->flags66 & 1) != 0) {
             func_8020A6B0(&self->effect, &self->position, self->resourceId,
-                          lbl_eu_80668420, 0, 0);
+                          *(f32*)lbl_eu_80668420, 0, 0);
         }
         self->flags &= ~0x400u;
     } else {
@@ -283,10 +286,10 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
     // loads (MWCC keeps each in its own non-volatile FPR).
     const f32 twoPi = lbl_eu_8066A1FC;
     const f32 pi = lbl_eu_8066A1F8;
-    const f32 speedScale = lbl_eu_80668424;
-    const f32 turnLimit = lbl_eu_80668428;
-    const f32 turnLimitNeg = lbl_eu_8066842C;
-    const f32 nearDistSq = lbl_eu_8066840C;
+    const f32 speedScale = *(f32*)lbl_eu_80668424;
+    const f32 turnLimit = *(f32*)lbl_eu_80668428;
+    const f32 turnLimitNeg = *(f32*)lbl_eu_8066842C;
+    const f32 nearDistSq = *(f32*)lbl_eu_8066840C;
 
     for (int index = 0; index < 3; ++index) {
         u32 bit = 0x80u << index;
@@ -391,7 +394,7 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     self->flags |= 0x400;
     if (self->duration == 0 || func_8020971C(self->duration) != 0) {
         self->motionState = 1;
-        self->timer = lbl_eu_80668404;
+        self->timer = *(f32*)lbl_eu_80668404;
     }
 }
 
@@ -408,7 +411,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     int result = dispatch(&self->transformedPosition, playerPosition,
                           &self->position);
     if (result == 0) {
-        self->timer = lbl_eu_80668404;
+        self->timer = *(f32*)lbl_eu_80668404;
         self->flags &= ~0x2000u;
         return;
     }
@@ -418,7 +421,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
             return;
         }
         self->flags |= 0x2000;
-        self->timer = lbl_eu_80668404;
+        self->timer = *(f32*)lbl_eu_80668404;
     }
 
     if ((self->flags & 1) == 0) {
@@ -426,7 +429,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         if ((self->flags66 & 8) == 0 &&
             func_80209754(self->flags66, &self->initialState,
                           &self->position, &self->rotation, self->effect) == 0) {
-            self->timer = lbl_eu_80668404;
+            self->timer = *(f32*)lbl_eu_80668404;
             return;
         }
         self->flags |= 1;
@@ -472,7 +475,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
             position.y = self->position.y;
         }
         self->soundHandle = func_80208C60(self->effectId, &position,
-                                           lbl_eu_80668430);
+                                           *(f32*)lbl_eu_80668430);
     }
 
     self->motionState = 2;
@@ -480,8 +483,8 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 }
 
 // Retail converts the frame count via the shared .sdata2 2^52 magic
-// (retail pool doubles lbl_eu_80668410 = 0x4330000080000000 and
-// lbl_eu_80668418 = 0x4330000000000000 ship from the split1 shared data
+// (retail pool doubles *(f32*)lbl_eu_80668410 = 0x4330000080000000 and
+// *(f32*)lbl_eu_80668418 = 0x4330000000000000 ship from the split1 shared data
 // object; the int-to-float conversion sequences reference them directly.)
 
 extern "C" void func_8020FC14(CfGimmickJump* self) {
@@ -512,8 +515,8 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
 
     if (self->timer >= (f32)(self->jumpFrames * 30 + self->waitFrames)) {
         self->motionState = 3;
-        self->timer = lbl_eu_80668404;
-        self->verticalOffset = lbl_eu_80668404;
+        self->timer = *(f32*)lbl_eu_80668404;
+        self->verticalOffset = *(f32*)lbl_eu_80668404;
     }
 }
 
@@ -598,8 +601,8 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
     self->timer += elapsed;
 
-    const f32 zero = lbl_eu_80668404;
-    const f32 one = lbl_eu_8066840C;
+    const f32 zero = *(f32*)lbl_eu_80668404;
+    const f32 one = *(f32*)lbl_eu_8066840C;
     for (int index = 0; index < 3; ++index) {
         u32 stateBit = 2u << index;
         u32 moveBit = 0x10u << index;
@@ -676,7 +679,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
     if (finished) {
         self->motionState = 1;
-        self->timer = lbl_eu_80668404;
+        self->timer = *(f32*)lbl_eu_80668404;
         if (self->soundHandle != 0) {
             func_801BFED0(1, self->soundHandle, 10);
             self->soundHandle = 0;
@@ -702,3 +705,21 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 }
 
 } // namespace cf
+
+// absorb: retail data (generated)
+__declspec(section ".rodata") char lbl_eu_80508728[0x12] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x47, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x4a, 0x75, 0x6d, 0x70, 0x00};
+__declspec(section ".rodata") char lbl_eu_8050873C[0x5c] = {0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x58, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x59, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x5a, 0x00, 0x6c, 0x6e, 0x52, 0x6f, 0x74, 0x59, 0x00, 0x72, 0x65, 0x63, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6a, 0x70, 0x45, 0x46, 0x00, 0x6a, 0x70, 0x53, 0x45, 0x00, 0x6a, 0x75, 0x6d, 0x70, 0x53, 0x00, 0x77, 0x61, 0x69, 0x74, 0x00, 0x45, 0x46, 0x41, 0x54, 0x52, 0x00, 0x72, 0x6b, 0x57, 0x61, 0x69, 0x74, 0x00, 0x74, 0x6f, 0x70, 0x00, 0x74, 0x69, 0x6d, 0x65, 0x00, 0x65, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805359B0[0x24] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805359D4[0x14] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805359E8[0x30] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") const f32 lbl_eu_80668400 = 0.009999999776482582f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668404 = 0.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668408 = 30.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_8066840C = 1.0f;
+__declspec(section ".sdata2") char lbl_eu_80668410[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80668418[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") const f32 lbl_eu_80668420 = 5.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668424 = 0.30000001192092896f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668428 = 0.10000000149011612f;
+__declspec(section ".sdata2") const f32 lbl_eu_8066842C = -0.10000000149011612f;
+__declspec(section ".sdata2") char lbl_eu_80668430[0x8] = {0x43, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

@@ -2,6 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" {
+    void func_801390E0(void*);
+    void func_80139124(void*);
+    void func_80138078(int);
+}
 #include "kyoshin/CQstLogList.hpp"
 // CfObjectImplMove.hpp (via harness_catalog.hpp) declares lbl_eu_80526324 as
 // const char[]; code_80135FDC.hpp's u8[] decl of the same name clashes and

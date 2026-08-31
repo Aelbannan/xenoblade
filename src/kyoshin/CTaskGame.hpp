@@ -124,6 +124,7 @@ public:
 
     static CTaskGame* getInstance();
     static u32 isFlag2000Set(); // isUnk68Bit13Set: (spInstance->unk68 >> 13) & 1
+    static int func_800426F0();
     virtual void Init();
 
     // Retail func_800436A8 compares the inherited CTTask move-hook ptmf against

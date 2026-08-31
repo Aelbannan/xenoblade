@@ -30,14 +30,14 @@ def build_prompt(batch, *, section, worktree_path=None, branch=None,
     if worktree_path:
         env.append(
             f"- Working directory: {worktree_path}  (branch {branch}, created from main "
-            f"at {launched_at or 'wave start'}). Only you work in this worktree — commit "
-            f"freely (git add <your files> && git commit). Never touch other branches or worktrees."
+            f"at {launched_at or 'wave start'}). Only you work in this worktree. "
+            f"NEVER TOUCH GIT — no git commands at all; leave files dirty for the harness."
         )
         env.append(
             "- Shared registries (tools/coop/targets.json, docs/evidence/decomp/attempts.jsonl, "
             "config/<region>/symbols.txt) are merged back centrally by the harness after your "
-            "batch finishes. Commit your changes to them as normal (claim/cycle write them), "
-            "but never hand-edit them to force a state."
+            "batch finishes. claim/cycle may write them; never hand-edit them to force a state, "
+            "and never commit them yourself."
         )
         env.append(
             "- The harness has configured this worktree; the first hexdiff/cycle run "
@@ -46,8 +46,10 @@ def build_prompt(batch, *, section, worktree_path=None, branch=None,
         )
     else:
         env.append(
-            "- Working tree is SHARED with other agents: commit ONLY your own files and the "
-            "registry (targets.json / attempts.jsonl); never git reset or revert others' work."
+            "- Working tree is SHARED with other agents. NEVER TOUCH GIT — no git "
+            "commands (status/diff/add/commit/checkout/reset/stash/restore/clean/"
+            "pull/push/show/log/branch/worktree or wrappers). Leave the tree dirty; "
+            "do not reset or revert anyone's work."
         )
 
     smt = ""
@@ -89,7 +91,7 @@ def build_prompt(batch, *, section, worktree_path=None, branch=None,
 Section: {section} | Batch {bid} ({batch['label']}): {batch['total']} targets ({batch['leaf_count']} leaf, {batch['likely_blocked']} likely callee-blocked).
 Goal: reach FULL_MATCH (100% static) and ACCEPT every target in your batch. All targets in this batch are on the ready frontier (leaf, or every callee accepted and certified) — callee blockers should be rare; if you hit one, record it and move on.
 
-ENVIRONMENT — {'ISOLATED git worktree' if worktree_path else 'shared working tree'}:
+ENVIRONMENT — {'ISOLATED worktree (still NEVER TOUCH GIT)' if worktree_path else 'shared working tree'}:
 {chr(10).join('- ' + e for e in env)}
 
 ACCEPTANCE (FULL_MATCH campaign — no SMT in-session):
@@ -112,8 +114,7 @@ RULES (non-negotiable):
 - No external source hunting (no web_search / fetch_content / curl). No hand disassembly — hexdiff prints it (no objdump / llvm-objdump).
 - Search budget: max 3 grep/find per function; read hexdiff --json directly.
 - Do NOT use the pi harness (tools/pi_harness). Do NOT use subagents. Do NOT ask questions — keep working until the batch is done or every remaining target is blocked.
-- Minimal git: status/diff once at start and once before commit; commit per unit or several targets at once with batch-cycle.py — do not commit every keystroke.
-- Do NOT git reset, do NOT revert other worktrees' files, do NOT push. NEVER commit orig/ (retail files) or build/ artifacts.
+- NEVER TOUCH GIT. Forbidden: git status, diff, add, commit, checkout, reset, stash, restore, clean, pull, push, show, log, branch, worktree, submodule, and any wrapper. Leave the working tree dirty; the human/harness owns all git. Do not commit orig/ or build/.
 - Per-unit compiler flags are a legitimate tool: if MWCC_PATTERNS.md attributes a diff to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...), hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no failed experiments left in place.
 
 WORKFLOW per target:
@@ -121,7 +122,7 @@ WORKFLOW per target:
 2. Inspect: .venv/bin/python3 tools/coop/run.py targets show <target-id> — callee-blocked? record and skip.
 3. Iterate fast: .venv/bin/python3 tools/coop/hexdiff.py <unit> --symbol <mangled-or-substr> --brief ; use --json for detail. hexdiff builds itself and holds this worktree's build lock — never run ninja/configure.py directly.
 4. Accept: cycle WITHOUT --smt (above), or mass-accept several at once with .venv/bin/python3 tools/coop/batch-cycle.py <id...> --default-hypothesis "..." --default-next-change "...".
-5. Commit: git add <your unit files> docs/evidence/decomp/attempts.jsonl && git commit -m "paseo-{section}: match <units> batch {bid}"
+5. Do NOT commit. Leave matched sources and attempts.jsonl dirty for the harness.
 
 {digest}{stall_section}
 FINAL REPORT (end of session, plain text):

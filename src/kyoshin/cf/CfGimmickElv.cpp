@@ -2,28 +2,29 @@
 // Decompiled from retail ASM at build/us/asm/kyoshin/cf/CfGimmickElv.s
 
 #include "kyoshin/cf/CfGimmickElv.hpp"
+extern char lbl_eu_80535844[];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // External globals
 extern "C" {
-extern u8 lbl_eu_805358C8[];   // CfGimmickElv vtable
-extern u8 lbl_eu_805357E8[];   // bdat column pointer table
-extern u8 lbl_eu_8050867C[];   // bdat column name strings
-extern u32 lbl_eu_80664130;    // bdat table pointer (via sda21)
-extern u32 lbl_eu_806646BC;    // global flag
+extern char lbl_eu_805358C8[];   // CfGimmickElv vtable
+extern char lbl_eu_805357E8[];   // bdat column pointer table
+extern char lbl_eu_8050867C[];   // bdat column name strings
+extern char lbl_eu_80664130[];    // bdat table pointer (via sda21)
+extern char lbl_eu_806646BC[];    // global flag
 typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
-extern CfGimmickElvStateFunc lbl_eu_80535868[];   // PTMF state table
-extern u32 lbl_eu_805765B0[];  // bit array
-extern f32 lbl_eu_805765A0[3];  // vec3 constant (player-relative check center)
-extern const f32 lbl_eu_80668380;    // float constant (0.0f)
-extern f32 lbl_eu_80668384;    // float constant (1.0f)
-extern f64 lbl_eu_80668388;    // double constant
-extern f32 lbl_eu_80668390;    // float constant
-extern f32 lbl_eu_80668394;    // float constant
-extern f32 lbl_eu_80668398;    // float constant
-extern f32 lbl_eu_8066839C;    // float constant
-extern f32 lbl_eu_806683A0;    // float constant
+extern char lbl_eu_80535868[];   // PTMF state table
+extern char lbl_eu_805765B0[];  // bit array
+extern char lbl_eu_805765A0[];  // vec3 constant (player-relative check center)
+extern char lbl_eu_80668380[];    // float constant (0.0f)
+extern char lbl_eu_80668384[];    // float constant (1.0f)
+extern char lbl_eu_80668388[];    // double constant
+extern char lbl_eu_80668390[];    // float constant
+extern char lbl_eu_80668394[];    // float constant
+extern char lbl_eu_80668398[];    // float constant
+extern char lbl_eu_8066839C[];    // float constant
+extern char lbl_eu_806683A0[];    // float constant
 extern u32 jumptable_eu_80535830[]; // jump table
 }
 
@@ -114,7 +115,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     // LOD timer setup
     if (lastVal != 0 && self->lod0 != 0) {
         f32 fval = (f32)(u32)lastVal;
-        fval = fval - *(f64*)&lbl_eu_80668388;  // subtract double constant
+        fval = fval - *(f64*)&*(f32*)lbl_eu_80668388;  // subtract double constant
         updateLODObject__8CTaskLODFv(self->lod0, fval);
     }
 
@@ -123,7 +124,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     for (i = 0; i < 3; i++) {
         u8 lod = ((u8*)self)[0x70 + i];
         if (lod != 0) {
-            removeLODEntry__8CTaskLODFv(lod, lbl_eu_80668380);
+            removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_80668380);
         }
     }
 
@@ -139,7 +140,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
             mode = 1;
             void* snd = getScnHandle__Fv();
             func_804BCC30(snd, self->lod1);
-            refreshLOD__8CTaskLODFv(self->lod1, lbl_eu_80668384);
+            refreshLOD__8CTaskLODFv(self->lod1, *(f32*)lbl_eu_80668384);
             activateLOD__8CTaskLODFv(self->lod1);
         }
         attachLODObject__8CTaskLODFv(self->lod1, mode);
@@ -153,7 +154,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
             mode = 1;
             void* snd = getScnHandle__Fv();
             func_804BCC30(snd, self->lod2);
-            refreshLOD__8CTaskLODFv(self->lod2, lbl_eu_80668384);
+            refreshLOD__8CTaskLODFv(self->lod2, *(f32*)lbl_eu_80668384);
             activateLOD__8CTaskLODFv(self->lod2);
         }
         attachLODObject__8CTaskLODFv(self->lod2, mode);
@@ -188,7 +189,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 
     // Final init
     self->state = 0;
-    self->val1C8 = lbl_eu_80668380;
+    self->val1C8 = *(f32*)lbl_eu_80668380;
     self->unk1AC = 0;
     self->unk1A8 = 0;
     self->unk1A4 = 0;
@@ -218,9 +219,9 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
 // func_8020B20C (0x58 bytes) - state dispatch + update
 // ============================================================
 extern "C" void func_8020B20C(CfGimmickElvData* self) {
-    if (lbl_eu_806646BC & 2) {
+    if (*(u32*)lbl_eu_806646BC & 2) {
         // PTMF call through state table
-        (self->*lbl_eu_80535868[self->state])();
+        typedef void (CfGimmickElvData::*PMF)(); PMF* tbl = (PMF*)lbl_eu_80535868; (self->*tbl[self->state])();
         func_8020B34C(self);
     }
 }
@@ -239,7 +240,7 @@ extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
             clearLODEntry__8CTaskLODFv(lod);
         } else {
             self->flags = f | 0x20;
-            removeLODEntry__8CTaskLODFv(lod, lbl_eu_80668380);
+            removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_80668380);
         }
         getLODOrSelf__8CTaskLODFv(self->lod0);
     }
@@ -272,11 +273,11 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
     if (self->flags & 0x100) {
         // LOD1 effect (bit 23)
         if ((self->flag1B1 & 1) && (self->flags & 0x00800000)) {
-            func_8020A6B0(&self->unk1A8, &self->elvVec1, self->unk6A, lbl_eu_80668390, 1, 0);
+            func_8020A6B0(&self->unk1A8, &self->elvVec1, self->unk6A, *(f32*)lbl_eu_80668390, 1, 0);
         }
         // LOD2 effect (bit 24)
         if ((self->flag1B2 & 1) && (self->flags & 0x01000000)) {
-            func_8020A6B0(&self->unk1AC, &self->elvVec2, self->unk6A, lbl_eu_80668390, 1, 0);
+            func_8020A6B0(&self->unk1AC, &self->elvVec2, self->unk6A, *(f32*)lbl_eu_80668390, 1, 0);
         }
     } else {
         func_8020A434((void*)&self->unk1A8);
@@ -475,7 +476,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
     if (self->flags & lodBit) {
         // Fading in
         if (flag & 0x10) {
-            if (self->val1C8 >= lbl_eu_80668394) {
+            if (self->val1C8 >= *(f32*)lbl_eu_80668394) {
                 // Complete
                 deactivateLOD__8CTaskLODFv(lod);
                 void* snd = getScnHandle__Fv();
@@ -485,8 +486,8 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
                 u32 db = 2 << d;
                 self->flags = (self->flags & ~lb) | db;
             } else {
-                f32 t = self->val1C8 / lbl_eu_80668394;
-                refreshLOD__8CTaskLODFv(lod, lbl_eu_80668384 - t);
+                f32 t = self->val1C8 / *(f32*)lbl_eu_80668394;
+                refreshLOD__8CTaskLODFv(lod, *(f32*)lbl_eu_80668384 - t);
             }
         } else {
             f32 cur = getLODDistance__8CTaskLODFv(lod);
@@ -501,7 +502,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
     } else {
         // Not yet fading
         if (flag & 0x10) {
-            refreshLOD__8CTaskLODFv(lod, lbl_eu_80668384);
+            refreshLOD__8CTaskLODFv(lod, *(f32*)lbl_eu_80668384);
         } else {
             attachLODObject__8CTaskLODFv(lod, 1);
             detachLODObject__8CTaskLODFv(lod, 0);
@@ -509,7 +510,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
 
         f32 cur = getLODLevel__8CTaskLODFv(lod);
         self->val1C0 = cur;
-        self->val1C8 = lbl_eu_80668380;
+        self->val1C8 = *(f32*)lbl_eu_80668380;
         self->flags |= lodBit;
 
         if (self->val1B8 != 0) {
@@ -530,9 +531,9 @@ extern "C" void func_8020BA98(CfGimmickElvData* self) {
 
     // Per-axis LOD fade driver (direction bits 0x20/0x40, latch bits 0x100/0x200)
     int allDone = 1;
-    f32 fadeTime = lbl_eu_80668394;
+    f32 fadeTime = *(f32*)lbl_eu_80668394;
     int i;
-    f32 zero = lbl_eu_80668380;
+    f32 zero = *(f32*)lbl_eu_80668380;
 
     for (i = 0; i < 2; i++) {
         u32 dirBit = 2 << i;
@@ -557,7 +558,7 @@ extern "C" void func_8020BA98(CfGimmickElvData* self) {
                 if (self->val1C8 >= fadeTime) {
                     void* snd = getScnHandle__Fv();
                     func_804BCC30(snd, lod);
-                    refreshLOD__8CTaskLODFv(lod, lbl_eu_80668384);
+                    refreshLOD__8CTaskLODFv(lod, *(f32*)lbl_eu_80668384);
                     self->flags = self->flags & ~lodBit & ~dirBit;
                 } else {
                     refreshLOD__8CTaskLODFv(lod, self->val1C8 / fadeTime);
@@ -614,10 +615,10 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
     }
 
     self->val1C8 -= func_80496288(lbl_eu_80663E14);
-    if (self->val1C8 > lbl_eu_80668380) {
+    if (self->val1C8 > *(f32*)lbl_eu_80668380) {
         func_80209F5C();
     } else {
-        self->val1C8 = lbl_eu_80668380;
+        self->val1C8 = *(f32*)lbl_eu_80668380;
     }
 
     {
@@ -638,21 +639,21 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
             if (self->flags & 0x02000000) {
                 f32 dt = func_80496288(lbl_eu_80663E14);
                 if (self->flags & 0x4000)
-                    cur = lbl_eu_80668398 * dt + cur;
+                    cur = *(f32*)lbl_eu_80668398 * dt + cur;
                 else
                     cur = cur + dt;
                 if (cur > self->val1C0) cur = self->val1C0;
                 removeLODEntry__8CTaskLODFv(lod, cur);
             }
         } else {
-            if (cur <= lbl_eu_80668380) arrived = 1;
+            if (cur <= *(f32*)lbl_eu_80668380) arrived = 1;
             if (self->flags & 0x02000000) {
                 f32 dt = func_80496288(lbl_eu_80663E14);
                 if (self->flags & 0x4000)
-                    cur = cur - lbl_eu_80668398 * dt;
+                    cur = cur - *(f32*)lbl_eu_80668398 * dt;
                 else
                     cur = cur - dt;
-                if (cur < lbl_eu_80668380) cur = lbl_eu_80668380;
+                if (cur < *(f32*)lbl_eu_80668380) cur = *(f32*)lbl_eu_80668380;
                 removeLODEntry__8CTaskLODFv(lod, cur);
             }
         }
@@ -689,7 +690,7 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
                     }
                 } else {
                     self->unk80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                        1, self->val1BC, 0, 0, lbl_eu_80668384);
+                        1, self->val1BC, 0, 0, *(f32*)lbl_eu_80668384);
                     self->val1D4 = 0xFFFF;
                 }
             }
@@ -708,8 +709,8 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
             // Periodic auto-reverse timer
             if (self->flags & 0x400) {
                 self->val1CC += func_80496288(lbl_eu_80663E14);
-                if (self->val1CC >= lbl_eu_80668394) {
-                    self->val1CC = lbl_eu_80668380;
+                if (self->val1CC >= *(f32*)lbl_eu_80668394) {
+                    self->val1CC = *(f32*)lbl_eu_80668380;
                     if (self->flags & 0x800) {
                         setLODObject__8CTaskLODFv(self->lod3, self->val1D6);
                         u16 sndId = self->val1B6;
@@ -726,10 +727,10 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
                             f32 lenSqA = diffA.x * diffA.x + diffA.y * diffA.y + diffA.z * diffA.z;
                             f32 lenSqB = diffB.x * diffB.x + diffB.y * diffB.y + diffB.z * diffB.z;
                             if (lenSqA >= lenSqB) {
-                                if (lenSqB <= lbl_eu_806683A0)
+                                if (lenSqB <= *(f32*)lbl_eu_806683A0)
                                     func_80208C48(sndId, &self->elvVec0);
                             } else {
-                                if (lenSqA <= lbl_eu_806683A0)
+                                if (lenSqA <= *(f32*)lbl_eu_806683A0)
                                     func_80208C48(sndId, &self->vec0);
                             }
                         }
@@ -768,7 +769,7 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
         if (self->flags & 0x1000) {
             if (self->lod3 != 0) {
                 self->val1D6 = getLODObject__8CTaskLODFv(self->lod3);
-                self->val1CC = lbl_eu_80668394;
+                self->val1CC = *(f32*)lbl_eu_80668394;
                 self->flags |= 0x400;
             }
             self->flags = (self->flags & ~0x1000) | 0x00200000;
@@ -778,7 +779,7 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
 
 finish:
     if (done) {
-        self->val1C8 = lbl_eu_80668380;
+        self->val1C8 = *(f32*)lbl_eu_80668380;
         self->state = 4;
     }
 }
@@ -807,3 +808,17 @@ extern "C" void func_8020C274(CfGimmickElvData* self) {
     }
     self->state = 1;
 }
+
+// absorb: retail data (generated)
+__declspec(section ".rodata") u8 lbl_eu_80508668[0x11] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x47, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x45, 0x6c, 0x76, 0x00};
+__declspec(section ".rodata") u8 lbl_eu_8050867C[0x5c] = {0x6d, 0x61, 0x70, 0x4f, 0x62, 0x6a, 0x00, 0x4c, 0x49, 0x46, 0x54, 0x4c, 0x4f, 0x44, 0x00, 0x73, 0x68, 0x74, 0x41, 0x4c, 0x4f, 0x44, 0x00, 0x73, 0x68, 0x74, 0x42, 0x4c, 0x4f, 0x44, 0x00, 0x73, 0x77, 0x74, 0x4c, 0x4f, 0x44, 0x00, 0x73, 0x77, 0x69, 0x74, 0x63, 0x68, 0x45, 0x46, 0x00, 0x73, 0x77, 0x69, 0x74, 0x63, 0x68, 0x53, 0x45, 0x00, 0x73, 0x68, 0x74, 0x53, 0x45, 0x00, 0x4c, 0x53, 0x53, 0x45, 0x00, 0x4c, 0x4c, 0x53, 0x45, 0x00, 0x4c, 0x45, 0x53, 0x45, 0x00, 0x4c, 0x4f, 0x44, 0x53, 0x54, 0x4f, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80535844[0x24] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_80535868[0x60] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
+const f32 *(f32*)lbl_eu_80668380 = 0.0f;
+const f32 *(f32*)lbl_eu_80668384 = 1.0f;
+const f64 *(f32*)lbl_eu_80668388 = 4503601774854144.0;
+__declspec(section ".sdata2") const f32 lbl_eu_80668390 = 5.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668394 = 30.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_80668398 = 4.0f;
+__declspec(section ".sdata2") const f32 lbl_eu_8066839C = 200.0f;
+char *(f32*)lbl_eu_806683A0[8] = {0x43, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

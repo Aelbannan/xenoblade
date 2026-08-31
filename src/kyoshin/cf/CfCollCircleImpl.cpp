@@ -36,3 +36,10 @@ void func_800AAC98(void* context, cf::CfCollCircleImpl* shape, void* c, void* d)
     void* mgr = reinterpret_cast<cf::CfCollCircleVTableIf*>(shape)->_v0AC();
     func_800A50AC(c, mgr, static_cast<float>(uval), d);
 }
+// absorb: split1 retail data sections
+// generated from retail build/us/asm via absorb
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfCollCircleImpl_cpp_sdata2[0x1C] = {
+    0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x3E, 0x99, 0x99, 0x9A,
+    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x42, 0x22, 0xF9, 0x83
+};

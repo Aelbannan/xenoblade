@@ -2,15 +2,29 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
+extern char lbl_eu_806677E0[];
+extern char lbl_eu_806677A0[];
+extern char lbl_eu_80662438[];
+extern char lbl_eu_80662430[];
+extern char lbl_eu_8066241C[];
+extern char lbl_eu_80662418[];
+extern char lbl_eu_80662410[];
+extern char lbl_eu_805316F8[];
+extern char lbl_eu_805316E8[];
+extern char lbl_eu_805316D0[];
+extern char lbl_eu_805316C0[];
+extern char lbl_eu_805033A8[];
+extern char lbl_eu_80503390[];
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <math.h>
 #include "monolib/math.hpp"
+#include <new>
 
-extern unsigned long lbl_eu_806640C0;
-extern unsigned long lbl_eu_806640D0;
+extern char lbl_eu_806640C0[];
+extern char lbl_eu_806640D0[];
 
 // ---------------------------------------------------------------------------
 // Type context for the field map item manager (retail symbol names).
@@ -59,17 +73,17 @@ extern "C" int func_8020971C(u16 id);
 extern "C" u32 func_802B2894(u8* self, const u32* src, u16 value);
 
 // sdata2 constants used by func_80173CA0's range thresholds.
-extern f32 lbl_eu_806677B8;
-extern f32 lbl_eu_806677BC;
-extern f32 lbl_eu_806677C0;
-extern f32 lbl_eu_806677C4;
-extern f32 lbl_eu_806677C8;
-extern f32 lbl_eu_806677CC;
-extern f32 lbl_eu_806677D0;
-extern u32 lbl_eu_806640A8;   // bdat table handle
-extern f32 lbl_eu_806677D4;
-extern f32 lbl_eu_806677D8;
-extern f32 lbl_eu_80667790;
+extern char lbl_eu_806677B8[];
+extern char lbl_eu_806677BC[];
+extern char lbl_eu_806677C0[];
+extern char lbl_eu_806677C4[];
+extern char lbl_eu_806677C8[];
+extern char lbl_eu_806677CC[];
+extern char lbl_eu_806677D0[];
+extern char lbl_eu_806640A8[];   // bdat table handle
+extern char lbl_eu_806677D4[];
+extern char lbl_eu_806677D8[];
+extern char lbl_eu_80667790[];
 
 // func_80174C98 / func_80174B4C: single unified decls live in
 // kyoshin/cf/CfMapItemManager.hpp (owner header).
@@ -126,16 +140,16 @@ public:
 };
 
 // External data (retail linker symbols)
-extern u8 lbl_eu_80664298;
-extern int lbl_eu_80664184;
-extern f32 lbl_eu_80667780;
-extern f32 lbl_eu_80667794;
-extern f32 lbl_eu_806677A8;
-extern f64 lbl_eu_806677B0;
-extern f32 lbl_eu_806677E8;
-extern f32 lbl_eu_806677E4;
-extern f32 lbl_eu_806677EC;
-extern f64 lbl_eu_806677F0;
+extern char lbl_eu_80664298[];
+extern char lbl_eu_80664184[];
+extern char lbl_eu_80667780[];
+extern char lbl_eu_80667794[];
+extern char lbl_eu_806677A8[];
+extern char lbl_eu_806677B0[];
+extern char lbl_eu_806677E8[];
+extern char lbl_eu_806677E4[];
+extern char lbl_eu_806677EC[];
+extern char lbl_eu_806677F0[];
 extern char lbl_eu_805033C0[];
 
 // Plain float triple so the record union stays trivial (MWCC rejects
@@ -246,8 +260,6 @@ using cf::CfValueItemManager;
 // mItems element constructors, clears the counters, then memsets the array.
 // Kept under the verbatim retail C-linkage name; the body delegates to the
 // inline member ctor so MWCC emits its array-construction idiom here.
-inline void* operator new(size_t size, void* ptr) { return ptr; }
-
 extern "C" void* __ct__cf_CfMapItemManager(CfMapItemManager* self) {
     return new (self) CfMapItemManager;
 }
@@ -281,12 +293,12 @@ void func_80173338(CfMapItemManager* self) {
 }
 
 // Column-name scratch keys and sdata2 constants used by func_801733C0.
-extern u8 lbl_eu_80662420[8];      // "itm?Per" key (byte 3 rewritten per pick)
+extern char lbl_eu_80662420[];      // "itm?Per" key (byte 3 rewritten per pick)
 extern char lbl_eu_805033C0[];     // bdat column-name blob
-extern f32 lbl_eu_80667784;
-extern f32 lbl_eu_80667788;
-extern f32 lbl_eu_8066778C;
-extern f32 lbl_eu_80667798;
+extern char lbl_eu_80667784[];
+extern char lbl_eu_80667788[];
+extern char lbl_eu_8066778C[];
+extern char lbl_eu_80667798[];
 // lbl_eu_80667790 (line ~70) and lbl_eu_8066A210 come from earlier decls/headers.
 // s16 -> float conversion magic double (0x4330000080000000): defining it lets
 // MWCC's constant pool reuse the retail symbol for the implicit conversions
@@ -443,7 +455,7 @@ int cf::CfMapItemManager::func_801737CC() { return 0; }
 
 // sdata scratch key: "itm?Per" - byte 3 is rewritten each iteration with
 // '1'+i to select lottery weight column itm1Per..itm8Per.
-extern u8 lbl_eu_80662428[8];
+extern char lbl_eu_80662428[];
 
 // Weighted lottery over up to 8 columns: roll mtRand(100), walk cumulative
 // weights from the bdat row, and forward the winning column index.
@@ -1299,3 +1311,43 @@ void func_801751DC(CfMapMarker* self) {
     self->field_3A = 5;
 }
 #pragma pop
+
+// absorb: retail data (generated)
+__declspec(section ".rodata") char lbl_eu_80503390[0x17] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
+__declspec(section ".rodata") char lbl_eu_805033A8[0x15] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x4d, 0x61, 0x70, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
+__declspec(section ".rodata") char lbl_eu_805033C0[0x78] = {0x70, 0x6f, 0x73, 0x58, 0x00, 0x70, 0x6f, 0x73, 0x59, 0x00, 0x70, 0x6f, 0x73, 0x5a, 0x00, 0x52, 0x61, 0x64, 0x69, 0x75, 0x73, 0x00, 0x73, 0x6e, 0x61, 0x70, 0x00, 0x70, 0x6f, 0x70, 0x4e, 0x75, 0x6d, 0x00, 0x6d, 0x61, 0x70, 0x49, 0x44, 0x00, 0x70, 0x6f, 0x70, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x77, 0x74, 0x72, 0x54, 0x79, 0x70, 0x65, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x44, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x53, 0x54, 0x46, 0x4c, 0x47, 0x00, 0x67, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x49, 0x44, 0x00, 0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x49, 0x4e, 0x00, 0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x41, 0x58, 0x00, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805316C0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805316D0[0x18] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805316E8[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char lbl_eu_805316F8[0x18] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".data") char jumptable_eu_80531710[0x20] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662410[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662418[0x4] = {0x72, 0x65, 0x66, 0x00};
+__declspec(section ".sdata") char lbl_eu_8066241C[0x4] = {0x72, 0x65, 0x66, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662420[0x7] = {0x69, 0x74, 0x6d, 0x3f, 0x49, 0x44, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662428[0x8] = {0x69, 0x74, 0x6d, 0x3f, 0x50, 0x65, 0x72, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662430[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata") char lbl_eu_80662438[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80667780[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80667784[0x4] = {0x3c, 0x23, 0xd7, 0x0a};
+__declspec(section ".sdata2") char lbl_eu_80667788[0x4] = {0x42, 0x34, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_8066778C[0x4] = {0x42, 0x22, 0xf9, 0x83};
+__declspec(section ".sdata2") char lbl_eu_80667790[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80667794[0x4] = {0x41, 0xf0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_80667798[0x4] = {0x3f, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677A0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677A8[0x4] = {0x42, 0x70, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677B0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677B8[0x4] = {0x45, 0x61, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677BC[0x4] = {0x42, 0xc8, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677C0[0x4] = {0x47, 0x1c, 0x40, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677C4[0x4] = {0x42, 0x48, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677C8[0x4] = {0x46, 0xaf, 0xc8, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677CC[0x4] = {0x3f, 0xc0, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677D0[0x4] = {0x40, 0x10, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677D4[0x4] = {0x3f, 0x19, 0x99, 0x9a};
+__declspec(section ".sdata2") char lbl_eu_806677D8[0x8] = {0x40, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677E0[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677E4[0x4] = {0x00, 0x00, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677E8[0x4] = {0x3f, 0x80, 0x00, 0x00};
+__declspec(section ".sdata2") char lbl_eu_806677EC[0x4] = {0x41, 0xf0, 0x00, 0x00};

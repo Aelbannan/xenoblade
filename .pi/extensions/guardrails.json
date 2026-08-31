@@ -3,28 +3,9 @@
   "permissionGate": {
     "autoDenyPatterns": [
       {
-        "pattern": "git reset"
-      },
-      {
-        "pattern": "git push"
-      },
-      {
-        "pattern": "git clean"
-      },
-      {
-        "pattern": "git checkout"
-      },
-      {
-        "pattern": "git restore"
-      },
-      {
-        "pattern": "git stash"
-      },
-      {
-        "pattern": "git filter-branch"
-      },
-      {
-        "pattern": "git filter-repo"
+        "pattern": "(?:\\bgit\\b(?:\\s+-C\\s+\\S+)*(?:\\s+--?[\\w-]+(?:=\\S*)?)*\\s+(?:reset|push|clean|checkout|restore|stash|filter-branch|filter-repo)\\b)|(?:\\[\\s*['\\\"]git['\\\"]\\s*,\\s*['\\\"](?:reset|push|clean|checkout|restore|stash|filter-branch|filter-repo)['\\\"])",
+        "regex": true,
+        "description": "Blocked: destructive/rewriting git command (reset/push/clean/checkout/restore/stash/filter-branch/filter-repo), including -C/flag forms and Python argv ['git','<verb>']"
       }
     ]
   },

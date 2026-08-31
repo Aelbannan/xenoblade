@@ -66,7 +66,7 @@ extern "C" unsigned long func_80061FFC();   // bdat heap handle getter
 // address computation, so the value is the FIRST declared parameter.
 // NOTE: the real definition is func_80175A50(CActorParam* dst, CActorParam*
 // src) - the write target comes FIRST.
-extern "C" void func_80175A50(u8* obj, u32 value);       // CActorParam.cpp
+extern "C" void func_80175A50(cf::CActorParam* dst, cf::CActorParam* src);       // CActorParam.cpp
 extern "C" void func_8014B804(u8* self, int index, int a2, int a3, int a4,
     int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13);
 // getInstance__Q22cf14CBattleManagerFv is declared by kyoshin/cf/CBattleManagerApi.hpp
@@ -150,40 +150,17 @@ struct Obj89cField {
     u32 field_0x89C;
 };
 
-// Interface over the sub-object at this+0x4 (slot 0x30 used by
-// func_800C0524 / CActorParam_UnkVirtualFunc88).
-class PcSub4VtIf {
-public:
-    virtual void _q008(); virtual void _q00C(); virtual void _q010();
-    virtual void _q014(); virtual void _q018(); virtual void _q01C();
-    virtual void _q020(); virtual void _q024(); virtual void _q028();
-    virtual void _q02C();
-    virtual void* _q030();   // +0x30 returns a state pointer
-};
-struct PcSub4Pad { u8 _pad[0x4]; };
-struct PcSub4Fake : PcSub4Pad, PcSub4VtIf {};
-// Distinct type, identical layout: alternating spellings keeps MWCC from
-// CSE-ing the sub-object address into one temp (retail reloads it).
-struct PcSub4PadB { u8 _pad[0x4]; };
-struct PcSub4FakeB : PcSub4PadB, PcSub4VtIf {};
-struct PcSub4PadC { u8 _pad[0x4]; };
-struct PcSub4FakeC : PcSub4PadC, PcSub4VtIf {};
+// Foreign sub-object at +0x4 is a CObjectState pointer (owner: CObjectState).
+// Slot 0x30 is CObjectState_UnkVirtualFunc11 (void*). Tiny iface on owning
+// type keeps addi+lwz pattern; deleted PcSub4VtIf caller-named pad.
+struct CObjectStatePad4 { u8 _pad[0x4]; };
+struct CObjectStateFake4 : CObjectStatePad4, cf::CObjectState {};
+struct CObjectStatePad4B { u8 _pad[0x4]; };
+struct CObjectStateFake4B : CObjectStatePad4B, cf::CObjectState {};
 
-// Interface over the sub-object at this+0x8 (slots 0x14/0x20 used by
-// func_800C0524).
-class PcSub8VtIf {
-public:
-    virtual void _s008(); virtual void _s00C(); virtual void _s010();
-    virtual void _s014(int id);       // +0x14
-    virtual void _s018(); virtual void _s01C();
-    virtual void _s020(int id);       // +0x20
-    virtual void _s024(); virtual void _s028(); virtual void _s02C();
-    virtual void _s030();
-};
-struct PcSub8Pad { u8 _pad[0x8]; };
-struct PcSub8Fake : PcSub8Pad, PcSub8VtIf {};
-struct PcSub8PadB { u8 _pad[0x8]; };
-struct PcSub8FakeB : PcSub8PadB, PcSub8VtIf {};
+// Foreign sub-object at +0x8 is the embedded CBattleState (owner: CBattleState).
+// Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted
+// PcSub8VtIf pad; call via reinterpret_cast<CBattleState*>((u8*)this+8)->...
 
 // Linked-list node/head view of the battle-manager list at +0x48.
 struct BmListNode {
@@ -242,18 +219,9 @@ struct CfObjectPcSubFields {
     float field_0x45C0; // 0x45C0: float field (set by enablePcFlag)
 };
 
-// Absolute-offset vtable-pointer slots rewritten by the CfObjectPc
-// dtor (stores lbl_eu_80529DA0 + 0x0/0xC/0x36C/0x37C).
+// Dtor vtable restores use CfActorVtSlots (same layout as former CfPcVt).
+// Deleted CfPcVt pad; use cf::CfActorVtSlots from CfObjectActor.hpp.
 namespace cf {
-struct CfPcVt {
-    u32 vt0;             // +0x00 primary vtable
-    u8 _pad4[4];
-    u32 vt8;             // +0x08 secondary vtable (+0xC)
-    u8 _padC[0x3380 - 0xC];
-    u32 vt3380;          // +0x3380 CAIAction sub-vtable (+0x36C)
-    u8 _pad3384[0x3E9C - 0x3384];
-    u32 vt3E9C;          // +0x3E9C player sub-vtable (+0x37C)
-};
 // +0x3380 CAIAction subobject base / block views (same shapes as the
 // CfObjectEne dtor's inlined cleanup).
 struct CfPcCAISub {
@@ -298,7 +266,7 @@ namespace cf {
         virtual void setupActionTable(); //0x5FC
         virtual void triggerActionRefreshA(); //0x600
         virtual void triggerActionRefreshB(); //0x604
-        virtual void handleMoveState(); //0x608
+        virtual void handleMoveState(u32 a, u32 b, u32 c, u32 d, u32 e); //0x608
 
         inline UNKTYPE* unkInline1(){
             BOOL thing = CObjectParam_UnkVirtualFunc5();
@@ -324,12 +292,11 @@ namespace cf {
     void CActorParam_UnkVirtualFunc176();
     int CActorParam_UnkVirtualFunc86();
     void CActorParam_UnkVirtualFunc88();
-    void CActorParam_UnkVirtualFunc178();
     void CActorParam_UnkVirtualFunc173();
     void CObjectParam_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
     void CfObject_UnkVirtualFunc2();
-    void CfObjectMove_UnkVirtualFunc16();
+    void CfObjectMove_UnkVirtualFunc16(u32 a, u32 b, u32 c, u32 d, u32 e);
     void CfObject_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc4();
     void finalizePcCleanup();

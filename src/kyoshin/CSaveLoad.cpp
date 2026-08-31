@@ -2,6 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" {
+    void func_801390E0(void*);
+    void func_80139124(void*);
+    void func_80138078(int);
+    void func_8009D018(u32, u32);
+}
 #include "kyoshin/CSaveLoad.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkSystem.hpp"

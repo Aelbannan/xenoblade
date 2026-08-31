@@ -29,6 +29,9 @@ state should be "no SKILL.md loaded" — load it on demand, not up front.
 
 ## Never (full policy: `SKILL.md` / `PLAN.md` §17)
 
+- **NEVER USE GIT** — do not run `git` (status, diff, add, commit, push, checkout, stash, rebase,
+  reset, clean, or any other subcommand). Leave all version control to the human; agents only edit
+  working-tree files.
 - Submit LLM-assisted matching upstream; commit `orig/`, `main.dol`, RELs, or disc assets; or decompile to asm/registers outside the §17.6 PS backend.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so launch it outside the restricted process.
 - **Treat the repo root as sacred** — do not dump scratch files, downloads, binaries, zip archives,

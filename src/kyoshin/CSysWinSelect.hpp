@@ -80,6 +80,7 @@ class CTaskGame {
 public:
     static CTaskGame* getInstance();
     static bool isFlag01Set();
+    static int func_800426F0();
 };
 
 // Abstract view into the embedded CCur18 vtable (slot 3 at +0x0C is the

@@ -619,7 +619,7 @@ extern "C" void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv() {}
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv(float /*value*/) {}
 
 extern "C" void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv() {}
 

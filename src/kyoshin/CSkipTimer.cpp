@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/CSkipTimer.hpp"
+extern "C" { void func_801390E0(void*); void func_80139124(void*); }
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

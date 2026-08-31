@@ -64,7 +64,10 @@ DO NOT:
   neg/or/srwi and grows the caller ~0xC.
 - Keep a pad "until we know the name". The vtable word IS the name.
 - Grow dummy _vNNN lists. Prefer real named virtuals on the owning class.
-- Commit. Do not run --smt / --linked / plain run.py diff.
+- NEVER TOUCH GIT. Do not run any git command (status, diff, add, commit,
+  checkout, reset, stash, restore, clean, pull, push, show, log, branch,
+  worktree, submodule, or wrappers). Leave the working tree dirty; the
+  human/harness owns git. Do not run --smt / --linked / plain run.py diff.
 
 CHelp worked example (already done; copy the shape, not the names):
 - CHelp is novtable, prefix so vptr is at +8, ctor writes lbl_eu_8053B3A0
@@ -96,5 +99,6 @@ TASK: Kill fake vtables in these files and recover the real class tree.
 
 When done, report: (1) retail __vt__ / lbl_eu_* you dumped and slot->symbol map,
 (2) owning class per slot, (3) what you deleted, (4) hexdiff --brief before/after
-for the functions you touched, (5) any slot still blocked and why. No commit.
+for the functions you touched, (5) any slot still blocked and why.
+NEVER TOUCH GIT — no git commands at all; leave files dirty.
 """

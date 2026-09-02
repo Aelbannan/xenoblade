@@ -25,9 +25,20 @@
 
 #include <types.h>
 #include <nw4r/lyt.h>
+#include <nw4r/math/math_types.h>
 
 // Vtable symbol for CBaseCur (6 entries, .data)
 extern "C" void* lbl_eu_805349A0[];
+
+// Tiny iface for virtual dispatch on the CBaseCur vtable (retail slots 0x08..0x14).
+// Lives on the owning class (CBaseCur) so call sites can use real virtuals
+// without a caller-named pad. Real arity only.
+struct CBaseCurVtIf {
+    virtual void VUpdate() = 0;
+    virtual void cleanup();
+    virtual void setRootPaneTranslate(const nw4r::math::VEC3* pos);
+    virtual void checkDeactivate();
+};
 
 class CBaseCur {
 public:

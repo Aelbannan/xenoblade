@@ -660,6 +660,6 @@ extern "C" int func_80061C5C(MenuCmdRingView* buffer, u32* headerOut,
                              u32* dataOut);
 
 // Party-slot character-data lookups used by func_8018FA2C.
-extern "C" void* func_8009EC9C(u16 index);  // matches CAIAction.hpp declaration
+extern "C" void* func_8009EC9C(u32 index);  // matches CAIAction.hpp declaration
 extern "C" void func_800A30E4(void* data);
 extern "C" void func_800A1370(void* data);

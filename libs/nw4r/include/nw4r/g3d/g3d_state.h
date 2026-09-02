@@ -15,7 +15,7 @@ struct FogState;
 extern "C" GXRenderModeObj lbl_eu_8061F9D4;
 extern "C" char lbl_eu_8061A750[];
 extern "C" char lbl_eu_8061FAB8[];
-extern "C" char lbl_eu_80665458[1];
+extern "C" char lbl_eu_80665458[8];
 extern "C" FogState lbl_eu_8061AF60;
 
 namespace nw4r {

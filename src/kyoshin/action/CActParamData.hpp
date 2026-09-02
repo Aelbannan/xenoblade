@@ -202,22 +202,22 @@ struct ActParamCtx94 {
 };
 
 // Callback interface stored at CActParamData+0x10.
-struct ActParamObj10 {
-    virtual void _v00(); virtual void _v04(); virtual void _v08(); virtual void _v0C();
-    virtual void _v10(); virtual void _v14(); virtual void _v18();
+struct ActParamObjView {
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08(); virtual void dummy0C();
+    virtual void dummy10(); virtual void dummy14(); virtual void dummy18();
     virtual int invoke1C(int sel, u32 val);   // vt+0x1C (sel: ctx-is-own-block flag)
-    virtual void _v20(); virtual void _v24(); virtual void _v28(); virtual void _v2C();
-    virtual void _v30(); virtual void _v34(); virtual void _v38(); virtual void _v3C();
-    virtual void _v40(); virtual void _v44(); virtual void _v48(); virtual void _v4C();
-    virtual void _v50(); virtual void _v54(); virtual void _v58(); virtual void _v5C();
-    virtual void _v60(); virtual void _v64(); virtual void _v68(); virtual void _v6C();
-    virtual void _v70(); virtual void _v74();
+    virtual void dummy20(); virtual void dummy24(); virtual void dummy28(); virtual void dummy2C();
+    virtual void dummy30(); virtual void dummy34(); virtual void dummy38(); virtual void dummy3C();
+    virtual void dummy40(); virtual void dummy44(); virtual void dummy48(); virtual void dummy4C();
+    virtual void dummy50(); virtual void dummy54(); virtual void dummy58(); virtual void dummy5C();
+    virtual void dummy60(); virtual void dummy64(); virtual void dummy68(); virtual void dummy6C();
+    virtual void dummy70(); virtual void dummy74();
     virtual int check80(int sel);    // vt+0x80
-    virtual void _v084(); virtual void _v088(); virtual void _v08C();
-    virtual void _v090(); virtual void _v094(); virtual void _v098(); virtual void _v09C();
-    virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8(); virtual void _v0AC();
-    virtual void _v0B0(); virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC();
-    virtual void _v0C0();
+    virtual void dummy084(); virtual void dummy088(); virtual void dummy08C();
+    virtual void dummy090(); virtual void dummy094(); virtual void dummy098(); virtual void dummy09C();
+    virtual void dummy0A0(); virtual void dummy0A4(); virtual void dummy0A8(); virtual void dummy0AC();
+    virtual void dummy0B0(); virtual void dummy0B4(); virtual void dummy0B8(); virtual void dummy0BC();
+    virtual void dummy0C0();
     virtual int invokeC4();          // vt+0xC4
 };
 
@@ -236,24 +236,24 @@ extern ActParamGlobalTable* lbl_eu_80663D50;
 void* getNonNullPtr(void* param);
 int func_80055EBC(CActParamData* self);
 void func_80055EE4(CActParamData* self);
-int func_80056730(struct ActParamCallIf* self, void* unused, u32 index);
+int func_80056730(struct ActParamCallView* self, void* unused, u32 index);
 int func_80056C54(u32 flags, void* unused, CActParamCopyDst2830* dst, const CActParamCopySrc080C* src);
 int func_80057470(u32 flags, void* unused, CActParamSet7C* dst, const CActParamDataRef* src);
 
 // Interface whose virtual at vt+0xBC is tail-called by func_80056730.
-struct ActParamCallIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8();
+struct ActParamCallView {
+    virtual void dummy008(); virtual void dummy00C(); virtual void dummy010(); virtual void dummy014();
+    virtual void dummy018(); virtual void dummy01C(); virtual void dummy020(); virtual void dummy024();
+    virtual void dummy028(); virtual void dummy02C(); virtual void dummy030(); virtual void dummy034();
+    virtual void dummy038(); virtual void dummy03C(); virtual void dummy040(); virtual void dummy044();
+    virtual void dummy048(); virtual void dummy04C(); virtual void dummy050(); virtual void dummy054();
+    virtual void dummy058(); virtual void dummy05C(); virtual void dummy060(); virtual void dummy064();
+    virtual void dummy068(); virtual void dummy06C(); virtual void dummy070(); virtual void dummy074();
+    virtual void dummy078(); virtual void dummy07C(); virtual void dummy080(); virtual void dummy084();
+    virtual void dummy088(); virtual void dummy08C(); virtual void dummy090(); virtual void dummy094();
+    virtual void dummy098(); virtual void dummy09C(); virtual void dummy0A0(); virtual void dummy0A4();
+    virtual void dummy0A8(); virtual void dummy0AC(); virtual void dummy0B0(); virtual void dummy0B4();
+    virtual void dummy0B8();
     virtual int findEntryByIndex(void* src, u32 index); // vt+0xBC
     virtual int findEntryByIndexWide(void* src, u32 index); // vt+0xC0
 };
@@ -346,7 +346,7 @@ struct ActParamStrRec {
     u32 mField24;                  // 0x24: receives the index for type-0x29 records
 };
 extern "C" int func_80055960(CActParamLinkTable* table, ActParamStrRec* list, ActParamStrRec* rec);
-int func_80056760(ActParamCallIf* self, void* unused, u32 index);
+int func_80056760(ActParamCallView* self, void* unused, u32 index);
 bool func_80053F40(CActParamByteList* list, u8 value);
 int func_80056828(u32 flags, CActParamNodeTable* table, CActParamSet1C38* dst, const CActParamWordSrc08* src);
 void func_8005577C(CActParamLinkTable* table, CActParamRecStream* stream);
@@ -406,14 +406,14 @@ float func_80053DE8(CActParamData* self, int sel);
 // Object at host+0x04: carries the vt+0x14 callback and a threshold float at 0x388.
 // First user virtual sits at vtable+0x08 (RTTI words at 0x00/0x04).
 struct ActParamObj5 {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
     virtual double notify14();     // vt+0x14; returns the (double) time so
                                    // callers keep it live in f1 across the call
 };
 // Float-returning view of the same object: func_80057670 keeps the time in a
 // single-precision float local (retail fsubs conversion) riding in f1.
 struct ActParamObj5f {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
     virtual float notify14();      // vt+0x14
 };
 struct ActParamData388 {
@@ -425,10 +425,10 @@ struct ActParamHost5 {
     u8 _pad00[4];
     void* mObj04;                  // 0x04: ActParamObj5 / ActParamData388 view
     u8 _pad08[0x24 - 0x08];
-    struct ActParamCb5* mCb24;     // 0x24
+    struct ActParamCbView5* mCb24;     // 0x24
 };
-struct ActParamCb5 {
-    virtual void _v00(); virtual void _v04();
+struct ActParamCbView5 {
+    virtual void dummy00(); virtual void dummy04();
     virtual void invoke10(void* obj); // vt+0x10
 };
 struct ActParamVals5 {
@@ -468,7 +468,7 @@ struct CActParamWalkRec {
     u8 mByte0B;                    // 0x0B
 };
 // Interface whose second user virtual (vt+0x0C) receives the walk callback.
-struct ActParamWalkIf {
+struct ActParamWalkView {
     virtual void vf08(u32 a, u8 b, u8 c);
     virtual void vf0C(u32 a, u8 b, u8 c);
 };
@@ -482,7 +482,7 @@ struct ActParamWalkHost {
     u8 _pad00[0x04];
     u32 mField04;                  // 0x04: first callback arg
     u8 _pad08[0x1C];
-    ActParamWalkIf* mIf24;         // 0x24: callback receiver
+    ActParamWalkView* mIf24;         // 0x24: callback receiver
     u8 _pad28[0x250];
     CActParamWalkRec* volatile mRec278; // 0x278: record chain head (volatile: retail re-reads per access)
 };
@@ -532,37 +532,37 @@ void func_80054980(ActParamWalkHost* host);
 
 // ---- func_80056D00 / func_80057280 / func_800568E8 / func_80057670 ----
 // Variants of func_80056A98 differing only in the callback invoked at the end.
-struct ActParamCb0C {
-    virtual void _v0();
+struct ActParamCbView0C {
+    virtual void dummy0();
     virtual void invoke0C(void* obj, u8 a, u8 b); // vt+0x0C
 };
-struct ActParamCb14 {
-    virtual void _v0(); virtual void _v1(); virtual void _v2();
+struct ActParamCbView14 {
+    virtual void dummy0(); virtual void dummy1(); virtual void dummy2();
     virtual void invoke14(void* obj, void* src); // vt+0x14
 };
-struct ActParamCb1C {
-    virtual void _v0(); virtual void _v1(); virtual void _v2(); virtual void _v3(); virtual void _v4();
+struct ActParamCbView1C {
+    virtual void dummy0(); virtual void dummy1(); virtual void dummy2(); virtual void dummy3(); virtual void dummy4();
     virtual void invoke1C(void* obj, void* src); // vt+0x1C
 };
-struct ActParamCb20 {
-    virtual void _v0(); virtual void _v1(); virtual void _v2(); virtual void _v3();
-    virtual void _v4(); virtual void _v5();
+struct ActParamCbView20 {
+    virtual void dummy0(); virtual void dummy1(); virtual void dummy2(); virtual void dummy3();
+    virtual void dummy4(); virtual void dummy5();
     virtual void invoke20(void* obj, void* src); // vt+0x20
 };
 // Callback interface used by func_80056EC8: fires the vt+0x18 slot with
 // the data object and the source record.
-struct ActParamCb18 {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
-    virtual void _v0C();
+struct ActParamCbView18 {
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
+    virtual void dummy0C();
     virtual void invoke18(void* obj, void* src); // vt+0x18
 };
 // Callback interface used by func_80057490
 // data object, the source mask word, two vals words, and the func_80053960
 // tick value.
-struct ActParamCb28 {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
-    virtual void _v0C(); virtual void _v10(); virtual void _v14();
-    virtual void _v18(); virtual void _v1C();
+struct ActParamCbView28 {
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
+    virtual void dummy0C(); virtual void dummy10(); virtual void dummy14();
+    virtual void dummy18(); virtual void dummy1C();
     virtual void invoke28(ActParamData388* obj, u32 mask, u32 flag14,
                           u32 flag0C, u32 tick); // vt+0x28
 };
@@ -579,11 +579,11 @@ struct ActParamData3A0 {
 };
 // Callback interface for func_8005789C: fires the vt+0x28 slot with a pointer
 // to the src mask word (src+0x0C) and the normalized src byte flag.
-struct ActParamCb28Time {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
-    virtual void _v0C(); virtual void _v10(); virtual void _v14();
-    virtual void _v18(); virtual void _v1C(); virtual void _v20();
-    virtual void _v24();
+struct ActParamCbView28Time {
+    virtual void dummy00(); virtual void dummy04(); virtual void dummy08();
+    virtual void dummy0C(); virtual void dummy10(); virtual void dummy14();
+    virtual void dummy18(); virtual void dummy1C(); virtual void dummy20();
+    virtual void dummy24();
     virtual void invoke28(u32* wordPtr, u32 flag); // vt+0x28
 };
 
@@ -630,7 +630,7 @@ struct ActParamD3CTimeRec {
 
 // Callback interface at CActParamData+0x24 used by func_800550E8: fires the
 // vt+0x24 slot with the entry object and a selector (0 = phase A, 1 = B).
-struct ActParamCbSel24 {
+struct ActParamCbViewSel24 {
     virtual void v08(); virtual void v0C(); virtual void v10();
     virtual void v14(); virtual void v18(); virtual void v1C();
     virtual void v20();
@@ -653,11 +653,11 @@ struct ActParamD3CMember {
     volatile float mFloat70;
 };
 // Callback interface at CActParamData+0x24 used by func_80054D3C.
-struct ActParamCbD3C {
-    virtual void _v08();
+struct ActParamCbViewD3C {
+    virtual void dummy08();
     virtual void invoke0C(void* obj, u8 a, u8 b); // vt+0x0C
-    virtual void _v10();
-    virtual void _v14();
+    virtual void dummy10();
+    virtual void dummy14();
     virtual void invoke18(void* obj, void* src);  // vt+0x18
 };
 extern "C" void func_80054D3C(CActParamData* self, ActParamD3CMember* member);

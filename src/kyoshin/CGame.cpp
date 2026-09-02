@@ -74,9 +74,7 @@ CGame::~CGame() {
 
 void CWorkThread::wkRender() {}
 void CWorkThread::wkRenderAfter() {}
-bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) {
-    return true;
-}
+// bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) { return true; } // removed
 
 CGame* CGame::getInstance() {
     return spInstance;
@@ -339,7 +337,7 @@ bool CGame::wkStandbyExceptionRetry(u32 wid) {
     if (exception == nullptr) {
         return true;
     }
-    if (exception->func_80457C8C() == false) {
+    if (exception->isFadedIn() == false) {
         return false;
     }
     if (exception->mException == nullptr) {

@@ -378,15 +378,15 @@ extern "C" {
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void activateLOD__8CTaskLODFv(s16 taskID);
     // Imports for cf::CTaskREvent::Move
-    u32 func_801684F4();
+    int func_801684F4();
     void func_8016C6EC(int arg);
     int func_8016A35C();
     int func_80043BA4();
     void func_804962A8(u8* self, u32 flag);
     u32 func_800EA444(u32 battle);
-    f32 lbl_eu_80667638;
-    f32 lbl_eu_8066763C;
-    f32 lbl_eu_80667640;
+    extern f32 lbl_eu_80667638;
+    extern f32 lbl_eu_8066763C;
+    extern f32 lbl_eu_80667640;
     void func_80086B5C__Q22cf13CfGameManagerFv(u32 a, u32 b);
     u8* getGlobalSda();
     void func_800599E0(u32 a, u32 b, u32 c, u32 d);

@@ -308,8 +308,8 @@ extern u8 lbl_eu_8052BD80[0xC];
 extern const float lbl_eu_80666EC8;   // 0.2f
 extern const float lbl_eu_80666ECC;   // 0.1f
 extern const float lbl_eu_80666EF0;   // -1.0f (sdata2 word)
-extern float lbl_eu_8066A1FC;          // two*pi (angle wrap; pi is declared in CfCam.hpp)
-extern "C" float lbl_eu_8066A1F8;      // .sdata2 pi
+extern const float lbl_eu_8066A1FC;          // two*pi (angle wrap; pi is declared in CfCam.hpp)
+extern "C" const float lbl_eu_8066A1F8;      // .sdata2 pi
 extern const float lbl_eu_80666ED0;   // 0.024543693f (angle scale)
 extern const float lbl_eu_80666ED4;   // 0.5f (half-angle scale)
 extern const float lbl_eu_80666ED8;   // radians -> FIdx scale (SinFIdx/CosFIdx arg)

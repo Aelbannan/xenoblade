@@ -7,7 +7,6 @@
 class CResLookup;
 
 namespace cf {
-
 class CfGameManager;
 class CfObjectMove;
 
@@ -63,7 +62,7 @@ struct CfResPcResObj {
 // Model objects at parent+0x6F8/+0x6FC are CScnItemModel (created by
 // func_80489A60 in monolib/src/scn/CScnItemModel.cpp). Use CScnItemModel
 // virtuals directly: vfunc48(float) at +0x48, vfunc9C(u32,u32) at +0x9C.
-// ResModelIf / ResModelIfF pads deleted.
+// ResModel pads deleted (both variants).
 
 // Object stored at parent+0x700: the first word is a handle pointer
 // (null-checked after the entry-build dispatch by func_8018E7E4).
@@ -252,10 +251,6 @@ struct CfResPcImplPrefix {
     /* 0x0E */ s16 field_0E; // state (-1 = invalid)
 };
 
-struct CfResPcImplVtbl {
-    void* slots[27];
-};
-
 // Real class tree for cf::CfResPcImpl (retail lbl_eu_80532774, 0x6C:
 // RTTI + 0 + 25 slots). novtable: TU has no .data vtable, ctor writes
 // lbl_eu_80532774 at +0x10 like CToken / CHelp.
@@ -424,7 +419,7 @@ typedef void (cf::CfResPcImpl::*CfResPcImplPMF)();
 extern CfResPcImplPMF lbl_eu_80532730[4];
 
 // Secondary vtable for CfResPcImpl, stored at +0x10 by the ctor (.data).
-extern cf::CfResPcImplVtbl lbl_eu_80532774;
+extern "C" void* lbl_eu_80532774[];
 
 // Float seed written to +0x04 by the ctor (.sdata2). Declared const so MWCC
 // treats the pool load as a constant and hoists the lfs above the frame
@@ -532,6 +527,19 @@ extern "C" void func_800B7410();
 
 // Stack-buffer slot query (CfGameManager helper): fills CfResPcLoadBuffer.
 extern "C" void func_80080F48__Q22cf13CfGameManagerFv(u32 value, cf::CfResPcLoadBuffer* resource, u32 first, u32 second);
+extern "C" unsigned long getEffectFlagState__Q22cf13CfGameManagerFv();
+extern "C" int func_8007E908__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_8007FE18__Q22cf13CfGameManagerFv(int);
+extern "C" void func_80085334__Q22cf13CfGameManagerFv(int);
+extern "C" void func_8007D834__Q22cf13CfGameManagerFv(void*);
+extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32, u16);
+extern "C" void func_8007C140__Q22cf13CfGameManagerFv(int);
+extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(int);
+extern "C" void func_8007DA0C__Q22cf13CfGameManagerFv(void*, u16, u16);
+extern "C" void func_80083328__Q22cf13CfGameManagerFv(void*, u32, u16);
+extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
+extern "C" void func_80085248__Q22cf13CfGameManagerFv(cf::CfGameManager*);
+extern "C" void func_8007D84C__Q22cf13CfGameManagerFv(cf::CfGameManager*);
 
 // C-ABI imports used by func_8018E7E4 / func_8018D79C (defined in IResInfo.cpp /
 // CfGameManager.cpp / the model layer). extern "C" keeps the call-site relocs
@@ -580,8 +588,10 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
 // RTTI typeinfo pair for the __dynamic_cast in func_8018DE8C (.sdata).
-extern const void* lbl_eu_806624C0;
-extern const void* lbl_eu_806624D0;
+extern const void* lbl_eu_806624C0[2];
+extern const void* lbl_eu_806624C8[2];
+extern const void* lbl_eu_806624D0[2];
+extern const void* lbl_eu_806624D8[2];
 
 // Debug/format string used by func_8018DE8C (.rodata).
 extern char lbl_eu_80503BC4[];

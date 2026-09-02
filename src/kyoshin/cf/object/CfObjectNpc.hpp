@@ -55,64 +55,7 @@ extern "C" void __ct__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
 extern "C" u8* __ct__cf_CfResPcImpl(u8* obj, cf::CfObjectMove* parent);
 extern "C" void* __ct__cf_CfResReloadImpl(void* self, void* parent);
 
-// Vtable-layout proxy for calling cf-chain vtable slots that carry
-// arguments or return values the base header declares as plain void slots.
-// Dummy virtuals pin every offset so the named slots land exactly where the
-// retail CfObjectNpc vtable has them (same shape as CfObjectModel.hpp's
-// CfObjectVt14C proxies).
-class CfObjectNpcVt {
-public:
-    // NB: MWCC implicitly reserves vtable +0x0/+0x4 for the dtor pair.
-    virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-    virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-    virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-    virtual void m38();
-    virtual void setName(const char* name);   // +0x3C (CfObject_UnkVirtualFunc15)
-    // +0x40 .. +0xD8
-    virtual void m40(); virtual void m44(); virtual void m48(); virtual void m4C();
-    virtual void m50(u32 flag); virtual void m54(); virtual void m58(); virtual void m5C();
-    virtual void m60(); virtual void m64(); virtual void m68(); virtual void m6C();
-    virtual void m70(); virtual void m74(); virtual void m78(); virtual void m7C();
-    virtual void m80(); virtual void m84(); virtual void m88();
-    // +0x8C leaves a scaled float in f1 despite the void base declaration.
-    virtual f32 getScale8C();
-    virtual void m90(); virtual void m94(); virtual void m98(); virtual void m9C();
-    virtual void mA0(); virtual void mA4(); virtual void mA8(); virtual void mAC();
-    virtual void mB0(); virtual void mB4(); virtual void mB8(); virtual void mBC();
-    virtual void mC0(); virtual void mC4(); virtual void mC8(); virtual void mCC();
-    virtual void mD0(); virtual void mD4(); virtual void mD8();
-    virtual void setFade(float value);        // +0xDC (CfObject_UnkVirtualFunc35)
-    // +0xE0 .. +0x130
-    virtual void mE0(); virtual void mE4(); virtual void mE8(); virtual void mEC();
-    virtual void mF0(); virtual void mF4(); virtual void mF8(); virtual void mFC();
-    virtual void m100(); virtual void m104(); virtual void m108(); virtual void m10C();
-    virtual void m110(); virtual void m114(); virtual void m118(); virtual void m11C();
-    virtual void m120(); virtual void m124(); virtual void m128(); virtual void m12C();
-    virtual void m130();
-    virtual void setTime(float value);        // +0x134 (CfObject_UnkVirtualFunc57)
-    virtual u32* getScalePtr();               // +0x138 (CfObject_UnkVirtualFunc58)
-    virtual void setSpeed(float value);       // +0x13C (CfObject_UnkVirtualFunc59)
-    // +0x140 .. +0x220
-    virtual void m140(); virtual void m144(); virtual void m148(); virtual void m14C();
-    virtual void m150(); virtual void m154(); virtual void m158(); virtual void m15C();
-    virtual void m160(); virtual void m164(); virtual void m168(); virtual void m16C();
-    virtual void m170(); virtual void m174(); virtual void m178(); virtual void m17C();
-    virtual void m180(); virtual void m184(); virtual void m188(); virtual void m18C();
-    virtual void m190(); virtual void m194(); virtual void m198(); virtual void m19C();
-    virtual void m1A0(); virtual void m1A4(); virtual void m1A8();
-    virtual void m1AC(u32 param, const char* table); // +0x1AC BDAT column loader
-    virtual void m1B0(); virtual void m1B4(); virtual void m1B8(); virtual void m1BC();
-    virtual void m1C0(); virtual void m1C4(); virtual void m1C8(); virtual void m1CC();
-    virtual void m1D0();
-    virtual void moveTime(float value);       // +0x1D4 (CfObjectMove_UnkVirtualFunc4)
-    virtual void m1D8(); virtual void m1DC();
-    virtual void m1E0(); virtual void m1E4(); virtual void m1E8(); virtual void m1EC();
-    virtual void m1F0(); virtual void m1F4(); virtual void m1F8(); virtual void m1FC();
-    virtual void m200(); virtual void m204(); virtual void m208(); virtual void m20C();
-    virtual void m210(); virtual void m214(); virtual void m218(); virtual void m21C();
-    virtual void m220();
-    virtual void applyParams();               // +0x224 (slot after CfObjectMove_UnkVirtualFunc23)
-};
+
 
 namespace cf {
     // size: 0x724

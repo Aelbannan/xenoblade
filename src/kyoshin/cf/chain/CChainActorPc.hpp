@@ -19,20 +19,20 @@ public:
     CChainActorPc();
     virtual ~CChainActorPc();
     // filler virtuals to position +0x48 correctly (header 2 + 16 dummies = offset 0x48 is index 16)
-    virtual void _vf0C();
+    virtual void _vf0C(int val);
     virtual void _vf10();
     virtual void _vf14();
     virtual void _vf18();
     virtual void _vf1C();
-    virtual void _vf20();
+    virtual int _vf20(int arg);
     virtual void _vf24();
     virtual void _vf28();
     virtual void _vf2C();
-    virtual void _vf30();
-    virtual void _vf34();
+    virtual void _vf30(int p1,int p2,int p3);
+    virtual void* _vf34();
     virtual void _vf38();
     virtual void _vf3C();
-    virtual void _vf40();
+    virtual int _vf40();
     virtual int _vf44(void* arg); // slot +0x44 : func_8028246C (thunk) – takes void** arg, forwards to +0x48
     virtual int vf48(void* arg);  // slot +0x48 : func_80282480 – int(void* p) where p = *(void**)arg, tests bit at +0x3f00
     // overlay for manual vptr at +0x70 (CChainActor::mVTable)

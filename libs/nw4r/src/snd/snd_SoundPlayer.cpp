@@ -246,3 +246,4 @@ void nw4r::snd::SoundPlayer::detail_SetPlayableSoundLimit(int limit) {
 
 // ABSORB pad - make raw BSS sizes match retail
 unsigned char absorb_pad_snd_SoundPlayer_bss_10[0x10] __attribute__((aligned(8)));
+unsigned char absorb_pad_snd_SoundPlayer_sbss_4[4];

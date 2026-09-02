@@ -6,32 +6,20 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
+#include "kyoshin/cf/CfResReloadViews.hpp"
+// IResInfo's func_800AA33C uses FixStr; this TU needs the u8* form - hide the
+// FixStr decl so the two extern "C" overloads don't collide (10197).
+#define func_800AA33C IResInfo_func_800AA33C
+#include "kyoshin/cf/IResInfo.hpp"
+#undef func_800AA33C
 extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
-
-class CResLookup {
-public:
-    virtual void* getResourceBase(void* entry, int arg);
-    virtual u32 getFlags();
-    virtual ~CResLookup();
-    virtual void* vfunc01();
-    virtual u8* _v018(void* entry);
-    virtual u8* _v01C(void* entry);
-    virtual void* vfunc04();
-    virtual void* vfunc05();
-    virtual int _v028(void* entry);
-    virtual void* vfunc07();
-    virtual u8* _v030(void* entry);
-    virtual void* vfunc09();
-    virtual void* vfunc0A();
-    virtual void* vfunc0B(void* entry);
-    virtual int _v040(void* entry);
-};
 
 #include "monolib/math/Random.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
 void* memset(void*, int, unsigned long);
+
 
 // Retail ctor symbol __ct__cf_CfResReloadImpl uses the legacy flattened
 // mangling, which a real member ctor cannot reproduce (MWCC would emit
@@ -78,8 +66,8 @@ int func_8016CE5C(const cf::CfResReloadImpl* self) {
         cf::CfResReloadParent* q = self->field_00;
         if (e->field_04 == q->field_70) {
             // slot +0x40 takes the owning entry as r4 (same convention as
-            // func_8016D688's CfResEntryIf2 dispatches)
-            if (e->field_2C->_v040(e) != 0) {
+            // func_8016D688's CfResEntry dispatches)
+            if (e->field_2C->isInUse(e) != 0) {
                 return 1;
             }
         }
@@ -305,9 +293,9 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
 // at every call boundary); the post-instance-check parent copy stays live in
 // a register across the flag tests and the lookup-param selection.
 extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
-    ((cf::CfResParentVtIf*)self->field_00)->_v17C();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
     func_800BBB50((cf::CfObjectModel*)self->field_00);
-    ((cf::CfResParentVtIf*)self->field_00)->_v178();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
     self->field_00->field_90 = 0;
     // Local introduced after the first clear: MWCC reuses this load for both
     // the field_94 store and the game-manager call (no reload before bl).
@@ -430,7 +418,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         return;
     }
     if (f6c & 0x20) {
-        if (entry->field_2C->_v040(entry) == 0) {
+        if (entry->field_2C->isInUse(entry) == 0) {
             ok = 0;
         }
     }
@@ -470,7 +458,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     setMemInitFlag__Q23mtl10MemManagerFb(false);
     if (self->field_00->field_6C & 0x20) {
         if (self->field_00->field_98 == 0) {
-            u8* slot18 = entry->field_2C->_v018(entry);
+            u8* slot18 = entry->field_2C->getHandle18(entry);
             self->field_00->field_90 = slot18;
             u8* h = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
             func_800BBADC(self->field_00, h);
@@ -489,14 +477,14 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             wp[0] = 0;
             work.tail = 0;
             func_800AA33C(wp, entry->field_04, 1, 0);
-            u8* slot1C = entry->field_2C->_v01C(entry);
+            u8* slot1C = entry->field_2C->getHandle1C(entry);
             self->field_00->field_94 = slot1C;
             // three-arg call: getD80Flag result lands in r3 like retail
             self->field_00->field_9C =
                 func_800584B8((u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)work.buf);
         }
     }
-    if (entry->field_2C->_v028(entry) != 0) {
+    if (entry->field_2C->isActive28(entry) != 0) {
         self->field_00->field_6DC = entry;
         cf::CfResReloadParent* par = self->field_00;
         if (par->field_64 & 0x8) {
@@ -509,7 +497,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     int ok2 = (self->field_00->field_68 >> 20) & 1;
     if (ok2 != 0) {
         func_800BB618((cf::CfObjectModel*)self->field_00, 0);
-        ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_8066769C);
+        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_8066769C);
     }
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
     // volatile on both stores + the parent read pins retail's order:
@@ -523,7 +511,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (lbl_eu_80663E24 & 0x40000) {
         func_800BE824(self->field_00, 0);
     } else if (self->field_00->field_C4 != 0) {
-        u8* slot30 = entry->field_2C->_v030(entry);
+        u8* slot30 = entry->field_2C->getHandle30(entry);
         if (slot30 != 0) {
             func_804B0A6C(self->field_00->field_60C, slot30);
         }
@@ -537,7 +525,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     // x & -3 lowers to the retail wrap-mask rlwinm(0,31,29)
     self->field_00->field_6C &= -3;
     if (self->field_00->field_98 != 0) {
-        ((cf::CfResParentObjIf*)self->field_00->field_98)->_v064(0);
+        reinterpret_cast<ResHandleLocal*>(self->field_00->field_98)->handle64(0);
     }
     if (self->field_00->field_64 & 0x4) {
         cf::CfResReloadParent* p = self->field_00;
@@ -547,7 +535,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         }
         if (ene->field_45CA & 0x6) {
             // retail performs no null check on field_98 here
-            ((cf::CfResParentObjIf*)p->field_98)->_v088(0);
+            reinterpret_cast<ResHandleLocal*>(p->field_98)->handle88(0);
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
@@ -574,7 +562,7 @@ extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
     }
     cf::CfResEneObj* obj = (cf::CfResEneObj*)func_800AD860(self->field_00);
     if (obj != 0 && (obj->field_45CA & 0x2)) {
-        if (((cf::CfResParentVtIf*)self->field_00)->_v098() != 0) {
+        if (reinterpret_cast<ParentInt98Local*>(self->field_00)->isActive98() != 0) {
             self->field_1C = 0;
             goto eee4;
         }
@@ -627,7 +615,7 @@ ef7c:
         }
     }
     func_800BC4A0((cf::CfObjectMove*)self->field_00);
-    ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_806676A4);
+    reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_806676A4);
     return;
 efe8:
     self->field_1E = 0;
@@ -641,58 +629,21 @@ effc:
     self->field_08++;
 }
 
-// Cast-only SI for CfResReloadImpl sub-object virtual calls
-struct ResReloadIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void* vf3C(void* a);
-    virtual void _v040(); virtual int vf44();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void vfB0();
-    virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0();
-    virtual void _v0C4(); virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0();
-    virtual void _v0D4(); virtual void _v0D8(); virtual void _v0DC(); virtual float vfE0();
-    virtual void _v0E4(); virtual void _v0E8(); virtual void _v0EC(); virtual float vfF0();
-    virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC(); virtual void _v100();
-    virtual void _v104(); virtual void _v108(); virtual void _v10C(); virtual void _v110();
-    virtual void _v114(); virtual void _v118(); virtual void _v11C(); virtual void _v120();
-    virtual void _v124(); virtual void _v128(); virtual void _v12C(); virtual void _v130();
-    virtual void _v134(); virtual void _v138(); virtual void _v13C(); virtual void _v140();
-    virtual void _v144(); virtual void _v148(); virtual void _v14C(); virtual void _v150();
-    virtual void _v154(); virtual void _v158(); virtual void _v15C(); virtual void _v160();
-    virtual void _v164(); virtual void _v168(); virtual void _v16C(); virtual void _v170();
-    virtual void _v174(); virtual void _v178(); virtual void _v17C(); virtual void* vf180();
-    virtual void _v184(); virtual void _v188(); virtual void _v18C(); virtual void _v190();
-    virtual void _v194(); virtual void _v198(); virtual void _v19C(); virtual void _v1A0();
-    virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0();
-    virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0();
-    virtual void _v1C4(); virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0();
-    virtual void _v1D4(); virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0();
-    virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0();
-    virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC(); virtual int vf200();
-};
-
 extern "C" void func_8016DCE4(u8* self) {
-    if (!((ResReloadIf*)*(void**)self)->vf44()) {
-        void* r = ((ResReloadIf*)*(void**)self)->vf180();
-        ((ResReloadIf*)*(void**)self)->vf3C(r);
+    if (!((cf::CObjectParam*)*(void**)self)->CObjectParam_UnkVirtualFunc3()) {
+        void* r = ((cf::CfObjectModel*)*(void**)self)->CfObjectModel_UnkVirtualFunc3();
+        ((cf::CObjectParam*)*(void**)self)->CObjectParam_UnkVirtualFunc1((const char*)r);
     }
     if (*(void**)((u8*)*(void**)self + 0x38))
-        ((ResReloadIf*)*(void**)((u8*)*(void**)self + 0x38))->vfB0();
+        ((cf::CfObject*)*(void**)((u8*)*(void**)self + 0x38))->CfObject_UnkVirtualFunc24();
     if (*(void**)((u8*)*(void**)self + 0x98)) {
         float v;
-        if (((ResReloadIf*)*(void**)self)->vf200()) {
+        if (((cf::CfObjectMove*)*(void**)self)->CfObjectMove_UnkVirtualFunc15()) {
             void* b = *(void**)self;
             if (b) b = (u8*)b - 0x3e9c;
-            v = ((ResReloadIf*)b)->vfF0();
+            v = ((cf::CfObject*)b)->CfObject_UnkVirtualFunc40();
         } else {
-            v = ((ResReloadIf*)*(void**)self)->vfE0();
+            v = ((cf::CfObject*)*(void**)self)->CfObject_UnkVirtualFunc36();
         }
         void* obj = *(void**)((u8*)*(void**)self + 0x98);
         *(float*)((u8*)obj + 0x304) = v;

@@ -15,6 +15,241 @@
 #include <nw4r/math.h>
 #include <revolution/GX.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CObjectState.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/object/CBattleState.hpp"
+
+// absorb: split1 retail data sections - generated for kyoshin/menu/CMenuEnemyState
+// retail sizes: .rodata=0x778, .data=0x108, .bss=0x10, .sdata=0x10, .sbss=0x50, .sdata2=0x90
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_menu_CMenuEnemyState_data[0x108] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xA8, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xA4,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5C, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_data, __absorb_kyoshin_menu_CMenuEnemyState_data);
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_menu_CMenuEnemyState_rodata[0x778] = {
+    0x43, 0x50, 0x63, 0x53, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x43, 0x75, 0x72,
+    0x73, 0x6F, 0x72, 0x30, 0x31, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69,
+    0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74,
+    0x30, 0x31, 0x5F, 0x70, 0x63, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00,
+    0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F,
+    0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x30, 0x31, 0x5F, 0x70, 0x63, 0x5F,
+    0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x38,
+    0x30, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72,
+    0x67, 0x65, 0x74, 0x30, 0x31, 0x5F, 0x70, 0x63, 0x5F, 0x6F, 0x6E, 0x2E,
+    0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69,
+    0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74,
+    0x30, 0x31, 0x5F, 0x70, 0x63, 0x5F, 0x72, 0x6F, 0x6F, 0x70, 0x2E, 0x62,
+    0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x63, 0x72, 0x73,
+    0x5F, 0x73, 0x69, 0x64, 0x65, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62,
+    0x61, 0x74, 0x74, 0x6C, 0x65, 0x31, 0x37, 0x5F, 0x65, 0x78, 0x70, 0x30,
+    0x31, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x6D, 0x66, 0x37, 0x31,
+    0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x31, 0x37, 0x5F, 0x65, 0x78,
+    0x70, 0x30, 0x31, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E,
+    0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x61, 0x6C, 0x6C, 0x00, 0x74, 0x78, 0x74,
+    0x5F, 0x65, 0x78, 0x70, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x61, 0x70, 0x00,
+    0x74, 0x78, 0x74, 0x5F, 0x70, 0x70, 0x00, 0x43, 0x4D, 0x65, 0x6E, 0x75,
+    0x42, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x50, 0x6C, 0x61, 0x79, 0x65, 0x72,
+    0x53, 0x74, 0x61, 0x74, 0x65, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62,
+    0x61, 0x74, 0x74, 0x6C, 0x65, 0x36, 0x30, 0x5F, 0x70, 0x63, 0x69, 0x6E,
+    0x66, 0x6F, 0x5F, 0x62, 0x61, 0x73, 0x65, 0x2E, 0x62, 0x72, 0x6C, 0x79,
+    0x74, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C,
+    0x65, 0x36, 0x30, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x62,
+    0x61, 0x73, 0x65, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E,
+    0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65,
+    0x36, 0x31, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x63, 0x61,
+    0x75, 0x74, 0x69, 0x6F, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00,
+    0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x36,
+    0x31, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x63, 0x61, 0x75,
+    0x74, 0x69, 0x6F, 0x6E, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61,
+    0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C,
+    0x65, 0x36, 0x31, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x63,
+    0x61, 0x75, 0x74, 0x69, 0x6F, 0x6E, 0x5F, 0x75, 0x6E, 0x64, 0x65, 0x72,
+    0x35, 0x30, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37,
+    0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x36, 0x31, 0x5F, 0x70,
+    0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x63, 0x61, 0x75, 0x74, 0x69, 0x6F,
+    0x6E, 0x5F, 0x75, 0x6E, 0x64, 0x65, 0x72, 0x32, 0x30, 0x2E, 0x62, 0x72,
+    0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74,
+    0x74, 0x6C, 0x65, 0x36, 0x32, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F,
+    0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00,
+    0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x36,
+    0x32, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x69, 0x6E, 0x66,
+    0x6F, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x74,
+    0x78, 0x74, 0x5F, 0x6C, 0x76, 0x30, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F,
+    0x6C, 0x76, 0x30, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x68, 0x70, 0x00,
+    0x74, 0x78, 0x74, 0x5F, 0x68, 0x70, 0x30, 0x31, 0x00, 0x70, 0x69, 0x63,
+    0x5F, 0x67, 0x61, 0x67, 0x65, 0x5F, 0x73, 0x6B, 0x6C, 0x00, 0x70, 0x69,
+    0x63, 0x5F, 0x67, 0x61, 0x67, 0x65, 0x5F, 0x65, 0x78, 0x70, 0x00, 0x70,
+    0x69, 0x63, 0x5F, 0x66, 0x61, 0x63, 0x65, 0x5F, 0x64, 0x30, 0x30, 0x00,
+    0x70, 0x69, 0x63, 0x5F, 0x66, 0x61, 0x63, 0x65, 0x5F, 0x64, 0x30, 0x31,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x66, 0x61, 0x63, 0x65, 0x5F, 0x30, 0x30,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x66, 0x61, 0x63, 0x65, 0x5F, 0x30, 0x31,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5F,
+    0x62, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
+    0x5F, 0x67, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74,
+    0x6C, 0x65, 0x36, 0x33, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F,
+    0x74, 0x65, 0x6E, 0x73, 0x69, 0x6F, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x79,
+    0x74, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C,
+    0x65, 0x36, 0x33, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x74,
+    0x65, 0x6E, 0x73, 0x69, 0x6F, 0x6E, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72,
+    0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74,
+    0x74, 0x6C, 0x65, 0x36, 0x34, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F,
+    0x5F, 0x6D, 0x61, 0x78, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x6D,
+    0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x36, 0x34,
+    0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x6D, 0x61, 0x78, 0x5F,
+    0x68, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D,
+    0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x36, 0x34,
+    0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x6D, 0x61, 0x78, 0x5F,
+    0x68, 0x5F, 0x72, 0x6F, 0x6F, 0x70, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E,
+    0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65,
+    0x36, 0x34, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x6D, 0x61,
+    0x78, 0x5F, 0x68, 0x5F, 0x6F, 0x75, 0x74, 0x2E, 0x62, 0x72, 0x6C, 0x61,
+    0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C,
+    0x65, 0x36, 0x34, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x6D,
+    0x61, 0x78, 0x5F, 0x6C, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61,
+    0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C,
+    0x65, 0x36, 0x34, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x6D,
+    0x61, 0x78, 0x5F, 0x6C, 0x5F, 0x72, 0x6F, 0x6F, 0x70, 0x2E, 0x62, 0x72,
+    0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x61, 0x74,
+    0x74, 0x6C, 0x65, 0x36, 0x34, 0x5F, 0x70, 0x63, 0x69, 0x6E, 0x66, 0x6F,
+    0x5F, 0x6D, 0x61, 0x78, 0x5F, 0x6C, 0x5F, 0x6F, 0x75, 0x74, 0x2E, 0x62,
+    0x72, 0x6C, 0x61, 0x6E, 0x00, 0x25, 0x30, 0x32, 0x64, 0x00, 0x4D, 0x4E,
+    0x55, 0x5F, 0x70, 0x61, 0x72, 0x74, 0x79, 0x00, 0x6E, 0x61, 0x6D, 0x65,
+    0x00, 0x42, 0x54, 0x4C, 0x5F, 0x50, 0x53, 0x56, 0x73, 0x6B, 0x69, 0x6C,
+    0x6C, 0x00, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x5F, 0x50, 0x50, 0x00, 0x69,
+    0x63, 0x6F, 0x6E, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x69, 0x63, 0x6F, 0x6E,
+    0x5F, 0x6C, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x69, 0x63, 0x6F, 0x6E, 0x5F,
+    0x68, 0x00, 0x00, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x74, 0x6C,
+    0x30, 0x30, 0x5F, 0x70, 0x6E, 0x6D, 0x6B, 0x30, 0x30, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x00, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x74, 0x6C,
+    0x30, 0x30, 0x5F, 0x70, 0x6E, 0x6D, 0x6B, 0x30, 0x31, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x00, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x74, 0x6C,
+    0x30, 0x30, 0x5F, 0x70, 0x6E, 0x6D, 0x6B, 0x30, 0x32, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x00, 0x00, 0x6D, 0x66, 0x37, 0x31, 0x5F, 0x62, 0x74, 0x6C,
+    0x30, 0x30, 0x5F, 0x70, 0x6E, 0x6D, 0x6B, 0x30, 0x33, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x4D, 0x65, 0x6E,
+    0x75, 0x45, 0x6E, 0x65, 0x6D, 0x79, 0x53, 0x74, 0x61, 0x74, 0x65, 0x00,
+    0x43, 0x50, 0x63, 0x53, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x43, 0x75, 0x72,
+    0x73, 0x6F, 0x72, 0x00, 0x43, 0x50, 0x63, 0x53, 0x65, 0x6C, 0x65, 0x63,
+    0x74, 0x43, 0x75, 0x72, 0x73, 0x6F, 0x72, 0x00, 0x6D, 0x66, 0x38, 0x30,
+    0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67,
+    0x65, 0x74, 0x5F, 0x70, 0x63, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00,
+    0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F,
+    0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x5F, 0x70, 0x63, 0x5F, 0x69, 0x6E,
+    0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F,
+    0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67, 0x65,
+    0x74, 0x5F, 0x70, 0x63, 0x5F, 0x6F, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61,
+    0x6E, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x63, 0x72, 0x73, 0x00, 0x6E, 0x75,
+    0x6C, 0x5F, 0x63, 0x72, 0x73, 0x5F, 0x66, 0x00, 0x70, 0x69, 0x63, 0x5F,
+    0x63, 0x72, 0x73, 0x30, 0x32, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x63, 0x72,
+    0x73, 0x30, 0x33, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x63, 0x72, 0x73, 0x5F,
+    0x66, 0x30, 0x32, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x63, 0x72, 0x73, 0x5F,
+    0x66, 0x30, 0x33, 0x00, 0x43, 0x4D, 0x65, 0x6E, 0x75, 0x45, 0x6E, 0x65,
+    0x6D, 0x79, 0x53, 0x74, 0x61, 0x74, 0x65, 0x00, 0x6D, 0x66, 0x37, 0x31,
+    0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x31, 0x30, 0x5F, 0x68, 0x70,
+    0x67, 0x61, 0x67, 0x65, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x70,
+    0x69, 0x63, 0x5F, 0x70, 0x63, 0x62, 0x61, 0x72, 0x00, 0x70, 0x69, 0x63,
+    0x5F, 0x65, 0x6E, 0x62, 0x61, 0x72, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x74,
+    0x67, 0x62, 0x61, 0x72, 0x5F, 0x66, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x70,
+    0x69, 0x63, 0x5F, 0x64, 0x65, 0x61, 0x74, 0x68, 0x00, 0x70, 0x69, 0x63,
+    0x5F, 0x70, 0x61, 0x6E, 0x69, 0x63, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x70,
+    0x63, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x65, 0x6E, 0x65, 0x6D, 0x6D, 0x79,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x74, 0x67, 0x62, 0x61, 0x72, 0x00, 0x6E,
+    0x75, 0x6C, 0x5F, 0x74, 0x67, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69,
+    0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74,
+    0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x63,
+    0x72, 0x73, 0x30, 0x30, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x62, 0x73, 0x00,
+    0x70, 0x69, 0x63, 0x5F, 0x73, 0x6E, 0x73, 0x00, 0x6E, 0x75, 0x6C, 0x5F,
+    0x6D, 0x6B, 0x67, 0x72, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x63, 0x72, 0x73,
+    0x5F, 0x73, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x69, 0x6E, 0x66, 0x6F,
+    0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x69, 0x6E, 0x66,
+    0x6F, 0x2E, 0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x6D, 0x66, 0x38, 0x30,
+    0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x30, 0x30, 0x5F, 0x74, 0x61, 0x72, 0x67,
+    0x65, 0x74, 0x69, 0x6E, 0x66, 0x6F, 0x5F, 0x72, 0x6F, 0x6F, 0x70, 0x2E,
+    0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6C, 0x76,
+    0x30, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6C, 0x76, 0x30, 0x31, 0x00,
+    0x6E, 0x75, 0x6C, 0x5F, 0x6E, 0x70, 0x63, 0x00, 0x6E, 0x75, 0x6C, 0x5F,
+    0x65, 0x6E, 0x5F, 0x73, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x65, 0x6E, 0x5F,
+    0x67, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x67, 0x72, 0x5F, 0x65, 0x30, 0x30,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x67, 0x72, 0x5F, 0x65, 0x30, 0x31, 0x00,
+    0x70, 0x69, 0x63, 0x5F, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5F, 0x62,
+    0x00, 0x70, 0x69, 0x63, 0x5F, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x5F,
+    0x67, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x74, 0x67, 0x69, 0x6E, 0x66,
+    0x30, 0x30, 0x5F, 0x65, 0x6E, 0x6D, 0x6B, 0x30, 0x30, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x74, 0x67, 0x69, 0x6E, 0x66,
+    0x30, 0x30, 0x5F, 0x65, 0x6E, 0x6D, 0x6B, 0x30, 0x31, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x6D, 0x66, 0x38, 0x30, 0x5F, 0x74, 0x67, 0x69, 0x6E, 0x66,
+    0x30, 0x30, 0x5F, 0x65, 0x6E, 0x6D, 0x6B, 0x30, 0x32, 0x2E, 0x74, 0x70,
+    0x6C, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x62, 0x61, 0x74, 0x74, 0x6C, 0x65,
+    0x00, 0x6E, 0x61, 0x6D, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6E, 0x61,
+    0x6D, 0x65, 0x5F, 0x6E, 0x70, 0x63, 0x00, 0x25, 0x30, 0x33, 0x64, 0x00,
+    0x74, 0x78, 0x74, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x5F, 0x65, 0x6E, 0x65,
+    0x6D, 0x6D, 0x79, 0x00, 0x66, 0x72, 0x61, 0x6D, 0x65, 0x00, 0x70, 0x69,
+    0x63, 0x5F, 0x67, 0x72, 0x00, 0x69, 0x63, 0x6F, 0x6E, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_rodata, __absorb_kyoshin_menu_CMenuEnemyState_rodata);
+__declspec(section ".sdata") __attribute__((used)) char __sdata_802410[0x10] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
+DECOMP_FORCEACTIVE(__sdata_802410, __sdata_802410);
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_menu_CMenuEnemyState_sdata2[0x88] = {
+    0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0xA0, 0x00, 0x00,
+    0x43, 0x60, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00, 0x43, 0x20, 0x00, 0x00,
+    0x41, 0x80, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x42, 0x34, 0x00, 0x00,
+    0x3D, 0x4C, 0xCC, 0xCD, 0x42, 0x22, 0xF9, 0x83, 0x46, 0x1C, 0x40, 0x00,
+    0x3F, 0xAA, 0xAA, 0xAB, 0x43, 0x34, 0x00, 0x00, 0x42, 0xEC, 0x00, 0x00,
+    0x42, 0x40, 0x00, 0x00, 0x42, 0x10, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+    0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x42, 0x70, 0x00, 0x00,
+    0x0F, 0x09, 0x10, 0x12, 0x42, 0xBC, 0x00, 0x00, 0x42, 0xC0, 0x00, 0x00,
+    0x3F, 0x33, 0x33, 0x33, 0x42, 0x38, 0x00, 0x00, 0x42, 0x14, 0x00, 0x00,
+    0x41, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
+    0x41, 0xC8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sdata2, __absorb_kyoshin_menu_CMenuEnemyState_sdata2);
+char __absorb_kyoshin_menu_CMenuEnemyState_bss[0x10] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_bss, __absorb_kyoshin_menu_CMenuEnemyState_bss);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_0[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_0, __absorb_kyoshin_menu_CMenuEnemyState_sbss_0);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_1[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_1, __absorb_kyoshin_menu_CMenuEnemyState_sbss_1);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_2[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_2, __absorb_kyoshin_menu_CMenuEnemyState_sbss_2);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_3[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_3, __absorb_kyoshin_menu_CMenuEnemyState_sbss_3);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_4[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_4, __absorb_kyoshin_menu_CMenuEnemyState_sbss_4);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_5[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_5, __absorb_kyoshin_menu_CMenuEnemyState_sbss_5);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_6[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_6, __absorb_kyoshin_menu_CMenuEnemyState_sbss_6);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_7[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_7, __absorb_kyoshin_menu_CMenuEnemyState_sbss_7);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_8[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_8, __absorb_kyoshin_menu_CMenuEnemyState_sbss_8);
+char __absorb_kyoshin_menu_CMenuEnemyState_sbss_9[0x8] __attribute__((used));
+DECOMP_FORCEACTIVE(kyoshin_menu_CMenuEnemyState_sbss_9, __absorb_kyoshin_menu_CMenuEnemyState_sbss_9);
+
 
 // ---------------------------------------------------------------------------
 // Local overlay structs for external objects accessed via pointer arithmetic.
@@ -149,36 +384,7 @@ struct PcEmbedLayout {
     u32 field74;          // +0x74  current battle-target id
 };
 
-// Virtual-probe view of the same sub-object (slots 0xAC / 0x12C). Never
-// constructed - no vtable is emitted; MWCC emits the genuine r12 dispatch.
 struct RLayout;
-class TargetVt {
-public:
-    // NOTE: MWCC vtables carry an 8-byte header, so slot N lands at byte
-    // 4*N+8; two fewer leading dummies put getPos/getVec at retail's 0xAC /
-    // 0x12C dispatch offsets.
-    virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
-    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08();
-    virtual void p09(); virtual void p10(); virtual void p11(); virtual void p12();
-    virtual void p13(); virtual void p14(); virtual void p15(); virtual void p16();
-    virtual void p17(); virtual void p18(); virtual void p19(); virtual void p20();
-    virtual void p21(); virtual void p22(); virtual void p23(); virtual void p24();
-    virtual void p25(); virtual void p26(); virtual void p27(); virtual void p28();
-    virtual void p29(); virtual void p30(); virtual void p31(); virtual void p32();
-    virtual void p33(); virtual void p34(); virtual void p35(); virtual void p36();
-    virtual void p37(); virtual void p38(); virtual void p39(); virtual void p40();
-    virtual void p41();
-    virtual void* getPos();                 // 0xAC
-    virtual void q44(); virtual void q45(); virtual void q46(); virtual void q47();
-    virtual void q48(); virtual void q49(); virtual void q50(); virtual void q51();
-    virtual void q52(); virtual void q53(); virtual void q54(); virtual void q55();
-    virtual void q56(); virtual void q57(); virtual void q58(); virtual void q59();
-    virtual void q60(); virtual void q61(); virtual void q62(); virtual void q63();
-    virtual void q64(); virtual void q65(); virtual void q66(); virtual void q67();
-    virtual void q68(); virtual void q69(); virtual void q70(); virtual void q71();
-    virtual void q72(); virtual void q73(); virtual void q74(); virtual void q75();
-    virtual RLayout* getVec(int idx);       // 0x12C
-};
 
 // Pose data returned by func_80496264(unk60, -1).
 // Matrix at +0x9C (VEC3TransformNormal), two Vec3f clusters at +0x10C and
@@ -199,7 +405,6 @@ struct PoseLayout {
     f32 vec138_z;
 };
 
-// Object returned by vslot GetVecFn(handle, 0x12C).
 // Three f32 components at 16-byte stride (0x0C / 0x1C / 0x2C).
 struct RLayout {
     u8 gap00[0x0C];
@@ -618,29 +823,6 @@ struct SubSlot5CResult {
     u32 word30;  // +0x30
 };
 
-// Polymorphic view of the actor2->sub8 sub-object used for the slot-0x5C
-// probe. The dtor + dummy virtuals occupy vtable 0x08..0x54 so that the
-// probes land at vtable +0x58 / +0x5C and MWCC emits the retail r12 dispatch
-// chain for genuine virtual calls. Never constructed - no vtable is emitted.
-class Sub8Probe {
-public:
-    virtual ~Sub8Probe();              // 0x08
-    virtual void m0C(); virtual void m10(); virtual void m14(); virtual void m18();
-    virtual void m1C(); virtual void m20(); virtual void m24(); virtual void m28();
-    virtual void m2C(); virtual void m30(); virtual void m34(); virtual void m38();
-    virtual void m3C(); virtual void m40(); virtual void m44(); virtual void m48();
-    virtual void m4C(); virtual void m50(); virtual void m54();
-    virtual SubSlot5CResult* probe2(u8 idx);  // 0x58
-    virtual SubSlot5CResult* probe(u8 idx);   // 0x5C
-};
-
-// Vtable slot dispatch helper (same style as cf::CBattleState_UnkVirtualFuncN
-// ? call through the vtable without declaring the callee's own methods).
-template <typename Fn>
-static inline Fn vslot(void* obj, u32 offset) {
-    return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
-}
-
 void CMenuEnemyState::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::isFlag01Set()) {
@@ -929,8 +1111,7 @@ after_bit21:
         }
 
         if (actor2 != NULL) {
-            typedef f32 (*GetFloatFn)(void*);
-            f32 stateVal = vslot<GetFloatFn>(actor2, 0x128)(actor2);
+            f32 stateVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
             // Retail: state==FEC && panelData[0x1c]==0 → always cull.
             if (animMarker == stateVal) {
                 if (panel.unk1C == 0) {
@@ -947,10 +1128,9 @@ after_bit21:
         // Distance cull + frustum test only when panelType==0 and pc!=NULL.
         // Retail skips both when either gate fails (falls through to flag work).
         if (panel.panelType == 0 && pc != NULL) {
-            typedef void* (*GetPosFn)(void*);
-            void* handlePos = vslot<GetPosFn>(handle, 0xAC)(handle);
+            ml::CVec3* handlePos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
             PcEmbedLayout* pcEmbed = reinterpret_cast<PcEmbedLayout*>(pc);
-            void* pcPos = vslot<GetPosFn>(&pcEmbed->vtable, 0xAC)(&pcEmbed->vtable);
+            ml::CVec3* pcPos = reinterpret_cast<cf::CfObject*>(pcEmbed)->CfObject_UnkVirtualFunc23();
 
             nw4r::math::VEC3Sub(
                 pDelta,
@@ -975,8 +1155,8 @@ after_bit21:
                 b.y = pose->vec138_y;
                 b.z = pose->vec138_z;
 
-                void* qpos = vslot<GetPosFn>(handle, 0xAC)(handle);
-                Vec3f c = *static_cast<const Vec3f*>(qpos);
+                ml::CVec3* qpos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+                Vec3f c = *reinterpret_cast<const Vec3f*>(qpos);
 
                 if (!func_8013A4B4(&a, &b, &c)) {
                     panel.visible = z;
@@ -995,15 +1175,13 @@ after_bit21:
                     b1 = (b1 & 0xFE) | 1;
                     b2 = b2 & 0xFE;
 
-                    typedef u32* (*GetPtrFn)(void*);
-                    u32* r = vslot<GetPtrFn>(actor2, 0x258)(actor2);
+                    u32* r = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113();
                     u32 v = *r;
                     if (v - 1 <= 3) {
                         b2 = (b2 & 0xFE) | 1;
                     }
 
-                    typedef u32 (*GetU8Fn)(void*);
-                    u32 byteVal = vslot<GetU8Fn>(actor2, 0x260)(actor2) & 0xFF;
+                    u32 byteVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115() & 0xFF;
                     b3 = (b3 & 0xFE) | static_cast<u8>(byteVal);
                 }
             } else {
@@ -1024,22 +1202,20 @@ after_bit21:
             Vec3f posB;
             Vec3f* posTmpPtr = &posTmp;
 
-            typedef RLayout* (*GetVecFn)(void*, int);
-            RLayout* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
+            void* rRaw = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc55(0x64);
+            RLayout* r = static_cast<RLayout*>(rRaw);
             if (r != NULL) {
                 posTmpPtr->x = r->val0C;
                 posTmpPtr->y = r->val1C;
                 posTmpPtr->z = r->val2C;
                 posA = *posTmpPtr;
             } else {
-                typedef void* (*GetPosFn)(void*);
-                void* p = vslot<GetPosFn>(handle, 0xAC)(handle);
-                posA = *static_cast<const Vec3f*>(p);
+                ml::CVec3* p = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+                posA = *reinterpret_cast<const Vec3f*>(p);
             }
 
-            typedef void* (*GetPosFn)(void*);
-            void* p2 = vslot<GetPosFn>(handle, 0xAC)(handle);
-            posB = *static_cast<const Vec3f*>(p2);
+            ml::CVec3* p2 = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+            posB = *reinterpret_cast<const Vec3f*>(p2);
 
             Obj64_91* hf = handle;
             u32 flagWord = hf->word64;
@@ -1066,21 +1242,20 @@ after_bit21:
                 panel.drawLayout0Flag = (count == 0) ? 1 : 0;
             } else {
                 void* subObj = actor2->subObj4;
-                typedef int* (*SubGetFn)(void*);
-                int* result = vslot<SubGetFn>(subObj, 0x30)(subObj);
+                void* resultRaw = reinterpret_cast<cf::CObjectState*>(subObj)->CObjectState_UnkVirtualFunc11();
+                int* result = static_cast<int*>(resultRaw);
                 int localVal = *result;
                 u32 ret = func_80174C98(actor2, &localVal, 0x803);
                 panel.drawLayout0Flag = (ret == 0) ? 1 : 0;
             }
 
             if (panel.drawLayout0Flag == 0) {
-                typedef f32 (*GetFloatFn)(void*);
-                f32 v12c = vslot<GetFloatFn>(actor2, 0x12C)(actor2);
-                f32 v128 = vslot<GetFloatFn>(actor2, 0x128)(actor2);
+                f32 v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc38();
+                f32 v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
                 func_80111B08(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
-                v12c = vslot<GetFloatFn>(actor2, 0x12C)(actor2);
-                v128 = vslot<GetFloatFn>(actor2, 0x128)(actor2);
+                v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc38();
+                v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
                 func_80111E70(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
                 func_801132A8(this, reinterpret_cast<u8*>(&panel), actor2);
@@ -1260,34 +1435,6 @@ void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
     panel->layout1->Animate(0);
 }
 
-// Polymorphic view of the enemy subobject for func_8010EE40's two virtual
-// probes (vt +0x12C vec fetch and vt +0xAC position fetch). Never constructed
-// - no vtable is emitted; MWCC emits the real r12 dispatch chain.
-class EnemyVt {
-public:
-    virtual void q00(); virtual void q01(); virtual void q02(); virtual void q03();
-    virtual void q04(); virtual void q05(); virtual void q06(); virtual void q07();
-    virtual void q08(); virtual void q09(); virtual void q10(); virtual void q11();
-    virtual void q12(); virtual void q13(); virtual void q14(); virtual void q15();
-    virtual void q16(); virtual void q17(); virtual void q18(); virtual void q19();
-    virtual void q20(); virtual void q21(); virtual void q22(); virtual void q23();
-    virtual void q24(); virtual void q25(); virtual void q26(); virtual void q27();
-    virtual void q28(); virtual void q29(); virtual void q30(); virtual void q31();
-    virtual void q32(); virtual void q33(); virtual void q34(); virtual void q35();
-    virtual void q36(); virtual void q37(); virtual void q38(); virtual void q39();
-    virtual void q40(); virtual void q41(); virtual void q42();
-    virtual void* getPos();                 // 0xAC
-    virtual void q44(); virtual void q45(); virtual void q46(); virtual void q47();
-    virtual void q48(); virtual void q49(); virtual void q50(); virtual void q51();
-    virtual void q52(); virtual void q53(); virtual void q54(); virtual void q55();
-    virtual void q56(); virtual void q57(); virtual void q58(); virtual void q59();
-    virtual void q60(); virtual void q61(); virtual void q62(); virtual void q63();
-    virtual void q64(); virtual void q65(); virtual void q66(); virtual void q67();
-    virtual void q68(); virtual void q69(); virtual void q70(); virtual void q71();
-    virtual void q72(); virtual void q73(); virtual void q74();
-    virtual RLayout* getVec(int idx);       // 0x12C
-};
-
 // Vtable adjustor thunks: retail "this" lands at the +0x5C subobject; back it
 // off to the CMenuEnemyState base and forward (subi r3,r3,0x5c; b <fn>).
 void func_801135D0(void* self) {
@@ -1394,17 +1541,17 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     Vec3f posB;
     Vec3f posA;
     const Vec3f* posPtr;
-    RLayout* r = vslot<GetVecFn>(obj, 0x12C)(obj, 0x64);
+    RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
     if (r != NULL) {
         layoutPos.x = r->val0C;
         layoutPos.y = r->val1C;
         layoutPos.z = r->val2C;
         posPtr = &layoutPos;
     } else {
-        posPtr = static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+        posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
     }
     posA = *posPtr;
-    posB = *static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+    posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
 
     func_80111080(self, reinterpret_cast<u8*>(panel), &posA, &posB);
 
@@ -1456,17 +1603,17 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     if (actor2 == NULL) return;
 
     typedef int* (*SubGetFn)(void*);
-    int v = *vslot<SubGetFn>(actor2->subObj4, 0x30)(actor2->subObj4);
+    int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
     panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
     typedef void* (*GetObjFn)(void*);
-    panel->unk24 = reinterpret_cast<u32>(vslot<GetObjFn>(actor2, 0x108)(actor2));
+    panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
 
     func_80111C50(self, reinterpret_cast<u8*>(panel), (panel->unk1C != 0) ? 1 : 2);
 
     // Slot-type texture by the vt[0x258] value (1/2/3 select a name offset).
     typedef u32* (*GetPtrFn)(void*);
-    u32* p258 = vslot<GetPtrFn>(actor2, 0x258)(actor2);
+    u32* p258 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113();
     void* tex = NULL;
     switch (*p258) {
     case 1:
@@ -1490,7 +1637,7 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     }
 
     typedef u32 (*GetU8Fn)(void*);
-    u8 byteVal = static_cast<u8>(vslot<GetU8Fn>(actor2, 0x260)(actor2));
+    u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
     ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
     f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
 }
@@ -1565,7 +1712,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         typedef void* (*GetPosFn)(void*);
         Vec3f posA;
         const Vec3f* posPtr;
-        RLayout* r = vslot<GetVecFn>(obj, 0x12C)(obj, 0x64);
+        RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
         if (r != NULL) {
             Vec3f tmp;
             tmp.x = r->val0C;
@@ -1573,10 +1720,10 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             tmp.z = r->val2C;
             posPtr = &tmp;
         } else {
-            posPtr = static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+            posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
         }
         posA = *posPtr;
-        Vec3f posB = *static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+        Vec3f posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
 
         func_80111080(self, panelData, &posA, &posB);
 
@@ -1638,18 +1785,18 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
                 typedef int* (*SubGetFn)(void*);
-                int v = *vslot<SubGetFn>(actor2->subObj4, 0x30)(actor2->subObj4);
+                int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
                 typedef void* (*GetObjFn)(void*);
-                panel->unk24 = reinterpret_cast<u32>(vslot<GetObjFn>(actor2, 0x108)(actor2));
+                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
                 typedef u32* (*GetPtrFn)(void*);
                 void* tex = NULL;
-                switch (*vslot<GetPtrFn>(actor2, 0x258)(actor2)) {
+                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113()) {
                 case 1:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
@@ -1669,7 +1816,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                 }
 
                 typedef u32 (*GetU8Fn)(void*);
-                u8 byteVal = static_cast<u8>(vslot<GetU8Fn>(actor2, 0x260)(actor2));
+                u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
                 ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
                 f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
             }
@@ -1733,7 +1880,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         typedef void* (*GetPosFn2)(void*);
         Vec3f posA2;
         const Vec3f* posPtr2;
-        RLayout* r2 = vslot<GetVecFn2>(obj, 0x12C)(obj, 0x64);
+        RLayout* r2 = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
         if (r2 != NULL) {
             Vec3f tmp2;
             tmp2.x = r2->val0C;
@@ -1741,10 +1888,10 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             tmp2.z = r2->val2C;
             posPtr2 = &tmp2;
         } else {
-            posPtr2 = static_cast<const Vec3f*>(vslot<GetPosFn2>(obj, 0xAC)(obj));
+            posPtr2 = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
         }
         posA2 = *posPtr2;
-        Vec3f posB2 = *static_cast<const Vec3f*>(vslot<GetPosFn2>(obj, 0xAC)(obj));
+        Vec3f posB2 = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
 
         func_80111080(self, panelData, &posA2, &posB2);
 
@@ -1806,18 +1953,18 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
                 typedef int* (*SubGetFn2)(void*);
-                int v2 = *vslot<SubGetFn2>(actor2->subObj4, 0x30)(actor2->subObj4);
+                int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v2, 0x802));
 
                 typedef void* (*GetObjFn2)(void*);
-                panel->unk24 = reinterpret_cast<u32>(vslot<GetObjFn2>(actor2, 0x108)(actor2));
+                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
                 typedef u32* (*GetPtrFn2)(void*);
                 void* tex2 = NULL;
-                switch (*vslot<GetPtrFn2>(actor2, 0x258)(actor2)) {
+                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113()) {
                 case 1:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
                                ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
@@ -1837,7 +1984,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                 }
 
                 typedef u32 (*GetU8Fn2)(void*);
-                u8 byteVal2 = static_cast<u8>(vslot<GetU8Fn2>(actor2, 0x260)(actor2));
+                u8 byteVal2 = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
                 ObjBBFlag* f34b = reinterpret_cast<ObjBBFlag*>(panel->obj3);
                 f34b->flagBB = (f34b->flagBB & 0xFE) | byteVal2;
             }
@@ -1914,15 +2061,13 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
 
         // Stack-home order (posTmp=0x08, tmp=0x14, out=0x20, pos=0x2c) comes
         // from this declaration order under MWCC's reverse-allocation packing.
-        typedef RLayout* (*GetVecFn)(void*, int);
-        typedef RLayout* (*GetVecFn)(void*, int);
-        typedef void* (*GetPosFn)(void*);
         Vec3f pos;
         Vec3f out;
         Vec3f tmp;
         Vec3f posTmp;
         const Vec3f* src;
-        RLayout* r = vslot<GetVecFn>(target, 0x12C)(target, 0x64);
+        void* rRaw = reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc55(0x64);
+        RLayout* r = static_cast<RLayout*>(rRaw);
         if (r != NULL) {
             // Declared z,y,x then stored x,y,z - reproduces retail's batched
             // f0/f1/f2 loads followed by the three stack stores.
@@ -1934,7 +2079,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
             posTmp.z = fz;
             src = &posTmp;
         } else {
-            src = static_cast<const Vec3f*>(vslot<GetPosFn>(target, 0xAC)(target));
+            src = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc23());
         }
         pos = *src;
 
@@ -1963,8 +2108,8 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
         pos = out;
         if (out.y > lbl_eu_80666FFC) {
             out.y = lbl_eu_80666FFC;
-            func_8049B59C(&tmp, pose, static_cast<const Vec3f*>(
-                vslot<GetPosFn>(target, 0xAC)(target)));
+            ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc23();
+            func_8049B59C(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
             f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
             if (sel > out.y) {
@@ -1985,29 +2130,6 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
 // highlight colour; otherwise pick the colour from the diff between the
 // panel's unk24 and the player-target id. Then scan the enemy slot list for a
 // matching id and light the unk40 pane.
-// Virtual probe for the CfObjectPc target fetch at vtable +0x108 (slot 64:
-// byte offset 4*64+8 with the 8-byte vtable header). Never constructed.
-class PcTargetVt {
-public:
-    virtual void q00(); virtual void q01(); virtual void q02(); virtual void q03();
-    virtual void q04(); virtual void q05(); virtual void q06(); virtual void q07();
-    virtual void q08(); virtual void q09(); virtual void q10(); virtual void q11();
-    virtual void q12(); virtual void q13(); virtual void q14(); virtual void q15();
-    virtual void q16(); virtual void q17(); virtual void q18(); virtual void q19();
-    virtual void q20(); virtual void q21(); virtual void q22(); virtual void q23();
-    virtual void q24(); virtual void q25(); virtual void q26(); virtual void q27();
-    virtual void q28(); virtual void q29(); virtual void q30(); virtual void q31();
-    virtual void q32(); virtual void q33(); virtual void q34(); virtual void q35();
-    virtual void q36(); virtual void q37(); virtual void q38(); virtual void q39();
-    virtual void q40(); virtual void q41(); virtual void q42(); virtual void q43();
-    virtual void q44(); virtual void q45(); virtual void q46(); virtual void q47();
-    virtual void q48(); virtual void q49(); virtual void q50(); virtual void q51();
-    virtual void q52(); virtual void q53(); virtual void q54(); virtual void q55();
-    virtual void q56(); virtual void q57(); virtual void q58(); virtual void q59();
-    virtual void q60(); virtual void q61(); virtual void q62(); virtual void q63();
-    virtual int getObj();   // +0x108
-};
-
 extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
     if (panel->unk1D == 0) return;
@@ -2016,7 +2138,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     if (pc == NULL) return;
     // Retail keeps this value in r29 and later reuses the same register for
     // the unk24 difference (subf r29,r29,r0), so one variable serves both.
-    s32 tgt = reinterpret_cast<PcTargetVt*>(pc)->getObj();
+    s32 tgt = (s32)reinterpret_cast<cf::CActorParam*>(pc)->CActorParam_UnkVirtualFunc29();
 
     // Tail locals declared early; birth order pins tail colours.
     // OPEN ITEM (us-80112c4c): residual is a pure reg_swap - sub lands in r30
@@ -2181,12 +2303,12 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         } else if (panel->unk1F != 0) {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
                           reinterpret_cast<char*>(
-                              reinterpret_cast<MenuEnemyVt*>(obj)->m014()),
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_UnkVirtualFunc2()),
                           0);
         } else {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
                           func_80138DA4(reinterpret_cast<char*>(
-                              reinterpret_cast<MenuEnemyVt*>(obj)->m014())),
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_UnkVirtualFunc2())),
                           0);
         }
     } else if (panel->unk1D != 0) {
@@ -2205,7 +2327,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         // Retail compares the pane id with signed cmpw.
         // Real virtual calls - retail dispatches through r12.
         s32 a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<MenuEnemyVt*>(actor2)->m064()));
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29()));
         if (special != 0) {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x1b2],
                           func_80136190(&lbl_eu_804FDBF8[0x256],
@@ -2216,15 +2338,15 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
             func_80136A1C(self->unk74, &lbl_eu_804FDBF8[0x1b2], buf, 0);
         }
         a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<MenuEnemyVt*>(actor2)->m064()));
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29()));
         if (static_cast<s32>(panel->unk24) != a2id) {
             panel->unk24 = static_cast<u32>(
-                reinterpret_cast<MenuEnemyVt*>(actor2)->m064());
+                reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29());
             func_80112170(self, panelData);
         }
         func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x278],
                       reinterpret_cast<char*>(
-                          reinterpret_cast<MenuEnemyVt*>(actor2)->m036()),
+                          const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc1())),
                       0);
         // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
         func_80137B44(self->unk74, &lbl_eu_804FDBF8[0x278],
@@ -2249,9 +2371,9 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         }
 
         typedef int* (*SubGetFn)(void*);
-        int v1 = *reinterpret_cast<MenuEnemyVt*>(actor2->subObj4)->m010();
+        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
         if (func_80174C98(actor2, &v1, 0xa) == 0) {
-            int v2 = *reinterpret_cast<MenuEnemyVt*>(actor2->subObj4)->m010();
+            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
             if (func_80174C98(actor2, &v2, 9) == 0) {
                 goto tail;
             }
@@ -2259,7 +2381,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         // Slot 164: MWCC prepends 2 dtor entries to the view vtable
         // (dispatch offset = n*4 + 8), so 0x298 == m164.
         Obj298View* v298 = reinterpret_cast<Obj298View*>(
-            reinterpret_cast<MenuEnemyVt*>(actor2)->m164());
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc129());
         if (v298->field50 != NULL) {
             Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
             if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == lbl_eu_80666FEC) {
@@ -2440,7 +2562,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
             ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(self->field94);
             f94->flagBB &= 0xFE;
             SubSlot5CResult* res =
-                reinterpret_cast<Sub8Probe*>(&actor2->sub8)->probe(idx);
+                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc22(idx));
             if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
                 res->id0C != 0x10 && res->id0C != 0x12) {
                 u16 id = func_80136254(lbl_eu_806640E0,
@@ -2468,7 +2590,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
             u16 arr16[0x21];
             for (u8 i = 0; i < 0x20; i++) {
                 SubSlot5CResult* res =
-                    reinterpret_cast<Sub8Probe*>(&actor2->sub8)->probe2(i);
+                    reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc21(i));
                 arr16[i] = (res->word30 == 0x800) ? 0 : res->id0C;
             }
             arr16[0x20] = (u16)actor2->field1530;
@@ -2709,7 +2831,7 @@ void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {
     for (u8 oi = 0; oi < 4; oi++) {
         for (u8 ii = 0; ii < 0x20; ii++) {
             SubSlot5CResult* res =
-                reinterpret_cast<Sub8Probe*>(&actor2->sub8)->probe(ii);
+                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc22(ii));
             // Retail reads the pattern byte after the id check (short-circuit)
             // and the texture index inside the load call.
             if (res->id0C != 0 && res->id0C == *((u8*)&bits + oi)) {
@@ -2981,7 +3103,7 @@ void CMenuEnemyState::Init() {
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
-    func_8013676C(rootPane, reinterpret_cast<MenuFontView*>(fontObj)->m24());
+    func_8013676C(rootPane, reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_UnkVirtualFunc8(0));
 
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], func_801355D8());

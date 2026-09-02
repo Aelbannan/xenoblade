@@ -50179,5 +50179,3 @@ bta_dm_pm_cfg = .sbss2:0x8066B540; // type:object size:0x8 scope:global align:8
 bd_addr_null = .sbss2:0x8066B548; // type:object size:0x8 scope:global align:8
 DefaultBlackColor = .sbss2:0x8066B550; // type:object size:0x8 scope:local align:8 data:2byte
 lbl_8066DCF8 = .sbss2:0x8066B558; // type:object size:0x4 scope:global align:4
-
-

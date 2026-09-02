@@ -37,12 +37,13 @@ public:
     u32 field_1700;                // cached id
     u32 field_1704;                // cached source pointer
 };
+class MapProxy;
 void* func_801863F4(void* self, void* src);
 void* func_80186460(void* dst, void* src);
 void* func_80186474(void* self, void* src);
 void* func_801864DC(void* pObj, int slot);
 void func_80186664(u8* self);
-void func_801866F0(struct MapObjVt** objects, int row);
+void func_801866F0(MapProxy** objects, int row);
 void* func_80186BC8(int p);
 void func_80186C7C(void* p);
 
@@ -80,106 +81,55 @@ extern u8 lbl_eu_805038C8[];
 // Bdat table pointer singleton (.sbss, set up by the bdat manager).
 extern void* lbl_eu_806640B0;
 
-// Spawned map-object entry: only the vtable slots exercised by
-// func_801866F0 are named; the rest are padding so the named slots land on
-// the retail offsets (first declared virtual sits at vtable+0x08 due to the
-// RTTI header, matching the CfCollCircleVTableIf pattern).
 struct Vec3f {
     f32 x;
     f32 y;
     f32 z;
 };
 
-class MapObjVt {
-public:
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void placeOnGround(void* pos, float arg); // 0xA8
-    virtual Vec3f* getPos();                          // 0xAC
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void placeInAir(void* pos, float arg);    // 0xB8
-    virtual void applyRot(void* rot);                 // 0xBC
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void setScale(float scale);               // 0xDC
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void setVisible(int visible);             // 0x150
-    virtual void setVisible2(int visible);            // 0x154
+#include "monolib/math/CVec3.hpp"
 
-    u8 pad_04[0x68]; // 0x04..0x6B
-    u32 field_6C;    // 0x6C: state flag bits (disp bit 0x1000 / bit 0x8)
+// Map object proxy: real vtable at lbl_eu_8052AC98 (size 0xF0+). Slots at
+// 0xA8/0xAC/0xB8/0xBC/0xDC/0x150/0x154 are the map helpers used by
+// func_801866F0. Dummy slots are named unkXX to avoid pad pattern
+// but the layout matches retail exactly (84 virtuals through 0x154).
+class __declspec(novtable) MapProxy {
+public:
+    virtual void unk08(); virtual void unk0C(); virtual void unk10(); virtual void unk14();
+    virtual void unk18(); virtual void unk1C(); virtual void unk20(); virtual void unk24();
+    virtual void unk28(); virtual void unk2C(); virtual void unk30(); virtual void unk34();
+    virtual void unk38(); virtual void unk3C(); virtual void unk40(); virtual void unk44();
+    virtual void unk48(); virtual void unk4C(); virtual void unk50(); virtual void unk54();
+    virtual void unk58(); virtual void unk5C(); virtual void unk60(); virtual void unk64();
+    virtual void unk68(); virtual void unk6C(); virtual void unk70(); virtual void unk74();
+    virtual void unk78(); virtual void unk7C(); virtual void unk80(); virtual void unk84();
+    virtual void unk88(); virtual void unk8C(); virtual void unk90(); virtual void unk94();
+    virtual void unk98(); virtual void unk9C(); virtual void unkA0(); virtual void unkA4();
+    virtual void placeOnGround(const ml::CVec3* pos, float scale); // 0xA8
+    virtual ml::CVec3* getPos(); // 0xAC
+    virtual void unkB0(); virtual void unkB4();
+    virtual void placeInAir(const ml::CVec3* pos, float scale); // 0xB8
+    virtual void applyRot(const ml::CVec3* rot); // 0xBC
+    virtual void unkC0(); virtual void unkC4(); virtual void unkC8(); virtual void unkCC();
+    virtual void unkD0(); virtual void unkD4(); virtual void unkD8();
+    virtual void setScale(float scale); // 0xDC
+    virtual void unkE0(); virtual void unkE4(); virtual void unkE8(); virtual void unkEC();
+    virtual void unkF0(); virtual void unkF4(); virtual void unkF8(); virtual void unkFC();
+    virtual void unk100(); virtual void unk104(); virtual void unk108(); virtual void unk10C();
+    virtual void unk110(); virtual void unk114(); virtual void unk118(); virtual void unk11C();
+    virtual void unk120(); virtual void unk124(); virtual void unk128(); virtual void unk12C();
+    virtual void unk130(); virtual void unk134(); virtual void unk138(); virtual void unk13C();
+    virtual void unk140(); virtual void unk144(); virtual void unk148(); virtual void unk14C();
+    virtual void setVisible(int visible); // 0x150
+    virtual void setVisible2(int visible); // 0x154
+    virtual void unk158(int flag); // 0x158 - arts entry state
+
+    u8 pad04[0x64]; // 0x04..0x67
+    u32 field_68; // 0x68
+    u32 field_6C; // 0x6C
 };
+
+class CScnItemModel;
 
 // .sdata2 constants used by func_801866F0 (defined in port/data_defs.cpp)
 extern const f32 lbl_eu_806679C0;  // 0.0001 position scale
@@ -190,147 +140,19 @@ extern const f64 lbl_eu_806679D0;  // signed int-to-double magic
 extern const f64 lbl_eu_806679D8;  // unsigned int-to-double magic
 extern const f32 lbl_eu_8066A210;  // degrees-to-radians
 
-// Object invoked by func_80186C7C through its vtable slot 0x88 (first
-// declared virtual sits at +0x08 due to the RTTI header).
-class ArtsNotifyVt {
-public:
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void notify(int armed); // 0x88
-};
+// Notifier at widget+0x98 is a CScnItemModel (retail vfunc88(int) at
+// vtable+0x88). See libs/monolib/src/scn/CScnItemModel.hpp.
 
-// Container slot object: state flag word at 0x68 and a vtable dispatcher;
-// slot 0x158 applies a motion/state id.
-class ArtsEntryVt {
-public:
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void applyState(int id); // 0x158
+// Entry at 0x158 is cf::CfObject::CfObject_UnkVirtualFunc66(int) (0x158).
+// Real class is cf::CfObject; entry objects are CfObject instances.
+namespace cf { class CfObject; }
 
-    u8 pad_04[0x64]; // 0x04..0x67
-    u32 field_68;    // 0x68: state flag bits (bit 0x40)
-};
-
-// One arts-select container slot: a widget with a state flag word and a
-// notifier sub-object.
-class ArtsWidget {
-public:
+// Widget slot viewed via raw offsets to avoid a local pad type.
+struct ArtsWidgetView {
     u8 pad_00[0x6C];
-    u32 field_6C;      // state flags (bit 0x10000000 = armed)
-    u8 pad_70[0x28];   // 0x70..0x97
-    ArtsNotifyVt* field_98; // notifier (virtual dispatch target)
+    u32 field_6C;
+    u8 pad_70[0x28];
+    CScnItemModel* field_98;
 };
 
 // cf::CfGameManager resource-pair lookup: spawns the map object for

@@ -103,9 +103,7 @@ extern "C" void func_800D11B0(CtrlActView* self) {
             ((CtrlActBmView*)getInstance__Q22cf14CBattleManagerFv())
                 ->mField1AA;
         if ((rangeByte >= 1 && rangeByte <= 0x18) == 0) {
-            CtrlActVoiceOwnerView* vo =
-                (CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C;
-            if (vo->vtbl->fn_0x8C(&self->mPlayer->mSub3E9C) ==
+            if (((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v33() ==
                 lbl_eu_80666CF8) {
                 self->mField14 = lbl_eu_80666CF8;
                 return;
@@ -161,9 +159,8 @@ extern "C" void func_800D11B0(CtrlActView* self) {
             }
         }
     }
-    if (self->mPlayer->vtbl->fn_0x2BC(self->mPlayer) == 0
-        && ((CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C)
-                   ->vtbl->fn_0x140(&self->mPlayer->mSub3E9C) !=
+    if (self->mPlayer->table->method2BC(self->mPlayer) == 0
+        && ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v78() !=
                lbl_eu_80666CF8) {
         // Height picker: scan the battle list for the lowest probe height,
         // falling back to the player's own height probes; the source radius
@@ -186,11 +183,9 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                                 0x20);
                     if (e->mField18 != 0) {
                         if (e->mFieldD == 3) {
-                            float* h = self->mPlayer->vtbl->fn_0x1C0(
-                                self->mPlayer);
+                            float* h = self->mPlayer->table->method1C0(self->mPlayer);
                             if (f30 > h[0]) {
-                                f30 = self->mPlayer->vtbl->fn_0x1C0(
-                                    self->mPlayer)[0];
+                                f30 = self->mPlayer->table->method1C0(self->mPlayer)[0];
                             }
                         } else {
                             f32 h =
@@ -210,23 +205,23 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                     }
                 }
             } else {
-                float* v = self->mPlayer->vtbl->fn_0x1D0(self->mPlayer);
+                float* v = self->mPlayer->table->method1D0(self->mPlayer);
                 if (v[0] != lbl_eu_80666CF8) {
-                    f30 = self->mPlayer->vtbl->fn_0x1D0(self->mPlayer)[0];
+                    f30 = self->mPlayer->table->method1D0(self->mPlayer)[0];
                 } else {
-                    f30 = self->mPlayer->vtbl->fn_0x1C0(self->mPlayer)[0];
+                    f30 = self->mPlayer->table->method1C0(self->mPlayer)[0];
                 }
             }
             if (f30 == lbl_eu_80666D00) {
-                float* v = self->mPlayer->vtbl->fn_0x1D0(self->mPlayer);
+                float* v = self->mPlayer->table->method1D0(self->mPlayer);
                 if (v[0] != lbl_eu_80666CF8) {
-                    f30 = self->mPlayer->vtbl->fn_0x1D0(self->mPlayer)[0];
+                    f30 = self->mPlayer->table->method1D0(self->mPlayer)[0];
                 } else {
-                    f30 = self->mPlayer->vtbl->fn_0x1C0(self->mPlayer)[0];
+                    f30 = self->mPlayer->table->method1C0(self->mPlayer)[0];
                 }
             }
             if (f30 < lbl_eu_80666CF8) {
-                f30 = self->mPlayer->vtbl->fn_0x1C0(self->mPlayer)[0];
+                f30 = self->mPlayer->table->method1C0(self->mPlayer)[0];
             }
         } else {
             void* p = cf::CfGameManager::getPlayer(1);
@@ -247,8 +242,7 @@ extern "C" void func_800D11B0(CtrlActView* self) {
         ml::CVec3 pos40;
         ml::CVec3 pos58;
         CtrlActPosBlock* res =
-            ((CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C)
-                ->vtbl->fn_0x12C(&self->mPlayer->mSub3E9C, 0x64);
+            (CtrlActPosBlock*)((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v73(0x64);
         if (res != 0) {
             pos40.x = res->mFieldC;
             pos40.y = res->mField1C;
@@ -344,12 +338,9 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                         // height probe by the voice-owner 0x138 height and
                         // clamp, or blend the facing value into mField70.
                         if (self->mFlags58.mBit14) {
-                            pf = self->mPlayer->vtbl->fn_0xF0(self->mPlayer);
+                            pf = self->mPlayer->table->methodF0(self->mPlayer);
                             float* hv =
-                                ((CtrlActVoiceOwnerView*)
-                                     &self->mPlayer->mSub3E9C)
-                                    ->vtbl->fn_0x138(
-                                        &self->mPlayer->mSub3E9C);
+                                ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
                             f32 f1;
                             if (self->mFlags58.mBit13) {
                                 f1 = lbl_eu_80666D28 / hv[0] * pf;
@@ -363,13 +354,10 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                             self->mField70 = f1;
                         } else {
                             // .L_800D2480: playerF0 is held in pf (f29)
-                            // across the fn_0x138 call (retail fmr f29, f1).
-                            pf = self->mPlayer->vtbl->fn_0xF0(self->mPlayer);
+                            // across the method138 call (retail fmr f29, f1).
+                            pf = self->mPlayer->table->methodF0(self->mPlayer);
                             float* hv2 =
-                                ((CtrlActVoiceOwnerView*)
-                                     &self->mPlayer->mSub3E9C)
-                                    ->vtbl->fn_0x138(
-                                        &self->mPlayer->mSub3E9C);
+                                ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
                             f32 f1 = hv2[0] * pf;
                             if (f1 >= lbl_eu_80666D38) {
                                 self->mField70 = f27;
@@ -378,13 +366,9 @@ extern "C" void func_800D11B0(CtrlActView* self) {
                                 f32 sum = lbl_eu_80666D3C + f30 + f31;
                                 if (f28 < sum) {
                                     f30 =
-                                        self->mPlayer->vtbl->fn_0xF0(
-                                            self->mPlayer);
+                                        self->mPlayer->table->methodF0(self->mPlayer);
                                     float* hv3 =
-                                        ((CtrlActVoiceOwnerView*)
-                                             &self->mPlayer->mSub3E9C)
-                                            ->vtbl->fn_0x138(
-                                                &self->mPlayer->mSub3E9C);
+                                        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v76();
                                     f32 f1b = lbl_eu_80666D38 / hv3[0] * f30;
                                     if (f1b < lbl_eu_80666D30) {
                                         f1b = lbl_eu_80666D20;
@@ -451,7 +435,7 @@ extern "C" void func_800D11B0(CtrlActView* self) {
     // r29 "stuck" flag zeroes it, otherwise the 0x3F00 bit 2 path re-probes.
     {
         f32 cur = self->mField14;
-        f32 scaled = cur * self->mPlayer->vtbl->fn_0x23C(self->mPlayer);
+        f32 scaled = cur * self->mPlayer->table->method23C(self->mPlayer);
         self->mField14 = scaled;
         if (r29 != 0) {
             self->mField14 = lbl_eu_80666CF8;
@@ -493,9 +477,7 @@ void func_800D1CFC(CtrlActView* self) {
         if (arg != NULL) {
             arg = (u8*)arg + 0x3E9C;
         }
-        ((CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C)
-            ->vtbl->fn_0x1AC(&self->mPlayer->mSub3E9C, arg,
-                             lbl_eu_804FC81C);
+        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v105(arg, lbl_eu_804FC81C);
         if (self->mPlayer->mField3F60 != 0) {
             int page = func_8004C5EC(self->mPlayer->mField3F60);
             if (page < 0x21 || page > 0x2a) {
@@ -603,11 +585,9 @@ void func_800D1F0C(CtrlActView* self) {
         // No fresh entry: re-validate the current action state.
         if (!(entry.mFlags10 & 0x20)) {
             // L_3460: compare the owner's id probe against the stale entry.
-            CtrlActVoiceOwnerView* vo =
-                (CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C;
-            if (vo->vtbl->fn_0x4C(vo) != (int)entry.mField0) {
+            if (((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v17() != (int)entry.mField0) {
                 if (entry.mFlags10 & 0x400) {
-                    self->mPlayer->vtbl->fn_0x70(
+                    self->mPlayer->table->method70(
                         self->mPlayer->mField3ED4,
                         (void*)(uintptr_t)entry.mField0);
                 }
@@ -687,7 +667,7 @@ void func_800D1F0C(CtrlActView* self) {
             }
         }
         if (ap->mField78 & 0x8000) {
-            self->mPlayer->vtbl->fn_0x5C8(self->mPlayer, 1);
+            self->mPlayer->table->method5C8(self->mPlayer, 1);
         }
         u32 g806 = *self->mPlayer->mField4->vf30();
         if (func_80174C98(self->mPlayer, &g806, 0x806) == 0) {
@@ -695,7 +675,7 @@ void func_800D1F0C(CtrlActView* self) {
             CtrlActEntryObj* eo = (CtrlActEntryObj*)entry.mPtr18;
             eo->mField7C = eo->mField2C;
             void* bm = getInstance__Q22cf14CBattleManagerFv();
-            ((CtrlActBm2*)bm)->vtbl->fn2C(bm, self->mPlayer, sub);
+            ((CtrlActBm2*)bm)->table->fn2C(bm, self->mPlayer, sub);
         }
         return;
     }
@@ -706,13 +686,11 @@ void func_800D1F0C(CtrlActView* self) {
     switch (entry.mKind) {
     case 0:
     case 1:
-        ((CtrlActSelfView*)self)
-            ->vtbl->fn_0x78(self, &entry);
+        self->vf28(&entry);
         break;
     case 2:
     case 3:
-        ((CtrlActSelfView*)self)
-            ->vtbl->fn_0x7C(self, &entry);
+        self->vf29(&entry);
         break;
     case 4:
         func_8016FE34(findObjectById((int)entry.mField0));
@@ -810,10 +788,10 @@ void func_800D1F0C(CtrlActView* self) {
         break;
     }
     case 22: {
-        void* base = self->mPlayer->vtbl->fn_0x27C(self->mPlayer);
+        void* base = self->mPlayer->table->method27C(self->mPlayer);
         CtrlActArtsParam* p =
             (CtrlActArtsParam*)getArtsParamByIdx(base, entry.mArtsIdx);
-        p->mField80 = p->vtbl->fn14(p);
+        p->mField80 = p->table->fn14(p);
         break;
     }
     case 23: {
@@ -977,13 +955,13 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     void* arts;
     {
         CtrlActPlayerView* p = self->mPlayer;
-        arts = func_80153CAC(p->vtbl->fn_0x27C(p), atkIndex);
+        arts = func_80153CAC(p->table->method27C(p), atkIndex);
     }
     CtrlActAtkParam* atk;
     {
         CtrlActPlayerView* p2 = self->mPlayer;
         atk = (CtrlActAtkParam*)getArtsParamByIdx(
-            p2->vtbl->fn_0x27C(p2), atkIndex);
+            p2->table->method27C(p2), atkIndex);
     }
     if (arts == 0 || src == 0) {
         return 0;
@@ -1002,7 +980,7 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
             return 0;
         }
     }
-    CtrlActSub2A4* sub = self->mPlayer->vtbl->fn_0x2A4(self->mPlayer);
+    CtrlActSub2A4* sub = self->mPlayer->table->method2A4(self->mPlayer);
     bm = getInstance__Q22cf14CBattleManagerFv();
     if (func_800EA444(bm) != 0
         && ((CtrlActBattleSubView*)func_800EA444(bm))->mField0
@@ -1098,8 +1076,8 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     snapshot.mField4 = sub->mField4;
     snapshot.mField0 = sub->mField0;
     if (func_80148778(&self->mPlayer->mField8, 0xeb) != 0) {
-        ((CtrlActArtsVtbl*)self->mPlayer->mField8)
-            ->fn_0x20(&self->mPlayer->mField8, 0xeb);
+        ((ArtsTable*)self->mPlayer->mField8)
+            ->method20(&self->mPlayer->mField8, 0xeb);
         return 1;
     }
     if (func_80145C00(atk->mField48) != 0) {
@@ -1109,18 +1087,18 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
             if (v < 1 || v > 0x18) {
                 if ((self->mPlayer->mField3E6C & 0x1000) == 0
                     && self->mPlayer->mField1530 == atk->mField48) {
-                    ((CtrlActArtsVtbl*)self->mPlayer->mField8)->fn_0x20(
+                    ((ArtsTable*)self->mPlayer->mField8)->method20(
                         &self->mPlayer->mField8, self->mPlayer->mField1530);
                     return 1;
                 }
             }
             if (self->mPlayer->mField1530 == 0xea
                 && atk->mField48 == 0xea) {
-                ((CtrlActArtsVtbl*)self->mPlayer->mField8)->fn_0x20(
+                ((ArtsTable*)self->mPlayer->mField8)->method20(
                     &self->mPlayer->mField8, self->mPlayer->mField1530);
                 return 1;
             }
-            ((CtrlActArtsVtbl*)self->mPlayer->mField8)->fn_0x20(
+            ((ArtsTable*)self->mPlayer->mField8)->method20(
                 &self->mPlayer->mField8, self->mPlayer->mField1530);
         }
     }
@@ -1371,7 +1349,7 @@ extern "C" void func_800D3998(CtrlActView* self) {
             (lbl_eu_80666D64 + lbl_eu_80666D64 * t2 / lbl_eu_80666D4C) * lbl_eu_8066A210;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         s->mPos30 = *(ml::CVec3*)pos;
-        s->mField48 = src->vtbl->fn_0x5B4(src);
+        s->mField48 = src->table->method5B4(src);
         s->mField54 = f30;
         s->mField50 = f31;
         CVoicePos* ppos = s->mPlayer->mSub3E9C.getPosition();
@@ -1472,7 +1450,7 @@ extern "C" void func_800D3D34(CtrlActView* self) {
         f32 timer = (f32)(conv.d - lbl_eu_80666D78) / denom;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         self->mPos30 = *(ml::CVec3*)pos;
-        self->mField48 = src->vtbl->fn_0x5B4(src);
+        self->mField48 = src->table->method5B4(src);
         self->mField54 = timer;
         self->mField50 = zero8;
         CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
@@ -1607,7 +1585,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
             if (dPlayer < dSelf) {
                 f32 lim =
                     lbl_eu_80666D14 *
-                    (self->mPlayer->vtbl->fn_0x1C0(self->mPlayer)[0] +
+                    (self->mPlayer->table->method1C0(self->mPlayer)[0] +
                      src->mField44D8);
                 if (dPlayer < lim) {
                     self->mField14 = lbl_eu_80666CF8;
@@ -1777,7 +1755,7 @@ extern "C" void func_800D49F4(CtrlActView* self) {
             f31 = lbl_eu_80666D3C;
             CVoicePos* pos = src->mOwner3E9C.getPosition();
             self->mPos30 = *(ml::CVec3*)pos;
-            self->mField48 = src->vtbl->fn_0x5B4(src);
+            self->mField48 = src->table->method5B4(src);
             self->mField54 = f31;
             self->mField50 = f30;
             CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
@@ -1915,7 +1893,7 @@ extern "C" void func_800D4F30(CtrlActView* self) {
             f31 = lbl_eu_80666D3C;
             CVoicePos* pos = src->mOwner3E9C.getPosition();
             self->mPos30 = *(ml::CVec3*)pos;
-            self->mField48 = src->vtbl->fn_0x5B4(src);
+            self->mField48 = src->table->method5B4(src);
             self->mField54 = f31;
             self->mField50 = f30;
             CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
@@ -2007,7 +1985,7 @@ void func_800D5308(CtrlActView* self) {
     // probe below. The probe offset (0,0,D68) is materialized before the trig
     // calls, then rotated around Y by the facing and scaled so the ground
     // probe point tracks the terrain height at the source.
-    f32 angle = src->vtbl->fn_0x5B4(src);
+    f32 angle = src->table->method5B4(src);
     ml::CVec3 v;
     v.x = lbl_eu_80666CF8;
     v.y = lbl_eu_80666CF8;
@@ -2020,7 +1998,7 @@ void func_800D5308(CtrlActView* self) {
     v.x = -sin * vx + lbl_eu_80666CF8 * v.y + cos * vz;
     v.y = lbl_eu_80666CF8 * vx + lbl_eu_80666CFC * v.y + lbl_eu_80666CF8 * vz;
     v.z = cos * vx + lbl_eu_80666CF8 * v.y + sin * vz;
-    float* h = self->mPlayer->vtbl->fn_0x1C0(self->mPlayer);
+    float* h = self->mPlayer->table->method1C0(self->mPlayer);
     f32 scale = lbl_eu_80666D14 * (h[0] + src->mField44D8);
     v.x = v.x * scale;
     v.y = v.y * scale;
@@ -2057,10 +2035,8 @@ void func_800D5308(CtrlActView* self) {
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
     } else {
-        CtrlActVoiceOwnerView* vo =
-            (CtrlActVoiceOwnerView*)&self->mPlayer->mSub3E9C;
-        vo->vtbl->fn_0x9C(&self->mPlayer->mSub3E9C, &point);
-        vo->vtbl->fn_0xC8(&self->mPlayer->mSub3E9C, angle);
+        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v37(&point);
+        ((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v48(angle);
         memset(&self->mPos30, 0, 0x2c);
         func_80174C24(self->mPlayer, 0x40);
     }
@@ -2659,7 +2635,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
         // position plus the facing offset and walk it with vf26.
         u16 save455A = src->mField455A;
         src->mField455A = 1;
-        f32 facing = self->mPlayer->vtbl->fn_0x5B4(self->mPlayer);
+        f32 facing = self->mPlayer->table->method5B4(self->mPlayer);
         f32 cosv = nw4r::math::CosFIdx(lbl_eu_80666D80 * facing);
         f32 sinv = nw4r::math::SinFIdx(lbl_eu_80666D80 * facing);
         ml::CVec3 dirVec(sinv, lbl_eu_80666CF8, cosv);
@@ -2700,7 +2676,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
             self->mField7B++;
             if ((u8)self->mField7B >= 0x1e) {
                 self->mField7B = 0;
-                f32 facing2 = self->mPlayer->vtbl->fn_0x5B4(self->mPlayer);
+                f32 facing2 = self->mPlayer->table->method5B4(self->mPlayer);
                 self->mField6C = facing2;
                 f32 ang = facing2 + lbl_eu_8066A1F8;
                 f32 cosv2 = nw4r::math::CosFIdx(lbl_eu_80666D80 * ang);

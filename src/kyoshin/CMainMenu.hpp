@@ -67,12 +67,6 @@ public:
     void removeRenderCB(IScnRender* cb);
 };
 #endif
-struct CMainMenuCurVt {
-    virtual void _v008();       // VUpdate
-    virtual void _v00C();       // cleanup
-    virtual void vfn_0x10(const nw4r::math::VEC3* trans);  // setRootPaneTranslate
-};
-
 class CMainMenu {
 public:
     CMainMenu();
@@ -318,48 +312,6 @@ struct CMainMenuPlayerSub {
     u16 field_530;              // 0x530 - action flags
 };
 
-// Cast-only iface for the player-spot vtable slot 0x9C (party/status open).
-// RTTI on -> two hidden slots before the first declared virtual.
-struct CMainMenuSpotVt {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void vfn_0x9C(u8* arg);  // slot 0x9C
-};
 struct CMainMenuPlayerSpot {
     void** vtable;              // 0x00 - embedded +0x3E9C sub-object
     u8 _04[0xC4 - 0x04];
@@ -369,87 +321,6 @@ struct CMainMenuPlayer {
     void** vtable;              // 0x00 - slot 0x128 yields HP (float)
     u8 _04[0x3E9C - 0x04];
     CMainMenuPlayerSpot spot;   // 0x3E9C (0xC8 bytes; field_0xC4 == player+0x3F60)
-};
-
-// Cast-only iface for the player vtable: MWCC virtual dispatch emits the
-// retail lwz r12 / lwz r12,off(r12) pattern (fp-style vtable loads color the
-// vptr temp r4). RTTI on -> two hidden slots before the first declared
-// virtual, so placeholders fill 0x08..0x124 and vf128 lands at retail 0x128.
-// Never constructed.
-struct CMainMenuPlayerVt {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void _v0AC();
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual float vf128();     // slot 0x128 - HP
 };
 extern "C" CMainMenuPlayerSpot* getPlayer__Q22cf13CfGameManagerFi(int index);
 

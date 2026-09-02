@@ -74,7 +74,7 @@ struct CfObjectNpc_model98 {
 // vtable slot 0x8C returns a f32 in retail even though the base header declares
 // it void; the proxy's getScale8C() reads f1.
 float CfObjectNpc::readSlot8c() {
-    return reinterpret_cast<CfObjectNpcVt*>(this)->getScale8C();
+    return static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc15();
 }
 
 // 0x800BFE00
@@ -136,9 +136,8 @@ void CfObjectNpc::updateNpcDialog() {
                 this->CObjectState_UnkVirtualFunc5(3);
                 // Slots 0x50 and 0x1AC take arguments though the base headers
                 // declare them argument-less; call through the vtable proxy.
-                reinterpret_cast<CfObjectNpcVt*>(this)->m50(0);
-                reinterpret_cast<CfObjectNpcVt*>(this)->m1AC(
-                    0, (const char*)lbl_eu_804FC580);
+                static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc6(0);
+                static_cast<cf::CfObjectModel*>(this)->CfObjectModel_UnkVirtualFunc14(nullptr, (const char*)lbl_eu_804FC580);
                 this->mTimer = lbl_eu_80666AE0;
             } else {
                 // Local forces the scene-pointer load before the slot call,
@@ -170,16 +169,13 @@ void CfObjectNpc::func_800BF764() {
     // the fixed string baked into the column-name table at +0xC.
     if (strlen((const char*)getBdatStringColumnValue(
             fp, (const char*)&lbl_eu_804FC580[7], unk8C_3)) > 0x1F) {
-        reinterpret_cast<CfObjectNpcVt*>(this)->setName(
-            (const char*)&lbl_eu_804FC580[0xC]);
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc1((const char*)&lbl_eu_804FC580[0xC]);
     } else {
-        reinterpret_cast<CfObjectNpcVt*>(this)->setName(
-            (const char*)getBdatStringColumnValue(
-                fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc1((const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
     }
 
-    reinterpret_cast<CfObjectNpcVt*>(this)->setTime(lbl_eu_80666AF4);
-    reinterpret_cast<CfObjectNpcVt*>(this)->moveTime(lbl_eu_80666AF8);
+    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc57(lbl_eu_80666AF4);
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80666AF8);
 
     // Speed column (+0x11): byte payload scaled by the model's current scale.
     // The plain (f32)(u32)(u8) casts emit MWCC's builtin 0x43300000 stack-slot
@@ -188,16 +184,16 @@ void CfObjectNpc::func_800BF764() {
     u32 col11 = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
     f32 val1 = (f32)(u32)(u8)col11 /
-        *(f32*)reinterpret_cast<CfObjectNpcVt*>(this)->getScalePtr();
-    reinterpret_cast<CfObjectNpcVt*>(this)->setSpeed(val1);
+        *(f32*)static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc58();
+    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc59(val1);
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
     u32 col1c = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
     f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
-    reinterpret_cast<CfObjectNpcVt*>(this)->setFade(val2);
+    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc35(val2);
 
-    reinterpret_cast<CfObjectNpcVt*>(this)->applyParams();
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc23();
 }
 
 // 0x800C0314
@@ -238,19 +234,3 @@ u8 CfObjectNpc::getIconType() {
 
 // absorb: split1 retail data sections
 // generated from retail spec (fixed pointers to zero for reloc)
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectNpc_cpp_rodata[0x48] __attribute__((used)) = {
-    0x63, 0x66, 0x3A, 0x3A, 0x43, 0x66, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74,
-    0x4E, 0x70, 0x63, 0x00, 0x4A, 0x55, 0x68, 0x65, 0x61, 0x64, 0x00, 0x6E,
-    0x61, 0x6D, 0x65, 0x00, 0x4F, 0x56, 0x45, 0x52, 0x00, 0x6D, 0x6F, 0x76,
-    0x65, 0x5F, 0x73, 0x70, 0x65, 0x65, 0x64, 0x00, 0x73, 0x63, 0x61, 0x6C,
-    0x65, 0x00, 0x69, 0x63, 0x6F, 0x6E, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00,
-    0x72, 0x6C, 0x74, 0x5F, 0x6D, 0x65, 0x65, 0x74, 0x00, 0x00, 0x00, 0x00
-};
-
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectNpc_cpp_sdata2[0x28] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x41, 0xF0, 0x00, 0x00, 0x41, 0xC8, 0x00, 0x00,
-    0x41, 0x48, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
-

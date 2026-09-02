@@ -705,6 +705,14 @@ slot. CHelp (below) is the proven instance of this flow; replicate it on the
 next pad cluster (`CfObjectEne` / `CActorParam` / `PcSub4*` / `CHelp_Talk`
 sub-object pads / ...), not only on help.
 
+**Fix all blockers (hard):** do not stop with "still blocked" / "tiny If kept"
+/ "TODO owner". Every `*If` / `*Vt` / `_vNNN` / `fn_0xNN` pad in the assigned
+files must be deleted (folded onto a real owning-class virtual with retail
+arity). Foreign `*(obj+N)` sub-objects: recover the owner (table/RTTI), edit
+that hot header if needed, call `obj->method(...)`, delete the iface. If one
+angle regresses, revert and try the next — do not park the pad. Non-pad
+matching residuals (PS/scheduling) may remain; pad leftovers may not.
+
 **Flow (do in order, hexdiff `--brief` after each step, revert if the mismatch
 count rises):**
 

@@ -6,66 +6,7 @@
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
-
-// Foreign sub-object at mSubObj38 (CfObject-family helper). Its vtable slots
-// at 0x08 (release with flag), 0x2C (attach parent), 0x9C-0xAC and
-// 0xB4/0xC4/0xD0 are called by the CfObjectEff member functions. The true
-// class of this sub-object lives outside CfObjectEff (like PcSub4VtIf on
-// CfObjectPc), so this stays a small named iface on the owner - the
-// honest in-tree name is not known here, so keep a descriptive local view.
-struct CfObjectEffSub38If {
-    virtual void _v0008(int flag);
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void _v0014();
-    virtual void _v0018();
-    virtual void _v001C();
-    virtual void _v0020();
-    virtual void _v0024();
-    virtual void _v0028();
-    virtual void _v002C(cf::CfObjectEff* parent);
-    virtual void _v0030();
-    virtual void _v0034();
-    virtual void _v0038();
-    virtual void _v003C();
-    virtual void _v0040();
-    virtual void _v0044();
-    virtual void _v0048();
-    virtual void _v004C();
-    virtual void _v0050();
-    virtual void _v0054();
-    virtual void _v0058();
-    virtual void _v005C();
-    virtual void _v0060();
-    virtual void _v0064();
-    virtual void _v0068();
-    virtual void _v006C();
-    virtual void _v0070();
-    virtual void _v0074();
-    virtual void _v0078();
-    virtual void _v007C();
-    virtual void _v0080();
-    virtual void _v0084();
-    virtual void _v0088();
-    virtual void _v008C();
-    virtual void _v0090();
-    virtual void _v0094();
-    virtual void _v0098();
-    virtual void vf009C();
-    virtual void _v00A0();
-    virtual void _v00A4();
-    virtual void _v00A8();
-    virtual void _v00AC();
-    virtual void _v00B0();
-    virtual void vf00B4();
-    virtual void _v00B8();
-    virtual void _v00BC();
-    virtual void _v00C0();
-    virtual void vf00C4();
-    virtual void _v00C8();
-    virtual void _v00CC();
-    virtual void vf00D0();
-};
+#include "kyoshin/cf/object/CfObjectModel.hpp"
 
 
 
@@ -203,7 +144,7 @@ extern "C" bool detachBoundO___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
 }
 void CfObjectEff::notifySubA08_() {
     if (mSubObj38 != nullptr)
-        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00A8();
+        reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->mA8();
 }
 // Retail symbol setSubObject___Q22cf11CfObjectEffFv (void params in the name)
 // but the body consumes an object pointer in r4 - forced-name form.
@@ -212,14 +153,14 @@ extern "C" void setSubObject___Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
         // Redundant nested check on the same loaded value mirrors retail's two
         // beq targets (MWCC keeps both branches).
         if (self->mSubObj38 != 0) {
-            reinterpret_cast<CfObjectEffSub38If*>(self->mSubObj38)->_v0008(1);
+            reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->m08(1);
         }
         self->mSubObj38 = 0;
     }
     self->mSubObj38 = arg;
     if (arg != 0) {
-        reinterpret_cast<CfObjectEffSub38If*>(arg)->_v002C(self);
-        reinterpret_cast<CfObjectEffSub38If*>(self->mSubObj38)->_v00A0();
+        reinterpret_cast<cf::CfObjectSub38*>(arg)->m2C(reinterpret_cast<cf::CfObjectModel*>(self));
+        reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->mA0();
     }
 }
 // Retail symbol setEffEnable___Q22cf11CfObjectEffFv (void params in the name)
@@ -504,8 +445,8 @@ void createEffect_(cf::CfObjectEff* self) {
         return;
     }
     bool valid = true;
-    if (reinterpret_cast<cf::CfObjectEffSourceSubIf*>(
-            reinterpret_cast<cf::CfObjectEffSourceView*>(source)->field_2C)->func40(source) == 0) {
+    if (reinterpret_cast<cf::CfSourceHelper*>(
+            reinterpret_cast<cf::CfObjectEffSourceView*>(source)->field_2C)->validate(source) == 0) {
         valid = false;
     }
     if (!valid) return;
@@ -592,7 +533,7 @@ void CfObjectEff::updateEffect_() {
         (this->*lbl_eu_80528858[mCount8E])();
     }
     if (mSubObj38 != nullptr) {
-        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00A4();
+        reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->mA4();
     }
     if (mChildEff != nullptr) {
         // Sync the child's flag bit 14 (0x4000) with slot-0x160's status
@@ -730,16 +671,16 @@ extern "C" void teardownEff____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, u8* a
     }
     func_804E3D48(self->mChildEff, parent);
     if (self->mFieldB0 != nullptr) {
-        reinterpret_cast<cf::CfObjectEffVtable0CIf*>(self->mFieldB0)->func0C(self);
+        reinterpret_cast<cf::CfB0Helper*>(self->mFieldB0)->func0C(self);
         self->mFieldB0 = nullptr;
     }
     if (self->mField9C != nullptr &&
         reinterpret_cast<cf::CfObjectEffArg14View*>(arg)->field_14 != 0 &&
         func_800B8920(self->mField9C) != 0) {
-        reinterpret_cast<cf::CfObjectEffVtable1BCIf*>(self->mField9C)->func1BC(self);
+        reinterpret_cast<cf::CfObjectModel*>(self->mField9C)->CfObjectModel_UnkVirtualFunc18(self);
     }
     if (self->mFieldA0 != nullptr && func_800B8920(self->mFieldA0) != 0) {
-        reinterpret_cast<cf::CfObjectEffVtable1BCIf*>(self->mFieldA0)->func1BC(self);
+        reinterpret_cast<cf::CfObjectModel*>(self->mFieldA0)->CfObjectModel_UnkVirtualFunc18(self);
     }
     self->mChildEff = nullptr;
     u32 flags = self->mFlags68;
@@ -806,32 +747,32 @@ extern "C" void callVirt25_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
 
 extern "C" void callVirt32_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc32(); }
 
-extern "C" void callVirtC4_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjectEffSub38If*>(self)->vf00C4(); }
+extern "C" void callVirtC4_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) { self->CfObject_UnkVirtualFunc29(value); }
 
 
 namespace cf {
 void CfObjectEff::cleanupEffct_() {
     if (mFieldB0 != nullptr) {
-        reinterpret_cast<CfObjectEffVtable0CIf*>(mFieldB0)->func0C(this);
+        reinterpret_cast<cf::CfB0Helper*>(mFieldB0)->func0C(this);
         mFieldB0 = nullptr;
     }
     if (mSubObj38 != nullptr) {
-        reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v00AC();
+        reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->mAC();
         if (mSubObj38 != nullptr) {
             // Redundant nested check on the reloaded value mirrors retail's
             // two beq targets (MWCC keeps both branches).
             if (mSubObj38 != nullptr) {
-                reinterpret_cast<CfObjectEffSub38If*>(mSubObj38)->_v0008(1);
+                reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->m08(1);
             }
             mSubObj38 = nullptr;
         }
     }
     if (hasChildEffs_() != 0) {
         if (mField9C != nullptr) {
-            reinterpret_cast<CfObjectEffVtable1BCIf*>(mField9C)->func1BC(this);
+            reinterpret_cast<cf::CfObjectModel*>(mField9C)->CfObjectModel_UnkVirtualFunc18(this);
         }
         if (mFieldA0 != nullptr) {
-            reinterpret_cast<CfObjectEffVtable1BCIf*>(mFieldA0)->func1BC(this);
+            reinterpret_cast<cf::CfObjectModel*>(mFieldA0)->CfObjectModel_UnkVirtualFunc18(this);
         }
         detachChildEf();
     }
@@ -842,18 +783,4 @@ void CfObjectEff::cleanupEffct_() {
 
 // absorb: split1 retail data sections
 // generated from retail object bytes (reloc-zeroed)
-__declspec(section ".data") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CfObjectEff_cpp_data[0x50] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00
-};
-
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectEff_cpp_sdata2[0x10] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00,
-    0x44, 0x7A, 0x00, 0x00
-};
 

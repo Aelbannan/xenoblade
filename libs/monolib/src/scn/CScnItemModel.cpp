@@ -1496,7 +1496,7 @@ void func_80484D3C(CScnItemModel* self, u32 a, u32 b) {
 
 void func_80484E04(u8* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
 
-void func_80484E0C(void) {}
+void func_80484E0C(CScnItemModel* self, u32 param) { (void)self; (void)param; }
 
 extern "C" void func_80484E10(u8* self, u32 a, u32 b) {
     volatile u32* f = (volatile u32*)((u8*)self + 0x7A8);

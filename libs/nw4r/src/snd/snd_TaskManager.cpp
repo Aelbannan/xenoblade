@@ -151,5 +151,6 @@ void TaskManager::CancelWaitTask() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+unsigned char absorb_pad_snd_TaskManager_sbss_4[4];
 
 

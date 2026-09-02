@@ -121,19 +121,20 @@ extern G3DStateCache lbl_eu_8061A520;
 extern TexCoordScaleCache lbl_eu_8061A52C;
 
 // "sync" flag: cleared before every display-list upload.
-extern bool lbl_eu_80665448;
+bool lbl_eu_80665448;
 
 // Small-data flags in g3d_state.o's retail .sbss.
-extern u8 lbl_eu_8066544C;
-extern u32 lbl_eu_80665450;
-extern u32 lbl_eu_80665454;
+u8 lbl_eu_8066544C;
+u32 lbl_eu_80665450;
+u32 lbl_eu_80665454;
+char lbl_eu_80665458[8];
 // Z-comploc cache (retail small-data at 80665460): bit0 of the flag word
 // marks the cached byte valid.
 struct ZCompLocState {
     u32 flag;   // at 0x0
     u8 compLoc; // at 0x4
 };
-extern ZCompLocState lbl_eu_80665460;
+ZCompLocState lbl_eu_80665460;
 
 // Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx
 // and ScnDependentMtxFunc::EnvironmentMapping).
@@ -2065,7 +2066,6 @@ extern "C" const char lbl_eu_8061FA20[];
 extern "C" __declspec(section ".sdata") u32 lbl_eu_80663468 = 0xFFFFFFFF;
 extern "C" __declspec(section ".sdata") u32 lbl_eu_8066346C = (u32)lbl_eu_8061FA20;
 extern "C" __declspec(section ".rodata") const unsigned char lbl_eu_8051D660[48] = {0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xBF,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x3F,0x80,0x00,0x00};
+// Retail bss 0x55E0 (21984) — pad from end of actual bss symbols
+// (0x44D8) to reach retail size; sbss 0x20 via 8 small u32s.
 __declspec(align(8)) unsigned char bss_pad_g3d_state_bss[0x1108];
-__declspec(align(8)) u32 sbss_pad1; __declspec(align(8)) u32 sbss_pad2; __declspec(align(8)) u32 sbss_pad3;
-__declspec(align(8)) u32 sbss_pad4; __declspec(align(8)) u32 sbss_pad5;
-

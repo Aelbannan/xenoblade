@@ -19,9 +19,53 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+// Real player base/spot types are in CfGimmick.hpp (CfPlayerBase::getHP at 0x128,
+// CfPlayerSpot::partyOpen at 0x9C). Define minimal forward views here to avoid
+// pulling the full CfGimmick header which conflicts on several extern "C" globals
+// (func_8009CF8C/func_80124B78/getUnk80664658) already declared with different
+// view structs in the menu headers.
+class CfPlayerSpotReal {
+public:
+    virtual ~CfPlayerSpotReal();
+    virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
+    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08();
+    virtual void d09(); virtual void d10(); virtual void d11(); virtual void d12();
+    virtual void d13(); virtual void d14(); virtual void d15(); virtual void d16();
+    virtual void d17(); virtual void d18(); virtual void d19(); virtual void d20();
+    virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
+    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28();
+    virtual void d29(); virtual void d30(); virtual void d31(); virtual void d32();
+    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36();
+    virtual void partyOpen(u8* arg); // 0x9C
+};
+class CfPlayerBaseReal {
+public:
+    virtual ~CfPlayerBaseReal();
+    virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
+    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08();
+    virtual void d09(); virtual void d10(); virtual void d11(); virtual void d12();
+    virtual void d13(); virtual void d14(); virtual void d15(); virtual void d16();
+    virtual void d17(); virtual void d18(); virtual void d19(); virtual void d20();
+    virtual void d21(); virtual void d22(); virtual void d23(); virtual void d24();
+    virtual void d25(); virtual void d26(); virtual void d27(); virtual void d28();
+    virtual void d29(); virtual void d30(); virtual void d31(); virtual void d32();
+    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36();
+    virtual void d37(); virtual void d38(); virtual void d39(); virtual void d40();
+    virtual void d41(); virtual void d42(); virtual void d43(); virtual void d44();
+    virtual void d45(); virtual void d46(); virtual void d47(); virtual void d48();
+    virtual void d49(); virtual void d50(); virtual void d51(); virtual void d52();
+    virtual void d53(); virtual void d54(); virtual void d55(); virtual void d56();
+    virtual void d57(); virtual void d58(); virtual void d59(); virtual void d60();
+    virtual void d61(); virtual void d62(); virtual void d63(); virtual void d64();
+    virtual void d65(); virtual void d66(); virtual void d67(); virtual void d68();
+    virtual void d69(); virtual void d70(); virtual void d71();
+    virtual float getHP(); // 0x128
+};
 
 // C-linkage import (retail unmangled symbol).
 extern "C" void func_8013676C(void* node, u32 font);
+extern "C" void func_801390E0(CFileHandle** handle);
+void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* acc);
 
 // CBaseCur shared helpers (defined in CCur.cpp)
 extern "C" void func_801D21CC(CBaseCur* cur);
@@ -39,9 +83,9 @@ void* __dt__800FEA30(void* _this, int flags) {
     return _this;
 }
 
-u32 func_800FEDF8(void) {
+void* func_800FEDF8(void) {
     extern u32 lbl_eu_80663F18;
-    return lbl_eu_80663F18;
+    return (void*)(uintptr_t)lbl_eu_80663F18;
 }
 
 // Destructor for CProcess-derived class at vtable 0x800FED0C.
@@ -378,7 +422,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                 ((CBaseCur*)&self->_90[0])->mActive = ((CBaseCur*)temp)->mActive;
                 ((CBaseCur*)&self->_90[0])->mVisible = ((CBaseCur*)temp)->mVisible;
                 __dt__8CBaseCurFv(temp, 0);
-                ((CMainMenuCurVt*)&self->_90[0])->_v008();
+                ((CBaseCurVtIf*)&self->_90[0])->VUpdate();
             }
             // Build the sub cursor on the stack and copy its members into +0xA8.
             {
@@ -397,7 +441,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                 ((CMainMenuSubCurView*)&self->subCur)->mVisible =
                     ((CMainMenuSubCurView*)temp)->mVisible;
                 __dt__7CSubCurFv((CBaseCur*)temp, -1);
-                ((CMainMenuCurVt*)&self->subCur)->_v008();
+                ((CBaseCurVtIf*)&self->subCur)->VUpdate();
             }
 
             func_80101BF8(self);
@@ -640,7 +684,7 @@ void func_800FF920(CMainMenu* self) {
             vec = pane->GetTranslate();
         }
         vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
+        ((CBaseCurVtIf*)&self->_90[0])->setRootPaneTranslate(&vec);
         // Refresh the "N" counter panes for the new cursor index.
         int n = self->field_0xC0 + 1;
         if (n > 0) {
@@ -669,7 +713,7 @@ void func_800FF920(CMainMenu* self) {
             vec = pane->GetTranslate();
         }
         vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CMainMenuCurVt*)&self->_90[0])->vfn_0x10(&vec);
+        ((CBaseCurVtIf*)&self->_90[0])->setRootPaneTranslate(&vec);
         int n = self->field_0xC0 + 1;
         if (n > 0) {
             char* base = lbl_eu_804FCEBC;
@@ -909,7 +953,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
     // Fourth argument reloads the raw root pointer (no dispatch).
     func_80137924(&vec, pane1, pane2,
                   *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-    ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
+    ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
     if (idx > 0) {
         char* s1 = func_80136190(base + 0x5e, base + 0x67, idx);
         char* s2 = func_80136190(base + 0x5e, base + 0x6c, idx);
@@ -1010,7 +1054,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         nw4r::math::VEC3 vec;
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
+        ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
         goto tail;
     }
@@ -1044,7 +1088,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         nw4r::math::VEC3 vec;
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CMainMenuCurVt*)&self->subCur)->vfn_0x10(&vec);
+        ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
         goto tail;
     }
@@ -1076,8 +1120,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
                 player = (CMainMenuPlayer*)((char*)player - 0x3E9C);
             }
             if (player != 0 && player->spot.field_0xC4 != 0) {
-                ((CMainMenuSpotVt*)&player->spot)
-                    ->vfn_0x9C(&player->spot.field_0xC4->field_0x3B4[0]);
+                ((CfPlayerSpotReal*)&player->spot)->partyOpen(&player->spot.field_0xC4->field_0x3B4[0]);
             }
         }
         playUISound__FUl(0x6b);
@@ -1206,7 +1249,7 @@ extern "C" int func_80101A88(CMainMenu* self) {
         player = (CMainMenuPlayer*)((char*)spot - 0x3E9C);
     }
     if (player != 0) {
-        float hp = ((CMainMenuPlayerVt*)player)->vf128();
+        float hp = ((CfPlayerBaseReal*)player)->getHP();
         if (lbl_eu_80666F1C == hp) return 1;
         CMainMenuPlayerSub* sub = player->spot.field_0xC4;
         if (sub != 0) {
@@ -1404,8 +1447,8 @@ void CMainMenu::Term() {
     }
     field_0x70->removeRenderCB(render);
     func_801390E0(&field_0x74);
-    ((CMainMenuCurVt*)&_90[0])->_v00C();
-    ((CMainMenuCurVt*)&subCur)->_v00C();
+    ((CBaseCurVtIf*)&_90[0])->cleanup();
+    ((CBaseCurVtIf*)&subCur)->cleanup();
     if (field_0x7C != 0) {
         delete field_0x7C;
         field_0x7C = 0;

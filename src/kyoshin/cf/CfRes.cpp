@@ -14,12 +14,16 @@ extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void* func_80495FF0(void* scene);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
+extern "C" void* CfRes_vcall34(u8* self);
+extern "C" void* CfRes_vcall38(u8* self);
 // Two-word ring record built on the caller's frame by func_80061870; both
 // members stay memory-resident in retail (header at 0x8(sp), data at 0xC(sp)).
 
 // Append a header/data record to the ring buffer. Each stored word lands at
 // ring offset (field_400 + field_404) words and advances field_404 by one.
 // Returns 0 when the record would overflow the 0x100-word budget.
+#pragma push
+#pragma optimization_level 1
 int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
                   unsigned int dataVal, unsigned int* src, int count) {
     if (buffer->field_404 + count + 2 >= 0x100) {
@@ -50,6 +54,7 @@ int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfw
     }
     return 1;
 }
+#pragma pop
 
 // Backward-write variant of func_80061870: the record ends at the current
 // field_400, so the write index walks backwards (field_400 - count - 2).
@@ -57,6 +62,8 @@ int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfw
 // count nibble at bits 8-11; bits 12-19 come from the caller's headerBits
 // and survive. Each ring store indexes through the u32* view, whose potential
 // aliasing with field_400 forces retail to reload it for every word.
+#pragma push
+#pragma optimization_level 1
 int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword,
                                unsigned int dataVal, unsigned int* src, int count,
                                unsigned int headerBits) {
@@ -95,6 +102,7 @@ int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword,
     field_404 = field_404 + count + 2;
     return 1;
 }
+#pragma pop
 
 // func_80061C5C: pop a header word pair plus `count` data words off the
 // CfResBuffer ring (mod-0x100 index); the popped header's bits 8-11 hold the
@@ -151,6 +159,8 @@ static CfResRingPair CfRes_popPair(CfResBuffer* buffer) {
 // at header bits 16-19, extracted with the (h<<12)>>28 rotate so MWCC emits
 // the extrwi-shaped rlwinm.). Ring indices are saved at entry and restored at
 // exit, so the scan never consumes the ring.
+#pragma push
+#pragma optimization_level 1
 bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
     bool found = false;
     u32 saved400 = buffer->field_400;
@@ -174,6 +184,7 @@ bool func_80061D2C(CfResBuffer* buffer, u32 mode) {
     buffer->field_404 = saved404;
     return found;
 }
+#pragma pop
 
 // func_80061E8C: scan the CfResBuffer ring for a record whose header key
 // byte (bits 24-31) matches `mode`; return 1 immediately on the first match
@@ -1379,18 +1390,9 @@ extern "C" __declspec(noinline) int CfRes_getE24Bit18() {
     return (lbl_eu_80663E24 >> 18) & 1;
 }
 
-// C++ virtual thunk with struct access (14 dummies + RTTI = offset 64)
-struct CfResObj_63DF0 { u8 _00[0x2C]; struct CfResSub_63DF0* sub; };
-struct CfResSub_63DF0 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13(); virtual int m14(void* self); };
-extern "C" __declspec(noinline) int CfRes_vcall14(void* self) {
-    return ((CfResObj_63DF0*)self)->sub->m14(self);
-}
+// folded isInUse
 
-struct CfResSub_63E08 { virtual void* m02(void* self, void* arg); };
-struct CfResObj_63E08 { u8 _00[0x2C]; CfResSub_63E08* sub; };
-__declspec(noinline) void* CfRes_vcall02(void* self, void* arg) {
-    return ((CfResObj_63E08*)self)->sub->m02(self, arg);
-}
+// folded to getResourceBase
 
 extern "C" __declspec(noinline) u32 CfRes_extractBits27_5(void* self) { return ((u32)(uintptr_t)self >> 27) & 0x1F; }
 
@@ -1421,7 +1423,7 @@ int __declspec(noinline) func_80063E30(void* a, void* b, u32 c, void* d, void* e
     return result;
 }
 
-// func_80063F1C (0x800646E8): format the packed resource id into a path and
+// func_80063F1C
 // run the archive-read pipeline (func_80063E30); 0 when the path cannot be
 // built or the pipeline reports failure.
 int __declspec(noinline) func_80063F1C(u8* a, u8* b, u32 c, u8* d, int e) {
@@ -1500,7 +1502,7 @@ extern "C" int __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, 
                     entry->field_0x00 = (entry->field_0x00 & 0xFFFFFFAEu) | 2;
                     entry->field_0x28 = 0;
                     if (entry->field_0x2C != 0) {
-                        ((CfResLookupV38*)entry->field_0x2C)->_v038(entry);
+                        ((CResLookup*)entry->field_0x2C)->vfunc0A(entry);
                     }
                 } else {
                     entry->field_0x00 = (entry->field_0x00 & 0xFFFFFFACu);
@@ -1514,7 +1516,7 @@ extern "C" int __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, 
     return 0;
 }
 
-extern "C" int func_800640F4(int a, void* b) {
+extern "C" __declspec(noinline) int func_800640F4(int a, void* b) {
     int result = -1;
     void* r = func_80063FA8((ResInfoEntry*)(uintptr_t)a, (int)(uintptr_t)b, 0, 130, 1, 0);
     if (r)
@@ -1537,14 +1539,14 @@ extern "C" __declspec(noinline) u32 CfRes_getAddrLow10(void* self) { return (u32
 // resource table. Special bit-27 fields (7/8) are normalized before the
 // scan; after a match, `out` receives whether the entry's load is complete
 // and, for the special types, the entry's +0x2C lookup object is finalized
-// through its vtable (vcall04/05/07/08).
+// through its vtable.
 // func_800641CC: resolve a packed resource token `packed` through the
 // manager's resource table (func_80063FA8 scan of 0x82 slots). Bits 27-31 of
 // the token select normalization (7 -> 4, 8 -> 3 unless already the pure
 // (8,0,0) marker reported by func_8006414C). After a hit, *out receives
 // whether the entry finished loading; finished special-class entries are
-// finalized through their lookup-object vtable (vcall04/05/07/08), everything
-// else through vcall02 with the token's bits 20-26.
+// finalized through their lookup-object vtable, everything
+// else through getResourceBase with the token's bits 20-26.
 int __declspec(noinline) func_800641CC(void* inst, u32 packed, u32* out) {
     int result = 0;
     *out = -1;
@@ -1556,74 +1558,15 @@ int __declspec(noinline) func_800641CC(void* inst, u32 packed, u32* out) {
     // special marks the bits classes handled by the finalize switch below;
     // every case assigns it so MWCC keeps the dispatch as one jump table.
     int special;
-    switch (bits - 3) {
-    case 4:   // bits 7 -> normalize to 4
-        packed = CfRes_packShift27(packed, 4);
-        special = 1;
-        break;
-    case 5:   // bits 8 -> normalize to 3 unless the pure form
-        if (vcflag == 0) {
+    special = 1;
+    if ((u32)(bits - 3) > 19) {
+        special = 0;
+    } else {
+        if (bits == 7) {
+            packed = CfRes_packShift27(packed, 4);
+        } else if (bits == 8 && vcflag == 0) {
             packed = CfRes_packShift27(packed, 3);
         }
-        special = 1;
-        break;
-    case 0:
-        special = 1;
-        break;
-    case 1:
-        special = 1;
-        break;
-    case 2:
-        special = 1;
-        break;
-    case 3:
-        special = 1;
-        break;
-    case 6:
-        special = 1;
-        break;
-    case 7:
-        special = 1;
-        break;
-    case 8:
-        special = 1;
-        break;
-    case 9:
-        special = 1;
-        break;
-    case 10:
-        special = 1;
-        break;
-    case 11:
-        special = 1;
-        break;
-    case 12:
-        special = 1;
-        break;
-    case 13:
-        special = 1;
-        break;
-    case 14:
-        special = 1;
-        break;
-    case 15:
-        special = 1;
-        break;
-    case 16:
-        special = 1;
-        break;
-    case 17:
-        special = 1;
-        break;
-    case 18:
-        special = 1;
-        break;
-    case 19:
-        special = 1;
-        break;
-    default:
-        special = 0;
-        break;
     }
     ResInfoEntry* entry = func_80063FA8((ResInfoEntry*)inst, (int)packed, 0, 0x82, 1, 0);
     if (entry != NULL) {
@@ -1633,30 +1576,28 @@ int __declspec(noinline) func_800641CC(void* inst, u32 packed, u32* out) {
             if (bits - 3 <= 0x13) {
                 switch (bits - 3) {
                 case 1:   // bits 4
-                    result = (int)(uintptr_t)CfRes_vcall04((void*)entry);
+                    result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->getResHandle18(entry);
                     break;
-                case 5:   // bits 8: pure form -> vcall02, else vcall05
+                case 5:   // bits 8: pure form -> getResourceBase, else getResHandle1C
                     if (vcflag != 0) {
-                        result = (int)(uintptr_t)CfRes_vcall02((void*)entry, 0);
+                        result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, 0);
                     } else {
-                        result = (int)(uintptr_t)CfRes_vcall05((void*)entry);
+                        result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->getResHandle1C(entry);
                     }
                     break;
                 case 0xF:   // bits 0x12
-                    result = (int)(uintptr_t)CfRes_vcall08((void*)entry);
+                    result = ((ResInfoEntry*)entry)->field_0x2C->isResActive28(entry);
                     break;
                 case 0x10:  // bits 0x13
-                    result = (int)(uintptr_t)CfRes_vcall07((void*)entry);
+                    result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->vfunc05(entry);
                     break;
                 default:
-                    result = (int)(uintptr_t)CfRes_vcall02(
-                        (void*)entry, (void*)(uintptr_t)func_8006251C((void*)(uintptr_t)packed));
+                    result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, (int)func_8006251C((void*)(uintptr_t)packed));
                     break;
                 }
             }
         } else {
-            result = (int)(uintptr_t)CfRes_vcall02(
-                (void*)entry, (void*)(uintptr_t)func_8006251C((void*)(uintptr_t)packed));
+            result = (int)(uintptr_t)((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, (int)func_8006251C((void*)(uintptr_t)packed));
         }
     }
     return result;
@@ -1666,45 +1607,25 @@ extern "C" unsigned long __declspec(noinline) CfRes_packShift27(unsigned long a,
     return (a & 0x7FFFFFF) | (b << 27);
 }
 
-// C++ virtual thunk with struct access (4 dummies + RTTI = offset 24).
-// Declared int-returning so callers can capture the r3 result (retail
-// callers do `mr rX, r3` after the call); the body is a void virtual call
-// followed by blr, so the bytes are identical to the void form.
-struct CfResObj_64370 { u8 _00[0x2C]; struct CfResSub_64370* sub; };
-struct CfResSub_64370 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(void* self); };
-extern "C" int CfRes_vcall04(void* self) {
-    ((CfResObj_64370*)self)->sub->m04(self);
-}
+// folded
 
 extern "C" bool CfRes_stubFalse_64388() { return false; }
 
 // C++ virtual thunk with struct access (5 dummies + RTTI = offset 28).
-// int-returning so callers can capture r3 (see CfRes_vcall04).
-struct CfResObj_64390 { u8 _00[0x2C]; struct CfResSub_64390* sub; };
-struct CfResSub_64390 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(void* self); };
-extern "C" int CfRes_vcall05(void* self) {
-    ((CfResObj_64390*)self)->sub->m05(self);
-}
+// int-returning so callers can capture r3.
+// folded getResHandle1C
 
 extern "C" bool CfRes_stubFalse_643A8() { return false; }
 
 // C++ virtual thunk with struct access (8 dummies + RTTI = offset 40).
-// int-returning so callers can capture r3 (see CfRes_vcall04).
-struct CfResObj_643B0 { u8 _00[0x2C]; struct CfResSub_643B0* sub; };
-struct CfResSub_643B0 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(void* self); };
-extern "C" int CfRes_vcall08(void* self) {
-    ((CfResObj_643B0*)self)->sub->m08(self);
-}
+// int-returning so callers can capture r3.
+// folded
 
 extern "C" bool CfRes_stubFalse_643C8() { return false; }
 
 // C++ virtual thunk with struct access (7 dummies + RTTI = offset 36).
-// int-returning so callers can capture r3 (see CfRes_vcall04).
-struct CfResObj_643D0 { u8 _00[0x2C]; struct CfResSub_643D0* sub; };
-struct CfResSub_643D0 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(void* self); };
-extern "C" int CfRes_vcall07(void* self) {
-    ((CfResObj_643D0*)self)->sub->m07(self);
-}
+// int-returning so callers can capture r3.
+// folded
 
 extern "C" bool CfRes_stubFalse_643E8() { return false; }
 
@@ -1741,10 +1662,7 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
     check = func_8006414C(packed);
     e24bit = CfRes_getE24Bit18();
 
-    // Jump table over `bits` (0x00-0x16); cases >= 6 share the fallthrough.
-    switch (bits) {
-    case 0:
-        // Probe whether an equivalent resource id is already resident.
+    if (bits == 0) {
         if (low != 9) {
             result = func_80063560(func_8006251C((void*)(uintptr_t)packed), 1, flag);
         }
@@ -1753,54 +1671,27 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
         } else {
             result = func_80062928(packed, flag != 0 ? 4 : 5) != 0;
         }
-        break;
-    case 1: {
-        // Pending async read: done when it already completed (-1 = failed).
+    } else if (bits == 1) {
         u32 pending;
         func_80062AD8(packed, &pending);
         if (pending != (u32)-1) {
             return 1;
         }
         queued = 1;
-        break;
-    }
-    case 2:
+    } else if (bits == 2) {
         queued = 1;
-        break;
-    case 3:
+    } else if (bits == 3) {
         packed = CfRes_packShift27(packed, 4);
         queued = 1;
-        break;
-    case 4:
+    } else if (bits == 4) {
         if (check == 0) {
             packed = CfRes_packShift27(packed, 3);
             queued = 1;
         }
-        break;
-    case 5:
+    } else if (bits == 5) {
         if (flag != 0) {
             check = 1;
         }
-        break;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
-    case 20:
-    case 21:
-    case 22:
-    default:
-        break;
     }
 
     u32 out10;
@@ -1837,12 +1728,12 @@ int func_800643F0(void* self, u32 packed, int flag, int kind) {
         }
         return result;
     }
-    if (CfRes_vcall02(entry, NULL) != NULL) {
+    if (((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, 0) != NULL) {
         // Already resident.
         if (flag != 0) {
             entry->field_0x24 = CfRes_getE30();
         } else if (func_800649F4(entry) == 4 && !CfRes_checkMask_64A08((u8*)entry, 0x800)) {
-            CfRes_vcall14(entry);
+            ((ResInfoEntry*)entry)->field_0x2C->isInUse(entry);
         }
         return 1;
     }
@@ -1952,6 +1843,15 @@ void CfRes_64994::initStruct() {
     field_20 = 0;
 }
 
+extern "C" __declspec(noinline) void CfRes_initStruct_64994(u8* self) {
+    *(u32*)((char*)self + 4) = 0;
+    *(u32*)((char*)self + 8) = 0;
+    *(u32*)((char*)self + 0x28) = 0;
+    *(u32*)((char*)self + 0) = 0;
+    *(u32*)((char*)self + 0x24) = 0;
+    *(u32*)((char*)self + 0x20) = 0;
+}
+
 extern "C" __declspec(noinline) void CfRes_orBits_649B4(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
@@ -1972,8 +1872,7 @@ extern "C" __declspec(noinline) void CfRes_setE28Mask(u32 bits) {
 }
 
 // vtable+0xC dispatch on *(self+0x2C) (retail: lwz r3,0x2c; lwz r12,0; lwz r12,0xc; mtctr; bctr)
-struct CfResVtC { virtual void m0(); virtual void m1(); };
-extern "C" __declspec(noinline) int func_800649F4(void* self) { ((CfResVtC*)(*(void**)((char*)self + 0x2C)))->m1(); }
+extern "C" __declspec(noinline) int func_800649F4(void* self) { return ((CResLookup*)(*(void**)((char*)self + 0x2C)))->getFlags(); }
 
 extern "C" __declspec(noinline) int CfRes_checkMask_64A08(u8* self, u32 mask) {
     u32 val = *(u32*)self;
@@ -2005,10 +1904,10 @@ extern "C" int __declspec(noinline) func_80064B78(int inst, int a, int b, int d,
         return 0;
     }
     ResInfoEntry* entry = (ResInfoEntry*)getEntryPtrGrid((char*)(inst + 4), a, d);
-    if (CfRes_vcall17((u8*)entry, (void*)(uintptr_t)b) != 0) {
-        if (CfRes_vcall14(entry) != 0) {
+    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)b) != 0) {
+        if (((ResInfoEntry*)entry)->field_0x2C->isInUse(entry) != 0) {
             if ((u32)(d - 9) <= 1) {
-                CfRes_vcall38((u8*)entry);
+                ((ResInfoEntry*)entry)->field_0x2C->vfunc0A(entry);
             }
         }
         return b;
@@ -2017,7 +1916,7 @@ extern "C" int __declspec(noinline) func_80064B78(int inst, int a, int b, int d,
         func_80066714(entry, true);
     }
     CfRes_delegateCleanup(entry);
-    void* vc = CfRes_vcall02(entry, (void*)(uintptr_t)func_8006251C((void*)(uintptr_t)b));
+    void* vc = ((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, (int)func_8006251C((void*)(uintptr_t)b));
     if (vc == 0) {
         ml::FixStr<64> str;
         func_800AA33C(str, (u32)(uintptr_t)b, 0, 0);
@@ -2067,18 +1966,7 @@ extern "C" int __declspec(noinline) func_80064A74(int inst, int a, int b, int c)
     return func_80064B78(inst, a, b, d, c);
 }
 
-// 15 dummies (m00-m14) span indices 2-16 with MWCC overhead; m17 at index 17 = offset 68
-struct CfResSub_64CB8 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
-    virtual void m12(); virtual void m13(); virtual void m14();
-    virtual int m17(void* self, void* arg);
-};
-struct CfResObj_64CB8 { u8 _00[0x2C]; CfResSub_64CB8* sub; };
-extern "C" __declspec(noinline) int CfRes_vcall17(u8* self, void* arg) {
-    return ((CfResObj_64CB8*)self)->sub->m17(self, arg);
-}
+// folded cmpField4Eq
 
 // func_80064CD8: resolve a packed resource token when its bits-27 field is
 // one of the supported types (2-8 or 11); otherwise 0. `b` is returned
@@ -2120,7 +2008,7 @@ void __declspec(noinline) func_eu_80065590(int inst, int index, u8* ptr) {
     if (entry == 0) {
         return;
     }
-    if (CfRes_vcall17((u8*)entry, ptr) == 0) {
+    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)ptr) == 0) {
         return;
     }
     if (entry->field_0x04 != 0) {
@@ -2151,9 +2039,9 @@ extern "C" int __declspec(noinline) func_80064DC4(int inst, int a, int b, int d,
         return b;
     }
     ResInfoEntry* entry = (ResInfoEntry*)getEntryPtr((char*)inst + 4, a, d);
-    if (CfRes_vcall17((u8*)entry, (void*)(uintptr_t)b) != 0) {
-        if (CfRes_vcall14((u8*)entry) != 0) {
-            CfRes_vcall38((u8*)entry);
+    if (((ResInfoEntry*)entry)->field_0x2C->cmpField4Eq(entry, (u32)(uintptr_t)b) != 0) {
+        if (((ResInfoEntry*)entry)->field_0x2C->isInUse(entry) != 0) {
+            ((ResInfoEntry*)entry)->field_0x2C->vfunc0A(entry);
         }
         return b;
     }
@@ -2161,7 +2049,7 @@ extern "C" int __declspec(noinline) func_80064DC4(int inst, int a, int b, int d,
         func_80066714(entry, true);
     }
     CfRes_delegateCleanup(entry);
-    void* vc = CfRes_vcall02(entry, 0);
+    void* vc = ((ResInfoEntry*)entry)->field_0x2C->getResourceBase(entry, 0);
     if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)b, (u8*)entry, e) == 0) {
         b = 0;
     }
@@ -2186,7 +2074,7 @@ int __declspec(noinline) func_80064EB0(int inst, int a, int b, int c) {
     p2 = (u8*)func_80062FA0((u8*)(inst + 4));
     if (v != 0 && CfRes_getField18_64F58(p2) != 0) {
         u32 f18 = CfRes_getField18_64F58(p2);
-        int vc = (int)(uintptr_t)CfRes_vcall02(p1, 0);
+        int vc = (int)(uintptr_t)((ResInfoEntry*)p1)->field_0x2C->getResourceBase(p1, 0);
         CfRes_initFields4(p1, v, 0, vc, (int)f18);
         CfRes_setBits11_64F60(p1);
     }
@@ -2204,11 +2092,11 @@ extern "C" int __declspec(noinline) func_80064F78(int inst, int a, int b, int c)
     if (result == 0) {
         return result;
     }
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)result) != 0) {
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)result) != 0) {
         return result;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (vc == 0) {
         vc = (void*)(uintptr_t)func_800A8CD4();
         ((ResInfoEntry*)slot)->data = (u32*)vc;
@@ -2226,11 +2114,11 @@ extern "C" int __declspec(noinline) func_80064F78(int inst, int a, int b, int c)
 extern "C" int __declspec(noinline) func_80065050(int inst, int a, int b, int c) {
     u32 packed = func_800AA2BC((u32)a, (u32)b);
     u8* slot = (u8*)func_80062FE8((u8*)(inst + 4));
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)packed) != 0) {
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     ml::FixStr<64> str;
     if (func_800AA33C(str, packed, 1, 1) != 0) {
         ml::FixStr<64> path;
@@ -2252,7 +2140,7 @@ extern "C" int __declspec(noinline) func_80065050(int inst, int a, int b, int c)
 extern "C" int __declspec(noinline) func_80065158(int inst, int a, int b, int c, int d) {
     u32 packed = func_800AA2BC((u32)b, (u32)c);
     u8* slot = (u8*)func_80063030((u8*)(inst + 4));
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)packed) != 0) {
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)packed) != 0) {
         return (int)packed;
     }
     CfRes_delegateCleanup(slot);
@@ -2281,7 +2169,7 @@ extern "C" __declspec(noinline) unsigned long CfRes_packThreeFields(unsigned lon
 void __declspec(noinline) func_80065254(int inst, u8* arg) {
     u8* p = (u8*)func_80063078((u8*)(inst + 4));
     func_80066788(p, 0, 0, 0);
-    void* vc = CfRes_vcall02(p, 0);
+    void* vc = ((ResInfoEntry*)p)->field_0x2C->getResourceBase(p, 0);
     if (vc != 0) {
         u16 first;
         u16 second;
@@ -2301,14 +2189,14 @@ int __declspec(noinline) func_80065314(int inst, int a, int b) {
     if (a == 0) {
         return a;
     }
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
-        if (CfRes_vcall14(slot) != 0) {
-            CfRes_vcall38(slot);
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
+        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
+            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2323,14 +2211,14 @@ int __declspec(noinline) func_80065314(int inst, int a, int b) {
 extern "C" int __declspec(noinline) func_eu_80065C7C(int inst, int a, int b, int c) {
     int result = (int)func_800AA2BC((u32)a, (u32)b);
     u8* slot = (u8*)func_eu_80065D60((u8*)(inst + 4));
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)result) != 0) {
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)result) != 0) {
         CfRes_setE28Mask(0x2000);
         return result;
     }
     CfRes_delegateCleanup(slot);
     ml::FixStr<64> str;
     str.format(lbl_eu_804FB214 + 0x23, a, b);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (func_80063E30((void*)(uintptr_t)inst, vc, (u32)(uintptr_t)result, CfRes_stub_63ACC(&str), slot, c) == 0) {
         result = 0;
     }
@@ -2345,14 +2233,14 @@ extern "C" int __declspec(noinline) func_800653E4(int inst, int a, int b) {
     if (a == 0) {
         return a;
     }
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
-        if (CfRes_vcall14(slot) != 0) {
-            CfRes_vcall38(slot);
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
+        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
+            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2374,15 +2262,15 @@ extern "C" int __declspec(noinline) func_800654B4(int inst, int a, int b) {
     if (slot == 0 || a == 0) {
         return a;
     }
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
-        if (CfRes_vcall14(slot) != 0) {
-            CfRes_vcall38(slot);
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
+        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
+            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
         }
         return a;
     }
-    CfRes_vcall34(slot);
+    ((ResInfoEntry*)slot)->field_0x2C->vfunc09(slot);
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2396,14 +2284,14 @@ extern "C" int __declspec(noinline) func_800655C4(int inst, int a, int b) {
     if (a == 0) {
         return a;
     }
-    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
-        if (CfRes_vcall14(slot) != 0) {
-            CfRes_vcall38(slot);
+    if (((ResInfoEntry*)slot)->field_0x2C->cmpField4Eq(slot, (u32)(uintptr_t)a) != 0) {
+        if (((ResInfoEntry*)slot)->field_0x2C->isInUse(slot) != 0) {
+            ((ResInfoEntry*)slot)->field_0x2C->vfunc0A(slot);
         }
         return a;
     }
     CfRes_delegateCleanup(slot);
-    void* vc = CfRes_vcall02(slot, 0);
+    void* vc = ((ResInfoEntry*)slot)->field_0x2C->getResourceBase(slot, 0);
     if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
         a = 0;
     }
@@ -2491,6 +2379,15 @@ int CfRes_65818::decRefCount() {
         field_04--;
     }
     return field_04;
+}
+
+extern "C" __declspec(noinline) int CfResEntry_decRefCount(u8* self) {
+    int v = *(int*)((char*)self + 4);
+    if (v > 0) {
+        v--;
+        *(int*)((char*)self + 4) = v;
+    }
+    return *(int*)((char*)self + 4);
 }
 
 extern "C" __declspec(noinline) int CfRes_incField8(u8* self) {
@@ -2668,10 +2565,7 @@ int func_80065D0C(void* a1, CfResCleanupEntry* self) {
 
 // C++ virtual call forces MWCC to use r12 for vtable dispatch
 // 14 dummies + RTTI overhead = offset 64 at vtable+0x40
-struct CfResVtabClass { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11(); virtual void m13(); virtual void m14(); virtual void m16(); };
-extern "C" void CfRes_vcall16(u8* self) {
-    ((CfResVtabClass*)self)->m16();
-}
+// folded isInUse direct
 
 int func_80065D74() { return func_800A8CD4(); }
 
@@ -2782,101 +2676,50 @@ extern "C" void func_80062BA0() {}
 extern "C" void func_80062CD0() {}
 
 // absorb: split1 retail data sections
-// generated from retail build/us/asm via absorb
-__declspec(section ".data") __attribute__((aligned(8), used)) const volatile unsigned char __absorb_kyoshin_cf_CfRes_cpp_data[0x220] = {
-    0x80, 0x06, 0x4A, 0xB4, 0x80, 0x06, 0x4A, 0xB4, 0x80, 0x06, 0x4B, 0x14,
-    0x80, 0x06, 0x4B, 0x14, 0x80, 0x06, 0x4B, 0x14, 0x80, 0x06, 0x4A, 0xC0,
-    0x80, 0x06, 0x4A, 0xC0, 0x80, 0x06, 0x4B, 0x14, 0x80, 0x06, 0x4B, 0x14,
-    0x80, 0x06, 0x4B, 0x14, 0x80, 0x06, 0x4B, 0x14, 0x80, 0x06, 0x4B, 0x14,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
+// .data 0x220 handled via pad_data_section in postprocess (retail zeros), .rodata/.sdata/.sdata2/.sbss via source
+
 __declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfRes_cpp_rodata[0x1A0] = {
     0x63, 0x66, 0x3A, 0x3A, 0x43, 0x66, 0x52, 0x65, 0x73, 0x54, 0x61, 0x73,
     0x6B, 0x00, 0x00, 0x00, 0x43, 0x54, 0x54, 0x61, 0x73, 0x6B, 0x3C, 0x63,
     0x66, 0x3A, 0x3A, 0x43, 0x66, 0x52, 0x65, 0x73, 0x54, 0x61, 0x73, 0x6B,
     0x3E, 0x00, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x43, 0x66, 0x52, 0x65,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x73, 0x00, 0x00, 0x00, 0x6D, 0x61, 0x70, 0x00, 0x6D, 0x70, 0x66, 0x00,
+    0x69, 0x64, 0x00, 0x6C, 0x67, 0x74, 0x00, 0x6B, 0x70, 0x00, 0x6F, 0x63,
+    0x63, 0x00, 0x62, 0x69, 0x6E, 0x00, 0x2E, 0x69, 0x64, 0x00, 0x2E, 0x6C,
+    0x6F, 0x64, 0x00, 0x6D, 0x61, 0x70, 0x62, 0x64, 0x61, 0x74, 0x2F, 0x6A,
+    0x70, 0x2F, 0x62, 0x64, 0x61, 0x74, 0x5F, 0x6D, 0x61, 0x25, 0x30, 0x32,
+    0x64, 0x25, 0x30, 0x32, 0x64, 0x2E, 0x62, 0x69, 0x6E, 0x00, 0x00, 0x00,
+    0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x3C, 0x75, 0x6E, 0x73, 0x69,
+    0x67, 0x6E, 0x65, 0x64, 0x20, 0x73, 0x68, 0x6F, 0x72, 0x74, 0x3E, 0x00,
+    0x5F, 0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x5F, 0x62, 0x61, 0x73,
+    0x65, 0x3C, 0x75, 0x6E, 0x73, 0x69, 0x67, 0x6E, 0x65, 0x64, 0x20, 0x73,
+    0x68, 0x6F, 0x72, 0x74, 0x3E, 0x00, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x45, 0x6E, 0x65, 0x4E,
+    0x70, 0x63, 0x45, 0x76, 0x65, 0x6E, 0x74, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x45, 0x6E, 0x65, 0x4E,
+    0x70, 0x63, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73,
+    0x49, 0x6E, 0x66, 0x6F, 0x50, 0x63, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x4D, 0x61, 0x70, 0x42,
+    0x64, 0x61, 0x74, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73,
+    0x49, 0x6E, 0x66, 0x6F, 0x4F, 0x62, 0x6A, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x54, 0x42, 0x6F, 0x78,
+    0x00, 0x00, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73,
+    0x49, 0x6E, 0x66, 0x6F, 0x53, 0x65, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x45, 0x66, 0x66, 0x65,
+    0x63, 0x74, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73,
+    0x49, 0x6E, 0x66, 0x6F, 0x4C, 0x4F, 0x44, 0x00, 0x63, 0x66, 0x3A, 0x3A,
+    0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F, 0x49, 0x44, 0x00, 0x00,
+    0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F,
+    0x50, 0x72, 0x65, 0x6C, 0x6F, 0x61, 0x64, 0x4D, 0x61, 0x70, 0x00, 0x00,
+    0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73, 0x49, 0x6E, 0x66, 0x6F,
+    0x4D, 0x61, 0x70, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x52, 0x65, 0x73,
+    0x49, 0x6E, 0x66, 0x6F, 0x00, 0x00, 0x00, 0x00
 };
-int __absorb_kyoshin_cf_CfRes_cpp_sbss_0;
-int __absorb_kyoshin_cf_CfRes_cpp_sbss_1;
-int __absorb_kyoshin_cf_CfRes_cpp_sbss_2;
-int __absorb_kyoshin_cf_CfRes_cpp_sbss_3;
 __declspec(section ".sdata") __attribute__((aligned(8), used)) const volatile unsigned char __absorb_kyoshin_cf_CfRes_cpp_sdata[0xA0] = {
-    0x80, 0x66, 0x61, 0xF0, 0x80, 0x66, 0x61, 0xF4, 0x80, 0x4F, 0xB1, 0xE0,
-    0x80, 0x52, 0x67, 0xC8, 0x80, 0x4F, 0xB1, 0xF0, 0x80, 0x52, 0x68, 0x10,
-    0x80, 0x4F, 0xB2, 0x08, 0x80, 0x52, 0x68, 0xB8, 0x2E, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x80, 0x4F, 0xB2, 0x58, 0x80, 0x52, 0x69, 0x2C,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2E, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -2892,3 +2735,8 @@ __declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned c
     0x4B, 0x59, 0x50, 0x00, 0x44, 0x41, 0x50, 0x31, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00
 };
+int __absorb_kyoshin_cf_CfRes_cpp_sbss_0;
+int __absorb_kyoshin_cf_CfRes_cpp_sbss_1;
+int __absorb_kyoshin_cf_CfRes_cpp_sbss_2;
+int __absorb_kyoshin_cf_CfRes_cpp_sbss_3;
+

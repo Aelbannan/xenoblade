@@ -118,9 +118,9 @@ public:
     virtual int CfObject_UnkVirtualFunc43();        // +0xFC
     virtual int CfObject_UnkVirtualFunc44();        // +0x100
     virtual void CfObject_UnkVirtualFunc45();       // +0x104
-    virtual void CfObject_UnkVirtualFunc46();       // +0x108
+    virtual void CfObject_UnkVirtualFunc46(void*);       // +0x108
     virtual void CfObject_UnkVirtualFunc47();       // +0x10C
-    virtual void CfObject_UnkVirtualFunc48();       // +0x110
+    virtual void* CfObject_UnkVirtualFunc48();       // +0x110
     virtual void CfObject_UnkVirtualFunc49();       // +0x114
     virtual void CfObject_UnkVirtualFunc50();       // +0x118
     virtual int CfObject_UnkVirtualFunc51();        // +0x11C

@@ -45,20 +45,20 @@ bool func_80282464() { return true; }
 namespace cf {
 CChainActorPc::CChainActorPc() { vtbl() = &lbl_eu_805384E0; }
 CChainActorPc::~CChainActorPc() {}
-void CChainActorPc::_vf0C() {}
+void CChainActorPc::_vf0C(int) {}
 void CChainActorPc::_vf10() {}
 void CChainActorPc::_vf14() {}
 void CChainActorPc::_vf18() {}
 void CChainActorPc::_vf1C() {}
-void CChainActorPc::_vf20() {}
+int CChainActorPc::_vf20(int) { return 0; }
 void CChainActorPc::_vf24() {}
 void CChainActorPc::_vf28() {}
 void CChainActorPc::_vf2C() {}
-void CChainActorPc::_vf30() {}
-void CChainActorPc::_vf34() {}
+void CChainActorPc::_vf30(int,int,int) {}
+void* CChainActorPc::_vf34() { return 0; }
 void CChainActorPc::_vf38() {}
 void CChainActorPc::_vf3C() {}
-void CChainActorPc::_vf40() {}
+int CChainActorPc::_vf40() { return 0; }
 int CChainActorPc::_vf44(void* arg) { return this->vf48(*(void**)arg); }
 int CChainActorPc::vf48(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
 }
@@ -98,9 +98,10 @@ extern void func_804B1DC0(void*, int);
 extern void func_80279B34(cf::CChainActorPc*);
 extern u8* func_80282380(cf::CChainActorPc*);
 extern void func_80279E48(cf::CChainActorPc*, int);
-extern f32 lbl_eu_80668AEC;
-extern f32 lbl_eu_80668AF0;
-extern f32 lbl_eu_80668AE8;
+__declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_80668AE8 = 1.0f;
+__declspec(section ".sdata2") const float lbl_eu_80668AEC = 0.0f;
+__declspec(section ".sdata2") const float lbl_eu_80668AF0 = 0.01f;
+__declspec(section ".sdata2") __attribute__((aligned(8))) const double lbl_eu_80668AF8 = 4503601774854144.0;
 
 // Main per-frame update for chain actor PC.
 // Uses multi-exit guard pattern to match retail control flow.
@@ -177,8 +178,8 @@ extern "C" void func_80281CB8(cf::CChainActorPc* self) {
     func_80279DC0(self);
 }
 // External declarations specific to func_80281CF0
-extern u8* func_8009EC9C(u16);
-extern int func_800A32BC(u8*);
+extern void* func_8009EC9C(u32 index);
+extern int func_800A32BC(void*);
 extern u32 func_8025FB10(u8*, u32);
 extern u8* getListB28();
 extern float func_800D81A8(int, u8*, int);

@@ -135,3 +135,4 @@ void SoundThread::FrameProcess() {
 
 // ABSORB pad - make raw BSS sizes match retail
 unsigned char absorb_pad_snd_SoundThread_bss_18[0x18] __attribute__((aligned(8)));
+unsigned char absorb_pad_snd_SoundThread_sbss_4[4];

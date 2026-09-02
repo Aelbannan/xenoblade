@@ -100,12 +100,12 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc2();  //0x5A4
         virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
         virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
-        virtual void CfObjectActor_UnkVirtualFunc5();  //0x5B0
+        virtual void CfObjectActor_UnkVirtualFunc5(float a, u32 b);  //0x5B0
         virtual float CfObjectActor_UnkVirtualFunc6();  //0x5B4
         virtual float CfObjectActor_UnkVirtualFunc7();  //0x5B8 (retail returns a float in f1)
         virtual float CfObjectActor_UnkVirtualFunc8();  //0x5BC (retail returns a float in f1)
-        virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0
-        virtual void CfObjectActor_UnkVirtualFunc10(); //0x5C4
+        virtual void* CfObjectActor_UnkVirtualFunc9(void* arg);  //0x5C0
+        virtual void CfObjectActor_UnkVirtualFunc10(float value); //0x5C4
         virtual void CfObjectActor_UnkVirtualFunc11(void* arg); //0x5C8
         virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
         virtual void CfObjectActor_UnkVirtualFunc13(); //0x5D0
@@ -185,6 +185,8 @@ namespace cf {
         u8 _pad0C[0x4];  // 0xC
         s32 field_0x10;  // 0x10
         s16 field_0x14;  // 0x14
+        u8 _pad16[2];    // 0x16-0x17
+        s16 field_0x1A;  // 0x1A (E08E8 s1A)
     };
 
     // 12-byte ptmf copy built by CActorParam_UnkVirtualFunc35 from

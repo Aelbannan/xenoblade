@@ -281,6 +281,20 @@ public:
 class CfObjectImplPcED4 {
 public:
     virtual void e08();              // index 0
+    virtual void e0C();
+    virtual void e10();
+    virtual void e14();
+    virtual void e18();
+    virtual void e1C();
+    virtual void e20();
+    virtual void e24();
+    virtual void e28();
+    virtual void e2C();
+    virtual void e30();
+    virtual void e34();
+    virtual void e38();
+    virtual void e3C();
+    virtual int vf40(int arg);       // index 15 -> vtable offset 0x40
 };
 
 // Result record returned by func_80149154: signed magnitude at +0x10.
@@ -629,7 +643,7 @@ public:
     virtual void* vFC() = 0;         // index 61
     virtual void* v100() = 0;        // index 62
     virtual void v104() = 0;         // index 63
-    virtual void v108() = 0;         // index 64
+    virtual int v108() = 0;          // index 64 -> 0x108 actor level
     virtual void v10C() = 0;         // index 65
     virtual void v110() = 0;         // index 66
     virtual void v114() = 0;         // index 67
@@ -639,7 +653,7 @@ public:
     virtual void v124(f32 value) = 0;  // index 71
     virtual f32 v128() = 0;          // index 72
     virtual f32 v12C() = 0;          // index 73
-    virtual void v130() = 0;         // index 74
+    virtual float v130() = 0;      // index 74 -> 0x130 gauge
     virtual void v134() = 0;         // index 75
     virtual void v138() = 0;         // index 76
     virtual void v13C() = 0;         // index 77
@@ -738,7 +752,7 @@ public:
     virtual void v2B0() = 0;         // index 170
     virtual void v2B4() = 0;         // index 171
     virtual void v2B8() = 0;         // index 172
-    virtual s32 v2BC() = 0;          // index 173 -> 0x2BC
+    virtual int v2BC() = 0;          // index 173 -> 0x2BC state check
     virtual void v2C0() = 0;         // index 174
     virtual void vf2C4(u8* obj, f32 a, f32 b, f32 c) = 0;  // index 175 -> 0x2C4
     virtual void w2C8() = 0;         // 176 -> 0x2C8

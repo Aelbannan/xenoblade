@@ -45,7 +45,7 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
 extern "C" void* func_800B8920(void* obj);
 
 namespace cf {
-class CfObjectEff;  // forward decl for the vtable-view structs below
+class CfObjectEff;
 }
 
 // Pointer-to-member-function dispatch table used by updateEffect_: indexed by
@@ -55,136 +55,6 @@ class CfObjectEff;  // forward decl for the vtable-view structs below
 extern void (cf::CfObjectEff::*const lbl_eu_80528858[])();
 
 namespace cf {
-
-// Slots +0x5C (CfObject_UnkVirtualFunc3), +0xC4 (CfObject_UnkVirtualFunc29),
-// +0x9C/+0xB4/+0xD0 etc. are now spelled as base-name virtuals on CfObject
-// (signatures fixed in CfObject.hpp / CObjectParam.hpp), so the former
-// CfObjectEffIf / Vtable198If pads are gone. The remaining header Ifs are
-// foreign -object views (the objects at +0xB0/+0x9C/+0xA0 are not CfObjectEff).
-
-// Vtable view used by teardownEff__: slot 0xC on the mFieldB0 object receives
-// the owning CfObjectEff. mFieldB0 is a foreign object, so this stays a
-// small named iface on the owner.
-struct CfObjectEffVtable0CIf {
-    virtual void _f08();
-    virtual void func0C(CfObjectEff* owner);  // slot 0xC
-};
-
-// Vtable view used by teardownEff__: slot 0x1BC receives the owning
-// CfObjectEff. The 0x9C/0xA0 partners are foreign CfObject-family objects,
-// so this stays a small named iface on the owner.
-struct CfObjectEffVtable1BCIf {
-    virtual void _f08();
-    virtual void _f0C();
-    virtual void _f10();
-    virtual void _f14();
-    virtual void _f18();
-    virtual void _f1C();
-    virtual void _f20();
-    virtual void _f24();
-    virtual void _f28();
-    virtual void _f2C();
-    virtual void _f30();
-    virtual void _f34();
-    virtual void _f38();
-    virtual void _f3C();
-    virtual void _f40();
-    virtual void _f44();
-    virtual void _f48();
-    virtual void _f4C();
-    virtual void _f50();
-    virtual void _f54();
-    virtual void _f58();
-    virtual void _f5C();
-    virtual void _f60();
-    virtual void _f64();
-    virtual void _f68();
-    virtual void _f6C();
-    virtual void _f70();
-    virtual void _f74();
-    virtual void _f78();
-    virtual void _f7C();
-    virtual void _f80();
-    virtual void _f84();
-    virtual void _f88();
-    virtual void _f8C();
-    virtual void _f90();
-    virtual void _f94();
-    virtual void _f98();
-    virtual void _f9C();
-    virtual void _fA0();
-    virtual void _fA4();
-    virtual void _fA8();
-    virtual void _fAC();
-    virtual void _fB0();
-    virtual void _fB4();
-    virtual void _fB8();
-    virtual void _fBC();
-    virtual void _fC0();
-    virtual void _fC4();
-    virtual void _fC8();
-    virtual void _fCC();
-    virtual void _fD0();
-    virtual void _fD4();
-    virtual void _fD8();
-    virtual void _fDC();
-    virtual void _fE0();
-    virtual void _fE4();
-    virtual void _fE8();
-    virtual void _fEC();
-    virtual void _fF0();
-    virtual void _fF4();
-    virtual void _fF8();
-    virtual void _fFC();
-    virtual void _f100();
-    virtual void _f104();
-    virtual void _f108();
-    virtual void _f10C();
-    virtual void _f110();
-    virtual void _f114();
-    virtual void _f118();
-    virtual void _f11C();
-    virtual void _f120();
-    virtual void _f124();
-    virtual void _f128();
-    virtual void _f12C();
-    virtual void _f130();
-    virtual void _f134();
-    virtual void _f138();
-    virtual void _f13C();
-    virtual void _f140();
-    virtual void _f144();
-    virtual void _f148();
-    virtual void _f14C();
-    virtual void _f150();
-    virtual void _f154();
-    virtual void _f158();
-    virtual void _f15C();
-    virtual void _f160();
-    virtual void _f164();
-    virtual void _f168();
-    virtual void _f16C();
-    virtual void _f170();
-    virtual void _f174();
-    virtual void _f178();
-    virtual void _f17C();
-    virtual void _f180();
-    virtual void _f184();
-    virtual void _f188();
-    virtual void _f18C();
-    virtual void _f190();
-    virtual void _f194();
-    virtual void _f198();
-    virtual void _f19C();
-    virtual void _f1A0();
-    virtual void _f1A4();
-    virtual void _f1A8();
-    virtual void _f1AC();
-    virtual void _f1B0();
-    virtual void _f1B4();
-    virtual void _f1B8();
-    virtual void func1BC(CfObjectEff* owner);  // slot 0x1BC
-};
 
 // Minimal view of the argument passed to teardownEff__: only the +0x14 word
 // (validity flag) is read.
@@ -304,8 +174,8 @@ struct CfObjectEffCtorView {
 
 // Slot +0xBC (CfObject_UnkVirtualFunc27) is base-name: void* arg matches retail.
 // Slots +0x3C/+0x9C/+0xB4/+0xDC now take retail arity on CObjectParam/CfObject
-// (const char* / const ml::CVec3* / (ml::CVec3*, float) / float), so OwnerIf /
-// MoveIf pads were deleted; call sites use this->method(...).
+// (const char* / const ml::CVec3* / (ml::CVec3*, float) / float), so Owner
+// and Move pads were deleted; call sites use this->method(...).
 
 // Minimal view of the effect-source objects (BDAT/CfRes entries) used by
 // createEffect_: the +0xC word gates the 0x10/0x11 types, and +0x2C is a
@@ -317,22 +187,28 @@ struct CfObjectEffSourceView {
     void* field_2C;    // 0x2C
 };
 
-struct CfObjectEffSourceSubIf {
-    virtual void _f08();
-    virtual void _f0C();
-    virtual void _f10();
-    virtual void _f14();
-    virtual void _f18();
-    virtual void _f1C();
-    virtual void _f20();
-    virtual void _f24();
-    virtual void _f28();
-    virtual void _f2C();
-    virtual void _f30();
-    virtual void _f34();
-    virtual void _f38();
-    virtual void _f3C();
-    virtual u32 func40(void* obj);  // slot 0x40
+// Foreign helpers for mFieldB0 (slot 0xC) and source validation (slot 0x40).
+// These are tiny interfaces on the owning objects, not pads named after the caller.
+struct CfB0Helper {
+    virtual void f08();
+    virtual void func0C(CfObjectEff* owner); // slot 0xC
+};
+struct CfSourceHelper {
+    virtual void f08();
+    virtual void f0C();
+    virtual void f10();
+    virtual void f14();
+    virtual void f18();
+    virtual void f1C();
+    virtual void f20();
+    virtual void f24();
+    virtual void f28();
+    virtual void f2C();
+    virtual void f30();
+    virtual void f34();
+    virtual void f38();
+    virtual void f3C();
+    virtual u32 validate(void* owner); // slot 0x40
 };
 
 class __declspec(novtable) CfObjectEff : public CfObject {
@@ -382,13 +258,13 @@ public:
     // a secondary group at +0x178: header {RTTI, -0x90}, thunks
     // thunkDtor90__ (-0x90 -> dtor) and thunkTear90__ (-0x90 ->
     // teardownEff__) at +0x180/+0x184, then CfObjectEff's own appended
-    // virtuals at +0x188..+0x1A4. The dummies _v178-_v184 cover the header/
+    // virtuals at +0x188..+0x1A4. The dummies at 0x178-0x184 cover the header/
     // thunk words; the appended reals are the MI analysis from the probe
     // (header+2 thunks + 8 appended = retail 0x188-0x1A4 exactly).
-    virtual void _v178();                      // +0x178 dummy (RTTI word)
-    virtual void _v17C();                      // +0x17C dummy (-0x90 word)
-    virtual void _v180();                      // +0x180 dummy (dtor-thunk slot)
-    virtual void _v184();                      // +0x184 dummy (AD68C-thunk slot)
+    virtual void dummy178();                      // +0x178 dummy (RTTI word)
+    virtual void dummy17C();                      // +0x17C dummy (-0x90 word)
+    virtual void dummy180();                      // +0x180 dummy (dtor-thunk slot)
+    virtual void dummy184();                      // +0x184 dummy (AD68C-thunk slot)
     virtual u32 hasChildEffs_();               // +0x188 - active-sub-object check
     virtual void teardownEff__(u8* arg);       // +0x18C - teardown (Sub iface op)
     virtual void detachChildEf();              // +0x190 - detach child effect

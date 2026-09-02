@@ -93,51 +93,6 @@ extern "C" u8 code80135FDC_getByte_64077();
 // view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
-// Tag processor used by func_80136A1C/func_80136D74: vtable slot 0x14
-// rewrites a UTF-16 string in place.
-class CTagProcIf36D74 {
-public:
-    virtual void _v04();
-    virtual void _v08();
-    virtual void _v10();
-    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b);  // 0x14
-};
-
-// String-setter interface called by func_80136D74: vtable slot 0x7C sets a
-// UTF-16 string entry.
-class CLytSetStrIf36D74 {
-public:
-    virtual void _v004();
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v078();
-    virtual void SetString(u16* text, int index);  // 0x7C
-};
 
 struct CViewFrame37038 {
     /* 0x000 */ u8 pad00[0xCC];
@@ -157,9 +112,10 @@ struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 extern "C" u8 func_801392B4(u32);
 #endif
 
-// Interface whose vtable slot 0x28 is the Set(idx, value*) dispatcher called
+// Anim target whose vtable slot 0x28 is Set(idx, value*) dispatcher called
 // by func_80137C1C (and siblings); ten placeholder virtuals put Set at 0x28.
-class CAnimTargetIf37038 {
+// Renamed from CAnimTargetIf37038 to real class (folded onto owning type).
+class CAnimTarget {
 public:
     virtual void v00();
     virtual void v04();

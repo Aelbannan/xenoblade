@@ -3,7 +3,9 @@
 #include <types.h>
 #include <revolution/MTX.h>  // nw4r::math::VEC3 (segment-projection helper decl)
 #include "kyoshin/cf/object/CObjectState.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"
 namespace cf {
 
 // Word-triple input for func_80094DF4 (raw word copy into field_C8..field_D0);
@@ -19,22 +21,7 @@ struct CtrlNpcVec3W {
 // found). Never instantiated here, so no vtable is emitted.
 class CCtrlNpcSearch {
 public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual int _v44(const char* name);   // +0x44
+    virtual int findNameIndex(const char* name);   // +0x44 retail (was _v44)
 
     u8 _pad00[0x7A0];
     u32 field_7A4;   // flags word (bit 0x00010000 tested by func_8009398C)
@@ -49,136 +36,11 @@ struct CCtrlNpcC4Object {
 };
 
 // Character-model object reached through CtrlNpc::field_28 (CfObjectMove
-// family, cf-chain vtable). Only the vtable slots and the state words this TU
-// touches are declared; never instantiated here, so no vtable is emitted.
-class CCtrlNpcChar {
-public:
-    // cf-chain vtable: MWCC places the Nth declared virtual at vtable offset
-    // (N+2)*4 (entries 0/1 are the RTTI/offset-to-top slots). Declared indices
-    // 7, 20, 21 therefore land at +0x24 (CObjectState_UnkVirtualFunc8),
-    // +0x58 and +0x5C (the CfObject vfunc2/vfunc3 pair); index 41 lands at
-    // +0xac (position getter consumed by func_800951A0). Indices 42..69 are
-    // dummy pins for the +0x84 / +0x11C slots read by func_800950E8.
-    virtual void _v08();
-    virtual int _v0C(int);
-    virtual void _v10(u32);
-    virtual void _v14();
-    virtual void _v18(int);
-    virtual void _v1C();
-    virtual void _v20(int);
-    virtual int _v24(int arg);    // +0x24
-    virtual void _v28();
-    virtual int _v2C(int a, int b);   // +0x2C
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual int _v4C();               // +0x4C (id fed to findObjectById)
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();          // +0x58
-    virtual void _v5C();          // +0x5C
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual int _v74();           // +0x74 (returns active/idle state)
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual int _v84();           // +0x84
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual int _v98();           // +0x98 (talk-availability query)
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8(const ml::CVec3* pos);   // +0xa8 (set world position)
-    virtual CtrlNpcVec3W* _vAC();  // +0xac position getter
-    virtual void _vB0();
-    virtual void _vB4(f32 arg);   // +0xb4 (called with a constant float)
-    virtual void _vB8(const ml::CVec3* pos, f32 arg);  // +0xb8 (set position + blend)
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4(f32 arg);       // +0xC4 (set heading/turn amount)
-    virtual void _vC8(f32 arg);       // +0xC8 (set heading/turn amount)
-    virtual f32 _vCC();               // +0xCC (returns a heading)
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual f32 _vD8();          // +0xd8 (returns a heading/turn amount)
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual int _v11C();          // +0x11C
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual f32* _v138();         // +0x138 (returns a float pointer)
-    virtual void _v13C();
-    virtual f32 _v140();          // +0x140 (movement progress)
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual int _v160(ml::CVec3* arg);  // +0x160 (position-offset query)
-    virtual void _v164();
-    virtual void _v168();
-    virtual f32 _v16C();          // +0x16c (returns a progress/distance float)
-    virtual void _v170();
-    virtual f32 _v174();          // +0x174 (returns a progress/distance float)
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual void _v188();
-    virtual void _v18C();
-    virtual void _v190();
-    virtual void _v194();
-    virtual void _v198();
-    virtual void _v19C();
-    virtual void _v1A0();
-    virtual void _v1A4();
-    virtual void _v1A8();
-    virtual void _v1AC(void* a, const char* name);   // +0x1AC
-    virtual void _v1B0();
-    virtual void _v1B4();
-    virtual void _v1B8();
-    virtual void _v1BC();
-    virtual void _v1C0();
-    virtual void _v1C4();
-    virtual void _v1C8();
-    virtual void _v1CC();
-    virtual void _v1D0();
-    virtual void _v1D4();
-    virtual void _v1D8();
-    virtual void _v1DC(int arg);  // +0x1DC
-
-    u32 field_04;                 // 0x04
+// family, cf-chain vtable). Real virtuals are on CfObject/CfObjectModel/
+// CfObjectMove/CObjectState/CObjectParam - this struct is now a plain data
+// view with no vtable; virtual calls go via the owning class.
+struct CCtrlNpcChar {
+    u32 field_04;
     u8 _pad08[0x68 - 0x08];       // 0x08..0x67
     u32 field_68;                 // 0x68 flags word (bits 0x00100000 / 0x2000 tested)
     u8 _pad6C[0x74 - 0x6C];       // 0x6C..0x73
@@ -192,6 +54,8 @@ public:
     u8 _padC8[0x6C4 - 0xC8];      // 0xC8..0x6C3
     u32 field_6C4;                // 0x6C4 state word (0x21..0x2A = active states)
 };
+// View of CfObject at field_28 for field access (overlay, not inheritance)
+inline CCtrlNpcChar* NpcCharView(void* obj) { return reinterpret_cast<CCtrlNpcChar*>(obj); }
 
 // CtrlNpc's retail ctor (__ct__CtrlNpc) is a plain free function that stores
 // the vtable pointers manually (MWCC_CASES §4193 pattern: short-form ctor
@@ -212,7 +76,7 @@ public:
     u32 field_1C;                  // 0x1C
     u8 _pad20[0x24 - 0x20];        // 0x20..0x23
     u32 field_24;                  // 0x24
-    CCtrlNpcChar* field_28;        // 0x28 character object (CfObjectMove family)
+    cf::CfObjectMove* field_28;        // 0x28 character object (CfObjectMove family)
     u32 field_2C;                  // 0x2C
     u8 _sub30[0xAC - 0x30];        // 0x30..0xAB (CCtrlMoveNpc sub-object at 0x30)
     // Raw-word / float views of the movement-target words (ctor stores floats,
@@ -286,13 +150,14 @@ extern "C" f32 func_800A3DF8(const ml::CVec3& v);
 // Ground-probe walk helper (code_800A3B24.cpp); third arg is a packed flag word.
 extern "C" int func_800A72E0(const ml::CVec3* self, ml::CVec3* out, s32 flags,
                              f32 f1, f32 f2);
-// Position-region copy helper (retail func_804B0B54, CActParamAnimGame.cpp).
-extern "C" void func_804B0B54(u8* dst, const ml::CVec3* src);
+// Position-region copy helper (retail func_804B0B54). Same ABI as
+// CfObjectMove.hpp / CfGimmickLock.hpp (void*, const float*).
+extern "C" void func_804B0B54(void* region, const float* vec);
 // CfGameManager play-frame helper (see CfObjectImplWalker.hpp).
 extern "C" u32 getControllerWordA37C__Q22cf13CfGameManagerFv();
 // Battle-status position getter (retail func_800BE0B0): returns a Vec*
 // (the character object's +0x54 sub-object) fed straight into PSVECMag.
-extern "C" void* func_800BE0B0(cf::CCtrlNpcChar* self);
+extern "C" void* func_800BE0B0(void* self);
 
 // Unsigned-int -> double conversion scratch (MWCC 0x4330 idiom): build the
 // 0x43300000-prefixed double on the stack, then subtract the magic constant
@@ -347,7 +212,7 @@ extern "C" void* func_800BBC0C(void* obj);
 extern "C" void __ct__cf_CtrlMoveNpc(cf::CCtrlMoveNpc* self, cf::CtrlNpc* parent);
 // Talk/page helper: takes the character object's field_C4 word, returns a
 // page id (unsigned compare at the call site).
-extern "C" u32 func_8004C5EC(u32 arg);
+extern "C" u32 func_8004C5EC(void* arg);
 
 extern "C" void func_8019F6E8(cf::CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB);
 extern "C" int func_8019F8E0(cf::CCtrlMoveNpc* self);
@@ -423,5 +288,6 @@ extern const CtrlNpcActionMfp lbl_eu_80527B10[3];   // action 3 handlers
 extern "C" void* getInstance__Q22cf13CfGameManagerFv();
 bool isGlobalCamFlagSet(int mask);
 // Search-helper helpers reached with CCtrlNpcChar::field_98.
+namespace cf { struct CfObjectModelSub98; }
 extern "C" float func_80484F18(cf::CCtrlNpcSearch* obj);
-extern "C" void func_804876DC(cf::CCtrlNpcSearch* obj);
+extern "C" void func_804876DC(cf::CfObjectModelSub98* sub);

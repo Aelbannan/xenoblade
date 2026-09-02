@@ -4,6 +4,9 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CTTask.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 
 
 
@@ -155,25 +158,7 @@ struct LytLayoutFields {
     LytPaneFields* rootPane;  // +0x10
 };
 
-// Virtual view whose slot 0x3C is FindPaneByName(name, pick).
-class LytPaneFindView {
-public:
-    virtual ~LytPaneFindView();
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual LytPaneFindView* findPane(const char* name, bool pick); // 0x3C
-};
+// Real Pane type provides FindPaneByName at 0x3C (replaces LytPaneFindView pad)
 
 // Current map/area id global (read by func_8011E540's state gate).
 extern u32 lbl_eu_80664184;
@@ -235,103 +220,7 @@ public:
     SymbolMarkRenderItem* mRenderItem; // 0x8B0
 };
 
-// Read-only view over the actor object returned by findObjectById: only the
-// vtable slots consumed by func_8011EA98 are named (never instantiated, so
-// no vtable is emitted).
-class CfActorView {
-public:
-    // MWCC prepends two implicit slots (destructor pair) to this view's
-    // layout, so the leading two placeholder slots are omitted to keep the
-    // remaining _vNNN names aligned with real retail vtable offsets.
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual void* _v0AC();    // vtable offset 0xAC
-    virtual void _v0B0();
-    virtual void _v0B4();
-    virtual void _v0B8();
-    virtual void _v0BC();
-    virtual void _v0C0();
-    virtual void _v0C4();
-    virtual void _v0C8();
-    virtual void _v0CC();
-    virtual void _v0D0();
-    virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void _v0DC();
-    virtual void _v0E0();
-    virtual void _v0E4();
-    virtual void _v0E8();
-    virtual void _v0EC();
-    virtual void _v0F0();
-    virtual void _v0F4();
-    virtual void _v0F8();
-    virtual void _v0FC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void* _v12C(int speed); // vtable offset 0x12C
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual int _v160();      // vtable offset 0x160
-    virtual int _v228();      // vtable offset 0x228
-};
+// CfActorView pad deleted: use cf::CfObject / cf::CfObjectMove for 0xAC/0x12C/0x160 and CfObjectMove extended 0x228, and cf::CActorParam for 0x128 hp gate
 
 // Circular marker-object list shared by func_800B6BEC / func_800B6C58:
 // sentinel node at +0x04, nodes chained through their next at +0x00 with the
@@ -397,14 +286,7 @@ void Warning(const char* file, int line, const char* msg, ...);
 } // namespace db
 } // namespace nw4r
 
-// Read-only view of the layout arc resource accessor: Init only consumes the
-// virtual at slot 0xC - a texture lookup keyed by a fourcc + name.
-class ArcAccessorView {
-public:
-    virtual ~ArcAccessorView();               // 0x00/0x04
-    virtual void _v008();                     // 0x08
-    virtual void* find(const char* fourcc, const char* name, u32 index); // 0x0C
-};
+// Real ArcResourceAccessor provides GetResource at 0xC (replaces ArcAccessorView pad)
 
 class CArrow3D : public CTTask<CArrow3D> {
 public:
@@ -444,38 +326,7 @@ extern const f32 lbl_eu_80667130;
 extern const f32 lbl_eu_8066A1FC;
 extern const f32 lbl_eu_8066A210;
 
-// View over the object reached as (player - 0x3e9c) in cbRenderBefore: only
-// the vtable slot at 0x128 (hp-like float query) is consumed.
-class PlayerHpGate {
-public:
-#define SYM_HP_GATE_SLOT_(off) virtual void _v##off();
-    SYM_HP_GATE_SLOT_(008) SYM_HP_GATE_SLOT_(00C) SYM_HP_GATE_SLOT_(010)
-    SYM_HP_GATE_SLOT_(014) SYM_HP_GATE_SLOT_(018) SYM_HP_GATE_SLOT_(01C)
-    SYM_HP_GATE_SLOT_(020) SYM_HP_GATE_SLOT_(024) SYM_HP_GATE_SLOT_(028)
-    SYM_HP_GATE_SLOT_(02C) SYM_HP_GATE_SLOT_(030) SYM_HP_GATE_SLOT_(034)
-    SYM_HP_GATE_SLOT_(038) SYM_HP_GATE_SLOT_(03C) SYM_HP_GATE_SLOT_(040)
-    SYM_HP_GATE_SLOT_(044) SYM_HP_GATE_SLOT_(048) SYM_HP_GATE_SLOT_(04C)
-    SYM_HP_GATE_SLOT_(050) SYM_HP_GATE_SLOT_(054) SYM_HP_GATE_SLOT_(058)
-    SYM_HP_GATE_SLOT_(05C) SYM_HP_GATE_SLOT_(060) SYM_HP_GATE_SLOT_(064)
-    SYM_HP_GATE_SLOT_(068) SYM_HP_GATE_SLOT_(06C) SYM_HP_GATE_SLOT_(070)
-    SYM_HP_GATE_SLOT_(074) SYM_HP_GATE_SLOT_(078) SYM_HP_GATE_SLOT_(07C)
-    SYM_HP_GATE_SLOT_(080) SYM_HP_GATE_SLOT_(084) SYM_HP_GATE_SLOT_(088)
-    SYM_HP_GATE_SLOT_(08C) SYM_HP_GATE_SLOT_(090) SYM_HP_GATE_SLOT_(094)
-    SYM_HP_GATE_SLOT_(098) SYM_HP_GATE_SLOT_(09C) SYM_HP_GATE_SLOT_(0A0)
-    SYM_HP_GATE_SLOT_(0A4) SYM_HP_GATE_SLOT_(0A8) SYM_HP_GATE_SLOT_(0AC)
-    SYM_HP_GATE_SLOT_(0B0) SYM_HP_GATE_SLOT_(0B4) SYM_HP_GATE_SLOT_(0B8)
-    SYM_HP_GATE_SLOT_(0BC) SYM_HP_GATE_SLOT_(0C0) SYM_HP_GATE_SLOT_(0C4)
-    SYM_HP_GATE_SLOT_(0C8) SYM_HP_GATE_SLOT_(0CC) SYM_HP_GATE_SLOT_(0D0)
-    SYM_HP_GATE_SLOT_(0D4) SYM_HP_GATE_SLOT_(0D8) SYM_HP_GATE_SLOT_(0DC)
-    SYM_HP_GATE_SLOT_(0E0) SYM_HP_GATE_SLOT_(0E4) SYM_HP_GATE_SLOT_(0E8)
-    SYM_HP_GATE_SLOT_(0EC) SYM_HP_GATE_SLOT_(0F0) SYM_HP_GATE_SLOT_(0F4)
-    SYM_HP_GATE_SLOT_(0F8) SYM_HP_GATE_SLOT_(0FC) SYM_HP_GATE_SLOT_(100)
-    SYM_HP_GATE_SLOT_(104) SYM_HP_GATE_SLOT_(108) SYM_HP_GATE_SLOT_(10C)
-    SYM_HP_GATE_SLOT_(110) SYM_HP_GATE_SLOT_(114) SYM_HP_GATE_SLOT_(118)
-    SYM_HP_GATE_SLOT_(11C) SYM_HP_GATE_SLOT_(120) SYM_HP_GATE_SLOT_(124)
-#undef SYM_HP_GATE_SLOT_
-    virtual f32 queryHp(); // vtable offset 0x128
-};
+// Real CActorParam provides CActorParam_UnkVirtualFunc37 at 0x128 (replaces PlayerHpGate pad)
 
 // Raw field views over the arrow resource blob pointed to by mDataPtr (+0x5C).
 struct ArrowResPtrView {
@@ -505,10 +356,10 @@ u32 func_80136254(const void* table, const char* str, u32 index);
 int func_80138234(const void* table, u32 index);
 void func_8049B59C(nw4r::math::VEC3* out, ScnXformBlock* pose,
                    const nw4r::math::VEC3* in);
-ScnXformBlock* func_80496264(CScn* scene, int index);
 void* func_8003AA34(void);
 u32 func_8003B1EC(u8* bdat);
 }
+// func_80496264 provided by CfObjectMove.hpp as void* func_80496264(void*, int)
 
 // Naturally mangled retail helpers (global scope: no extern "C" needed).
 void* getFP(const char* name);

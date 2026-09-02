@@ -25,6 +25,8 @@ void ReverseYAxis(math::MTX34* pMtx) {
 
 } // namespace
 
+extern "C" const void* __vt__Q34nw4r3lyt4Pane;
+extern "C" const void* __vt__Q44nw4r3lyt6detail8PaneBase;
 namespace nw4r {
 namespace lyt {
 
@@ -533,23 +535,23 @@ extern "C" void Animate__Q34nw4r3lyt4PaneFUl();
 extern "C" void AnimateSelf__Q34nw4r3lyt4PaneFUl();
 extern "C" void GetVtxColor__Q34nw4r3lyt7PictureCFUl();
 extern "C" void SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color();
-extern "C" void GetColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" unsigned char GetColorElement__Q34nw4r3lyt4PaneCFUl();
 extern "C" void SetColorElement__Q34nw4r3lyt4PaneFUlUc();
-extern "C" void GetVtxColorElement__Q34nw4r3lyt7PictureCFUl();
+extern "C" unsigned char GetVtxColorElement__Q34nw4r3lyt7PictureCFUl();
 extern "C" void SetVtxColorElement__Q34nw4r3lyt7PictureFUlUc();
-extern "C" void FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
-extern "C" void FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void* FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void* FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
 extern "C" void BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
 extern "C" void UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb();
 extern "C" void UnbindAllAnimation__Q34nw4r3lyt4PaneFb();
 extern "C" void UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
-extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
-extern "C" void FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
+extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
 extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
 extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb();
-extern "C" void GetMaterialNum__Q34nw4r3lyt4PaneCFv();
-extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFv();
-extern "C" void GetMaterial__Q34nw4r3lyt4PaneCFUl();
+extern "C" unsigned char GetMaterialNum__Q34nw4r3lyt4PaneCFv();
+extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFv();
+extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFUl();
 extern "C" void LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
 extern "C" void Append__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap();
 extern "C" void __dt__Q34nw4r3lyt7TextBoxFv();
@@ -558,13 +560,41 @@ extern void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo__FPQ34nw4r3lyt7T
 extern "C" void DrawSelf__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo();
 extern "C" void GetTextColor__Q34nw4r3lyt7TextBoxCFUl();
 extern "C" void SetVtxColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color();
-extern "C" void GetVtxColorElement__Q34nw4r3lyt7TextBoxCFUl();
+extern "C" unsigned char GetVtxColorElement__Q34nw4r3lyt7TextBoxCFUl();
 extern "C" void SetVtxColorElement__Q34nw4r3lyt7TextBoxFUlUc();
 extern "C" void AllocStringBuffer__Q34nw4r3lyt7TextBoxFUs();
 extern "C" void FreeStringBuffer__Q34nw4r3lyt7TextBoxFv();
 extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUs();
 extern "C" void SetString__Q34nw4r3lyt7TextBoxFPCwUsUs();
+extern "C" void __dt__Q34nw4r3lyt4PaneFv();
+extern "C" void* GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv();
+extern "C" void CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void DrawSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
+extern "C" void Animate__Q34nw4r3lyt4PaneFUl();
+extern "C" void AnimateSelf__Q34nw4r3lyt4PaneFUl();
+extern "C" void* GetVtxColor__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetVtxColor__Q34nw4r3lyt4PaneFUlQ34nw4r2ut5Color();
+extern "C" unsigned char GetColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetColorElement__Q34nw4r3lyt4PaneFUlUc();
+extern "C" unsigned char GetVtxColorElement__Q34nw4r3lyt4PaneCFUl();
+extern "C" void SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc();
+extern "C" void* FindPaneByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void* FindMaterialByName__Q34nw4r3lyt4PaneFPCcb();
+extern "C" void BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb();
+extern "C" void UnbindAllAnimation__Q34nw4r3lyt4PaneFb();
+extern "C" void UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform();
+extern "C" void* FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb();
+extern "C" void SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb();
+extern "C" unsigned char GetMaterialNum__Q34nw4r3lyt4PaneCFv();
+extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFv();
+extern "C" void* GetMaterial__Q34nw4r3lyt4PaneCFUl();
+extern "C" void LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo();
 extern "C" {
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_805698F0[30] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt4PaneFv, (const void*)&GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv, (const void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&DrawSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt4PaneFUl, (const void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl, (const void*)&GetVtxColor__Q34nw4r3lyt4PaneCFUl, (const void*)&SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color, (const void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&GetVtxColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetVtxColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb, (const void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb, (const void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb, (const void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl, (const void*)&LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, nullptr };
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569968[4] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt5GroupFv, nullptr };
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_80569978[16] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt6LayoutFv, (const void*)&Build__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFv, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFPCvPQ34nw4r3lyt16ResourceAccessor, (const void*)&CreateAnimTransform__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor, (const void*)&BindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform, (const void*)&UnbindAnimation__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransform, (const void*)&UnbindAllAnimation__Q34nw4r3lyt6LayoutFv, (const void*)&SetAnimationEnable__Q34nw4r3lyt6LayoutFPQ34nw4r3lyt13AnimTransformb, (const void*)&CalculateMtx__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt6LayoutFUl, (const void*)&GetLayoutRect__Q34nw4r3lyt6LayoutCFv, nullptr };
 __declspec(section ".data") __attribute__((aligned(8), used)) const void* lbl_eu_805699B8[30] = { nullptr, nullptr, (const void*)&__dt__Q34nw4r3lyt7PictureFv, (const void*)&GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv, (const void*)&CalculateMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Draw__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&DrawSelf__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt8DrawInfo, (const void*)&Animate__Q34nw4r3lyt4PaneFUl, (const void*)&AnimateSelf__Q34nw4r3lyt4PaneFUl, (const void*)&GetVtxColor__Q34nw4r3lyt7PictureCFUl, (const void*)&SetVtxColor__Q34nw4r3lyt7PictureFUlQ34nw4r2ut5Color, (const void*)&GetColorElement__Q34nw4r3lyt4PaneCFUl, (const void*)&SetColorElement__Q34nw4r3lyt4PaneFUlUc, (const void*)&GetVtxColorElement__Q34nw4r3lyt7PictureCFUl, (const void*)&SetVtxColorElement__Q34nw4r3lyt7PictureFUlUc, (const void*)&FindPaneByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&FindMaterialByName__Q34nw4r3lyt4PaneFPCcb, (const void*)&BindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&UnbindAnimation__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformb, (const void*)&UnbindAllAnimation__Q34nw4r3lyt4PaneFb, (const void*)&UnbindAnimationSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransform, (const void*)&FindAnimationLinkSelf__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResource, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFPQ34nw4r3lyt13AnimTransformbb, (const void*)&SetAnimationEnable__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt12AnimResourcebb, (const void*)&GetMaterialNum__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFv, (const void*)&GetMaterial__Q34nw4r3lyt4PaneCFUl, (const void*)&LoadMtx__Q34nw4r3lyt4PaneFRCQ34nw4r3lyt8DrawInfo, (const void*)&Append__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap };

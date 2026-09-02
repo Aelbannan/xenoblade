@@ -43,20 +43,6 @@ struct CfResReloadParentSub {
 // cf::CfGameManager methods used by this unit come from there. func_80069EA0
 // is declared void by that header but really returns float - call it through
 // a cast at the use site.
-// +0x88 take a single int arg (called with 0 by func_8016D688).
-struct CfResParentObjIf {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060();
-    virtual void _v064(int arg);  // vtable offset 0x64
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(int arg);  // vtable offset 0x88
-};
-
 // Parent object referenced at +0x00 of CfResReloadImpl; the flag words at
 // +0x68/+0x6C and the resource pointer at +0x70 are read/written here.
 struct CfResReloadParent {
@@ -69,7 +55,7 @@ struct CfResReloadParent {
     u8 field_78[0x18];        // 0x78..0x8F
     /* 0x90 */ u8* field_90;  // slot +0x18 result (cleared by func_8016D3F8)
     /* 0x94 */ u8* field_94;  // slot +0x1C result (cleared by func_8016D3F8)
-    /* 0x98 */ CfResParentObjIf* field_98;
+    /* 0x98 */ void* field_98;
     /* 0x9C */ u8* field_9C;
     u8 field_A0[0x24];        // 0xA0..0xC3
     /* 0xC4 */ CfResReloadParentSub* field_C4;  // sub-object (flag words at +0x0C/+0x4EC)
@@ -82,41 +68,11 @@ struct CfResReloadParent {
     /* 0x6E4 */ u8 field_6E4[0x20];   // tail padding (struct ends at 0x704)
 };
 
-// Polymorphic view of the parent object (a CfObject-derived instance) for the
-// two virtual dispatches in func_8016DAF8: vtable slot +0x98 (returns nonzero
-// to stop the reload) and slot +0x168 (takes a float arg). The vptr sits at
-// +0x00 of the parent object; dummy slots pin the offsets (same pattern as
-// CfResReloadVtIf).
-struct CfResParentVtIf {
-    virtual void _v008(); virtual void _v00C();
-    virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C();
-    virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual void _v03C();
-    virtual void _v040(); virtual void _v044(); virtual void _v048(); virtual void _v04C();
-    virtual void _v050(); virtual void _v054(); virtual void _v058(); virtual void _v05C();
-    virtual void _v060(); virtual void _v064(); virtual void _v068(); virtual void _v06C();
-    virtual void _v070(); virtual void _v074(); virtual void _v078(); virtual void _v07C();
-    virtual void _v080(); virtual void _v084(); virtual void _v088(); virtual void _v08C();
-    virtual void _v090(); virtual void _v094();
-    virtual int _v098();       // vtable offset 0x98 - nonzero stops the reload
-    virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4(); virtual void _v0A8();
-    virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4(); virtual void _v0B8();
-    virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4(); virtual void _v0C8();
-    virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4(); virtual void _v0D8();
-    virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4(); virtual void _v0E8();
-    virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4(); virtual void _v0F8();
-    virtual void _v0FC(); virtual void _v100(); virtual void _v104(); virtual void _v108();
-    virtual void _v10C(); virtual void _v110(); virtual void _v114(); virtual void _v118();
-    virtual void _v11C(); virtual void _v120(); virtual void _v124(); virtual void _v128();
-    virtual void _v12C(); virtual void _v130(); virtual void _v134(); virtual void _v138();
-    virtual void _v13C(); virtual void _v140(); virtual void _v144(); virtual void _v148();
-    virtual void _v14C(); virtual void _v150(); virtual void _v154(); virtual void _v158();
-    virtual void _v15C(); virtual void _v160(); virtual void _v164();
-    virtual void _v168(float value);  // vtable offset 0x168
-    virtual void _v16C(); virtual void _v170(); virtual void _v174();
-    virtual void _v178();  // vtable offset 0x178 - dispatched by func_8016D3F8
-    virtual void _v17C();  // vtable offset 0x17C - dispatched by func_8016D3F8
-};
+// CfResParent deleted: use cf::CfObject / CfObjectModel real virtuals
+// slot98 -> CfObject_UnkVirtualFunc18 (0x98, int)
+// slot168 -> CfObject_UnkVirtualFunc70 (0x168, float)
+// slot178 -> CfObjectModel_UnkVirtualFunc1 (0x178)
+// slot17C -> CfObjectModel_UnkVirtualFunc2 (0x17C)
 
 // Prefix pushing vptr to +0x10 (CHelp pattern). Base CfResImpl defines the
 // 0x00-0x0E prefix; the vptr follows at +0x10, then the 0x14 tail.

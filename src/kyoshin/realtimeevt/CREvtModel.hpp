@@ -14,7 +14,7 @@
 
 class CScnItemModel;
 
-class CREvtModel : public cf::CREvtObj {
+class __declspec(novtable) CREvtModel : public cf::CREvtObj {
 public:
     CREvtModel(void* pData, void* pArg);
     /* vtable 0x00 */ virtual ~CREvtModel();
@@ -28,11 +28,10 @@ public:
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
     /* vtable 0x24 */ virtual void vfunc_24();
     /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28
-    /* vtable 0x2C */ virtual void vfunc_2C();
+    /* vtable 0x2C */ virtual void vfunc_2C(void* pData, void* pModelData);
     /* vtable 0x30 */ virtual void onEvent(unsigned int visible); // vfunc_30
     /* vtable 0x34 */ virtual bool reset(); // vfunc_34
-    /* vtable 0x38 */ virtual void vfunc_38(int r4);     // called from func_801729F0
-    /* vtable 0x3C */ virtual void vfunc_3C();           // cleanup for destructor
+    /* vtable 0x38 */ virtual void vfunc_38();     // called from func_801729F0
 
     // Non-virtual methods
     int func_801726DC();

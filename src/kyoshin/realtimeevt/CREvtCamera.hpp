@@ -80,6 +80,36 @@ public:
     virtual void vfunc_0x34();
     virtual void vfunc_0x38();
     virtual u32 vfunc_0x3C(const char* name);  // +0x3C: get animation handle by name
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual void vfunc_0x74();
+    virtual void vfunc_0x78();
+    virtual void vfunc_0x7C();
+    virtual void vfunc_0x80();
+    virtual void vfunc_0x84();
+    virtual void vfunc_0x88();
+    virtual void vfunc_0x8C();
+    virtual void vfunc_0x90();
+    virtual void vfunc_0x94();
+    virtual void vfunc_0x98();
+    virtual void vfunc_0x9C();
+    virtual void vfunc_0xA0();
+    virtual void vfunc_0xA4();
+    virtual void vfunc_0xA8();
+    virtual void vfunc_0xAC();
+    virtual void vfunc_0xB0();
+    virtual void vfunc_0xB4(int value); // +0xB4: set visible (CREvtModelMap dispatch)
     u8 field_0x4[0x7A8 - 0x4];
     u32 field_0x7A8;
 };

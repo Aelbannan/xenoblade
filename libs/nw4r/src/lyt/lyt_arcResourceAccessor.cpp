@@ -13,7 +13,9 @@ extern "C" __declspec(section ".data") __attribute__((aligned(8))) const void* l
     (const void*)&GetResource__Q34nw4r3lyt19ArcResourceAccessorFUlPCcPUl,
     (const void*)&GetFont__Q34nw4r3lyt19ArcResourceAccessorFPCc, nullptr
 };
-// .sdata
+// .sdata - retail 0x806634C8 (2) "." and 0x806634CC (3) ".." with padding to 8
+extern "C" __declspec(section ".sdata") __attribute__((aligned(4), used)) char lbl_eu_806634C8[4] = ".";
+extern "C" __declspec(section ".sdata") __attribute__((aligned(4), used)) char lbl_eu_806634CC[4] = "..";
 // code below and renamed to lbl_eu_806634C8/CC via data_pool_patterns; the
 // section is kept (extern removed) so the retail 8B layout is preserved.
 
@@ -37,14 +39,14 @@ s32 FindNameResource(ARCHandle* pHandle, const char* pName) {
     s32 entrynum = -1;
 
     ARCDir dir;
-    ARCOpenDir(pHandle, ".", &dir);
+    ARCOpenDir(pHandle, lbl_eu_806634C8, &dir);
 
     ARCDirEntry ent;
     while (ARCReadDir(&dir, &ent)) {
         if (ent.isDir) {
             ARCChangeDir(pHandle, ent.name);
             entrynum = FindNameResource(pHandle, pName);
-            ARCChangeDir(pHandle, "..");
+            ARCChangeDir(pHandle, lbl_eu_806634CC);
 
             if (entrynum != -1) {
                 break;
@@ -82,11 +84,11 @@ void* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
                     ARCChangeDir(pHandle, resDir)) {
 
                     entrynum = ARCConvertPathToEntrynum(pHandle, pName);
-                    ARCChangeDir(pHandle, "..");
+                    ARCChangeDir(pHandle, lbl_eu_806634CC);
                 }
             }
 
-            ARCChangeDir(pHandle, "..");
+            ARCChangeDir(pHandle, lbl_eu_806634CC);
         }
     }
 

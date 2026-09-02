@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -136,53 +137,52 @@ struct CFunc8008B580F60 {
 class CFunc8008D444Sub {
 public:
     virtual void sv08(u32 a);           // index 0 -> vtable +0x8
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual void _vAC();
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4(float angle);     // index 0x30 -> vtable +0xC4 (func_8008E06C)
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);     // index 0x30 -> vtable +0xC4 (func_8008E06C)
 };
 
 // func_8008B580's view of the +0x3E9C embedded sub-object: same base virtuals
@@ -191,88 +191,87 @@ public:
 class CFunc8008B580Sub150 {
 public:
     virtual void sv08(u32 a);
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual void _vAC();
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4(float angle);
-    virtual void _vC8();
-    virtual void _vCC();
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150(u32 arg);        // index 0x52 -> vtable +0x150 (func_8008B580 passes 0)
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;
+    virtual void CfObject_UnkVirtualFunc49();;
+    virtual void CfObject_UnkVirtualFunc50();;
+    virtual void CfObject_UnkVirtualFunc51();;
+    virtual void CfObject_UnkVirtualFunc52();;
+    virtual void CfObject_UnkVirtualFunc53();;
+    virtual void CfObject_UnkVirtualFunc54();;
+    virtual void CfObject_UnkVirtualFunc55();;
+    virtual void CfObject_UnkVirtualFunc56();;
+    virtual void CfObject_UnkVirtualFunc57();;
+    virtual float* CfObject_UnkVirtualFunc58();
+    virtual void CfObject_UnkVirtualFunc59();;
+    virtual void CfObject_UnkVirtualFunc60();;
+    virtual void CfObject_UnkVirtualFunc61();;
+    virtual void CfObject_UnkVirtualFunc62();;
+    virtual void CfObject_UnkVirtualFunc63();;
+    virtual void CfObject_UnkVirtualFunc64(u32 arg);;        // index 0x52 -> vtable +0x150 (func_8008B580 passes 0)
 };
 
 // The +0x04 object of the enemy battle object (func_8008B580 reads the first
@@ -282,40 +281,23 @@ struct CFunc8008B580Word {
 };
 class CFunc8008B580Sub4 {
 public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual CFunc8008B580Word* _v30();  // vtable +0x30
+    virtual void CObjectState_UnkVirtualFunc1();;
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual CFunc8008B580Word* CObjectState_UnkVirtualFunc11();;  // vtable +0x30
 };
 
-// func_8008A2C8's sub-object vtable: slots +0x0C (int query), +0x4C (int
-// query), +0x50 (int arg), +0x8C (float), +0xAC (position), +0x110 (int),
-// +0x150 (int arg). Declared before CFunc8008B580Obj, which embeds the same
-// sub-object as a raw vtable view.
-struct CFunc8008A2C8SubVtbl {
-    void* r00[0x0C / 4];                                // 0x00-0x0B
-    int (*fn_0x0C)(void* self, int arg);                // 0x0C
-    void* r10[(0x4C - 0x10) / 4];                       // 0x10-0x4B
-    int (*fn_0x4C)(void* self, int arg);                // 0x4C
-    void (*fn_0x50)(void* self, int arg);               // 0x50
-    void* r54[(0x8C - 0x54) / 4];                       // 0x54-0x8B
-    f32 (*fn_0x8C)(void* self);                         // 0x8C
-    void* r90[(0xAC - 0x90) / 4];                       // 0x90-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0x110 - 0xB0) / 4];                      // 0xB0-0x10F
-    int (*fn_0x110)(void* self, int arg);               // 0x110
-    void* r114[(0x150 - 0x114) / 4];                    // 0x114-0x14F
-    void (*fn_0x150)(void* self, int arg);              // 0x150
-};
+// +0x3E9C Move sub-object view (CObjectState / CfObject virtuals). Former
+// CFunc8008A2C8SubVtbl FP pad deleted - call real UVFs via cast.
 struct CFunc8008A2C8Sub {
-    CFunc8008A2C8SubVtbl* vtable;                       // 0x00
+    void* vptr;                                         // 0x00
 };
 
 // func_8008A2C8's extension of the +0x3F60 flag object: +0x4F8 float and the
@@ -339,7 +321,7 @@ struct CFunc8008B580Obj {
     // Declared virtuals first so the vptr lands at offset 0 (retail loads
     // it with lwz r12,0(rObj)); never instantiated here -> no vtable emitted.
     // -RTTI places the Nth declared virtual at vtable offset (N+2)*4.
-    virtual void _v08();
+    virtual void CObjectState_UnkVirtualFunc1();;
     CFunc8008B580Sub4* field_04;        // 0x04 (func_8008B580 reads a word via its +0x30 vtable slot)
     u8 _pad08[0x3374 - 0x08];           // 0x08-0x3373
     u32 field_3374;                     // 0x3374 flags
@@ -357,179 +339,100 @@ struct CFunc8008B580Obj {
     u16 field_45C4;                     // 0x45C4
     u16 field_45C6;                     // 0x45C6
 
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual void _vAC();
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4();
-    virtual void _vC8();
-    virtual void _vCC();
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual float _v11C(float f);       // vtable +0x11C (func_8008B580: negated HP)
-    virtual void _v120();
-    virtual void _v124();
-    virtual float _v128();              // vtable +0x128 (func_8008B580: HP query)
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual void _v160();
-    virtual void _v164();
-    virtual void _v168();
-    virtual void _v16C();
-    virtual void _v170();
-    virtual void _v174();
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual void _v188();
-    virtual void _v18C();
-    virtual void _v190();
-    virtual void _v194();
-    virtual void _v198();
-    virtual void _v19C();
-    virtual void _v1A0();
-    virtual void _v1A4();
-    virtual void _v1A8();
-    virtual void _v1AC();
-    virtual void _v1B0();
-    virtual void _v1B4();
-    virtual void _v1B8();
-    virtual void _v1BC();
-    virtual void _v1C0();
-    virtual void _v1C4();
-    virtual void _v1C8();
-    virtual void _v1CC();
-    virtual void _v1D0();
-    virtual void _v1D4();
-    virtual void _v1D8();
-    virtual void _v1DC();
-    virtual void _v1E0();
-    virtual void _v1E4();
-    virtual void _v1E8();
-    virtual void _v1EC();
-    virtual void _v1F0();
-    virtual void _v1F4();
-    virtual void _v1F8();
-    virtual void _v1FC();
-    virtual void _v200();
-    virtual void _v204();
-    virtual void _v208();
-    virtual void _v20C();
-    virtual void _v210();
-    virtual void _v214();
-    virtual void _v218();
-    virtual void _v21C();
-    virtual void _v220();
-    virtual void _v224();
-    virtual void _v228();
-    virtual void _v22C();
-    virtual void _v230();
-    virtual void _v234();
-    virtual void _v238();
-    virtual void _v23C();
-    virtual void _v240();
-    virtual void _v244();
-    virtual void _v248();
-    virtual void _v24C();
-    virtual void _v250();
-    virtual void _v254();
-    virtual void _v258();
-    virtual void _v25C();
-    virtual void _v260();
-    virtual void _v264();
-    virtual void _v268();
-    virtual void _v26C();
-    virtual void _v270();
-    virtual void _v274();
-    virtual void _v278();
-    virtual void _v27C();
-    virtual void _v280();
-    virtual void _v284();
-    virtual void _v288();
-    virtual void _v28C();
-    virtual void _v290();
-    virtual void _v294();
-    virtual void _v298();
-    virtual void _v29C();
-    virtual void _v2A0();
-    virtual void* _v2A4();              // vtable +0x2A4 (func_8008A2C8: sub-object ptr)
-    virtual void _v2A8();
-    virtual void _v2AC();
-    virtual void _v2B0();
-    virtual void _v2B4();
-    virtual void _v2B8();
-    virtual int _v2BC();                 // vtable +0x2BC (func_8008B580 busy/active query)
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;
+    virtual void CfObject_UnkVirtualFunc49();;
+    virtual void CfObject_UnkVirtualFunc50();;
+    virtual float CfObject_UnkVirtualFunc51(float f);;       // vtable +0x11C (func_8008B580: negated HP)
+    virtual void CfObject_UnkVirtualFunc52();;
+    virtual void CfObject_UnkVirtualFunc53();;
+    virtual float CfObject_UnkVirtualFunc54();;              // vtable +0x128 (func_8008B580: HP query)
+    virtual void CfObject_UnkVirtualFunc55();;
+    virtual void CfObject_UnkVirtualFunc56();;
+    virtual void CfObject_UnkVirtualFunc57();;
+    virtual float* CfObject_UnkVirtualFunc58();
+    virtual void CfObject_UnkVirtualFunc59();;
+    virtual void CfObject_UnkVirtualFunc60();;
+    virtual void CfObject_UnkVirtualFunc61();;
+    virtual void CfObject_UnkVirtualFunc62();;
+    virtual void CfObject_UnkVirtualFunc63();;
+    virtual void CfObject_UnkVirtualFunc64();;
+    virtual void CfObject_UnkVirtualFunc65();;
+    virtual void CfObject_UnkVirtualFunc66();;
+    virtual void CfObject_UnkVirtualFunc67();;
+    virtual void CfObject_UnkVirtualFunc68();;
+    virtual void CfObject_UnkVirtualFunc69();;
+    virtual void CfObject_UnkVirtualFunc70();;
+    virtual void CfObject_UnkVirtualFunc71();;
+    virtual void CfObject_UnkVirtualFunc72();;
+    virtual void CfObject_UnkVirtualFunc73();;
+    virtual void CfObjectModel_UnkVirtualFunc_1A0();
+    virtual float* CfObjectMove_UnkVirtualFunc5();
+    virtual void* CActorParam_UnkVirtualFunc_2A4();              // vtable +0x2A4 (func_8008A2C8: sub-object ptr)
+    virtual int CActorParam_UnkVirtualFunc_2BC();                 // vtable +0x2BC (func_8008B580 busy/active query)
 };
 
 // Plain (non-polymorphic) view of the enemy battle object used by the
@@ -552,123 +455,99 @@ struct CFunc8008D444Obj {
 // instantiated here, so no vtable is emitted.
 class CNpcMoveSubView {
 public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual int _v74();               // vtable +0x74
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual float _v8C();             // vtable +0x8C (func_8008A23C compares to 0.0f)
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual void _vAC();
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4();              // vtable +0xC4
-    virtual void _vC8();
-    virtual float _vCC();             // vtable +0xCC (returns a float; ctor / func_8008E06C)
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual float* _v138();           // vtable +0x138 (movement-rate divisor query)
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual void _v160();
-    virtual void _v164();
-    virtual void _v168();
-    virtual void _v16C();
-    virtual void _v170();
-    virtual void _v174();
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual void _v188();
-    virtual void _v18C();
-    virtual void _v190();
-    virtual void _v194();
-    virtual void _v198();
-    virtual void _v19C();
-    virtual void _v1A0();
-    virtual void _v1A4();
-    virtual void _v1A8();
-    virtual void _v1AC();
-    virtual void _v1B0();
-    virtual void _v1B4();
-    virtual void _v1B8();
-    virtual void _v1BC();
-    virtual void _v1C0();
-    virtual void _v1C4();
-    virtual void _v1C8();
-    virtual void _v1CC();
-    virtual void _v1D0();
-    virtual void _v1D4();
-    virtual float* _v1D8();           // vtable +0x1D8 (movement-rate query)
+    virtual void CObjectState_UnkVirtualFunc1();;
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();               // vtable +0x74
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();             // vtable +0x8C (func_8008A23C compares to 0.0f)
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);              // vtable +0xC4
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (returns a float; ctor / func_8008E06C)
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;
+    virtual void CfObject_UnkVirtualFunc49();;
+    virtual void CfObject_UnkVirtualFunc50();;
+    virtual void CfObject_UnkVirtualFunc51();;
+    virtual void CfObject_UnkVirtualFunc52();;
+    virtual void CfObject_UnkVirtualFunc53();;
+    virtual void CfObject_UnkVirtualFunc54();;
+    virtual void CfObject_UnkVirtualFunc55();;
+    virtual void CfObject_UnkVirtualFunc56();;
+    virtual void CfObject_UnkVirtualFunc57();;
+    virtual float* CfObject_UnkVirtualFunc58();           // vtable +0x138 (movement-rate divisor query)
+    virtual void CfObject_UnkVirtualFunc59();;
+    virtual void CfObject_UnkVirtualFunc60();;
+    virtual void CfObject_UnkVirtualFunc61();;
+    virtual void CfObject_UnkVirtualFunc62();;
+    virtual void CfObject_UnkVirtualFunc63();;
+    virtual void CfObject_UnkVirtualFunc64();;
+    virtual void CfObject_UnkVirtualFunc65();;
+    virtual void CfObject_UnkVirtualFunc66();;
+    virtual void CfObject_UnkVirtualFunc67();;
+    virtual void CfObject_UnkVirtualFunc68();;
+    virtual void CfObject_UnkVirtualFunc69();;
+    virtual void CfObject_UnkVirtualFunc70();;
+    virtual void CfObject_UnkVirtualFunc71();;
+    virtual void CfObject_UnkVirtualFunc72();;
+    virtual void CfObject_UnkVirtualFunc73();;
+    virtual void CfObjectModel_UnkVirtualFunc_1A0();
+    virtual float* CfObjectMove_UnkVirtualFunc5();           // vtable +0x1D8 (movement-rate query)
 };
 
 // func_8008F9EC / func_8009156C view of the move sub-object: same virtual
@@ -677,123 +556,99 @@ public:
 // func_8008C4F0 / func_8008A23C keep their exact CNpcMoveSubView.
 class CFunc8008F9ECSub {
 public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual int _v74();               // vtable +0x74
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual float _v8C();             // vtable +0x8C
-    virtual void _v90();
-    virtual void _v94();
-    virtual int _v98();               // vtable +0x98 (func_8008F9EC: nonzero = active)
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual ml::CVec3* _vAC();        // vtable +0xAC (position getter)
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4();              // vtable +0xC4
-    virtual void _vC8();
-    virtual float _vCC();             // vtable +0xCC (heading index)
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual float* _v138();           // vtable +0x138 (movement-rate divisor query)
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150();
-    virtual void _v154();
-    virtual void _v158();
-    virtual void _v15C();
-    virtual void _v160();
-    virtual void _v164();
-    virtual void _v168();
-    virtual void _v16C();
-    virtual void _v170();
-    virtual void _v174();
-    virtual void _v178();
-    virtual void _v17C();
-    virtual void _v180();
-    virtual void _v184();
-    virtual void _v188();
-    virtual void _v18C();
-    virtual void _v190();
-    virtual void _v194();
-    virtual void _v198();
-    virtual void _v19C();
-    virtual void _v1A0();
-    virtual void _v1A4();
-    virtual void _v1A8();
-    virtual void _v1AC();
-    virtual void _v1B0();
-    virtual void _v1B4();
-    virtual void _v1B8();
-    virtual void _v1BC();
-    virtual void _v1C0();
-    virtual void _v1C4();
-    virtual void _v1C8();
-    virtual void _v1CC();
-    virtual void _v1D0();
-    virtual void _v1D4();
-    virtual float* _v1D8();           // vtable +0x1D8 (movement-rate query)
+    virtual void CObjectState_UnkVirtualFunc1();;
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();               // vtable +0x74
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();             // vtable +0x8C
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();               // vtable +0x98 (func_8008F9EC: nonzero = active)
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();        // vtable +0xAC (position getter)
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);              // vtable +0xC4
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (heading index)
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;
+    virtual void CfObject_UnkVirtualFunc49();;
+    virtual void CfObject_UnkVirtualFunc50();;
+    virtual void CfObject_UnkVirtualFunc51();;
+    virtual void CfObject_UnkVirtualFunc52();;
+    virtual void CfObject_UnkVirtualFunc53();;
+    virtual void CfObject_UnkVirtualFunc54();;
+    virtual void CfObject_UnkVirtualFunc55();;
+    virtual void CfObject_UnkVirtualFunc56();;
+    virtual void CfObject_UnkVirtualFunc57();;
+    virtual float* CfObject_UnkVirtualFunc58();           // vtable +0x138 (movement-rate divisor query)
+    virtual void CfObject_UnkVirtualFunc59();;
+    virtual void CfObject_UnkVirtualFunc60();;
+    virtual void CfObject_UnkVirtualFunc61();;
+    virtual void CfObject_UnkVirtualFunc62();;
+    virtual void CfObject_UnkVirtualFunc63();;
+    virtual void CfObject_UnkVirtualFunc64();;
+    virtual void CfObject_UnkVirtualFunc65();;
+    virtual void CfObject_UnkVirtualFunc66();;
+    virtual void CfObject_UnkVirtualFunc67();;
+    virtual void CfObject_UnkVirtualFunc68();;
+    virtual void CfObject_UnkVirtualFunc69();;
+    virtual void CfObject_UnkVirtualFunc70();;
+    virtual void CfObject_UnkVirtualFunc71();;
+    virtual void CfObject_UnkVirtualFunc72();;
+    virtual void CfObject_UnkVirtualFunc73();;
+    virtual void CfObjectModel_UnkVirtualFunc_1A0();
+    virtual float* CfObjectMove_UnkVirtualFunc5();           // vtable +0x1D8 (movement-rate query)
 
     u8 _pad04[0xC4 - 0x04];           // 0x04-0xC3
     void* field_C4;                   // 0xC4 target word (null-checked)
@@ -806,89 +661,88 @@ public:
 // instantiated, so no vtable emitted.
 class CFunc8008EF04Sub {
 public:
-    virtual void _v08();
-    virtual int _v0C(int arg);        // vtable +0x0C
-    virtual void _v10(int arg);       // vtable +0x10
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual void _vAC();
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4(f32 heading);   // vtable +0xC4 (func_8008EF04 passes field_0x4C)
-    virtual void _vC8();
-    virtual float _vCC();             // vtable +0xCC (heading index)
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void _v110();
-    virtual void _v114();
-    virtual void _v118();
-    virtual void _v11C();
-    virtual void _v120();
-    virtual void _v124();
-    virtual void _v128();
-    virtual void _v12C();
-    virtual void _v130();
-    virtual void _v134();
-    virtual void _v138();
-    virtual void _v13C();
-    virtual void _v140();
-    virtual void _v144();
-    virtual void _v148();
-    virtual void _v14C();
-    virtual void _v150(int arg);      // vtable +0x150
+    virtual void CObjectState_UnkVirtualFunc1();;
+    virtual int CObjectState_UnkVirtualFunc2(int arg);;        // vtable +0x0C
+    virtual void CObjectState_UnkVirtualFunc3(int arg);;       // vtable +0x10
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);   // vtable +0xC4 (func_8008EF04 passes field_0x4C)
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (heading index)
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;
+    virtual void CfObject_UnkVirtualFunc49();;
+    virtual void CfObject_UnkVirtualFunc50();;
+    virtual void CfObject_UnkVirtualFunc51();;
+    virtual void CfObject_UnkVirtualFunc52();;
+    virtual void CfObject_UnkVirtualFunc53();;
+    virtual void CfObject_UnkVirtualFunc54();;
+    virtual void CfObject_UnkVirtualFunc55();;
+    virtual void CfObject_UnkVirtualFunc56();;
+    virtual void CfObject_UnkVirtualFunc57();;
+    virtual float* CfObject_UnkVirtualFunc58();
+    virtual void CfObject_UnkVirtualFunc59();;
+    virtual void CfObject_UnkVirtualFunc60();;
+    virtual void CfObject_UnkVirtualFunc61();;
+    virtual void CfObject_UnkVirtualFunc62();;
+    virtual void CfObject_UnkVirtualFunc63();;
+    virtual void CfObject_UnkVirtualFunc64(int arg);;      // vtable +0x150
 
     u8 _pad04[0x98 - 0x04];           // 0x04-0x97
     void* field_98;                   // 0x98
@@ -976,73 +830,72 @@ struct CfObjectMoveInitView {
 // Declared virtuals only; never instantiated, so no vtable emitted.
 class CFunc8009156CGimmick {
 public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual void _v90();
-    virtual void _v94();
-    virtual void _v98();
-    virtual void _v9C();
-    virtual void _vA0();
-    virtual void _vA4();
-    virtual void _vA8();
-    virtual ml::CVec3* _vAC();       // vtable +0xAC (position getter)
-    virtual void _vB0();
-    virtual void _vB4();
-    virtual void _vB8();
-    virtual void _vBC();
-    virtual void _vC0();
-    virtual void _vC4();
-    virtual void _vC8();
-    virtual void _vCC();
-    virtual void _vD0();
-    virtual void _vD4();
-    virtual void _vD8();
-    virtual void _vDC();
-    virtual void _vE0();
-    virtual void _vE4();
-    virtual void _vE8();
-    virtual void _vEC();
-    virtual void _vF0();
-    virtual void _vF4();
-    virtual void _vF8();
-    virtual void _vFC();
-    virtual void _v100();
-    virtual void _v104();
-    virtual void _v108();
-    virtual void _v10C();
-    virtual void* _v110();           // vtable +0x110 (target object)
+    virtual void CObjectState_UnkVirtualFunc1();;
+    virtual void CObjectState_UnkVirtualFunc2();;
+    virtual void CObjectState_UnkVirtualFunc3();;
+    virtual void CObjectState_UnkVirtualFunc4();;
+    virtual void CObjectState_UnkVirtualFunc5();;
+    virtual void CObjectState_UnkVirtualFunc6();;
+    virtual void CObjectState_UnkVirtualFunc7();;
+    virtual void CObjectState_UnkVirtualFunc8();;
+    virtual void CObjectState_UnkVirtualFunc9();;
+    virtual void CObjectState_UnkVirtualFunc10();;
+    virtual void CObjectState_UnkVirtualFunc11();;
+    virtual void CObjectState_UnkVirtualFunc12();;
+    virtual void CObjectState_UnkVirtualFunc13();;
+    virtual void CObjectParam_UnkVirtualFunc1();;
+    virtual void CObjectParam_UnkVirtualFunc2();;
+    virtual void CObjectParam_UnkVirtualFunc3();;
+    virtual void CObjectParam_UnkVirtualFunc4();;
+    virtual void CObjectParam_UnkVirtualFunc5();;
+    virtual void CObjectParam_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc2();;
+    virtual void CfObject_UnkVirtualFunc3();;
+    virtual void CfObject_UnkVirtualFunc4();;
+    virtual void CfObject_UnkVirtualFunc5();;
+    virtual void CfObject_UnkVirtualFunc6();;
+    virtual void CfObject_UnkVirtualFunc7();;
+    virtual void CfObject_UnkVirtualFunc8();;
+    virtual int CfObject_UnkVirtualFunc9();
+    virtual void CfObject_UnkVirtualFunc10();;
+    virtual void CfObject_UnkVirtualFunc11();;
+    virtual void CfObject_UnkVirtualFunc12();;
+    virtual void CfObject_UnkVirtualFunc13();;
+    virtual void CfObject_UnkVirtualFunc14();;
+    virtual float CfObject_UnkVirtualFunc15();
+    virtual void CfObject_UnkVirtualFunc16();;
+    virtual void CfObject_UnkVirtualFunc17();;
+    virtual int CfObject_UnkVirtualFunc18();
+    virtual void CfObject_UnkVirtualFunc19();;
+    virtual void CfObject_UnkVirtualFunc20();;
+    virtual void CfObject_UnkVirtualFunc21();;
+    virtual void CfObject_UnkVirtualFunc22();;
+    virtual ml::CVec3* CfObject_UnkVirtualFunc23();       // vtable +0xAC (position getter)
+    virtual void CfObject_UnkVirtualFunc24();;
+    virtual void CfObject_UnkVirtualFunc25();;
+    virtual void CfObject_UnkVirtualFunc26();;
+    virtual void CfObject_UnkVirtualFunc27();;
+    virtual void CfObject_UnkVirtualFunc28();;
+    virtual void CfObject_UnkVirtualFunc29(float value);
+    virtual void CfObject_UnkVirtualFunc30();;
+    virtual float CfObject_UnkVirtualFunc31();
+    virtual void CfObject_UnkVirtualFunc32();;
+    virtual void CfObject_UnkVirtualFunc33();;
+    virtual void CfObject_UnkVirtualFunc34();;
+    virtual void CfObject_UnkVirtualFunc35();;
+    virtual void CfObject_UnkVirtualFunc36();;
+    virtual void CfObject_UnkVirtualFunc37();;
+    virtual void CfObject_UnkVirtualFunc38();;
+    virtual void CfObject_UnkVirtualFunc39();;
+    virtual void CfObject_UnkVirtualFunc40();;
+    virtual void CfObject_UnkVirtualFunc41();;
+    virtual void CfObject_UnkVirtualFunc42();;
+    virtual void CfObject_UnkVirtualFunc43();;
+    virtual void CfObject_UnkVirtualFunc44();;
+    virtual void CfObject_UnkVirtualFunc45();;
+    virtual void CfObject_UnkVirtualFunc46(void*);
+    virtual void CfObject_UnkVirtualFunc47();;
+    virtual void* CfObject_UnkVirtualFunc48();;           // vtable +0x110 (target object)
 };
 
 // Target object returned by the gimmick's +0x110 slot (func_8009156C marks it
@@ -1120,29 +973,15 @@ struct CFunc8008E760Vec3W {
     u32 z;                          // 0x08
 };
 
-// Vtable of the +0x3E9C embedded sub-object as func_8008E760 calls it:
-// slots +0x9C (takes a pointer), +0xAC (position getter) and +0xC4 (no args).
-// Declared as a raw vtable struct so no vtable is emitted.
-struct CFunc8008E760SubVtbl {
-    void* r00[0x9C / 4];                                // 0x00-0x9B
-    void (*fn_0x9C)(void* self, void* a);               // 0x9C
-    void* rA0[(0xAC - 0xA0) / 4];                       // 0xA0-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0xC4 - 0xB0) / 4];                       // 0xB0-0xC3
-    void (*fn_0xC4)(void* self);                        // 0xC4 (no args)
-};
+// +0x3E9C Move sub-object (CfObject::UVF29 at +0xC4). Former FP SubVtbl deleted.
 struct CFunc8008E760Sub {
-    CFunc8008E760SubVtbl* vtable;                       // 0x00
+    void* vptr;                                         // 0x00
 };
 
-// Battle object r31 (func_80198310 result): vtable slot +0x5B4 returns a
-// float, +0x3E9C the embedded sub-object, +0x44D8 a float.
-struct CFunc8008E760BattleVtbl {
-    void* r00[0x5B4 / 4];                               // 0x00-0x5B3
-    f32 (*fn_0x5B4)(void* self);                        // 0x5B4
-};
+// Battle/actor view: +0x5B4 = CfObjectActor::UVF6 -> float. Former BattleVtbl
+// / ActorVtbl FP pads deleted - cast to CfObjectActor*.
 struct CFunc8008E760BattleObj {
-    CFunc8008E760BattleVtbl* vtable;                    // 0x00
+    void* vptr;                                         // 0x00
     u8 _pad04[0x3E9C - 0x04];                           // 0x04-0x3E9B
     CFunc8008E760Sub mSub;                              // 0x3E9C
     u8 _pad3EA0[0x44D8 - 0x3EA0];                       // 0x3EA0-0x44D7
@@ -1288,17 +1127,9 @@ struct CFunc80090DB4View {
 // Move sub-object as func_80090DB4 calls it: vtable +0x0C (int query), +0x10
 // (int arg), +0xAC (position getter) and +0xC4 (float angle); data words at
 // +0x98 / +0xC4 / +0x63C.
-struct CFunc80090DB4SubVtbl {
-    void* r00[0x0C / 4];                                // 0x00-0x0B
-    int (*fn_0x0C)(void* self, int arg);                // 0x0C
-    void (*fn_0x10)(void* self, int arg);               // 0x10
-    void* r14[(0xAC - 0x14) / 4];                       // 0x14-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0xC4 - 0xB0) / 4];                       // 0xB0-0xC3
-    void (*fn_0xC4)(void* self, f32 angle);             // 0xC4
-};
+
 struct CFunc80090DB4Sub {
-    CFunc80090DB4SubVtbl* vtable;                       // 0x00
+    void* vtable;                       // 0x00
     u8 _pad04[0x98 - 0x04];                             // 0x04-0x97
     void* field_98;                                     // 0x98
     u8 _pad9C[0xC4 - 0x9C];                             // 0x9C-0xC3
@@ -1311,24 +1142,9 @@ struct CFunc80090DB4Sub {
 // slots +0x50 (int arg), +0x8C (float query), +0x9C (pointer arg), +0xAC
 // (position getter), +0xC4 (float angle), +0x138 (float* divisor) and +0x150
 // (int arg).
-struct CFunc8008D51CSubVtbl {
-    void* r00[0x50 / 4];                                // 0x00-0x4F
-    void (*fn_0x50)(void* self, int arg);               // 0x50
-    void* r54[(0x8C - 0x54) / 4];                       // 0x54-0x8B
-    f32 (*fn_0x8C)(void* self);                         // 0x8C
-    void* r90[(0x9C - 0x90) / 4];                       // 0x90-0x9B
-    void (*fn_0x9C)(void* self, void* a);               // 0x9C
-    void* rA0[(0xAC - 0xA0) / 4];                       // 0xA0-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0xC4 - 0xB0) / 4];                       // 0xB0-0xC3
-    void (*fn_0xC4)(void* self, f32 angle);             // 0xC4
-    void* rC8[(0x138 - 0xC8) / 4];                      // 0xC8-0x137
-    float* (*fn_0x138)(void* self);                     // 0x138
-    void* r13C[(0x150 - 0x13C) / 4];                    // 0x13C-0x14F
-    void (*fn_0x150)(void* self, int arg);              // 0x150
-};
+
 struct CFunc8008D51CSub {
-    CFunc8008D51CSubVtbl* vtable;                       // 0x00
+    void* vtable;                       // 0x00
 };
 
 // One 0x14-byte slot of the +0x1928 array func_8008D51C zeroes (word at +0x14
@@ -1423,21 +1239,9 @@ struct CFunc8008FE8CView {
 // Move sub-object as func_8008FE8C calls it: vtable +0x0C (int query), +0x10
 // (int arg), +0x9C (pointer arg), +0xAC (position getter), +0xC4 (float
 // angle) and +0xCC (heading query); data words at +0x98 / +0xC4 / +0x63C.
-struct CFunc8008FE8CSubVtbl {
-    void* r00[0x0C / 4];                                // 0x00-0x0B
-    int (*fn_0x0C)(void* self, int arg);                // 0x0C
-    void (*fn_0x10)(void* self, int arg);               // 0x10
-    void* r14[(0x9C - 0x14) / 4];                       // 0x14-0x9B
-    void (*fn_0x9C)(void* self, void* a);               // 0x9C
-    void* rA0[(0xAC - 0xA0) / 4];                       // 0xA0-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0xC4 - 0xB0) / 4];                       // 0xB0-0xC3
-    void (*fn_0xC4)(void* self, f32 angle);             // 0xC4
-    void* rC8[(0xCC - 0xC8) / 4];                       // 0xC8-0xCB
-    float (*fn_0xCC)(void* self);                       // 0xCC
-};
+
 struct CFunc8008FE8CSub {
-    CFunc8008FE8CSubVtbl* vtable;                       // 0x00
+    void* vtable;                       // 0x00
     u8 _pad04[0x98 - 0x04];                             // 0x04-0x97
     void* field_98;                                     // 0x98
     u8 _pad9C[0xC4 - 0x9C];                             // 0x9C-0xC3
@@ -1486,27 +1290,15 @@ struct CFunc8008A2C8View {
 
 // Vtable of the +0x3E9C embedded sub-object as func_80091864 calls it:
 // +0xAC (position getter) and +0x110 (target object).
-struct CFunc80091864SubVtbl {
-    void* r00[0xAC / 4];                                // 0x00-0xAB
-    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
-    void* rB0[(0x110 - 0xB0) / 4];                      // 0xB0-0x10F
-    void* (*fn_0x110)(void* self);                      // 0x110
-};
+
 struct CFunc80091864Sub {
-    CFunc80091864SubVtbl* vtable;                       // 0x00
+    void* vtable;                       // 0x00
 };
 
-// Battle-object view shared by the func_80091864 participants (enemy base
-// derived from the move-data +0x28 sub-object, the func_80198310 player and
-// the func_801984F0 list entries): +0x5B4 heading query, the embedded sub,
-// the +0x3F60 flag object, the +0x44D8 radius and the +0x45C0..+0x45C6
-// halfwords.
-struct CFunc80091864ActorVtbl {
-    void* r00[0x5B4 / 4];                               // 0x00-0x5B3
-    f32 (*fn_0x5B4)(void* self);                        // 0x5B4 heading
-};
+// Battle-object view: +0x5B4 = CfObjectActor::UVF6. Former ActorVtbl FP pad
+// deleted - cast to CfObjectActor*.
 struct CFunc80091864Actor {
-    CFunc80091864ActorVtbl* vtable;                     // 0x00
+    void* vptr;                                         // 0x00
     u8 _pad04[0x3374 - 0x04];                           // 0x04-0x3373
     u32 field_3374;                                     // 0x3374 flags
     u8 _pad3378[0x3E9C - 0x3378];                       // 0x3378-0x3E9B
@@ -1613,7 +1405,8 @@ extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f,
                              void* g);
 // Global coli probe object (retail .sdata pointer) and the probe-block buffer
 // func_8008CDE8 passes to func_804B526C.
-extern cf::CFunc8008CDE8Probe* lbl_eu_80665958;
+// Typed as void* to match CfObjectMove.hpp (same .sbss global).
+extern void* lbl_eu_80665958;
 extern u8 lbl_eu_80571810[0x38];
 // Collision-list height probe API used by func_8008B9C0 (retail C-ABI names;
 // same declarations as CtrlAct.hpp). func_804BE398's canonical declaration

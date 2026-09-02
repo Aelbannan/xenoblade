@@ -70,16 +70,16 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
         virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
-        virtual void CBattleState_UnkVirtualFunc18(cf::CBattleStateEntry* entry); //0x4C
+        virtual void* CBattleState_UnkVirtualFunc18(); //0x4C
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
-        virtual void CBattleState_UnkVirtualFunc20(); //0x54
+        virtual void* CBattleState_UnkVirtualFunc20(int index); //0x54
         virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc21(int index); //0x58
         virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc22(int index); //0x5C
         virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc23(int index); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
         virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
-        virtual void* CBattleState_UnkVirtualFunc27(); //0x70
+        virtual void CBattleState_UnkVirtualFunc27(u32 arg); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(u32 flags); //0x7C (OR into +0x4; retail Fv)

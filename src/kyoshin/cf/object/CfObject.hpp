@@ -26,12 +26,12 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
-        virtual void CfObject_UnkVirtualFunc13();     //0x84
+        virtual int CfObject_UnkVirtualFunc13();     //0x84
         virtual void* CfObject_UnkVirtualFunc14(float value);     //0x88
         virtual float CfObject_UnkVirtualFunc15();    //0x8C (Move/Coll return float; retail Fv)
         virtual void* CfObject_UnkVirtualFunc16(float value);     //0x90
         virtual void CfObject_UnkVirtualFunc17();     //0x94
-        virtual void CfObject_UnkVirtualFunc18();     //0x98
+        virtual int CfObject_UnkVirtualFunc18();     //0x98
         // Retail bodies read r4 as a position vector (setEffPosVec_ /
         // Model/Move/ocUnit UVF19). Fv linker names are uneducated.
         virtual void CfObject_UnkVirtualFunc19(const ml::CVec3* vec); //0x9C
@@ -68,37 +68,39 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc43();     //0xFC
         virtual void CfObject_UnkVirtualFunc44();     //0x100
         virtual void CfObject_UnkVirtualFunc45();     //0x104
-        virtual void CfObject_UnkVirtualFunc46();     //0x108
-        virtual void CfObject_UnkVirtualFunc47();     //0x10C
-        virtual void CfObject_UnkVirtualFunc48();     //0x110
-        virtual void CfObject_UnkVirtualFunc49();     //0x114
+        virtual void CfObject_UnkVirtualFunc46(void* arg);     //0x108
+        virtual void CfObject_UnkVirtualFunc47();
+        // Move override returns target object pointer (pluginCfs: +0xC4/+0x6C0).
+        virtual void* CfObject_UnkVirtualFunc48();     //0x110
+        virtual void CfObject_UnkVirtualFunc49(u32 value);     //0x114
         virtual int CfObject_UnkVirtualFunc50();     //0x118
         virtual int CfObject_UnkVirtualFunc51();     //0x11C
-        virtual void CfObject_UnkVirtualFunc52();     //0x120
+        virtual void* CfObject_UnkVirtualFunc52(const char* name);     //0x120
         virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
-        virtual void CfObject_UnkVirtualFunc54();     //0x128
-        virtual void CfObject_UnkVirtualFunc55();     //0x12C
+        virtual u32 CfObject_UnkVirtualFunc54();     //0x128
+        virtual void* CfObject_UnkVirtualFunc55(int arg);     //0x12C
         virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57(float value);     //0x134
         virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
-        virtual void CfObject_UnkVirtualFunc60();     //0x140
-        virtual void CfObject_UnkVirtualFunc61();     //0x144
+        virtual float CfObject_UnkVirtualFunc60();     //0x140
+        virtual void CfObject_UnkVirtualFunc61(u32 a, u32 b);     //0x144
         virtual void CfObject_UnkVirtualFunc62();     //0x148
-        virtual void CfObject_UnkVirtualFunc63();     //0x14C
+        virtual u32 CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64(int flag);     //0x150
-        virtual void CfObject_UnkVirtualFunc65();     //0x154
+        virtual void CfObject_UnkVirtualFunc65(int flag);     //0x154
+
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         void func_800BFB90();
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
-        virtual int CfObject_UnkVirtualFunc68(); //0x160
+        virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
         virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         // Retail: return float in f1 (Model reads +0xA0; Coll returns const).
         // CfResPcImpl forwards that into CScnItemModel::vfunc48.
         virtual float CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
-        virtual void CfObject_UnkVirtualFunc73();     //0x174
+        virtual float CfObject_UnkVirtualFunc73();     //0x174
 
         //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
         void requestVoice(int, u32, float, float);
@@ -120,4 +122,31 @@ namespace cf {
         u32 mFlags68;               // 0x68-0x6B
         u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
     };
+
+    class CfObjectModel;
+    // Vtable view for the CfObject-family sub-object at CfObject+0x38
+    class CfObjectSub38 {
+    public:
+        virtual void m08(int flag);
+        virtual void _f0C(); virtual void _f10(); virtual void _f14(); virtual void _f18();
+        virtual void _f1C(); virtual void _f20(); virtual void _f24(); virtual void _f28();
+        virtual void m2C(CfObjectModel* parent);
+        virtual void _f30(); virtual void _f34(); virtual void _f38(); virtual void _f3C();
+        virtual void _f40(); virtual void _f44(); virtual void _f48(); virtual void _f4C();
+        virtual void _f50(); virtual void _f54(); virtual void _f58(); virtual void _f5C();
+        virtual void _f60(); virtual void _f64(); virtual void _f68(); virtual void _f6C();
+        virtual void _f70(); virtual void _f74(); virtual void _f78(); virtual void _f7C();
+        virtual void _f80(); virtual void _f84(); virtual void _f88(); virtual void _f8C();
+        virtual void _f90(); virtual void _f94(); virtual void _f98(); virtual void _f9C();
+        virtual void mA0();
+        virtual void _fA4(); virtual void _fA8();
+        virtual void mAC();
+        virtual void _fB0(); virtual void _fB4(); virtual void _fB8(); virtual void _fBC();
+        virtual void _fC0(); virtual void _fC4(); virtual void _fC8(); virtual void _fCC();
+        virtual void _fD0(); virtual void _fD4(); virtual void _fD8(); virtual void _fDC();
+        virtual void _fE0();
+        virtual int _fE4();
+    };
+    // Tiny view for the resource handle heap object stored at
+    // CfResReloadParent+0x98 (and similar). Slots 0x64/0x88 take int.
 }

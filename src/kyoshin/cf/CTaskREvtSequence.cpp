@@ -31,8 +31,17 @@
 #include "monolib/math/CCol4.hpp"
 // CGame::setTaskManagerUpdateCount (static) is called by func_8016A480.
 #include "kyoshin/CGame.hpp"
-// CREvtLightNotifyIf (+0x2F3C game-manager sub-object interface) is called
-// by func_8016A480.
+// UnkMapFxObj (+0x2F3C game-manager sub-object interface) is called
+// by func_8016A480 (real owner in src/kyoshin/cf/object/CfObjectMap.hpp).
+struct UnkMapFxObjREvtSeq {
+    virtual void v08(); virtual void v0C(); virtual void v10(); virtual void v14();
+    virtual void v18(); virtual void v1C(); virtual void v20(); virtual void v24();
+    virtual void v28(); virtual void v2C(); virtual void v30(); virtual void v34();
+    virtual void v38(); virtual void v3C(); virtual void v40(); virtual void v44();
+    virtual void v48(); virtual void v4C(); virtual void v50(); virtual void v54();
+    virtual void v58(); virtual void v5C(); virtual void v60(); virtual void v64();
+    virtual void vfunc_0x68(int arg);
+};
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 // nw4r g3d resource walk used by func_8016AF4C / func_8016B5A4.
 #include "nw4r/g3d/res/g3d_resfile.h"
@@ -2079,9 +2088,9 @@ void func_8016A480(void* selfv) {
     if (cf::CfGameManager::getGameSubManager() != nullptr) {
         if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) !=
             nullptr) {
-            CREvtLightNotifyIf* notif = (CREvtLightNotifyIf*)*(void**)(
+            UnkMapFxObjREvtSeq* fx = (UnkMapFxObjREvtSeq*)*(void**)(
                 (u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-            notif->_v068(1);
+            fx->vfunc_0x68(1);
         }
     }
     if (isEventPending() != 0) {

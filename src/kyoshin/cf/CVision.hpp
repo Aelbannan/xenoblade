@@ -513,12 +513,12 @@ namespace cf{
         virtual ~CVision();
         virtual void IObjectInfo_UnkVirtualFunc1();
         virtual void vt_10();       //0x10
-        virtual s32 vt_14(CVisionObjV* obj, CVisionFusionV* target); //0x14
+        virtual void* vt_14(); //0x14
         virtual void vt_18();       //0x18
         virtual void vt_1C();       //0x1C (no-arg state refresh)
         virtual void vt_20(u32 r4); //0x20
         virtual void vt_24();       //0x24
-        virtual void vt_28();       //0x28
+        virtual s32 vt_28(CVisionObjV* obj, CVisionFusionV* target); //0x28
         virtual void vt_2C(u32 r4); //0x2C
         virtual void vt_30(u32 r4);  //0x30
         virtual void vt_34();       //0x34

@@ -8,8 +8,24 @@
 #include "kyoshin/CTaskGame.hpp"   // CTaskGameCamView
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include <nw4r/math.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+
+struct CfGimmickMgr88 {
+    virtual void dummy_00(); virtual void dummy_04(); virtual void dummy_08(); virtual void dummy_0C();
+    virtual void dummy_10(); virtual void dummy_14(); virtual void dummy_18(); virtual void dummy_1C();
+    virtual void dummy_20(); virtual void dummy_24(); virtual void dummy_28(); virtual void dummy_2C();
+    virtual void dummy_30(); virtual void dummy_34(); virtual void dummy_38(); virtual void dummy_3C();
+    virtual void dummy_40(); virtual void dummy_44(); virtual void dummy_48(); virtual void dummy_4C();
+    virtual void dummy_50(); virtual void dummy_54(); virtual void dummy_58(); virtual void dummy_5C();
+    virtual void dummy_60(); virtual void dummy_64(); virtual void dummy_68(); virtual void dummy_6C();
+    virtual void dummy_70(); virtual void dummy_74(); virtual void dummy_78(); virtual void dummy_7C();
+    virtual void m88(); // 0x88
+};
+
+
+struct CfGimmickVec3;
 
 namespace cf {
 // Minimal view of cf::CfGameManager for this TU (CfGameManager.hpp is not
@@ -179,21 +195,21 @@ void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
     }
 
     if (cf::CfGameManager::getPlayer(0) != 0) {
-        CfGimmickPlayerFace* player = (CfGimmickPlayerFace*)cf::CfGameManager::getPlayer(0);
+        cf::CfObject* player = (cf::CfObject*)cf::CfGameManager::getPlayer(0);
         // Integer-copy the target position (retail lwz/stw, no f32 path):
         // loads are hoisted x,y then stored y,x, then z - mirror with temps.
-        CfGimmickVec3u* target = (CfGimmickVec3u*)player->d41();
+        CfGimmickVec3u* target = (CfGimmickVec3u*)player->CfObject_UnkVirtualFunc23();
         u32 tx = target->x;
         u32 ty = target->y;
         CfGimmickVec3u& dst = (CfGimmickVec3u&)lbl_eu_805765A0;
         dst.y = ty;
         dst.x = tx;
         dst.z = target->z;
-        lbl_eu_806646B0 = player->d49();
+        lbl_eu_806646B0 = player->CfObject_UnkVirtualFunc31();
         lbl_eu_806646B4 = (u32)partyId;
         if (flagA) lbl_eu_806646BC |= 0x20;
         if (flagB) lbl_eu_806646BC |= 0x40;
-        if (player->field_C4 != 0 && player->d27() && player->d86() &&
+        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_UnkVirtualFunc9() && player->CfObject_UnkVirtualFunc68() &&
             (lbl_eu_80663E24 & 0x80) != 0) {
             lbl_eu_806646BC |= 0x2;
         }
@@ -333,12 +349,12 @@ void func_802095D8(CfGimmick* self, f32* out, void* unused, void** holder, int v
 }
 
 int func_802096EC(void* obj) {
-    int v = func_8009CF8C((void*)((u32)obj + 0x1d44));
+    int v = func_8009CF8C((u32)obj + 0x1d44);
     return (v == 1) ? 1 : 0;
 }
 
 int func_8020971C(void* obj) {
-    int v = func_8009CF8C((void*)((u32)obj + 0x2cc8));
+    int v = func_8009CF8C((u32)obj + 0x2cc8);
     return (v == 1) ? 1 : 0;
 }
 
@@ -472,7 +488,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         CfGimmickList* list = func_800B6BC8();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = ((CfGimmickPlayerFace*)n->object)->d41();
+            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_UnkVirtualFunc23();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -484,7 +500,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                 if (base != 0)
                     base = (CfPlayerBase*)((char*)base - 0x3E9C);
                 int ok;
-                if (base != 0 && base->getHP() > lbl_eu_80668350) {
+                if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > lbl_eu_80668350) {
                     if (base->subField3F60 == 0 ||
                         ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                         ok = 1;
@@ -494,7 +510,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                     ok = 0;
                 if (ok == 0)
                     return 0;
-                CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+                CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
                 if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                     return 1;
             } else {
@@ -510,7 +526,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                     if (base != 0)
                         base = (CfPlayerBase*)((char*)base - 0x3E9C);
                     int ok;
-                    if (base != 0 && base->getHP() > zero) {
+                    if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > zero) {
                         if (base->subField3F60 == 0 ||
                             ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                             ok = 1;
@@ -520,7 +536,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                         ok = 0;
                     if (ok == 0)
                         continue;
-                    CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+                    CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
                     if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                         return 1;
                 }
@@ -534,7 +550,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         CfGimmickList* list = func_800B6BEC();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = ((CfGimmickPlayerFace*)n->object)->d41();
+            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_UnkVirtualFunc23();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -547,7 +563,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         int ok;
-        if (base != 0 && base->getHP() > lbl_eu_80668350) {
+        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > lbl_eu_80668350) {
             if (base->subField3F60 == 0 ||
                 ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                 ok = 1;
@@ -557,7 +573,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
             ok = 0;
         if (ok == 0)
             return 0;
-        CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
         return 0;
@@ -571,7 +587,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         int ok;
-        if (base != 0 && base->getHP() > zero) {
+        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > zero) {
             if (base->subField3F60 == 0 ||
                 ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                 ok = 1;
@@ -581,7 +597,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
             ok = 0;
         if (ok == 0)
             continue;
-        CfGimmickVec3* target = ((CfGimmickPlayerFace*)&base->spot)->d41();
+        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
     }
@@ -691,7 +707,7 @@ int func_8020A294(u32 playerId) {
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         if ((int)((CfPlayerIdView*)base)->id456C >> 4 == playerId) {
-            float hp = base->getHP();
+            float hp = ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37();
             // Retail materializes the le-test through cror/mfcr/extrwi.
             int lowHP = hp <= zero;
             if (!lowHP)
@@ -719,7 +735,7 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
         }
 
         // Activate, then reposition the object above the requested point.
-        ((CfGimmickSpawnIf*)obj)->activate(1);
+        obj->activate(1);
         // FPR temp order x,y,z drives the retail f0/f1/f2 colors; reversed
         // assignment keeps retail's load order, forward stores the struct.
         f32 x, y, z;
@@ -729,7 +745,7 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
         pos.x = x;
         pos.y = y;
         pos.z = z;
-        ((CfGimmickSpawnIf*)obj)->setPos(&pos);
+        obj->setPos(&pos);
         obj->field_90 = 1;
         return obj;
     }
@@ -895,7 +911,7 @@ resolvedName:;
 
             // Activate, then reposition the object above the requested point.
             // FPR temp order mirrors matched func_8020A35C's tail exactly.
-            ((CfGimmickSpawnIf*)obj)->activate(1);
+            obj->activate(1);
             CfGimmickVec3 pos;
             f32 x, y, z;
             z = point->z;
@@ -904,7 +920,7 @@ resolvedName:;
             pos.x = x;
             pos.y = y;
             pos.z = z;
-            ((CfGimmickSpawnIf*)obj)->setPos(&pos);
+            obj->setPos(&pos);
             obj->field_90 = 1;
             result = obj;
         }
@@ -1007,3 +1023,53 @@ void func_8020899C(cf::CfGimmick* self) {
         return;
     ((CfGimmickMgr88*)self->field_78)->m88();
 }
+
+
+// absorb: split1 retail data sections - generated
+__declspec(section ".data") __attribute__((aligned(8), used)) unsigned char __absorb_CfGimmick_data[0x5C] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+};
+__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_CfGimmick_rodata[0xD0] = {
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x78, 0x00, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x70, 0x79, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x6D, 0x79, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x7A, 0x00, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x72, 0x78, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x72, 0x79, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x72, 0x7A, 0x00, 0x00, 0x00,
+    0x41, 0x5F, 0x72, 0x65, 0x63, 0x74, 0x79, 0x70, 0x65, 0x00, 0x00, 0x00,
+    0x53, 0x5F, 0x46, 0x4C, 0x47, 0x5F, 0x4D, 0x49, 0x4E, 0x00, 0x00, 0x00,
+    0x53, 0x5F, 0x46, 0x4C, 0x47, 0x5F, 0x4D, 0x41, 0x58, 0x00, 0x00, 0x00,
+    0x71, 0x75, 0x65, 0x73, 0x74, 0x5F, 0x46, 0x4C, 0x47, 0x00, 0x00, 0x00,
+    0x71, 0x75, 0x65, 0x73, 0x74, 0x5F, 0x53, 0x54, 0x46, 0x4C, 0x47, 0x00,
+    0x4D, 0x45, 0x53, 0x53, 0x20, 0x45, 0x52, 0x52, 0x00, 0x00, 0x00, 0x00,
+    0x63, 0x6C, 0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x78, 0x00, 0x63, 0x6C,
+    0x5F, 0x61, 0x72, 0x65, 0x61, 0x5F, 0x70, 0x79, 0x00, 0x63, 0x6C, 0x5F,
+    0x61, 0x72, 0x65, 0x61, 0x5F, 0x6D, 0x79, 0x00, 0x63, 0x6C, 0x5F, 0x61,
+    0x72, 0x65, 0x61, 0x5F, 0x7A, 0x00, 0x25, 0x73, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata") __attribute__((aligned(8), used)) unsigned char __absorb_CfGimmick_sdata[0xC] = {
+    0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_CfGimmick_sdata2[0x60] = {
+    0x41, 0x5F, 0x70, 0x6F, 0x73, 0x58, 0x00, 0x00, 0x41, 0x5F, 0x70, 0x6F,
+    0x73, 0x59, 0x00, 0x00, 0x41, 0x5F, 0x70, 0x6F, 0x73, 0x5A, 0x00, 0x00,
+    0x67, 0x69, 0x6D, 0x49, 0x44, 0x00, 0x00, 0x00, 0x4D, 0x53, 0x47, 0x49,
+    0x44, 0x00, 0x00, 0x00, 0x6E, 0x61, 0x6D, 0x65, 0x31, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x42, 0x22, 0xF9, 0x83, 0x3F, 0x80, 0x00, 0x00,
+    0x41, 0xF0, 0x00, 0x00, 0x46, 0xEA, 0x60, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
+    0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x3F, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+char __absorb_CfGimmick_bss[0xB8] __attribute__((used, aligned(8)));
+int __absorb_CfGimmick_sbss_0 __attribute__((used));
+int __absorb_CfGimmick_sbss_1 __attribute__((used));
+int __absorb_CfGimmick_sbss_2 __attribute__((used));

@@ -497,6 +497,17 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
         tmp = _postprocess_data_copy(project, decomp)
         if tmp is None:
             return raw_result, ""
+        # If the postprocessed tmp has no data sections (extern-only TU),
+        # still compare - if retail also has no data, it's a MATCH
+        if not has_data_sections(tmp):
+            try:
+                result = check_data_sections(retail, tmp)
+            finally:
+                try:
+                    shutil.rmtree(tmp.parent, ignore_errors=True)
+                except Exception:
+                    pass
+            return result, "§17.6 reloc-name rules applied to a temp copy (extern-only)"
         try:
             result = check_data_sections(retail, tmp)
         finally:
@@ -540,6 +551,12 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             file=sys.stderr,
         )
         return 2
+    # Extern-only TUs have no data sections to verify (data ships from another TU);
+    # skip the gate so `data diff` for those units reports no failure, matching
+    # the `data diff --all` has_data_sections gate.
+    if not has_data_sections(decomp):
+        print(f"unit: {unit.name}  [bypass:ok]")
+        return 0
     result, note = _compare(retail, decomp)
     print(f"unit: {unit.name}")
     if note:

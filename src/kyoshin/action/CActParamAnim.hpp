@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include "kyoshin/action/CActParamData.hpp"
+#include "kyoshin/action/CActParamAnimForeign.hpp"
 #include "monolib/math/CVec3.hpp"  // ml::CVec3 for func_80053490 (same-TU helper)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
@@ -17,11 +18,9 @@ struct CActParamAnimFull {
 
 // Cast-only view of the anim-state region (+0x394..+0x440) plus the flags
 // word at +0x0C. Used by the C-linkage state helpers below.
-// (Forward-declared owner type: CActParamAnimOwnerIf is defined below.)
-struct CActParamAnimOwnerIf;
 struct CActParamAnimStateView {
     u8 _pad_00[0x08];           // +0x00..+0x07
-    CActParamAnimOwnerIf* owner08;  // +0x08: owner object
+    CActParamAnimOwner* owner08;  // +0x08: owner object
     u32 field0C;                // +0x0C: flags
     u8 mChildData10[0x24 - 0x10];   // +0x10..+0x23 (embedded CActParamData base, start)
     f32 field24;                // +0x24 (anim scale, func_8004CC8C)
@@ -324,77 +323,8 @@ extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 extern "C" void func_804BE4E0(void* out, int a);
 
-// Vtable-view for the +0x14 dispatch on the object returned by
-// func_8004B51C in func_80051CD4 (third user virtual after two RTTI slots).
-struct CActParamAnimObjVt14 {
-    virtual int f00();
-    virtual int f01();
-    virtual int f02();
-    virtual int f14();  // +0x14
-};
+// Deleted fake views folded onto owning class virtuals (see CActParamAnimForeign split)
 
-// Deleted fake view CActParamAnimVtE8 - folded onto CActParamAnim::initAnimBlendVectors (vt+0xE8)
-
-// Cast-only interface for the owner object at +0x08: MWCC places the first
-// user virtual at vt+0x08 (two RTTI entries at vt+0x00/0x04), so the 4th
-// virtual lands at vt+0x14, the slot func_8004B4A4 dispatches through.
-struct CActParamAnimOwnerIf {
-    virtual int v0();
-    virtual int v1();
-    virtual int v2();
-    virtual int v3();
-    u32 field04;    // +0x04 (bit 3 tested in func_8004D7EC)
-    u8 _pad08[0x0C - 0x08]; // +0x08..+0x0B
-    f32 field0C;    // +0x0C (heading offset read by func_8004C608)
-    u8 _pad10[0x14 - 0x10]; // +0x10..+0x13
-    f32 field14;    // +0x14
-    u32 field18;    // +0x18 (eff timer, read by func_8004DAE0)
-    u32 field1C;    // +0x1C (id compared against val in func_8004F5FC)
-    u8 _pad_20[0x24 - 0x20]; // +0x20..+0x23
-    u32 field24;    // +0x24 (func_8004D950 stores it to field4C8)
-};
-
-// Deleted fake view CActParamAnimVt18F0 - folded onto CActParamAnim::clearAnimState (vt+0x18)
-
-// Vtable-view for the attached sub-object dispatches in func_8004BDCC:
-// +0x64 takes the eff id word, +0x68 returns a handle stored to +0x4E4.
-struct CActParamAnimObjVt6468 {
-    virtual int f00();                      // +0x08
-    virtual int f01();                      // +0x0C
-    virtual int f02();                      // +0x10
-    virtual int f03();                      // +0x14
-    virtual int f04();                      // +0x18
-    virtual int f05();
-    virtual int f06();
-    virtual int f07();
-    virtual int f08();
-    virtual int f09();
-    virtual int f10();
-    virtual int f11();
-    virtual int f12();
-    virtual int f13();
-    virtual int f14();
-    virtual int f15();
-    virtual int f16();
-    virtual int f17();
-    virtual int f18();
-    virtual int f19();
-    virtual int f20();
-    virtual int f21();
-    virtual int f22();                      // +0x60
-    virtual int dispatch64(u32 effId);      // +0x64
-    virtual int dispatch68();               // +0x68
-};
-
-// Deleted fake view CActParamAnimVt14 - folded onto CActParamAnim::getAttachedAnimRate (vt+0x14)
-
-// Deleted fake view CActParamAnimVt0C - folded onto CActParamAnim::getAttachedAnimTime (vt+0x0C)
-
-// Deleted fake view CActParamAnimVtE4 - folded onto CActParamAnim::func_80052934 (vt+0xE4)
-
-// Deleted fake view CActParamAnimVtEC - folded onto CActParamAnim::func_8004FFBC (vt+0xEC)
-
-// Deleted fake view CActParamAnimVt80 - folded onto CActParamAnim::calcAnimBlendWeight (vt+0x80)
 
 class __declspec(novtable) CActParamAnim {
 public:
@@ -429,7 +359,7 @@ public:
     virtual void func_80050744();
     virtual void __vt_78();
     virtual int func_80050890(u32 a, u32 b);
-    virtual void calcAnimBlendWeight(u32 arg);
+    virtual int calcAnimBlendWeight(u32 arg);
     virtual int func_80050C50(u32 a, u32 b);
     virtual void func_80050DB0();
     virtual void func_80050F5C();
@@ -455,7 +385,7 @@ public:
     virtual bool isAnimBlendActive();
     virtual void func_8004B114();
     virtual void func_80052934(const ml::CVec3* v);
-    virtual void initAnimBlendVectors(const ml::CVec3* v);
+    virtual int initAnimBlendVectors(const ml::CVec3* v);
     virtual void func_8004FFBC();
     virtual void __vt_F0();
     // Legacy non-virtual wrappers (kept for compatibility, now virtual above)

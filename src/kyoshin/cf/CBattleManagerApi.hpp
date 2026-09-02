@@ -20,9 +20,9 @@ extern "C" void* getInstance__Q22cf14CBattleManagerFv();
 namespace cf { class CBattleManager; }
 
 // Thin shared iface for CBattleManager vtable slot +0x28 (func_800885F0 /
-// mask probe). Same layout as BMVtIf828 in CBattleManager.hpp; kept here so
+// mask probe). Same layout as CBattleManagerSlot28 in CBattleManager.hpp; kept here so
 // caller TUs need not include the heavy manager header.
-struct BMVtIf828 {
+struct CBattleManagerSlot28 {
     virtual void v000() = 0;
     virtual void v001() = 0;
     virtual void v002() = 0;

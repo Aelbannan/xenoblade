@@ -953,7 +953,7 @@ void cf::CfGameManager::dispatchObjectFunc48() {
 }
 
 void cf::CfGameManager::dispatchObjectFunc46() {
-    field_0x4->CfObject_UnkVirtualFunc46();
+    field_0x4->CfObject_UnkVirtualFunc46(nullptr);
 }
 
 void cf::CfGameManager::dispatchObjectFunc56() {
@@ -1215,7 +1215,7 @@ void* cf::CfGameManager::getSelf() { return this; }
 #pragma dont_inline reset
 void cf::CfGameManager::stubEmptyA() {}
 void cf::CfGameManager::dispatchObjectFunc52() {}
-void cf::CfObject::CfObject_UnkVirtualFunc46() {}
+void cf::CfObject::CfObject_UnkVirtualFunc46(void*) {}
 void cf::CfObject::CfObject_UnkVirtualFunc47() {}
 
 void cf::CfGameManager::stubEmptyB() {}

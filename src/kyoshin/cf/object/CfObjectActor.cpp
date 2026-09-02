@@ -53,9 +53,9 @@ extern "C" const char* CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void*
 // int)) with the float arg = value itself, passed through unchanged.
 extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int arg) {
     if (value <= lbl_eu_80667738) {
-        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 0, 0, arg);
+        self->CActorParam_UnkVirtualFunc35(value, 0, 0, arg);
     } else {
-        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 3, 0, arg);
+        self->CActorParam_UnkVirtualFunc35(value, 3, 0, arg);
     }
 }
 
@@ -158,64 +158,33 @@ extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObj
             actor = 0;
         }
         if (actor != 0) {
-            reinterpret_cast<cf::CfActorVt5C4If*>((u8*)actor)->fn5C4(value);
+            CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(actor, value);
         }
     }
 }
 
 
-struct IfE0 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-    virtual void _v0D8(); virtual void _v0DC();
-    virtual void vfE0();
-};
-struct IfDC {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-    virtual void _v0D8();
-    virtual void vfDC();
-};
-extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
-    reinterpret_cast<IfE0*>((u8*)self + 0x3e9c)->vfE0();
+extern "C" float CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+    return static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_UnkVirtualFunc36();
 }
 
 // CActorParam_UnkVirtualFunc21: store float then adjust-tail-call vt+0xDC
 extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float v) {
     *(float*)((u8*)self + 0x15e8) = v;
-    reinterpret_cast<IfDC*>((u8*)self + 0x3e9c)->vfDC();
+    static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_UnkVirtualFunc35(v);
 }
 
 
-// Retail symbol is Fv; the real ABI passes (self, arg, f1, f2, f3). Compares
-// the CfObjectModel.field_0x74 word (absolute offset 0x3F10) of both actors
-// and tail-calls the base CActorParam implementation when they differ.
-extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, cf::CfObjectActor* arg, float a, float b, float c) {
+// Retail Fv ABI is (self, arg, f1, f2, f3) - no int. The lwz of field_0x3F10
+// lands in r5; that live r5 is the hidden int the base Unk140 consumes.
+// Declaring int here reserved r5 and forced the load into r6 (75% reg_swap).
+extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv(
+    cf::CfObjectActor* self, cf::CfObjectActor* arg, float a, float b, float c) {
     if (arg == 0) return;
-    if (reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10 == reinterpret_cast<cf::CfActorField3F10*>(arg)->field_0x3F10) return;
-    CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(self, arg, a, b, c);
+    u32 selfId = reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10;
+    if (selfId == reinterpret_cast<cf::CfActorField3F10*>(arg)->field_0x3F10) return;
+    CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(
+        self, arg, static_cast<int>(selfId), a, b, c);
 }
 // cf::CfObjectActor vtable thunks (retail: this-adjust + tail-branch)
 extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
@@ -241,7 +210,7 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(cf::CfObje
     case 0x10: {
         cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
         if ((f->field_0x3374 & 0x40000) != 0 && f->field_0x1634 != 0) {
-            reinterpret_cast<cf::CfBattleVt20*>((u8*)self + 8)->m20((int)f->field_0x1634);
+            static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc7((int)f->field_0x1634);
         }
         break;
     }
@@ -249,7 +218,7 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    reinterpret_cast<cf::CfSub3ED4Vt*>(obj3ED4)->m8C(arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->_f8C(arg);
 }
 // Retail symbol is Fv; the real ABI passes a float in f1. Rounds the input
 // to the nearest int (fctiwz roundtrip), then - unless the presentation or
@@ -289,13 +258,15 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     } else if ((s16)sum > max) {
         f->field_0x160C = (u16)max;
     }
-    u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(self)->field_0x04)->vf30();
+    u32* idPtr = reinterpret_cast<u32*>(
+        reinterpret_cast<cf::CObjectState*>(
+            reinterpret_cast<cf::CActorState*>(self)->unk4)
+            ->CObjectState_UnkVirtualFunc11());
     u32 id = *idPtr;
     if (func_80174C98(self, (int*)&id, 0x802) != 0) {
-        cf::CfActorParamVt168* vt = reinterpret_cast<cf::CfActorParamVt168*>(self);
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
-        if (vt->m174() == vt->m178()) {
-            vt->m168(vt->m178() - 1);
+        if (self->CActorParam_UnkVirtualFunc56() == self->CActorParam_UnkVirtualFunc57()) {
+            self->CActorParam_UnkVirtualFunc53(self->CActorParam_UnkVirtualFunc57() - 1);
         }
     }
 }
@@ -325,7 +296,7 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
             buf.field_0x18 = (u16)f->field_0x1644;
             buf.field_0x20 = lbl_eu_80667738;
             buf.field_0x30 = 0x10001;
-            reinterpret_cast<cf::CfBattleVt18*>((u8*)self + 8)->m18(&buf);
+            static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc5((cf::CBattleStateEntry*)&buf);
         }
         break;
     }
@@ -333,7 +304,7 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    reinterpret_cast<cf::CfSub3ED4Vt*>(obj3ED4)->m88(arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->_f88(arg);
 }
 // Retail symbol is Fv; the real ABI passes (self, delta). Same gauge update
 // as CActorParam_UnkVirtualFunc54 but on 0x1614/[0, 0x1616]; after the
@@ -353,7 +324,10 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
     } else if ((s16)sum > max) {
         f->field_0x1614 = (u16)max;
     }
-    u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(self)->field_0x04)->vf30();
+    u32* idPtr = reinterpret_cast<u32*>(
+        reinterpret_cast<cf::CObjectState*>(
+            reinterpret_cast<cf::CActorState*>(self)->unk4)
+            ->CObjectState_UnkVirtualFunc11());
     u32 id = *idPtr;
     if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         s16 cur2 = f->field_0x1614;
@@ -365,10 +339,9 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
         } else if ((s16)sum2 > max2) {
             f->field_0x1614 = (u16)max2;
         }
-        cf::CfActorParamVt168* vt = reinterpret_cast<cf::CfActorParamVt168*>(self);
         // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
-        if (vt->m18C() == vt->m190()) {
-            vt->m180(vt->m190() - 1);
+        if (self->CActorParam_UnkVirtualFunc62() == self->CActorParam_UnkVirtualFunc63()) {
+            self->CActorParam_UnkVirtualFunc59(self->CActorParam_UnkVirtualFunc63() - 1);
         }
     }
 }
@@ -377,9 +350,9 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
 // is value itself, passed through unchanged.
 extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
     if (value <= lbl_eu_80667738) {
-        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 0, 0, 0);
+        self->CActorParam_UnkVirtualFunc35(value, 0, 0, 0);
     } else {
-        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 3, 0, 0);
+        self->CActorParam_UnkVirtualFunc35(value, 3, 0, 0);
     }
 }
 // Retail symbol is Fv; the real ABI passes (self, value, a, b, c). Slot
@@ -437,7 +410,7 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
                         func_801A891C(self, 0);
                         return;
                     }
-                    reinterpret_cast<cf::CfBattleVt24*>((u8*)self + 8)->m24(ep);
+                    static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)ep);
                     if (lbl_eu_80667738 == f) return;
                 } else {
                     if (f <= lbl_eu_80667738) {
@@ -448,7 +421,7 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
                             return;
                         }
                         f = (float)(s16)ep->field_0x14;
-                        reinterpret_cast<cf::CfBattleVt24*>((u8*)self + 8)->m24(ep);
+                        static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)ep);
                         if (lbl_eu_80667738 == f) return;
                     }
                 }
@@ -491,11 +464,11 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
             if (ep != 0) {
                 f = lbl_eu_80667740;
                 if (ep->field_0x10 != 0) {
-                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                    float g = self->CActorParam_UnkVirtualFunc38();
                     f = (float)(s32)ep->field_0x10 * (g / lbl_eu_80667760);
                 }
-                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < f) {
-                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(f);
+                if (self->CActorParam_UnkVirtualFunc37() < f) {
+                    self->CActorParam_UnkVirtualFunc33(f);
                 }
             }
         }
@@ -516,13 +489,13 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
                 }
                 ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x92);
                 if (ep != 0) {
-                    if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+                    if (self->CActorParam_UnkVirtualFunc37() < lbl_eu_80667740) {
                         s32 val = ep->field_0x10;
                         if (ep->field_0x8 == 0x2000) val += v27b;
                         if ((c & 0xA0000000) != 0) {
-                            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+                            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
                         } else if (rand() % 100 < val) {
-                            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+                            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
                         }
                     }
                 }
@@ -532,13 +505,13 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
         if (func_80148778((u8*)self + 8, 0xFC) != 0) {
             ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xFC);
             if (ep != 0) {
-                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
-                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                if (self->CActorParam_UnkVirtualFunc37() < lbl_eu_80667740) {
+                    float g = self->CActorParam_UnkVirtualFunc38();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
                     f *= func_800D81A8(0, self, 0);
-                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m11C(f);
-                    reinterpret_cast<cf::CfBattleVt20*>((u8*)self + 8)->m20(0xFC);
+                    self->CActorParam_UnkVirtualFunc34(f);
+                    static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc7(0xFC);
                     func_8018C820((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
                 }
             }
@@ -547,22 +520,22 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
         if (func_80148778((u8*)self + 8, 0x100) != 0) {
             ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x100);
             if (ep != 0) {
-                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
-                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                if (self->CActorParam_UnkVirtualFunc37() < lbl_eu_80667740) {
+                    float g = self->CActorParam_UnkVirtualFunc38();
                     f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
                     getInstance__Q22cf14CBattleManagerFv();
                     f *= func_800D81A8(0, self, 0);
-                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m11C(f);
-                    reinterpret_cast<cf::CfBattleVt20*>((u8*)self + 8)->m20(0x100);
-                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m154(lbl_eu_80667768);
+                    self->CActorParam_UnkVirtualFunc34(f);
+                    static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc7(0x100);
+                    self->CActorParam_UnkVirtualFunc48(lbl_eu_80667768);
                     func_800F38E0(getInstance__Q22cf14CBattleManagerFv(), self, 0x93);
                 }
             }
         }
     }
-    if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+    if (self->CActorParam_UnkVirtualFunc37() < lbl_eu_80667740) {
         if (func_8027990C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self) != 0) {
-            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
         }
     }
     func_801A891C(self, 0);
@@ -574,7 +547,10 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
 void cf::CfObjectActor::CActorParam_UnkVirtualFunc4(void* arts) {
     (void)arts;
     ::CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(this, 0);
-    u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(this)->field_0x04)->vf30();
+    u32* idPtr = reinterpret_cast<u32*>(
+        reinterpret_cast<cf::CObjectState*>(
+            reinterpret_cast<cf::CActorState*>(this)->unk4)
+            ->CObjectState_UnkVirtualFunc11());
     u32 id = *idPtr;
     if (func_80174C98(this, (int*)&id, 0x1c) != 0) {
         func_800BE12C((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
@@ -583,18 +559,12 @@ void cf::CfObjectActor::CActorParam_UnkVirtualFunc4(void* arts) {
 
 // absorb: split1 retail data sections
 // generated from retail object bytes (reloc-zeroed)
-__declspec(section ".data") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CfObjectActor_cpp_data[0x1C] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x00, 0x00, 0x00, 0x00
-};
 
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectActor_cpp_sdata2[0x44] __attribute__((used)) = {
+__attribute__((section(".sdata2"), used, aligned(8))) const unsigned char __absorb_CfObjectActor_sdata2_fix[0x44] = {
     0x00, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
     0x3F, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
     0x42, 0x48, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x3F, 0x66, 0x66, 0x66, 0x3E, 0xB3, 0x33, 0x33
+    0x3F, 0x66, 0x66, 0x66, 0x3E, 0xB3, 0x33, 0x33,
 };
-

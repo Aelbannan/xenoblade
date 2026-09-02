@@ -16,59 +16,8 @@ extern "C" { extern char lbl_eu_80529128[]; }
 extern "C" void __dt__8047BDA8(void* self);
 extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 
-struct CMIf {
-    virtual void _v0008();
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void _v0014();
-    virtual void _v0018();
-    virtual void _v001C();
-    virtual void _v0020();
-    virtual void _v0024();
-    virtual void _v0028();
-    virtual void _v002C();
-    virtual void _v0030();
-    virtual void _v0034();
-    virtual void _v0038();
-    virtual void _v003C();
-    virtual void _v0040();
-    virtual void _v0044();
-    virtual void _v0048();
-    virtual void _v004C();
-    virtual void _v0050();
-    virtual void _v0054();
-    virtual void _v0058();
-    virtual void _v005C();
-    virtual void _v0060();
-    virtual void _v0064();
-    virtual void _v0068();
-    virtual void _v006C();
-    virtual void _v0070();
-    virtual void _v0074();
-    virtual void _v0078();
-    virtual void _v007C();
-    virtual void _v0080();
-    virtual void _v0084();
-    virtual void _v0088();
-    virtual void _v008C();
-    virtual void _v0090();
-    virtual void _v0094();
-    virtual void _v0098();
-    virtual void _v009C();
-    virtual void _v00A0();
-    virtual void _v00A4();
-    virtual void _v00A8();
-    virtual void _v00AC();
-    virtual void _v00B0();
-    virtual void _v00B4();
-    virtual void _v00B8();
-    virtual void _v00BC();
-    virtual void _v00C0();
-    virtual void vf00C4();
-    virtual void _v00C8();
-    virtual void _v00CC();
-    virtual void vf00D0();
-};
+// Fake table removed: retail slots at 0xC4/0xD0 are CfObject 29/32.
+// Wrappers below now call the real CfObject virtuals directly.
 
 // Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
@@ -495,6 +444,13 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
     return self;
 }
 
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { reinterpret_cast<CMIf*>(self)->vf00D0(); }
+extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
+    // Retail forwarder at 0xD4 -> slot 0xD0 (CfObject_UnkVirtualFunc32). The float
+    // in f1 is forwarded unchanged via bcctr; Model's 32 ignores it.
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc32();
+}
 
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { reinterpret_cast<CMIf*>(self)->vf00C4(); }
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
+    // Retail forwarder at 0xC8 -> slot 0xC4 (CfObject_UnkVirtualFunc29).
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc29(value);
+}

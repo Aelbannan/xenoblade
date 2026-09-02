@@ -30,18 +30,27 @@ public:
     virtual void* getResourceBase(void* entry, int arg); // vtable +8
     virtual u32 getFlags();                              // vtable +0xC - state flags (masked with 0x18E / 0x10000)
     virtual ~CResLookup();                               // vtable +0x10 (unused)
-    virtual void* vfunc01();                             // vtable +0x14 (unused)
-    virtual u8* _v018(void* entry);                      // vtable +0x18
-    virtual u8* _v01C(void* entry);                      // vtable +0x1C
-    virtual void* vfunc04();                             // vtable +0x20 (unused)
-    virtual void* vfunc05();                             // vtable +0x24 (unused)
-    virtual int _v028(void* entry);                      // vtable +0x28
-    virtual void* vfunc07();                             // vtable +0x2C (unused)
-    virtual u8* _v030(void* entry);                      // vtable +0x30
-    virtual void* vfunc09();                             // vtable +0x34 (unused)
-    virtual void* vfunc0A();                             // vtable +0x38 (unused)
+    virtual void* vfunc01(void* entry);                  // vtable +0x14
+    virtual u8* getResHandle18(void* entry);             // vtable +0x18
+    virtual u8* getResHandle1C(void* entry);             // vtable +0x1C
+    virtual void* vfunc04(void* entry);                  // vtable +0x20
+    virtual void* vfunc05(void* entry);                  // vtable +0x24
+    virtual int isResActive28(void* entry);              // vtable +0x28
+    virtual void* vfunc07(void* entry);                  // vtable +0x2C
+    virtual u8* getResHandle30(void* entry);             // vtable +0x30
+    virtual void* vfunc09(void* entry);                // vtable +0x34 (outer dispatch)
+    virtual void* vfunc0A(void* entry);                // vtable +0x38 (outer dispatch, widened)
     virtual void* vfunc0B(void* entry);                  // vtable +0x3C - resolution probe (1 arg)
-    virtual int _v040(void* entry);                      // vtable +0x40
+    virtual int isInUse(void* entry);                      // vtable +0x40
+    virtual int cmpField4Eq(void* entry, u32 val);       // vtable +0x44 - was m17 (field_04 compare)
+    virtual int checkFlag48(void* entry);                // vtable +0x48 - was m16 / func_80068998
+    virtual int checkFlag4C(void* entry);                // vtable +0x4C - was isResFlag0 / func_800661A8
+    virtual void cleanup50(void* entry);                 // vtable +0x50 - was func_800665A0
+    // Wrappers keep call sites stable after _v rename
+    inline u8* getHandle18(void* e) { return getResHandle18(e); }
+    inline u8* getHandle1C(void* e) { return getResHandle1C(e); }
+    inline int isActive28(void* e) { return isResActive28(e); }
+    inline u8* getHandle30(void* e) { return getResHandle30(e); }
 };
 
 // 0x3C-byte resource record operated on by the IResInfo accessors.

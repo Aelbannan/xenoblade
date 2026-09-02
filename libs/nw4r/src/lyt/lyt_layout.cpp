@@ -483,7 +483,7 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" __attribute__((used)) char lyt_layout_sbss_pad[4];
+__attribute__((used, aligned(1))) char lyt_layout_sbss_pad[4];
 
 // Retail Layout::BindAnimationAuto
 // function because the retail vtable entry returns bool while the header

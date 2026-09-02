@@ -2,38 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "monolib/math.hpp"
 #include <nw4r/math.h>
 #include <math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-struct OMIfShift { char pad[0x10]; };
-struct OMIf : OMIfShift {
-    virtual void _v0008();
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void vf0014();
-};
 
-typedef void (*VFn)(void*);
-// Cast-only SI iface for the +0xB0/+0x10 double-hop thunks.
-// Shift base puts the vptr at object+0x10 (retail lwz r12, 0x10(r3));
-// RTTI omit keeps slots at vtable+0x08, +0x04 each.
-struct Shift { char pad[0x10]; };
-struct ObjVtIf : Shift {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void vf14();
-    virtual void vf18(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void vf28(); virtual void vf2C(); virtual void vf30(); virtual void vf34();
-    virtual void _v038(); virtual void _v03C(); virtual void vf40(); virtual void _v044();
-    virtual void vf48(); virtual void _v04C(); virtual void _v050(); virtual void vf54();
-    virtual void vf58(); virtual void _v05C(); virtual void vf60(); virtual void _v064();
-    virtual void vf68();
-};
-
-// Flags word at +0xC of the mTargetC4 object (CfObject_UnkVirtualFunc64/65
 // toggle bits there; same offset as the CActParamAnim flag view).
 struct CfObjectMoveC4Flags {
     u8 _pad[0xC];
@@ -117,16 +91,16 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     // value is fed to the CCharEffect slot helper.
     this->CfObject_UnkVirtualFunc12();
     this->CfObject_UnkVirtualFunc5();
-    if (isSceneLoading__Q22cf13CfGameManagerFv() == 0) {
+    if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
         func_800BCD04(this);
-        // Pointer-induction release walk: the base pointer starts at this and
-        // the fixed +0xC8 member offset stays folded into the load (retail
-        // steps the pointer by 4 with a separate counter).
-        void** slot = (void**)this;
+        // Pointer-induction release walk (retail steps the slot pointer by 4
+        // with a separate counter).
+        void** slot;
         int i = 0;
+        slot = &mTargetC8;
         while (i < 2) {
-            if (slot[50] != 0) {
-                func_8004CF00(slot[50]);
+            if (*slot != 0) {
+                func_8004CF00(*slot);
             }
             i++;
             slot++;
@@ -135,9 +109,13 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     if (func_800BB934(this) != 0) {
         u32 b4 = ((cf::CfObjectMoveB4View*)this)->field_B4;
         if (b4 != 0) {
-            ((cf::CfObjectMoveVt1AC*)this)->m1AC(b4, ((cf::CfObjectMoveB4View*)this)->field_B8);
+            this->CfObjectModel_UnkVirtualFunc14((cf::CfObject*)b4, (const char*)((cf::CfObjectMoveB4View*)this)->field_B8);
         }
     }
+    int r30 = 0;
+    int cond = 0;
+    int r28 = 0;
+    int r27 = 0;
     if (mSubObj38 != 0) {
         // Global-mode gate: the two flag reads are kept separate (volatile
         // casts; the extern itself is non-volatile to match CSystemWindow.hpp
@@ -146,32 +124,29 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
         // advance gate).
         u32 g0 = *(volatile u32*)&lbl_eu_80663E24;
         u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
-        int cond = (g0 & 0x02040000) != 0;
+        cond = (g0 & 0x02040000) != 0;
         if ((g0 & 0x10000000) != 0) {
             cond = 0;
         }
         if (cond == 0) {
-            ((cf::CfObjectSub38If*)mSubObj38)->_fA4();
+            ((cf::CfObjectSub38*)mSubObj38)->_fA4();
         } else if (((this->unk64 & 0x8) != 0 || (this->unk64 & 0x4) != 0) && (g1 & 0x40000) != 0) {
-            ((cf::CfObjectSub38If*)mSubObj38)->_fA4();
+            ((cf::CfObjectSub38*)mSubObj38)->_fA4();
         }
         if ((this->unk64 & 0x2) != 0 || (this->unk64 & 0x4) != 0) {
-            int r28 = 0;
             if (mSubObj98 != 0) {
                 r28 = (mSubObj98->field_7A4 & 0x04000000) == 0;
             }
-            if (((cf::CfObjectSub38VtE4*)mSubObj38)->_fE4() != 0) {
-                int r27 = 0;
+            if (((cf::CfObjectSub38*)mSubObj38)->_fE4() != 0) {
                 if (mSubObj98 != 0) {
-                    if (((cf::CfObjectMoveSub98Vt4C*)mSubObj98)->m4C() > lbl_eu_80666A8C) {
+                    if (((CScnItemModel*)mSubObj98)->vfunc4C() > lbl_eu_80666A8C) {
                         r27 = 1;
                     }
                 }
-                int r30 = 0;
-                if (cond == 0 && ((cf::CfObjectMoveVt160*)this)->m160() != 0 && r28 != 0 && r27 == 0) {
+                if (cond == 0 && this->CfObject_UnkVirtualFunc68() != 0 && r28 != 0 && r27 == 0) {
                     r30 = 1;
                 }
-                int q = ((cf::CfObjectSub38VtE4*)mSubObj38)->_fE4();
+                int q = ((cf::CfObjectSub38*)mSubObj38)->_fE4();
                 func_8015BD24((void*)q, r30);
             }
         }
@@ -180,7 +155,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc7() {
     // Forward to the sub-object's vtable slot +0xA8 (tail virtual call).
-    CfObjectSub38If* sub = (CfObjectSub38If*)mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)mSubObj38;
     if (sub != 0) {
         sub->_fA8();
     }
@@ -193,21 +168,21 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc6() {
     CfObjectModel_UnkVirtualFunc2();  // vtable +0x17C
     CfObjectModel_UnkVirtualFunc1();  // vtable +0x178
     if (mTargetC4 != 0) {
-        reinterpret_cast<cf::CfObjectSub38VtE4*>(mTargetC4)->_fE0();
+        reinterpret_cast<cf::CfObjectSub38*>(mTargetC4)->_fE0();
         mTargetC4 = 0;
     }
     if (mTarget6C0 != 0) {
         // Redundant nested check mirrors retail's two beq targets.
         if (mTarget6C0 != 0) {
-            reinterpret_cast<cf::CfObjectSub38If*>(mTarget6C0)->m08(1);
+            reinterpret_cast<cf::CfObjectSub38*>(mTarget6C0)->m08(1);
         }
         mTarget6C0 = 0;
     }
 }
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc1() {
-    reinterpret_cast<cf::CfObjectMoveVt1D0*>(this)->m1D0(0);
-    reinterpret_cast<cf::CfObjectMoveVt1D0*>(this)->m1D0(1);
+    this->CfObjectMove_UnkVirtualFunc3(0);
+    this->CfObjectMove_UnkVirtualFunc3(1);
     for (int i = 0; i < 2; i++) {
         void* t = (&mTargetC8)[i];
         // Redundant nested checks mirror retail's three beq targets (MWCC
@@ -215,16 +190,16 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc1() {
         if (t != 0) {
             if (t != 0) {
                 if (t != 0) {
-                    reinterpret_cast<cf::CfObjectSub38If*>(t)->m08(1);
+                    reinterpret_cast<cf::CfObjectSub38*>(t)->m08(1);
                 }
                 (&mTargetC8)[i] = 0;
             }
         }
     }
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)mSubObj38;
     if (sub != 0 && mFieldC0 != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)mSubObj38)->_fE4();
             func_8015C8F4((void*)r, mSubObj98);
         }
     }
@@ -232,7 +207,7 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc1() {
     mFlags68 &= ~0x4;
     func_804B0A7C(_60C_region);
     if (mTargetC4 != 0) {
-        reinterpret_cast<cf::CfObjectSub38VtE4*>(mTargetC4)->_fE0();
+        reinterpret_cast<cf::CfObjectSub38*>(mTargetC4)->_fE0();
         mTargetC4 = 0;
     }
 }
@@ -242,7 +217,7 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc2() {
     // +0x1C8 after), releasing both model lists (+0x9C from the base class
     // and +0x6D4) through the C4 target, then hop the +0xB0 sub-object's
     // vtable slot +0x24.
-    reinterpret_cast<cf::CfObjectMoveVt208*>(this)->m1CC();
+    this->CfObjectMove_UnkVirtualFunc2();
     // field_0x9C is the u8[4] base-class slot; access it as the pointer it
     // holds (model list released through the C4 target).
     void*& list9C = *reinterpret_cast<void**>(field_0x9C);
@@ -261,8 +236,8 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc2() {
         mField6D4 = 0;
     }
     CfObjectModel::CfObjectModel_UnkVirtualFunc2();
-    reinterpret_cast<cf::CfObjectMoveVt208*>(this)->m1C8();
-    reinterpret_cast<ObjVtIf*>(mSubObjB0)->_v024();
+    this->CfObjectMove_UnkVirtualFunc1();
+    reinterpret_cast<cf::CfSubB0Real*>(mSubObjB0)->func24();
 }
 
 void CfObjectMove_nullsub_1() {}
@@ -286,7 +261,7 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc2() {
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc1() {
     // Forward to the +0xB0 sub-object's vtable slot +0x44, then clear the
     // two resource-request fields (retail stores 0 to +0x6DC / +0x6E0).
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)this + 0xb0))->_v044();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)this + 0xb0))->func44();
     mField6DC = 0;
     mField6E0 = 0;
 }
@@ -307,9 +282,7 @@ void CfObjectMove_nullsub_4(){}
 
 void CfObjectMove_nullsub_5(){}
 
-// (the shared speed constant lbl_eu_80666A88 is only declared in the
-// header as extern const float; retail keeps the single .sdata2 copy in
-// split1.s, so this TU must not define a namespace-cf storage copy)
+f32 lbl_eu_80666A88;
 
 void cf::CfObjectMove::resetMoveSpeed() {
     u32 flags = mFlags68;
@@ -341,13 +314,8 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
         float f = view->field_A4 - lbl_eu_80666AB4 * v;
         view->field_A4 = f;
         if (f <= ::lbl_eu_80666A88) {
-            // Retail order at each clamp: reload the flag word FIRST, then
-            // store the clamp constant, then mask+store the flags.
-            // Volatile cast: blocks MWCC from CSE-ing this load with the
-            // direction-test read above (retail emits a fresh lwz here).
-            u32 cur = *(volatile u32*)&mFlags68;
             view->field_A4 = ::lbl_eu_80666A88;
-            ((cf::CfObjectMoveFlags68View*)this)->flags68 = cur & ~0x4000;
+            ((cf::CfObjectMoveFlags68View*)this)->flags68 &= ~0x4000;
             if (lbl_eu_80665958 != 0) {
                 func_804B4C7C(lbl_eu_80665958, _60C_region);
             }
@@ -357,9 +325,8 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
         float f = view->field_A4 + lbl_eu_80666AB4 * v;
         view->field_A4 = f;
         if (f >= lbl_eu_80666A94) {
-            u32 cur = *(volatile u32*)&mFlags68;
             view->field_A4 = lbl_eu_80666A94;
-            ((cf::CfObjectMoveFlags68View*)this)->flags68 = cur & ~0x2000;
+            ((cf::CfObjectMoveFlags68View*)this)->flags68 &= ~0x2000;
             if (lbl_eu_80665958 != 0) {
                 func_804B4BDC(lbl_eu_80665958, _60C_region);
             }
@@ -367,8 +334,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
     }
     if (mSubObj98 != 0) {
         float spd = mMoveSpeed;
-        // Constant-first form: retail emits fcmpu cr0, const, spd.
-        if (::lbl_eu_80666A88 == spd) {
+        if (spd == ::lbl_eu_80666A88) {
             spd = lbl_eu_80666A94;
         }
         float factor = lbl_eu_80666A94 / spd;
@@ -378,18 +344,16 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {
             float f = factor * v + field_A0;
             field_A0 = f;
             if (f >= lbl_eu_80666A94) {
-                u32 cur = *(volatile u32*)&mFlags68;
                 field_A0 = lbl_eu_80666A94;
-                mFlags68 = cur & ~0x800;
+                mFlags68 &= ~0x800;
             }
         } else if ((flags2 & 0x400) != 0) {
             // Move the +0xA0 position toward the low clamp.
             float f = field_A0 - factor * v;
             field_A0 = f;
             if (f <= ::lbl_eu_80666A88) {
-                u32 cur = *(volatile u32*)&mFlags68;
                 field_A0 = ::lbl_eu_80666A88;
-                mFlags68 = cur & ~0x400;
+                mFlags68 &= ~0x400;
             }
         }
         func_800BC8D8(this);
@@ -422,7 +386,7 @@ void CfObject_UnkVirtualFunc46__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, vo
         if (arg != self->mTarget6C0) {
             if (self->mTarget6C0 != 0) {
                 if (self->mTarget6C0 != 0) {
-                    reinterpret_cast<cf::CfObjectSub38If*>(self->mTarget6C0)->m08(1);
+                    reinterpret_cast<cf::CfObjectSub38*>(self->mTarget6C0)->m08(1);
                 }
                 self->mTarget6C0 = 0;
             }
@@ -449,55 +413,6 @@ void CfObject_UnkVirtualFunc46__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, vo
 // CfObject_UnkVirtualFunc46/49). extern "C" so the definition symbol is the
 // exact retail name. Allocates and constructs the movement-target object for
 // the id, then dispatches it through the vtable +0x108 slot.
-
-// Per-kind construct helpers: allocation + conditional constructor. Written
-// as real functions so MWCC's inliner pins the allocation result in r3
-// across the null-check (retail only copies it into the tracked slot at the
-// helper boundary).
-namespace {
-
-inline void* newMoveEnemy(cf::CfObjectMove* self) {
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x224, func_80061FFC());
-    if (mem != 0) {
-        __ct__cf_CtrlEnemy(mem, self);
-    }
-    return mem;
-}
-
-inline void* newMoveNpc(cf::CfObjectMove* self) {
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x180, func_80061FFC());
-    if (mem != 0) {
-        __ct__CtrlNpc(mem, self);
-    }
-    return mem;
-}
-
-inline void* newMovePc(cf::CfObjectMove* self) {
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x1DC, func_80061FE8());
-    if (mem != 0) {
-        __ct__cf_CtrlPc(mem, self, 0);
-    }
-    return mem;
-}
-
-inline void* newMoveRemote(cf::CfObjectMove* self, u32 heap, int arg) {
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
-    if (mem != 0) {
-        __ct__CtrlRemote(mem, self, arg);
-    }
-    return mem;
-}
-
-inline void* newMovePad(cf::CfObjectMove* self, u32 heap, int arg) {
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
-    if (mem != 0) {
-        __ct__cf_CtrlPad(mem, self, arg);
-    }
-    return mem;
-}
-
-}  // namespace
-
 extern "C" void CfObject_UnkVirtualFunc47__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int arg) {
     // Two separate guards (retail emits two beq targets to the epilogue; a
     // single ||-condition adds an extra branch).
@@ -508,28 +423,45 @@ extern "C" void CfObject_UnkVirtualFunc47__Q22cf12CfObjectMoveFv(cf::CfObjectMov
         return;
     }
     self->_6CA = (s16)arg;
-    // Per-kind helpers keep the allocation result in r3 across the
-    // null-check/ctor block; obj only receives it at the helper boundary.
+    // obj declared (and zeroed) before the heap query so MWCC colours it
+    // into r31 and the heap handle into r30, as in retail.
     void* obj = 0;
     u32 heap = func_80061FE8();
     if (arg == 8) {
-        obj = newMoveEnemy(self);
+        // Single target variable: retail assigns the allocation result
+        // straight into the tracked slot (no intermediate temporary).
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x224, func_80061FFC());
+        if (obj != 0) {
+            __ct__cf_CtrlEnemy(obj, self);
+        }
     } else if (arg == 9) {
-        obj = newMoveNpc(self);
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x180, func_80061FFC());
+        if (obj != 0) {
+            __ct__CtrlNpc(obj, self);
+        }
     } else if (arg == 10) {
-        obj = newMovePc(self);
+        obj = allocate__Q23mtl10MemManagerFUlUl(0x1DC, func_80061FE8());
+        if (obj != 0) {
+            __ct__cf_CtrlPc(obj, self, 0);
+        }
     } else {
         float f = self->CfObject_UnkVirtualFunc31();
         if (arg >= 0 && arg <= 3) {
-            obj = newMoveRemote(self, heap, arg);
+            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+            if (obj != 0) {
+                __ct__CtrlRemote(obj, self, arg);
+            }
         } else if (arg >= 4 && arg <= 7) {
-            obj = newMovePad(self, heap, arg);
+            obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
+            if (obj != 0) {
+                __ct__cf_CtrlPad(obj, self, arg);
+            }
         }
         if (self->mTarget6C0 != 0) {
             *(float*)((char*)self->mTarget6C0 + 0xC) = f;
         }
     }
-    reinterpret_cast<CfObjectMoveVt108*>(self)->m108(obj);
+    self->CfObject_UnkVirtualFunc46(obj);
 }
 
 // Retail symbol is Fv but the body consumes r4 (an action id forwarded to
@@ -641,18 +573,14 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMov
             ((((u32)__cntlzw((u32)__cntlzw(flags & 0x8) >> 5)) >> 5) != 0) &&
             amount > lbl_eu_80666AD4 && lbl_eu_80663E42 == 4u &&
             lbl_eu_80663E44 == 1u) {
-            // Slot order matters: retail stacks the offset temp at sp+0x14,
-            // the operator+ result at sp+8 and the assigned target at
-            // sp+0x20.
-            ml::CVec3 arg;
+            // Sum the incoming vector with the shared offset through
+            // CVec3::operator+ (nw4r VEC3Add -> paired-single adds); the
+            // copy-ctor init reproduces retail's second stack copy.
             ml::CVec3 off(::lbl_eu_80666A88, lbl_eu_80666AD8,
                           ::lbl_eu_80666A88);
-            ml::CVec3 sum = *vec + off;
-            // Volatile member writes keep the sp+0x20 copy observable so
-            // MWCC cannot merge arg with the operator+ return temp.
-            ((volatile ml::CVec3*)&arg)->x = sum.x;
-            ((volatile ml::CVec3*)&arg)->y = sum.y;
-            ((volatile ml::CVec3*)&arg)->z = sum.z;
+            ml::CVec3 arg;
+            arg = *vec + off;
+            CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(self, &arg);
         } else {
             CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(self, vec);
         }
@@ -682,27 +610,10 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMov
             ((((u32)__cntlzw((u32)__cntlzw(flags & 0x8) >> 5)) >> 5) != 0) &&
             amount > lbl_eu_80666AD4 && lbl_eu_80663E42 == 4u &&
             lbl_eu_80663E44 == 1u) {
-            // Retail stacks the offset temp at sp+0x14, the operator+
-            // result at sp+8 and a separate sp+0x20 buffer passed to the
-            // base call via addi r0/mr r4. The inline helper above forces
-            // the early address materialization.
-            // Retail stacks the offset temp at sp+0x14, the operator+
-            // result at sp+8 and a separate sp+0x20 buffer passed to the
-            // base call via addi r0/mr r4. OPEN ITEM (plateau): every
-            // source shape tried - operator= merge, named-sum copy-ctor,
-            // pointer local used for store+call, inline helper taking the
-            // destination by reference (2 spellings) - canonicalizes to
-            // identical 304B output: MWCC forwards the copy into the call
-            // argument and folds &arg into the bl, landing exactly one mr
-            // short of retail's 308B schedule (uncontrollable hoist class,
-            // cf. code_800B06A4.cpp "byte-identical output, MWCC
-            // normalizes"). Next lever: match sibling UnkVirtualFunc25 or
-            // find the original expression tree boundary.
-            ml::CVec3 arg;
             ml::CVec3 off(::lbl_eu_80666A88, lbl_eu_80666AD8,
                           ::lbl_eu_80666A88);
-            ml::CVec3 sum = *vec + off;
-            arg = sum;
+            ml::CVec3 arg;
+            arg = *vec + off;
             CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(self, &arg);
         } else {
             CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(self, vec);
@@ -722,12 +633,12 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     }
 }
 
-u32 cf::CfObjectMove::CfObject_UnkVirtualFunc23() {
+ml::CVec3* cf::CfObjectMove::CfObject_UnkVirtualFunc23() {
     // Both sub-objects present + busy flag bit 2 (mFlags68 & 4) -> return a
     // pointer into the C4 target; otherwise defer to the base implementation.
     if (mSubObj98 != 0 && *(const u32*)field_0x9C != 0 && (mFlags68 & 0x4) != 0) {
         cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)mTargetC4;
-        return (u32)&target->field_3A8;
+        return (ml::CVec3*)&target->field_3A8;
     }
     return CfObjectModel::CfObject_UnkVirtualFunc23();
 }
@@ -790,9 +701,9 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc33(float amount) {}
 // the C4 target's vtable +0x80 with a 0 arg (the base header declares the
 // override void) - forced-name form carrying the int return.
 extern "C" int CfObject_UnkVirtualFunc13__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    cf::CfObjectMoveC4Vt80* target = (cf::CfObjectMoveC4Vt80*)self->mTargetC4;
+    cf::CfC4Target* target = (cf::CfC4Target*)self->mTargetC4;
     if (target != 0) {
-        return target->m80(0);
+        return target->v80(0);
     }
     return 1;
 }
@@ -919,7 +830,7 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {
 // action-advance query result). The header declares the vtable slot with the
 // int return so the vtable entry keeps the retail name.
 // const self: MWCC hoists the first member load (lwz r3,0x6c0(r3)) above the
-// LR save (stw r0,0x14(r1)) -- the documented plateau closed by the const-self
+// LR save (stw r0,0x14(r1)) — the documented plateau closed by the const-self
 // lever (CScnEffectActNw4r getters family; non-const emits stw-first).
 // extern "C" + the mangled name keeps the vtable reference verbatim.
 extern "C" int CfObjectMove_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(const cf::CfObjectMove* self) {
@@ -961,20 +872,20 @@ extern "C" void* CfObject_UnkVirtualFunc16__Q22cf12CfObjectMoveFv(cf::CfObjectMo
 // slot +0xE4; on a non-zero result re-run the query (retail reloads the
 // sub pointer) and forward the query result plus the incoming index.
 void CfObjectMove_UnkVirtualFunc17__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             func_8015C074((void*)r, arg);
         }
     }
 }
 
 void CfObjectMove_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             func_8015C0B0((void*)r, arg);
         }
     }
@@ -986,10 +897,10 @@ void CfObjectMove_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
 // vtable +0xE4 is queried twice; on success the query result plus the five
 // args go to func_8015BFCC (the s16 arg emits the retail extsh).
 void CfObjectMove_UnkVirtualFunc16__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 a, u32 b, u32 c, u32 d, u32 e) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             // c is widened here so the int->short conversion emits the retail
             // extsh at the call site (MWCC defers it after the plain moves).
             func_8015BFCC((void*)r, a, b, (s16)c, d, e);
@@ -1001,10 +912,10 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc21() {
     // Query the +0x38 sub-object's vtable slot +0xE4; on a non-zero result
     // re-run the query (retail reloads the sub pointer) and flush the
     // character effect slots.
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            ((cf::CfObjectSub38VtE4*)mSubObj38)->_fE4();
+            ((cf::CfObjectSub38*)mSubObj38)->_fE4();
             func_8015C100();
         }
     }
@@ -1013,9 +924,9 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc21() {
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc22() {
     // Loop the counter 0..0x2B through the vtable slot +0x208 (the int-taking
     // form of CfObjectMove_UnkVirtualFunc17; the base header declares the
-    // slot Fv, so the call goes through the CfObjectMoveVt208 proxy).
+    // slot Fv, so the call goes through the CfObjectMoveReal proxy).
     for (int i = 0; i < 0x2C; i++) {
-        reinterpret_cast<CfObjectMoveVt208*>(this)->m208(i);
+        this->CfObjectMove_UnkVirtualFunc17(i);
     }
 }
 
@@ -1024,10 +935,10 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc22() {
 // forced-name form carrying the hidden arg and the return. Same sub-object
 // +0xE4 double-query scheme as CfObjectModel_UnkVirtualFunc18.
 bool CfObjectMove_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             return func_8015C294((unsigned int*)r, arg);
         }
     }
@@ -1035,10 +946,10 @@ bool CfObjectMove_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
 }
 
 void CfObjectMove_UnkVirtualFunc20__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             func_8015BD24((void*)r, arg);
         }
     }
@@ -1051,10 +962,10 @@ void CfObjectMove_UnkVirtualFunc20__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self
 // (retail reloads the sub pointer) and forward the query result plus the
 // incoming arg to func_8015C214.
 void CfObjectModel_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             func_8015C214((void*)r, (void*)arg);
         }
     }
@@ -1068,7 +979,7 @@ extern "C" void* CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv(cf::CfObje
     void* a = self->mField6DC;
     bool cond = (a != 0 && self->mField6E0 != 0);
     if (cond) {
-        return createEffectForPlayer__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
+        return func_80081900__Q22cf13CfGameManagerFv((u32)param, (u32)a, (u32)self->mField6E0);
     }
     return 0;
 }
@@ -1076,7 +987,7 @@ extern "C" void* CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv(cf::CfObje
 // Retail returns the sub-object voice-request result (r3) or 0; the base
 // header declares void, so use the forced-name form to carry the bool
 // return. Only `this` (+0x28) is forwarded to func_802A109C in retail.
-extern "C" bool requestVoice__Q22cf8CfObjectFiUlff(cf::CfObject* self, int a, u32 b, float c, float d) {
+extern "C" bool func_800BE898__Q22cf8CfObjectFiUlff(cf::CfObject* self, int a, u32 b, float c, float d) {
     void* sub = self->mSubObj38;
     if (sub != 0) {
         return func_802A109C((char*)sub + 0x28);
@@ -1125,11 +1036,11 @@ void cf::CfObjectMove::setSubFieldE(unsigned short val) {
 }
 
 extern "C" void CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf14();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func14();
 }
 
 extern "C" void CfObject_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf18();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func18();
 }
 
 void cf::CfObjectMove::virtCall10(){
@@ -1139,11 +1050,11 @@ void cf::CfObjectMove::virtCall10(){
 }
 
 extern "C" void CfObject_UnkVirtualFunc61__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf30();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func30();
 }
 
 extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf34();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func34();
 }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc12() {
@@ -1151,8 +1062,8 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc12() {
     // +0x10 (Shift-padded view: the vptr sits at object+0x10). Retail
     // reloads mSubObjB0 for each call, so keep the two calls as separate
     // member accesses rather than a cached pointer.
-    reinterpret_cast<ObjVtIf*>(mSubObjB0)->_v00C();
-    reinterpret_cast<ObjVtIf*>(mSubObjB0)->_v010();
+    reinterpret_cast<cf::CfSubB0Real*>(mSubObjB0)->func0C();
+    reinterpret_cast<cf::CfSubB0Real*>(mSubObjB0)->func10();
 }
 
 void CfObjectMove_nullsub_24() {}
@@ -1170,12 +1081,12 @@ void CfObjectMove_UnkVirtualFunc3__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self,
     if (index < 2) {
         if (self->mField6F8[index] != 0) {
             if (self->mSubObj98 != 0) {
-                reinterpret_cast<cf::CfObjectMoveSub98VtC4*>(self->mSubObj98)->mC8(self->mField6F8[index]);
+                reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfuncC8(self->mField6F8[index]);
             }
-            cf::CfObjectSub38VtE4* sub38 = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+            cf::CfObjectSub38* sub38 = (cf::CfObjectSub38*)self->mSubObj38;
             if (sub38 != 0) {
                 if (sub38->_fE4() != 0) {
-                    int q = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+                    int q = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
                     func_8015C8F4((void*)q, self->mField6F8[index]);
                 }
             }
@@ -1228,7 +1139,7 @@ void CfObjectModel_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* sel
 }
 
 extern "C" void* CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf48();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func48();
     return NULL;
 }
 
@@ -1244,8 +1155,8 @@ void CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
     cf::CfObjectMove90View* view = reinterpret_cast<cf::CfObjectMove90View*>(self);
     self->CfObjectModel_UnkVirtualFunc2();  // vtable +0x17C
     self->CfObjectModel_UnkVirtualFunc1();  // vtable +0x178
-    reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(0);
-    reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(1);
+    self->CfObjectMove_UnkVirtualFunc3(0);
+    self->CfObjectMove_UnkVirtualFunc3(1);
     view->field_90 = 0;
     view->field_94 = 0;
     self->CfObjectModel_UnkVirtualFunc6((void*)arg);  // vtable +0x18C
@@ -1257,7 +1168,7 @@ void CfObject_UnkVirtualFunc37__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
 void CfObject_UnkVirtualFunc38__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg) {
     self->CfObjectModel_UnkVirtualFunc2();
     reinterpret_cast<cf::CfObjectMove90View*>(self)->field_94 = 0;
-    reinterpret_cast<cf::CfObjectMoveSubB0Vt4C*>(self->mSubObjB0)->_v04C(arg);
+    reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func4C(arg);
 }
 
 int cf::CfObjectMove::nullsub_27() { return 0; }
@@ -1288,12 +1199,12 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
     self->field_710[0] = (u16)arg1;
     self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
-        reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(0);
+        self->CfObjectMove_UnkVirtualFunc3(0);
     } else {
         self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(arg2);
-        reinterpret_cast<cf::CfObjectMoveVt144*>(self)->m144(6, (u32)r);
+        self->CfObject_UnkVirtualFunc61(6, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfObjectMoveSubB0Vt3C*>(self->mSubObjB0)->m3C((u32)r, 0);
+            reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func3C((u32)r, 0);
         }
     }
     return 1;
@@ -1302,22 +1213,22 @@ int CfObject_UnkVirtualFunc39__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // Retail symbol is Fv but the body consumes r4/r5 (a bdat id and a slot
 // index) - forced-name form carrying the hidden args (same scheme as
 // CfObject_UnkVirtualFunc39/42). Unlike the 39/42 pair the slot index is
-// first converted to a name (CfBdat::getBdatStringEntry) and the arm path feeds
+// first converted to a name (CfBdat::func_801424A8) and the arm path feeds
 // that name back through func_80142428. Slot 0 / flags 6,0.
 int CfObject_UnkVirtualFunc40__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
+    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[0] = (u16)arg1;
     self->field_70C[0] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 0);
     if (r == 0) {
-        reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(0);
+        self->CfObjectMove_UnkVirtualFunc3(0);
     } else {
         self->field_70C[0] = (u16)((int (*)(u32))func_80142428)(name);
-        reinterpret_cast<cf::CfObjectMoveVt144*>(self)->m144(6, (u32)r);
+        self->CfObject_UnkVirtualFunc61(6, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfObjectMoveSubB0Vt3C*>(self->mSubObjB0)->m3C((u32)r, 0);
+            reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func3C((u32)r, 0);
         }
     }
     return 1;
@@ -1328,12 +1239,12 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
     self->field_710[1] = (u16)arg1;
     self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
-        reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(1);
+        self->CfObjectMove_UnkVirtualFunc3(1);
     } else {
         self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(arg2);
-        reinterpret_cast<cf::CfObjectMoveVt144*>(self)->m144(7, (u32)r);
+        self->CfObject_UnkVirtualFunc61(7, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfObjectMoveSubB0Vt3C*>(self->mSubObjB0)->m3C((u32)r, 1);
+            reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func3C((u32)r, 1);
         }
     }
     return 1;
@@ -1343,22 +1254,22 @@ int CfObject_UnkVirtualFunc42__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32
 // index) - forced-name form carrying the hidden args (same scheme as
 // CfObject_UnkVirtualFunc39/42). Same name round-trip as
 // CfObject_UnkVirtualFunc40 but slot 1 / flags 7,1. r is declared first so
-// MWCC colours it into r31 (retail keeps r in r31, the getBdatStringEntry
+// MWCC colours it into r31 (retail keeps r in r31, the func_801424A8
 // result in r30).
 int CfObject_UnkVirtualFunc43__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u32 arg1, u32 arg2) {
     int r;
     u32 name;
-    name = (u32)cf::CfBdat::getBdatStringEntry((u16)arg2);
+    name = (u32)cf::CfBdat::func_801424A8((u16)arg2);
     r = (int)cf::CfBdat::func_801422A8(arg1);
     self->field_710[1] = (u16)arg1;
     self->field_70C[1] = (u16)func_8014235C(arg1, &lbl_eu_804FC550[0x7], 1);
     if (r == 0) {
-        reinterpret_cast<cf::CfObjectMoveVt1D0*>(self)->m1D0(1);
+        self->CfObjectMove_UnkVirtualFunc3(1);
     } else {
         self->field_70C[1] = (u16)((int (*)(u32))func_80142428)(name);
-        reinterpret_cast<cf::CfObjectMoveVt144*>(self)->m144(7, (u32)r);
+        self->CfObject_UnkVirtualFunc61(7, (u32)r);
         if (self->mSubObj98 != 0) {
-            reinterpret_cast<cf::CfObjectMoveSubB0Vt3C*>(self->mSubObjB0)->m3C((u32)r, 1);
+            reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func3C((u32)r, 1);
         }
     }
     return 1;
@@ -1378,9 +1289,9 @@ void CfObject_UnkVirtualFunc45__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u3
     if (result > 0) {
         if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
             if (self->mSubObj98 != 0 && self->mField6F8[index] != 0) {
-                reinterpret_cast<cf::CfObjectMoveSub98VtC4*>(self->mSubObj98)->mC8(self->mField6F8[index]);
+                reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfuncC8(self->mField6F8[index]);
             }
-            reinterpret_cast<cf::CfObjectMoveSub98VtC4*>(self->mSubObj98)->mC4(self->mField6F8[index], value, 0);
+            reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfuncC4(self->mField6F8[index], value, 0);
         }
     }
     self->field_70C[index] = (u16)result;
@@ -1405,25 +1316,25 @@ void CfObjectMove_nullsub_42(){}
 void func_eu_800BFC78() {}
 
 extern "C" void func_800BEE1C(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf40();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func40();
 }
 extern "C" void func_800BF29C(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf54();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func54();
 }
 extern "C" void func_800BF2B0(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf58();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func58();
 }
 extern "C" void func_800BF2CC(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf60();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func60();
 }
 extern "C" void func_800BF2E0(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf28();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func28();
 }
 extern "C" void func_800BF2F8(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf2C();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func2C();
 }
 extern "C" void func_eu_800BFC7C(void* self) {
-    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf68();
+    reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func68();
 }
 extern "C" void func_800BC4B8(void* self, float v) {
     extern float lbl_eu_80666A90;
@@ -1447,10 +1358,10 @@ void cf::CfObjectMove::setBit6c9(unsigned long bit) {
 // with (query result, lbl_eu_80666A94 - value).
 void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
     CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(self, value);
-    cf::CfObjectSub38VtE4* sub = (cf::CfObjectSub38VtE4*)self->mSubObj38;
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
     if (sub != 0) {
         if (sub->_fE4() != 0) {
-            int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
             func_eu_8015D258((void*)r, lbl_eu_80666A94 - value);
         }
     }
@@ -1465,7 +1376,7 @@ cf::CfObjectMove* cf::CfObjectMove::testFlag8() {
 
 } // namespace cf
 
-extern "C" void func_800BE9AC(void* self) { reinterpret_cast<OMIf*>(self)->vf0014(); }
+extern "C" void func_800BE9AC(void* self) { reinterpret_cast<CScnItemModel*>(self)->vfunc14(); }
 
 // Retail symbol is Fv but the body tail-calls vtable+0xC4 with a scaled
 // float argument - forced-name form (same as the CfObjectModel sibling).
@@ -1477,7 +1388,7 @@ extern "C" void CfObject_UnkVirtualFunc32__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 // float argument (the +0xC8 slot consumes a float in retail despite the
 // base header's no-arg decl) - forced-name form.
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    reinterpret_cast<cf::CfObjectMoveVtC8*>(self)->mC8(f * lbl_eu_8066A210);
+    self->CfObject_UnkVirtualFunc30(f * lbl_eu_8066A210);
 }
 
 extern "C" void func_800BC3B0(cf::CfObjectMove* self, float value) {
@@ -1562,8 +1473,8 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
             } else {
                 f32 dist = lbl_eu_80666A9C;
                 if (func_8007560C() != 0) {
-                    void* mgr = getCameraDataBlock__Q22cf13CfGameManagerFv();
-                    if (mgr == 0 || (void*)self != ((cf::CfDynMgrVt60*)mgr)->m60()) {
+                    void* mgr = func_800821F8__Q22cf13CfGameManagerFv();
+                    if (mgr == 0 || (void*)self != ((cf::CfDynMgrReal*)mgr)->mgr60()) {
                         dist += lbl_eu_80666AA0;
                     }
                 } else if ((void*)self != getPlayer__Q22cf13CfGameManagerFi(0)) {
@@ -1623,20 +1534,18 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
     }
     if ((*(volatile u32*)&lbl_eu_80663E24 & 0x02040000) == 0) {
         u32 flags = self->unk64;
-        // Short-circuit OR of the five movement-request bits; the result
-        // selects whether func_800BC68C decays or raises the move speed.
         if ((flags & 0x2) != 0 || (flags & 0x4) != 0 || (flags & 0x8) != 0 ||
             (flags & 0x80000000u) != 0 || (flags & 0x100) != 0) {
-            int r = self->_6F4 != 0 || func_800BC4CC(self) != 0;
+            int r = 0;
+            if (self->_6F4 != 0) {
+                r = 1;
+            } else if (func_800BC4CC(self) != 0) {
+                r = 1;
+            }
             func_800BC68C(self, r);
         }
     }
     cf::CfObjectMoveA8View* view = (cf::CfObjectMoveA8View*)self;
-    // v = lbl_eu_80666A94 - AC * (A8 * ((lbl_eu_80666A94 - A0) * A4)).
-    // Residual: retail emits the inner fmuls with the difference as frA
-    // (fmuls f3,f4,f3); this MWCC version canonicalizes every tried source
-    // shape (~16 variants incl. named temps, sign-flipped difference,
-    // reordered leaves) to the load-first form (fmuls f3,f3,f4).
     float v = lbl_eu_80666A94 - view->field_AC * (view->field_A8 *
               ((lbl_eu_80666A94 - self->field_A0) * view->field_A4));
     if (v > lbl_eu_80666A88) {
@@ -1645,12 +1554,13 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
         }
     }
     self->mField718 = v;
-    reinterpret_cast<cf::CfObjectMoveSub98Vt48*>(self->mSubObj98)->m48(v);
-    // Retail re-loads mSubObj38 from memory for the second (argument) call.
-    if (((cf::CfObjectSub38VtE4*)self->mSubObj38) != 0 &&
-        ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4() != 0) {
-        int r = ((cf::CfObjectSub38VtE4*)self->mSubObj38)->_fE4();
-        func_eu_8015D258((void*)r, lbl_eu_80666A94 - v);
+    reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc48(v);
+    cf::CfObjectSub38* sub = (cf::CfObjectSub38*)self->mSubObj38;
+    if (sub != 0) {
+        if (sub->_fE4() != 0) {
+            int r = ((cf::CfObjectSub38*)self->mSubObj38)->_fE4();
+            func_eu_8015D258((void*)r, lbl_eu_80666A94 - v);
+        }
     }
 }
 extern "C" void func_800BCD04(cf::CfObjectMove* self) {
@@ -1679,37 +1589,34 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
                 }
             }
         }
-        if (((cf::CfObjectMoveVt160*)self)->m160() != 0) {
+        if (self->CfObject_UnkVirtualFunc68() != 0) {
             func_8004CF00(self->mTargetC4);
             // Copy the C4 position into the move position (integer copy) and
             // store the difference against the snapshot into the +0x54 area
             // (PS sub via the nw4r inline helper, then the float->int bridge).
-            cf::CfObjectMoveTargetC4* tgt = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
+            c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
             *reinterpret_cast<ml::CVec3*>(&self->mPos3C) =
-                *reinterpret_cast<const ml::CVec3*>(&tgt->field_3A8);
+                *reinterpret_cast<const ml::CVec3*>(&c4->field_3A8);
             // Struct-returning operator- keeps MWCC's return-slot + copy
             // sequence (retail routes the delta through a second stack copy).
             ml::CVec3 delta = *reinterpret_cast<ml::CVec3*>(&self->mPos3C) - targetPos;
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = delta;
-            self->mField4C = tgt->field_444;
+            self->mField4C = ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_444;
         } else {
             func_800BC9EC(self);
             ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);
         }
 done_flags:
-        // Toggle the C4 target's busy bit 6 from the mFlags68 sign bit /
-        // bit 24 states (the sign-bit path also clears the sign bit).
+        // Toggle the C4 target's busy bit 6 from the mFlags68 bit 0 / bit 24
+        // states (retail keeps both ops and clears bit 0 on the first path).
         u32 f = self->mFlags68;
-        if ((f & 0x80000000) != 0) {
+        if ((f & 0x1) != 0) {
             ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
-            self->mFlags68 = self->mFlags68 & 0x7FFFFFFFu;
+            self->mFlags68 = f & ~0x1;
+        } else if ((f & 0x01000000) != 0) {
+            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags |= 0x40;
         } else {
-            CfObjectMoveC4Flags* c4f = (CfObjectMoveC4Flags*)self->mTargetC4;
-            if ((f & 0x01000000) != 0) {
-                c4f->flags |= 0x40;
-            } else {
-                c4f->flags &= ~0x40u;
-            }
+            ((CfObjectMoveC4Flags*)self->mTargetC4)->flags &= ~0x20;
         }
     } else {
         // No model sub-object: the +0x6C0 target drives the position delta.
@@ -1730,15 +1637,6 @@ done_flags:
     }
 }
 
-// Store the position difference into the +0x54 area. The by-value parameter
-// makes MWCC materialize the subtraction result and copy it word-wise to the
-// destination (retail double-copy shape).
-static inline void cfomPutPosDiff(cf::CfObjectMove* self, ml::CVec3 d) {
-    ((cf::CfObjectMove54View*)self)->field_54 = *(u32*)&d.x;
-    ((cf::CfObjectMove54View*)self)->field_58 = *(u32*)&d.y;
-    ((cf::CfObjectMove54View*)self)->field_5C = *(u32*)&d.z;
-}
-
 extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     if (self->mTarget6C0 == 0) {
         return;
@@ -1751,7 +1649,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     origPos.z = pos->z;
     cf::CfObjectMove6C0View* tgt = (cf::CfObjectMove6C0View*)self->mTarget6C0;
     tgt->field_14 = lbl_eu_80666A88;
-    ((cf::CfObjectSub38If*)tgt)->_f0C();
+    ((cf::CfObjectSub38*)tgt)->_f0C();
     // Declared angle-first so MWCC colours rate into f30 (retail order).
     f32 angle = tgt->field_C;
     f32 rate = tgt->field_14;
@@ -1761,24 +1659,24 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     }
     int force = 0;
     void* enemy = func_800AD860((void*)self);
-    // Nested else-if keeps retail's branch shape (no force retest).
     if (enemy != 0) {
         if (((cf::CfObjectMoveAD86View*)enemy)->field_45CA & 1) {
             force = 1;
         }
-    } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
+    }
+    if (force == 0 && ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
         force = 1;
     }
     if (ml::math::abs(rate) > lbl_eu_8066A208 || force != 0) {
         // Circular sweep: scale the position X by the rate, sweep the angle
         // through Sin/Cos, then step the +0x60C region toward the swept point.
-        // Retail recomputes ABC*angle for the Cos call instead of CSE-ing it.
         float sx = rate * *(const float*)self->CfObject_UnkVirtualFunc58();
         rate = lbl_eu_80666AB8 * sx;
+        f32 ang = lbl_eu_80666ABC * angle;
         ml::CVec3 step;
-        step.x = rate * SinFIdx__Q24nw4r4mathFf(lbl_eu_80666ABC * angle);
-        step.z = rate * CosFIdx__Q24nw4r4mathFf(lbl_eu_80666ABC * angle);
+        step.x = rate * SinFIdx__Q24nw4r4mathFf(ang);
         step.y = lbl_eu_80666A88;
+        step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
         const ml::CVec3* base = (const ml::CVec3*)self->CfObject_UnkVirtualFunc23();
         ml::CVec3 tmp;
         func_804B1164(self->_60C_region, &tmp, base, &step);
@@ -1788,12 +1686,10 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) == 0) {
             step.y -= lbl_eu_80666AA4;
         }
-        // Retail keeps the flags word in one register across both id checks.
-        u32 flags = self->unk64;
         u32 id = 0x44A09;
-        if (((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5) >> 5) != 0) {
+        if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x2) >> 5) >> 5) != 0) {
             id = 0x44A05;
-        } else if (((u32)__cntlzw((u32)__cntlzw(flags & 0x4) >> 5) >> 5) != 0) {
+        } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x4) >> 5) >> 5) != 0) {
             id = 0x44A11;
         }
         float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
@@ -1801,16 +1697,12 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
                       lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, lbl_eu_80666AC4);
     }
     // Store the position difference against the snapshot into the +0x54 area.
-    cfomPutPosDiff(self, *reinterpret_cast<const ml::CVec3*>(&self->mPos3C) - origPos);
+    ml::CVec3 diff;
+    diff.x = self->mPos3C - origPos.x;
+    diff.y = self->mPos40 - origPos.y;
+    diff.z = self->mPos44 - origPos.z;
+    *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
 }
-
-// View for the mFlags68 RMW: a distinct class type so MWCC's TBAA refuses
-// to forward the cached test load and rematerializes the flag word
-// (retail lwz r5,0x68(r30) before the and).
-struct CfObjectMoveFlags68View {
-    char pad[0x68];
-    u32 flags68;  // 0x68
-};
 
 extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
@@ -1821,21 +1713,21 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     if (((cf::CfObjectMove94View*)self)->field_9C != 0 && self->mTargetC4 == 0) {
         // Construct the +0xD0 CActParamAnimGame sub-object as the C4 target.
         self->mTargetC4 = self->_D0;
-        ((cf::CfObjectSub38VtE4*)self->mTargetC4)->_fE0();
+        ((cf::CfObjectSub38*)self->mTargetC4)->_fE0();
         ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4E8 = self;
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0) {
-            // No cached C4 local here: retail reloads self->mTargetC4 around
-            // every call (the calls may alias the target slot).
+            void* c4 = self->mTargetC4;
             if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self) {
-                func_80051B84(self->mTargetC4);
+                func_80051B84(c4);
                 ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_530 |= 0x400;
             } else {
-                func_80051BA0(self->mTargetC4);
+                func_80051BA0(c4);
             }
             ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC |= 0x4000;
-            ((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC =
-                (((cf::CfObjectMoveD0View*)self->mTargetC4)->field_4EC & 0xFFF5FFFF) | 0x00040000;
+            void* c4b = self->mTargetC4;
+            ((cf::CfObjectMoveD0View*)c4b)->field_4EC =
+                (((cf::CfObjectMoveD0View*)c4b)->field_4EC & 0xFFF5FFFF) | 0x00040000;
         } else if ((flags & 0x4) != 0) {
             func_80051BDC(self->mTargetC4);
         } else if ((flags & 0x8) != 0 || (flags & 0x1) != 0) {
@@ -1852,7 +1744,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
             // stay live across it (retail colours them into r28/r29).
             void* field6D4 = self->mField6D4;
             void* sub98 = self->mSubObj98;
-            void* anim = ((cf::CfObjectMoveVt184*)self)->m184();
+            void* anim = ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc4();
             func_8004B624(self->mTargetC4, sub98, field6D4, (u32)anim);
             func_8004B6A4(self->mTargetC4, (void*)((cf::CfObjectMove94View*)self)->field_9C, (void*)((cf::CfObjectMove94View*)self)->field_94);
         } else {
@@ -1861,20 +1753,17 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
     }
     u32 f68 = self->mFlags68;
     if ((f68 & 0x10) != 0) {
-        // ~0x110 folds to li r0,-0x111 (retail); bits 4+8, not 0+4+8.
-        ((CfObjectMoveFlags68View*)self)->flags68 &= ~0x110u;
-        ((cf::CfObjectMoveVtA8*)self)->mA8((const ml::CVec3*)&self->mPos3C);
+        self->mFlags68 &= ~0x111;
+        static_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc22((const ml::CVec3*)&self->mPos3C);
     } else if ((f68 & 0x00800000) != 0) {
         u32 flags2 = self->unk64;
-        ((CfObjectMoveFlags68View*)self)->flags68 &= ~0x00800000u;
-        // Ternary lives in the call argument so the constant selects are
-        // emitted after the flag-clear store (retail order).
-        self->CfObject_UnkVirtualFunc26((u32)(&self->mPos3C),
-            (flags2 & 0x2) != 0 ? lbl_eu_80666AC8 : lbl_eu_80666ACC);
+        self->mFlags68 &= ~0x00800000u;
+        f32 rate2 = (flags2 & 0x2) != 0 ? lbl_eu_80666AC8 : lbl_eu_80666ACC;
+        self->CfObject_UnkVirtualFunc26((u32)(&self->mPos3C), rate2);
     } else {
-        ((cf::CfObjectMoveVtA8*)self)->mA8((const ml::CVec3*)&self->mPos3C);
+        static_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc22((const ml::CVec3*)&self->mPos3C);
     }
-    ((cf::CfObjectMoveVtC8*)self)->mC8(self->mField4C);
+    self->CfObject_UnkVirtualFunc30(self->mField4C);
     self->CfObject_UnkVirtualFunc27(self->_pad48);
     if (self->mTargetC4 != 0) {
         if (wasC4Null) {
@@ -1910,11 +1799,11 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         self->CfObject_UnkVirtualFunc64(1);
     }
     if ((self->mFlags68 & 0x2000000) != 0) {
-        ((cf::CfObjectMoveVt154*)self)->m154(1);
+        ((cf::CfObject*)self)->CfObject_UnkVirtualFunc65(1);
     }
     func_80484E5C(self->mSubObj98, lbl_eu_80666A94);
     self->CfObject_UnkVirtualFunc70(self->field_A0);
-    ((cf::CfObjectMoveVt1A4*)self)->m1A4(lbl_eu_80666A94);
+    ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc12(lbl_eu_80666A94);
     u32 f = self->mFlags68;
     if ((f & 0x800) != 0) {
         int bit14 = (f >> 14) & 1;
@@ -1925,7 +1814,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         }
         if (self->mSubObj98 != 0) {
             if (bit14 != 0) {
-                ((cf::CfObjectMoveSub98Vt50*)self->mSubObj98)->m50(1);
+                ((CScnItemModel*)self->mSubObj98)->vfunc50(1);
                 cf::CfObjectModelSub98* sub = self->mSubObj98;
                 if (sub != 0) {
                     void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
@@ -1934,16 +1823,16 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
                     }
                 }
             } else {
-                ((cf::CfObjectMoveSub98Vt50*)self->mSubObj98)->m50(0);
+                ((CScnItemModel*)self->mSubObj98)->vfunc50(0);
             }
         }
     }
     if ((self->mFlags68 & 0x20000) == 0) {
         if (self->mSubObj98 != 0) {
-            if (((cf::CfObjectMoveSub98Vt54*)self->mSubObj98)->m54() != 0) {
+            if (((CScnItemModel*)self->mSubObj98)->vfunc54() != 0) {
                 self->mFlags68 |= 0x20000;
                 if (self->mSubObj98 != 0) {
-                    ((cf::CfObjectMoveSub98Vt50*)self->mSubObj98)->m50(1);
+                    ((CScnItemModel*)self->mSubObj98)->vfunc50(1);
                     cf::CfObjectModelSub98* sub = self->mSubObj98;
                     if (sub != 0) {
                         void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
@@ -1959,19 +1848,19 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         cf::CfObjectModelSub98* sub = self->mSubObj98;
         void* p = ((cf::CfObjectMoveSub98View7EC*)sub)->field_7EC;
         if (p != 0) {
-            ((cf::CfObjectMoveVt1C*)p)->m1C(1, lbl_eu_8066AF20);
+            ((cf::Cf7ECTarget*)p)->v1C(1, lbl_eu_8066AF20);
         }
     }
     if (((self->mFlags6C9 >> 3) & 0xF) != 5) {
-        ((cf::CfObjectModelSub98Vt*)self->mSubObj98)->m64();
+        reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc64(0);
     }
     self->CfObject_UnkVirtualFunc66((self->mFlags68 >> 11) & 1);
     if (func_800BAD98(self) != 0 || func_800BADF8(self) != 0) {
-        ((cf::CfObjectMoveSub98Vt9C*)self->mSubObj98)->m9C(0, 0);
+        ((CScnItemModel*)self->mSubObj98)->vfunc9C(0, 0);
     } else if (func_800BADC8(self) != 0) {
-        ((cf::CfObjectMoveSub98Vt9C*)self->mSubObj98)->m9C(1, 0);
+        ((CScnItemModel*)self->mSubObj98)->vfunc9C(1, 0);
     } else if (func_800BAE28(self) != 0) {
-        ((cf::CfObjectMoveSub98Vt9C*)self->mSubObj98)->m9C(2, 0);
+        ((CScnItemModel*)self->mSubObj98)->vfunc9C(2, 0);
         const u8* s = (const u8*)getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_804FC550, lbl_eu_80664184);
         u8 b = *s;
         if ((b & 0x2) != 0) {
@@ -1982,7 +1871,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         }
     }
     if (self->mSubObj38 != 0) {
-        ((cf::CfObjectSub38If*)self->mSubObj38)->_f74();
+        ((cf::CfObjectSub38*)self->mSubObj38)->_f74();
     }
 }
 // retail: lhz r0,0x1678(r3); extrwi r3,r0,1,28 = ((u16 at +0x1678)>>3)&1
@@ -1999,48 +1888,43 @@ void func_800BD644(cf::CfObjectMove* self) {
     // Walk the two +0x6F8 animation slots; both per-slot reads (the slot
     // array and the +0xC8/+0xCC target pair) index the same i so MWCC
     // strength-reduces them onto one stepped cursor.
-    void* slot;
-    char* cur = (char*)self;
-    int i = 0;
-    while (i < 2) {
-        slot = *(void**)(cur + 0x6F8);
+    for (int i = 0; i < 2; i++) {
+        void* slot = self->mField6F8[i];
         if (slot != 0 && self->mField6D8 != 0) {
-            if (*(void**)(cur + 0xC8) == 0) {
-                void* obj = allocate__Q23mtl10MemManagerFUlUl(0x53C, func_80061FE8());
+            if ((&self->mTargetC8)[i] == 0) {
+                // obj declared/zeroed before the allocation sequence (same
+                // scheme as CfObject_UnkVirtualFunc47) so MWCC colours the
+                // alloc result deterministically.
+                void* obj = 0;
+                obj = allocate__Q23mtl10MemManagerFUlUl(0x53C, func_80061FE8());
                 if (obj != 0) {
-                    // Ctor returns the object in r3 (MWCC ctor ABI), so the
-                    // store below can reuse r3 directly - no callee-saved
-                    // register is needed to carry obj across the call.
-                    obj = __ct__8005A3FC(obj, self);
+                    __ct__8005A3FC(obj, self);
                 }
                 // Retail stores the (possibly null) result to the slot
                 // BEFORE the field writes, and writes field_378 straight
                 // from the alloc result; the remaining fields re-read the
                 // member (no register reuse).
-                *(void**)(cur + 0xC8) = obj;
+                (&self->mTargetC8)[i] = obj;
                 ((cf::CfObjectMoveC8View*)obj)->field_378 = i;
-                void* ta = *(void**)(cur + 0xC8);
-                void* sub38 = self->mSubObj38;
-                ((cf::CfObjectMoveC8View*)ta)->field_4 = sub38;
-                ((cf::CfObjectMoveC8View*)ta)->field_34 = sub38;
-                ta = *(void**)(cur + 0xC8);
+                void* ta = (&self->mTargetC8)[i];
+                ((cf::CfObjectMoveC8View*)ta)->field_4 = self->mSubObj38;
+                ta = (&self->mTargetC8)[i];
+                ((cf::CfObjectMoveC8View*)ta)->field_34 = self->mSubObj38;
+                ta = (&self->mTargetC8)[i];
                 ((cf::CfObjectMoveC8View*)ta)->field_4F4 = self;
             }
-            if (*(void**)(cur + 0xC8) != 0) {
-                func_8005A594(*(void**)(cur + 0xC8));
-                u32 anim = (u32)reinterpret_cast<cf::CfObjectMoveVt188*>(self)->m188();
-                func_8004B624(*(void**)(cur + 0xC8), slot, self->mField6D8, anim);
+            if ((&self->mTargetC8)[i] != 0) {
+                func_8005A594((&self->mTargetC8)[i]);
+                u32 anim = (u32)reinterpret_cast<cf::CfObjectModel*>(self)->CfObjectModel_UnkVirtualFunc5();
+                func_8004B624((&self->mTargetC8)[i], slot, self->mField6D8, anim);
                 if (self->mTargetC4 != 0) {
                     // Retail: bl func_8004C5EC; mr r4,r3; lwz r3,<target>;
                     // li r5/r6/r7; bl func_8004B9D4.
-                    void* page = (void*)func_8004C5EC(self->mTargetC4);
                     ((void (*)(void*, void*, int, int, int))func_8004B9D4)(
-                        *(void**)(cur + 0xC8), page, 0, -1, 0);
+                        (&self->mTargetC8)[i], (void*)func_8004C5EC(self->mTargetC4), 0, -1, 0);
                 }
             }
         }
-        i++;
-        cur += 4;
     }
     if (self->mSubObj98 != 0) {
         func_80482918(self->mSubObj98, 1);
@@ -2054,10 +1938,10 @@ extern "C" void func_800BE0F8(cf::CfObjectMove* self, u32 value) {
     u32 flags = __rlwimi(self->mFlags6C9, value, 1, 27, 30);
     self->mFlags6C9 = (u8)flags;
     if (target != 0) {
-        // Retail: rlwinm r4,r0,31,28,31 = (flags >> 1) & 0xF -- the flag-word
+        // Retail: rlwinm r4,r0,31,28,31 = (flags >> 1) & 0xF — the flag-word
         // nibble at bits 1-4 (untouched by the 27-30 insertion), NOT the
         // inserted field nibble ((flags >> 27) & 0xF is a different value).
-        ((cf::CfObjectMoveSub98Vt64*)target)->m64((flags >> 1) & 0xF);
+        reinterpret_cast<CScnItemModel*>(target)->vfunc64((flags >> 1) & 0xF);
     }
 }
 void func_800BE12C(u8* obj, int a, int b, int c, int d) {
@@ -2112,7 +1996,7 @@ void func_800BE33C(cf::CfObjectMove* self, int flag) {
     }
     if (self->mSubObj98 != 0) {
         if (flag != 0) {
-            reinterpret_cast<cf::CfObjectMoveSub98Vt50*>(self->mSubObj98)->m50(1);
+            reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc50(1);
             cf::CfObjectModelSub98* sub = self->mSubObj98;
             if (sub != 0) {
                 struct Sub98Field7EC {
@@ -2129,7 +2013,7 @@ void func_800BE33C(cf::CfObjectMove* self, int flag) {
                 }
             }
         } else {
-            reinterpret_cast<cf::CfObjectMoveSub98Vt50*>(self->mSubObj98)->m50(0);
+            reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc50(0);
         }
     }
 }
@@ -2140,7 +2024,7 @@ void func_800BE33C(cf::CfObjectMove* self, int flag) {
 void func_800BE3E8(cf::CfObjectMove* self, int flag) {
     if (flag != 0) {
         ((cf::CfObjectMoveFlags6C*)self)->field_6C |= 0x10000;
-        reinterpret_cast<ObjVtIf*>(self->mSubObjB0)->_v038();
+        reinterpret_cast<cf::CfSubB0Real*>(self->mSubObjB0)->func38();
     } else {
         if (self->mField6D4 != 0) {
             if (self->mTargetC4 != 0) {
@@ -2186,16 +2070,16 @@ extern "C" u32 func_800BED6C(u32 id, u32 flag) {
 }
 // Column-name lookup through the bdat reader: index self->field_710[flag],
 // resolve column offset 0x7 of the name table, then map the u16 result to a
-// name string via CfBdat::getBdatStringEntry.
+// name string via CfBdat::func_801424A8.
 const char* func_800BED80(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x7], flag);
-    return cf::CfBdat::getBdatStringEntry((u16)result);
+    return cf::CfBdat::func_801424A8((u16)result);
 }
 
 // Same as func_800BED80 but column offset 0x11.
 const char* func_800BEDC4(cf::CfObjectMove* self, u32 flag) {
     u32 result = func_8014235C(self->field_710[flag], &lbl_eu_804FC550[0x11], flag);
-    return cf::CfBdat::getBdatStringEntry((u16)result);
+    return cf::CfBdat::func_801424A8((u16)result);
 }
 // Same as func_800BED6C but column offset 0x11.
 extern "C" u32 func_800BEE08(u32 id, u32 flag) {
@@ -2203,3 +2087,17 @@ extern "C" u32 func_800BEE08(u32 id, u32 flag) {
 }
 extern "C" void func_800BEE30() {}
 extern "C" void func_800BF2F4() {}
+
+// absorb: rodata + sdata2 (retail split1.s)
+__attribute__((section(".rodata"), used)) const unsigned char __absorb_CfObjectMove_rodata[0x20] = {
+    0x6D,0x61,0x70,0x41,0x54,0x52,0x00,0x64,0x65,0x66,0x5F,0x6D,0x6F,0x75,0x6E,0x74,
+    0x00,0x62,0x61,0x74,0x5F,0x6D,0x6F,0x75,0x6E,0x74,0x00,0x00,0x00,0x00,0x00,0x00
+};
+__attribute__((section(".sdata2"), used)) const unsigned char __absorb_CfObjectMove_sdata2[0x58] = {
+    0x00,0x00,0x00,0x00,0x3F,0x66,0x66,0x66,0x41,0xF0,0x00,0x00,0x3F,0x80,0x00,0x00,
+    0x40,0x4F,0x5C,0x28,0x3E,0xCC,0xCC,0xCD,0x3F,0xB3,0x33,0x33,0x3D,0xCC,0xCC,0xCD,
+    0x3F,0x33,0x33,0x33,0x3C,0xF5,0xC2,0x8F,0x3D,0x75,0xC2,0x8F,0x3D,0x4C,0xCC,0xCD,
+    0x3C,0x17,0xB4,0x26,0x42,0x22,0xF9,0x83,0xBD,0xCC,0xCC,0xCD,0x3E,0x99,0x99,0x9A,
+    0x41,0x20,0x00,0x00,0x46,0x1C,0x40,0x00,0x3F,0x00,0x00,0x00,0x40,0x80,0x00,0x00,
+    0x40,0x19,0x99,0x9A,0x00,0x00,0x00,0x00
+};

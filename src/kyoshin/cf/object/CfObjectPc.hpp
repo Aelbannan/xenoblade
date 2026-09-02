@@ -152,7 +152,7 @@ struct Obj89cField {
 
 // Foreign sub-object at +0x4 is a CObjectState pointer (owner: CObjectState).
 // Slot 0x30 is CObjectState_UnkVirtualFunc11 (void*). Tiny iface on owning
-// type keeps addi+lwz pattern; deleted PcSub4VtIf caller-named pad.
+// type keeps addi+lwz pattern; deleted fake iface.
 struct CObjectStatePad4 { u8 _pad[0x4]; };
 struct CObjectStateFake4 : CObjectStatePad4, cf::CObjectState {};
 struct CObjectStatePad4B { u8 _pad[0x4]; };
@@ -160,7 +160,7 @@ struct CObjectStateFake4B : CObjectStatePad4B, cf::CObjectState {};
 
 // Foreign sub-object at +0x8 is the embedded CBattleState (owner: CBattleState).
 // Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted
-// PcSub8VtIf pad; call via reinterpret_cast<CBattleState*>((u8*)this+8)->...
+// fake pad; call via reinterpret_cast<CBattleState*>((u8*)this+8)->...
 
 // Linked-list node/head view of the battle-manager list at +0x48.
 struct BmListNode {
@@ -286,13 +286,20 @@ namespace cf {
         //0x0-45BC: CfObjectActor
         u8 unk45BC[0x4];
     CfObjectPc();
+    inline cf::CfObjectMove* pcMove() { struct View { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return &((View*)this)->m; }
+    inline const cf::CfObjectMove* pcMove() const { struct View { u8 pad[0x3E9C]; const cf::CfObjectMove m; }; return &((const View*)this)->m; }
+    inline cf::CfObjectMove& pcMoveRefA() { struct ViewA { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return ((ViewA*)this)->m; }
+    inline cf::CfObjectMove& pcMoveRefB() { struct ViewB { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return ((ViewB*)this)->m; }
     void CActorParam_UnkVirtualFunc166();
     void CActorParam_UnkVirtualFunc167();
     void CActorParam_UnkVirtualFunc4();
     void CActorParam_UnkVirtualFunc176();
     int CActorParam_UnkVirtualFunc86();
-    void CActorParam_UnkVirtualFunc88();
-    void CActorParam_UnkVirtualFunc173();
+    void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);
+    virtual void CActorParam_UnkVirtualFunc173();
+    virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127();
+    virtual int CActorParam_UnkVirtualFunc178();
+    virtual int CActorParam_UnkVirtualFunc157();
     void CObjectParam_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
     void CfObject_UnkVirtualFunc2();

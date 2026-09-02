@@ -1643,7 +1643,7 @@ extern "C" void func_800B3A60(void* list, void* obj);
 // --- imports for func_800B83AC (us-800b8cc8) ---
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
 extern "C" void* func_8009ECB0();
-extern "C" void* func_8009EC9C(unsigned long index);
+extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);
 extern "C" int CfRes_getD80Flag();

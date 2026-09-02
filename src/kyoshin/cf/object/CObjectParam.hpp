@@ -12,7 +12,7 @@ namespace cf {
         virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
         virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
-        virtual void CObjectParam_UnkVirtualFunc6(); //0x50
+        virtual void CObjectParam_UnkVirtualFunc6(int flag); //0x50
 
         //0x0: vtable
         //0x0-10: CObjectState

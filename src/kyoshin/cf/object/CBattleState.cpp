@@ -11,7 +11,15 @@ extern const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
 extern const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
 extern const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
 extern const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
-extern u8 lbl_eu_80662248[8];      // .sdata object; CBattleState_UnkVirtualFunc3 returns its address
+#pragma push
+#pragma section sdata_type ".sdata" ".sdata"
+u8 lbl_eu_80662248[8] = {0};
+#pragma pop      // .sdata object; CBattleState_UnkVirtualFunc3 returns its address
+const float lbl_eu_80667400 = 1.0f;
+const float lbl_eu_80667404 = 0.5f;
+const double lbl_eu_80667408 = 1.5;
+const float lbl_eu_80667410 = 0.0f;
+const float lbl_eu_80667414 = 0.9f;
 
 void func_80109784(void* ptr, u32 id, int arg);
 void func_8013DB6C(int a, u32 id, int b, int c);
@@ -3134,12 +3142,4 @@ simple_test:
 
 // absorb: split1 retail data sections
 // generated from retail spec (fixed pointers to zero for reloc)
-__declspec(section ".sdata") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CBattleState_cpp_sdata[0x8] __attribute__((used)) = {
-    0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CBattleState_cpp_sdata2[0x18] __attribute__((used)) = {
-    0x3F, 0x80, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0xF8, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x66, 0x66, 0x66
-};
 

@@ -20,6 +20,10 @@ state should be "no SKILL.md loaded" — load it on demand, not up front.
 - **Architecture/legal rules:** `PLAN.md` §§2, 3, 17 (legal boundaries, invariants, matching policy).
   Read other sections only when the task touches that subsystem.
 
+## Goal
+
+The goal is to match the original source shape! No cheating, temporary hacks, or shortcuts just to accomplish your goal. Implement properly, and try to get as close as possible to the original source shape. If you cause any regressions, fix them.
+
 ## Always
 
 - Use **`.venv/bin/python3`**, never the system `python3` (system is 3.9 and fails on project syntax).

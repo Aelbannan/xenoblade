@@ -8,14 +8,15 @@
 #include <revolution/MTX.h>
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
+#include "include/kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/math/CVec3.hpp"
 
-// Resource globals / imports (C ABI from external TUs).
-// lbl_eu_80663E14 must be at global scope (not anonymous namespace) so the
-// SDA21 reloc keeps the plain symbol name.
-extern "C" void* func_804C1BA0(void* mgr, const char* name, int flag);
-extern "C" void  func_804C1D7C(void* mgr, void* handle);
+// Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
+// declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
+// const char* (CREvtLight) and void* (CfObjectMap) call sites.
+extern "C" void func_804C1D7C(void* mgr, void* handle);
 extern "C" u32   func_80180940(void);
 
 // Own vtable and math constants / helpers.
@@ -24,12 +25,12 @@ extern "C" void  __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
 extern "C" void  __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
 extern "C" void  __dt__80185754(void* ptr);
 
-extern "C" f32 lbl_eu_80667F08;  // angle conversion factor
-extern "C" f32 lbl_eu_80667F0C;  // pi
-extern "C" f32 lbl_eu_80667F10;  // pi/2 threshold base
-extern "C" f32 lbl_eu_8066A1F8;  // -pi
-extern "C" f32 lbl_eu_8066A1FC;  // 2pi
-extern "C" f32 lbl_eu_8066A210;  // pi/2
+extern "C" const f32 lbl_eu_80667F08;  // angle conversion factor
+extern "C" const f32 lbl_eu_80667F0C;  // pi
+extern "C" const f32 lbl_eu_80667F10;  // pi/2 threshold base
+extern "C" const f32 lbl_eu_8066A1F8;  // -pi
+extern "C" const f32 lbl_eu_8066A1FC;  // 2pi
+extern "C" const f32 lbl_eu_8066A210;  // pi/2
 
 // ============================================================================
 // Constructor: __ct__CREvtLight
@@ -68,9 +69,9 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
             // Notify the object behind the game manager's +0x2F3C pointer.
             if (cf::CfGameManager::getGameSubManager() != nullptr) {
                 if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                    CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                    notif->_v068(1);
+                    UnkMapFxObj* fx =
+                        (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                    fx->vfunc_0x68(1);
                 }
             }
         }
@@ -102,9 +103,9 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
             if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                CREvtLightNotifyIf* notif =
-                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                notif->_v068(1);
+                UnkMapFxObj* fx =
+                    (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                fx->vfunc_0x68(1);
             }
         }
     }
@@ -117,9 +118,9 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
             if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                CREvtLightNotifyIf* notif =
-                    (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                notif->_v068(func_80180940());
+                UnkMapFxObj* fx =
+                    (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                fx->vfunc_0x68(func_80180940());
             }
         }
     }
@@ -143,9 +144,10 @@ void func_801C37C8(void) {}
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-f32 func_801C37CC(CREvtLight* self, CREvtLightTargetIf* target) {
-    // Get target position via vtable slot 0xAC
-    nw4r::math::VEC3* pos = target->_v0AC();
+f32 func_801C37CC(CREvtLight* self, cf::CfObject* target) {
+    // Get target position via CfObject vtable slot 0xAC (CfObject_UnkVirtualFunc23)
+    ml::CVec3* rawPos = target->CfObject_UnkVirtualFunc23();
+    nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
     // diff = targetPos - thisPos; copied through a temporary so MWCC emits
     // the same paired-single block plus element copy before PSVECMag.
@@ -164,9 +166,10 @@ f32 func_801C37CC(CREvtLight* self, CREvtLightTargetIf* target) {
 // Computes horizontal angle from this to target, returns state (1, 2, or 4)
 // based on angle thresholds.
 // ============================================================================
-int func_801C3850(CREvtLight* self, CREvtLightTargetIf* target) {
-    // Get target position via vtable slot 0xAC
-    nw4r::math::VEC3* pos = target->_v0AC();
+int func_801C3850(CREvtLight* self, cf::CfObject* target) {
+    // Get target position via CfObject vtable slot 0xAC (CfObject_UnkVirtualFunc23)
+    ml::CVec3* rawPos = target->CfObject_UnkVirtualFunc23();
+    nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
     // diff = targetPos - thisPos (paired-single ops)
     nw4r::math::VEC3 delta;

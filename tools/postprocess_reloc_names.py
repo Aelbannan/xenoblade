@@ -244,7 +244,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("sResetCallbackCalled__9CErrorWii", "lbl_eu_80665A65"),
             ("sUnkFlag__9CErrorWii", "lbl_eu_80665A66"),
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
     "CTaskLOD.o": UnitRules(
         # Data dissolve: retail split owns this class's data (vtables
@@ -2339,7 +2338,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x3F666666), "lbl_eu_806660C4"),
             (struct.pack(">I", 0x3FB33333), "lbl_eu_80666108"),
         ),
-        extern_data_sections=(".sdata2", ".bss", ".sbss"),
     ),
     "CfRes.o": UnitRules(
         # Switch cookie lives in the retail split object's .data
@@ -2375,7 +2373,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666530"),
         ),
-        extern_data_sections=(".sdata2", ".bss", ".sbss"),
     ),
     "CtrlEnemy.o": UnitRules(
         # int->double magic -> lbl_eu_80666588 (content match); CtrlAct/
@@ -2438,7 +2435,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # iterations are `addi rX, base, ofs` on a single base); strip the
         # emitted .data and UNDEF the symbols so the .text relocs resolve to
         # nw4r_data.o at link (CfPadTask.o pattern).
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         # Retail emits no GetResPlttNumEntries/GetResTexNumEntries/…, no u32
         # overloads, and no GetResAnmVis*/GetResAnmShp* symbols: the only
         # callers are Bind/Init/Terminate/CheckRevision, where -ipa file
@@ -2476,7 +2472,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_80669C8C"),  # 0.0f
             (struct.pack(">I", 0x3F800000), "lbl_eu_80669C90"),  # 1.0f
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
     "CArtsInfo.o": UnitRules(
         exact_renames=(
@@ -2607,6 +2602,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2", ".sbss"),
     ),
     "CfNandManager.o": UnitRules(
+        extern_data_sections=(".sdata",),
+        copy_data_sections=(".data", ".rodata", ".sdata", ".bss", ".sbss"),
         # func_8023EB78's pending-type switch: MWCC lowers the current source
         # shape to an in-TU jumptable (@NNN over its own case labels), but the
         # retail form is a compare chain with NO data object anywhere in the
@@ -2653,6 +2650,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668910"),
         ),    ),
     "CfGimmickEne.o": UnitRules(
+        extern_data_sections=(".sdata",),
+        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         # int->double magic 2^52 and read-only 1.0f -> the shared .sdata2
         # pool (bytes verified: lbl_eu_80668980 / lbl_eu_80668968; note
         # lbl_eu_80662784 is a MUTABLE .sdata static, not this constant).
@@ -3098,6 +3097,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
     "CfCam.o": UnitRules(
+        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         # Data dissolve: camera-follow statics/vtables ship from split1.s;
         # both anon double slots resolve to lbl_eu_806662A8 (site
         # correspondence; retail loads the same magic double at both pools').
@@ -3109,9 +3109,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_806662A8"),
         ),
-        extern_data_sections=(".sdata2", ".bss", ".sbss"),
     ),
-    "CMenuEnemyState.o": UnitRules(),
+    "CMenuEnemyState.o": UnitRules(
+        patch_data=((".sdata", 0xF, b"\x00"),),
+    ),
     "CUIBattleManager.o": UnitRules(
         # functions.hpp declares C++-linkage bool; retail reloc is unmangled.
         exact_renames=(
@@ -4225,7 +4226,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # ships from monolibdata1 (lbl_eu_80665550). The sinit's stw reloc must
         # point at the retail label and the local .sbss must be stripped.
         retarget_relocs=((".text", 0x4, "lbl_eu_80665550"),),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
     "CMCEffStart.o": UnitRules(
         # Vtable/RTTI/typeinfo live in the retail data slice (lbl_eu_805360xx);
@@ -4835,7 +4835,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "snd_MmlSeqTrack.o": UnitRules(
         # Vtable lives in nw4r_data.s; retail references it as lbl_eu_8056AAC0.
         exact_renames=(("__vt__Q44nw4r3snd6detail11MmlSeqTrack", "lbl_eu_8056AAC0"),),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
 
     "snd_MemorySoundArchive.o": UnitRules(
@@ -5095,7 +5094,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x00000000), "lbl_eu_8066A0F0"),  # 0.0f
         ),
         pad_data_section=((".data", 0x10), (".sdata", 0x8)),
-        extern_data_sections=(".sdata2", ".bss", ".sbss"),
     ),
 
     "snd_SoundPlayer.o": UnitRules(
@@ -6041,11 +6039,9 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CDeviceFileJob.o": UnitRules(
         exact_renames=(("__vt__14CDeviceFileJob", "lbl_eu_8056C4D8"),),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         repack_after_drop=4,
     ),
     "CScn.o": UnitRules(
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
     "CDeviceVI.o": UnitRules(
         drop_data_tail=((".data", 0x170), (".rodata", 0xB9), (".sdata", 0x18)),
@@ -7322,6 +7318,7 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
 
     "CfBdat.o": UnitRules(
+        patch_data=((".data", 0xBF, b"\x00"),),
         # Data dissolve with instruction-level ground truth (func_801414CC
         # store sequence aligns 1:1 with our sinit assignments; anchors:
         # spLandmark->806640A0 per source note; quest table written through
@@ -7406,7 +7403,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@stringBase0", "lbl_eu_80500FA4"),  # BTL_*/FLD_*/ITM_* strings
             ("@8661", "lbl_eu_80500F28"),         # quest template ptr array
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
 
     "CUICfManager.o": UnitRules(
@@ -7909,6 +7905,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CfGimmick.o": UnitRules(
+        patch_data=((".data", 0x5B, b"\x00"),),
+        drop_data_range=((".sdata2", 0, 16),),
         # Pool trio: retail slots 80668350(.float 0)/80668368(HI)/80668370
         # (2^52), ctx votes 9-12 strong per slot.
         pool_patterns=(
@@ -8669,7 +8667,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         copy_data_sections=(".sbss",),
     ),
     "CfGimmickLock.o": UnitRules(
-        copy_data_sections=(".sdata",),
+        patch_data=((".sdata", 0xF, b"\x00"),),
     ),
     "CfGimmickItem.o": UnitRules(
         copy_data_sections=(".sdata",),
@@ -8698,6 +8696,11 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CfMapItemManager.o": UnitRules(
         copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
+    ),
+    "CfResPcImpl.o": UnitRules(
+        patch_data=((".sdata", 0, b"\x00"), (".data", 0xCF, b"\x01"),),
+        extern_data_sections=(".sdata",),
+        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
 }
 

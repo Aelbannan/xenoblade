@@ -43,16 +43,3 @@ extern "C" void func_800584B8(u8* self, void* data, const char* name) {
         func_80495EAC(self, data, *(ml::FixStr<64>*)buf);
     }
 }
-
-// absorb: split1 retail data sections
-// generated from retail build/us/asm via split1_spec.txt
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cf_CMcaFile_data[0xC] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_cf_CMcaFile_rodata[0x10] = {
-    0x43, 0x4D, 0x63, 0x61, 0x46, 0x69, 0x6C, 0x65, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cf_CMcaFile_sdata[0x8] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};

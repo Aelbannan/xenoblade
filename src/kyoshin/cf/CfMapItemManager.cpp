@@ -2,22 +2,60 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CBattleManagerApi.hpp"
-extern char lbl_eu_806677E0[];
-extern char lbl_eu_806677A0[];
-extern char lbl_eu_80662438[];
-extern char lbl_eu_80662430[];
-extern char lbl_eu_8066241C[];
-extern char lbl_eu_80662418[];
-extern char lbl_eu_80662410[];
-extern char lbl_eu_805316F8[];
-extern char lbl_eu_805316E8[];
-extern char lbl_eu_805316D0[];
-extern char lbl_eu_805316C0[];
-extern char lbl_eu_805033A8[];
-extern char lbl_eu_80503390[];
+#include "kyoshin/cf/CHelpManager.hpp"
+#include "kyoshin/cf/CfBdat.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/CtrlPc.hpp"
+
+__attribute__((section(".data"), used, aligned(8))) const volatile unsigned char __absorb_kyoshin_cf_CfMapItemManager_data[112] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+__attribute__((section(".sdata"), used, aligned(8))) const volatile unsigned char __absorb_kyoshin_cf_CfMapItemManager_sdata[48] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x72, 0x65, 0x66, 0x00,
+    0x72, 0x65, 0x66, 0x00, 0x69, 0x74, 0x6D, 0x3F, 0x49, 0x44, 0x00, 0x00,
+    0x69, 0x74, 0x6D, 0x3F, 0x50, 0x65, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfMapItemManager_rodata[168] = {
+    0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x49,
+    0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00, 0x00,
+    0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x4d, 0x61, 0x70, 0x49, 0x74, 0x65,
+    0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00, 0x00, 0x00, 0x00,
+    0x70, 0x6f, 0x73, 0x58, 0x00, 0x70, 0x6f, 0x73, 0x59, 0x00, 0x70, 0x6f,
+    0x73, 0x5a, 0x00, 0x52, 0x61, 0x64, 0x69, 0x75, 0x73, 0x00, 0x73, 0x6e,
+    0x61, 0x70, 0x00, 0x70, 0x6f, 0x70, 0x4e, 0x75, 0x6d, 0x00, 0x6d, 0x61,
+    0x70, 0x49, 0x44, 0x00, 0x70, 0x6f, 0x70, 0x54, 0x69, 0x6d, 0x65, 0x00,
+    0x77, 0x74, 0x72, 0x54, 0x79, 0x70, 0x65, 0x00, 0x71, 0x75, 0x65, 0x73,
+    0x74, 0x49, 0x44, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x53, 0x54,
+    0x46, 0x4c, 0x47, 0x00, 0x67, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x49,
+    0x44, 0x00, 0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x49, 0x4e, 0x00,
+    0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x41, 0x58, 0x00, 0x65, 0x5f,
+    0x72, 0x65, 0x70, 0x6f, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfMapItemManager_sdata2[112] = {
+    0x00, 0x00, 0x00, 0x00, 0x3c, 0x23, 0xd7, 0x0a, 0x42, 0x34, 0x00, 0x00,
+    0x42, 0x22, 0xf9, 0x83, 0x3f, 0x80, 0x00, 0x00, 0x41, 0xf0, 0x00, 0x00,
+    0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x80, 0x00, 0x00, 0x00, 0x42, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x61, 0x00, 0x00,
+    0x42, 0xc8, 0x00, 0x00, 0x47, 0x1c, 0x40, 0x00, 0x42, 0x48, 0x00, 0x00,
+    0x46, 0xaf, 0xc8, 0x00, 0x3f, 0xc0, 0x00, 0x00, 0x40, 0x10, 0x00, 0x00,
+    0x3f, 0x19, 0x99, 0x9a, 0x40, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x3f, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0x80, 0x00, 0x00,
+    0x41, 0xf0, 0x00, 0x00
+};
+
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
-
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include <math.h>
 #include "monolib/math.hpp"
@@ -25,135 +63,86 @@ extern char lbl_eu_80503390[];
 
 extern char lbl_eu_806640C0[];
 extern char lbl_eu_806640D0[];
+extern float lbl_eu_80667780;
+extern float lbl_eu_80667784;
+extern float lbl_eu_80667788;
+extern float lbl_eu_8066778C;
+extern float lbl_eu_80667790;
+extern float lbl_eu_80667794;
+extern float lbl_eu_80667798;
+extern double lbl_eu_806677A0;
+extern float lbl_eu_806677A8;
+extern double lbl_eu_806677B0;
+extern float lbl_eu_806677B8;
+extern float lbl_eu_806677BC;
+extern float lbl_eu_806677C0;
+extern float lbl_eu_806677C4;
+extern float lbl_eu_806677C8;
+extern float lbl_eu_806677CC;
+extern float lbl_eu_806677D0;
+extern float lbl_eu_806677D4;
+extern float lbl_eu_806677E4;
+extern float lbl_eu_806677E8;
+extern float lbl_eu_806677EC;
+extern double lbl_eu_806677F0;
+extern double lbl_eu_806677F8;
 
-// ---------------------------------------------------------------------------
-// Type context for the field map item manager (retail symbol names).
-//
-// The manager's item array starts at object offset 0x00 and overlaps the
-// vtable pointer: slot 0 is never stored into (mCount is 1-based), so the
-// vtable stays intact.  Each slot is a 0x1C-byte CfMapItem record.
-// ---------------------------------------------------------------------------
 
-// C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* func_802B262C();
-extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B1EC(void* file);
-extern "C" u32 func_8003B41C(void* file);
-// getBdatStringColumnValue comes from kyoshin/code_801862C0.hpp (harness_catalog).
-extern "C" u32 func_8009CF8C(u32 index);
-extern "C" void func_802808AC(s32 mode);
 
-// Cross-TU imports for func_801742D4 (mangled retail symbols; headers are
-// outside this session's writable scope).
-extern "C" bool func_80083118__Q22cf13CfGameManagerFv(s32 self);
-extern "C" void setInputMaskByAmount__Q22cf13CfGameManagerFv(int self);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);  // int (not s32=long): must match CfObjectImplMove.hpp exactly
-// These CfGameManager helpers ignore their incoming r3 in retail; they are
-// declared argument-less so MWCC leaves the caller's r3 untouched (matching
-// the stale-register chain in the retail asm).
-extern "C" int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
-extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
-extern "C" int isSceneReadyForInput__Q22cf13CfGameManagerFv();
-extern "C" void* func_8016FE34(void* obj);  // void* form matches the harness-chain header decl
-extern "C" bool func_800FF8B0();
-extern "C" bool func_80251550();
-extern "C" void* func_801586D4(unsigned short id);
-extern "C" bool func_802B37F4(u32 handle);
-extern "C" void* func_801351C4(int idx);
-extern "C" void func_8009D018(unsigned long index, unsigned long value);
-extern "C" int func_80140E00(int arg1, int arg2, int arg3, int arg4);
-extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(unsigned long a, unsigned long b, unsigned long c, unsigned long d, float e);
-// Extra imports for func_80173CA0.
-extern "C" int CfRes_getD80Flag();
-extern "C" u32 func_8016DF2C();
-extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
-extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 cond);
-extern "C" int func_8020971C(u16 id);
-extern "C" u32 func_802B2894(u8* self, const u32* src, u16 value);
-
-// sdata2 constants used by func_80173CA0's range thresholds.
-extern char lbl_eu_806677B8[];
-extern char lbl_eu_806677BC[];
-extern char lbl_eu_806677C0[];
-extern char lbl_eu_806677C4[];
-extern char lbl_eu_806677C8[];
-extern char lbl_eu_806677CC[];
-extern char lbl_eu_806677D0[];
-extern char lbl_eu_806640A8[];   // bdat table handle
-extern char lbl_eu_806677D4[];
-extern char lbl_eu_806677D8[];
-extern char lbl_eu_80667790[];
-
-// func_80174C98 / func_80174B4C: single unified decls live in
-// kyoshin/cf/CfMapItemManager.hpp (owner header).
-#include "kyoshin/cf/CfMapItemManager.hpp"
-
-// Read-only view of the player object up to the position getter at vtable
-// slot 0xAC (returns ml::CVec3*).
-class CfPlayerPosView {
-public:
-    virtual void _v000();
-    virtual void _v004();
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual ml::CVec3* getPos();  // vtable +0xAC
+union BdatCell {
+    u32 raw;
+    u8 b;
+    s16 s;
+    u16 u;
 };
 
-// External data (retail linker symbols)
-extern char lbl_eu_80664298[];
-extern char lbl_eu_80664184[];
-extern char lbl_eu_80667780[];
-extern char lbl_eu_80667794[];
-extern char lbl_eu_806677A8[];
-extern char lbl_eu_806677B0[];
-extern char lbl_eu_806677E8[];
-extern char lbl_eu_806677E4[];
-extern char lbl_eu_806677EC[];
-extern char lbl_eu_806677F0[];
-extern char lbl_eu_805033C0[];
+extern "C" {
+void func_800A3B24(ml::CVec3* out, int seed);
+int func_800A7094(ml::CVec3* a, ml::CVec3* b, int c, float d, float e);
+void* func_8003AA34();
+u32 func_8003B41C(void* p);
+u32 func_8003B1EC(void* p);
+u32 func_8009CF8C(u32 v);
+void func_8009D018(u32 v, u32 w);
+u32 func_8016DF2C();
+void* func_8016FE34(void* p);
+int func_800FF8B0();
+int func_80251550();
+int func_80083118__Q22cf13CfGameManagerFv(int v);
+int func_8020971C(int v);
+u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
+u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 v);
+int isAnyFieldFlagSet__Q22cf13CfGameManagerFv();
+int isSceneActive__Q22cf13CfGameManagerFv();
+int isSceneReadyForInput__Q22cf13CfGameManagerFv();
+void func_802808AC(int v);
+void* func_801586D4(int v);
+void func_801351C4(int v);
+int func_80140E00(int a, int b, int c, int d);
+void setInputMaskByAmount__Q22cf13CfGameManagerFv(u32 v);
+void CfRes_getD80Flag();
+void func_802B37F4(u32 h);
+u32 func_802B2894(u8* a, u32* b, int c);
+void* getPlayer__Q22cf13CfGameManagerFi(int idx);
+}
 
-// Plain float triple so the record union stays trivial (MWCC rejects
-// nontrivial class members in unions).
+extern u32 lbl_eu_80663E24;
+
+extern "C" {
+extern char lbl_eu_80503334[];
+extern char lbl_eu_80503390[];
+extern char lbl_eu_805033A8[];
+extern char lbl_eu_805316E8[];
+}
+
+
+
+
+// External data (retail linker symbols)
+extern u8 lbl_eu_80664298;
+extern u32 lbl_eu_80664184;
+
 struct CfMapItemPos {
     f32 x, y, z;
 };
@@ -208,10 +197,7 @@ struct MapItemBuffer {
 //       +0x10 func_80173894  +0x14 func_801738A4
 namespace cf {
 
-struct CfMapItemManagerVtbl {
-    void* mSlots[6];
-};
-extern CfMapItemManagerVtbl lbl_eu_805316F8;
+extern "C" char lbl_eu_805316F8[];
 
 // novtable: the retail .data holds the vtables (split1.s); this TU must not
 // emit its own. Object layout: vptr @0, mItems @+4, counts @+0x3804/06
@@ -228,15 +214,15 @@ public:
     u16 field_3806;            // +0x3806 active-item count
 
     // Overlay on the vptr so ctors can write the retail table label.
-    CfMapItemManagerVtbl*& vtbl() {
-        return *reinterpret_cast<CfMapItemManagerVtbl**>(this);
+    void** vtbl() {
+        return reinterpret_cast<void**>(this);
     }
 
     // Member ctor: the mItems element constructors produce retail's
     // array-initialization loop; kept inline so the extern "C" wrapper below
     // carries the verbatim retail linker name.
     CfMapItemManager() {
-        vtbl() = &lbl_eu_805316F8;
+        *vtbl() = lbl_eu_805316F8;
         mCount = 0;
         field_3806 = 0;
         memset(mItems, 0, 0x3800);
@@ -276,6 +262,7 @@ extern "C" void* __dt__801732F8(void* self, int mode) {
 // Clear every loaded map item (releasing each through the hikari-item
 // manager singleton), then reset the manager's bookkeeping and item array.
 extern "C" void func_802B2938(void* mgr, u32 handle);
+extern "C" void* func_802B262C();
 
 void func_80173338(CfMapItemManager* self) {
     u32 zero = 0;
@@ -295,31 +282,6 @@ void func_80173338(CfMapItemManager* self) {
 // Column-name scratch keys and sdata2 constants used by func_801733C0.
 extern char lbl_eu_80662420[];      // "itm?Per" key (byte 3 rewritten per pick)
 extern char lbl_eu_805033C0[];     // bdat column-name blob
-extern char lbl_eu_80667784[];
-extern char lbl_eu_80667788[];
-extern char lbl_eu_8066778C[];
-extern char lbl_eu_80667798[];
-// lbl_eu_80667790 (line ~70) and lbl_eu_8066A210 come from earlier decls/headers.
-// s16 -> float conversion magic double (0x4330000080000000): defining it lets
-// MWCC's constant pool reuse the retail symbol for the implicit conversions
-// instead of emitting a TU-local @N label (CFloorMap.cpp idiom).
-extern const double lbl_eu_806677A0 = 0x4330000080000000ll;
-
-// Random-angle table filler (monolib scn unit; defining TU code_800A3B24.cpp).
-// Retail call site uses the plain unmangled linker name.
-extern "C" void func_800A3B24(ml::CVec3* out, int seed);
-// Segment ground-probe helper (defining TU code_800A3B24.cpp; retail call site
-// passes a scene-query id as the third argument).
-extern "C" int func_800A7094(ml::CVec3* a, ml::CVec3* b, int query, float f,
-                             float g);
-
-// BDAT cell accessor: raw word in, consumed through its signed/unsigned half.
-union BdatCell {
-    u32 raw;
-    s16 s;
-    u16 u;
-    u8 b;
-};
 
 #pragma push
 #pragma auto_inline off
@@ -846,27 +808,9 @@ struct CBmNode {
     u32* next;
 };
 
-// Loader object reached from func_8016FE34: +4 points at a sub-object whose
-// vtable slot +0x30 returns a pointer to the current flag word.
-class ProbeSub {
-public:
-    virtual void p000();
-    virtual void p004();
-    virtual void p008();
-    virtual void p00C();
-    virtual void p010();
-    virtual void p014();
-    virtual void p018();
-    virtual void p01C();
-    virtual void p020();
-    virtual void p024();
-    virtual void p028();
-    virtual void* p030();  // vtable +0x30
-};
-class ProbeObj {
-public:
+struct ProbeObj {
     u8 pad_00[4];
-    ProbeSub* field_4;
+    CtrlPlayerSub4* mField4;
 };
 
 // func_801742D4 - pick-up handling: find the map item under the player,
@@ -888,7 +832,7 @@ void func_801742D4(CfMapItemManager* self) {
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
 
     // Player feet position + small Y offset, fed to the item lookup.
-    ml::CVec3* pp = ((CfPlayerPosView*)pv)->getPos();
+    ml::CVec3* pp = ((cf::CfObject*)pv)->CfObject_UnkVirtualFunc23();
     ml::CVec3 pos;
     pos.x = pp->x;
     pos.y = pp->y;
@@ -922,9 +866,9 @@ void func_801742D4(CfMapItemManager* self) {
         // must fail to abort the pick-up.
         pv = 1;
         ProbeObj* po = (ProbeObj*)loader;
-        u32 flagv = *(u32*)po->field_4->p030();
+        u32 flagv = *po->mField4->vf30();
         if (!func_80174C98(loader, &flagv, 3)) {
-            flagv = *(u32*)po->field_4->p030();
+            flagv = *po->mField4->vf30();
             if (!func_80174C98(loader, &flagv, 4)) pv = 0;
         }
         if (pv != 0) pick = (CfMapItem*)1;
@@ -1156,21 +1100,21 @@ void func_80174B4C(){}
 
 // Source-object interface reached through the holder's +4 member: load-range
 // setup (vtbl +0x20, fixed 0x7c0 limit) followed by per-id load (vtbl +0x18).
-class ICfMapItemLoad {
+class CMapItemLoadView {
 public:
-    virtual void v00();
-    virtual void v01();
-    virtual void v02();
-    virtual void v03();
+    virtual void unk00();
+    virtual void unk04();
+    virtual void unk08();
+    virtual void unk0C();
     virtual void loadId(int id);   // vtbl +0x18
-    virtual void v05();
+    virtual void unk14();
     virtual void beginRange(int limit); // vtbl +0x20
 };
 
 class CfMapItemLoader {
 public:
     u8 pad_00[4];                  // 0x00
-    ICfMapItemLoad* mpLoad;        // 0x04
+    CMapItemLoadView* mpLoad;        // 0x04
 };
 
 void func_80174C24(CfMapItemLoader* self, u32 id) {
@@ -1313,41 +1257,3 @@ void func_801751DC(CfMapMarker* self) {
 #pragma pop
 
 // absorb: retail data (generated)
-__declspec(section ".rodata") char lbl_eu_80503390[0x17] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
-__declspec(section ".rodata") char lbl_eu_805033A8[0x15] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x4d, 0x61, 0x70, 0x49, 0x74, 0x65, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x00};
-__declspec(section ".rodata") char lbl_eu_805033C0[0x78] = {0x70, 0x6f, 0x73, 0x58, 0x00, 0x70, 0x6f, 0x73, 0x59, 0x00, 0x70, 0x6f, 0x73, 0x5a, 0x00, 0x52, 0x61, 0x64, 0x69, 0x75, 0x73, 0x00, 0x73, 0x6e, 0x61, 0x70, 0x00, 0x70, 0x6f, 0x70, 0x4e, 0x75, 0x6d, 0x00, 0x6d, 0x61, 0x70, 0x49, 0x44, 0x00, 0x70, 0x6f, 0x70, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x77, 0x74, 0x72, 0x54, 0x79, 0x70, 0x65, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x44, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x53, 0x54, 0x46, 0x4c, 0x47, 0x00, 0x67, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x49, 0x44, 0x00, 0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x49, 0x4e, 0x00, 0x53, 0x5f, 0x46, 0x4c, 0x47, 0x5f, 0x4d, 0x41, 0x58, 0x00, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805316C0[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805316D0[0x18] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805316E8[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805316F8[0x18] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char jumptable_eu_80531710[0x20] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662410[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662418[0x4] = {0x72, 0x65, 0x66, 0x00};
-__declspec(section ".sdata") char lbl_eu_8066241C[0x4] = {0x72, 0x65, 0x66, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662420[0x7] = {0x69, 0x74, 0x6d, 0x3f, 0x49, 0x44, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662428[0x8] = {0x69, 0x74, 0x6d, 0x3f, 0x50, 0x65, 0x72, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662430[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata") char lbl_eu_80662438[0x8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80667780[0x4] = {0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80667784[0x4] = {0x3c, 0x23, 0xd7, 0x0a};
-__declspec(section ".sdata2") char lbl_eu_80667788[0x4] = {0x42, 0x34, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_8066778C[0x4] = {0x42, 0x22, 0xf9, 0x83};
-__declspec(section ".sdata2") char lbl_eu_80667790[0x4] = {0x3f, 0x80, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80667794[0x4] = {0x41, 0xf0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80667798[0x4] = {0x3f, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677A0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677A8[0x4] = {0x42, 0x70, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677B0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677B8[0x4] = {0x45, 0x61, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677BC[0x4] = {0x42, 0xc8, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677C0[0x4] = {0x47, 0x1c, 0x40, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677C4[0x4] = {0x42, 0x48, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677C8[0x4] = {0x46, 0xaf, 0xc8, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677CC[0x4] = {0x3f, 0xc0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677D0[0x4] = {0x40, 0x10, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677D4[0x4] = {0x3f, 0x19, 0x99, 0x9a};
-__declspec(section ".sdata2") char lbl_eu_806677D8[0x8] = {0x40, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677E0[0x4] = {0x3f, 0x80, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677E4[0x4] = {0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677E8[0x4] = {0x3f, 0x80, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806677EC[0x4] = {0x41, 0xf0, 0x00, 0x00};

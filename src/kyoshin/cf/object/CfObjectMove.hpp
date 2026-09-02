@@ -2,8 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
-#include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 namespace cf {
 class CtrlNpc;
@@ -42,7 +41,7 @@ extern "C" void func_8009377C(cf::CtrlNpc* self, u32 param);
 extern "C" int func_80094D1C(const cf::CtrlNpc* self);
 // Region-library helpers (0x804B0xxx): attach/detach a region object to the
 // shared manager global below. CfGimmickLock.hpp also declares these but is
-// not included here (its createBattleActor return type conflicts with the
+// not included here (its func_800817BC return type conflicts with the
 // CfGameManager unity header). func_804B0924 is the +0x60C region
 // sub-object ctor called from the CfObjectMove ctor.
 extern "C" void func_804B0924(void* region);
@@ -63,7 +62,7 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // CfGameManager resource loader (defined in CfGameManagerUnityHelpers.hpp as
 // extern "C" with Unk8187CData* return; declared void* here to avoid pulling
 // that unity-TU header into this TU).
-extern "C" void* createEffectForPlayer__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
+extern "C" void* func_80081900__Q22cf13CfGameManagerFv(u32 first, u32 value, u32 resource);
 
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (func_800BED6C / func_800BEE08)
@@ -72,8 +71,10 @@ extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the func_800BC
 // extern so the type agrees with CSystemWindow.hpp and the .sbss definition in
 // CUICfManager.cpp; reads that must stay separate use explicit volatile casts
 // in CfObjectMove.cpp (retail loads it twice there - see the double-lwz note).
+extern u32 lbl_eu_80663E24;
 extern u16 lbl_eu_80663E42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 lbl_eu_80663E44;
+extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the func_80496288 time query
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
@@ -96,6 +97,7 @@ extern const float lbl_eu_80666AB4;   // CfObject_UnkVirtualFunc5 movement-rate 
 // threshold, lbl_eu_80666AD8 the sum-vector Y offset.
 extern const float lbl_eu_80666AD4;
 extern const float lbl_eu_80666AD8;
+extern const float lbl_eu_8066A208;   // ml::epsilon (sdata2)
 // Movement constants for func_800BC4CC: lbl_eu_80666A98 is the squared-
 // distance threshold, lbl_eu_80666A9C the fallback distance, lbl_eu_80666AA0
 // the addend applied when the camera/player distance check fails.
@@ -120,6 +122,7 @@ extern const float lbl_eu_80666ACC;
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md §2).
+extern "C" f32 func_80496288(void* scene);
 // Minimal bdat imports (CfBdat.hpp cannot be included here: its
 // getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
 // The static-member forms keep the retail mangled reloc names.
@@ -127,7 +130,7 @@ namespace cf {
 class CfBdat {
 public:
     static u32 func_801422A8(u32 param1);
-    static const char* getBdatStringEntry(u16 index);
+    static const char* func_801424A8(u16 index);
     static void resetMapBdatFileDataPointers();
 };
 }  // namespace cf
@@ -150,9 +153,7 @@ extern "C" void func_8004B4A4(void* target, f32 value);
 // CfObject member; the retail symbol is Fv but the body reads r4 as a
 // position vector). extern "C" keeps the call-site reloc at the unmangled
 // retail name (CfObject_UnkVirtualFunc26 forwards its hidden r4 through).
-extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self,
-                                                           ml::CVec3* pos,
-                                                           float scale);
+extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(cf::CfObject* self, const ml::CVec3* vec);
 // Base +0x178 forced-name implementation (defined in CfObjectModel.cpp as the
 // CfObjectModel member; the retail symbol is Fv). CfObjectModel_UnkVirtualFunc1
 // (CfObjectMove) calls it before tearing down its own state.
@@ -180,10 +181,10 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 extern "C" int CfRes_getD80Flag();
 extern "C" void* func_80496264(void* obj, int index);
 extern "C" int func_8007560C();
-extern "C" bool isSceneLoading__Q22cf13CfGameManagerFv();
+extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 class UnkClass_800821F8;
-extern "C" UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv();
+extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
 // Region-library helper used by func_800BC4CC (region, target, flags, dist).
 extern "C" int func_804B192C(void* region, void* target, int arg2, int arg3, f32 dist);
 // +0x98 sub-object flag query (CfObjectModel.cpp, retail unmangled name) used
@@ -217,7 +218,7 @@ extern "C" void func_80484E5C(void* self, f32 value);
 // call relocs unmangled).
 extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
-// Enemy-state query (mangled global C++ symbol getEffOwner____FPv; defined
+// Enemy-state query (mangled global C++ symbol func_800AD860__FPv; defined
 // outside this repo's src tree) used by func_800BC9EC.
 void* func_800AD860(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
@@ -244,7 +245,7 @@ extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 
 // Retail unmangled import used by the CfObjectMove wrappers: voice-request
 // helper (defined in kyoshin/cf/voice/CCharVoice.cpp). The CCharVoice member
-// declaration takes three args; retail requestVoice forwards only `this`
+// declaration takes three args; retail func_800BE898 forwards only `this`
 // (addi r3,+0x28; b), so a one-arg C-ABI form is declared here to
 // reproduce the call site exactly.
 extern "C" bool func_802A109C(void* self);
@@ -286,7 +287,7 @@ extern "C" void func_8015BD24(void* self, u32 param);
 extern "C" void func_8015C214(void* self, void* p);
 extern "C" bool func_8015C294(unsigned int* param1, int param2);
 // CCharEffect slot-detach helper (defined in kyoshin/cf/CCharEffect.cpp
-// with (CCharEffect*, CCharEffectVTableIf*); CCharEffect.hpp is not
+// with (CCharEffect*, CCharEffectvtable*); CCharEffect.hpp is not
 // included here, so the canonical typed form is not visible). C linkage
 // keeps the call-site reloc at the plain retail name (same scheme as the
 // func_8015C074 family above).
@@ -324,10 +325,8 @@ extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 // +0xC8 target ctor (retail 0x8005A3FC, defined in
 // kyoshin/cf/CActParamAnimGame.cpp): func_800BD644 constructs the target
-// with the owning CfObjectMove as the parent. Returns the object pointer
-// (MWCC ctor ABI keeps this in r3): declaring void forces func_800BD644
-// to keep the alloc result alive across the call in a callee-saved reg.
-extern "C" void* __ct__8005A3FC(void* self, void* parent);
+// with the owning CfObjectMove as the parent.
+extern "C" void __ct__8005A3FC(void* self, void* parent);
 // Model sub-object helper used by func_800BD644's tail (defined in the
 // monolib scene library, same family as func_804838DC in
 // CfObjectModel.hpp).
@@ -378,7 +377,7 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
         virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
         virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
-        virtual void CfObjectMove_UnkVirtualFunc6();  //0x1DC
+        virtual void CfObjectMove_UnkVirtualFunc6(u32 arg);  //0x1DC
         virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
         virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
         virtual int CfObjectMove_UnkVirtualFunc9();   //0x1E8 (retail returns int: 1 or the CtrlNpc action-advance query)
@@ -387,11 +386,11 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
         virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
         virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
-        virtual int CfObjectMove_UnkVirtualFunc15(); //0x200
+        virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
         virtual void CfObjectMove_UnkVirtualFunc16(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
-        virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
-        virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
-        virtual void CfObjectMove_UnkVirtualFunc19(); //0x210
+        virtual void CfObjectMove_UnkVirtualFunc17(u32 arg); //0x208
+        virtual void CfObjectMove_UnkVirtualFunc18(u32 flag); //0x20C
+        virtual int CfObjectMove_UnkVirtualFunc19(u32 flag); //0x210
         virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
         virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
         virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
@@ -442,21 +441,21 @@ namespace cf {
     void CfObjectModel_UnkVirtualFunc1();
     void CfObjectModel_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc5();
-    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc46(void* arg);
     void CfObject_UnkVirtualFunc47();
     void CfObject_UnkVirtualFunc49();
     void CfObject_UnkVirtualFunc64(int flag);
     void CfObject_UnkVirtualFunc65();
-    void CfObject_UnkVirtualFunc19(const ml::CVec3* vec);
-    void CfObject_UnkVirtualFunc22(const ml::CVec3* vec);
-    void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale);
-    void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount);
+    void CfObject_UnkVirtualFunc19();
+    CfObjectMove* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc26(u32 value, float amount);
     ml::CVec3* CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);
-    void CfObject_UnkVirtualFunc30();
+    void CfObject_UnkVirtualFunc30(float value);
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc33(float amount);
-    void CfObject_UnkVirtualFunc13();
+    int CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57(float value);
     void* CObjectParam_UnkVirtualFunc2();
     void* CfObject_UnkVirtualFunc14(float value);
@@ -466,11 +465,11 @@ namespace cf {
     void CfObjectModel_UnkVirtualFunc18();
     bool CfObject_UnkVirtualFunc9();
     void CfObject_UnkVirtualFunc10();
-    void CfObject_UnkVirtualFunc61();
+    void CfObject_UnkVirtualFunc61(u32 a, u32 b);
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
     void CfObject_UnkVirtualFunc66(int);
-    void CfObjectModel_UnkVirtualFunc19();
+    void CfObjectModel_UnkVirtualFunc19(int flag);
     void* CfObjectModel_UnkVirtualFunc6(void* arg);
     void CfObject_UnkVirtualFunc37();
     void CfObject_UnkVirtualFunc38();
@@ -482,7 +481,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc70(float value);
     int CfObject_UnkVirtualFunc50();
     int CfObject_UnkVirtualFunc51();
-    void CfObject_UnkVirtualFunc60();
+    float CfObject_UnkVirtualFunc60();
     void CfObject_UnkVirtualFunc29(float value);
     void setMoveSpeed(float value);
     void resetMoveSpeed();
@@ -504,15 +503,10 @@ namespace cf {
     void setBit6c9(unsigned long bit);
     cf::CfObjectMove* testFlag8();
     };
-    // Vtable proxy for calling cf-chain vtable slot +0xC8 as a float-taking
+    // vtable proxy for calling cf-chain vtable slot +0xC8 as a float-taking
     // virtual (retail CfObject_UnkVirtualFunc33 tail-calls it with a scaled
     // value; the base header declares the slot void). Extends the +0xB4
     // proxy; dummy slots pin the offset.
-    class CfObjectMoveVtC8 : public CfObjectVtB4 {
-    public:
-        virtual void mB8(); virtual void mBC(); virtual void mC0(); virtual void mC4();
-        virtual void mC8(float value);  // vtable +0xC8
-    };
     // Layout of the object behind CfObjectMove::mTargetC4 (fields written by
     // CfObject_UnkVirtualFunc4 / 14 / 57 and read by 15 / 17).
     struct CfObjectMoveTargetC4 {
@@ -540,124 +534,28 @@ namespace cf {
         u8 _pad[0xC0];       // 0x00-0xBF
         u16 field_C0;        // 0xC0 action id
     };
-    // Vtable proxy for the CfObjectMove mTargetC4 object's slot +0x80: retail
+    // vtable proxy for the CfObjectMove mTargetC4 object's slot +0x80: retail
     // CfObject_UnkVirtualFunc13 tail-calls it with a 0 arg and returns its int
     // result (the null path returns 1). Dummy slots pin the offset.
-    class CfObjectMoveC4Vt80 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
-        virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
-        virtual void m78(); virtual void m7C();
-        virtual int m80(int arg);  // vtable +0x80
-    };
-    // Vtable proxy for the CfObjectModel+0x98 sub-object's slot +0x64 with an
+    // vtable proxy for the CfObjectModel+0x98 sub-object's slot +0x64 with an
     // explicit int arg: retail func_800BE0F8 forwards a 4-bit flag extracted
-    // from mFlags6C9 (the base CfObjectModelSub98Vt proxy declares the slot
+    // from mFlags6C9 (the base CfObjectModelSub98vt proxy declares the slot
     // no-arg). Dummy slots pin the offset.
-    class CfObjectMoveSub98Vt64 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C(); virtual void m60();
-        virtual void m64(int arg);  // vtable +0x64
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x108
+    // vtable proxy for calling the CfObjectMove slot +0x108
     // (CfObject_UnkVirtualFunc46) with an explicit pointer arg (retail
     // CfObject_UnkVirtualFunc47 dispatches the newly constructed target
     // through it; the base header declares the slot Fv). Dummy slots pin
-    // the offset (same scheme as CfObjectMoveC4Vt80).
-    class CfObjectMoveVt108 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
-        virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
-        virtual void m78(); virtual void m7C(); virtual void m80(); virtual void m84();
-        virtual void m88(); virtual void m8C(); virtual void m90(); virtual void m94();
-        virtual void m98(); virtual void m9C(); virtual void mA0(); virtual void mA4();
-        virtual void mA8(); virtual void mAC(); virtual void mB0(); virtual void mB4();
-        virtual void mB8(); virtual void mBC(); virtual void mC0(); virtual void mC4();
-        virtual void mC8(); virtual void mCC(); virtual void mD0(); virtual void mD4();
-        virtual void mD8(); virtual void mDC(); virtual void mE0(); virtual void mE4();
-        virtual void mE8(); virtual void mEC(); virtual void mF0(); virtual void mF4();
-        virtual void mF8(); virtual void mFC(); virtual void m100(); virtual void m104();
-        virtual void m108(void* arg);  // vtable +0x108 (CfObject_UnkVirtualFunc46)
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x208 as an int-taking
+    // the offset (same scheme as CfObjectMoveC4vt80).
+    // vtable proxy for calling the CfObjectMove slot +0x208 as an int-taking
     // virtual (retail CfObjectMove_UnkVirtualFunc22 loops a counter through
     // it; the base header declares the slot Fv). Inherits CfObjectModel so
     // the new virtuals land in the CfObjectMove vtable range; the dummy slots
     // pin 0x1C8..0x204 and m208 lands at +0x208.
-    class CfObjectMoveVt208 : public CfObjectModel {
-    public:
-        virtual void m1C8(); virtual void m1CC(); virtual void m1D0(); virtual void m1D4();
-        virtual void m1D8(); virtual void m1DC(); virtual void m1E0(); virtual void m1E4();
-        virtual void m1E8(); virtual void m1EC(); virtual void m1F0(); virtual void m1F4();
-        virtual void m1F8(); virtual void m1FC(); virtual void m200(); virtual void m204();
-        virtual void m208(int arg);  // vtable +0x208
-    };
-    // Vtable proxies for calling CfObjectMove vtable slots as arg-carrying
-    // virtuals (retail CfObject_UnkVirtualFunc37 dispatches +0x1D0 with a 0/1
-    // flag and +0x18C with its hidden r4; the base header declares those slots
-    // no-arg). Dummy slots pin the offsets (same scheme as CfObjectMoveVt208).
-    class CfObjectMoveVt1D0 : public CfObjectModel {
-    public:
-        virtual void m1C8(); virtual void m1CC();
-        virtual void m1D0(int arg);  // vtable +0x1D0 (CfObjectMove_UnkVirtualFunc3)
-    };
-    class CfObjectMoveVt18C : public CfObjectModel {
-    public:
-        virtual void m178(); virtual void m17C(); virtual void m180(); virtual void m184();
-        virtual u32 m188();  // vtable +0x188 (CfObjectModel_UnkVirtualFunc5 returns a value in retail)
-        virtual void m18C(void* arg);  // vtable +0x18C (CfObjectModel_UnkVirtualFunc6)
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x188 as a
-    // value-returning virtual (retail func_800BD644 queries the model list;
-    // the CfObjectModel-derived proxies land past +0x1C8 because the base
-    // vtable already extends that far). Pins dummies +0x10C..+0x184 after
-    // CfObjectMoveVt108 (last slot +0x108).
-    class CfObjectMoveVt188 : public CfObjectMoveVt108 {
-    public:
-        virtual void m10C(); virtual void m110(); virtual void m114(); virtual void m118();
-        virtual void m11C(); virtual void m120(); virtual void m124(); virtual void m128();
-        virtual void m12C(); virtual void m130(); virtual void m134(); virtual void m138();
-        virtual void m13C(); virtual void m140(); virtual void m144(); virtual void m148();
-        virtual void m14C(); virtual void m150(); virtual void m154(); virtual void m158();
-        virtual void m15C(); virtual void m160(); virtual void m164(); virtual void m168();
-        virtual void m16C(); virtual void m170(); virtual void m174(); virtual void m178();
-        virtual void m17C(); virtual void m180(); virtual void m184();
-        virtual u32 m188();  // vtable +0x188
-    };
-    // Vtable proxy for calling a CfObjectMove vtable slot +0x144 with two
+    // vtable proxy for calling a CfObjectMove vtable slot +0x144 with two
     // explicit args (retail CfObject_UnkVirtualFunc39/42 dispatch the bdat
     // result through it; the base header declares CfObject_UnkVirtualFunc61
     // no-arg). Extends the cf-chain sub-object proxy (CObjectParam root,
     // last slot +0xA8); dummy slots pin +0xAC..+0x140.
-    class CfObjectMoveVt144 : public CfObjectModelSub98Vt {
-    public:
-        virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
-        virtual void mBC(); virtual void mC0(); virtual void mC4(); virtual void mC8();
-        virtual void mCC(); virtual void mD0(); virtual void mD4(); virtual void mD8();
-        virtual void mDC(); virtual void mE0(); virtual void mE4(); virtual void mE8();
-        virtual void mEC(); virtual void mF0(); virtual void mF4(); virtual void mF8();
-        virtual void mFC(); virtual void m100(); virtual void m104(); virtual void m108();
-        virtual void m10C(); virtual void m110(); virtual void m114(); virtual void m118();
-        virtual void m11C(); virtual void m120(); virtual void m124(); virtual void m128();
-        virtual void m12C(); virtual void m130(); virtual void m134(); virtual void m138();
-        virtual void m13C(); virtual void m140();
-        virtual void m144(u32 a, u32 b);  // vtable +0x144 (CfObject_UnkVirtualFunc61)
-    };
     // View of the CfObjectModel field_0x90 area: retail
     // CfObject_UnkVirtualFunc38 clears the +0x94 word. Cast on `self` with
     // the full offset pad, so field_94 lands at 0x94 (same scheme as
@@ -710,36 +608,15 @@ namespace cf {
     };
     // Base pad that places the vptr at object+0x10 (retail double-hop reads
     // the vtable via lwz r12, 0x10(r3); same scheme as the file-scope
-    // ObjVtIf view in CfObjectMove.cpp).
-    class CfObjectMoveSubB0Shift {
-    public:
-        u8 _pad[0x10];
-    };
-    // Vtable proxy for the +0xB0 sub-object's slot +0x4C with an explicit
+    // ObjReal view in CfObjectMove.cpp).
+    // vtable proxy for the +0xB0 sub-object's slot +0x4C with an explicit
     // arg (retail CfObject_UnkVirtualFunc38 forwards its hidden r4; the
-    // file-scope ObjVtIf view declares the slot no-arg, so this typed slot
+    // file-scope ObjReal view declares the slot no-arg, so this typed slot
     // is a separate class). Dummy slots pin the offset.
-    class CfObjectMoveSubB0Vt4C : public CfObjectMoveSubB0Shift {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void vf14();
-        virtual void vf18(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void vf28(); virtual void vf2C(); virtual void vf30(); virtual void vf34();
-        virtual void _v038(); virtual void _v03C(); virtual void vf40(); virtual void _v044();
-        virtual void vf48();
-        virtual void _v04C(u32 arg);  // vtable +0x4C
-    };
-    // Vtable proxy for the +0xB0 sub-object's slot +0x3C with two explicit
+    // vtable proxy for the +0xB0 sub-object's slot +0x3C with two explicit
     // args (retail CfObject_UnkVirtualFunc39/42 forward the bdat result and
-    // a 0/1 flag; the file-scope ObjVtIf view declares the slot no-arg).
-    // Dummy slots pin the offset (same scheme as CfObjectMoveSubB0Vt4C).
-    class CfObjectMoveSubB0Vt3C : public CfObjectMoveSubB0Shift {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void vf14();
-        virtual void vf18(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void vf28(); virtual void vf2C(); virtual void vf30(); virtual void vf34();
-        virtual void _v038();
-        virtual void m3C(u32 a, u32 b);  // vtable +0x3C
-    };
+    // a 0/1 flag; the file-scope ObjReal view declares the slot no-arg).
+    // Dummy slots pin the offset (same scheme as CfObjectMoveSubB0Real4C).
     // View of the CfObjectMove flags word at +0x68 (CfObject_UnkVirtualFunc5
     // clears bits through this separate view type so MWCC's alias analysis
     // treats the clamp-path clear as a fresh read - retail reloads mFlags68
@@ -748,55 +625,28 @@ namespace cf {
         u8 _pad[0x68];
         u32 flags68;  // 0x68
     };
-    // Vtable proxy for the +0x98 sub-object's slot +0x48 with an explicit
+    // vtable proxy for the +0x98 sub-object's slot +0x48 with an explicit
     // float arg (retail func_800BC8D8 forwards the movement value to the
     // slot; the CObjectParam base header declares it no-arg). Dummy slots
-    // pin the offset (same scheme as CfObjectMoveSub98Vt64).
-    class CfObjectMoveSub98Vt48 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(float value);  // vtable +0x48
-    };
-    // Vtable proxy for the +0x98 sub-object's slot +0x50 with an explicit
+    // pin the offset (same scheme as CfObjectMoveSub98vt64).
+    // vtable proxy for the +0x98 sub-object's slot +0x50 with an explicit
     // int arg (retail func_800BE33C forwards its flag to the slot; the
     // CObjectParam base header declares it no-arg). Dummy slots pin the
-    // offset (same scheme as CfObjectMoveSub98Vt64).
-    class CfObjectMoveSub98Vt50 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C();
-        virtual void m50(int flag);  // vtable +0x50
-    };
-    // Vtable proxy for the +0x98 sub-object's slots +0xC4/+0xC8 (the sub's
+    // offset (same scheme as CfObjectMoveSub98vt64).
+    // vtable proxy for the +0x98 sub-object's slots +0xC4/+0xC8 (the sub's
     // retail vtable is the CModelDisp family layout): CfObject_UnkVirtualFunc45
     // stops the slot's animation model (mC8, one arg) then re-arms it with
-    // the name and a 0 flag (mC4). Extends CfObjectModelSub98Vt (pins +0x54
+    // the name and a 0 flag (mC4). Extends CfObjectModelSub98vt (pins +0x54
     // .. +0xA8); dummy slots pin +0xAC..+0xC0.
-    class CfObjectMoveSub98VtC4 : public CfObjectModelSub98Vt {
-    public:
-        virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
-        virtual void mBC(); virtual void mC0();
-        virtual int mC4(u8* res, u32 bdat, u32 arg);  // vtable +0xC4 (real arity: res ptr, bdat string, flag; returns int)
-        virtual void mC8(void* animModel);  // vtable +0xC8
-    };
-    // Vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning
+    // vtable view of the CfObject-family sub-object at CfObjectModel+0x38
+    // (mSubObj38): slots 0x8 (release-with-delete-flag), 0x2C (attach parent),
+    // 0xA0 (activate) and 0xAC (release) are called by
+    // CfObject_UnkVirtualFunc6 / CfObject_UnkVirtualFunc8. Dummy slots pin
+    // the offsets (MWCC puts the Nth declared virtual at (N+1)*4).
+    // vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning
     // query): retail CfObjectMove_UnkVirtualFunc21 calls it, tests the
-    // result, then re-calls it. CfObjectSub38If stops at +0xAC, so dummy
+    // result, then re-calls it. CfObjectSub38 stops at +0xAC, so dummy
     // slots pin the range up to +0xE4.
-    class CfObjectSub38VtE4 : public CfObjectSub38If {
-    public:
-        virtual void _fB0(); virtual void _fB4(); virtual void _fB8(); virtual void _fBC();
-        virtual void _fC0(); virtual void _fC4(); virtual void _fC8(); virtual void _fCC();
-        virtual void _fD0(); virtual void _fD4(); virtual void _fD8(); virtual void _fDC();
-        virtual void _fE0();
-        virtual int _fE4();  // vtable +0xE4
-    };
     // View of the +0xD0 CActParamAnimGame sub-object fields func_800BCFA0
     // touches: owner at +0x4E8, flag word at +0x4EC, speeds at +0x504/+0x50C,
     // and the u16 at +0x530.
@@ -889,127 +739,84 @@ namespace cf {
         u8 _pad[0x2A];          // 0x00-0x29
         u8 field_2A;            // 0x2A
     };
-    // Vtable proxy for the getCameraDataBlock result (dynamic manager): retail
+    // vtable proxy for the func_800821F8 result (dynamic manager): retail
     // func_800BC4CC invokes its slot +0x60 and compares the result to self.
     // Dummy slots pin the offset.
-    class CfDynMgrVt60 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C();
-        virtual void* m60();  // vtable +0x60
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x160 as an
+    // vtable proxy for calling the CfObjectMove slot +0x160 as an
     // int-returning virtual (retail CfObject_UnkVirtualFunc68 returns a value;
     // the base header declares the slot void). Extends the +0x14C proxy;
     // dummy slots pin +0x150..+0x15C.
-    class CfObjectMoveVt160 : public CfObjectVt14C {
-    public:
-        virtual void m150(); virtual void m154(); virtual void m158(); virtual void m15C();
-        virtual int m160();  // vtable +0x160
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x184 as a
+    // vtable proxy for calling the CfObjectMove slot +0x184 as a
     // pointer-returning virtual (retail CfObjectModel_UnkVirtualFunc4 returns
     // a value forwarded to func_8004B624; the base header declares it void).
-    class CfObjectMoveVt184 : public CfObjectMoveVt160 {
-    public:
-        virtual void m164(); virtual void m168(); virtual void m16C(); virtual void m170();
-        virtual void m174(); virtual void m178(); virtual void m17C(); virtual void m180();
-        virtual void* m184();  // vtable +0x184
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x1A4 with an explicit
+    // vtable proxy for calling the CfObjectMove slot +0x1A4 with an explicit
     // float arg (retail func_800BCFA0 passes lbl_eu_80666A94; the base header
     // declares CfObjectModel_UnkVirtualFunc12 no-arg).
-    class CfObjectMoveVt1A4 : public CfObjectMoveVt184 {
-    public:
-        virtual void m188(); virtual void m18C(); virtual void m190(); virtual void m194();
-        virtual void m198(); virtual void m19C(); virtual void m1A0();
-        virtual void m1A4(float value);  // vtable +0x1A4
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x1AC with two explicit
+    // vtable proxy for calling the CfObjectMove slot +0x1AC with two explicit
     // args (retail CfObject_UnkVirtualFunc4 forwards the +0xB4/+0xB8 words;
     // the base header declares CfObjectModel_UnkVirtualFunc14 no-arg).
-    class CfObjectMoveVt1AC : public CfObjectMoveVt1A4 {
-    public:
-        virtual void m1A8();
-        virtual void m1AC(u32 a, u32 b);  // vtable +0x1AC
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0x154 with an explicit
+    // vtable proxy for calling the CfObjectMove slot +0x154 with an explicit
     // int arg (retail func_800BCFA0 passes 1; the header declares
     // CfObject_UnkVirtualFunc65 no-arg). m150 pins +0x150.
-    class CfObjectMoveVt154 : public CfObjectVt14C {
-    public:
-        virtual void m150(int flag);  // vtable +0x150 (CfObject_UnkVirtualFunc64)
-        virtual void m154(int flag);  // vtable +0x154 (CfObject_UnkVirtualFunc65)
-    };
-    // Vtable proxy for calling the CfObjectMove slot +0xA8 with an explicit
+    // vtable proxy for calling the CfObjectMove slot +0xA8 with an explicit
     // position-vector arg (retail func_800BCFA0 passes self+0x3C; the header
     // declares CfObject_UnkVirtualFunc22 no-arg). Dummy slots pin +0x08..+0xA4.
-    class CfObjectMoveVtA8 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
-        virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
-        virtual void m78(); virtual void m7C(); virtual void m80(); virtual void m84();
-        virtual void m88(); virtual void m8C(); virtual void m90(); virtual void m94();
-        virtual void m98(); virtual void m9C(); virtual void mA0(); virtual void mA4();
-        virtual void mA8(const ml::CVec3* vec);  // vtable +0xA8
-    };
-    // Vtable proxy for the +0x98 sub-object's slot +0x4C as a float-returning
+    // vtable proxy for the +0x98 sub-object's slot +0x4C as a float-returning
     // virtual (retail CfObject_UnkVirtualFunc4 compares the result against a
     // constant; the CObjectParam base header declares it BOOL).
-    class CfObjectMoveSub98Vt4C {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48();
-        virtual float m4C();  // vtable +0x4C
-    };
-    // Vtable proxy for the +0x98 sub-object's slot +0x54 as an int-returning
-    // virtual (retail func_800BCFA0 tests the result; the CfObjectModelSub98Vt
+    // vtable proxy for the +0x98 sub-object's slot +0x54 as an int-returning
+    // virtual (retail func_800BCFA0 tests the result; the CfObjectModelSub98vt
     // header declares it void).
-    class CfObjectMoveSub98Vt54 {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50();
-        virtual int m54();  // vtable +0x54
-    };
-    // Vtable proxy for the +0x98 sub-object's slot +0x9C with two explicit
+    // vtable proxy for the +0x98 sub-object's slot +0x9C with two explicit
     // args (retail func_800BCFA0 forwards a 0/1/2 index and 0; the
-    // CfObjectModelSub98Vt header declares it no-arg).
-    class CfObjectMoveSub98Vt9C {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-        virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-        virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-        virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-        virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
-        virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
-        virtual void m78(); virtual void m7C(); virtual void m80(); virtual void m84();
-        virtual void m88(); virtual void m8C(); virtual void m90(); virtual void m94();
-        virtual void m98();
-        virtual void m9C(u32 a, u32 b);  // vtable +0x9C
-    };
-    // Vtable proxy for the +0x7EC target object's slot +0x1C with an explicit
+    // CfObjectModelSub98vt header declares it no-arg).
+    // vtable proxy for the +0x7EC target object's slot +0x1C with an explicit
     // flag + float (retail func_800BCFA0 passes 1 and lbl_eu_8066AF20).
-    class CfObjectMoveVt1C {
-    public:
-        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-        virtual void m18();
-        virtual void m1C(u32 a, f32 b);  // vtable +0x1C
-    };
-}
 
+// Real class for C4 target (replaces CfObjectMoveC4vt80)
+class CfC4Target {
+public:
+    virtual int v80(int arg);
+};
+// Real class for subB0 double-hop (replaces ObjReal / SubB0Real)
+struct CfSubB0Shift2 { char pad[0x10]; };
+class CfSubB0Real : public CfSubB0Shift2 {
+public:
+    virtual void func08();
+    virtual void func0C();
+    virtual void func10();
+    virtual void func14();
+    virtual void func18();
+    virtual void func1C();
+    virtual void func20();
+    virtual void func24();
+    virtual void func28();
+    virtual void func2C();
+    virtual void func30();
+    virtual void func34();
+    virtual void func38();
+    virtual void func3C(u32 a, u32 b);
+    virtual void func40();
+    virtual void func44();
+    virtual void func48();
+    virtual void func4C(u32 arg);
+    virtual void func50();
+    virtual void func54();
+    virtual void func58();
+    virtual void func5C();
+    virtual void func60();
+    virtual void func64();
+    virtual void func68();
+};
+// Real class for DynMgr (replaces CfDynMgrvt60)
+class CfDynMgrReal {
+public:
+    virtual void* mgr60();
+};
+// Real class for 7EC target (replaces CfObjectMovevt1C)
+class Cf7ECTarget {
+public:
+    virtual void v1C(u32 a, f32 b);
+};
+
+}

@@ -17,12 +17,12 @@ class CfCamEvent;
 // on, MWCC prefixes each vtable with offset-to-top + RTTI (slots 0-1), so the
 // virtual at index N sits at vtable slot N+2. Slot 3 dispatches setPos,
 // slot 4 setDir, slot 5 setLookat (see the intf helpers).
-class CfCamIntf {
+class CfCamDispatch {
 public:
-    virtual void v_00();
-    virtual void fn_0x0C(CfCamEvent* ev, void* arg);  // idx 1 -> 0x0C setPos
-    virtual void fn_0x10(CfCamEvent* ev, void* arg);  // idx 2 -> 0x10 setDir
-    virtual void fn_0x14(CfCamEvent* ev, void* arg);  // idx 3 -> 0x14 setLookat
+    virtual void virt00();
+    virtual void setPos(CfCamEvent* ev, void* arg);  // idx 1 -> 0x0C setPos
+    virtual void setDir(CfCamEvent* ev, void* arg);  // idx 2 -> 0x10 setDir
+    virtual void setLookat(CfCamEvent* ev, void* arg);  // idx 3 -> 0x14 setLookat
 };
 
 // 48-byte camera vector block shared between the source object at unk160
@@ -34,7 +34,7 @@ struct CfCamBlock48 {
     f32 unk2C;            // 0x2C
 };
 
-// 0x25C camera body block - shared view used by func_8006A82C to refresh
+// 0x25C camera body block - shared region used by func_8006A82C to refresh
 // the direction/lookat/pos vectors in one pass.
 struct CfCamBody25C {
     ml::CVec3 dir;      // +0x00 (unk25C)
@@ -79,30 +79,30 @@ struct CfCamNodeList {
 // declared in CfCamDirectionIntf.hpp.
 class CfCamEvent {
 public:
-    virtual void v_00();                          // idx 0  -> 0x08
-    virtual void v_01();                          // idx 1  -> 0x0C
-    virtual void v_02();                          // idx 2  -> 0x10
-    virtual void fn_0x14(void* param);            // idx 3  -> 0x14 follow dispatch
-    virtual void v_04();                          // idx 4  -> 0x18
-    virtual ml::CVec3* v_05();                    // idx 5  -> 0x1C returns direction
-    virtual void v_06();                          // idx 6  -> 0x20
-    virtual void v_07();                          // idx 7  -> 0x24
-    virtual void fn_0x28();                       // idx 8  -> 0x28 reset hook
-    virtual void v_09();                          // idx 9  -> 0x2C
-    virtual void v_10();                          // idx 10 -> 0x30
-    virtual void v_11();                          // idx 11 -> 0x34
-    virtual void v_12();                          // idx 12 -> 0x38
-    virtual void v_13();                          // idx 13 -> 0x3C
-    virtual void v_14();                          // idx 14 -> 0x40
-    virtual void v_15();                          // idx 15 -> 0x44
-    virtual void v_16(void* param);               // idx 16 -> 0x48
-    virtual void v_17();                          // idx 17 -> 0x4C
-    virtual void v_18();                          // idx 18 -> 0x50
-    virtual void v_19();                          // idx 19 -> 0x54
-    virtual void v_20();                          // idx 20 -> 0x58
-    virtual void v_21();                          // idx 21 -> 0x5C
-    virtual void v_22();                          // idx 22 -> 0x60
-    virtual void fn_0x64(void* param);            // idx 23 -> 0x64 follow dispatch
+    virtual void virt00();                          // idx 0  -> 0x08
+    virtual void virt01();                          // idx 1  -> 0x0C
+    virtual void virt02();                          // idx 2  -> 0x10
+    virtual void dispatchFollow(void* param);            // idx 3  -> 0x14 follow dispatch
+    virtual void virt04();                          // idx 4  -> 0x18
+    virtual ml::CVec3* virt05();                    // idx 5  -> 0x1C returns direction
+    virtual void virt06();                          // idx 6  -> 0x20
+    virtual void virt07();                          // idx 7  -> 0x24
+    virtual void reset();                       // idx 8  -> 0x28 reset hook
+    virtual void virt09();                          // idx 9  -> 0x2C
+    virtual void virt10();                          // idx 10 -> 0x30
+    virtual void virt11();                          // idx 11 -> 0x34
+    virtual void virt12();                          // idx 12 -> 0x38
+    virtual void virt13();                          // idx 13 -> 0x3C
+    virtual void virt14();                          // idx 14 -> 0x40
+    virtual void virt15();                          // idx 15 -> 0x44
+    virtual void virt16(void* param);               // idx 16 -> 0x48
+    virtual void virt17();                          // idx 17 -> 0x4C
+    virtual void virt18();                          // idx 18 -> 0x50
+    virtual void virt19();                          // idx 19 -> 0x54
+    virtual void virt20();                          // idx 20 -> 0x58
+    virtual void virt21();                          // idx 21 -> 0x5C
+    virtual void virt22();                          // idx 22 -> 0x60
+    virtual void dispatchFollow64(void* param);            // idx 23 -> 0x64 follow dispatch
 
     u32 unk4;                 // 0x04 - flag word
     s32 unk8;                 // 0x08 - cam type id (8/9/10 selects intf)
@@ -150,14 +150,14 @@ public:
 // several of these (e.g. func_80071B78 takes one argument at this call site).
 extern "C" float func_800749AC(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* out);
 extern "C" void func_80074090(void* out);
-extern "C" cf::CfCamIntf* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
+extern "C" cf::CfCamDispatch* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
 extern const f32 lbl_eu_80666268;
 void func_8006BC1C(void* self, int mask);  // clears bits in the 0x04 flag word
 
-// Minimal layout view of CfCamFollow: only the vtable slot (offset 0x00) is
+// Minimal layout region of CfCamFollow: only the vtable slot (offset 0x00) is
 // touched here, to install the camera-event vtable in the factory.
-struct CfCamFollowView {
-    void* vtable;  // 0x00
+struct CfCamFollowSlot {
+    void* table;  // 0x00
 };
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(void* self, void* arg1, void* arg2);
@@ -167,7 +167,7 @@ extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup
 void cleanupMapEffects__Q22cf13CfGameManagerFv();
-extern u8 lbl_eu_80527048[];                          // CfCamEvent vtable label
+extern const volatile unsigned char lbl_eu_80527048[];                          // CfCamEvent vtable label
 
 // Per-frame update (func_8006ACC0) imports.
 extern "C" void stubEmptyE__Q22cf13CfGameManagerFv(u32);

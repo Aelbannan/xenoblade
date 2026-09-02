@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 
 // Forward declarations for the C-linkage imports below.
 class UnkClass_805764CC;
@@ -77,83 +78,22 @@ struct CfGimmickReg {
 // Object spawned by func_8020A6B0 via func_800B20B4.  The vtable is used to
 // invoke slots 0x158 (activate) and 0x9C (set position); field_90 is the
 // spawned/active flag.
-struct CfGimmickObject {
-    void** vtable;              // 0x00
-    u8 gap04[0x90 - 0x04];      // 0x04..0x8F
+struct CfGimmickObject : public cf::CfObject {
+    // CfObject base at 0x00 (vtable + fields to 0x70); tail holds gimmick flag
+    u8 gap70[0x90 - 0x70];      // 0x70..0x8F
     u8 field_90;                // 0x90
+    void CfObject_UnkVirtualFunc2() override {}
+    void CfObject_UnkVirtualFunc4() override {}
+    void CfObject_UnkVirtualFunc7() override {}
+    void CfObject_UnkVirtualFunc8() override {}
+    void CfObject_UnkVirtualFunc19(const ml::CVec3* vec) override { (void)vec; }
+    void CfObject_UnkVirtualFunc66(int flag) override { field_90 = (u8)flag; }
+    void setPos(const CfGimmickVec3* pos) { CfObject_UnkVirtualFunc19((const ml::CVec3*)pos); }
+    void activate(int flag) { CfObject_UnkVirtualFunc66(flag); }
 };
 
-// Sparse virtual interface over CfGimmickObject's vtable (slots +0x9C =
-// setPos, +0x158 = activate).  MWCC vtable slots are shifted +2 for the
-// RTTI/dtor headers, so a method declared at index N dispatches at (N+2)*4:
-// declared 37 -> +0x9C, declared 84 -> +0x158 (same scheme as CfGimmickMgr88).
-class CfGimmickSpawnIf {
-public:
-    virtual ~CfGimmickSpawnIf();                    // declared 0 -> +0x08
-    virtual void d01();  virtual void d02();  virtual void d03();  virtual void d04();
-    virtual void d05();  virtual void d06();  virtual void d07();  virtual void d08();
-    virtual void d09();  virtual void d10();  virtual void d11();  virtual void d12();
-    virtual void d13();  virtual void d14();  virtual void d15();  virtual void d16();
-    virtual void d17();  virtual void d18();  virtual void d19();  virtual void d20();
-    virtual void d21();  virtual void d22();  virtual void d23();  virtual void d24();
-    virtual void d25();  virtual void d26();  virtual void d27();  virtual void d28();
-    virtual void d29();  virtual void d30();  virtual void d31();  virtual void d32();
-    virtual void d33();  virtual void d34();  virtual void d35();  virtual void d36();
-    virtual void setPos(const CfGimmickVec3* pos);  // declared 37 -> +0x9C
-    virtual void d38();  virtual void d39();  virtual void d40();  virtual void d41();
-    virtual void d42();  virtual void d43();  virtual void d44();  virtual void d45();
-    virtual void d46();  virtual void d47();  virtual void d48();  virtual void d49();
-    virtual void d50();  virtual void d51();  virtual void d52();  virtual void d53();
-    virtual void d54();  virtual void d55();  virtual void d56();  virtual void d57();
-    virtual void d58();  virtual void d59();  virtual void d60();  virtual void d61();
-    virtual void d62();  virtual void d63();  virtual void d64();  virtual void d65();
-    virtual void d66();  virtual void d67();  virtual void d68();  virtual void d69();
-    virtual void d70();  virtual void d71();  virtual void d72();  virtual void d73();
-    virtual void d74();  virtual void d75();  virtual void d76();  virtual void d77();
-    virtual void d78();  virtual void d79();  virtual void d80();  virtual void d81();
-    virtual void d82();  virtual void d83();
-    virtual void activate(int flag);                // declared 84 -> +0x158
-};
-
-// Vtable interface over the getPlayer(0) object used by func_80208CC0.
-// Mirrors the CfObject vtable layout, typing the four used slots: +0x74
-// state check (bool), +0xAC target-map position, +0xCC heading angle (f32),
-// +0x160 extra state check (int), plus the raw s32 at +0xC4.  MWCC slots
-// are shifted +2 (RTTI headers), so declared N dispatches at (N+2)*4:
-// 27 -> +0x74, 41 -> +0xAC, 49 -> +0xCC, 86 -> +0x160.
-class CfGimmickPlayerFace {
-public:
-    virtual ~CfGimmickPlayerFace();                 // declared 0 -> +0x08
-    virtual void d01();  virtual void d02();  virtual void d03();  virtual void d04();
-    virtual void d05();  virtual void d06();  virtual void d07();  virtual void d08();
-    virtual void d09();  virtual void d10();  virtual void d11();  virtual void d12();
-    virtual void d13();  virtual void d14();  virtual void d15();  virtual void d16();
-    virtual void d17();  virtual void d18();  virtual void d19();  virtual void d20();
-    virtual void d21();  virtual void d22();  virtual void d23();  virtual void d24();
-    virtual void d25();  virtual void d26();
-    virtual bool d27();                             // declared 27 -> +0x74
-    virtual void d28();  virtual void d29();  virtual void d30();  virtual void d31();
-    virtual void d32();  virtual void d33();  virtual void d34();  virtual void d35();
-    virtual void d36();  virtual void d37();  virtual void d38();  virtual void d39();
-    virtual void d40();
-    virtual CfGimmickVec3* d41();                   // declared 41 -> +0xAC
-    virtual void d42();  virtual void d43();  virtual void d44();  virtual void d45();
-    virtual void d46();  virtual void d47();  virtual void d48();
-    virtual float d49();                            // declared 49 -> +0xCC
-    virtual void d50();  virtual void d51();  virtual void d52();  virtual void d53();
-    virtual void d54();  virtual void d55();  virtual void d56();  virtual void d57();
-    virtual void d58();  virtual void d59();  virtual void d60();  virtual void d61();
-    virtual void d62();  virtual void d63();  virtual void d64();  virtual void d65();
-    virtual void d66();  virtual void d67();  virtual void d68();  virtual void d69();
-    virtual void d70();  virtual void d71();  virtual void d72();  virtual void d73();
-    virtual void d74();  virtual void d75();  virtual void d76();  virtual void d77();
-    virtual void d78();  virtual void d79();  virtual void d80();  virtual void d81();
-    virtual void d82();  virtual void d83();  virtual void d84();  virtual void d85();
-    virtual int d86();                              // declared 86 -> +0x160
-
-    u8 pad04[0xC4 - 0x04];          // 0x04..0xC3
-    s32 field_C4;                   // 0xC4
-};
+// Player object helpers are provided by cf::CfObject / cf::CfObjectMove
+// (vtable slots +0x74, +0xAC, +0xCC, +0x160 and raw field +0xC4).
 
 // Circular object list returned by func_800B6BC8 / func_800B6BEC.  The head
 // node stored at +0x04 is the sentinel; real nodes are reached from head->next
@@ -177,33 +117,9 @@ struct CfPlayerSub3F60 {
 struct CfPlayerSpot {
     void** vtable;              // 0x00 (object at player+0x3E9C; slot 0xAC yields the target)
 };
-// Player base object scanned by func_8020A294.  The HP read is a genuine
-// C++ virtual dispatch (vtable slot +0x128); MWCC shifts declared slots +2
-// for the RTTI/dtor headers, so getHP sits at declared 72.
-class CfPlayerBase {
-public:
-    virtual ~CfPlayerBase();                    // declared 0
-    virtual void d01();  virtual void d02();  virtual void d03();  virtual void d04();
-    virtual void d05();  virtual void d06();  virtual void d07();  virtual void d08();
-    virtual void d09();  virtual void d10();  virtual void d11();  virtual void d12();
-    virtual void d13();  virtual void d14();  virtual void d15();  virtual void d16();
-    virtual void d17();  virtual void d18();  virtual void d19();  virtual void d20();
-    virtual void d21();  virtual void d22();  virtual void d23();  virtual void d24();
-    virtual void d25();  virtual void d26();  virtual void d27();  virtual void d28();
-    virtual void d29();  virtual void d30();  virtual void d31();  virtual void d32();
-    virtual void d33();  virtual void d34();  virtual void d35();  virtual void d36();
-    virtual void d37();  virtual void d38();  virtual void d39();  virtual void d40();
-    virtual void d41();  virtual void d42();  virtual void d43();  virtual void d44();
-    virtual void d45();  virtual void d46();  virtual void d47();  virtual void d48();
-    virtual void d49();  virtual void d50();  virtual void d51();  virtual void d52();
-    virtual void d53();  virtual void d54();  virtual void d55();  virtual void d56();
-    virtual void d57();  virtual void d58();  virtual void d59();  virtual void d60();
-    virtual void d61();  virtual void d62();  virtual void d63();  virtual void d64();
-    virtual void d65();  virtual void d66();  virtual void d67();  virtual void d68();
-    virtual void d69();  virtual void d70();  virtual void d71();
-    virtual float getHP();                      // declared 72 -> +0x128
-
-    u8 pad[0x3E9C - 0x04];
+// Player base object scanned by func_8020A294.  HP is CActorParam::CActorParam_UnkVirtualFunc37 at +0x128.
+struct CfPlayerBase {
+    u8 pad[0x3E9C];
     CfPlayerSpot spot;          // 0x3E9C - object handed to the jumptable checkers
     u8 pad2[0x3F60 - 0x3EA0];
     void* subField3F60;         // 0x3F60
@@ -216,23 +132,8 @@ struct CfPlayerIdView {
     u16 id456C;   // 0x456C
 };
 
-// Cast-only interface for the CfGimmick::field_78 game-manager object:
-// func_8020899C tail-dispatches its vtable slot +0x88.  MWCC vtable slots
-// are shifted +2 (RTTI headers), so a method at declared slot N dispatches
-// at (N+2)*4; declared 32 -> vtable +0x88 (same scheme as CfGimmickLockObj).
-class CfGimmickMgr88 {
-public:
-    virtual ~CfGimmickMgr88();      // declared 0 -> 0x08
-    virtual void d01();  virtual void d02();  virtual void d03();  virtual void d04();
-    virtual void d05();  virtual void d06();  virtual void d07();  virtual void d08();
-    virtual void d09();  virtual void d10();  virtual void d11();  virtual void d12();
-    virtual void d13();  virtual void d14();  virtual void d15();  virtual void d16();
-    virtual void d17();  virtual void d18();  virtual void d19();  virtual void d20();
-    virtual void d21();  virtual void d22();  virtual void d23();  virtual void d24();
-    virtual void d25();  virtual void d26();  virtual void d27();  virtual void d28();
-    virtual void d29();  virtual void d30();  virtual void d31();
-    virtual void m88();             // declared 32 -> vtable +0x88
-};
+// CfGimmick::field_78 dispatch at +0x88 is recovered on cf::CfGameManager
+// (see CfGimmick.cpp local CfGameManager definition).
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -242,7 +143,7 @@ public:
 // Cross-TU callees (resolved via the retail symbol map).
 extern "C" void func_800B3A88(void* self, void* target);
 extern "C" void func_801BFED0(int a, u16 b, int c);
-extern "C" int func_8009CF8C(void*);
+extern "C" u32 func_8009CF8C(u32 resourceId);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
 extern "C" u32 lbl_eu_806646B4;
@@ -257,6 +158,7 @@ extern "C" u8 lbl_eu_80535844[];
 
 // Reference point the gimmick range checks are measured from.
 extern "C" CfGimmickVec3 lbl_eu_805765A0;
+extern "C" char _bss_pad_805765A0[4];
 
 // Downward drop offset recorded by func_80208CC0 when the stage ground is
 // above zero (.sdata).
@@ -268,10 +170,10 @@ extern "C" f32 lbl_eu_80668360;
 extern "C" CfGimmickGlobal* getUnk80664658();
 
 // Bdat table data used by func_8020A608 / func_80208F34 columns.
-extern "C" u8 lbl_eu_805357E8[];
+extern "C" const void* lbl_eu_805357E8[];
 extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
 // Returned when func_8020A608 cannot fetch a column row.
-extern "C" void* lbl_eu_80662788;
+extern "C" char lbl_eu_80662788[8];
 
 // Column-capacity helpers (CBdat row begin/count).
 extern "C" void* func_8003AA34();
@@ -327,4 +229,4 @@ extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);
 extern "C" u32 func_8013C54C();
 extern "C" void func_8013D55C(char* msg, int a, int b);
 // Shared message format buffer (retail .data, absolute-address access).
-extern "C" char lbl_eu_805765D8[0x20];
+extern "C" char lbl_eu_805765D8[128];

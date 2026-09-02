@@ -32,32 +32,13 @@ struct CModelDispMakeCrystalFull {
     u8 field_2DD2;                // +0x2DD2
 };
 
-// Inline anim object at sub+0x08 of CMCrystalDispSub; vtable flush call at
-// +0xE0 (index 0x38), used by func_80220E14 to flush the buffered anim.
-// MWCC reserves 2 hidden vtable slots (RTTI): 55 declared methods put the
-// flush at declared index 54 => slot +0xE0.
-struct CMCryAnimVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
-    virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();
-    virtual void m34(); virtual void m35(); virtual void m36();  // => +0xE0
-};
+// CMCryAnim folded into cf::CActParamAnimGame (vtable +0xE0 is func_8005A524) - use void* vptr to avoid header conflict
 
 // Virtual dispatch on the crystal-charged actor's embedded CfObjectMove at
 // +0x3e9c: method +0x74 (index 29) and +0x148 (index 82, one int arg).
 // MWCC reserves 2 hidden vtable slots (RTTI): 81 declared methods place the
 // first call at declared index 27 and the second at declared index 80.
-struct CMCryMoveVt {
+struct CMCryMove {
     virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
     virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
     virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
@@ -88,7 +69,7 @@ struct CMCryMoveVt {
 // Virtual dispatch on the built model object (sub->field_00): method +0x48
 // (index 18, one float) and +0x9c (index 39, two ints). MWCC reserves 2
 // hidden vtable slots (RTTI): declared indices 16 and 37.
-struct CMCModelVt {
+struct CMCModel {
     virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
     virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
     virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
@@ -104,7 +85,7 @@ struct CMCModelVt {
 
 // Virtual dispatch at +0x8 on the per-crystal param object (returns a ptr).
 // MWCC reserves 2 hidden vtable slots (RTTI): declared index 0 => +0x8.
-struct CMCCryParamObjVt {
+struct CMCCryParamObj {
     virtual void* m02();   // declared index 0 => +0x8
 };
 
@@ -141,7 +122,7 @@ struct CMCryVec3 {
 // Per-crystal param slot (stride 0x3c); +0x2c holds a vtable-slot-2 object.
 struct CMCCryParamSlot {
     u8 _00[0x2c];
-    CMCCryParamObjVt* field_2c;            // +0x2c
+    CMCCryParamObj* field_2c;            // +0x2c
     u8 _30[0x3c - 0x30];
 };
 
@@ -149,7 +130,7 @@ struct CMCCryParamSlot {
 struct CMCrystalDispSub {
     void* field_00;            // +0x00 built model pointer (assigned from void* func -> kept void*)
     void* field_04;            // +0x04 (assigned from void* func -> kept void*)
-    CMCryAnimVt mAnim;         // +0x08 inline CActParamAnimGame (vptr only here)
+    void* mAnimVptr;           // +0x08 inline CActParamAnimGame vptr
     u8 _0c[0x14 - 0x0c];       // +0x0c anim-object payload
     u32 field_14;              // +0x14 anim flags (CActParamAnimGame::field_0C)
     u8 _18[0x544 - 0x18];      // +0x18 rest of the anim object

@@ -2,11 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/cf/IResInfo.hpp"
-#include "kyoshin/cf/object/CfObject.hpp"
-#include "kyoshin/cf/object/CfObjectModel.hpp"
-#include "kyoshin/cf/object/CfObjectMove.hpp"
-#include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
 // NOTE: CfBdat.hpp is intentionally not included here - its `s32` (long)
 // getBdatStringColumnValue declaration clashes with code_801862C0.hpp's
@@ -14,7 +9,13 @@
 // this TU needs are declared in CfResPcImpl.hpp instead.
 #include <nw4r/math/math_types.h>
 #include <string.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "kyoshin/cf/IResInfo.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Resolve ml::FixStr<128>::format calls to the explicit specialization that
 // CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).  The
@@ -22,8 +23,6 @@
 // drift; same convention as pluginSnd.cpp).
 template <> void ml::FixStr<128>::format(const char* fmt, ...);
 
-namespace cf {}
-extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 using namespace cf;
 
 // Retail ctor: writes the parent ref last (after the constant fields),
@@ -63,7 +62,7 @@ cf::CfResPcImpl::~CfResPcImpl() {
     if (state >= 0) {
         ok = 0;
         if (field_00->field_68 & 0x200000) {
-            if (((cf::CfObject*)field_00)->CfObject_UnkVirtualFunc9() != 0) {
+            if (reinterpret_cast<cf::CfObject*>(field_00)->CfObject_UnkVirtualFunc9() != 0) {
                 ok = 1;
             }
         }
@@ -85,10 +84,10 @@ int func_8018CB34() { return 2; }
 // +0x90/+0x94/+0x704 words, runs func_800BE1A4, then invalidates the three
 // state halfwords (+0x38/+0x3A/+0x3C) and clears the +0x34 slot.
 void func_8018CB3C(cf::CfResPcImpl* self) {
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc2();
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
     func_800BBB50(self->field_00);
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
     self->field_00->field_90 = 0;
     self->field_00->field_94 = 0;
     self->field_00->field_704 = 0;
@@ -105,13 +104,13 @@ void func_8018CB3C(cf::CfResPcImpl* self) {
 // notifies the resource (func_eu_80063174) and dispatches table slot +0x28.
 void func_eu_8018E19C(cf::CfResPcImpl* self) {
     if (self->field_00->field_64 & 0x80000000) {
-        int res = self->func_8018D134(0);
+        int res = (self)->func_8018D134(0);
         if (res != 0) {
             u8* inst = CfRes_getInstanceField();
             s16 state = self->field_38;
             if (inst != 0 && state > 0) {
                 func_eu_80063174(state, (u8*)res);
-                self->func_8018CB3C();
+                (self)->func_8018CB3C();
             }
         }
     }
@@ -132,20 +131,20 @@ u32 func_8018D134(cf::CfResPcImpl* self, int idx)
 // The +0x30 slot index order (0,1,2,4,3,5,6) matches retail.
 void func_8018CBE8(cf::CfResPcImpl* self, u16 arg2) {
     cf::CfResPcLoadBuffer buf;
-    self->func_8018CB3C();
+    (self)->func_8018CB3C();
     func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, 0, 1);
     self->field_40 = arg2;
     if (arg2 == 0) {
-        self->func_8018D510(0, buf.field_00[0]);
-        self->func_8018D510(1, buf.field_00[1]);
-        self->func_8018D510(2, buf.field_00[2]);
-        self->func_8018D510(4, buf.field_00[3]);
-        self->func_8018D510(3, buf.field_00[4]);
-        self->func_8018D510(5, buf.field_00[5]);
-        self->func_8018D510(6, buf.field_00[6]);
+        (self)->func_8018D510(0, buf.field_00[0]);
+        (self)->func_8018D510(1, buf.field_00[1]);
+        (self)->func_8018D510(2, buf.field_00[2]);
+        (self)->func_8018D510(4, buf.field_00[3]);
+        (self)->func_8018D510(3, buf.field_00[4]);
+        (self)->func_8018D510(5, buf.field_00[5]);
+        (self)->func_8018D510(6, buf.field_00[6]);
     }
     if (buf.field_1E != 0) {
-        self->func_8018D510(7, buf.field_00[6]);
+        (self)->func_8018D510(7, buf.field_00[6]);
     }
     self->field_00->field_70C[0] = buf.field_1C;
     self->field_00->field_70C[1] = buf.field_1E;
@@ -171,7 +170,7 @@ void func_8018CD9C(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, 
     cf::CfResPcParent* parent = self->field_00;
     int ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (((cf::CfObject*)parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
             ok = 1;
         }
     }
@@ -193,7 +192,7 @@ void func_8018CE70(cf::CfResPcImpl* self, int arg2, int arg3) {
     cf::CfResPcParent* parent = self->field_00;
     int ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (((cf::CfObject*)parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
             ok = 1;
         }
     }
@@ -217,7 +216,7 @@ void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     cf::CfResPcParent* parent = self->field_00;
     ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (((cf::CfObject*)parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
             ok = 1;
         }
     }
@@ -239,7 +238,7 @@ int func_8018CF90(cf::CfResPcImpl* self) {
         cf::CfResPcParent* parent = self->field_00;
         ok = 0;
         if (parent->field_68 & 0x200000) {
-            if (((cf::CfObject*)parent)->CfObject_UnkVirtualFunc9() != 0) {
+            if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
                 ok = 1;
             }
         }
@@ -309,7 +308,7 @@ extern "C" __declspec(noinline) int func_8018D154(cf::CfResPcImpl* self, u32 arg
     int ret = func_80062928(state, arg2, 3);
     int ok = (u32)(-ret | ret) >> 31;
     if (ok) {
-        self->func_8018D510(arg3, arg2);
+        (self)->func_8018D510(arg3, arg2);
         if ((int)arg3 == 1) {
             self->field_00->field_6C |= 0x20;
         } else if ((int)arg3 == 2) {
@@ -350,7 +349,7 @@ int func_8018D290(cf::CfResPcImpl* self, int arg2) {
     }
     int ok = (u32)(-ret | ret) >> 31;
     if (ok) {
-        self->func_8018D510(0, arg2);
+        (self)->func_8018D510(0, arg2);
         self->field_00->field_6C |= 0x10;
         self->field_08 = 1;
     }
@@ -398,10 +397,10 @@ int func_8018D3F0(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (state < 0) {
         return 0;
     }
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc3(arg3);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(arg3);
     int ret = func_80062928(state, cf::CfBdat::func_801422A8(arg2), 3);
     int ok = (u32)(-ret | ret) >> 31;
-    self->func_8018D510(6, arg2);
+    (self)->func_8018D510(6, arg2);
     if (ok) {
         if ((int)arg3 == 1) {
             self->field_00->field_6C |= 0x2000;
@@ -455,7 +454,7 @@ void func_8018D570(cf::CfResPcImpl* self) {
         if (obj == 0) {
             continue;
         }
-        if (obj->field_04 != (u32)self->func_8018D134(0)) {
+        if (obj->field_04 != (u32)(self)->func_8018D134(0)) {
             continue;
         }
         obj->field_38++;
@@ -476,10 +475,10 @@ void func_8018D570(cf::CfResPcImpl* self) {
 // field_3E = 3.
 void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
     if (arg2 != 0) {
-        ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc2();
-        ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
+        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
+        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
         func_800BBB50(self->field_00);
-        ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
+        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
         self->field_00->field_90 = 0;
         self->field_00->field_94 = 0;
         self->field_00->field_704 = 0;
@@ -497,7 +496,7 @@ void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
     } else {
         s16 state = self->field_0E;
         if (state >= 0) {
-            int result = self->func_8018D00C();
+            int result = (self)->func_8018D00C();
             func_80063994(state, result);
         }
         self->field_00->field_6C &= ~0x4;
@@ -514,12 +513,12 @@ void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
 // refresh the character-slot ids and finally dispatch the +0x50 slot (or
 // install the +0x34 slot result via func_800685C8 / findResEntry).
 void func_8018D79C(cf::CfResPcImpl* self) {
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc2();
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
     func_800BBB50(self->field_00);
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
     self->field_00->field_90 = 0;
     self->field_00->field_94 = 0;
     self->field_38 = -1;
@@ -553,8 +552,8 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         self->field_3E--;
         return;
     }
-    int v034_0 = self->func_8018D134(0);
-    int v034_6 = self->func_8018D134(6);
+    int v034_0 = (self)->func_8018D134(0);
+    int v034_6 = (self)->func_8018D134(6);
     int r29 = 1;
     int r25 = 0;
     if (self->field_00->field_64 & 0x80000000) {
@@ -587,9 +586,9 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         return;
     }
     if (self->field_00->field_64 & 0x2) {
-        int v6 = self->func_8018D134(6);
+        int v6 = (self)->func_8018D134(6);
         if (v6 != 0) {
-            int v6b = self->func_8018D134(6);
+            int v6b = (self)->func_8018D134(6);
             if (((v6b >> 5) & 0x7F) != 0) {
                 u16 slot = self->field_00->field_8C;
                 if (slot == 0xB) {
@@ -628,7 +627,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         (cf::CfResPcCharData*)func_8009EC9C(self->field_00->field_8C);
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
-        int v = self->func_8018D134(i);
+        int v = (self)->func_8018D134(i);
         u32 r5;
         if (self->field_00->field_64 & 0x8) {
             r5 = (u32)func_8009E120(charData, (u16)(i - 1));
@@ -639,14 +638,14 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
         if ((u32)v != r5) {
             v = (int)r5;
-            self->func_8018D510(i, r5);
+            (self)->func_8018D510(i, r5);
         }
         func_8018D154((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
     if (self->field_00->field_64 & 0x2) {
         func_800BE3E8(self->field_00, 1);
     }
-    self->func_8018D290(v034_0);
+    (self)->func_8018D290(v034_0);
     if (r29 != 0) {
         if (self->field_00->field_6C & 0x100000) {
             cf::CfResPcLoadBuffer buf;
@@ -656,9 +655,9 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
         for (int j = 0; j < 2; j++) {
             if ((j == 0 && self->field_00->field_70C[0] != 0) || (j == 1 && self->field_00->field_70C[1] != 0)) {
-                int v = self->func_8018D134(j + 6);
+                int v = (self)->func_8018D134(j + 6);
                 if (v != 0) {
-                    self->func_8018D3F0(j, v);
+                    (self)->func_8018D3F0(j, v);
                     if (self->field_00->field_70C[j] == 0) {
                         self->field_00->field_70C[j] = 4;
                     }
@@ -667,13 +666,13 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
     }
     int token = 0;
-    int v6 = self->func_8018D134(6);
+    int v6 = (self)->func_8018D134(6);
     if (v6 != 0) {
         token = (v6 & 0xFE0) | 0x58000400;
     }
     if (self->field_00->field_64 & 0x2) {
         if (token != 0) {
-            self->func_8018D354(token);
+            (self)->func_8018D354(token);
         }
     } else if ((self->field_00->field_64 & 0x80000000) && r29 != 0 &&
                (lbl_eu_80663E24 & 0x40000) && inst != 0 && token != 0) {
@@ -723,7 +722,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         c = 0;
     }
     int ok = 1;
-    int v = self->func_8018D134(0);
+    int v = (self)->func_8018D134(0);
     if ((u32)b->field_04 != (u32)v) {
         self->field_00->field_6C &= 0xFFD88C0F;
         self->field_08 = 0;
@@ -731,8 +730,8 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         u8 msgBuf[0x84];
         ml::FixStr<128>* msg = (ml::FixStr<128>*)msgBuf;
         msg->clear();
-        int v1 = self->func_8018D134(0);
-        int v2 = self->func_8018D134(0);
+        int v1 = (self)->func_8018D134(0);
+        int v2 = (self)->func_8018D134(0);
         msg->format(lbl_eu_80503BC4, (const char*)func_800AA5C0((void*)v2), v1);
         return;
     }
@@ -746,9 +745,8 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         (lbl_eu_80663E24 & 0x4000)) {
         // Position the player: add a fixed offset to its current position,
         // optionally corrected by func_804BE470, then place it (slot +0xB8).
-        ml::CVec3* p = ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc23();
-        nw4r::math::VEC3* pp = (nw4r::math::VEC3*)p;
-        nw4r::math::VEC3 pos = *pp;
+        nw4r::math::VEC3* p = reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc23());
+        nw4r::math::VEC3 pos = *p;
         nw4r::math::VEC3 off;
         off.x = lbl_eu_80667A40;
         off.y = lbl_eu_80667A44;
@@ -766,15 +764,15 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         func_804BD94C(&pos, &zero, 0x44A05, 0, 0, 0, lbl_eu_80667A4C,
                       lbl_eu_80667A50, lbl_eu_80667A54, lbl_eu_8066AF20,
                       lbl_eu_80667A58);
-        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc26((const ml::CVec3*)&pos, lbl_eu_80667A5C);
+        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc26(reinterpret_cast<const ml::CVec3*>(&pos), lbl_eu_80667A5C);
         flag = 1;
     }
     for (int i = 1; i <= 5; i++) {
         if (self->field_00->field_6C & 0x20) {
-            int v2 = self->func_8018D134(i);
+            int v2 = (self)->func_8018D134(i);
             if (v2 != 0) {
                 cf::CfResPcLookupEntry* e = (cf::CfResPcLookupEntry*)&a[i];
-                if (((CResLookup*)e->field_2C)->_v040(e) == 0) {
+                if ((e->field_2C)->isInUse(e) == 0) {
                     ok = 0;
                     break;
                 }
@@ -782,17 +780,17 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         }
     }
     if (self->field_00->field_6C & 0x10) {
-        if (((CResLookup*)b->field_2C)->_v040(b) == 0) {
+        if ((b->field_2C)->isInUse(b) == 0) {
             ok = 0;
         }
     }
     if (self->field_00->field_6C & 0x10000) {
-        if (((CResLookup*)f->field_2C)->_v040(f) == 0) {
+        if ((f->field_2C)->isInUse(f) == 0) {
             ok = 0;
         }
     }
     if (self->field_00->field_6C & 0x40000) {
-        if (((CResLookup*)c->field_2C)->_v040(c) == 0) {
+        if ((c->field_2C)->isInUse(c) == 0) {
             ok = 0;
         }
     }
@@ -810,14 +808,14 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     setMemInitFlag__Q23mtl10MemManagerFb(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u8* h = 0;
-        int v1 = self->func_8018D134(1);
+        int v1 = (self)->func_8018D134(1);
         if (v1 != 0) {
             s16 st = self->field_0A;
             if (st < 0) {
                 h = 0;
             } else {
                 cf::CfResPcTableEntry* a2 = func_80062C28(st, 0);
-                h = (u8*)((CResLookup*)a2[1].field_2C)->getResourceBase(
+                h = (u8*)(a2[1].field_2C)->getResourceBase(
                     (cf::CfResPcLookupEntry*)&a2[1], slot);
             }
         }
@@ -828,12 +826,12 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         func_8048472C(self->field_00->field_98, lbl_eu_80503BC4 + 7);
         ((cf::CfResPcResObj*)self->field_00->field_98)->field_7A4 |= 0x400000;
         if (self->field_00->field_98 != 0) {
-            ((cf::CfObjectMoveSub98Vt64*)self->field_00->field_98)->m64(0);
+            reinterpret_cast<CScnItemModel*>(self->field_00->field_98)->vfunc64(0);
         }
         for (int i = 2; i <= 5; i++) {
-            int v2 = self->func_8018D134(i);
+            int v2 = (self)->func_8018D134(i);
             if (v2 != 0) {
-                u8* res = (u8*)((CResLookup*)a[i].field_2C)->getResourceBase((cf::CfResPcLookupEntry*)&a[i], slot);
+                u8* res = (u8*)(a[i].field_2C)->getResourceBase((cf::CfResPcLookupEntry*)&a[i], slot);
                 if (*(u32*)res != 0) {
                     func_804831C4(self->field_00->field_98, res);
                 }
@@ -849,7 +847,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         name.mLength = 0;
         if (self->field_00->field_9C == 0) {
             func_800AA33C(name, (u32)b->field_04, 1, 0);
-            self->field_00->field_94 = (u32)(u8*)((CResLookup*)b->field_2C)->getResourceBase(b, slot);
+            self->field_00->field_94 = (u32)(b->field_2C)->getResourceBase(b, slot);
             self->field_00->field_9C = (u32)func_800584B8(CfRes_getD80Flag(),
                                                          (u32)self->field_00->field_94,
                                                          (const char*)&name);
@@ -857,7 +855,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         if (self->field_00->field_6C & 0x10000) {
             if (self->field_00->field_6D4 == 0) {
                 func_800AA33C(name, (u32)f->field_04, 1, 0);
-                self->field_00->field_708 = (u32)(u8*)((CResLookup*)f->field_2C)->getResourceBase(f, slot);
+                self->field_00->field_708 = (u32)(f->field_2C)->getResourceBase(f, slot);
                 self->field_00->field_6D4 = (u32)func_800584B8(CfRes_getD80Flag(),
                                                               (u32)self->field_00->field_708,
                                                               (const char*)&name);
@@ -866,7 +864,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     }
     if (self->field_00->field_6C & 0x40000) {
         self->field_00->field_6DC = c;
-        int v6 = self->func_8018D134(6);
+        int v6 = (self)->func_8018D134(6);
         self->field_00->field_6E0 = ((u32)slot << 20) | 0x78000000 | ((u32)v6 >> 10) & 0x3F8000;
     }
     setMemInitFlag__Q23mtl10MemManagerFb(true);
@@ -874,7 +872,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     int b20 = (f68 >> 11) & 1;
     if (f68 & 0x100000) {
         func_800BB618((cf::CfObjectModel*)self->field_00, 0);
-        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_80667A60);
+        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_80667A60);
         if (!(self->field_00->field_68 & 0x10000000)) {
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_80667A64);
         }
@@ -886,8 +884,8 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     if (b20 != 0) {
         self->field_00->field_68 |= 0x100000;
     }
-    ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc57(lbl_eu_80666B08);
-    ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80667A68 * lbl_eu_80666B08);
+    reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc57(lbl_eu_80666B08);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80667A68 * lbl_eu_80666B08);
     if (self->field_00->field_64 & 0x2) {
         func_800BE12C((u8*)self->field_00, 1, 0, -1, 1);
         if (flag != 0) {
@@ -977,75 +975,70 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
     cf::CfResPcPosTableEntry table[11];
     *(cf::CfResPcPosTable*)(table + 1) = lbl_eu_80503B30;
     if ((self->field_00->field_6C & 0x3000) &&
-        ((CResLookup*)entry_d->field_2C)->_v040(entry_d) == 0) {
+        (entry_d->field_2C)->isInUse(entry_d) == 0) {
         ok = 0;
     }
     if ((self->field_00->field_6C & 0x20000) &&
-        ((CResLookup*)entry_e->field_2C)->_v040(entry_e) == 0) {
+        (entry_e->field_2C)->isInUse(entry_e) == 0) {
         ok = 0;
     }
     if ((self->field_00->field_6C & 0x200000) &&
-        ((CResLookup*)entry_c->field_2C)->_v040(entry_c) == 0) {
+        (entry_c->field_2C)->isInUse(entry_c) == 0) {
         ok = 0;
     }
     if (ok != 0) {
         self->field_08++;
-        ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc21();
+        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc21();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
-        void* obj98 = self->field_00->field_98;
+        CScnItemModel* obj98 = reinterpret_cast<CScnItemModel*>(self->field_00->field_98);
         if ((self->field_00->field_6C & 0x1000) && self->field_00->field_6F8[0] == 0) {
-            self->field_00->field_700 = (cf::CfResPc700Obj*)(u8*)((CResLookup*)entry_d->field_2C)->getResourceBase(entry_d, slot);
+            self->field_00->field_700 = (cf::CfResPc700Obj*)(entry_d->field_2C)->getResourceBase(entry_d, slot);
             if (self->field_00->field_700->field_00 != 0) {
-                self->field_00->field_6F8[0] = reinterpret_cast<CScnItemModel*>(
-                    func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70));
+                self->field_00->field_6F8[0] = (CScnItemModel*)func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[0] != 0) {
-                    reinterpret_cast<cf::CfResPcResObj*>(self->field_00->field_6F8[0])->field_7A4 |= 0x40000000;
+                    self->field_00->field_6F8[0]->flags7A4 |= 0x40000000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
                     if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
-                        // UVF71 returns float in f1; retail leaves it into vfunc48.
-                        self->field_00->field_6F8[0]->vfunc48(
-                            ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc71());
+                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc71();
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc48(0.0f);
                     }
-                    if (((cf::CfObjectMoveSub98VtC4*)obj98)->mC4((u8*)self->field_00->field_6F8[0],
-                                     (u32)CfBdat::getBdatStringEntry(self->field_00->field_70C[0]), 0) == 0) {
-                        ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
+                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[0], (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]), 0) == 0) {
+                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
                     } else {
-                        u32 bdat = (u32)CfBdat::getBdatStringEntry(self->field_00->field_70C[0]);
+                        u32 bdat = (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]);
                         func_804873EC(obj98, bdat, 1);
                         if (slot <= 10) {
                             func_804875B8(obj98, bdat, table[slot].field_00, table[slot].field_04);
                         }
-                        self->field_00->field_6F8[0]->vfunc9C(2, 0);
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc9C(2, 0);
                     }
                 }
             }
         }
         if ((self->field_00->field_6C & 0x2000) && self->field_00->field_6F8[1] == 0) {
-            self->field_00->field_700 = (cf::CfResPc700Obj*)(u8*)((CResLookup*)entry_d->field_2C)->getResourceBase(entry_d, slot);
+            self->field_00->field_700 = (cf::CfResPc700Obj*)(entry_d->field_2C)->getResourceBase(entry_d, slot);
             if (self->field_00->field_700->field_00 != 0) {
-                self->field_00->field_6F8[1] = reinterpret_cast<CScnItemModel*>(
-                    func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70));
+                self->field_00->field_6F8[1] = (CScnItemModel*)func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[1] != 0) {
-                    reinterpret_cast<cf::CfResPcResObj*>(self->field_00->field_6F8[1])->field_7A4 |= 0x40000000;
+                    self->field_00->field_6F8[1]->flags7A4 |= 0x40000000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[1] != 0) {
                     if ((self->field_00->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
-                        self->field_00->field_6F8[1]->vfunc48(lbl_eu_80667A60);
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(lbl_eu_80667A60);
                     } else {
-                        self->field_00->field_6F8[1]->vfunc48(
-                            ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc71());
+                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc71();
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(0.0f);
                     }
-                    if (((cf::CfObjectMoveSub98VtC4*)obj98)->mC4((u8*)self->field_00->field_6F8[1],
-                                     (u32)CfBdat::getBdatStringEntry(self->field_00->field_70C[1]), 0) == 0) {
-                        ((cf::CfObjectMove*)self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
+                    if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[1], (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]), 0) == 0) {
+                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
                     } else {
-                        u32 bdat2 = (u32)CfBdat::getBdatStringEntry(self->field_00->field_70C[1]);
+                        u32 bdat2 = (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]);
                         func_804873EC(obj98, bdat2, 1);
                         if (slot <= 10) {
                             func_804875B8(obj98, bdat2, table[slot].field_00, table[slot].field_04);
                         }
-                        self->field_00->field_6F8[1]->vfunc9C(2, 0);
+                        reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc9C(2, 0);
                     }
                 }
             }
@@ -1053,7 +1046,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
         if ((self->field_00->field_6C & 0x20000) && self->field_00->field_6D8 == 0) {
             ml::FixStr<64> buf;
             func_800AA33C(buf, (u32)entry_e->field_04, 1, 0);
-            self->field_00->field_704 = (u32)(u8*)((CResLookup*)entry_e->field_2C)->getResourceBase(entry_e, slot);
+            self->field_00->field_704 = (u32)(entry_e->field_2C)->getResourceBase(entry_e, slot);
             CfResPcMca mca;
             __ct__CMcaFile((CMcaFile*)&mca, (void*)self->field_00->field_704);
             self->field_00->field_6D8 = (u32)func_80495EAC((void*)CfRes_getD80Flag(), mca.field_0C, (void*)&buf);
@@ -1068,7 +1061,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
         }
         setMemInitFlag__Q23mtl10MemManagerFb(true);
         if (self->field_00->field_38 != 0) {
-            ((cf::CfObject*)self->field_00->field_38)->CfObject_UnkVirtualFunc24();
+            reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_UnkVirtualFunc24();
         }
     }
 }
@@ -1091,7 +1084,7 @@ void func_8018EE18(cf::CfResPcImpl* self) {
             if (parent != 0) {
                 parent = (cf::CfResPcParent*)((char*)parent - 0x3E9C);
             }
-            if (((cf::CActorParam*)parent)->CActorParam_UnkVirtualFunc138() != 0) {
+            if (reinterpret_cast<cf::CActorParam*>(parent)->CActorParam_UnkVirtualFunc138() != 0) {
                 ok = 0;
             }
         }
@@ -1424,57 +1417,3 @@ __declspec(noinline) void func_8018F63C(void* self) {
         func_800B7410();
     }
 }
-
-// absorb: split1 retail data sections
-// generated from retail build/us/asm via absorb
-__declspec(section ".data") __attribute__((aligned(8), used)) const volatile unsigned char __absorb_kyoshin_cf_CfResPcImpl_cpp_data[0x108] = {
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x18, 0xED, 0xE4,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x18, 0xF4, 0xD4,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x18, 0xFE, 0x2C,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x19, 0x04, 0x60,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfResPcImpl_cpp_rodata[0xA8] = {
-    0x3D, 0xCC, 0xCC, 0xCD, 0x3F, 0x66, 0x66, 0x66, 0x3D, 0x23, 0xD7, 0x0A,
-    0x3F, 0x66, 0x66, 0x66, 0x3E, 0x42, 0x8F, 0x5C, 0x3F, 0x66, 0x66, 0x66,
-    0x3D, 0x8F, 0x5C, 0x29, 0x3F, 0x66, 0x66, 0x66, 0x3D, 0xCC, 0xCC, 0xCD,
-    0x3F, 0x66, 0x66, 0x66, 0x3E, 0x42, 0x8F, 0x5C, 0x3F, 0x66, 0x66, 0x66,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".sdata") __attribute__((aligned(8), used)) const volatile unsigned char __absorb_kyoshin_cf_CfResPcImpl_cpp_sdata[0x20] = {
-    0x80, 0x50, 0x3B, 0x80, 0x80, 0x53, 0x27, 0x60, 0x80, 0x50, 0x3B, 0x98,
-    0x80, 0x53, 0x27, 0xE0, 0x80, 0x50, 0x3B, 0xA8, 0x80, 0x53, 0x27, 0xEC,
-    0x80, 0x50, 0x3B, 0xB8, 0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfResPcImpl_cpp_sdata2[0x30] = {
-    0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0xC1, 0x00, 0x00, 0x00,
-    0x3F, 0x33, 0x33, 0x33, 0x3F, 0xB3, 0x33, 0x33, 0xBD, 0xCC, 0xCC, 0xCD,
-    0x3E, 0x99, 0x99, 0x9A, 0x40, 0x40, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
-    0x41, 0xA0, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};

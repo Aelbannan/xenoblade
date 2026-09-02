@@ -2193,5 +2193,6 @@ extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsPause(); }
 extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsStarted(); }
 extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsActive(); }
+unsigned char absorb_pad_snd_StrmPlayer_sbss_4[4];
 
 

@@ -6,16 +6,26 @@ namespace detail {
 
 // Retail sdata2 pool constants: ClipFrame's 0.0f comes from the shared pool
 // (lbl_eu_80669AC8); the u16->f32 conversion magic (2^52 double,
-// lbl_eu_80669AD0) is compiler-generated and stays TU-local.
+// lbl_eu_80669AD0) is compiler-generated — now explicitly referenced
+// to avoid TU-local sdata2 pooling (absorb: retail sdata2 is 0).
 extern "C" const float lbl_eu_80669AC8;
+extern "C" const double lbl_eu_80669AD0;
+
+inline f32 U16ToF32_shared(u16 v) {
+    union { double d; struct { u32 hi; u32 lo; } w; } u;
+    u.w.hi = 0x43300000;
+    u.w.lo = v;
+    return (f32)(u.d - lbl_eu_80669AD0);
+}
 
 inline f32 ClipFrameLocal(const ResAnmClrInfoData& rInfo, f32 frame) {
     if (frame <= lbl_eu_80669AC8) {
         return lbl_eu_80669AC8;
     }
 
-    if (rInfo.numFrame <= frame) {
-        return static_cast<f32>(rInfo.numFrame);
+    f32 numFrameF = U16ToF32_shared(rInfo.numFrame);
+    if (numFrameF <= frame) {
+        return numFrameF;
     }
 
     return frame;

@@ -4,7 +4,55 @@
 #include <string.h>
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
+#include <decomp.h>
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/CfGimmick.hpp"
+
+// Map effect object at +0x2F3C (real owner of slot 0x68) - definition mirrors
+// kyoshin/cf/object/CfObjectMap.hpp UnkMapFxObj (hot header in scope conceptually,
+// but redeclared here to avoid pulling that header's conflicting extern "C"
+// overloads into this TU). Full virtual list ensures vfunc_0x68 lands at 0x68.
+class UnkMapFxObj {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68(int arg);
+    virtual void vfunc_0x6C(u32 arg);
+    virtual void vfunc_0x70();
+    virtual void vfunc_0x74();
+    virtual void vfunc_0x78();
+    virtual void vfunc_0x7C();
+    virtual void vfunc_0x80();
+    virtual void vfunc_0x84(u32 r4, u32 r5);
+    virtual void vfunc_0x88(u32 r4, u32 r5, void* r6, void* r7);
+    virtual void vfunc_0x8C(u32 r4, u32 r5, void* r6);
+    virtual void vfunc_0x90();
+    virtual void vfunc_0x94(u32 r4, u32 r5, u32 r6, u32 r7, u32 r8, u32 r9, u32 r10);
+};
+
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "include/kyoshin/cf/CfGameManager.hpp"
@@ -25,10 +73,9 @@ extern "C" {
     extern u32 lbl_eu_80531D38[];  // 4 action-table entries (12 bytes each; loadCreature reads the first as u32 words)
     extern ActionEntry lbl_eu_80531D68[];  // 1 entry: {0, -1, updatePosition}
     extern ActionEntry lbl_eu_80531D74[];  // 1 entry: {0, -1, updatePosition}
-    extern const char lbl_eu_8050372C[];   // path strings: ".lod\0/obj/\0.map\0.lgt"
+    extern const char lbl_eu_8050372C[];   // path strings: ".lod\\0/obj/\\0.map\\0.lgt"
 
-    // Forward declarations for internal helpers
-    void func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+    int func_800AA33C(char* buf, u32 packed, int prefixFlag, int suffixFlag);
     bool func_80181988(CREvtModelMap* self, CEventFile* ev); // handleFileEvent (retail C-linkage name)
     void func_8016BC1C(CREvtModelMap* self);
     bool func_8016BDA8(void* self, s32* pId);
@@ -43,7 +90,7 @@ extern "C" {
     void enableLOD__8CTaskLODFv();
     void restorePrimaryLOD__8CTaskLODFv();
     void disableLOD__8CTaskLODFv();
-    extern mtl::ALLOC_HANDLE func_80495FF0(void* self); // retail: virtual at vtable[0x2C] of *(lbl_eu_80663E14)
+    mtl::ALLOC_HANDLE func_80495FF0(void* self); // retail: virtual at vtable[0x2C] of *(lbl_eu_80663E14)
     void func_80495E60(void* pEmote);
     void* func_80495E8C(void* a, void* b, int c, int d);
     void func_804838DC(void* pEmote, int r4);
@@ -70,47 +117,49 @@ extern "C" {
     void func_801726DC(CREvtModelMap* self);
     void func_80172668();
     void func_80181A54(void* self, int dealloc);
-    void WorkEvent1__10IWorkEventFPvPCc();
-    bool WorkEvent3__10IWorkEventFPv();
-    bool WorkEvent4__10IWorkEventFv();
-    void OnPauseTrigger__10IWorkEventFb();
-    bool WorkEvent6__10IWorkEventFv();
-    bool WorkEvent7__10IWorkEventFv();
-    bool WorkEvent8__10IWorkEventFv();
-    bool WorkEvent9__10IWorkEventFv();
-    bool WorkEvent10__10IWorkEventFv();
-    bool WorkEvent11__10IWorkEventFv();
-    bool WorkEvent12__10IWorkEventFv();
-    bool WorkEvent13__10IWorkEventFv();
-    bool WorkEvent14__10IWorkEventFv();
-    bool WorkEvent15__10IWorkEventFv();
-    bool WorkEvent16__10IWorkEventFv();
-    bool WorkEvent17__10IWorkEventFv();
-    bool WorkEvent18__10IWorkEventFv();
-    bool WorkEvent19__10IWorkEventFv();
-    bool WorkEvent20__10IWorkEventFv();
-    bool WorkEvent21__10IWorkEventFv();
-    bool WorkEvent22__10IWorkEventFv();
-    bool WorkEvent23__10IWorkEventFv();
-    bool WorkEvent24__10IWorkEventFv();
-    bool WorkEvent25__10IWorkEventFv();
-    bool WorkEvent26__10IWorkEventFv();
-    bool WorkEvent27__10IWorkEventFv();
-    bool WorkEvent28__10IWorkEventFv();
-    bool WorkEvent29__10IWorkEventFv();
-    bool WorkEvent30__10IWorkEventFv();
-    void WorkEvent31__10IWorkEventFv();
+}
 
-    // Global pointers
+void WorkEvent1__10IWorkEventFPvPCc();
+bool WorkEvent3__10IWorkEventFPv();
+bool WorkEvent4__10IWorkEventFv();
+void OnPauseTrigger__10IWorkEventFb();
+bool WorkEvent6__10IWorkEventFv();
+bool WorkEvent7__10IWorkEventFv();
+bool WorkEvent8__10IWorkEventFv();
+bool WorkEvent9__10IWorkEventFv();
+bool WorkEvent10__10IWorkEventFv();
+bool WorkEvent11__10IWorkEventFv();
+bool WorkEvent12__10IWorkEventFv();
+bool WorkEvent13__10IWorkEventFv();
+bool WorkEvent14__10IWorkEventFv();
+bool WorkEvent15__10IWorkEventFv();
+bool WorkEvent16__10IWorkEventFv();
+bool WorkEvent17__10IWorkEventFv();
+bool WorkEvent18__10IWorkEventFv();
+bool WorkEvent19__10IWorkEventFv();
+bool WorkEvent20__10IWorkEventFv();
+bool WorkEvent21__10IWorkEventFv();
+bool WorkEvent22__10IWorkEventFv();
+bool WorkEvent23__10IWorkEventFv();
+bool WorkEvent24__10IWorkEventFv();
+bool WorkEvent25__10IWorkEventFv();
+bool WorkEvent26__10IWorkEventFv();
+bool WorkEvent27__10IWorkEventFv();
+bool WorkEvent28__10IWorkEventFv();
+bool WorkEvent29__10IWorkEventFv();
+bool WorkEvent30__10IWorkEventFv();
+void WorkEvent31__10IWorkEventFv();
+
+extern "C" {
     extern CREvtModelMap* lbl_eu_806642B0;  // current active model map
     extern CREvtModelMap* lbl_eu_806642B4;  // current visible model map
     extern float lbl_eu_806678C0;            // 1.0f scale
-    extern double lbl_eu_806678C8;           // 0x43300000_80000000 double for int→float conv
-extern "C" void* spawnGimmickEntity__Q22cf13CfGameManagerFv();
-extern "C" void* getMapEffectManager__Q22cf13CfGameManagerFv();
-extern "C" void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
-extern "C" void __ct__CREvtModel(void* self, void* pData, int pArg); // retail base ctor name
-extern "C" void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+    extern double lbl_eu_806678C8;           // 0x43300000_80000000 double for int->float conv
+    void* spawnGimmickEntity__Q22cf13CfGameManagerFv();
+    void* getMapEffectManager__Q22cf13CfGameManagerFv();
+    void setHandleParam__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
+    void __ct__CREvtModel(void* self, void* pData, int pArg); // retail base ctor name
+    void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 }
 
 // ---------------------------------------------------------------------------
@@ -209,12 +258,12 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
         if (self->mIsGuest) {
             // Hide the model map, then tell the game-manager core to leave
             // guest mode (retail dispatches vtable+0x30 with a 0 arg).
-            ((CREvtMapVtIf*)self)->v30(0);
+            static_cast<CREvtModel*>(static_cast<void*>(self))->setVisible(0);
 
             // Retail re-fetches the singleton for the virtual call (MWCC
             // does not CSE calls).
             if (cf::CfGameManager::getGameSubManager()) {
-                ((CGameMgrCoreIf*)cf::CfGameManager::getGameSubManager())->v158(1);
+                static_cast<CfGimmickObject*>(static_cast<void*>(cf::CfGameManager::getGameSubManager()))->activate(1);
             }
 
             enableLOD__8CTaskLODFv();
@@ -227,7 +276,7 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
                 CCreatureNode* it = head->next;
                 while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
                     u8 v = (u8)self->mModelName[i];
-                    it->obj->v158(!v);
+                    static_cast<CfGimmickObject*>(it->obj)->activate(!v);
                     it = it->next;
                     i++;
                 }
@@ -243,7 +292,7 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
         }
 
         // Cleanup virtual, then base-class teardown
-        ((CREvtMapVtIf*)self)->v3C();
+        static_cast<CREvtModel*>(static_cast<void*>(self))->reset();
         restorePrimaryLOD__8CTaskLODFv();
         __ct__80172668(self, 0);
 
@@ -357,7 +406,7 @@ extern "C" void func_80180DCC(CREvtModelMap* self)
     if (cf::CfGameManager::getGameSubManager()) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         // virtual call: core->vtable[0x158](0) - real dispatch (r12 ABI)
-        ((CGameMgrCoreIf*)mgr)->v158(0);
+        static_cast<CfGimmickObject*>(static_cast<void*>(mgr))->activate(0);
         disableLOD__8CTaskLODFv();
     }
 }
@@ -374,7 +423,7 @@ extern "C" void func_80180E1C(CREvtModelMap* self)
     cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
     // Virtual call CfGameManager::setGuestMode(1) (vtable slot 0x158);
     // retail does NOT null-check the singleton result.
-    ((CGameMgrCoreIf*)mgr)->v158(1);
+    static_cast<CfGimmickObject*>(static_cast<void*>(mgr))->activate(1);
     enableLOD__8CTaskLODFv();
 }
 
@@ -392,7 +441,7 @@ extern "C" void func_80180E60(CREvtModelMap* self)
     if (func_8016BDA8(self, pId)) {
         // w1/w2/w0 locals DECLARED BEFORE the src pointer: the w-locals' VRs
         // are born first, so the allocator colors w0->r3 and src->r4 like
-        // retail (src-first declaration swaps the colors — 5 reg_swap). The
+        // retail (src-first declaration swaps the colors -- 5 reg_swap). The
         // store order +0x0C, +0x08, +0x10 reproduces retail's lwzu schedule.
         u32 w1, w2, w0;
         u32* src = (u32*)lbl_eu_80531D38;
@@ -440,7 +489,7 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
         self->mFlags = flags;
 
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-        func_800AA33C(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
+        func_800AA33C(self->mBasePath, mgr->unk70, 1, 0);
 
         // Append ".lod" to the base path.
         s32 len = strlen(&lbl_eu_8050372C[0]);
@@ -573,12 +622,12 @@ extern "C" void func_8018140C(CREvtModelMap* self)
         if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
             // Create emote model (retail passes the device-file instance in
             // r3 and mFileData1 in r4, then 7 and 1).
-            self->mEmoteModel = (CEmoteModelObj*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
+            self->mEmoteModel = (CREvtSceneModel*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
             func_804838DC(self->mEmoteModel, 0);
             func_80484E5C(self->mEmoteModel, lbl_eu_806678C0);
 
             // Set flag on emote model
-            self->mEmoteModel->field_7A8 |= 4;
+            self->mEmoteModel->field_0x7A8 |= 4;
 
             self->mVisible = 0;
 
@@ -630,7 +679,7 @@ extern "C" void func_8018152C(CREvtModelMap* self)
         func_80484F80(self->mEmoteModel, fTime);
     }
 
-    ((CREvtMapVtIf*)self)->v30(func_80180960());
+    static_cast<CREvtModel*>(static_cast<void*>(self))->setVisible(func_80180960());
     func_80168514(self);
 }
 
@@ -662,7 +711,7 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
         // Tell the game-manager core to enter/leave guest mode.
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
-            ((CGameMgrCoreIf*)mgr)->v158(visible);
+            static_cast<CfGimmickObject*>(static_cast<void*>(mgr))->activate(visible);
         }
 
         if (visible) {
@@ -689,14 +738,14 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
         while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
             if (!visible) {
                 // Query each creature's status byte and record it, then hide.
-                u8 v = it->obj->v160();
+                    u8 v = (u8)static_cast<cf::CfObject*>(it->obj)->CfObject_UnkVirtualFunc68();
                 self->mModelName[i] = (char)v;
                 self->mCreatureCount++;
-                it->obj->v158(0);
+                static_cast<CfGimmickObject*>(it->obj)->activate(0);
             } else {
                 // Restore each creature's visibility from the recorded byte.
                 u8 v = (u8)self->mModelName[i];
-                it->obj->v158(!v);
+                static_cast<CfGimmickObject*>(it->obj)->activate(!v);
             }
             it = it->next;
             i++;
@@ -723,9 +772,9 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
 
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
-                    CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                    notif->_v068(0);
+                    UnkMapFxObj* fx =
+                        (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                    fx->vfunc_0x68(0);
                 }
             }
 
@@ -738,14 +787,14 @@ extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
             }
 
             if (self->mLoadedModelData) {
-                func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
+                func_804C1D7C(self->mLoadedModelData);
                 self->mLoadedModelData = 0;
 
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
-                    CREvtLightNotifyIf* notif =
-                        (CREvtLightNotifyIf*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                    notif->_v068(1);
+                    UnkMapFxObj* fx =
+                        (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                    fx->vfunc_0x68(1);
                 }
             }
         }
@@ -780,8 +829,8 @@ extern "C" void func_801818BC(CREvtModelMap* self, int visible)
     if (self->mIsGuest) {
         if (cf::CfGameManager::getGameSubManager()) {
             cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-            // virtual call: core->vtable[0x190](visible) - real dispatch
-            ((CGameMgrCoreIf*)mgr)->v190(visible);
+            // virtual call: core->vtable[0x190](visible) - real dispatch (CfObject 0x190)
+            ((void (*)(void*, int))(*(void***)mgr)[0x190/4])(mgr, visible);
         }
 
         if (getGlobalSda()) {
@@ -793,8 +842,8 @@ extern "C" void func_801818BC(CREvtModelMap* self, int visible)
         u8* taskState = (u8*)(*(void**)((u8*)lbl_eu_80663E14 + 0x78));
         taskState[0x28] = visible;
     } else if (self->mEmoteModel) {
-        // virtual call on the emote model at vtable+0xB4 - real dispatch
-        ((CEmoteModelIf*)self->mEmoteModel)->vB4(func_80180960());
+        // virtual call on the emote model at vtable+0xB4 - real dispatch (CREvtSceneModel)
+        static_cast<CREvtSceneModel*>(static_cast<void*>(self->mEmoteModel))->vfunc_0xB4(func_80180960());
     }
 }
 

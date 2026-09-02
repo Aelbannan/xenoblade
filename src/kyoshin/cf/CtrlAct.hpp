@@ -521,31 +521,31 @@ public:
 // Player actor view (CtrlPc+0x5C) covering the fields/vtable slots this TU
 // touches: slot 0x288 (getAtkParam base), slot 0x2A4 (action-state block) and
 // slot 0x1C0 (height/radius probe returning a float vector).
-struct CtrlActPlayerVtbl {
+struct PlayerTable {
     void* p00[0x30 / 4];
-    u32* (*fn_0x30)(void* self);              // mField4 sub-object slot 0x30
+    u32* (*method30)(void* self);              // mField4 sub-object slot 0x30
     void* r34[(0x70 - 0x34) / 4];
-    void (*fn_0x70)(void* self, void* arg);   // 0x70 (func_800D1F0C L_3460)
+    void (*method70)(void* self, void* arg);   // 0x70 (func_800D1F0C L_3460)
     void* r74[(0xF0 - 0x74) / 4];
-    f32 (*fn_0xF0)(void* self);               // 0xF0 (returns a height scalar)
+    f32 (*methodF0)(void* self);               // 0xF0 (returns a height scalar)
     void* rF4[(0x1C0 - 0xF4) / 4];
-    float* (*fn_0x1C0)(void* self);           // 0x1C0 (returns float vector, [0] = height)
+    float* (*method1C0)(void* self);           // 0x1C0 (returns float vector, [0] = height)
     void* r1C4[(0x1D0 - 0x1C4) / 4];
-    float* (*fn_0x1D0)(void* self);           // 0x1D0 (returns float vector, [0] = height)
+    float* (*method1D0)(void* self);           // 0x1D0 (returns float vector, [0] = height)
     void* r1D4[(0x23C - 0x1D4) / 4];
-    f32 (*fn_0x23C)(void* self);              // 0x23C (returns a scalar scale factor)
+    f32 (*method23C)(void* self);              // 0x23C (returns a scalar scale factor)
     void* r240[(0x27C - 0x240) / 4];
-    void* (*fn_0x27C)(void* self);            // 0x27C (arts set base, func_800D2D64)
+    void* (*method27C)(void* self);            // 0x27C (arts set base, func_800D2D64)
     void* r280[(0x288 - 0x280) / 4];
-    void* (*fn_0x288)(void* self);            // 0x288
+    void* (*method288)(void* self);            // 0x288
     void* r28C[(0x2A4 - 0x28C) / 4];
-    CtrlActSub2A4* (*fn_0x2A4)(void* self);   // 0x2A4
+    CtrlActSub2A4* (*method2A4)(void* self);   // 0x2A4
     void* r2A8[(0x2BC - 0x2A8) / 4];
-    int (*fn_0x2BC)(void* self);              // 0x2BC (usable gate, func_800D11B0)
+    int (*method2BC)(void* self);              // 0x2BC (usable gate, func_800D11B0)
     void* r2C0[(0x5B4 - 0x2C0) / 4];
-    f32 (*fn_0x5B4)(void* self);              // 0x5B4 (base facing angle, func_800D69D8)
+    f32 (*method5B4)(void* self);              // 0x5B4 (base facing angle, func_800D69D8)
     void* r5B8[(0x5C8 - 0x5B8) / 4];
-    void (*fn_0x5C8)(void* self, int flag);   // 0x5C8 (func_800D1F0C)
+    void (*method5C8)(void* self, int flag);   // 0x5C8 (func_800D1F0C)
 };
 
 // 32-byte battle-list entry (player +0x358C array, indexed modulo 0x3598).
@@ -561,7 +561,7 @@ struct CtrlActBattleEntryObj {
 };
 
 struct CtrlActPlayerView {
-    CtrlActPlayerVtbl* vtbl;     // 0x00
+    PlayerTable* table;     // 0x00
     CtrlPlayerSub4* mField4;     // 0x04 (sub-object, vf30 -> u32* word holder)
     void* mField8;               // 0x08 embedded arts container (vtbl pointer)
     u8 _0C[0x1530 - 0x0C];
@@ -595,14 +595,14 @@ struct CtrlActPlayerView {
 
 // Action-source object (func_8016FE34 result): vtable slots 0x2BC (usable
 // gate) and 0x5B4 (base facing), +0x04 sub-object, +0x3E9C voice-owner.
-struct CtrlActSrcVtbl {
+struct SrcTable {
     void* p00[0x2BC / 4];
-    int (*fn_0x2BC)(void* self);              // 0x2BC
+    int (*method2BC)(void* self);              // 0x2BC
     void* r2C0[(0x5B4 - 0x2C0) / 4];
-    f32 (*fn_0x5B4)(void* self);              // 0x5B4
+    f32 (*method5B4)(void* self);              // 0x5B4
 };
 struct CtrlActSrc {
-    CtrlActSrcVtbl* vtbl;        // 0x00
+    SrcTable* table;        // 0x00
     CtrlPlayerSub4* mField4;     // 0x04
     u8 _08[0x3388 - 0x08];
     u16 mField3388;              // 0x3388 (bit 3 latch, func_800D1F0C case)
@@ -627,9 +627,9 @@ struct CtrlActAtkParam {
 };
 
 // Player +0x08 embedded arts container: vtable slot 0x20 takes an id.
-struct CtrlActArtsVtbl {
+struct ArtsTable {
     void* p00[0x20 / 4];
-    void (*fn_0x20)(void* self, int id);      // 0x20
+    void (*method20)(void* self, int id);      // 0x20
 };
 
 // Battle-manager field views used by func_800D2D64.
@@ -678,8 +678,9 @@ public:
     virtual int vf25(ml::CVec3* out);                                        // 0x6C
     virtual int vf26(ml::CVec3* out, int flag);                              // 0x70
     virtual int vf27(ml::CVec3* out);                                        // 0x74
-    virtual void vf28();
-    virtual void vf29();  virtual int vf30();  virtual int vf31();
+    virtual void vf28(void* entry);  // 0x78 func_800D2A5C-family (arts entry)
+    virtual void vf29(void* entry);  // 0x7C func_800D2D64-family (arts entry)
+    virtual int vf30();  virtual int vf31();
     virtual void vf32();  virtual void vf33();  virtual void vf34();
     virtual void vf35();  virtual void vf36();  virtual void vf37();
     virtual void vf38();  virtual void vf39();  virtual void vf40();
@@ -755,28 +756,7 @@ struct CtrlActPosBlock {
     u8 _20[0x2C - 0x20];
     f32 mField2C;            // 0x2C (anchor z)
 };
-struct CtrlActVoiceOwnerVtbl {
-    void* p08[(0x4C - 0x08) / 4];
-    int (*fn_0x4C)(void* self);                    // 0x4C (id probe, L_3460)
-    void* p50[(0x8C - 0x50) / 4];
-    f32 (*fn_0x8C)(void* self);                    // 0x8C (height float)
-    void* r90[(0x9C - 0x90) / 4];
-    void (*fn_0x9C)(void* self, ml::CVec3* out);   // 0x9C
-    void* rA0[(0xC4 - 0xA0) / 4];
-    void (*fn_0xC4)(void* self, f32 arg);          // 0xC4
-    void (*fn_0xC8)(void* self, f32 arg);          // 0xC8
-    void* rCC[(0x12C - 0xCC) / 4];
-    CtrlActPosBlock* (*fn_0x12C)(void* self, int arg);  // 0x12C (anchor block)
-    void* r130[(0x138 - 0x130) / 4];
-    float* (*fn_0x138)(void* self);                // 0x138 (returns float vector, [0] used)
-    void* r13C[(0x140 - 0x13C) / 4];
-    f32 (*fn_0x140)(void* self);                   // 0x140 (returns a height scalar)
-    void* r144[(0x1AC - 0x144) / 4];
-    void (*fn_0x1AC)(void* self, void* arg, const char* label);  // 0x1AC
-};
-struct CtrlActVoiceOwnerView {
-    CtrlActVoiceOwnerVtbl* vtbl;  // 0x00
-};
+
 
 // Stack frame block built by func_800D3FFC phase 0: the rotated placement
 // offset followed by a Y-rotation basis (cos/sin columns and the CFC y-scale).
@@ -830,34 +810,26 @@ struct CtrlActFxReq {
 
 // Arts-param record whose vptr sits at +0x84; virtual 0x14 writes the float
 // stored back to +0x80 (func_800D1F0C case).
-struct CtrlActArtsParamVtbl {
+struct ArtsParamTable {
     void* p00[0x14 / 4];
     f32 (*fn14)(void* self);
 };
 struct CtrlActArtsParam {
     u8 _00[0x80];
     f32 mField80;                        // 0x80
-    CtrlActArtsParamVtbl* vtbl;          // 0x84
+    ArtsParamTable* table;          // 0x84
 };
 
 // Battle-manager view for the virtual slot 0x2C dispatch (func_800D1F0C).
-struct CtrlActBm2Vtbl {
+struct Bm2Table {
     void* p00[0x2C / 4];
     void (*fn2C)(void* self, void* player, void* sub);
 };
 struct CtrlActBm2 {
-    CtrlActBm2Vtbl* vtbl;
+    Bm2Table* table;
 };
 
-// Self-object view for the switch-dispatch slots 0x78/0x7C on CtrlActView.
-struct CtrlActSelfDispatchVtbl {
-    void* p00[0x78 / 4];
-    void (*fn_0x78)(void* self, void* entry);  // 0x78
-    void (*fn_0x7C)(void* self, void* entry);  // 0x7C
-};
-struct CtrlActSelfView {
-    CtrlActSelfDispatchVtbl* vtbl;
-};
+
 
 // Chain-object view for the func_800AD860 path of func_800D1F0C.
 struct CtrlActChainObj {

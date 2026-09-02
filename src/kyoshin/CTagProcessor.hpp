@@ -684,6 +684,7 @@ struct __declspec(novtable) CTagProcessorBase
     : public nw4r::ut::TagProcessorBase<wchar_t> {
     CTagProcessorBase();
     virtual ~CTagProcessorBase();
+    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14 retail func_80125B58
 
     u16 mBuf[0x400];    // +0x04 message buffer (0x800 bytes)
     u32 field_804;      // +0x804
@@ -952,11 +953,11 @@ void func_8009D018(u32 owner, u32 value);
 void* func_800451D8(u32 cls, void* param);
 void func_8013DB6C(u32 a, u32 b, u32 c, u32 d);
 void func_8013BE38();
-int code80135FDC_getByte_6405A();
-int code80135FDC_getByte_6405B();
-int code80135FDC_getWord_6405C();
-int code80135FDC_getWord_64060();
-void code80135FDC_setPair_6405C_64060(int a, int b);
+u8 code80135FDC_getByte_6405A();
+u8 code80135FDC_getByte_6405B();
+u32 code80135FDC_getWord_6405C();
+u32 code80135FDC_getWord_64060();
+void code80135FDC_setPair_6405C_64060(u32 a, u32 b);
 // cf::CfGameManager controller-mode query. Retail name keeps the Fv suffix
 // but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
 int isClassicController__Q22cf13CfGameManagerFv(int arg);

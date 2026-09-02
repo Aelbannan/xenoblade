@@ -1018,7 +1018,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
     if (actor != 0) {
         void* a3 = func_800B8B94(self->field_00);
         if (a3 != 0) {
-            u8* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
+            void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
             func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
     }
@@ -1082,7 +1082,7 @@ extern "C" void func_8009F6D4(void* selfV) {
     actor2 = func_800B8B94(self->field_00);
     if (actor2 != 0) {
         func_801765A4(actor2, lbl_eu_806667A0, 1);
-        u8* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
+        void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         self->mParam.CActorParam_UnkVirtualFunc4(self);
@@ -1098,7 +1098,7 @@ extern "C" void func_8009F6D4(void* selfV) {
     if (actor != 0) {
         void* a3 = func_800B8B94(self->field_00);
         if (a3 != 0) {
-            u8* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
+            void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
             func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
     }
@@ -1222,7 +1222,7 @@ extern "C" void func_800A03F4(cf::CtrlObjectParamArtsInitView* self) {
         if (actor != 0) {
             void* actor2 = func_800B8B94(self->field_00);
             if (actor2 != 0) {
-                u8* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
+                void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
                 func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
             }
         }
@@ -1286,7 +1286,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
         void* actor2 = func_800B8B94(self->field_00[0]);
         if (actor2 != 0) {
             func_801765A4(actor2, lbl_eu_806667A0, 0);
-            u8* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
+            void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
             func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
         } else {
             self->mParam.CActorParam_UnkVirtualFunc4(self);
@@ -1328,7 +1328,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
         if (actor != 0) {
             void* a3 = func_800B8B94(self->field_00[0]);
             if (a3 != 0) {
-                u8* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
+                void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
                 func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
             }
         }
@@ -1513,7 +1513,7 @@ extern "C" void func_800A1370(cf::CtrlObjectParamArtsView* self) {
     // func_80175A50(reinterpret_cast<cf::CActorParam*>(retail arg order: value in r3), reinterpret_cast<cf::CActorParam*>(obj in r4)).
     u8* obj = reinterpret_cast<u8*>(func_800B8B94(self->field_00));
     if (obj != 0) {
-        u8* value = reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_UnkVirtualFunc126();
+        void* value = reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->field_17C));
     }
 }
@@ -1528,7 +1528,7 @@ void func_800A13C4(cf::CtrlObjectParamArtsView* self, u32 arg2) {
     void* actor = func_800B8B94(self->field_00);
     if (actor != 0) {
         func_801765A4(actor, lbl_eu_806667A0, arg2);
-        u8* value = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc126();
+        void* value = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->field_17C), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         reinterpret_cast<cf::CActorParam*>(&reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self)->mParam)->CActorParam_UnkVirtualFunc4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
@@ -1553,7 +1553,7 @@ extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
     void* actor2 = func_800B8B94(self->field_00);
     if (actor2 != 0) {
         func_801765A4(actor2, lbl_eu_806667A0, 0);
-        u8* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
+        void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
     } else {
         self->mParam.CActorParam_UnkVirtualFunc4(self);
@@ -1691,7 +1691,7 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
     void* actor2 = func_800B8B94(self->field_00);
     if (actor2 != 0) {
         func_801765A4(actor2, lbl_eu_806667A0, 0);
-        u8* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
+        void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
         self->mParam.CActorParam_UnkVirtualFunc4(self);
@@ -1739,7 +1739,7 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
     if (actor != 0) {
         void* a3 = func_800B8B94(self->field_00);
         if (a3 != 0) {
-            u8* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
+            void* value = reinterpret_cast<cf::CActorParam*>(a3)->CActorParam_UnkVirtualFunc126();
             func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
         }
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc166();

@@ -3,6 +3,7 @@
 
 #include <types.h>
 #include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "kyoshin/cf/CfBdat.hpp"
 #include "monolib/math/CAttrTransform.hpp"
 #include "kyoshin/action/CActParamAnim.hpp"
@@ -15,7 +16,7 @@ namespace {
 // 0x08-0x50, the first CfObject slot lands at 0x54). novtable: never
 // constructed, only reinterpret_cast, so MWCC emits no vtable data and the
 // m68() call compiles to a genuine load-vptr/load-slot/bctrl dispatch.
-struct __declspec(novtable) ModelDtorVt : public cf::CObjectParam {
+struct __declspec(novtable) ModelDtorReal : public cf::CObjectParam {
     virtual void m54();  // 0x54 (base-dtor placeholder)
     virtual void m58();  // 0x58
     virtual void m5C();  // 0x5C
@@ -30,7 +31,7 @@ struct __declspec(novtable) ModelDtorVt : public cf::CObjectParam {
 struct SubObjB0Head {
     u8 _pad00[0x10];   // 0x00-0x0F
 };
-struct __declspec(novtable) SubObjB0If : SubObjB0Head {
+struct __declspec(novtable) SubObjB0Real : SubObjB0Head {
     virtual void m08(s32 flag);  // table +0x08: deleting destructor
 };
 } // namespace
@@ -101,7 +102,7 @@ cf::CfObjectModel::CfObjectModel() {
     g88->w88 = 0;
     g88->h8c = 0;
     g88->h8e = 0;
-    reinterpret_cast<ModelDtorVt*>(this)->m5C();  // vtable +0x5C
+    reinterpret_cast<ModelDtorReal*>(this)->m5C();  // vtable +0x5C
     // Phase 2: flag bit, base vtable install, model-tail init.
     mFlags68 |= 0x00100000;
     *(void**)this = (void*)lbl_eu_80529318;
@@ -150,18 +151,18 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
         if (flags & 0x40000000) {
             func_80186474(func_801862C0(), self);
         }
-        reinterpret_cast<ModelDtorVt*>(self)->m68();
+        reinterpret_cast<ModelDtorReal*>(self)->m68();
         if (self->mSubObjB0 != 0) {
             if (self->mSubObjB0 != 0) {
                 // Redundant nested re-check reproduces retail's dead second
                 // beq (MWCC keeps both branch targets).
-                reinterpret_cast<SubObjB0If*>(self->mSubObjB0)->m08(1);
+                reinterpret_cast<SubObjB0Real*>(self->mSubObjB0)->m08(1);
             }
             self->mSubObjB0 = 0;
         }
         if (self != 0) {
             *(void**)self = (void*)lbl_eu_805294E0;
-            reinterpret_cast<ModelDtorVt*>(self)->m68();
+            reinterpret_cast<ModelDtorReal*>(self)->m68();
         }
     if (deleteFlag > 0) {
         operator delete(self);
@@ -185,12 +186,12 @@ u8* __dt__800BAA24(u8* object, s32 deleteFlag) {
 void cf::CfObjectModel::CfObject_UnkVirtualFunc6() {
     notifyDetach_(this);
     if (mSubObj38 != 0) {
-        reinterpret_cast<cf::CfObjectSub38If*>(mSubObj38)->mAC();
+        reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->mAC();
         if (mSubObj38 != 0) {
             // Redundant nested check on the reloaded value mirrors retail's
             // two beq targets (MWCC keeps both branches).
             if (mSubObj38 != 0) {
-                reinterpret_cast<cf::CfObjectSub38If*>(mSubObj38)->m08(1);
+                reinterpret_cast<cf::CfObjectSub38*>(mSubObj38)->m08(1);
             }
             mSubObj38 = 0;
         }
@@ -245,21 +246,21 @@ void func_800BAB64(cf::CfObjectModel* self) {
 // new object from r4 - forced-name form.
 void CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, void* newObj) {
     if (self->mSubObj38 != 0) {
-        reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->mAC();
+        reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->mAC();
     }
     if (self->mSubObj38 != 0) {
         // Redundant re-check on the reloaded pointer: MWCC shares the compare
         // between the two tests and emits two beq targets (skip-call /
         // skip-block), matching retail.
         if (self->mSubObj38 != 0) {
-            reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->m08(1);
+            reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->m08(1);
         }
         self->mSubObj38 = 0;
     }
     self->mSubObj38 = newObj;
     if (newObj != 0) {
-        reinterpret_cast<cf::CfObjectSub38If*>(newObj)->m2C(self);
-        reinterpret_cast<cf::CfObjectSub38If*>(self->mSubObj38)->mA0();
+        reinterpret_cast<cf::CfObjectSub38*>(newObj)->m2C(self);
+        reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->mA0();
     }
 }
 
@@ -341,22 +342,22 @@ u32 CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // Call the cf-chain vtable slot +0x14C (retail CfObject_UnkVirtualFunc63
 // returns a flag word) and return bit 1 of it.
 u32 func_800BAD98(cf::CfObject* obj) {
-    return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 1) & 1;
+    return (obj->CfObject_UnkVirtualFunc63() >> 1) & 1;
 }
 
 // Same as func_800BAD98 but returns bit 2 of the flag word.
 u32 func_800BADC8(cf::CfObject* obj) {
-    return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 2) & 1;
+    return (obj->CfObject_UnkVirtualFunc63() >> 2) & 1;
 }
 
 // Same as func_800BAD98 but returns bit 3 of the flag word.
 u32 func_800BADF8(cf::CfObject* obj) {
-    return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 3) & 1;
+    return (obj->CfObject_UnkVirtualFunc63() >> 3) & 1;
 }
 
 // Call the cf-chain vtable slot +0x14C and return bit 7 of the flag word.
 u32 func_800BAE28(cf::CfObject* obj) {
-    return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 7) & 1;
+    return (obj->CfObject_UnkVirtualFunc63() >> 7) & 1;
 }
 
 // Copies the vector into the sub-object transform's position and refreshes
@@ -554,8 +555,8 @@ u32 func_800BB340(cf::CfObjectModel* self) {
     if (sub != 0) {
         // Retail dispatches to the sub-object's vtable slot +0xA8 and returns
         // its value; the slot returns u32 in retail, so it goes through the
-        // CfObjectModelSub98Vt proxy (the base header's Func22 is void).
-        return reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub)->mA8();
+        // CfObjectModelSub98vt proxy (the base header's Func22 is void).
+        return reinterpret_cast<CScnItemModel*>(sub)->vfuncA8();
     }
     return 0;
 }
@@ -637,7 +638,7 @@ u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(const cf::CfObjectModel* s
     if (sub == 0) {
         return 0;
     }
-    return reinterpret_cast<cf::CfObjectParamVt44*>(reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub)->mA8())->m44(arg);
+    return reinterpret_cast<cf::CfObjectParamReal*>(reinterpret_cast<CScnItemModel*>(sub)->vfuncA8())->m44(arg);
 }
 
 // Returns this+0x10 when the vtable+0x44 flag is set, else the vtable+0x180
@@ -653,7 +654,7 @@ void* cf::CfObjectModel::CObjectParam_UnkVirtualFunc2() {
 // when there is no sub-object (retail tail-calls the sub-object's slot).
 void* cf::CfObjectModel::CfObjectModel_UnkVirtualFunc3() {
     if (mSubObj98 != 0) {
-        return reinterpret_cast<CfObjectModelSub98Vt18*>(mSubObj98)->m18();
+        return (void*)reinterpret_cast<CScnItemModel*>(mSubObj98)->vfunc18();
     }
     return lbl_eu_804FC548;
 }
@@ -711,7 +712,7 @@ void CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     if (sub == 0) {
         return;
     }
-    reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub)->CObjectParam_UnkVirtualFunc4();
+    reinterpret_cast<CScnItemModel*>(sub)->vfunc48(value);
 }
 
 void CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv(void* self, float val) { *(float*)((u8*)self + 0xa4) = val; }
@@ -727,7 +728,7 @@ void CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv(void* self, float va
 void CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, u32 arg) {
     if (self->mSubObj98 != 0) {
         func_80484E10(self->mSubObj98, 1, self->field_BD);
-        reinterpret_cast<cf::CfObjectModelSub98Vt*>(self->mSubObj98)->m6C(arg);
+        reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc6C(arg);
     }
 }
 
@@ -752,14 +753,14 @@ void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
         // Resolve the name through the source object; fall back to the retail
         // placeholder label (+1) when the lookup reports failure.
         const char* target = name;
-        if (reinterpret_cast<cf::CfObjectVt120*>(other)->m120(name) == 0) {
+        if (static_cast<cf::CfObject*>(other)->CfObject_UnkVirtualFunc52(name) == nullptr) {
             target = reinterpret_cast<const char*>(&lbl_eu_804FC548[1]);
         }
 
         ml::CVec3 pos;
         cf::CfObjectModelSub98* srcSub = other->mSubObj98;
         if (srcSub != 0) {
-            float* mtx = reinterpret_cast<cf::CfObjectParamVt3C*>(srcSub)->m3C(target);
+            float* mtx = (float*)reinterpret_cast<CScnItemModel*>(srcSub)->vfunc3C(target);
             pos = ml::CVec3(mtx[3], mtx[7], mtx[11]);
         } else {
             pos = zero__Q22ml5CVec3;
@@ -775,12 +776,11 @@ void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
     }
 }
 
-extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int val) {
-    // Store (val != 0) at field_BC, then tail-call the virtual
-    // CfObjectModel_UnkVirtualFunc14 (vtable+0x1AC). val stays in r4 for the
-    // callee (the retail Fv annotation omits the parameter).
-    self->field_BC = (u8)(((u32)(-val) | (u32)(val)) >> 31);
-    self->CfObjectModel_UnkVirtualFunc14();
+extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, cf::CfObject* other, const char* name) {
+    // Store (other != 0) at field_BC, then tail-call the virtual
+    // CfObjectModel_UnkVirtualFunc14 (vtable+0x1AC) with the same args.
+    self->field_BC = (u8)(other != nullptr);
+    self->CfObjectModel_UnkVirtualFunc14(other, name);
 }
 
 extern "C" u32 func_800BB934(cf::CfObjectModel* self) {
@@ -805,16 +805,17 @@ extern "C" u32 CfObject_UnkVirtualFunc69__Q22cf13CfObjectModelFv(cf::CfObjectMod
 // vtable +0x16C result is below the low constant while the vtable +0x174
 // result is above the high constant (0 otherwise). The vtable slots return
 // floats in retail though the base header declares them void, so they are
-// reached through the CfObjectVt174 proxy. The explicit reset inside the
+// reached through the CfObjectvt174 proxy. The explicit reset inside the
 // sub-object check reproduces the retail's redundant second li r31,0.
-int CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
+extern "C" int CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
+    (void)vec;
     int result = 0;
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub != 0) {
         result = 0;
         if ((sub->field_7A4 & 0x2) != 0) {
-            if (reinterpret_cast<cf::CfObjectVt174*>(self)->m16C() < lbl_eu_80666A6C &&
-                reinterpret_cast<cf::CfObjectVt174*>(self)->m174() > lbl_eu_80666A68) {
+            if (self->CfObject_UnkVirtualFunc71() < lbl_eu_80666A6C &&
+                self->CfObject_UnkVirtualFunc73() > lbl_eu_80666A68) {
                 result = 1;
             }
         }
@@ -828,12 +829,12 @@ int CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // (retail reloads +0x98 after the first bctrl).
 void func_800BBA08(cf::CfObjectModel* self) {
     if (self->mSubObj98 != 0) {
-        reinterpret_cast<cf::CfObjectModelSub98Vt*>(self->mSubObj98)->m98();
+        reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc98();
         float vec[3];
         vec[0] = lbl_eu_80666A6C;
         vec[1] = lbl_eu_80666A6C;
         vec[2] = lbl_eu_80666A6C;
-        reinterpret_cast<cf::CfObjectModelSub98Vt*>(self->mSubObj98)->m90(vec, 0);
+        reinterpret_cast<CScnItemModel*>(self->mSubObj98)->vfunc90(vec, 0);
     }
 }
 
@@ -880,7 +881,7 @@ void func_800BBADC(cf::CfObjectModel* self, cf::CfObjectModelSub98* arg) {
     ModelC0* obj = reinterpret_cast<ModelC0*>(self);
     self->mSubObj98 = arg;
     if (arg != 0 && obj->field_C0 != 0) {
-        u32 v = (arg != 0) ? reinterpret_cast<cf::CfObjectModelSub98Vt*>(arg)->mA8() : 0;
+        u32 v = (arg != 0) ? reinterpret_cast<CScnItemModel*>(arg)->vfuncA8() : 0;
         reattachTrg__(obj->field_C0, reinterpret_cast<void*>(v));
     }
     obj->field_C0 = 0;
@@ -897,12 +898,12 @@ void func_800BBB50(cf::CfObjectModel* self) {
     };
     ModelC0* obj = reinterpret_cast<ModelC0*>(self);
     cf::CfObjectModelSub98* sub = self->mSubObj98;
-    u32 v = (sub != 0) ? reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub)->mA8() : 0;
+    u32 v = (sub != 0) ? reinterpret_cast<CScnItemModel*>(sub)->vfuncA8() : 0;
     if (v != 0) {
         u32 c0 = reinterpret_cast<u32>(obj->field_C0);
         if (c0 == 0 && c0 != v) {
             cf::CfObjectModelSub98* sub2 = self->mSubObj98;
-            u32 v2 = (sub2 != 0) ? reinterpret_cast<cf::CfObjectModelSub98Vt*>(sub2)->mA8() : 0;
+            u32 v2 = (sub2 != 0) ? reinterpret_cast<CScnItemModel*>(sub2)->vfuncA8() : 0;
             obj->field_C0 = reinterpret_cast<void*>(v2);
             detachTrgPrt_(reinterpret_cast<u8*>(v2));
         }

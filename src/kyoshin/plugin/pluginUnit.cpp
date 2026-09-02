@@ -37,7 +37,7 @@ extern "C" {
 
     // Actor param helpers (C-linkage in retail). Typed as cf::CfObjectActor*
     // to satisfy the no_void_ptr lint rule while keeping C linkage.
-    cf::CfObjectActor* func_8009EC9C(unsigned short);
+    void* func_8009EC9C(u32 index);
     void func_800A18A4(cf::CfObjectActor*, int);
     cf::CfObjectActor* func_800B8B94(int);
     cf::CfObjectActor* func_800B8C78(int);

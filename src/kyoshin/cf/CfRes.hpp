@@ -294,7 +294,6 @@ extern "C" void func_8006349C();
 
 // C++ virtual thunk dispatching the +0x2C sub-object's m02 (retail returns
 // the vtable call result in r3).
-extern "C" void* CfRes_vcall02(void* self, void* arg);
 
 // Packed-field query on the CfGameManager singleton (defined in
 // CfGameManagerUnityHelpers.hpp; the retail name is the mangled member
@@ -339,18 +338,7 @@ struct CfResPcEntry28View {
     u32 field_28;
 };
 
-// vtable +0x38 dispatch over the resource-entry lookup object (CResLookup in
-// IResInfo.hpp stops at vfunc0C and its +0x38 slot is declared arg-less, but
-// func_80064014's completion path calls it with the owning entry as an arg).
-// With -RTTI on, the first declared virtual lands at vtable offset +8, so
-// _v038 sits at +0x38.
-struct CfResLookupV38 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010();
-    virtual void _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(); virtual void _v024(); virtual void _v028();
-    virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void* _v038(void* entry);
-};
+// vtable +0x38 dispatch over the resource-entry lookup object (CResLookup::vfunc0A at +0x38).
 
 // Same-unit resource-table accessor (stub defined in CfRes.cpp; C linkage so
 // call relocs carry the retail unmangled name).
@@ -366,10 +354,6 @@ extern "C" u32 CfRes_getAddrLow10(void* self);
 // func_800641CC (defined in CfRes.cpp; C linkage so the call relocs carry
 // the retail unmangled names). int-returning so callers capture r3.
 extern "C" unsigned long CfRes_packShift27(unsigned long a, unsigned long b);
-extern "C" int CfRes_vcall04(void* self);
-extern "C" int CfRes_vcall05(void* self);
-extern "C" int CfRes_vcall07(void* self);
-extern "C" int CfRes_vcall08(void* self);
 
 // Packed-name hash (kyoshin/code_800AA008.cpp - retail C symbol name; the
 // plain C++ declaration in code_800AA008.hpp would mangle the call reloc).
@@ -429,10 +413,6 @@ extern "C" int CfRes_streq(const char* s1, const char* s2);
 
 // Same-TU entry helpers (defined in CfRes.cpp; C linkage so call relocs
 // carry the retail unmangled names).
-extern "C" int CfRes_vcall17(u8* self, void* arg);
-extern "C" int CfRes_vcall14(void* self);
-extern "C" void* CfRes_vcall38(u8* self);
-extern "C" void* CfRes_vcall34(u8* self);
 extern "C" void CfRes_delegateCleanup(void* self);
 extern "C" void CfRes_initFields4(u8* self, int a, int b, int c, int d);
 extern "C" void CfRes_setBits1_2(u8* self);

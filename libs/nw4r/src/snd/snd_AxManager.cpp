@@ -483,9 +483,24 @@ BiquadFilterBpf2048::~BiquadFilterBpf2048() {}
 } // namespace snd
 } // namespace nw4r
 
-// Absorb: .data 0x50 via pad_data_section (retail zeros)
-extern "C" void __ct__Q44nw4r3snd6detail9AxManagerFv();
-__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_AxManager_data_anchor[4] = { (const void*)&__ct__Q44nw4r3snd6detail9AxManagerFv, nullptr, nullptr, nullptr };
+// Absorb: retail .data 0x50 = 5 x Biquad vtables (0,0,dtor,GetCoef)
+extern "C" void __dt__Q44nw4r3snd6detail15BiquadFilterLpfFv();
+extern "C" void __dt__Q44nw4r3snd6detail15BiquadFilterHpfFv();
+extern "C" void __dt__Q44nw4r3snd6detail18BiquadFilterBpf512Fv();
+extern "C" void __dt__Q44nw4r3snd6detail19BiquadFilterBpf1024Fv();
+extern "C" void __dt__Q44nw4r3snd6detail19BiquadFilterBpf2048Fv();
+extern "C" void GetCoef__Q44nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
+extern "C" void GetCoef__Q44nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
+extern "C" void GetCoef__Q44nw4r3snd6detail18BiquadFilterBpf512CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
+extern "C" void GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf1024CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
+extern "C" void GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf2048CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef();
+__declspec(section ".data") __attribute__((aligned(8), used)) const void* snd_AxManager_data_blob[20] = {
+    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail19BiquadFilterBpf2048Fv, (const void*)&GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf2048CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
+    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail19BiquadFilterBpf1024Fv, (const void*)&GetCoef__Q44nw4r3snd6detail19BiquadFilterBpf1024CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
+    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail18BiquadFilterBpf512Fv, (const void*)&GetCoef__Q44nw4r3snd6detail18BiquadFilterBpf512CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
+    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail15BiquadFilterHpfFv, (const void*)&GetCoef__Q44nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
+    nullptr, nullptr, (const void*)&__dt__Q44nw4r3snd6detail15BiquadFilterLpfFv, (const void*)&GetCoef__Q44nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef,
+};
 unsigned char snd_AxManager_bss_pad[0x248] __attribute__((aligned(8)));
 unsigned int snd_AxManager_sbss_pad0;
 unsigned int snd_AxManager_sbss_pad1;

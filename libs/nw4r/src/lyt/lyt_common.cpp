@@ -217,6 +217,6 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" __attribute__((used)) char lyt_common_sbss_pad[7];
+// sbss pad removed - now handled via UNIT_RULES symbol_sizes
 
 

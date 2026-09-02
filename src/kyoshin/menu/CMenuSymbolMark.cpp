@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>   // nw4r::lyt::DrawInfo
 #include <nw4r/lyt/lyt_layout.h>    // nw4r::lyt::Layout
+#include <nw4r/lyt/lyt_arcResourceAccessor.h> // ArcResourceAccessor
 #include <nw4r/lyt/lyt_pane.h>      // nw4r::lyt::Pane (FindPaneByName/SetVisible)
 #include <revolution/mtx/vec.h>     // Vec, PSVECMag
 #include <revolution/mtx.h>         // PSMTXConcat
@@ -362,11 +363,11 @@ struct EntryClearView {
             clr.worldY = jy;                                                   \
             clr.worldZ = jz;                                                   \
             clr.unk1C = 0;                                                     \
-            LytPaneFindView* pane =                                            \
-                (LytPaneFindView*)((LytLayoutFields*)mEntries[i].layout)       \
+            nw4r::lyt::Pane* pane =                                            \
+                (nw4r::lyt::Pane*)((LytLayoutFields*)mEntries[i].layout)       \
                     ->rootPane;                                                \
             if (pane != 0) {                                                   \
-                LytPaneFindView* found = pane->findPane(sBase + 0x14, true);   \
+                nw4r::lyt::Pane* found = pane->FindPaneByName(sBase + 0x14, true);   \
                 if (found != 0) {                                              \
                     ((LytPaneFields*)found)->flagBB &= 0xFE;                   \
                 }                                                              \
@@ -387,9 +388,9 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self);
     do {                                                                       \
         const f32 distLimit = lbl_eu_806670EC;                                 \
         for (u32 mi = 0; mi < self->countField; mi++) {                         \
-            CfActorView* actorV =                                              \
-                (CfActorView*)findObjectById(self->listArr[mi]);                 \
-            if (actorV == 0 || actorV->_v160() == 0) {                         \
+            cf::CfObject* actorV =                                              \
+                (cf::CfObject*)findObjectById(self->listArr[mi]);                 \
+            if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {                         \
                 continue;                                                      \
             }                                                                  \
             CfActorFields* actor = (CfActorFields*)actorV;                     \
@@ -409,13 +410,13 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self);
                 continue;                                                      \
             }                                                                  \
             self->mEntries[count].unk04 = name;                                \
-            void* speed = actorV->_v12C(100);                                  \
-            Vec* pos = (Vec*)actorV->_v0AC();                                  \
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);                                  \
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();                                  \
             void* player = cf::CfGameManager::getPlayer(0);                    \
             if (player == 0) {                                                 \
                 continue;                                                      \
             }                                                                  \
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();                 \
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();                 \
             Vec delta;                                                         \
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,                     \
                                 (nw4r::math::VEC3*)ppos,                       \
@@ -481,7 +482,7 @@ void CMenuSymbolMark::Move() {
             func_8011FB68(this);
             func_8011F8F8(this);
             // Measured markers from the first list (state gate v228 == 3).
-            SCAN_MARKERS(actorV->_v228() == 3, 0xC, mArray4A0, mField_6A0, 1);
+            SCAN_MARKERS(((cf::CfObjectMove*)actorV)->CfObjectMove_UnkVirtualFunc25() == 3, 0xC, mArray4A0, mField_6A0, 1);
             // Kind-0xC markers from the second id list.
             SCAN_MARKERS(actor->kind91 == 0xC, 0x10, mArray6A8, mField_8A8, 0);
             func_801209BC(this);
@@ -555,9 +556,9 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
     }
     SymbolMarkEntry* entry = &self->mEntries[self->mEntryCount];
     if (id == 7) {
-        CfActorView* player = (CfActorView*)cf::CfGameManager::getPlayer(0);
+        cf::CfObject* player = (cf::CfObject*)cf::CfGameManager::getPlayer(0);
         if (player != 0) {
-            Vec* ppos = (Vec*)player->_v0AC();
+            Vec* ppos = (Vec*)player->CfObject_UnkVirtualFunc23();
             // PS-kernel subtraction + element copy reproduces the retail
             // psq_l/ps_sub block and the stfs copy before PSVECMag.
             nw4r::math::VEC3 delta;
@@ -598,8 +599,8 @@ extern "C" void func_8011E540(CMenuSymbolMark* self, u32 id, Vec* pos, void* arg
     char* markerName = func_8013639C(self->mAnotherFP, S + 0x7b, id);
     ml::FixStr<32> name;
     name.format(S + 0x86, markerName);
-    ArcAccessorView* acc = (ArcAccessorView*)func_801355F4();
-    if (acc->find((const char*)0x74696d67 /* "timg" */,
+    nw4r::lyt::ArcResourceAccessor* acc = (nw4r::lyt::ArcResourceAccessor*)func_801355F4();
+    if (acc->GetResource(0x74696d67 /* "timg" */,
                   (const char*)name.c_str(), 0) != 0) {
         func_80137E7C((nw4r::lyt::Layout*)entry->layout, S + 0x8d);
     }
@@ -638,7 +639,7 @@ extern "C" __declspec(noinline) void func_8011E778(
         world = &posTmp;
     }
     worldPos = *world;
-    ScnXformBlock* pose = func_80496264(self->mScn, -1);
+    ScnXformBlock* pose = (ScnXformBlock*)func_80496264(self->mScn, -1);
     if (posSrc == 0) {
         if (flag != 0) {
             worldPos.y += lbl_eu_806670F0;
@@ -714,18 +715,18 @@ extern "C" void func_8011EA98(CMenuSymbolMark* self) {
     for (i = 0; i < self->mEntryCount; i++) {
         SymbolMarkEntry* entry = &self->mEntries[i];
         if (entry->flag1 != 0) {
-            CfActorView* actor = (CfActorView*)findObjectById(entry->unk04);
+            cf::CfObject* actor = (cf::CfObject*)findObjectById(entry->unk04);
             if (actor == 0) {
                 entry->flag0 = zero;
                 continue;
             }
             // unk00 == 9 or 10: gate on the actor's live flag (vtable 0x160).
-            if ((entry->unk00 - 9) <= 1 && actor->_v160() == 0) {
+            if ((entry->unk00 - 9) <= 1 && actor->CfObject_UnkVirtualFunc68() == 0) {
                 entry->flag0 = zero;
                 continue;
             }
-            value12c = actor->_v12C(100);
-            Vec* valueAC = (Vec*)actor->_v0AC();
+            value12c = actor->CfObject_UnkVirtualFunc55(100);
+            Vec* valueAC = (Vec*)actor->CfObject_UnkVirtualFunc23();
             func_8011E778(self, entry, (nw4r::math::VEC3*)valueAC,
                           (EntryInputPos*)value12c, zero);
         } else {
@@ -845,7 +846,7 @@ extern "C" void func_8011EDDC(CMenuSymbolMark* self) {
         }
         // Anchor position of the object (vtable slot 0xAC); the scene bounds
         // query runs inside the loop, after the position is captured.
-        pos = (Vec*)((CfActorView*)obj)->_v0AC();
+        pos = (Vec*)((cf::CfObject*)obj)->CfObject_UnkVirtualFunc23();
         ScnObjPositions* scn =
             (ScnObjPositions*)func_80496264(self->mScn, -1);
         Vec extent;
@@ -931,7 +932,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
         CfObjList* list = (CfObjList*)func_800B6CF8(sw);
         for (CfObjListNode* node = list->sentinel->next;
              node != list->sentinel; node = node->next) {
-            CfActorView* actorV = (CfActorView*)node->object;
+            cf::CfObject* actorV = (cf::CfObject*)node->object;
             CfActorFields* actor = (CfActorFields*)actorV;
             u32 name = actor->name74;
             u8 count = self->mEntryCount;
@@ -946,10 +947,10 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* pos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             func_8011E540(self, 7, pos, speed, 0, 0);
-            SYMBOL_ITEM_TAIL(self, actorV->_v0AC());
+            SYMBOL_ITEM_TAIL(self, actorV->CfObject_UnkVirtualFunc23());
             return;
         }
         return;
@@ -1006,7 +1007,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
             if (actor->field8C != (u16)meas) {
                 continue;
             }
-            CfActorView* actorV = (CfActorView*)obj;
+            cf::CfObject* actorV = (cf::CfObject*)obj;
             u32 name = actor->name74;
             u8 count = self->mEntryCount;
             bool isNew = true;
@@ -1020,10 +1021,10 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* pos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             func_8011E540(self, 7, pos, speed, 0, 0);
-            SYMBOL_ITEM_TAIL(self, actorV->_v0AC());
+            SYMBOL_ITEM_TAIL(self, actorV->CfObject_UnkVirtualFunc23());
             return;
         }
         return;
@@ -1039,7 +1040,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
             if (actor->field8C != (u16)meas) {
                 continue;
             }
-            CfActorView* actorV = (CfActorView*)actor;
+            cf::CfObject* actorV = (cf::CfObject*)actor;
             u32 name = actor->name74;
             u8 count = self->mEntryCount;
             bool isNew = true;
@@ -1053,10 +1054,10 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* pos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             func_8011E540(self, 7, pos, speed, 1, 0);
-            SYMBOL_ITEM_TAIL(self, actorV->_v0AC());
+            SYMBOL_ITEM_TAIL(self, actorV->CfObject_UnkVirtualFunc23());
             return;
         }
         return;
@@ -1072,7 +1073,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
             if (actor->field8C != (u16)meas) {
                 continue;
             }
-            CfActorView* actorV = (CfActorView*)actor;
+            cf::CfObject* actorV = (cf::CfObject*)actor;
             u32 name = actor->name74;
             u8 count = self->mEntryCount;
             bool isNew = true;
@@ -1086,10 +1087,10 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* pos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             func_8011E540(self, 7, pos, speed, 1, 0);
-            SYMBOL_ITEM_TAIL(self, actorV->_v0AC());
+            SYMBOL_ITEM_TAIL(self, actorV->CfObject_UnkVirtualFunc23());
             return;
         }
         return;
@@ -1112,8 +1113,8 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
     Vec anchor;
     Vec extent;
     for (u32 i = 0; i < self->mField_6A0; i++) {
-        CfActorView* actorV = (CfActorView*)findObjectById(self->mArray4A0[i]);
-        if (actorV == 0 || actorV->_v160() == 0) {
+        cf::CfObject* actorV = (cf::CfObject*)findObjectById(self->mArray4A0[i]);
+        if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {
             continue;
         }
         CfActorFields* actor = (CfActorFields*)actorV;
@@ -1127,7 +1128,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
             if (func_80138234((const void*)self->mSomeValue, j) == 0) {
                 continue;
             }
-            Vec* pos = (Vec*)actorV->_v0AC();
+            Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             ScnObjPositions* scn =
                 (ScnObjPositions*)func_80496264(self->mScn, -1);
             anchor.x = scn->posX;
@@ -1154,13 +1155,13 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* pos2 = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* pos2 = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
                 continue;
             }
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                 (nw4r::math::VEC3*)ppos,
                                 (nw4r::math::VEC3*)pos2);
@@ -1297,18 +1298,18 @@ void func_8011FB68(CMenuSymbolMark* self) {
             u32 nActors = isFirst ? self->mField_6A0 : self->mField_8A8;
             const u32 argD = isFirst ? 1 : 0;
             for (u32 j = 0; j < nActors; j++) {
-                CfActorView* actorV = (CfActorView*)findObjectById(arr[j]);
+                cf::CfObject* actorV = (cf::CfObject*)findObjectById(arr[j]);
                 if (actorV == 0) {
                     continue;
                 }
-                if (!kindNonzero && actorV->_v160() == 0) {
+                if (!kindNonzero && actorV->CfObject_UnkVirtualFunc68() == 0) {
                     continue;
                 }
                 CfActorFields* actor = (CfActorFields*)actorV;
                 if (actor->field8C != (u16)meas) {
                     continue;
                 }
-                Vec* pos = (Vec*)actorV->_v0AC();
+                Vec* pos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
                 if (!SYM_IN_SCENE_BOUNDS(func_80496264(self->mScn, -1), pos)) {
                     continue;
                 }
@@ -1318,17 +1319,17 @@ void func_8011FB68(CMenuSymbolMark* self) {
                 }
                 self->mEntries[self->mEntryCount].unk04 = name;
                 if (kindNonzero) {
-                    void* speed = actorV->_v12C(100);
+                    void* speed = actorV->CfObject_UnkVirtualFunc55(100);
                     func_8011E540(self, 5, pos, speed, argD, 0);
                 } else {
                     u32 markId = kindOk ? 0xa : 9;
-                    void* speed = actorV->_v12C(100);
-                    Vec* pos2 = (Vec*)actorV->_v0AC();
+                    void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+                    Vec* pos2 = (Vec*)actorV->CfObject_UnkVirtualFunc23();
                     void* player = cf::CfGameManager::getPlayer(0);
                     if (player == 0) {
                         goto next_id;
                     }
-                    Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+                    Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
                     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                         (nw4r::math::VEC3*)ppos,
                                         (nw4r::math::VEC3*)pos2);
@@ -1371,7 +1372,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                     if (player == 0) {
                         goto next_id;
                     }
-                    Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+                    Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
                     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                         (nw4r::math::VEC3*)ppos,
                                         (nw4r::math::VEC3*)pos);
@@ -1406,7 +1407,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                 if (player == 0) {
                     goto next_id;
                 }
-                Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+                Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
                 nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                     (nw4r::math::VEC3*)ppos,
                                     (nw4r::math::VEC3*)&worldPos);
@@ -1448,7 +1449,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                     goto next_id;
                 }
                 Vec posB = rawPos;
-                Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+                Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
                 nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                     (nw4r::math::VEC3*)ppos,
                                     (nw4r::math::VEC3*)&posB);
@@ -1492,7 +1493,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                     goto next_id;
                 }
                 Vec posB = recPos;
-                Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+                Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
                 nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
                                     (nw4r::math::VEC3*)ppos,
                                     (nw4r::math::VEC3*)&posB);
@@ -1516,8 +1517,8 @@ void func_8011FB68(CMenuSymbolMark* self) {
 extern "C" void func_801209BC(CMenuSymbolMark* self) {
     const f32 distLimit = lbl_eu_806670EC;
     for (u32 i = 0; i < self->mField_8A8; i++) {
-        CfActorView* actorV = (CfActorView*)findObjectById(self->mArray6A8[i]);
-        if (actorV == 0 || actorV->_v160() == 0) {
+        cf::CfObject* actorV = (cf::CfObject*)findObjectById(self->mArray6A8[i]);
+        if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {
             continue;
         }
         CfActorFields* actor = (CfActorFields*)actorV;
@@ -1537,13 +1538,13 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* apos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* apos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
                 continue;
             }
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
             Vec delta;
             Vec scratch;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
@@ -1571,13 +1572,13 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* apos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* apos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
                 continue;
             }
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
             Vec delta;
             Vec scratch;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
@@ -1605,13 +1606,13 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* apos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* apos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
                 continue;
             }
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
             Vec delta;
             Vec scratch;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
@@ -1639,13 +1640,13 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->_v12C(100);
-            Vec* apos = (Vec*)actorV->_v0AC();
+            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            Vec* apos = (Vec*)actorV->CfObject_UnkVirtualFunc23();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
                 continue;
             }
-            Vec* ppos = (Vec*)((CfActorView*)player)->_v0AC();
+            Vec* ppos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
             Vec delta;
             Vec scratch;
             nw4r::math::VEC3Sub((nw4r::math::VEC3*)&delta,
@@ -1747,7 +1748,7 @@ extern const f32 lbl_eu_804FE6D8[12];
 // Light color floats (rgb triple) used by both light and chan setup.
 extern const f32 lbl_eu_8052CD38[8];
 // Retail ml statics (data_defs.cpp).
-extern f32 zero__Q22ml5CVec3[3];
+// zero__Q22ml5CVec3 provided by CfObjectModel.hpp
 extern u32 identity__Q22ml6CMat34[12];
 
 #pragma push
@@ -1797,8 +1798,8 @@ void CArrow3D::cbRenderBefore() {
     for (int p = 0; p < 3; p++) {
         void* pl = cf::CfGameManager::getPlayer(p);
         if (pl != 0) {
-            PlayerHpGate* gate = (PlayerHpGate*)((char*)pl - 0x3e9c);
-            if (gate->queryHp() > 0.0f) {
+            cf::CActorParam* gate = (cf::CActorParam*)((char*)pl - 0x3e9c);
+            if (gate->CActorParam_UnkVirtualFunc37() > 0.0f) {
                 anyAlive = true;
                 break;
             }
@@ -1815,9 +1816,9 @@ void CArrow3D::cbRenderBefore() {
         if (player == 0) {
             return;
         }
-        ScnXformBlock* pose = func_80496264(
+        ScnXformBlock* pose = (ScnXformBlock*)func_80496264(
             reinterpret_cast<CScn*>(lbl_eu_80663E14), -1);
-        Vec* pos = (Vec*)((CfActorView*)player)->_v0AC();
+        Vec* pos = (Vec*)( (cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
         // Player-relative horizontal offset (y ignored by the length test).
         float dx = pos->x - mPosX;
         float dy = pos->y - mPosY;
@@ -1850,7 +1851,7 @@ void CArrow3D::cbRenderBefore() {
         hv.z = dz;
         float hLen = hv.x * hv.x + hv.z * hv.z;
         if (hLen == 0.0f) {
-            hv = *reinterpret_cast<const nw4r::math::VEC3*>(&zero__Q22ml5CVec3[0]);
+            hv = *reinterpret_cast<const nw4r::math::VEC3*>(&zero__Q22ml5CVec3);
         } else {
             PSVECNormalize((Vec*)&hv, (Vec*)&hv);
         }
@@ -1864,7 +1865,7 @@ void CArrow3D::cbRenderBefore() {
         fv.y = 0.0f;
         float fLen = fv.x * fv.x + fv.z * fv.z;
         if (fLen == 0.0f) {
-            fv = *reinterpret_cast<const nw4r::math::VEC3*>(&zero__Q22ml5CVec3[0]);
+            fv = *reinterpret_cast<const nw4r::math::VEC3*>(&zero__Q22ml5CVec3);
         } else {
             PSVECNormalize((Vec*)&fv, (Vec*)&fv);
         }

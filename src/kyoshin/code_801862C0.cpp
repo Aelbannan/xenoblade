@@ -4,6 +4,9 @@
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/cf/CfMapMineManager.hpp" // func_800B8920 / func_800B9404
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp" // func_800BE12C
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
+#include "monolib/math/CVec3.hpp"
 
 // CArtsSelectSlot / CArtsSelectBucket are defined in code_801862C0.hpp.
 
@@ -15,7 +18,9 @@ struct CArtsSelectSrc {
 
 // Returned singleton object backing func_801862C0's accessor.
 // Sized to land in normal .bss (not SDA) so its address materializes as lis+addi.
-u8 lbl_eu_80574090[0x20];
+u8 lbl_eu_80574090[0x1708];
+s8 lbl_eu_806642C8;
+u32 lbl_eu_806642D0;
 
 /* One-time init guard: set the SDA flag on first call, then hand out the
    singleton object's address. Sign-extension in retail matches a signed byte. */
@@ -227,7 +232,7 @@ void func_80186664(u8* self) {
    radians; the scale column is tenths. The gravity column doubles as an
    invert-visibility flag, and the disp column sets/clears state bits in the
    object's 0x6C flag word. */
-void func_801866F0(MapObjVt** objects, int row) {
+void func_801866F0(MapProxy** objects, int row) {
     // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
     func_8003AA34();
     const char* cols = (const char*)lbl_eu_805038C8;
@@ -237,7 +242,7 @@ void func_801866F0(MapObjVt** objects, int row) {
     // (lbz/lha/lhz through the slot) match retail's store/reload shape.
     u32 modelCol = getBdatStringColumnValue(bdat, cols + 0x00, row);
     u32 motionCol = getBdatStringColumnValue(bdat, cols + 0x06, row);
-    objects[row] = reinterpret_cast<MapObjVt*>(
+    objects[row] = reinterpret_cast<MapProxy*>(
         createPlayerEffectInstance__Q22cf13CfGameManagerFv(*(u8*)&modelCol, *(u8*)&motionCol));
     if (objects[row] == NULL) {
         return;
@@ -276,13 +281,13 @@ void func_801866F0(MapObjVt** objects, int row) {
     rot.y = rotY * lbl_eu_8066A210;
     rot.z = rotZ * lbl_eu_8066A210;
     if (*(u8*)&airCol == 0) {
-        objects[row]->placeOnGround(&pos, lbl_eu_806679CC);
+        objects[row]->placeOnGround(reinterpret_cast<ml::CVec3*>(&pos), lbl_eu_806679CC);
     } else {
-        objects[row]->placeInAir(&pos, lbl_eu_806679CC);
+        objects[row]->placeInAir(reinterpret_cast<ml::CVec3*>(&pos), lbl_eu_806679CC);
     }
     // Retail copies the current position out (result unused) - keep it.
-    Vec3f curPos = *objects[row]->getPos();
-    objects[row]->applyRot(&rot);
+    Vec3f curPos = *reinterpret_cast<Vec3f*>(objects[row]->getPos());
+    objects[row]->applyRot(reinterpret_cast<ml::CVec3*>(&rot));
     objects[row]->setScale(scale);
     int visible = (ground == 0);
     objects[row]->setVisible(visible);
@@ -378,20 +383,22 @@ void func_80186C7C(void* p) {
     if (lbl_eu_806642D0 != 0) {
         s32 i;
         for (i = 0; i < 64; i++) {
-            ArtsWidget** entries = reinterpret_cast<ArtsWidget**>(lbl_eu_806642D0);
-            ArtsWidget* widget = entries[i];
+            MapProxy** entries = reinterpret_cast<MapProxy**>(lbl_eu_806642D0);
+            MapProxy* widget = entries[i];
             if (widget == NULL) {
                 continue;
             }
-            ArtsNotifyVt* notifier = widget->field_98;
+            // Notifier at +0x98 is a CScnItemModel (vfunc88(int) at 0x88).
+            CScnItemModel* notifier = *reinterpret_cast<CScnItemModel**>(reinterpret_cast<u8*>(widget) + 0x98);
             if (notifier == NULL) {
                 continue;
             }
             int armed = 0;
-            if ((widget->field_6C & 0x10000000) != 0 && p != NULL) {
+            u32 flag6C = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(widget) + 0x6C);
+            if ((flag6C & 0x10000000) != 0 && p != NULL) {
                 armed = 1;
             }
-            notifier->notify(armed);
+            notifier->vfunc88(armed);
         }
     }
 }
@@ -406,7 +413,7 @@ void func_80186D20(void* p) {
     void* bdat = lbl_eu_806640B0;
     const char* gateCol;
     const char* cols;
-    ArtsEntryVt** slots;
+    MapProxy** slots;
     u16* slotFlags;
     void* curTable;
     s32 end;
@@ -415,8 +422,8 @@ void func_80186D20(void* p) {
     row = func_8003B41C(bdat);
     end = row + func_8003B1EC(bdat);
     cols = (const char*)lbl_eu_805038C8;
-    slots = reinterpret_cast<ArtsEntryVt**>(p) + row;
-    slotFlags = reinterpret_cast<u16*>(p) + row;
+    slots = reinterpret_cast<MapProxy**>(p) + row;
+    slotFlags = reinterpret_cast<u16*>(reinterpret_cast<u8*>(p) + row * 2);
     // Retail hoists the availability-check's last column pointer into a
     // callee-saved register ahead of the loop.
     gateCol = cols + 0xe4;
@@ -424,9 +431,9 @@ void func_80186D20(void* p) {
         int avail = func_80186A70(p, row, cols + 0xa0, cols + 0xac,
                                   cols + 0xb9, cols + 0xc6, cols + 0xd0,
                                   cols + 0xda, gateCol);
-        ArtsEntryVt* entry = *slots;
+        MapProxy* entry = *slots;
         if (entry == NULL && avail != 0) {
-            func_801866F0(reinterpret_cast<MapObjVt**>(p), row);
+            func_801866F0(reinterpret_cast<MapProxy**>(p), row);
         }
         if (*slots != NULL && avail == 0) {
             (*slots)->field_68 |= 0x40;
@@ -440,7 +447,7 @@ void func_80186D20(void* p) {
             curTable = lbl_eu_806640B0;
             u8 hasName = (u8)getBdatStringColumnValue(curTable, cols + 0x45, row);
             if (hasName != 0) {
-                (*slots)->applyState(!flag); // retail passes !flag
+                (*slots)->unk158(!flag); // retail slot 0x158, takes !flag
             }
             int doState = 1;
             if (flag != 0) {

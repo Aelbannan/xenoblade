@@ -72,7 +72,7 @@ public:
     virtual void vfunc0C();
     virtual void vfunc10();
     virtual void vfunc14();
-    virtual void vfunc18();
+    virtual const char* vfunc18();
     virtual void vfunc1C();
     virtual void vfunc20();
     virtual void vfunc24();
@@ -81,42 +81,42 @@ public:
     virtual void vfunc30(u32 a, u32 b);  // vtable 0x30 (2-arg notify)
     virtual int vfunc34(u32 param);  // vtable 0x34 (1-arg query, non-zero = handled)
     virtual void vfunc38();
-    virtual void vfunc3C();
+    virtual void* vfunc3C(const char* name);
     virtual void vfunc40();
     virtual void vfunc44();
     virtual void vfunc48(float f);  // vtable 0x48 (1-arg float notify, see func_80484838)
-    virtual void vfunc4C();
-    virtual void vfunc50();
-    virtual void vfunc54();
+    virtual float vfunc4C();
+    virtual void vfunc50(u32 a);
+    virtual int vfunc54();
     virtual void vfunc58();
     virtual void vfunc5C();
     virtual void vfunc60();
     virtual void vfunc64(u32 a);  // vtable 0x64 (1-arg notify, see func_804831C4)
     virtual void vfunc68();
-    virtual void vfunc6C();
+    virtual void vfunc6C(u32 param);
     virtual void vfunc70();
     virtual void vfunc74();
-    virtual void vfunc78();
+    virtual void vfunc78(void* arg);  // 0x78 - CfRes model sync (was void)
     virtual void vfunc7C();
     virtual void vfunc80();
-    virtual void vfunc84();
-    virtual void vfunc88();
+    virtual void vfunc84(u32 a);
+    virtual void vfunc88(int arg);  // 0x88 - CfRes flag (was void)
     virtual void vfunc8C(u32 a);  // vtable 0x8C (1-arg notify, see func_804849E4)
-    virtual int vfunc90(u32 a, u32 b);  // vtable 0x90 (2-arg query, non-zero = handled; see func_80484AB4)
+    virtual int vfunc90(const void* vec, u32 flags);
     virtual void vfunc94(u32 a);  // vtable 0x94 (1-arg notify, see func_80484BB4)
     virtual void vfunc98();
     virtual void vfunc9C(u32 a, u32 b);  // vtable 0x9C (2-arg notify)
     virtual void vfuncA0();
     virtual void vfuncA4(u32 a);  // vtable 0xA4 (1-arg notify, see func_804838DC)
-    virtual void vfuncA8();
+    virtual u32 vfuncA8();
     virtual void vfuncAC(CScnItemModel* node);  // vtable 0xAC (1-arg notify, see func_804831C4)
     virtual void vfuncB0(CScnItemModel* node);  // vtable 0xB0 (1-arg notify, see func_80483448)
     virtual void vfuncB4(u32 a);  // vtable 0xB4 (1-arg notify, see func_80484914)
     virtual void vfuncB8();
     virtual void vfuncBC();
     virtual void vfuncC0();
-    virtual void vfuncC4();
-    virtual void vfuncC8();
+    virtual int vfuncC4(void* res, u32 bdat, u32 arg);
+    virtual void vfuncC8(void* arg);
     virtual void vfuncCC();
     virtual void vfuncD0();  // vtable 0xD0
     virtual void vfuncD4(CScnItemModel* parent);  // vtable 0xD4 (slot-list link notify, called on the node)

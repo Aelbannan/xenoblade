@@ -337,5 +337,6 @@ int VoiceManager::DropLowestPriorityVoice(int priority) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+unsigned char absorb_pad_snd_VoiceManager_sbss_4[4];
 
 

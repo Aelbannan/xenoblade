@@ -142,7 +142,7 @@ extern "C" {
     void* func_801864DC(void* mgr, int slot);
 
     // Monado arts unlock
-    void* func_8009EC9C(u16 index);
+    void* func_8009EC9C(u32 index);
     void func_801F9288(void* self, int, int, int);
     void func_801F92B0(void* self, int, int, int);
 

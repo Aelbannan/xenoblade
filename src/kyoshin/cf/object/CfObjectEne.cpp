@@ -16,6 +16,23 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneVtables/CfEneTailView/CfEneReloadSlot views
 
+// absorb: split1 retail data sections - generated for kyoshin/cf/object/CfObjectEne
+// retail sizes: .sdata2=0x70
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cf_object_CfObjectEne_sdata2[0x70] = {
+    0x00, 0x00, 0x00, 0x00, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
+    0x65, 0x6E, 0x65, 0x31, 0x4C, 0x76, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00,
+    0x3F, 0x80, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+    0x40, 0x40, 0x00, 0x00, 0x43, 0x34, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
+    0x3D, 0xCC, 0xCC, 0xCD, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x3C, 0x23, 0xD7, 0x0A, 0x46, 0x1C, 0x40, 0x00, 0x3F, 0xE0, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x43, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+DECOMP_FORCEACTIVE(kyoshin_cf_object_CfObjectEne_sdata2, __absorb_kyoshin_cf_object_CfObjectEne_sdata2);
+
+
 // Global gimmick-settings singleton accessor (defined in code_801F3BE0.cpp);
 // this TU only null-tests it and forwards it to opaque-taking helpers. Typed
 // after the owner declaration on CSuddenCommu.hpp (the singleton behind the
@@ -219,10 +236,15 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 // +0x3F34 target's bit-0x80000000 flag + subobject slots +0x80/+0x64, else
 // runs the CfObjectMove subobject's CfObject_UnkVirtualFunc4.
 void cf::CfObjectEne::updateEnemyBattleState() {
-    u32 wordA = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
+    // unk4 = Move subobject (this+0x3E9C); +0x30 = CObjectState::UVF11.
+    u32 wordA = *(u32*)reinterpret_cast<cf::CObjectState*>(
+        reinterpret_cast<cf::CActorState*>(this)->unk4)
+        ->CObjectState_UnkVirtualFunc11();
     u32 wordB;
     if (func_80174C98((void*)this, (int*)&wordA, 0x803) == 0 &&
-        ((wordB = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30()),
+        ((wordB = *(u32*)reinterpret_cast<cf::CObjectState*>(
+              reinterpret_cast<cf::CActorState*>(this)->unk4)
+              ->CObjectState_UnkVirtualFunc11()),
          func_80174C98((void*)this, (int*)&wordB, 0xE)) == 0) {
         if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
             // +0x8 CBattleState: slot +0x14 = UnkVirtualFunc4.
@@ -251,7 +273,9 @@ void cf::CfObjectEne::updateEnemyBattleState() {
     if (isGlobalCamFlagSet__Fi(0x1000000) == 0)
         goto defaultPath;
     {
-        u32 wordC = *((cf::CfActorUnk4Vt30*)((cf::CfActorField04*)this)->field_0x04)->vf30();
+        u32 wordC = *(u32*)reinterpret_cast<cf::CObjectState*>(
+            reinterpret_cast<cf::CActorState*>(this)->unk4)
+            ->CObjectState_UnkVirtualFunc11();
         if (func_80174C98(this, &wordC, 0x1) != 0)
             goto defaultPath;
         u8* p = ((cf::CfEneField3F34*)this)->field_0x3F34;
@@ -822,18 +846,10 @@ void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
 void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
-// If38: loads *(self+4) then slot +0x38. CActorState::unk4 is the pointer;
-// the pointed-to owner's class is not yet named (slot 0x38 is common -
-// CBattleState UVF13 among others). Left as a local pad until the owner
-// is identified.
-struct If38 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void vf38();
-};
+// CActorState UVF1: unk4 is the Move subobject (this+0x3E9C); slot +0x38 =
+// CObjectState::UVF13. If38 / CfActorUnk4Vt30 pads deleted.
 void CActorState_UnkVirtualFunc1__Q22cf11CActorStateFv(cf::CActorState* self) {
-    reinterpret_cast<If38*>(*(void**)((u8*)self + 4))->vf38();
+    reinterpret_cast<cf::CObjectState*>(self->unk4)->CObjectState_UnkVirtualFunc13();
 }
 
 u8* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
@@ -1149,15 +1165,15 @@ void* CActorParam_UnkVirtualFunc95__Q22cf11CActorParamFv(cf::CActorParam* self) 
 void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1650); }
 
 
-// us-800b0be0: retail symbol is Fv; the real ABI passes (self, r4-unused,
-// arg, flag). Dispatches the primary vtable slots +0x1DC (no arg) and +0x1FC
-// (arg), then forwards the +0x15E0 sub-object to func_802617B8 when present.
-void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, int unused, void* arg, int flag) {
-    self->CActorParam_UnkVirtualFunc82();
-    self->CActorParam_UnkVirtualFunc90(arg);
+// us-800b0be0: retail symbol is Fv; the real ABI passes (self, val, argA, argB).
+// Forwards to Unk82(val) / Unk90(argA), then the +0x15E0 sub-object to
+// func_802617B8 when present (flag = argB).
+void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val, u32 argA, u32 argB) {
+    self->CActorParam_UnkVirtualFunc82(val);
+    self->CActorParam_UnkVirtualFunc90(argA);
     u8* obj = ((cf::CfActorParam15E0View*)self)->field_0x15E0;
     if (obj != NULL) {
-        func_802617B8(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, flag);
+        func_802617B8(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
     }
 }
 
@@ -1373,19 +1389,3 @@ void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, c
 void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {
     *(ParamCopyBlock*)((u8*)self + 0x1650) = *(const ParamCopyBlock*)src;
 }
-
-// absorb: split1 retail data sections
-// generated from retail spec (fixed pointers to zero for reloc)
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectEne_cpp_sdata2[0x70] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
-    0x65, 0x6E, 0x65, 0x31, 0x4C, 0x76, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00,
-    0x3F, 0x80, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
-    0x40, 0x40, 0x00, 0x00, 0x43, 0x34, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x3C, 0x23, 0xD7, 0x0A, 0x46, 0x1C, 0x40, 0x00, 0x3F, 0xE0, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x43, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
-

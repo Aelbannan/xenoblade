@@ -14,12 +14,21 @@ namespace cf {
 // Vtable at 0x80532320 (size 0x28 = 10 entries); total size 0x14.
 //
 // Layout:
-//   0x00 vtable    manual vptr (lbl_eu_80532320), installed by the base ctor
+//   0x00 vtable    vptr (lbl_eu_80532320), installed by the base ctor
 //   0x04 mType     realtime-ev kind set by each derived ctor
 //                  (0=camera, 1=effect, 2=light, 3=model, 4=movie)
 //   0x08 mCallback callback ptmf (3 words: [0]=pfn, [1]=obj, [2]=delta);
 //                  reset to the null sentinel by the base ctor
-struct CREvtObj {
+class __declspec(novtable) CREvtObj {
+public:
+    virtual ~CREvtObj();
+    virtual void vfunc_04();
+    virtual void vfunc_08();
+    virtual void vfunc_0C();
+    virtual void vfunc_10();
+    virtual void vfunc_14();
+    virtual bool isBusy();
+    virtual void vfunc_1C();
     /* 0x00 */ void* vtable;
     /* 0x04 */ u32 mType;
     /* 0x08 */ void (CREvtObj::*mCallback)();  // __ptmf (12 bytes: 3 x u32)

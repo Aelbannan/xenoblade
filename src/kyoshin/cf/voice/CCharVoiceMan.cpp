@@ -1,6 +1,26 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
+#include <decomp.h>
+#include "kyoshin/cfsys/CfObjectImplPc.hpp"
+// Local real dispatch for voice nodes: mirrors CVS_THREAD's vtable at +0x1C.
+// Defined here to avoid pulling CVS_THREAD's extern "C" overloads into this TU.
+struct VoiceNodePrefix {
+    u8 _00[0xC];
+    u32 _0C;
+    u32 _10;
+    s32 _14;
+    u32 _18;
+};
+class __declspec(novtable) VoiceNode : public VoiceNodePrefix {
+public:
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC(u32 id);
+    virtual int blank1();
+    virtual int func_802A1EA0();
+    virtual void* func_802A3740(void* a, void* b);
+    virtual int blank2();
+};
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -128,7 +148,7 @@ void func_802A1500() {
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
-            ((cf::CVoiceNodeIf*)node)->vf08();
+            ((VoiceNode*)node)->func_802A3B50();
         node = node->next;
     }
     m->nodeHead = 0;
@@ -165,7 +185,7 @@ void func_802A1610(){
             if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
                 match = true;
             if (match)
-                ((cf::CVoiceNodeIf*)node)->vf08();
+                ((VoiceNode*)node)->func_802A3B50();
             node = node->next;
         }
         m->nodeHead = 0;
@@ -206,8 +226,8 @@ void func_802A1610(){
             cf::CVoiceBFC68* br =
                 (cf::CVoiceBFC68*)getCfObjectPc__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
             if (br != 0) {
-                cf::CVoiceEdge* edge = (cf::CVoiceEdge*)br->field_3ED4;
-                if (edge != 0 && ((cf::CVoiceEdgeIf*)edge)->fn_40(0x800) == 0) {
+                cf::CfObjectImplPcED4* edge = (cf::CfObjectImplPcED4*)br->field_3ED4;
+                if (edge != 0 && edge->vf40(0x800) == 0) {
                     if (m->unk230 != 0) {
                         void* src = func_8016FE34(findObjectById((BOOL)m->unk230));
                         if (src != 0) {
@@ -268,7 +288,7 @@ void func_802A1610(){
                 cf::CVoiceActorState** it = arr2;
                 while (i < n) {
                     // Fail (result 0) when any top gauge reaches the limit.
-                    if (limit <= ((cf::CVoiceActorStateIf*)*it)->fn_130()) {
+                    if (limit <= ((cf::CfObjectImplPc18*)*it)->v130()) {
                         iresult = 0;
                         goto interactStore;
                     }
@@ -316,8 +336,8 @@ noFieldFlag:;
             if (player != 0)
                 player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
             if (srcNode != 0 && player != 0) {
-                cf::CVoiceSrcInner* inner = srcNode->field_4;
-                u32 sv = *((u32*)((cf::CVoiceSrcInnerIf*)inner)->fn_30());
+                cf::CfObjectImplPcBattle4* inner = (cf::CfObjectImplPcBattle4*)srcNode->field_4;
+                u32 sv = *inner->vf30();
                 // Resolution failure keeps the pending flag set to retry next
                 // frame; every other path falls into the single clear store.
                 if (func_80174C98(srcNode, (int*)&sv, 6) == 0)
@@ -470,7 +490,7 @@ void func_802A1DF0(u8 flag) {
         bool match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
-        if (match && ((cf::CVoiceNodeIf*)node)->vf14() != 0)
+        if (match && ((VoiceNode*)node)->func_802A1EA0() != 0)
             func_802A3E74(node);
         node = node->next;
     }
@@ -483,16 +503,16 @@ extern "C" int func_802A1EA8(cf::CVoiceActorState* self);
 int func_802A1EA8(cf::CVoiceActorState* self) {
     if (!(self->field_3F00 & 0x2))
         return 0;
-    if (((cf::CVoiceActorStateIf*)self)->fn_2BC() != 0)
+    if (((cf::CfObjectImplPc18*)self)->v2BC() != 0)
         return 0;
     if (self->field_3F28 != 1)
         return 0;
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
     if (func_80148778(&self->unk4[4], 0xcf) == 0 && func_80148778(&self->unk4[4], 0xd0) == 0)
         return 0;
-    cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
-    void* moveRes = move->fn_4C();
-    void* r = func_8016FE34(findObjectById((BOOL)(u32)moveRes));
+    cf::CfObjectImplPcSub3E9C* move = (cf::CfObjectImplPcSub3E9C*)((u8*)self + 0x3E9C);
+    u32 moveRes = move->sf4C();
+    void* r = func_8016FE34(findObjectById((BOOL)moveRes));
     if (r == 0)
         return 0;
     if (((cf::CVoiceActorState*)r)->field_3F28 != 0x10c)
@@ -573,9 +593,9 @@ void func_802A2078(void* a, void* b, void* c) {
 void func_802A216C(cf::CVoiceActorState* self) {
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
-    void* moveRes = move->fn_4C();
-    void* actor = findObjectById((BOOL)(u32)moveRes);
+    cf::CfObjectImplPcSub3E9C* move = (cf::CfObjectImplPcSub3E9C*)((u8*)self + 0x3E9C);
+    u32 moveRes = move->sf4C();
+    void* actor = findObjectById((BOOL)moveRes);
     if (actor != 0)
         actor = (void*)((u8*)actor - 0x3E9C);
     if (actor == 0)
@@ -1268,7 +1288,7 @@ int func_802A330C(int a, int b) {
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
-            if (((cf::CVoiceNodeIf*)node)->vf10() < a)
+            if (((VoiceNode*)node)->blank1() < a)
                 return 0;
         }
         node = node->next;
@@ -1280,11 +1300,11 @@ int func_802A330C(int a, int b) {
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
-            if (((cf::CVoiceNodeIf*)node)->vf10() == a) {
+            if (((VoiceNode*)node)->blank1() == a) {
                 if (b == 1)
                     return 0;
                 if (b == 0)
-                    ((cf::CVoiceNodeIf*)node)->vf08();
+                    ((VoiceNode*)node)->func_802A3B50();
             }
         }
         node = node->next;
@@ -1296,8 +1316,8 @@ int func_802A330C(int a, int b) {
         if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match) {
-            if (a < ((cf::CVoiceNodeIf*)node)->vf10())
-                ((cf::CVoiceNodeIf*)node)->vf08();
+            if (a < ((VoiceNode*)node)->blank1())
+                ((VoiceNode*)node)->func_802A3B50();
         }
         node = node->next;
     }
@@ -1332,13 +1352,13 @@ void func_802A35B8(u32 arg) {
         return;
     node = FindVoiceNodeById(arg);
     if (node != 0)
-        ((cf::CVoiceNodeIf*)node)->vf08();
+        ((VoiceNode*)node)->func_802A3B50();
 }
 void* func_802A3680(void* a, void* b, void* c) {
     cf::CSoundNode* node = FindVoiceNodeById((u32)a);
     if (node == 0)
         return 0;
-    return ((cf::CVoiceNodeIf*)node)->vf18(b, c);
+    return ((VoiceNode*)node)->func_802A3740(b, c);
 }
 // Scan for a node whose type matches the reference pmf and whose +0x18 id is
 // `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf
@@ -1364,7 +1384,7 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
-            ((cf::CVoiceNodeIf*)node)->vf0C(actor);
+            ((VoiceNode*)node)->func_802A3BEC((u32)actor);
         node = node->next;
     }
 }
@@ -1395,7 +1415,7 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     // p is dead after this, so MWCC folds the add into an update-form vptr
     // load (retail lwzu r12, 0x3e9c(r3)).
     p = (cf::CVoiceActorState*)((u8*)p + 0x3E9C);
-    void* mv = ((cf::CVoiceMoveIf*)p)->fn_4C();
+    u32 mv = ((cf::CfObjectImplPcSub3E9C*)p)->sf4C();
 
     cf::CVoiceActorState* other = (cf::CVoiceActorState*)findObjectById((BOOL)(u32)mv);
     if (other != 0)
@@ -1405,11 +1425,11 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     if (!(other->field_3F00 & 0x4))
         return 0;
 
-    int diff = ((cf::CVoiceActorStateIf*)actor)->fn_108() - 3;
-    if (((cf::CVoiceActorStateIf*)other)->fn_108() < diff)
+    int diff = ((cf::CfObjectImplPc18*)actor)->v108() - 3;
+    if (((cf::CfObjectImplPc18*)other)->v108() < diff)
         return 0;
 
-    if (lbl_eu_80668C70 < ((cf::CVoiceActorStateIf*)other)->fn_130())
+    if (lbl_eu_80668C70 < ((cf::CfObjectImplPc18*)other)->v130())
         return 0;
 
     cf::CVoiceActorState* arr[3];
@@ -1423,9 +1443,27 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     float limit = lbl_eu_80668C70;
     for (it = arr, i = 0; i < cnt; i++) {
         cf::CVoiceActorState* obj = *it;
-        if (((cf::CVoiceActorStateIf*)obj)->fn_130() < limit)
+        if (((cf::CfObjectImplPc18*)obj)->v130() < limit)
             return 0;
         ++it;
     }
     return 1;
 }
+
+// absorb: split1 retail data sections
+__declspec(section ".data") __attribute__((aligned(8))) const unsigned char __absorb_CCharVoiceMan_data[60] __attribute__((used)) = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_CCharVoiceMan_sdata2[56] __attribute__((used)) = {
+    0x00, 0x00, 0x00, 0x00, 0x43, 0x16, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00,
+    0x44, 0xE1, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
+    0x41, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x99, 0x99, 0x9A,
+    0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00
+};
+char __absorb_CCharVoiceMan_sbss_extra[4] __attribute__((used));
+DECOMP_FORCEACTIVE(CCharVoiceMan_sbss_extra, __absorb_CCharVoiceMan_sbss_extra);

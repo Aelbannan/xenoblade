@@ -69,22 +69,25 @@ public:
     virtual void v09();  virtual void v10();  virtual void v11();
     virtual void v12();  virtual void v13();  virtual void v14();
     virtual void v15();  virtual void v16();
-    virtual void* v17();                   // 0x4C
+    virtual void* v17();                   // 0x4C handle getter
     virtual void v18(void* arg);           // 0x50
     virtual void v19();  virtual void v20();  virtual void v21();
     virtual void v22();  virtual void v23();  virtual void v24();
     virtual void v25();  virtual void v26();  virtual void v27();
     virtual void v28();  virtual void v29();  virtual void v30();
-    virtual void v31();  virtual void v32();  virtual void v33();
+    virtual void v31();  virtual void v32();
+    virtual float v33();               // 0x8C height
     virtual void v34();  virtual void v35();  virtual void v36();
-    virtual void v37();  virtual void v38();  virtual void v39();
+    virtual void v37(ml::CVec3* out);  // 0x9C
+    virtual void v38();  virtual void v39();
     virtual void v40();
     virtual CVoicePos* getPosition();      // 0xAC
     virtual void v42();  virtual void v43();  virtual void v44();
     virtual void v45();  virtual void v46();
     virtual void v47(f32 arg);             // 0xC4
+    virtual void v48(f32 arg);             // 0xC8
     // Padding out to retail slot 0x220 (used by func_80097A5C).
-    virtual void v48();  virtual void v49();  virtual void v50();
+    virtual void v49();
     virtual void v51();  virtual void v52();  virtual void v53();
     virtual void v54();  virtual void v55();  virtual void v56();
     virtual void v57();  virtual void v58();  virtual void v59();
@@ -92,9 +95,14 @@ public:
     virtual void v63();  virtual void v64();  virtual void v65();
     virtual void v66();  virtual void v67();  virtual void v68();
     virtual void v69();  virtual void v70();  virtual void v71();
-    virtual void v72();  virtual void v73();  virtual void v74();
-    virtual void v75();  virtual void v76();  virtual void v77();
-    virtual void v78();  virtual void v79();  virtual void v80();
+    virtual void v72();
+    virtual void* v73(int arg);    // 0x12C
+    virtual void v74();
+    virtual void v75();
+    virtual float* v76();              // 0x138
+    virtual void v77();
+    virtual float v78();               // 0x140
+    virtual void v79();  virtual void v80();
     virtual void v81();  virtual void v82();  virtual void v83();
     virtual void v84();  virtual void v85();  virtual void v86();
     virtual void v87();  virtual void v88();  virtual void v89();
@@ -103,7 +111,8 @@ public:
     virtual void v96();  virtual void v97();  virtual void v98();
     virtual void v99();  virtual void v100(); virtual void v101();
     virtual void v102(); virtual void v103(); virtual void v104();
-    virtual void v105(); virtual void v106(); virtual void v107();
+    virtual void v105(void* arg, const char* label); // 0x1AC
+    virtual void v106(); virtual void v107();
     virtual void v108(); virtual void v109(); virtual void v110();
     virtual void v111(); virtual void v112(); virtual void v113();
     virtual void v114(); virtual void v115(); virtual void v116();
@@ -115,6 +124,8 @@ public:
     virtual void v132(); virtual void v133();
     virtual void* v134(int arg);           // 0x220
 };
+
+
 
 namespace cf {
 class __declspec(novtable) CtrlRemote {
@@ -736,24 +747,7 @@ extern "C" void __ct__CtrlRemote(void* obj, void* posObj, int arg5);
 extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 // Pad-config writer used by the __ct__cf_CtrlPad loop (retail 0x800995A8).
 extern "C" void func_80098BD0(int index, u32 value);
-// Arts/combo helpers used by func_80098810 (retail short-form names).
-struct CAttackParamVt {
-    virtual void v00();
-    virtual int getComboId();        // vtable slot 0x0C
-    virtual void applyCombo(int);    // vtable slot 0x10
-};
-// Polymorphic view of cf::CAttackParam with the vptr at +0x84 (retail
-// layout): lets func_80098810 issue true virtual dispatches through the
-// record's +0x84 table exactly as the retail code does.
-struct CAttackParam84Head {
-    u8 _00[0x84];
-};
-class CAttackParamVtObj : private CAttackParam84Head {
-public:
-    virtual void vt00();            // +0x08
-    virtual int getComboId();       // +0x0C
-    virtual void applyCombo(int);   // +0x10
-};
+
 extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
 extern "C" int func_801B202C(void);
 extern "C" int func_801B1D4C(int arg);

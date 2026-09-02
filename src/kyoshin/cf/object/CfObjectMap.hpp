@@ -78,7 +78,7 @@ public:
     virtual void vfunc_0x5C();
     virtual void vfunc_0x60();
     virtual void vfunc_0x64();
-    virtual void vfunc_0x68();
+    virtual void vfunc_0x68(int arg);
     virtual void vfunc_0x6C(u32 arg);
     virtual void vfunc_0x70();
     virtual void vfunc_0x74();
@@ -161,7 +161,7 @@ extern "C" {
     // ---- scene / resource helpers ----
     void func_80495E60(void* ptr);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
-    void* func_804C1BA0(void* mgr, void* handle, int flag);
+    void* func_804C1BA0(void* mgr, const void* name, int flag);
     void func_804C1D7C(void* mgr, void* resource);
     void func_804C1F10(void* mgr, u16 value, float amount);
     void func_80496294(CScn* scene, float value);

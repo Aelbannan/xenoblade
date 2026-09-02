@@ -154694,8 +154694,8 @@
       "size": "0xAC",
       "unit": "kyoshin/cf/CfResPcImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bc470",
@@ -154709,7 +154709,7 @@
       "source": "src/kyoshin/cf/CfResPcImpl.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8018e19c",
@@ -225332,7 +225332,7 @@
       "unit": "kyoshin/cf/CfNandManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -225349,7 +225349,7 @@
       ],
       "source": "src/kyoshin/cf/CfNandManager.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 93.213,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {

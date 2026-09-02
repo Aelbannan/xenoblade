@@ -13,6 +13,8 @@
 #include <revolution/MTX.h>
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 
 // ---------------------------------------------------------------------------
 // Types (unit-private)
@@ -28,98 +30,15 @@ struct PTMF {
 
 namespace cf {
 
-// Sub-object reached through CCtrlMoveNpc::mBaseData->field_0x28. Only the two
-// virtual slots used by func_8019F6E8 are named; the rest are padding.
-class CNpcMoveSub {
-public:
-    // Naming: retail getPos() sits at vtable slot 43 (0xac) and getF78() at
-    // slot 78 (0x138); the real object has 2 implicit leading vtable entries
-    // (dtor + vbase), so only 41 explicit placeholders precede getPos().
-    virtual void _v0();
-    virtual void _v1();
-    virtual void _v2();
-    virtual void _v3();
-    virtual void _v4();
-    virtual void _v5();
-    virtual void _v6();
-    virtual void _v7();
-    virtual void _v8();
-    virtual void _v9();
-    virtual void _v10();
-    virtual void _v11();
-    virtual void _v12();
-    virtual void _v13();
-    virtual void _v14();
-    virtual void _v15();
-    virtual void _v16();
-    virtual void _v17();
-    virtual void _v18();
-    virtual void _v19();
-    virtual void _v20();
-    virtual void _v21();
-    virtual void _v22();
-    virtual void _v23();
-    virtual void _v24();
-    virtual void _v25();
-    virtual void _v26();
-    virtual void _v27();
-    virtual void _v28();
-    virtual void _v29();
-    virtual void _v30();
-    virtual void _v31();
-    virtual void _v32();
-    virtual void _v33();
-    virtual void _v34();
-    virtual void _v35();
-    virtual void _v36();
-    virtual void _v37();
-    virtual void _v38();
-    virtual void _v39();
-    virtual void _v40();
-    virtual ml::CVec3* getPos();   // slot 43 (0xac)
-    virtual void _v44();
-    virtual void _v45();
-    virtual void _v46();
-    virtual void _v47();
-    virtual void _v48();
-    virtual void _v49();
-    virtual void _v50();
-    virtual void _v51();
-    virtual void _v52();
-    virtual void _v53();
-    virtual void _v54();
-    virtual void _v55();
-    virtual void _v56();
-    virtual void _v57();
-    virtual void _v58();
-    virtual void _v59();
-    virtual void _v60();
-    virtual void _v61();
-    virtual void _v62();
-    virtual void _v63();
-    virtual void _v64();
-    virtual void _v65();
-    virtual void _v66();
-    virtual void _v67();
-    virtual void _v68();
-    virtual void _v69();
-    virtual void _v70();
-    virtual void _v71();
-    virtual void _v72();
-    virtual void _v73();
-    virtual void _v74();
-    virtual void _v75();
-    virtual void _v76();
-    virtual void _v77();
-    virtual float* getF78();   // slot 78 (0x138)
-};
-
 // Layout of CCtrlMoveNpc::mBaseData (0x34). Only fields used here are named.
+// The object at +0x28 is a CfObject (position at vtable +0xAC,
+// float slot at +0x138). Retail vtable is CfObject's; we call the real
+// virtuals directly instead of a TU-local pad with _vNNN dummies.
 struct CNpcBaseData {
     u8 _00[0x14];
     f32 field_0x14;      // 0x14
     u8 _18[0x28 - 0x18];
-    CNpcMoveSub* field_0x28;  // 0x28
+    CfObject* field_0x28;  // 0x28
 };
 
 class CCtrlMoveNpc {
@@ -127,19 +46,19 @@ public:
     CCtrlMoveNpc();
 
     // --- base class (CCtrlMoveBase) region 0x00..0x4B ---
-    char mBase00[0x18];     // 0x00 primary vtable + base fields
-    ml::CVec3 mVec18;       // 0x18
-    char mBase24[0x0C];     // 0x24..0x2F
-    void* mBase30;          // 0x30
-    void* mBaseData;        // 0x34 data ptr (CNpcBaseData)
-    f32 mBase38;            // 0x38
-    f32 mBase3C;            // 0x3C
-    u16 mBase40;            // 0x40
-    u16 mBase42;            // 0x42
-    u8  mBase44;            // 0x44
-    u8  mBase45;            // 0x45
+    char mBase00[0x18];     // 0x00 primary fields
+    ml::CVec3 mVec18;       // 0x18 mVelocity (CCtrlMoveBase::mVelocity)
+    char mBase24[0x0C];     // 0x24..0x2F field_0x24
+    void* mBase30;          // 0x30 mpSomePtr
+    void* mBaseData;        // 0x34 mpDataPtr (CNpcBaseData*)
+    f32 mBase38;            // 0x38 mFloatParam1
+    f32 mBase3C;            // 0x3C mFloatParam2
+    u16 mBase40;            // 0x40 mFlagsU16_1
+    u16 mBase42;            // 0x42 mFlagsU16_2
+    u8  mBase44;            // 0x44 mByte1
+    u8  mBase45;            // 0x45 mByte2
     char mBase46[2];        // 0x46..0x47
-    void* mBaseVtable2;     // 0x48 secondary vtable (overwritten here)
+    void* mBaseVtable2;     // 0x48 secondary vptr (CCtrlMoveBase::unk08's vtable, overwritten here)
 
     // --- CCtrlMoveNpc own fields ---
     int (CCtrlMoveNpc::*mStateFunc)();  // 0x4C state dispatch ptmf (12 bytes)
@@ -156,7 +75,6 @@ public:
 
 using cf::CCtrlMoveNpc;
 using cf::CNpcBaseData;
-using cf::CNpcMoveSub;
 
 // ---------------------------------------------------------------------------
 // Imports
@@ -166,8 +84,8 @@ using cf::CNpcMoveSub;
 // C linkage so the literal symbol name is resolved/emitted verbatim.
 extern "C" {
 
-// Base class ctor + ptmf runtime.
-void __ct__80088904(CCtrlMoveNpc* self);
+// Base class ctor + ptmf runtime (CCtrlMoveBase's ctor, takes CCtrlMoveBase*).
+void __ct__80088904(cf::CCtrlMoveBase* self);
 long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
@@ -185,7 +103,7 @@ void deactivateLOD__8CTaskLODFv(u8 v);
 void* getScnHandle__Fv(void);
 void func_804BCC30(void*, s8 v);
 void func_804BCC3C(void*, u8 v);
-void func_80089990(CCtrlMoveNpc* self);
+void func_80089990(cf::CCtrlMoveBase* self);
 f32 FrSqrt__Q24nw4r4mathFf(f32 x);
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
@@ -202,8 +120,8 @@ void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, .
 // cf::CfGameManager::getResourceFromTable is declared non-static void in
 // CfGameManager.hpp, but the retail call site passes no instance and uses the
 // return value, so the header's declaration is wrong here. Declare the mangled
-// symbol directly.
-u16 getResourceFromTable__Q22cf13CfGameManagerFv();
+// symbol directly (canonical signature from kyoshin/code_801862C0.hpp).
+u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
 
 } // C-linkage import block
 
@@ -242,7 +160,7 @@ extern u32 lbl_eu_80663D90;     // global value copied into mField78
 // ---------------------------------------------------------------------------
 namespace cf {
 CCtrlMoveNpc::CCtrlMoveNpc() {
-    __ct__80088904(this);
+    __ct__80088904((cf::CCtrlMoveBase*)this);
     this->mBaseVtable2 = (void*)lbl_eu_80532DB4;
     this->mStateFunc = __ptmf_null;
 }
@@ -273,13 +191,13 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 
     // The base data pointer is re-loaded for each access in the retail.
     self->mField74 =
-        *(((CNpcBaseData*)self->mBaseData)->field_0x28->getF78());
+        *reinterpret_cast<float*>(((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc58());
     self->mField78 = lbl_eu_80663D90;
     self->mField70 = lbl_eu_80667C58;
     ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->getPos();
+    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc23();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
@@ -306,7 +224,7 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
         self->mField70 = v;
     }
 
-    func_80089990(self);
+    func_80089990((cf::CCtrlMoveBase*)self);
     self->mVec18 = ml::CVec3::zero;
     self->mStateFunc = lbl_eu_80532DA8;
 }
@@ -343,7 +261,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
     u32 v10 = getBdatStringColumnValue(bdat, p1, idx);
     int flag2 = 1;
     if (*(u16*)&v10 != 0) {
-        u16 range1 = getResourceFromTable__Q22cf13CfGameManagerFv();
+        u32 range1 = getResourceFromTable__Q22cf13CfGameManagerFv((u32)*(u16*)&v10);
         u32 v0c = getBdatStringColumnValue(bdat, p2, idx);
         u32 v08 = getBdatStringColumnValue(bdat, p3, idx);
         if ((u32)*(u8*)&v0c <= (u32)range1 && (u32)range1 <= (u32)*(u8*)&v08)
@@ -416,7 +334,7 @@ void func_8019FD2C() {
 namespace cf {
 void func_8019F93C(CCtrlMoveNpc* self) {
     const ml::CVec3* pos =
-        ((CNpcBaseData*)self->mBaseData)->field_0x28->getPos();
+        ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc23();
 
     // PS vector subtraction: delta = target - current position.
     ml::CVec3 diff = self->mField58 - *pos;

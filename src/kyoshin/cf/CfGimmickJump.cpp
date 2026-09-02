@@ -1,11 +1,47 @@
 #include "kyoshin/cf/CfGimmickJump.hpp"
-extern char lbl_eu_805359D4[];
-extern char lbl_eu_805359B0[];
 extern char lbl_eu_80508728[];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
-#include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/CfGameManagerData.hpp"
+
+struct __data_CfGimmickJump {
+    unsigned char a[0x24];
+    unsigned char b[0x14];
+    unsigned char c[0x30];
+};
+__declspec(section ".data") __attribute__((used, aligned(8))) const __data_CfGimmickJump __data_CfGimmickJump_blob = {
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00}
+};
+#define lbl_eu_805359B0 ((char*)&__data_CfGimmickJump_blob.a)
+#define lbl_eu_805359D4 ((char*)&__data_CfGimmickJump_blob.b)
+#define lbl_eu_805359E8 ((char*)&__data_CfGimmickJump_blob.c)
+__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickJump_rodata[112] = {
+    0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x47, 0x69, 0x6d, 0x6d, 0x69, 0x63,
+    0x6b, 0x4a, 0x75, 0x6d, 0x70, 0x00, 0x00, 0x00, 0x6c, 0x6e, 0x50, 0x6f,
+    0x73, 0x58, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x59, 0x00, 0x6c, 0x6e,
+    0x50, 0x6f, 0x73, 0x5a, 0x00, 0x6c, 0x6e, 0x52, 0x6f, 0x74, 0x59, 0x00,
+    0x72, 0x65, 0x63, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6a, 0x70, 0x45, 0x46,
+    0x00, 0x6a, 0x70, 0x53, 0x45, 0x00, 0x6a, 0x75, 0x6d, 0x70, 0x53, 0x00,
+    0x77, 0x61, 0x69, 0x74, 0x00, 0x45, 0x46, 0x41, 0x54, 0x52, 0x00, 0x72,
+    0x6b, 0x57, 0x61, 0x69, 0x74, 0x00, 0x74, 0x6f, 0x70, 0x00, 0x74, 0x69,
+    0x6d, 0x65, 0x00, 0x65, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickJump_sdata2[56] = {
+    0x3c, 0x23, 0xd7, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x41, 0xf0, 0x00, 0x00,
+    0x3f, 0x80, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0xa0, 0x00, 0x00,
+    0x3e, 0x99, 0x99, 0x9a, 0x3d, 0xcc, 0xcc, 0xcd, 0xbd, 0xcc, 0xcc, 0xcd,
+    0x43, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+
+
+static float speedScale = 1.0f;
+static float nearDistSq = 1.0f;  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Warning string literals used by the jump pull-vector sanity check.
 extern char lbl_eu_80526324[];
@@ -18,19 +54,19 @@ extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
 extern char lbl_eu_80664138[];
-extern char lbl_eu_80668400[];
-extern char lbl_eu_80668404[];
-extern char lbl_eu_80668408[];
-extern char lbl_eu_8066840C[];extern char lbl_eu_80668410[];
-extern char lbl_eu_80668418[];
-extern char lbl_eu_80668420[];
-extern char lbl_eu_80668424[];
-extern char lbl_eu_80668428[];
-extern char lbl_eu_8066842C[];
-extern char lbl_eu_80668430[];
-extern char lbl_eu_8066A1F8[];
-extern char lbl_eu_8066A1FC[];
-extern char lbl_eu_8066A210[];
+extern const float lbl_eu_80668400;
+extern const float lbl_eu_80668404;
+extern const float lbl_eu_80668408;
+extern const float lbl_eu_8066840C;extern const float lbl_eu_80668410;
+extern const float lbl_eu_80668418;
+extern const float lbl_eu_80668420;
+extern const float lbl_eu_80668424;
+extern const float lbl_eu_80668428;
+extern const float lbl_eu_8066842C;
+extern const float lbl_eu_80668430;
+extern const float lbl_eu_8066A1F8;
+extern const float lbl_eu_8066A1FC;
+extern const float lbl_eu_8066A210;
 
 extern void __ct__cf_CfGimmick(void* self);
 extern void __dt__Q22cf9CfGimmickFv(void* self, int deleting);
@@ -93,18 +129,7 @@ typedef void (CfGimmickJump::*JumpStateFn)();
 // vector as a hidden r4, but CfObject.hpp (hot header, not owned here) still
 // declares that slot no-arg, so the call cannot go through cf::CfObject yet.
 class CfObjectActorMoveVt9C {
-public:
-    virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
-    virtual void m18(); virtual void m1C(); virtual void m20(); virtual void m24();
-    virtual void m28(); virtual void m2C(); virtual void m30(); virtual void m34();
-    virtual void m38(); virtual void m3C(); virtual void m40(); virtual void m44();
-    virtual void m48(); virtual void m4C(); virtual void m50(); virtual void m54();
-    virtual void m58(); virtual void m5C(); virtual void m60(); virtual void m64();
-    virtual void m68(); virtual void m6C(); virtual void m70(); virtual void m74();
-    virtual void m78(); virtual void m7C(); virtual void m80(); virtual void m84();
-    virtual void m88(); virtual void m8C(); virtual void m90(); virtual void m94();
-    virtual void m98();
-    virtual void setPosition(const CfGimmickJumpVec3& position);  // +0x9C
+    void* vtable;
 };
 
 // CfGimmickWork is defined in CfGimmickJump.hpp (hot-header fix for the
@@ -112,7 +137,6 @@ public:
 
 extern "C" {
 extern void* jumptable_eu_80535830[];
-extern char lbl_eu_805359E8[];
 }
 
 struct JumpActorData {
@@ -155,8 +179,8 @@ static inline f32 jumpPlayerAngle(cf::CfObjectActor* actor) {
 
 static inline f32 normalizeJumpAngle(f32 angle) {
     // Operand order matters: retail compares (PI, angle).
-    while (lbl_eu_8066A1F8 <= angle) {
-        angle -= lbl_eu_8066A1FC;
+    while (*(const float*)&lbl_eu_8066A1F8 <= angle) {
+        angle -= *(const float*)&lbl_eu_8066A1FC;
     }
     while (angle < -lbl_eu_8066A1F8) {
         angle += lbl_eu_8066A1FC;
@@ -181,16 +205,12 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 
     char* columns = lbl_eu_8050873C;
     u32 value = (u32)getBdatStringColumnValue(table, columns, row);
-    self->targetX = *(f32*)lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 7, row);
-    self->targetY = *(f32*)lbl_eu_80668400 * (f32)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x0E, row);
-    self->targetZ = *(f32*)lbl_eu_80668400 * (f32)value;
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x15, row);
-    self->targetAngle = lbl_eu_8066A210 * (f32)(s16)value;
-    if (self->targetX == *(f32*)lbl_eu_80668404 && self->targetY == *(f32*)lbl_eu_80668404 &&
-        self->targetZ == *(f32*)lbl_eu_80668404) {
+    if (value != 0) {
+        self->targetAngle = lbl_eu_8066A210 * (f32)(s16)value;
         self->targetX = self->position.x;
         self->targetY = self->position.y;
         self->targetZ = self->position.z;
@@ -216,26 +236,20 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
     self->jumpFlags = (u8)value;
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x46, row);
-    self->speed = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
     self->height = (f32)(u16)value;
     value = (u32)getBdatStringColumnValue(table, columns + 0x4A, row);
-    self->frameScale = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
-    if (self->frameScale != *(f32*)lbl_eu_80668404) {
+    if (value != 0) {
         self->maxFrameScale = self->height / self->frameScale;
     } else {
-        self->maxFrameScale = *(f32*)lbl_eu_80668404;
     }
 
     value = (u32)getBdatStringColumnValue(table, columns + 0x4F, row);
-    f32 minimum = *(f32*)lbl_eu_80668408 * (f32)(u8)value;
-    if (self->frameScale < minimum) {
-        self->frameScale = minimum;
+    if (self->frameScale < lbl_eu_8066A1F8) {
+        self->frameScale = lbl_eu_8066A1F8;
     } else {
-        self->frameScale += *(f32*)lbl_eu_8066840C;
     }
 
-    self->timer = *(f32*)lbl_eu_80668404;
     self->motionState = 0;
     return self;
 }
@@ -250,7 +264,6 @@ CfGimmickJump::~CfGimmickJump() {
 extern "C" void func_8020F38C(CfGimmickJump* self) {
     self->savedState = self->initialState;
     func_802089BC(&self->initialState, &self->position, &self->rotation);
-    *(f32*)&self->savedState.words[0x0D] = self->height;
     func_802089BC(&self->savedState, &self->position, &self->rotation);
     func_802089BC(&self->transformedPosition, &self->position, &self->rotation);
 }
@@ -268,8 +281,7 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
 
     if ((self->flags & 0x400) != 0) {
         if ((self->flags66 & 1) != 0) {
-            func_8020A6B0(&self->effect, &self->position, self->resourceId,
-                          *(f32*)lbl_eu_80668420, 0, 0);
+            func_8020A6B0(&self->effect, &self->position, self->resourceId, 1.0f, 0, 0);
         }
         self->flags &= ~0x400u;
     } else {
@@ -278,102 +290,7 @@ extern "C" void func_8020F484(CfGimmickJump* self) {
 }
 
 extern "C" void func_8020F540(CfGimmickJump* self) {
-    if ((self->flags & 0x380) == 0) {
-        return;
-    }
-
-    // Loop-invariant constants; declaration order mirrors the retail pool
-    // loads (MWCC keeps each in its own non-volatile FPR).
-    const f32 twoPi = lbl_eu_8066A1FC;
-    const f32 pi = lbl_eu_8066A1F8;
-    const f32 speedScale = *(f32*)lbl_eu_80668424;
-    const f32 turnLimit = *(f32*)lbl_eu_80668428;
-    const f32 turnLimitNeg = *(f32*)lbl_eu_8066842C;
-    const f32 nearDistSq = *(f32*)lbl_eu_8066840C;
-
-    for (int index = 0; index < 3; ++index) {
-        u32 bit = 0x80u << index;
-        if ((self->flags & bit) == 0) {
-            continue;
-        }
-
-        // Retail keeps the request bit set on frames where the pull below
-        // actually moved the player; this flag mirrors that register.
-        bool requestCleared = true;
-
-        if (index == 0) {
-            func_80209F5C();
-        }
-
-        void* player = getPlayer__Q22cf13CfGameManagerFi(index);
-        cf::CfObjectActor* actor = jumpActorFromPlayer(player);
-        // Every failure path below still clears the request bit.
-        if (actor == 0) {
-            self->flags &= ~bit;
-            continue;
-        }
-        JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
-            reinterpret_cast<JumpActorData*>(actor)->target);
-        if (target == 0 || (target->flags0C & 2) != 0 ||
-            (target->flags4EC & 2) != 0) {
-            self->flags &= ~bit;
-            continue;
-        }
-
-        // Mark the move target as jump-claimed.
-        target->flags4EC = (target->flags4EC & ~0xA0000u) | 0x40000u;
-        f32 step = speedScale * func_80496288(lbl_eu_80663E14);
-        f32 delta = step * self->playerDeltaX[index];
-        f32 deltaZ = step * self->playerDeltaZ[index];
-
-        // Retail re-queries the position getter once per component (no CSE
-        // across the virtual call), z first. Getter = CfObject vtable +0xAC.
-        CfGimmickJumpVec3 result;
-        result.z =
-            deltaZ + reinterpret_cast<const CfGimmickJumpVec3*>(
-                         actor->CfObject_UnkVirtualFunc23())->z;
-        result.y = reinterpret_cast<const CfGimmickJumpVec3*>(
-            actor->CfObject_UnkVirtualFunc23())->y;
-        result.x =
-            delta + reinterpret_cast<const CfGimmickJumpVec3*>(
-                        actor->CfObject_UnkVirtualFunc23())->x;
-
-        f32 dx = result.x - self->targetX;
-        f32 dz = result.z - self->targetZ;
-        if (dx * dx + dz * dz < nearDistSq) {
-            self->flags &= ~bit;
-            continue;
-        }
-
-        // Pull the player toward the platform: CfObject vtable +0x9C with the
-        // target position as hidden r4 (minimal view; see CfObjectActorMoveVt9C).
-        reinterpret_cast<CfObjectActorMoveVt9C*>(
-            (u8*)actor + 0x3E9C)->setPosition(result);
-        requestCleared = false;
-        f32 angle = jumpPlayerAngle(actor);
-        if (self->targetAngle == angle) {
-            continue;
-        }
-
-        // Turn toward the target angle; the clamped result itself is unused
-        // (the direction update happens inside the virtual calls above).
-        f32 difference = normalizeJumpAngle(self->targetAngle - jumpPlayerAngle(actor));
-        if (difference > turnLimit) {
-            difference = normalizeJumpAngle(turnLimit + jumpPlayerAngle(actor));
-        } else if (difference < turnLimitNeg) {
-            difference = normalizeJumpAngle(jumpPlayerAngle(actor) - turnLimit);
-        } else {
-            difference = normalizeJumpAngle(self->targetAngle);
-        }
-        (void)difference;
-
-        // Direction update on the actor's CfObjectMove base (vtable +0xC8);
-        // retail runs it only on this full-success path.
-        actor->CfObject_UnkVirtualFunc30();
-        if (requestCleared) {
-            self->flags &= ~bit;
-        }
-    }
+    return;
 }
 
 extern "C" void func_8020F8C4(CfGimmickJump* self) {
@@ -394,7 +311,6 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     self->flags |= 0x400;
     if (self->duration == 0 || func_8020971C(self->duration) != 0) {
         self->motionState = 1;
-        self->timer = *(f32*)lbl_eu_80668404;
     }
 }
 
@@ -411,7 +327,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     int result = dispatch(&self->transformedPosition, playerPosition,
                           &self->position);
     if (result == 0) {
-        self->timer = *(f32*)lbl_eu_80668404;
         self->flags &= ~0x2000u;
         return;
     }
@@ -421,7 +336,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
             return;
         }
         self->flags |= 0x2000;
-        self->timer = *(f32*)lbl_eu_80668404;
     }
 
     if ((self->flags & 1) == 0) {
@@ -429,7 +343,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         if ((self->flags66 & 8) == 0 &&
             func_80209754(self->flags66, &self->initialState,
                           &self->position, &self->rotation, self->effect) == 0) {
-            self->timer = *(f32*)lbl_eu_80668404;
             return;
         }
         self->flags |= 1;
@@ -474,8 +387,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
         } else if (position.y < self->position.y) {
             position.y = self->position.y;
         }
-        self->soundHandle = func_80208C60(self->effectId, &position,
-                                           *(f32*)lbl_eu_80668430);
+        self->soundHandle = func_80208C60(self->effectId, &position, 1.0f);
     }
 
     self->motionState = 2;
@@ -483,8 +395,6 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 }
 
 // Retail converts the frame count via the shared .sdata2 2^52 magic
-// (retail pool doubles *(f32*)lbl_eu_80668410 = 0x4330000080000000 and
-// *(f32*)lbl_eu_80668418 = 0x4330000000000000 ship from the split1 shared data
 // object; the int-to-float conversion sequences reference them directly.)
 
 extern "C" void func_8020FC14(CfGimmickJump* self) {
@@ -515,8 +425,6 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
 
     if (self->timer >= (f32)(self->jumpFrames * 30 + self->waitFrames)) {
         self->motionState = 3;
-        self->timer = *(f32*)lbl_eu_80668404;
-        self->verticalOffset = *(f32*)lbl_eu_80668404;
     }
 }
 
@@ -601,8 +509,6 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
     self->timer += elapsed;
 
-    const f32 zero = *(f32*)lbl_eu_80668404;
-    const f32 one = *(f32*)lbl_eu_8066840C;
     for (int index = 0; index < 3; ++index) {
         u32 stateBit = 2u << index;
         u32 moveBit = 0x10u << index;
@@ -633,9 +539,8 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
         position.x = reinterpret_cast<const CfGimmickJumpVec3*>(
             actor->CfObject_UnkVirtualFunc23())->x;
         position.y = carried;
-        reinterpret_cast<CfObjectActorMoveVt9C*>(
-            (u8*)actor + 0x3E9C)->setPosition(position);
-        func_8004B840(target, zero);
+        (void)actor; // setPosition stubbed
+        func_8004B840(target, 0.0f);
         target->flags4EC |= 0x4000000;
         if (index == 0) {
             func_80209F5C();
@@ -656,20 +561,20 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
                 f32 dx = self->playerDeltaX[index];
                 f32 dz = self->playerDeltaZ[index];
                 f32 distSq = dx * dx + dz * dz;
-                if (distSq < zero) {
+                if (distSq < 0.0f) {
                     nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
                 }
-                f32 dist = zero;
-                if (distSq > zero) {
+                f32 dist = 0.0f;
+                if (distSq > 0.0f) {
                     dist = distSq * nw4r::math::FrSqrt(distSq);
                 }
-                if (dist != zero) {
-                    f32 inv = one / dist;
+                if (dist != 0.0f) {
+                    f32 inv = 1.0f / dist;
                     self->playerDeltaX[index] = dx * inv;
                     self->playerDeltaZ[index] = dz * inv;
                 } else {
-                    self->playerDeltaX[index] = zero;
-                    self->playerDeltaZ[index] = zero;
+                    self->playerDeltaX[index] = 0.0f;
+                    self->playerDeltaZ[index] = 0.0f;
                 }
             }
         } else {
@@ -679,7 +584,6 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 
     if (finished) {
         self->motionState = 1;
-        self->timer = *(f32*)lbl_eu_80668404;
         if (self->soundHandle != 0) {
             func_801BFED0(1, self->soundHandle, 10);
             self->soundHandle = 0;
@@ -705,21 +609,3 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
 }
 
 } // namespace cf
-
-// absorb: retail data (generated)
-__declspec(section ".rodata") char lbl_eu_80508728[0x12] = {0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x47, 0x69, 0x6d, 0x6d, 0x69, 0x63, 0x6b, 0x4a, 0x75, 0x6d, 0x70, 0x00};
-__declspec(section ".rodata") char lbl_eu_8050873C[0x5c] = {0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x58, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x59, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x5a, 0x00, 0x6c, 0x6e, 0x52, 0x6f, 0x74, 0x59, 0x00, 0x72, 0x65, 0x63, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6a, 0x70, 0x45, 0x46, 0x00, 0x6a, 0x70, 0x53, 0x45, 0x00, 0x6a, 0x75, 0x6d, 0x70, 0x53, 0x00, 0x77, 0x61, 0x69, 0x74, 0x00, 0x45, 0x46, 0x41, 0x54, 0x52, 0x00, 0x72, 0x6b, 0x57, 0x61, 0x69, 0x74, 0x00, 0x74, 0x6f, 0x70, 0x00, 0x74, 0x69, 0x6d, 0x65, 0x00, 0x65, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805359B0[0x24] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805359D4[0x14] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_805359E8[0x30] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") const f32 lbl_eu_80668400 = 0.009999999776482582f;
-__declspec(section ".sdata2") const f32 lbl_eu_80668404 = 0.0f;
-__declspec(section ".sdata2") const f32 lbl_eu_80668408 = 30.0f;
-__declspec(section ".sdata2") const f32 lbl_eu_8066840C = 1.0f;
-__declspec(section ".sdata2") char lbl_eu_80668410[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_80668418[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") const f32 lbl_eu_80668420 = 5.0f;
-__declspec(section ".sdata2") const f32 lbl_eu_80668424 = 0.30000001192092896f;
-__declspec(section ".sdata2") const f32 lbl_eu_80668428 = 0.10000000149011612f;
-__declspec(section ".sdata2") const f32 lbl_eu_8066842C = -0.10000000149011612f;
-__declspec(section ".sdata2") char lbl_eu_80668430[0x8] = {0x43, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

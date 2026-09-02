@@ -33,7 +33,7 @@ void GetModelLocalAxisY3(math::VEC3*, const math::MTX34*, const math::MTX34*);
 void Calc_BILLBOARD_STD(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
 void Calc_BILLBOARD_PERSP_STD(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
 void Calc_BILLBOARD_ROT(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
-void Calc_BILLBOARD_PERSP_ROT(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl, unsigned long);
+void Calc_BILLBOARD_PERSP_ROT(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
 void Calc_BILLBOARD_Y(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
 void Calc_BILLBOARD_PERSP_Y(math::MTX34*, const math::MTX34*, bool, const math::MTX34*, const ResMdl*, unsigned long);
 
@@ -585,7 +585,7 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
  ******************************************************************************/
 void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                                bool useParent, const math::MTX34* pViewMtx,
-                               const ResMdl pMdl, unsigned long mtxId) {
+                               const ResMdl* pMdl, unsigned long mtxId) {
     // Direction toward the camera: negated translation column.
     math::VEC3 right;
     math::VEC3 localY;
@@ -593,13 +593,13 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
     // Direction toward the camera: negated translation column.
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    s32 nodeId = pMdl.GetResMdlInfo().GetNodeIDFromMtxID(mtxId);
+    s32 nodeId = pMdl->GetResMdlInfo().GetNodeIDFromMtxID(mtxId);
 
     // Local Y axis: recovered through the parent node's matrix when the
     // node has a parent; otherwise straight from the node's Y column.
     if (nodeId >= 0) {
         ResNode parentNode =
-            pMdl.GetResNode(static_cast<int>(nodeId)).GetParentNode();
+            pMdl->GetResNode(static_cast<int>(nodeId)).GetParentNode();
 
         if (parentNode.IsValid()) {
             GetModelLocalAxisY3(&localY, &pMtxArray[mtxId],

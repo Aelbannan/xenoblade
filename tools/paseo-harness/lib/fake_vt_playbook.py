@@ -13,6 +13,24 @@ Do NOT move pads into a header, do NOT combine them into one shared If, do NOT
 leave _v008() dummies. End state is this->method(...) (or this->Base::method(...))
 on the type that owns the slot. CHelp is the proven instance of this flow.
 
+FIX ALL BLOCKERS (hard - do not stop early):
+- "Still blocked" / "left as next slot" / "TODO owner" / "tiny If kept" is NOT
+  an acceptable finish. Keep going until every *If / *Vt / _vNNN / fn_0xNN /
+  function-pointer iface pad in the PRIMARY FILES is gone (or folded onto a
+  real owning-class virtual with retail arity).
+- Foreign sub-objects (*(obj+N)) are not an excuse to leave a pad: recover the
+  owner (dump its table / RTTI), put the slot on THAT class (hot headers IN
+  SCOPE), call obj->method(...), delete the iface. Widen arity on the owner
+  when retail leaves r4/f1 live (same as CfObject UVF19/25/26/35).
+- If a first angle regresses (virtual vs field-load, wrong owner, arity),
+  REVERT that attempt, then try the next angle - do not park the blocker.
+  Angles: dump table -> owner from mangling/RTTI -> arity from hexdiff --asm
+  -> argument forwarding -> novtable + ctor label -> sibling TU hexdiff.
+- Matching residuals that are NOT pads (PS/scheduling/size on already-real
+  calls) may stay; pad/If/Vt leftovers may NOT. Do not report done while any
+  pad remains in PRIMARY FILES.
+- Only after every pad in scope is deleted: write the final report.
+
 FLOW (hexdiff --brief after each step; revert if mismatch count rises):
 
 1. Dump the retail table. JP __vt__Q22cf... / US lbl_eu_* in
@@ -94,11 +112,17 @@ PRIMARY FILES (start here; owning-class headers are also in scope when a slot li
 hexdiff unit: {unit}
 
 TASK: Kill fake vtables in these files and recover the real class tree.
+FIX ALL BLOCKERS before you stop - every *If/*Vt/_vNNN/fn_0xNN pad in the
+PRIMARY FILES must be gone (see FIX ALL BLOCKERS in the playbook). Do not
+end with a "still blocked" list; keep iterating until pads are deleted.
 {extra_block}
 {PLAYBOOK}
 
-When done, report: (1) retail __vt__ / lbl_eu_* you dumped and slot->symbol map,
+When done (only after all in-scope pads are deleted), report:
+(1) retail __vt__ / lbl_eu_* you dumped and slot->symbol map,
 (2) owning class per slot, (3) what you deleted, (4) hexdiff --brief before/after
-for the functions you touched, (5) any slot still blocked and why.
-NEVER TOUCH GIT — no git commands at all; leave files dirty.
+for the functions you touched, (5) confirmation that PRIMARY FILES have zero
+remaining *If/*Vt/_vNNN/fn_0xNN pads (rg count), plus any NON-pad matching
+residuals (scheduling/PS) that are out of scope.
+NEVER TOUCH GIT - no git commands at all; leave files dirty.
 """

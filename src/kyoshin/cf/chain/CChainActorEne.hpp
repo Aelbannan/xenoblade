@@ -4,82 +4,29 @@
 #include "kyoshin/cf/chain/CChainActor.hpp"
 
 namespace cf {
-    class CChainActorEne : public CChainActor {
+    class __declspec(novtable) CChainActorEne : public CChainActor {
     public:
-        // No additional members beyond CChainActor
+        CChainActorEne();
+        virtual ~CChainActorEne();
+        // overrides of CChainActor's first 16 virtuals (0x0C..0x48)
+        virtual void _vf0C(int val) override; // 0x0C func_80281308
+        virtual void _vf14() override; // 0x14 func_8028133C
+        virtual int _vf20(int arg) override; // 0x20 func_80281384
+        virtual void _vf30(int p1,int p2,int p3) override; // 0x30 func_80281438
+        virtual void* _vf34() override; // 0x34 func_80281460
+        virtual int _vf40() override; // 0x40 func_8028146C
+        virtual int _vf44(void* arg) override; // 0x44 func_802818E4 (tail to 0x48)
+        virtual int vf48(void* arg) override; // 0x48 func_802814E4
+        // new slots beyond base's 0x48 (0x4C..0x74)
+        virtual int _vf4C(); // 0x4C func_802815B8
+        virtual void _vf50(); // 0x50 func_802816FC
+        virtual int _vf54(); // 0x54 func_8028183C
+        virtual int _vf58(); // 0x58 CChain_getChainCount
+        virtual int _vf5C(); // 0x5C CChain_getZero_A584
+        virtual int _vf60(); // 0x60 func_802818DC (int)
+        virtual void _vf64(); // 0x64 func_802818D4 (void)
         void func_802818D4();
         s32 func_802818DC();
-    };
-
-    // Typed view of a CChainActor whose manually-managed vtable pointer lives at
-    // +0x70 (CChainActor::mVTable). Never instantiated; used only so the manual
-    // vtable dispatch at slot 0x50 emits as a real r12-bidirectional virtual call
-    // (lwz r12,[self+0x70]; lwz r12,[r12+0x50]; mtctr; bctrl). 21 pure virtuals
-    // position wf50 at vtable offset 0x50 (index 20).
-    class CChainActorEneVtDispatch {
-    public:
-        u8 _pad[0x70];
-        virtual void wf00() = 0;
-        virtual void wf04() = 0;
-        virtual void wf08() = 0;
-        virtual void wf0C() = 0;
-        virtual void wf10() = 0;
-        virtual void wf14() = 0;
-        virtual void wf18() = 0;
-        virtual void wf1C() = 0;
-        virtual void wf20() = 0;
-        virtual void wf24() = 0;
-        virtual void wf28() = 0;
-        virtual void wf2C() = 0;
-        virtual void wf30() = 0;
-        virtual void wf34() = 0;
-        virtual void wf38() = 0;
-        virtual void wf3C() = 0;
-        virtual int wf40() = 0;  // dispatched target (vtable offset 0x40) returns a truth flag
-        virtual void wf44() = 0;
-        virtual void wf50() = 0; // dispatched target (vtable offset 0x50)
-    };
-
-    // Dedicated dispatcher for the vtable offset 0x40 hook (func_8028183C).
-    // With -RTTI on, MWCC reserves two leading vtable slots (offset-to-top +
-    // typeinfo), so a virtual at index 14 lands at offset (14+2)*4 == 0x40.
-    class CChainActorEneVtDispatch40 {
-    public:
-        u8 _pad[0x70];
-        virtual void wf00() = 0;
-        virtual void wf04() = 0;
-        virtual void wf08() = 0;
-        virtual void wf0C() = 0;
-        virtual void wf10() = 0;
-        virtual void wf14() = 0;
-        virtual void wf18() = 0;
-        virtual void wf1C() = 0;
-        virtual void wf20() = 0;
-        virtual void wf24() = 0;
-        virtual void wf28() = 0;
-        virtual void wf2C() = 0;
-        virtual void wf30() = 0;
-        virtual void wf34() = 0;
-        virtual int target() = 0; // index 14 -> vtable offset 0x40
-    };
-
-    // Dispatcher for the standard object rooted at obj+4 (func_80281384). Its
-    // vptr lives at +0 (normal C++ ABI). With -RTTI's two leading vtable slots,
-    // a virtual at index 10 lands at vtable offset (10+2)*4 == 0x30; the hook
-    // returns a pointer whose first field is an id.
-    class ChainSubDispatch {
-    public:
-        virtual void f00() = 0;
-        virtual void f04() = 0;
-        virtual void f08() = 0;
-        virtual void f0C() = 0;
-        virtual void f10() = 0;
-        virtual void f14() = 0;
-        virtual void f18() = 0;
-        virtual void f1C() = 0;
-        virtual void f20() = 0;
-        virtual void f24() = 0;
-        virtual void* target() = 0; // index 10 -> vtable offset 0x30
     };
 }
 

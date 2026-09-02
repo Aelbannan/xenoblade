@@ -7,6 +7,7 @@
 #include "monolib/core/CDrawGX.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail SDA2/data constants referenced by the PS math helpers below. Declared
 // by retail label so the emitted @sda21 relocs match retail byte-for-byte; the
@@ -117,56 +118,6 @@ public:
     ml::CVec3 mPos;  // 0x00 - sphere/capsule center
 };
 } // namespace cf
-
-// Collision object vtable interface used by func_800A50AC: position getter at
-// vtable slot +0xAC (cf. CfCollCircleVTableIf) plus a reference vector at +0x54.
-struct ColObjIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v074();
-    virtual void _v078();
-    virtual void _v07C();
-    virtual void _v080();
-    virtual void _v084();
-    virtual void _v088();
-    virtual void _v08C();
-    virtual void _v090();
-    virtual void _v094();
-    virtual void _v098();
-    virtual void _v09C();
-    virtual void _v0A0();
-    virtual void _v0A4();
-    virtual void _v0A8();
-    virtual ml::CVec3* _v0AC();  // position getter (slot 0xAC/4)
-    virtual void _v0B0();
-    u8 field_0x04[0x50];  // 0x04
-    ml::CVec3 mRef;       // 0x54
-};
 
 void func_800A3B24(ml::CVec3* out, int seed) {
     // Lazily fill the random-angle offset table (element 0 stays untouched).
@@ -547,7 +498,7 @@ float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) 
     return t;
 }
 
-int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out,
+extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out,
                   float radius) {
     // Segment-vs-sphere probe: raise the object position's Y by each of three
     // table offsets (1.0/1.7/0.1) and test the closest point on segment ab
@@ -563,7 +514,7 @@ int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CV
     ml::CVec3 d2Tmp;   // 0x24
     ml::CVec3 d3Tmp;   // 0x18
     ml::CVec3 tAdd;    // 0xc
-    d.set(*self->_v0AC());
+    d.set(*self->CfObject_UnkVirtualFunc23());
     if (out != 0) *out = d;
     float R = lbl_eu_806667FC + radius;
     float R2 = R * R;
@@ -589,7 +540,7 @@ int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CV
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->_v0AC(), self->mRef);
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, closest);
             d3.set(d3Tmp);
@@ -613,7 +564,7 @@ int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CV
         float R2b = lbl_eu_806667FC + radius;
         d.x = dir.x * R2b;
         d.z = dir.z * R2b;
-        d.y = self->_v0AC()->y - closest.y;
+        d.y = self->CfObject_UnkVirtualFunc23()->y - closest.y;
         nw4r::math::VEC3Add(tAdd, d, closest);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -636,7 +587,7 @@ bool func_800A5038(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r
     return dist2 <= (r1 + r2) * (r1 + r2);
 }
 
-int func_800A50AC(ColObjIf* self, nw4r::math::VEC3* point, float radius, ml::CVec3* out) {
+extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float radius, ml::CVec3* out) {
     // Radius test against the object's position (raised 1 unit), pushing the
     // point out to the sphere boundary when it is inside and out is given.
     ml::CVec3 d;
@@ -650,7 +601,7 @@ int func_800A50AC(ColObjIf* self, nw4r::math::VEC3* point, float radius, ml::CVe
     ml::CVec3 d2Tmp;
     ml::CVec3 d3Tmp;
     ml::CVec3 tAdd;
-    ml::CVec3* pos = self->_v0AC();
+    ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
     d.set(*pos);
     if (out != 0) *out = d;
     float R = lbl_eu_806667FC + radius;
@@ -674,7 +625,7 @@ int func_800A50AC(ColObjIf* self, nw4r::math::VEC3* point, float radius, ml::CVe
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->_v0AC(), self->mRef);
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, point);
             d3.set(d3Tmp);
@@ -699,7 +650,7 @@ int func_800A50AC(ColObjIf* self, nw4r::math::VEC3* point, float radius, ml::CVe
         float R2 = lbl_eu_806667FC + radius;
         d.x = dir.x * R2;
         d.z = dir.z * R2;
-        d.y = self->_v0AC()->y - point->y;
+        d.y = self->CfObject_UnkVirtualFunc23()->y - point->y;
         nw4r::math::VEC3Add(tAdd, d, point);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -763,7 +714,7 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
     return overlap;
 }
 
-int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out) {
+extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius, ml::CVec3* out) {
     // Push point out to the surface of the object's collision sphere (center
     // d = pos + (0,1,0), radius 0.25 + radius) when it is inside, writing the
     // pushed position to out. Returns whether the point was inside the sphere.
@@ -772,7 +723,7 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
     ml::CVec3 d;
     {
         // Scoped so the vcall result's live range ends before the body.
-        ml::CVec3* pos = self->_v0AC();
+        ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
         d.x = pos->x;
         d.y = pos->y;
         d.z = pos->z;
@@ -807,7 +758,7 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->_v0AC(), self->mRef);
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, *point);
             d3.set(d3Tmp);
@@ -831,7 +782,7 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
         float R2 = lbl_eu_806667FC + radius;
         d.x = dir.x * R2;
         d.z = dir.z * R2;
-        d.y = self->_v0AC()->y - point->y;
+        d.y = self->CfObject_UnkVirtualFunc23()->y - point->y;
         nw4r::math::VEC3Add(tAdd, d, *point);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -839,7 +790,7 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
     return cond;
 }
 
-int func_800A5B18(ColObjIf* self, const ml::CVec3& point, ml::CVec3* out, float radius,
+extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVec3* out, float radius,
                   float h) {
     // Cylinder test: true when the raised center (pos + (0,1,0)) is within the
     // horizontal radius of point's XZ position AND point's Y is within h of the
@@ -858,7 +809,7 @@ int func_800A5B18(ColObjIf* self, const ml::CVec3& point, ml::CVec3* out, float 
     ml::CVec3 d2Tmp;
     ml::CVec3 d3Tmp;
     ml::CVec3 tAdd;
-    d.set(*self->_v0AC());
+    d.set(*self->CfObject_UnkVirtualFunc23());
     if (out != 0) *out = d;
     d.y += lbl_eu_806667E8;
     nw4r::math::VEC3Sub(dvTmp, d, point);
@@ -885,8 +836,8 @@ int func_800A5B18(ColObjIf* self, const ml::CVec3& point, ml::CVec3* out, float 
             }
             if (zero) {
                 // Coincident centers: retry from the object's reference point.
-                ml::CVec3* pos = self->_v0AC();
-                nw4r::math::VEC3Sub(d2Tmp, *pos, self->mRef);
+                ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
+                nw4r::math::VEC3Sub(d2Tmp, *pos, *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
                 d2.set(d2Tmp);
                 nw4r::math::VEC3Sub(d3Tmp, d2, point);
                 d3.set(d3Tmp);
@@ -911,7 +862,7 @@ int func_800A5B18(ColObjIf* self, const ml::CVec3& point, ml::CVec3* out, float 
             float R2 = lbl_eu_806667FC + radius;
             d.x = dir.x * R2;
             d.z = dir.z * R2;
-            d.y = self->_v0AC()->y - point.y;
+            d.y = self->CfObject_UnkVirtualFunc23()->y - point.y;
             }
             nw4r::math::VEC3Add(tAdd, d, point);
             outTmp.set(tAdd);
@@ -941,7 +892,7 @@ extern "C" void func_800A5F54(const ml::CVec3* src, const ml::CVec3* min, const 
     }
 }
 
-int func_800A5FE8(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, const Mtx mat,
+extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::CVec3& b, const Mtx mat,
                   ml::CVec3* out) {
     // AABB test: the raised center d = pos + (0,1,0) (optionally transformed by
     // mat) is clamped into the box [a-0.5, b+0.5]; if the clamp moved it, the
@@ -965,7 +916,7 @@ int func_800A5FE8(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, const 
     ml::CVec3 diff2;   // 0x20 - clamped - proj
     ml::CVec3 tC;      // 0x14 - VEC3Scale result
     ml::CVec3 proj;    // 0x8 - scaled direction
-    d.set(*self->_v0AC());
+    d.set(*self->CfObject_UnkVirtualFunc23());
     if (out != 0) *out = d;
     min.x = a.x - lbl_eu_806667F4;
     min.y = a.y - lbl_eu_806667F4;
@@ -987,7 +938,7 @@ int func_800A5FE8(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, const 
     float R = lbl_eu_806667D8;
     bool cond = nw4r::math::VEC3Dot(diff, diff) <= R * R;
     if (cond && out != 0) {
-        nw4r::math::VEC3Sub(dirTmp, *self->_v0AC(), self->mRef);
+        nw4r::math::VEC3Sub(dirTmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
         dir.x = dirTmp.x;
         dir.y = dirTmp.y;
         dir.z = dirTmp.z;
@@ -1016,7 +967,7 @@ int func_800A5FE8(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, const 
         nw4r::math::VEC3Sub(diff2, clamped, proj);
         outTmp.set(diff2);
         *out = outTmp;
-        out->y = self->_v0AC()->y;
+        out->y = self->CfObject_UnkVirtualFunc23()->y;
     }
     return cond;
 }

@@ -6,7 +6,13 @@
 // (nw4r_data.s). Declared at global scope: MWCC does not mangle global
 // variable names, so the emitted symbol matches the retail name
 // (docs/MWCC_CASES.md 1a).
+extern const float lbl_eu_80669AE0;
+extern const float lbl_eu_80669AE4;
+extern const float lbl_eu_80669AE8;
+extern const float lbl_eu_80669AEC;
 extern const float lbl_eu_80669AF0;
+extern const double lbl_eu_80669AF8;
+extern const float lbl_eu_80669B00;
 
 namespace nw4r {
 namespace g3d {
@@ -18,9 +24,9 @@ namespace {
  *
  ******************************************************************************/
 inline f32 HermiteInterpolation(f32 v0, f32 t0, f32 v1, f32 t1, f32 s, f32 d) {
-    f32 s_1 = s - 1.0f;
+    f32 s_1 = s - lbl_eu_80669AE4;
 
-    return v0 + s * (s * ((2.0f * s - 3.0f) * (v0 - v1))) +
+    return v0 + s * (s * ((lbl_eu_80669AE8 * s - lbl_eu_80669AEC) * (v0 - v1))) +
            d * s_1 * (s_1 * t0 + s * t1);
 }
 
@@ -280,7 +286,7 @@ template <typename TTraits>
 f32 CalcAnimationCV(const ResAnmChrCVData* pCVData, u16 numFrame, f32 frame) {
     u16 frame_i = math::F32ToU16(frame);
 
-    if (frame <= 0.0f) {
+    if (frame <= lbl_eu_80669AE0) {
         return TTraits::GetAt(pCVData, 0);
     }
 
@@ -291,7 +297,7 @@ f32 CalcAnimationCV(const ResAnmChrCVData* pCVData, u16 numFrame, f32 frame) {
     f32 r = frame - static_cast<f32>(frame_i);
 
     f32 v0 = TTraits::GetAt(pCVData, frame_i);
-    if (r == 0.0f) {
+    if (r == lbl_eu_80669AE0) {
         return v0;
     }
 
@@ -457,9 +463,9 @@ GetAnmScale(math::VEC3* pResult, const ResAnmChrNodeData* pNodeData,
     }
 
     default: {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
+        x = lbl_eu_80669AE0;
+        y = lbl_eu_80669AE0;
+        z = lbl_eu_80669AE0;
         break;
     }
     }
@@ -549,9 +555,9 @@ GetAnmRotation(math::MTX34* pResult, math::VEC3* pRawResult,
     }
 
     default: {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
+        x = lbl_eu_80669AE0;
+        y = lbl_eu_80669AE0;
+        z = lbl_eu_80669AE0;
     }
     }
 
@@ -610,9 +616,9 @@ GetAnmTranslation(math::VEC3* pTrans, const ResAnmChrNodeData* pNodeData,
     }
 
     default: {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
+        x = lbl_eu_80669AE0;
+        y = lbl_eu_80669AE0;
+        z = lbl_eu_80669AE0;
     }
     }
 
@@ -651,9 +657,9 @@ void GetAnmResult_(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 #pragma unused(pNodeData)
 #pragma unused(frame)
 
-    pResult->s.x = 1.0f;
-    pResult->s.y = 1.0f;
-    pResult->s.z = 1.0f;
+    pResult->s.x = lbl_eu_80669AE4;
+    pResult->s.y = lbl_eu_80669AE4;
+    pResult->s.z = lbl_eu_80669AE4;
     math::MTX34Identity(&pResult->rt);
 }
 
@@ -664,9 +670,9 @@ void GetAnmResult_T(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
     math::VEC3 t;
 
-    pResult->s.x = 1.0f;
-    pResult->s.y = 1.0f;
-    pResult->s.z = 1.0f;
+    pResult->s.x = lbl_eu_80669AE4;
+    pResult->s.y = lbl_eu_80669AE4;
+    pResult->s.z = lbl_eu_80669AE4;
     math::MTX34Identity(&pResult->rt);
 
     GetAnmTranslation(&t, pNodeData, pAnmData, frame);
@@ -681,18 +687,18 @@ void GetAnmResult_R(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
 
     // Rotation-only result: no scale channel, so the scale stays identity.
-    pResult->s.x = 1.0f;
-    pResult->s.y = 1.0f;
-    pResult->s.z = 1.0f;
+    pResult->s.x = lbl_eu_80669AE4;
+    pResult->s.y = lbl_eu_80669AE4;
+    pResult->s.z = lbl_eu_80669AE4;
 
     pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
                               pNodeData, pAnmData, frame);
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 
-    pResult->rt._03 = 0.0f;
-    pResult->rt._13 = 0.0f;
-    pResult->rt._23 = 0.0f;
+    pResult->rt._03 = lbl_eu_80669AE0;
+    pResult->rt._13 = lbl_eu_80669AE0;
+    pResult->rt._23 = lbl_eu_80669AE0;
 }
 
 void GetAnmResult_S(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
@@ -711,9 +717,9 @@ void GetAnmResult_RT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
     math::VEC3 t;
 
-    pResult->s.x = 1.0f;
-    pResult->s.y = 1.0f;
-    pResult->s.z = 1.0f;
+    pResult->s.x = lbl_eu_80669AE4;
+    pResult->s.y = lbl_eu_80669AE4;
+    pResult->s.z = lbl_eu_80669AE4;
 
     pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
                               pNodeData, pAnmData, frame);
@@ -738,9 +744,9 @@ void GetAnmResult_SR(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 
-    pResult->rt._03 = 0.0f;
-    pResult->rt._13 = 0.0f;
-    pResult->rt._23 = 0.0f;
+    pResult->rt._03 = lbl_eu_80669AE0;
+    pResult->rt._13 = lbl_eu_80669AE0;
+    pResult->rt._23 = lbl_eu_80669AE0;
 }
 
 void GetAnmResult_ST(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
@@ -835,9 +841,9 @@ void ResAnmChr::GetAnmResult(ChrAnmResult* pResult, u32 idx, f32 frame) const {
  ******************************************************************************/
 void ChrAnmResult::GetScale(math::VEC3* pScale) const {
     if (flags & FLAG_SCALE_ONE) {
-        pScale->x = 1.0f;
-        pScale->y = 1.0f;
-        pScale->z = 1.0f;
+        pScale->x = lbl_eu_80669AE4;
+        pScale->y = lbl_eu_80669AE4;
+        pScale->z = lbl_eu_80669AE4;
     } else {
         pScale->x = s.x;
         pScale->y = s.y;
@@ -880,9 +886,9 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
 
 void ChrAnmResult::GetTranslate(math::VEC3* pTrans) const {
     if (flags & FLAG_TRANS_ZERO) {
-        pTrans->x = 0.0f;
-        pTrans->y = 0.0f;
-        pTrans->z = 0.0f;
+        pTrans->x = lbl_eu_80669AE0;
+        pTrans->y = lbl_eu_80669AE0;
+        pTrans->z = lbl_eu_80669AE0;
     } else {
         pTrans->x = rt._03;
         pTrans->y = rt._13;
@@ -902,9 +908,9 @@ void ChrAnmResult::GetRotTrans(math::MTX34* pRotTrans) const {
         }
     } else if (flags & FLAG_TRANS_ZERO) {
         math::MTX34Copy(pRotTrans, &rt);
-        pRotTrans->_03 = 0.0f;
-        pRotTrans->_13 = 0.0f;
-        pRotTrans->_23 = 0.0f;
+        pRotTrans->_03 = lbl_eu_80669AE0;
+        pRotTrans->_13 = lbl_eu_80669AE0;
+        pRotTrans->_23 = lbl_eu_80669AE0;
     } else {
         math::MTX34Copy(pRotTrans, &rt);
     }
@@ -999,7 +1005,7 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
 }
 
 void ChrAnmResult::SetTranslate(const math::VEC3* pTrans) {
-    if (pTrans->x == 0.0f && pTrans->y == 0.0f && pTrans->z == 0.0f) {
+    if (pTrans->x == lbl_eu_80669AE0 && pTrans->y == lbl_eu_80669AE0 && pTrans->z == lbl_eu_80669AE0) {
         u32 flag = FLAG_TRANS_ZERO;
 
         if (flags & FLAG_ROT_ZERO) {

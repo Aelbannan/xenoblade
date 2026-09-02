@@ -24,20 +24,20 @@ namespace cf {
         virtual ~CChainActor();
 
         // 17 virtuals to reach +0x48 (dt + 14 dummies + _vf44 + vf48) – rest of table beyond 0x48 is manual (0x4C..0x74)
-        virtual void _vf0C();
+        virtual void _vf0C(int val);
         virtual void _vf10();
         virtual void _vf14();
         virtual void _vf18();
         virtual void _vf1C();
-        virtual void _vf20();
+        virtual int _vf20(int arg);
         virtual void _vf24();
         virtual void _vf28();
         virtual void _vf2C();
-        virtual void _vf30();
-        virtual void _vf34();
+        virtual void _vf30(int p1,int p2,int p3);
+        virtual void* _vf34();
         virtual void _vf38();
         virtual void _vf3C();
-        virtual void _vf40();
+        virtual int _vf40();
         virtual int _vf44(void* arg);
         virtual int vf48(void* arg);
 

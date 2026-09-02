@@ -112,7 +112,7 @@ extern void CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv();
+extern void CfObject_UnkVirtualFunc46__Q22cf8CfObjectFPv();
 extern void CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv();
@@ -213,7 +213,7 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
+    &CfObject_UnkVirtualFunc46__Q22cf8CfObjectFPv,
     &CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,

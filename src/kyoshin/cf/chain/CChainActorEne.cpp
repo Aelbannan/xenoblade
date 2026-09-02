@@ -7,6 +7,7 @@
 #include "kyoshin/cf/chain/CChainActorEne.hpp"
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
+#include "kyoshin/cf/object/CObjectState.hpp"
 
 // ---- Cross-TU helper declarations ---------------------------------------
 // func_800AD860 / findObjectById are mangled C++ retail symbols; the rest are
@@ -18,7 +19,7 @@ extern "C" void* func_80193CD0(void* list, void* obj);
 extern "C" void* func_80193AB0(void* list, u32 id);
 extern "C" void* func_800B6BC8(void);
 extern "C" void* func_8016FE34(void* src);
-extern void* func_800AD860(void*);
+void* getEffOwner__(void* obj);
 extern void* findObjectById(int);
 
 // Layout view of the enemy chain actor's timeline object (the object reached
@@ -51,26 +52,7 @@ struct GlistList {
     GlistNode* field_04;      //0x04
 };
 
-struct CEIfShift { char pad[0x70]; };
-struct CEIf : CEIfShift {
-    virtual void _v0008();
-    virtual void _v000C();
-    virtual void _v0010();
-    virtual void _v0014();
-    virtual void _v0018();
-    virtual void _v001C();
-    virtual void _v0020();
-    virtual void _v0024();
-    virtual void _v0028();
-    virtual void _v002C();
-    virtual void _v0030();
-    virtual void _v0034();
-    virtual void _v0038();
-    virtual void _v003C();
-    virtual void _v0040();
-    virtual void _v0044();
-    virtual void vf0048(void* a);
-};
+
 
 // Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
 void func_802A0AA0(cf::CChainEffect* effect);
@@ -81,17 +63,8 @@ extern "C" void func_80281308(cf::CChainActorEne* self, int val) {
     func_802A08F4(self->mChainEffectRaw);
 }
 
-// Runs the manual vtable enter-hook (offset 0x50), releases the effect, then
-// notifies the chain scheduler via func_80279DC0.
-// Resource view of the chain actor used to reach the manually-managed vtable
-// pointer at +0x70 (CChainActor::mVTable is declared as a raw u32, which
-// disturbs dispatch codegen; a typed local view keeps the indirect call
-// allocation identical to retail).
-struct VtCast { u8 pad[0x70]; void** vt; };
-
 extern "C" void func_8028133C(cf::CChainActorEne* self) {
-    // Dispatch through the manual vtable at +0x70, slot +0x50 (index 20).
-    reinterpret_cast<cf::CChainActorEneVtDispatch*>(self)->wf50();
+    self->_vf50();
     func_802A0904(self->mChainEffectRaw);
     func_80279DC0(self);
 }
@@ -103,10 +76,8 @@ extern "C" int func_80281384(cf::CChainActorEne* self, int arg) {
     void* handle = findObjectById(arg);
     void* obj = func_8016FE34(handle);
     if (obj == 0) return 0;
-    // sub is the object at obj+4; its vtable-slot-12 hook (offset 0x30) returns
-    // a pointer whose first field is the id matched against the style flag.
     void* sub = *(void**)((u8*)obj + 4);
-    int v = *(int*)reinterpret_cast<cf::ChainSubDispatch*>(sub)->target();
+    int v = *(int*)static_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11();
     if (func_80174C98(obj, &v, 0x803) != 0) {
         return func_8027A024((void*)self, (void*)arg);
     }
@@ -129,7 +100,7 @@ extern "C" void* func_80281460(cf::CChainActorEne* self) {
 extern "C" int func_8028146C(const cf::CChainActorEne* self) {
     u32 addr = self->unk0;
     if (addr != 0) addr += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)func_800AD860((void*)addr);
+    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
     if (obj != 0) {
         if (obj == (EneChainObj*)func_80193CD0(func_80193670(), (void*)obj)) return 1;
         if (obj->type == 0x96b) return 1;
@@ -144,10 +115,10 @@ extern "C" int func_802814E4(cf::CChainActorEne* self, void* arg2) {
     if (((u32*)arg2)[0x3f00 / 4] & 4) {
         u32 a1 = self->unk0;
         if (a1 != 0) a1 += 0x3e9c;
-        EneChainObj* e1 = (EneChainObj*)func_800AD860((void*)a1);
+        EneChainObj* e1 = (EneChainObj*)getEffOwner__((void*)a1);
         u32 a2 = (u32)arg2;
         if (a2 != 0) a2 += 0x3e9c;
-        EneChainObj* e2 = (EneChainObj*)func_800AD860((void*)a2);
+        EneChainObj* e2 = (EneChainObj*)getEffOwner__((void*)a2);
         if (e1->id == e2->id) return 1;
         int s1 = (e1->type == 0x96b) || (e1->type == 0x96c);
         if (s1) {
@@ -166,19 +137,26 @@ extern "C" int func_802814E4(cf::CChainActorEne* self, void* arg2) {
 extern "C" int func_802815B8(cf::CChainActorEne* self) {
     u32 a0 = self->unk0;
     if (a0 != 0) a0 += 0x3e9c;
-    EneChainObj* o0 = (EneChainObj*)func_800AD860((void*)a0);
-    bool special = false;
-    if (o0 != 0 && (o0->type == 0x96b || o0->type == 0x96c)) special = true;
-    if (special) {
+    EneChainObj* o0 = (EneChainObj*)getEffOwner__((void*)a0);
+    int special;
+    if (o0 == 0) {
+        special = 0;
+    } else {
+        int t = o0->type;
+        special = 1;
+        if (t != 0x96b && t != 0x96c) special = 0;
+    }
+    if (special != 0) {
         GlistList* list = (GlistList*)func_800B6BC8();
-        EneChainObj* found = 0;
-        for (GlistNode* node = list->field_04->next; node != list->field_04; node = node->next) {
-            EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
-            if (o != 0 && o->type == 0x96b) {
-                found = o;
-                break;
-            }
+        EneChainObj* found = (EneChainObj*)list;
+        GlistNode* node = list->field_04->next;
+        while (node != list->field_04) {
+            EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
+            if (o != 0 && o->type == 0x96b) goto foundB8;
+            node = node->next;
         }
+        found = 0;
+    foundB8:;
         if (found != 0) {
             BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), found->id);
             if (act != 0) return (act->flagA0 >> 1) & 1;
@@ -186,7 +164,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
     }
     u32 a2 = self->unk0;
     if (a2 != 0) a2 += 0x3e9c;
-    EneChainObj* o2 = (EneChainObj*)func_800AD860((void*)a2);
+    EneChainObj* o2 = (EneChainObj*)getEffOwner__((void*)a2);
     if (o2 != 0) {
         BattleActor* act = (BattleActor*)func_80193AB0(func_80193670(), o2->id);
         if (act != 0) return (act->flagA0 >> 1) & 1;
@@ -200,7 +178,7 @@ extern "C" int func_802815B8(cf::CChainActorEne* self) {
 extern "C" void func_802816FC(cf::CChainActorEne* self) {
     u32 a1 = self->unk0;
     if (a1 != 0) a1 += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)func_800AD860((void*)a1);
+    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)a1);
 
     // Special enemy-chain types (0x96b/0x96c) share the 0x96b timeline.
     int special;
@@ -221,7 +199,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
         EneChainObj* found = (EneChainObj*)list;
         GlistNode* node = list->field_04->next;
         while (node != list->field_04) {
-            EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
+            EneChainObj* o = (EneChainObj*)getEffOwner__(node->obj);
             if (o != 0 && o->type == 0x96b) goto matched;
             node = node->next;
         }
@@ -237,7 +215,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
     // Always also clear the bit on the actor found through our own timeline.
     u32 a2 = self->unk0;
     if (a2 != 0) a2 += 0x3e9c;
-    EneChainObj* obj2 = (EneChainObj*)func_800AD860((void*)a2);
+    EneChainObj* obj2 = (EneChainObj*)getEffOwner__((void*)a2);
     if (obj2 != 0) {
         BattleActor* act2 = (BattleActor*)func_80193AB0(func_80193670(), obj2->id);
         if (act2 != 0) act2->flagA0 &= ~2;
@@ -249,13 +227,11 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
 extern "C" int func_8028183C(cf::CChainActorEne* self) {
     u32 addr = self->unk0;
     if (addr != 0) addr += 0x3e9c;
-    EneChainObj* obj = (EneChainObj*)func_800AD860((void*)addr);
+    EneChainObj* obj = (EneChainObj*)getEffOwner__((void*)addr);
     if (obj != 0) {
         if (obj->type == 0x96b) return 0;
         if (obj->type == 0x96c) return 1;
-        // Classify via the manual vtable hook at offset 0x40: result is 3 when
-        // the hook is false, 2 when the hook is true.
-        int v = reinterpret_cast<cf::CChainActorEneVtDispatch40*>(self)->target();
+        int v = self->_vf40();
         // 3 when hook false, 2 when true - a small-constant ternary if-converts
         // to MWCC's branchless neg/or/srawi/addi (sign mask of v plus 3).
         return (v != 0) ? 2 : 3;
@@ -273,7 +249,7 @@ s32 cf::CChainActorEne::func_802818DC() {
     return 1;
 }
 
-extern "C" void func_802818E4(void* self, void* arg) { reinterpret_cast<CEIf*>(self)->vf0048(*(void**)arg); }
+extern "C" int func_802818E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->vf48(*(void**)arg); }
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
 extern "C" void func_802818F8(void) {

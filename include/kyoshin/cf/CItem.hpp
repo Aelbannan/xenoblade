@@ -524,6 +524,6 @@ extern "C" u32 isEffectListEmpty__Q22cf13CfGameManagerFv(s32 playerIndex, u32 va
 // func_8009EC9C returns the character-data block for a u16 character id;
 // func_800A33C8 looks a character id up by comparing the given inventory
 // slot against the party's equipment; func_800A30E4 syncs equipment state.
-extern "C" void* func_8009EC9C(u16 index);
+extern "C" void* func_8009EC9C(u32 index);
 extern "C" s32 func_800A33C8(CItemExt* obj);
 extern "C" void func_800A30E4(void* data);

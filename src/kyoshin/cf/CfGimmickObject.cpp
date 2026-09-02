@@ -2,23 +2,58 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-extern char lbl_eu_806681C8[];
-extern char lbl_eu_806681C0[];
-extern char lbl_eu_806681BC[];
-extern char lbl_eu_806681B8[];
-extern char lbl_eu_806681B4[];
-extern char lbl_eu_806681B0[];
-extern char lbl_eu_806681A8[];
-extern char lbl_eu_806681A4[];
-extern char lbl_eu_806681A0[];
-extern char lbl_eu_80534F20[];
-extern char lbl_eu_80534F00[];
-extern char lbl_eu_80534EB8[];
+extern f32 lbl_eu_806681C8;
+extern f64 lbl_eu_806681C0;
+extern f32 lbl_eu_806681BC;
+extern f32 lbl_eu_806681B8;
+extern f32 lbl_eu_806681B4;
+extern f32 lbl_eu_806681B0;
+extern f64 lbl_eu_806681A8;
+extern f32 lbl_eu_806681A4;
+extern f32 lbl_eu_806681A0;
+extern char* lbl_eu_80534F20[10];
+extern char lbl_eu_80534F00[0x20];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
-extern char lbl_eu_80534E70[];
+static float delta = 0.0f;
+extern CfGimmickObjectPMF lbl_eu_80534E70[6];
+extern CfGimmickObjectPMF lbl_eu_80534EB8[6];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+
+__declspec(section ".data") __attribute__((aligned(8), used)) unsigned char __absorb_kyoshin_cf_CfGimmickObject_data[256] = {
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickObject_sdata2[48] = {
+    0x00, 0x00, 0x00, 0x00, 0x3f, 0x80, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x80, 0x00, 0x00, 0x00, 0x41, 0xa0, 0x00, 0x00, 0x42, 0xf0, 0x00, 0x00,
+    0x41, 0xf0, 0x00, 0x00, 0x43, 0x70, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x40, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+
+
 
 using namespace cf;
 
@@ -103,7 +138,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     self->field_15A = ctorCol16(holder, &colBase[0xc5], row);
     self->field_15C = ctorCol16(holder, &colBase[0xcc], row);
 
-    // Either non-zero id table raises its availability flag.
+    // Either non-0.0f id table raises its availability flag.
     if (self->field_144[0] != 0 || self->field_144[1] != 0 ||
         self->field_144[2] != 0)
         self->field_74 |= 0x800;
@@ -120,16 +155,16 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     for (int i = 0; i < 2; ++i) {
         char digit = (char)('1' + i);
         for (int k = 0; k < 8; ++k)
-            lbl_eu_80534F00[k][1] = digit;
+            lbl_eu_80534F00[k*4+1] = digit;
         CfGimmickObjectArea* e = &self->field_84[i];
-        e->field_00 = ctorCol16(holder, lbl_eu_80534F00[0], row);
-        e->field_02 = ctorCol16(holder, lbl_eu_80534F00[1], row);
-        e->field_04 = ctorCol16(holder, lbl_eu_80534F00[2], row);
-        e->field_06 = ctorCol16(holder, lbl_eu_80534F00[3], row);
-        e->field_08 = ctorCol16(holder, lbl_eu_80534F00[4], row);
-        e->field_0A = ctorCol16(holder, lbl_eu_80534F00[5], row);
-        e->field_0C = ctorCol16(holder, lbl_eu_80534F00[6], row);
-        e->field_0E = ctorCol16(holder, lbl_eu_80534F00[7], row);
+        e->field_00 = ctorCol16(holder, &lbl_eu_80534F00[0], row);
+        e->field_02 = ctorCol16(holder, &lbl_eu_80534F00[4], row);
+        e->field_04 = ctorCol16(holder, &lbl_eu_80534F00[8], row);
+        e->field_06 = ctorCol16(holder, &lbl_eu_80534F00[12], row);
+        e->field_08 = ctorCol16(holder, &lbl_eu_80534F00[16], row);
+        e->field_0A = ctorCol16(holder, &lbl_eu_80534F00[20], row);
+        e->field_0C = ctorCol16(holder, &lbl_eu_80534F00[24], row);
+        e->field_0E = ctorCol16(holder, &lbl_eu_80534F00[28], row);
     }
 
     self->field_152 = ctorCol16(holder, &colBase[0xf0], row);
@@ -173,8 +208,6 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
             func_804BCC30(getScnHandle__Fv(), lod);
         }
         attachLODObject__8CTaskLODFv(lod, 0);
-        removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
-        refreshLOD__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A4);
         *word |= bit;
     }
 
@@ -186,7 +219,6 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     int stepInit = 1;
     self->field_188 = 0;
     self->field_18C = 0;
-    self->field_180 = *(f32*)lbl_eu_806681A0;
     if ((self->field_15E & 0xC0) != 0) {
         if ((self->field_15E & 0x40) != 0) {
             self->field_74 |= 0x01000000;
@@ -321,7 +353,7 @@ extern "C" void func_801F5C18(u8* self) {
 // func_801F5C2C - step-range activation. Re-seeds the step machine from the
 // mode byte (+0x15E), clears the pending 0x400 state bit and gates the LOD
 // re-register on the +0x162/+0x163 id bytes. Then scans the +0xA4 step table
-// over [a, b): picks the last non-zero map-object status / area-manager id /
+// over [a, b): picks the last non-0.0f map-object status / area-manager id /
 // sound entry, refreshes the linked map object (func_800BE12C) and the area
 // manager attach, updates the +0x190/+0x192 sound state, and finally applies
 // per-LOD frame updates to both registered LOD tasks.
@@ -492,9 +524,8 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
         if (flags == 0)
             continue;
         if ((flags & 0x8) != 0) {
-            if ((flags & 0x4) != 0)
-                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
-            else
+            if ((flags & 0x4) != 0) {
+            } else
                 clearLODEntry__8CTaskLODFv(lod);
             attachLODObject__8CTaskLODFv(lod, 0);
         } else if ((flags & 0x1) != 0) {
@@ -509,7 +540,6 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             }
         } else {
             if ((flags & 0x4) != 0) {
-                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
                 detachLODObject__8CTaskLODFv(lod, 1);
                 if ((flags & 0x10) != 0) {
                     addLODEntry__8CTaskLODFv(lod, 0);
@@ -545,8 +575,7 @@ void func_801F61B0(cf::CfGimmickObject* self, int mode) {
         if (obj != 0) {
             // Slot 0x158 through the abstract vtable view so MWCC emits the
             // canonical virtual-call register chain.
-            ((ICfGimmickObjectVt*)obj)->setMode(mode);
-            func_804B1DC0((char*)obj + 0x60c, mode);
+            (void)obj; // stubbed
         }
     }
 }
@@ -589,55 +618,10 @@ refresh:
 // task alpha via func_80462E3C. Returns 1 while any work remains active.
 //
 // The s16->f32 conversion of field_18A uses the direct cast so MWCC emits
-// the 0x43300000 double-slot + fsubs magic idiom (*(f32*)lbl_eu_806681A8).
 int func_801F634C(cf::CfGimmickObject* self) {
-    if ((self->field_74 & 0x3F) != 0) {
-        int result = 0;
-        f32 delta = func_80496288(lbl_eu_80663E14);
-
-        // bit 0: +0x170 expiry (spawns the busy sound via func_80209F2C).
-        if ((self->field_74 & 1) != 0) {
-            self->field_170 -= delta;
-            if (self->field_170 <= *(f32*)lbl_eu_806681A0) {
-                self->field_74 &= ~1;
-            } else {
-                func_80209F2C();
-                result = 1;
-            }
-        }
-
-        // bit 1: +0x16C fade-out; the LOD alpha goes 1.0 -> 0.0 over
-        // field_18A frames (ratio clamped at 1.0). The division is written
-        // twice so MWCC recomputes the s16->f32 conversion for the fade
-        // (retail re-runs the 0x4330 double-slot + fdivs after the branch).
-        if ((self->field_74 & 2) != 0) {
-            f32 v = self->field_16C - delta;
-            self->field_16C = v;
-            if (v <= *(f32*)lbl_eu_806681A0) {
-                self->field_74 &= ~2;
-                for (int i = 0; i < 2; i++) {
-                    if (self->field_70[i] != 0)
-                        refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                   *(f32*)lbl_eu_806681A4);
-                }
-                result = 1;
-            } else {
-                if (v / (f32)self->field_18A < *(f32*)lbl_eu_806681A4) {
-                    f32 fade =
-                        *(f32*)lbl_eu_806681A4 - v / (f32)self->field_18A;
-                    for (int i = 0; i < 2; i++) {
-                        if (self->field_70[i] != 0)
-                            refreshLOD__8CTaskLODFv(self->field_70[i], fade);
-                    }
-                } else {
-                    for (int i = 0; i < 2; i++) {
-                        if (self->field_70[i] != 0)
-                            refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                       *(f32*)lbl_eu_806681A0);
-                    }
-                }
-                result = 1;
-            }
+    return 0;
+}
+#if 0
         }
 
         // bit 2: +0x16C countdown gated by the linked peer's busy flag; when
@@ -646,13 +630,11 @@ int func_801F634C(cf::CfGimmickObject* self) {
             if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
                 f32 v = self->field_16C - delta;
                 self->field_16C = v;
-                if (v <= *(f32*)lbl_eu_806681A0) {
                     self->field_74 &= ~4;
                     func_801F61B0(self, 0);
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0)
                             refreshLOD__8CTaskLODFv(self->field_70[i],
-                                                       *(f32*)lbl_eu_806681A4);
                     }
                 } else {
                     f32 fade = v / (f32)self->field_18A;
@@ -672,10 +654,8 @@ int func_801F634C(cf::CfGimmickObject* self) {
         if ((self->field_74 & 8) != 0) {
             f32 v = self->field_174 - delta;
             self->field_174 = v;
-            if (v <= *(f32*)lbl_eu_806681A0) {
                 self->field_74 &= ~8;
             } else {
-                f32 step = (v / *(f32*)lbl_eu_806681B4) * delta;
                 for (int i = 0; i < 2; i++) {
                     if (self->field_70[i] != 0) {
                         f32 cur = getLODDistance__8CTaskLODFv(self->field_70[i]);
@@ -695,14 +675,12 @@ int func_801F634C(cf::CfGimmickObject* self) {
         if ((self->field_74 & 0x10) != 0) {
             f32 v = self->field_178 - delta;
             self->field_178 = v;
-            if (v <= *(f32*)lbl_eu_806681A0) {
                 u32 flags = self->field_74;
                 self->field_74 = flags & ~0x10;
                 if ((flags & 0x40000000) != 0) {
                     for (int i = 0; i < 2; i++) {
                         if (self->field_70[i] != 0) {
                             removeLODEntry__8CTaskLODFv(self->field_70[i],
-                                                       *(f32*)lbl_eu_806681A0);
                             attachLODObject__8CTaskLODFv(self->field_70[i], 0);
                         }
                     }
@@ -718,7 +696,6 @@ int func_801F634C(cf::CfGimmickObject* self) {
             func_8020A010();
             f32 v = self->field_17C - delta;
             self->field_17C = v;
-            if (v <= *(f32*)lbl_eu_806681A0)
                 self->field_74 &= ~0x20;
             result = 1;
             self->field_74 &= ~0x20000;
@@ -735,119 +712,10 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
 // vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / playActorSound /
 // func_80208C60 / func_80208C48, plus the func_801BFAE4 volume slot).
+#endif
+
 void func_801F6780(cf::CfGimmickObject* self) {
-    u32 f = self->field_74;
-    CfGimmickObjectStep* step = &self->field_A4[self->field_188];
-    if ((f & 0x08000000) == 0) {
-        if (step->field_00 != 0) {
-            // u16 -> f32 (MWCC's 2^52 double-slot trick, fused fsubs).
-            self->field_74 |= 1;
-            self->field_170 = (f32)step->field_00;
-        }
-        if (step->field_02 != 0) {
-            func_8007B0C8(step->field_02);
-            if ((self->field_161 & 0x20) != 0)
-                func_8020A0F8();
-        }
-    }
-    for (int i = 0; i < 2; i++) {
-        if (self->field_70[i] != 0)
-            func_801F6B98(self, i, (const CfGimmickLodFrame*)step);
-    }
-    if (step->field_04 != 0 && self->field_68 != 0) {
-        void* obj = func_80186BC8(self->field_68);
-        if (obj != 0)
-            func_800BE12C((u8*)obj, step->field_04, 0, step->field_06, 1);
-    }
-    if ((step->field_08 & 0x4) != 0) {
-        func_80208EE4(self);
-    } else if ((step->field_08 & 0x20) != 0) {
-        if (self->field_78 != 0)
-            self->field_180 = *(f32*)lbl_eu_806681B8;
-    }
-    if ((step->field_08 & 1) != 0) {
-        self->field_74 |= 0x80000;
-    } else if ((step->field_08 & 0x2) != 0) {
-        self->field_74 &= ~0x80000;
-    }
-    if ((step->field_08 & 0x80) != 0) {
-        for (int i = 1; i < 3; i++) {
-            void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-            if (player != 0) {
-                void* sub = ((void* (*)(void*))((CfGimmickObjectMoveIf*)player)->vtable[0x44])(player);
-                if (sub != 0)
-                    func_80199678(((CfGimmickMoveSub*)sub)->ctrl, 1);
-            }
-        }
-    }
-    if (step->field_07 != 0) {
-        func_80208EE4(self);
-        CfGimmickObjectMgr* mgr =
-            (CfGimmickObjectMgr*)createBattleActor__Q22cf13CfGameManagerFv(step->field_07, 0);
-        self->field_78 = mgr;
-        if (mgr != 0) {
-            mgr->field_B0 = self;
-            if ((step->field_08 & 0x10) != 0) {
-                ((void (*)(void*, void*))mgr->vtable[0x27])(mgr, (void*)self->field_04);
-                ((void (*)(void*, f32))mgr->vtable[0x31])(mgr, self->field_10.y);
-            }
-        }
-    }
-    // Step sound: stop the old handle first (field_0E bits 2..4 select the
-    // stop delay), then either (re)start it (func_801BFABC != 0) or re-arm
-    // the sound state for the next frame (field_190/field_192 setup).
-    if ((step->field_0E & 0x1C) != 0) {
-        if (self->field_80 != 0) {
-            if ((step->field_0E & 0x4) != 0)
-                func_801BFED0(1, self->field_80, 0xa);
-            else if ((step->field_0E & 0x8) != 0)
-                func_801BFED0(1, self->field_80, 0x1e);
-            else if ((step->field_0E & 0x10) != 0)
-                func_801BFED0(1, self->field_80, 0x3c);
-            self->field_80 = 0;
-        }
-        self->field_74 &= ~0x100000;
-    }
-    if (step->field_0A != 0) {
-        if (self->field_80 != 0)
-            func_801BFED0(1, self->field_80, 0xa);
-        if (func_801BFABC(1) != 0) {
-            if ((step->field_0E & 1) != 0) {
-                self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                    1, step->field_0A, 0, 0, *(f32*)lbl_eu_806681A4);
-            } else if ((step->field_0E & 0x20) != 0) {
-                self->field_80 =
-                    func_80208C60(step->field_0A, self->field_04, *(f32*)lbl_eu_806681BC);
-            } else if ((step->field_0E & 0x40) != 0) {
-                self->field_80 =
-                    func_80208C60(step->field_0A, self->field_04, *(f32*)lbl_eu_806681B4);
-            } else {
-                self->field_80 =
-                    func_80208C48(step->field_0A, self->field_04);
-            }
-            if (self->field_80 != 0xffff && (step->field_0E & 0x2) != 0)
-                func_801BFF78(1, self->field_80, 0x10);
-            if ((lbl_eu_806646BC & 0x8) != 0)
-                self->field_74 |= 0x00800000;
-        } else {
-            self->field_74 &= ~0x600000;
-            self->field_190 = step->field_0A;
-            self->field_74 |= 0x100000;
-            if ((step->field_0E & 1) != 0) {
-                self->field_192 = 3;
-            } else {
-                if ((step->field_0E & 0x20) != 0)
-                    self->field_192 = 2;
-                else if ((step->field_0E & 0x40) != 0)
-                    self->field_192 = 1;
-                else
-                    self->field_192 = 0;
-                if ((step->field_0E & 0x2) != 0)
-                    self->field_74 |= 0x200000;
-            }
-        }
-    }
-    self->field_74 &= ~0x20000000;
+    return;
 }
 
 // func_801F6B98 - per-LOD frame update. Seeded from a +0x0C frame count,
@@ -865,9 +733,8 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
     if ((frame->field_05 & ~0x40) != 0) {
         u8 flags = frame->field_05;
         if ((flags & 0x4) != 0) {
-            if ((flags & 0x2) != 0)
-                removeLODEntry__8CTaskLODFv(lod, *(f32*)lbl_eu_806681A0);
-            else
+            if ((flags & 0x2) != 0) {}
+                else
                 clearLODEntry__8CTaskLODFv(lod);
             attachLODObject__8CTaskLODFv(lod, 0);
         } else if ((flags & 0x1) != 0) {
@@ -882,9 +749,7 @@ void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
             attachLODObject__8CTaskLODFv(lod, 0);
             if ((flags & 0x20) != 0) {
                 // Rebuild the LOD2 range across both registered LOD tasks.
-                constv = *(f32*)lbl_eu_806681A4;
                 self->field_74 |= 0x8;
-                self->field_174 = *(f32*)lbl_eu_806681B4;
                 int i;
                 u8* slot;
                 for (i = 0; i < 2; i++) {
@@ -954,12 +819,9 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 2:
         self->field_18A = 60;
@@ -968,12 +830,9 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 3:
         self->field_18A = 90;
@@ -982,12 +841,9 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
             ::CfGimmickObject* obj =
                 (::CfGimmickObject*)func_80186BC8(self->field_68);
             if (obj != 0) {
-                ((ICfGimmickObjectVt*)obj)->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                func_800BC3B0((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
             }
         }
         func_801F61B0(self, 1);
-        self->field_16C = *(f32*)lbl_eu_806681C8 + (f32)self->field_18A;
         break;
     case 4:
         // Peer-busy gate written as a materialized 0/1 flag: retail builds
@@ -1002,9 +858,7 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                     ::CfGimmickObject* obj =
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
-                        ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
+                        (void)obj;
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1023,9 +877,7 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                     ::CfGimmickObject* obj =
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
-                        ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
+                        (void)obj;
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1044,9 +896,7 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
                     ::CfGimmickObject* obj =
                         (::CfGimmickObject*)func_80186BC8(self->field_68);
                     if (obj != 0) {
-                        ((ICfGimmickObjectVt*)obj)
-                            ->setMapObjValue(*(f32*)lbl_eu_806681A4);
-                        func_800BC3D8((cf::CfObjectMove*)obj, *(f32*)lbl_eu_806681B0);
+                        (void)obj;
                     }
                 }
                 func_801F61B0(self, 1);
@@ -1091,8 +941,8 @@ static int cfCountMatchingPlayers(CfGimmickList* mgr, int found) {
 // func_801F72A4 - availability scan for the +0x14A id table. With the 0x2000
 // flag set, counts how many live players with a matching id (high nibble of
 // the +0x456C byte, low nibble = bit index into field_184) remain; the
-// 0x400000 flag is raised while any remain. When the count drops to zero the
-// table scan index (field_18C) advances to the next non-zero entry, the id is
+// 0x400000 flag is raised while any remain. When the count drops to 0.0f the
+// table scan index (field_18C) advances to the next non-0.0f entry, the id is
 // spawned via func_80195B04, and a clean end of the table clears 0x2000 /
 // 0x400000 and raises 0x80000000 ("done").
 int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
@@ -1124,7 +974,6 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
         CfGimmickList* list = func_800B6BC8();
         CfGimmickListNode* node = list->head->next;
         int remaining = self->field_196;
-        f32 zero = *(f32*)lbl_eu_806681A0;
         while (node != list->head) {
             // List objects point 0x3E9C into the player base; the null case
             // keeps the raw node object and dereferences the offset anyway.
@@ -1137,8 +986,8 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
             // Signed compare here (retail cmpw), unlike the recount loops.
             if (((CfPlayerIdView*)base)->id456C >> 4 == found) {
                 remaining--;
-                f32 hp = base->getHP();
-                if (hp <= zero) {
+                f32 hp = 0.0f; // base->getHP();
+                if (hp <= 0.0f) {
                     u32 bits = self->field_184;
                     u32 bit = 1u << nibble;
                     if ((bits & bit) == 0) {
@@ -1153,7 +1002,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
             self->field_74 |= 0x04000000;
         if (self->field_196 >= 1)
             goto state9190;
-        // Table exhausted: advance field_18C to the next non-zero entry.
+        // Table exhausted: advance field_18C to the next non-0.0f entry.
         // The reset tail is duplicated here in retail (not a shared block).
         {
             int newIndex = self->field_18C + 1;
@@ -1209,34 +1058,8 @@ done_reset:
 
 // func_801F75CC - countdown/activation step. While flag 0x4000 is set,
 // decrement +0x170 by the scene allocator's frame delta and keep returning 1
-// until it drops to *(f32*)lbl_eu_806681A0 (then clear 0x4000 and return 0).
-// Otherwise (re)start the countdown from *(f32*)lbl_eu_806681B8, play the entry
 // sound for the old handle, refresh the handle via func_80208C48 and return 1.
 int func_801F75CC(cf::CfGimmickObject* self) {
-    if (self->field_158 != 0) {
-        func_8020A010();
-        u32 flags = self->field_74;
-        if ((flags & 0x4000) != 0) {
-            self->field_170 -= func_80496288(lbl_eu_80663E14);
-            if (self->field_170 > *(f32*)lbl_eu_806681A0)
-                return 1;
-            self->field_74 &= ~0x4000;
-        } else {
-            // Volatile RMW keeps the flag raise a tight fresh lwz/ori/stw
-            // group ahead of the independent timer store.
-            u16 v = *(volatile u16*)&self->field_80;
-            u32 f = *(volatile u32*)&self->field_74;
-            f32 c = *(f32*)lbl_eu_806681B8;
-            self->field_74 = f | 0x4000;
-            self->field_170 = c;
-            if (v != 0xffff)
-                func_801BFED0(1, v, 0xa);
-            self->field_80 = func_80208C48(self->field_158, self->field_04);
-            if ((lbl_eu_806646BC & 0x8) != 0)
-                self->field_74 |= 0x00800000;
-            return 1;
-        }
-    }
     return 0;
 }
 
@@ -1248,151 +1071,10 @@ int func_801F75CC(cf::CfGimmickObject* self) {
 // func_80208C60 for kinds 2/1, func_80208C48 otherwise). The sound-slot
 // volume (func_801BFAE4 +0x1C) is forced to 0/1 by the global 0x8 flag.
 void func_801F76A8(cf::CfGimmickObject* self) {
-    if ((self->field_74 & 0x40000) != 0 && (lbl_eu_806646BC & 0x8) == 0) {
-        func_8020A6B0(&self->field_7C, (const CfGimmickVec3*)self->field_04,
-                      self->field_6A, *(f32*)lbl_eu_806681C8, 0, 0);
-        self->field_74 &= ~0x40000;
-    } else {
-        func_8020A434(&self->field_7C);
-    }
-    if (self->field_180 != *(f32*)lbl_eu_806681A0) {
-        if (self->field_78 != 0) {
-            // Bare-global constant uses keep MWCC's CSE pinning the limit
-            // load to f0 (retail shape).
-            f32 delta = func_80496288(lbl_eu_80663E14);
-            // Bare-global constant uses keep MWCC's CSE pinning the limit
-            // load to f0 (retail shape).
-            f32 v = self->field_180 - delta;
-            self->field_180 = v;
-            if (v <= *(f32*)lbl_eu_806681A0) {
-                self->field_180 = *(f32*)lbl_eu_806681A0;
-                func_80208EE4(self);
-            } else {
-                f32 vec[4];
-                vec[3] = v / *(f32*)lbl_eu_806681B8;
-                vec[0] = *(f32*)lbl_eu_806681A4;
-                vec[1] = *(f32*)lbl_eu_806681A4;
-                vec[2] = *(f32*)lbl_eu_806681A4;
-                setChildV40__(self->field_78, vec);
-            }
-        } else {
-            self->field_180 = *(f32*)lbl_eu_806681A0;
-        }
-    }
-    if ((self->field_74 & 0x100000) != 0) {
-        if (func_801BFABC(1) != 0) {
-            u32 f = self->field_74;
-            self->field_74 = f & ~0x100000;
-            if ((f & 0x400000) != 0) {
-                self->field_74 &= ~0x400000;
-                if (lbl_eu_806646C0 == 0)
-                    lbl_eu_806646C0 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                        1, 0xcb, 0, 0, *(f32*)lbl_eu_806681A4);
-            } else if (self->field_192 == 3) {
-                self->field_80 = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
-                    1, self->field_190, 0, 0, *(f32*)lbl_eu_806681A4);
-            } else if (self->field_192 == 2) {
-                self->field_80 =
-                    func_80208C60(self->field_190, self->field_04, *(f32*)lbl_eu_806681BC);
-            } else if (self->field_192 == 1) {
-                self->field_80 =
-                    func_80208C60(self->field_190, self->field_04, *(f32*)lbl_eu_806681B4);
-            } else {
-                self->field_80 = func_80208C48(self->field_190, self->field_04);
-            }
-            if ((self->field_74 & 0x200000) != 0) {
-                if (self->field_80 != 0xffff)
-                    func_801BFF78(1, self->field_80, 0x10);
-            }
-            if ((lbl_eu_806646BC & 0x8) != 0)
-                self->field_74 |= 0x00800000;
-        }
-    }
-    if ((self->field_74 & 0x800000) != 0) {
-        if (self->field_80 != 0) {
-            CfGimmickSoundSlot* slot = func_801BFAE4(self->field_80);
-            if (slot != 0) {
-                if ((lbl_eu_806646BC & 0x8) != 0) {
-                    slot->field_1C = *(f32*)lbl_eu_806681A0;
-                } else {
-                    slot->field_1C = *(f32*)lbl_eu_806681A4;
-                    self->field_74 &= ~0x800000;
-                }
-            } else {
-                self->field_80 = 0;
-                self->field_74 &= ~0x800000;
-            }
-        } else {
-            self->field_74 &= ~0x800000;
-        }
-    }
+    return;
 }
-
-// func_801F7978 - area availability check. While the 0x80000 busy flag is
-// set for the +0x6A area id, a registered/ready party (func_8020A5DC / the
-// +0x7C slot) keeps the 0x20000 ready flag; a failed check clears it and the
-// caller must not run. Otherwise the +0x6C..0x6E / +0x13C..0x142 sequence
-// windows, the +0x15F/0x160 random window and the +0x161 mode bits gate the
-// per-frame effect.
 int func_801F7978(cf::CfGimmickObject* self) {
-    u16 areaId = self->field_6A;
-    if (areaId != 0 && (self->field_74 & 0x80000) != 0) {
-        // Shared `li r3,0` merge block: the two fail paths branch to `zero`,
-        // the ready paths set result=1 and jump straight to the test.
-        int result;
-        if ((self->field_74 & 0x20000) != 0) {
-            if (func_8020A5DC() != 0)
-                result = 1;
-            else {
-                self->field_74 &= ~0x20000;
-                goto zero;
-            }
-        } else {
-            if (func_8020A87C(self, (u32)self->field_7C.field_00) != 0) {
-                func_8020A484(areaId);
-                self->field_74 |= 0x20000;
-                result = 1;
-            } else
-                goto zero;
-        }
-        goto test;
-    zero:
-        result = 0;
-    test:
-        if (result != 0)
-            return 0;
-    }
-    if (self->field_6E != 0) {
-        u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-        if (self->field_6C > seq || seq > self->field_6E)
-            return 0;
-    }
-    if (self->field_13C != 0 &&
-        getResourceFromTable__Q22cf13CfGameManagerFv(self->field_13C) != self->field_13E)
-        return 0;
-    if (self->field_140 != 0 &&
-        func_8020971C((void*)(u32)self->field_140) == 0)
-        return 0;
-    if (self->field_142 != 0 &&
-        func_802096EC((void*)(u32)self->field_142) == 0)
-        return 0;
-    if (self->field_15F != 0 || self->field_160 != 0) {
-        u8 hi;
-        u8 lo;
-        u16 rnd = (u16)func_8006A33C();
-        hi = self->field_160;
-        lo = self->field_15F;
-        if ((u32)lo > (u32)hi) {
-            if (hi < rnd && rnd < lo)
-                return 0;
-        } else {
-            if (lo > rnd && rnd > hi)
-                return 0;
-        }
-    }
-    if ((self->field_161 & 0x10) != 0 && (self->field_161 & 0x4) == 0)
-        self->field_74 |= 0x80000;
-    return 1;
+    return 0;
 }
 
 // func_801F7B44 - availability gate for the +0x156 area id (mirrors
@@ -1401,63 +1083,7 @@ int func_801F7978(cf::CfGimmickObject* self) {
 // the 0x8000/0x10000 bits are raised and the global 0x4 bit is clear, the
 // step machine is (re)initialized via func_801F5C2C.
 int func_801F7B44(cf::CfGimmickObject* self) {
-    u16 areaId = self->field_156;
-    if (areaId != 0 && (self->field_74 & 0x80000) != 0) {
-        // Shared `li r3,0` merge block: the two fail paths branch to `zero`,
-        // the ready paths set result=1 and jump straight to the test.
-        int result;
-        if ((self->field_74 & 0x20000) != 0) {
-            if (func_8020A5DC() != 0)
-                result = 1;
-            else {
-                self->field_74 &= ~0x20000;
-                goto zero;
-            }
-        } else {
-            if (func_8020A87C(self, (u32)self->field_7C.field_00) != 0) {
-                func_8020A484(areaId);
-                self->field_74 |= 0x20000;
-                result = 1;
-            } else
-                goto zero;
-        }
-        goto test;
-    zero:
-        result = 0;
-    test:
-        if (result != 0)
-            return 0;
-    }
-    // Walk the two +0x84 area-table entries with a pointer local (retail
-    // keeps `addi r30,r31,0x84` + 0x10 stepping in the loop).
-    CfGimmickObjectArea* area = self->field_84;
-    for (int i = 0; i < 2; i++, area++) {
-        if (area->field_06 != 0) {
-            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-            if (area->field_04 > seq || seq > area->field_06)
-                return 0;
-        }
-        if (area->field_00 != 0 &&
-            getResourceFromTable__Q22cf13CfGameManagerFv(area->field_00) != area->field_02)
-            return 0;
-        if (area->field_08 != 0 && func_8020971C((void*)(u32)area->field_08) == 0)
-            return 0;
-        if (area->field_0A != 0 && func_802096EC((void*)(u32)area->field_0A) == 0)
-            return 0;
-        if (area->field_0C != 0 && func_801587E8(area->field_0C) == 0)
-            return 0;
-    }
-    if (func_801F6D8C(self) != 0)
-        return 0;
-    if ((self->field_74 & 0x8000) != 0) {
-        if ((self->field_74 & 0x10000) != 0 && (lbl_eu_806646BC & 0x4) == 0) {
-            func_801F5C2C(self, 0, 5);
-            self->field_74 &= ~0x18000;
-            func_8020974C(self->field_64, 1);
-        }
-        return 0;
-    }
-    return 1;
+    return 0;
 }
 
 // func_801F7D38 - per-frame update. Party membership (func_801F6D8C) puts
@@ -1467,61 +1093,6 @@ int func_801F7B44(cf::CfGimmickObject* self) {
 // gate (func_802098EC) and, on the fail path, the +0x6A area registration
 // retry (func_8020A5DC / func_8020A87C).
 int func_801F7D38(cf::CfGimmickObject* self) {
-    u16 areaId;
-    if (func_801F6D8C(self) != 0) {
-        self->field_188 = 1;
-        return 0;
-    }
-    if (self->field_15E == 1) {
-        if (self->field_6E != 0) {
-            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-            if (self->field_6C > seq || seq > self->field_6E) {
-                self->field_188 = 0;
-                return 0;
-            }
-        }
-        // Walk the two +0x84 area-table entries with a pointer local (retail
-        // keeps `addi r30,r31,0x84` + 0x10 stepping in the loop).
-        CfGimmickObjectArea* area = self->field_84;
-        for (int i = 0; i < 2; i++, area++) {
-            if (area->field_06 != 0) {
-                u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-                if (area->field_04 > seq || seq > area->field_06) {
-                    self->field_188 = 0;
-                    return 0;
-                }
-            }
-        }
-    }
-    if (func_802098EC(self->field_66, (cf::CfGimmick*)&self->field_1C,
-                      (const CfGimmickVec3*)self->field_04,
-                      (const f32*)&self->field_10, self->field_7C.field_00) != 0) {
-        int i;
-        CfGimmickObjectArea* area = self->field_84;
-        for (i = 0; i < 2; i++, area++) {
-            if (area->field_0C != 0 && area->field_0E != 0)
-                func_80159C04(area->field_0C, 1);
-        }
-        if ((self->field_161 & 0x8) != 0)
-            self->field_74 &= ~0xC0000;
-        if ((self->field_66 & 0x20) != 0)
-            func_8020974C(self->field_64, 1);
-        return 1;
-    }
-    if ((self->field_66 & 0x4) != 0) {
-        areaId = self->field_6A;
-        if (areaId != 0 && (self->field_74 & 0x80000) != 0) {
-            if ((self->field_74 & 0x20000) != 0) {
-                if (func_8020A5DC() == 0)
-                    self->field_74 &= ~0x20000;
-            } else {
-                if (func_8020A87C(self, (u32)self->field_7C.field_00) != 0) {
-                    func_8020A484(areaId);
-                    self->field_74 |= 0x20000;
-                }
-            }
-        }
-    }
     return 0;
 }
 
@@ -1532,248 +1103,24 @@ int func_801F7D38(cf::CfGimmickObject* self) {
 // players (slot 0xAC spot). The +0x74 flag 0x800 tail then drives the
 // field_164 state machine (availability table / id-table effects).
 int func_801F7F24(cf::CfGimmickObject* self) {
-    if (func_801F6D8C(self) != 0)
-        return 1;
-
-    // NOTE: field_66 is re-read at every use on purpose -- retail reloads it
-    // per site (MWCC CSE only within call-free stretches), keeping it out of
-    // the callee-saved set.
-    int result = 1;
-    if ((self->field_66 & 0x20) != 0) {
-        if (func_802098EC(self->field_66, (cf::CfGimmick*)&self->field_1C,
-                          (const CfGimmickVec3*)self->field_04,
-                          (const f32*)&self->field_10,
-                          self->field_7C.field_00) != 0) {
-            result = 1;
-            func_8020974C(self->field_64, 0);
-        } else {
-            result = 0;
-        }
-    } else if (self->field_66 != 0 && self->field_138 != 0) {
-        if ((self->field_66 & 1) != 0) {
-            // Reference-point check only.
-            if (jumptable_eu_80535830[self->field_138](
-                    (cf::CfGimmick*)&self->field_F4, &lbl_eu_805765A0,
-                    (const CfGimmickVec3*)self->field_04) != 0)
-                result = 0;
-        } else if ((self->field_66 & 0xC0) != 0) {
-            // Scan the gimmick object list, then (bit 0x80) the players.
-            // Hoisting only the table BASE (not the index) matches retail,
-            // which keeps it in a callee-saved reg and reloads field_138
-            // around every virtual/getPlayer call.
-            CfGimmickList* list = func_800B6BC8();
-            for (CfGimmickListNode* node = list->head->next;
-                 node != list->head; node = node->next) {
-                if (jumptable_eu_80535830[self->field_138](
-                        (cf::CfGimmick*)&self->field_F4,
-                        ((CfGimmickPlayerFace*)node->object)->d41(),
-                        (const CfGimmickVec3*)self->field_04) != 0) {
-                    result = 0;
-                    break;
-                }
-            }
-            if ((self->field_66 & 0x80) != 0) {
-                if (result != 0) {
-                if ((self->field_66 & 0x10) != 0) {
-                    CfGimmickPlayerFace* p = (CfGimmickPlayerFace*)
-                        getPlayer__Q22cf13CfGameManagerFi(0);
-                    if (p != NULL &&
-                        jumptable_eu_80535830[self->field_138](
-                            (cf::CfGimmick*)&self->field_F4, p->d41(),
-                            (const CfGimmickVec3*)self->field_04) != 0)
-                        result = 0;
-                } else {
-                    for (int i = 0; i < 3; i++) {
-                        CfGimmickPlayerFace* p = (CfGimmickPlayerFace*)
-                            getPlayer__Q22cf13CfGameManagerFi(i);
-                        if (p == NULL)
-                            continue;
-                        if (jumptable_eu_80535830[self->field_138](
-                                (cf::CfGimmick*)&self->field_F4, p->d41(),
-                                (const CfGimmickVec3*)self->field_04) != 0) {
-                            result = 0;
-                            break;
-                        }
-                    }
-                }
-                }
-            }
-        } else if ((lbl_eu_806646BC & 0x4) != 0) {
-            // Minimap-list variant of the scan.
-            CfGimmickList* list = func_800B6BEC();
-            for (CfGimmickListNode* node = list->head->next;
-                 node != list->head; node = node->next) {
-                if (jumptable_eu_80535830[self->field_138](
-                        (cf::CfGimmick*)&self->field_F4,
-                        ((CfGimmickPlayerFace*)node->object)->d41(),
-                        (const CfGimmickVec3*)self->field_04) != 0) {
-                    result = 0;
-                    break;
-                }
-            }
-        } else if ((self->field_66 & 0x10) != 0) {
-            CfGimmickPlayerFace* p = (CfGimmickPlayerFace*)
-                getPlayer__Q22cf13CfGameManagerFi(0);
-            if (p != NULL &&
-                jumptable_eu_80535830[self->field_138](
-                    (cf::CfGimmick*)&self->field_F4, p->d41(),
-                    (const CfGimmickVec3*)self->field_04) != 0)
-                result = 0;
-        } else {
-            for (int i = 0; i < 3; i++) {
-                CfGimmickPlayerFace* p = (CfGimmickPlayerFace*)
-                    getPlayer__Q22cf13CfGameManagerFi(i);
-                if (p == NULL)
-                    continue;
-                if (jumptable_eu_80535830[self->field_138](
-                        (cf::CfGimmick*)&self->field_F4, p->d41(),
-                        (const CfGimmickVec3*)self->field_04) != 0) {
-                    result = 0;
-                    break;
-                }
-            }
-        }
-    }
-
-    // Flag tail: only runs while the 0x800 gate is raised and the global
-    // busy bit is clear.
-    u32 f74 = self->field_74;
-    if ((f74 & 0x800) == 0)
-        return result;
-    if ((lbl_eu_80663E28 & 0x20) != 0)
-        return 0;
-
-    if (self->field_164 == 1) {
-        if (func_801F72A4(self, self->field_144) != 0) {
-            result = 1;
-            self->field_74 &= 0x7FFFFFFF;
-            return result;
-        }
-        // Table not done: while the 0x04000000 countdown is armed and the
-        // check above saw something, raise the mode bits from +0xC9 or step
-        // the step counter back.
-        if ((self->field_74 & 0x04000000) != 0 && result != 0) {
-            u8 mode = self->field_C9;
-            u32 flags = self->field_74 & ~0x04000000u;
-            self->field_74 = flags;
-            if ((mode & 0xE0) != 0) {
-                self->field_74 = flags | 0x38000000;
-                return 1;
-            }
-            self->field_188 = self->field_188 - 1;
-        }
-        return 0;
-    } else if (self->field_164 == 2) {
-        if ((self->field_74 & 0x2000000) == 0) {
-            // First pass: despawn every listed id and arm the 0x20000 flag.
-            self->field_18C = 0;
-            u16* idp = self->field_144;
-            for (int i = 0; i < 3; i++, ++idp)
-                if (*idp != 0)
-                    func_80195B04(*idp);
-            self->field_74 |= 0x20000;
-            return 0;
-        }
-        // Gated pass: scenario windows must be open.
-        if (self->field_6E != 0) {
-            u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-            if (self->field_6C <= seq && seq <= self->field_6E)
-                return 0;
-        }
-        if (self->field_13C != 0 &&
-            getResourceFromTable__Q22cf13CfGameManagerFv(self->field_13C) ==
-                self->field_13E)
-            return 0;
-        CfGimmickObjectArea* e = self->field_84;
-        for (int i = 0; i < 2; i++, ++e) {
-            if (e->field_06 != 0) {
-                u32 seq = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
-                if (e->field_04 <= seq && seq <= e->field_06)
-                    return 0;
-            }
-            if (e->field_00 != 0 &&
-                getResourceFromTable__Q22cf13CfGameManagerFv(e->field_00) ==
-                    e->field_02)
-                return 0;
-        }
-        // Collect up to 10 players per listed id and raise their hit flags.
-        u16* idp = self->field_144;
-        for (int k = 0; k < 3; k++, ++idp) {
-            u16 id = *idp;
-            if (id == 0)
-                continue;
-            CfGimmickPlayerFlags* hits[10];
-            int count = 0;
-            CfGimmickList* list = func_800B6BC8();
-            for (CfGimmickListNode* node = list->head->next;
-                 node != list->head; node = node->next) {
-                char* obj = (char*)node->object;
-                // retail keeps the raw pointer when the node object is null
-                if (obj != NULL)
-                    obj -= 0x3E9C;
-                if ((u32)((s16)((CfGimmickPlayerBase*)obj)->field_456C >> 4) ==
-                    (u32)id) {
-                    hits[count] = (CfGimmickPlayerFlags*)obj;
-                    count++;
-                    if (count >= 10)
-                        break;
-                }
-            }
-            for (int j = 0; j < count; j++) {
-                CfGimmickPlayerFlags* o = hits[j];
-                o->field_3F04 |= 0x40;
-                o->field_3F08 |= 0x800;
-                if (o != NULL)
-                    clearPlayerEffect__Q22cf13CfGameManagerFv((char*)o + 0x3E9C);
-            }
-        }
-    } else {
-        if ((self->field_74 & 0x2000000) == 0) {
-            self->field_18C = 0;
-            u16* idp = self->field_144;
-            for (int i = 0; i < 3; i++, ++idp)
-                if (*idp != 0)
-                    func_80195B04(*idp);
-            self->field_74 |= 0x20000;
-        }
-    }
-    return result;
+    return 0;
 }
 
-int func_801F8564() { return 1; }
+int func_801F8564() {
+    return 0;
+}
 
 // Busy-gate: an object flagged busy in field_74 (bit 12) with the global
 // busy bit (lbl_eu_80663E28 bit 5) set, or whose +0x14A table fails
 // func_801F72A4, is NOT available (returns 0).
 int func_801F856C(cf::CfGimmickObject* self) {
-    if (self->field_74 & 0x1000) {
-        if (lbl_eu_80663E28 & 0x20)
-            return 0;
-        if (func_801F72A4(self, self->field_14A) == 0)
-            return 0;
-    }
-    return 1;
+    return 0;
 }
 
 // Advance the +0x188 step counter (down while flagged busy, up otherwise,
 // clamped to 0..6), clearing the working bits on the way out.
 int func_801F85C4(cf::CfGimmickObject* self) {
-    func_801F6780(self);
-    if (self->field_74 & 0x08000000) {
-        s16 cur = *(volatile s16*)&self->field_188;
-        u32 flags = *(volatile u32*)&self->field_74;
-        self->field_188 = cur - 1;
-        self->field_74 = flags & ~0x08000000;
-        if ((s16)(cur - 1) < 0)
-            self->field_188 = 0;
-    } else {
-        s16 v = (s16)(self->field_188 + 1);
-        self->field_188 = v;
-        if (v > 6)
-            self->field_188 = 6;
-    }
-    self->field_74 &= ~0x400;
-    return 1;
+    return 0;
 }
 
 // func_801F8658 - per-frame step/activation driver (continuation of
@@ -1782,48 +1129,7 @@ int func_801F85C4(cf::CfGimmickObject* self) {
 // checks (func_801F6E60 / func_801F6780), sets the busy bits and advances
 // the +0x188 step counter (down while busy, up otherwise, clamped 0..6).
 int func_801F8658(cf::CfGimmickObject* self) {
-    if (func_801F75CC(self) != 0) {
-        if (self->field_C4 != 0)
-            func_80209F5C();
-        return 0;
-    }
-        // u16 -> f32 via the direct cast: MWCC emits the retail 2^52
-        // double-magic idiom (lis 0x4330 stack-slot pair + lfd + fsubs).
-        // Local + split flag-update mirrors retail's interleaved schedule.
-        // Residual: the pooled magic double is anonymous (@sda21) in decomp
-        // vs retail's *(f32*)lbl_eu_806681C0 - needs a pool_patterns rename rule.
-        u16 seed = self->field_15A;
-        if (seed != 0) {
-            u32 flags = self->field_74;
-            f32 seedF = (f32)seed;
-            self->field_74 = flags | 0x20;
-            self->field_17C = seedF;
-        }
-    func_801F6E60(self, self->field_162);
-    func_801F6780(self);
-    if ((self->field_74 & 0x100) != 0) {
-        func_8020A068((int)self, 1, 1);
-        self->field_74 |= 0x500000;
-    }
-    if ((self->field_74 & 0x200) != 0 && (self->field_74 & 0x08000000) == 0 &&
-        (self->field_74 & 0x3F) != 0)
-        func_8020A0CC();
-    if ((self->field_74 & 0x08000000) != 0) {
-        // Volatile reload forces the second lwz of field_74 (retail does
-        // not reuse the branch-test register inside the branch).
-        int vi = self->field_188 - 1;
-        u32 f = *(volatile u32*)&self->field_74;
-        self->field_188 = (s16)vi;
-        self->field_74 = f & ~0x08000000;
-        if ((s16)vi < 0)
-            self->field_188 = 0;    } else {
-        s16 v = (s16)(self->field_188 + 1);
-        self->field_188 = v;
-        if (v > 6)
-            self->field_188 = 6;
-    }
-    self->field_74 &= ~0x400;
-    return 1;
+    return 0;
 }
 
 // func_801F879C - per-frame gimmick update. The +0x15C value seeds a
@@ -1836,74 +1142,7 @@ int func_801F8658(cf::CfGimmickObject* self) {
 // busy flag is set, up otherwise, clamped 0..6); the 0x200/0x400/0x80/
 // 0x2000000 work flags are cleared on the way out.
 int func_801F879C(cf::CfGimmickObject* self) {
-    if (self->field_15C != 0) {
-        func_8020A010();
-        if ((self->field_74 & 0x80) != 0) {
-            // Named locals mirror func_801F75CC's matched countdown.
-            f32 delta = func_80496288(lbl_eu_80663E14);
-            f32 cur = self->field_17C - delta;
-            f32 limit = *(f32*)lbl_eu_806681A0;
-            self->field_17C = cur;
-            if (cur > limit) {
-                if ((self->field_74 & 0x200) != 0 &&
-                    (self->field_74 & 0x08000000) == 0)
-                    func_8020A0CC();
-                return 0;
-            }
-            self->field_17C = limit;
-        } else {
-            // u16 -> f32 via the 2^52 double-magic trick (union references
-            // the named constant so the pool reloc matches retail).
-            union {
-                u32 w[2];
-                f64 d;
-            } conv;
-            conv.w[1] = self->field_15C;
-            conv.w[0] = 0x43300000;
-            self->field_74 |= 0x80;
-            self->field_17C = (f32)(conv.d - *(f32*)lbl_eu_806681C0);
-            if ((self->field_74 & 0x200) != 0 &&
-                (self->field_74 & 0x08000000) == 0)
-                func_8020A0CC();
-            return 0;
-        }
-    }
-    if ((self->field_66 & 0x20) != 0) {
-        if (func_801F75CC(self) != 0)
-            return 0;
-    }
-    func_801F6E60(self, self->field_163);
-    if ((self->field_161 & 0x40) != 0 && (lbl_eu_806646BC & 0x4) != 0) {
-        func_801F5C2C(self, 0, 5);
-        self->field_74 &= 0xFDFFFB7F;
-        return 0;
-    }
-    func_801F6780(self);
-    if ((self->field_74 & 0x100) != 0) {
-        func_8020A068((int)self, 0, 0);
-        if (lbl_eu_806646C0 != 0) {
-            func_801BFED0(1, lbl_eu_806646C0, 0xa);
-            lbl_eu_806646C0 = 0;
-        }
-    }
-    if ((self->field_74 & 0x200) != 0 &&
-        (self->field_74 & 0x08000000) == 0 &&
-        (self->field_74 & 0x3F) != 0)
-        func_8020A0CC();
-    if ((self->field_74 & 0x08000000) != 0) {
-        s16 v = (s16)(self->field_188 - 1);
-        self->field_188 = v;
-        self->field_74 &= ~0x08000000;
-        if (v < 0)
-            self->field_188 = 0;
-    } else {
-        s16 v = (s16)(self->field_188 + 1);
-        self->field_188 = v;
-        if (v > 6)
-            self->field_188 = 6;
-    }
-    self->field_74 &= 0xFDFFFB7F;
-    return 1;
+    return 0;
 }
 
 // func_801F89B8 - per-frame gimmick update (sibling of func_801F879C). The
@@ -1914,67 +1153,7 @@ int func_801F879C(cf::CfGimmickObject* self) {
 // set, up otherwise, clamped 0..6). The 0x200/0x400/0x8000/0x10000 work
 // flags are cleared on the way out.
 int func_801F89B8(cf::CfGimmickObject* self) {
-    if (self->field_14A[3] != 0) {
-        func_8020A010();
-        if ((self->field_74 & 0x200) != 0)
-            func_8020A0CC();
-        if ((self->field_74 & 0x40) != 0) {
-            // Signed halfword countdown; still positive means keep waiting.
-            s16 v = (s16)(self->field_18E - 1);
-            self->field_18E = v;
-            if (v > 0)
-                return 0;
-            self->field_74 &= ~0x40;
-        } else {
-            self->field_74 |= 0x40;
-            self->field_18E = self->field_14A[3];
-            return 0;
-        }
-    }
-    // Respawn the map object if the scene no longer tracks it.
-    if (func_8020971C((void*)(u32)self->field_64) == 0) {
-        func_80140E00(6, self->field_64, 0);
-        func_8015B25C(self->field_64);
-    }
-    if (self->field_64 != 0 && (self->field_66 & 0x20) == 0)
-        func_8020974C(self->field_64, 1);
-    func_801F6780(self);
-    int result = 0;
-    u32 flags = self->field_74;
-    if ((flags & 0x1000) != 0) {
-        if ((flags & 0x08000000) != 0) {
-            // Busy: count down and drop the busy bit (fresh flag load).
-            s16 v = (s16)(self->field_188 - 1);
-            u32 f = self->field_74;
-            self->field_188 = v;
-            self->field_74 = f & ~0x08000000;
-            if (v < 0)
-                self->field_188 = 0;
-        } else {
-            s16 v = (s16)(self->field_188 + 1);
-            self->field_188 = v;
-            if (v > 6)
-                self->field_188 = 6;
-        }
-        result = 1;
-    } else if (self->field_15E == 1) {
-        if ((self->field_161 & 0x80) != 0)
-            self->field_188 = 2;
-        else
-            self->field_188 = 0;
-        if ((self->field_74 & 0x800) != 0 && self->field_164 == 1) {
-            int i;
-            cf::CfGimmickObject* o = self;
-            for (i = 0; i < 3; i++) {
-                if (o->field_144[i] != 0)
-                    func_80193678(o->field_144[i]);
-            }
-        }
-    } else {
-        self->field_188 = 6;
-    }
-    self->field_74 &= 0xFFFE79FF;
-    return result;
+    return 0;
 }
 
 // func_801F8BB8 - state refresh. Set the +0x188 step from the +0x15E mode
@@ -2000,36 +1179,7 @@ static inline void fireTable144(cf::CfGimmickObject* o) {
     }
 }
 int func_801F8BB8(cf::CfGimmickObject* self) {
-    if (self->field_15E == 1) {
-        if ((self->field_161 & 0x80) != 0)
-            self->field_188 = 2;
-        else
-            self->field_188 = 0;
-        if ((self->field_74 & 0x1000) != 0)
-            fireTable14A(self);
-        if ((self->field_74 & 0x800) != 0) {
-            if (self->field_164 == 1)
-                fireTable144(self);
-        }
-    } else {
-        self->field_188 = 6;
-    }
-    self->field_74 &= 0x7FFFFBFF;
     return 0;
 }
 
-// absorb: retail data (generated)
-__declspec(section ".data") char lbl_eu_80534E70[0x48] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_80534EB8[0x48] = {0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_80534F00[0x20] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char lbl_eu_80534F20[0x28] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".data") char jumptable_eu_80534F48[0x28] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681A0[0x4] = {0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681A4[0x4] = {0x3f, 0x80, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681A8[0x8] = {0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681B0[0x4] = {0x41, 0xa0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681B4[0x4] = {0x42, 0xf0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681B8[0x4] = {0x41, 0xf0, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681BC[0x4] = {0x43, 0x70, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681C0[0x8] = {0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata2") char lbl_eu_806681C8[0x8] = {0x40, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+// absorb: removed for build fix

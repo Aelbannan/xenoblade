@@ -454,7 +454,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/plugin/pluginCam.cpp"),
             Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfRes.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfRes.cpp", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),
             Object(Matching, "kyoshin/cf/CfScript.cpp"),
             Object(NonMatching, "kyoshin/cf/CfTaskMain.cpp"),
@@ -464,7 +464,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (func_8007560C/5640/54C0 family)
+            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-sdata 0"]),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (func_8007560C/5640/54C0 family)
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -627,7 +627,7 @@ config.libs = [
                    extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSortMenu.cpp",
                    extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxLine.cpp"),
             Object(Matching, "kyoshin/CScrollBar.cpp", extra_cflags=["-O4,s", "-func_align 4"]),

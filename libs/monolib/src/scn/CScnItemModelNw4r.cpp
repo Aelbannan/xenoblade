@@ -956,7 +956,8 @@ void func_80488F44(CScnItemModelNw4r* self, u32 value) {
     } while (swapped);
 }
 
-extern "C" void  func_80488FEC(CScnItemModelNw4r* self) {
+extern "C" void  func_80488FEC(CScnItemModelNw4r* self, u32 param) {
+    (void)param;
     s32 v = self->field_0x17C8;
     if (v == 0) return;
     func_804E8220(v);

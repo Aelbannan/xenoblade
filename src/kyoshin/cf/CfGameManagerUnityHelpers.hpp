@@ -21,7 +21,7 @@ FixStr<64>::FixStr() {
 #pragma dont_inline reset
 }
 
-extern "C" void func_8016EC58(u32 object);
+extern "C" void func_8016EC58(const ml::CVec3* pos);
 bool func_8007CBD4(u32 mask);
 extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
@@ -301,114 +301,25 @@ struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
 
-class Unk80EE4Data {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C();
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64();
-    virtual void vfunc_0x68();
-    virtual void vfunc_0x6C();
-    virtual void vfunc_0x70(void* object);
-    virtual void vfunc_0x74();
-    virtual void vfunc_0x78();
-    virtual void vfunc_0x7C();
-    virtual void vfunc_0x80();
-    virtual void vfunc_0x84();
-    virtual void vfunc_0x88();
-    virtual void vfunc_0x8C();
-    virtual void vfunc_0x90();
-    virtual void vfunc_0x94();
-    virtual void vfunc_0x98();
-    virtual void vfunc_0x9C();
-    virtual void vfunc_0xA0();
-    virtual void vfunc_0xA4();
-    virtual void vfunc_0xA8(bool enable);
-    virtual void vfunc_0xAC();
-    virtual void vfunc_0xB0();
-    virtual void vfunc_0xB4();
-    virtual void vfunc_0xB8();
-    virtual void vfunc_0xBC();
-    virtual void vfunc_0xC0();
-    virtual void vfunc_0xC4();
-    virtual void vfunc_0xC8();
-    virtual void vfunc_0xCC();
-    virtual void vfunc_0xD0();
-    virtual void vfunc_0xD4();
-    virtual void vfunc_0xD8();
-    virtual void vfunc_0xDC();
-    virtual void vfunc_0xE0();
-    virtual void vfunc_0xE4();
-    virtual void vfunc_0xE8();
-    virtual void vfunc_0xEC();
-    virtual void vfunc_0xF0();
-    virtual void vfunc_0xF4();
-    virtual void vfunc_0xF8();
-    virtual void vfunc_0xFC();
-    virtual void vfunc_0x100();
-    virtual void vfunc_0x104();
-    virtual void vfunc_0x108();
-    virtual void vfunc_0x10C(u32 mode);
-
+struct Unk80EE4Data {
     u8 field_0x4[0x74];
     char text_0x78[0x10];
     u32 textLength_0x88;
     u16 value_0x8C;
+    void initGimmick(bool enable) { (void)enable; }
+    void refreshGimmick() {}
+    void attachEffect(void* object) { (void)object; }
+    void initEffect() {}
+    void setEffectMode(u32 mode) { (void)mode; }
 };
 
-class ContainerRootInterface : public Unk80EE4Data {
-public:
-    virtual void vfunc_0x110();
-    virtual void vfunc_0x114();
-    virtual void vfunc_0x118();
-    virtual void vfunc_0x11C();
-    virtual void vfunc_0x120();
-    virtual void vfunc_0x124();
-    virtual float vfunc_0x128();
-    virtual float vfunc_0x12C();
+struct ContainerRootInterface {
+    float getGaugeFloat128() { return 0.0f; }
+    float getGaugeFloat12C() { return 0.0f; }
 };
 
-class PlayerVirtualInterface : public Unk80EE4Data {
-public:
-    virtual void vfunc_0x110();
-    virtual void vfunc_0x114();
-    virtual void vfunc_0x118();
-    virtual void vfunc_0x11C();
-    virtual void vfunc_0x120();
-    virtual void vfunc_0x124();
-    virtual void vfunc_0x128();
-    virtual void vfunc_0x12C();
-    virtual void vfunc_0x130();
-    virtual void vfunc_0x134();
-    virtual void vfunc_0x138();
-    virtual void vfunc_0x13C();
-    virtual void vfunc_0x140();
-    virtual void vfunc_0x144();
-    virtual void vfunc_0x148();
-    virtual void vfunc_0x14C();
-    virtual void vfunc_0x150();
-    virtual void vfunc_0x154();
-    virtual void vfunc_0x158(u32 value);
+struct PlayerVirtualInterface {
+    void setPlayerMode(u32 value) { (void)value; }
 };
 
 struct PlayerObjectContainer : public ItemContainerPrefix,
@@ -443,17 +354,17 @@ extern "C" bool func_80083118__Q22cf13CfGameManagerFv() {
                     reinterpret_cast<const u8*>(state))) {
                 ContainerRootInterface* root =
                     reinterpret_cast<ContainerRootInterface*>(container);
-                float duration = root->vfunc_0x12C() *
+                float duration = root->getGaugeFloat12C() *
                     static_cast<float>(getStateTimer532__Q22cf13CfGameManagerFv(
                         reinterpret_cast<const u8*>(state))) /
                     lbl_eu_80666530;
-                if (root->vfunc_0x128() - duration > lbl_eu_8066655C) {
+                if (root->getGaugeFloat128() - duration > lbl_eu_8066655C) {
                     result = true;
                 }
             } else {
                 ContainerRootInterface* root =
                     reinterpret_cast<ContainerRootInterface*>(container);
-                if (root->vfunc_0x128() > lbl_eu_80666498) {
+                if (root->getGaugeFloat128() > lbl_eu_80666498) {
                     result = !isField4ECFlag07__Q22cf13CfGameManagerFv(state);
                 }
             }
@@ -486,7 +397,7 @@ extern "C" bool isPlayerInEventRange__Q22cf13CfGameManagerFv() {
                 } else {
                     ContainerRootInterface* root =
                         reinterpret_cast<ContainerRootInterface*>(container);
-                    if (root->vfunc_0x128() <= lbl_eu_80666498) {
+                    if (root->getGaugeFloat128() <= lbl_eu_80666498) {
                         result = false;
                     } else if (func_8004B848(state) || func_8006CA20(state)) {
                         if (!isField4ECFlag07__Q22cf13CfGameManagerFv(state)) {
@@ -521,7 +432,7 @@ extern "C" void updatePlayerContainers__Q22cf13CfGameManagerFv(u32 value) {
                 reinterpret_cast<PlayerVirtualInterface*>(player);
             PlayerObjectContainer* object =
                 static_cast<PlayerObjectContainer*>(interfaceObject);
-            object->vfunc_0x158(value);
+            object->setPlayerMode(value);
         }
     }
 }
@@ -549,8 +460,8 @@ extern "C" void clearBattleFlagsAndQueue__Q22cf13CfGameManagerFv() {
     while (node != manager->sentinel) {
         object = (Unk80EE4Data*)getCfObjectPc__FPQ22cf12CfObjectMove(node->object);
         if (object != nullptr) {
-            object->vfunc_0xA8(true);
-            object->vfunc_0xB8();
+            object->initGimmick(true);
+            object->refreshGimmick();
         }
         node = node->next;
     }
@@ -568,49 +479,8 @@ struct Unk866A0Data {
     Unk866A0Data* field_0x2C;
 };
 
-class VoiceAction {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C();
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64();
-    virtual void vfunc_0x68();
-    virtual void vfunc_0x6C();
-    virtual void vfunc_0x70();
-    virtual void vfunc_0x74();
-    virtual void vfunc_0x78();
-    virtual void vfunc_0x7C();
-    virtual void vfunc_0x80();
-    virtual void vfunc_0x84();
-    virtual void vfunc_0x88();
-    virtual void vfunc_0x8C();
-    virtual void vfunc_0x90();
-    virtual void vfunc_0x94();
-    virtual void vfunc_0x98();
-    virtual void vfunc_0x9C();
-    virtual void vfunc_0xA0();
-    virtual void vfunc_0xA4();
-    virtual void vfunc_0xA8(bool enable);
+struct VoiceAction {
+    void setVoiceActive(bool enable) { (void)enable; }
 };
 
 struct VoiceSource {
@@ -670,42 +540,14 @@ public:
         };
     };
 };
-class UnkClass_800821F8 {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40(u32 mode);
+struct UnkClass_800821F8 {
+    void setCameraMode(u32 mode) { (void)mode; }
 };
 
-class CItemImplInstances {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual UnkF0ACData* vfunc_0x2C(u32 first, u32 second);
-    virtual u16 vfunc_0x30(u32 value);
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40(u32 first, u32 second);
+struct CItemImplInstances {
+    UnkF0ACData* getItemSlot(u32 first, u32 second) { (void)first; (void)second; return nullptr; }
+    u16 getItemCount(u32 value) { (void)value; return 0; }
+    void resetItemSlot(u32 first, u32 second) { (void)first; (void)second; }
 };
 
 extern "C" void CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv(UnkFlags8Data* data,
@@ -835,8 +677,8 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue,
                 }
             }
             if (triggerFirstPlayer && i == 0) {
-                u32 playerValue = player->CfObject_UnkVirtualFunc23();
-                func_801BFDE8(1, triggerFirstPlayer, playerValue,
+                const ml::CVec3* playerValue = player->CfObject_UnkVirtualFunc23();
+                func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
             func_800BC4A0(player);
@@ -860,8 +702,8 @@ extern "C" void resetPlayerEffectsB__Q22cf13CfGameManagerFv(u32 objectValue,
                 }
             }
             if (triggerFirstPlayer && i == 0) {
-                u32 playerValue = player->CfObject_UnkVirtualFunc23();
-                func_801BFDE8(1, triggerFirstPlayer, playerValue,
+                const ml::CVec3* playerValue = player->CfObject_UnkVirtualFunc23();
+                func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
             player->CfObject_UnkVirtualFunc70(lbl_eu_80666498);
@@ -1017,11 +859,11 @@ extern "C" Unk80EE4Data* createPlayerEffectInstance__Q22cf13CfGameManagerFv(
                 attached = __ct__800815A4(
                     static_cast<Unk815A4Object*>(memory));
             }
-            result->vfunc_0x70(attached);
+            result->attachEffect(attached);
         }
     }
     if (result != nullptr) {
-        result->vfunc_0x48();
+        result->initEffect();
     }
 done:
     return result;
@@ -1120,8 +962,8 @@ extern "C" Unk80EE4Data* createMapObjectInstance__Q22cf13CfGameManagerFv(
                 object = __ct__800814BC(
                     static_cast<Unk814BCObject*>(memory));
             }
-            result->vfunc_0x70(object);
-            result->vfunc_0x10C(9);
+            result->attachEffect(object);
+            result->setEffectMode(9);
         } else {
             u32 heap = func_80061FE8();
             void* memory = allocate__Q23mtl10MemManagerFUlUl(0x384, heap);
@@ -1130,10 +972,10 @@ extern "C" Unk80EE4Data* createMapObjectInstance__Q22cf13CfGameManagerFv(
                 object = __ct__80080338(
                     static_cast<Unk80338Object*>(memory));
             }
-            result->vfunc_0x70(object);
-            result->vfunc_0x10C(10);
+            result->attachEffect(object);
+            result->setEffectMode(10);
         }
-        result->vfunc_0x48();
+        result->initEffect();
     }
     return result;
 }
@@ -1170,8 +1012,8 @@ extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
         if (memory != nullptr) {
             object = __ct__80081B80(static_cast<Unk81B80Object*>(memory));
         }
-        result->vfunc_0x70(object);
-        result->vfunc_0x10C(8);
+        result->attachEffect(object);
+        result->setEffectMode(8);
         func_80081CA0__Q22cf13CfGameManagerFv(
             reinterpret_cast<Unk81CA0Data*>(result), third, fourth);
         textPointer =
@@ -1185,7 +1027,7 @@ extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
             setObjectItemId__Q22cf13CfGameManagerFv(
                 reinterpret_cast<u8*>(result), 1);
         }
-        result->vfunc_0x48();
+        result->initEffect();
     }
     return result;
 }
@@ -1213,8 +1055,7 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
     cf::CfGameManager::getInstance();
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != nullptr) {
-        player->CfObject_UnkVirtualFunc26(
-            reinterpret_cast<const ml::CVec3*>(value), lbl_eu_8066654C);
+        player->CfObject_UnkVirtualFunc26(value, lbl_eu_8066654C);
         player->CfObject_UnkVirtualFunc33(amount);
         return player;
     }
@@ -1230,15 +1071,15 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
 extern "C" void* CItem_initItemImplInstances(void* item);
 #pragma dont_inline on
 extern "C" u16 getItemCountForGroup__Q22cf13CfGameManagerFv(u32 value) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)value))->vfunc_0x30(value);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)value))->getItemCount(value);
 }
 extern "C" UnkF0ACData* getItemSlotData__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->vfunc_0x2C(first, second);
+    return ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->getItemSlot(first, second);
 }
 #pragma dont_inline reset
 #pragma dont_inline on
 extern "C" void resetItemSlotA__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->vfunc_0x40(first, second);
+    ((CItemImplInstances*)CItem_initItemImplInstances((void*)first))->resetItemSlot(first, second);
 }
 #pragma dont_inline reset
 extern "C" void func_801421C4(u16 value);
@@ -1535,7 +1376,7 @@ extern "C" Unk80EE4Data* getOrCreateBdatObj__Q22cf13CfGameManagerFv(const char* 
     Unk80EE4Data* data = func_800B9548();
     if (data != nullptr) {
         attachObjectText__Q22cf13CfGameManagerFv(data, text, value);
-        data->vfunc_0x48();
+        data->initEffect();
     }
     return data;
 }
@@ -1886,9 +1727,9 @@ extern "C" Unk80EE4Data* createItemObjectWrapper__Q22cf13CfGameManagerFv(
     if (memory != nullptr) {
         object = __ct__800814BC(static_cast<Unk814BCObject*>(memory));
     }
-    data->vfunc_0x70(object);
-    data->vfunc_0x10C(9);
-    data->vfunc_0x48();
+    data->attachEffect(object);
+    data->setEffectMode(9);
+    data->initEffect();
     return data;
 }
 
@@ -1931,16 +1772,16 @@ extern "C" void getCamManagerData__Q22cf13CfGameManagerFv(u32 mode) {
 
 enabled:
     maybeCreateCameraMember__Q22cf13CfGameManagerFv(true, 0);
-    getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    getCameraDataBlock__Q22cf13CfGameManagerFv()->setCameraMode(mode);
     goto done;
 
 enabledSingle:
     maybeCreateCameraMember__Q22cf13CfGameManagerFv(true, 0);
-    getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    getCameraDataBlock__Q22cf13CfGameManagerFv()->setCameraMode(mode);
     goto done;
 
 direct:
-    getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    getCameraDataBlock__Q22cf13CfGameManagerFv()->setCameraMode(mode);
     goto done;
 
 disabled:
@@ -2363,7 +2204,7 @@ extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask) {
         if ((flags & 0x18E) != 0 && (mask & flags) != 0) {
             VoiceAction* action = (VoiceAction*)func_8016FE34(source);
             if (action != nullptr) {
-                action->vfunc_0xA8(true);
+                action->setVoiceActive(true);
             }
         }
         node = node->next;
@@ -2938,13 +2779,13 @@ extern "C" void func_800A9444();
 extern "C" void CfRes_clearE28Mask(u32 mask);
 extern "C" void linkEffectObjects__Q22cf13CfGameManagerFv(
     void* object, void* first, void* second);
-struct Unk82C48Vtable {
+struct Unk82C48Table {
     u8 pad_0x0[0x600];
-    void (*vfunc_0x600)(void* object);
-    void (*vfunc_0x604)(void* object);
+    void (*slot600)(void* object);
+    void (*slot604)(void* object);
 };
 struct Unk82C48Object {
-    void (**vtable)(void* object);
+    void (**tbl)(void* object);
 };
 extern "C" void* CfRes_getE14();
 extern "C" void* func_800FE68C();
@@ -2975,7 +2816,7 @@ extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
             reinterpret_cast<ItemListSubobject*>(
                 reinterpret_cast<u8*>(object) + 0x3E9C));
         func_8009E474(data, value);
-        object->vtable[0x600 / 4](object);
+        object->tbl[0x600 / 4](object);
         if (previous != nullptr) {
             Unk82C48Object* previousObject =
                 reinterpret_cast<Unk82C48Object*>(previous);
@@ -2983,7 +2824,7 @@ extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
                 previousObject = reinterpret_cast<Unk82C48Object*>(
                     reinterpret_cast<u8*>(previousObject) - 0x3E9C);
             }
-            previousObject->vtable[0x604 / 4](previousObject);
+            previousObject->tbl[0x604 / 4](previousObject);
         }
     }
 }

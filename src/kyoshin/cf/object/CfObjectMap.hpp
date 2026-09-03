@@ -4,6 +4,8 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+class CResLookup;
+class CScnEnvLgtCtrlListItem;
 
 class CScn;
 class CView;
@@ -16,28 +18,6 @@ class CView;
 // the mangled names are spelled out verbatim with extern "C" linkage.
 // ---------------------------------------------------------------------------
 
-// Resource-object vtable interface (behind field_0x2C of the map resource
-// managers).  Only the slots we dispatch are named.
-class UnkResObj {
-public:
-    virtual void* vfunc_0x08(void* parent, u32 r5); // vtable 0x08
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void* vfunc_0x40(void* parent);         // vtable 0x40
-    virtual void* vfunc_0x44(void* parent);         // vtable 0x44
-};
-
 // Map resource managers returned by func_80062F18/60/A8/FF0.
 struct UnkRes866A0 {
     u32 field_0x0;         // 0x00 flags
@@ -47,50 +27,7 @@ struct UnkRes866A0 {
     u32 field_0x20;        // 0x20
     u32 field_0x24;        // 0x24
     u32 field_0x28;        // 0x28
-    UnkResObj* field_0x2C; // 0x2C
-};
-
-// Map effect object at +0x2F3C (loaded via func_804C1BA0).  Virtual slots
-// used: 0x84 / 0x88 / 0x8C / 0x94.
-class UnkMapFxObj {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C();
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64();
-    virtual void vfunc_0x68(int arg);
-    virtual void vfunc_0x6C(u32 arg);
-    virtual void vfunc_0x70();
-    virtual void vfunc_0x74();
-    virtual void vfunc_0x78();
-    virtual void vfunc_0x7C();
-    virtual void vfunc_0x80();
-    virtual void vfunc_0x84(u32 r4, u32 r5);                      // vtable 0x84
-    virtual void vfunc_0x88(u32 r4, u32 r5, void* r6, void* r7); // vtable 0x88
-    virtual void vfunc_0x8C(u32 r4, u32 r5, void* r6);           // vtable 0x8C
-    virtual void vfunc_0x90();                                   // vtable 0x90
-    virtual void vfunc_0x94(u32 r4, u32 r5, u32 r6, u32 r7,
-                            u32 r8, u32 r9, u32 r10);            // vtable 0x94
+    CResLookup* field_0x2C; // 0x2C
 };
 
 // Big embedded sub-object at +0xF0 (UnkClass_8047BB54 in retail).  Only the
@@ -238,7 +175,7 @@ namespace cf {
         UnkMapSubF0 field_0xF0;            // 0xF0-0x2F2B (UnkClass_8047BB54)
         UnkMapPool2F2C field_0x2F2C;       // 0x2F2C-0x2F37 (UnkClass_8047CD0C)
         u32 field_0x2F38;                  // 0x2F38 packed map id
-        void* field_0x2F3C;                // 0x2F3C map effect object
+        CScnEnvLgtCtrlListItem* field_0x2F3C; // 0x2F3C map effect object
         u8 field_0x2F40;                   // 0x2F40
         u8 field_0x2F41;                   // 0x2F41
         u8 field_0x2F42[2];                // 0x2F42-0x2F43

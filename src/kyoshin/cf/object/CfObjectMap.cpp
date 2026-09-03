@@ -8,6 +8,74 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// Minimal CResLookup view for this TU (real owner in IResInfo.hpp). Offsets:
+// getResourceBase at +0x08 (idx0), isInUse at +0x40 (idx14), cmpField4Eq at
+// +0x44 (idx15). Dummy fillers occupy the intermediate slots.
+class CResLookup {
+public:
+    virtual void* getResourceBase(void* entry, u32 r5);
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void v3C();
+    virtual int isInUse(void* entry);
+    virtual int cmpField4Eq(void* entry, u32 val);
+};
+
+// Minimal CScnEnvLgtCtrlListItem view for this TU (real owner in
+// libs/monolib/src/scn/CScnEnvLgtCtrl.hpp). Virtuals v31/v32/v33/v35 at
+// 0x84/0x88/0x8C/0x94 widened to retail arity; v25 at 0x6C already correct.
+class CScnEnvLgtCtrlListItem {
+public:
+    virtual void v0(int flag);
+    virtual void v1();
+    virtual void v2(void* arg);
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8(void* arg);
+    virtual void v9(void* arg);
+    virtual void v10(void* arg, void* data);
+    virtual void v11(void* arg, u8 byte);
+    virtual int v12(void* vec);
+    virtual int v13(void* vec);
+    virtual void v14(void* data);
+    virtual int v15(float f, void* data, void* arg, u32 count);
+    virtual void v16(void* arg);
+    virtual void v17(void* arg);
+    virtual void v18(void* arg, float f);
+    virtual int v19(void* bits, int flag);
+    virtual int v20(void* base, int flag);
+    virtual void v21();
+    virtual void v22(float f, s32 mode, s32 submode);
+    virtual int v23();
+    virtual void v24();
+    virtual void v25(int flag);
+    virtual void v26(void* a, void* b);
+    virtual void v27(void* a, void* b, float f);
+    virtual int v28(void* out, int flag);
+    virtual int v29();
+    virtual int v30();
+    virtual void v31(u32 a, u32 b);
+    virtual void v32(u32 a, u32 b, void* c, void* d);
+    virtual void v33(u32 a, u32 b, void* c);
+    virtual void v34();
+    virtual void v35(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g);
+    virtual void v36();
+    virtual void v37(int flag);
+};
+
 extern const float lbl_eu_80666A84;
 
 // Retail data + dtor imports for the D1 (the header declares the virtual
@@ -51,10 +119,10 @@ void cf::CfObjectMap::cleanupMap() {
         resetActiveLOD__8CTaskLODFv(0);
         this->field_0x2F40 = 0;
     }
-    void* resource = this->field_0x2F3C;
+    CScnEnvLgtCtrlListItem* resource = this->field_0x2F3C;
     if (resource != 0) {
         func_804C1D7C(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, resource);
-        this->field_0x2F3C = 0;
+        this->field_0x2F3C = nullptr;
     }
     func_801A2C94__Q22cf12CTaskCullingFv();
 }
@@ -83,8 +151,7 @@ extern "C" void setMapVisibility__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u3
             }
         }
         if (self->field_0x2F3C) {
-            UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(self->field_0x2F3C);
-            fx->vfunc_0x6C(arg == 0);
+            self->field_0x2F3C->v25(arg == 0);
         }
     }
 }
@@ -133,7 +200,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         if (size > 0) {
             u32 rounded = (size + 0x7FF) & ~0x7FF;
             UnkRes866A0* res = func_80062FF0();
-            if (res->field_0x2C->vfunc_0x44(res) != 0 && func_800A7FBC() != 0) {
+            if (res->field_0x2C->cmpField4Eq(res, func_800AA2BC(a, b)) != 0 && func_800A7FBC() != 0) {
                 self->field_0xE4 = func_800A7FBC();
                 self->field_0x2F40 = 1;
             } else {
@@ -171,8 +238,8 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
 
     if ((resB->field_0x0 & 0x10) != 0) {
         // Per-frame map event processing (model-space delegate list).
-        if (resA->field_0x2C->vfunc_0x40(resA) != 0) {
-            UnkResObj* iter = static_cast<UnkResObj*>(resA->field_0x2C->vfunc_0x08(resA, 0));
+        if (resA->field_0x2C->isInUse(resA) != 0) {
+            void* iter = resA->field_0x2C->getResourceBase(resA, 0);
             u32 count = func_800621A0();
             for (s32 i = 0; i < (s32)count; i++) {
                 u32 type;
@@ -183,7 +250,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                 u32 flag = 0;
                 if (type == 1) {
                     func_800A9534((void*)outC);
-                    obj = resB->field_0x2C->vfunc_0x08(resB, 0);
+                    obj = resB->field_0x2C->getResourceBase(resB, 0);
                 } else if (type == 2) {
                     obj = func_800A965C((void*)outC);
                     self->field_0xE0 = obj;
@@ -218,20 +285,20 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
     }
 
     // Map re-entry / setup path.
-    if (resB->field_0x2C->vfunc_0x40(resB) == 0) {
+    if (resB->field_0x2C->isInUse(resB) == 0) {
         goto done;
     }
-    if (self->field_0xDC == 0 && resC->field_0x2C->vfunc_0x40(resC) == 0) {
+    if (self->field_0xDC == 0 && resC->field_0x2C->isInUse(resC) == 0) {
         goto done;
     }
-    void* loaded;
+    int loadedFlag;
     if (self->field_0x2F40 != 0) {
         UnkRes866A0* res = func_80062FF0();
-        loaded = res->field_0x2C->vfunc_0x40(res);
+        loadedFlag = res->field_0x2C->isInUse(res);
     } else {
-        loaded = (void*)1;
+        loadedFlag = 1;
     }
-    if (loaded == 0) {
+    if (loadedFlag == 0) {
         goto done;
     }
     {
@@ -263,12 +330,12 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
             notifyLODTick__8CTaskLODFv(lbl_eu_80666A38);
         }
         if (self->field_0xE8 != 0) {
-            UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(
+            CScnEnvLgtCtrlListItem* fx = static_cast<CScnEnvLgtCtrlListItem*>(
                 func_804C1BA0(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C,
                               self->field_0xE8, 7));
             self->field_0x2F3C = fx;
             if (fx != 0) {
-                fx->vfunc_0x84(1, 1);
+                fx->v31(1, 1);
 
                 ml::CVec3 dir1(lbl_eu_80666A38, lbl_eu_80666A3C, lbl_eu_80666A3C);
                 f32 len1 = dir1.y * dir1.y + dir1.x * dir1.x + dir1.z * dir1.z;
@@ -278,7 +345,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                     PSVECNormalize(dir1, dir1);
                 }
                 ml::CVec3 scale1(lbl_eu_80666A40, lbl_eu_80666A40, lbl_eu_80666A40);
-                fx->vfunc_0x88(1, 0, &dir1, &scale1);
+                fx->v32(1, 0, &dir1, &scale1);
 
                 ml::CVec3 dir2(lbl_eu_80666A38, lbl_eu_80666A3C, lbl_eu_80666A44);
                 f32 len2 = dir2.y * dir2.y + dir2.x * dir2.x + dir2.z * dir2.z;
@@ -288,14 +355,14 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
                     PSVECNormalize(dir2, dir2);
                 }
                 ml::CVec3 scale2(lbl_eu_80666A40, lbl_eu_80666A40, lbl_eu_80666A40);
-                fx->vfunc_0x88(1, 1, &dir2, &scale2);
+                fx->v32(1, 1, &dir2, &scale2);
 
                 u32 bdat = getBdatStringColumnValue(lbl_eu_806640A8, &lbl_eu_804FC538[5], lbl_eu_80664184);
                 if ((bdat & 1) == 0) {
-                    fx->vfunc_0x84(1, 0);
+                    fx->v31(1, 0);
                     ml::CVec3 dir3(lbl_eu_80666A48, lbl_eu_80666A4C, lbl_eu_80666A48);
-                    fx->vfunc_0x8C(0, 0, &dir3);
-                    fx->vfunc_0x94(0, 0, 0x12, 0x1E, 5, 0x1E, 0x1E);
+                    fx->v33(0, 0, &dir3);
+                    fx->v35(0, 0, 0x12, 0x1E, 5, 0x1E, 0x1E);
                 }
                 self->field_0x2F41 = 0;
             }
@@ -345,17 +412,17 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
     if (&self->field_0xF0 != 0) {
         forwardMpfCallA__17UnkClass_8047BB54Fv(&self->field_0xF0, v);
     }
-    UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(self->field_0x2F3C);
+    CScnEnvLgtCtrlListItem* fx = self->field_0x2F3C;
     if (fx != 0) {
         if (lbl_eu_80663E24 & 0x02000000) {
             if (self->field_0x2F41 == 0) {
                 float vec[4] = {lbl_eu_80666A58, lbl_eu_80666A5C, lbl_eu_80666A60, lbl_eu_80666A64};
-                fx->vfunc_0x8C(0, 0, vec);
+                fx->v33(0, 0, vec);
                 self->field_0x2F41 = !self->field_0x2F41;
             }
         } else if (self->field_0x2F41 != 0) {
             float vec[3] = {lbl_eu_80666A48, lbl_eu_80666A4C, lbl_eu_80666A48};
-            fx->vfunc_0x8C(0, 0, vec);
+            fx->v33(0, 0, vec);
             self->field_0x2F41 = !self->field_0x2F41;
         }
     }

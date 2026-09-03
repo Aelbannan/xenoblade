@@ -521,13 +521,6 @@ namespace cf {
         u32 field_0x74; // 0x74: status word (bit 0 gate)
     };
 
-    // Vtable interface for the target object's embedded vtable pointer at
-    // +0x84 (slot 0xC returns the int read by Func10's u32 conversion).
-    struct CActorParam10TargetVt {
-        virtual void dummy08();
-        virtual int vf0C(); // 0xC
-    };
-
     // Object reachable through CActorParam10Arg::field_0x50.
     struct CActorParam10Target {
         u8 _pad[0x44];
@@ -535,7 +528,7 @@ namespace cf {
         u8 _pad45[0x78 - 0x45];
         u32 field_0x78; // 0x78: flags (0x40000000 / 0x4000 / 0x20)
         u8 _pad7C[0x84 - 0x7C];
-        void* vt; // 0x84: embedded vtable (was CActorParam10TargetVt; slot 0xC returns int)
+        void* vt; // 0x84: embedded vtable (slot 0xC returns int)
     };
 
     //size: 0x3384
@@ -684,7 +677,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
         virtual bool CActorParam_UnkVirtualFunc138(); //0x2BC
         virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
-        virtual void CActorParam_UnkVirtualFunc140(void* arg, float x, float y, float z); //0x2C4
+        virtual void CActorParam_UnkVirtualFunc140(void* arg, int id, float x, float y, float z); //0x2C4
         virtual void CActorParam_UnkVirtualFunc141(void* arg); //0x2C8
         virtual void CActorParam_UnkVirtualFunc142(); //0x2CC
         virtual void CActorParam_UnkVirtualFunc143(); //0x2D0

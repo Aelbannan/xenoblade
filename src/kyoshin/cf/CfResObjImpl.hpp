@@ -59,13 +59,13 @@ struct CfResObjParent {
 };
 
 // Parent dispatch now via real cf::CfObjectModel / cf::CfObject (slots
-// 0x178/0x17C = CfObjectModel_UnkVirtualFunc1/2, 0xDC/0xE0 =
-// CfObject_UnkVirtualFunc35/36). Fake CfResObjParentVtIf deleted.
+// 0x178/0x17C = CfObjectModel func1/2, 0xDC/0xE0 =
+// CfObject func35/36). Fake parent dispatch deleted.
 
-// Real owner of the +0x38 sub-object is cf::CfObject (vtable slot 0xB0
-// is CfObject_UnkVirtualFunc24). The fake CfResObj38If pad is deleted.
+// Real owner of the +0x38 sub-object is cf::CfObject (slot 0xB0
+// is CfObject_UnkVirtualFunc24). The fake pad is deleted.
 
-// Fake CfResObjModel98If deleted: real CScnItemModel::vfunc78(void*)/vfunc88(int)
+// Fake model dispatch deleted: real CScnItemModel::vfunc78(void*)/vfunc88(int)
 // now owned by CScnItemModel header (hot header, widened to retail arity).
 
 // Non-virtual data view of the +0x98 sub-object: the +0x7A4 flag word is

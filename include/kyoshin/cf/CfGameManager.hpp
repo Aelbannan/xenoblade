@@ -36,34 +36,7 @@ struct UnkClass_80083298SubF0 {
 
 class UnkClass_80083298 {
 public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C();
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64();
-    virtual void vfunc_0x68();
-    virtual void vfunc_0x6C();
-    virtual void vfunc_0x70();
-    virtual u32 vfunc_0x74();
+    virtual u32 isReady();
 
     u8 field_0x4[0xEC];
     UnkClass_80083298SubF0 field_0xF0;
@@ -80,13 +53,6 @@ struct Unk65958Object {
 // at object+0x3E9C and slots 0x10 / 0x20 are dispatched with a u32 argument.
 class UnkContainerIntf3E9C {
 public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10(u32 value);
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20(u32 value);
 };
 
 struct UnkObj3E9C {
@@ -579,7 +545,7 @@ extern void* lbl_eu_80663E74;
 // called with (mode 2, 0) after wiping the +0x94 payload). Cast-only: first
 // declared virtual lands at vtable+0x08 (2 RTTI header entries), so the
 // 6th declared virtual is slot +0x1C.
-struct CBattleManagerVt1C {
+struct CBattleManagerSlot1C {
     virtual void m08();
     virtual void m0C();
     virtual void m10();
@@ -614,11 +580,11 @@ struct UnkC1B4Data {
 // Cast-only dtor view used for delete-style release via vtable+0x08: retail
 // `if (ptr) delete ptr` shows two identical null tests (the if plus the
 // delete expansion's own guard), which a plain manual-cast virtual call
-// cannot reproduce. Same shape as CItemBoxGrid.hpp CItemBoxObjVt08: MWCC
+// cannot reproduce. Same shape as CItemBoxGrid.hpp CItemBox slot 08: MWCC
 // prepends 2 RTTI header entries, so the first declared virtual (the dtor)
 // lands at vtable+0x08 and delete dispatches there with the delete flag.
-struct CfVt08Dtor {
-    virtual ~CfVt08Dtor();  // vtable+0x08
+struct CfDtor08 {
+    virtual ~CfDtor08();  // vtable+0x08
 };
 
 // The player-file slots live at the very start of CfGameManager (0x00, 0x04,

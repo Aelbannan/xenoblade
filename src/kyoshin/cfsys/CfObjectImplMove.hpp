@@ -195,7 +195,7 @@ struct CfEmbeddedSubObj_3E9C {
     virtual void* f14();          // index 14
     virtual void* f15();          // index 15
     virtual void* f16();          // index 16
-    virtual void* vfn13();        // index 17 -> vtable 0x4c (returns sub-result)
+    virtual int vfn13();        // index 17 -> vtable 0x4c (actor id)
     virtual void* vfn14(void* a); // index 18 -> vtable 0x50
     virtual void* f19();          // index 19
     // Filler slots 0x54-0x200 (indices 20-126): opaque vtable padding so the
@@ -207,7 +207,7 @@ struct CfEmbeddedSubObj_3E9C {
     virtual void vfn90(float v);  // index 34 -> vtable 0x90 (presentation float)
     virtual float vfn94();        // index 35 -> vtable 0x94 (float query)
     virtual void* f36(); virtual void* f37(); virtual void* f38(); virtual void* f39();
-    virtual void* f40(); virtual void* f41(); virtual void* f42(); virtual void* f43();
+    virtual void* f40(); virtual void* getPos(); virtual void* f42(); virtual void* f43();
     virtual void* f44(); virtual void* f45(); virtual void* f46(); virtual void* f47();
     virtual void* f48(); virtual void* f49(); virtual void* f50(); virtual void* f51();
     virtual void* f52(); virtual void* f53(); virtual void* f54(); virtual void* f55();

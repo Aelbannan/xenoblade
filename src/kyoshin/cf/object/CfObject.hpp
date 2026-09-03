@@ -101,13 +101,6 @@ namespace cf {
         virtual float CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual float CfObject_UnkVirtualFunc73();     //0x174
-        virtual void CfObject_UnkVirtualFunc74(); //0x178
-        virtual void CfObject_UnkVirtualFunc75(); //0x17C
-        virtual void CfObject_UnkVirtualFunc76(); //0x180
-        virtual void CfObject_UnkVirtualFunc77(); //0x184
-        virtual void CfObject_UnkVirtualFunc78(); //0x188
-        virtual void CfObject_UnkVirtualFunc79(); //0x18C
-        virtual void CfObject_UnkVirtualFunc80(int flag); //0x190
 
         //not sure if belongs here?
         void requestVoice(int, u32, float, float);

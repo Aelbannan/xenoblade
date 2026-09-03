@@ -4,6 +4,7 @@
 #define __ct__Q22cf17UnkClass_8018EF3CFv ct_UnkClass_8018EF3C_2arg
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+
 #include "monolib/scn/CScnTimeApi.hpp"
 #undef __ct__Q22cf17UnkClass_8018EF3CFv
 #include "kyoshin/cf/CfPadData.hpp"
@@ -43,6 +44,16 @@
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+
+extern "C" void setContainerMode10(void* container, u32 mode);
+extern "C" void setContainerMode20(void* container, u32 mode);
+extern "C" void dispatchFieldC4(void* field);
+extern "C" u32 getEffectFlagFromMgr(void* mgr);
+extern "C" void setGimmickActive(void* obj, bool enable);
+extern "C" void refreshGimmickObject(void* obj);
+extern "C" void setVoiceActionActive(void* act, bool enable);
+extern "C" void setContainerMode158(void* obj, u32 mode);
+extern "C" void setBdatObjActive(void* obj, u32 mode);
 
 // Local complete type for func_8049603C's result (canonical name per
 // CfGameManager.hpp's fwd-decl; layout matches CTaskGame.hpp's view;
@@ -632,7 +643,7 @@ bool cf::CfGameManager::isManagerInitialized() {
 // resets the global state and removes the layered CProcess hooks. The
 // vtable+0x08 dispatch with delete flag 1 is MWCC's delete-on-cast-dtor
 // shape (the if + delete-expansion null guards produce the paired beq; see
-// CfGameManager.hpp CfVt08Dtor).
+// CfGameManager.hpp CfDtor08).
 void cf::CfGameManager::teardownGameManager() {
     lbl_eu_80663E28 |= 0x200000;
     func_8012F87C(0);
@@ -668,7 +679,7 @@ void cf::CfGameManager::teardownGameManager() {
         manager->unkA8 = nullptr;
     }
     if (manager->unkA0 != 0) {
-        delete reinterpret_cast<CfVt08Dtor*>(manager->unkA0);
+        delete reinterpret_cast<CfDtor08*>(manager->unkA0);
         manager->unkA0 = 0;
     }
     if (manager->field_0xA4 != nullptr) {
@@ -704,7 +715,7 @@ void cf::CfGameManager::teardownGameManager() {
         if (slots->slots[i] != nullptr) {
             func_80069A18(slots->slots[i]);
             if (slots->slots[i] != nullptr) {
-                delete reinterpret_cast<CfVt08Dtor*>(slots->slots[i]);
+                delete reinterpret_cast<CfDtor08*>(slots->slots[i]);
                 slots->slots[i] = nullptr;
             }
         }
@@ -786,8 +797,8 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
                 continue;
             }
             func_800BE12C(reinterpret_cast<u8*>(&obj->container), 1, 0, -1, 1);
-            obj->container.vfunc_0x10(4);
-            obj->container.vfunc_0x20(0x1000);
+            setContainerMode10(&obj->container, 4);
+            setContainerMode20(&obj->container, 0x1000);
         }
     }
     for (int i = 0; i < 5; ++i) {
@@ -803,8 +814,8 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
             continue;
         }
         func_800BE12C(reinterpret_cast<u8*>(&obj->container), 1, 0, -1, 1);
-        obj->container.vfunc_0x10(4);
-        obj->container.vfunc_0x20(0x1000);
+        setContainerMode10(&obj->container, 4);
+        setContainerMode20(&obj->container, 0x1000);
     }
     lbl_eu_80663E28 &= ~0x00800000;
     // 8 pump frames when arg1 divides evenly by 3, else 16.
@@ -941,7 +952,7 @@ cf::CfObject** cf::CfGameManager::getField04Ptr() {
 #pragma dont_inline reset
 
 void cf::CfGameManager::dispatchObjectFunc52b() {
-    field_0x4->CfObject_UnkVirtualFunc52();
+    field_0x4->CfObject_UnkVirtualFunc52(nullptr);
 }
 
 void cf::CfGameManager::dispatchObjectFunc53() {
@@ -969,7 +980,7 @@ void cf::CfGameManager::dispatchObjectFunc31() {
 }
 
 void cf::CfGameManager::dispatchObjectFuncC4() {
-    reinterpret_cast<Unk80EE4Data*>(field_0x4)->vfunc_0xC4();
+    dispatchFieldC4(field_0x4);
 }
 
 void cf::CfGameManager::dispatchObjectFunc23() {
@@ -998,7 +1009,7 @@ void cf::CfGameManager::cleanupMapEffects() {
 
 u32 cf::CfGameManager::getEffectFlagState() {
     UnkClass_80083298* object = getGameSubManager();
-    return object != nullptr ? object->vfunc_0x74() : 0;
+    return object != nullptr ? getEffectFlagFromMgr(object) : 0;
 }
 
 void cf::CfGameManager::tickGameManager() {
@@ -1645,7 +1656,7 @@ cf::CfGameManager* UnkClass_8007DAE0::init(CScnNw4r* scene, CView* view,
         // First-boot path: tear down the battle manager, build the help manager
         // and the layered CProcess graph, then run the full subsystem reset.
         getBattleStateA__Q22cf14CBattleManagerFv();
-    __ct__Q22cf12CHelpManagerFv();
+    __ct__Q22cf12CHelpManagerFv(nullptr);
     func_802A14B8();
     CProcess* rtRoot = GetRootProcRealTime__12CTaskManagerFv();
     lbl_eu_80663E20 = create__Q22cf9CfPadTaskFP8CProcess(rtRoot, scene);
@@ -2174,7 +2185,7 @@ void cf::CfGameManager::resetBattlePresentation() {
         func_8018C8F4(((CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv())->field_0x194, 0);
         CBattleManagerView* battle = (CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv();
         memset(battle->cleared_0x94, 0, 0x100);
-        reinterpret_cast<CBattleManagerVt1C*>(battle)->m1C(2, 0);
+        reinterpret_cast<CBattleManagerSlot1C*>(battle)->m1C(2, 0);
     }
     func_80135FDC();
     manager->func_8007D84C();
@@ -2311,8 +2322,8 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
             getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
         if (object != nullptr) {
-            object->vfunc_0xA8(true);
-            object->vfunc_0xB8();
+            setGimmickActive(object, true);
+            refreshGimmickObject(object);
         }
         node = node->next;
     }
@@ -2537,8 +2548,7 @@ void cf::CfGameManager::func_80085FB8() {
         }
         UnkObj3E9C* containerObj = reinterpret_cast<UnkObj3E9C*>(obj);
         void** vt = *reinterpret_cast<void***>(&containerObj->container);
-        typedef void (*V158Fn)(UnkObj3E9C*, u32);
-        reinterpret_cast<V158Fn>(vt[0x158 / 4])(containerObj, 1);
+        setContainerMode158(containerObj, 1);
     }
 
     getInstance__Fv();
@@ -2579,8 +2589,8 @@ void cf::CfGameManager::func_80085FB8() {
             Unk80EE4Data* object = static_cast<Unk80EE4Data*>(
                 getCfObjectPc__FPQ22cf12CfObjectMove(node->object));
             if (object != nullptr) {
-                object->vfunc_0xA8(true);
-                object->vfunc_0xB8();
+                setGimmickActive(object, true);
+                refreshGimmickObject(object);
             }
             node = node->next;
         }
@@ -2680,9 +2690,7 @@ void cf::CfGameManager::func_80086778() {
         }
         func_800AC450(obj, (u32)row, code);
         // virtual dispatch through vtable slot 0x158 (arg 0)
-        void** vtbl = *reinterpret_cast<void***>(obj);
-        typedef void (*V158Fn)(BdatObjView*, u32);
-        reinterpret_cast<V158Fn>(vtbl[0x158 / 4])(view, 0);
+        setBdatObjActive(view, 0);
         view->field_0x64 &= ~0x10000;
         if (v == 0) {
             view->field_0x158 |= 0x100;

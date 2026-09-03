@@ -79,7 +79,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
         virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
-        virtual void CBattleState_UnkVirtualFunc27(u32 arg); //0x70
+        virtual void* CBattleState_UnkVirtualFunc27(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(u32 flags); //0x7C (OR into +0x4; retail Fv)

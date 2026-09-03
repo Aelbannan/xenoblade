@@ -8,6 +8,9 @@
 #include "kyoshin/cf/IResInfo.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 namespace cf {}
 using namespace cf;
@@ -27,7 +30,7 @@ cf::CfResObjImpl::CfResObjImpl(cf::CfResObjParent* parent) {
     field_0A = -1;
     field_0C = 0;
     field_0E = -1;
-    field_10 = lbl_eu_80530F44;
+    vtbl() = &lbl_eu_80530F44;
     field_08 = 1;
     memset(&field_14, 0, sizeof(field_14));
 }
@@ -48,8 +51,8 @@ int func_8016C880(void* self) { return 128; }
 // arg4. f1/f2 pass through to func_801BFE20; arg3 (r5) is an unused
 // register-slot parameter (retail never reads it).
 void func_8016C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
-    if (((cf::CfResObjImplVtIf*)self)->_v014() != 0) {
-        int id = ((cf::CfResObjImplVtIf*)self)->_v060();
+    if (self->func_8016C860() != 0) {
+        int id = self->func_8016C950();
         cf::SoundSlotEntry* slot =
             func_801BFAE4((u16)func_801BFE20(id, arg2, self->field_00->field_74, f1, f2));
         if (slot != 0 && arg4 != 0 && slot->field_00 != 0) {
@@ -62,7 +65,7 @@ void func_8016C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1,
 // map the boolean result to -1/1 (retail preloads -1 and skips the 1 on a
 // zero result).
 int func_8016C950(CfResObjImpl* self) {
-    if (((CfResObjImplVtIf*)self)->_v014() != 0) {
+    if (self->func_8016C860() != 0) {
         return 1;
     }
     return -1;
@@ -76,31 +79,31 @@ int func_8016C950(CfResObjImpl* self) {
 void func_8016C98C(cf::CfResObjImpl* self) {
     u8 buf64[0x44];    // sp+0x8 (FixStr<64> name buffer)
 
-    ((cf::CfResObjParentVtIf*)self->field_00)->_v17C();
-    ((cf::CfResObjParentVtIf*)self->field_00)->_v178();
+    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
     self->field_00->field_90 = 0;
     cf::CfResObjParent* parent = self->field_00;
     parent->field_94 = 0;
     if (((cf::CfGameManager*)parent)->getEffectFlagState() == 0) return;
     ResInfoEntry* entry = (ResInfoEntry*)func_80063038();
     int ok = 1;
-    if (entry->field_0x2C->_v040(entry) == 0) ok = 0;
+    if (entry->field_0x2C->isInUse(entry) == 0) ok = 0;
     if (!ok) return;
     self->field_08 = self->field_08 + 1;
     mtl::MemManager::setMemInitFlag(false);
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
-        u32 handle1 = ((cf::CfResObjImplVtIf*)self)->_v034(1);
+        u32 handle1 = self->func_8016CCBC(1);
         self->field_00->field_90 = func_80066E7C(entry, handle1);
-        f32 anim = ((cf::CfResObjParentVtIf*)self->field_00)->_v0E0();
+        f32 anim = ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc36();
         u8* obj = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
             (((cf::CfResObjModel98Data*)self->field_00->field_98)->field_7A4 & 0x800000) != 0 &&
             cf::CfGameManager::getGameSubManager() != 0 &&
             ((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98 != 0) {
-            self->field_00->field_98->_v078(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
+            self->field_00->field_98->vfunc78(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
         }
-        ((cf::CfResObjParentVtIf*)self->field_00)->_v0DC(anim);
+        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc35(anim);
     }
     if (self->field_00->field_6C & 0x10) {
         // Direct buffer derefs so the address is recomputed at each use
@@ -109,9 +112,9 @@ void func_8016C98C(cf::CfResObjImpl* self) {
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;   // retail stb/stw init (no bl ctor)
         ((ml::FixStr<64>*)buf64)->mLength = 0;
         if (self->field_00->field_9C == 0) {
-            u32 handle0 = ((cf::CfResObjImplVtIf*)self)->_v034(0);
+            u32 handle0 = self->func_8016CCBC(0);
             func_800AA33C(*(ml::FixStr<64>*)buf64, handle0, 0, 0);
-            u32 handle1 = ((cf::CfResObjImplVtIf*)self)->_v034(0);
+            u32 handle1 = self->func_8016CCBC(0);
             self->field_00->field_94 = func_80066E7C(entry, handle1);
             self->field_00->field_9C = (u8*)func_800584B8(
                 (u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)buf64);
@@ -119,7 +122,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     }
     mtl::MemManager::setMemInitFlag(true);
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
-    u32 handle = ((cf::CfResObjImplVtIf*)self)->_v034(1);
+    u32 handle = self->func_8016CCBC(1);
     u8* obj = func_80066E7C(entry, (handle & 0x07FFFFFF) | 0xF0000000);
     if (obj != 0) {
         func_804B0A6C(self->field_00->field_60C, obj);
@@ -128,10 +131,10 @@ void func_8016C98C(cf::CfResObjImpl* self) {
         self->field_00->field_6B4 |= 0x800;
     }
     if (self->field_00->field_38 != 0) {
-        self->field_00->field_38->_v0B0();
+        ((cf::CfObject*)self->field_00->field_38)->CfObject_UnkVirtualFunc24();
     }
     if (self->field_00->field_98 != 0) {
-        self->field_00->field_98->_v088((self->field_00->field_6C >> 28) & 1);
+        self->field_00->field_98->vfunc88((self->field_00->field_6C >> 28) & 1);
     }
 }
 

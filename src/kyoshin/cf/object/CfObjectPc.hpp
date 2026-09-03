@@ -12,7 +12,7 @@ extern UNKTYPE* getValidObject(UNKTYPE* r3);
 // Retail data labels referenced by the CfObjectPc methods.
 extern void* lbl_eu_806640DC;   // .sbss bdat file pointer (arts list)
 extern void* lbl_eu_806640F4;   // .sbss bdat file pointer (arts list)
-extern u8 lbl_eu_804FC5EC[];    // .rodata column-name string table
+extern const char lbl_eu_804FC5EC[];    // .rodata column-name string table
 extern u8 lbl_eu_80529DA0[];    // retail CfObjectPc vtable data (.data)
 
 // Old-style retail ctor symbol of the CfResPcImpl resource object

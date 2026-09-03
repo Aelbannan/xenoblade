@@ -3463,9 +3463,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CfGimmickObject.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
     ),
-    "CfGimmickJump.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
-    ),
     "CfNandManager.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
@@ -7955,6 +7952,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668418"),
             (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668410"),
         ),
+        drop_data_tail=((".sdata2", 0x38),),
     ),
     "CMenuMakeCrystal.o": UnitRules(
         # The lone .sbss static already carries its retail name
@@ -8378,8 +8376,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             # @N slot for the literal-0 float stores).
             (struct.pack(">I", 0x00000000), "lbl_eu_80666968"),
         ),
-        extern_data_sections=(".sdata2",),
-        drop_data_range=((".sdata2", 0, 0x30),),
+        drop_data_tail=((".sdata2", 0x70),),
     ),
     "CfObjectEnumList.o": UnitRules(
         # Unsigned magic maps to lbl_eu_80666EC0 (ref'd x3); the 2^52 slot

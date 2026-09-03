@@ -50,7 +50,7 @@ extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value h
 // Retail symbol is Fv but the real ABI passes (self, arg, f1, f2, f3);
 // CfObjectActor::CActorParam_UnkVirtualFunc140 tail-calls this base entry
 // (defined in CActorParam.cpp).
-extern "C" void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, f32 a, f32 b, f32 c);
+extern "C" void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, int id, f32 a, f32 b, f32 c);
 
 // Retail symbols are Fv; the real ABI passes (self, arg). The CfObjectActor
 // overrides of 179/180 forward to these base entries (defined in CActorParam.cpp).
@@ -118,14 +118,14 @@ namespace cf {
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
     const char* CActorParam_UnkVirtualFunc1();
-    void CActorParam_UnkVirtualFunc140();
-    void CActorParam_UnkVirtualFunc179();
-    void CActorParam_UnkVirtualFunc180();
-    void CActorParam_UnkVirtualFunc33();
+    void CActorParam_UnkVirtualFunc140(void* arg, float x, float y, float z);
+    void CActorParam_UnkVirtualFunc179(void* arg);
+    void CActorParam_UnkVirtualFunc180(void* arg);
+    void CActorParam_UnkVirtualFunc33(float val);
     void CActorParam_UnkVirtualFunc35(float value, int a, int b, int c);
     void CActorParam_UnkVirtualFunc34(float val);
-    void CActorParam_UnkVirtualFunc54();
-    void CActorParam_UnkVirtualFunc60();
+    void CActorParam_UnkVirtualFunc54(int delta);
+    void CActorParam_UnkVirtualFunc60(int delta);
     void CActorParam_UnkVirtualFunc4(void* arts);
     void CActorParam_UnkVirtualFunc21();
     void CActorParam_UnkVirtualFunc23();

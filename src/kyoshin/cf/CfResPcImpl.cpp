@@ -996,7 +996,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
             if (self->field_00->field_700->field_00 != 0) {
                 self->field_00->field_6F8[0] = (CScnItemModel*)func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[0] != 0) {
-                    self->field_00->field_6F8[0]->flags7A4 |= 0x40000000;
+                    self->field_00->field_6F8[0]->flags7A4 |= 0x400000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
                     if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
@@ -1021,7 +1021,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
             if (self->field_00->field_700->field_00 != 0) {
                 self->field_00->field_6F8[1] = (CScnItemModel*)func_80489A60((u8*)lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
                 if (self->field_00->field_6F8[1] != 0) {
-                    self->field_00->field_6F8[1]->flags7A4 |= 0x40000000;
+                    self->field_00->field_6F8[1]->flags7A4 |= 0x400000;
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[1] != 0) {
                     if ((self->field_00->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
@@ -1350,7 +1350,7 @@ int func_8018F5A4(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg
     int result = 0;
     cf::CfGameManager* manager = self->field_408;
     UnkClass_80083298* obj = manager->unk90;
-    if (obj != 0 && obj->vfunc_0x74() == 0) {
+    if (obj != 0 && obj->isReady() == 0) {
         func_80061A80((u32)self, 2, arg2, arg3, arg4, arg5);
         result = 1;
     } else {

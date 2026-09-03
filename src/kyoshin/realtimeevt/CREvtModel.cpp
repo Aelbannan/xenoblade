@@ -238,8 +238,8 @@ void func_80172CC4(void* self, int visible) {
 void func_80172CE4(void* self, void* model) {
     const char* strBase = lbl_eu_80503344;
     int stackVal = 0;
-    float stackF1 = 1.0f;
-    float stackF0 = 0.0f;
+    float stackF1 = lbl_eu_80667774;
+    float stackF0 = lbl_eu_80667778;
     func_8016AF4C(FLD(void*, self, 0x24), &strBase[0x24], &stackVal);
     if (stackVal > 0) {
         stackVal--;
@@ -469,5 +469,13 @@ __declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __
     0x65, 0x50, 0x54, 0x00, 0x63, 0x6F, 0x72, 0x65, 0x00, 0x00, 0x00, 0x00
 };
 
-// absorb: split1 retail .sdata
-__declspec(section ".sdata") __attribute__((aligned(8))) int __absorb_CREvtModel_sdata_dummy = 0x01020304;
+// absorb: split1 retail .sdata 0x20 + .sdata2 0x4
+// .sdata: 4 entries (lbl_eu_806623F0..408) each 8 bytes; force file-backed via dummy relocs so MWCC keeps it in .sdata (bytes are zero placeholders, relocs skipped when bytes match)
+extern "C" char __dummy_CREvtModel_sdata;
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) void* __absorb_CREvtModel_sdata[8] = {
+    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
+    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
+    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
+    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata
+};
+__declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_8066777C __attribute__((used)) = 255.0f;

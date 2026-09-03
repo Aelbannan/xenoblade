@@ -40,6 +40,7 @@ struct CCtrlNpcC4Object {
 // CfObjectMove/CObjectState/CObjectParam - this struct is now a plain data
 // view with no vtable; virtual calls go via the owning class.
 struct CCtrlNpcChar {
+    void* _vptr;                 // 0x00 vtable (retail CfObject vtable)
     u32 field_04;
     u8 _pad08[0x68 - 0x08];       // 0x08..0x67
     u32 field_68;                 // 0x68 flags word (bits 0x00100000 / 0x2000 tested)

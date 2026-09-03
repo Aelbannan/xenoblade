@@ -151,12 +151,8 @@ struct Obj89cField {
 };
 
 // Foreign sub-object at +0x4 is a CObjectState pointer (owner: CObjectState).
-// Slot 0x30 is CObjectState_UnkVirtualFunc11 (void*). Tiny iface on owning
-// type keeps addi+lwz pattern; deleted fake iface.
-struct CObjectStatePad4 { u8 _pad[0x4]; };
-struct CObjectStateFake4 : CObjectStatePad4, cf::CObjectState {};
-struct CObjectStatePad4B { u8 _pad[0x4]; };
-struct CObjectStateFake4B : CObjectStatePad4B, cf::CObjectState {};
+// Slot 0x30 is CObjectState_UnkVirtualFunc11 (void*). Deleted fake iface;
+// call via *(CObjectState**)((u8*)this+4)->CObjectState_UnkVirtualFunc11().
 
 // Foreign sub-object at +0x8 is the embedded CBattleState (owner: CBattleState).
 // Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted

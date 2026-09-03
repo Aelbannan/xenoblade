@@ -165,7 +165,7 @@ int cf::CfObjectPc::initialize() {
     func_800BE824((u8*)((u32)self + 0x3E9C), 1);
     u8* region = self + 0x44A8;
     func_804B0AD4(region, 0, lbl_eu_80666B0C, lbl_eu_80666B10);
-    *(u16*)(region + 0xB2) = 100;
+    *(u16*)((u8*)this + 0x44A8 + 0xB2) = 100;
     return 1;
 }
 
@@ -499,9 +499,6 @@ u32 CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     cf::CfObjectPc* self, int arg1, int arg2, int arg3) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
-    // Declared before `arts` so MWCC colors arts into the higher callee-saved
-    // reg (retail: arts=r30, acted=r29).
-    int acted = 0;
     CfObjectPcArtsData* arts =
         (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
     // Clamp cap 0x5F5E0FF; keep the subtraction inline at each use so MWCC
@@ -518,6 +515,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     }
     Obj89cField* obj = (Obj89cField*)self->CActorParam_UnkVirtualFunc127();
     func_802617B8((u8*)obj, obj->field_0x89C, arg3);
+    int acted = 0;
     // Drain the action queue through slot 0x35C.
     while (self->CActorParam_UnkVirtualFunc178() != 0) {
         acted = 1;
@@ -532,21 +530,18 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
             (u32)self->CActorParam_UnkVirtualFunc127());
         BattleMgrRangeView* bm =
             (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
-        // Goto form mirrors retail: flag=0, two early-out compares
-        // (second commuted), flag=1, then shared check label. Commuting
-        // blocks MWCC's unsigned range-check fusion (MWCC_CASES
-        // func_801575B0).
         int inBattle = 0;
+        void* state;
         if (bm->field_0x1AA < 1) goto bmCheck;
         if (0x18 < bm->field_0x1AA) goto bmCheck;
         inBattle = 1;
     bmCheck:
         if (inBattle != 0) goto actedDone;
         if (bm->field_0x20C8 != 0) goto actedDone;
-        void* state = ((CObjectStateFake4*)self)->CObjectState_UnkVirtualFunc11();
+        state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_UnkVirtualFunc11();
         if (func_80174C98(self, (int*)&state, 6) ||
-            (((state = ((CObjectStateFake4B*)self)->CObjectState_UnkVirtualFunc11()),
-                func_80174C98(self, (int*)&state, 9)))) {
+            ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_UnkVirtualFunc11()),
+                func_80174C98(self, (int*)&state, 9))) {
             func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
     actedDone:;

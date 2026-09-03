@@ -93,7 +93,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         void func_800BFB90();
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
-        virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec); //0x160
+        virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
         virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         // Retail: return float in f1 (Model reads +0xA0; Coll returns const).

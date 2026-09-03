@@ -14,8 +14,7 @@ extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void* func_80495FF0(void* scene);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
-extern "C" void* CfRes_vcall34(u8* self);
-extern "C" void* CfRes_vcall38(u8* self);
+
 // Two-word ring record built on the caller's frame by func_80061870; both
 // members stay memory-resident in retail (header at 0x8(sp), data at 0xC(sp)).
 
@@ -1273,11 +1272,11 @@ extern "C" int __declspec(noinline) func_80063AD0(void* a, void* b, u32 c, void*
                 CfRes_streq(str.mString, namePtr) != 0) {
                 CfRes_initFields4((u8*)e, (int)c, 0, (int)(uintptr_t)b, size);
                 CfRes_setBits1_2((u8*)e);
-                CfRes_vcall34((u8*)e);
+                if (((ResInfoEntry*)e)->field_0x2C != 0) ((ResInfoEntry*)e)->field_0x2C->vfunc09((ResInfoEntry*)e);
                 memcpy(b, (void*)dataPtr, (size_t)size);
                 DCFlushRange(b, (u32)size);
                 CfRes_resetState2((u8*)e);
-                CfRes_vcall38((u8*)e);
+                if (((ResInfoEntry*)e)->field_0x2C != 0) ((ResInfoEntry*)e)->field_0x2C->vfunc0A((ResInfoEntry*)e);
                 return 1;
             }
         }
@@ -1297,19 +1296,7 @@ extern "C" __declspec(noinline) void CfRes_setBits1_2(u8* self) {
     *(int*)self = (val & ~2) | 1;
 }
 
-// RTTI on: omit _v000/_v004 so _v034 lands at retail 0x34 (offset 52).
-struct CfResSub_63C04 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010();
-    virtual void _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(); virtual void _v024(); virtual void _v028();
-    virtual void _v02C(); virtual void _v030(); virtual void* _v034(void* outer);
-};
-struct CfResObj_63C04 { u8 _00[0x2C]; CfResSub_63C04* sub; };
-extern "C" __declspec(noinline) void* CfRes_vcall34(u8* self) {
-    CfResSub_63C04* sub = ((CfResObj_63C04*)self)->sub;
-    if (!sub) return self;
-    return sub->_v034(self);
-}
+
 
 extern "C" void CfRes_stub_63C2C() {}
 
@@ -1322,20 +1309,7 @@ extern "C" __declspec(noinline) void CfRes_resetState2(u8* self) {
     *(u32*)self = r;
 }
 
-// RTTI on: omit _v000/_v004 so _v038 lands at retail 0x38 (offset 56).
-struct CfResSub_63C50 {
-    virtual void _v008(); virtual void _v00C(); virtual void _v010();
-    virtual void _v014(); virtual void _v018(); virtual void _v01C();
-    virtual void _v020(); virtual void _v024(); virtual void _v028();
-    virtual void _v02C(); virtual void _v030(); virtual void _v034();
-    virtual void* _v038(void* outer);
-};
-struct CfResObj_63C50 { u8 _00[0x2C]; CfResSub_63C50* sub; };
-extern "C" __declspec(noinline) void* CfRes_vcall38(u8* self) {
-    CfResSub_63C50* sub = ((CfResObj_63C50*)self)->sub;
-    if (!sub) return self;
-    return sub->_v038(self);
-}
+
 
 extern "C" void CfRes_stub_63C78() {}
 
@@ -1417,7 +1391,7 @@ int __declspec(noinline) func_80063E30(void* a, void* b, u32 c, void* d, void* e
         }
         CfRes_initFields4((u8*)e, (int)c, (int)(uintptr_t)handle, (int)(uintptr_t)b, size);
         CfRes_setBits1_2((u8*)e);
-        CfRes_vcall34((u8*)e);
+        if (((ResInfoEntry*)e)->field_0x2C != 0) ((ResInfoEntry*)e)->field_0x2C->vfunc09((ResInfoEntry*)e);
         result = 1;
     }
     return result;

@@ -14,7 +14,29 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/math/math_triangular.h>
 
+#define lbl_eu_80527A48 lbl_eu_80527A48_hack
+#define lbl_eu_80527A60 lbl_eu_80527A60_hack
+#define lbl_eu_80527A80 lbl_eu_80527A80_hack
+#define lbl_eu_80527AA0 lbl_eu_80527AA0_hack
+#define lbl_eu_80527AB8 lbl_eu_80527AB8_hack
+#define lbl_eu_80527AE0 lbl_eu_80527AE0_hack
+#define lbl_eu_80527B10 lbl_eu_80527B10_hack
 #include "kyoshin/cf/CtrlNpc.hpp"
+#undef lbl_eu_80527A48
+#undef lbl_eu_80527A60
+#undef lbl_eu_80527A80
+#undef lbl_eu_80527AA0
+#undef lbl_eu_80527AB8
+#undef lbl_eu_80527AE0
+#undef lbl_eu_80527B10
+// real data symbols (hidden from header via hack above, redeclare for use)
+extern const char* lbl_eu_80527A48[];
+extern const char* lbl_eu_80527A60[];
+extern const char* lbl_eu_80527A80[];
+extern const void* lbl_eu_80527AA0[];
+extern const void* lbl_eu_80527AB8[];
+extern const void* lbl_eu_80527AE0[];
+extern const void* lbl_eu_80527B10[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail ctor is a free function (MWCC_CASES §4193): stores the base
@@ -140,7 +162,7 @@ gateFail:
     return;
 bodyStart:
     {
-            if ((self->field_28->field_68 & 0x00100000) == 0 &&
+            if ((NpcCharView(self->field_28)->field_68 & 0x00100000) == 0 &&
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(1) != 0) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(1);
             reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_UnkVirtualFunc14(nullptr, lbl_eu_804FBB0C);
@@ -149,12 +171,12 @@ bodyStart:
         if ((self->field_2C & 0x08) != 0) {
             self->field_14 = lbl_eu_80666698;
             // Search helper kept live across the calls (retail r30).
-            cf::CCtrlNpcSearch* search = self->field_28->field_98;
+            cf::CCtrlNpcSearch* search = NpcCharView(self->field_28)->field_98;
             if (search == 0)
                 goto mask08;
             if (func_80484F18(search) < lbl_eu_806666A4)
                 goto mask08;
-            if (self->field_28->field_C4 != 0)
+            if (NpcCharView(self->field_28)->field_C4 != 0)
                 goto tail;
         mask08:;
             self->field_2C &= ~0x08;
@@ -171,14 +193,14 @@ bodyStart:
             // retail keeps this as an int tested with cmpi, not a bool.
             int ready = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc18();
             if (ready == 0) {
-                cf::CCtrlNpcSearch* s = self->field_28->field_98;
+                cf::CCtrlNpcSearch* s = NpcCharView(self->field_28)->field_98;
                 if (s != 0 && (s->field_7A4 & 0x00010000) != 0)
                     ready = 1;
             }
             if (ready == 0)
                 goto tail;
             self->field_2C &= ~0x10;
-            self->field_28->field_6C4 = 1;
+            NpcCharView(self->field_28)->field_6C4 = 1;
             goto tail;
         }
 
@@ -189,11 +211,11 @@ bodyStart:
             // Offset query takes the action kind (retail reuses r4 holding
             // the halfword unchanged).
             if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc68(reinterpret_cast<const ml::CVec3*>(act)) != 0 ||
-                (self->field_28->field_68 & 0x2000) != 0) {
+                (NpcCharView(self->field_28)->field_68 & 0x2000) != 0) {
                 int be = self->field_BE;
                 if (be >= 0) {
                     if (be < 4)
-                        (self->*lbl_eu_80527AE0[be])();
+                        ((void (*)(cf::CtrlNpc*))lbl_eu_80527AE0[be*3+2])(self);
                 }
                 goto tail;
             } else {
@@ -211,10 +233,10 @@ bodyStart:
                 int be = self->field_BE;
                 if (be >= 0) {
                     if (be < 3)
-                        (self->*lbl_eu_80527B10[be])();
+                        ((void (*)(cf::CtrlNpc*))lbl_eu_80527B10[be*3+2])(self);
                 }
             }
-            if (self->field_28->field_98 != 0) {
+            if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
                 if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
                     goto chk3;
@@ -226,7 +248,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
                     goto tail;
             settle3:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(o->field_98));
+                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -238,9 +260,9 @@ bodyStart:
             int be = self->field_BE;
             if (be >= 0) {
                 if (be < 2)
-                    (self->*lbl_eu_80527AA0[be])();
+                    ((void (*)(cf::CtrlNpc*))lbl_eu_80527AA0[be*3+2])(self);
             }
-            if (self->field_28->field_98 != 0) {
+            if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
                 if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
                     goto chk4;
@@ -252,7 +274,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
                     goto tail;
             settle4:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(o->field_98));
+                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -260,9 +282,9 @@ bodyStart:
             int be = self->field_BE;
             if (be >= 0) {
                 if (be < 3)
-                    (self->*lbl_eu_80527AB8[be])();
+                    ((void (*)(cf::CtrlNpc*))lbl_eu_80527AB8[be*3+2])(self);
             }
-            if (self->field_28->field_98 != 0) {
+            if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
                 if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
                     goto chk5;
@@ -274,7 +296,7 @@ bodyStart:
                 if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
                     goto tail;
             settle5:
-                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(o->field_98));
+                func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
             }
             goto tail;
         }
@@ -285,7 +307,7 @@ bodyStart:
     tail:
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(4) == 0)
             return;
-        if (self->field_28->field_C4 == 0)
+        if (NpcCharView(self->field_28)->field_C4 == 0)
             return;
         self->field_14 = lbl_eu_80666698;
         reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(self->field_0C);
@@ -340,15 +362,15 @@ void func_80093F28(cf::CtrlNpc* self) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
             cf::CfObject* target =
                 (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_UnkVirtualFunc5());
-            if (target != 0 && self->field_28->field_C4 != 0) {
-                int page = (int)func_8004C5EC(self->field_28->field_C4);
+            if (target != 0 && NpcCharView(self->field_28)->field_C4 != 0) {
+                int page = (int)func_8004C5EC(NpcCharView(self->field_28)->field_C4);
                 int flag = 1;
-                u32 st = self->field_28->field_8C;
+                u32 st = NpcCharView(self->field_28)->field_8C;
                 if ((st == 1 || st == 8 || st == 0x13) && page >= 0x21 &&
                     page <= 0x26)
                     flag = 0;
                 if (flag != 0) {
-                    cf::CCtrlNpcSearch* search = self->field_28->field_98;
+                    cf::CCtrlNpcSearch* search = NpcCharView(self->field_28)->field_98;
                     if (search != 0) {
                         // retail compares against 0xFFFFFFFF (unsigned ->
                         // addis+cmplwi form).
@@ -434,7 +456,7 @@ void func_80093F28(cf::CtrlNpc* self) {
             // object.
             for (u32 i = 0; i < 6; i++) {
                 v48.w = getBdatStringColumnValue(
-                    fp1, lbl_eu_80527A48[i], self->field_28->field_8C);
+                    fp1, lbl_eu_80527A48[i], NpcCharView(self->field_28)->field_8C);
                 u8 count = v48.b;
                 if (count == 0)
                     continue;
@@ -686,11 +708,11 @@ void func_80094DF4(cf::CtrlNpc* self, const cf::CtrlNpcVec3W* vec) {
     self->field_BE = 1;
     self->field_174 = 0;
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_6C4 < 0x21)
+    if (NpcCharView(obj)->field_6C4 < 0x21)
         return;
-    if (obj->field_6C4 > 0x2a)
+    if (NpcCharView(obj)->field_6C4 > 0x2a)
         return;
-    obj->field_6C4 = 1;
+    NpcCharView(obj)->field_6C4 = 1;
 }
 
 // 0x8009581C: reset the movement target to the character's current position
@@ -709,7 +731,7 @@ void func_80094E44(cf::CtrlNpc* self, u32 val) {
     self->field_AC.u = x;
     self->field_B4.u = pos->z;
     self->field_174 = 0;
-    self->field_28->field_6C4 = val;
+    NpcCharView(self->field_28)->field_6C4 = val;
 }
 
 // 0x800958B4: reset the movement target to the character's current position
@@ -732,7 +754,7 @@ void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
     self->field_B4.u = pos->z;
     self->field_174 = 0;
     s16 state = self->field_16C != 0 ? self->field_16C : self->field_16E;
-    self->field_28->field_6C4 = state;
+    NpcCharView(self->field_28)->field_6C4 = state;
 }
 
 // 0x800959A0: record the flag byte, then activate the character object if it
@@ -740,11 +762,11 @@ void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
 void func_80094FC8(cf::CtrlNpc* self, u8 val) {
     self->field_C2 = val;
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_6C4 < 0x21)
+    if (NpcCharView(obj)->field_6C4 < 0x21)
         return;
-    if (obj->field_6C4 > 0x2a)
+    if (NpcCharView(obj)->field_6C4 > 0x2a)
         return;
-    obj->field_6C4 = 1;
+    NpcCharView(obj)->field_6C4 = 1;
 }
 
 float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
@@ -755,7 +777,7 @@ float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(f
 // halfword field_16C into the battle-status helper and bump the busy counter.
 void func_80095000(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_C4 != 0) {
+    if (NpcCharView(obj)->field_C4 != 0) {
         func_800BE12C((u8*)obj, self->field_16C, 0, -1, 1);
         self->field_BE += 1;
     }
@@ -766,7 +788,7 @@ void func_80095000(cf::CtrlNpc* self) {
 // counter one extra time.
 void func_8009505C(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_C4 != 0) {
+    if (NpcCharView(obj)->field_C4 != 0) {
         if (self->field_16C != 0) {
             func_800BE12C((u8*)obj, self->field_16C, 1, -1, 1);
         } else {
@@ -782,7 +804,7 @@ void func_8009505C(cf::CtrlNpc* self) {
 // into the battle-status helper and bump the busy counter.
 void func_800950E8(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    cf::CCtrlNpcC4Object* flag = obj->field_C4;
+    cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
     if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc13() != 0 || func_8004C5EC(flag) == 1)) {
         if (self->field_16E != 0) {
             int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc51() == 0);
@@ -804,7 +826,7 @@ void func_800951A0(cf::CtrlNpc* self) {
     self->field_C8 = x;
     self->field_D0 = pos->z;
     self->field_BC = 0;
-    if (self->field_28->field_C4 != 0)
+    if (NpcCharView(self->field_28)->field_C4 != 0)
         self->field_BE += 1;
     else
         self->field_14 = lbl_eu_80666698;
@@ -816,7 +838,7 @@ void func_800951A0(cf::CtrlNpc* self) {
 // the previous turn while the wander timer field_BC is still running).
 void func_80095224(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0)
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0)
         return;
     const ml::CVec3* posf =
         reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
@@ -874,7 +896,7 @@ void func_80095450(cf::CtrlNpc* self) {
         if (self->field_BA < 0)
             self->field_B8 = 0;
     }
-    if (self->field_28->field_C4 != 0 &&
+    if (NpcCharView(self->field_28)->field_C4 != 0 &&
         reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         return;
@@ -882,8 +904,8 @@ void func_80095450(cf::CtrlNpc* self) {
     if (self->field_BC > 0)
         self->field_BC -= 1;
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_C4 != 0) {
-        if ((obj->field_C4->field_4EC & 0x02000000) != 0) {
+    if (NpcCharView(obj)->field_C4 != 0) {
+        if ((NpcCharView(obj)->field_C4->field_4EC & 0x02000000) != 0) {
             if (self->field_BC <= 0) {
                 self->field_B8 = 0;
                 self->field_BA = 0;
@@ -1166,7 +1188,7 @@ void func_80095F44(cf::CtrlNpc* self) {
     f32 distSq = diff.x * diff.x + diff.z * diff.z;
 
     cf::CfObjectMove* obj = self->field_28;
-    if (obj->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0) {
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         self->field_C6 = (u16)((self->field_C6 & 0xFF00) | 1);
         return;
@@ -1192,7 +1214,7 @@ void func_80095F44(cf::CtrlNpc* self) {
 
     // While a forced-wait flag is set on the C4 status object and few
     // waypoints remain, creep forward until within the small threshold.
-    cf::CCtrlNpcC4Object* flag = self->field_28->field_C4;
+    cf::CCtrlNpcC4Object* flag = NpcCharView(self->field_28)->field_C4;
     if (flag != 0) {
         if ((flag->field_4EC & 0x02000000) != 0 && self->field_15C <= 2) {
             f32 mag = PSVECMag(
@@ -1368,7 +1390,7 @@ void func_800966E8(cf::CtrlNpc* self) {
             self->field_BE = 3;
         }
     } else if (self->field_BE == 2) {
-        if (self->field_28->field_C4 == 0 ||
+        if (NpcCharView(self->field_28)->field_C4 == 0 ||
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
             self->field_D4 = lbl_eu_80666700;
             self->field_BE = 3;
@@ -1403,3 +1425,104 @@ extern "C" int func_8009684C(u8* self) { return 1; }
 extern "C" int func_80096854(u8* self) { return 0; }
 
 cf::CtrlNpc::~CtrlNpc() {}
+
+// absorb: split1 retail data sections - generated (pointer tables via relocs)
+extern const unsigned char __absorb_kyoshin_cf_CtrlNpc_rodata[];
+__declspec(section ".data") const char* lbl_eu_80527A48[6] = {
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x00,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x0C,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x18,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x24,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x30,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x3C
+};
+__declspec(section ".data") const char* lbl_eu_80527A60[8] = {
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x48,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x54,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x60,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x6C,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x78,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x84,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x90,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x9C
+};
+__declspec(section ".data") const char* lbl_eu_80527A80[8] = {
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x48,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x54,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x60,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x6C,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x78,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x84,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x90,
+    (const char*)__absorb_kyoshin_cf_CtrlNpc_rodata + 0x9C
+};
+// handler tables: member function pointers (0, -1, func)
+__declspec(section ".data") const void* lbl_eu_80527AA0[] = {
+    (void*)0, (void*)-1, (void*)func_80095000,
+    (void*)0, (void*)-1, (void*)func_8009519C
+};
+__declspec(section ".data") const void* lbl_eu_80527AB8[] = {
+    (void*)0, (void*)-1, (void*)func_8009505C,
+    (void*)0, (void*)-1, (void*)func_800950E8,
+    (void*)0, (void*)-1, (void*)func_8009519C,
+    (void*)0
+};
+__declspec(section ".data") const void* lbl_eu_80527AE0[] = {
+    (void*)0, (void*)-1, (void*)func_800951A0,
+    (void*)0, (void*)-1, (void*)func_80095224,
+    (void*)0, (void*)-1, (void*)func_80095450,
+    (void*)0, (void*)-1, (void*)func_8009563C
+};
+__declspec(section ".data") const void* lbl_eu_80527B10[] = {
+    (void*)0, (void*)-1, (void*)func_8009565C,
+    (void*)0, (void*)-1, (void*)func_80095F44,
+    (void*)0, (void*)-1, (void*)func_80096488,
+    (void*)0
+};
+__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CtrlNpc_rodata[0x170] = {
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x31, 0x00, 0x00, 0x00,
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x32, 0x00, 0x00, 0x00,
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x33, 0x00, 0x00, 0x00,
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x34, 0x00, 0x00, 0x00,
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x35, 0x00, 0x00, 0x00,
+    0x61, 0x75, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x6b, 0x36, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x30, 0x00, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x33, 0x00, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x36, 0x00, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x39, 0x00, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x31, 0x32, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x31, 0x35, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x31, 0x38, 0x00, 0x00, 0x00,
+    0x4f, 0x43, 0x4c, 0x4f, 0x43, 0x4b, 0x5f, 0x32, 0x31, 0x00, 0x00, 0x00,
+    0x63, 0x66, 0x3a, 0x3a, 0x43, 0x74, 0x72, 0x6c, 0x4e, 0x70, 0x63, 0x00,
+    0x4a, 0x55, 0x68, 0x65, 0x61, 0x64, 0x00, 0x46, 0x4c, 0x44, 0x5f, 0x6e,
+    0x70, 0x63, 0x6c, 0x69, 0x73, 0x74, 0x00, 0x61, 0x75, 0x74, 0x6f, 0x74,
+    0x61, 0x6c, 0x6b, 0x6c, 0x69, 0x73, 0x74, 0x25, 0x30, 0x32, 0x64, 0x25,
+    0x30, 0x32, 0x64, 0x00, 0x73, 0x63, 0x65, 0x6e, 0x61, 0x72, 0x69, 0x6f,
+    0x5f, 0x73, 0x00, 0x73, 0x63, 0x65, 0x6e, 0x61, 0x72, 0x69, 0x6f, 0x5f,
+    0x65, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x6e, 0x6f, 0x00, 0x72,
+    0x65, 0x6c, 0x61, 0x74, 0x65, 0x5f, 0x6e, 0x6f, 0x00, 0x72, 0x65, 0x6c,
+    0x61, 0x74, 0x65, 0x00, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x5f, 0x6e,
+    0x6f, 0x00, 0x73, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x00, 0x70, 0x6f, 0x70,
+    0x75, 0x6c, 0x61, 0x72, 0x5f, 0x6e, 0x6f, 0x00, 0x70, 0x6f, 0x70, 0x75,
+    0x6c, 0x61, 0x72, 0x00, 0x6e, 0x70, 0x63, 0x6d, 0x65, 0x65, 0x74, 0x5f,
+    0x6e, 0x6f, 0x00, 0x63, 0x6f, 0x6c, 0x36, 0x5f, 0x68, 0x5f, 0x6e, 0x6f,
+    0x00, 0x63, 0x6f, 0x6c, 0x36, 0x5f, 0x68, 0x00, 0x63, 0x6f, 0x6c, 0x36,
+    0x5f, 0x6b, 0x5f, 0x6e, 0x6f, 0x00, 0x63, 0x6f, 0x6c, 0x36, 0x5f, 0x6b,
+    0x00, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x6d, 0x65, 0x73, 0x00, 0x6e, 0x6f,
+    0x20, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x00, 0x00
+};
+__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CtrlNpc_sdata2[0x80] = {
+    0x00, 0x00, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00,
+    0x3f, 0x80, 0x00, 0x00, 0x3d, 0xcc, 0xcc, 0xcd, 0x3c, 0xc9, 0x0f, 0xdb,
+    0x40, 0x66, 0x66, 0x66, 0x3f, 0x4c, 0xcc, 0xcd, 0x3c, 0x23, 0xd7, 0x0a,
+    0x43, 0x34, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
+    0x44, 0x7a, 0x00, 0x00, 0x45, 0x61, 0x00, 0x00, 0x42, 0x48, 0x00, 0x00,
+    0x41, 0x10, 0x00, 0x00, 0x40, 0xbc, 0xcc, 0xcd, 0xbe, 0x57, 0x0a, 0x3d,
+    0x40, 0x00, 0x00, 0x00, 0x42, 0xc8, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x00, 0x3d, 0x80, 0x00, 0x00,
+    0x3c, 0x46, 0x3f, 0x14, 0x3e, 0x99, 0x99, 0x9a, 0x40, 0xa0, 0x00, 0x00,
+    0x3d, 0xb8, 0x51, 0xec, 0x3d, 0x23, 0xd7, 0x0b, 0x3e, 0x4c, 0xcc, 0xcd,
+    0x3f, 0x00, 0x00, 0x00, 0x43, 0xb4, 0x00, 0x00
+};
+

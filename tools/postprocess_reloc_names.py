@@ -2217,13 +2217,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CtrlNpc.o": UnitRules(
-        # magic -> lbl_eu_806666C0 (content match); zero slot ->
-        # lbl_eu_80666698 (verified by ref-index alignment in func_800964EC).
-        pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_806666C0"),
-            (struct.pack(">I", 0x00000000), "lbl_eu_80666698"),
-        ),
-        extern_data_sections=(".sdata2",),
+        drop_data_range=((".sdata2", 0, 0x10),),
+        drop_nobits_range=((".sbss2", 0, 4),),
     ),
     "CtrlRemote.o": UnitRules(
         # int->double magic -> lbl_eu_80666740 (content match).
@@ -2233,11 +2228,37 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CtrlObjectParam.o": UnitRules(
-        # 2^52 double -> lbl_eu_80666778 (content match).
-        pool_patterns=(
-            (struct.pack(">d", 4503599627370496.0), "lbl_eu_80666778"),
+        add_symbols=(
+            ("lbl_eu_804FBC28", ".rodata", 0x00, 0x9),
+            ("lbl_eu_804FBC34", ".rodata", 0x0C, 0x9),
+            ("lbl_eu_804FBC40", ".rodata", 0x18, 0x9),
+            ("lbl_eu_804FBC50", ".rodata", 0x28, 0x20),
+            ("lbl_eu_804FBC70", ".rodata", 0x48, 0x20),
+            ("lbl_eu_804FBC90", ".rodata", 0x68, 0x20),
+            ("lbl_eu_804FBCB0", ".rodata", 0x88, 0x2A8),
+            ("lbl_eu_804FBF58", ".rodata", 0x330, 0x7),
+            ("lbl_eu_80666770", ".sdata2", 0x00, 0x4),
+            ("lbl_eu_80666774", ".sdata2", 0x04, 0x4),
+            ("lbl_eu_80666778", ".sdata2", 0x08, 0x8),
+            ("lbl_eu_80666780", ".sdata2", 0x10, 0x4),
+            ("lbl_eu_80666784", ".sdata2", 0x14, 0x4),
+            ("lbl_eu_80666788", ".sdata2", 0x18, 0x8),
+            ("lbl_eu_80666790", ".sdata2", 0x20, 0x4),
+            ("lbl_eu_80666794", ".sdata2", 0x24, 0x4),
+            ("lbl_eu_80666798", ".sdata2", 0x28, 0x4),
+            ("lbl_eu_8066679C", ".sdata2", 0x2C, 0x4),
+            ("lbl_eu_806667A0", ".sdata2", 0x30, 0x4),
+            ("lbl_eu_806667A4", ".sdata2", 0x34, 0x4),
+            ("lbl_eu_806667A8", ".sdata2", 0x38, 0x4),
+            ("lbl_eu_806667AC", ".sdata2", 0x3C, 0x4),
+            ("lbl_eu_806667B0", ".sdata2", 0x40, 0x8),
+            ("lbl_eu_806667B8", ".sdata2", 0x48, 0x4),
+            ("lbl_eu_806667BC", ".sdata2", 0x4C, 0x4),
+            ("lbl_eu_806667C0", ".sdata2", 0x50, 0x8),
+            ("lbl_eu_806667C8", ".sdata2", 0x58, 0x4),
+            ("lbl_eu_806667CC", ".sdata2", 0x5C, 0x4),
         ),
-        extern_data_sections=(".sdata2",),
+        drop_data_range=((".sdata2", 0, 8),),
     ),
     "code_800A3B24.o": UnitRules(
         # magic -> lbl_eu_806667E0 (content match); debug-draw residual 1.0f
@@ -8394,20 +8415,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_range=((".sdata2", 0, 8),),
     ),
     "CfObjectNpc.o": UnitRules(
-        # Retail merges the {0,0x8c,0} leading words and the 0x224 vtable
-        # into ONE object lbl_eu_805298B8 (0x230); both text-referenced
-        # locals map onto its base (retail ctor/dtor store the base).
-        # @518 goes through data_pool_patterns (unique leading-content
-        # match) because objcopy rejects two --redefine-sym to one target
-        # in a single pass; the vtable rename is a later separate pass.
-        data_pool_patterns=(
-            (".data", bytes.fromhex("00000000000000" "8c" "00000000"), "lbl_eu_805298B8"),
-        ),
-        exact_renames=(("__vt__Q22cf11CfObjectNpc", "lbl_eu_805298B8"),),
-        pool_patterns=(
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80666B00"),
-        ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+        extern_data_sections=(".data", ".sdata"),
+        drop_data_tail=((".rodata", 0x48),),
         drop_data_range=((".sdata2", 0, 8),),
     ),
     "CfObjectImplEne.o": UnitRules(
@@ -8697,11 +8706,7 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CfMapItemManager.o": UnitRules(
         copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
     ),
-    "CfResPcImpl.o": UnitRules(
-        patch_data=((".sdata", 0, b"\x00"), (".data", 0xCF, b"\x01"),),
-        extern_data_sections=(".sdata",),
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
-    ),
+    "CfResPcImpl.o": UnitRules(),
 }
 
 

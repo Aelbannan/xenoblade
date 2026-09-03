@@ -282,8 +282,6 @@ void CfObjectMove_nullsub_4(){}
 
 void CfObjectMove_nullsub_5(){}
 
-f32 lbl_eu_80666A88;
-
 void cf::CfObjectMove::resetMoveSpeed() {
     u32 flags = mFlags68;
     f32 value = lbl_eu_80666A88;

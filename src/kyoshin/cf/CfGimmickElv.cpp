@@ -5,7 +5,7 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// absorb: retail data (generated) — fixed object bytes (relocs via inject)
+// retail data — typed source shape (replaces absorb blobs)
 extern "C" {
 struct __data_CfGimmickElv {
     unsigned char a[0x24];
@@ -18,14 +18,42 @@ __declspec(section ".data") __attribute__((used, aligned(4))) const __data_CfGim
 #define lbl_eu_80535844 ((char*)&__data_blob_CfGimmickElv.a)
 #define lbl_eu_80535868 ((char*)&__data_blob_CfGimmickElv.b)
 
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickElv_rodata[112] = {
-    0x63,0x66,0x3a,0x3a,0x43,0x66,0x47,0x69,0x6d,0x6d,0x69,0x63,0x6b,0x45,0x6c,0x76,0x00,0x00,0x00,0x00,0x6d,0x61,0x70,0x4f,0x62,0x6a,0x00,0x4c,0x49,0x46,0x54,0x4c,0x4f,0x44,0x00,0x73,0x68,0x74,0x41,0x4c,0x4f,0x44,0x00,0x73,0x68,0x74,0x42,0x4c,0x4f,0x44,0x00,0x73,0x77,0x74,0x4c,0x4f,0x44,0x00,0x73,0x77,0x69,0x74,0x63,0x68,0x45,0x46,0x00,0x73,0x77,0x69,0x74,0x63,0x68,0x53,0x45,0x00,0x73,0x68,0x74,0x53,0x45,0x00,0x4c,0x53,0x53,0x45,0x00,0x4c,0x4c,0x53,0x45,0x00,0x4c,0x45,0x53,0x45,0x00,0x4c,0x4f,0x44,0x53,0x54,0x4f,0x50,0x00,0x00,0x00,0x00
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_80508668[0x14] = "cf::CfGimmickElv";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_8050867C[0x5C] = {
+    'm','a','p','O','b','j','\0',
+    'L','I','F','T','L','O','D','\0',
+    's','h','t','A','L','O','D','\0',
+    's','h','t','B','L','O','D','\0',
+    's','w','t','L','O','D','\0',
+    's','w','i','t','c','h','E','F','\0',
+    's','w','i','t','c','h','S','E','\0',
+    's','h','t','S','E','\0',
+    'L','S','S','E','\0',
+    'L','L','S','E','\0',
+    'L','E','S','E','\0',
+    'L','O','D','S','T','O','P','\0',
+    '\0','\0','\0','\0','\0','\0','\0'
 };
-__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickElv_sdata2[40] = {
-    0x00,0x00,0x00,0x00,0x3F,0x80,0x00,0x00,0x43,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x40,0xA0,0x00,0x00,0x41,0xF0,0x00,0x00,0x40,0x80,0x00,0x00,0x43,0x48,0x00,0x00,0x44,0x61,0x00,0x00,0x00,0x00,0x00,0x00
+
+struct Sdata2_Elv {
+    float f0;
+    float f1;
+    double d;
+    float f2;
+    float f3;
+    float f4;
+    float f5;
+    float f6[2];
 };
-#define lbl_eu_80668380 (*(const float*)&__absorb_kyoshin_cf_CfGimmickElv_sdata2[0])
-#define lbl_eu_80668384 (*(const float*)&__absorb_kyoshin_cf_CfGimmickElv_sdata2[4])
+__declspec(section ".sdata2") __attribute__((used, aligned(8))) const Sdata2_Elv sdata2_Elv = {0.0f, 1.0f, 4503599627370496.0, 5.0f, 30.0f, 4.0f, 200.0f, {900.0f, 0.0f}};
+#define lbl_eu_80668380 sdata2_Elv.f0
+#define lbl_eu_80668384 sdata2_Elv.f1
+#define lbl_eu_80668388 sdata2_Elv.d
+#define lbl_eu_80668390 sdata2_Elv.f2
+#define lbl_eu_80668394 sdata2_Elv.f3
+#define lbl_eu_80668398 sdata2_Elv.f4
+#define lbl_eu_8066839C sdata2_Elv.f5
+#define lbl_eu_806683A0 sdata2_Elv.f6
 
 } // extern "C"
 
@@ -97,7 +125,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
     vfunc(self);
 
     // More bdat columns
-    u8* nameBase = (u8*)(__absorb_kyoshin_cf_CfGimmickElv_rodata+0x14);
+    u8* nameBase = (u8*)lbl_eu_8050867C;
     self->unk68 = getCol16(table, nameBase + 0x07, rowId);
     self->lod0 = getCol8(table, nameBase + 0x0F, rowId);
     self->lod1 = getCol8(table, nameBase + 0x17, rowId);

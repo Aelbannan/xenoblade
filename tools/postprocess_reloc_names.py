@@ -3463,9 +3463,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CfGimmickObject.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
     ),
-    "CfGimmickElv.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
-    ),
     "CfGimmickJump.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
     ),

@@ -12,7 +12,18 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include <string.h>
 
-// 0x800BFD48 - CfObjectNpc constructor (retail symbol __ct__Q22cf11CfObjectNpcFv).
+// sdata2 float pool — single table to avoid leading 0.0 sbss migration (see task recipe a)
+__declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdata2_tbl_CfObjectNpc[8] = {0.0f, 0.6f, 1.8f, 0.1f, 30.0f, 25.0f, 12.5f, 100.0f};
+#define lbl_eu_80666AE0 sdata2_tbl_CfObjectNpc[0]
+#define lbl_eu_80666AE4 sdata2_tbl_CfObjectNpc[1]
+#define lbl_eu_80666AE8 sdata2_tbl_CfObjectNpc[2]
+#define lbl_eu_80666AEC sdata2_tbl_CfObjectNpc[3]
+#define lbl_eu_80666AF0 sdata2_tbl_CfObjectNpc[4]
+#define lbl_eu_80666AF4 sdata2_tbl_CfObjectNpc[5]
+#define lbl_eu_80666AF8 sdata2_tbl_CfObjectNpc[6]
+#define lbl_eu_80666AFC sdata2_tbl_CfObjectNpc[7]
+
+// 0x800BFD48 - CfObjectNpc constructor
 // See the hidden-parameter note on the header declaration: heapFlag selects
 // which resource-impl child is allocated into +0xB0 (0x44 bytes of
 // CfResPcImpl when spawning with full PC resources, 0x20 bytes of
@@ -236,12 +247,4 @@ u8 CfObjectNpc::getIconType() {
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC570[0x10] = "cf::CfObjectNpc";
 __declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC580[0x38] = "JUhead\0name\0OVER\0move_speed\0scale\0icon_type\0rlt_meet";
 
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AE0 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AE4 = 0.6f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AE8 = 1.8f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AEC = 0.1f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AF0 = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AF4 = 25.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AF8 = 12.5f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AFC = 100.0f;
 __declspec(section ".sdata2") __attribute__((used)) const double lbl_eu_80666B00 = 4503599627370496.0;

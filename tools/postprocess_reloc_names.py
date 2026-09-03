@@ -8414,9 +8414,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_range=((".sdata2", 0, 8),),
     ),
     "CfObjectNpc.o": UnitRules(
-        extern_data_sections=(".data", ".sdata"),
-        drop_data_tail=((".rodata", 0x48),),
-        drop_data_range=((".sdata2", 0, 8),),
+        # .data vtable/RTTI emission (retail keeps it in split1.s); .sdata2 trailing int->double magic duplicate (MWCC pools an extra 43300000_00000000 after our typed 0x28 pool) — trim to retail 0x28.
+        extern_data_sections=(".data",),
+        drop_data_tail=((".sdata2", 0x28),),
     ),
     "CfObjectImplEne.o": UnitRules(
         # No .text references into .data/.rodata/.sdata (vtable/RTTI are

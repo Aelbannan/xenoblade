@@ -290,7 +290,7 @@ public:
     /* 0x38 */ s16 field_38; // state (-1 = invalid; lha by func_eu_8018E19C)
     /* 0x3A */ s16 field_3A;
     /* 0x3C */ s16 field_3C;
-    /* 0x3E */ u16 field_3E;
+    /* 0x3E */ s16 field_3E;
     /* 0x40 */ u16 field_40;
 };
 

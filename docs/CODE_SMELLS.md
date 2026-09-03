@@ -14,8 +14,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 15389 |
 | extern "C" declarations (non-lbl_*, imports) | 6777 |
 | extern "C" definitions (forced names) | 3957 |
-| `self`/register-style params | 13055 |
-| `void*` (params + locals) | 7831 |
+| `self`/register-style params | 13057 |
+| `void*` (params + locals) | 7833 |
 | raw pointer offset arithmetic | 7501 |
 | deref-through-cast arithmetic | 2885 |
 | inline asm / `register` | 126 |
@@ -455,7 +455,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 8 | 31 | 311 | 138 | 45 | 0 | 0 | 20 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CActorParam.cpp | 44 | 9 | 143 | 94 | 298 | 197 | 0 | 10 | 9 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 4 | 22 | 23 | 9 | 36 | 13 | 0 | 0 | 916 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectActor.cpp | 7 | 15 | 59 | 18 | 33 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectActor.cpp | 7 | 15 | 61 | 20 | 33 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 35 | 49 | 11 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectEff.cpp | 4 | 18 | 50 | 15 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectEne.cpp | 1 | 0 | 182 | 33 | 87 | 60 | 0 | 0 | 5 | 0 | 0 | 0 |
@@ -4839,8 +4839,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 33,
   "schedule_pragma": 0,
-  "self_params": 59,
-  "void_ptr": 18
+  "self_params": 61,
+  "void_ptr": 20
  },
  "src/kyoshin/cf/object/CfObjectColl.cpp": {
   "asm_insn_shim": 0,

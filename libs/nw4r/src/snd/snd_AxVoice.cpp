@@ -24,7 +24,7 @@ struct AdpcmParam {
 #include <cstring>
 
 // Retail .sdata2 float-pool entries shared by the AxVoice src helpers
-// (values confirmed against port/data_defs.cpp). Global-scope variable
+// (retail .sdata2 pool; values confirmed against retail). Global-scope variable
 // declarations are not mangled by MWCC; referencing the labels keeps the
 // sda21 relocs pointed at the shared pool entries instead of TU-local
 // duplicates.

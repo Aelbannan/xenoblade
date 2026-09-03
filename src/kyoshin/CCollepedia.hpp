@@ -82,7 +82,7 @@ struct CLPTexSize {
     u16 field_02;
 };
 
-// Shared .sdata2 u32->f64 conversion magic (2^52); defined in port/data_defs.cpp.
+// Shared .sdata2 u32->f64 conversion magic (2^52); retail .sdata2 label (owning TU or extern).
 extern double lbl_eu_80668808;
 
 // POD mirror of nw4r::lyt::Size (two f32): using the real type would emit

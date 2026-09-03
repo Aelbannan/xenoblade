@@ -57,7 +57,7 @@ void operator delete(void* ptr) throw();
 
 extern char lbl_eu_8065F32C[];
 
-// .sdata2 constants (defined in port/data_defs.cpp).
+// .sdata2 constants (retail .sdata2 pool; see owning absorb/typed defs in the defining TU).
 extern const f32 lbl_eu_8066AF44;
 extern const f32 lbl_eu_8066AF4C;
 extern const f64 lbl_eu_8066AF58;

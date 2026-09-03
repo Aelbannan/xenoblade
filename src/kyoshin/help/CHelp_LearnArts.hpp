@@ -36,5 +36,5 @@ extern "C" u32 func_801B481C();
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" bool func_801F9268(unsigned char* p, int i, int j);
 
-// "wpn_type" BDAT column-name string (retail .rodata, defined in port/data_defs.cpp).
+// "wpn_type" BDAT column-name string (retail .rodata label, owning TU or extern).
 extern u8 lbl_eu_805138AC[];

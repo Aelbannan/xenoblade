@@ -510,7 +510,7 @@ AnmObjChrBlend* AnmObjChrBlend::Construct(MEMAllocator* pAllocator,
 } // namespace g3d
 } // namespace nw4r
 
-// Shared .sdata2 quiet-NaN constant (0x7FC00000, defined in port/data_defs.cpp);
+// Shared .sdata2 quiet-NaN constant (0x7FC00000, retail .sdata2 label, owning TU or extern);
 // retail's inlined FLog domain-guard loads NaN from this slot.
 extern const f32 lbl_eu_80669B90;
 

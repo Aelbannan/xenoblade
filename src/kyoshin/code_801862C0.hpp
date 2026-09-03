@@ -131,7 +131,7 @@ public:
 
 class CScnItemModel;
 
-// .sdata2 constants used by func_801866F0 (defined in port/data_defs.cpp)
+// .sdata2 constants used by func_801866F0 (retail .sdata2 pool; see owning absorb/typed defs in the defining TU)
 extern const f32 lbl_eu_806679C0;  // 0.0001 position scale
 extern const f32 lbl_eu_806679C4;  // 0.01 rotation scale
 extern const f32 lbl_eu_806679C8;  // 0.1 scale-column scale

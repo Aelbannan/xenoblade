@@ -47,7 +47,7 @@ struct OccFrustumEntry {
 // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
 cf::CTaskCulling* lbl_eu_80664328;
 
-// Merged rodata string blob: "/" at +0, "occ" at +2 (defined in data_defs.cpp).
+// Merged rodata string blob: "/" at +0, "occ" at +2 (retail .rodata label, owning TU or extern).
 extern const char lbl_eu_80503F58[];
 
 // Retail symbols are C-linkage (unmangled); declared here because the declaring

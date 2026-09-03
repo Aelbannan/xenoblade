@@ -1,5 +1,6 @@
 #include <harness_catalog.h>
-#include "lbls_criware.hpp"
+
+extern f32 lbl_eu_80517548[];
 
 /* AHX SBF filter multiply (extended).
  * a   = 32-tap filter coefficient array (fixed across both passes)

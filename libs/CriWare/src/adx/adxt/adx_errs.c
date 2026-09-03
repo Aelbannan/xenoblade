@@ -4,7 +4,8 @@
 
 #include <harness_catalog.h>
 #include <string.h>
-#include "lbls_criware.hpp"
+
+extern char lbl_eu_80517498[];
 
 u8 lbl_eu_805E6380[264];
 char lbl_eu_805E6488[32];

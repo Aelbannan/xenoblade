@@ -7,7 +7,8 @@
 // software-filter trace callback (lbl_eu_80606E34, vtable slot 9).
 
 #include <harness_catalog.h>
-#include "lbls_criware.hpp"
+
+extern void *lbl_eu_80606E34;
 
 // Absorbed from criware_data (retail bytes) - generated
 __declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_8051CEC0[0x20] = {"before seeki\x00""after seeki\x00""\x00""\x00""\x00""\x00""\x00""\x00"}; // off 0x0

@@ -118,7 +118,7 @@ struct CNumSelectLayoutDtorVt {
     virtual void destroy(u32 flags);
 };
 
-// CNumSelect vtable (retail .data; contents defined in port/data_defs.cpp).
+// CNumSelect vtable (retail .data label; extern here, defined via retail linkage).
 extern void* lbl_eu_80534BC0[];
 
 /* Stores the retail vtable label at +0x00 before the members construct,

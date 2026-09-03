@@ -66,7 +66,7 @@ public:
 extern "C" u32 lbl_eu_8056C420[46];  // defined below (dissolved monolibdata2)
 // Retail singleton pointer (sda21 .sbss).
 extern CDeviceFileDvd* lbl_eu_80665670;
-// .rodata error-message string blob (defined in port/data_defs.cpp).
+// .rodata error-message string blob (retail .rodata label; owning TU or extern).
 extern const char lbl_eu_80522CB8[136];
 
 // Typed view of the device file job object laid out at retail offsets.

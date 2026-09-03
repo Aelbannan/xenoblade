@@ -12,7 +12,7 @@ extern char* lbl_eu_80661AC0;    // .sdata:0x80661AC0 current-dir string pointer
 extern char lbl_eu_80570918[];   // .bss  manager instance storage
 extern s8 lbl_eu_80663D88;       // .sdata singleton-init flag
 
-// Retail CfScript vtable (.data:0x80526DE8, port/data_defs.cpp).  The class is
+// Retail CfScript vtable (.data:0x80526DE8, retail .data label).  The class is
 // __declspec(novtable), so the ctor stores this label explicitly instead of
 // the compiler-generated __vt__Q22cf8CfScript (which would add .data/.rodata/
 // RTTI to a retail-empty TU and drift the reloc name).

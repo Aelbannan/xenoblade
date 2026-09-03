@@ -32,8 +32,8 @@ extern "C" bool isInitialized__12CDeviceClockFv();
 u32* lbl_eu_80665594;
 CWorkThread** lbl_eu_80665598[2];
 
-// Reslist/CMsgParam subobject vtables (blob monolibdata labels, data in
-// port/data_defs.cpp). Referenced by the flat ctor below.
+// Reslist/CMsgParam subobject vtables (blob monolibdata labels, retail .data;
+// see owning absorb/typed defs in the defining TU). Referenced by the flat ctor below.
 extern "C" u32 lbl_eu_8056B1B0[];
 extern "C" u32 lbl_eu_8056B1BC[];
 extern "C" u32 lbl_eu_8056B1D4[];

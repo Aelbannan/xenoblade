@@ -16,7 +16,7 @@ extern "C" bool func_801C4648(nw4r::lyt::Pane*);
 extern "C" void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*)
     __attribute__((never_inline));
 
-// Shared 0.0f constant in .sdata2 (defined in port/data_defs.cpp). Retail
+// Shared 0.0f constant in .sdata2 (retail .sdata2 label, owning TU or extern). Retail
 // code loads it via lfs @sda21 instead of pooling a local literal.
 extern f32 lbl_eu_80667FA4;
 

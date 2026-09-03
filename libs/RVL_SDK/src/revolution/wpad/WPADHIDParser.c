@@ -178,7 +178,7 @@ static char lbl_80560E7C[0x124] = {
 // Debug message accessors (strings are stored after the report array)
 #define WPAD_DBG_MSG(off) ((const char*)__a1_input_reports_array + (off))
 
-// Sensor bar / DPD calibration data, per channel (defined in port/data_defs.cpp)
+// Sensor bar / DPD calibration data, per channel (retail .sdata label, owning TU or extern)
 extern f32 _wpadCalibrationX[5][WPAD_MAX_CONTROLLERS];
 
 // Shared MWCC literal-pool constants (retail .sdata2 symbols)

@@ -1747,7 +1747,7 @@ extern const f32 lbl_eu_804FE6D8[12];
 // Current scene pointer (also used by Term/Init).
 // Light color floats (rgb triple) used by both light and chan setup.
 extern const f32 lbl_eu_8052CD38[8];
-// Retail ml statics (data_defs.cpp).
+// Retail ml statics (retail .sdata/.rodata labels; owning TU or extern).
 // zero__Q22ml5CVec3 provided by CfObjectModel.hpp
 extern u32 identity__Q22ml6CMat34[12];
 

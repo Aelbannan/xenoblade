@@ -7,7 +7,7 @@
 #include <nw4r/g3d.h>
 #undef GXGetIndTexMtx
 
-// Retail .sdata2 pool constants used by GXGetIndTexMtx (see port/data_defs.cpp).
+// Retail .sdata2 pool constants used by GXGetIndTexMtx (retail .sdata2 labels, owning TU or extern).
 // Per MWCC_PATTERNS.md section 1b: declare as scalars and reference verbatim
 // at each site so MWCC emits lfs/lfd lbl@sda21(r0) pool loads.
 extern "C" const f32 lbl_eu_80669A68; // 0.0f

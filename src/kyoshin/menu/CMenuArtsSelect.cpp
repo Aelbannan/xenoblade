@@ -57,8 +57,8 @@
 #include <revolution/GX.h>
 #include <stdio.h>
 
-// sdata2 conversion-magic doubles (2^52 family) are defined globally in
-// port/data_defs.cpp (lbl_eu_80666F30 / lbl_eu_80666F38); declaring them here
+// sdata2 conversion-magic doubles (2^52 family) are shared retail .sdata2 labels
+// (lbl_eu_80666F30 / lbl_eu_80666F38, owning TU or extern); declaring them here
 // lets conversions reference the shared .sdata2 pool entries by retail name.
 extern const double lbl_eu_80666F30;  // s16 -> f32 magic (2^52 + 2^31)
 extern const double lbl_eu_80666F38;  // u16 -> f32 magic (2^52)

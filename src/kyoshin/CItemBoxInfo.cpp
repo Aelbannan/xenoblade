@@ -3,6 +3,70 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+
+// Local item-impl vt shims for this TU only (primary header no longer provides them).
+// These are kept here to keep this NonMatching TU building while the primary
+// header's fake vtable has been deleted (Wave-21 gate).
+struct CItemImplVt {
+    virtual u32 _v08(void* item);
+    virtual void _v0C();
+    virtual void _v10(void* item);
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void* _v20(void* item);
+    virtual void _v24();
+    virtual u16 _v28(void* item, const char* str);
+    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
+    virtual u8 _v30(void* item);
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual s16 _v40(void* item, u32 i);
+    virtual void _v44();
+    virtual void _v48(void* item);
+    virtual u16 _v4C(void* item, u32 i);
+    virtual void _v50();
+    virtual u16 _v54(void* item);
+    virtual void _v58();
+    virtual void _v5C();
+    virtual void _v60();
+    virtual u8 _v64(void* item, u32 i);
+    virtual void _v68();
+    virtual void _v6C();
+    virtual void _v70();
+    virtual void _v74();
+    virtual void _v78();
+    virtual void _v7C();
+    virtual void _v80();
+    virtual void _v84();
+    virtual void _v88();
+    virtual void _v8C();
+    virtual u32 _v90(void* item);
+};
+struct CItemImplVt54 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void* _v20(void* item);
+    virtual void _v24();
+    virtual void _v28();
+    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
+    virtual u8 _v30(void* item);
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual s16 _v40(void* item, u32 i);
+    virtual void _v44();
+    virtual void _v48();
+    virtual u16 _v4C(void* item, u32 i);
+    virtual void _v50();
+    virtual u32 _v54(void* item);
+};
+
 // absorb: split1 retail data sections - top
 #include "decomp.h"
 __attribute__((section(".data"), used, aligned(8))) unsigned char __absorb_kyoshin_CItemBoxInfo_data[0x159] = {

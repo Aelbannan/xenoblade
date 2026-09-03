@@ -48,19 +48,30 @@ CChainActorPc::~CChainActorPc() {}
 void CChainActorPc::_vf0C(int) {}
 void CChainActorPc::_vf10() {}
 void CChainActorPc::_vf14() {}
-void CChainActorPc::_vf18() {}
-void CChainActorPc::_vf1C() {}
+void CChainActorPc::_vf18(int) {}
+void CChainActorPc::_vf1C(int) {}
 int CChainActorPc::_vf20(int) { return 0; }
-void CChainActorPc::_vf24() {}
-void CChainActorPc::_vf28() {}
-void CChainActorPc::_vf2C() {}
-void CChainActorPc::_vf30(int,int,int) {}
-void* CChainActorPc::_vf34() { return 0; }
-void CChainActorPc::_vf38() {}
-void CChainActorPc::_vf3C() {}
+int CChainActorPc::_vf24(int) { return 0; }
+int CChainActorPc::_vf28() { return 0; }
+int CChainActorPc::_vf2C() { return 0; }
+void CChainActorPc::_vf30(int, cf::CChainActor*, int) {}
+void CChainActorPc::_vf34() {}
+void CChainActorPc::_vf38(int, int) {}
+int CChainActorPc::_vf3C() { return 0; }
 int CChainActorPc::_vf40() { return 0; }
 int CChainActorPc::_vf44(void* arg) { return this->vf48(*(void**)arg); }
 int CChainActorPc::vf48(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
+int CChainActorPc::_vf4C() { return 0; }
+void CChainActorPc::_vf50() {}
+int CChainActorPc::_vf54() { return 0; }
+int CChainActorPc::_vf58() { return 0; }
+int CChainActorPc::_vf5C() { return 0; }
+int CChainActorPc::_vf60() { return 0; }
+void CChainActorPc::_vf64(int) {}
+int CChainActorPc::_vf68() { return 0; }
+void CChainActorPc::_vf6C(int) {}
+int CChainActorPc::_vf70() { return 0; }
+int CChainActorPc::_vf74() { return 0; }
 }
 extern "C" void func_8028246C(cf::CChainActorPc* self, void* arg) {
     self->vf48(*(void**)arg);

@@ -125,34 +125,21 @@ extern void clearAIActionTable();
 extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* findObjectById(int);        // C++ linkage -> findObjectById__Fi
 
-// Raw vtable view: retail code invokes fixed slots through object vtables.
-struct CAIVtable {
-    void* slot[0x170]; // up to offset 0x5C0
-};
+// Forward decl for real state sub-object (owner: CObjectState, slot 0x30).
+namespace cf { class CObjectState; }
 
-// Embedded move object at partyBase + 0x3E9C.
+// Embedded move object at partyBase + 0x3E9C (real owner: CObjectParam/CfObjectMove, slots 0x4C/0x50).
 struct CAIPartyMoveObj {
-    CAIVtable* vtable;        // +0x00 (slots 0x4C / 0x50 used)
+    void* vtable;        // +0x00 (slots 0x4C / 0x50 used - real CObjectParam)
     u8 pad04[0x64 - 0x4];
     u32 moveFlags;            // +0x64 (abs 0x3F00; bits 1/2 select lookup id)
 };
 
 // Party/battle object stored in CAIAction::unkB14 (used by func_801537F0 /
-// func_80150618).
-// State sub-object at party+4: real object whose vptr sits at its own +0.
-// Slot +0x30 returns a u32* whose first word is the probed tag.
-class CAIPartyStateVt {
-public:
-    virtual void _d008(); virtual void _d00C(); virtual void _d010();
-    virtual void _d014(); virtual void _d018(); virtual void _d01C();
-    virtual void _d020(); virtual void _d024(); virtual void _d028();
-    virtual void _d02C();
-    virtual u32* vf30(); // vtable +0x30
-};
-
+// func_80150618). Real class is CfObjectActor/CfObjectPc/CActorParam; state sub-object at +4 is CObjectState (slot 0x30 = CObjectState_UnkVirtualFunc11).
 struct CAIPartyObj {
-    CAIVtable* vtable;        // 0x00 (slot 0x5C0 used)
-    CAIPartyStateVt* unk04;   // 0x04 state sub-object (slot 0x30 used)
+    void* vtable;        // 0x00 (slot 0x5C0 used - real CfObjectActor_UnkVirtualFunc9)
+    cf::CObjectState* unk04;   // 0x04 state sub-object (slot 0x30 = CObjectState_UnkVirtualFunc11)
     u8 pad08[0x3388 - 0x8];
     u16 unk3388;              // 0x3388 status flag bits (0x8 / 0x10 tested)
     u8 pad338A[0x3E98 - 0x338A];

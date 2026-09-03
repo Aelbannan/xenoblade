@@ -125,205 +125,38 @@ namespace cf {
     // Interface for the chain-actor manual vtable at +0x70: declared virtual
     // #23 lands at vtable byte offset +0x64 (func_80279694 dispatches
     // (self,key) there). Same pad-first / -RTTI layout trick as
-    // CChainActorVtIf: the vptr sits after the 0x70 pad.
-    class CChainActorVtIf64 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005() = 0;
-        virtual void v006() = 0;
-        virtual void v007() = 0;
-        virtual void v008() = 0;
-        virtual void v009() = 0;
-        virtual void v010() = 0;
-        virtual void v011() = 0;
-        virtual void v012() = 0;
-        virtual void v013() = 0;
-        virtual void v014() = 0;
-        virtual void v015() = 0;
-        virtual void v016() = 0;
-        virtual void v017() = 0;
-        virtual void v018() = 0;
-        virtual void v019() = 0;
-        virtual void v020() = 0;
-        virtual void v021() = 0;
-        virtual void v022() = 0;
-        virtual void v023(int key) = 0; // slot 25 / +0x64
-    };
+    // CChainActor: the vptr sits after the 0x70 pad.
 
     // Manual-vtable interface for func_80279DC0: slots +0x18 / +0x1c on the
     // chain actor's manual vtable at +0x70 take (int key). Same pad-first /
-    // -RTTI layout trick as CChainActorVtIf64; never instantiated.
-    class CChainActorVtIfDC0 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004(int key) = 0; // slot 6 / +0x18
-        virtual void v005(int key) = 0; // slot 7 / +0x1c
-    };
+    // -RTTI layout trick as CChainActor64; never instantiated.
 
     // Manual-vtable interface for func_80279778: the actor's manual vtable
     // at +0x70, slot 0x28 (declared virtual #8). The slot returns an int
     // that becomes the function's result on the fall-through path.
-    class CChainActorVtIf28 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005() = 0;
-        virtual void v006() = 0;
-        virtual void v007() = 0;
-        virtual int v008() = 0; // slot 10 / +0x28
-    };
 
     // Manual-vtable interface for the chain-actor vtables at +0x70, extended
-    // past CChainActorVtIf64/28 to the slots used by func_80278E0C /
+    // past CChainActor64/28 to the slots used by func_80278E0C /
     // func_8027936C / func_8027A338: +0x1c (slot 7), +0x34 (slot 13),
     // +0x38 (slot 14), +0x5c (slot 23), +0x68 (slot 26), +0x6c (slot 27).
     // Same pad-first / -RTTI layout trick: declared virtual #k lands at
     // vtable byte offset (k+2)*4.
-    class CChainActorVtIf2 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005(int v) = 0;       // slot 7 / +0x1c (activate-with-flag)
-        virtual void v006() = 0;
-        virtual void v007() = 0;
-        virtual void v008() = 0;
-        virtual void v009() = 0;
-        virtual void v010() = 0;
-        virtual void v011() = 0;            // slot 13 / +0x34
-        virtual void v012(int a, int b) = 0; // slot 14 / +0x38
-        virtual void v013() = 0;
-        virtual void v014() = 0;
-        virtual void v015() = 0;
-        virtual void v016() = 0;
-        virtual void v017() = 0;
-        virtual void v018() = 0;
-        virtual void v019() = 0;
-        virtual int v020() = 0;             // slot 22 / +0x58 (actor value query)
-        virtual int v021() = 0;             // slot 23 / +0x5c (chainable check)
-        virtual void v022() = 0;
-        virtual void v023() = 0;
-        virtual int v024() = 0;             // slot 26 / +0x68 (run key query)
-        virtual void v025(int v) = 0;       // slot 27 / +0x6c
-    };
 
     // Manual-vtable interface for func_80278F84: slots 0x24 (declared #7,
     // takes the flag arg), 0x2c (declared #9) and 0x58 (declared #20) on the
     // chain actor's manual vtable at +0x70. Same pad-first / -RTTI layout
-    // trick as CChainActorVtIf2: declared virtual #k lands at vtable byte
+    // trick as CChainActor2: declared virtual #k lands at vtable byte
     // offset (k+2)*4. Never instantiated, so no vtable emits.
-    class CChainActorVtIf84 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005() = 0;
-        virtual void v006() = 0;
-        virtual int v007(int v) = 0; // slot 9 / +0x24 (activate-with-flag)
-        virtual void v008() = 0;
-        virtual int v009() = 0;      // slot 11 / +0x2c (chain-state query)
-        virtual void v010() = 0;
-        virtual void v011() = 0;
-        virtual void v012() = 0;
-        virtual void v013() = 0;
-        virtual void v014() = 0;
-        virtual void v015() = 0;
-        virtual void v016() = 0;
-        virtual void v017() = 0;
-        virtual void v018() = 0;
-        virtual void v019() = 0;
-        virtual int v020() = 0;      // slot 22 / +0x58 (actor value query)
-    };
 
     // Manual-vtable interface for func_8027A024: slot +0x70 (declared #26)
     // returns int. Same pad-first / -RTTI layout trick; never instantiated.
-    class CChainActorVtIf70 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005() = 0;
-        virtual void v006() = 0;
-        virtual void v007() = 0;
-        virtual void v008() = 0;
-        virtual void v009() = 0;
-        virtual void v010() = 0;
-        virtual void v011() = 0;
-        virtual void v012() = 0;
-        virtual void v013() = 0;
-        virtual void v014() = 0;
-        virtual void v015() = 0;
-        virtual void v016() = 0;
-        virtual void v017() = 0;
-        virtual void v018() = 0;
-        virtual void v019() = 0;
-        virtual void v020() = 0;
-        virtual void v021() = 0;
-        virtual void v022() = 0;
-        virtual void v023() = 0;
-        virtual void v024() = 0;
-        virtual void v025() = 0;
-        virtual int v026() = 0;      // slot 28 / +0x70
-    };
 
     // Manual-vtable interface for func_80277B38: slots +0x1c (declared #5,
     // activate-with-flag), +0x24 (declared #7, returns int), +0x38 (declared
     // #12, two-arg), +0x3c (declared #13, returns int), +0x68 (declared #24,
     // run key query) and +0x6c (declared #25). Same pad-first / -RTTI layout
-    // trick as CChainActorVtIf2: declared virtual #k lands at byte offset
+    // trick as CChainActor2: declared virtual #k lands at byte offset
     // (k+2)*4. Never instantiated, so no vtable emits.
-    class CChainActorVtIfB38 {
-    public:
-        u8 pad70[0x70];
-        virtual void v000() = 0;
-        virtual void v001() = 0;
-        virtual void v002() = 0;
-        virtual void v003() = 0;
-        virtual void v004() = 0;
-        virtual void v005(int v) = 0;       // slot 7 / +0x1c (activate-with-flag)
-        virtual void v006() = 0;
-        virtual int v007(int v) = 0;        // slot 9 / +0x24 (chainable check)
-        virtual void v008() = 0;
-        virtual void v009() = 0;
-        virtual void v010() = 0;
-        virtual void v011() = 0;
-        virtual void v012(int a, int b) = 0; // slot 14 / +0x38
-        virtual int v013() = 0;              // slot 15 / +0x3c (chain-state query)
-        virtual void v014() = 0;
-        virtual void v015() = 0;
-        virtual void v016() = 0;
-        virtual void v017() = 0;
-        virtual void v018() = 0;
-        virtual void v019() = 0;
-        virtual void v020() = 0;
-        virtual void v021() = 0;
-        virtual void v022() = 0;
-        virtual void v023() = 0;
-        virtual int v024() = 0;             // slot 26 / +0x68 (run key query)
-        virtual void v025(int v) = 0;       // slot 27 / +0x6c
-    };
 
     // Battle-object vtable interface for func_80278E0C: slot +0x5b4
     // (declared virtual #363) returns a float that is stored into the
@@ -896,6 +729,7 @@ extern "C" {
     void func_802AB474(CBattleChainMenuState* self);
     // Presentation/event flag-bit probe (code_800F42AC.cpp; retail symbol
     // carries the Fi suffix) and battle-manager sub-check (CBattleManager).
+    bool func_8006EF04__Fi(int mask);
     bool isGlobalCamFlagSet__Fi(int mask);
     void* func_800EA444(void* bm);
     // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail

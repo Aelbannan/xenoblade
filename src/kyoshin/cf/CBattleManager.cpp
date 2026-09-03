@@ -1387,7 +1387,7 @@ extern "C" s32 func_800EC918(
     case 227: {
         if (pc == nullptr) break;               // cmpwi r23,0; beq .L_800F4000
 
-        // r15 = pc->vf298() (stat object); r16 = flag
+        // r15 = pc->CActorParam_UnkVirtualFunc129() (stat object); r16 = flag
         void* pcStat = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc129();      // 0x800EE538
         s32 flag = 0;                           // li r16, 0
 
@@ -1476,7 +1476,7 @@ extern "C" s32 func_800EC918(
             val = *(u32*)((cf::CObjectState*)obj4)->CObjectState_UnkVirtualFunc11();
         }
         if (func_80174C98((void*)acc, &val, 0xA)) {       // beq .L_800EE84C
-            void* accStat = ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc129();   // acc->vf298()
+            void* accStat = ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc129();   // acc->CActorParam_UnkVirtualFunc129()
             if (*(u32*)((u8*)accStat + 0x78) & 0x08000000) {  // rlwinm. 0,0,4,4
                 return 0;                               // li r3,0; b .L_800F41D4
             }
@@ -1496,11 +1496,11 @@ extern "C" s32 func_800EC918(
             }
         }
 
-        // .L_800EE888 -- pc != nullptr main branch; r14 = tgt ? tgt : pc->vf298()
+        // .L_800EE888 -- pc != nullptr main branch; r14 = tgt ? tgt : pc->CActorParam_UnkVirtualFunc129()
         if (pc != nullptr) {
             void* r14;
             if (tgt != nullptr) r14 = (void*)tgt; // mr r14, r26
-            else r14 = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc129();              // pc->vf298()
+            else r14 = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc129();              // pc->CActorParam_UnkVirtualFunc129()
 
             if ((*(u32*)((u8*)r14 + 0x74) & 0x4) ||     // rlwinm. 0,3,29,29; bne .L_800EEADC
                 (*(u32*)((u8*)r14 + 0x74) & 0x2)) {     // rlwinm. 0,3,30,30; bne .L_800EEADC
@@ -1626,7 +1626,7 @@ extern "C" s32 func_800EC918(
         if (pc != nullptr) {
             void* r14;
             if (tgt != nullptr) r14 = (void*)tgt; // mr r14, r26
-            else r14 = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc129();              // pc->vf298()
+            else r14 = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc129();              // pc->CActorParam_UnkVirtualFunc129()
 
             if ((*(u32*)((u8*)r14 + 0x74) & 0x4) ||     // rlwinm. 0,3,29,29; bne .L_800EEF2C
                 (*(u32*)((u8*)r14 + 0x74) & 0x2)) {     // rlwinm. 0,3,30,30; bne .L_800EEF2C
@@ -1898,7 +1898,7 @@ extern "C" s32 func_800EC918(
                                   (s32)(*(u8*)((u8*)artsData + 0x6F)) *
                                       (artsLevel - 1)) * 10);
         } else {
-            // .L_800EF880: acc->vf12C() float scale -> field_14
+            // .L_800EF880: acc->CActorParam_UnkVirtualFunc38() float scale -> field_14
             //   f1 = vf12C(acc); (f32)(s32)field_10 / 100.0f * f1; fctiwz
             evt->field_14 = (s16)((f32)(s32)evt->field_10 / lbl_eu_80666E00 *
                                  ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc38());
@@ -2985,7 +2985,7 @@ extern "C" s32 func_800EC918(
             }
 
             if (count != 0) {
-                // if (acc->vfE0() == 5) --count;
+                // if (acc->CActorParam_UnkVirtualFunc19() == 5) --count;
                 {
                     void* v2 = *(void**)acc;
                     typedef s32 (*VFE0)(void*);
@@ -3992,10 +3992,10 @@ extern "C" void func_800D9978(void* selfV, void* actorV) {
 
     if (cur != head1) {
         // Already registered: refresh the busy check.
-        ((cf::CVisionBattleObj*)actor)->vf2BC();
-    } else if (((cf::CVisionBattleObj*)actor)->vf2BC() != 0) {
+        ((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138();
+    } else if (((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138() != 0) {
         // Busy and unregistered: retail re-runs the check call.
-        ((cf::CVisionBattleObj*)actor)->vf2BC();
+        ((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138();
     } else {
         // Register the actor in the lists.
         self->mActorList1.push_back(actor);
@@ -10409,7 +10409,7 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
         cf::CfObjectActor* obj; \
         while ((cur = cur->mNext) != *pHead) { \
             obj = cur->mItem; \
-            if (obj != target && ((cf::CVisionBattleObj*)obj)->vf2BC() == 0) { \
+            if (obj != target && ((cf::CVisionBattleObj*)obj)->CActorParam_UnkVirtualFunc138() == 0) { \
                 if (arg5 == 1) { \
                     if ((u32)(uintptr_t)arg6 == ((cf::CChainBattleObjB38*)obj)->mSub.v17()) { \
                         cvt[0].w[1] = (u32)arg2 ^ 0x80000000; \
@@ -11791,9 +11791,9 @@ loop:
     {
         element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
         // Retail uses canonical r12 virtual dispatch (slots 0xB0/0xB8/0x314).
-        ((CSuddenCommuActorVt*)element)->v42();
-        ((CSuddenCommuActorVt*)element)->v44();
-        ((CSuddenCommuActorVt*)element)->vf314();
+        ((cf::CActorParam*)element)->CActorParam_UnkVirtualFunc7();
+        ((cf::CActorParam*)element)->CActorParam_UnkVirtualFunc9();
+        ((cf::CActorParam*)element)->CActorParam_UnkVirtualFunc160();
         i++;
     }
 check:

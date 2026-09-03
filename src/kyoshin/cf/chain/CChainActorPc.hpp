@@ -18,23 +18,33 @@ class __declspec(novtable) CChainActorPc : public CChainActor {
 public:
     CChainActorPc();
     virtual ~CChainActorPc();
-    // filler virtuals to position +0x48 correctly (header 2 + 16 dummies = offset 0x48 is index 16)
-    virtual void _vf0C(int val);
-    virtual void _vf10();
-    virtual void _vf14();
-    virtual void _vf18();
-    virtual void _vf1C();
-    virtual int _vf20(int arg);
-    virtual void _vf24();
-    virtual void _vf28();
-    virtual void _vf2C();
-    virtual void _vf30(int p1,int p2,int p3);
-    virtual void* _vf34();
-    virtual void _vf38();
-    virtual void _vf3C();
-    virtual int _vf40();
-    virtual int _vf44(void* arg); // slot +0x44 : func_8028246C (thunk) – takes void** arg, forwards to +0x48
-    virtual int vf48(void* arg);  // slot +0x48 : func_80282480 – int(void* p) where p = *(void**)arg, tests bit at +0x3f00
+    virtual void _vf0C(int val) override;
+    virtual void _vf10() override;
+    virtual void _vf14() override;
+    virtual void _vf18(int val) override;
+    virtual void _vf1C(int val) override;
+    virtual int _vf20(int arg) override;
+    virtual int _vf24(int arg) override;
+    virtual int _vf28() override;
+    virtual int _vf2C() override;
+    virtual void _vf30(int p1, cf::CChainActor* p2, int p3) override;
+    virtual void _vf34() override;
+    virtual void _vf38(int a, int b) override;
+    virtual int _vf3C() override;
+    virtual int _vf40() override;
+    virtual int _vf44(void* arg) override;
+    virtual int vf48(void* arg) override;
+    virtual int _vf4C() override;
+    virtual void _vf50() override;
+    virtual int _vf54() override;
+    virtual int _vf58() override;
+    virtual int _vf5C() override;
+    virtual int _vf60() override;
+    virtual void _vf64(int key) override;
+    virtual int _vf68() override;
+    virtual void _vf6C(int val) override;
+    virtual void _vf70() override;
+    virtual int _vf74() override;
     // overlay for manual vptr at +0x70 (CChainActor::mVTable)
     CChainActorPcVtbl*& vtbl() { return *reinterpret_cast<CChainActorPcVtbl**>(reinterpret_cast<u8*>(this) + 0x70); }
 };

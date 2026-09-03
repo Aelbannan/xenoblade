@@ -23,23 +23,34 @@ namespace cf {
         CChainActor();
         virtual ~CChainActor();
 
-        // 17 virtuals to reach +0x48 (dt + 14 dummies + _vf44 + vf48) – rest of table beyond 0x48 is manual (0x4C..0x74)
+        // 28 entries (dt at +0x08 + 27) to reach +0x74 – covers full retail table lbl_eu_80538290 (0x78 bytes, header2+28)
         virtual void _vf0C(int val);
         virtual void _vf10();
         virtual void _vf14();
-        virtual void _vf18();
-        virtual void _vf1C();
+        virtual void _vf18(int val);
+        virtual void _vf1C(int val);
         virtual int _vf20(int arg);
-        virtual void _vf24();
-        virtual void _vf28();
-        virtual void _vf2C();
-        virtual void _vf30(int p1,int p2,int p3);
-        virtual void* _vf34();
-        virtual void _vf38();
-        virtual void _vf3C();
+        virtual int _vf24(int arg);
+        virtual int _vf28();
+        virtual int _vf2C();
+        virtual void _vf30(int p1, cf::CChainActor* p2, int p3);
+        virtual void _vf34();
+        virtual void _vf38(int a, int b);
+        virtual int _vf3C();
         virtual int _vf40();
         virtual int _vf44(void* arg);
         virtual int vf48(void* arg);
+        virtual int _vf4C();
+        virtual void _vf50();
+        virtual int _vf54();
+        virtual int _vf58();
+        virtual int _vf5C();
+        virtual int _vf60();
+        virtual void _vf64(int key);
+        virtual int _vf68();
+        virtual void _vf6C(int val);
+        virtual int _vf70();
+        virtual int _vf74();
 
         u8 mChainEffectRaw[0xC]; // 0x74
 

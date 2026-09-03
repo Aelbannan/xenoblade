@@ -152,7 +152,7 @@ namespace cf {
         virtual void v150() = 0; virtual void v151() = 0; virtual void v152() = 0; virtual void v153() = 0;
         virtual void v154() = 0; virtual void v155() = 0; virtual void v156() = 0;
         virtual void* v157() = 0; // index 157 -> vtable offset 0x27c (arts set)
-        virtual void v158() = 0; virtual void v159() = 0; virtual void v160() = 0; virtual void v161() = 0;
+        virtual void v158() = 0; virtual void v159() = 0; virtual int v160() = 0; virtual void v161() = 0;
         virtual int v162() = 0; // index 162 -> vtable offset 0x290 (delta gate, cf. CChainBattleObj750::v162)
         virtual void v163() = 0;
         virtual class CChainGaugeSub* v164() = 0; // index 164 -> vtable offset 0x298 (gauge sub-object)
@@ -164,7 +164,7 @@ namespace cf {
         virtual void v178() = 0; virtual void v179() = 0; virtual void v180() = 0; virtual void v181() = 0;
         virtual void v182() = 0; virtual void v183() = 0; virtual void v184() = 0; virtual void v185() = 0;
         virtual void v186() = 0; virtual void v187() = 0; virtual void v188() = 0; virtual void v189() = 0;
-        virtual void v190() = 0; virtual void v191() = 0; virtual void v192() = 0; virtual void v193() = 0;
+        virtual void v190() = 0; virtual void v191() = 0; virtual int v192() = 0; virtual void v193() = 0;
         virtual void v194() = 0; virtual void v195() = 0; virtual void v196() = 0; virtual void v197() = 0;
         virtual void v198() = 0; virtual void v199() = 0; virtual void v200() = 0; virtual void v201() = 0;
         virtual void v202() = 0; virtual void v203() = 0; virtual void v204() = 0; virtual void v205() = 0;

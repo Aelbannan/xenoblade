@@ -378,12 +378,12 @@ public:
     virtual void vf10(CItemData* p);             // 0x10
     virtual void vf14();                         // 0x14
     virtual void vf18();                         // 0x18
-    virtual u32 vf1C(CItemData* p);              // 0x1C
-    virtual void vf20();                         // 0x20
-    virtual void vf24();                         // 0x24
-    virtual void vf28();                         // 0x28
-    virtual CItemRec* vf2C(CItemData* p, u32 x); // 0x2C (returns the 8-byte sub-record)
-    virtual u32 vf30(CItemData* p);              // 0x30
+    virtual u32 vf1C(CItemData* p);                              // 0x1C
+    virtual void vf20();                                         // 0x20
+    virtual void vf24();                                         // 0x24
+    virtual u16 vf28(CItemData* p, const char* col);              // 0x28
+    virtual CItemRec* vf2C(CItemData* p, u32 x);                 // 0x2C (returns the 8-byte sub-record)
+    virtual u32 vf30(CItemData* p);                              // 0x30
     virtual void vf34(CItemData* p, u32 x);      // 0x34
     virtual void vf38();                         // 0x38
     virtual void vf3C(CItemData* p, u32 x);      // 0x3C

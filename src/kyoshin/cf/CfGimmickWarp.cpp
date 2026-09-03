@@ -8,9 +8,11 @@
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CObjectState.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
-// PcSub4VtIf is the owner for *(player+4) slot 0x30 (defined inline to avoid
-// header overload conflicts; matches CfObjectPc.hpp's PcSub4VtIf).
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+// CObjectState is the owner for *(player+4) slot 0x30 (defined inline to avoid
+// header overload conflicts; matches CfObjectPc.hpp's cf::CObjectState).
 
 struct WarpObject;
 
@@ -48,16 +50,7 @@ struct WarpObject {
 
 typedef cf::CfGimmickWarp WarpData;
 
-// Owner-named view for *(player+4): cf::CfObjectPc sub-object at +4, slot 0x30.
-// This is PcSub4VtIf from CfObjectPc.hpp (owner CfObjectPc, not Warp).
-class PcSub4VtIf {
-public:
-    virtual void _q008(); virtual void _q00C(); virtual void _q010();
-    virtual void _q014(); virtual void _q018(); virtual void _q01C();
-    virtual void _q020(); virtual void _q024(); virtual void _q028();
-    virtual void _q02C();
-    virtual void* _q030();
-};
+// Removed fake iface - now using cf::CObjectState directly.
 
 // Forward-declare player layout helpers (retail player is cf::CfObjectPc / CfObjectMove).
 struct WarpPlayerHead {
@@ -72,34 +65,12 @@ struct WarpPlayer : WarpPlayerHead, WarpPlayerTail {
 };
 
 // Tiny owner-named views for foreign sub-objects.
-// PcSub4VtIf is the owner for *(player+4) slot 0x30 (see CfObjectPc.hpp / CHelp_ArtsAttack).
+// cf::CObjectState is the owner for *(player+4) slot 0x30 (see CfObjectPc.hpp / CHelp_ArtsAttack).
 // CfObject head slots (+0xA8/+0xC8/+0x168) are now folded onto the hot header
 // cf::CfObject (syncCollVectors / CfObject_UnkVirtualFunc30 / CfObject_UnkVirtualFunc70)
-// after fixing the arity in CfObject.hpp, so no local CfObjectHeadIf is needed.
+// after fixing the arity in CfObject.hpp, so no local helper is needed.
 
-// Owner: cf::CfObjectPc secondary (v08@0x08, v0c@0x0C, v110@0x110).
-class CfObjectPcTailIf {
-public:
-    virtual void v08(u32); // +0x08
-    virtual int v0c(u32); // +0x0C
-    virtual void _010(); virtual void _014(); virtual void _018(); virtual void _01C();
-    virtual void _020(); virtual void _024(); virtual void _028(); virtual void _02C();
-    virtual void _030(); virtual void _034(); virtual void _038(); virtual void _03C();
-    virtual void _040(); virtual void _044(); virtual void _048(); virtual void _04C();
-    virtual void _050(); virtual void _054(); virtual void _058(); virtual void _05C();
-    virtual void _060(); virtual void _064(); virtual void _068(); virtual void _06C();
-    virtual void _070(); virtual void _074(); virtual void _078(); virtual void _07C();
-    virtual void _080(); virtual void _084(); virtual void _088(); virtual void _08C();
-    virtual void _090(); virtual void _094(); virtual void _098(); virtual void _09C();
-    virtual void _0A0(); virtual void _0A4(); virtual void _0A8(); virtual void _0AC();
-    virtual void _0B0(); virtual void _0B4(); virtual void _0B8(); virtual void _0BC();
-    virtual void _0C0(); virtual void _0C4(); virtual void _0C8(); virtual void _0CC();
-    virtual void _0D0(); virtual void _0D4(); virtual void _0D8(); virtual void _0DC();
-    virtual void _0E0(); virtual void _0E4(); virtual void _0E8(); virtual void _0EC();
-    virtual void _0F0(); virtual void _0F4(); virtual void _0F8(); virtual void _0FC();
-    virtual void _100(); virtual void _104(); virtual void _108(); virtual void _10C();
-    virtual WarpObject* v110(); // +0x110
-};
+// Removed fake iface - now using real classes.
 
 extern "C" {
 extern WarpColumns lbl_eu_805357E8;
@@ -360,12 +331,12 @@ extern "C" void func_8020D998(WarpData* self) {
             func_80209FB8();
             WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
-                PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->_q030());
+                cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
+                u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
                 if (func_80174C98(player, &value, 0x803) != 0) {
-                    CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->v0c(0x200)) {
-                        tail->v08(0x200);
+                    cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
+                    if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
+                        tail->CObjectState_UnkVirtualFunc1(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -440,12 +411,12 @@ extern "C" void func_8020D998(WarpData* self) {
             func_80209FB8();
             WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
-                PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->_q030());
+                cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
+                u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
                 if (func_80174C98(player, &value, 0x803) != 0) {
-                    CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->v0c(0x200)) {
-                        tail->v08(0x200);
+                    cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
+                    if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
+                        tail->CObjectState_UnkVirtualFunc1(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -553,12 +524,12 @@ extern "C" void func_8020DF04(WarpData* self) {
     func_80209FB8();
     WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
-        PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(player) + 4);
-        u32 value = *static_cast<u32*>(sub->_q030());
+        cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
+        u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
         if (func_80174C98(player, &value, 0x803) != 0) {
-            CfObjectPcTailIf* tail = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-            if (!tail->v0c(0x200)) {
-                tail->v08(0x200);
+            cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
+            if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
+                tail->CObjectState_UnkVirtualFunc1(0x200);
             }
             self->state = 4;
             self->timer = lbl_eu_806683C8;
@@ -666,10 +637,10 @@ extern "C" void func_8020E3F0(WarpData* self) {
         if (ctl == 0) {
             continue;
         }
-        PcSub4VtIf* sub = *reinterpret_cast<PcSub4VtIf**>(reinterpret_cast<u8*>(ctl) + 4);
-        u32 stateA = *static_cast<u32*>(sub->_q030());
+        cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(ctl) + 4);
+        u32 stateA = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
         if (func_80174C98(ctl, &stateA, 8) == 0) {
-            u32 stateB = *static_cast<u32*>(sub->_q030());
+            u32 stateB = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
             if (func_80174C98(ctl, &stateB, 7) == 0) {
                 continue;
             }
@@ -801,16 +772,16 @@ extern "C" void func_8020E704(WarpData* self) {
             if (func_8019876C(&out68, &out4c) != 0) {
                 reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&out4c));
                 reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc30(distance);
-                WarpObject* object = reinterpret_cast<CfObjectPcTailIf*>(reinterpret_cast<u8*>(player) + 0x3E9C)->v110();
+                WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_UnkVirtualFunc48());
                 if (object != 0) {
                     func_80199810(object->field_8c, &centre);
                 }
             }
         }
 
-        CfObjectPcTailIf* manager = reinterpret_cast<CfObjectPcTailIf*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
+        cf::CObjectState* manager = reinterpret_cast<cf::CObjectState*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
         if (manager != 0) {
-            manager->v0c(0);
+            manager->CObjectState_UnkVirtualFunc2(0);
         }
         self->state = 7;
         self->timer = lbl_eu_806683D0;

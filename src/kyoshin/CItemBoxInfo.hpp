@@ -26,56 +26,12 @@ struct CItemBoxLayoutDtorVt {
     virtual void destroy(u32 flags);  // slot 2 => +0x8, arg in r4
 };
 
-// Opaque item sub-record returned by CItemImplVt::_v2C: a u32 at +0 and a
+// Opaque item sub-record returned by CItemImpl::vf2C: a u32 at +0 and a
 // u16 flag field at +4 whose bits [16..27] select the equip state.
 struct CItemBoxSubRecord {
     u32 _00;
     u16 field_04;
     u8 _06[2];
-};
-
-// Cast-only vtable interface for the object returned by
-// CItem_initItemImplInstances: with -RTTI on, MWCC prepends 2 hidden RTTI
-// header entries, so the first declared virtual lands at raw vtable slot 2
-// (+0x08). Real virtual dispatch reproduces the retail `lwz r12,0(r3);
-// lwz r12,<off>(r12); mtctr; bcctrl` sequence; the manual `(*(void***)x)[N]`
-// casts color a scratch r5 instead of r12 (see CItemBoxGrid.hpp CItemInstVt08).
-struct CItemImplVt {
-    virtual u32 _v08(void* item);  // vtable+0x08 (raw slot 2)
-    virtual void _v0C();
-    virtual void _v10(void* item);
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void* _v20(void* item);  // vtable+0x20 (raw slot 8)
-    virtual void _v24();
-    virtual u16 _v28(void* item, const char* str);
-    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);  // vtable+0x2C (raw slot 11)
-    virtual u8 _v30(void* item);                         // vtable+0x30 (raw slot 12)
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual s16 _v40(void* item, u32 i);                 // vtable+0x40 (raw slot 16)
-    virtual void _v44();
-    virtual void _v48(void* item);
-    virtual u16 _v4C(void* item, u32 i);  // vtable+0x4C (raw slot 19)
-    virtual void _v50();
-    virtual u16 _v54(void* item);    // vtable+0x54 (raw slot 21) - equip category
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual u8 _v64(void* item, u32 i);   // vtable+0x64 (raw slot 25)
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual u32 _v90(void* item);    // vtable+0x90 (raw slot 36)
 };
 
 // Cast-only vtable interface for nw4r::lyt::Pane: method at vtable+0x68
@@ -271,32 +227,6 @@ struct CItemBoxLabelTable {
     u32 hdr;         // 0x00
     char* labels[4]; // 0x04
     u32 tail[2];     // 0x14..0x1B
-};
-
-// u32-returning view of CItemImplVt::_v54: retail keeps the raw call result
-// live in a register and narrows at each use site, so the interface must not
-// force a u16 narrowing at the call.
-struct CItemImplVt54 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void* _v20(void* item);
-    virtual void _v24();
-    virtual void _v28();
-    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
-    virtual u8 _v30(void* item);
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual s16 _v40(void* item, u32 i);
-    virtual void _v44();
-    virtual void _v48();
-    virtual u16 _v4C(void* item, u32 i);
-    virtual void _v50();
-    virtual u32 _v54(void* item);  // vtable+0x54 (raw slot 21)
 };
 
 // 0xA4-byte item-name record written by func_801E20FC (ItemBox2 twin of

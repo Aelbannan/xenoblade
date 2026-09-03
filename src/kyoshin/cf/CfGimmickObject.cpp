@@ -86,7 +86,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     cf::CfGimmickObject* self, s32 row, cf::CfGimmickObject** tail, int count,
     u32* flagWords) {
     __ct__cf_CfGimmick((void*)self);
-    self->vtable = (void*)lbl_eu_80534F70;
+    *(void**)self = (void*)lbl_eu_80534F70;
     self->field_82 = 1;
     self->field_194 = 0;
 
@@ -105,7 +105,7 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     func_80209020(self, &self->field_1C, mgr, &holder);
     func_8020915C(self, &self->field_F4, mgr, &holder);
     func_80209288(self, &self->field_10, mgr, &holder);
-    ((ICfGimmickObjectVt*)self)->vt06();
+    self->vf_801F7930();
 
     // Scalar columns from lbl_eu_80507B60 and the lbl_eu_805357E8 pointer
     // table. Retail interleaves each call with the next column address, so
@@ -300,7 +300,7 @@ void func_801F7930(cf::CfGimmickObject* self) {
 }
 
 cf::CfGimmickObject::~CfGimmickObject() {
-    this->vtable = (void*)lbl_eu_80534F70;
+    *(void**)this = (void*)lbl_eu_80534F70;
     func_80208EE4((void*)this);
     func_8020A434(&this->field_7C);
     __dt__Q22cf9CfGimmickFv((void*)this, 0);

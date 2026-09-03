@@ -578,7 +578,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc40();  //0x134
         virtual void CActorParam_UnkVirtualFunc41(float val);  //0x138
         virtual void CActorParam_UnkVirtualFunc42(float val);  //0x13C
-        virtual void CActorParam_UnkVirtualFunc43();  //0x140
+        virtual float CActorParam_UnkVirtualFunc43();  //0x140
         virtual void CActorParam_UnkVirtualFunc44();  //0x144
         virtual void CActorParam_UnkVirtualFunc45();  //0x148
         virtual void CActorParam_UnkVirtualFunc46();  //0x14C
@@ -609,7 +609,7 @@ namespace cf {
         virtual float CActorParam_UnkVirtualFunc69();  //0x1A8
         virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
         virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
-        virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
+        virtual float CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
         virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
         virtual void CActorParam_UnkVirtualFunc75();  //0x1C0

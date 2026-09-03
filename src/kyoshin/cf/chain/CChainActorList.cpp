@@ -1,4 +1,5 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/cf/chain/CChainTimer.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
 #include "kyoshin/cf/CVision.hpp"
@@ -36,366 +37,9 @@ extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self);
 // gate/value query and slot 194 (+0x308) returns the tuning-pool selector.
 // kyoshin compiles with -RTTI on, so declared virtual #k lands at vtable byte
 // offset (k+2)*4.
-class CChainBattleVtIf {
-public:
-    virtual void v000() = 0;
-    virtual void v001() = 0;
-    virtual void v002() = 0;
-    virtual void v003() = 0;
-    virtual void v004() = 0;
-    virtual void v005() = 0;
-    virtual void v006() = 0;
-    virtual void v007() = 0;
-    virtual void v008() = 0;
-    virtual void v009() = 0;
-    virtual void v010() = 0;
-    virtual void v011() = 0;
-    virtual void v012() = 0;
-    virtual void v013() = 0;
-    virtual void v014() = 0;
-    virtual void v015() = 0;
-    virtual void v016() = 0;
-    virtual void v017() = 0;
-    virtual void v018() = 0;
-    virtual void v019() = 0;
-    virtual void v020() = 0;
-    virtual void v021() = 0;
-    virtual void v022() = 0;
-    virtual void v023() = 0;
-    virtual void v024() = 0;
-    virtual void v025() = 0;
-    virtual void v026() = 0;
-    virtual void v027() = 0;
-    virtual void v028() = 0;
-    virtual void v029() = 0;
-    virtual void v030() = 0;
-    virtual void v031() = 0;
-    virtual void v032() = 0;
-    virtual void v033() = 0;
-    virtual void v034() = 0;
-    virtual void v035() = 0;
-    virtual void v036() = 0;
-    virtual void v037() = 0;
-    virtual void v038() = 0;
-    virtual void v039() = 0;
-    virtual void v040() = 0;
-    virtual void v041() = 0;
-    virtual void v042() = 0;
-    virtual void v043() = 0;
-    virtual void v044() = 0;
-    virtual void v045() = 0;
-    virtual void v046() = 0;
-    virtual void v047() = 0;
-    virtual void v048() = 0;
-    virtual void v049() = 0;
-    virtual void v050() = 0;
-    virtual void v051() = 0;
-    virtual void v052() = 0;
-    virtual void v053() = 0;
-    virtual void v054() = 0;
-    virtual void v055() = 0;
-    virtual void v056() = 0;
-    virtual void v057() = 0;
-    virtual void v058() = 0;
-    virtual void v059() = 0;
-    virtual void v060() = 0;
-    virtual void v061() = 0;
-    virtual void v062() = 0;
-    virtual void v063() = 0;
-    virtual void v064() = 0;
-    virtual void v065() = 0;
-    virtual void v066() = 0;
-    virtual void v067() = 0;
-    virtual void v068() = 0;
-    virtual void v069() = 0;
-    virtual void v070() = 0;
-    virtual void v071() = 0;
-    virtual void v072() = 0;
-    virtual void v073() = 0;
-    virtual void v074() = 0;
-    virtual void v075() = 0;
-    virtual void v076() = 0;
-    virtual void v077() = 0;
-    virtual void v078() = 0;
-    virtual void v079() = 0;
-    virtual void v080() = 0;
-    virtual void v081() = 0;
-    virtual void v082() = 0;
-    virtual void v083() = 0;
-    virtual void v084() = 0;
-    virtual void v085() = 0;
-    virtual void v086() = 0;
-    virtual void v087() = 0;
-    virtual void v088() = 0;
-    virtual void v089() = 0;
-    virtual void v090() = 0;
-    virtual void v091() = 0;
-    virtual void v092() = 0;
-    virtual void v093() = 0;
-    virtual void v094() = 0;
-    virtual void v095() = 0;
-    virtual void v096() = 0;
-    virtual void v097() = 0;
-    virtual void v098() = 0;
-    virtual void v099() = 0;
-    virtual void v100() = 0;
-    virtual void v101() = 0;
-    virtual void v102() = 0;
-    virtual void v103() = 0;
-    virtual void v104() = 0;
-    virtual void v105() = 0;
-    virtual void v106() = 0;
-    virtual void v107() = 0;
-    virtual void v108() = 0;
-    virtual void v109() = 0;
-    virtual void v110() = 0;
-    virtual void v111() = 0;
-    virtual void v112() = 0;
-    virtual void v113() = 0;
-    virtual void v114() = 0;
-    virtual void v115() = 0;
-    virtual void v116() = 0;
-    virtual void v117() = 0;
-    virtual void v118() = 0;
-    virtual void v119() = 0;
-    virtual void v120() = 0;
-    virtual void v121() = 0;
-    virtual void v122() = 0;
-    virtual void v123() = 0;
-    virtual void v124() = 0;
-    virtual void v125() = 0;
-    virtual void v126() = 0;
-    virtual void v127() = 0;
-    virtual void v128() = 0;
-    virtual void v129() = 0;
-    virtual void v130() = 0;
-    virtual void v131() = 0;
-    virtual void v132() = 0;
-    virtual void v133() = 0;
-    virtual void v134() = 0;
-    virtual void v135() = 0;
-    virtual void v136() = 0;
-    virtual void v137() = 0;
-    virtual void v138() = 0;
-    virtual void v139() = 0;
-    virtual void v140() = 0;
-    virtual void v141() = 0;
-    virtual void v142() = 0;
-    virtual void v143() = 0;
-    virtual void v144() = 0;
-    virtual void v145() = 0;
-    virtual void v146() = 0;
-    virtual void v147() = 0;
-    virtual void v148() = 0;
-    virtual void v149() = 0;
-    virtual void v150() = 0;
-    virtual void v151() = 0;
-    virtual void v152() = 0;
-    virtual void v153() = 0;
-    virtual void v154() = 0;
-    virtual void v155() = 0;
-    virtual void v156() = 0;
-    virtual void v157() = 0;
-    virtual void v158() = 0;
-    virtual void v159() = 0;
-    virtual int v160() = 0;  // slot 162 / +0x290 gate query
-    virtual void v161() = 0;
-    virtual void v162() = 0;
-    virtual void v163() = 0;
-    virtual void v164() = 0;
-    virtual void v165() = 0;
-    virtual void v166() = 0;
-    virtual void v167() = 0;
-    virtual void v168() = 0;
-    virtual void v169() = 0;
-    virtual void v170() = 0;
-    virtual void v171() = 0;
-    virtual void v172() = 0;
-    virtual void v173() = 0;
-    virtual void v174() = 0;
-    virtual void v175() = 0;
-    virtual void v176() = 0;
-    virtual void v177() = 0;
-    virtual void v178() = 0;
-    virtual void v179() = 0;
-    virtual void v180() = 0;
-    virtual void v181() = 0;
-    virtual void v182() = 0;
-    virtual void v183() = 0;
-    virtual void v184() = 0;
-    virtual void v185() = 0;
-    virtual void v186() = 0;
-    virtual void v187() = 0;
-    virtual void v188() = 0;
-    virtual void v189() = 0;
-    virtual void v190() = 0;
-    virtual void v191() = 0;
-    virtual int v192() = 0;  // slot 194 / +0x308 pool selector
-};
 
 // Vtable-layout shim so the arts-set getter (vtable slot 0x9f = offset 0x27c)
 // can be invoked as a genuine virtual call (MWCC uses r12 for virtual calls).
-class CArtsSetOwnerShim {
-public:
-    virtual void v000() = 0;
-    virtual void v001() = 0;
-    virtual void v002() = 0;
-    virtual void v003() = 0;
-    virtual void v004() = 0;
-    virtual void v005() = 0;
-    virtual void v006() = 0;
-    virtual void v007() = 0;
-    virtual void v008() = 0;
-    virtual void v009() = 0;
-    virtual void v010() = 0;
-    virtual void v011() = 0;
-    virtual void v012() = 0;
-    virtual void v013() = 0;
-    virtual void v014() = 0;
-    virtual void v015() = 0;
-    virtual void v016() = 0;
-    virtual void v017() = 0;
-    virtual void v018() = 0;
-    virtual void v019() = 0;
-    virtual void v020() = 0;
-    virtual void v021() = 0;
-    virtual void v022() = 0;
-    virtual void v023() = 0;
-    virtual void v024() = 0;
-    virtual void v025() = 0;
-    virtual void v026() = 0;
-    virtual void v027() = 0;
-    virtual void v028() = 0;
-    virtual void v029() = 0;
-    virtual void v030() = 0;
-    virtual void v031() = 0;
-    virtual void v032() = 0;
-    virtual void v033() = 0;
-    virtual void v034() = 0;
-    virtual void v035() = 0;
-    virtual void v036() = 0;
-    virtual void v037() = 0;
-    virtual void v038() = 0;
-    virtual void v039() = 0;
-    virtual void v040() = 0;
-    virtual void v041() = 0;
-    virtual void v042() = 0;
-    virtual void v043() = 0;
-    virtual void v044() = 0;
-    virtual void v045() = 0;
-    virtual void v046() = 0;
-    virtual void v047() = 0;
-    virtual void v048() = 0;
-    virtual void v049() = 0;
-    virtual void v050() = 0;
-    virtual void v051() = 0;
-    virtual void v052() = 0;
-    virtual void v053() = 0;
-    virtual void v054() = 0;
-    virtual void v055() = 0;
-    virtual void v056() = 0;
-    virtual void v057() = 0;
-    virtual void v058() = 0;
-    virtual void v059() = 0;
-    virtual void v060() = 0;
-    virtual void v061() = 0;
-    virtual void v062() = 0;
-    virtual void v063() = 0;
-    virtual void v064() = 0;
-    virtual void v065() = 0;
-    virtual void v066() = 0;
-    virtual void v067() = 0;
-    virtual void v068() = 0;
-    virtual void v069() = 0;
-    virtual void v070() = 0;
-    virtual void v071() = 0;
-    virtual void v072() = 0;
-    virtual void v073() = 0;
-    virtual void v074() = 0;
-    virtual void v075() = 0;
-    virtual void v076() = 0;
-    virtual void v077() = 0;
-    virtual void v078() = 0;
-    virtual void v079() = 0;
-    virtual void v080() = 0;
-    virtual void v081() = 0;
-    virtual void v082() = 0;
-    virtual void v083() = 0;
-    virtual void v084() = 0;
-    virtual void v085() = 0;
-    virtual void v086() = 0;
-    virtual void v087() = 0;
-    virtual void v088() = 0;
-    virtual void v089() = 0;
-    virtual void v090() = 0;
-    virtual void v091() = 0;
-    virtual void v092() = 0;
-    virtual void v093() = 0;
-    virtual void v094() = 0;
-    virtual void v095() = 0;
-    virtual void v096() = 0;
-    virtual void v097() = 0;
-    virtual void v098() = 0;
-    virtual void v099() = 0;
-    virtual void v100() = 0;
-    virtual void v101() = 0;
-    virtual void v102() = 0;
-    virtual void v103() = 0;
-    virtual void v104() = 0;
-    virtual void v105() = 0;
-    virtual void v106() = 0;
-    virtual void v107() = 0;
-    virtual void v108() = 0;
-    virtual void v109() = 0;
-    virtual void v110() = 0;
-    virtual void v111() = 0;
-    virtual void v112() = 0;
-    virtual void v113() = 0;
-    virtual void v114() = 0;
-    virtual void v115() = 0;
-    virtual void v116() = 0;
-    virtual void v117() = 0;
-    virtual void v118() = 0;
-    virtual void v119() = 0;
-    virtual void v120() = 0;
-    virtual void v121() = 0;
-    virtual void v122() = 0;
-    virtual void v123() = 0;
-    virtual void v124() = 0;
-    virtual void v125() = 0;
-    virtual void v126() = 0;
-    virtual void v127() = 0;
-    virtual void v128() = 0;
-    virtual void v129() = 0;
-    virtual void v130() = 0;
-    virtual void v131() = 0;
-    virtual void v132() = 0;
-    virtual void v133() = 0;
-    virtual void v134() = 0;
-    virtual void v135() = 0;
-    virtual void v136() = 0;
-    virtual void v137() = 0;
-    virtual void v138() = 0;
-    virtual void v139() = 0;
-    virtual void v140() = 0;
-    virtual void v141() = 0;
-    virtual void v142() = 0;
-    virtual void v143() = 0;
-    virtual void v144() = 0;
-    virtual void v145() = 0;
-    virtual void v146() = 0;
-    virtual void v147() = 0;
-    virtual void v148() = 0;
-    virtual void v149() = 0;
-    virtual void v150() = 0;
-    virtual void v151() = 0;
-    virtual void v152() = 0;
-    virtual void v153() = 0;
-    virtual void v154() = 0;
-    virtual void v155() = 0;
-    virtual void v156() = 0;
-    virtual cf::CArtsSet* getArtsSet() = 0; // slot 0x9f
-};
 
 // Fake single-inheritance "interface" mirroring CChainActor's manually-managed
 // vtable at +0x70.  kyoshin compiles with -RTTI on, so every vtable carries two
@@ -403,38 +47,6 @@ public:
 // byte offset (k+2)*4.  Casting a CChainActor* to this interface and calling a
 // virtual makes MWCC emit retail's `lwz r12,0x70(r3); lwz r12,off(r12); bcctrl`
 // dispatch instead of a function-pointer cast that colors the vptr load r4/r5.
-class CChainActorVtIf {
-public:
-    u8 pad70[0x70];
-    virtual void v000() = 0; // slot 2  / +8
-    virtual void v001() = 0; // slot 3  / +12
-    virtual void v002() = 0; // slot 4  / +16
-    virtual void v003() = 0; // slot 5  / +20  (dead-actor destroy/remove)
-    virtual void v004(int) = 0; // slot 6  / +24  (chain-combo advance; retail passes the target arg in r4)
-    virtual void v005(int) = 0; // slot 7  / +28  (activate-with-flag)
-    virtual int  v006(int) = 0; // slot 8  / +32  (chainable-vs-key/move check)
-    virtual int  v007(int) = 0; // slot 9  / +36  (activate-with-flag)
-    virtual void v008() = 0;
-    virtual void v009() = 0;
-    virtual void v010(int, cf::CChainActor*, int) = 0; // slot 12 / +48 (chain-link: target, next actor, flag)
-    virtual void v011() = 0;
-    virtual void v012() = 0;
-    virtual void v013() = 0;
-    virtual void v014() = 0;
-    virtual int  v015(cf::CChainActor*) = 0; // slot 17 / +68 (run-chainable check)
-    virtual int  v016(int) = 0; // slot 18 / +72  (chainable-against-key check)
-    virtual int  v017() = 0; // slot 19 / +76  (activation gate)
-    virtual void v018() = 0;
-    virtual int  v019() = 0; // slot 21 / +84 (priority/arts value query)
-    virtual int  v020() = 0; // slot 22 / +88 (actor value query)
-    virtual int  v021() = 0; // slot 23 / +92  (chainable check)
-    virtual void v022() = 0;
-    virtual void v023() = 0;
-    virtual int  v024() = 0; // slot 26 / +104 (run key query)
-    virtual void v025() = 0;
-    virtual void v026() = 0;
-    virtual int  v027() = 0; // slot 29 / +116 (anti-gate: retail returns 0 when nonzero)
-};
 
 // Function-pointer types for CChainActor's manually-managed vtable (mVTable at
 // 0x70).
@@ -504,7 +116,7 @@ namespace cf {
             mChainActorList.mStartNodePtr->mNext;
         while (node != mChainActorList.mStartNodePtr) {
             cf::CChainActor* actor = node->mItem;
-            ((CChainActorVtIf*)actor)->v003();
+            actor->_vf14();
             node = node->mNext;
         }
         // Pass 2: unlink every node, marking its slot free (mNext = 0).
@@ -554,7 +166,7 @@ void func_8027B164(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        ((CChainActorVtIf*)node->mItem)->v003();
+        node->mItem->_vf14();
         node = node->mNext;
     }
     // Pass 2: detach every node (marking each slot free via mNext = 0).
@@ -579,7 +191,7 @@ void func_8027B200(cf::CChainActorList* self){
         if (base != 0) base += 0x3e9c;
         if (func_800B8920((void*)base) == 0) {
             cf::CChainActor* actor = node->mItem;
-            ((CChainActorVtIf*)actor)->v003();
+            actor->_vf14();
             // Pass the node's own item slot so the inlined remove compares
             // curr->mItem against a re-read r30->mItem (retail shape).
             self->mChainActorList.remove(node->mItem);
@@ -602,13 +214,13 @@ void func_8027B2CC(cf::CChainActorList* self){
     while (node != self->mChainActorList.mStartNodePtr) {
         int chainCount = 0;
         int otherCount = 0;
-        int key = ((CChainActorVtIf*)node->mItem)->v024();
+        int key = node->mItem->_vf68();
         _reslist_node<cf::CChainActor*>* cur = node;
         while (true) {
             // Both hooks run on the current node; the member is grabbed after
             // the chainable test so no node temp lives across the calls.
-            ((CChainActorVtIf*)cur->mItem)->v002();
-            if (((CChainActorVtIf*)cur->mItem)->v006(key) != 0) {
+            cur->mItem->_vf10();
+            if (cur->mItem->_vf20(key) != 0) {
                 cf::CChainActor* actor = cur->mItem;
                 cur = cur->mNext;
                 chainArr[chainCount++] = actor;
@@ -618,7 +230,7 @@ void func_8027B2CC(cf::CChainActorList* self){
                 otherArr[otherCount++] = actor;
             }
             if (cur == self->mChainActorList.mStartNodePtr) break;
-            if (((CChainActorVtIf*)node->mItem)->v015(cur->mItem) == 0) break;
+            if (node->mItem->_vf44(cur->mItem) == 0) break;
         }
 
         // Pass: link chainable and non-chainable actors into a ring.  When
@@ -628,54 +240,54 @@ void func_8027B2CC(cf::CChainActorList* self){
         int chk = 0;
         if (chainCount >= 2) {
             cf::CChainActor* first = chainArr[0];
-            chk = (first != 0) ? ((CChainActorVtIf*)first)->v017() : 0;
+            chk = (first != 0) ? first->_vf4C() : 0;
         }
         if (chainCount >= 2 && chk != 0) {
             if (chainCount == 1) {
-                ((CChainActorVtIf*)chainArr[0])->v010(0, 0, 0);
+                chainArr[0]->_vf30(0, 0, 0);
             } else if (chainCount == 2) {
-                ((CChainActorVtIf*)chainArr[0])->v010(1, chainArr[1], 1);
-                ((CChainActorVtIf*)chainArr[1])->v010(0, 0, 0);
+                chainArr[0]->_vf30(1, chainArr[1], 1);
+                chainArr[1]->_vf30(0, 0, 0);
             } else if (chainCount >= 3) {
                 for (int i = 0; i < chainCount; i++) {
                     int next = (i + 1 < chainCount) ? i + 1 : 0;
-                    ((CChainActorVtIf*)chainArr[i])->v010(1, chainArr[next], 1);
+                    chainArr[i]->_vf30(1, chainArr[next], 1);
                 }
             }
         } else {
             if (chainCount == 1) {
-                ((CChainActorVtIf*)chainArr[0])->v010(0, 0, 0);
+                chainArr[0]->_vf30(0, 0, 0);
             } else if (chainCount == 2) {
-                ((CChainActorVtIf*)chainArr[0])->v010(0, chainArr[1], 1);
-                ((CChainActorVtIf*)chainArr[1])->v010(0, 0, 0);
+                chainArr[0]->_vf30(0, chainArr[1], 1);
+                chainArr[1]->_vf30(0, 0, 0);
             } else if (chainCount >= 3) {
                 for (int i = 0; i < chainCount; i++) {
                     int next = (i + 1 < chainCount) ? i + 1 : 0;
-                    ((CChainActorVtIf*)chainArr[i])->v010(0, chainArr[next], 1);
+                    chainArr[i]->_vf30(0, chainArr[next], 1);
                 }
             }
             // Retail tail-duplicates the non-chainable linkage in both arms.
             if (otherCount == 1) {
-                ((CChainActorVtIf*)otherArr[0])->v010(0, 0, 0);
+                otherArr[0]->_vf30(0, 0, 0);
             } else if (otherCount == 2) {
-                ((CChainActorVtIf*)otherArr[0])->v010(0, otherArr[1], 1);
-                ((CChainActorVtIf*)otherArr[1])->v010(0, 0, 0);
+                otherArr[0]->_vf30(0, otherArr[1], 1);
+                otherArr[1]->_vf30(0, 0, 0);
             } else if (otherCount >= 3) {
                 for (int i = 0; i < otherCount; i++) {
                     int next = (i + 1 < otherCount) ? i + 1 : 0;
-                    ((CChainActorVtIf*)otherArr[i])->v010(0, otherArr[next], 1);
+                    otherArr[i]->_vf30(0, otherArr[next], 1);
                 }
             }
         }
         if (otherCount == 1) {
-            ((CChainActorVtIf*)otherArr[0])->v010(0, 0, 0);
+            otherArr[0]->_vf30(0, 0, 0);
         } else if (otherCount == 2) {
-            ((CChainActorVtIf*)otherArr[0])->v010(0, otherArr[1], 1);
-            ((CChainActorVtIf*)otherArr[1])->v010(0, 0, 0);
+            otherArr[0]->_vf30(0, otherArr[1], 1);
+            otherArr[1]->_vf30(0, 0, 0);
         } else if (otherCount >= 3) {
             for (int i = 0; i < otherCount; i++) {
                 int next = (i + 1 < otherCount) ? i + 1 : 0;
-                ((CChainActorVtIf*)otherArr[i])->v010(0, otherArr[next], 1);
+                otherArr[i]->_vf30(0, otherArr[next], 1);
             }
         }
 
@@ -691,7 +303,7 @@ cf::CChainActor* func_8027B770(cf::CChainActorList* self, u32 key){
         cf::CChainActor* newActor = func_8028120C(self);
         func_8027B8C8(self, newActor);
         if (self->unk1DA8[0]) {
-            ((CChainActorVtIf*)newActor)->v005(1);
+            newActor->_vf1C(1);
         }
     } else {
         // Returning the found actor here colors the merged search result
@@ -708,7 +320,7 @@ int func_8027B814(cf::CChainActorList* self, u32 key) {
     while (node != head) {
         cf::CChainActor* actor = node->mItem;
         if (key == actor->unk0) {
-            ((CChainActorVtIf*)actor)->v003();
+            actor->_vf14();
             // Pass the node's own item slot: the inlined remove re-reads
             // node->mItem each iteration (retail keeps the node in r31).
             self->mChainActorList.remove(node->mItem);
@@ -726,15 +338,15 @@ int func_8027B814(cf::CChainActorList* self, u32 key) {
 // node array, as reslist::insert does. Retail's symbol is the unmangled C-ABI
 // name func_8027B8C8 (call sites must reference it unmangled).
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor) {
-    int myVal = ((CChainActorVtIf*)actor)->v019();
+    int myVal = actor->_vf54();
     _reslist_node<cf::CChainActor*>* pre =
         self->mChainActorList.mStartNodePtr->mNext;
     while (pre != self->mChainActorList.mStartNodePtr) {
-        if (((CChainActorVtIf*)pre->mItem)->v015(actor)) {
+        if (pre->mItem->_vf44(actor)) {
             while (pre != self->mChainActorList.mStartNodePtr &&
-                   ((CChainActorVtIf*)pre->mItem)->v015(actor)) {
+                   pre->mItem->_vf44(actor)) {
                 if (myVal <
-                    ((CChainActorVtIf*)pre->mItem)->v019()) goto place;
+                    pre->mItem->_vf54()) goto place;
                 pre = pre->mNext;
             }
             goto place;
@@ -787,11 +399,9 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        if (((CChainActorVtIf*)node->mItem)->v016((int)target) != 0) {
-            if (((CChainActorVtIf*)node->mItem)->v006(
-                    ((CChainSubVtIf*)&((CChainBattleObjTail*)target)
-                         ->field_0x3E9C)
-                        ->v017()) != 0) {
+        if (node->mItem->vf48((void*)(int)target) != 0) {
+            if (node->mItem->_vf20(
+                    reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)target)->field_0x3E9C)->v17()) != 0) {
                 func_8027C5CC(other, node->mItem);
                 self->mChainActorList.remove(node->mItem);
                 node = node->mPrev;
@@ -805,7 +415,7 @@ void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other,
                    cf::CfObjectActor* target) {
     // 1. Activate the resident actor whose unk0 references @p target.
     cf::CChainActor* found = findActorByTarget((u32)target, self);
-    if (found != 0) ((CChainActorVtIf*)found)->v018();
+    if (found != 0) found->_vf50();
     func_8027C45C(other);
     // 2. Sweep every actor; the ones chainable against target move into @p other.
     sweepChainable(self, other, target);
@@ -872,35 +482,33 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
     cf::CChainActor* actor = findActorForKey(self, key);
     if (actor == 0) return 0;
     // The candidate must pass its own activation gate (vtable[19]).
-    int gate = (actor != 0) ? ((CChainActorVtIf*)actor)->v017() : 0;
+    int gate = (actor != 0) ? actor->_vf4C() : 0;
     if (gate == 0) return 0;
     // ... and must be chainable against the key's move sub-object.
-    if (((CChainActorVtIf*)actor)->v006(
-            ((CChainSubVtIf*)&((CChainBattleObjTail*)key)->field_0x3E9C)
-                ->v017()) == 0)
+    if (actor->_vf20(
+            reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)key)->field_0x3E9C)->v17()) == 0)
         return 0;
     // ... and must pass the "already chained" anti-gate (vtable[29]).
-    if (((CChainActorVtIf*)actor)->v027() != 0) return 0;
+    if (actor->_vf74() != 0) return 0;
     // The battle object's probed address must not be in any of three states.
     if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xeb) != 0) return 0;
     if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xcb) != 0) return 0;
     if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xf8) != 0) return 0;
     // The battle object's arts-selection state must not match the no-chain id.
-    int local = *((CChainSubVtIf*)((CChainTargetObj*)key)->field_4)->v010();
+    int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(((CChainTargetObj*)key)->field_4)->f30());
     if (func_80174C98((CChainTargetObj*)key, &local, 0x1f) != 0) return 0;
     if (func_8004C5EC((void*)((CChainBattleObjTail*)key)->field_0x3F60) == 0x31)
         return 0;
-    if (((CChainActorVtIf*)actor)->v007(1) == 0) return 0;
+    if (actor->_vf24(1) == 0) return 0;
     // Count how many other actors are chainable against the candidate. The
     // sentinel is NOT cached here: retail re-reads self->... every iteration.
     int count = 0;
     _reslist_node<cf::CChainActor*>* cur;
     for (cur = self->mChainActorList.mStartNodePtr->mNext;
          cur != self->mChainActorList.mStartNodePtr; cur = cur->mNext) {
-        if (((CChainActorVtIf*)cur->mItem)->v016((int)key) != 0) {
-            if (((CChainActorVtIf*)cur->mItem)->v006(
-                    ((CChainSubVtIf*)&((CChainBattleObjTail*)key)->field_0x3E9C)
-                        ->v017()) != 0) {
+        if (cur->mItem->vf48((void*)(int)key) != 0) {
+            if (cur->mItem->_vf20(
+                    reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)key)->field_0x3E9C)->v17()) != 0) {
                 count++;
             }
         }
@@ -922,7 +530,7 @@ int func_8027BE84(cf::CChainActorList* self){
         if (func_80148778(&((CChainTargetObj*)node->mItem->unk0)->field_8, 0x10c) == 0 &&
             func_80148778(&((CChainTargetObj*)node->mItem->unk0)->field_8, 0xf8) == 0) {
             obj = (CChainTargetObj*)node->mItem->unk0;
-            int local = *((CChainSubVtIf*)((CChainTargetObj*)node->mItem->unk0)->field_4)->v010();
+            int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(((CChainTargetObj*)node->mItem->unk0)->field_4)->f30());
             if (func_80174C98(obj, &local, 0x801) != 0) return 1;
         }
         node = node->mNext;
@@ -1005,12 +613,12 @@ int func_8027C1A8(cf::CChainChanceS* self,
     if (self->mField08 >= 0xf) {
         return 0;
     }
-    int tblOff = lbl_eu_8050EDD0[((CChainBattleVtIf*)objA)->v192()];
+    int tblOff = lbl_eu_8050EDD0[reinterpret_cast<cf::CChainBattleObj*>(objA)->v192()];
     u32 pair = (u16)getTableValueByPair__Q22cf13CfGameManagerFv(
         objA->field_0x3F28, objB->field_0x3F28);
     u32 val;
-    if (((CChainBattleVtIf*)objA)->v160() != 0) {
-        ((CChainBattleVtIf*)objA)->v160();
+    if (reinterpret_cast<cf::CChainBattleObj*>(objA)->v160() != 0) {
+        reinterpret_cast<cf::CChainBattleObj*>(objA)->v160();
         val = (u16)func_8025FB10(objA, 0x6b);
     } else {
         val = 0;
@@ -1125,7 +733,7 @@ void func_8027C49C(cf::CChainList* self){
         if (base != 0) base += 0x3e9c;
         if (func_800B8920((void*)base) == 0) {
             cf::CChainActor* actor = *p;
-            ((CChainActorVtIf*)actor)->v003();
+            actor->_vf14();
             if ((int)self->mCount - i - 1 > 0) {
                 memcpy(p, p + 1, ((int)self->mCount - 1 - i) * 4);
             }
@@ -1141,7 +749,7 @@ void func_8027C49C(cf::CChainList* self){
 void func_8027C560(cf::CChainList* self) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* a = self->mActors[i];
-        ((CChainActorVtIf*)a)->v002();
+        a->_vf10();
     }
 }
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
@@ -1150,7 +758,7 @@ int func_8027C5E4(cf::CChainList* self, u32 key){
         if (self->mActors[i]->unk0 == key) {
             cf::CChainActor** p = &self->mActors[i];
             cf::CChainActor* actor = self->mActors[i];
-            ((CChainActorVtIf*)actor)->v003();
+            actor->_vf14();
             if ((int)self->mCount - i - 1 > 0) {
                 memcpy(p, p + 1, ((int)self->mCount - 1 - i) * 4);
             }
@@ -1174,7 +782,7 @@ int func_8027C5E4(cf::CChainList* self, u32 key){
         int next = (((idxVar) + 1 < (int)self->mCount) ? (idxVar) + 1 : 0); \
         cf::CChainActor* nextActor = \
             (next < (int)self->mCount) ? self->mActors[next] : 0; \
-        ((CChainActorVtIf*)actor)->v010(target, nextActor, 0); \
+        actor->_vf30(target, nextActor, 0); \
     } while (0)
 
 // Drives the chain-link call for one slot (@p index), or for every slot when
@@ -1224,8 +832,8 @@ extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
 // ? i+1 : 0` (the retail min idiom yields 0, not count, when i+1 >= count).
 void func_8027C924(cf::CChainList* self, int target){
     for (int i = 0; i < (int)self->mCount; i++) {
-        ((CChainActorVtIf*)self->mActors[i])->v004(target);
-        if (target != 0 && ((CChainActorVtIf*)self->mActors[i])->v021() != 0) {
+        self->mActors[i]->_vf18(target);
+        if (target != 0 && self->mActors[i]->_vf5C() != 0) {
             int next = (i + 1 < (int)self->mCount) ? (i + 1) : 0;
             if (i != next) {
                 cf::CChainActor* other = self->mActors[next];
@@ -1240,7 +848,7 @@ void func_8027C924(cf::CChainList* self, int target){
 int func_8027CA0C(cf::CChainList* self, int key) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* actor = self->mActors[i];
-        if (((CChainActorVtIf*)actor)->v020() == key)
+        if (actor->_vf58() == key)
             return 1;
     }
     return 0;
@@ -1255,7 +863,7 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
         p = self->mActors;
         for (int i = 0; i < (int)self->mCount; i++) {
             obj = (CChainTargetObj*)(*p)->unk0;
-            int local = *((CChainSubVtIf*)obj->field_4)->v010();
+            int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(obj->field_4)->f30());
             if (func_80174C98(obj, &local, target) != 0) return 1;
             p++;
         }
@@ -1265,7 +873,7 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
     p = self->mActors;
     for (int i = 0; i < (int)self->mCount; i++) {
         obj = (CChainTargetObj*)(*p)->unk0;
-        int local = *((CChainSubVtIf*)obj->field_4)->v010();
+        int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(obj->field_4)->f30());
         if (func_80174C98(obj, &local, target) == 0) return 0;
         p++;
     }
@@ -1283,8 +891,8 @@ void func_8027CBE8(cf::CChainCounter* self) {
 }
 // Copies the owner's arts-param tuning values into the 3x8 slot table and
 // marks it enabled.
-void func_8027CC3C(cf::CChainMusic* self, CArtsSetOwnerShim* owner){
-    cf::CArtsSet* arts = owner->getArtsSet();
+void func_8027CC3C(cf::CChainMusic* self, cf::CChainBattleObj* owner){
+    cf::CArtsSet* arts = (cf::CArtsSet*)(cf::CArtsSet*)reinterpret_cast<cf::CChainBattleObj*>(owner)->v157();
     float fallback = lbl_eu_80668A80;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 8; j++) {
@@ -1299,9 +907,9 @@ void func_8027CC3C(cf::CChainMusic* self, CArtsSetOwnerShim* owner){
 }
 // Writes the 3x8 slot table back into the owner's arts-param tuning values
 // and clears the enable flag.
-void func_8027CD08(cf::CChainMusic* self, CArtsSetOwnerShim* owner){
+void func_8027CD08(cf::CChainMusic* self, cf::CChainBattleObj* owner){
     if (self->mEnabled == 0) return;
-    cf::CArtsSet* arts = owner->getArtsSet();
+    cf::CArtsSet* arts = (cf::CArtsSet*)(cf::CArtsSet*)reinterpret_cast<cf::CChainBattleObj*>(owner)->v157();
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 8; j++) {
             if (getArtsSlotRC(arts, (short)i, (short)j) != 0) {

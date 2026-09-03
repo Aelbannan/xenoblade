@@ -249,6 +249,38 @@ s32 cf::CChainActorEne::func_802818DC() {
     return 1;
 }
 
+namespace cf {
+CChainActorEne::CChainActorEne() { vtbl() = &lbl_eu_80538458; }
+CChainActorEne::~CChainActorEne() {}
+void CChainActorEne::_vf0C(int) {}
+void CChainActorEne::_vf10() {}
+void CChainActorEne::_vf14() {}
+void CChainActorEne::_vf18(int) {}
+void CChainActorEne::_vf1C(int) {}
+int CChainActorEne::_vf20(int) { return 0; }
+int CChainActorEne::_vf24(int) { return 0; }
+int CChainActorEne::_vf28() { return 0; }
+int CChainActorEne::_vf2C() { return 0; }
+void CChainActorEne::_vf30(int, CChainActor*, int) {}
+void CChainActorEne::_vf34() {}
+void CChainActorEne::_vf38(int, int) {}
+int CChainActorEne::_vf3C() { return 0; }
+int CChainActorEne::_vf40() { return 0; }
+int CChainActorEne::_vf44(void *a) { return 0; }
+int CChainActorEne::vf48(void *a) { return 0; }
+int CChainActorEne::_vf4C() { return 0; }
+void CChainActorEne::_vf50() {}
+int CChainActorEne::_vf54() { return 0; }
+int CChainActorEne::_vf58() { return 0; }
+int CChainActorEne::_vf5C() { return 0; }
+int CChainActorEne::_vf60() { return 0; }
+void CChainActorEne::_vf64(int) {}
+int CChainActorEne::_vf68() { return 0; }
+void CChainActorEne::_vf6C(int) {}
+int CChainActorEne::_vf70() { return 0; }
+int CChainActorEne::_vf74() { return 0; }
+}
+
 extern "C" int func_802818E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->vf48(*(void**)arg); }
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.

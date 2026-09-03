@@ -210,32 +210,9 @@ public:
     u32 field_0x3F60;    //0x3F60
 };
 
-// Interface for the move sub-object's vtable: declared virtual #10 lands at
-// vtable offset +0x30 under -RTTI (retail func_8027BE84 dispatches there and
-// dereferences the returned pointer). Casting the sub-object and calling this
-// virtual makes MWCC emit the r12 dispatch, like CChainActorVtIf. Slot 19
-// (+0x4c) is the move-sub-object getter used by func_8027BC14.
-class CChainSubVtIf {
-public:
-    virtual void v000() = 0;
-    virtual void v001() = 0;
-    virtual void v002() = 0;
-    virtual void v003() = 0;
-    virtual void v004() = 0;
-    virtual void v005() = 0;
-    virtual void v006() = 0;
-    virtual void v007() = 0;
-    virtual void v008() = 0;
-    virtual void v009() = 0;
-    virtual int* v010() = 0;  // slot 12 / +0x30
-    virtual void v011() = 0;
-    virtual void v012() = 0;
-    virtual void v013() = 0;
-    virtual void v014() = 0;
-    virtual void v015() = 0;
-    virtual void v016() = 0;
-    virtual int  v017() = 0;  // slot 19 / +0x4c
-};
+// (Former CChainSub4/CChainVoiceSub pad removed: slots are on the owning objects –
+// +0x30 is cf::CChainSub4::f30(), +0x4C is cf::CChainVoiceSub::v17()
+// in CChainTimer.hpp. Call sites in CChainActorList.cpp now use those.)
 
 // Manual vtable objects stored by the Pc/Ene constructors (retail .data).
 // Declared at their full retail sizes (0x78 / 0x10) so MWCC emits the

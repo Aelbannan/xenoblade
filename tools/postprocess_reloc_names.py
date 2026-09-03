@@ -2669,7 +2669,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668910"),
         ),    ),
     "CfGimmickEne.o": UnitRules(
-        extern_data_sections=(".sdata",),
+        patch_data=((".sdata", 0x27, b"\x00"),),
+        extern_data_sections=(),
         copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         # int->double magic 2^52 and read-only 1.0f -> the shared .sdata2
         # pool (bytes verified: lbl_eu_80668980 / lbl_eu_80668968; note
@@ -3458,9 +3459,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
     "CfMapItemManager.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
+        drop_data_tail=((".data", 0x70), (".sdata2", 0x70),),
+        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
+    ),
+    "CfResObjImpl.o": UnitRules(
+        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".sbss"),
     ),
     "CfGimmickObject.o": UnitRules(
+        drop_data_tail=((".data", 0x100), (".sdata2", 0x30),),
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
     ),
     "CfNandManager.o": UnitRules(
@@ -7458,7 +7464,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # split1.s (lbl_eu_8052F5A8/F5C0 vtables, 806677Exx sdata2 pool); the
         # source stores vptrs from blob labels directly and no reloc
         # references any local copy. Strip.
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".sbss"),
+        drop_nobits_range=((".sbss", 0, 4),),
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
         exact_renames=(
             # Retail tail-merges UnkVirtualFunc180's body under its virtual
             # (Fv) symbol; our fake-Fv free-function definition (self+Arg
@@ -7471,7 +7478,7 @@ UNIT_RULES: dict[str, UnitRules] = {
                 "CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv",
             ),
         ),
-        drop_data_range=((".rodata", 0x10, 0x58), (".sdata", 0, 0x20), (".sdata2", 0, 0x60), (".sbss", 0, 4), (".data", 0x140, 0x610)),
+        drop_data_range=((".rodata", 0x10, 0x58), (".sdata", 0, 0x20), (".sdata2", 0, 0x60), (".data", 0x140, 0x610)),
     ),
 
     "CMenuQstCnt.o": UnitRules(
@@ -7824,6 +7831,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         # matcher pins the float rename to .sdata2; effective mapping is
         # unchanged (pool starts with the LO pair, so only lbl_eu_806681C0
         # ever bound under used_targets).
+        drop_data_tail=((".data", 0x100), (".sdata2", 0x30),),
         data_pool_patterns=(
             (".sdata2", struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_806681A8"),
             (".sdata2", struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806681C0"),

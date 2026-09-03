@@ -10,6 +10,34 @@ extern const void* lbl_eu_805280D8[];
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"             // CItem_initItemImplInstances shim
+#undef CItem_initItemImplInstances
+// Minimal CItemImpl definition for the 5 slots used by this TU (real vtable layout).
+// Full definition lives in kyoshin/cf/CItem.hpp, but including it would redeclare lbl_eu symbols.
+struct CItemData;
+class CItemImpl {
+public:
+    virtual u32 vf08(CItemData* p);
+    virtual void vf0C(CItemData* p, u32 x);
+    virtual void vf10(CItemData* p);
+    virtual void vf14();
+    virtual void vf18();
+    virtual u32 vf1C(CItemData* p);
+    virtual void vf20();
+    virtual void vf24();
+    virtual u16 vf28(CItemData* p, const char* col);
+    virtual void* vf2C(CItemData* p, u32 x);
+    virtual u32 vf30(CItemData* p);
+    virtual void vf34(CItemData* p, u32 x);
+    virtual void vf38();
+    virtual void vf3C(CItemData* p, u32 x);
+    virtual u32 vf40(CItemData* p, u32 x);
+    virtual void vf44(CItemData* p, u32 x, u32 y);
+    virtual void vf48(CItemData* p);
+    virtual u32 vf4C(CItemData* p, u32 x);
+    virtual u32 vf50(CItemData* p, u32 x, u16 y);
+    virtual void vf54();
+};
+extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 // func_800B8B94 (actor lookup): declared locally - CAIAction.hpp conflicts
 // with CfGameManager.hpp's getInstance__Q22cf14CBattleManagerFv return type.
 extern "C" void* func_800B8B94(s32);
@@ -271,8 +299,8 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc94() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_1650;
 }
 
-extern "C" void func_80155CD0(void* a, void* b);
-extern "C" void func_8009DB1C(void* ignored, void* a, void* b) { func_80155CD0(a, b); }
+extern "C" u32 func_80155CD0(void* a, void* b);
+extern "C" u32 func_8009DB1C(void* ignored, void* a, void* b) { return func_80155CD0(a, b); }
 
 extern "C" void func_8009DB28(void* selfV, u32 index) {
     cf::CtrlObjectParamEquipRow* self = (cf::CtrlObjectParamEquipRow*)selfV;
@@ -283,7 +311,7 @@ extern "C" void func_8009DB28(void* selfV, u32 index) {
         inst = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[index]);
     }
     if (inst != 0) {
-        reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(inst))->_v10(inst);
+        CItem_initItemImplInstances(reinterpret_cast<CItemData*>(inst))->vf10(reinterpret_cast<CItemData*>(inst));
     }
     self->shortArr[index] = -1;
     self->field_0E[index] = 0;
@@ -364,11 +392,11 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
                 const char* strBase = lbl_eu_804FBCB0;
                 union { u32 w[2]; f64 d; } c1;
                 union { u32 w[2]; f64 d; } c2;
-                u16 v1 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item2))->_v28(item2, &strBase[0x22]);
+                u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &strBase[0x22]);
                 c1.w[0] = 0x43300000;
                 c1.w[1] = (u32)(mult * v1) ^ 0x80000000;
                 SELF->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
-                u16 v2 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item2))->_v28(item2, &strBase[0x2A]);
+                u16 v2 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &strBase[0x2A]);
                 c2.w[0] = 0x43300000;
                 c2.w[1] = (u32)(mult * v2) ^ 0x80000000;
                 SELF->field_D6 = (s16)(lbl_eu_80666784 * (f32)(c2.d - lbl_eu_80666788));
@@ -1318,10 +1346,10 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
                 self->mParam.CActorParam_UnkVirtualFunc94());
             u16 w0 = (u16)v94b->word0;
             if ((self->field_E6 & 4) != 0) {
-                u16 v1 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v28(item, &lbl_eu_804FBCB0[0x22]);
+                u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x22]);
                 convB.w[1] = (u32)(w0 * v1) ^ 0x80000000;
                 self->field_D4 = (s16)(f30 * (f32)(convB.d - f29));
-                u16 v2 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v28(item, &lbl_eu_804FBCB0[0x2A]);
+                u16 v2 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x2A]);
                 convA.w[1] = (u32)(w0 * v2) ^ 0x80000000;
                 self->field_D6 = (s16)(f31 * (f32)(convA.d - f29));
                 if (self->field_D4 > cap) self->field_D4 = cap;
@@ -1351,10 +1379,10 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
             self->mParam.CActorParam_UnkVirtualFunc94());
         u16 w0 = (u16)v94->word0;
         if ((self->field_E6 & 4) != 0) {
-            u16 v1 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item2))->_v28(item2, &lbl_eu_804FBCB0[0x22]);
+            u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &lbl_eu_804FBCB0[0x22]);
             convB.w[1] = (u32)(w0 * v1) ^ 0x80000000;
             self->field_D4 = (s16)(lbl_eu_80666780 * (f32)(convB.d - lbl_eu_80666788));
-            u16 v2 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item2))->_v28(item2, &lbl_eu_804FBCB0[0x2A]);
+            u16 v2 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &lbl_eu_804FBCB0[0x2A]);
             convA.w[1] = (u32)(w0 * v2) ^ 0x80000000;
             self->field_D6 = (s16)(lbl_eu_80666784 * (f32)(convA.d - lbl_eu_80666788));
             if (self->field_D4 > 0x3e7) self->field_D4 = 0x3e7;
@@ -1490,16 +1518,14 @@ void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
             self->mParam.CActorParam_UnkVirtualFunc94());
         u32 w0 = (u16)view2->word0;
         if ((self->field_E6 & 4) != 0) {
-            CItemImplVt* impl1 = reinterpret_cast<CItemImplVt*>(
-                CItem_initItemImplInstances(item));
-            u32 v1raw = impl1->_v28(item, &lbl_eu_804FBCB0[0x22]);
+            CItemImpl* impl1 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
+            u32 v1raw = impl1->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x22]);
             u16 v1 = *(const u16*)&v1raw;   // memory round-trip (retail stw 0x8(sp)/lhz)
             c1.w[0] = 0x43300000;
             c1.w[1] = (u32)(w0 * v1) ^ 0x80000000;
             self->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
-            CItemImplVt* impl2 = reinterpret_cast<CItemImplVt*>(
-                CItem_initItemImplInstances(item));
-            u32 v2raw = impl2->_v28(item, &lbl_eu_804FBCB0[0x2A]);
+            CItemImpl* impl2 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
+            u32 v2raw = impl2->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x2A]);
             u16 v2 = *(const u16*)&v2raw;   // memory round-trip (retail stw 0xc(sp)/lhz)
             c2.w[0] = 0x43300000;
             c2.w[1] = (u32)(w0 * v2) ^ 0x80000000;
@@ -1824,11 +1850,11 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
             if ((self->field_E6 & 4) != 0) {
                 union { u32 w[2]; f64 d; } c1;
                 union { u32 w[2]; f64 d; } c2;
-                u16 v1 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v28(item, &strBase[0x22]);
+                u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x22]);
                 c1.w[0] = magic;
                 c1.w[1] = (u32)(w0 * v1) ^ 0x80000000;
                 self->field_D4 = (s16)(scaleA * (f32)(c1.d - convConst));
-                u16 v2 = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v28(item, &strBase[0x2A]);
+                u16 v2 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &strBase[0x2A]);
                 c2.w[0] = magic;
                 c2.w[1] = (u32)(w0 * v2) ^ 0x80000000;
                 self->field_D6 = (s16)(scaleB * (f32)(c2.d - convConst));
@@ -2420,8 +2446,8 @@ extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner
     }
     if (item != 0) {
         int i = 0;
-        while (i < (u16)(reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v30(item))) {
-            void* srcRow = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item))->_v2C(item, i);
+        while (i < (u16)(CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf30(reinterpret_cast<CItemData*>(item)))) {
+            void* srcRow = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf2C(reinterpret_cast<CItemData*>(item), i);
             if (srcRow != 0) {
                 func_800A2DE8(&table,
                               reinterpret_cast<cf::CtrlObjectParamArtsSrcRow*>(srcRow), 1);
@@ -2435,7 +2461,7 @@ extern "C" __declspec(noinline) void func_800A30E4(cf::CtrlObjectParamActorOwner
             item2 = func_80157C4C(i > 4 ? 2 : i + 4, row->shortArr[i]);
         }
         if (item2 != 0) {
-            void* srcRow = reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(item2))->_v2C(item2, 0);
+            void* srcRow = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf2C(reinterpret_cast<CItemData*>(item2), 0);
             if (srcRow != 0) {
                 func_800A2DE8(&table,
                               reinterpret_cast<cf::CtrlObjectParamArtsSrcRow*>(srcRow), 0);
@@ -2485,7 +2511,7 @@ extern "C" void func_800A3304() {
                     *(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C));
             }
             if (inst != 0) {
-                reinterpret_cast<CItemImplVt*>(CItem_initItemImplInstances(inst))->_v48(inst);
+                CItem_initItemImplInstances(reinterpret_cast<CItemData*>(inst))->vf48(reinterpret_cast<CItemData*>(inst));
             }
             vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(
                 reinterpret_cast<char*>(vp) + 2);

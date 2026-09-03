@@ -2086,16 +2086,27 @@ extern "C" u32 func_800BEE08(u32 id, u32 flag) {
 extern "C" void func_800BEE30() {}
 extern "C" void func_800BF2F4() {}
 
-// absorb: rodata + sdata2 (retail split1.s)
-__attribute__((section(".rodata"), used)) const unsigned char __absorb_CfObjectMove_rodata[0x20] = {
-    0x6D,0x61,0x70,0x41,0x54,0x52,0x00,0x64,0x65,0x66,0x5F,0x6D,0x6F,0x75,0x6E,0x74,
-    0x00,0x62,0x61,0x74,0x5F,0x6D,0x6F,0x75,0x6E,0x74,0x00,0x00,0x00,0x00,0x00,0x00
-};
-__attribute__((section(".sdata2"), used)) const unsigned char __absorb_CfObjectMove_sdata2[0x58] = {
-    0x00,0x00,0x00,0x00,0x3F,0x66,0x66,0x66,0x41,0xF0,0x00,0x00,0x3F,0x80,0x00,0x00,
-    0x40,0x4F,0x5C,0x28,0x3E,0xCC,0xCC,0xCD,0x3F,0xB3,0x33,0x33,0x3D,0xCC,0xCC,0xCD,
-    0x3F,0x33,0x33,0x33,0x3C,0xF5,0xC2,0x8F,0x3D,0x75,0xC2,0x8F,0x3D,0x4C,0xCC,0xCD,
-    0x3C,0x17,0xB4,0x26,0x42,0x22,0xF9,0x83,0xBD,0xCC,0xCC,0xCD,0x3E,0x99,0x99,0x9A,
-    0x41,0x20,0x00,0x00,0x46,0x1C,0x40,0x00,0x3F,0x00,0x00,0x00,0x40,0x80,0x00,0x00,
-    0x40,0x19,0x99,0x9A,0x00,0x00,0x00,0x00
-};
+// typed data sections — source shape for retail bytes (replaces absorb blobs)
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FC550[0x20] = "mapATR\0def_mount\0bat_mount";
+
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A88 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A8C = 0.9f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A90 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A94 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A98 = 3.2399998f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666A9C = 0.4f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA0 = 1.4f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA4 = 0.1f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AA8 = 0.7f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AAC = 0.03f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB0 = 0.06f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB4 = 0.05f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AB8 = 0.009259259f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666ABC = 40.743664f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC0 = -0.1f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC4 = 0.3f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AC8 = 10.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666ACC = 10000.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD0 = 0.5f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666AD4 = 4.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(8))) const float lbl_eu_80666AD8[2] = {2.4f, 0.0f};

@@ -11,16 +11,16 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 15246 |
-| extern "C" declarations (non-lbl_*, imports) | 6725 |
-| extern "C" definitions (forced names) | 3956 |
-| `self`/register-style params | 13008 |
-| `void*` (params + locals) | 7808 |
-| raw pointer offset arithmetic | 7481 |
-| deref-through-cast arithmetic | 2882 |
+| extern "C" (total lines) | 15361 |
+| extern "C" declarations (non-lbl_*, imports) | 6777 |
+| extern "C" definitions (forced names) | 3958 |
+| `self`/register-style params | 13055 |
+| `void*` (params + locals) | 7831 |
+| raw pointer offset arithmetic | 7502 |
+| deref-through-cast arithmetic | 2885 |
 | inline asm / `register` | 126 |
-| rN-named params | 463 |
-| goto | 3679 |
+| rN-named params | 462 |
+| goto | 3681 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 10 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
@@ -405,7 +405,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfGimmickEne.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 1 | 1 | 12 | 1 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 8 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 56 | 5 | 4 | 0 | 4 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 33 | 15 | 31 | 11 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -590,7 +590,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 20 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 5 | 0 | 9 | 7 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 34 | 1 | 77 | 70 | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 0 | 0 | 4 | 4 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 52 | 2 | 51 | 25 | 21 | 3 | 0 | 3 | 2 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 51 | 19 | 56 | 68 | 11 | 1 | 0 | 10 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelPc.cpp | 36 | 14 | 35 | 69 | 5 | 0 | 0 | 3 | 2 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMovie.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4340,7 +4340,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 4,
   "schedule_pragma": 0,
   "self_params": 21,
-  "void_ptr": 8
+  "void_ptr": 10
  },
  "src/kyoshin/cf/CfGimmickObject.cpp": {
   "asm_code": 4,
@@ -6312,11 +6312,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/realtimeevt/CREvtModelMap.cpp": {
   "asm_insn_shim": 0,
+  "deref_arith": 3,
+  "extern_c_nonlbl_decl": 52,
+  "extern_c_nonlbl_def": 2,
+  "goto_count": 2,
   "init_side_effect": 0,
-  "rn_params": 4,
+  "ptr_arith": 21,
+  "rn_params": 3,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 4
+  "self_params": 51,
+  "void_ptr": 25
  },
  "src/kyoshin/realtimeevt/CREvtModelObj.cpp": {
   "asm_insn_shim": 0,

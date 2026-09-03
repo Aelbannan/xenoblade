@@ -19,7 +19,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc3(); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void CfObject_UnkVirtualFunc6();      //0x68
+        virtual void CfObject_UnkVirtualFunc6(int flag);      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
         virtual bool CfObject_UnkVirtualFunc9();      //0x74
@@ -101,8 +101,15 @@ namespace cf {
         virtual float CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual float CfObject_UnkVirtualFunc73();     //0x174
+        virtual void CfObject_UnkVirtualFunc74(); //0x178
+        virtual void CfObject_UnkVirtualFunc75(); //0x17C
+        virtual void CfObject_UnkVirtualFunc76(); //0x180
+        virtual void CfObject_UnkVirtualFunc77(); //0x184
+        virtual void CfObject_UnkVirtualFunc78(); //0x188
+        virtual void CfObject_UnkVirtualFunc79(); //0x18C
+        virtual void CfObject_UnkVirtualFunc80(int flag); //0x190
 
-        //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
+        //not sure if belongs here?
         void requestVoice(int, u32, float, float);
 
 

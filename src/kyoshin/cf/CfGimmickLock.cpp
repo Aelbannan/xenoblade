@@ -40,7 +40,7 @@ extern "C" void* __ct__cf_CfGimmickLock(cf::CfGimmickLock* self, u16 row) {
     // Four lock-id columns; the shared column-name buffer is patched in place
     // with the per-slot character (index + 0x31).
     for (int i = 0; i < 4; ++i) {
-        u8* nameBuf = lbl_eu_80662798;
+        u8* nameBuf = (u8*)lbl_eu_80662798[0];
         nameBuf[5] = (u8)(i + 0x31);
         u32 v = getBdatStringColumnValue(holder, (const char*)nameBuf, row);
         // Base+displacement store (offset last) so MWCC keeps the retail
@@ -527,19 +527,23 @@ int func_8020D368(cf::CfGimmickLock* self, void* target) {
     return 0;
 }
 
-// absorb: split1 retail data sections
-// generated from retail build/us/asm via absorb
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickLock_cpp_rodata[0x20] = {
-    0x63, 0x66, 0x3A, 0x3A, 0x43, 0x66, 0x47, 0x69, 0x6D, 0x6D, 0x69, 0x63,
-    0x6B, 0x4C, 0x6F, 0x63, 0x6B, 0x00, 0x00, 0x00, 0x72, 0x6F, 0x63, 0x6B,
-    0x54, 0x59, 0x50, 0x45, 0x00, 0x00, 0x00, 0x00
-};
-__declspec(section ".sdata") __attribute__((aligned(8), used)) unsigned char __absorb_kyoshin_cf_CfGimmickLock_cpp_sdata[0x10] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01
-};
-__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickLock_cpp_sdata2[0x20] = {
-    0x70, 0x6F, 0x70, 0x49, 0x44, 0x31, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
-    0x3C, 0x23, 0xD7, 0x0A, 0x3F, 0x00, 0x00, 0x00, 0x3D, 0x4C, 0xCC, 0xCD,
-    0x3F, 0x80, 0x00, 0x00, 0x41, 0xF0, 0x00, 0x00
-};
+// typed data sections — source shape for retail bytes (replaces absorb blobs)
+// .rodata 0x20: two strings with pad; .sdata 0x10: two 8-byte pointer tables; .sdata2 0x20: "popID1" + 6 floats
+extern "C" {
+extern char lbl_eu_80508668[];
+extern char lbl_eu_805358EC[];
+extern const char lbl_eu_806683A8[];
+}
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_805086D8[0x14] = "cf::CfGimmickLock";
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805086EC[0x0C] = "rockTYPE";
+
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662790[2] = { lbl_eu_80508668, lbl_eu_805358EC };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80662798[2] = { lbl_eu_806683A8, nullptr };
+
+__declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_806683A8[] = "popID1";
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B0 = 2.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B4 = 0.01f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683B8 = 0.5f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683BC = 0.05f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683C0 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806683C4 = 30.0f;

@@ -220,7 +220,7 @@ extern const f32 lbl_eu_806683C0;
 extern const f32 lbl_eu_806683C4;
 extern void* lbl_eu_80665958;
 extern void* lbl_eu_8066412C;    // bdat holder seed (sda21 pointer global)
-extern u8* lbl_eu_80662798;      // sda21 pointer to the lock-id column name buffer
+extern const void* lbl_eu_80662798[2];      // sda21 pointer table (first word is lock-id column name buffer)
 extern char lbl_eu_805086EC[];   // column-name string for configFlags
 extern void* lbl_eu_80663E10;    // scene/manager global
 extern u32 lbl_eu_806646BC;

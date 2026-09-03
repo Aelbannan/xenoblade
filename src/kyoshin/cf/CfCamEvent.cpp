@@ -401,11 +401,11 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
     0
 };
 
-__declspec(section ".rodata") __attribute__((aligned(1))) __attribute__((used)) const char lbl_eu_804FB470[] = "cf::CfCamEvent";
-__declspec(section ".rodata") __attribute__((aligned(1))) __attribute__((used)) const char lbl_eu_804FB480[] = "cf::CfCamTargetIntf";
-__declspec(section ".rodata") __attribute__((aligned(1))) __attribute__((used)) const char lbl_eu_804FB494[] = "cf::CfCamLookatIntf";
-__declspec(section ".rodata") __attribute__((aligned(1))) __attribute__((used)) const char lbl_eu_804FB4A8[] = "cf::CfCamDirectionIntf";
-__declspec(section ".rodata") __attribute__((aligned(1))) __attribute__((used)) const char lbl_eu_804FB4C0[] = "cf::CfCamIntf";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB470[0x10] = "cf::CfCamEvent";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB480[0x14] = "cf::CfCamTargetIntf";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB494[0x14] = "cf::CfCamLookatIntf";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB4A8[0x18] = "cf::CfCamDirectionIntf";
+__declspec(section ".rodata") __attribute__((used)) const char lbl_eu_804FB4C0[0x10] = "cf::CfCamIntf";
 
 
 
@@ -473,10 +473,14 @@ __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(8))) co
 __attribute__((section(".data"), used, nocommon)) __attribute__((aligned(4))) const volatile unsigned char lbl_eu_805271FC[0x0C] = {0};
 #pragma pop
 
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_cf_CfCamEvent_sdata2[0x34] = {
-    0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x3F, 0x00, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00,
-    0x3F, 0x80, 0x00, 0x00, 0x40, 0xA0, 0x00, 0x00, 0x48, 0x69, 0x67, 0x68,
-    0x00, 0x00, 0x00, 0x00, 0x4E, 0x6F, 0x72, 0x6D, 0x61, 0x6C, 0x00, 0x00,
-    0x4C, 0x6F, 0x77, 0x00
-};
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666268 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066626C = 2.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666270 = 3.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666274 = 0.1f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666278 = 0.5f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066627C = -1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666280 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80666284 = 5.0f;
+__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666288[] = "High";
+__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666290[] = "Normal";
+__declspec(section ".sdata2") __attribute__((used)) char lbl_eu_80666298[] = "Low";

@@ -2384,9 +2384,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CfCamEvent.o": UnitRules(
-        # Static camera-interface instances ship from the retail sbss slice;
-        # source already names them lbl_eu_* (strip keeps UNDEF refs).
-        extern_data_sections=(".bss", ".sbss"),
+        extern_data_sections=(".bss",),
     ),
     "CfGameManager.o": UnitRules(
         # int->double magic -> lbl_eu_80666530 (content match); all other
@@ -7942,6 +7940,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668388"),
         ),
+        drop_data_tail=((".sdata2", 0x28),),
     ),
     "CfGimmickWarp.o": UnitRules(
         # Signed int->double magic; lbl_eu_806683F0 = 0x4330000080000000.
@@ -8676,7 +8675,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         copy_data_sections=(".sbss",),
     ),
     "CfGimmickLock.o": UnitRules(
-        patch_data=((".sdata", 0xF, b"\x00"),),
     ),
     "CfGimmickItem.o": UnitRules(
         copy_data_sections=(".sdata",),

@@ -488,7 +488,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectMap.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectModel.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectMove.cpp"),
-            Object(NonMatching, "kyoshin/cf/object/CfObjectNpc.cpp"),
+            Object(NonMatching, "kyoshin/cf/object/CfObjectNpc.cpp", extra_cflags=["-RTTI off"]),
             Object(Matching, "kyoshin/cf/object/CfObjectObj.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectPc.cpp"),
             Object(Matching, "kyoshin/cf/object/CfObjectPoint.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI .rodata; -RTTI off drops the typeinfo strings so the unit carries no data sections

@@ -15,17 +15,18 @@ extern "C" int func_8013EB90(int v);
 
 // Retail data labels referenced by this unit. lbl_eu_80663E24 and
 // lbl_eu_80663E14 come from CfObjectMove.hpp.
-extern u8 lbl_eu_804FC580[];   // BDAT column-name string table base
+extern const char lbl_eu_804FC570[0x10];
+extern const char lbl_eu_804FC580[0x38];   // BDAT column-name string table base
 extern void* lbl_eu_805298B8[];   // CfObjectNpc vtable (stored by the ctor)
-extern float lbl_eu_80666AE0;
-extern float lbl_eu_80666AE4;
-extern float lbl_eu_80666AE8;
-extern float lbl_eu_80666AEC;
-extern float lbl_eu_80666AF0;
-extern float lbl_eu_80666AF4;
-extern float lbl_eu_80666AF8;
-extern float lbl_eu_80666AFC;
-extern double lbl_eu_80666B00;   // int->float conversion bias (2^52, sdata2)
+extern const float lbl_eu_80666AE0;
+extern const float lbl_eu_80666AE4;
+extern const float lbl_eu_80666AE8;
+extern const float lbl_eu_80666AEC;
+extern const float lbl_eu_80666AF0;
+extern const float lbl_eu_80666AF4;
+extern const float lbl_eu_80666AF8;
+extern const float lbl_eu_80666AFC;
+extern const double lbl_eu_80666B00;   // int->float conversion bias (2^52, sdata2)
 
 // ---------------------------------------------------------------------------
 // Retail constructor (hidden-parameter form)

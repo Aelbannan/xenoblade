@@ -1456,9 +1456,17 @@ __declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned c
     0x00, 0x00, 0x00, 0x00, 0x25, 0x73, 0x28, 0x25, 0x78, 0x29, 0x00, 0x4A, 0x55, 0x73, 0x70, 0x41,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
-extern char __dummy_CfResPcImpl_sdata;
+extern const unsigned char __absorb_CfResPcImpl_sdata2[0x30];
 __attribute__((section(".sdata"), used, aligned(8))) void* __absorb_CfResPcImpl_sdata[8] = {
-    (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata,
-    (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata, (void*)&__dummy_CfResPcImpl_sdata
+    (void*)&__absorb_CfResPcImpl_sdata2[0],(void*)&__absorb_CfResPcImpl_sdata2[4],(void*)&__absorb_CfResPcImpl_sdata2[8],(void*)&__absorb_CfResPcImpl_sdata2[12],
+    (void*)&__absorb_CfResPcImpl_sdata2[16],(void*)&__absorb_CfResPcImpl_sdata2[20],(void*)&__absorb_CfResPcImpl_sdata2[24],(void*)&__absorb_CfResPcImpl_sdata2[28]
 };
-char __dummy_CfResPcImpl_sdata = 0;
+// sdata2 retail 0x30 - single packed array to avoid per-float alignment padding
+__declspec(section ".sdata2") __attribute__((used)) const unsigned char __sdata2_CfResPcImpl_bytes[0x30] = {
+    0x00,0x00,0x00,0x00, 0x40,0x00,0x00,0x00, 0xC1,0x00,0x00,0x00, 0x3F,0x33,0x33,0x33,
+    0x3F,0xB3,0x33,0x33, 0xBD,0xCC,0xCC,0xCD, 0x3E,0x99,0x99,0x9A, 0x40,0x40,0x00,0x00,
+    0x3F,0x80,0x00,0x00, 0x41,0xA0,0x00,0x00, 0x3F,0x00,0x00,0x00, 0x00,0x00,0x00,0x00
+};
+
+// sdata2 retail 0x30: 0x00..0x2C floats (see build/us/asm/kyoshin/cf/CfResPcImpl.s .sdata2)
+

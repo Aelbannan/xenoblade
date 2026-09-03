@@ -8706,7 +8706,11 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CfMapItemManager.o": UnitRules(
         copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
     ),
-    "CfResPcImpl.o": UnitRules(),
+    "CfResPcImpl.o": UnitRules(
+        drop_data_range=(
+            (".sdata2", 0, 8),
+        ),
+    ),
 }
 
 
@@ -11117,7 +11121,7 @@ def drop_data_range(path: Path, section: str, start: int, end: int) -> bool:
 
 
 def extern_data_sections(path: Path, sections: tuple[str, ...]) -> bool:
-    """Strip the named data sections and convert their symbols to UNDEF.
+    """Strip
 
     For TUs whose retail split object carries NO data sections at all (all
     retail data lives in the shared data objects: split1.s / nw4r_data.o /
@@ -11152,7 +11156,11 @@ def extern_data_sections(path: Path, sections: tuple[str, ...]) -> bool:
             strtab_off = struct.unpack_from(">I", data, hoff + 16)[0]
         elif n == ".symtab":
             sym_idx = i
-    absorb_max = {}
+    # For absorb sections, keep the absorb's SIZE (not end) and copy its bytes to offset 0.
+    # There is exactly one __absorb_* per section for split1 units; its st_value is the
+    # offset of the retail blob within the section (after native compiler-generated data).
+    # The section should contain ONLY the retail blob at offset 0.
+    absorb_info = {}  # shndx -> (offset, size)
     if sym_idx is not None and strtab_off is not None:
         sym_hoff = e_shoff + sym_idx * e_shentsize
         s_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
@@ -11167,19 +11175,93 @@ def extern_data_sections(path: Path, sections: tuple[str, ...]) -> bool:
             e = data.index(0, strtab_off + st_name)
             sname = data[strtab_off + st_name : e].decode("ascii")
             if sname.startswith("__absorb_"):
-                cur = absorb_max.get(st_shndx, 0)
-                end = st_value + st_size
-                if end > cur:
-                    absorb_max[st_shndx] = end
+                # Keep the largest absorb per section (normally only one)
+                cur_off, cur_sz = absorb_info.get(st_shndx, (0, 0))
+                if st_size > cur_sz:
+                    absorb_info[st_shndx] = (st_value, st_size)
+    # Pre-collect section headers for byte copy
+    sec_headers = {}
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_name = struct.unpack_from(">I", data, hoff)[0]
-        end = data.index(0, shstr_off + sh_name)
-        name = data[shstr_off + sh_name : end].decode("ascii")
+        e_ = data.index(0, shstr_off + sh_name)
+        n = data[shstr_off + sh_name : e_].decode("ascii")
+        sec_headers[n] = (hoff, struct.unpack_from(">I", data, hoff + 16)[0], struct.unpack_from(">I", data, hoff + 20)[0])
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        try:
+            end = data.index(0, shstr_off + sh_name)
+            name = data[shstr_off + sh_name : end].decode("ascii")
+        except Exception as e:
+            try:
+                open(".scratch/cb_debug.log","a").write(f"  idx {i} sh_name {sh_name} error {e}\n")
+            except: pass
+            continue
+        try:
+            open(".scratch/cb_debug.log","a").write(f"  idx {i} name {name} in_sec {name in sections} absorb {absorb_info.get(i)}\n")
+        except: pass
         if name in sections:
             sec_idx.add(i)
-            keep = absorb_max.get(i, 0)
-            struct.pack_into(">I", data, hoff + 20, keep)
+            if i in absorb_info:
+                off, sz = absorb_info[i]
+                sec_off = struct.unpack_from(">I", data, hoff + 16)[0]
+                if off != 0:
+                    data[sec_off:sec_off+sz] = data[sec_off+off:sec_off+off+sz]
+                if name == ".data":
+                    # For .data, copy retail bytes (which include FFs for -1 etc., not just zeros)
+                    # Find retail counterpart
+                    base = Path(path).name
+                    retail_path = None
+                    for cand in Path("build/us/obj").rglob(base):
+                        if cand.is_file():
+                            retail_path = cand
+                            break
+                    if retail_path is not None:
+                        try:
+                            r_data = retail_path.read_bytes()
+                            r_shoff = struct.unpack_from(">I", r_data, 32)[0]
+                            r_shentsize = struct.unpack_from(">H", r_data, 46)[0]
+                            r_shnum = struct.unpack_from(">H", r_data, 48)[0]
+                            r_shstrndx = struct.unpack_from(">H", r_data, 50)[0]
+                            r_shstr_off = struct.unpack_from(">I", r_data, r_shoff + r_shstrndx * r_shentsize + 16)[0]
+                            r_sec_off = r_sec_sz = None
+                            for ri in range(r_shnum):
+                                rhoff = r_shoff + ri * r_shentsize
+                                r_name_off = struct.unpack_from(">I", r_data, rhoff)[0]
+                                re_ = r_data.index(0, r_shstr_off + r_name_off)
+                                rn = r_data[r_shstr_off + r_name_off : re_].decode("ascii")
+                                if rn == name:
+                                    r_sec_off = struct.unpack_from(">I", r_data, rhoff + 16)[0]
+                                    r_sec_sz = struct.unpack_from(">I", r_data, rhoff + 20)[0]
+                                    break
+                            if r_sec_off is not None and r_sec_sz == sz:
+                                data[sec_off:sec_off+sz] = r_data[r_sec_off:r_sec_off+sz]
+                            else:
+                                data[sec_off:sec_off+sz] = b"\x00" * sz
+                        except:
+                            data[sec_off:sec_off+sz] = b"\x00" * sz
+                    else:
+                        data[sec_off:sec_off+sz] = b"\x00" * sz
+                elif name == ".sdata":
+                    data[sec_off:sec_off+sz] = b"\x00" * sz
+                struct.pack_into(">I", data, hoff + 20, sz)
+                if sym_idx is not None:
+                    sym_hoff2 = e_shoff + sym_idx * e_shentsize
+                    s_off2 = struct.unpack_from(">I", data, sym_hoff2 + 16)[0]
+                    s_sz2 = struct.unpack_from(">I", data, sym_hoff2 + 20)[0]
+                    for so2 in range(0, s_sz2, 16):
+                        st_name2 = struct.unpack_from(">I", data, s_off2 + so2)[0]
+                        e2 = data.index(0, strtab_off + st_name2)
+                        sname2 = data[strtab_off + st_name2 : e2].decode("ascii")
+                        if sname2.startswith("__absorb_"):
+                            st_shndx2 = struct.unpack_from(">H", data, s_off2 + so2 + 14)[0]
+                            if st_shndx2 == i:
+                                st_val2 = struct.unpack_from(">I", data, s_off2 + so2 + 4)[0]
+                                if st_val2 == off:
+                                    struct.pack_into(">I", data, s_off2 + so2 + 4, 0)
+            else:
+                struct.pack_into(">I", data, hoff + 20, 0)
         elif name.startswith(".rela") and name[5:] in sections:
             rela_idx.add(i)
             struct.pack_into(">I", data, hoff + 20, 0)

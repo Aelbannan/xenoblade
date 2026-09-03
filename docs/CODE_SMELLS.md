@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 6725 |
 | extern "C" definitions (forced names) | 3956 |
 | `self`/register-style params | 13008 |
-| `void*` (params + locals) | 7807 |
+| `void*` (params + locals) | 7808 |
 | raw pointer offset arithmetic | 7481 |
 | deref-through-cast arithmetic | 2882 |
 | inline asm / `register` | 126 |
@@ -590,7 +590,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 20 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 5 | 0 | 9 | 7 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 34 | 1 | 77 | 70 | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 0 | 0 | 4 | 3 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 0 | 0 | 4 | 4 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 51 | 19 | 56 | 68 | 11 | 1 | 0 | 10 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelPc.cpp | 36 | 14 | 35 | 69 | 5 | 0 | 0 | 3 | 2 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMovie.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -6316,7 +6316,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 4,
   "schedule_pragma": 0,
   "self_params": 4,
-  "void_ptr": 3
+  "void_ptr": 4
  },
  "src/kyoshin/realtimeevt/CREvtModelObj.cpp": {
   "asm_insn_shim": 0,

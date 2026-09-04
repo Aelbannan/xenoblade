@@ -3,6 +3,7 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/CEventFile.hpp"
@@ -47,6 +48,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
 extern "C" void func_80124270(void*, u32);
+void func_801390E0(CFileHandle**);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (func_8022B9B4 /
@@ -104,20 +106,24 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind);
 /*
  * CSysWin - system message window widget.
  *
- * Layout-compatible with IWorkEvent (vptr at +0) for CDeviceFile::readFile,
- * but deliberately declares NO virtuals: the retail vtable (lbl_eu_80536510)
- * is stored manually by __ct__CSysWin so MWCC never emits its own
- * __vt__7CSysWin. US retail uses the short C-linkage ctor symbol
- * (__ct__CSysWin), so the ctor is written as an extern "C" free function in
- * CSysWin.cpp that stores the vtable, placement-constructs the embedded
- * UnkClass_8045F564, then zero/one-inits the state fields.
+ * Retail polymorphic class (vtable lbl_eu_80536510): IWorkEvent handlers at
+ * +0x08..+0x84 (dtor override, WorkEvent1..31 with OnFileEvent overridden at
+ * +0x10) plus its own loadSystemArc slot at +0x88 (func_8022B6F4).
+ * __declspec(novtable): the table lives in the data blob, so no TU emits
+ * __vt__7CSysWin; __ct__CSysWin stores the label manually (same idiom as
+ * cf::CHelp / CBaseCur). The retail method symbols keep their short
+ * C-linkage names; the matching extern "C" definitions stay in CSysWin.cpp
+ * and only the dispatch goes through these virtuals.
  */
-class CSysWin {
+class __declspec(novtable) CSysWin : public IWorkEvent {
 public:
-    bool OnFileEvent(CEventFile* pEventFile);
-    ~CSysWin();
+    virtual ~CSysWin();            // +0x08 (def: __dt__7CSysWinFv)
+    virtual bool OnFileEvent(CEventFile* pEventFile); // +0x10 override
+    virtual void loadSystemArc();  // +0x88 (def: func_8022B6F4)
 
-    void* mVtbl;                      // +0x00 - lbl_eu_80536510 (set by __ct__CSysWin)
+    // Overlay on the implicit vptr at +0x00 so the free-function ctor can
+    // store the retail table label.
+    void*& vtbl() { return *reinterpret_cast<void**>(this); }
     UnkClass_8045F564 mMemRegion;     // +0x04 - scratch region for layout build
     CFileHandle* mFileHandle;         // +0x14 - loaded System.arc file handle
     CTagProcessor* mTagProcessor;     // +0x18 - window tag processor (allocated in OnFileEvent)

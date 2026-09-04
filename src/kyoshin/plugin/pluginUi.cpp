@@ -1,4 +1,5 @@
 #include "kyoshin/plugin/pluginUi.hpp"
+#include "kyoshin/cfsys/CfWalkerCore.hpp"
 #include "monolib/util.hpp"
 #include "monolib/vm/yvm2.h"
 
@@ -49,8 +50,8 @@ int winTalkWait(VMThread* pThread) {
         PcBattleTalkObj* obj =
             (PcBattleTalkObj*)__dynamic_cast(player, 0, &lbl_eu_806619A0,
                                              &lbl_eu_806618D8, 0);
-        // Probe vtable+0x40 on the +0x3ED4 sub-object: nonzero while busy.
-        if (((PcTalkProbeIf*)obj->field_3ED4)->probe(0x8000) != 0) {
+        // Probe vf40 (+0x40) on the +0x3ED4 walker sub-object: nonzero while busy.
+        if (obj->field_3ED4->vf40(0x8000) != 0) {
             vmWaitModeSet(pThread);
         }
     }

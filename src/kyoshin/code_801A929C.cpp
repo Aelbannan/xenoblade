@@ -5,6 +5,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"  // getBdatStringColumnValue
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/object/CfObject.hpp" // owner of the +0xAC player slot (UVF23)
 #include <math.h>
 
 // SDA/sdata2 float pool labels used by the direction helpers below.
@@ -167,54 +168,9 @@ struct GmRoot {
     GmPosNode* field_C;
 };
 
-// Map object returned by func_80186BC8: only the virtual at vtable offset
-// 0xB0 is invoked; it returns the object's current position triplet. With the
-// RTTI header word the 43rd declared virtual sits at +0xB0.
-struct SndMapObjVt {
-    virtual void vf00() = 0;
-    virtual void vf01() = 0;
-    virtual void vf02() = 0;
-    virtual void vf03() = 0;
-    virtual void vf04() = 0;
-    virtual void vf05() = 0;
-    virtual void vf06() = 0;
-    virtual void vf07() = 0;
-    virtual void vf08() = 0;
-    virtual void vf09() = 0;
-    virtual void vf10() = 0;
-    virtual void vf11() = 0;
-    virtual void vf12() = 0;
-    virtual void vf13() = 0;
-    virtual void vf14() = 0;
-    virtual void vf15() = 0;
-    virtual void vf16() = 0;
-    virtual void vf17() = 0;
-    virtual void vf18() = 0;
-    virtual void vf19() = 0;
-    virtual void vf20() = 0;
-    virtual void vf21() = 0;
-    virtual void vf22() = 0;
-    virtual void vf23() = 0;
-    virtual void vf24() = 0;
-    virtual void vf25() = 0;
-    virtual void vf26() = 0;
-    virtual void vf27() = 0;
-    virtual void vf28() = 0;
-    virtual void vf29() = 0;
-    virtual void vf30() = 0;
-    virtual void vf31() = 0;
-    virtual void vf32() = 0;
-    virtual void vf33() = 0;
-    virtual void vf34() = 0;
-    virtual void vf35() = 0;
-    virtual void vf36() = 0;
-    virtual void vf37() = 0;
-    virtual void vf38() = 0;
-    virtual void vf39() = 0;
-    virtual void vf40() = 0;
-    virtual void vf41() = 0;
-    virtual ml::CVec3* vf42_getPos() = 0; // vtable +0xB0
-};
+// Map object returned by func_80186BC8 (catalog decl): the +0xB0 slot returns
+// the object's current position triplet. Real owner is MapProxy (vtable
+// lbl_eu_8052AC98); MapProxy::unkB0 is that slot (CfObject view: UVF24).
 
 // Scene pose block carrying a D80-flagged volume object pointer.
 struct D80VolObj {
@@ -244,7 +200,6 @@ union SndConv {
     f64 d;
 };
 
-void* func_80186BC8(int id);
 extern "C" u32 getCameraDataBlock__Q22cf13CfGameManagerFv();
 int CfRes_getD80Flag();
 D80VolObj* func_8049603C();
@@ -265,7 +220,7 @@ extern u32 lbl_eu_8057164C[3];       // reference aim-point vector
 extern f32 lbl_eu_80667D74;          // initial best-distance sentinel
 extern f32 lbl_eu_8066A208;          // column-match threshold
 
-extern "C" void func_801A96A0(SndCtrlObj* self, int unk4, int farArg,
+extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                                int entryBase) {
     GmRoot* root = (GmRoot*)getCameraDataBlock__Q22cf13CfGameManagerFv();
     if (root == NULL) {
@@ -274,11 +229,11 @@ extern "C" void func_801A96A0(SndCtrlObj* self, int unk4, int farArg,
     ml::CVec3 aim = root->field_C->mPos;
 
     if (self->m35 != 0) {
-        SndMapObjVt* obj = (SndMapObjVt*)func_80186BC8(self->m35);
+        MapProxy* obj = (MapProxy*)func_80186BC8(self->m35);
         if (obj == NULL) {
             return;
         }
-        self->mVec0 = *obj->vf42_getPos();
+        self->mVec0 = *obj->unkB0();
     }
 
     // Presentation bit 13 or the camera gate enables the shared-singleton
@@ -711,8 +666,8 @@ void func_801AA04C(void* param) {
 // updates the entry sound through func_801A96A0 or stops it.
 // ----------------------------------------------------------------------------
 
-// CfGameManager imports (retail mangled symbols).
-class CtrlPlayerVt;
+// CfGameManager imports (retail mangled symbols). Player objects are
+// cf::CfObject instances; the +0xAC slot is CfObject_UnkVirtualFunc23.
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
@@ -721,54 +676,6 @@ extern "C" u32 isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" u8 getGlobalFlag34__Q22cf13CfGameManagerFv();
 extern "C" u16 func_8016DF2C(void); // chapter/episode clock (CAIAction.hpp canonical form)
 extern "C" u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 resourceId);
-
-// Player object view: field getter at vtable slot 43 (+0xAC).
-class CtrlPlayerVt {
-public:
-    virtual void q00();
-    virtual void q01();
-    virtual void q02();
-    virtual void q03();
-    virtual void q04();
-    virtual void q05();
-    virtual void q06();
-    virtual void q07();
-    virtual void q08();
-    virtual void q09();
-    virtual void q0A();
-    virtual void q0B();
-    virtual void q0C();
-    virtual void q0D();
-    virtual void q0E();
-    virtual void q0F();
-    virtual void q10();
-    virtual void q11();
-    virtual void q12();
-    virtual void q13();
-    virtual void q14();
-    virtual void q15();
-    virtual void q16();
-    virtual void q17();
-    virtual void q18();
-    virtual void q19();
-    virtual void q1A();
-    virtual void q1B();
-    virtual void q1C();
-    virtual void q1D();
-    virtual void q1E();
-    virtual void q1F();
-    virtual void q20();
-    virtual void q21();
-    virtual void q22();
-    virtual void q23();
-    virtual void q24();
-    virtual void q25();
-    virtual void q26();
-    virtual void q27();
-    virtual void q28();
-    virtual void q29();
-    virtual s32 getField(); // +0xAC
-};
 
 // One 0x38-byte ctrl-state entry (fields touched by the update driver).
 struct UpdEntry {
@@ -807,7 +714,7 @@ struct ScanEntry {
 };
 
 void func_801AA2A8(UpdWork* self) {
-    CtrlPlayerVt* player = (CtrlPlayerVt*)getPlayer__Q22cf13CfGameManagerFi(0);
+    cf::CfObject* player = (cf::CfObject*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (player == NULL) {
         return;
     }
@@ -1024,8 +931,10 @@ void func_801AA2A8(UpdWork* self) {
         }
 
         if (doPlay != 0) {
-            s32 fieldVal = player->getField();
-            func_801A96A0((SndCtrlObj*)((char*)entry + 0x20), fieldVal, prio,
+            // Retail forwards the +0xAC position pointer into r4 (unused by
+            // the callee); keep the forwarding so the call shape matches.
+            func_801A96A0((SndCtrlObj*)((char*)entry + 0x20),
+                          player->CfObject_UnkVirtualFunc23(), prio,
                           (int)((char*)entry));
         } else {
             // Not playing this frame: fade out and clear any active handle.

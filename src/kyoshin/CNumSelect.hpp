@@ -33,19 +33,8 @@ extern "C" char* func_80136190(char*, char*, u32);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, int);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, int);
 
-/* Vtable view of the font-info object returned by CDeviceFont::getFontInfo;
- * virtual index 7 (+0x24) yields the pane data bound via func_8013676C. */
-class CNumSelectFontView {
-public:
-    virtual void vf0();
-    virtual void vf1();
-    virtual void vf2();
-    virtual void vf3();
-    virtual void vf4();
-    virtual void vf5();
-    virtual void vf6();
-    virtual void* vf7();
-};
+/* Font-info objects from CDeviceFont::getFontInfo dispatch through
+ * IDeviceFontInfo::getFont (+0x24); see monolib/device/CDeviceFont.hpp. */
 
 /* 'timg' texture record chain resolved through the cursor accessor source:
  * obj->vf01(0x74696d67, name, 0) returns a record whose +0x8 points at a
@@ -67,13 +56,8 @@ public:
     CNumSelectTimgRef* unk8; // 0x8
 };
 
-/* Vtable view of the accessor source returned by func_801355F4; virtual index
- * 1 (+0xC) resolves a named 'timg' resource. */
-class CNumSelectCurSrc {
-public:
-    virtual void vf00();
-    virtual CNumSelectTimg* vf01(u32 tag, char* name, u32 arg);
-};
+/* The 'timg' source from func_801355F4 is an nw4r::lyt::ArcResourceAccessor;
+ * GetResource(+0x0C) resolves the named texture record. */
 
 // code_80135FDC layout-build helpers (retail mangled C++ names).
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -86,7 +70,7 @@ extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 extern "C" char* func_801355BC();
-extern "C" CNumSelectCurSrc* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" char* func_80138F78(u32);
 extern "C" u16 func_8013606C(const void*, const void*, u16);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
@@ -111,12 +95,8 @@ void playUISound(u32);
 extern const f32 lbl_eu_80668088;
 extern const f32 lbl_eu_8066808C;
 
-// Fake SI interface for the nw4r::lyt::Layout deleting-destructor dispatch at
-// raw vtable slot 2 (+0x08, 2 hidden RTTI prefix slots). Real virtual dispatch
-// reproduces the retail `lwz r12,0(r3); lwz r12,8(r12); mtctr; bcctrl`.
-struct CNumSelectLayoutDtorVt {
-    virtual void destroy(u32 flags);
-};
+// (Layout teardown goes through `delete`: the deleting-dtor vcall at +0x08
+// matches retail.)
 
 // CNumSelect vtable (retail .data label; extern here, defined via retail linkage).
 extern void* lbl_eu_80534BC0[];

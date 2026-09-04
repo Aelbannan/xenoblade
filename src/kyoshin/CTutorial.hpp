@@ -29,15 +29,8 @@ struct CTutorialFull {
     u8 field_52;
 };
 
-// Font-handle object returned by CDeviceFont::getFontInfo. The first member
-// is the vtable pointer; vtable slot 9 (offset 0x24) is the font accessor that
-// feeds func_8013676C.
-struct CTutorialFontVtbl {
-    u32 mSlots[10];
-};
-struct CTutorialFontObj {
-    CTutorialFontVtbl* mpVtbl;
-};
+// (Font-handle objects from CDeviceFont::getFontInfo dispatch through
+// IDeviceFontInfo::getFont at +0x24; see monolib/device/CDeviceFont.hpp.)
 
 // IWorkEvent-compatible vtable for CTutorial (split1 .data, shared pool).
 extern u8 lbl_eu_80539230[136];

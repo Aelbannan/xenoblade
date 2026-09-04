@@ -92,20 +92,6 @@ struct CLPSize {
     f32 height;
 };
 
-// Mirror of the font object returned by CDeviceFont::getFontInfo: its
-// vtable slot 9 (+0x24) yields the u32 font handle bound into the layout.
-// Never instantiated, so no vtable is emitted; a genuine virtual call makes
-// MWCC emit the retail r12 dispatch sequence.
-struct CLPFontView {
-    virtual void sf2() = 0;
-    virtual void sf3() = 0;
-    virtual void sf4() = 0;
-    virtual void sf5() = 0;
-    virtual void sf6() = 0;
-    virtual void sf7() = 0;
-    virtual void sf8() = 0;
-    virtual u32 sf9() = 0; // vtable offset 0x24
-};
 
 // Page-info record produced by func_8025348C and stored at +0x28EC.
 struct CLPPageInfo {
@@ -117,27 +103,7 @@ struct CLPPageInfo {
     u8 field_0E;                 // +0x28FA
 };
 
-// Abstract view of the cursor vtable (lbl_eu_80537474 / CCur07 / CCur18):
-// slot 2 (offset 0x08) refreshes the cursor position after installation.
-struct CLPCurVt {
-    virtual void cv0() = 0;
-    virtual void cv1() = 0;
-    virtual void cv2() = 0;
-};
 
-// Cursor vtable views used by func_80256314: slot 3 (vtable+0x10) either
-// takes the new cursor position (CCur07 at +0x54) or refreshes in place
-// (cursor at +0x84).
-struct CLPCurSetPosProxy {
-    virtual void v0();
-    virtual void v1();
-    virtual void setPos(nw4r::math::VEC3* pPos);
-};
-struct CLPCurRefreshProxy {
-    virtual void v0();
-    virtual void v1();
-    virtual void refresh(u8* pWork);
-};
 
 // CCollepedia is a non-virtual class in the decomp (layout is flat, no vtable ptr).
 // Virtual destructor semantics are handled by __dt__<addr> thunks.
@@ -196,57 +162,8 @@ struct CCollepedia {
     CCollepedia();
 };
 
-// Proxy for objects freed via `delete` (virtual deleting dtor is the first
-// vtable entry at +0x08 after MWCC's implicit entries).
-class CLPDelProxy {
-public:
-    virtual ~CLPDelProxy();
-};
 
-// Proxy for embedded sub-objects whose second vtable entry (+0x0C) is a
-// parameterless finalizer called during cleanup.
-struct CLPSubProxy {
-    virtual void v0();
-    virtual void finalize();
-};
 
-// Abstract struct for CSysWin vtable dispatch at slot 34 (offset 0x88)
-// MWCC adds 2 implicit entries (RTTI/dtor) before first user function.
-struct CSysWinProxy {
-    virtual void v0() = 0;
-    virtual void v1() = 0;
-    virtual void v2() = 0;
-    virtual void v3() = 0;
-    virtual void v4() = 0;
-    virtual void v5() = 0;
-    virtual void v6() = 0;
-    virtual void v7() = 0;
-    virtual void v8() = 0;
-    virtual void v9() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0; // vtable slot 34 = offset 0x88 (after 2 implicit entries)
-};
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

@@ -11,6 +11,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 // Forward decls so the dispatch below stays independent of the helper bodies
 // (retail keeps every helper as an out-of-line bl call).
 extern "C" void func_801EB49C(CNumSelect* self);
@@ -168,7 +169,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
     nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
     func_8013676C(rootPane,
-                  reinterpret_cast<CNumSelectFontView*>(fontObj)->vf7());
+                  ((IDeviceFontInfo*)fontObj)->getFont());
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x20], (u32)func_801355BC());
     setLayoutTextBoxFont(mpLayout, &lbl_eu_80506C14[0x3d], (u32)func_801355BC());
 
@@ -208,7 +209,7 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
                              : &lbl_eu_80506C14[0x15d];
     u16 msgId = func_8013606C(&lbl_eu_80506C14[0x129], msgKey, 0x2b);
     char* timgName = func_80138F78(msgId);
-    CNumSelectTimg* timg = func_801355F4()->vf01(0x74696d67, timgName, 0);
+    CNumSelectTimg* timg = (CNumSelectTimg*)func_801355F4()->GetResource(0x74696d67, timgName, 0);
     if (timg != NULL) {
         func_80137E7C(mpLayout, &lbl_eu_80506C14[0x166], (u32)timg);
         func_80137E7C(mpLayout, &lbl_eu_80506C14[0x170], (u32)timg);
@@ -307,9 +308,7 @@ extern "C" void func_801EAF9C(CNumSelect* self) {
     func_801390E0(&self->field_14);
     self->field_2C = 0;
     if (self->mpLayout != NULL) {
-        if (self->mpLayout != NULL) {
-            reinterpret_cast<CNumSelectLayoutDtorVt*>(self->mpLayout)->destroy(1);
-        }
+        delete self->mpLayout;
         self->mpLayout = NULL;
     }
     releaseArcResourceAccessor(self->field_18);

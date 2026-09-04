@@ -73,19 +73,6 @@ struct CEventFile {
     CFileHandle* field_04; // 0x04 file handle
 };
 
-// Font-object mirror: vtable slot 9 (offset 0x24) yields the value bound
-// into the layout root pane via func_8013676C.
-class CArtsFontView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual u32 sf9() = 0; // vtable +0x24 (empirical: 8 dummies gave +0x28)
-};
 
 // Overlay structs for the 'timg' message resource consumed by OnFileEvent:
 // the resource object holds a chain whose first field points at the u16
@@ -135,330 +122,14 @@ struct CArtsColorPair {
     u32 hi;
 };
 
-// Mirror view of nw4r::lyt::ArcResourceAccessor exposing the resource
-// lookup used by OnFileEvent (vtable slot 3, offset 0x0C):
-// GetResource(type-tag "timg", id, 0).
-class CArtsArcView {
-public:
-    // NOTE: MWCC -RTTI emits vcall offset = declared_index + 2 for these
-    // mirror casts; one dummy puts getResource at retail's slot 3 (+0x0C).
-    virtual void a0() = 0;
-    virtual void* getResource(const char* typeTag, u32 id, u32 flags) = 0; // +0x0C
-};
 
-// Mirror view of the embedded CCur18 cursor vtable: slot 2 (offset 0x08)
-// binds the cursor after the temp-construction copy.
-class CArtsCurVt {
-public:
-    virtual void c0() = 0;
-    virtual void bind() = 0; // +0x08
-};
 
-// Abstract view into the embedded CCur18 cursor vtable used by this unit
-// (func_80236CF4). MWCC prefixes the vtable with offset-to-top + RTTI
-// (2 entries), so user virtual index 2 sits at vtable +0x10 - the
-// position-taking "Move" virtual, invoked with the VEC3 written by
-// func_80137924.
-class CArtsInfoCurView {
-public:
-    virtual void vf02() = 0;                    // index 0 -> +0x08
-    virtual void vf03() = 0;                    // index 1 -> +0x0C
-    virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
-};
 
-// Abstract view for the deleting-dtor virtual of nw4r::lyt::Layout as called
-// by this unit (vtable +0x08 with the delete flag in r4).
-class CArtsInfoLytView {
-public:
-    virtual void Destroy(int flags) = 0;        // index 0 -> +0x08
-};
 
-// Stats sub-object embedded at +0x17C of the func_8009EC9C character data
-// (same object as CPartySlotStats). The retail dispatch at vtable byte
-// offset 0x224 (slot 0x89) returns a pointer to the stat block below. MWCC
-// puts two implicit dtor slots at the start of every polymorphic vtable, so
-// the target below (user virtual #135) lands at 0x224. All-pure; never
-// constructed directly - only used to reproduce the retail r12 dispatch.
-struct CArtsStatBlock;
-class CArtsStatsV {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;
-    virtual void v40() = 0;
-    virtual void v41() = 0;
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual void v44() = 0;
-    virtual void v45() = 0;
-    virtual void v46() = 0;
-    virtual void v47() = 0;
-    virtual void v48() = 0;
-    virtual void v49() = 0;
-    virtual void v50() = 0;
-    virtual void v51() = 0;
-    virtual void v52() = 0;
-    virtual void v53() = 0;
-    virtual void v54() = 0;
-    virtual void v55() = 0;
-    virtual void v56() = 0;
-    virtual void v57() = 0;
-    virtual void v58() = 0;
-    virtual void v59() = 0;
-    virtual void v60() = 0;
-    virtual void v61() = 0;
-    virtual void v62() = 0;
-    virtual void v63() = 0;
-    virtual void v64() = 0;
-    virtual void v65() = 0;
-    virtual void v66() = 0;
-    virtual void v67() = 0;
-    virtual void v68() = 0;
-    virtual void v69() = 0;
-    virtual void v70() = 0;
-    virtual void v71() = 0;
-    virtual void v72() = 0;
-    virtual void v73() = 0;
-    virtual void v74() = 0;
-    virtual void v75() = 0;
-    virtual void v76() = 0;
-    virtual void v77() = 0;
-    virtual void v78() = 0;
-    virtual void v79() = 0;
-    virtual void v80() = 0;
-    virtual void v81() = 0;
-    virtual void v82() = 0;
-    virtual void v83() = 0;
-    virtual void v84() = 0;
-    virtual void v85() = 0;
-    virtual void v86() = 0;
-    virtual void v87() = 0;
-    virtual void v88() = 0;
-    virtual void v89() = 0;
-    virtual void v90() = 0;
-    virtual void v91() = 0;
-    virtual void v92() = 0;
-    virtual void v93() = 0;
-    virtual void v94() = 0;
-    virtual void v95() = 0;
-    virtual void v96() = 0;
-    virtual void v97() = 0;
-    virtual void v98() = 0;
-    virtual void v99() = 0;
-    virtual void v100() = 0;
-    virtual void v101() = 0;
-    virtual void v102() = 0;
-    virtual void v103() = 0;
-    virtual void v104() = 0;
-    virtual void v105() = 0;
-    virtual void v106() = 0;
-    virtual void v107() = 0;
-    virtual void v108() = 0;
-    virtual void v109() = 0;
-    virtual void v110() = 0;
-    virtual void v111() = 0;
-    virtual void v112() = 0;
-    virtual void v113() = 0;
-    virtual void v114() = 0;
-    virtual void v115() = 0;
-    virtual void v116() = 0;
-    virtual void v117() = 0;
-    virtual void v118() = 0;
-    virtual void v119() = 0;
-    virtual void v120() = 0;
-    virtual void v121() = 0;
-    virtual void v122() = 0;
-    virtual void v123() = 0;
-    virtual void v124() = 0;
-    virtual void v125() = 0;
-    virtual void v126() = 0;
-    virtual void v127() = 0;
-    virtual void v128() = 0;
-    virtual void v129() = 0;
-    virtual void v130() = 0;
-    virtual void v131() = 0;
-    virtual void v132() = 0;
-    virtual void v133() = 0;
-    virtual void v134() = 0;
-    virtual CArtsStatBlock* getStatBlock() = 0;  // vtable +0x224
-};
 
-// Dispatch-only view of the same stats sub-object but hitting vtable +0x200
-// (user virtual #126, used by func_80235AE0).
-class CArtsStatsDisp {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;
-    virtual void v40() = 0;
-    virtual void v41() = 0;
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual void v44() = 0;
-    virtual void v45() = 0;
-    virtual void v46() = 0;
-    virtual void v47() = 0;
-    virtual void v48() = 0;
-    virtual void v49() = 0;
-    virtual void v50() = 0;
-    virtual void v51() = 0;
-    virtual void v52() = 0;
-    virtual void v53() = 0;
-    virtual void v54() = 0;
-    virtual void v55() = 0;
-    virtual void v56() = 0;
-    virtual void v57() = 0;
-    virtual void v58() = 0;
-    virtual void v59() = 0;
-    virtual void v60() = 0;
-    virtual void v61() = 0;
-    virtual void v62() = 0;
-    virtual void v63() = 0;
-    virtual void v64() = 0;
-    virtual void v65() = 0;
-    virtual void v66() = 0;
-    virtual void v67() = 0;
-    virtual void v68() = 0;
-    virtual void v69() = 0;
-    virtual void v70() = 0;
-    virtual void v71() = 0;
-    virtual void v72() = 0;
-    virtual void v73() = 0;
-    virtual void v74() = 0;
-    virtual void v75() = 0;
-    virtual void v76() = 0;
-    virtual void v77() = 0;
-    virtual void v78() = 0;
-    virtual void v79() = 0;
-    virtual void v80() = 0;
-    virtual void v81() = 0;
-    virtual void v82() = 0;
-    virtual void v83() = 0;
-    virtual void v84() = 0;
-    virtual void v85() = 0;
-    virtual void v86() = 0;
-    virtual void v87() = 0;
-    virtual void v88() = 0;
-    virtual void v89() = 0;
-    virtual void v90() = 0;
-    virtual void v91() = 0;
-    virtual void v92() = 0;
-    virtual void v93() = 0;
-    virtual void v94() = 0;
-    virtual void v95() = 0;
-    virtual void v96() = 0;
-    virtual void v97() = 0;
-    virtual void v98() = 0;
-    virtual void v99() = 0;
-    virtual void v100() = 0;
-    virtual void v101() = 0;
-    virtual void v102() = 0;
-    virtual void v103() = 0;
-    virtual void v104() = 0;
-    virtual void v105() = 0;
-    virtual void v106() = 0;
-    virtual void v107() = 0;
-    virtual void v108() = 0;
-    virtual void v109() = 0;
-    virtual void v110() = 0;
-    virtual void v111() = 0;
-    virtual void v112() = 0;
-    virtual void v113() = 0;
-    virtual void v114() = 0;
-    virtual void v115() = 0;
-    virtual void v116() = 0;
-    virtual void v117() = 0;
-    virtual void v118() = 0;
-    virtual void v119() = 0;
-    virtual void v120() = 0;
-    virtual void v121() = 0;
-    virtual void v122() = 0;
-    virtual void v123() = 0;
-    virtual void v124() = 0;
-    virtual void v125() = 0;
-    virtual int vf126() = 0;               // vtable +0x200
-};
 
-// Non-polymorphic layout view of the embedded stats sub-object (the real
-// object is CArtsStatsV; the member slot is accessed via this struct's
-// mVtbl field, then cast for the virtual dispatch).
-struct CArtsStats {
-    void* mVtbl;                            // +0x00
-};
+// +0x17C: vptr of the embedded stats object (real owner: cf::CActorParam;
+// +0x200 is CActorParam_UnkVirtualFunc91, +0x224 UnkVirtualFunc100).
 
 // Stat block returned by the vtable[0x224] dispatch.
 struct CArtsStatBlock {
@@ -480,14 +151,10 @@ struct CArtsCharData {
     s16 field_0x24;                     // +0x24
     s16 field_0x26;                     // +0x26 (weapon id; -1 = none)
     u8 _28[0x17C - 0x28];               // 0x28..0x17B
-    CArtsStats stats;                   // +0x17C
+    u8 stats[4];                        // +0x17C (vptr; see note above)
 };
 
-// Entry object returned by func_80157C4C (a list/factory entry; the retail
-// arts-info caller only reads the first word).
-struct CArtsInfoListEntry {
-    u32 field_0x0;
-};
+// (List entries come from func_80157C4C as CItemExt*; see kyoshin/cf/CItem.hpp.)
 
 // Sub-entry returned by the slot-info virtual (vtable +0x2C). The arts list
 // loop reads an id field at +0x4 (bits 4..15 of the u16) and a value at
@@ -497,49 +164,6 @@ struct CArtsItemInfo {
     u16 field_0x4;                      // +0x04
 };
 
-// Dispatch-only view of the item-implementation object returned by
-// CItem_initItemImplInstances (see CMenuGetItemMulti / CItemBoxGrid). The
-// arts list loop dispatches through vtable slots 0x2C/0x30/0x40 (slot-info,
-// slot-count, slot-id of an entry) and 0x54/0x90 (sub-entry rank/value);
-// fillers keep those slots at their retail offsets.
-class CItemImplV {
-public:
-    virtual void v00() = 0;                              // +0x08
-    virtual void v01() = 0;                              // +0x0C
-    virtual void v02() = 0;                              // +0x10
-    virtual void v03() = 0;                              // +0x14
-    virtual void v04() = 0;                              // +0x18
-    virtual void v05() = 0;                              // +0x1C
-    virtual void v06() = 0;                              // +0x20
-    virtual void v07() = 0;                              // +0x24
-    virtual void v08() = 0;                              // +0x28
-    virtual CArtsItemInfo* vf11(CArtsInfoListEntry*, u32) = 0; // +0x2C slot info
-    virtual u8 vf12(CArtsInfoListEntry*) = 0;            // +0x30 slot count
-    virtual void v13() = 0;                              // +0x34
-    virtual void v14() = 0;                              // +0x38
-    virtual void v15() = 0;                              // +0x3C
-    virtual s16 vf16(CArtsInfoListEntry*, u32) = 0;      // +0x40 slot id
-    virtual void v17() = 0;                              // +0x44
-    virtual void v18() = 0;                              // +0x48
-    virtual void v19() = 0;                              // +0x4C
-    virtual void v20() = 0;                              // +0x50
-    virtual u16 vf21(CArtsInfoListEntry*) = 0;           // +0x54 rank count
-    virtual void v22() = 0;                              // +0x58
-    virtual void v23() = 0;                              // +0x5C
-    virtual void v24() = 0;                              // +0x60
-    virtual void v25() = 0;                              // +0x64
-    virtual void v26() = 0;                              // +0x68
-    virtual void v27() = 0;                              // +0x6C
-    virtual void v28() = 0;                              // +0x70
-    virtual void v29() = 0;                              // +0x74
-    virtual void v30() = 0;                              // +0x78
-    virtual void v31() = 0;                              // +0x7C
-    virtual void v32() = 0;                              // +0x80
-    virtual void v33() = 0;                              // +0x84
-    virtual void v34() = 0;                              // +0x88
-    virtual void v35() = 0;                              // +0x8C
-    virtual int vf36(CArtsInfoListEntry*) = 0;           // +0x90 value
-};
 
 // Six-byte item slot-type flags for the arts list loop (func_80236E6C): a
 // u32 + u16 loaded from the sdata objects at 0x80668688/0x8066868C, then
@@ -599,16 +223,16 @@ extern "C" u16 func_80139358(u32);
 // Full-width return: retail callers keep the raw result in a register and
 // narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
 extern "C" u32 func_80136254(const void*, const void*, int);
-extern "C" CArtsInfoListEntry* func_80157C4C(u32);
+// (func_80157C4C is declared by kyoshin/cf/CItem.hpp: the real 2-arg
+// CItemExt* form. Call sites pass the slot id that retail leaves in r4.)
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D216C(void*, int);
 extern "C" int sprintf(char*, const char*, ...);
 
-// Item-implementation object for an entry (dispatch-only view CItemImplV);
-// the retail call sites pass the entry in r3 and the loop dispatches
-// through CItemImplV's vtable slots.
-extern "C" CItemImplV* CItem_initItemImplInstances(CArtsInfoListEntry* entry);
+// Item-implementation object for an entry (real owner: CItemImpl in
+// kyoshin/cf/CItem.hpp; slots +0x2C/+0x30/+0x40/+0x54/+0x90).
+// (CItem_initItemImplInstances is declared by kyoshin/cf/CItem.hpp.)
 
 // Imports from the func_8025FB10 accessor family (code_8025FB10.cpp).
 // Retail call sites bind to the unmangled names, so keep C linkage
@@ -669,7 +293,8 @@ extern u16 lbl_eu_8066868C;
 
 // Arts bdat file pointer used by func_80236E6C's final row lookup
 // (func_80136254, value passed as the first argument).
-extern u32 lbl_eu_806640D8;
+// void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
+extern void* lbl_eu_806640D8;
 
 // --- CArtsInfo::OnFileEvent imports (retail C-linkage names) ---
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl

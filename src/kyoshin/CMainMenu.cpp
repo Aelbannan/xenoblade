@@ -342,7 +342,7 @@ extern "C" CMainMenu* __ct__CMainMenu(CMainMenu* _this, CScn* scene) {
     _this->field_0x88 = NULL;
     _this->field_0x8C = NULL;
     __ct__8CBaseCurFv(baseCur, NULL);
-    baseCur->mVtable = (void*)lbl_eu_8052BF28;
+    baseCur->vtbl() = (void*)lbl_eu_8052BF28;
     __ct__CSubCur(reinterpret_cast<CBaseCur*>(reinterpret_cast<u8*>(_this) + 0xA8), NULL);
 
     _this->field_0xC0 = 3;
@@ -414,7 +414,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
             {
                 u8 temp[0x18];
                 __ct__8CBaseCurFv((CBaseCur*)temp, self->field_0x78);
-                ((CBaseCur*)temp)->mVtable = (void*)lbl_eu_8052BF28;
+                ((CBaseCur*)temp)->vtbl() = (void*)lbl_eu_8052BF28;
                 ((CBaseCur*)&self->_90[0])->mArcResAcc = ((CBaseCur*)temp)->mArcResAcc;
                 ((CBaseCur*)&self->_90[0])->mpLayout = ((CBaseCur*)temp)->mpLayout;
                 ((CBaseCur*)&self->_90[0])->mpAnimTrans0 = ((CBaseCur*)temp)->mpAnimTrans0;
@@ -422,7 +422,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                 ((CBaseCur*)&self->_90[0])->mActive = ((CBaseCur*)temp)->mActive;
                 ((CBaseCur*)&self->_90[0])->mVisible = ((CBaseCur*)temp)->mVisible;
                 __dt__8CBaseCurFv(temp, 0);
-                ((CBaseCurVtIf*)&self->_90[0])->VUpdate();
+                ((CBaseCur*)&self->_90[0])->initLayout();
             }
             // Build the sub cursor on the stack and copy its members into +0xA8.
             {
@@ -441,7 +441,7 @@ extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
                 ((CMainMenuSubCurView*)&self->subCur)->mVisible =
                     ((CMainMenuSubCurView*)temp)->mVisible;
                 __dt__7CSubCurFv((CBaseCur*)temp, -1);
-                ((CBaseCurVtIf*)&self->subCur)->VUpdate();
+                ((CBaseCur*)&self->subCur)->initLayout();
             }
 
             func_80101BF8(self);
@@ -684,7 +684,7 @@ void func_800FF920(CMainMenu* self) {
             vec = pane->GetTranslate();
         }
         vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CBaseCurVtIf*)&self->_90[0])->setRootPaneTranslate(&vec);
+        ((CBaseCur*)&self->_90[0])->setRootPaneTranslate(&vec);
         // Refresh the "N" counter panes for the new cursor index.
         int n = self->field_0xC0 + 1;
         if (n > 0) {
@@ -713,7 +713,7 @@ void func_800FF920(CMainMenu* self) {
             vec = pane->GetTranslate();
         }
         vec.x = lbl_eu_804FCD60[self->field_0xC0];
-        ((CBaseCurVtIf*)&self->_90[0])->setRootPaneTranslate(&vec);
+        ((CBaseCur*)&self->_90[0])->setRootPaneTranslate(&vec);
         int n = self->field_0xC0 + 1;
         if (n > 0) {
             char* base = lbl_eu_804FCEBC;
@@ -953,7 +953,7 @@ extern "C" void func_80100E14(CMainMenu* self) {
     // Fourth argument reloads the raw root pointer (no dispatch).
     func_80137924(&vec, pane1, pane2,
                   *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-    ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
+    ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
     if (idx > 0) {
         char* s1 = func_80136190(base + 0x5e, base + 0x67, idx);
         char* s2 = func_80136190(base + 0x5e, base + 0x6c, idx);
@@ -1054,7 +1054,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         nw4r::math::VEC3 vec;
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
+        ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
         goto tail;
     }
@@ -1088,7 +1088,7 @@ extern "C" void func_801010B8(CMainMenu* self) {
         nw4r::math::VEC3 vec;
         func_80137924(&vec, pane1, pane2,
                       *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10));
-        ((CBaseCurVtIf*)&self->subCur)->setRootPaneTranslate(&vec);
+        ((CBaseCur*)&self->subCur)->setRootPaneTranslate(&vec);
         playUISound__FUl(0x6a);
         goto tail;
     }
@@ -1447,8 +1447,8 @@ void CMainMenu::Term() {
     }
     field_0x70->removeRenderCB(render);
     func_801390E0(&field_0x74);
-    ((CBaseCurVtIf*)&_90[0])->cleanup();
-    ((CBaseCurVtIf*)&subCur)->cleanup();
+    ((CBaseCur*)&_90[0])->cleanup();
+    ((CBaseCur*)&subCur)->cleanup();
     if (field_0x7C != 0) {
         delete field_0x7C;
         field_0x7C = 0;

@@ -113,6 +113,7 @@ void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor);
+void func_801390E0(CFileHandle**);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (func_8003AA34 / getFP__FPCc).
 extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration

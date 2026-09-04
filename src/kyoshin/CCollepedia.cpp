@@ -7,6 +7,8 @@
 #include "nw4r/lyt.h"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/CTagProcessor.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
@@ -48,7 +50,7 @@ extern "C" void func_80255C28(CCollepedia*);
 // CCLPCur constructor - sets vtable, stores accessor, zeros everything
 // noinline: retail callers invoke this out-of-line.
 extern "C" __declspec(noinline) void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::ArcResourceAccessor* pAccessor) {
-    self->mVtable = lbl_eu_80537474;
+    self->vtbl() = lbl_eu_80537474;
     self->mArcResAcc = pAccessor;
     self->mpLayout = nullptr;
     self->mpAnimTrans0 = nullptr;
@@ -189,7 +191,7 @@ void func_802534F0(CLPPageSetup* pg) {
     // CDeviceFont call), then fetch the font handle from vtable slot 9.
     nw4r::lyt::Pane* rootPane = pg->mpLayout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, pg->mpLayout);
-    u32 fontHandle = static_cast<CLPFontView*>(fontObj)->sf9();
+    u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontHandle);
 
     char* tagStr = (char*)func_801355BC();
@@ -880,8 +882,8 @@ void func_8025492C(CCollepedia* this_) {
     this_->field_2C = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
         func_800A9D90(), &lbl_eu_8050C6E8[0x1cc], this_, 0, 0);
 
-    // Virtual call on CSysWin at this+0x9C, vtable slot 34 (offset 0x88)
-    ((CSysWinProxy*)(void*)&this_->field_9C)->v32();
+    // Virtual call on CSysWin at this+0x9C: loadSystemArc at vtable +0x88.
+    ((CSysWin*)&this_->field_9C)->loadSystemArc();
 
     CLPInitTemp tmp;
     tmp._00 = 0;
@@ -1003,7 +1005,7 @@ void func_80254C04(CCollepedia* this_) {
     // Free layout at +0x38 via its virtual deleting dtor
     // (single if: `delete` itself emits the second null-check seen in retail)
     if (this_->field_38 != nullptr) {
-        delete reinterpret_cast<CLPDelProxy*>(this_->field_38);
+        delete this_->field_38;
         this_->field_38 = nullptr;
     }
 
@@ -1013,7 +1015,7 @@ void func_80254C04(CCollepedia* this_) {
 
     // Free heap object at +0x4C via its virtual deleting dtor
     if (this_->field_4C != 0) {
-        delete reinterpret_cast<CLPDelProxy*>(this_->field_4C);
+        delete (CTagProcessor*)this_->field_4C;
         this_->field_4C = 0;
     }
 
@@ -1021,13 +1023,13 @@ void func_80254C04(CCollepedia* this_) {
     deleteRegion__17UnkClass_8045F564Fv(&this_->field_4);
     deleteRegion__17UnkClass_8045F564Fv(&this_->_14[0]);
 
-    // Sub-objects at +0x54 and +0x84: parameterless finalizer at vtable +0xC
-    reinterpret_cast<CLPSubProxy*>(&this_->field_54[0])->finalize();
+    // Sub-objects at +0x54 and +0x84: cursor cleanup at vtable +0x0C.
+    ((CBaseCur*)&this_->field_54[0])->cleanup();
 
     func_8025338C(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18]));
     func_8022B7F4(&this_->field_9C);
 
-    reinterpret_cast<CLPSubProxy*>(&this_->field_54[0x30])->finalize();
+    ((CBaseCur*)&this_->field_54[0x30])->cleanup();
 }
 
 extern "C" u8 func_80254D0C(CCollepedia* self) {
@@ -1740,7 +1742,7 @@ extern "C" __declspec(noinline) void func_80256314(CCollepedia* this_) {
         func_80253970(reinterpret_cast<CCollepedia*>(work),
             reinterpret_cast<LayoutContainer*>(&this_->field_28EC), this_->field_DA);
 
-        reinterpret_cast<CLPCurRefreshProxy*>(&this_->field_54[0x30])->refresh(work);
+        ((CBaseCur*)&this_->field_54[0x30])->setRootPaneTranslate((nw4r::math::VEC3*)work);
     } else {
         char* name = reinterpret_cast<char*>(work + 0x18);
         sprintf(reinterpret_cast<char*>(work + 0x18), &lbl_eu_8050C6E8[0x256],
@@ -1752,7 +1754,7 @@ extern "C" __declspec(noinline) void func_80256314(CCollepedia* this_) {
         func_80137924(reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C), pane1, pane2,
             this_->field_38->GetRootPane());
 
-        reinterpret_cast<CLPCurSetPosProxy*>(&this_->field_54)->setPos(
+        ((CBaseCur*)&this_->field_54)->setRootPaneTranslate(
             reinterpret_cast<nw4r::math::VEC3*>(work + 0x0C));
     }
 }
@@ -1797,7 +1799,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
 
         // Bind the device font into every text pane via the root pane.
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
-        u32 fontHandle = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+        u32 fontHandle = (u32)((IDeviceFontInfo*)fontObj)->getFont();
         func_8013676C(field_38->GetRootPane(), fontHandle);
 
         char* tagStr = (char*)getPackedFont();
@@ -1834,7 +1836,7 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         curDst->field_10 = curSrc->field_10;
         curDst->mActive = curSrc->mActive;
         curDst->mVisible = curSrc->mVisible;
-        reinterpret_cast<CLPCurVt*>(curDst)->cv2();
+        ((CBaseCur*)curDst)->initLayout();
         curDst->mActive = 1;
 
         // Second-page info record built from a stack temporary.
@@ -1855,14 +1857,14 @@ bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur18(tmpCur18, func_801355F4());
         func_8018B0FC(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
         __dt__6CCur18Fv(tmpCur18, -1);
-        reinterpret_cast<CLPCurVt*>(reinterpret_cast<u8*>(this) + 0x84)->cv2();
+        ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x84))->initLayout();
 
         // +0x54 cursor (CCur07): same pattern.
         u8 tmpCur07[0x18];
         __ct__CCur07(tmpCur07, field_30);
         func_8018B0FC(reinterpret_cast<u8*>(this) + 0x54, tmpCur07);
         __dt__6CCur07Fv(tmpCur07, -1);
-        reinterpret_cast<CLPCurVt*>(reinterpret_cast<u8*>(this) + 0x54)->cv2();
+        ((CBaseCur*)(reinterpret_cast<u8*>(this) + 0x54))->initLayout();
 
         func_80255CC0(this);
         field_24 = nullptr;

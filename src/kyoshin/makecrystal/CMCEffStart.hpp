@@ -23,7 +23,7 @@ public:
     u8 func_80223F1C();
     void func_80223F24();
     void func_80223F44();
-    void init();
+    virtual void init();
     void update();
     void destroy();
     u8 isFinished();
@@ -49,7 +49,7 @@ public:
     virtual ~CMCEffUpRed();
     void func_8022400C();
     void func_8022409C();
-    void init();
+    virtual void init();
     void play();
     CMCEffUpRed();
 };
@@ -64,7 +64,7 @@ public:
     virtual ~CMCEffUpBlue();
     void func_80224140();
     void func_802241D0();
-    void init();
+    virtual void init();
     void play();
     CMCEffUpBlue();
 };
@@ -79,7 +79,7 @@ public:
     virtual ~CMCEffUpGreen();
     void func_80224274();
     void func_80224304();
-    void init();
+    virtual void init();
     void play();
     CMCEffUpGreen();
 };
@@ -147,7 +147,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans10;
     nw4r::lyt::AnimTransform* mAnimTrans14;
     u8 unk18;
-    void init();
+    virtual void init();
     void update();
     void draw(nw4r::lyt::DrawInfo*);
     void destroy();
@@ -169,7 +169,7 @@ public:
     CMCEffFailure(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffFailure();
     void func_80224BBC();
-    void init();
+    virtual void init();
     CMCEffFailure();
 };
 /******************************************************************************
@@ -181,7 +181,7 @@ class CMCEffCrystal {
 public:
     CMCEffCrystal(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffCrystal();
-    void func_80224CE4();
+    virtual void func_80224CE4();
     void func_80224E1C();
     void func_80224EF8(nw4r::lyt::DrawInfo*);
     void func_80224F84();
@@ -256,7 +256,7 @@ public:
     virtual ~CMCEffUpRank();
     void func_80225B14();
     void func_80225BA4();
-    void init();
+    virtual void init();
     void play();
     CMCEffUpRank();
 };
@@ -271,7 +271,7 @@ public:
     virtual ~CMCEffDivide();
     void func_80225C48();
     void func_80225CD8();
-    void init();
+    virtual void init();
     void play();
     CMCEffDivide();
 };
@@ -308,7 +308,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans14;
     nw4r::lyt::AnimTransform* mAnimTrans18;
     u8 unk1c;
-    void init();
+    virtual void init();
     void update();
     void draw(nw4r::lyt::DrawInfo*);
     void destroy();

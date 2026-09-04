@@ -180,7 +180,7 @@ extern "C" void* __dt__7CMapSelFv(CMapSel* self, int flags) {
     if (self != 0) {
         __dt__6CCur18Fv(&self->mCursor, -1);
         __dt__10CScrollBarFv(&self->mScrollBar, -1);
-        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
+        __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion), -1);
         if (flags > 0) {
             operator delete(self);
         }

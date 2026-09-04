@@ -3,6 +3,8 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
+#include "monolib/work/IWorkEvent.hpp"
+
 // Forward declarations for types used in CFloorMap
 class CScrollBar;
 class CBaseCur;
@@ -242,76 +244,35 @@ struct CFloorMapWidgetArg {
 // 0x18-byte embedded layout widget reset by the cursor ctor (four of them at
 // cursor +0x30D4/+0x30EC/+0x3104/+0x311C). The ctor clears everything except
 // the vtable, installs the shared arc resource accessor at +0x08 and calls
-// the virtual init entry.
-struct CFloorMapWidget18 {
-    void* vtbl;      // +0x00 - left untouched (member ctor already ran)
-    void* field_04;  // +0x04
-    void* accessor;  // +0x08 - ArcResourceAccessor (cursor +0x04)
-    void* field_0C;
-    void* field_10;
-    u8 field_14;
-    u8 field_15;
+// the virtual init entry. Retail invokes only the first virtual (Init at
+// +0x08) with the colour-table / name argument. novtable: the table lives in
+// the data blob and member ctors store it manually.
+class __declspec(novtable) CFloorMapWidget {
+public:
+    virtual void Init(CFloorMapWidgetArg* arg); // +0x08
+    void* field_04;                             // +0x04
+    nw4r::lyt::ArcResourceAccessor* accessor;   // +0x08
+    void* field_0C;                             // +0x0C
+    void* field_10;                             // +0x10
+    u8 field_14;                                // +0x14
+    u8 field_15;                                // +0x15
 };
 
 // View of the cursor object covering the four embedded widgets.
 struct CFloorMapWidgets {
     u8 _00[0x30D4];
-    CFloorMapWidget18 widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
+    CFloorMapWidget widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
 };
 
-// View of the embedded sys-win subobjects (offsets 0xB8/0xF4): their shared
-// vtable slot at offset 0x88 (index 34) is invoked by the map-load routine.
-class CFloorMapWinVf88 {
-public:
-    virtual void vf00();
-    virtual void vf04();
-    virtual void vf08();
-    virtual void vf0C();
-    virtual void vf10();
-    virtual void vf14();
-    virtual void vf18();
-    virtual void vf1C();
-    virtual void vf20();
-    virtual void vf24();
-    virtual void vf28();
-    virtual void vf2C();
-    virtual void vf30();
-    virtual void vf34();
-    virtual void vf38();
-    virtual void vf3C();
-    virtual void vf40();
-    virtual void vf44();
-    virtual void vf48();
-    virtual void vf4C();
-    virtual void vf50();
-    virtual void vf54();
-    virtual void vf58();
-    virtual void vf5C();
-    virtual void vf60();
-    virtual void vf64();
-    virtual void vf68();
-    virtual void vf6C();
-    virtual void vf70();
-    virtual void vf74();
-    virtual void vf78();
-    virtual void vf7C();
-    virtual void vf88();   // vtable offset 0x88
-};
+// (Embedded sys-win sub-objects dispatch through CSysWin::loadSystemArc
+// at +0x88; see kyoshin/CSysWin.hpp.)
 
 // Ctor view of the cursor object: layout/accessor head plus the widgets.
 struct CFloorMapCtorView {
     nw4r::lyt::Layout* layout;                // +0x00
     nw4r::lyt::ArcResourceAccessor* accessor; // +0x04
     u8 _08[0x30D4 - 0x08];
-    CFloorMapWidget18 widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
-};
-
-// Virtual shape of the embedded layout widget (init entry at vtable+8).
-class CFloorMapWidget {
-public:
-    virtual void v00();
-    virtual void v01();
-    virtual void Init(CFloorMapWidgetArg* arg);
+    CFloorMapWidget widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
 };
 
 // Colour/name query used by the cursor ctor: returns a pointer to four s16
@@ -327,7 +288,7 @@ extern const char lbl_eu_80537104[];
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 // CCur18 construction (retail unmangled) + shared UI accessor import.
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -630,14 +591,8 @@ extern f32 lbl_eu_80668764;   // 0.0f
 extern f32 lbl_eu_80668778;   // marker y scale factor
 extern f32 lbl_eu_8066877C;   // marker x scale factor
 
-// Minimal view of CCur18 (CFloorMap+0xA0) for the virtual call at vtable
-// offset 0x10 used by func_8024D614 (cursor position update).
-class CCur18View {
-public:
-    virtual void v00() = 0;      // 0x08
-    virtual void v01() = 0;      // 0x0C
-    virtual void v02(void*) = 0; // 0x10
-};
+// (CCur18 cursors dispatch through CBaseCur::initLayout/cleanup/
+// setRootPaneTranslate at +0x08/+0x0C/+0x10; see kyoshin/CBaseCur.hpp.)
 
 // Field view of the opaque CCur18 sub-object (CBaseCur layout + padding).
 // Used to copy a stack-constructed CCur18 into the embedded mCursorA0 region
@@ -668,12 +623,8 @@ extern "C" void func_8022B7F4(void* sysWin);       // CSysWin teardown
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
-// Cast-only view of nw4r::lyt::Layout for the deleting-destructor dispatch at
-// vtable slot 2 (+0x08 after the RTTI prefix); arg 1 in r4 (see
-// CItemBoxLayoutDtorVt).
-struct CFloorMapLayoutDtorVt {
-    virtual void destroy(int flags);  // slot 2 => +0x08
-};
+// (Layout/Pane teardown goes through `delete`: the deleting-dtor vcall
+// at +0x08 matches retail.)
 
 extern "C" void func_801F3540(void* scrollBar);   // CScrollBar per-frame update
 extern "C" void func_801D202C(void* cursor);      // CCur18 per-frame update
@@ -681,6 +632,16 @@ extern "C" void func_8022B748(void* sysWin);      // CSysWin per-frame update
 // Advance the attached anim-transform to a frame (returns nonzero when done);
 // retail symbol keeps the C++ mangled name advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
+
+// (Player/marker positions dispatch through cf::CfObject: UVF23 at +0xAC,
+// zoom through UVF31 at +0xCC; see kyoshin/cf/object/CfObject.hpp.)
+
+// 3-float position view for the marker objects' GetPos() (vtable+0xAC).
+struct CFloorMapVec3 {
+    f32 x;                                   // +0x00
+    f32 y;                                   // +0x04
+    f32 z;                                   // +0x08
+};
 
 // Linked list of marker objects returned by func_800B6CF8/func_800B6C58/
 // func_800B6BEC (same layout as CMiniMap's MiniMapList): head sentinel at
@@ -694,62 +655,12 @@ struct CFloorMapObjNode {
     u8 _04[0x08 - 0x04];                     // 0x04-0x07
     void* object;                            // +0x08
 };
-
-// 3-float position view for the marker objects' GetPos() (vtable+0xAC).
-struct CFloorMapVec3 {
-    f32 x;                                   // +0x00
-    f32 y;                                   // +0x04
-    f32 z;                                   // +0x08
-};
-
-// Player-object vtable view for func_8024FB78: GetPos() sits at vtable+0xAC
-// (41 dummy slots before it) and returns a pointer whose +0x04 is the y.
-class CFloorMapPlayerObj {
-public:
-    virtual void v000(); virtual void v004(); virtual void v008(); virtual void v00C();
-    virtual void v010(); virtual void v014(); virtual void v018(); virtual void v01C();
-    virtual void v020(); virtual void v024(); virtual void v028(); virtual void v02C();
-    virtual void v030(); virtual void v034(); virtual void v038(); virtual void v03C();
-    virtual void v040(); virtual void v044(); virtual void v048(); virtual void v04C();
-    virtual void v050(); virtual void v054(); virtual void v058(); virtual void v05C();
-    virtual void v060(); virtual void v064(); virtual void v068(); virtual void v06C();
-    virtual void v070(); virtual void v074(); virtual void v078(); virtual void v07C();
-    virtual void v080(); virtual void v084(); virtual void v088(); virtual void v08C();
-    virtual void v090(); virtual void v094(); virtual void v098(); virtual void v09C();
-    virtual void v0A0();
-    virtual CFloorMapVec3* GetPos();         // vtable+0xAC
-    virtual float fn0xCC();                  // vtable+0xCC - map zoom factor
-};
-
-// Marker object view used by the func_8024A748 list walks (fields read:
-// flags at +0x64, name at +0x74, id at +0x8C).
-class CFloorMapObj {
-public:
-    virtual void v000(); virtual void v004(); virtual void v008(); virtual void v00C();
-    virtual void v010(); virtual void v014(); virtual void v018(); virtual void v01C();
-    virtual void v020(); virtual void v024(); virtual void v028(); virtual void v02C();
-    virtual void v030(); virtual void v034(); virtual void v038(); virtual void v03C();
-    virtual void v040(); virtual void v044(); virtual void v048(); virtual void v04C();
-    virtual void v050(); virtual void v054(); virtual void v058(); virtual void v05C();
-    virtual void v060(); virtual void v064(); virtual void v068(); virtual void v06C();
-    virtual void v070(); virtual void v074(); virtual void v078(); virtual void v07C();
-    virtual void v080(); virtual void v084(); virtual void v088(); virtual void v08C();
-    virtual void v090(); virtual void v094(); virtual void v098(); virtual void v09C();
-    virtual void v0A0(); virtual void v0A4();
-    virtual CFloorMapVec3* GetPos();         // vtable+0xAC
-    virtual void v0B0(); virtual void v0B4(); virtual void v0B8(); virtual void v0BC();
-    virtual void v0C0(); virtual void v0C4(); virtual void v0C8(); virtual void v0CC();
-    virtual void v0D0(); virtual void v0D4(); virtual void v0D8(); virtual void v0DC();
-    virtual void v0E0(); virtual void v0E4(); virtual void v0E8(); virtual void v0EC();
-    virtual void v0F0(); virtual void v0F4(); virtual void v0F8(); virtual void v0FC();
-    virtual void v100(); virtual void v104(); virtual void v108(); virtual void v10C();
-    virtual void v110(); virtual void v114(); virtual void v118(); virtual void v11C();
-    virtual void v120(); virtual void v124(); virtual void v128(); virtual void v12C();
-    virtual void v130(); virtual void v134(); virtual void v138(); virtual void v13C();
-    virtual void v140(); virtual void v144(); virtual void v148(); virtual void v14C();
-    virtual void v150(); virtual void v154(); virtual void v158();
-    virtual void* fn0x160();                 // vtable+0x160 - marker pane lookup
-    u8 _0C[0x64 - 0x0C];                     // 0x0C-0x63
+// Marker object fields (non-polymorphic view): the vtable pointer stays
+// at +0x00 so field offsets match retail. Position (+0xAC) and
+// marker-pane (+0x160) slots dispatch through cf::CfObject (UVF23/UVF68).
+struct CFloorMapObj {
+    void* vtbl; // +0x00
+    u8 _04[0x64 - 0x04];                   // 0x04-0x63
     u32 m64;                                 // 0x64 - flags
     u8 _68[0x74 - 0x68];
     u32 m74;                                 // 0x74 - name string
@@ -828,7 +739,7 @@ extern "C" void func_8024B4CC(nw4r::math::VEC3*, void*, nw4r::lyt::Pane*);
 extern void playUISound(u32);
 
 // C-ABI imports used by the floor-map update functions (retail plain names).
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
+// (code80135FDC_setVec3 comes from kyoshin/CSysWin.hpp: VEC3* form.)
 extern "C" void copyVEC3(void*, const void*);
 extern "C" void func_80137738(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 extern "C" char* func_8013639C(const void*, const void*, int);
@@ -860,7 +771,7 @@ extern "C" void func_8022B8E4(void* sysWin);
 extern "C" void func_801D216C(void* cursor, int mode);
 extern "C" void func_8022B9B4(void* sysWin, char* nameA, char* nameB);
 extern "C" void func_8022BF6C(void* sysWin, char* nameA, char* nameB);
-extern "C" void func_8022BFC8(void* sysWin, u32 flags);
+// (func_8022BFC8 comes from kyoshin/CSysWin.hpp: CSysWin* form.)
 extern "C" void func_8022B8B8(void* sysWin);
 
 // .sdata2 floats / .sbss globals for the floor-map update functions.
@@ -940,8 +851,7 @@ static inline void CFloorMapSetSlotPos(CFloorMapLayoutHolder* slot, nw4r::math::
         slot->pane->SetTranslate(*(nw4r::math::VEC3*)&v);
     }
 }
-
-// Result of cf::UnkClass_800821F8's vtable+0x1C getter; +0x04 holds the map
+// Result of the scale-source getter at manager +0x1C; +0x04 holds the map
 // scale numerator used to size the current-position marker.
 class CFloorMapMgrSrc {
 public:
@@ -949,20 +859,15 @@ public:
     f32 scale04; // +0x04
 };
 
-// Virtual view of cf::UnkClass_800821F8 (only the vtable+0x1C entry is used).
-class CFloorMapMgrView {
+// Scale-source manager behind getCameraDataBlock(): +0x1C getter.
+// IFactoryEvent supplies five real pre-slots (same pattern as
+// pluginBtl's CBattleManager); never constructed here, so no vtable
+// is emitted.
+class CFloorMapMgr : public IWorkEvent {
 public:
-    virtual void v00();
-    virtual void v01();
-    virtual void v02();
-    virtual void v03();
-    virtual void v04();
-    virtual CFloorMapMgrSrc* getScaleSrc(); // vtable+0x1C
+    virtual CFloorMapMgrSrc* getScaleSrc(); // +0x1C
 };
 
-// View into the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// (slot 9, no args) yields the u32 passed to func_8013676C. All-pure so no
-// vtable is emitted.
 // Per-table BDAT entry pointers + flat-name helpers used by func_80249C1C
 // (retail symbols are unmangled).
 extern void* lbl_eu_80573D18[0x1C];
@@ -971,14 +876,5 @@ extern "C" u32 func_80138574(const char* name, u32 id);
 extern "C" u32 func_8013C038(u16 id);
 extern "C" CFloorMapVec3* func_801F4E68(CFloorMapGimmickGlobal* mgr, u16 id);
 
-class CFloorMapFontView {
-public:
-    virtual void v00() = 0;         // 0x08
-    virtual void v01() = 0;         // 0x0C
-    virtual void v02() = 0;         // 0x10
-    virtual void v03() = 0;         // 0x14
-    virtual void v04() = 0;         // 0x18
-    virtual void v05() = 0;         // 0x1C
-    virtual void v06() = 0;         // 0x20
-    virtual u32 getFontHandle() = 0; // 0x24
-};
+// (Font handles dispatch through IDeviceFontInfo::getFont at +0x24;
+// see monolib/device/CDeviceFont.hpp.)

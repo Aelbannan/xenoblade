@@ -3,6 +3,40 @@
 #include <types.h>
 #include "monolib/device/CFileHandle.hpp"
 
+// Owner-class definitions for the recovered virtual calls in this TU.
+// The three hidden free-function names keep this TU's retail-arity
+// prototypes (same scheme as CActParamAnim.cpp's func_80055B88_typed_hidden):
+// the canonical headers declare these symbols with a different arity, which
+// would collide with the byte-exact decls further down. The class
+// definitions (CActParamAnim, CScnItemModel) come through intact.
+#define func_8004B60C func_8004B60C_void_hidden
+#define func_8004B9D4 func_8004B9D4_hidden
+#define func_80495E94 func_80495E94_1arg_hidden
+#define func_80496264 func_80496264_s32_hidden
+#define func_80495E60 func_80495E60_void_hidden
+#define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
+#define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
+#define zero__Q22ml5CVec3 zero__Q22ml5CVec3_ml_hidden
+#define func_804BE398 func_804BE398_u32_hidden
+#define func_8048315C func_8048315C_void_hidden
+#define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
+#include "kyoshin/action/CActParamAnim.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/IResInfo.hpp"
+#undef func_8004B60C
+#undef func_8004B9D4
+#undef func_80495E94
+#undef func_80496264
+#undef func_80495E60
+#undef lbl_eu_805262F0
+#undef lbl_eu_805262C8
+#undef zero__Q22ml5CVec3
+#undef func_804BE398
+#undef func_8048315C
+#undef lbl_eu_8066A200
+
 namespace cf { class CActParamAnimGame; class CfObjectMove; }
 
 // Async file event handed to IWorkEvent callbacks by CDeviceFile. The
@@ -71,37 +105,13 @@ struct CModelDispEquipCmd {
     char field_0x1C; // +0x1C string start
 };
 
-// Fake SI interface for virtual dispatch at vtable offset +0x48 (index 18),
-// taking one float arg (the act-param object's alpha/color setter). Cast-only
-// usage: never constructed, so no vtable is emitted - MWCC emits the retail
-// r12 dispatch (lwz r12,0(r3); lwz r12,0x48(r12); mtctr; bctrl).
-// MWCC reserves 2 leading vtable slots, so 16 filler virtuals + m18 land the
-// setter at slot 18 (0x48).
-struct CModelDispVt48 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m18(float value); // slot 18 => +0x48
-};
+// (was a +0x48 float-setter pad here: virtual dispatch at vtable offset +0x48 taking one
+// float arg. Retail table lbl_eu_8056DD70 word 18 is CScnItemModel::vfunc48;
+// call sites now use the owning class directly.)
 
-// Fake SI interface for virtual dispatch at vtable offset +0xA8 (index 42),
-// taking no args and returning a pointer (the anim model's chain-obj getter).
-// 40 filler virtuals + m2A land the method at slot 42 (0xA8) with the 2
-// reserved leading slots.
-struct CModelDispVtA8 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void* m2A(); // slot 42 => +0xA8
-};
+// (was a +0xA8 chain-getter pad here: virtual dispatch at vtable offset +0xA8 returning a
+// pointer. Retail table lbl_eu_8056DD70 word 42 is CScnItemModel::vfuncA8;
+// call sites now use the owning class directly.)
 
 // Opaque object returned by the Bdat/equip lookups in this TU.
 struct CModelDispObj {
@@ -128,107 +138,43 @@ struct CModelDispCharRecord {
 
 struct CModelDispParamSlot;
 
-// Vtable dispatch at +0x08 (slot 2) on the equipment param-slot objects
-// (param[idx].field_2C): takes the owning slot and the weapon id.
-struct CModelDispVt8 {
-    virtual CModelDispNameParam* m00(CModelDispParamSlot* owner, u32 weaponId); // +0x8
-};
+// (was a +0x08 lookup pad here: virtual dispatch at +0x08 on the equipment param-slot
+// objects (param[idx].field_2C), taking the owning slot and the weapon id.
+// The +0x2C word is a ::CResLookup (cf. CfResPcTableEntry in CfResPcImpl.hpp),
+// whose first virtual is getResourceBase(void*, int) at +0x08; call sites now
+// use the owning class directly.)
 
 // Per-equipment param slot (stride 0x3C); +0x2C holds a vtable-slot-0x8 obj.
 struct CModelDispParamSlot {
     u8 _00[0x2C];
-    CModelDispVt8* field_2C; // +0x2C
+    CResLookup* field_2C; // +0x2C
     u8 _30[0x3C - 0x30];
 };
 
-// Vtable dispatch on the built display model (holder->field_0x00):
-// +0x48 (float), +0x64 (int), +0x9C (2 ints), +0xC4 (3 args), +0xC8 (1 arg).
-// 2 reserved slots; target slot = declared index + 1.
-// (m9C sits after 37 fillers incl. m24.)
-struct CModelDispModelVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m48(f32 value);        // #17 => +0x48
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15();
-    // (retail: 6 fillers between m48 and m64, 13 between m64 and m9C,
-    // 9 between m9C and mC4 - verified against func_801FFDC4 dispatches)
-    virtual void m64(u32 arg);          // slot 25 => +0x64
-    virtual void m17(); virtual void m18(); virtual void m19(); virtual void m1A();
-    virtual void m1B(); virtual void m1C(); virtual void m1D(); virtual void m1E();
-    virtual void m1F(); virtual void m20(); virtual void m21(); virtual void m22();
-    virtual void m23();
-    virtual void m9C(u32 a, u32 b);     // slot 39 => +0x9C
-    virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C();
-    virtual void m2D();
-    virtual void mC4(CModelDispModelVt* animModel, CModelDispNameParam* name, u32 flag); // #48 => +0xC4
-    virtual void mC8(CModelDispModelVt* animModel); // #49 => +0xC8
-};
+// (was a display-model dispatch pad here: virtual dispatch on the built display model
+// (holder->field_0x00) at +0x48 (float), +0x64 (int), +0x9C (2 ints),
+// +0xC4 (3 args), +0xC8 (1 arg). Retail table lbl_eu_8056DD70 words 18/25/39
+// /48/49 are CScnItemModel::vfunc48/64/9C/C4/C8; call sites now use the
+// owning class directly.)
 
-// Vtable dispatch on the actor's embedded CfObjectMove (actor+0x3E9C):
-// +0x74 (no args), +0x148 (int arg), +0x184 / +0x188 (no args).
-struct CModelDispMoveVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A();
-    virtual int m74();                  // #28 => +0x74
-    virtual void m1B(); virtual void m1C(); virtual void m1D(); virtual void m1E();
-    virtual void m1F(); virtual void m20(); virtual void m21(); virtual void m22();
-    virtual void m23(); virtual void m24(); virtual void m25(); virtual void m26();
-    virtual void m27(); virtual void m28(); virtual void m29(); virtual void m2A();
-    virtual void m2B(); virtual void m2C(); virtual void m2D(); virtual void m2E();
-    virtual void m2F(); virtual void m30(); virtual void m31(); virtual void m32();
-    virtual void m33(); virtual void m34(); virtual void m35(); virtual void m36();
-    virtual void m37(); virtual void m38(); virtual void m39(); virtual void m3A();
-    virtual void m3B(); virtual void m3C(); virtual void m3D(); virtual void m3E();
-    virtual void m3F(); virtual void m40(); virtual void m41(); virtual void m42();
-    virtual void m43(); virtual void m44(); virtual void m45(); virtual void m46();
-    virtual void m47(); virtual void m48(); virtual void m49(); virtual void m4A();
-    virtual void m4B(); virtual void m4C(); virtual void m4D(); virtual void m4E();
-    virtual int m148(u32 arg);          // #81 => +0x148
-    virtual void m4F(); virtual void m50(); virtual void m51(); virtual void m52();
-    virtual void m53(); virtual void m54(); virtual void m55(); virtual void m56();
-    virtual void m57(); virtual void m58(); virtual void m59(); virtual void m5A();
-    virtual void m5B(); virtual void m5C();
-    virtual int m184();                 // #96 => +0x184
-    virtual int m188();                 // #97 => +0x188
-};
+// (was a move-dispatch pad here: virtual dispatch on the actor's embedded CfObjectMove
+// (actor+0x3E9C) at +0x74 (no args), +0x148 (index arg), +0x184 / +0x188
+// (no args). These are cf::CfObject::CfObject_UnkVirtualFunc9 (bool, +0x74),
+// cf::CfObject::CfObject_UnkVirtualFunc62 (u32, +0x148, widened to the retail
+// index arity), cf::CfObjectModel::CfObjectModel_UnkVirtualFunc4 (void*,
+// +0x184) and CfObjectModel_UnkVirtualFunc5 (u32, +0x188); call sites now use
+// the owning classes directly.)
 
-// Vtable dispatch at +0xE0 (slot 0x38) on the act-param objects
-// (holder+0x0C / +0x550): the flush method. 54 fillers + m38 land it.
-struct CModelDispVtE0 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24();
-    virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
-    virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();
-    virtual void m34(); virtual void m35();
-    virtual void m38();                 // 55th declared => +0xE0
-};
+// (was a +0xE0 flush pad here: virtual dispatch at vtable offset +0xE0, the flush
+// method on the act-param objects. CActParamAnim declares 59 virtuals with
+// MWCC's 2 leading slots, so index 54 lands at +0xE0 (the __vt_48/__vt_78/
+// __vt_F0 names confirm the (N+2)*4 layout): CActParamAnim::func_8004B114.
+// Call sites now use the owning class directly.)
 
-// Vtable dispatch at +0x28 (slot 10) on actor->field_3F34.
-struct CModelDispVt28 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m28(const char* str, u32 flag); // #9 => +0x28
-};
+// (was a +0x28 notify pad here: virtual dispatch at vtable offset +0x28 taking a
+// string and a flag. The field_3F34 target carries the +0x7A4 word of
+// CScnItemModel, and retail table lbl_eu_8056DD70 word 10 is
+// CScnItemModel::vfunc28; call sites now use the owning class directly.)
 
 // View of the CMcaFile constructed at func_801FFDC4's stack frame.
 struct CModelDispMca {
@@ -446,8 +392,8 @@ extern "C" void func_800F4A98(CModelDispEnumList* list, u32 type, u32 filter);
 extern "C" CModelDispSlot* func_800F6EC0(CModelDispEnumList* list, u32 index);
 extern "C" void func_804E3CCC(CModelDispEffectView* effect);
 extern "C" void func_804E3D48(CModelDispEffectView* effect, CModelDispEffectView* parent);
-extern "C" CModelDispNameParam* func_800BEDC4(CModelDispMoveVt* move, int index);
-extern "C" CModelDispNameParam* func_800BED80(CModelDispMoveVt* move, int index);
+extern "C" CModelDispNameParam* func_800BEDC4(cf::CfObjectMove* move, int index);
+extern "C" CModelDispNameParam* func_800BED80(cf::CfObjectMove* move, int index);
 extern "C" CModelDispNameParam* func_800BBC08(u8 value);
 extern "C" u32 func_8014235C(u32 param1, const char* column, u32 param3);
 extern "C" int sprintf(char* str, const char* fmt, ...);
@@ -461,20 +407,20 @@ extern "C" void syncFieldData__Q22cf13CfGameManagerFv(u32 value, bool searchEntr
 extern "C" void func_80485684(void* model, int flag);
 extern "C" void func_80482DF4(void* model, int flag);
 extern "C" CModelDispObj* func_800584B8(u32 global, u32 id, const char* name);
-extern "C" CModelDispModelVt* func_80495E8C(u32 global, u32 id, int a, int b);
-extern "C" CModelDispModelVt* func_80495E94(u32 global, CModelDispNameParam* param);
+extern "C" CScnItemModel* func_80495E8C(u32 global, u32 id, int a, int b);
+extern "C" CScnItemModel* func_80495E94(u32 global, CModelDispNameParam* param);
 extern "C" CModelDispObj* func_80495EAC(u32 global, u8* mDataAdj, const char* name);
 extern "C" void func_80495E60(CModelDispObj* obj);
-extern "C" int func_800BE954(CModelDispMoveVt* move); // int return: callers store
+extern "C" int func_800BE954(cf::CfObjectMove* move); // int return: callers store
 // into an s16 local, forcing the extsh into the home register at assignment.
 extern "C" CModelDispParamSlot* func_80062C28(s16 id, int a);
 extern "C" CModelDispParamSlot* func_80062DA4(s16 id);
 extern "C" void func_8004B6BC(CActParamAnimView* self, CModelDispObj* obj);
 extern "C" void func_8004B6A4(CActParamAnimView* self, CModelDispObj* obj, u32 param);
-extern "C" void func_8004B624(CActParamAnimView* self, CModelDispModelVt* model, CModelDispObj* anim, u32 param);
+extern "C" void func_8004B624(CActParamAnimView* self, CScnItemModel* model, CModelDispObj* anim, u32 param);
 extern "C" CModelDispObj* func_8004C5EC(CActParamAnimView* self);
 extern "C" void func_8005A594(CActParamAnimView* self);
-extern "C" void func_804831C4(CModelDispModelVt* model, CModelDispNameParam* param);
+extern "C" void func_804831C4(CScnItemModel* model, CModelDispNameParam* param);
 extern "C" void __ct__CMcaFile(CModelDispMca* self, u32 anim);
 extern "C" void __construct_array(void*, void*, void*, int, int);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame* self);

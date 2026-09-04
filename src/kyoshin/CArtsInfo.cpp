@@ -2,6 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/CArtsInfo.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/cf/CItem.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/lyt.h>
 #include <stdlib.h>
 
@@ -30,7 +34,8 @@ extern u32 lbl_eu_80664758;
 extern u32 lbl_eu_80664760;
 
 // Small data object (.sbss, addressed via @sda21): arts bdat file pointer.
-extern u32 lbl_eu_806640F4;
+// void* (not u32): shared with kyoshin/cf/CItem.hpp (MWCC 10197).
+extern void* lbl_eu_806640F4;
 
 // Shared sdata2 int->float correction constants (2^52-family magics) are
 // declared in CArtsInfo.hpp; referenced by name so the conversion lfd's emit
@@ -89,45 +94,8 @@ static double ConvS32ToF64(s32 x) {
 const double lbl_eu_80668698 = 4503601774854144.0;
 
 
-// Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
-static inline void callVirt_38_0(nw4r::lyt::Layout* layout) {
-    // No named temp: retail loads the vptr straight into r12 for the bcctrl.
-    ((void (**)(nw4r::lyt::Layout*, u32))(*(void**)layout))[14](layout, 0);
-}
-
-static inline void callVirt_2C_50(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform* arg1, u32 arg2) {
-    typedef void (*VirtFn)(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform*, u32);
-    VirtFn fn = ((VirtFn*)*(u32*)layout)[11]; // 0x2C / 4 = 11
-    fn(layout, arg1, arg2);
-}
-
-// Vtable virtual method at offset 0x08 with flags=1 (destructor)
-static inline void callVirtDelete_08(nw4r::lyt::Layout* obj) {
-    typedef void (*VirtFn)(nw4r::lyt::Layout*, int);
-    VirtFn fn = ((VirtFn*)*(u32*)obj)[2]; // 0x08 / 4 = 2
-    fn(obj, 1);
-}
-
-// Vtable virtual method at offset 0x0C
-static inline void callVirt_0C(void* obj) {
-    typedef void (*VirtFn)(void*);
-    VirtFn fn = ((VirtFn*)*(u32*)obj)[3]; // 0x0C / 4 = 3
-    fn(obj);
-}
-
-// Vtable virtual method at offset 0x10 with pointer arg
-static inline void callVirt_10(void* obj, void* arg) {
-    typedef void (*VirtFn)(void*, void*);
-    VirtFn fn = ((VirtFn*)*(u32*)obj)[4]; // 0x10 / 4 = 4
-    fn(obj, arg);
-}
-
-// Vtable virtual method at offset 0x3C with two args
-static inline u32 callVirt_3C(nw4r::lyt::Layout* layout, const char* arg1, u32 arg2) {
-    typedef u32 (*VirtFn)(nw4r::lyt::Layout*, const char*, u32);
-    VirtFn fn = ((VirtFn*)*(u32*)layout)[15]; // 0x3C / 4 = 15
-    return fn(layout, arg1, arg2);
-}
+// (Layout/Pane virtual dispatches go through the real SDK classes:
+// `delete` for the +0x08 deleting-dtor, GetResource for +0x0C.)
 
 u8 CArtsInfo::getField48() { return field_0x48; }
 
@@ -275,17 +243,15 @@ __declspec(noinline) void func_802359CC(CArtsInfo* self) {
 
     // Doubled-beq shape: outer guard, inner guard around the deleting-dtor
     // virtual (+0x08, flag=1), unconditional-clear inside the outer guard.
+    // Single guard: `delete` emits its own null check, so one source-level
+    // if plus the delete check reproduces retail's doubled beq.
     if (self->mpLayout1 != nullptr) {
-        if (self->mpLayout1 != nullptr) {
-            ((CArtsInfoLytView*)self->mpLayout1)->Destroy(1);
-        }
+        delete self->mpLayout1;
         self->mpLayout1 = nullptr;
     }
 
     if (self->mpLayout2 != nullptr) {
-        if (self->mpLayout2 != nullptr) {
-            ((CArtsInfoLytView*)self->mpLayout2)->Destroy(1);
-        }
+        delete self->mpLayout2;
         self->mpLayout2 = nullptr;
     }
 
@@ -293,7 +259,7 @@ __declspec(noinline) void func_802359CC(CArtsInfo* self) {
     releaseArcResourceAccessor__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
 
     // Call virtual cleanup on cursor (+0x0C)
-    ((CArtsInfoCurView*)self->mCursor)->vf03();
+    ((CBaseCur*)self->mCursor)->cleanup();
 
     // Cleanup memory region
     deleteRegion__17UnkClass_8045F564Fv(&self->mMemRegion);
@@ -375,7 +341,7 @@ void func_80235AE0(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     char* base = lbl_eu_8050B00C;
     char* str1 = func_80136190(base + 0x32, base + 0x3D, 0x18);
-    int dispVal = ((CArtsStatsDisp*)&obj->stats)->vf126();
+    int dispVal = (int)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc91();
 
     char buf[32];
     sprintf(buf, base + 0x42, dispVal, str1);
@@ -786,7 +752,7 @@ extern "C" __declspec(noinline) void func_80236CF4(CArtsInfo* self) {
     nw4r::lyt::Pane* pane1 = self->mpLayout1->GetRootPane()->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = self->mpLayout1->GetRootPane()->FindPaneByName(lbl_eu_8050B00C + 0x1c5, true);
     func_80137924(&pos, pane1, pane2, self->mpLayout1->GetRootPane());
-    reinterpret_cast<CArtsInfoCurView*>(&self->mCursor[0])->vf04(&pos);
+    reinterpret_cast<CBaseCur*>(&self->mCursor[0])->setRootPaneTranslate(&pos);
 }
 #pragma optimize_for_size off
 
@@ -796,8 +762,7 @@ extern "C" __declspec(noinline) void func_80236CF4(CArtsInfo* self) {
 // explicit extsh (retail codegen).
 int func_80236DB8(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatsV* s = (CArtsStatsV*)&obj->stats;
-    CArtsStatBlock* st = s->getStatBlock();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
     return st->field_0x1C;
 }
 
@@ -809,8 +774,7 @@ int func_80236DB8(CArtsInfo* self) {
 // a bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
 extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatsV* s = (CArtsStatsV*)&obj->stats;
-    CArtsStatBlock* st = s->getStatBlock();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
     return st->field_0x20;
 }
 
@@ -820,8 +784,7 @@ extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
 // bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
 extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatsV* s = (CArtsStatsV*)&obj->stats;
-    CArtsStatBlock* st = s->getStatBlock();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
     return (int)st->field_0x10;
 }
 
@@ -848,23 +811,23 @@ extern "C" __declspec(noinline) int func_80236E6C(CArtsInfo* self, int arg2) {
 
     for (u8 i = 0; i < 6; i++) {
         if (ids[i] == -1) continue;
-        CArtsInfoListEntry* e = func_80157C4C(flags.b[i]);
+        CItemExt* e = func_80157C4C(flags.b[i], ids[i]);
         if (e == 0) continue;
-        if (e->field_0x0 == 0) continue;
+        if (e->field_00 == 0) continue;
         // Retail re-fetches the impl object at every dispatch (5 bl's); a
         // hoisted local would drop two of them.
-        u8 count = CItem_initItemImplInstances(e)->vf12(e);
+        u8 count = CItem_initItemImplInstances((CItemData*)e)->vf30((CItemData*)e);
         for (u8 j = 0; j < count; j++) {
-            s16 id = CItem_initItemImplInstances(e)->vf16(e, j);
+            s16 id = CItem_initItemImplInstances((CItemData*)e)->vf40((CItemData*)e, j);
             if (id != -1) {
-                CArtsInfoListEntry* e3 = func_80157C4C(3);
-                if (e3 != 0 && e3->field_0x0 != 0) {
-                    if ((u32)arg2 == CItem_initItemImplInstances(e3)->vf21(e3)) {
-                        result += CItem_initItemImplInstances(e3)->vf36(e3);
+                CItemExt* e3 = func_80157C4C(3, id);
+                if (e3 != 0 && e3->field_00 != 0) {
+                    if ((u32)arg2 == CItem_initItemImplInstances((CItemData*)e3)->vf54((CItemData*)e3)) {
+                        result += CItem_initItemImplInstances((CItemData*)e3)->vf90((CItemData*)e3);
                     }
                 }
             } else {
-                CArtsItemInfo* p = CItem_initItemImplInstances(e)->vf11(e, j);
+                CArtsItemInfo* p = (CArtsItemInfo*)CItem_initItemImplInstances((CItemData*)e)->vf2C((CItemData*)e, j);
                 if (p != 0) {
                     if ((u32)arg2 == ((p->field_0x4 >> 4) & 0xfff)) {
                         result += (s16)((p->field_0x0 >> 10) & 0x7ff);
@@ -952,13 +915,13 @@ int func_80237238(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     s16 weapon = obj->field_0x26;
     if (weapon == -1) goto fail;
-    CArtsInfoListEntry* e = func_80157C4C(2);
+    CItemExt* e = func_80157C4C(2, weapon);
     if (e == 0) goto fail;
-    u32 v0 = e->field_0x0;
+    u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = func_80139358(v0 >> 20);
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
-    u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u8 b = (u8)func_801361E8((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)func_800A082C(obj);
@@ -979,13 +942,13 @@ int func_80237394(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     s16 weapon = obj->field_0x26;
     if (weapon == -1) goto fail;
-    CArtsInfoListEntry* e = func_80157C4C(2);
+    CItemExt* e = func_80157C4C(2, weapon);
     if (e == 0) goto fail;
-    u32 v0 = e->field_0x0;
+    u32 v0 = e->field_00;
     if (v0 == 0) goto fail;
     u16 id = func_80139358(v0 >> 20);
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x205, id);
-    u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
+    u8 b = (u8)func_801361E8((u32)lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
         // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)func_800A082C(obj);
@@ -2517,7 +2480,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         nw4r::lyt::Pane* root1 = *(nw4r::lyt::Pane**)((u8*)mpLayout1 + 0x10);
         void* fontObj1 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout1);
-        func_8013676C(root1, reinterpret_cast<CArtsFontView*>(fontObj1)->sf9());
+        func_8013676C(root1, (u32)((IDeviceFontInfo*)fontObj1)->getFont());
 
         char* lang = func_801355BC();
         if (lang != 0) {
@@ -2560,7 +2523,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         // func_80138F78 to get the message resource name.
         char* resName = func_80138F78(
             func_8013606C(&lbl_eu_8050B00C[0x3A2], detailPane, 43));
-        void* timg = reinterpret_cast<CArtsArcView*>(field_0x1C)->getResource("timg", (u32)resName, 0);
+        void* timg = ((nw4r::lyt::ArcResourceAccessor*)field_0x1C)->GetResource(0x74696d67, resName, 0);
         if (timg != 0) {
             CArtsMsgObj* msg = (CArtsMsgObj*)timg;
             func_80136B4C(mpLayout1, &lbl_eu_8050B00C[0x3D3], (char*)timg, 0);
@@ -2582,7 +2545,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
 
         void* fontObj2 = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout2);
         func_8013676C(*(nw4r::lyt::Pane**)((u8*)mpLayout2 + 0x10),
-                      reinterpret_cast<CArtsFontView*>(fontObj2)->sf9());
+                      (u32)((IDeviceFontInfo*)fontObj2)->getFont());
 
         if (lang != 0) {
             setLayoutTextBoxFont(mpLayout2, &lbl_eu_8050B00C[238], (u32)lang);
@@ -2642,7 +2605,7 @@ int CArtsInfo::OnFileEvent(CEventFile* event) {
         mCursor[20] = tmpCursor[20];
         mCursor[21] = tmpCursor[21];
         __dt__6CCur18Fv(tmpCursor, -1);
-        reinterpret_cast<CArtsCurVt*>(mCursor)->bind();
+        ((CBaseCur*)mCursor)->initLayout();
         func_80236508(this);
         func_8023B430(this);
         field_0x14 = 0;

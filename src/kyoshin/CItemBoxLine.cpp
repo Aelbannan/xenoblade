@@ -270,7 +270,7 @@ __declspec(noinline) u8 func_801EC8B4(const CIBLTab* self, unsigned int index) {
 // external reloc; without it MWCC -inline auto inlines the same-TU body.
 extern "C" __declspec(noinline) CBaseCur* __ct__CIBLTabCur(CBaseCur* _this, void* accessor) {
     __ct__8CBaseCurFv(_this);
-    _this->mVtable = (void*)lbl_eu_80534D80;
+    _this->vtbl() = (void*)lbl_eu_80534D80;
     return _this;
 }
 

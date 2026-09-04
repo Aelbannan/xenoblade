@@ -7,6 +7,7 @@ namespace nw4r { namespace math { struct VEC3; } }
 namespace nw4r { namespace lyt { class Layout; class AnimTransform; class DrawInfo; class Pane; class ArcResourceAccessor; } }
 struct CFileHandle;
 class CEventFile;
+class UnkClass_8045F564;
 
 /* Map selection UI widget. Displays a grid of available maps for the player
    to choose from. Uses IWorkEvent-compatible vtable at +0x00 (set by the
@@ -127,8 +128,9 @@ extern "C" void func_801F34F4(void* scrollbar);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 extern "C" void __dl__FPv(void*);
+void func_801390E0(CFileHandle**);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(void*);

@@ -28,7 +28,7 @@ struct CSysWinPaneOverlay {
 };
 
 // us-8022d450 - CSysWin constructor (US retail short C-linkage
-// symbol __ct__CSysWin; the class declares no virtuals so MWCC never emits a
+// symbol __ct__CSysWin; the class is novtable so MWCC never emits a
 // __vt__7CSysWin of its own). Stores the retail vtable BEFORE the embedded
 // UnkClass_8045F564 is constructed (retail ctor order), then zero/one-inits
 // the state fields and returns `this` in r3. optimize_for_size matches the
@@ -37,7 +37,7 @@ struct CSysWinPaneOverlay {
 #pragma push
 #pragma optimize_for_size on
 extern "C" CSysWin* __ct__CSysWin(CSysWin* self, int arg) {
-    self->mVtbl = lbl_eu_80536510;
+    self->vtbl() = lbl_eu_80536510;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = 0;
     self->mTagProcessor = 0;

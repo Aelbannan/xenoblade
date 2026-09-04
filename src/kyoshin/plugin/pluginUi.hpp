@@ -71,36 +71,13 @@ extern u32 lbl_eu_806619A0;
 // func_8013639C against lbl_eu_804FABF0 keys.
 extern char* lbl_eu_80664090;
 
-// Sub-object hanging off the player at +0x3ED4: carries its own vtable with
-// a state probe at +0x40 (winTalkWait) and is handed to func_800C4244
-// (pcTalk).
-struct PcTalkSub;
-// Fake interface whose vtable slot 16 (+0x40) is the talk-busy probe; casting
-// the sub-object to this makes MWCC emit the retail folded r12 virtual-call
-// chain instead of a staged function-pointer temp.
-struct PcTalkProbeIf {
-    virtual void _v00();
-    virtual void _v01();
-    virtual void _v02();
-    virtual void _v03();
-    virtual void _v04();
-    virtual void _v05();
-    virtual void _v06();
-    virtual void _v07();
-    virtual void _v08();
-    virtual void _v09();
-    virtual void _v10();
-    virtual void _v11();
-    virtual void _v12();
-    virtual void _v13();
-    virtual int probe(int arg); // +0x40: nonzero while the talk window is busy
-};
-struct PcTalkSub {
-    PcTalkProbeIf* vtable; // 0x0
-};
+// Sub-object hanging off the player at +0x3ED4 (real owner:
+// cf::CfObjectImplWalker, whose vf40 at +0x40 is the talk-busy probe used
+// by winTalkWait); handed to func_800C4244 (pcTalk).
+namespace cf { class CfObjectImplWalker; }
 struct PcBattleTalkObj {
     u8 _00[0x3ED4];
-    PcTalkSub* field_3ED4; // +0x3ED4
+    cf::CfObjectImplWalker* field_3ED4; // +0x3ED4
 };
 
 extern "C" {
@@ -144,7 +121,7 @@ int func_eu_8013C8F4();
 // Player accessor on the game manager (retail mangled global).
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
 // Start/queue a party-chat line on the battle sub-object.
-int func_800C4244(PcTalkSub* sub, u32 id, u32 flag);
+int func_800C4244(cf::CfObjectImplWalker* sub, u32 id, u32 flag);
 void func_8013E52C(int id);
 void func_8013D448(int mode, const char* str);
 // Opens a system window with the given text.

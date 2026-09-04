@@ -22,12 +22,8 @@
 
 #include <functions.hpp>
 
-// Fake SI interface for the nw4r::lyt::Layout deleting-destructor dispatch at
-// vtable slot 2 (+0x8); real virtual dispatch reproduces the retail
-// `lwz r12,0(r3); lwz r12,8(r12); mtctr; bctrl` sequence.
-struct CTutorialLayoutDtorVt {
-    virtual void destroy(u32 flags);
-};
+// (Layout teardown goes through `delete`, whose deleting-dtor vcall
+// matches retail. Font dispatch goes through IDeviceFontInfo::getFont.)
 
 // Constructor: install the IWorkEvent vtable, construct the two memory
 // regions (in declaration order), null every pointer, then set the state
@@ -198,19 +194,8 @@ extern "C" void func_8029ADF8(CTutorial* self) {
     self->func_8029B124();
 }
 
-// Font object returned by CDeviceFont::getFontInfo: vtable slot 9 (+0x24)
-// yields the u32 font handle bound into the layout. Never instantiated, so no
-// vtable is emitted; a genuine virtual call reproduces the retail dispatch.
-struct CTutorialFontView {
-    virtual void sf2() = 0;
-    virtual void sf3() = 0;
-    virtual void sf4() = 0;
-    virtual void sf5() = 0;
-    virtual void sf6() = 0;
-    virtual void sf7() = 0;
-    virtual void sf8() = 0;
-    virtual u32 sf9() = 0; // vtable offset 0x24
-};
+// Font object returned by CDeviceFont::getFontInfo dispatches through
+// IDeviceFontInfo::getFont (vtable slot 9, +0x24).
 
 /* File-completion dispatcher: whichever of the three requested files arrived
  * determines the branch. Handle 0 (layout arc) builds the whole layout stack;
@@ -239,8 +224,8 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) {
         // Bind the shared font onto the root pane (retail loads the root pane
         // before fetching the font handle from vtable slot 9).
         nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
-        u32 fontResult = static_cast<CTutorialFontView*>(
-                             CDeviceFont::getFontInfo(1, mpLayout))->sf9();
+        u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
+                             CDeviceFont::getFontInfo(1, mpLayout))->getFont();
         func_8013676C(rootPane, fontResult);
 
         u32 lang = getPackedFont();
@@ -306,9 +291,7 @@ void CTutorial::func_8029ABD8() {
     field_44 = 0;
     nw4r::lyt::Layout* layout = mpLayout;
     if (layout != nullptr) {
-        if (layout != nullptr) {
-            reinterpret_cast<CTutorialLayoutDtorVt*>(layout)->destroy(1);
-        }
+        delete layout;
         mpLayout = nullptr;
     }
     releaseArcResourceAccessor(mAccessor0);

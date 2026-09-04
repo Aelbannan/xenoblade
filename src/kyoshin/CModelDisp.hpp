@@ -99,36 +99,6 @@ struct CDispVt40 {
     virtual u32 m40(CModelDispParamSlot* owner); // #14 => +0x40
 };
 
-// Alpha vtable view on a sub-object's controller: method at +0x48 takes the
-// current display alpha. 16 declared slots => byte offset (16+2)*4 = 0x48.
-struct CDispAlphaVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m48(f32 alpha); // lands at +0x48
-};
-
-// Local flush-vtable view (+0xE0 slot) - one filler larger than the shared
-// spelling so the method lands at byte offset 0xE0 with this compiler.
-struct CDispFlushVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
-    virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();
-    virtual void m34(); virtual void m35();
-    virtual void m38(); // lands at +0xE0
-};
-
 // --- C-linkage runtime helper and sub-object ctor/dtor (retail names) ---
 // The sub-object ctor/dtor are retail-named symbols (func_801FBEB8 /
 // __dt__801FBF0C), not C++ member symbols; C linkage keeps the __construct_array
@@ -136,24 +106,3 @@ struct CDispFlushVt {
 // (__construct_array itself is declared in CModelDispEquip.hpp.)
 extern "C" void* func_801FBEB8(CModelDispSub* sub);
 extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);
-
-// Vtable dispatch on the object stored in a sub-object's field_00:
-// +0xC8 (no args) and +0xC4 (three args). With MWCC's 2 reserved leading
-// slots, offset = (declaredIndex+2)*4: 47 fillers put mC4 (index 47) at
-// +0xC4 and mC8 (index 48) at +0xC8.
-struct CModelDispSubVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E();
-    virtual void mC4(void* ptr, void* arg, u32 flag); // index 47 => +0xC4
-    virtual void mC8();                               // index 48 => +0xC8
-};

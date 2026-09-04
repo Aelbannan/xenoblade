@@ -10,13 +10,8 @@
 // (declared in include/lbls_kyoshin.hpp; keep local extern for MWCC relocs)
 extern char lbl_eu_80505DE8[];
 
-// Fake SI interface for the CBaseCur vtable slot +0x14 (vtable[5]): real
-// virtual dispatch reproduces the retail lwz r12,0(r3); lwz r12,20(r12)
-// sequence (manual ((void**)mVtable)[5] casts emit a scratch r4).
-struct CBaseCurVt5 {
-    virtual void _v00(); virtual void _v04(); virtual void _v08();
-    virtual void m14();  // slot 5 => +0x14, no args (retail leaves r4 untouched)
-};
+// (CBaseCur now carries the real virtuals; func_801D202C dispatches
+// checkDeactivate() at +0x14 directly.)
 
 // ============================================================================
 // func_801D2150: Set pane translate from VEC3
@@ -74,7 +69,7 @@ zero:
     advanceAnimTransform(cur->mpAnimTrans0, 1.0f);
     goto animate;
 one:
-    reinterpret_cast<CBaseCurVt5*>(cur)->m14();
+    cur->checkDeactivate();
 animate:
     cur->mpLayout->Animate(0);
 }
@@ -139,7 +134,7 @@ extern "C" void checkDeactivate__8CBaseCurFv(CBaseCur* cur) {
 // CBaseCur constructor
 // ============================================================================
 extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    _this->mVtable = (void*)lbl_eu_805349A0;
+    _this->vtbl() = (void*)lbl_eu_805349A0;
     _this->mArcResAcc = arcResAcc;
     _this->mpLayout = nullptr;
     _this->mpAnimTrans0 = nullptr;
@@ -163,7 +158,7 @@ extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534978;
+    _this->vtbl() = (void*)lbl_eu_80534978;
     return _this;
 }
 
@@ -193,7 +188,7 @@ extern "C" void initLayout__6CCur07Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur09(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534950;
+    _this->vtbl() = (void*)lbl_eu_80534950;
     return _this;
 }
 
@@ -233,7 +228,7 @@ extern "C" void func_801D24E8(CBaseCur* cur, const nw4r::math::VEC3* trans0, con
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur11(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534928;
+    _this->vtbl() = (void*)lbl_eu_80534928;
     return _this;
 }
 
@@ -273,7 +268,7 @@ extern "C" void func_801D2670(CBaseCur* cur, u8 visible) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur14(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534900;
+    _this->vtbl() = (void*)lbl_eu_80534900;
     return _this;
 }
 
@@ -303,7 +298,7 @@ extern "C" void initLayout__6CCur14Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur15(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_805348D8;
+    _this->vtbl() = (void*)lbl_eu_805348D8;
     return _this;
 }
 
@@ -333,7 +328,7 @@ extern "C" void initLayout__6CCur15Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur16(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_805348B0;
+    _this->vtbl() = (void*)lbl_eu_805348B0;
     return _this;
 }
 
@@ -363,7 +358,7 @@ extern "C" void initLayout__6CCur16Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur18(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534884;
+    _this->vtbl() = (void*)lbl_eu_80534884;
     return _this;
 }
 
@@ -393,7 +388,7 @@ extern "C" void initLayout__6CCur18Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CCur22(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_8053485C;
+    _this->vtbl() = (void*)lbl_eu_8053485C;
     return _this;
 }
 
@@ -461,7 +456,7 @@ extern "C" void func_801D2CF4(CBaseCur* cur, u8 index) {
 // ============================================================================
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = (void*)lbl_eu_80534838;
+    _this->vtbl() = (void*)lbl_eu_80534838;
     return _this;
 }
 

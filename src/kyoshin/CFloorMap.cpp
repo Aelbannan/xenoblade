@@ -10,6 +10,10 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CScrollBar.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
 // Named .sdata2 conversion magics: defining them lets MWCC's constant pool
@@ -19,7 +23,7 @@ extern const double lbl_eu_80668770 = 0x4330000080000000ll;
 extern const double lbl_eu_80668788 = 0x4330000000000000ll;
 
 extern u32 lbl_eu_8066479C;
-extern s32 lbl_eu_80664184;
+extern u32 lbl_eu_80664184;
 extern u16 lbl_eu_8050B798[];
 extern u32 func_8003B1EC(void* bdat);   // matches code_801862C0.hpp canonical decl
 extern u32 lbl_eu_8050BDF8[];
@@ -589,9 +593,8 @@ void func_80246330(CFloorMapLayoutBlock* self) {
         self->slots[i].posY = 0;
         buildLayout(&self->slots[i].layout, self->accessor, tbl + 0x1C1);
         nw4r::lyt::Layout* lay = self->slots[i].layout;
-        CFloorMapFontView* font =
-            (CFloorMapFontView*)getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
-        func_8013676C(lay->GetRootPane(), font->getFontHandle());
+        void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, lay);
+        func_8013676C(lay->GetRootPane(), (u32)((IDeviceFontInfo*)fontObj)->getFont());
     }
 
     func_8003AA34();
@@ -743,7 +746,7 @@ void* __dt__802468C8(void* self, int mode) {
                     ->FindPaneByName(node->name, 1);                           \
             if (marker != NULL && marker->GetParent() != NULL) {               \
                 marker->GetParent()->RemoveChild(marker);                      \
-                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);                 \
+                delete marker;                 \
                 ((CLibLayout*)marker)->deleteTextboxOrPicture();               \
             }                                                                  \
             node = next;                                                       \
@@ -881,7 +884,7 @@ void func_80246908(void* self) {
                     ->FindPaneByName(node->name, 1);
             if (marker != NULL && marker->GetParent() != NULL) {
                 marker->GetParent()->RemoveChild(marker);
-                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);
+                delete marker;
                 ((CLibLayout*)marker)->deleteTextboxOrPicture();
             }
             node = next;
@@ -895,15 +898,14 @@ void func_80246908(void* self) {
             ->FindPaneByName(&lbl_eu_8050BEA8[0x263], 1);
     if (extra != NULL && extra->GetParent() != NULL) {
         extra->GetParent()->RemoveChild(extra);
-        ((CFloorMapLayoutDtorVt*)extra)->destroy(-1);
+        delete extra;
         ((CLibLayout*)extra)->deleteTextboxOrPicture();
     }
 
     // Release the map layout itself (double null check is the retail
     // deleting-dtor shape).
     if (slots->layout != 0) {
-        if (slots->layout != 0)
-            ((CFloorMapLayoutDtorVt*)slots->layout)->destroy(1);
+        delete (nw4r::lyt::Layout*)slots->layout;
         slots->layout = 0;
     }
 }
@@ -936,7 +938,7 @@ void func_80246908(void* self) {
                     ->FindPaneByName(node->name, 1);                           \
             if (marker != NULL && marker->GetParent() != NULL) {               \
                 marker->GetParent()->RemoveChild(marker);                      \
-                ((CFloorMapLayoutDtorVt*)marker)->destroy(-1);                 \
+                delete marker;                 \
                 ((CLibLayout*)marker)->deleteTextboxOrPicture();               \
             }                                                                  \
             node = next;                                                       \
@@ -1082,7 +1084,7 @@ void func_8024830C(void* self, void* arg2) {
         void* player = cf::CfGameManager::getPlayer(0);
         if (player == NULL)
             goto done;
-        CFloorMapVec3* pos = ((CFloorMapPlayerObj*)player)->GetPos();
+        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
         result[0] = pos->x;
         result[1] = pos->y;
         result[2] = pos->z;
@@ -1799,7 +1801,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
                  node = node->next) {
                 CFloorMapObj* obj = (CFloorMapObj*)node->object;
                 if (obj->m8C != rowId) continue;
-                foundPos = *(nw4r::math::VEC3*)obj->GetPos();
+                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_UnkVirtualFunc23();
                 sprintf(buf, &tbl[0x3BC], obj->m74);
                 placed = 1;
                 found = 1;
@@ -1844,7 +1846,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
                 CFloorMapObj* obj = (CFloorMapObj*)node->object;
                 if (!((obj->m64 & 0x4000) || (obj->m64 & 0x8000))) continue;
                 if (obj->m8C != rowId) continue;
-                foundPos = *(nw4r::math::VEC3*)obj->GetPos();
+                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_UnkVirtualFunc23();
                 sprintf(buf, &tbl[0x3ED], obj->m74);
                 placed = 1;
                 break;
@@ -2008,14 +2010,14 @@ void func_8024A448(void* self) {
     for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
          node = node->next) {
         CFloorMapObj* g = (CFloorMapObj*)node->object;
-        if (g->fn0x160() == NULL) continue;
+        if (((cf::CfObject*)g)->CfObject_UnkVirtualFunc68() == NULL) continue;
         if ((g->m64 & 0x8000) == 0 && (g->m64 & 0x4000) == 0) continue;
         if (g->m91 != 6) continue;
 
         // Word-wise snapshot of the position; the y is cached in a scalar so
         // MWCC dedicates a callee-saved FPR to it across the row loop
         // (retail f26).
-        CFloorMapVec3 pv = *g->GetPos();
+        CFloorMapVec3 pv = *(CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
         f32 py = pv.y;
 
         u8 found = 0;
@@ -2103,7 +2105,7 @@ void func_8024A748(void* self) {
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
-                CFloorMapVec3* pos = g->GetPos();
+                CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
                 vec.x = pos->x;
                 vec.y = pos->y;
                 vec.z = pos->z;
@@ -2136,7 +2138,7 @@ void func_8024A748(void* self) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if ((g->m64 & 0x8000) != 0 || (g->m64 & 0x10000) != 0) {
                     if (g->m8C == (u16)type) {
-                        CFloorMapVec3* pos = g->GetPos();
+                        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
                         vec.x = pos->x;
                         vec.y = pos->y;
                         vec.z = pos->z;
@@ -2154,7 +2156,7 @@ void func_8024A748(void* self) {
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if (g->m8C == (u16)type) {
-                    CFloorMapVec3* pos = g->GetPos();
+                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
@@ -2204,7 +2206,7 @@ void func_8024A748(void* self) {
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if (g->m8C == (u16)type) {
-                    CFloorMapVec3* pos = g->GetPos();
+                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
@@ -2308,10 +2310,9 @@ void func_8024AEEC(void* self) {
 
     if ((u8)lbl_eu_80664184 != lbl_eu_80664798) return;
 
-    CFloorMapPlayerObj* player =
-        (CFloorMapPlayerObj*)cf::CfGameManager::getPlayer(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
-    CFloorMapVec3* pos = player->GetPos();
+    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
     u8 found = 0;
     // Word-wise snapshot so the position lives in frame slots (retail
     // 0x40-0x4B) instead of nonvolatile FPRs across the table walk.
@@ -2384,7 +2385,7 @@ void func_8024AEEC(void* self) {
         // Scale the marker by the game's map zoom numerator; retail stores it
         // into the wrapper pane's rotate vector.
         f32 scale =
-            lbl_eu_8066879C * ((CFloorMapMgrView*)mgr)->getScaleSrc()->scale04 /
+            lbl_eu_8066879C * ((CFloorMapMgr*)mgr)->getScaleSrc()->scale04 /
             lbl_eu_8066A1F8;
         CFloorMapPaneRotate* rot = (CFloorMapPaneRotate*)holder;
         rot->rotX = lbl_eu_80668764;
@@ -2420,10 +2421,10 @@ void func_8024B234(CFloorMapFull* self) {
 
     if ((u8)lbl_eu_80664184 != lbl_eu_80664798) return;
 
-    CFloorMapPlayerObj* player = (CFloorMapPlayerObj*)cf::CfGameManager::getPlayer(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
 
-    CFloorMapVec3* pos = player->GetPos();
+    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
     // Word-wise snapshot so the loop compares a cached float (retail f30)
     // and the projection reads pre-projection x/z.
     ((u32*)&ppos)[0] = ((u32*)pos)[0];
@@ -2470,7 +2471,7 @@ void func_8024B234(CFloorMapFull* self) {
     root->AppendChild((nw4r::lyt::Pane*)pic);
 
     // Scale the marker by the player object's zoom factor.
-    f32 zoom = player->fn0xCC();
+    f32 zoom = ((cf::CfObject*)player)->CfObject_UnkVirtualFunc31();
     // Reset of the position snapshot: dead in retail but kept by MWCC since
     // ppos's address was taken for the word-wise copy above.
     ppos.y = lbl_eu_80668764;
@@ -2780,8 +2781,8 @@ CFloorMap::~CFloorMap() {
     __dt__7CSysWinFv(mSysWinB8, -1);
     __dt__6CCur18Fv(mCursorA0, -1);
     __dt__10CScrollBarFv(mScrollBar, -1);
-    __dt__17UnkClass_8045F564Fv(mMemRegion14, -1);
-    __dt__17UnkClass_8045F564Fv(mMemRegion04, -1);
+    __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion14), -1);
+    __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(mMemRegion04), -1);
 }
 
 // Loads the floor-map archive: builds the cursor staging image from the
@@ -3118,20 +3119,18 @@ void func_8024CB94(CFloorMapFull* p) {
         reinterpret_cast<UnkClass_8045F564*>((u8*)p + 0x14)->func_8045F778();
 
         func_801F35DC((void*)p->mScrollBar);
-        ((CCur18View*)&p->mCursor)->v01();
+        ((CBaseCur*)&p->mCursor)->cleanup();
         func_8022B7F4((void*)&p->mSysWinB8);
         func_8022B7F4((void*)&p->mSysWinF4);
 
         // Destroy each owned layout (double null check is the retail D2-
         // inlined deleting-dtor shape) and clear the slot.
         if (p->mLayout130 != 0) {
-            if (p->mLayout130 != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout130)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout130;
             p->mLayout130 = 0;
         }
         if (p->mLayout138 != 0) {
-            if (p->mLayout138 != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout138)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout138;
             p->mLayout138 = 0;
         }
 
@@ -3140,40 +3139,33 @@ void func_8024CB94(CFloorMapFull* p) {
         for (u32 i = 0; i < 0x14; i++) {
             u32* slot = &p->mLayouts150[i].mPtr;
             if (*slot != 0) {
-                if (*slot != 0)
-                    ((CFloorMapLayoutDtorVt*)*slot)->destroy(1);
+                delete (nw4r::lyt::Layout*)*slot;
                 *slot = 0;
             }
         }
 
         if (p->mLayout1FC != 0) {
-            if (p->mLayout1FC != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout1FC)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout1FC;
             p->mLayout1FC = 0;
         }
         if (p->mLayout32D4 != 0) {
-            if (p->mLayout32D4 != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout32D4)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout32D4;
             p->mLayout32D4 = 0;
         }
         if (p->mLayout32EC != 0) {
-            if (p->mLayout32EC != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout32EC)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout32EC;
             p->mLayout32EC = 0;
         }
         if (p->mLayout3304 != 0) {
-            if (p->mLayout3304 != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout3304)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout3304;
             p->mLayout3304 = 0;
         }
         if (p->mLayout331C != 0) {
-            if (p->mLayout331C != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout331C)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout331C;
             p->mLayout331C = 0;
         }
         if (p->mLayout3334 != 0) {
-            if (p->mLayout3334 != 0)
-                ((CFloorMapLayoutDtorVt*)p->mLayout3334)->destroy(1);
+            delete (nw4r::lyt::Layout*)p->mLayout3334;
             p->mLayout3334 = 0;
         }
     }
@@ -3423,7 +3415,7 @@ void func_8024D614(void* self) {
 
         nw4r::math::VEC3 curOut;
         func_8022C1B4(&curOut, &p->mSysWinB8, p->field_5C);
-        ((CCur18View*)&p->mCursor)->v02(&curOut);
+        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&curOut);
         playUISound(1);
         return;
     }
@@ -3549,7 +3541,7 @@ void func_8024DA0C(void* self) {
         if ((s8)p->field_5C >= 2) p->field_5C = 0;
 
         func_8022C1B4(&cursorOut, &p->mSysWinB8, p->field_5C);
-        ((CCur18View*)&p->mCursor)->v02(&cursorOut);
+        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&cursorOut);
         playUISound(1);
         return;
     }
@@ -4126,7 +4118,7 @@ void func_8024EE50(void* self) {
 
         char* name = func_80136190(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], nameIdx);
         func_8022B9B4(&p->mSysWinF4, name, 0);
-        func_8022BFC8(&p->mSysWinF4, 1);
+        func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
         playUISound(5);
         return;
@@ -4136,7 +4128,7 @@ void func_8024EE50(void* self) {
         // Unvisited but already-seen marker id: show the "no data" text.
         char* name = func_80136190(&lbl_eu_8050BEA8[0x519], &lbl_eu_8050BEA8[0x1F], 0x15);
         func_8022B9B4(&p->mSysWinF4, name, 0);
-        func_8022BFC8(&p->mSysWinF4, 1);
+        func_8022BFC8((CSysWin*)&p->mSysWinF4, 1);
         func_8022B8B8(&p->mSysWinF4);
         playUISound(5);
         return;
@@ -4150,12 +4142,12 @@ void func_8024EE50(void* self) {
     char* nCap3 = func_80136190(&lbl_eu_8050BEA8[0x17], &lbl_eu_8050BEA8[0x1F], 9);
     func_8022B9B4(&p->mSysWinB8, nCap1, nRow);
     func_8022BF6C(&p->mSysWinB8, nCap2, nCap3);
-    func_8022BFC8(&p->mSysWinB8, 0);
+    func_8022BFC8((CSysWin*)&p->mSysWinB8, 0);
     func_8022B8B8(&p->mSysWinB8);
     p->field_5C = 0;
     nw4r::math::VEC3 pos;
     func_8022C1B4(&pos, &p->mSysWinB8, 0);
-    ((CCur18View*)&p->mCursor)->v02(&pos);
+        ((CBaseCur*)&p->mCursor)->setRootPaneTranslate(&pos);
     func_801D216C(&p->mCursor, 1);
     p->field_58 = 1;
     p->field_208 = 1;
@@ -4275,9 +4267,9 @@ void func_8024C104(void* self) {
     u8 idx = lbl_eu_80664798;
     *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, namebuf[idx - 1], self, 0, 0);
     func_801F34F4(p + 0x60);
-    // Invoke vtable slot 0x88 on each embedded sys-win subobject
-    ((CFloorMapWinVf88*)(p + 0xB8))->vf88();
-    ((CFloorMapWinVf88*)(p + 0xF4))->vf88();
+    // Invoke loadSystemArc (vtable +0x88) on each embedded sys-win subobject.
+    ((CSysWin*)(p + 0xB8))->loadSystemArc();
+    ((CSysWin*)(p + 0xF4))->loadSystemArc();
 }
 #pragma optimize_for_size off
 
@@ -4476,7 +4468,7 @@ u32 func_8024FB78(void*) {
                 for (u8 i = 1; i <= count; i++) {
                     // Compare floor height against player y in double precision.
                     s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-                    f32 y = ((CFloorMapPlayerObj*)player)->GetPos()->y;
+                    f32 y = ((cf::CfObject*)player)->CfObject_UnkVirtualFunc23()->y;
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
                     conv.w[0] = 0x43300000;
                     if ((f32)(conv.d - lbl_eu_80668770) > y) {
@@ -4648,7 +4640,7 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
         curDst->field_14 = curSrc->field_14;
         curDst->field_15 = curSrc->field_15;
         __dt__6CCur18Fv(tmpCur, -1);
-        reinterpret_cast<CCur18View*>(&this->mCursorA0[0])->v00();
+        reinterpret_cast<CBaseCur*>(&this->mCursorA0[0])->initLayout();
 
         // Reposition every map layout under the current map cursor.
         if (this->field_34 != 0 && this->field_38 != 0 && this->field_30 == 0) {
@@ -4898,7 +4890,7 @@ extern "C" void __ct__8024507C(void* self) {
     nw4r::lyt::Layout* layout = cv->layout;
     nw4r::lyt::Pane* rootPane = layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     // Fill the four .sbss colour tables from two layout group queries: table
@@ -4929,7 +4921,7 @@ extern "C" void __ct__8024507C(void* self) {
     wv->widgets[0].field_10 = NULL;
     wv->widgets[0].field_14 = 0;
     wv->widgets[0].field_15 = 1;
-    ((CFloorMapWidget*)&wv->widgets[0])->Init(&arg);
+    wv->widgets[0].Init(&arg);
 
     arg.nameOrTable = lbl_eu_805370EC;
     wv->widgets[1].field_04 = NULL;
@@ -4938,7 +4930,7 @@ extern "C" void __ct__8024507C(void* self) {
     wv->widgets[1].field_10 = NULL;
     wv->widgets[1].field_14 = 0;
     wv->widgets[1].field_15 = 1;
-    ((CFloorMapWidget*)&wv->widgets[1])->Init(&arg);
+    wv->widgets[1].Init(&arg);
 
     arg.nameOrTable = lbl_eu_805370D4;
     wv->widgets[2].field_04 = NULL;
@@ -4947,7 +4939,7 @@ extern "C" void __ct__8024507C(void* self) {
     wv->widgets[2].field_10 = NULL;
     wv->widgets[2].field_14 = 0;
     wv->widgets[2].field_15 = 1;
-    ((CFloorMapWidget*)&wv->widgets[2])->Init(&arg);
+    wv->widgets[2].Init(&arg);
 
     arg.nameOrTable = lbl_eu_805370BC;
     wv->widgets[3].field_04 = NULL;
@@ -4956,7 +4948,7 @@ extern "C" void __ct__8024507C(void* self) {
     wv->widgets[3].field_10 = NULL;
     wv->widgets[3].field_14 = 0;
     wv->widgets[3].field_15 = 1;
-    ((CFloorMapWidget*)&wv->widgets[3])->Init(&arg);
+    wv->widgets[3].Init(&arg);
 
     // Rebuild the derived views.
     func_80245950(self);
@@ -4992,7 +4984,7 @@ void func_80244764(CFloorMapLayoutData0* self) {
 
     nw4r::lyt::Pane* rootPane = self->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     func_80136B4C(self->layout, &lbl_eu_8050BEA8[0x24],
@@ -5027,7 +5019,7 @@ void func_80244944(void* self) {
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
@@ -5049,7 +5041,7 @@ void func_80244AE8(void* self) {
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
@@ -5070,7 +5062,7 @@ void func_80244C60(void* self) {
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
@@ -5090,7 +5082,7 @@ void func_80244DD8(void* self) {
 
     nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
     void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
-    u32 fontResult = ((CFloorMapFontView*)fontObj)->getFontHandle();
+    u32 fontResult = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(rootPane, fontResult);
 
     obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);

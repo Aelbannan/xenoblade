@@ -243,9 +243,9 @@ void func_801FF9AC(CModelDispEquip* self) {
             self->state20 = 1;
         }
         CActParamHolder* holder = &self->actParamHolder;
-        void* obj = holder->field_0x00;
+        CScnItemModel* obj = reinterpret_cast<CScnItemModel*>(holder->field_0x00);
         if (obj != 0) {
-            reinterpret_cast<CModelDispVt48*>(obj)->m18(self->alpha);
+            obj->vfunc48(self->alpha);
         }
         struct V4 {
             u32 w[4];
@@ -289,9 +289,9 @@ extern "C" __declspec(noinline) void func_801FFADC(CModelDispEquip* self) {
         self->state20 = 1;
     }
     CActParamHolder* holder = &self->actParamHolder;
-    void* obj = holder->field_0x00;
+    CScnItemModel* obj = reinterpret_cast<CScnItemModel*>(holder->field_0x00);
     if (obj != 0) {
-        reinterpret_cast<CModelDispVt48*>(obj)->m18(self->alpha);
+        obj->vfunc48(self->alpha);
     }
     u32 tmp[4];
     func_801FFAB4((float*)tmp, lbl_eu_80668270, lbl_eu_80668270, lbl_eu_80668270,
@@ -332,13 +332,13 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
             func_804E3CCC(reinterpret_cast<CModelDispEffectView*>(holder->animPtrs[i]));
             holder->animPtrs[i] = 0;
         }
-        CModelDispModelVt* m = reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[i]);
+        CScnItemModel* m = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
         if (m != 0) {
             if (self->equipSlot >= 3) {
-                reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC8(m);
+                reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(m);
                 func_8004B6BC(&holder->actParams[i], holder->unk_55C);
             }
-            reinterpret_cast<CModelDispVtE0*>(&holder->actParams[i])->m38();
+            reinterpret_cast<CActParamAnim*>(&holder->actParams[i])->func_8004B114();
         }
     }
     func_80495E60(holder->unk_55C);
@@ -352,7 +352,7 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
     }
     func_8004B6BC(&holder->actParam, holder->field_0x04);
     func_8004B6BC(&holder->actParam, holder->field_0x08);
-    reinterpret_cast<CModelDispVtE0*>(&holder->actParam)->m38();
+    reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
     func_80495E60(holder->field_0x04);
     func_80495E60(holder->field_0x08);
     func_80495E60(reinterpret_cast<CModelDispObj*>(holder->field_0x00));
@@ -416,34 +416,34 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
             if (actor != 0) {
                 m = actor->field_3F2C;
                 if (m == 0) ready = 0;
-                if (reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m74() == 0) ready = 0;
+                if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc9() == 0) ready = 0;
                 if (func_80200C20(self, actor->field_3F28) == 0) ready = 0;
             }
             if (holder->field_0x00 == 0 && ready != 0) {
                 // ---- build the display model (retail statement order) ----
                 ((CActParamHolderTail*)holder)->currentModelPtr = (u32)actor;
                 holder->field_0x00 = func_80495E8C(self->somePtr, m, -1, 1);
-                reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m64(0);
+                reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
                 ((CActParamHolderTail*)holder)->equipPtrs[1] =
-                    ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(1) >> 10) & 0x3FF;
-                s16 be = func_800BE954(reinterpret_cast<CModelDispMoveVt*>(&actor->move));
+                    ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(1) >> 10) & 0x3FF;
+                s16 be = func_800BE954(reinterpret_cast<cf::CfObjectMove*>(&actor->move));
                 CModelDispParamSlot* param = func_80062C28(be, 0);
                 // u8 index: retail emits clrlwi/mulli address math + cmplwi/ble
                 for (u8 idx = 2; idx <= 5; idx++) {
-                    if (reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(idx) != 0) {
-                        CModelDispVt8* obj = param[idx].field_2C;
-                        func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
-                                      obj->m00(&param[idx], actor->field_3F28));
+                    if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) != 0) {
+                        CResLookup* obj = param[idx].field_2C;
+                        func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+                                      reinterpret_cast<CModelDispNameParam*>(obj->getResourceBase(&param[idx], actor->field_3F28)));
                         holder->equipPtrs[idx] =
-                            ((u32)reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m148(idx) >> 10) & 0x3FF;
+                            ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) >> 10) & 0x3FF;
                     }
                 }
                 holder->field_0x04 = func_800584B8(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
                 holder->field_0x08 = func_800584B8(self->somePtr,
-                    reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m184(), &lbl_eu_80507FF8[4]);
-                reinterpret_cast<CModelDispVtE0*>(&holder->actParam)->m38();
-                func_8004B624(&holder->actParam, reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
-                              holder->field_0x08, reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m184());
+                    reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc4()), &lbl_eu_80507FF8[4]);
+                reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
+                func_8004B624(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
+                              holder->field_0x08, reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc4()));
                 func_8004B6A4(&holder->actParam, holder->field_0x04, actor->field_3F30);
                 // Pinned via the §17.6 rotate intrinsic: plain '&= ~0x800000'
                 // lets the optimizer pick a different mask encoding here.
@@ -469,48 +469,48 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 CModelDispParamSlot* mainSlot = func_80062DA4(be);
                 if ((actor->field_3F08 & 0x1000) != 0) {
                     holder->animModelPtrs[0] = func_80495E94(self->somePtr,
-                        mainSlot->field_2C->m00(mainSlot, 0));
+                        reinterpret_cast<CModelDispNameParam*>(mainSlot->field_2C->getResourceBase(mainSlot, 0)));
                     if (holder->animModelPtrs[0] != 0) {
-                        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[0]),
-                            func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 0), 0);
+                        reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+                            reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[0]),
+                            reinterpret_cast<u32>(func_800BED80(reinterpret_cast<cf::CfObjectMove*>(&actor->move), 0)), 0);
                     }
                 }
                 if ((actor->field_3F08 & 0x2000) != 0) {
                     holder->animModelPtrs[1] = func_80495E94(self->somePtr,
-                        mainSlot->field_2C->m00(mainSlot, 0));
+                        reinterpret_cast<CModelDispNameParam*>(mainSlot->field_2C->getResourceBase(mainSlot, 0)));
                     if (holder->animModelPtrs[1] != 0) {
-                        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[1]),
-                            func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), 1), 0);
+                        reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+                            reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[1]),
+                            reinterpret_cast<u32>(func_800BED80(reinterpret_cast<cf::CfObjectMove*>(&actor->move), 1)), 0);
                     }
                 }
                 if ((actor->field_3F08 & 0x20000) != 0) {
-                    if (reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188() != 0) {
-                        __ct__CMcaFile(&mca, reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188());
+                    if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5() != 0) {
+                        __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5());
                         holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
                     }
                 }
                 for (u8 i = 0; i < 2; i++) {
-                    CModelDispModelVt* am =
-                        reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[i]);
+                    CScnItemModel* am =
+                        reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
                     if (am == 0 || holder->unk_55C == 0)
                         continue;
                     holder->actParams[i].field_0x378 = i;
                     func_8005A594(&holder->actParams[i]);
                     func_8004B624(&holder->actParams[i], am, holder->unk_55C,
-                                  reinterpret_cast<CModelDispMoveVt*>(&actor->move)->m188());
+                                  reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5());
                     func_8004B9D4(&holder->actParams[i],
                                   func_8004C5EC(&holder->actParam), 0, -1, 0);
                 }
                 if (actor->field_3F28 == 8) {
                     if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
-                        reinterpret_cast<CModelDispVt28*>(actor->field_3F34)->m28(&lbl_eu_80507FF8[0xC], 0);
+                        reinterpret_cast<CScnItemModel*>(actor->field_3F34)->vfunc28(reinterpret_cast<u32>(&lbl_eu_80507FF8[0xC]), 0);
                     }
                 }
                 holder->timer = 0x96;
-                reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m48(self->alpha);
-                reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m9C(3, 0);
+                reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc48(self->alpha);
+                reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc9C(3, 0);
                 self->state21 = 1;
                 func_801FF96C(self);
             } else if (holder->field_0x00 != 0 && ready == 0) {
@@ -665,17 +665,17 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     // No cached model local: retail reloads holder->field_0x00 (r30-based
     // lwz) before every use; an extra live value shifts the saved-reg pool.
     holder->field_0x00 = func_80495E8C(self->somePtr, (u32)self->fileSlots[0].data, -1, 1);
-    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m64(0);
+    reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
     func_80485684(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
     func_80482DF4(reinterpret_cast<CModelDispObj*>(holder->field_0x00), 1);
     if (holder->field_0x00 == 0) return;
-    func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
+    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[1].data));
-    func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
+    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[2].data));
-    func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
+    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[3].data));
-    func_804831C4(reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
+    func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   reinterpret_cast<CModelDispNameParam*>(self->fileSlots[4].data));
 
     // Pick the anim-model set for the weapon type (2 = off-hand only,
@@ -703,17 +703,17 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     if (holder->animModelPtrs[0] != 0) {
         u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 0);
         if (sub != 0) {
-            reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[0]),
-                func_800BBC08(sub), 0);
+            reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+                reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[0]),
+                reinterpret_cast<u32>(func_800BBC08(sub)), 0);
         }
     }
     if (holder->animModelPtrs[1] != 0) {
         u8 sub = (u8)func_8014235C(rec->weaponId, &lbl_eu_80507FF8[0x58], 1);
         if (sub != 0) {
-            reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-                reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[1]),
-                func_800BBC08(sub), 0);
+            reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+                reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[1]),
+                reinterpret_cast<u32>(func_800BBC08(sub)), 0);
         }
     }
 
@@ -721,8 +721,8 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     u32 f6 = (u32)self->fileSlots[6].data;
     holder->field_0x04 = func_800584B8(self->somePtr, f7, &lbl_eu_80507FF8[0]);
     holder->field_0x08 = func_800584B8(self->somePtr, f6, &lbl_eu_80507FF8[4]);
-    reinterpret_cast<CModelDispVtE0*>(&holder->actParam)->m38();
-    func_8004B624(&holder->actParam, reinterpret_cast<CModelDispModelVt*>(holder->field_0x00),
+    reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
+    func_8004B624(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                   holder->field_0x08, f6);
     func_8004B6A4(&holder->actParam, holder->field_0x04, f7);
     holder->actParam.field_0x0C &= ~0x800000;
@@ -750,7 +750,7 @@ extern "C" void func_80200394(CModelDispEquip* self) {
 
     // Wire both anim-model slots into the act-param array and start their anims.
     for (u8 i = 0; i < 2; i++) {
-        CModelDispModelVt* am = reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[i]);
+        CScnItemModel* am = reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
         if (am != 0 && holder->unk_55C != 0) {
             holder->actParams[i].field_0x378 = i;
             func_8005A594(&holder->actParams[i]);
@@ -762,13 +762,13 @@ extern "C" void func_80200394(CModelDispEquip* self) {
     // Character 8 gets a special greeting at high progress.
     if (charId == 8) {
         if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {
-            reinterpret_cast<CModelDispVt28*>(holder->field_0x00)->m28(&lbl_eu_80507FF8[0xC], 0);
+            reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc28(reinterpret_cast<u32>(&lbl_eu_80507FF8[0xC]), 0);
         }
     }
 
     holder->timer = 0x96;
-    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m48(self->alpha);
-    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->m9C(3, 0);
+    reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc48(self->alpha);
+    reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc9C(3, 0);
     self->state21 = 1;
     func_801FF96C(self);
 }
@@ -889,11 +889,11 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
 extern "C" void func_80200E94(CModelDispEquip* self, void* arg, int index) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->animModelPtrs[index] != 0) {
-        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC8(
-            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]));
-        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]),
-            reinterpret_cast<CModelDispNameParam*>(arg), 0);
+        reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(
+            reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[index]));
+        reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+            reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[index]),
+            reinterpret_cast<u32>(arg), 0);
     }
 }
 
@@ -904,11 +904,11 @@ extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int 
     if (holder->animModelPtrs[index] == 0) return;
     // Stop + re-arm the animation-model slot (same shape as func_80200E94),
     // guarded on the move pointer and the name lookup.
-    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC8(
-        reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]));
-    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
-        reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]),
-        reinterpret_cast<CModelDispNameParam*>(arg), 0);
+    reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC8(
+        reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[index]));
+    reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfuncC4(
+        reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[index]),
+        reinterpret_cast<u32>(arg), 0);
 }
 
 // ============================================================
@@ -944,11 +944,11 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                 switch (subKind) {
                 case 0:
                     idx = 0;
-                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    res = func_800BEDC4(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 case 1:
                     idx = 1;
-                    res = func_800BEDC4(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    res = func_800BEDC4(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
                 if (res != 0) func_80200F08(self, actor, res, idx);
@@ -957,11 +957,11 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                 switch (subKind) {
                 case 0:
                     idx = 0;
-                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    res = func_800BED80(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 case 1:
                     idx = 1;
-                    res = func_800BED80(reinterpret_cast<CModelDispMoveVt*>(&actor->move), idx);
+                    res = func_800BED80(reinterpret_cast<cf::CfObjectMove*>(&actor->move), idx);
                     break;
                 }
                 if (res != 0) func_80200F08(self, actor, res, idx);
@@ -1104,7 +1104,7 @@ extern "C" void func_8020131C(CModelDispEquip* self, u32 unused,
                             reinterpret_cast<u8*>(parent) + 8);
                     func_804E3D0C(effect, parent);
                     void* chain =
-                        reinterpret_cast<CModelDispVtA8*>(holder->animModelPtrs[i])->m2A();
+                        reinterpret_cast<void*>(reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i])->vfuncA8());
                     reinterpret_cast<CModelDispEffectView*>(
                         ((CActParamHolderTail*)holder)->animPtrs[i])->field_0x14 =
                         reinterpret_cast<u32>(chain);

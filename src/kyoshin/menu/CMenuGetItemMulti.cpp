@@ -815,7 +815,7 @@ void CMenuGetItemMulti::Init() {
     mCursor.mActive = cursorTemp.mActive;
     mCursor.mVisible = cursorTemp.mVisible;
     __dt__6CCur18Fv(&cursorTemp, -1);
-    ((void (*)(CBaseCur*))reinterpret_cast<void**>(mCursor.mVtable)[2])(&mCursor);
+    mCursor.initLayout();
 
     u8 systemWindowStorage[sizeof(CSysWin)];
     CSysWin* systemWindowTemp = reinterpret_cast<CSysWin*>(&systemWindowStorage[0]);
@@ -840,7 +840,7 @@ void CMenuGetItemMulti::Init() {
     systemWindow->field_38 = systemWindowTemp->field_38;
     systemWindow->field_39 = systemWindowTemp->field_39;
     __dt__7CSysWinFv(systemWindowTemp, -1);
-    ((void (*)(CSysWin*))reinterpret_cast<void**>(systemWindow->mVtbl)[34])(systemWindow);
+    systemWindow->loadSystemArc();
 
     if ((*reinterpret_cast<u32*>(cf::CfGameManager::getCurrentPad()) & 0x0001e000) != 0) {
         field_200 = 1;

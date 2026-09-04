@@ -23,6 +23,7 @@
 // emits nothing when it is already in r3). No guard needed here anymore.
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
+#include "kyoshin/CBaseCur.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/MTRand.hpp"
 #include "monolib/work/CEventFile.hpp"
@@ -91,6 +92,7 @@ void initCrystalData(unsigned char* p);
 int CSysWin_isActive(void* self);
 int CSysWin_isReady(void* self);
 int CScrollBar_isVisible(void* self);
+extern "C" void closeFileHandle__FPP11CFileHandle(void*);
 int func_80297CC0(void* self);
 int func_80222A50(void* self);
 void func_80222AF0(void* self);
@@ -312,25 +314,9 @@ extern u8 lbl_eu_80576658[0x20];
 extern u8 lbl_eu_80576664[0x20];
 extern u32 lbl_eu_8065FC18[];
 
-// Virtual-call helper: represents the UI sub-object at this+0xEB4 whose
-// vtable has methods at slots 3 (offset 0x0c, no-arg) and 4 (offset 0x10,
-// void* arg).
-struct CMCWinFn {
-    virtual void m0();
-    virtual void m1();
-    virtual void m2(void* arg);
-    virtual void m3();
-    virtual void m4();
-};
 
-// Virtual dispatch to a sub-object whose vtable method sits at slot +0x10
-// (declared index 2, MWCC adds 2 hidden RTTI slots) taking one argument
-// (used on this+0xe20 in func_8021DF84).
-struct CMCE20Fn {
-    virtual void m0();
-    virtual void m1();
-    virtual void m2(const void* arg);
-};
+
+
 
 // Same slot-4 virtual dispatch but no-arg (used on this+0xc8c in func_8021CE4C).
 // MWCC reserves 2 hidden vtable slots (RTTI), so declared index 2 => +0x10.
@@ -869,7 +855,7 @@ void func_8021C7A0(CModelDispMakeCrystal* self)
         base[0x2dc3] = 1;
         break;
     }
-    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80221FE0();
+    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->update();
     func_802228B8(base + 0xc18);
     func_8022E988(base + 0xc70);
     reinterpret_cast<CMCEffStart*>(base + 0xc8c)->update();
@@ -895,9 +881,9 @@ void func_8021C8B0(CModelDispMakeCrystal* self) {
     CDeviceVI::waitForDrawDone();
     func_8022077C(self);
     func_8022B7F4(base + 0xe78);
-    reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m1();
+    reinterpret_cast<CBaseCur*>(base + 0xeb4)->cleanup();
     func_80297B68(base + 0xecc);
-    func_801390E0(reinterpret_cast<CFileHandle**>(base + 0x3c));
+    closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x3c));
     releaseArcResourceAccessor(*reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
     *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) = nullptr;
     deleteRegion__17UnkClass_8045F564Fv(base + 0x2c);
@@ -911,7 +897,7 @@ void func_8021C928(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     u8* base = reinterpret_cast<u8*>(self);
     func_80222964(base + 0xc18, drawInfo);
-    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80222070(drawInfo);
+    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->draw(drawInfo);
     func_8022E9E4(base + 0xc70, drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xc8c), drawInfo);
     draw(reinterpret_cast<CMCEffStart*>(base + 0xca4), drawInfo);
@@ -969,11 +955,11 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     base = reinterpret_cast<u8*>(self);
     int r0 = func_801392B4(self->field_5F0);
     if (r0 == 3 || r0 == 8) {
-        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_802222A4(3);
+        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(3);
     } else {
-        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_802222A4(1);
+        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(1);
     }
-    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_802220F8();
+    reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->start();
     func_80222A60(base + 0xc18);
     u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
     nw4r::math::VEC3 v;
@@ -1651,12 +1637,12 @@ void __declspec(noinline) func_8021DEF8(CModelDispMakeCrystal* self)
         if (entries[0]) {
             base[0xbdd] = 0x11;
             reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)
-                ->setNumber(reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80222258());
-            reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80222118();
+->setNumber(reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->getLevel());
+            reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->startOut();
             reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->startIn();
         } else {
             base[0xbdd] = 0x14;
-            reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80222118();
+            reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->startOut();
         }
     }
 }
@@ -1667,12 +1653,12 @@ void __declspec(noinline) func_8021DF84(CModelDispMakeCrystal* self)
     // Once the cylinder effect finishes and the gauge is full, start the
     // cylinder-count anim: rebuild the step list and flush the buffered entry.
     if (isFinished__14CMCEffCylinderFv(base + 0xdfc) == 0) return;
-    if (isReady__16CMCCylinderGaugeFv(base + 0xbec) == 0) return;
+    if (reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->isReady() == 0) return;
     base[0xbdd] = 0x12;
     func_801D216C(base + 0xe20, 1);
     u8 buf[16];
     func_80222F64(buf, base + 0xc18, base[0x2dc1]);
-    reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m2(buf);
+    reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
     func_80223334(base + 0xc18);
 }
 
@@ -1760,7 +1746,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             }
             char local[0xc];
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
-            reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m2(local);
+            reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             func_8021FC28(self, 1);
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
@@ -1792,7 +1778,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             }
             char local[0xc];
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
-            reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m2(local);
+            reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             func_8021FC28(self, 1);
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
@@ -1817,7 +1803,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             }
             char local[0xc];
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
-            reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m2(local);
+            reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             func_8021FC28(self, 1);
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
@@ -1844,7 +1830,7 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
             }
             char local[0xc];
             func_80222F64(local, base + 0xc18, base[0x2dc1]);
-            reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m2(local);
+            reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(local));
             func_8021FC28(self, 1);
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             playUISound__FUl(1);
@@ -1914,8 +1900,8 @@ struct CMCItemData {
 void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
 {
     if (isFinished__14CMCEffCylinderFv((u8*)self + 0xdfc) == 0) return;
-    reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->func_80222234();
-    u8 v = reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->func_80222258();
+    reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->decrementLevel();
+    u8 v = reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel();
     reinterpret_cast<CMCEffCylinder*>((u8*)self + 0xdfc)->setNumber(v);
     u8* entries = *reinterpret_cast<u8**>((u8*)self + 0xe1c);
     CMCItemData item;
@@ -1947,13 +1933,13 @@ void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
     ((u8*)self)[0x2dc2] = 0;
     u8 buf[0xc];
     func_80222F64(buf, (u8*)self + 0xc18, 0);
-    reinterpret_cast<CMCE20Fn*>((u8*)self + 0xe20)->m2(buf);
+    reinterpret_cast<CBaseCur*>((u8*)self + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
     func_8021FC28(self, 1);
     func_801F36BC((u8*)self + 0xe38, 8, entries[0]);
     func_801F3850((u8*)self + 0xe38, (u16)(s8)((u8*)self)[0x2dc2]);
     playUISound__FUl(0xb1);
     if (entries[0] != 0 &&
-        reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->func_80222258() != 0) {
+        reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->getLevel() != 0) {
         ((u8*)self)[0xbdd] = 0x12;
     } else {
         ((u8*)self)[0xbdd] = 0x14;
@@ -2223,7 +2209,7 @@ void __declspec(noinline) func_8021EFE4(CModelDispMakeCrystal* self) {
     u8 param = base[0x2dd1];
     u8 buf[16];
     func_8022C1B4(buf, base + 0xe78, param);
-    reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+    reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
 
@@ -2273,7 +2259,7 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
         // Cursor forward: increment step (resetting to 0).
@@ -2283,13 +2269,13 @@ void __declspec(noinline) func_8021F058(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
 }
 #pragma optimize_for_size off
 
-// Retail 0x80221104: while the gauge-tune dialog is open, branch on the cursor
+// Retail 0x80221104
 // step: zero runs the confirm-side cleanup, non-zero moves the cursor forward.
 void __declspec(noinline) func_8021F214(CModelDispMakeCrystal* self)
 {
@@ -2405,7 +2391,7 @@ void __declspec(noinline) func_8021F534(CModelDispMakeCrystal* self) {
     u8 param = base[0x2dd1];
     u8 buf[16];
     func_8022C1B4(buf, base + 0xe78, param);
-    reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+    reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
 
@@ -2449,7 +2435,7 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
@@ -2458,13 +2444,13 @@ void __declspec(noinline) func_8021F5A8(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
 }
 #pragma optimize_for_size off
 
-// Retail 0x80221654: same gauge-tune dialog branch as func_8021F214, but for
+// Retail 0x80221654
 // the crystal-success menu (confirm path 3 / cursor-forward path 0x20).
 void __declspec(noinline) func_8021F764(CModelDispMakeCrystal* self)
 {
@@ -2516,7 +2502,7 @@ void __declspec(noinline) func_8021F8E4(CModelDispMakeCrystal* self) {
     u8 param = base[0x2dd1];
     u8 buf[16];
     func_8022C1B4(buf, base + 0xe78, param);
-    reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+    reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
 }
 
 
@@ -2559,7 +2545,7 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
@@ -2568,7 +2554,7 @@ void __declspec(noinline) func_8021F958(CModelDispMakeCrystal* self)
         u8 param = base[0x2dd1];
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
-        reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
         playUISound__FUl(1);
     }
 }
@@ -2818,10 +2804,10 @@ void func_80220128(CModelDispMakeCrystal* self)
         // constant, then flush the effect list.
         u8 c = func_801392B4(self->field_5F0);
         if (c == 5) {
-            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->func_802221A4(
+            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
                 lbl_eu_80668500);
         } else {
-            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->func_802221A4(
+            reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
                 lbl_eu_806684A4);
         }
         reinterpret_cast<CMCC8CFn*>((u8*)self + 0xcd4)->m2();
@@ -2993,8 +2979,8 @@ void func_8022077C(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     if (base[0x2dd4] == 0) {
         CDeviceVI::waitForDrawDone();
-        func_801390E0(reinterpret_cast<CFileHandle**>(base + 0x18));
-        func_801390E0(reinterpret_cast<CFileHandle**>(base + 0x24));
+        closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x18));
+        closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(base + 0x24));
         void* arc = &lbl_eu_8065FC18[0];
         if (arc != nullptr) {
             // Release the file-state machine's object references.
@@ -3026,7 +3012,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
         for (u8 i = 0; i < 2; i++) {
             u8* sub = base + (u32)i * 0x5cc + 0x44;
             for (u8 j = 0; j < 6; j++) {
-                func_801390E0(reinterpret_cast<CFileHandle**>(sub + (u32)j * 0xc + 0x564));
+                closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(sub + (u32)j * 0xc + 0x564));
             }
         }
         // Release the built display models for both slots.
@@ -3034,7 +3020,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
             func_8021FB68(self, base + (u32)i * 0x5cc + 0x44);
         }
         // Destroy the gauge, list, support, and every effect sub-object.
-        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_80222090();
+        reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->destroy();
         __dt__80222984(base + 0xc18);
         func_8022EA04(base + 0xc70);
         reinterpret_cast<CMCEffStart*>(base + 0xc8c)->destroy();
@@ -3048,7 +3034,7 @@ void func_8022077C(CModelDispMakeCrystal* self)
         reinterpret_cast<CMCEffStart*>(base + 0xdcc)->destroy();
         reinterpret_cast<CMCEffStart*>(base + 0xde4)->destroy();
         reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->destroy();
-        reinterpret_cast<CMCE20Fn*>(base + 0xe20)->m1();
+        reinterpret_cast<CBaseCur*>(base + 0xe20)->cleanup();
         func_801F35DC(base + 0xe38);
         base[0x2dd4] = 1;
     }
@@ -3251,7 +3237,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     if (actor != nullptr) {
         crystalCount = actor->field_3f2c;
         if (crystalCount == 0) ready = 0;
-        if (reinterpret_cast<CMCryMoveVt*>(&actor->move)->m74() == 0) ready = 0;
+        if (reinterpret_cast<CMCryMove*>(&actor->move)->m74() == 0) ready = 0;
         if (sub->field_5a4 == 0) {
             if (sub->field_5a0 == 0) {
                 // Load the crystal model file for this actor.
@@ -3273,7 +3259,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Build the crystal display model for this slot.
         sub->field_00 = func_80495E8C(objs->field_0c, crystalCount, -1, 1);
         sub->mCrystalVals[1] =
-            (static_cast<u32>(reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(1)) >> 12) &
+            (static_cast<u32>(reinterpret_cast<CMCryMove*>(&actor->move)->m82(1)) >> 12) &
             0x3ff;
         s16 be = func_800BE954(&actor->move);
         CMCCryParamSlot* params =
@@ -3281,21 +3267,21 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Crystal attachment points 2..5; do-while keeps the retail loop shape.
         u8 idx = 2;
         do {
-            if (reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(idx) != 0) {
+            if (reinterpret_cast<CMCryMove*>(&actor->move)->m82(idx) != 0) {
                 void* obj = params[idx].field_2c->m02();
                 func_804831C4(sub->field_00, obj);
                 sub->mCrystalVals[idx] =
-                    (static_cast<u32>(reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(idx)) >>
+                    (static_cast<u32>(reinterpret_cast<CMCryMove*>(&actor->move)->m82(idx)) >>
                      12) &
                     0x3ff;
             }
         } while (++idx <= 5);
         u32 handle = sub->field_5a4;
         sub->field_04 = func_800584B8(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
-        sub->mAnim.m36();
-        func_8004B624(&sub->mAnim, sub->field_00, sub->field_04, handle);
+        reinterpret_cast<CMCVtE0*>(reinterpret_cast<u8*>(sub) + 0x8)->m36();
+        func_8004B624(reinterpret_cast<u8*>(sub) + 0x8, sub->field_00, sub->field_04, handle);
         sub->field_14 |= 0x160;
-        func_80200388(&sub->mAnim,
+        func_80200388(reinterpret_cast<u8*>(sub) + 0x8,
                       self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4)
                            : reinterpret_cast<void*>(self));
         u32* posA = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
@@ -3306,10 +3292,10 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         posB[3] = sub->field_5bc;
         posB[4] = sub->field_5c0;
         posB[5] = sub->field_5c4;
-        reinterpret_cast<CMCModelVt*>(sub->field_00)->m12(objs->field_be0);
-        reinterpret_cast<CMCModelVt*>(sub->field_00)->m27(3, 0);
+        reinterpret_cast<CMCModel*>(sub->field_00)->m12(objs->field_be0);
+        reinterpret_cast<CMCModel*>(sub->field_00)->m27(3, 0);
         if (sub->field_00 != nullptr) {
-            func_8004B9D4(&sub->mAnim, 0x21, 0, -1, 0);
+            func_8004B9D4(reinterpret_cast<u8*>(sub) + 0x8, 0x21, 0, -1, 0);
         }
         sub->field_5c8 = 1;
     } else if (sub->field_00 != nullptr && ready == 0) {
@@ -3408,9 +3394,9 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
         g1[3] = sub->field_5bc;
         g1[4] = sub->field_5c0;
         g1[5] = sub->field_5c4;
-        reinterpret_cast<CMCModelVt*>(sub->field_00)->m12(
+        reinterpret_cast<CMCModel*>(sub->field_00)->m12(
             *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0xbe0));
-        reinterpret_cast<CMCModelVt*>(sub->field_00)->m27(3, 0);
+        reinterpret_cast<CMCModel*>(sub->field_00)->m27(3, 0);
         if (sub->field_00 != 0) {
             func_8004B9D4(subp + 0x8, 0x21, 0, -1, 0);
         }
@@ -3418,17 +3404,9 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
     }
 }
 
-// Virtual dispatch at vtable offset +0xC on the embedded effect objects
-// (declared index 1, MWCC adds 2 hidden RTTI slots).
-struct CMCEffInitVt {
-    virtual void m0();
-    virtual void m1();  // declared index 1 => +0xC
-};
 
-// Virtual dispatch at vtable offset +0x8 (declared index 0).
-struct CMCCur18Vt {
-    virtual void m0();  // declared index 0 => +0x8
-};
+
+
 
 // Retail 0x8022338C: async file-event handler for the make-crystal UI load.
 // Dispatch on which pending readFile handle completed: the crystal-list file
@@ -3535,25 +3513,25 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xc8c, effStart);
         __dt__11CMCEffStartFv(effStart, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xc8c)->m1();
+        reinterpret_cast<CMCEffStart*>(base + 0xc8c)->init();
         __ct__CMCEffUpRed(
             effUpRed,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xca4, effUpRed);
         __dt__11CMCEffUpRedFv(effUpRed, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xca4)->m1();
+        reinterpret_cast<CMCEffUpRed*>(base + 0xca4)->init();
         __ct__CMCEffUpBlue(
             effUpBlue,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xcbc, effUpBlue);
         __dt__12CMCEffUpBlueFv(effUpBlue, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xcbc)->m1();
+        reinterpret_cast<CMCEffUpBlue*>(base + 0xcbc)->init();
         __ct__CMCEffUpGreen(
             effUpGreen,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xcd4, effUpGreen);
         __dt__13CMCEffUpGreenFv(effUpGreen, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xcd4)->m1();
+        reinterpret_cast<CMCEffUpGreen*>(base + 0xcd4)->init();
         // UpPrm: larger copy with an 8-byte-per-iteration counted loop
         // (same lwz/lwzu + stw/stwu pair idiom as the item-box tables).
         __ct__CMCEffUpPrm(
@@ -3588,13 +3566,13 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         *(u32*)(base + 0xd70) = *(u32*)(effSuccess + 0x14);
         base[0xd74] = effSuccess[0x18];
         __dt__13CMCEffSuccessFv(effSuccess, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xd5c)->m1();
+        reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->init();
         __ct__CMCEffFailure(
             effFailure,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xd78, effFailure);
         __dt__13CMCEffFailureFv(effFailure, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xd78)->m1();
+        reinterpret_cast<CMCEffFailure*>(base + 0xd78)->init();
         __ct__CMCEffCrystal(
             effCrystal,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
@@ -3615,19 +3593,19 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         *(u16*)(base + 0xdc6) = *(u16*)(effCrystal + 0x36);
         base[0xdc8] = effCrystal[0x38];
         __dt__13CMCEffCrystalFv(effCrystal, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xd90)->m1();
+        reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->func_80224CE4();
         __ct__CMCEffUpRank(
             effUpRank,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xdcc, effUpRank);
         __dt__12CMCEffUpRankFv(effUpRank, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xdcc)->m1();
+        reinterpret_cast<CMCEffUpRank*>(base + 0xdcc)->init();
         __ct__CMCEffDivide(
             effDivide,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xde4, effDivide);
         __dt__12CMCEffDivideFv(effDivide, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xde4)->m1();
+        reinterpret_cast<CMCEffDivide*>(base + 0xde4)->init();
         __ct__CMCEffCylinder(
             effCylinder,
             *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
@@ -3640,16 +3618,16 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         *(u32*)(base + 0xe14) = *(u32*)(effCylinder + 0x18);
         base[0xe18] = effCylinder[0x1c];
         __dt__14CMCEffCylinderFv(effCylinder, -1);
-        reinterpret_cast<CMCEffInitVt*>(base + 0xdfc)->m1();
+        reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->init();
         // Cursor objects: build on stack, install via func_8018B0FC, destroy.
         __ct__6CCur18Fv(cur1, func_801355F4());
         func_8018B0FC(base + 0xe20, cur1);
         __dt__6CCur18Fv(cur1, -1);
-        reinterpret_cast<CMCCur18Vt*>(base + 0xe20)->m0();
+        reinterpret_cast<CBaseCur*>(base + 0xe20)->initLayout();
         __ct__6CCur18Fv(cur2, func_801355F4());
         func_8018B0FC(base + 0xeb4, cur2);
         __dt__6CCur18Fv(cur2, -1);
-        reinterpret_cast<CMCCur18Vt*>(base + 0xeb4)->m0();
+        reinterpret_cast<CBaseCur*>(base + 0xeb4)->initLayout();
         *reinterpret_cast<void**>(base + 0x3c) = 0;
         validateHeap__17UnkClass_8045F564Fv(base + 0x2c);
         __dt__14Class_8045F858Fv(cls858, -1);
@@ -3693,7 +3671,7 @@ void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     func_8049EFF8(m, &v2, &v1);
     for (u8 j = 0; j < 2; j++) {
         for (u8 i = 0; i < 6; i++) {
-            func_801390E0(reinterpret_cast<CFileHandle**>(
+            closeFileHandle__FPP11CFileHandle(reinterpret_cast<CFileHandle**>(
                 base + (u32)j * 0x5cc + 0x44 + (u32)i * 0xc + 0x564));
         }
     }

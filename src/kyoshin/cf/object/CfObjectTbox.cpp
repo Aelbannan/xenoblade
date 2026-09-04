@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectTbox.hpp"
+#include "kyoshin/cf/CfResTboxImpl.hpp"  // complete type for delete below
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
@@ -12,17 +13,17 @@ using namespace cf;
 // Global presentation event/presentation bitfield shared across kyoshin.
 
 // us-801fa970 - constructor: base CfObjectObj ctor, retail vtable restore,
-// clear field_73C, release any inherited +0xB0 resource (manual-vtable slot
-// 0x8 with delete-flag 1) and null it, init the flag fields, then allocate a
-// fresh 0x1C-byte CfResTboxImpl and store it at +0xB0.
+// clear field_73C, delete any inherited +0xB0 CfResTboxImpl and null the slot,
+// init the flag fields, then allocate a fresh 0x1C-byte CfResTboxImpl and
+// store it at +0xB0.
 cf::CfObjectTbox::CfObjectTbox() : CfObjectObj() {
     *(void**)this = (void*)lbl_eu_80534FB8;
     field_73C = 0;
-    // Both null-tests fold onto one compare before the release call.
+    // The +0xB0 resource is a CfResTboxImpl (vptr at +0x10, deleting dtor at
+    // slot +0x08); delete emits the retail li r4,1 + virtual dispatch, and
+    // its null guard is retail's second beq (single cmpwi, two beqs).
     if (mSubObjB0 != 0) {
-        if (mSubObjB0 != 0) {
-            reinterpret_cast<CfTboxSubB0Vt*>(mSubObjB0)->_v008(1);
-        }
+        delete (CfResTboxImpl*)mSubObjB0;
         mSubObjB0 = 0;
     }
     field_734 = 1;

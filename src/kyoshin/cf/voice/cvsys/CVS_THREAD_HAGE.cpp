@@ -42,7 +42,7 @@ void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
 // us-802a97fc (func_802A70C8)
 // Advance/play function for voice slot 2 (field_0x24).
 // Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
-// the voice is still active (vtable method at offset 0x2BC), and if
+// the voice is still active (CActorParam slot 138 at 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0xC27).
 void func_802A70C8(CVS_THREAD_HAGE* self) {
     if (func_802A3E88(self) == 0) {
@@ -52,14 +52,13 @@ void func_802A70C8(CVS_THREAD_HAGE* self) {
         const u32* p = lbl_eu_80539BC0;
         v0 = *p++;
         CVoiceHandle* handle = self->field_0x24;
-        self->unk4 = *p++;
-        self->unk0 = (u32*)v0;
-        self->unk8 = *p;
+        ((CVS_THREAD_HAGE_raw*)self)->state1 = *p++;
+        ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
+        ((CVS_THREAD_HAGE_raw*)self)->state2 = *p;
 
         if (handle != NULL) {
-            // Voice idle check via phantom-vtable slot 173 (byte offset 0x2BC);
-            // emitted as a true r12-chained virtual dispatch.
-            if (((CVoiceHandleVt*)handle)->isVoiceActive() == 0) {
+            // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
+            if (((cf::CActorParam*)handle)->CActorParam_UnkVirtualFunc138() == 0) {
                 // Voice is not active -- try to play a random voice
                 // Use conditional bias pattern to match retail (no else branch)
                 CVoiceHandle* tmpHandle = self->field_0x24;
@@ -104,8 +103,7 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         try {
             // Base constructor (self already in r3), then vtable/owner fields.
             __ct__cf_CVS_THREAD();
-            ((CVS_THREAD_HAGE_raw*)self)->vtable =
-                (const CVS_THREAD_HAGE_VTable*)lbl_eu_80539BCC;
+            ((CVS_THREAD_HAGE_raw*)self)->vtable = lbl_eu_80539BCC;
             self->field_0x20 = owner1;
             self->field_0x24 = owner2;
         } catch (...) {
@@ -114,10 +112,12 @@ CVS_THREAD_HAGE* __ct__802A6E84(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     }
 
     // Copy the init-state triple into the first 3 u32s (outside try). The
-    // integer cast keeps the label materialized once via lis+addi.
-    const u32* base = (const u32*)(u32)lbl_eu_80539BA8;
-    register u32* p0;
+    // integer cast keeps the label materialized once via lis+addi. Values
+    // declared before the base pointer so they claim the lower scratch
+    // registers (retail: value in r4, base in r5).
+    u32* p0;
     u32 v1;
+    const u32* base = (const u32*)(u32)lbl_eu_80539BA8;
     v1 = base[1];
     p0 = (u32*)base[0];
     ((CVS_THREAD_HAGE_raw*)self)->state0 = p0;
@@ -143,17 +143,16 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
     CVoiceHandle* handle;
     v0 = *p++;
     handle = self->field_0x20;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    ((CVS_THREAD_HAGE_raw*)self)->state1 = *p++;
+    ((CVS_THREAD_HAGE_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_HAGE_raw*)self)->state2 = *p;
 
     // Both slots must be populated (slot 2 is re-read from memory here)
     if (handle == NULL) return;
     if (self->field_0x24 == NULL) return;
 
-    // Voice idle check via phantom-vtable slot 173 (byte offset 0x2BC);
-    // emitted as a true r12-chained virtual dispatch.
-    if (((CVoiceHandleVt*)handle)->isVoiceActive() != 0) return;
+    // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
+    if (((cf::CActorParam*)handle)->CActorParam_UnkVirtualFunc138() != 0) return;
 
     // Get voice iterator from slot 2 handle
     int iter = func_802A77E8(self->field_0x24);

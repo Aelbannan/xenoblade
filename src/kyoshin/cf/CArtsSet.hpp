@@ -5,9 +5,13 @@
 
 namespace cf {
 
-    //size: 0x88
-    class CAttackParam {
-    public:
+    // 0x84 bytes of non-polymorphic record data. The C++ vptr follows at
+    // +0x84 (MWCC lays the derived vptr after a non-polymorphic prefix base;
+    // same scheme as CHelp/CHelpPrefix with vptr at +8). Retail stores the
+    // record tables there (CAttackParam: lbl_eu_8052F610, CArtsParam:
+    // lbl_eu_8052F5E8) and dispatches slot +0x08 through them:
+    //   lwz r12, 0x84(rX) / lwz r12, 0x8(r12) / bctrl
+    struct CAttackParamPrefix {
         u8 unk0;
         u8 unk4[0x20 - 0x4];
         u32 unk20;
@@ -52,24 +56,29 @@ namespace cf {
         u32 unk78;
         float unk7C;
         float unk80;
-        void* unk84;   // 0x84 - raw vtable (slot 3 = +0x0C hook, read by UnkVirtualFunc4)
+    };
+
+    //size: 0x88 (0x84 data + vptr at +0x84)
+    // Retail vtable lbl_eu_8052F610 (RTTI lbl_eu_80662280): four virtuals.
+    // novtable: the tables live in the shared data split, so this TU never
+    // emits __vt__; the ctor installs the retail label through vtbl().
+    class __declspec(novtable) CAttackParam : public CAttackParamPrefix {
+    public:
+        virtual void CAttackParam_UnkVirtualFunc1();      // +0x08
+        virtual u8 CAttackParam_UnkVirtualFunc2();        // +0x0C
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); // +0x10
+        virtual float CAttackParam_UnkVirtualFunc4();     // +0x14
 
         CAttackParam();
 
-        void CAttackParam_UnkVirtualFunc1();
-        void CAttackParam_UnkVirtualFunc2();
-        void CAttackParam_UnkVirtualFunc3(u8 r4);
-        void CAttackParam_UnkVirtualFunc4();
+        // Overlay on the vptr at +0x84 so the ctor can install the retail
+        // table (same pattern as CHelp::vtbl at +8).
+        void*& vtbl() {
+            return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x84);
+        }
     };
 
     struct _sAttackSet {
-    };
-
-    // ── Retail record tail at +0x84 (polymorphic view, vptr at +0x84) ────
-    // The 0x84-byte data base places the vptr at +0x84; first virtual (slot 8)
-    // is the per-record init (CAttackParam/CArtsParam override).
-    struct CAttackParamTailIf {
-        virtual void vtInit(); // vtable offset 8
     };
 
     //size: 0x334

@@ -141,7 +141,27 @@ namespace cf {
 // merged here on purpose.
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 class CfObject;     // active camera-state object (func_8006E5A4 return)
-struct CVoiceRec;   // owned by help/CHelp_Talk.hpp (func_8006DBD4 param)
+// Owner view for func_8006DBD4's +0x04 sub-object (slot 0x30 -> query word).
+// Owned by kyoshin/help/CHelp_Talk.hpp (CVoiceRec/CVoiceSub30: result of
+// func_8016FE34) - repeated here so this TU stays self-contained;
+// same shape as CHelp_Talk::func_802B86F0 (voice->field_04->vf30()).
+struct CVoiceSub30 {
+    virtual void* f00();
+    virtual void* f01();
+    virtual void* f02();
+    virtual void* f03();
+    virtual void* f04();
+    virtual void* f05();
+    virtual void* f06();
+    virtual void* f07();
+    virtual void* f08();
+    virtual void* f09();
+    virtual u32* vf30(); // index 10 -> vtable 0x30 (returns pointed-to query word)
+};
+struct CVoiceRec {
+    u8 _pad00[0x4];
+    CVoiceSub30* field_04; // 0x04
+};
 // Base camera object (+0x00..+0x10). Retail table lbl_eu_805272E8
 // (cf::CfCam: dtor + 25 virtuals through +0x6C; zero words are pure
 // virtuals overridden by the leaves below).

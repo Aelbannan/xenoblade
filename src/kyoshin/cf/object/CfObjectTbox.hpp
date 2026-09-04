@@ -29,16 +29,6 @@ namespace cf {
 struct CfResTboxImpl;  // full def in kyoshin/cf/CfResTboxImpl.hpp
 }
 
-// Cast-only view of the +0xB0 sub-object: its vtable pointer lives at object
-// offset 0x10 (manual-vtable scheme, cf. CfResTboxShift), and slot +0x08
-// releases the resource (called with the delete-flag argument 1). MWCC adds
-// two overhead slots when lowering the view's virtual call, so no dummy
-// slots are needed to land on retail's 0x8 (cf. CfFn144View).
-struct CfTboxSubB0Vt {
-    u8 pad[0x10];
-    virtual void _v008(u32 flag);
-};
-
 // C-ABI import (retail unmangled name): the CfObjectObj base constructor.
 // Retail names it with the flat cf_ scheme (like __ct__cf_CfResObjImpl), so
 // the Tbox ctor calls it directly instead of through a C++ base initializer

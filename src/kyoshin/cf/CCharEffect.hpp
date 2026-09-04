@@ -45,35 +45,22 @@ extern u8 lbl_eu_8052FE08[];
 extern u8 lbl_eu_8052FE38[];
 extern u8 lbl_eu_8052FE68[];
 
-class CCharEffectSlot;
-class CCharEffectData;
+struct CCharEffectSlot;
+struct CCharEffectData;
+
+namespace cf {
+class CfObjectImplPcBattle4; // owner of the +0x04 battle sub-object (cfsys/CfObjectImplPc.hpp)
+} // namespace cf
 
 namespace cf {
 
-// Sub-object at +0x04
-// with -RTTI on MWCC reserves two leading vtable slots, so the virtual at
-// declared index N sits at vtable offset (N+2)*4. Declared index 10 is thus
-// vtable offset 0x30; it returns a pointer whose first word is the id
-// queried by func_80174C98.
-class CCharEffectBattleObj4 {
-public:
-    virtual void bf00() = 0;  // index 0
-    virtual void bf04() = 0;  // index 1
-    virtual void bf08() = 0;  // index 2
-    virtual void bf0C() = 0;  // index 3
-    virtual void bf10() = 0;  // index 4
-    virtual void bf14() = 0;  // index 5
-    virtual void bf18() = 0;  // index 6
-    virtual void bf1C() = 0;  // index 7
-    virtual void bf20() = 0;  // index 8
-    virtual void bf24() = 0;  // index 9
-    virtual u32* bf30() = 0;  // index 10 -> vtable offset 0x30
-};
-
-// Battle object held at CCharEffect::mBattleObj (NULL when none).
+// Battle object held at CCharEffect::mBattleObj (NULL when none). The +0x04
+// sub-object's real class is cf::CfObjectImplPcBattle4 (cfsys owner iface:
+// vtable 0x30 returns the id word holder); the former caller-local
+// CCharEffectBattleObj4 pad is folded onto it.
 struct CCharEffectBattleObj {
     u8 pad_00[0x4];
-    CCharEffectBattleObj4* field_04;  // 0x04
+    cf::CfObjectImplPcBattle4* field_04;  // 0x04
 };
 
 // Real class tree for CCharEffect family (retail __vt__ dump from US split1.s):
@@ -119,36 +106,15 @@ public:
 } // namespace cf
 
 // Effect-slot object held in CCharEffect::mSlots (never instantiated in
-// this TU - only dispatched/cast). Declared virtual N lands at vtable byte
-// offset (N+2)*4 (kyoshin builds with -RTTI on), so the method used here
-// (index 84) sits at vtable offset 0x158. The slot also carries a pointer
-// at +0x94 (func_eu_8015D258 follows it to a float holder).
-class CCharEffectSlot {
-public:
-    virtual void v000() = 0; virtual void v001() = 0; virtual void v002() = 0; virtual void v003() = 0;
-    virtual void v004() = 0; virtual void v005() = 0; virtual void v006() = 0; virtual void v007() = 0;
-    virtual void v008() = 0; virtual void v009() = 0; virtual void v010() = 0; virtual void v011() = 0;
-    virtual void v012() = 0; virtual void v013() = 0; virtual void v014() = 0; virtual void v015() = 0;
-    virtual void v016() = 0; virtual void v017() = 0; virtual void v018() = 0; virtual void v019() = 0;
-    virtual void v020() = 0; virtual void v021() = 0; virtual void v022() = 0; virtual void v023() = 0;
-    virtual void v024() = 0; virtual void v025() = 0; virtual void v026() = 0; virtual void v027() = 0;
-    virtual void v028() = 0; virtual void v029() = 0; virtual void v030() = 0; virtual void v031() = 0;
-    virtual void v088() = 0; virtual void v033() = 0; // v088: index 32 -> vtable 0x88 virtual void v034() = 0; virtual void v035() = 0;
-    virtual void v036() = 0; virtual void v037() = 0; virtual void v038() = 0; virtual void v039() = 0;
-    virtual void v040() = 0; virtual void v041() = 0; virtual void v042() = 0; virtual void v043() = 0;
-    virtual void v044() = 0; virtual void v045() = 0; virtual void v046() = 0; virtual void v047() = 0;
-    virtual void v048() = 0; virtual void v049() = 0; virtual void v050() = 0; virtual void v051() = 0;
-    virtual void v052() = 0; virtual void v053() = 0; virtual void v054() = 0; virtual void v055() = 0;
-    virtual void v056() = 0; virtual void v057() = 0; virtual void v058() = 0; virtual void v059() = 0;
-    virtual void v060() = 0; virtual void v061() = 0; virtual void v062() = 0; virtual void v063() = 0;
-    virtual void v064() = 0; virtual void v065() = 0; virtual void v066() = 0; virtual void v067() = 0;
-    virtual void v068() = 0; virtual void v069() = 0; virtual void v070() = 0; virtual void v071() = 0;
-    virtual void v072() = 0; virtual void v073() = 0; virtual void v074() = 0; virtual void v075() = 0;
-    virtual void v076() = 0; virtual void v077() = 0; virtual void v078() = 0; virtual void v079() = 0;
-    virtual void v080() = 0; virtual void v081() = 0; virtual void v082() = 0; virtual void v083() = 0;
-    virtual void v158(u32 value) = 0; // index 84 -> vtable offset 0x158
-
-    u8 pad_04[0x64];        // 0x04..0x67
+// this TU - only dispatched/cast). Slots are CfObject-family effect objects
+// (getObj/factory results - cf::CfObjectEff* at creation sites); the former
+// 84-dummy vtable pad is deleted and dispatch goes through the real owner
+// slots (cf::CfObject::CfObject_UnkVirtualFunc66 at vtable offset 0x158).
+// Plain layout view of the effect-relevant words (all inside CfObjectModel
+// range: +0x68 CfObject::mFlags68, +0x94 sub-object pointer, +0xB0 owner
+// back-pointer (cf::CfObjectModel::mSubObjB0), +0xB4 removal guard).
+struct CCharEffectSlot {
+    u8 pad_00[0x68];        // 0x00..0x67 (vptr at +0x00)
     u32 field_68;           // 0x68  flags word (bit 0x40 = "in use")
     u8 pad_6C[0x94 - 0x6C]; // 0x6C..0x93
     void* field_94;         // 0x94  sub-object pointer
@@ -166,52 +132,13 @@ struct CCharEffectSlotSub {
     f32 field_4C;           // 0x4C
 };
 
-// Cast-only virtual interface for the manager/effect objects dispatched at
-// retail vtable offsets 0x0A8 / 0x0DC / 0x194 (kyoshin -RTTI: declared
-// index N lands at vtable byte offset (N+2)*4). Never instantiated.
-class CCharEffectVTableIf {
-public:
-    virtual void v008() = 0; virtual void v00C() = 0; virtual void v010() = 0; virtual void v014() = 0;
-    virtual CCharEffectSlot* v018(u32 idx, s16 val) = 0;   // index 4 -> vtable 0x18
-    virtual void v01C(CCharEffectSlot* slot, u32 idx, u8 v) = 0; // index 5 -> vtable 0x1c
-    virtual void v020() = 0; virtual void v024() = 0;
-    virtual void v028() = 0; virtual void v02C() = 0; virtual void v030() = 0; virtual void v034() = 0;
-    virtual void v038() = 0; virtual void v03C() = 0; virtual void v040() = 0; virtual void v044() = 0;
-    virtual void v048() = 0; virtual void v04C() = 0; virtual void v050() = 0; virtual void v054() = 0;
-    virtual void v058() = 0; virtual void v05C() = 0; virtual void v060() = 0; virtual void v064() = 0;
-    virtual void v068() = 0; virtual void v06C() = 0; virtual void v070() = 0; virtual void v074() = 0;
-    virtual void v078() = 0; virtual void v07C() = 0; virtual void v080() = 0; virtual void v084() = 0;
-    virtual void v088() = 0; virtual void v08C() = 0; virtual void v090() = 0; virtual void v094() = 0;
-    virtual void v098() = 0; virtual void v09C() = 0; virtual void v0A0() = 0; virtual void v0A4() = 0;
-    virtual u32 v0A8() = 0;  // index 40 -> vtable 0x0A8
-    virtual void v0AC() = 0; virtual void v0B0() = 0; virtual void v0B4() = 0;
-    virtual void v0B8() = 0; virtual void v0BC() = 0; virtual void v0C0() = 0; virtual void v0C4() = 0;
-    virtual void v0C8() = 0; virtual void v0CC() = 0; virtual void v0D0() = 0; virtual void v0D4() = 0;
-    virtual void v0D8() = 0; virtual void v0DC(f32 v) = 0; // index 53 -> vtable 0x0DC
-    virtual void v0E0() = 0; virtual void v0E4() = 0;
-    virtual void v0E8() = 0; virtual void v0EC() = 0; virtual void v0F0() = 0; virtual void v0F4() = 0;
-    virtual void v0F8() = 0; virtual void v0FC() = 0; virtual void v100() = 0; virtual void v104() = 0;
-    virtual void v108() = 0; virtual void v10C() = 0; virtual void v110() = 0; virtual void v114() = 0;
-    virtual void v118() = 0; virtual void v11C() = 0; virtual void v120() = 0; virtual void v124() = 0;
-    virtual void v128() = 0; virtual void v12C() = 0; virtual void v130() = 0; virtual void v134() = 0;
-    virtual void v138() = 0; virtual void v13C() = 0; virtual void v140() = 0; virtual void v144() = 0;
-    virtual void v148() = 0; virtual void v14C() = 0; virtual void v150() = 0; virtual void v154() = 0;
-    virtual void v158() = 0; virtual void v15C() = 0; virtual void v160() = 0; virtual void v164() = 0;
-    virtual void v168() = 0; virtual void v16C() = 0; virtual void v170() = 0; virtual void v174() = 0;
-    virtual void v178() = 0; virtual void v17C() = 0; virtual void v180() = 0; virtual void v184() = 0;
-    virtual void v188() = 0; virtual void v18C() = 0; virtual void v190() = 0; virtual void v194(u32 v) = 0; // index 99 -> vtable 0x194
-};
-
-// Effect data object pointed to by CCharEffectMgr::field_98: virtual at
-// vtable 0x18 returns a name string; f32 at 0x2E8 and byte at 0x304 are
-// read by func_8015C2B0.
-class CCharEffectData {
-public:
-    virtual void v008() = 0; virtual void v00C() = 0;
-    virtual void v010() = 0; virtual void v014() = 0;
-    virtual char* v018() = 0; // index 4 -> vtable 0x18
-
-    u8 pad_04[0x2E8 - 0x04];
+// Effect data object pointed to by CCharEffectMgr::field_98. Retail it is
+// a CScnItemModel: vtable 0x18 (vfunc18) returns the name string compared
+// by func_8015C2B0; f32 at 0x2E8 and the byte at 0x304 are read there too.
+// Plain layout view (no virtuals); the name query goes via
+// CScnItemModel::vfunc18, the fields stay at absolute offsets.
+struct CCharEffectData {
+    u8 pad_00[0x2E8];
     f32 field_2E8;          // 0x2E8
     u8 pad_2EC[0x304 - 0x2EC];
     u8 field_304;           // 0x304

@@ -5,7 +5,10 @@
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CCharEffect.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cfsys/CfObjectImplPc.hpp" // CfObjectImplPcBattle4 (mBattleObj +0x04 owner iface)
 #include "kyoshin/code_802B8A3C.hpp"
+#include "kyoshin/cf/object/CfObjectEff.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include <string.h>
 
 // The retail symbol __ct__CCharEffect is a plain (non-member) function, not
@@ -38,12 +41,17 @@ void* __ct__CCharEffect(CCharEffect* self) {
 void func_8015BB3C(){}
 
 // func_8015BD24: walk the 44 effect slots (mSlots[1..44]) and forward a
-// value to each non-NULL slot via its vtable method at offset 0x158.
+// value to each non-NULL slot via CfObject vtable slot 0x158
+// (CfObject_UnkVirtualFunc66). Slots are CfObject-family effect objects
+// (getObj/factory results: cf::CfObjectEff* at creation sites), so the
+// dispatch goes through the cf::CfObject base (heterogeneous dynamic
+// types share this slot; the former CCharEffectSlot::v158 pad is folded
+// onto it, same offset and arity).
 void func_8015BD24(CCharEffect* self, u32 param) {
     for (u32 i = 0; i < 0x2c; i++) {
-        CCharEffectSlot* obj = (CCharEffectSlot*)self->mSlots[i + 1];
+        cf::CfObject* obj = (cf::CfObject*)self->mSlots[i + 1];
         if (obj != NULL) {
-            obj->v158(param);
+            obj->CfObject_UnkVirtualFunc66((int)param);
         }
     }
 }
@@ -288,21 +296,21 @@ bool func_8015C294(unsigned int* param1, int param2) {
 // with the flag, and dispatches a per-type handler (byte table
 // lbl_eu_80501DF8: 1 = copy the data string into the target, 2 = scale
 // the target's vtable-0xDC argument by lbl_eu_80667530 * data->field_2E8).
-void func_8015C2B0(CCharEffect* self, CCharEffectVTableIf* eff, u32 type, u32 flags) {
+void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags) {
     CCharEffectData* data = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
     if (data == NULL) return;
 
     u8* p = ((CCharEffectMgr*)self->mManager)->field_C4;
     p += 0x10;
     u32 x = ((flags >> 7) & 1) | func_80053F40(p, type & 0xFF);
-    u32 bitFlag = (x != 0);
-    char* name = ((CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98)->v018();
+    bool bitFlag = (x != 0);
+    const char* name = ((CScnItemModel*)((CCharEffectMgr*)self->mManager)->field_98)->vfunc18();
     if (strstr(name, lbl_eu_80501E38) != NULL && type == 3) {
         bitFlag = 1;
     }
 
     bindPartnerO_(eff, (CCharEffectMgr*)self->mManager, 0);
-    eff->v194(bitFlag);
+    eff->setEffLockFg_(bitFlag);
 
     s8 v = lbl_eu_80501DF8[type];
     if (v == 1) {
@@ -310,7 +318,7 @@ void func_8015C2B0(CCharEffect* self, CCharEffectVTableIf* eff, u32 type, u32 fl
         setChild34Sc_(eff, &d->field_304);
     } else if (v == 2) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
-        eff->v0DC(lbl_eu_80667530 * d->field_2E8);
+        eff->CfObject_UnkVirtualFunc35(lbl_eu_80667530 * d->field_2E8);
     }
 
     func_80484EB0((u8*)((CCharEffectMgr*)self->mManager)->field_98);
@@ -323,7 +331,7 @@ void func_8015C404(){}
 // matches the manager's vtable-0xA8 result. Each match clears the slot
 // back-pointer and sub-object id, sets slot flag 0x40, and NULLs the slot
 // pointer. Returns early when no manager is given.
-void func_8015C8F4(CCharEffect* self, CCharEffectVTableIf* manager) {
+void func_8015C8F4(CCharEffect* self, CScnItemModel* manager) {
     u32 id;
     if (manager == NULL) return;
     void** p = (void**)self;
@@ -333,7 +341,7 @@ void func_8015C8F4(CCharEffect* self, CCharEffectVTableIf* manager) {
             CCharEffectSlotSub* sub = (CCharEffectSlotSub*)slot->field_94;
             if (sub != NULL) {
                 id = sub->field_14;
-                if (id == manager->v0A8()) {
+                if (id == manager->vfuncA8()) {
                     ((CCharEffectSlot*)p[1])->field_B0 = NULL;
                     ((CCharEffectSlotSub*)((CCharEffectSlot*)p[1])->field_94)->field_14 = 0;
                     ((CCharEffectSlot*)p[1])->field_68 |= 0x40;
@@ -365,7 +373,7 @@ int func_8015CBC0() {
 int func_8015CBEC(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
-        int id = *battleObj->field_04->bf30();
+        int id = *battleObj->field_04->vf30();
         return func_80174C98(battleObj, &id, 0x802);
     }
     return 1;
@@ -376,7 +384,7 @@ int func_8015CBEC(CCharEffect* self) {
 int func_8015CC50(CCharEffect* self) {
     cf::CCharEffectBattleObj* battleObj = self->mBattleObj;
     if (battleObj != NULL) {
-        int id = *battleObj->field_04->bf30();
+        int id = *battleObj->field_04->vf30();
         return func_80174C98(battleObj, &id, 0x803);
     }
     return 0;

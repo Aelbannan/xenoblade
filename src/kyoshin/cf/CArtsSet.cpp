@@ -1,40 +1,10 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 
-// Records viewed as polymorphic objects: the 0x84-byte non-polymorphic data
-// base places the vptr at 0x84 (retail loads the table pointer from there),
-// and the per-record init routine is vtable slot 2 (offset 8) - the same
-// dispatch shape the retail CAttackSet/CArtsSet init loops emit.
-//
-// The init virtual is declared PURE: the real init implementations live in
-// CArtsParam.cpp (CAttackParam::CAttackParam_UnkVirtualFunc1 and CArtsParam's
-// override). This TU only needs the dispatch shape (load the record's table
-// pointer at +0x84, jump to slot 2) - the record objects are never
-// constructed here, so these class vtables are never dispatched through at
-// runtime; the game data carries the real per-record table pointers.
-struct CAttackParamData {
-    u8 field_0[0x84];
-};
-
-struct CAttackParamVtblRec : CAttackParamData {
-    virtual void vtInit() = 0;  // first virtual -> vtable slot 2 (offset 8, MWCC 2-slot vtable overhead)
-};
-
-// 0x8c-strided arts-param record: vptr at 0x84, 4 bytes of derived data at 0x88.
-struct CArtsParamVtblRec : CAttackParamData {
-    virtual void vtInit() = 0;  // first virtual -> vtable slot 2 (offset 8)
-    u8 field_88[0x8c - 0x88];
-};
-
-// Record viewed as a 0x8c-strided element within CArtsSet where the
-// CArtsParam begins 0x38 bytes in (relative to the CArtsSet base).
-// Field offsets below are relative to the record origin, matching the
-// retail loads of 0xaf (unk77 + 0x38) and 0x58 (unk20 + 0x38).
-struct CArtsRecord {
-    u8 field_0[0x58];
-    u32 field58;  // 0x58  (unk20 of the nested CArtsParam)
-    u8 field_5c[0xaf - 0x5c];
-    u8 fieldAF;   // 0xaf  (unk77 of the nested CArtsParam)
-};
+// Per-record init is virtual slot +0x08 on the record itself (vptr at
+// +0x84; CAttackParam table lbl_eu_8052F610, CArtsParam table
+// lbl_eu_8052F5E8). Call sites dispatch through the real base virtual, so
+// MWCC emits the retail shape (lwz r12, 0x84(rX) / lwz r12, 0x8(r12) /
+// bctrl) with no reinterpret-cast views.
 
 // Note on function order: the object emits functions in source order, and the
 // retail .o lists them in this exact order (ctor, the sArtsSet init virtual,
@@ -115,15 +85,15 @@ namespace cf {
 
         // Function-scope rowBase/p/row declaration order drives the Chaitin
         // homes to r31/r30/r29, matching the retail init loop.
-        CArtsParamVtblRec* rowBase;
-        CArtsParamVtblRec* p;
+        CArtsParam* rowBase;
+        CArtsParam* p;
         int row;
 
-        rowBase = reinterpret_cast<CArtsParamVtblRec*>(&self->mArtsParams[0]);
+        rowBase = &self->mArtsParams[0];
         for (row = 0; row < 3; row++) {
             p = rowBase;
             for (int col = 0; col < 8; col++) {
-                p->vtInit();
+                p->CAttackParam_UnkVirtualFunc1();
                 p++;
             }
             rowBase += 8;  // 8 * 0x8c = 0x460 bytes per row
@@ -155,8 +125,11 @@ cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
     do {
         inner = outer;
         for (int col = 0; col < 8; col++) {
-            if (id == reinterpret_cast<CArtsRecord*>(inner)->fieldAF &&
-                reinterpret_cast<CArtsRecord*>(inner)->field58 != 0) {
+            // The CArtsParam record starts 0x38 bytes in; unk77/unk20 land
+            // on the retail 0xaf/0x58 loads after offset folding.
+            cf::CArtsParam* rec = reinterpret_cast<cf::CArtsParam*>(inner + 0x38);
+            if (id == rec->unk77 &&
+                rec->unk20 != 0) {
                 unsigned char* rp = reinterpret_cast<unsigned char*>(self);
                 rp += row * 0x460;
                 rp += col * 0x8c;
@@ -194,9 +167,9 @@ namespace cf {
 
 void func_80153E88(void* self) {
     std::memset(self, 0, 0xc);
-    CAttackParamVtblRec* arr = reinterpret_cast<CAttackParamVtblRec*>(reinterpret_cast<unsigned char*>(self) + 0x10);
+    cf::CAttackParam* arr = reinterpret_cast<cf::CAttackParam*>(reinterpret_cast<unsigned char*>(self) + 0x10);
     for (int i = 0; i < 6; i++) {
-        arr[i].vtInit();
+        arr[i].CAttackParam_UnkVirtualFunc1();
     }
 }
 

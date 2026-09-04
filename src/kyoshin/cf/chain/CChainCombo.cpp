@@ -53,12 +53,14 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending != 0) {
-        // Call vtable[0x4c] on the +0x3e9c CfObjectMove sub-object, then chain
-        // its id through findObjectById -> func_8016FE34.
-        CChainVObj* vobjRaw = (CChainVObj*)func_8016FE34(findObjectById(
-            ((CChainCombo_Vt4CIf*)((u8*)actor + 0x3E9C))->m4C()));
+        // Slot +0x4C is CObjectParam_UnkVirtualFunc5 on the CfObjectMove
+        // sub-object at actor+0x3E9C (same shape as CAIAction aiMoveBaseVt4C);
+        // its id result resolves through findObjectById -> func_8016FE34 to
+        // a CActorParam whose slot +0x184 is CActorParam_UnkVirtualFunc60.
+        cf::CActorParam* vobj = (cf::CActorParam*)func_8016FE34(findObjectById(
+            ((cf::CObjectParam*)((u8*)actor + 0x3E9C))->CObjectParam_UnkVirtualFunc5()));
 
-        if (vobjRaw != nullptr) {
+        if (vobj != nullptr) {
             // Random selection from a 3-entry table based on probability thresholds.
             int rand = ml::math::mtRand(100);
             int value;
@@ -70,9 +72,9 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
                 value = lbl_eu_80538988[2];
             }
 
-            // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
-            ((CChainCombo_Vt184If*)vobjRaw)->m184(value);
-            func_802A07F4(0xbf, vobjRaw);
+            // Slot +0x184 is CActorParam_UnkVirtualFunc60 (takes the id).
+            vobj->CActorParam_UnkVirtualFunc60(value);
+            func_802A07F4(0xbf, vobj);
         }
     }
     // Volatile final store: makes MWCC schedule the epilogue with the LR

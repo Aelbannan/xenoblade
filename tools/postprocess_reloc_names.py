@@ -2667,20 +2667,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # verified; like-named local def skipped, resolves to blob).
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668910"),
-        ),    ),
-    "CfGimmickEne.o": UnitRules(
-        patch_data=((".sdata", 0x27, b"\x00"),),
-        extern_data_sections=(),
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
-        # int->double magic 2^52 and read-only 1.0f -> the shared .sdata2
-        # pool (bytes verified: lbl_eu_80668980 / lbl_eu_80668968; note
-        # lbl_eu_80662784 is a MUTABLE .sdata static, not this constant).
-        # The lone -1.0f (@3645) has no referenced blob counterpart - retail
-        # codegen for the site function loads neither - so it is stripped
-        # unrenamed and dies with the pending code match.
-        pool_patterns=(
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80668968"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668980"),
         ),
     ),
     "CKizunaTalkList.o": UnitRules(
@@ -3458,16 +3444,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CSysWinSave.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
-    "CfMapItemManager.o": UnitRules(
-        drop_data_tail=((".data", 0x70), (".sdata2", 0x70),),
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
-    ),
     "CfResObjImpl.o": UnitRules(
+        patch_data=((".sdata2", 0x7, b"\x00"),),
+        drop_nobits_range=((".sbss2", 0, 8),),
         copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".sbss"),
-    ),
-    "CfGimmickObject.o": UnitRules(
-        drop_data_tail=((".data", 0x100), (".sdata2", 0x30),),
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2"),
     ),
     "CfNandManager.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
@@ -8704,7 +8684,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
     ),
     "CfMapItemManager.o": UnitRules(
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
+        patch_data=((".data", 0x6F, b"\x00"),),
+        drop_data_tail=((".data", 0x70), (".sdata2", 0x70),),
     ),
     "CfResPcImpl.o": UnitRules(
         drop_data_range=(

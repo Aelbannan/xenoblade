@@ -7,6 +7,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "kyoshin/cf/object/CfObject.hpp"  // owner of the 0x74/0xAC/0xCC/0x120/0x128/0x12C slots (unk164 / 73DDC / 74090 / 74230)
 
 namespace cf {
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
@@ -140,23 +141,62 @@ namespace cf {
 // merged here on purpose.
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 class CfObject;     // active camera-state object (func_8006E5A4 return)
-// Base camera object (+0x00..+0x10). The vtable slot is a plain field stored
-// manually (retail lbl_eu_805272E8) so the ctor bytes match retail exactly.
+struct CVoiceRec;   // owned by help/CHelp_Talk.hpp (func_8006DBD4 param)
+// Base camera object (+0x00..+0x10). Retail table lbl_eu_805272E8
+// (cf::CfCam: dtor + 25 virtuals through +0x6C; zero words are pure
+// virtuals overridden by the leaves below).
+// __declspec(novtable): the tables live in retail .data (this TU has no
+// .data), never emitted here - the ctors store the symbols.txt labels
+// manually (this->vtbl() = lbl_eu_...), same as CToken / CHelp. Virtual
+// calls emit no relocs, so members mirror the flat retail words (CHelp
+// pattern: func_802B7CBC). Pure signatures are forced by the leaf
+// overrides (an override must match the base).
 // Defined before CfCamFollow so the follow camera can really derive from it
 // (the derived dtor must emit the retail `bl __dt__Q22cf5CfCamFv`).
-class CfCam {
+class __declspec(novtable) CfCam {
 public:
-    void* vtable;      // 0x00 (retail lbl_eu_805272E8, stored manually)
+    virtual ~CfCam();                               // 0x08
+    virtual void func_8006CC68(int arg) = 0;        // 0x0C (leaf: reset entry)
+    virtual void* func_8006B6B8() = 0;              // 0x10 (leaf: this+0x1C)
+    virtual void func_80074D60(void* src) = 0;      // 0x14 (leaf: copy 3 words to +0x28)
+    virtual void func_8006CA2C(void* arg, float f) = 0; // 0x18 (leaf: vector prep)
+    virtual void* func_80074D4C();                  // 0x1C (field_0x0C + 0x118)
+    virtual void func_8006E884(float f) = 0;        // 0x20 (leaf: per-frame driver)
+    virtual void func_80071B74() = 0;               // 0x24 (leaf: no-op)
+    virtual void func_8006BFDC() = 0;               // 0x28 (leaf: constants reset)
+    virtual void* func_80073C74(void* src) = 0;     // 0x2C (leaf: this+0x10 copy)
+    virtual void* func_8006B6A0();                  // 0x30 (this+0x10)
+    virtual void* func_8006B6B0() = 0;              // 0x34 (leaf: this+0x40)
+    virtual void func_8006D7A8(void* src) = 0;      // 0x38 (leaf: state-block copy)
+    virtual void func_8006C1BC(float f) = 0;        // 0x3C (leaf: store heading)
+    virtual void func_8006BEF0(int arg);            // 0x40 (stores arg at +0x08)
+    virtual void* func_80074D44();                  // 0x44 (returns 0)
+    virtual void func_80073DDC(CfObject* src) = 0;  // 0x48 (leaf: state copy)
+    virtual void func_800606AC();                   // 0x4C (pluginCam no-op)
+    virtual void func_80060738();                   // 0x50 (pluginCam no-op)
+    virtual void func_800607C4();                   // 0x54 (pluginCam no-op)
+    virtual float func_80074D58() = 0;              // 0x58 (leaf: +0x1E0 getter)
+    virtual void func_8006C16C(void* target) = 0;   // 0x5C (leaf: stash +0x164)
+    virtual void* func_8006B6A8() = 0;              // 0x60 (leaf: +0x164 handle)
+    virtual void func_800605D0();                   // 0x64 (pluginCam no-op)
+    virtual void func_80060A08();                   // 0x68 (pluginCam no-op; CfCamFollow overrides)
+    virtual void func_80060B84();                   // 0x6C (pluginCam no-op)
+
+    // Overlay on the implicit vptr at +0 so the ctors can store the retail
+    // table labels manually (novtable suppresses the compiler store).
+    void*& vtbl() {
+        return *reinterpret_cast<void**>(this);
+    }
+
     u32 field_0x04;    // 0x04
     u32 field_0x08;    // 0x08
     void* field_0x0C;  // 0x0C ctor arg
     float getUnk4FC();
-    ~CfCam();
 };
 
 // Derived follow camera; base CfCam occupies +0x00..+0x10, follow extends
 // through ~0x25A.
-struct CfCamFollow : CfCam {
+struct __declspec(novtable) CfCamFollow : CfCam {
     u8 unk10[0x1C - 0x10];
     u8 unk1C[0x28 - 0x1C];
     f32 field_0x28; // 0x28 camera position x
@@ -169,7 +209,7 @@ struct CfCamFollow : CfCam {
     u8 unk70[0xC0]; // 0x70..0x130
     u8 unk130[0x160 - 0x130];
     void* unk160; // 0x160 ctor arg2
-    void* unk164; // 0x164 ctor arg1
+    CfObject* unk164; // 0x164 follow-target handle (ctor arg1; CfObject vtable slots 0x74/0xAC/0xCC/0x128)
     u8 unk168[0x180 - 0x168];
     f32 field_0x180;          // 0x180 snapshot source for unk1F8
     f32 field_0x184;          // 0x184 blended heading angle
@@ -216,7 +256,31 @@ struct CfCamFollow : CfCam {
 
     void clearUnk04Bits(unsigned int mask);
     unsigned int getBit26_0x4EC();
-    ~CfCamFollow(); // retail __dt__Q22cf11CfCamFollowFv (defined outside this TU)
+    virtual ~CfCamFollow(); // retail __dt__Q22cf11CfCamFollowFv (defined outside this TU)
+
+    // Retail table lbl_eu_80527260 (cf::CfCamFollow: 28 virtuals through
+    // +0x74). Overrides redeclare the base slots they fill with the same
+    // signature (a true override, not an append); the +0x70/+0x74 pair is
+    // new on this class. Slots the leaf shares with the base
+    // (0x1C/0x30/0x40/0x44/0x4C/0x50/0x54/0x64/0x6C) are inherited as-is.
+    virtual void func_8006CC68(int arg);             // 0x0C
+    virtual void* func_8006B6B8();                  // 0x10
+    virtual void func_80074D60(void* src);          // 0x14
+    virtual void func_8006CA2C(void* arg, float f); // 0x18
+    virtual void func_8006E884(float f);            // 0x20
+    virtual void func_80071B74();                   // 0x24
+    virtual void func_8006BFDC();                   // 0x28
+    virtual void* func_80073C74(void* src);         // 0x2C
+    virtual void* func_8006B6B0();                  // 0x34
+    virtual void func_8006D7A8(void* src);          // 0x38
+    virtual void func_8006C1BC(float f);            // 0x3C
+    virtual void func_80073DDC(CfObject* src);      // 0x48
+    virtual float func_80074D58();                  // 0x58
+    virtual void func_8006C16C(void* target);       // 0x5C
+    virtual void* func_8006B6A8();                  // 0x60
+    virtual void func_80073D8C(int cond);           // 0x68 (base holds func_80060A08 here)
+    virtual void* func_80074A3C();                  // 0x70 (new: pad-action source)
+    virtual int func_80074AA4(int id);              // 0x74 (new: pad-action dispatch)
 };
 
 // Layout view over the follow-camera state block copied wholesale by
@@ -234,250 +298,11 @@ struct CfCamStateView {
     f32 field1E0;           // 0x1E0
 };
 
-// Camera-position source / follow-target object view: real virtuals at the
-// offsets used by func_8006CA2C (0x74), func_80074230 (0xAC) and
-// func_8006CB0C (0xCC). With the -RTTI 8-byte vtable header, virtual index N
-// sits at 0x08 + 4N, so these are indices 27 / 41 / 49. The class is only
-// ever used through pointers - MWCC emits no vtable for it.
-class CfCamPosSource {
-public:
-    virtual void v00() = 0;  // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13(float f) = 0; // 0x3C (index 13) - camera-state update
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void* v26() = 0; // 0x70 (index 26) - sub-object getter
-    virtual int fn0x74() = 0;    // 0x74 (index 27) - target-visible flag
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;
-    virtual void v40() = 0;
-    virtual float* fn0xAC() = 0; // 0xAC (index 41) - aim vector body
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual void v44() = 0;
-    virtual void v45() = 0;
-    virtual void v46() = 0;
-    virtual void v47() = 0;
-    virtual void v48() = 0;
-    virtual float fn0xCC() = 0;  // 0xCC (index 49) - scale factor
-};
 
 // cf::CfCamEvent - camera event state. Full definition lives in
 // CfCamEvent.hpp (which includes this header); keep only the forward
 // declaration here to avoid a redefinition in TUs that include both.
 class CfCamEvent;
-
-// Vtable-slot view over CfCamFollow's head for __ct__cf_CfCamFollow's two
-// virtual calls. With the -RTTI 8-byte vtable header, virtual index N sits at
-// 0x08 + 4N: index 14 -> slot 0x40, index 8 -> slot 0x28 (retail ctor loads
-// those slots into r12 right before each bctrl). Never instantiated - MWCC
-// emits no vtable for it (same pattern as CfCamPosSource).
-class CfCamCtorVt {
-public:
-    virtual void v00() = 0; // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;        // 0x28 (index 8) - follow-cam init (no args)
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14(int arg) = 0; // 0x40 (index 14) - init with int arg
-    virtual void v15() = 0;
-};
-
-// Vtable view for func_8006BFDC's reset call: slot 0x0C (index 1 with -RTTI).
-class CfCamVt01 {
-public:
-    virtual void v00() = 0;           // 0x08
-    virtual void fnAt0C(int arg) = 0; // 0x0C - reset entry
-};
-
-// Vtable view over the camera-position source used by func_80074090: the
-// aim-vector body at slot 0xAC (index 41), the scale factor at slot 0xCC
-// (index 49), and the indexed vector getters at slots 0x120 / 0x128 / 0x12C
-// (indices 70 / 72 / 73). Never instantiated - MWCC emits no vtable for it.
-class CfCamSrcVt {
-public:
-    virtual void v00() = 0; // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;
-    virtual void v33() = 0;
-    virtual void v34() = 0;
-    virtual void v35() = 0;
-    virtual void v36() = 0;
-    virtual void v37() = 0;
-    virtual void v38() = 0;
-    virtual void v39() = 0;
-    virtual void v40() = 0;
-    virtual ml::CVec3* fn0xAC() = 0;    // 0xAC (index 41) - aim vector body
-    virtual void v42() = 0;
-    virtual void v43() = 0;
-    virtual void v44() = 0;
-    virtual void v45() = 0;
-    virtual void v46() = 0;
-    virtual void v47() = 0;
-    virtual void v48() = 0;
-    virtual float fn0xCC() = 0;         // 0xCC (index 49) - scale factor
-    virtual void v50() = 0;
-    virtual void v51() = 0;
-    virtual void v52() = 0;
-    virtual void v53() = 0;
-    virtual void v54() = 0;
-    virtual void v55() = 0;
-    virtual void v56() = 0;
-    virtual void v57() = 0;
-    virtual void v58() = 0;
-    virtual void v59() = 0;
-    virtual void v60() = 0;
-    virtual void v61() = 0;
-    virtual void v62() = 0;
-    virtual void v63() = 0;
-    virtual void v64() = 0;
-    virtual void v65() = 0;
-    virtual void v66() = 0;
-    virtual void v67() = 0;
-    virtual void v68() = 0;
-    virtual void v69() = 0;
-    virtual const float* fnAt120(int idx) = 0; // 0x120 (index 70)
-    virtual void v71() = 0;
-    virtual const float* fnAt128() = 0;        // 0x128 (index 72)
-    virtual const float* fnAt12C(int idx) = 0; // 0x12C (index 73)
-};
-
-// Minimal views for func_8006DBD4: the +0x4 sub-object's vtable slot-0x30
-// (index 10 with -RTTI) returns an object whose first word feeds the
-// func_80174C98 arts-state gate.
-struct CfStateWord {
-    u32 field_0; // +0x0
-};
-class CfSubObjView {
-public:
-    virtual void v00() = 0; // 0x08
-    virtual void v01() = 0; // 0x0C
-    virtual void v02() = 0; // 0x10
-    virtual void v03() = 0; // 0x14
-    virtual void v04() = 0; // 0x18
-    virtual void v05() = 0; // 0x1C
-    virtual void v06() = 0; // 0x20
-    virtual void v07() = 0; // 0x24
-    virtual void v08() = 0; // 0x28
-    virtual void v09() = 0; // 0x2C
-    virtual CfStateWord* fnAt30() = 0; // index 10 -> vtable 0x30
-};
-
-// Vtable view for func_8006CC68's slot-0x38 call (index 12).
-class CfCamVt38 {
-public:
-    virtual void v00() = 0; // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void fnAt38(void* arg) = 0; // 0x38 (index 12)
-};
-
-// Vtable view for func_8006B720's game-manager probe at slot 0x60 (index 22).
-class CfCamGmView {
-public:
-    virtual void v00() = 0; // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void* fnAt60() = 0; // 0x60 (index 22); returns an object whose +0x8C u16 is read
-};
 
 // Row-id halfword view of the active camera object (read at +0x8C).
 struct CfCamRowView {
@@ -489,16 +314,6 @@ struct CfCamRowView {
 struct UnkClass800821F8FlagView {
     u8 field_0x00[4];
     u32 flags; // +0x04
-};
-
-// Vtable view for func_8006F9EC's slot-0x18 call (index 4).
-class CfCamVt18 {
-public:
-    virtual void v00() = 0;               // 0x08
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void fnAt18(void* arg, float f) = 0; // 0x18 (index 4)
 };
 
 } // namespace cf
@@ -529,7 +344,7 @@ void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 void func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
 int getNullPtrC__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
-void func_8006CB0C(void* out, void* self, void* dir, void* sel); // follow-cam vector prep (see below decl)
+void func_8006CB0C(void* out, cf::CfCamFollow* self, void* dir, void* sel); // follow-cam vector prep
 int isTimerActive__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
 void func_8049EFF8(void* obj, f32 f, void* a, void* b);  // retail 0x8049EFF8 (pose/scale apply)
 int func_8006D374(void* self);                           // CfCam sibling (retail 0x8006D374)
@@ -628,39 +443,6 @@ float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x8057
 extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
 void func_8006CE18(cf::CfCamFollow* self);           // CfCam sibling: zero the 0x1D4 flag word (retail 0x8006D870)
 int func_80074CD4(void* obj, u32 mask);              // CfCam sibling pad-action dispatcher (retail 0x80075568)
-// Main-vtable view for func_80074AA4: with -RTTI the declared virtual #26
-// lands at vtable byte offset 0x70, and its returned pointer is what retail
-// forwards to func_80074CD4. Never instantiated, so no vtable emits.
-class CfObjActView {
-public:
-    virtual void* v000() = 0;
-    virtual void* v001() = 0;
-    virtual void* v002() = 0;
-    virtual void* v003() = 0;
-    virtual void* v004() = 0;
-    virtual void* v005() = 0;
-    virtual void* v006() = 0;
-    virtual void* v007() = 0;
-    virtual void* v008() = 0;
-    virtual void* v009() = 0;
-    virtual void* v010() = 0;
-    virtual void* v011() = 0;
-    virtual void* v012() = 0;
-    virtual void* v013() = 0;
-    virtual void* v014() = 0;
-    virtual void* v015() = 0;
-    virtual void* v016() = 0;
-    virtual void* v017() = 0;
-    virtual void* v018() = 0;
-    virtual void* v019() = 0;
-    virtual void* v020() = 0;
-    virtual void* v021() = 0;
-    virtual void* v022() = 0;
-    virtual void* v023() = 0;
-    virtual void* v024() = 0;
-    virtual void* v025() = 0;
-    virtual void* v026() = 0; // slot 26 / +0x70
-};
 void* getActiveCameraObject__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
 class UnkClass_800821F8;
 UnkClass_800821F8* getCameraDataBlock__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
@@ -743,7 +525,7 @@ u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
 // call sites (see the extern-C-only-views pattern above).
 extern "C" void func_80071398(void* out, void* a, void* b, float t); // in-TU def: (Quaternion*, const Quaternion*, const Quaternion*, float)
 extern "C" void* func_80071364(void* q);                            // in-TU def: (Quaternion*)
-extern "C" int func_8006DBD4(cf::CfCamFollow* self, int flags);     // in-TU def (defined below its first use)
+extern "C" int func_8006DBD4(cf::CVoiceRec* self, int flags);     // in-TU def (defined below its first use)
 extern "C" __declspec(noinline) void func_80071694(ml::CMat33* out, const ml::CQuat* q); // in-TU def: quat -> 3x3 rotation matrix (mixed linkage keeps the unmangled bl)
 }
 

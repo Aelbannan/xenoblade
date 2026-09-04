@@ -825,7 +825,7 @@ bmCheck:
         cvN.w[0] = 0x43300000;
         cvN.w[1] = (u32)count;
         f32 n = (f32)(cvN.d - lbl_eu_806669A0);
-        f32 prod = lbl_eu_806669B0 * (n * ((cf::CfActorParamVt118*)self)->m12C());
+        f32 prod = lbl_eu_806669B0 * (n * static_cast<cf::CActorParam*>(self)->CActorParam_UnkVirtualFunc38());
         if (prod != lbl_eu_80666968) {
             s32 iv = (s32)prod;
             cf::CfEneF64Conv cvV;
@@ -833,7 +833,7 @@ bmCheck:
             cvV.w[1] = (u32)iv ^ 0x80000000;
             f32 rv = (f32)(cvV.d - lbl_eu_806669A8);
             if (rv == lbl_eu_80666968) rv = lbl_eu_80666980;
-            ((cf::CfActorParamVt118*)self)->m11C(-rv);
+            static_cast<cf::CActorParam*>(self)->CActorParam_UnkVirtualFunc34(-rv);
         }
         ((cf::CfEneTailView*)self)->field_0x45CC = lbl_eu_80666968;
         return;
@@ -1250,7 +1250,7 @@ float CActorParam_UnkVirtualFunc39__Q22cf11CActorParamFv(cf::CActorParam* self) 
 // val by the gauge field at 0x17F4 and tail-dispatches vtable slot +0x11C
 // (CActorParam_UnkVirtualFunc34).
 void CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
-    reinterpret_cast<cf::CfActorParamVt118*>(self)->m11C(((cf::CfActorParamFields*)self)->field_0x17F4 * val);
+    self->CActorParam_UnkVirtualFunc34(((cf::CfActorParamFields*)self)->field_0x17F4 * val);
 }
 
 // us-800b0d9c: retail symbol is Fv; the real ABI passes (self, amount). Adds

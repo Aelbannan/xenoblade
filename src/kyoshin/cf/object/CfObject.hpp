@@ -136,7 +136,7 @@ namespace cf {
         virtual void _f50(); virtual void _f54(); virtual void _f58(); virtual void _f5C();
         virtual void _f60(); virtual void _f64(); virtual void _f68(); virtual void _f6C();
         virtual void _f70(); virtual void _f74(); virtual void _f78(); virtual void _f7C();
-        virtual void _f80(); virtual void _f84(); virtual void _f88(); virtual void _f8C();
+        virtual void _f80(); virtual void _f84(); virtual void m88(void* arg); virtual void m8C(void* arg);
         virtual void _f90(); virtual void _f94(); virtual void _f98(); virtual void _f9C();
         virtual void mA0();
         virtual void _fA4(); virtual void _fA8();

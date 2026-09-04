@@ -1,5 +1,130 @@
-extern "C" void dummy() {}
-__declspec(section ".data") __attribute__((used)) char __absorb_CfGimmickEne_data[0x7C] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".rodata") __attribute__((used)) const char __absorb_CfGimmickEne_rodata[0x58] = {0x63, 0x66, 0x3A, 0x3A, 0x43, 0x66, 0x47, 0x69, 0x6D, 0x6D, 0x69, 0x63, 0x6B, 0x45, 0x6E, 0x65, 0x00, 0x00, 0x00, 0x00, 0x65, 0x6E, 0x65, 0x49, 0x44, 0x00, 0x61, 0x72, 0x74, 0x49, 0x44, 0x00, 0x73, 0x74, 0x61, 0x74, 0x65, 0x00, 0x45, 0x46, 0x46, 0x00, 0x53, 0x45, 0x00, 0x65, 0x6E, 0x76, 0x53, 0x45, 0x00, 0x77, 0x65, 0x74, 0x00, 0x68, 0x6F, 0x75, 0x72, 0x00, 0x73, 0x70, 0x57, 0x46, 0x00, 0x73, 0x74, 0x61, 0x72, 0x74, 0x46, 0x00, 0x77, 0x61, 0x74, 0x69, 0x46, 0x00, 0x65, 0x6E, 0x64, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-__declspec(section ".sdata") __attribute__((used, aligned(8))) char __absorb_CfGimmickEne_sdata[0x28] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
-__declspec(section ".sdata2") __attribute__((used)) const char __absorb_CfGimmickEne_sdata2[0x48] = {0x61, 0x4C, 0x4F, 0x44, 0x31, 0x00, 0x00, 0x00, 0x61, 0x54, 0x79, 0x70, 0x65, 0x00, 0x00, 0x00, 0x61, 0x53, 0x70, 0x64, 0x00, 0x00, 0x00, 0x00, 0x61, 0x43, 0x4C, 0x00, 0x63, 0x6C, 0x31, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xC2, 0xC8, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A, 0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x7F, 0x00, 0x00, 0x3D, 0xCC, 0xCC, 0xCD};
+// Anchor for the TU; the real .sdata2 touch lives at the bottom
+// (dummy must see the label declarations first).
+extern "C" void dummy();
+
+// Typified retail data (was __absorb_* blobs). Layout from
+// build/us/asm/kyoshin/cf/CfGimmickEne.s.
+
+// .rodata 0x58: type string + BDAT column-name blob.
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_8050E690[0x14] = "cf::CfGimmickEne";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_8050E6A4[0x44] =
+    "eneID\0artID\0state\0EFF\0SE\0envSE\0wet\0hour\0spWF\0startF\0watiF\0endF";
+
+// .sdata2 0x48: short tags (with retail padding) then float pool.
+__declspec(section ".sdata2") __attribute__((used))
+const char lbl_eu_80668948[8] = "aLOD1";
+__declspec(section ".sdata2") __attribute__((used))
+const char lbl_eu_80668950[8] = "aType";
+__declspec(section ".sdata2") __attribute__((used))
+const char lbl_eu_80668958[8] = "aSpd";
+__declspec(section ".sdata2") __attribute__((used))
+const char lbl_eu_80668960[4] = "aCL";
+__declspec(section ".sdata2") __attribute__((used))
+const char lbl_eu_80668964[4] = "cl1";
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668968 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066896C = 0.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const int lbl_eu_80668970 = -1;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668974 = -100.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668978 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066897C = 0.01f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80668980 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668988 = 255.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066898C = 0.1f;
+
+// .sdata 0x28: RTTI-ish pointer pairs (reloc sites are zero bytes in .o).
+extern char lbl_eu_8050DBC4[];
+extern char lbl_eu_805379F0[];
+extern char lbl_eu_8050DBD8[];
+extern char lbl_eu_8050DBF0[];
+extern char lbl_eu_8050DC08[];
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_80662990[2] = { lbl_eu_8050DBC4, lbl_eu_805379F0 };
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_80662998[2] = { lbl_eu_8050DBD8, 0 };
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_806629A0[2] = { lbl_eu_8050DBF0, 0 };
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_806629A8[2] = { lbl_eu_8050DC08, 0 };
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_806629B0[2] = { lbl_eu_80668964, 0 };
+
+// .data 0x7C: dtor-descriptor triples, dispatch rows, tag-pointer table.
+extern "C" {
+void __dt__Q22UI17CPassiveSkillLineFv();
+void __dt__Q22UI17CPassiveSkillInfoFv();
+void __dt__Q22UI16CPassiveSkillCurFv();
+void func_8026EA20();
+void func_8026EBA8();
+void func_8026EC80();
+void func_8026ECEC();
+void func_8026F254();
+void func_8026F31C();
+}
+struct EneDataRow {
+    const void* a;
+    unsigned int b;
+    const void* c;
+};
+// NOTE: six single-row objects, not one 72-byte table: MWCC 8-aligns any
+// single .data object of this size (0x24 -> 0x28 pad) while retail packs
+// the rows at 4. The lead row keeps the lbl_eu_80537A20 symbol (code takes
+// its address); the rest are file-static rows.
+__declspec(section ".data") __attribute__((used))
+const EneDataRow lbl_eu_805379FC[1] = {
+    { lbl_eu_80662998, 0, (const void*)__dt__Q22UI17CPassiveSkillLineFv },
+};
+__declspec(section ".data") __attribute__((used))
+const EneDataRow lbl_eu_80537A08[1] = {
+    { lbl_eu_806629A0, 0, (const void*)__dt__Q22UI17CPassiveSkillInfoFv },
+};
+__declspec(section ".data") __attribute__((used))
+const EneDataRow lbl_eu_80537A14[1] = {
+    { lbl_eu_806629A8, 0, (const void*)__dt__Q22UI16CPassiveSkillCurFv },
+};
+__declspec(section ".data") __attribute__((used))
+const EneDataRow lbl_eu_80537A20 = { 0, 0xFFFFFFFFu, (const void*)func_8026EA20 };
+__declspec(section ".data") __attribute__((used))
+static const EneDataRow s_dispatchRow1 = { 0, 0xFFFFFFFFu, (const void*)func_8026EBA8 };
+__declspec(section ".data") __attribute__((used))
+static const EneDataRow s_dispatchRow2 = { 0, 0xFFFFFFFFu, (const void*)func_8026EC80 };
+__declspec(section ".data") __attribute__((used))
+static const EneDataRow s_dispatchRow3 = { 0, 0xFFFFFFFFu, (const void*)func_8026ECEC };
+__declspec(section ".data") __attribute__((used))
+static const EneDataRow s_dispatchRow4 = { 0, 0xFFFFFFFFu, (const void*)func_8026F254 };
+__declspec(section ".data") __attribute__((used))
+static const EneDataRow s_dispatchRow5 = { 0, 0xFFFFFFFFu, (const void*)func_8026F31C };
+__declspec(section ".data") __attribute__((used))
+const void* lbl_eu_80537A68[4] = {
+    lbl_eu_80668948, lbl_eu_80668950, lbl_eu_80668958, lbl_eu_80668960,
+};
+
+extern "C" void dummy() {
+    // Anchor the .sdata2 scalar pool above: MWCC drops unreferenced const
+    // scalars, so volatile-read each label in retail order (emission =
+    // first use). Plain arithmetic folds at compile time and drops the
+    // labels, so every read goes through a volatile pointer.
+    volatile float sinkf;
+    sinkf = *(volatile float*)&lbl_eu_80668968;
+    sinkf = *(volatile float*)&lbl_eu_8066896C;
+    volatile int sinki = *(volatile int*)&lbl_eu_80668970;
+    sinkf = *(volatile float*)&lbl_eu_80668974;
+    sinkf = *(volatile float*)&lbl_eu_80668978;
+    sinkf = *(volatile float*)&lbl_eu_8066897C;
+    volatile double sinkd = *(volatile double*)&lbl_eu_80668980;
+    sinkf = *(volatile float*)&lbl_eu_80668988;
+    sinkf = *(volatile float*)&lbl_eu_8066898C;
+    (void)sinkf;
+    (void)sinki;
+    (void)sinkd;
+}

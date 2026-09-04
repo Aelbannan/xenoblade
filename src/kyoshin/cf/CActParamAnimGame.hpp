@@ -30,137 +30,14 @@ struct CActParamAnimGameLink {
     u8 active;                     // +0x714
 };
 
-// Fake SI interface for the virtual dispatch at vtable+0x4C / +0xAC / +0xC4
-// (func_80060110 dispatches these on the +0x4E8 link object / its action
-// source). MWCC reserves 2 leading vtable slots, so declared virtual N sits
-// at (N+2)*4: 17 fillers put v4C at slot 19 = 0x4C, then 23 fillers put vAC
-// at slot 43 = 0xAC, then 5 fillers put vC4 at slot 49 = 0xC4. Cast-only
-// usage (never constructed), so no vtable is emitted by this TU.
-struct CActParamAnimGameVt4C {
-    virtual void f00();  virtual void f01();  virtual void f02();  virtual void f03();
-    virtual void f04();  virtual void f05();  virtual void f06();  virtual void f07();
-    virtual void f08();  virtual void f09();  virtual void f0A();  virtual void f0B();
-    virtual void f0C();  virtual void f0D();  virtual void f0E();  virtual void f0F();
-    virtual void f10();
-    virtual void* v4C();  // slot 19 => +0x4C
-    virtual void f11();  virtual void f12();  virtual void f13();  virtual void f14();
-    virtual void f15();  virtual void f16();  virtual void f17();  virtual void f18();
-    virtual void f19();  virtual void f1A();  virtual void f1B();  virtual void f1C();
-    virtual void f1D();  virtual void f1E();  virtual void f1F();  virtual void f20();
-    virtual void f21();  virtual void f22();  virtual void f23();  virtual void f24();
-    virtual void f25();  virtual void f26();  virtual void f27();
-    virtual void* vAC();  // slot 43 => +0xAC
-    virtual void f28();  virtual void f29();  virtual void f2A();  virtual void f2B();
-    virtual void f2C();
-    virtual void vC4(f32);  // slot 49 => +0xC4
-};
-
-// Sub-object reachable via +0x3A0 then +0x7EC; the +0x7EC slot points to an
-// object dispatched through vtable+0x08 with an int arg (func_8005D2C4).
+// Sub-object reachable via +0x3A0 then +0x7EC; the +0x7EC slot points to a
+// CActParam7ECTarget (see kyoshin/action/CActParamAnim.hpp) notified through
+// +0x08 (int gate, func_8005D2C4), +0x14 (position) and +0x18 (flag).
 struct CActParamAnimGameObj3A0 {
     u8 _00[0x7CC];
     ml::CVec3 pos7CC;  // +0x7CC airborne drift accumulator
     u8 _7D8[0x7EC - 0x7D8];
     void* sub7EC;   // +0x7EC
-};
-
-// Opaque object dispatched through vtable+0x08 (slot 2) with an int arg,
-// and through vtable+0x14 (slot 5) with a CVec3 arg (func_8005A5B0's
-// +0x3A0 chain notification). Cast-only usage (never constructed).
-struct CActParamAnimGameObj7EC {
-    virtual void v8(int arg);  // slot 2 => +0x8
-    virtual void f3();         // slot 3
-    virtual void f4();         // slot 4
-    virtual void v14(void* vec);  // slot 5 => +0x14
-    virtual void v18(int arg);    // slot 6 => +0x18
-};
-
-// Opaque object returned by func_8016FE34 for the +0x4E8 link; virtual
-// dispatch at vtable+0x17C (slot 95) and +0x194 (slot 101). MWCC reserves
-// 2 leading vtable slots, so declared virtual N sits at (N+2)*4: 93 fillers
-// put v17C at slot 95 = 0x17C, then 5 fillers put v194 at slot 101 = 0x194.
-// Cast-only usage (never constructed), so no vtable is emitted by this TU.
-struct CActParamAnimGameLinkVt {
-    virtual void v00();  virtual void v01();  virtual void v02();  virtual void v03();
-    virtual void v04();  virtual void v05();  virtual void v06();  virtual void v07();
-    virtual void v08();  virtual void v09();  virtual void v0A();  virtual void v0B();
-    virtual void v0C();  virtual void v0D();  virtual void v0E();  virtual void v0F();
-    virtual void v10();  virtual void v11();  virtual void v12();  virtual void v13();
-    virtual void v14();  virtual void v15();  virtual void v16();  virtual void v17();
-    virtual void v18();  virtual void v19();  virtual void v1A();  virtual void v1B();
-    virtual void v1C();  virtual void v1D();  virtual void v1E();  virtual void v1F();
-    virtual void v20();  virtual void v21();  virtual void v22();  virtual void v23();
-    virtual void v24();  virtual void v25();  virtual void v26();  virtual void v27();
-    virtual void v28();  virtual void v29();  virtual void v2A();  virtual void v2B();
-    virtual void v2C();  virtual void v2D();  virtual void v2E();  virtual void v2F();
-    virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
-    virtual void v34();  virtual void v35();  virtual void v36();  virtual void v37();
-    virtual void v38();  virtual void v39();  virtual void v3A();  virtual void v3B();
-    virtual void v3C();  virtual void v3D();  virtual void v3E();  virtual void v3F();
-    virtual void v40();  virtual void v41();  virtual void v42();  virtual void v43();
-    virtual void v44();  virtual void v45();  virtual void v46();  virtual void v47();
-    virtual void v48();  virtual void v49();  virtual void v4A();  virtual void v4B();
-    virtual void v4C();  virtual void v4D();  virtual void v4E();  virtual void v4F();
-    virtual void v50();  virtual void v51();  virtual void v52();  virtual void v53();
-    virtual void v54();  virtual void v55();  virtual void v56();  virtual void v57();
-    virtual void v58();  virtual void v59();  virtual void v5A();  virtual void v5B();
-    virtual void v5C();
-    virtual void v17C();  // slot 95 => +0x17C
-    virtual void v5D();  virtual void v5E();  virtual void v5F();  virtual void v60();
-    virtual void v61();
-    virtual void v194();  // slot 101 => +0x194
-};
-
-// Fake SI interface for the virtual dispatch at vtable+0xE0 (both retail
-// ctors call it after storing the retail vtable). MWCC reserves 2 leading
-// vtable slots, so the Nth declared virtual sits at (N+2)*4: 54 fillers land
-// the called slot at 56*4 = 0xE0. Cast-only usage (never constructed), so no
-// vtable is emitted by this TU (retail vtable data lives in split1.s).
-struct CActParamAnimGameVtE0 {
-    virtual void v00();  virtual void v01();  virtual void v02();  virtual void v03();
-    virtual void v04();  virtual void v05();  virtual void v06();  virtual void v07();
-    virtual void v08();  virtual void v09();  virtual void v0A();  virtual void v0B();
-    virtual void v0C();  virtual void v0D();  virtual void v0E();  virtual void v0F();
-    virtual void v10();  virtual void v11();  virtual void v12();  virtual void v13();
-    virtual void v14();  virtual void v15();  virtual void v16();  virtual void v17();
-    virtual void v18();  virtual void v19();  virtual void v1A();  virtual void v1B();
-    virtual void v1C();  virtual void v1D();  virtual void v1E();  virtual void v1F();
-    virtual void v20();  virtual void v21();  virtual void v22();  virtual void v23();
-    virtual void v24();  virtual void v25();  virtual void v26();  virtual void v27();
-    virtual void v28();  virtual void v29();  virtual void v2A();  virtual void v2B();
-    virtual void v2C();  virtual void v2D();  virtual void v2E();  virtual void v2F();
-    virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
-    virtual void v34();  virtual void v35();
-    virtual void vE0();  // slot 56 => +0xE0
-};
-
-// Fake SI interface for the virtual dispatch at vtable+0xE8 issued by the
-// paused branch of func_8005B820 (args: &pos, &delta; returns int status).
-// MWCC reserves 2 leading vtable slots, so the Nth declared virtual sits at
-// (N+2)*4: 56 fillers land the called slot at 58*4 = 0xE8. Cast-only usage.
-struct CActParamAnimGameVtE8 {
-    virtual void v00();  virtual void v01();  virtual void v02();  virtual void v03();
-    virtual void v04();  virtual void v05();  virtual void v06();  virtual void v07();
-    virtual void v08();  virtual void v09();  virtual void v0A();  virtual void v0B();
-    virtual void v0C();  virtual void v0D();  virtual void v0E();  virtual void v0F();
-    virtual void v10();  virtual void v11();  virtual void v12();  virtual void v13();
-    virtual void v14();  virtual void v15();  virtual void v16();  virtual void v17();
-    virtual void v18();  virtual void v19();  virtual void v1A();  virtual void v1B();
-    virtual void v1C();  virtual void v1D();  virtual void v1E();  virtual void v1F();
-    virtual void v20();  virtual void v21();  virtual void v22();  virtual void v23();
-    virtual void v24();  virtual void v25();  virtual void v26();  virtual void v27();
-    virtual void v28();  virtual void v29();  virtual void v2A();  virtual void v2B();
-    virtual void v2C();  virtual void v2D();  virtual void v2E();  virtual void v2F();
-    virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
-    virtual void v34();  virtual void v35();  virtual void v36();  virtual void v37();
-    virtual int vE8(void* pos, void* delta);  // slot 58 => +0xE8
-};
-
-// Fake SI interface for the virtual dispatch at vtable+0x10 (slot 4) used by
-// func_8005EEB4's fallback counter (returns a float). Cast-only usage.
-struct CActParamAnimGameVt10 {
-    virtual void v00();  virtual void v01();
-    virtual f32 v10();  // slot 4 => +0x10
 };
 
 // Retail hierarchy: cf::CActParamAnimGame : CActParamAnim (base ctor/dtor are
@@ -317,14 +194,6 @@ struct CActParamAnimGameView {
 
 } // namespace cf
 
-// Fake SI interface for the virtual dispatch at vtable+0x10 (slot 4) on the
-// +0x8 link object (func_8005D76C state-1 path, returns an int status).
-struct CActParamAnimGameVt10I {
-    virtual void v00();
-    virtual void v01();
-    virtual int v10();  // slot 4 => +0x10
-};
-
 // Opaque object stored at the actor's +0x8 slot; its +0x4 word holds gate
 // flag bits consumed by isActionReady.
 struct CActParamAnimGameOwner {
@@ -345,32 +214,6 @@ struct CActParamAnimGameListNode {
     u32 next;      // +0x0
     u8 _04[4];
     void* f08;     // +0x8
-};
-
-// Fake SI interface for func_8016FE34 results dispatched at vtable+0x128 /
-// +0x12C (slots 74/75, both return floats). MWCC reserves 2 leading vtable
-// slots, so 72 fillers land v128 at 74*4 = 0x128.
-struct CActParamAnimGameListVt {
-    virtual void v00();  virtual void v01();  virtual void v02();  virtual void v03();
-    virtual void v04();  virtual void v05();  virtual void v06();  virtual void v07();
-    virtual void v08();  virtual void v09();  virtual void v0A();  virtual void v0B();
-    virtual void v0C();  virtual void v0D();  virtual void v0E();  virtual void v0F();
-    virtual void v10();  virtual void v11();  virtual void v12();  virtual void v13();
-    virtual void v14();  virtual void v15();  virtual void v16();  virtual void v17();
-    virtual void v18();  virtual void v19();  virtual void v1A();  virtual void v1B();
-    virtual void v1C();  virtual void v1D();  virtual void v1E();  virtual void v1F();
-    virtual void v20();  virtual void v21();  virtual void v22();  virtual void v23();
-    virtual void v24();  virtual void v25();  virtual void v26();  virtual void v27();
-    virtual void v28();  virtual void v29();  virtual void v2A();  virtual void v2B();
-    virtual void v2C();  virtual void v2D();  virtual void v2E();  virtual void v2F();
-    virtual void v30();  virtual void v31();  virtual void v32();  virtual void v33();
-    virtual void v34();  virtual void v35();  virtual void v36();  virtual void v37();
-    virtual void v38();  virtual void v39();  virtual void v3A();  virtual void v3B();
-    virtual void v3C();  virtual void v3D();  virtual void v3E();  virtual void v3F();
-    virtual void v40();  virtual void v41();  virtual void v42();  virtual void v43();
-    virtual void v44();  virtual void v45();  virtual void v46();  virtual void v47();
-    virtual f32 v128();  // slot 74 => +0x128
-    virtual f32 v12C();  // slot 75 => +0x12C
 };
 
 // Retail data symbols (global scope: variable names are not mangled).

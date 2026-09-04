@@ -325,6 +325,24 @@ extern "C" void func_804BE4E0(void* out, int a);
 
 // Deleted fake views folded onto owning class virtuals (see CActParamAnimForeign split)
 
+// Notify target behind CActParamAnim::object3A0+0x7EC (reached via the
+// +0x3A0 attached sub-object). Retail dispatches vtable+0x08 with an int
+// fall-state gate (func_8005D2C4), +0x14 with a position vector
+// (func_8005A5B0/func_8005EEB4), and +0x18 with an int flag
+// (func_8005EEB4). Same shape as Cf7ECTarget in CfObjectMove.hpp: a tiny
+// named iface on the owning object, never constructed here, so no vtable
+// is emitted by including TUs. The +0x0C/+0x10 slots mirror CObjectState
+// UVF2/UVF3 (the target's early-vtable family); they are never dispatched
+// from the anim TUs.
+class CActParam7ECTarget {
+public:
+    virtual void func08(u32 arg);       // +0x08 fall-state gate
+    virtual int func0C(int arg);        // +0x0C (mirrors CObjectState UVF2)
+    virtual void func10(u32 arg);       // +0x10 (mirrors CObjectState UVF3)
+    virtual void func14(const void* vec);  // +0x14 position notify
+    virtual void func18(int arg);       // +0x18 flag
+};
+
 
 class __declspec(novtable) CActParamAnim {
 public:
@@ -385,7 +403,7 @@ public:
     virtual bool isAnimBlendActive();
     virtual void func_8004B114();
     virtual void func_80052934(const ml::CVec3* v);
-    virtual int initAnimBlendVectors(const ml::CVec3* v);
+    virtual int initAnimBlendVectors(const ml::CVec3* a, const ml::CVec3* b);
     virtual void func_8004FFBC();
     virtual void __vt_F0();
     // Legacy non-virtual wrappers (kept for compatibility, now virtual above)

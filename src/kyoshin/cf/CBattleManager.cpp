@@ -3956,7 +3956,7 @@ extern "C" void func_800D9354(cf::CBattleManager* self) {
                     if (obj != 0) {
                         int id = 0;
                         u8* sub4 = ((cf::CfActorField04*)obj)->field_0x04;
-                        u32* holder = ((cf::CfActorUnk4Vt30*)sub4)->vf30();
+                        u32* holder = (u32*)((cf::CObjectState*)sub4)->CObjectState_UnkVirtualFunc11();
                         id = (int)*holder;
                         if (func_80174C98(holder, &id, 0x802)) {
                             func_800D9CA0(self, (BattleRemoveObjAccessor*)obj);

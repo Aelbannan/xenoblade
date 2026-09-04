@@ -588,7 +588,7 @@ namespace cf {
         virtual float CActorParam_UnkVirtualFunc50();  //0x15C
         virtual float CActorParam_UnkVirtualFunc51();  //0x160
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
-        virtual void CActorParam_UnkVirtualFunc53();  //0x168
+        virtual void CActorParam_UnkVirtualFunc53(int val);  //0x168
         virtual void CActorParam_UnkVirtualFunc54(int delta);  //0x16C
         virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
         // int (not s16): Unk179 passes the getter result to Unk54 via mr r4,r3;
@@ -596,7 +596,7 @@ namespace cf {
         virtual int CActorParam_UnkVirtualFunc56();  //0x174
         virtual int CActorParam_UnkVirtualFunc57();  //0x178
         virtual void CActorParam_UnkVirtualFunc58();  //0x17C
-        virtual void CActorParam_UnkVirtualFunc59();  //0x180
+        virtual void CActorParam_UnkVirtualFunc59(int val);  //0x180
         virtual void CActorParam_UnkVirtualFunc60(int delta);  //0x184
         virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
         virtual int CActorParam_UnkVirtualFunc62();  //0x18C

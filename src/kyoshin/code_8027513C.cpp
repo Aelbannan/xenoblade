@@ -13,6 +13,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_8027513C.hpp"
+#include "kyoshin/cf/ICamControl.hpp"
 #include "libs/monolib/src/scn/CScn_8049603C.hpp" // func_8049603C (single owner decl)
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
@@ -28,34 +29,20 @@ class CScn;
 // code_8027513C.hpp with retail-accurate linkage. func_8049603C: single owner
 // decl in libs/monolib/src/scn/CScn_8049603C.hpp.
 
-// Vtable helper structs for calling methods whose return type
-// or signature differs from the header declaration.
-struct CfObjectMove_VTable43 {
-    u32 _pad[43];
-    float* (*fn)(cf::CfObjectMove*);
-};
-
-// Retail passes the summed position by value; MWCC copies it into the
-// parameter buffer and hands the callee a pointer.
-struct CfObjectEff_VTable39 {
-    u32 _pad[39];
-    void (*fn)(cf::CfObjectEff*, const nw4r::math::VEC3*);
-};
+// (No vtable helper structs: the position slots are real CfObject virtuals
+// with retail arity - UVF23 at +0xAC returns the position vector, UVF19 at
+// +0x9C takes it by const pointer - so both sites call this->method(...).)
 
 int func_802759A8(void* self) { return 0; }
 
 // ---------------------------------------------------------------------------
 // Camera-control registration helpers: fetch the shared camera-control
-// instance (initCamControlInstances) and dispatch (self) through its vtable
-// slots 4..11. Retail: bl initCamControlInstances; lwz r12,0(r3);
-// mr r4,r31; lwz r12,slot(r12); mtctr; bcctrl.
+// instance (initCamControlInstances, a cf::ICamControl subclass object whose
+// vtable is one of lbl_eu_80537F58/80537ED0/80537F10) and forward (self) as
+// the controller id through its vtable slots 2..9 (see ICamControl.hpp).
+// Retail: bl initCamControlInstances; lwz r12,0(r3); mr r4,r31;
+// lwz r12,slot(r12); mtctr; bcctrl.
 // ---------------------------------------------------------------------------
-struct CamCtrlRegVt {
-    virtual void m00(); virtual void m01();
-    virtual void m04(void* arg); virtual void m05(void* arg); virtual void m06(void* arg);
-    virtual void m07(void* arg); virtual void m08(void* arg); virtual void m09(void* arg);
-    virtual void m0A(void* arg); virtual void m0B(void* arg);
-};
 
 // One-time-init flag / instance-pointer pairs for the three camera-control
 // singleton slots (retail .sbss/.sdata).
@@ -120,14 +107,14 @@ void* initCamControlInstances() {
     return lbl_eu_80537EC0[index];
 }
 
-void func_802751F8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m04(self); }
-void func_80275238(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m05(self); }
-void func_80275278(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m06(self); }
-void func_802752B8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m07(self); }
-void func_802752F8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m08(self); }
-void func_80275338(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m09(self); }
-void func_80275378(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m0A(self); }
-void func_802753B8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m0B(self); }
+void func_802751F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274C68(reinterpret_cast<int>(self)); }
+void func_80275238(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274B2C(reinterpret_cast<int>(self)); }
+void func_80275278(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274BA4(reinterpret_cast<int>(self)); }
+void func_802752B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274CD4(reinterpret_cast<int>(self)); }
+void func_802752F8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D08(reinterpret_cast<int>(self)); }
+void func_80275338(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D3C(reinterpret_cast<int>(self)); }
+void func_80275378(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274D70(reinterpret_cast<int>(self)); }
+void func_802753B8(void* self) { static_cast<cf::ICamControl*>(initCamControlInstances())->func_80274DA4(reinterpret_cast<int>(self)); }
 
 
 
@@ -154,8 +141,10 @@ void func_80275454(UnkCode8027513C* self) {
 
         // Only proceed if field_0x3C4 is below the threshold
         if (target->field_0x3C4 < threshold) {
-            // CfObject_UnkVirtualFunc44 returns float* in retail (header says void)
-            float* pos = (*(CfObjectMove_VTable43**)obj)->fn(obj);
+            // Position-vector getter at CfObject vtable +0xAC (UVF23). The
+            // static type is CfObject* so the call binds the real virtual
+            // (CfObjectModel/CfObjectMove declare a non-virtual homonym).
+            ml::CVec3* pos = static_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23();
 
             obj = self->field_0x14;
             if (obj != nullptr) {
@@ -183,8 +172,9 @@ void func_80275454(UnkCode8027513C* self) {
                     nw4r::math::VEC3Add(&sum, (const nw4r::math::VEC3*)pos, &offset);
 
                     nw4r::math::VEC3 out = sum;
-                    // CfObjectEff vtable[39]: position passed by reference
-                    (*(CfObjectEff_VTable39**)eff)->fn(eff, &out);
+                    // Position sink at CfObject vtable +0x9C (UVF19): position
+                    // passed by const pointer.
+                    eff->CfObject_UnkVirtualFunc19((const ml::CVec3*)&out);
 
                     // Load position from obj->field_0x90[8] (offset 0x98)
                     UnkPosContainer* posContainer =

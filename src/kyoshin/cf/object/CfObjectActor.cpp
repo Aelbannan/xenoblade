@@ -12,20 +12,6 @@ extern "C" s32 func_80174C98(void* obj, void* outFlags, u32 id);
 extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
 extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(void* self, int val);
 
-// Helpers for CfObjectSub38 slots +0x88/+0x8C: header declares them no-arg
-// (retail passes void* arg). Use manual vtable dispatch to avoid touching
-// the shared CfObject.hpp header (scope rule) while keeping the retail call shape.
-static inline void call_sub38_88(void* obj, void* arg) {
-    void** vt = *(void***)obj;
-    void (*fn)(void*, void*) = (void(*)(void*, void*))vt[32];
-    fn(obj, arg);
-}
-static inline void call_sub38_8C(void* obj, void* arg) {
-    void** vt = *(void***)obj;
-    void (*fn)(void*, void*) = (void(*)(void*, void*))vt[33];
-    fn(obj, arg);
-}
-
 namespace cf {
     /* TODO: find out what base class the static cast is
     casting down to */
@@ -231,7 +217,7 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    call_sub38_8C(obj3ED4, arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->m8C(arg);
 }
 // Retail symbol is Fv; the real ABI passes a float in f1. Rounds the input
 // to the nearest int (fctiwz roundtrip), then - unless the presentation or
@@ -279,7 +265,7 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
         if (self->CActorParam_UnkVirtualFunc56() == self->CActorParam_UnkVirtualFunc57()) {
-            ((cf::CfActorParamVt168*)self)->m168(self->CActorParam_UnkVirtualFunc57() - 1);
+            self->CActorParam_UnkVirtualFunc53(self->CActorParam_UnkVirtualFunc57() - 1);
         }
     }
 }
@@ -317,7 +303,7 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    call_sub38_88(obj3ED4, arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->m88(arg);
 }
 // Retail symbol is Fv; the real ABI passes (self, delta). Same gauge update
 // as CActorParam_UnkVirtualFunc54 but on 0x1614/[0, 0x1616]; after the
@@ -354,7 +340,7 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
         }
         // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
         if (self->CActorParam_UnkVirtualFunc62() == self->CActorParam_UnkVirtualFunc63()) {
-            ((cf::CfActorParamVt168*)self)->m180(self->CActorParam_UnkVirtualFunc63() - 1);
+            self->CActorParam_UnkVirtualFunc59(self->CActorParam_UnkVirtualFunc63() - 1);
         }
     }
 }

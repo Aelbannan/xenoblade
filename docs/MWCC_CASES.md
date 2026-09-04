@@ -10712,3 +10712,32 @@ intermediate forms do not break the coalescing.
   definition under MWCC — always use braced `extern "C" { ... }` or an
   initializer; verify with elftools that the symbol is DEFINED before trusting
   `data diff` (stale `.o` / missing ninja rebuild will lie).
+
+## kyoshin/cf/CfCam — fake vtables (CfCamCtorVt/CfCamSrcVt/CfCamPosSource/6 more) -> real CfCam/CfCamFollow tree + CfObject/CVoiceRec reuse (Wii/1.1, scratch-proven)
+- Symptom:   CfCam.hpp carried 9 pad classes (CfCamPosSource, CfCamCtorVt, CfCamVt01,
+  CfCamSrcVt, CfSubObjView+CfStateWord, CfCamVt38, CfCamGmView, CfCamVt18, CfObjActView);
+  CfCam.cpp is absorb-only (0/181 matched) so no hexdiff signal was available.
+- Cause:     Retail tables lbl_eu_805272E8 (cf::CfCam, 26 virtuals 0x08-0x6C, zeros pure)
+  and lbl_eu_80527260 (cf::CfCamFollow, 28 virtuals 0x08-0x74) in the CfCamEvent_1 data
+  range; a sibling leaf table lbl_eu_80527048 (cf::CfCamEvent) shares 12 slots, proving
+  textbook inheritance (base + overrides + 2 appended). All 7 foreign slots matched
+  CfObject virtuals with exact arity (0x74 UVF9, 0xAC UVF23, 0xCC UVF31, 0x120 UVF52
+  with the lbl_eu_80527244 joint-name strings "JUhead"/"JUhd_L"/..., 0x128 UVF54,
+  0x12C UVF55, 0x110 UVF48). Trailing [lbl_eu_80661B30,0,0,0] at 0x78-0x84 is
+  dynamic_cast typeinfo, not vtable (nothing dispatches past 0x74).
+- Fix:       __declspec(novtable) CfCam (26 decls, pure where the word is 0 with the
+  leaf-forced signature) + CfCamFollow (17 overrides + 0x70 func_80074A3C + 0x74
+  func_80074AA4); vtbl() overlay + manual label stores in ctors/dtor; unk164 retyped
+  CfObject*; DBD4 converted to the CHelp_Talk CVoiceRec/field_04->vf30() idiom
+  (owner header reused, not redeclared); all call sites this->/obj->.
+- Result:    PRIMARY FILES zero pads (rg-verified); scratch TU under Wii/1.1 game flags
+  compiles clean with all 15 dispatched slots byte-exact vs retail
+  (0x0C/0x18/0x28/0x38/0x3C/0x40/0x60/0x70/0x74 on Follow, 0x74/0xAC/0xCC/0x120/
+  0x128/0x12C on CfObject) and the DBD4 shape byte-identical (lwz+4/bctrl-0x30/
+  lwz-0/bl-80174C98); no __vt__/__RTTI__ emitted; hexdiff CfCam --all unchanged
+  (0/181, split PASS, header has no compiled includers).
+- Confidence: repo_proven for the slot map (scratch objdump); draft-only for bodies
+  (CfCam.cpp still absorb; free/duplicate member names coexist until bodies move).
+- Applies to/a.k.a.: CfCamEvent_1.cpp bodies (holds the tables); CfCamEvent.hpp vtable
+  (24 decls, missing 0x68-0x74 - separate task); CfGameManager unity-helpers raw-vt
+  pads (separate task, out of scope).

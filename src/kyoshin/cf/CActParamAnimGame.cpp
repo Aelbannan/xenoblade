@@ -8,18 +8,21 @@
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
+#include "kyoshin/cf/object/CfObject.hpp"  // real owner of the +0x4C/+0xAC/+0xC4 link slots
+#include "kyoshin/cf/object/CBattleState.hpp"  // CBattleState_UnkVirtualFunc3 (+0x10 owner gate)
 
 // Retail constructor(C) at 0x8005AA64 (unmangled symbol): base-constructs
 // the ::CActParamAnim subobject, stores the retail vtable manually
-// (novtable class), zeroes the flag fields, invokes the vtable+0xE0 virtual,
-// then parks the link argument at +0x4E8 and returns this.
+// (novtable class), zeroes the flag fields, invokes the +0xE0 virtual
+// (CActParamAnim::func_8004B114, overridden in the retail table by
+// func_8005A524), then parks the link argument at +0x4E8 and returns this.
 cf::CActParamAnimGame* __ct__8005A3FC(cf::CActParamAnimGame* self, cf::CActParamAnimGameLink* arg) {
     __ct__13CActParamAnimFv(self);
     *(void**)self = (void*)lbl_eu_80526458;
     *(u32*)((u8*)self + 0x4EC) = 0;
     *(u32*)((u8*)self + 0x4F0) = 0;
     *(u16*)((u8*)self + 0x530) = 0;
-    ((cf::CActParamAnimGameVtE0*)self)->vE0();
+    self->func_8004B114();
     *(cf::CActParamAnimGameLink**)((u8*)self + 0x4E8) = arg;
     return self;
 }
@@ -31,7 +34,7 @@ cf::CActParamAnimGame::CActParamAnimGame() {
     *(u32*)((u8*)this + 0x4EC) = 0;
     *(u32*)((u8*)this + 0x4F0) = 0;
     *(u16*)((u8*)this + 0x530) = 0;
-    ((CActParamAnimGameVtE0*)this)->vE0();
+    this->func_8004B114();
 }
 
 cf::CActParamAnimGame::~CActParamAnimGame() {}
@@ -171,10 +174,10 @@ extern "C" void __declspec(noinline) func_8005B820(cf::CActParamAnimGame* selfV)
         self->f448 = len;
         getScnHandle__Fv();
         if (func_804BCC10() != 0) {
-            // Paused: probe the vt+0xE8 hook with the position/delta pair;
-            // land only when the vertical speed is positive or the hook
-            // reports failure.
-            int ret = ((cf::CActParamAnimGameVtE8*)self)->vE8(&pos, &delta);
+            // Paused: probe the +0xE8 hook (initAnimBlendVectors) with the
+            // position/delta pair; land only when the vertical speed is
+            // positive or the hook reports failure.
+            int ret = selfV->initAnimBlendVectors(&pos, &delta);
             f32 vy = self->vel3C0.y;
             if (vy > lbl_eu_80666040 || ret == 0) {
                 func_80051AA8(self, 0);
@@ -510,7 +513,7 @@ shared:
                     vec.x = self->tgt3E4.x;
                     vec.y = self->tgt3E4.y;
                     vec.z = self->tgt3E4.z;
-                    ((cf::CActParamAnimGameObj7EC*)sub)->v14(&vec);
+                    ((CActParam7ECTarget*)sub)->func14(&vec);
                 }
                 if ((self->flags4EC & 0x20000000) && r25v == 0) {
                     f32 dot = self->hit3D8.x * self->face3CC.x + self->tgt3E4.z * self->face3CC.z;
@@ -717,13 +720,6 @@ void func_8005A594(CActParamAnimGameViewBC14* self) {
     self->flags4EC |= 1;
 }
 
-static float bc14CallVfn(void* self, u32 off) {
-    return ((float (*)(void*))(*(void**)((u8*)*(void**)self + off)))(self);
-}
-static int bc14CallVfnI(void* self, u32 off) {
-    return ((int (*)(void*))(*(void**)((u8*)*(void**)self + off)))(self);
-}
-
 extern "C" void func_8005BC14(void* selfV) {
     CActParamAnimGameViewBC14* self = (CActParamAnimGameViewBC14*)selfV;
     s32 moved = 0;
@@ -777,9 +773,9 @@ bit1clear:
     {
         f32 f31v = isTvFormatPal__9CDeviceVIFv() ? 1.2f : 1.0f;
         f32 f29v = func_eu_8048A084();
-        f32 f30v = bc14CallVfn(self, 0x14) - f29v;
-        f32 f29b = bc14CallVfn(self, 0x0C);
-        if (bc14CallVfn(self, 0x10) * f31v + f29b >= f30v) {
+        f32 f30v = ((CActParamAnim*)self)->getAttachedAnimRate() - f29v;
+        f32 f29b = ((CActParamAnim*)self)->getAttachedAnimTime();
+        if (((CActParamAnim*)self)->getAttachedAnimScale() * f31v + f29b >= f30v) {
         } else {
             self->flags530 |= 2;
         }
@@ -839,7 +835,7 @@ mode0:
     }
 next:
     if (self->flags530 & 0x200) {
-        if (bc14CallVfnI(self->owner, 0x10) != 0 || func_80051BF4(self) != 0) {
+        if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() != 0 || func_80051BF4(self) != 0) {
             self->flags530 &= 0xFDFF;
         } else {
             if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
@@ -1167,7 +1163,7 @@ void cf::CActParamAnimGame::func_8005D2C4() {
             } else {
                 arg = 0;
             }
-            ((CActParamAnimGameObj7EC*)sub)->v8(arg);
+            ((CActParam7ECTarget*)sub)->func08(arg);
         }
     }
 
@@ -1176,8 +1172,8 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     if ((v->flags4EC & 2) != 0 && (v->flags4F0 & 2) == 0) {
         void* link = func_8016FE34(v->link4E8);
         if (link != 0) {
-            ((CActParamAnimGameLinkVt*)link)->v194();
-            ((CActParamAnimGameLinkVt*)link)->v17C();
+            ((cf::CActorParam*)link)->CActorParam_UnkVirtualFunc64();
+            ((cf::CActorParam*)link)->CActorParam_UnkVirtualFunc58();
         }
     }
 }
@@ -1268,7 +1264,8 @@ bool cf::CActParamAnimGame::clearFlag80000() {
 }
 
 // State-0/1 movement start: state 1 additionally dispatches the +0x8 link's
-// vtable+0x10 status; only when that status AND func_80051BF4 both clear is
+// CBattleState_UnkVirtualFunc3 status; only when that status AND func_80051BF4
+// both clear is
 // the 0x200 flag raised before notifying the region.
 bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
@@ -1281,7 +1278,7 @@ bool cf::CActParamAnimGame::func_8005D76C(u32 type, u32 state) {
     } else if (state == 1) {
         if (func_8005E28C(this)) {
             field_530 = (field_530 | 8) & ~0x100;
-            if (((CActParamAnimGameVt10I*)self->owner)->v10() == 0 && func_80051BF4(this) == 0) {
+            if (((cf::CBattleState*)self->owner)->CBattleState_UnkVirtualFunc3() == 0 && func_80051BF4(this) == 0) {
                 field_530 |= 0x200;
             }
             ((void (*)(void*, u32))func_8004BC94)(this, type);
@@ -1377,7 +1374,8 @@ bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
 }
 
 // Walks the game-manager linked list: for each node resolves its action
-// source via func_8016FE34 and compares scale * v12C() against v128(); when
+// source via func_8016FE34 and compares scale * CActorParam_UnkVirtualFunc38
+// against CActorParam_UnkVirtualFunc37; when
 // any source passes, notifies the region via func_8004BC94. The list head is
 // re-fetched from the manager every iteration (retail reloads it at the loop
 // bottom).
@@ -1393,8 +1391,8 @@ bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
     while (node !=
            (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)getGimmickListHead__Q22cf13CfGameManagerFv())->head) {
         void* item = func_8016FE34(node->f08);
-        f32 limit = ((CActParamAnimGameListVt*)item)->v128();
-        f32 value = ((CActParamAnimGameListVt*)item)->v12C();
+        f32 limit = ((cf::CActorParam*)item)->CActorParam_UnkVirtualFunc37();
+        f32 value = ((cf::CActorParam*)item)->CActorParam_UnkVirtualFunc38();
         if (scale * value >= limit) {
             found = true;
             break;
@@ -2241,7 +2239,7 @@ l60418:
             }
             field_4EC &= ~0x40000;
         } else if (field_4EC & 0x80000) {
-            if (((CActParamAnimGameVt10*)this)->v10() > 0.0f) {
+            if (this->getAttachedAnimScale() > 0.0f) {
                 s16 c = (s16)field_538;
                 field_538 = (u16)(c + 1);
                 if (c > 6) field_4EC &= ~0x80000;
@@ -2267,8 +2265,8 @@ l60418:
                 if (func_804B5658((void*)lbl_eu_80665958, &vD4, &vC8, &vBC, &vB0)) {
                     if (vD4.y > field_3E4.y - lbl_eu_80666160) {
                         ml::CVec3 v44 = vD4;
-                        ((cf::CActParamAnimGameObj7EC*)sub)->v14(&v44);
-                        ((cf::CActParamAnimGameObj7EC*)sub)->v18(1);
+                        ((CActParam7ECTarget*)sub)->func14(&v44);
+                        ((CActParam7ECTarget*)sub)->func18(1);
                     }
                 }
             }
@@ -2279,18 +2277,20 @@ l60418:
 
 
 // Actor-facing position/heading update: reads the +0x4E8 link's current
-// position (vtable+0x4C), diffs it against this object's position, and when
-// the delta is non-trivial, orients the link toward the actor (vtable+0xC4)
-// with the heading from Atan2FIdx. vtable+0xAC returns the position vector.
+// position (CObjectParam_UnkVirtualFunc5 id gate, then findObjectById),
+// diffs the action source's CObject_UnkVirtualFunc23 position vector against
+// this object's position, and when the delta is non-trivial, orients the
+// link toward the actor (CfObject_UnkVirtualFunc29) with the heading from
+// Atan2FIdx.
 void cf::CActParamAnimGame::func_80060110() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     // Retail reloads the +0x4E8 link for every dispatch; keep the loads
     // independent so MWCC colors them like retail.
     if (v->link4E8 == 0) return;
-    if (((CActParamAnimGameVt4C*)v->link4E8)->v4C() == 0) return;
-    void* src = findObjectById((int)((CActParamAnimGameVt4C*)v->link4E8)->v4C());
+    if (((cf::CfObject*)v->link4E8)->CObjectParam_UnkVirtualFunc5() == 0) return;
+    void* src = findObjectById((int)((cf::CfObject*)v->link4E8)->CObjectParam_UnkVirtualFunc5());
     if (src == 0) return;
-    ml::CVec3* p = (ml::CVec3*)((CActParamAnimGameVt4C*)src)->vAC();
+    ml::CVec3* p = ((cf::CfObject*)src)->CfObject_UnkVirtualFunc23();
     ml::CVec3 d;
     nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(&d),
                          reinterpret_cast<const nw4r::math::VEC3*>(p),
@@ -2305,18 +2305,18 @@ void cf::CActParamAnimGame::func_80060110() {
     bool nearAll = nearXY && b3;
     if (nearAll) return;
     v->flags0C |= 0x1000000;
-    ((CActParamAnimGameVt4C*)v->link4E8)->vC4(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
+    ((cf::CfObject*)v->link4E8)->CfObject_UnkVirtualFunc29(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
 }
 
 // Forwards the +0x444 scalar to the +0xC4 virtual slot of the object at
 // +0x4E8 (tail call; retail keeps no stack frame). Real virtual dispatch
-// so MWCC emits the r12 vtable load (the manual cast would use r4).
+// (CfObject_UnkVirtualFunc29) so MWCC emits the r12 vtable load.
 void cf::CActParamAnimGame::syncYawToLink() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    CActParamAnimGameVt4C* region = (CActParamAnimGameVt4C*)self->region4E8;
+    cf::CfObject* region = (cf::CfObject*)self->region4E8;
     if (region == 0) return;
     f32 value = self->f444;
-    region->vC4(value);
+    region->CfObject_UnkVirtualFunc29(value);
 }
 
 extern "C" bool func_80060290(void* r3) {

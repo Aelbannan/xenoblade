@@ -7136,9 +7136,11 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
 
     "CfObjectActor.o": UnitRules(
-        # Same magic pool (9 live SDA21 relocs); content-equal blob label.
-        exact_renames=(("@1061", "lbl_eu_80667748"),),
-        extern_data_sections=(".sdata2",),
+        # Typed .sdata2 consts + .data pointer tables own the full retail
+        # pools in retail order via the capdatatouch anchor. MWCC pre-emits
+        # its own 8-byte anon s16->float conversion magic (43300000_80000000,
+        # the old @1061 slot) BEFORE named consts and will not merge it with
+        # our identical lbl_eu_80667748 -> trim the leading 8 only.
         drop_data_range=((".sdata2", 0, 8),),
     ),
 
@@ -7901,15 +7903,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CfGimmickJump.o": UnitRules(
-        # After the (f32)value source fix only the two conversion doubles
-        # remain; retail ctor sites load lbl_eu_80668410 (HI, signed) and
-        # lbl_eu_80668418 (LO, unsigned) alternately (asm 80210E2C ff.).
-        # Source previously mis-defined lbl_eu_80668410 locally with the LO
-        # value - removed; both ship from split1.s.
-        pool_patterns=(
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668418"),
-            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668410"),
-        ),
+        # Typed .sdata2 struct owns the retail pool incl. both conversion
+        # doubles (d0=HI/signed 43300000_80000000, d1=LO/unsigned
+        # 43300000_00000000). MWCC still pools its own code-literal floats
+        # (e.g. the 1.0f effect-scale arg) AFTER our defs -> trim trailing.
         drop_data_tail=((".sdata2", 0x38),),
     ),
     "CMenuMakeCrystal.o": UnitRules(
@@ -8311,29 +8308,18 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CfObjectPc.o": UnitRules(
-        # unsigned int->double magic; retail lfd site uses lbl_eu_80666B30.
-        pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666B30"),
-        ),
-        extern_data_sections=(".sdata2",),
+        # Typed .sdata2 consts own the full retail 0x40 pool (incl. both
+        # conversion doubles) in retail order via the capdatatouch anchor.
+        # MWCC pre-emits its own 8-byte anon int->float conversion magic
+        # (43300000_80000000) BEFORE named consts and will not merge it
+        # with our identical lbl_eu_80666B30 -> trim the leading 8 only.
         drop_data_range=((".sdata2", 0, 8),),
     ),
     "CfObjectEne.o": UnitRules(
-        # Five float/double pool slots -> split1.s labels (each content
-        # matches exactly one reloc-referenced local; all are retail-ref'd
-        # sda21 sites in cf/object/CfObjectEne.s). Leading zero word is an
-        # unreferenced orphan - stripped with the section.
-        pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, 0x00000000), "lbl_eu_806669A0"),   # 2^52
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_806669A8"),     # 2^52+2^31
-            (struct.pack(">II", 0x3FE00000, 0x00000000), "lbl_eu_806669B8"), # 0.5
-            (struct.pack(">II", 0xBFE00000, 0x00000000), "lbl_eu_806669C0"), # -0.5
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80666980"),              # 1.0f
-            # 0.0f float-zero: referenced by CActorParam_UnkVirtualFunc148's
-            # entry-init (retail loads lbl_eu_80666968; MWCC pools an anon
-            # @N slot for the literal-0 float stores).
-            (struct.pack(">I", 0x00000000), "lbl_eu_80666968"),
-        ),
+        # Typed .sdata2 struct owns the full retail 0x70 pool in order
+        # (floats + ene1Lv tag + both conversion doubles). MWCC appends its
+        # own anon conversion-magic/literal pool AFTER our defs -> trim
+        # trailing only.
         drop_data_tail=((".sdata2", 0x70),),
     ),
     "CfObjectEnumList.o": UnitRules(

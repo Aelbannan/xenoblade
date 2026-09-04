@@ -2720,7 +2720,3 @@ void func_8015396C(cf::CAIAction* self, u32 sel) {
         }
     }
 }
-
-// absorb: split1 retail data sections
-// generated from retail object bytes (reloc-zeroed)
-extern "C" char __absorb_dummy_kyoshin_cf_object_CAIAction_cpp;

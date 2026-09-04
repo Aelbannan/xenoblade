@@ -1,5 +1,5 @@
 #include "kyoshin/cf/CfGimmickJump.hpp"
-extern char lbl_eu_80508728[];
+extern const char lbl_eu_80508728[];
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <nw4r/math.h>
@@ -18,25 +18,36 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const __data_CfGim
 #define lbl_eu_805359B0 ((char*)&__data_CfGimmickJump_blob.a)
 #define lbl_eu_805359D4 ((char*)&__data_CfGimmickJump_blob.b)
 #define lbl_eu_805359E8 ((char*)&__data_CfGimmickJump_blob.c)
-__declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickJump_rodata[112] = {
-    0x63, 0x66, 0x3a, 0x3a, 0x43, 0x66, 0x47, 0x69, 0x6d, 0x6d, 0x69, 0x63,
-    0x6b, 0x4a, 0x75, 0x6d, 0x70, 0x00, 0x00, 0x00, 0x6c, 0x6e, 0x50, 0x6f,
-    0x73, 0x58, 0x00, 0x6c, 0x6e, 0x50, 0x6f, 0x73, 0x59, 0x00, 0x6c, 0x6e,
-    0x50, 0x6f, 0x73, 0x5a, 0x00, 0x6c, 0x6e, 0x52, 0x6f, 0x74, 0x59, 0x00,
-    0x72, 0x65, 0x63, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6a, 0x70, 0x45, 0x46,
-    0x00, 0x6a, 0x70, 0x53, 0x45, 0x00, 0x6a, 0x75, 0x6d, 0x70, 0x53, 0x00,
-    0x77, 0x61, 0x69, 0x74, 0x00, 0x45, 0x46, 0x41, 0x54, 0x52, 0x00, 0x72,
-    0x6b, 0x57, 0x61, 0x69, 0x74, 0x00, 0x74, 0x6f, 0x70, 0x00, 0x74, 0x69,
-    0x6d, 0x65, 0x00, 0x65, 0x78, 0x54, 0x69, 0x6d, 0x65, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
+// .rodata strings (retail 0x70): class-name tag + bdat column-name blob.
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_80508728[0x14] = "cf::CfGimmickJump";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_8050873C[0x5C] = "lnPosX\0lnPosY\0lnPosZ\0lnRotY\0rectype\0jpEF\0jpSE\0jumpS\0wait\0EFATR\0rkWait\0top\0time\0exTime";
+// .sdata2 pool
+// Single struct freezes retail declaration order (MWCC would reorder
+// individual consts by first use); tail (150.0f, 0.0f) matches retail.
+struct Sdata2_Jump {
+    float f0, f1, f2, f3;
+    double d0, d1;
+    float f4, f5, f6, f7, f8, f9;
 };
-__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickJump_sdata2[56] = {
-    0x3c, 0x23, 0xd7, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x41, 0xf0, 0x00, 0x00,
-    0x3f, 0x80, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0xa0, 0x00, 0x00,
-    0x3e, 0x99, 0x99, 0x9a, 0x3d, 0xcc, 0xcc, 0xcd, 0xbd, 0xcc, 0xcc, 0xcd,
-    0x43, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_Jump sdata2_Jump = {
+    0.01f, 0.0f, 30.0f, 1.0f,
+    4503601774854144.0, 4503599627370496.0,
+    5.0f, 0.3f, 0.1f, -0.1f, 150.0f, 0.0f
 };
+#define lbl_eu_80668400 sdata2_Jump.f0
+#define lbl_eu_80668404 sdata2_Jump.f1
+#define lbl_eu_80668408 sdata2_Jump.f2
+#define lbl_eu_8066840C sdata2_Jump.f3
+#define lbl_eu_80668410 sdata2_Jump.d0
+#define lbl_eu_80668418 sdata2_Jump.d1
+#define lbl_eu_80668420 sdata2_Jump.f4
+#define lbl_eu_80668424 sdata2_Jump.f5
+#define lbl_eu_80668428 sdata2_Jump.f6
+#define lbl_eu_8066842C sdata2_Jump.f7
+#define lbl_eu_80668430 sdata2_Jump.f8
 
 
 
@@ -54,16 +65,6 @@ extern char lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
 extern char lbl_eu_80664138[];
-extern const float lbl_eu_80668400;
-extern const float lbl_eu_80668404;
-extern const float lbl_eu_80668408;
-extern const float lbl_eu_8066840C;extern const float lbl_eu_80668410;
-extern const float lbl_eu_80668418;
-extern const float lbl_eu_80668420;
-extern const float lbl_eu_80668424;
-extern const float lbl_eu_80668428;
-extern const float lbl_eu_8066842C;
-extern const float lbl_eu_80668430;
 extern const float lbl_eu_8066A1F8;
 extern const float lbl_eu_8066A1FC;
 extern const float lbl_eu_8066A210;

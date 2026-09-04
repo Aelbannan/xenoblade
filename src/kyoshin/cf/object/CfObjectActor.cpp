@@ -12,6 +12,32 @@ extern "C" s32 func_80174C98(void* obj, void* outFlags, u32 id);
 extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
 extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(void* self, int val);
 
+// Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
+// retail declaration order (emission follows first use; code uses alone
+// would hoist lbl_eu_8066776C second and permute the doubles).
+extern "C" void capdatatouch_CfObjectActor(void) {
+    // MWCC drops unreferenced const scalars, so volatile-read each label
+    // in retail order (plain reads fold away). lbl_eu_80667748 (s16->float
+    // magic) and the 67770/67774/67778 tail have no code uses.
+    volatile float sinkf;
+    sinkf = *(volatile float*)&lbl_eu_80667738;
+    sinkf = *(volatile float*)&lbl_eu_8066773C;
+    sinkf = *(volatile float*)&lbl_eu_80667740;
+    volatile double sinkd;
+    sinkd = *(volatile double*)&lbl_eu_80667748;
+    sinkd = *(volatile double*)&lbl_eu_80667750;
+    sinkd = *(volatile double*)&lbl_eu_80667758;
+    sinkf = *(volatile float*)&lbl_eu_80667760;
+    sinkf = *(volatile float*)&lbl_eu_80667764;
+    sinkf = *(volatile float*)&lbl_eu_80667768;
+    sinkf = *(volatile float*)&lbl_eu_8066776C;
+    sinkf = *(volatile float*)&lbl_eu_80667770;
+    sinkf = *(volatile float*)&lbl_eu_80667774;
+    sinkf = *(volatile float*)&lbl_eu_80667778;
+    (void)sinkf;
+    (void)sinkd;
+}
+
 namespace cf {
     /* TODO: find out what base class the static cast is
     casting down to */
@@ -556,19 +582,48 @@ void cf::CfObjectActor::CActorParam_UnkVirtualFunc4(void* arts) {
     }
 }
 
-// absorb: split1 retail data sections
-// generated from retail object bytes (reloc-zeroed)
-__attribute__((section(".data"), used, aligned(8))) const unsigned char __absorb_CfObjectActor_data[0x1C] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x00, 0x00, 0x00, 0x00,
+// .data tables (retail 0x1C) as typed pointer tables. Reloc sites read as
+// zero in the .o (relocs skipped when bytes match), so these stay MATCH.
+// lbl_eu_80531080 is the CfMapEffectManager vtable whose bytes live in this
+// split range (cf. CfMapEffectManager.hpp:101 decl); its dtor/RTTI owners
+// are not decompiled yet, so those slots extern-ref their retail symbols.
+void func_8016FC98();
+void func_801A4194();
+extern "C" void __dt__Q22cf18CfMapEffectManagerFv(void* self);
+extern u8 lbl_eu_806623F0[];
+__declspec(section ".data") __attribute__((used))
+const void* lbl_eu_80531080[4] = {
+    lbl_eu_806623F0, 0,
+    (const void*)__dt__Q22cf18CfMapEffectManagerFv,
+    (const void*)func_8016FC98
 };
+__declspec(section ".data") __attribute__((used))
+const u32 lbl_eu_80531090[3] = { 0, 0xFFFFFFFFu, (u32)func_801A4194 };
 
-__attribute__((section(".sdata2"), used, aligned(8))) const unsigned char __absorb_CfObjectActor_sdata2_fix[0x44] = {
-    0x00, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x3F, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
-    0x42, 0x48, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x3F, 0x66, 0x66, 0x66, 0x3E, 0xB3, 0x33, 0x33,
-};
+// .sdata2 pool (retail 0x44) as typed consts in retail declaration order.
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667738 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066773C = 0.5f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667740 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80667748 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80667750 = 0.5;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80667758 = -0.5;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667760 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667764 = 0.01f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667768 = 50.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066776C = -1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667770 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667774 = 0.9f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667778 = 0.35f;

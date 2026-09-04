@@ -14,6 +14,31 @@
 // including CArtsInfo.hpp's u32 extern "C" here would be illegal overloading)
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// Pool anchor FIRST in the TU so MWCC emits the .sdata2 consts below in
+// retail declaration order (emission follows first use; code uses alone
+// would permute the two conversion doubles).
+extern "C" void capdatatouch_CfObjectPc(void) {
+    // MWCC drops unreferenced const scalars, so volatile-read each label
+    // in retail order (plain reads fold away). lbl_eu_80666B08 is only
+    // referenced cross-TU (CfResPcImpl) and would otherwise trail the pool.
+    volatile float sinkf;
+    sinkf = *(volatile float*)&lbl_eu_80666B08;
+    sinkf = *(volatile float*)&lbl_eu_80666B0C;
+    sinkf = *(volatile float*)&lbl_eu_80666B10;
+    sinkf = *(volatile float*)&lbl_eu_80666B14;
+    sinkf = *(volatile float*)&lbl_eu_80666B18;
+    sinkf = *(volatile float*)&lbl_eu_80666B1C;
+    sinkf = *(volatile float*)&lbl_eu_80666B20;
+    sinkf = *(volatile float*)&lbl_eu_80666B24;
+    sinkf = *(volatile float*)&lbl_eu_80666B28;
+    volatile double sinkd;
+    sinkd = *(volatile double*)&lbl_eu_80666B30;
+    sinkf = *(volatile float*)&lbl_eu_80666B38;
+    sinkd = *(volatile double*)&lbl_eu_80666B40;
+    (void)sinkf;
+    (void)sinkd;
+}
+
 // PCIf: leaf-slot view (CfObjectPc 0x5EC..0x608). CActorParam slots use
 // real methods; leaf slots stay on PCIf until the CfObjectActor primary
 // +8 shift vs retail is fixed. Move subobject at +0x3E9C view.
@@ -721,12 +746,31 @@ extern "C" void triggerActionRefreshB__Q22cf10CfObjectPcFv(cf::CfObjectPc* self)
 __declspec(section ".rodata") __attribute__((used, aligned(8)))
 const char lbl_eu_804FC5EC[0x5C] = "tp_atk\0tp_arts\0tp_atkdmg\0tp_artsdmg\0wpn_type\0JUhead\0level_exp\0mat_no\0map\0interval\0dmg";
 
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CfObjectPc_cpp_sdata2[0x40] __attribute__((used)) = {
-    0x42, 0x00, 0xCC, 0xCD, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
-    0x00, 0x00, 0x00, 0x00, 0x42, 0x00, 0xCC, 0xCD, 0x3E, 0x1F, 0x01, 0x97,
-    0x41, 0x80, 0xCC, 0xCD, 0x3F, 0x80, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x3C, 0x23, 0xD7, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
+// .sdata2 pool (retail 0x40) as typed consts in retail declaration order.
+// lbl_eu_80666B08 is code-orphaned; the touch function below keeps it live.
+// The two doubles are the int/uint-double conversion magic (HI + 2^52).
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B08 = 32.2f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B0C = 0.6f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B10 = 1.8f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B14 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B18 = 32.2f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B1C = 0.1552795f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B20 = 16.1f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B24 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B28 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80666B30 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80666B38 = 0.01f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80666B40 = 4503599627370496.0;
 

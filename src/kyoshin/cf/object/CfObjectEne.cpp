@@ -16,21 +16,49 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "kyoshin/cf/object/CfObjectEne.hpp" // cf::CfObjectEne + CfEneVtables/CfEneTailView/CfEneReloadSlot views
 
-// absorb: split1 retail data sections - generated for kyoshin/cf/object/CfObjectEne
-// retail sizes: .sdata2=0x70
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cf_object_CfObjectEne_sdata2[0x70] = {
-    0x00, 0x00, 0x00, 0x00, 0x3F, 0x19, 0x99, 0x9A, 0x3F, 0xE6, 0x66, 0x66,
-    0x65, 0x6E, 0x65, 0x31, 0x4C, 0x76, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00,
-    0x3F, 0x80, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
-    0x40, 0x40, 0x00, 0x00, 0x43, 0x34, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x3C, 0x23, 0xD7, 0x0A, 0x46, 0x1C, 0x40, 0x00, 0x3F, 0xE0, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xBF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x43, 0x34, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
+// .sdata2 pool (retail 0x70) as one struct: freezes retail declaration
+// order (MWCC would reorder individual consts by first use) and keeps the
+// three code-orphaned slots (ene1Lv tag, trailing 180.0f, trailing 2^52)
+// live without a touch function. Code uses labels via the defines below;
+// the hpp extern decls stay (parsed before the defines, never referenced).
+struct Sdata2_Ene {
+    float f0, f1, f2;
+    char tag[8];
+    float f3, f4, f5, f6, f7, f8, f9, f10;
+    double d0, d1;
+    float f11, f12;
+    double d2, d3;
+    float f13;
+    double d4;
 };
-DECOMP_FORCEACTIVE(kyoshin_cf_object_CfObjectEne_sdata2, __absorb_kyoshin_cf_object_CfObjectEne_sdata2);
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_Ene sdata2_Ene = {
+    0.0f, 0.6f, 1.8f,
+    "ene1Lv",
+    10.0f, 1.0f, 4.0f, 2.0f, 3.0f, 180.0f, 100.0f, 0.1f,
+    4503599627370496.0, 4503601774854144.0,
+    0.01f, 10000.0f,
+    0.5, -0.5,
+    180.0f,
+    4503599627370496.0
+};
+#define lbl_eu_80666968 sdata2_Ene.f0
+#define lbl_eu_8066696C sdata2_Ene.f1
+#define lbl_eu_80666970 sdata2_Ene.f2
+#define lbl_eu_8066697C sdata2_Ene.f3
+#define lbl_eu_80666980 sdata2_Ene.f4
+#define lbl_eu_80666984 sdata2_Ene.f5
+#define lbl_eu_80666988 sdata2_Ene.f6
+#define lbl_eu_8066698C sdata2_Ene.f7
+#define lbl_eu_80666990 sdata2_Ene.f8
+#define lbl_eu_80666994 sdata2_Ene.f9
+#define lbl_eu_80666998 sdata2_Ene.f10
+#define lbl_eu_806669A0 sdata2_Ene.d0
+#define lbl_eu_806669A8 sdata2_Ene.d1
+#define lbl_eu_806669B0 sdata2_Ene.f11
+#define lbl_eu_806669B4 sdata2_Ene.f12
+#define lbl_eu_806669B8 sdata2_Ene.d2
+#define lbl_eu_806669C0 sdata2_Ene.d3
 
 
 // Global gimmick-settings singleton accessor (defined in code_801F3BE0.cpp);

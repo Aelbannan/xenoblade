@@ -146,11 +146,20 @@ struct CfPmf3 {
     u32 w2;
 };
 
-// PMTF dispatch table (3 x 12-byte member pointers) selected by field_08 in
-// func_8016CCE0. Declared at global scope so MWCC keeps the retail name
-// unmangled; the (self->*table[idx])() call lowers to `bl __ptmf_scall`.
+// PMTF dispatch table (3 x 12-byte entries) selected by field_08 in
+// func_8016CCE0. Stored as CfPmf3 words ({0,0,0} + two {0,-1,func} rows:
+// the free-function targets are not expressible as PMFs in C++); the
+// dispatch site casts back to CfResObjImplPMF so the call still lowers to
+// `bl __ptmf_scall`. Declared at global scope so MWCC keeps the retail
+// name unmangled.
 typedef void (cf::CfResObjImpl::*CfResObjImplPMF)();
-extern CfResObjImplPMF lbl_eu_80530F20[3];
+// Word/PMF dual view of one dispatch entry: initialized via w (raw words
+// with relocs), dispatched via p (real PMF call -> bl __ptmf_scall).
+union CfPmfEntry {
+    CfPmf3 w;
+    CfResObjImplPMF p;
+};
+extern CfPmfEntry lbl_eu_80530F20[3];
 
 // One-time PMTF-table init flag (.sdata).
 extern char lbl_eu_80664270;
@@ -162,8 +171,11 @@ extern u32 __ptmf_null[3];
 // by the ctor.
 extern cf::CfResObjImplVtbl lbl_eu_80530F44;
 
-// Float seed written to +0x04 by the ctor (.sdata2; 0.0f).
-extern const float lbl_eu_80667690;
+// Float seed pair written to +0x04 by the ctor (.sdata2; two 0.0f words).
+// Stored as one 8-byte scalar: MWCC drops unreferenced const scalars and
+// BSS-optimizes zero aggregates into .sbss2, so neither float[2] nor a
+// second static survives. Code reads the low word as float (single lfs).
+extern const double lbl_eu_80667690;
 
 // ---------------------------------------------------------------------------
 // C-ABI imports (retail unmangled names - keep linkage/signatures verbatim)
@@ -184,3 +196,23 @@ extern "C" void func_800BE824(cf::CfResObjParent* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
+
+// Free-function vtable-slot targets owned by other TUs (retail .data
+// lbl_eu_80530F44 references these unmangled names; the same-named virtuals
+// above are scoped methods and do not collide).
+extern "C" void func_800BEA34();
+extern "C" void func_800BE9AC();
+extern "C" void func_800BC2DC();
+extern "C" void func_800BF2F4();
+extern "C" void func_eu_800BFC78();
+extern "C" void func_800BEA38();
+extern "C" void func_800BED64();
+extern "C" void func_800BEE30();
+extern "C" void func_800BC3AC();
+extern "C" void func_800BEC44();
+extern "C" void func_800BED5C();
+extern "C" void func_800BF2C4();
+extern "C" void func_800BF2C8();
+extern "C" void func_800BF30C();
+// Compiler-generated deleting destructor (defined in this TU's .text).
+extern "C" void __dt__Q22cf12CfResObjImplFv();

@@ -42,6 +42,9 @@ extern const float lbl_eu_80667844; // 4.0f extended duration
 extern const float lbl_eu_80667808; // sdata2: unk1620 default (ctor)
 extern const float lbl_eu_8066780C; // sdata2: unk1630 multiplier (ctor)
 extern const float lbl_eu_80667810; // sdata2: unk1630 pi divisor (ctor)
+extern const float lbl_eu_80667858; // sdata2: 0.7f (unreferenced; kept by the TU pool anchor)
+extern const float lbl_eu_8066785C; // sdata2: 0.001f (unreferenced; kept by the TU pool anchor)
+extern const float lbl_eu_80667860; // sdata2: 9999.0f (unreferenced; kept by the TU pool anchor)
 
 namespace cf {
 

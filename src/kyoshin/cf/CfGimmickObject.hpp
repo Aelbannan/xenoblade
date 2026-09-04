@@ -177,11 +177,12 @@ extern u8 lbl_eu_80534F70[];
 extern "C" void __ct__cf_CfGimmick(void* self);
 
 // Bdat column-name bases used by the ctor: lbl_eu_80507B60 holds inline
-// column names, lbl_eu_805357E8 a pointer table (see CfGimmick.hpp), and
-// the two arrays below hold per-index column-name buffers whose second byte
-// the ctor overwrites with the 1-based slot digit ('1'+i).
+// column names, lbl_eu_805357E8 a pointer table (see CfGimmick.hpp).
 extern char lbl_eu_80507B60[];
-extern char lbl_eu_80534F00[0x20];   // area-table column names (2 slots x 8)
+// Area-table column-name slots: 8 pointers to shared name strings (retail
+// .data lbl_eu_80534F00). The ctor stamps each slot's second byte with the
+// 1-based digit through the pointer (shared-buffer shape, as retail).
+extern const char* lbl_eu_80534F00[8];   // area-table column names (8 slots)
 extern char* lbl_eu_80534F20[10];  // step-table column names (5 slots x 10)
 
 // Gimmick sub-object initializers (CfGimmick.cpp family; holder receives
@@ -195,8 +196,17 @@ extern "C" void func_80209288(void* self, void* out, void* bdat, void* holder);
 // func_801F5B00; MWCC lowers (self->*table[idx])() to mulli/add + `bl
 // __ptmf_scall` against the retail __ptmf_scall helper.
 typedef int (cf::CfGimmickObject::*CfGimmickObjectPMF)();
-extern CfGimmickObjectPMF lbl_eu_80534E70[6];
-extern CfGimmickObjectPMF lbl_eu_80534EB8[6];
+// Word/PMF dual view of one dispatch entry: initialized via w (raw words
+// with relocs: {0,0,0} / {0,-1,func} for free-function targets that are
+// not expressible as PMFs in C++), dispatched via p (real PMF call).
+union CfGimmickObjectPmfEntry {
+    struct {
+        u32 w0, w1, w2;
+    } w;
+    CfGimmickObjectPMF p;
+};
+extern CfGimmickObjectPmfEntry lbl_eu_80534E70[6];
+extern CfGimmickObjectPmfEntry lbl_eu_80534EB8[6];
 
 // Global flag word tested by func_801F856C (bit 5 = object busy).
 extern u32 lbl_eu_80663E28;
@@ -296,21 +306,9 @@ void clearPlayerEffect__Q22cf13CfGameManagerFv(void* obj);
 // Small-data globals read by this TU (retail @sda21 accesses; global-scope
 // variables keep their names without `extern "C"`).
 // ---------------------------------------------------------------------------
-// .sdata2 countdown constants (func_801F75CC).
-extern f32 lbl_eu_806681A0;
-extern f32 lbl_eu_806681B8;
-extern f32 lbl_eu_806681B0;   // 20.0f heal/map-object value (func_801F6E60)
-// .sdata2 s16->f32 magic double (2^52 + 2^31; func_801F634C / func_801F6E60).
-extern f64 lbl_eu_806681A8;
-// .sdata2 LOD constants (func_801F6B98).
-extern f32 lbl_eu_806681A4;
-extern f32 lbl_eu_806681B4;
-// .sdata2 2^52 magic double for the u16/u32 -> f32 conversions
-// (func_801F8658 / func_801F6B98; CfTFile.cpp convention).
-extern f64 lbl_eu_806681C0;
-// .sdata2 sound-distance / spawn constants (func_801F6780 / func_801F76A8).
-extern f32 lbl_eu_806681BC;
-extern f32 lbl_eu_806681C8;
+// .sdata2 countdown constants (func_801F75CC) and friends: owned by the
+// Sdata2_GimmickObject struct at the top of CfGimmickObject.cpp (which
+// #defines these label names to the struct members, so no externs here).
 
 // ---------------------------------------------------------------------------
 // Cast-only helper layouts (CfGimmickObject.cpp func_801F6780 / func_801F72A4).

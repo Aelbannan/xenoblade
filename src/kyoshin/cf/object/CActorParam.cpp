@@ -7,31 +7,101 @@
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "monolib/math.hpp"
 
-// absorb: split1 retail data sections
-// generated from retail object bytes (reloc-zeroed)
-extern "C" char __absorb_dummy_kyoshin_cf_object_CActorParam_cpp;
-__declspec(section ".data") __attribute__((aligned(8))) const void* __absorb_kyoshin_cf_object_CActorParam_cpp_data[80] __attribute__((used)) = {
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp,
-    (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp, (void*)&__absorb_dummy_kyoshin_cf_object_CActorParam_cpp
-};
+// Typified retail data (replaces the old generated byte blobs). The .data
+// jumptables are compiler-generated from this TU's switches (no source
+// definitions needed); the .rodata string and .sdata2 pool below are typed.
+// Every .data object sits on an aligned offset.
+
+// .sdata2 0x80 pool in retail order (individual typed labels; types match
+// the hpp decls exactly so MWCC's const-scheduling is undisturbed).
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_806677F0 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_806677F8 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667800 = 2.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667804 = 3.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667808 = 40.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066780C = 10.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667810 = 18.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667814 = 0.05f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667818 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80667820 = 0.15;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667828 = -1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066782C = 0.5f;
+__declspec(section ".sdata2") __attribute__((used))
+float lbl_eu_80667830 = 0.01f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667834 = 0.9f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667838 = 0.1f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066783C = 5.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667840 = 2.5f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667844 = 4.0f;
+__declspec(section ".sdata2") __attribute__((used))
+double lbl_eu_80667848 = 0.5;
+__declspec(section ".sdata2") __attribute__((used))
+double lbl_eu_80667850 = -0.5;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667858 = 0.7f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066785C = 0.001f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667860 = 9999.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667864 = 30000.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80667868 = 1.5f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_8066786C = 0.3f;
+
+// Pool anchor: MWCC emits referenced sdata2 scalars in first-use order and
+// drops unreferenced ones, so volatile-read every label in retail order
+// first (emission follows this order); plain arithmetic would fold.
+extern "C" void capdatatouch() {
+    volatile double dd;
+    volatile float ff;
+    dd = *(volatile double*)&lbl_eu_806677F0;
+    dd = *(volatile double*)&lbl_eu_806677F8;
+    ff = *(volatile float*)&lbl_eu_80667800;
+    ff = *(volatile float*)&lbl_eu_80667804;
+    ff = *(volatile float*)&lbl_eu_80667808;
+    ff = *(volatile float*)&lbl_eu_8066780C;
+    ff = *(volatile float*)&lbl_eu_80667810;
+    ff = *(volatile float*)&lbl_eu_80667814;
+    ff = *(volatile float*)&lbl_eu_80667818;
+    dd = *(volatile double*)&lbl_eu_80667820;
+    ff = *(volatile float*)&lbl_eu_80667828;
+    ff = *(volatile float*)&lbl_eu_8066782C;
+    ff = *(volatile float*)&lbl_eu_80667830;
+    ff = *(volatile float*)&lbl_eu_80667834;
+    ff = *(volatile float*)&lbl_eu_80667838;
+    ff = *(volatile float*)&lbl_eu_8066783C;
+    ff = *(volatile float*)&lbl_eu_80667840;
+    ff = *(volatile float*)&lbl_eu_80667844;
+    dd = *(volatile double*)&lbl_eu_80667848;
+    dd = *(volatile double*)&lbl_eu_80667850;
+    ff = *(volatile float*)&lbl_eu_80667858;
+    ff = *(volatile float*)&lbl_eu_8066785C;
+    ff = *(volatile float*)&lbl_eu_80667860;
+    ff = *(volatile float*)&lbl_eu_80667864;
+    ff = *(volatile float*)&lbl_eu_80667868;
+    ff = *(volatile float*)&lbl_eu_8066786C;
+    (void)dd;
+    (void)ff;
+}
 
 namespace cf {
     CActorParam::CActorParam(UNKTYPE* r4, UNKTYPE* r5) : CActorState(r4),
@@ -2887,26 +2957,9 @@ extern "C" void CActorParam_UnkVirtualFunc52__Q22cf11CActorParamFv(cf::CActorPar
     self->CActorParam_UnkVirtualFunc48(*(float*)((u8*)self + 0x17fc));
 }
 
-// absorb: split1 retail rodata/sdata2 (bottom)
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CActorParam_cpp_rodata[0x10] __attribute__((used)) = {
-    0x00, 0x6C, 0x65, 0x76, 0x65, 0x6C, 0x5F, 0x65, 0x78, 0x70, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-};
-
-
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_kyoshin_cf_object_CActorParam_cpp_sdata2[0x80] __attribute__((used)) = {
-    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x80, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00,
-    0x42, 0x20, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00, 0x41, 0x90, 0x00, 0x00,
-    0x3D, 0x4C, 0xCC, 0xCD, 0x42, 0xC8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x3F, 0xC3, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0xBF, 0x80, 0x00, 0x00,
-    0x3F, 0x00, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A, 0x3F, 0x66, 0x66, 0x66,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x40, 0xA0, 0x00, 0x00, 0x40, 0x20, 0x00, 0x00,
-    0x40, 0x80, 0x00, 0x00, 0x3F, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xBF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x33, 0x33, 0x33,
-    0x3A, 0x83, 0x12, 0x6F, 0x46, 0x1C, 0x3C, 0x00, 0x46, 0xEA, 0x60, 0x00,
-    0x3F, 0xC0, 0x00, 0x00, 0x3E, 0x99, 0x99, 0x9A
-};
+// .rodata 0x10: BDAT column-name block with a leading NUL (the name is
+// read from offset +1).
+__declspec(section ".rodata") __attribute__((aligned(8))) char lbl_eu_80503438[0x10] __attribute__((used)) = "\0level_exp";
 
 
 

@@ -2,54 +2,102 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-extern f32 lbl_eu_806681C8;
-extern f64 lbl_eu_806681C0;
-extern f32 lbl_eu_806681BC;
-extern f32 lbl_eu_806681B8;
-extern f32 lbl_eu_806681B4;
-extern f32 lbl_eu_806681B0;
-extern f64 lbl_eu_806681A8;
-extern f32 lbl_eu_806681A4;
-extern f32 lbl_eu_806681A0;
-extern char* lbl_eu_80534F20[10];
-extern char lbl_eu_80534F00[0x20];
+// .sdata2 0x30 as one struct: MWCC reorders individually-declared floats by
+// first use, so the pool is frozen in retail order. Code keeps the retail
+// label names via the macros below (read-only).
+struct Sdata2_GimmickObject {
+    float fA0, fA4;
+    double dA8;
+    float fB0, fB4, fB8, fBC;
+    double dC0;
+    float fC8a, fC8b;
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_GimmickObject sdata2_GimmickObject = {
+    0.0f, 1.0f, 4503601774854144.0,
+    20.0f, 120.0f, 30.0f, 240.0f,
+    4503599627370496.0,
+    5.0f, 0.0f
+};
+#define lbl_eu_806681A0 (sdata2_GimmickObject.fA0)
+#define lbl_eu_806681A4 (sdata2_GimmickObject.fA4)
+#define lbl_eu_806681A8 (sdata2_GimmickObject.dA8)
+#define lbl_eu_806681B0 (sdata2_GimmickObject.fB0)
+#define lbl_eu_806681B4 (sdata2_GimmickObject.fB4)
+#define lbl_eu_806681B8 (sdata2_GimmickObject.fB8)
+#define lbl_eu_806681BC (sdata2_GimmickObject.fBC)
+#define lbl_eu_806681C0 (sdata2_GimmickObject.dC0)
+#define lbl_eu_806681C8 (sdata2_GimmickObject.fC8a)
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMoveApi.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
 static float delta = 0.0f;
-extern CfGimmickObjectPMF lbl_eu_80534E70[6];
-extern CfGimmickObjectPMF lbl_eu_80534EB8[6];
+// Free-function targets of the PMF tables below (defined later in this TU).
+int func_801F7978(cf::CfGimmickObject* self);
+int func_801F7B44(cf::CfGimmickObject* self);
+int func_801F7D38(cf::CfGimmickObject* self);
+int func_801F7F24(cf::CfGimmickObject* self);
+int func_801F8564();
+int func_801F856C(cf::CfGimmickObject* self);
+int func_801F85C4(cf::CfGimmickObject* self);
+int func_801F8658(cf::CfGimmickObject* self);
+int func_801F879C(cf::CfGimmickObject* self);
+int func_801F89B8(cf::CfGimmickObject* self);
+int func_801F8BB8(cf::CfGimmickObject* self);
+// Shared column-name strings owned by other TUs (targets of the pointer
+// tables below).
+extern char lbl_eu_80507AA0[];
+extern char lbl_eu_80507AB0[];
+extern char lbl_eu_80507AC0[];
+extern char lbl_eu_80507AD0[];
+extern char lbl_eu_80507AE0[];
+extern char lbl_eu_80507AEC[];
+extern char lbl_eu_80507AFC[];
+extern char lbl_eu_80507B0C[];
+extern char lbl_eu_80507B18[];
+extern char lbl_eu_80507B24[];
+extern char lbl_eu_80507B30[];
+extern char lbl_eu_80668168[];
+extern char lbl_eu_80668170[];
+extern char lbl_eu_80668178[];
+extern char lbl_eu_80668180[];
+extern char lbl_eu_80668188[];
+extern char lbl_eu_80668190[];
+extern char lbl_eu_80668198[];
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-__declspec(section ".data") __attribute__((aligned(8), used)) unsigned char __absorb_kyoshin_cf_CfGimmickObject_data[256] = {
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
+// .data 0xD8: PMF dispatch tables and column-name pointer tables. They
+// come before the code so MWCC's compiler-generated func_801F6E60 dispatch
+// table lands after them at 0xD8, exactly like retail (zeros + section
+// relocs in the .o). Every object sits on an aligned offset.
+__declspec(section ".data") __attribute__((used))
+CfGimmickObjectPmfEntry lbl_eu_80534E70[6] = {
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F7978 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F7B44 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F7D38 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F7F24 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F8564 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F856C }},
 };
-__declspec(section ".sdata2") __attribute__((aligned(8), used)) const unsigned char __absorb_kyoshin_cf_CfGimmickObject_sdata2[48] = {
-    0x00, 0x00, 0x00, 0x00, 0x3f, 0x80, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x80, 0x00, 0x00, 0x00, 0x41, 0xa0, 0x00, 0x00, 0x42, 0xf0, 0x00, 0x00,
-    0x41, 0xf0, 0x00, 0x00, 0x43, 0x70, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x40, 0xa0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+__declspec(section ".data") __attribute__((used))
+CfGimmickObjectPmfEntry lbl_eu_80534EB8[6] = {
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F85C4 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F85C4 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F8658 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F879C }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F89B8 }},
+    {{ 0, 0xFFFFFFFFu, (u32)func_801F8BB8 }},
+};
+__declspec(section ".data") __attribute__((used))
+const char* lbl_eu_80534F00[8] = {
+    lbl_eu_80507AA0, lbl_eu_80507AB0, lbl_eu_80507AC0, lbl_eu_80507AD0,
+    lbl_eu_80507AE0, lbl_eu_80507AEC, lbl_eu_80668168, lbl_eu_80507AFC,
+};
+__declspec(section ".data") __attribute__((used))
+char* lbl_eu_80534F20[10] = {
+    lbl_eu_80507B0C, lbl_eu_80668170, lbl_eu_80668178, lbl_eu_80507B18,
+    lbl_eu_80507B24, lbl_eu_80668180, lbl_eu_80668188, lbl_eu_80668190,
+    lbl_eu_80668198, lbl_eu_80507B30,
 };
 
 
@@ -150,21 +198,23 @@ extern "C" cf::CfGimmickObject* __ct__cf_CfGimmickObject(
     self->field_165 = ctorCol8(holder, &colBase[0xdc], row);
     self->field_14A[3] = ctorCol16(holder, &colBase[0xe7], row);
 
-    // Per-area tables: the shared column-name buffers get the slot digit
+    // Per-area tables: the shared column-name slots get the slot digit
     // ('1'/'2') stamped in before each batch of eight columns is read.
+    // (Scaffold note: retail keeps 34F00 as pointers to shared strings;
+    // the stamp writes through to the shared slot.)
     for (int i = 0; i < 2; ++i) {
         char digit = (char)('1' + i);
         for (int k = 0; k < 8; ++k)
-            lbl_eu_80534F00[k*4+1] = digit;
+            ((char*)lbl_eu_80534F00[k])[1] = digit;
         CfGimmickObjectArea* e = &self->field_84[i];
-        e->field_00 = ctorCol16(holder, &lbl_eu_80534F00[0], row);
-        e->field_02 = ctorCol16(holder, &lbl_eu_80534F00[4], row);
-        e->field_04 = ctorCol16(holder, &lbl_eu_80534F00[8], row);
-        e->field_06 = ctorCol16(holder, &lbl_eu_80534F00[12], row);
-        e->field_08 = ctorCol16(holder, &lbl_eu_80534F00[16], row);
-        e->field_0A = ctorCol16(holder, &lbl_eu_80534F00[20], row);
-        e->field_0C = ctorCol16(holder, &lbl_eu_80534F00[24], row);
-        e->field_0E = ctorCol16(holder, &lbl_eu_80534F00[28], row);
+        e->field_00 = ctorCol16(holder, lbl_eu_80534F00[0], row);
+        e->field_02 = ctorCol16(holder, lbl_eu_80534F00[1], row);
+        e->field_04 = ctorCol16(holder, lbl_eu_80534F00[2], row);
+        e->field_06 = ctorCol16(holder, lbl_eu_80534F00[3], row);
+        e->field_08 = ctorCol16(holder, lbl_eu_80534F00[4], row);
+        e->field_0A = ctorCol16(holder, lbl_eu_80534F00[5], row);
+        e->field_0C = ctorCol16(holder, lbl_eu_80534F00[6], row);
+        e->field_0E = ctorCol16(holder, lbl_eu_80534F00[7], row);
     }
 
     self->field_152 = ctorCol16(holder, &colBase[0xf0], row);
@@ -320,7 +370,7 @@ void func_801F5B00(cf::CfGimmickObject* self) {
             // reuse the branch-test value).
             *(volatile u32*)&self->field_74 |= 0x40000000;
         if ((self->field_74 & 0x400) != 0) {
-            if ((self->*lbl_eu_80534EB8[self->field_188])() == 0)
+            if ((self->*lbl_eu_80534EB8[self->field_188].p)() == 0)
                 break;
         } else {
             if (func_801F634C(self) != 0) {
@@ -328,7 +378,7 @@ void func_801F5B00(cf::CfGimmickObject* self) {
                     func_8020A0CC();
                 break;
             }
-            if ((self->*lbl_eu_80534E70[self->field_188])() != 0)
+            if ((self->*lbl_eu_80534E70[self->field_188].p)() != 0)
                 self->field_74 |= 0x400;
             else
                 break;

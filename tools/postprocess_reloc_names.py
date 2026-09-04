@@ -3444,11 +3444,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CSysWinSave.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
-    "CfResObjImpl.o": UnitRules(
-        patch_data=((".sdata2", 0x7, b"\x00"),),
-        drop_nobits_range=((".sbss2", 0, 8),),
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".sbss"),
-    ),
     "CfNandManager.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
@@ -7157,19 +7152,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
 
-    "CfMapItemManager.o": UnitRules(
-        # Phantom pools + dispatch table (object rebuilt by concurrent agent;
-        # re-derived from the fresh object): {2^52+scale} double ->
-        # lbl_eu_806677A0; plain 2^52 -> lbl_eu_806677B0 (the copy retail's
-        # func_80174AE8 range loads); 8-slot func_80174C98+addend jump table
-        # -> jumptable_eu_80531710.
-        exact_renames=(
-            ("@4956", "lbl_eu_806677A0"),
-            ("@5129", "lbl_eu_806677B0"),
-            ("@5244", "jumptable_eu_80531710"),
-        ),
-    ),
-
     "CREvtModelMap.o": UnitRules(
         # Magic pool; site-confirmed (lfd f1, lbl_eu_806678C8 in func_8018152C).
         exact_renames=(("@3569", "lbl_eu_806678C8"),),
@@ -7439,13 +7421,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
 
     "CActorParam.o": UnitRules(
-        # Data dissolve: retail split carries no data — vtable/RTTI
-        # locators/typeinfo names/float pools/static-local flags ship from
-        # split1.s (lbl_eu_8052F5A8/F5C0 vtables, 806677Exx sdata2 pool); the
-        # source stores vptrs from blob labels directly and no reloc
-        # references any local copy. Strip.
+        # Typified (no blobs remain): .rodata string + .sdata2 pool are
+        # typed source defs; the .data jumptables are compiler-generated.
+        # MWCC also emits a vtable/RTTI pair, code-string/rodata literals,
+        # an .sdata pair and an sdata2 literal pool that retail keeps
+        # elsewhere: trim them back to the retail sizes.
         drop_nobits_range=((".sbss", 0, 4),),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
         exact_renames=(
             # Retail tail-merges UnkVirtualFunc180's body under its virtual
             # (Fv) symbol; our fake-Fv free-function definition (self+Arg
@@ -7458,7 +7439,8 @@ UNIT_RULES: dict[str, UnitRules] = {
                 "CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv",
             ),
         ),
-        drop_data_range=((".rodata", 0x10, 0x58), (".sdata", 0, 0x20), (".sdata2", 0, 0x60), (".data", 0x140, 0x610)),
+        drop_data_range=((".rodata", 0x10, 0x58), (".sdata", 0, 0x20), (".data", 0x140, 0x4D4)),
+        drop_data_tail=((".sdata2", 0x80),),
     ),
 
     "CMenuQstCnt.o": UnitRules(
@@ -7800,23 +7782,11 @@ UNIT_RULES: dict[str, UnitRules] = {
     # else exact_renames on the current @N indices.
     # ------------------------------------------------------------------
     "CfGimmickObject.o": UnitRules(
-        # int->double magic pair (content match; retail sda21 sites load
-        # lbl_eu_806681A8/81C0). The lone .data table is the 40-byte
-        # function-pointer dispatch base loaded via lis/addi lbl_eu_805765A0
-        # (retail func_801F9C70/801F9C80).
-        # data_pool_patterns (NOT pool_patterns): the .data table sits at
-        # st_value 0, and rename_pool_symbols matches every @N symbol
-        # against .sdata2 bytes at st_value regardless of home section -
-        # the table was being stolen by the float pattern. Section-aware
-        # matcher pins the float rename to .sdata2; effective mapping is
-        # unchanged (pool starts with the LO pair, so only lbl_eu_806681C0
-        # ever bound under used_targets).
-        drop_data_tail=((".data", 0x100), (".sdata2", 0x30),),
-        data_pool_patterns=(
-            (".sdata2", struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_806681A8"),
-            (".sdata2", struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806681C0"),
-            (".data", bytes(0x28), "lbl_eu_805765A0"),
-        ),
+        # Typified (no string/float blobs remain): the source tables own the
+        # full 0xD8 retail .data and the struct owns the 0x30 sdata2 pool;
+        # MWCC appends a 0x14 code-const pool that retail materializes
+        # inline. Thin trailing trim only.
+        drop_data_tail=((".sdata2", 0x30),),
     ),
     "CfObjectTbox.o": UnitRules(
         # Only .text-referenced local is the class vtable (dtor site);
@@ -8683,14 +8653,17 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CSysWinSave.o": UnitRules(
         copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
     ),
-    "CfMapItemManager.o": UnitRules(
-        patch_data=((".data", 0x6F, b"\x00"),),
-        drop_data_tail=((".data", 0x70), (".sdata2", 0x70),),
-    ),
     "CfResPcImpl.o": UnitRules(
         drop_data_range=(
             (".sdata2", 0, 8),
         ),
+    ),
+    "CfMapItemManager.o": UnitRules(
+        # Typified (no string/float blobs remain): the source struct owns the
+        # full 0x70 retail pool; MWCC appends a 0x20 code-const pool
+        # (func_80173CA0's @LOCAL consts + float/double literals) that
+        # retail materializes inline. Thin trailing trim only.
+        drop_data_tail=((".sdata2", 0x70),),
     ),
 }
 

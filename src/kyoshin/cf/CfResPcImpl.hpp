@@ -414,9 +414,17 @@ namespace cf { class CfTFile; }
 
 // PMTF dispatch table (4 x 12-byte member pointers) selected by field_08 in
 // func_8018EEF0. Declared at global scope so MWCC keeps the retail name
-// unmangled; the (self->*table[idx])() call lowers to `bl __ptmf_scall`.
+// unmangled; the (self->*table[idx].p)() call lowers to `bl __ptmf_scall`.
+// The free-function targets are not expressible as PMFs in C++, so entries
+// are initialized via the raw-word view w ({0,-1,func}) and dispatched via
+// p (same CfPmfEntry pattern as CfResObjImpl.hpp).
 typedef void (cf::CfResPcImpl::*CfResPcImplPMF)();
-extern CfResPcImplPMF lbl_eu_80532730[4];
+struct CfResPcImplPmf3 { u32 w0; u32 w1; u32 w2; };
+union CfResPcImplPmfEntry {
+    CfResPcImplPmf3 w;
+    CfResPcImplPMF p;
+};
+extern CfResPcImplPmfEntry lbl_eu_80532730[4];
 
 // Secondary vtable for CfResPcImpl, stored at +0x10 by the ctor (.data).
 extern "C" void* lbl_eu_80532774[];
@@ -562,6 +570,8 @@ extern "C" void __ct__CMcaFile(CMcaFile* self, void* data);
 extern "C" void* func_80495EAC(void* global, void* data, void* buf);
 
 // Area-id table walked by func_8018F63C (8 x 8-byte entries, .data).
+// Defined as struct bytes in CfResPcImpl.cpp (Elv pattern); this decl stays
+// the reader's opaque view (see the .cpp note).
 extern cf::CfResPcAreaEntry lbl_eu_805327F8[8];
 
 // Position table copied by func_8018E7E4 (.data, 0x50 bytes).
@@ -596,6 +606,18 @@ extern const void* lbl_eu_806624D8[2];
 // Debug/format string used by func_8018DE8C (.rodata).
 extern char lbl_eu_80503BC4[];
 
+// Free-function vtable-slot targets owned by other TUs (retail .data
+// lbl_eu_80532774 references these unmangled names; the same-named virtuals
+// above are scoped methods and do not collide).
+extern "C" void func_800BE9AC();
+extern "C" void func_8016CD64();
+extern "C" int func_8016CD54();
+extern "C" int func_800BF30C();
+// Compiler-generated deleting destructor (defined in this TU's .text).
+extern "C" void __dt__Q22cf11CfResPcImplFv();
+// sdata locator owned by another TU (first word of the .data descriptor at
+// lbl_eu_805327E0; same forward-decl pattern as CfResObjImpl.hpp).
+extern const void* lbl_eu_806623D8[2];
 // .sdata2 float constants used by func_8018DE8C.
 extern const float lbl_eu_80667A44;
 extern const float lbl_eu_80667A48;
@@ -605,6 +627,9 @@ extern const float lbl_eu_80667A54;
 extern const float lbl_eu_80667A58;
 extern const float lbl_eu_80667A5C;
 extern const float lbl_eu_80667A64;
+// Second word of the trailing float pair at retail .sdata2 0x28
+// (0.5f + 0.0f pad); defined as member f68 of the .sdata2 pool struct in
+// CfResPcImpl.cpp.
 extern const float lbl_eu_80667A68;
 extern const float lbl_eu_80666B08;
 extern f32 lbl_eu_8066AF20; // f32 form: must match CtrlMoveBase.hpp (10197/10505 on mixed spellings)

@@ -2217,7 +2217,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CtrlNpc.o": UnitRules(
-        drop_data_range=((".sdata2", 0, 0x10),),
+        # Typified: .rodata strings + .sdata2 struct own the full retail
+        # pools; .data tables are source-typed. MWCC appends a 0x10
+        # code-literal magic pool after our defs -> trim trailing only.
+        drop_data_tail=((".sdata2", 0x80),),
         drop_nobits_range=((".sbss2", 0, 4),),
     ),
     "CtrlRemote.o": UnitRules(
@@ -2228,37 +2231,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CtrlObjectParam.o": UnitRules(
-        add_symbols=(
-            ("lbl_eu_804FBC28", ".rodata", 0x00, 0x9),
-            ("lbl_eu_804FBC34", ".rodata", 0x0C, 0x9),
-            ("lbl_eu_804FBC40", ".rodata", 0x18, 0x9),
-            ("lbl_eu_804FBC50", ".rodata", 0x28, 0x20),
-            ("lbl_eu_804FBC70", ".rodata", 0x48, 0x20),
-            ("lbl_eu_804FBC90", ".rodata", 0x68, 0x20),
-            ("lbl_eu_804FBCB0", ".rodata", 0x88, 0x2A8),
-            ("lbl_eu_804FBF58", ".rodata", 0x330, 0x7),
-            ("lbl_eu_80666770", ".sdata2", 0x00, 0x4),
-            ("lbl_eu_80666774", ".sdata2", 0x04, 0x4),
-            ("lbl_eu_80666778", ".sdata2", 0x08, 0x8),
-            ("lbl_eu_80666780", ".sdata2", 0x10, 0x4),
-            ("lbl_eu_80666784", ".sdata2", 0x14, 0x4),
-            ("lbl_eu_80666788", ".sdata2", 0x18, 0x8),
-            ("lbl_eu_80666790", ".sdata2", 0x20, 0x4),
-            ("lbl_eu_80666794", ".sdata2", 0x24, 0x4),
-            ("lbl_eu_80666798", ".sdata2", 0x28, 0x4),
-            ("lbl_eu_8066679C", ".sdata2", 0x2C, 0x4),
-            ("lbl_eu_806667A0", ".sdata2", 0x30, 0x4),
-            ("lbl_eu_806667A4", ".sdata2", 0x34, 0x4),
-            ("lbl_eu_806667A8", ".sdata2", 0x38, 0x4),
-            ("lbl_eu_806667AC", ".sdata2", 0x3C, 0x4),
-            ("lbl_eu_806667B0", ".sdata2", 0x40, 0x8),
-            ("lbl_eu_806667B8", ".sdata2", 0x48, 0x4),
-            ("lbl_eu_806667BC", ".sdata2", 0x4C, 0x4),
-            ("lbl_eu_806667C0", ".sdata2", 0x50, 0x8),
-            ("lbl_eu_806667C8", ".sdata2", 0x58, 0x4),
-            ("lbl_eu_806667CC", ".sdata2", 0x5C, 0x4),
-        ),
-        drop_data_range=((".sdata2", 0, 8),),
+        # Typified: .rodata strings/tables + .sdata2 floats/tags/doubles own
+        # the full retail pools; .data table is source-typed. MWCC appends
+        # a 0x10 code-literal pool after our defs -> trim trailing only.
+        drop_data_tail=((".sdata2", 0x60),),
     ),
     "code_800A3B24.o": UnitRules(
         # magic -> lbl_eu_806667E0 (content match); debug-draw residual 1.0f
@@ -2621,16 +2597,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2", ".sbss"),
     ),
     "CfNandManager.o": UnitRules(
-        extern_data_sections=(".sdata",),
-        copy_data_sections=(".data", ".rodata", ".sdata", ".bss", ".sbss"),
-        # func_8023EB78's pending-type switch: MWCC lowers the current source
-        # shape to an in-TU jumptable (@NNN over its own case labels), but the
-        # retail form is a compare chain with NO data object anywhere in the
-        # splits - the table dies together with its two lis/addi refs once the
-        # function's codegen is brought onto the retail shape (source-level
-        # follow-up). Until then there is nothing legitimate to rename onto,
-        # so only the storage is stripped.
-        
+        # Typified (stub TU): .rodata strings, .sdata pointer pairs, and
+        # .bss/.sbss zero-fill are source-defined; .data jumptable+tables
+        # stay as a sized blob (see source note). Raw MATCH, no crutches.
     ),
     "CMenuPause.o": UnitRules(
         # Lone dead MWCC float constant; retail has no local copy and no
@@ -3116,9 +3085,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_806662A8"),
         ),
     ),
-    "CMenuEnemyState.o": UnitRules(
-        patch_data=((".sdata", 0xF, b"\x00"),),
-    ),
     "CUIBattleManager.o": UnitRules(
         # functions.hpp declares C++-linkage bool; retail reloc is unmangled.
         exact_renames=(
@@ -3442,9 +3408,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
     "CSysWinSave.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
-    ),
-    "CfNandManager.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
     "CfHikariItemManager.o": UnitRules(
@@ -4033,27 +3996,22 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CAIAction.o": UnitRules(
         exact_renames=(
             ("__vt__Q22cf9CAIAction", "lbl_eu_8052F598"),
-            # Five state-dispatch jump tables (all .rela.data words target own
-            # .text): retail keeps each in split1.s with func+addend slots that
-            # resolve to our definitions at link (site-mapped per function).
-            ("@3813", "jumptable_eu_8052F504"),   # func_801522C4 dispatch 2
-            ("@3814", "jumptable_eu_8052F238"),   # func_801522C4 dispatch 1
-            ("@4210", "jumptable_eu_8052F1AC"),   # func_80150828 dispatch 1
-            ("@4211", "jumptable_eu_8052EEE0"),   # func_80150828 dispatch 2
-            ("@4212", "jumptable_eu_8052EDEC"),   # func_80150828 tail dispatch
-            # Float pools (site/content-mapped against unit retail refs).
-            ("@3806", "lbl_eu_80667434"),   # 10.0f
-            ("@3807", "lbl_eu_80667454"),   # 1.0f
-            ("@3808", "lbl_eu_8066745C"),   # 0.2f
-            ("@3815", "lbl_eu_80667440"),   # {128.0f,-0.0} magic double
-            ("@4205", "lbl_eu_80667428"),   # {0.0,...} tail
-            ("@4213", "lbl_eu_80667438"),   # {128.0f,0.0}
         ),
-        # Data dissolve: strip the TU-local copies once renamed.
-        extern_data_sections=(".data", ".sdata2"),
-        # No Chaitin insn_patches (skill forbids). UnkVirtualFunc1/2 soft-cap is
-        # stwux vs retail stwx+add / r9 src / 8-then-4 schedule — high-level only.,
-        drop_data_range=((".data", 0, 0x8E0),),
+        # Float pools live in CMenuGetItem's sdata2 blob (retail CAIAction.o
+        # has empty sdata2); content-keyed dissolves so MWCC locals bind the
+        # shared globals. .data jumptables are real TU-local tables emitted
+        # from the C++ switches (EB40 0x140 / EC80 0x16C / EDEC 0xF4 /
+        # EEE0 0x2CC / F1AC+lbl 0x8C / F238 0x2CC / F504 0x94 = 0xA58) and
+        # must NOT be dissolved (raw .data MATCH).
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80667428"),   # 0.0f
+            (struct.pack(">I", 0x41200000), "lbl_eu_80667434"),   # 10.0f
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80667438"),  # u32->double magic
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80667440"),  # s32->float magic
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80667454"),   # 1.0f
+            (struct.pack(">I", 0x3E4CCCCD), "lbl_eu_8066745C"),   # 0.2f
+        ),
+        extern_data_sections=(".sdata2",),
     ),
     "CBattleState.o": UnitRules(
         exact_renames=(
@@ -7720,9 +7678,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CCharVoiceMan.o": UnitRules(
-        # The lone .sbss static already carries its retail name
-        # (lbl_eu_80664A58); UNDEF resolves it to the split1 copy.
-        extern_data_sections=(".sbss",),
+        # Typified: sdata2 struct owns the 0x38 retail pool (floats + magic
+        # double), both .sbss words are source-defined (singleton +
+        # counter); .data pattern tables stay as a sized blob. Raw MATCH.
     ),
     "CVS_THREAD.o": UnitRules(
         # The 0x24 zero table is the Move switch jumptable; retail loads it
@@ -7879,14 +7837,10 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CfGimmick.o": UnitRules(
         patch_data=((".data", 0x5B, b"\x00"),),
-        drop_data_range=((".sdata2", 0, 16),),
-        # Pool trio: retail slots 80668350(.float 0)/80668368(HI)/80668370
-        # (2^52), ctx votes 9-12 strong per slot.
-        pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80668350"),
-            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668368"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668370"),
-        ),
+        # Typified: .rodata strings, .sdata struct, and .sdata2 strings +
+        # numeric struct own the full retail pools. MWCC appends a 0x10
+        # code-literal pool after our defs -> trim trailing only.
+        drop_data_tail=((".sdata2", 0x60),),
     ),
     "CfGimmickElv.o": UnitRules(
         # Single 2^52 conversion double; content-equal unit-ref label

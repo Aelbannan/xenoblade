@@ -228,7 +228,7 @@ void* func_800AD860(void* obj);
 // Retail .sdata singleton (created by func_801109D8, cleared by Term).
 extern u32 lbl_eu_80663F50;
 // CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
-extern char lbl_eu_8052C534[];
+// (Mini-vtable decl lives in the .cpp: MWCC rejects an hpp extern for it.)
 // String pool base (func_80111B08 pane names at +0xd3/+0xdd/+0x11d).
 extern char lbl_eu_804FDBF8[];
 // sdata2 constants used by the panel-highlight helpers.
@@ -248,16 +248,16 @@ extern u32 lbl_eu_804FDBC8[];
 // sdata colour/scale quads + s16 pairs used by func_80110A78's pane setup.
 // Declared as 4-element s16 arrays so direct element access keeps the retail
 // sda21 addressing (li lbl@sda21 + halfword ops).
-extern s16 lbl_eu_80663F58[4];
+extern s16 lbl_eu_80663F58[];
 extern u32 lbl_eu_80663F5C;
-extern s16 lbl_eu_80663F60[4];
+extern s16 lbl_eu_80663F60[];
 extern u32 lbl_eu_80663F64;
-extern s16 lbl_eu_80663F68[4];
-extern s16 lbl_eu_80663F70[4];
-extern s16 lbl_eu_80663F78[4];
-extern s16 lbl_eu_80663F80[4];
-extern s16 lbl_eu_80663F88[4];
-extern s16 lbl_eu_80663F90[4];
+extern s16 lbl_eu_80663F68[];
+extern s16 lbl_eu_80663F70[];
+extern s16 lbl_eu_80663F78[];
+extern s16 lbl_eu_80663F80[];
+extern s16 lbl_eu_80663F88[];
+extern s16 lbl_eu_80663F90[];
 extern u32 lbl_eu_806640CC;
 // sdata2 constants used by the position-marker helpers.
 extern const f32 lbl_eu_80666FF0;

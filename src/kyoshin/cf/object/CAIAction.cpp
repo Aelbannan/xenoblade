@@ -16,6 +16,14 @@
 
 #include <cstring>
 
+// Retail float pools live in CMenuGetItem's sdata2; reference them as
+// externs so this TU emits no local sdata2 (raw .data MATCH needs empty
+// sdata2; the magic doubles dissolve via UNIT_RULES renames).
+extern const float lbl_eu_80667428;  // 0.0f
+extern const float lbl_eu_80667434;  // 10.0f
+extern const float lbl_eu_80667454;  // 1.0f
+extern const float lbl_eu_8066745C;  // 0.2f
+
 // Batch 2026-07-14e: aiaction-ctor owns CAIAction::CAIAction()
 // Batch 2026-07-14f: aiaction-vfunc1 owns CAIAction_UnkVirtualFunc1 (Fv)
 
@@ -587,11 +595,11 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (e[5] == 0xE || e[7] == 0xE) {
         out->unk14 = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc72();
     } else if (e[5] == 0xB || e[5] == 0xD) {
-        out->unk14 = (f32)((f64)(u32)e[6] / 10.0);
+        out->unk14 = (f32)(u32)e[6] / lbl_eu_80667434;
     } else if (e[5] == 0xA || e[5] == 0xC) {
         out->unk14 = (f32)(u32)e[6];
     } else if (e[7] == 0xB || e[7] == 0xD) {
-        out->unk14 = (f32)((f64)(u32)e[8] / 10.0);
+        out->unk14 = (f32)(u32)e[8] / lbl_eu_80667434;
     } else if (e[7] == 0xA || e[7] == 0xC) {
         out->unk14 = (f32)(u32)e[8];
     }
@@ -707,14 +715,14 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             if ((u16)func_8016DF2C() != (u32)(k - 0x2E))
                 return 0;
             break;
-        case 58: {
+        case 0x3E: {
             // Character category must match.
             void* ch = func_8009EC9C(party->unk3F28);
             if (func_800A32BC(ch) != b[i])
                 return 0;
             break;
         }
-        case 59: {
+        case 0x3F: {
             // BDAT column byte-3 comparison via the select table.
             void* ch = func_8009EC9C(party->unk3F28);
             u16 v = *(u16*)((u8*)ch + 0xA);
@@ -726,7 +734,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             }
             break;
         }
-        case 60: case 61: {
+        case 0x40: case 0x41: {
             // Turn-counter window; inner dispatch keyed on 0x40/0x41 only.
             if (k == 0x40) {
                 if (((CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv())->field194
@@ -739,21 +747,21 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             }
             break;
         }
-        case 62:
+        case 0x42:
             if (party->unk3E98 != 0)
                 return 0;
             if ((party->unk3388 & 0x10) != 0)
                 return 0;
             break;
-        case 63:
+        case 0x43:
             if (party->unk3E98 != 0)
                 return 0;
             break;
-        case 64:
+        case 0x44:
             if ((party->unk3388 & 0x10) != 0)
                 return 0;
             break;
-        case 65: case 66: case 67: {
+        case 0x45: case 0x46: case 0x47: {
             // Element-row gate; inner dispatch keyed on 0x45/46/47 only.
             if (!(party->move.moveFlags & 4))
                 return 0;
@@ -775,7 +783,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             }
             break;
         }
-        case 74: case 75: {
+        case 0x4E: case 0x4F: {
             // Attack-slot accumulator window; inner keys 0x4E/0x4F only.
             u32 acc = 0;
             if (func_80148778((u8*)party + 8, 0x8D))
@@ -1033,7 +1041,93 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     return 1; // 0x3F..0x52
 #undef party
 }
-void func_8014E164(){}
+extern "C" int func_8014E164(cf::CAIAction* self, CAIActionQuery* in) {
+    // Retail dispatch on query byte 0xD (0..90, 91 entries -> EC80 0x16C).
+    // Grouping mirrors the retail jumptable targets so MWCC lowers to a dense
+    // 91-entry address table; each group probes a distinct action list id.
+    u8 tag = in->unk0D;
+    switch (tag) {
+    case 0:
+    case 15: case 16:
+    case 33: case 34: case 35: case 36: case 37: case 38:
+    case 57: case 58:
+        in->unk1C = 3;
+        return 0;
+    case 1: {
+        u16 f = in->unk10 | 0x400;
+        in->unk10 = f;
+        void* r = func_80150618(self, in);
+        in->unk00 = (u32)(uintptr_t)r;
+        if (r == 0)
+            return 0;
+        return 1;
+    }
+    case 2: case 3:
+    case 84: case 85:
+        if (func_801B1FFC(0))
+            return 1;
+        return 0;
+    case 5: case 6: case 7: case 8:
+    case 9: case 10: case 11: case 12:
+        if (func_801B1FFC(1))
+            return 1;
+        return 0;
+    case 39: case 40: case 41: case 42: case 43: case 44: case 45:
+    case 46: case 47: case 48: case 49: case 50: case 51: case 52:
+    case 83:
+        if (func_801B1FFC(2))
+            return 1;
+        return 0;
+    case 53:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x11))
+            return 1;
+        return 0;
+    case 54:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x12))
+            return 1;
+        return 0;
+    case 55:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x13))
+            return 1;
+        return 0;
+    case 56:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x14))
+            return 1;
+        return 0;
+    case 59:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x15))
+            return 1;
+        return 0;
+    case 60:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x16))
+            return 1;
+        return 0;
+    case 61: case 62:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x17))
+            return 1;
+        return 0;
+    case 63: case 64: case 65: case 66: case 67:
+    case 68: case 69: case 70: case 71: case 72:
+        return 1;
+    case 73: case 74: case 75: case 76:
+    case 77: case 78: case 79: case 80:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x18))
+            return 1;
+        return 0;
+    case 81: case 82:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x19))
+            return 1;
+        return 0;
+    case 86: case 87: case 88:
+        if (func_80148778((u8*)self->unkB14 + 8, 0x1A))
+            return 1;
+        return 0;
+    case 89: case 90:
+        return 0;
+    default:
+        return 0;
+    }
+}
 // Returns the result of dispatching the query through the party's move
 // vtable (or the cached battle handle at 0x3F10), with bit 0x400 in the
 // query's flags set in two pre-dispatch paths.

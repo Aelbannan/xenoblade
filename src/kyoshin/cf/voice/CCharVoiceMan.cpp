@@ -26,6 +26,41 @@ public:
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// typed .sdata2 pool (replaces the old sdata2 byte blob): retail
+// 0x38 pool is 10 floats incl. two (x,0) pairs + trailing int->double magic
+// 4503601774854144 (0x43340000_00000000, signed). Single struct freezes
+// MWCC declaration order (bare individuals reorder by first-use) and keeps
+// the leading/trailing 0.0f slots live (else they migrate to .sbss).
+struct Sdata2_CCharVoiceMan {
+    float f0;      // 80668C68 0.0
+    float f1;      // 80668C6C 150.0
+    float f2;      // 80668C70 0.5
+    float f3;      // 80668C74 1800.0
+    float f4;      // 80668C78 3.0
+    float f5;      // 80668C7C 1.0
+    float f6[2];   // 80668C80 30.0, 0.0
+    float f7[2];   // 80668C88 1.0, 0.0
+    float f8;      // 80668C90 0.0
+    float f9;      // 80668C94 0.3
+    double d;      // 80668C98 magic
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_CCharVoiceMan sdata2_CCharVoiceMan = {
+    0.0f, 150.0f, 0.5f, 1800.0f, 3.0f, 1.0f,
+    {30.0f, 0.0f}, {1.0f, 0.0f}, 0.0f, 0.3f, 4503601774854144.0
+};
+#define lbl_eu_80668C68 sdata2_CCharVoiceMan.f0
+#define lbl_eu_80668C6C sdata2_CCharVoiceMan.f1
+#define lbl_eu_80668C70 sdata2_CCharVoiceMan.f2
+#define lbl_eu_80668C74 sdata2_CCharVoiceMan.f3
+#define lbl_eu_80668C78 sdata2_CCharVoiceMan.f4
+#define lbl_eu_80668C7C sdata2_CCharVoiceMan.f5
+#define lbl_eu_80668C80 sdata2_CCharVoiceMan.f6[0]
+#define lbl_eu_80668C88 sdata2_CCharVoiceMan.f7[0]
+#define lbl_eu_80668C90 sdata2_CCharVoiceMan.f8
+#define lbl_eu_80668C94 sdata2_CCharVoiceMan.f9
+#define lbl_eu_80668C98 sdata2_CCharVoiceMan.d
+
 // Global-scope free functions matching the retail C names: MWCC mangles a
 // global no-arg getInstance() to getInstance__Fv and a global
 // registerFactoryEvent(void*, cf::IFactoryEvent*) to
@@ -81,6 +116,8 @@ namespace cf{
 }
 
 cf::CCharVoiceMan* lbl_eu_80664A58; // CCharVoiceMan singleton
+// typed .sbss second word (replaces the old sbss byte filler)
+extern "C" { u32 lbl_eu_80664A5C; } // global character-voice counter
 
 // C++-mangled findObjectById__Fi (actor-id -> action source).
 extern void* findObjectById(BOOL id);
@@ -1450,7 +1487,9 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     return 1;
 }
 
-// absorb: split1 retail data sections
+// absorb: split1 retail data sections (.data pattern tables stay as blob:
+// 4 pointer tables with relocs to other TUs' sbss/vtable symbols +
+// 0xFFFFFFFF guard word; typing them risks MATCH, bytes already identical)
 __declspec(section ".data") __attribute__((aligned(8))) const unsigned char __absorb_CCharVoiceMan_data[60] __attribute__((used)) = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1458,12 +1497,3 @@ __declspec(section ".data") __attribute__((aligned(8))) const unsigned char __ab
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00
 };
-__declspec(section ".sdata2") __attribute__((aligned(8))) const unsigned char __absorb_CCharVoiceMan_sdata2[56] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x16, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00,
-    0x44, 0xE1, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
-    0x41, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x99, 0x99, 0x9A,
-    0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00
-};
-char __absorb_CCharVoiceMan_sbss_extra[4] __attribute__((used));
-DECOMP_FORCEACTIVE(CCharVoiceMan_sbss_extra, __absorb_CCharVoiceMan_sbss_extra);

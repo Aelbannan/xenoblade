@@ -228,7 +228,7 @@ extern const char* lbl_eu_80661A20;
 // Extension separator character (in .sdata, ".\0"): the key func_80063C7C
 // strips from the end of a path. Declared as a scalar (not an array) so MWCC
 // emits the retail @sda21 addressing; use &lbl_eu_80661A40 as the string.
-extern char lbl_eu_80661A40;
+extern char lbl_eu_80661A40[8];   // '.' separator + pad (retail .sdata 8 bytes)
 
 // Reset the ResInfoEntry array (defined in kyoshin/cf/IResInfo.cpp).
 // C linkage so the retail unmangled symbol name is emitted (struct params

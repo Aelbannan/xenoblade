@@ -158,13 +158,12 @@ extern "C" u8 lbl_eu_80535844[];
 
 // Reference point the gimmick range checks are measured from.
 extern "C" CfGimmickVec3 lbl_eu_805765A0;
-extern "C" char _bss_pad_805765A0[4];
 
 // Downward drop offset recorded by func_80208CC0 when the stage ground is
 // above zero (.sdata).
 extern "C" f32 lbl_eu_80662780;
-// 1.0f fill constant used when no player is present (.sdata).
-extern "C" f32 lbl_eu_80668360;
+// 1.0f fill constant used when no player is present (.sdata2).
+extern "C" const f32 lbl_eu_80668360;
 
 // Shared singleton accessor; refs resolve to the unmangled retail name.
 extern "C" CfGimmickGlobal* getUnk80664658();
@@ -173,7 +172,7 @@ extern "C" CfGimmickGlobal* getUnk80664658();
 extern "C" const void* lbl_eu_805357E8[];
 extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
 // Returned when func_8020A608 cannot fetch a column row.
-extern "C" char lbl_eu_80662788[8];
+extern "C" const void* lbl_eu_80662788[2];
 
 // Column-capacity helpers (CBdat row begin/count).
 extern "C" void* func_8003AA34();
@@ -185,15 +184,15 @@ extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
 extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
 
 // Scale factor for bdat int -> float position conversion.
-extern "C" float lbl_eu_80668364;
+extern "C" const float lbl_eu_80668364;
 // Alternative scale factor used by the +0x1C-family column readers.  Const
 // declaration matches CfObjectModel.hpp (which also references it).
 extern const float lbl_eu_8066A210;
 // 2^52 magic constant subtracted in the u16->f32 double-trick conversions
 // (lfd + fsubs per bdat-column reader block).
-extern "C" double lbl_eu_80668370;
+extern "C" const double lbl_eu_80668370;
 // Base of the +0, +0xA, +0x15, +0x20 column-name string block.
-extern "C" char lbl_eu_80508634[];
+extern "C" const char lbl_eu_80508634[];
 // Sentinel used by the player loops (func_8020A124 / func_8020A1DC) and the
 // gimmick extent checks.  Const so MWCC treats the SDA load as read-only and
 // schedules it at retail's position (CfObjectMove.hpp pattern).
@@ -204,8 +203,8 @@ extern "C" const float lbl_eu_80668350;
 extern "C" void func_801BFDE8(u32 mode, u32 value,
                                u32 playerValue, float first, float second);
 // Sound constants loaded in func_80208C48 / func_80208C60 (retail .sda21 loads)
-extern "C" float lbl_eu_80668358;
-extern "C" float lbl_eu_8066835C;
+extern "C" const float lbl_eu_80668358;
+extern "C" const float lbl_eu_8066835C;
 extern "C" unsigned int func_80124B78();
 // FIdx scale applied to the rotation point before MTX34RotXYZFIdx.
 extern "C" const f32 lbl_eu_80668354;

@@ -392,7 +392,7 @@ public:
     virtual void vf48(CItemData* p);             // 0x48
     virtual u32 vf4C(CItemData* p, u32 x);       // 0x4C
     virtual u32 vf50(CItemData* p, u32 x, u16 y); // 0x50
-    virtual void vf54();                         // 0x54
+    virtual u16 vf54(CItemData* p);              // 0x54 (rank/count; retail narrows to u16)
     virtual void vf58(CItemData* p, u32 x);      // 0x58
     virtual void vf5C();                         // 0x5C
     virtual void vf60();                         // 0x60
@@ -407,7 +407,7 @@ public:
     virtual u32 vf84(CItemData* p, u32 x);       // 0x84
     virtual void vf88();                         // 0x88
     virtual void vf8C(CItemData* p, u32 x);      // 0x8C
-    virtual void vf90();                         // 0x90
+    virtual int vf90(CItemData* p);              // 0x90 (value; full-width int)
     virtual u32 vf94(CItemData* p, u32 x);       // 0x94
 };
 

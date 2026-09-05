@@ -1857,24 +1857,52 @@ void __declspec(noinline) func_8021E014(CModelDispMakeCrystal* self)
     }
 }
 
-// Item-implementation vtable for the local CItemData in func_8021E5C0.
-// Declared index i => byte offset +0x08+4i (MWCC reserves 2 hidden RTTI
-// slots): index 5 => +0x1C, 18 => +0x50, 24 => +0x68, 31 => +0x84.
-struct CMCItemVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(void* p);   // +0x1C
-    virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09();
-    virtual void m0A(); virtual void m0B(); virtual void m0C(); virtual void m0D();
-    virtual void m0E(); virtual void m0F(); virtual void m10(); virtual void m11();
-    virtual void m12(); virtual void m13(); virtual void m14(); virtual void m15();
-    virtual void m16(); virtual void m17(); virtual void m18(void* p, u32 x, u16 y);  // +0x50
-    virtual void m19(); virtual void m1A(); virtual void m1B(); virtual void m1C();
-    virtual void m1D(); virtual void m1E(); virtual void m1F(); virtual void m20();
-    virtual void m21(); virtual void m22(); virtual void m23(); virtual void m24(void* p, u32 x, u16 y);  // +0x68
-    virtual void m25(); virtual void m26(); virtual void m27(); virtual void m28();
-    virtual void m29(); virtual void m2A(); virtual void m2B(); virtual void m2C();
-    virtual void m2D(); virtual void m2E(); virtual void m2F(); virtual void m30();
-    virtual void m31(void* p, u32 x);  // +0x84
+// Item-impl dispatch folded onto the real owner CItemImpl: the retail
+// item-impl tables (lbl_eu_8052F770 etc., 0xA0 = 38 virtuals) show the
+// method list IS the original virtuals. Slots used here: +0x1C=vf1C,
+// +0x50=vf50, +0x58=vf58, +0x68=vf68, +0x84=vf84, +0x94=vf94 (declared
+// index i => +0x08+4i). Signatures match kyoshin/cf/CItem.hpp; the void*
+// init form matches cf/CfGameManager.hpp (cf. CfMapMineManager precedent).
+struct CItemData;
+struct CItemRec;
+class __declspec(novtable) CItemImpl {
+public:
+    virtual u32 vf08(CItemData* p);
+    virtual void vf0C(CItemData* p, u32 x);
+    virtual void vf10(CItemData* p);
+    virtual void vf14();
+    virtual void vf18();
+    virtual u32 vf1C(CItemData* p);
+    virtual void vf20();
+    virtual void vf24();
+    virtual u16 vf28(CItemData* p, const char* col);
+    virtual CItemRec* vf2C(CItemData* p, u32 x);
+    virtual u32 vf30(CItemData* p);
+    virtual void vf34(CItemData* p, u32 x);
+    virtual void vf38();
+    virtual void vf3C(CItemData* p, u32 x);
+    virtual u32 vf40(CItemData* p, u32 x);
+    virtual void vf44(CItemData* p, u32 x, u32 y);
+    virtual void vf48(CItemData* p);
+    virtual u32 vf4C(CItemData* p, u32 x);
+    virtual u32 vf50(CItemData* p, u32 x, u16 y);
+    virtual u16 vf54(CItemData* p);
+    virtual void vf58(CItemData* p, u32 x);
+    virtual void vf5C();
+    virtual void vf60();
+    virtual void vf64();
+    virtual u32 vf68(CItemData* p, u32 x, u16 y);
+    virtual void vf6C();
+    virtual void vf70();
+    virtual void vf74();
+    virtual u32 vf78(CItemData* p);
+    virtual void vf7C(CItemData* p, u16 x);
+    virtual u32 vf80(CItemData* p);
+    virtual u32 vf84(CItemData* p, u32 x);
+    virtual void vf88();
+    virtual void vf8C(CItemData* p, u32 x);
+    virtual int vf90(CItemData* p);
+    virtual u32 vf94(CItemData* p, u32 x);
 };
 
 // Local mirror of the item record used by func_8021E5C0: 0x34 bytes, head
@@ -1908,22 +1936,16 @@ void __declspec(noinline) func_8021E5C0(CModelDispMakeCrystal* self)
     item.field_00 = 0;
     *reinterpret_cast<u16*>(&item.field_04) = 0;
     func_80158300(&item, 1);
-    CMCItemVt* inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-    inst->m05(&item);
-    inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-    inst->m31(&item, 1);
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf1C((CItemData*)&item);
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf84((CItemData*)&item, 1);
     func_801570A0(&item, entries[1]);
     for (u8 i = 0; i < 4; i++) {
-        inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-        inst->m18(&item, i, 0);
-        inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-        inst->m24(&item, i, 0);
+        ((CItemImpl*)CItem_initItemImplInstances(&item))->vf50((CItemData*)&item, i, 0);
+        ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, i, 0);
     }
     u16 idx = (u16)((s8)((u8*)self)[0x2dc1] + (s8)((u8*)self)[0x2dc2]);
-    inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-    inst->m18(&item, 0, *(u16*)(entries + ((u16)idx << 3) + 2));
-    inst = (CMCItemVt*)CItem_initItemImplInstances(&item);
-    inst->m24(&item, 0, *(u16*)(entries + ((u16)idx << 3) + 4));
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf50((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 2));
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf68((CItemData*)&item, 0, *(u16*)(entries + ((u16)idx << 3) + 4));
     u8 n = ((u8*)self)[0x2dc0];
     ((u8*)self)[0x2dc0] = n + 1;
     func_8015704C((u8*)self + n * 0x34 + 0x13c0, &item);
@@ -2844,22 +2866,9 @@ extern "C" void func_802200A8(void* selfp)
     reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)->activateSlots(slot);
 }
 
-// Item-impl vtable used by func_802203D8: methods at +0x58 (3 args incl
-// this) and +0x94 (3 args). MWCC reserves 2 hidden RTTI slots, so declared
-// indices 20 and 35 hit those slots.
-struct CMCItemImplVt {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m58(void* item, u32 n);   // declared index 20 => +0x58
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m94(void* item, u32 v);   // declared index 35 => +0x94
-};
+// Second item-impl pad folded onto the same CItemImpl owner above:
+// +0x58=vf58, +0x94=vf94. Call sites in func_802203D8 use
+// ((CItemImpl*)CItem_initItemImplInstances(...))->vfXX directly.
 
 // Retail 0x80222230: cylinder-count finalize - resolve the item-source row
 // for the current char, build the item record, compute the display count
@@ -2897,7 +2906,7 @@ void func_802203D8(void* selfp)
         tier = ch;
     }
     func_80159F6C(&item, idx, n, tier);
-    reinterpret_cast<CMCItemImplVt*>(CItem_initItemImplInstances(&item))->m58(&item, n);
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf58((CItemData*)&item, n);
     void* g2 = lbl_eu_806640D8;
     u32 first = 0;
     u32 second = 0;
@@ -2956,7 +2965,7 @@ void func_802203D8(void* selfp)
         u16 countB = (u16)(count - b);
         result = (u8)((s32)((float)diff * ((float)countB * lbl_eu_806684EC)) + first);
     }
-    reinterpret_cast<CMCItemImplVt*>(CItem_initItemImplInstances(&item))->m94(&item, result);
+    ((CItemImpl*)CItem_initItemImplInstances(&item))->vf94((CItemData*)&item, result);
     // Append the step record (stride 0x34 at +0x13c0) the requested times.
     for (u8 k = 0; k < copyCount; k++) {
         u8 stepN = base[0x2dc0];

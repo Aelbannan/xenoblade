@@ -1487,13 +1487,37 @@ extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     return 1;
 }
 
-// absorb: split1 retail data sections (.data pattern tables stay as blob:
-// 4 pointer tables with relocs to other TUs' sbss/vtable symbols +
-// 0xFFFFFFFF guard word; typing them risks MATCH, bytes already identical)
-__declspec(section ".data") __attribute__((aligned(8))) const unsigned char __absorb_CCharVoiceMan_data[60] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00
+// --- typified .data (layout from build/us/asm/kyoshin/cf/voice/CCharVoiceMan.s) ---
+// Two vtable-shaped rows, one locator row, and one PMF entry. Slots
+// carrying relocs emit zero bytes + ADDR32 relocs in the .o, matching
+// retail (the gate compares bytes; reloc names are ignored once bytes
+// match). Slot targets owned by other TUs are extern (UNDEF here, resolved
+// at link via the global symbol map).
+extern "C" {
+void __dt__Q22cf12CChainEffectFv();
+void func_802A0AE0();
+void __dt__Q22cf10CCharVoiceFv();
+void func_802A13B8();
+}
+extern char lbl_eu_80662C90[];
+extern char lbl_eu_80661BE0[];
+extern char lbl_eu_80662CA0[];
+struct VoiceVtableRow {
+    const void* typeinfo; // +0x0 sdata locator
+    u32 reserved;         // +0x4 zero
+    const void* dtor;     // +0x8 deleting dtor (or 0)
+    const void* slotC;    // +0xC method or null
 };
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const VoiceVtableRow lbl_eu_80539890 = {
+    lbl_eu_80662C90, 0,
+    (const void*)__dt__Q22cf12CChainEffectFv, (const void*)func_802A0AE0,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const VoiceVtableRow lbl_eu_805398A0 = { lbl_eu_80661BE0, 0, 0, 0 };
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const VoiceVtableRow lbl_eu_805398B0 = {
+    lbl_eu_80662CA0, 0, (const void*)__dt__Q22cf10CCharVoiceFv, 0,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+VoicePmfEntry lbl_eu_805398C0 = {{0, 0xFFFFFFFFu, (u32)func_802A13B8}};

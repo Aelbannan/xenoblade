@@ -40,13 +40,31 @@ extern void __ct__CREvtModelObj(void* self, void* parent);
 extern void __ct__CREvtModelPc(void* self, void* parent);
 extern void func_8049E708(void* data, int index);
 extern const void* lbl_eu_8053167C[];
-extern const char lbl_eu_80503344[];
+extern const void* lbl_eu_806623F8[2];
+extern const void* lbl_eu_80662400[2];
+// typified split1 retail .rodata: RTTI type names + nw4r option strings as
+// one 8-aligned struct (two commented halves). Byte-exact; offsets used by
+// code: 0x00 CScnMaruShadowNw4r, 0x14 IScnPolyShadow, 0x24 cf::CREvtModel,
+// 0x34 cf::CREvtObj, blob 0x44 (MonoChrome+0, MonoRGB+0x0B, noDynamics+0x13,
+// LgtID+0x1E, HidePT+0x3D, core+0x44).
+struct Rodata_CREvtModel {
+    char head[0x24];  // 80503300 + gap + 80503314 + gap
+    char tail[0x6C];  // 80503324 + gap + 80503334 + gaps + 80503344 blob
+};
+__declspec(section ".rodata") __attribute__((aligned(8))) const struct Rodata_CREvtModel rodata_CREvtModel __attribute__((used)) = {
+    "CScnMaruShadowNw4r\000\000IScnPolyShadow\000",
+    "cf::CREvtModel\000\000cf::CREvtObj\000\000\000\000Monochrome\000MonoRGB\000noDynamics\000LgtID\000SdwType\000SdwRadius\000SdwPow\000HidePT\000core"
+};
+// rodata names below are UNDEF reads (like the .data-backed halves): MWCC
+// 8-packs .rodata objects, so retail's contiguous 144-byte pool can only be
+// rebuilt as one neutral struct. 80503344 is a local macro (offset 0x44).
+#define lbl_eu_80503344 (rodata_CREvtModel.tail + 0x20)
 extern const float lbl_eu_80667770;
 extern const float lbl_eu_80667774;
 extern const float lbl_eu_80667778;
 extern const float lbl_eu_8066777C;
-extern const void* lbl_eu_806623F8;
-extern const void* lbl_eu_80662400;
+extern const void* lbl_eu_806623F8[2];
+extern const void* lbl_eu_80662400[2];
 extern const void* lbl_eu_80662418;
 extern const void* lbl_eu_8066241C;
 extern const char lbl_eu_80530D18[];
@@ -453,29 +471,27 @@ __declspec(section ".data") __attribute__((aligned(4))) const unsigned char __ab
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// absorb: split1 retail .rodata
-__declspec(section ".rodata") __attribute__((aligned(8))) const unsigned char __absorb_CREvtModel_rodata[144] __attribute__((used)) = {
-    0x43, 0x53, 0x63, 0x6E, 0x4D, 0x61, 0x72, 0x75, 0x53, 0x68, 0x61, 0x64,
-    0x6F, 0x77, 0x4E, 0x77, 0x34, 0x72, 0x00, 0x00, 0x49, 0x53, 0x63, 0x6E,
-    0x50, 0x6F, 0x6C, 0x79, 0x53, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x00, 0x00,
-    0x63, 0x66, 0x3A, 0x3A, 0x43, 0x52, 0x45, 0x76, 0x74, 0x4D, 0x6F, 0x64,
-    0x65, 0x6C, 0x00, 0x00, 0x63, 0x66, 0x3A, 0x3A, 0x43, 0x52, 0x45, 0x76,
-    0x74, 0x4F, 0x62, 0x6A, 0x00, 0x00, 0x00, 0x00, 0x4D, 0x6F, 0x6E, 0x6F,
-    0x63, 0x68, 0x72, 0x6F, 0x6D, 0x65, 0x00, 0x4D, 0x6F, 0x6E, 0x6F, 0x52,
-    0x47, 0x42, 0x00, 0x6E, 0x6F, 0x44, 0x79, 0x6E, 0x61, 0x6D, 0x69, 0x63,
-    0x73, 0x00, 0x4C, 0x67, 0x74, 0x49, 0x44, 0x00, 0x53, 0x64, 0x77, 0x54,
-    0x79, 0x70, 0x65, 0x00, 0x53, 0x64, 0x77, 0x52, 0x61, 0x64, 0x69, 0x75,
-    0x73, 0x00, 0x53, 0x64, 0x77, 0x50, 0x6F, 0x77, 0x00, 0x48, 0x69, 0x64,
-    0x65, 0x50, 0x54, 0x00, 0x63, 0x6F, 0x72, 0x65, 0x00, 0x00, 0x00, 0x00
-};
+// (rodata struct lives at top of file; sdata pairs below.)
+extern "C" char lbl_eu_80503300[];
+extern "C" char lbl_eu_80503314[];
+extern "C" char lbl_eu_80503324[];
 
-// absorb: split1 retail .sdata 0x20 + .sdata2 0x4
-// .sdata: 4 entries (lbl_eu_806623F0..408) each 8 bytes; force file-backed via dummy relocs so MWCC keeps it in .sdata (bytes are zero placeholders, relocs skipped when bytes match)
-extern "C" char __dummy_CREvtModel_sdata;
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) void* __absorb_CREvtModel_sdata[8] = {
-    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
-    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
-    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata,
-    (void*)&__dummy_CREvtModel_sdata, (void*)&__dummy_CREvtModel_sdata
+// typified split1 retail .sdata: 4 RTTI-ish pointer pairs (MES pattern).
+// 80503230 lives in a neighbor unit; 80531670/805316C0 are this TU's .data
+// (opaque absorb kept below), so those two stay UNDEF reads for now.
+extern "C" char lbl_eu_80503230[];
+extern "C" void* lbl_eu_80531670[];
+extern "C" void* lbl_eu_805316C0[];
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806623F0[2] = {
+    lbl_eu_80503230, 0
+};
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806623F8[2] = {
+    lbl_eu_80503300, lbl_eu_80531670
+};
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80662400[2] = {
+    lbl_eu_80503314, 0
+};
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_80662408[2] = {
+    lbl_eu_80503324, lbl_eu_805316C0
 };
 __declspec(section ".sdata2") __attribute__((aligned(8))) const float lbl_eu_8066777C __attribute__((used)) = 255.0f;

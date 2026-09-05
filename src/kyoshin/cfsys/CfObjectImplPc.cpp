@@ -12,6 +12,15 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // lbl_eu_80663E14 (CScn*)
 #include "monolib/scn/CScnTimeApi.hpp"        // func_80496288
 
+// TU-local C-ABI imports (moved out of CfObjectImplPc.hpp so that header
+// stays co-includable with kyoshin/cf/object/CfObjectMove.hpp, whose owner
+// decls for these two names are distinct overloads (MWCC 10197); same
+// pattern as CChain.cpp's local func_800BE12C). Only this TU uses them.
+extern "C" {
+void func_800BE12C(void* sub, u32 a, u32 b, s32 c, u32 d);
+void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
+}
+
 // absorb: split1 retail data sections - generated for kyoshin/cfsys/CfObjectImplPc
 // retail sizes: .rodata=0x40, .data=0x290, .sdata2=0x40
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cfsys_CfObjectImplPc_data[0x290] = {
@@ -72,24 +81,46 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) un
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 DECOMP_FORCEACTIVE(kyoshin_cfsys_CfObjectImplPc_data, __absorb_kyoshin_cfsys_CfObjectImplPc_data);
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cfsys_CfObjectImplPc_rodata[0x40] = {
-    0x00, 0x49, 0x4E, 0x50, 0x55, 0x54, 0x00, 0x45, 0x4E, 0x43, 0x4F, 0x00,
-    0x41, 0x57, 0x41, 0x4B, 0x45, 0x00, 0x48, 0x45, 0x4C, 0x50, 0x00, 0x52,
-    0x45, 0x56, 0x49, 0x56, 0x45, 0x00, 0x52, 0x45, 0x56, 0x49, 0x56, 0x45,
-    0x5F, 0x4D, 0x45, 0x00, 0x52, 0x45, 0x56, 0x49, 0x56, 0x45, 0x5F, 0x45,
-    0x4E, 0x44, 0x00, 0x46, 0x49, 0x53, 0x48, 0x49, 0x4E, 0x47, 0x00, 0x63,
-    0x6F, 0x72, 0x65, 0x00,
+// .rodata 0x40: NUL-led battle-command string table (retail lbl_eu_804FC758).
+// Code offsets: +1 INPUT, +7 ENCO, +0xC AWAKE, +0x12 HELP, +0x17 REVIVE,
+// +0x1E REVIVE_ME, +0x28 REVIVE_END, +0x33 FISHING, +0x3B core.
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) char lbl_eu_804FC758[0x40] =
+    "\0INPUT\0ENCO\0AWAKE\0HELP\0REVIVE\0REVIVE_ME\0REVIVE_END\0FISHING\0core";
+// .sdata2 0x40: battle float/double pool in retail order. Elv-style struct so
+// MWCC cannot reorder by first use; the explicit pad word mirrors retail +0xC.
+// (lbl_eu_80666BD8 owns the int->double bias; u32->double conversions still
+// pool an anon duplicate after this struct -> drop_data_tail 0x40 in UNIT_RULES.)
+struct Sdata2_ImplPc {
+    float f_BC8;   // 1.0
+    float f_BCC;   // 0.0
+    float f_BD0;   // 0.01
+    u32 pad_BD4;
+    double d_BD8;  // 2^52 (int->double bias)
+    double d_BE0;  // 2^52 + 2^31 (unsigned bias)
+    float f_BE8;   // 100.0
+    float f_BEC;   // 0.15
+    float f_BF0;   // -1.0
+    float f_BF4;   // 10.0
+    float f_BF8;   // 30.0
+    float f_BFC;   // 15.0
+    float f_C00;   // -10.0
+    float f_C04;   // trailing 0.0 pad
 };
-DECOMP_FORCEACTIVE(kyoshin_cfsys_CfObjectImplPc_rodata, __absorb_kyoshin_cfsys_CfObjectImplPc_rodata);
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_cfsys_CfObjectImplPc_sdata2[0x40] = {
-    0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00,
-    0x3E, 0x19, 0x99, 0x9A, 0xBF, 0x80, 0x00, 0x00, 0x41, 0x20, 0x00, 0x00,
-    0x41, 0xF0, 0x00, 0x00, 0x41, 0x70, 0x00, 0x00, 0xC1, 0x20, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const Sdata2_ImplPc sdata2_ImplPc = {
+    1.0f, 0.0f, 0.01f, 0, 4503599627370496.0, 4503601774854144.0,
+    100.0f, 0.15f, -1.0f, 10.0f, 30.0f, 15.0f, -10.0f, 0.0f
 };
-DECOMP_FORCEACTIVE(kyoshin_cfsys_CfObjectImplPc_sdata2, __absorb_kyoshin_cfsys_CfObjectImplPc_sdata2);
+#define lbl_eu_80666BC8 sdata2_ImplPc.f_BC8
+#define lbl_eu_80666BCC sdata2_ImplPc.f_BCC
+#define lbl_eu_80666BD0 sdata2_ImplPc.f_BD0
+#define lbl_eu_80666BE0 sdata2_ImplPc.d_BE0
+#define lbl_eu_80666BE8 sdata2_ImplPc.f_BE8
+#define lbl_eu_80666BEC sdata2_ImplPc.f_BEC
+#define lbl_eu_80666BF0 sdata2_ImplPc.f_BF0
+#define lbl_eu_80666BF4 sdata2_ImplPc.f_BF4
+#define lbl_eu_80666BF8 sdata2_ImplPc.f_BF8
+#define lbl_eu_80666BFC sdata2_ImplPc.f_BFC
+#define lbl_eu_80666C00 sdata2_ImplPc.f_C00
 
 
 // Minimal cf::CBattleManager view (the full header conflicts with this TU's
@@ -2196,7 +2227,7 @@ L_tail:
     cf::CfObjectImplPc298Res* res = bt->v298();
     bt = self->field_18;
     cf::CfObjectImplPc2A4Sub* sub = res->field_50;
-    u8* info = func_8009D7E4(func_8009EC9C(bt->field_3F28) + 0x1c, 5);
+    u8* info = func_8009D7E4((u8*)func_8009EC9C(bt->field_3F28) + 0x1c, 5);
     if (info[0x1c] != 0) {
         return;
     }

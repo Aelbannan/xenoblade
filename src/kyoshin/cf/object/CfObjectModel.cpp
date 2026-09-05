@@ -958,126 +958,480 @@ ret0:
     return 0;
 }
 
-// absorb: split1 retail data sections
-// generated from retail object bytes (reloc-zeroed)
-__declspec(section ".data") __attribute__((aligned(8))) unsigned char __absorb_kyoshin_cf_object_CfObjectModel_cpp_data[0x568] __attribute__((used)) = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4E, 0x57, 0x34, 0x52,
-    0x3A, 0x46, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x20, 0x61, 0x73, 0x73, 0x65,
-    0x72, 0x74, 0x69, 0x6F, 0x6E, 0x20, 0x49, 0x73, 0x56, 0x61, 0x6C, 0x69,
-    0x64, 0x28, 0x29, 0x00, 0x67, 0x33, 0x64, 0x5F, 0x72, 0x65, 0x73, 0x6E,
-    0x6F, 0x64, 0x65, 0x5F, 0x61, 0x63, 0x2E, 0x68, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
+// --- typified .data (layout from build/us/asm/kyoshin/cf/object/CfObjectModel.s) ---
+// Two full vtables + RTTI locator list + assert strings. Slots carrying
+// relocs emit zero bytes + ADDR32 relocs in the .o, matching retail (the
+// gate compares bytes; reloc names are ignored once bytes match). Targets
+// owned by other TUs are extern (UNDEF here, resolved at link via the
+// global symbol map). The two vtable bodies use stand-in names:
+// CfObjectModel.hpp pins lbl_eu_80529318/805294E0 as u8[] for other TUs,
+// so pointer tables cannot take those spellings in this TU; UNIT_RULES
+// exact_renames maps them onto the retail labels for the link.
+extern "C" {
+void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv();
+void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv();
+void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
+void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
+void CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv();
+void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv();
+void CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv();
+void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv();
+void __dt__Q22cf11CfObjectMapFv();
+void checkTarget__Q22cf11CfObjectMapFv();
+void clearStatus__Q22cf11CfObjectMapFv();
+void dispatchMapState__Q22cf11CfObjectMapFv();
+void cleanupMap__Q22cf11CfObjectMapFv();
+void nopMap__Q22cf11CfObjectMapFv();
+void isObjectMapReady__Q22cf11CfObjectMapFv();
+void setMapScale__Q22cf11CfObjectMapFv();
+void setMapVisibility__Q22cf11CfObjectMapFv();
+void setMapId__Q22cf11CfObjectMapFv();
+void setMapEffectFlag__Q22cf11CfObjectMapFv();
+void __dt__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf();
+void CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi();
+void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv();
+void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
+void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv();
+void CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc29__Q22cf8CfObjectFf();
+void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc31__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
+void CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv();
+void CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc7__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc8__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv();
+void CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv();
+}
+extern char lbl_eu_80661D08[];
+extern char lbl_eu_806618E8[];
+extern char lbl_eu_806618F0[];
+extern char lbl_eu_806618F8[];
+extern char lbl_eu_80661900[];
+extern const void* lbl_eu_80529128[114];
+extern const void* lbl_eu_805292F0[10];
+extern const void* modelVtable29318[114];
+extern const void* modelVtable294E0[94];
+
+// CfObjectMap-side vtable (0x1C8): sdata locator + CObjectState/Param slots,
+// CfObjectMap/CfObject slots, then the CfObjectModel tail.
+__declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu_80529128[114] = {
+    lbl_eu_80661D08, 0,
+    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
+    (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)__dt__Q22cf11CfObjectMapFv,
+    (const void*)checkTarget__Q22cf11CfObjectMapFv,
+    (const void*)clearStatus__Q22cf11CfObjectMapFv,
+    (const void*)dispatchMapState__Q22cf11CfObjectMapFv,
+    (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
+    (const void*)cleanupMap__Q22cf11CfObjectMapFv,
+    (const void*)nopMap__Q22cf11CfObjectMapFv,
+    (const void*)CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
+    (const void*)isObjectMapReady__Q22cf11CfObjectMapFv,
+    (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
+    (const void*)setMapScale__Q22cf11CfObjectMapFv,
+    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
+    (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc36__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc53__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
+    (const void*)setMapVisibility__Q22cf11CfObjectMapFv,
+    (const void*)CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc69__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv,
+    (const void*)setMapId__Q22cf11CfObjectMapFv,
+    (const void*)setMapEffectFlag__Q22cf11CfObjectMapFv,
+    (const void*)CfObjectModel_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
 };
+// RTTI locator list (0x28): sdata pairs + nulls.
+__declspec(section ".data") __attribute__((used)) const void* lbl_eu_805292F0[10] = {
+    lbl_eu_80661900, 0, lbl_eu_806618F8, 0, lbl_eu_806618F0, 0,
+    lbl_eu_806618E8, 0, 0, 0,
+};
+// CfObjectModel vtable (0x1C8) -> lbl_eu_80529318 via UNIT_RULES rename.
+__declspec(section ".data") __attribute__((used)) const void* modelVtable29318[114] = {
+    lbl_eu_806618E8, 0,
+    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
+    (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)__dt__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf,
+    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
+    (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc36__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc53__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc68__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc69__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc6__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc7__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc10__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc12__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc17__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
+};
+// CfObject vtable (0x178) -> lbl_eu_805294E0 via UNIT_RULES rename.
+__declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[94] = {
+    lbl_eu_806618F0, 0,
+    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)__dt__Q22cf8CfObjectFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv,
+    0, 0,
+    (const void*)CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf,
+    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv,
+    (const void*)CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc29__Q22cf8CfObjectFf,
+    (const void*)CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc31__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv,
+    0,
+    (const void*)CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv,
+    (const void*)CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv,
+};
+// Assert strings live in .data in retail (not .rodata). The 7-byte padding
+// after g3d_resnode_ac.h is folded into the second array so the all-zero
+// tail cannot migrate to .bss.
+__declspec(section ".data") __attribute__((used)) const char lbl_eu_80529658[0x20] = "NW4R:Failed assertion IsValid()";
+__declspec(section ".data") __attribute__((used)) const char lbl_eu_80529678[0x18] = "g3d_resnode_ac.h";
 
 // Typified retail data (replaces the old generated byte blobs). Layout from
 // build/us/asm/kyoshin/cf/object/CfObjectModel.s.

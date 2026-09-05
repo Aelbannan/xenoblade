@@ -27,6 +27,46 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/MTRand.hpp"
 #include "monolib/work/CEventFile.hpp"
+// Owning classes for the folded vtable slots (cf. CModelDispEquip.hpp):
+// +0x48/+0x9C/+0xA8 model slots -> CScnItemModel::vfunc48/vfunc9C/vfuncA8
+// (retail lbl_eu_8056DD70 words 18/39/42); +0xE0 act-param flush ->
+// CActParamAnim::func_8004B114; +0x74/+0x148 move slots ->
+// cf::CfObject UVF9/UVF62; +0x08 param slot -> CResLookup::getResourceBase;
+// +0x88 syswin slot -> CSysWin::loadSystemArc (retail lbl_eu_80536510).
+// The canonical headers declare these symbols with a different arity/type
+// than this TU's byte-exact retail decls (same scheme as
+// CModelDispEquip.hpp): hide the header copies so the class definitions
+// (CActParamAnim, CScnItemModel, CfObject, CResLookup, CSysWin) come through
+// intact while this TU keeps its own prototypes.
+#define func_8004B60C func_8004B60C_void_hidden
+#define func_8004B9D4 func_8004B9D4_hidden
+#define lbl_eu_805262F0 lbl_eu_805262F0_constchar_hidden
+#define lbl_eu_805262C8 lbl_eu_805262C8_constchar_hidden
+#define lbl_eu_8066A200 lbl_eu_8066A200_float_hidden
+#define func_8022B90C func_8022B90C_typed_hidden
+#define func_8022BFC8 func_8022BFC8_typed_hidden
+#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_typed_hidden
+#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_typed_hidden
+#define createArcResourceAccessor__10CLibLayoutFv createArcResourceAccessor__10CLibLayoutFv_typed_hidden
+#define func_800AA33C func_800AA33C_fixstr_hidden
+#define func_80496264 func_80496264_s32_hidden
+#include "kyoshin/action/CActParamAnim.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/IResInfo.hpp"
+#include "kyoshin/CSysWin.hpp"
+#undef func_8004B60C
+#undef func_8004B9D4
+#undef lbl_eu_805262F0
+#undef lbl_eu_805262C8
+#undef lbl_eu_8066A200
+#undef func_8022B90C
+#undef func_8022BFC8
+#undef __ct__17UnkClass_8045F564Fv
+#undef __dt__17UnkClass_8045F564Fv
+#undef createArcResourceAccessor__10CLibLayoutFv
+#undef func_800AA33C
+#undef func_80496264
 
 // forward declarations for scaffold thunk references
 // Retail calls every state runner out-of-line via its unmangled C-linkage
@@ -310,36 +350,120 @@ extern void* lbl_eu_806640D8;   // sdata: item-source pointer (func_802203D8)
 extern const u8 lbl_eu_806684E2;
 extern const u32 lbl_eu_806684E4;
 extern const u16 lbl_eu_806684E8;
-extern u8 lbl_eu_80576658[0x20];
-extern u8 lbl_eu_80576664[0x20];
+extern u8 lbl_eu_80576658[0xC];
+extern u8 lbl_eu_80576664[0xC];
 extern u32 lbl_eu_8065FC18[];
 
+// ===== typified split1 retail data (wave6) =====
+// .rodata: filter triple + class name in ONE struct (MWCC 8-packs separate
+// .rodata objects, which would pad the string to 0x10; retail packs it at
+// 0xC). The [0x18] class field absorbs retail's 2-byte gap at 0x22.
+// Only this TU references these labels, so member macros are link-safe.
+struct Rodata_MCMCHead {
+    u32 filt[3];
+    char cls[0x18];
+};
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const struct Rodata_MCMCHead rodata_MCMCHead = {
+    { 0x10, 0x100000, 0x200000 }, "CModelDispMakeCrystal"
+};
+#define lbl_eu_805090D8 (rodata_MCMCHead.filt)
+#define lbl_eu_805090E4 (rodata_MCMCHead.cls)
+// code offsets: +0 .chr, +0x11 .rec, +0x25 .arc, +0x38 MNU_skill, +0x42 help,
+// +0x47 MNU_sysmes, +0x52 name, +0x57 MNU_crystal, +0x63 info, +0x68 itemType,
+// +0xd1 format, +0xef ANM, +0xf3 class, +0x109 arc.
+__declspec(section ".rodata") __attribute__((used)) char lbl_eu_805090FC[0x114] =
+    "obj/oj820002.chr\000eff/rec/eu/eu01.rec\000menu/jp/McData.arc\000MNU_skill\000help\000MNU_sysmes\000name\000MNU_crystal\000info\000itemType\000lower_E\000upper_E\000lower_D\000upper_D\000lower_C\000upper_C\000lower_B\000upper_B\000lower_A\000upper_A\000lower_S\000upper_S\000/chr/jp/pc/mu%02d%02d%02d.mca\000ANM\000CModelDispMakeCrystal\000arc\000";
 
-
-
-
-// Same slot-4 virtual dispatch but no-arg (used on this+0xc8c in func_8021CE4C).
-// MWCC reserves 2 hidden vtable slots (RTTI), so declared index 2 => +0x10.
-struct CMCC8CFn {
-    virtual void m0();
-    virtual void m1();
-    virtual void m2();
+// .sdata: RTTI-ish pair (class name + .data RTTI pad, which stays in the
+// opaque .data absorb below, so the pad half stays an UNDEF read for now).
+extern "C" void* lbl_eu_80535F38[];
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806627E8[2] = {
+    lbl_eu_805090E4, lbl_eu_80535F38
 };
 
-// Virtual dispatch at vtable offset +0x88 (index 34): the CSysWin-dispatch
-// call in func_8021C6E4 on this+0xe78. MWCC reserves 2 hidden vtable slots
-// (RTTI), so the declared list is 2 shorter than the real method count.
-struct CMCSysWinFn {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20();  // declared index 32 => slot +0x88
+// .sdata2 0xA4: crystal float pool + tag words + owned 2^52 doubles, retail
+// order (Elv-style struct). Int tags (E0/E2/E4/E8) keep their UNDEF extern
+// reads: a known const would fold into immediates and regress .text (MES
+// u3C precedent). MWCC pools one anon conversion double after this struct
+// -> drop_data_tail 0xA4 in UNIT_RULES.
+struct Sdata2_MCMC {
+    float f_A0, f_A4, f_A8, f_AC, f_B0, f_B4, f_B8, f_BC;
+    float f_C0, f_C4, f_C8, f_CC, f_D0, f_D4, f_D8, f_DC;
+    u16 u_E0; u8 b_E2; u8 pad_E3; u32 u_E4; u16 u_E8; u16 pad_EA;
+    float f_EC;
+    double d_F0;
+    float f_F8, f_FC, f_500, f_504, f_508, f_50C;
+    float f_510a, f_510b;
+    float f_518; u32 pad_51C;
+    double d_520;
+    float f_528, f_52C;
+    double d_530;
+    float f_538a, f_538b;
+    float f_540;
 };
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const Sdata2_MCMC sdata2_MCMC = {
+    1.0f, 0.0f, 0.063f, -0.15f, -1.659f, 2.037f, -0.941f, 70.0f,
+    -110.0f, -86.0f, 72.0f, 5.0f, 0.2f, 50.0f, 30.0f, 20.0f,
+    0xFFFF, 0xFF, 0, 0xFFFFFFFF, 0xFFFF, 0,
+    0.01f,
+    4503599627370496.0,
+    100.0f, 0.04f, 25.0f, 1.5f, 1.05f, -1.3f,
+    -20.0f, 0.0f,
+    0.0f, 0,
+    4503599627370496.0,
+    30.0f, 0.01f,
+    4503601774854144.0,
+    1.0f, 0.0f,
+    0.0f
+};
+#define lbl_eu_806684A0 sdata2_MCMC.f_A0
+#define lbl_eu_806684A4 sdata2_MCMC.f_A4
+#define lbl_eu_806684A8 sdata2_MCMC.f_A8
+#define lbl_eu_806684AC sdata2_MCMC.f_AC
+#define lbl_eu_806684B0 sdata2_MCMC.f_B0
+#define lbl_eu_806684B4 sdata2_MCMC.f_B4
+#define lbl_eu_806684B8 sdata2_MCMC.f_B8
+#define lbl_eu_806684BC sdata2_MCMC.f_BC
+#define lbl_eu_806684C0 sdata2_MCMC.f_C0
+#define lbl_eu_806684C4 sdata2_MCMC.f_C4
+#define lbl_eu_806684C8 sdata2_MCMC.f_C8
+#define lbl_eu_806684CC sdata2_MCMC.f_CC
+#define lbl_eu_806684D0 sdata2_MCMC.f_D0
+#define lbl_eu_806684D4 sdata2_MCMC.f_D4
+#define lbl_eu_806684D8 sdata2_MCMC.f_D8
+#define lbl_eu_806684DC sdata2_MCMC.f_DC
+#define lbl_eu_806684EC sdata2_MCMC.f_EC
+#define lbl_eu_806684F8 sdata2_MCMC.f_F8
+#define lbl_eu_806684FC sdata2_MCMC.f_FC
+#define lbl_eu_80668500 sdata2_MCMC.f_500
+#define lbl_eu_80668504 sdata2_MCMC.f_504
+#define lbl_eu_80668508 sdata2_MCMC.f_508
+#define lbl_eu_8066850C sdata2_MCMC.f_50C
+#define lbl_eu_80668510 sdata2_MCMC.f_510a
+#define lbl_eu_80668528 sdata2_MCMC.f_528
+#define lbl_eu_8066852C sdata2_MCMC.f_52C
+
+// .bss 2x0xC (crystal vec work) + .sbss crystal-state bytes (hpp declares u8[8]).
+// Plain zero-init: MWCC sorts by size into .bss/.sbss like the old absorbs.
+__attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80576658[0xC];
+__attribute__((used)) u8 lbl_eu_80576664[0xC];
+__attribute__((aligned(8))) __attribute__((used)) u8 lbl_eu_80664718[8];
+
+
+
+
+
+// (was CMCC8CFn: no-arg virtual dispatch at vtable offset +0x10 on the
+// CMCEff family (this+0xc8c/0xca4/0xcbc/0xcd4/0xd78/0xdcc/0xde4). Retail
+// tables (lbl_eu_80536114 et al.) carry startInAnim (Start/Failure) or play
+// (UpRed/UpBlue/UpGreen/UpRank/Divide) at the +0x10 word; startInAnim is now
+// a real virtual on CMCEffStart, so call sites dispatch through it and land
+// on the retail word for every leaf.)
+
+// (was CMCSysWinFn: virtual dispatch at vtable offset +0x88, the CSysWin call
+// in func_8021C6E4 on this+0xe78. Retail table lbl_eu_80536510 word 34 is
+// CSysWin::loadSystemArc (def: func_8022B6F4); the call site now uses the
+// owning class directly.)
 
 // Entry at this+0x13c0 (stride 0x34); a 4-bit type at bits 12-15.
 struct CMCStep {
@@ -348,26 +472,10 @@ struct CMCStep {
     u32 _pad16 : 16;
 };
 
-// Virtual dispatch at vtable offset +0xE0 (index 0x38): the flush call in
-// func_8021FB68 on the inline object at the sub-struct +0x8.
-// NOTE: MWCC adds 2 hidden vtable slots (RTTI), so the declared method list
-// must be 2 shorter than the real vtable to index the retail slot.
-struct CMCVtE0 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
-    virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();
-    virtual void m34(); virtual void m35(); virtual void m36();  // index 0x38 => +0xE0
-};
+// (was CMCVtE0: virtual dispatch at vtable offset +0xE0, the flush call in
+// func_8021FB68 on the inline object at the sub-struct +0x8. Retail vtable
+// word 54 is CActParamAnim::func_8004B114 (cf. CModelDispEquip.hpp); call
+// sites now use the owning class directly.)
 
 void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
 {
@@ -733,16 +841,10 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     __dt__13CMCGetItemBoxFv(boxTmp, -1);
 }
 
-// Virtual dispatch at vtable offset +0x48 (index 18), taking one float arg.
-// Used on this+0x20 and on the per-slot objects at this+0x44 (stride 0x5cc).
-// MWCC reserves 2 hidden vtable slots (RTTI): declared index 16 => +0x48.
-struct CMCVt48 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m16(float f1);  // declared index 16 => +0x48
-};
+// (was CMCVt48: virtual dispatch at vtable offset +0x48 taking one float
+// arg, on this+0x20 and the per-slot objects. Retail table lbl_eu_8056DD70
+// word 18 is CScnItemModel::vfunc48 (cf. CModelDispEquip.hpp); call sites
+// now use the owning class directly.)
 
 void CModelDispMakeCrystal::initCrystalSubStruct() {
     *(unsigned long*)this = 0;
@@ -828,7 +930,7 @@ void func_8021C6E4(CModelDispMakeCrystal* self)
             getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805090FC[0x25], self, 0, 0);
     func_80222848(base + 0xc18);
     func_801F34F4(base + 0xe38);
-    reinterpret_cast<CMCSysWinFn*>(base + 0xe78)->m20();
+    reinterpret_cast<CSysWin*>(base + 0xe78)->loadSystemArc();
     base[0xbe9] = 0;
     base[0xbdd] = 0;
     base[0x2dd2] = 0;
@@ -1011,12 +1113,12 @@ void func_8021CC60(CModelDispMakeCrystal* self)
         }
         void* p20 = *reinterpret_cast<void**>(base + 0x20);
         if (p20) {
-            reinterpret_cast<CMCVt48*>(p20)->m16(*fbe0);
+            reinterpret_cast<CScnItemModel*>(p20)->vfunc48(*fbe0);
         }
         for (u8 i = 0; i < 2; i++) {
             void* p = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
             if (p) {
-                reinterpret_cast<CMCVt48*>(p)->m16(*fbe0);
+                reinterpret_cast<CScnItemModel*>(p)->vfunc48(*fbe0);
             }
         }
     }
@@ -1067,7 +1169,7 @@ void __declspec(noinline) func_8021CE4C(CModelDispMakeCrystal* self)
             }
         }
     }
-    reinterpret_cast<CMCC8CFn*>(base + 0xc8c)->m2();
+    reinterpret_cast<CMCEffStart*>(base + 0xc8c)->startInAnim();
     base[0xbdd] = 0x1;
     func_80220954(self, 0, func_801392B4(base[0xbbc]));
 }
@@ -1175,21 +1277,9 @@ void __declspec(noinline) func_8021D168(CModelDispMakeCrystal* self)
     func_80220954(self, 1, func_801392B4(base[0x5f0]));
 }
 
-// Virtual dispatch at vtable offset +0xA8 (index 0x2a), returns a pointer.
-// MWCC reserves 2 hidden vtable slots (RTTI): declared index 0x28 => +0xA8.
-struct CMCVtA8 {
-    virtual void* m00(); virtual void* m01(); virtual void* m02(); virtual void* m03();
-    virtual void* m04(); virtual void* m05(); virtual void* m06(); virtual void* m07();
-    virtual void* m08(); virtual void* m09(); virtual void* m0A(); virtual void* m0B();
-    virtual void* m0C(); virtual void* m0D(); virtual void* m0E(); virtual void* m0F();
-    virtual void* m10(); virtual void* m11(); virtual void* m12(); virtual void* m13();
-    virtual void* m14(); virtual void* m15(); virtual void* m16(); virtual void* m17();
-    virtual void* m18(); virtual void* m19(); virtual void* m1A(); virtual void* m1B();
-    virtual void* m1C(); virtual void* m1D(); virtual void* m1E(); virtual void* m1F();
-    virtual void* m20(); virtual void* m21(); virtual void* m22(); virtual void* m23();
-    virtual void* m24(); virtual void* m25(); virtual void* m26(); virtual void* m27();
-    virtual void* m28();  // declared index 0x28 => +0xA8
-};
+// (was CMCVtA8: virtual dispatch at vtable offset +0xA8 returning a word.
+// Retail table lbl_eu_8056DD70 word 42 is CScnItemModel::vfuncA8 (cf.
+// CModelDispEquip.hpp); call sites now use the owning class directly.)
 
 // Retail symbol is the unmangled C-linkage "setCrystalPosEntry"; noinline:
 // retail calls it out-of-line (bl) from func_80220128/func_802211CC.
@@ -1239,9 +1329,8 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
             *reinterpret_cast<void**>(base + 0x14) = e;
             if (e != nullptr) {
                 func_804E3D0C(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
-                void* r = reinterpret_cast<CMCVtA8*>(*reinterpret_cast<void**>(base + 0x20))->m28();
-                *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x14)) + 0x14) =
-                    reinterpret_cast<u32>(r);
+                u32 r = reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfuncA8();
+                *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x14)) + 0x14) = r;
             }
         }
         for (u8 i = 0; i < 2; i++) {
@@ -1470,7 +1559,7 @@ void __declspec(noinline) func_8021D9B8(CModelDispMakeCrystal* self)
     } else {
         // Failure: crystal count too low.
         base[0xbdd] = 0xa;
-        reinterpret_cast<CMCC8CFn*>(base + 0xd78)->m2();
+        reinterpret_cast<CMCEffStart*>(base + 0xd78)->startInAnim();
         for (u8 i = 0; i < 2; i++) {
             // Same dead-duplicate-beq shape as the success loop above.
             if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
@@ -1539,7 +1628,7 @@ void __declspec(noinline) func_8021DC1C(CModelDispMakeCrystal* self)
         if (*reinterpret_cast<u16*>(entries + 4) >= 0xc8) {
             base[0xbdd] = 0xd;
             reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startChange();
-            reinterpret_cast<CMCC8CFn*>(base + 0xdcc)->m2();
+            reinterpret_cast<CMCEffStart*>(base + 0xdcc)->startInAnim();
             for (u8 i = 0; i < 2; i++) {
                 u8* s = base + (u32)i * 0x5cc;
                 if (*reinterpret_cast<u32*>(s + 0x44)) {
@@ -1577,7 +1666,7 @@ void __declspec(noinline) func_8021DD0C(CModelDispMakeCrystal* self)
     if (count >= 0x12c) {
         // Success path: full crystal count reached.
         base[0xbdd] = 0xe;
-        reinterpret_cast<CMCC8CFn*>(base + 0xde4)->m2();
+        reinterpret_cast<CMCEffStart*>(base + 0xde4)->startInAnim();
         reinterpret_cast<CMCEffCrystal*>(base + 0xd90)->startSpecial();
         for (u8 i = 0; i < 2; i++) {
             u8* s = base + (u32)i * 0x5cc;
@@ -2084,12 +2173,12 @@ void __declspec(noinline) func_8021EB00(CModelDispMakeCrystal* self)
     }
     void* p20 = *reinterpret_cast<void**>(base + 0x20);
     if (p20) {
-        reinterpret_cast<CMCVt48*>(p20)->m16(*fbe0);
+        reinterpret_cast<CScnItemModel*>(p20)->vfunc48(*fbe0);
     }
     for (u8 i = 0; i < 2; i++) {
         void* p = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
         if (p) {
-            reinterpret_cast<CMCVt48*>(p)->m16(*fbe0);
+            reinterpret_cast<CScnItemModel*>(p)->vfunc48(*fbe0);
         }
     }
     if (!(*fbe0 < lbl_eu_806684A0)) {
@@ -2601,7 +2690,7 @@ extern "C" void func_8021FB68(CModelDispMakeCrystal* self, u8* obj)
     CDeviceVI::waitForDrawDone();
     if (*reinterpret_cast<u32*>(obj) == 0) return;
     func_8004B6BC(obj + 0x8, *reinterpret_cast<void**>(obj + 0x4));
-    reinterpret_cast<CMCVtE0*>(obj + 0x8)->m36();
+    reinterpret_cast<CActParamAnim*>(obj + 0x8)->func_8004B114();
     func_80495E60(*reinterpret_cast<void**>(obj + 0x4));
     func_80495E60(reinterpret_cast<void*>(*reinterpret_cast<u32*>(obj + 0x0)));
     *reinterpret_cast<u32*>(obj + 0x0) = 0;
@@ -2784,7 +2873,7 @@ void func_80220128(CModelDispMakeCrystal* self)
             (u16)slot,
             (u16)((s8)d + *(u16*)(entries + ((u16)slot << 3) + 4)),
             (u16)(s8)d);
-        reinterpret_cast<CMCC8CFn*>((u8*)self + 0xca4)->m2();
+        reinterpret_cast<CMCEffStart*>((u8*)self + 0xca4)->startInAnim();
         func_802200A8(self);
         func_8021FC28(self, 0);
         playUISound__FUl(0x8d);
@@ -2815,7 +2904,7 @@ void func_80220128(CModelDispMakeCrystal* self)
                 (u16)((s8)d + *(u16*)(entries + ((u8)i << 3) + 4)),
                 (u16)(s8)d);
         }
-        reinterpret_cast<CMCC8CFn*>((u8*)self + 0xcbc)->m2();
+        reinterpret_cast<CMCEffStart*>((u8*)self + 0xcbc)->startInAnim();
         func_802200A8(self);
         func_8021FC28(self, 0);
         playUISound__FUl(0x8c);
@@ -2832,7 +2921,7 @@ void func_80220128(CModelDispMakeCrystal* self)
             reinterpret_cast<CMCCylinderGauge*>((u8*)self + 0xbec)->addFillValue(
                 lbl_eu_806684A4);
         }
-        reinterpret_cast<CMCC8CFn*>((u8*)self + 0xcd4)->m2();
+        reinterpret_cast<CMCEffStart*>((u8*)self + 0xcd4)->startInAnim();
         playUISound__FUl(0xb0);
         break;
     }
@@ -3158,7 +3247,7 @@ void func_80220C34(CModelDispMakeCrystal* self)
                           *reinterpret_cast<u32*>(base + 0x28), -1, 1);
         func_80485684(*reinterpret_cast<void**>(base + 0x20), 1);
         func_80482DF4(*reinterpret_cast<void**>(base + 0x20), 1);
-        reinterpret_cast<CMCVt48*>(*reinterpret_cast<void**>(base + 0x20))->m16(
+        reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfunc48(
             *reinterpret_cast<f32*>(base + 0xbe0));
         void* p1 = func_8048315C(*reinterpret_cast<void**>(base + 0x20));
         u8* s1 = reinterpret_cast<u8*>(lbl_eu_80576658);
@@ -3179,9 +3268,8 @@ void func_80220C34(CModelDispMakeCrystal* self)
             *reinterpret_cast<void**>(base + 0x10) = e;
             if (e != nullptr) {
                 func_804E3D0C(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
-                void* r = reinterpret_cast<CMCVtA8*>(*reinterpret_cast<void**>(base + 0x20))->m28();
-                *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x10)) + 0x14) =
-                    reinterpret_cast<u32>(r);
+                u32 r = reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfuncA8();
+                *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x10)) + 0x14) = r;
             }
         }
         base[0xbe9] = 1;
@@ -3246,7 +3334,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     if (actor != nullptr) {
         crystalCount = actor->field_3f2c;
         if (crystalCount == 0) ready = 0;
-        if (reinterpret_cast<CMCryMove*>(&actor->move)->m74() == 0) ready = 0;
+        if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc9() == 0) ready = 0;
         if (sub->field_5a4 == 0) {
             if (sub->field_5a0 == 0) {
                 // Load the crystal model file for this actor.
@@ -3268,7 +3356,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Build the crystal display model for this slot.
         sub->field_00 = func_80495E8C(objs->field_0c, crystalCount, -1, 1);
         sub->mCrystalVals[1] =
-            (static_cast<u32>(reinterpret_cast<CMCryMove*>(&actor->move)->m82(1)) >> 12) &
+            (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(1) >> 12) &
             0x3ff;
         s16 be = func_800BE954(&actor->move);
         CMCCryParamSlot* params =
@@ -3276,18 +3364,18 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Crystal attachment points 2..5; do-while keeps the retail loop shape.
         u8 idx = 2;
         do {
-            if (reinterpret_cast<CMCryMove*>(&actor->move)->m82(idx) != 0) {
-                void* obj = params[idx].field_2c->m02();
+            if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) != 0) {
+                void* obj = params[idx].field_2c->getResourceBase(&params[idx], actor->field_3f28);
                 func_804831C4(sub->field_00, obj);
                 sub->mCrystalVals[idx] =
-                    (static_cast<u32>(reinterpret_cast<CMCryMove*>(&actor->move)->m82(idx)) >>
+                    (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) >>
                      12) &
                     0x3ff;
             }
         } while (++idx <= 5);
         u32 handle = sub->field_5a4;
         sub->field_04 = func_800584B8(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
-        reinterpret_cast<CMCVtE0*>(reinterpret_cast<u8*>(sub) + 0x8)->m36();
+        reinterpret_cast<CActParamAnim*>(reinterpret_cast<u8*>(sub) + 0x8)->func_8004B114();
         func_8004B624(reinterpret_cast<u8*>(sub) + 0x8, sub->field_00, sub->field_04, handle);
         sub->field_14 |= 0x160;
         func_80200388(reinterpret_cast<u8*>(sub) + 0x8,
@@ -3301,8 +3389,8 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         posB[3] = sub->field_5bc;
         posB[4] = sub->field_5c0;
         posB[5] = sub->field_5c4;
-        reinterpret_cast<CMCModel*>(sub->field_00)->m12(objs->field_be0);
-        reinterpret_cast<CMCModel*>(sub->field_00)->m27(3, 0);
+        reinterpret_cast<CScnItemModel*>(sub->field_00)->vfunc48(objs->field_be0);
+        reinterpret_cast<CScnItemModel*>(sub->field_00)->vfunc9C(3, 0);
         if (sub->field_00 != nullptr) {
             func_8004B9D4(reinterpret_cast<u8*>(sub) + 0x8, 0x21, 0, -1, 0);
         }
@@ -3388,7 +3476,7 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
         sub->field_04 = func_800584B8(
             *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 0xc), f5a4,
             &lbl_eu_805090FC[0xef]);
-        reinterpret_cast<CMCVtE0*>(subp + 0x8)->m36();
+        reinterpret_cast<CActParamAnim*>(subp + 0x8)->func_8004B114();
         func_8004B624(subp + 0x8, sub->field_00, sub->field_04, f5a4);
         sub->field_14 |= 0x160;
         func_80200388(
@@ -3403,9 +3491,9 @@ void func_802211CC(CModelDispMakeCrystal* self, u8* subp)
         g1[3] = sub->field_5bc;
         g1[4] = sub->field_5c0;
         g1[5] = sub->field_5c4;
-        reinterpret_cast<CMCModel*>(sub->field_00)->m12(
+        reinterpret_cast<CScnItemModel*>(sub->field_00)->vfunc48(
             *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0xbe0));
-        reinterpret_cast<CMCModel*>(sub->field_00)->m27(3, 0);
+        reinterpret_cast<CScnItemModel*>(sub->field_00)->vfunc9C(3, 0);
         if (sub->field_00 != 0) {
             func_8004B9D4(subp + 0x8, 0x21, 0, -1, 0);
         }
@@ -3751,11 +3839,4 @@ void sinit_80221DDC() {
 /* ===== BEGIN split1 absorb (single-blob) ===== */
 #include <decomp.h>
 __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_data[0x1B8] = { 0x19, 0x19, 0x32, 0x50, 0x0A, 0x0A, 0x05, 0x5A, 0x05, 0x3C, 0x0F, 0x19, 0x0F, 0x3C, 0x19, 0x0A, 0x0A, 0x50, 0x0A, 0x50, 0x0A, 0x05, 0x5A, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_rodata[0x138] = { 0x00, 0x00, 0x00, 0x10, 0x00, 0x10, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x43, 0x4D, 0x6F, 0x64, 0x65, 0x6C, 0x44, 0x69, 0x73, 0x70, 0x4D, 0x61, 0x6B, 0x65, 0x43, 0x72, 0x79, 0x73, 0x74, 0x61, 0x6C, 0x00, 0x00, 0x00, 0x6F, 0x62, 0x6A, 0x2F, 0x6F, 0x6A, 0x38, 0x32, 0x30, 0x30, 0x30, 0x32, 0x2E, 0x63, 0x68, 0x72, 0x00, 0x65, 0x66, 0x66, 0x2F, 0x72, 0x65, 0x63, 0x2F, 0x65, 0x75, 0x2F, 0x65, 0x75, 0x30, 0x31, 0x2E, 0x72, 0x65, 0x63, 0x00, 0x6D, 0x65, 0x6E, 0x75, 0x2F, 0x6A, 0x70, 0x2F, 0x4D, 0x63, 0x44, 0x61, 0x74, 0x61, 0x2E, 0x61, 0x72, 0x63, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x73, 0x6B, 0x69, 0x6C, 0x6C, 0x00, 0x68, 0x65, 0x6C, 0x70, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x73, 0x79, 0x73, 0x6D, 0x65, 0x73, 0x00, 0x6E, 0x61, 0x6D, 0x65, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x63, 0x72, 0x79, 0x73, 0x74, 0x61, 0x6C, 0x00, 0x69, 0x6E, 0x66, 0x6F, 0x00, 0x69, 0x74, 0x65, 0x6D, 0x54, 0x79, 0x70, 0x65, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x45, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x45, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x44, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x44, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x43, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x43, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x42, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x42, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x41, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x41, 0x00, 0x6C, 0x6F, 0x77, 0x65, 0x72, 0x5F, 0x53, 0x00, 0x75, 0x70, 0x70, 0x65, 0x72, 0x5F, 0x53, 0x00, 0x2F, 0x63, 0x68, 0x72, 0x2F, 0x6A, 0x70, 0x2F, 0x70, 0x63, 0x2F, 0x6D, 0x75, 0x25, 0x30, 0x32, 0x64, 0x25, 0x30, 0x32, 0x64, 0x25, 0x30, 0x32, 0x64, 0x2E, 0x6D, 0x63, 0x61, 0x00, 0x41, 0x4E, 0x4D, 0x00, 0x43, 0x4D, 0x6F, 0x64, 0x65, 0x6C, 0x44, 0x69, 0x73, 0x70, 0x4D, 0x61, 0x6B, 0x65, 0x43, 0x72, 0x79, 0x73, 0x74, 0x61, 0x6C, 0x00, 0x61, 0x72, 0x63, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_sdata[0x8] = { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_sdata2[0xA4] = { 0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3D, 0x81, 0x06, 0x25, 0xBE, 0x19, 0x99, 0x9A, 0xBF, 0xD4, 0x5A, 0x1D, 0x40, 0x02, 0x5E, 0x35, 0xBF, 0x70, 0xE5, 0x60, 0x42, 0x8C, 0x00, 0x00, 0xC2, 0xDC, 0x00, 0x00, 0xC2, 0xAC, 0x00, 0x00, 0x42, 0x90, 0x00, 0x00, 0x40, 0xA0, 0x00, 0x00, 0x3E, 0x4C, 0xCC, 0xCD, 0x42, 0x48, 0x00, 0x00, 0x41, 0xF0, 0x00, 0x00, 0x41, 0xA0, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A, 0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0xC8, 0x00, 0x00, 0x3D, 0x23, 0xD7, 0x0A, 0x41, 0xC8, 0x00, 0x00, 0x3F, 0xC0, 0x00, 0x00, 0x3F, 0x86, 0x66, 0x66, 0xBF, 0xA6, 0x66, 0x66, 0xC1, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41, 0xF0, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-__attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_bss[0x18];
-DECOMP_FORCEACTIVE(__absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_bss, __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_bss)
-__attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_sbss[0x8];
-DECOMP_FORCEACTIVE(__absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_sbss, __absorb_kyoshin_makecrystal_CModelDispMakeCrystal_cpp_sbss)
 /* ===== END split1 absorb ===== */

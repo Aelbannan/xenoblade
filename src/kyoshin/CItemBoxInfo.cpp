@@ -1,343 +1,189 @@
 // Auto-scaffolded catalog TU for kyoshin/CItemBoxInfo
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+// harness_catalog dropped: this TU uses none of its VM/script-helper
+// headers, and it drags in the stale void*/void* CItem_initItemImplInstances
+// declaration (via CTaskGameEff -> CfGameManager) that conflicts with the
+// real one in kyoshin/cf/CItem.hpp (see below).
+#include <cstring>
+// Real item-impl owner BEFORE CItemBoxInfo.hpp: that header defines a
+// CItem_initItemImplInstances function-like macro that would rewrite the
+// declaration inside this header.
+#include "kyoshin/cf/CItem.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+// Real item-impl accessor (CItem.hpp) for this TU only: undo the
+// itemimplshim macro from CItemBoxInfo.hpp (other TUs keep using it).
+#undef CItem_initItemImplInstances
 
-// Local item-impl vt shims for this TU only (primary header no longer provides them).
-// These are kept here to keep this NonMatching TU building while the primary
-// header's fake vtable has been deleted (Wave-21 gate).
-struct CItemImplVt {
-    virtual u32 _v08(void* item);
-    virtual void _v0C();
-    virtual void _v10(void* item);
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void* _v20(void* item);
-    virtual void _v24();
-    virtual u16 _v28(void* item, const char* str);
-    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
-    virtual u8 _v30(void* item);
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual s16 _v40(void* item, u32 i);
-    virtual void _v44();
-    virtual void _v48(void* item);
-    virtual u16 _v4C(void* item, u32 i);
-    virtual void _v50();
-    virtual u16 _v54(void* item);
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual u8 _v64(void* item, u32 i);
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual u32 _v90(void* item);
-};
-struct CItemImplVt54 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void* _v20(void* item);
-    virtual void _v24();
-    virtual void _v28();
-    virtual CItemBoxSubRecord* _v2C(void* item, u32 i);
-    virtual u8 _v30(void* item);
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual s16 _v40(void* item, u32 i);
-    virtual void _v44();
-    virtual void _v48();
-    virtual u16 _v4C(void* item, u32 i);
-    virtual void _v50();
-    virtual u32 _v54(void* item);
+// ===== typified split1 retail data (wave6) =====
+// MWCC 8-packs .rodata/.data objects: only labels at 8-aligned boundaries
+// get real symbols; interior names keep UNDEF extern reads (words stay zero,
+// relocs gate-skipped), exactly like the pre-typify linkage.
+
+// POD quad color (moved up from below: the .sbss defs need the complete type).
+struct E43Quad {
+    s16 r, g, b, a;
 };
 
-// absorb: split1 retail data sections - top
+// .rodata [0..0x48]: six "percent_X" rank strings, one 8-aligned object.
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) char lbl_eu_805062E8[0x48] =
+    "percent_E\000\000\000percent_D\000\000\000percent_C\000\000\000percent_B\000\000\000percent_A\000\000\000percent_S\000";
+
+// .rodata [0x48..0x80]: category string tables (7-word pointer tables, one
+// 8-aligned struct). Contents are UNDEF extern reads: the percent strings
+// (except the base) have no 8-aligned address for real symbols.
+extern const u8 lbl_eu_80668008[];
+extern const char lbl_eu_805062F4[];
+extern const char lbl_eu_80506300[];
+extern const char lbl_eu_8050630C[];
+extern const char lbl_eu_80506318[];
+extern const char lbl_eu_80506324[];
+struct Rodata_ItemBoxTbls { const void* t1[7]; const void* t2[7]; };
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTbls lbl_eu_80506330 = {
+    { lbl_eu_80668008, lbl_eu_805062E8, lbl_eu_805062F4, lbl_eu_80506300, lbl_eu_8050630C, lbl_eu_80506318, lbl_eu_80506324 },
+    { lbl_eu_80668008, lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 }
+};
+#define lbl_eu_8050634C (lbl_eu_80506330.t2)
+
+// .rodata [0x80..0x920]: single 8-aligned tail struct (int table + reversed
+// string table + class names + format/path pool). Interior labels have no
+// 8-aligned address: code reaches the pool through member macros.
+struct Rodata_ItemBoxTail {
+    u32 ints[6];
+    const void* t[7];
+    char s9C[0x10];
+    char sAC[0x10];
+    char blob[0x84C];
+};
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) struct Rodata_ItemBoxTail rodata_ItemBoxTail = {
+    { 2, 4, 5, 6, 7, 8 },
+    { lbl_eu_80668008, lbl_eu_80506324, lbl_eu_80506318, lbl_eu_8050630C, lbl_eu_80506300, lbl_eu_805062F4, lbl_eu_805062E8 },
+    "CItemBoxInfo2",
+    "CItemBoxInfo",
+    "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000"
+};
+#define lbl_eu_80506380 (rodata_ItemBoxTail.t)
+#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)
+
+// .sdata: two RTTI-ish pairs (class-name string + .data RTTI pad). Both
+// halves stay UNDEF reads: the strings are struct members below and the
+// pads live in the hand-typed .data at file end.
+extern "C" char lbl_eu_8050639C[];
+extern "C" char lbl_eu_805063AC[];
+extern "C" const void* lbl_eu_80534B18[];
+extern "C" const void* lbl_eu_80534BB0[];
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806626D0[2] = {
+    lbl_eu_8050639C, lbl_eu_80534B18
+};
+__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) const void* lbl_eu_806626D8[2] = {
+    lbl_eu_805063AC, lbl_eu_80534BB0
+};
+
+// .sdata2 0x80: item-box float pool + rank tag words + owned 2^52 doubles in
+// retail order (Elv-style struct; MWCC cannot reorder). Only float/double
+// slots get member macros: known int constants would fold into immediates
+// and regress .text (MES u3C precedent), so tags keep UNDEF extern reads.
+// MWCC pools literal/magic duplicates after this struct -> drop_data_tail.
+struct Sdata2_ItemBox {
+    u32 i8008;
+    float f800C, f8010, f8014, f8018, f801C;
+    double d8020, d8028;
+    u8 t8030[4];
+    u16 t8034; u16 pad8036;
+    u8 t8038[4];
+    u8 b803C; u8 pad803D[3];
+    float f8040, f8044, f8048;
+    u8 t804C[4];
+    u16 t8050; u16 pad8052;
+    u8 t8054[4];
+    u16 t8058; u16 pad805A;
+    u8 t805C[4];
+    u16 t8060; u16 pad8062;
+    u8 t8064[4];
+    u16 t8068; u16 pad806A;
+    u32 t806C;
+    u8 b8070; u8 pad8071[3];
+    u8 t8074[4];
+    u16 t8078; u16 pad807A;
+    u8 t807C[4];
+    u16 t8080; u16 pad8082[3];
+};
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const struct Sdata2_ItemBox sdata2_ItemBox = {
+    0,
+    0.0f, 1.0f, 10.0f, 1.4f, 1.5f,
+    4503599627370496.0, 4503601774854144.0,
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    { 4, 5, 6, 7 },
+    8, { 0, 0, 0 },
+    0.01f, 100.0f, 0.5f,
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    0x04050607,
+    8, { 0, 0, 0 },
+    { 2, 4, 5, 6 },
+    0x0708, 0,
+    { 2, 4, 5, 6 },
+    0x0708, { 0, 0, 0 }
+};
+#define lbl_eu_80668010 sdata2_ItemBox.f8010
+#define lbl_eu_80668014 sdata2_ItemBox.f8014
+#define lbl_eu_80668018 sdata2_ItemBox.f8018
+#define lbl_eu_8066801C sdata2_ItemBox.f801C
+#define lbl_eu_80668020 sdata2_ItemBox.d8020
+#define lbl_eu_80668028 sdata2_ItemBox.d8028
+#define lbl_eu_80668040 sdata2_ItemBox.f8040
+
+// .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
+// 4-byte entries are u32, 8-byte entries E43Quad; first carries aligned(8)
+// for the section align, the rest pack without pads.
+__attribute__((aligned(8))) __attribute__((used)) u32 lbl_eu_80664518;
+__attribute__((used)) u32 lbl_eu_8066451C;
+__attribute__((used)) u32 lbl_eu_80664520;
+__attribute__((used)) u32 lbl_eu_80664524;
+__attribute__((used)) E43Quad lbl_eu_80664528;
+__attribute__((used)) E43Quad lbl_eu_80664530;
+__attribute__((used)) E43Quad lbl_eu_80664538;
+__attribute__((used)) E43Quad lbl_eu_80664540;
+__attribute__((used)) E43Quad lbl_eu_80664548;
+__attribute__((used)) E43Quad lbl_eu_80664550;
+__attribute__((used)) u32 lbl_eu_80664558;
+__attribute__((used)) u32 lbl_eu_8066455C;
+__attribute__((used)) u32 lbl_eu_80664560;
+__attribute__((used)) u32 lbl_eu_80664564;
+__attribute__((used)) E43Quad lbl_eu_80664568;
+__attribute__((used)) E43Quad lbl_eu_80664570;
+__attribute__((used)) E43Quad lbl_eu_80664578;
+__attribute__((used)) E43Quad lbl_eu_80664580;
+__attribute__((used)) E43Quad lbl_eu_80664588;
+__attribute__((used)) E43Quad lbl_eu_80664590;
+__attribute__((used)) E43Quad lbl_eu_80664598;
+__attribute__((used)) E43Quad lbl_eu_806645A0;
+__attribute__((used)) u32 lbl_eu_806645A8;
+__attribute__((used)) u32 lbl_eu_806645AC;
+__attribute__((used)) u32 lbl_eu_806645B0;
+__attribute__((used)) u32 lbl_eu_806645B4;
+__attribute__((used)) E43Quad lbl_eu_806645B8;
+__attribute__((used)) E43Quad lbl_eu_806645C0;
+__attribute__((used)) u32 lbl_eu_806645C8;
+__attribute__((used)) u32 lbl_eu_806645CC;
+__attribute__((used)) u32 lbl_eu_806645D0;
+__attribute__((used)) u32 lbl_eu_806645D4;
+
+
+
+
 #include "decomp.h"
-__attribute__((section(".data"), used, aligned(8))) unsigned char __absorb_kyoshin_CItemBoxInfo_data[0x159] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
-};
-__attribute__((section(".rodata"), used, aligned(8))) const unsigned char __absorb_kyoshin_CItemBoxInfo_rodata[0x920] = {
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x45, 0x00, 0x00, 0x00,
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x44, 0x00, 0x00, 0x00,
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x43, 0x00, 0x00, 0x00,
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x42, 0x00, 0x00, 0x00,
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x41, 0x00, 0x00, 0x00,
-    0x70, 0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x5F, 0x53, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06,
-    0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x43, 0x49, 0x74, 0x65, 0x6D, 0x42, 0x6F, 0x78, 0x49, 0x6E, 0x66, 0x6F,
-    0x32, 0x00, 0x00, 0x00, 0x43, 0x49, 0x74, 0x65, 0x6D, 0x42, 0x6F, 0x78,
-    0x49, 0x6E, 0x66, 0x6F, 0x00, 0x00, 0x00, 0x00, 0x25, 0x64, 0x00, 0x72,
-    0x76, 0x73, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00, 0x72, 0x76, 0x73, 0x5F,
-    0x63, 0x61, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x00, 0x25, 0x73, 0x00, 0x3C,
-    0x63, 0x6F, 0x6C, 0x3D, 0x72, 0x65, 0x64, 0x3E, 0x25, 0x73, 0x3C, 0x63,
-    0x6F, 0x6C, 0x3D, 0x64, 0x65, 0x66, 0x3E, 0x00, 0x3C, 0x63, 0x6F, 0x6C,
-    0x3D, 0x72, 0x65, 0x64, 0x3E, 0x25, 0x73, 0x20, 0x25, 0x25, 0x3C, 0x63,
-    0x6F, 0x6C, 0x3D, 0x64, 0x65, 0x66, 0x3E, 0x00, 0x3C, 0x63, 0x6F, 0x6C,
-    0x3D, 0x72, 0x65, 0x64, 0x3E, 0x25, 0x73, 0x25, 0x25, 0x3C, 0x63, 0x6F,
-    0x6C, 0x3D, 0x64, 0x65, 0x66, 0x3E, 0x00, 0x3C, 0x63, 0x6F, 0x6C, 0x3D,
-    0x72, 0x65, 0x64, 0x3E, 0x25, 0x64, 0x20, 0x25, 0x25, 0x3C, 0x63, 0x6F,
-    0x6C, 0x3D, 0x64, 0x65, 0x66, 0x3E, 0x00, 0x3C, 0x63, 0x6F, 0x6C, 0x3D,
-    0x72, 0x65, 0x64, 0x3E, 0x25, 0x64, 0x25, 0x25, 0x3C, 0x63, 0x6F, 0x6C,
-    0x3D, 0x64, 0x65, 0x66, 0x3E, 0x00, 0x6D, 0x65, 0x6E, 0x75, 0x2F, 0x6A,
-    0x70, 0x2F, 0x49, 0x74, 0x65, 0x6D, 0x42, 0x6F, 0x78, 0x49, 0x6E, 0x66,
-    0x6F, 0x2E, 0x61, 0x72, 0x63, 0x00, 0x6D, 0x65, 0x6E, 0x75, 0x2F, 0x6A,
-    0x70, 0x2F, 0x74, 0x70, 0x6C, 0x2F, 0x43, 0x72, 0x79, 0x73, 0x74, 0x61,
-    0x6C, 0x49, 0x63, 0x6F, 0x6E, 0x2E, 0x61, 0x72, 0x63, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x30, 0x31, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x33, 0x30, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x35, 0x30, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x36, 0x30, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x38, 0x30, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x5F, 0x37, 0x30, 0x30, 0x00, 0x6E,
-    0x75, 0x6C, 0x5F, 0x65, 0x74, 0x68, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x69,
-    0x6E, 0x66, 0x62, 0x63, 0x6C, 0x6E, 0x30, 0x31, 0x00, 0x6E, 0x75, 0x6C,
-    0x5F, 0x69, 0x6E, 0x66, 0x62, 0x63, 0x6C, 0x6E, 0x37, 0x30, 0x30, 0x00,
-    0x4D, 0x4E, 0x55, 0x5F, 0x69, 0x74, 0x65, 0x6D, 0x00, 0x6E, 0x61, 0x6D,
-    0x65, 0x00, 0x25, 0x64, 0x25, 0x73, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x67,
-    0x6F, 0x6C, 0x64, 0x30, 0x31, 0x5F, 0x30, 0x30, 0x00, 0x74, 0x78, 0x74,
-    0x5F, 0x65, 0x78, 0x63, 0x61, 0x6E, 0x67, 0x65, 0x25, 0x30, 0x32, 0x64,
-    0x00, 0x70, 0x69, 0x63, 0x5F, 0x70, 0x63, 0x62, 0x73, 0x25, 0x30, 0x32,
-    0x64, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x70, 0x72, 0x6F, 0x70, 0x6F, 0x72,
-    0x74, 0x69, 0x6F, 0x6E, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x63, 0x6E,
-    0x64, 0x30, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x63, 0x6E, 0x64,
-    0x30, 0x33, 0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x73, 0x63, 0x6E, 0x64, 0x00,
-    0x64, 0x6D, 0x67, 0x5F, 0x6C, 0x6F, 0x77, 0x00, 0x64, 0x6D, 0x67, 0x5F,
-    0x68, 0x69, 0x00, 0x61, 0x72, 0x6D, 0x5F, 0x70, 0x68, 0x79, 0x00, 0x61,
-    0x72, 0x6D, 0x5F, 0x65, 0x74, 0x68, 0x00, 0x61, 0x74, 0x74, 0x5F, 0x6C,
-    0x65, 0x76, 0x00, 0x73, 0x70, 0x65, 0x65, 0x64, 0x00, 0x67, 0x72, 0x64,
-    0x5F, 0x72, 0x61, 0x74, 0x65, 0x00, 0x66, 0x6C, 0x61, 0x67, 0x00, 0x65,
-    0x71, 0x75, 0x69, 0x70, 0x5F, 0x70, 0x63, 0x25, 0x64, 0x00, 0x65, 0x76,
-    0x61, 0x5F, 0x72, 0x61, 0x74, 0x65, 0x00, 0x61, 0x72, 0x6D, 0x5F, 0x74,
-    0x79, 0x70, 0x65, 0x00, 0x70, 0x63, 0x25, 0x64, 0x00, 0x72, 0x61, 0x6E,
-    0x6B, 0x54, 0x79, 0x70, 0x65, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x73, 0x68,
-    0x6F, 0x70, 0x00, 0x61, 0x74, 0x72, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00,
-    0x74, 0x79, 0x70, 0x65, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x63, 0x6F, 0x6C,
-    0x6C, 0x65, 0x63, 0x74, 0x00, 0x6D, 0x61, 0x70, 0x49, 0x44, 0x00, 0x6D,
-    0x65, 0x6D, 0x6F, 0x72, 0x79, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00, 0x70,
-    0x63, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x00, 0x67, 0x65, 0x74, 0x5F, 0x61,
-    0x72, 0x74, 0x73, 0x00, 0x70, 0x63, 0x5F, 0x61, 0x72, 0x74, 0x73, 0x00,
-    0x69, 0x64, 0x78, 0x00, 0x25, 0x64, 0x25, 0x73, 0x25, 0x64, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x30, 0x32, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x30, 0x38, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x30, 0x39, 0x00, 0x25,
-    0x73, 0x25, 0x64, 0x25, 0x73, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x30, 0x34, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x30, 0x37, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x32, 0x32, 0x00, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70,
-    0x61, 0x72, 0x61, 0x32, 0x35, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x30, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72,
-    0x61, 0x31, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61,
-    0x31, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x30,
-    0x34, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x30, 0x38,
-    0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x32, 0x32, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x32, 0x33, 0x00, 0x70,
-    0x69, 0x63, 0x5F, 0x70, 0x63, 0x25, 0x30, 0x32, 0x64, 0x00, 0x70, 0x69,
-    0x63, 0x5F, 0x65, 0x71, 0x25, 0x30, 0x32, 0x64, 0x00, 0x6D, 0x66, 0x30,
-    0x30, 0x5F, 0x72, 0x65, 0x67, 0x30, 0x30, 0x5F, 0x65, 0x71, 0x30, 0x31,
-    0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x30, 0x30, 0x5F, 0x72, 0x65,
-    0x67, 0x30, 0x30, 0x5F, 0x65, 0x71, 0x30, 0x30, 0x2E, 0x74, 0x70, 0x6C,
-    0x00, 0x6D, 0x66, 0x30, 0x30, 0x5F, 0x63, 0x6F, 0x6D, 0x30, 0x30, 0x5F,
-    0x64, 0x6D, 0x79, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x70, 0x61, 0x72, 0x61, 0x32, 0x34, 0x00, 0x70, 0x69, 0x63, 0x5F, 0x65,
-    0x74, 0x68, 0x63, 0x6F, 0x6C, 0x25, 0x30, 0x32, 0x64, 0x00, 0x6D, 0x66,
-    0x30, 0x30, 0x5F, 0x72, 0x65, 0x67, 0x33, 0x30, 0x5F, 0x63, 0x72, 0x79,
-    0x73, 0x30, 0x30, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x30, 0x30,
-    0x5F, 0x72, 0x65, 0x67, 0x33, 0x30, 0x5F, 0x63, 0x72, 0x79, 0x73, 0x30,
-    0x31, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x30, 0x30, 0x5F, 0x72,
-    0x65, 0x67, 0x33, 0x30, 0x5F, 0x63, 0x72, 0x79, 0x73, 0x30, 0x32, 0x2E,
-    0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66, 0x30, 0x30, 0x5F, 0x72, 0x65, 0x67,
-    0x33, 0x30, 0x5F, 0x63, 0x72, 0x79, 0x73, 0x30, 0x33, 0x2E, 0x74, 0x70,
-    0x6C, 0x00, 0x6D, 0x66, 0x30, 0x30, 0x5F, 0x72, 0x65, 0x67, 0x33, 0x30,
-    0x5F, 0x63, 0x72, 0x79, 0x73, 0x30, 0x34, 0x2E, 0x74, 0x70, 0x6C, 0x00,
-    0x6D, 0x66, 0x30, 0x30, 0x5F, 0x72, 0x65, 0x67, 0x33, 0x30, 0x5F, 0x63,
-    0x72, 0x79, 0x73, 0x30, 0x35, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x6D, 0x66,
-    0x30, 0x30, 0x5F, 0x72, 0x65, 0x67, 0x33, 0x30, 0x5F, 0x63, 0x72, 0x79,
-    0x73, 0x30, 0x36, 0x2E, 0x74, 0x70, 0x6C, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x65, 0x74, 0x68, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x25, 0x30, 0x32, 0x64,
-    0x00, 0x25, 0x73, 0x25, 0x73, 0x00, 0x25, 0x73, 0x20, 0x00, 0x25, 0x64,
-    0x20, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x65, 0x74, 0x68, 0x25, 0x30, 0x32,
-    0x64, 0x00, 0x6A, 0x77, 0x6C, 0x5F, 0x73, 0x6C, 0x6F, 0x74, 0x00, 0x6A,
-    0x77, 0x6C, 0x5F, 0x73, 0x6B, 0x69, 0x6C, 0x6C, 0x25, 0x64, 0x00, 0x70,
-    0x65, 0x72, 0x63, 0x65, 0x6E, 0x74, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70,
-    0x61, 0x72, 0x61, 0x38, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x35, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x35, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x35, 0x31, 0x00, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x35, 0x32, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x36, 0x30, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x36, 0x31, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33, 0x30, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x25, 0x30, 0x32, 0x64, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x25, 0x30, 0x32,
-    0x64, 0x00, 0x74, 0x61, 0x67, 0x5F, 0x69, 0x63, 0x6F, 0x6E, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x37, 0x33, 0x36, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x30, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x32,
-    0x00, 0x61, 0x63, 0x63, 0x75, 0x6D, 0x00, 0x6D, 0x61, 0x78, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x37, 0x25, 0x30, 0x32, 0x64,
-    0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x25,
-    0x30, 0x32, 0x64, 0x00, 0x43, 0x49, 0x74, 0x65, 0x6D, 0x42, 0x6F, 0x78,
-    0x49, 0x6E, 0x66, 0x6F, 0x00, 0x61, 0x72, 0x63, 0x00, 0x6D, 0x66, 0x30,
-    0x32, 0x5F, 0x62, 0x6F, 0x78, 0x30, 0x32, 0x5F, 0x69, 0x6E, 0x66, 0x2E,
-    0x62, 0x72, 0x6C, 0x79, 0x74, 0x00, 0x6D, 0x66, 0x30, 0x32, 0x5F, 0x62,
-    0x6F, 0x78, 0x30, 0x32, 0x5F, 0x69, 0x6E, 0x66, 0x5F, 0x69, 0x6E, 0x2E,
-    0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x6D, 0x66, 0x30, 0x32, 0x5F, 0x62,
-    0x6F, 0x78, 0x30, 0x32, 0x5F, 0x69, 0x6E, 0x66, 0x5F, 0x69, 0x6E, 0x66,
-    0x6F, 0x5F, 0x69, 0x6E, 0x2E, 0x62, 0x72, 0x6C, 0x61, 0x6E, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33, 0x31, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33, 0x32, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33, 0x33, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x33, 0x34, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x65, 0x74, 0x68, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x30,
-    0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x65, 0x74, 0x68, 0x76, 0x61, 0x6C,
-    0x75, 0x65, 0x30, 0x32, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x65, 0x74, 0x68,
-    0x76, 0x61, 0x6C, 0x75, 0x65, 0x30, 0x33, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x33, 0x00, 0x74, 0x78, 0x74,
-    0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x34, 0x00, 0x74, 0x78,
-    0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x35, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30, 0x38, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x31, 0x30,
-    0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x30,
-    0x36, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37,
-    0x30, 0x39, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65,
-    0x37, 0x31, 0x32, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75,
-    0x65, 0x37, 0x31, 0x34, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C,
-    0x75, 0x65, 0x37, 0x31, 0x35, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61,
-    0x6C, 0x75, 0x65, 0x37, 0x31, 0x36, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x76,
-    0x61, 0x6C, 0x75, 0x65, 0x37, 0x31, 0x37, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x31, 0x38, 0x00, 0x74, 0x78, 0x74,
-    0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x31, 0x39, 0x00, 0x74, 0x78,
-    0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x32, 0x30, 0x00, 0x74,
-    0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x32, 0x31, 0x00,
-    0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x32, 0x32,
-    0x00, 0x74, 0x78, 0x74, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x37, 0x32,
-    0x33, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x37, 0x30,
-    0x34, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x73, 0x63, 0x6E, 0x64, 0x30, 0x32,
-    0x00, 0x6E, 0x75, 0x6C, 0x5F, 0x73, 0x68, 0x6F, 0x70, 0x00, 0x6E, 0x75,
-    0x6C, 0x5F, 0x65, 0x78, 0x63, 0x61, 0x6E, 0x67, 0x65, 0x00, 0x74, 0x78,
-    0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x33, 0x30, 0x00, 0x74, 0x78, 0x74,
-    0x5F, 0x70, 0x61, 0x72, 0x61, 0x35, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x70, 0x61, 0x72, 0x61, 0x36, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70,
-    0x61, 0x72, 0x61, 0x36, 0x31, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x32, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x33, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x35, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x36, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x38, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x30, 0x39, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x31, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x31, 0x33, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x31, 0x36, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x70, 0x61,
-    0x72, 0x61, 0x37, 0x31, 0x37, 0x00, 0x4D, 0x4E, 0x55, 0x5F, 0x72, 0x65,
-    0x6C, 0x61, 0x74, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6E, 0x70, 0x63,
-    0x74, 0x79, 0x70, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6E, 0x70, 0x63,
-    0x6E, 0x61, 0x6D, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x6E, 0x70, 0x63,
-    0x66, 0x72, 0x61, 0x6D, 0x65, 0x00, 0x74, 0x78, 0x74, 0x5F, 0x65, 0x78,
-    0x63, 0x61, 0x6E, 0x67, 0x65, 0x30, 0x30, 0x00, 0x74, 0x78, 0x74, 0x5F,
-    0x65, 0x78, 0x63, 0x61, 0x6E, 0x67, 0x65, 0x30, 0x31, 0x00, 0x70, 0x69,
-    0x63, 0x5F, 0x70, 0x63, 0x62, 0x73, 0x30, 0x31, 0x00, 0x74, 0x78, 0x74,
-    0x5F, 0x73, 0x63, 0x6E, 0x64, 0x30, 0x30, 0x00, 0x43, 0x49, 0x74, 0x65,
-    0x6D, 0x42, 0x6F, 0x78, 0x49, 0x6E, 0x66, 0x6F, 0x54, 0x65, 0x78, 0x00,
-    0x69, 0x74, 0x65, 0x6D, 0x49, 0x44, 0x00, 0x6A, 0x77, 0x6C, 0x5F, 0x73,
-    0x6B, 0x69, 0x6C, 0x6C, 0x31, 0x00, 0x43, 0x49, 0x74, 0x65, 0x6D, 0x42,
-    0x6F, 0x78, 0x49, 0x6E, 0x66, 0x6F, 0x32, 0x00, 0x43, 0x49, 0x74, 0x65,
-    0x6D, 0x42, 0x6F, 0x78, 0x49, 0x6E, 0x66, 0x6F, 0x32, 0x54, 0x65, 0x78,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-__attribute__((section(".sdata"), used, aligned(8))) unsigned char __absorb_kyoshin_CItemBoxInfo_sdata[0x11] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x01
-};
-__attribute__((section(".sdata2"), used, aligned(8))) const unsigned char __absorb_kyoshin_CItemBoxInfo_sdata2[0x80] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
-    0x41, 0x20, 0x00, 0x00, 0x3F, 0xB3, 0x33, 0x33, 0x3F, 0xC0, 0x00, 0x00,
-    0x43, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x80, 0x00, 0x00, 0x00, 0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00,
-    0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
-    0x42, 0xC8, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x02, 0x04, 0x05, 0x06,
-    0x07, 0x08, 0x00, 0x00, 0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00,
-    0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00, 0x02, 0x04, 0x05, 0x06,
-    0x07, 0x08, 0x00, 0x00, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00, 0x00,
-    0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x00, 0x02, 0x04, 0x05, 0x06,
-    0x07, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-char __absorb_kyoshin_CItemBoxInfo_sbss_0[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_1[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_2[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_3[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_4[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_5[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_6[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_7[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_8[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_9[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_10[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_11[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_12[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_13[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_14[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_15[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_16[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_17[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_18[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_19[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_20[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_21[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_22[0x8] __attribute__((used));
-char __absorb_kyoshin_CItemBoxInfo_sbss_23[0x8] __attribute__((used));
+
+
+
+
 
 #include "monolib/util.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -346,17 +192,17 @@ char __absorb_kyoshin_CItemBoxInfo_sbss_23[0x8] __attribute__((used));
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
 #include <new>
 
-// Retail is 2-arg (category index + s16 item id, see CEquipChange.hpp).
-extern "C" void* func_80157C4C(u32 index, s16 value);
+// Retail is 2-arg (category index + s16 item id); the real declaration now
+// comes from kyoshin/cf/CItem.hpp (CItemExt* return).
 // Legacy 1-arg form (category 0) used by not-yet-matched reconstructions.
 static inline void* func_80157C4C_1(u32 id) { return func_80157C4C(0, (s16)id); }
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
-int sprintf(char*, const char*, ...);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
 char* func_80136190(char*, char*, u32);
@@ -366,10 +212,6 @@ u8 func_8013600C(const void*, const void*, u32);
 u32 func_800A32BC();
 u32 func_800A082C(void*);
 extern "C" f32 func_8013B380(u32);
-extern void* lbl_eu_806645A8;
-extern void* lbl_eu_806645B0;
-extern void* lbl_eu_80664598;
-extern void* lbl_eu_806645A0;
 void func_801D885C(CItemBoxInfo*);
 extern "C" void func_801D5564(void*, void*, void*, void*);
 void func_801D8318(CItemBoxInfo*);
@@ -394,30 +236,6 @@ extern "C" u32 func_801E9310(void*, void*, u32, void*);
 extern "C" s32 func_801E9190(void*, void*, s32, void*);
 extern "C" s32 func_801E9224(void*, void*, s32, void*);
 extern "C" u32 func_801E96F0(void*, u32, u32);
-// .sbss GXColorS10 palette globals (8-byte entries; declared as void* per
-// the hard-symbol convention, read through casts in the renderers).
-extern void* lbl_eu_80664518;
-extern void* lbl_eu_80664520;
-extern void* lbl_eu_80664528;
-extern void* lbl_eu_80664530;
-extern void* lbl_eu_80664538;
-extern void* lbl_eu_80664540;
-extern void* lbl_eu_80664548;
-extern void* lbl_eu_80664550;
-extern void* lbl_eu_80664558;
-extern void* lbl_eu_80664560;
-extern void* lbl_eu_80664568;
-extern void* lbl_eu_80664570;
-extern void* lbl_eu_80664578;
-extern void* lbl_eu_80664580;
-extern void* lbl_eu_80664588;
-extern void* lbl_eu_80664590;
-extern void* lbl_eu_806645A8;
-extern void* lbl_eu_806645B0;
-extern void* lbl_eu_806645C8;
-extern void* lbl_eu_806645D0;
-extern void* lbl_eu_806645B8;
-extern void* lbl_eu_806645C0;
 char* func_801394D4(u32);
 u32 func_801E9774(void*, u16, void*);
 bool func_801E98E4(void*, u16, void*);
@@ -442,14 +260,7 @@ extern void* lbl_eu_806640EC;
 extern void* func_801571FC();
 extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
-extern u32 lbl_eu_80506330[8];
-extern float lbl_eu_80668040;
 extern float lbl_eu_8066800C;
-extern const float lbl_eu_80668010;
-extern const float lbl_eu_80668014;
-extern const float lbl_eu_80668018;
-extern const float lbl_eu_8066801C;
-extern const double lbl_eu_80668020;
 // 6-byte item-box slot tables (pair of u32+u16 .sdata2 constants).
 extern const u32 lbl_eu_8066804C;
 extern const u16 lbl_eu_80668050;
@@ -461,7 +272,8 @@ extern const u32 lbl_eu_80668074;
 extern const u16 lbl_eu_80668078;
 extern const u32 lbl_eu_8066807C;
 extern const u16 lbl_eu_80668080;
-extern "C" u8 getLanguage__9CDeviceSCFv();
+// getLanguage__9CDeviceSCFv: real int-returning declaration comes from
+// kyoshin/cf/CItem.hpp (stale local u8 prototype deleted).
 extern void* lbl_eu_80664110;
 extern void* lbl_eu_80664090;
 
@@ -586,11 +398,12 @@ void func_801D4174(CItemBoxInfo* info) {
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
-        if (layout != 0) {
-            // Retail calls the deleting destructor through vtable slot 2;
-            // real virtual dispatch reproduces the r12/CTR load pattern.
-            reinterpret_cast<CItemBoxLayoutDtorVt*>(layout)->destroy(1);
-        }
+        // Retail calls the Layout deleting destructor (vtable +0x08,
+        // delete flag in r4); plain `delete` reproduces the r12/CTR
+        // dispatch (CCur.cpp cleanup__8CBaseCurFv precedent). The
+        // single manual check plus delete's own null check give the
+        // retail two-branch shape.
+        delete (nw4r::lyt::Layout*)layout;
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
@@ -857,15 +670,15 @@ void __declspec(noinline) func_801D5564(void* out, void* unused, void* data, voi
         func_801392E4((u32)data);
     }
     if (arg3 != NULL) {
-        CItemImplVt54* inst = (CItemImplVt54*)CItem_initItemImplInstances(item);
-        cat = inst->_v54(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        cat = inst->vf54((CItemData*)item);
     } else {
         // Retail keeps the raw result live in r28 (no early narrowing).
         cat = ((u32 (*)(u32))func_80139358)((u32)data);
     }
     if (arg3 != NULL) {
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        count = (u16)inst->_v08(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        count = (u16)inst->vf08((CItemData*)item);
     } else {
         count = func_801361E8((u32)lbl_eu_806640EC, &lbl_eu_805063BC[0x1f9], (u32)data);
     }
@@ -875,8 +688,8 @@ void __declspec(noinline) func_801D5564(void* out, void* unused, void* data, voi
     rec.str = (u32)func_80136190(base + 0x130, base + 0x139, 0x1e - ((u8)count - 1));
     char* s2 = func_80136190(base + 0x202, base + 0x139, 0xf);
     if (arg3 != NULL) {
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        sprintf(rec.name, base, inst->_v90(item));
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        sprintf(rec.name, base, inst->vf90((CItemData*)item));
     } else {
         sprintf(rec.name, base + 0x18, s2);
     }
@@ -1074,19 +887,19 @@ void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
     CItemBoxSlotRecord1 rec;
     // Chained call + virtual dispatch: no named intermediate keeps the result
     // web dead after each use, matching retail's direct r3 consumption.
-    u32 v08 = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v08(p);
+    u32 v08 = CItem_initItemImplInstances((CItemData*)p)->vf08((CItemData*)p);
     char* base = lbl_eu_805063BC;
     rec.count = (u8)v08;
     rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - ((u8)v08 - 1));
     rec.counter = 0;
     for (u32 i = 0; i < 4; i++) {
-        u32 n = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v4C(p, (u8)i);
+        u32 n = (u16)CItem_initItemImplInstances((CItemData*)p)->vf4C((CItemData*)p, (u8)i);
         // Signed >0 test: folds into the record-form clrlwi as retail's ble.
         if ((s32)n > 0) {
             // Retail passes the pair count n as a third arg to func_8013639C.
             rec.text[rec.counter] =
                 (u32)((char*(*)(void*, char*, u32))&func_8013639C)(lbl_eu_806640D8, &base[0x139], n);
-            rec.vals[rec.counter] = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v64(p, (u8)i);
+            rec.vals[rec.counter] = CItem_initItemImplInstances((CItemData*)p)->vf64((CItemData*)p, (u8)i);
             rec.counts[rec.counter] = n;
             rec.counter++;
         }
@@ -1239,7 +1052,7 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(paneName, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
@@ -1254,15 +1067,12 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
                     sprintf(label, base + 0x30e, (u8)i + 1);
                     u32 tex;
                     if (slot == (u8)func_801392B4(playerIdx)) {
-                        tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                                  ->findName(tagHi + 0x6d67, (u32)(base + 0x319), 0);
+                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
                     } else {
-                        tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                                  ->findName(tagHi + 0x6d67, (u32)(base + 0x32d), 0);
+                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
                     }
                     if (tex == 0) {
-                        tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                                  ->findName(tagHi + 0x6d67, (u32)(base + 0x341), 0);
+                        tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
                     }
                     if (tex != 0) {
                         func_80137E7C((nw4r::lyt::Layout*)info->state.layout, label, tex);
@@ -1416,7 +1226,7 @@ void func_801D6394(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void* mat = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* mat = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(mat, (u8)j, (u8*)quadCol + (u8)j * 8);
             }
@@ -1440,12 +1250,12 @@ void func_801D6394(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
         int curSlot = func_801392B4(cur);
         u32 tex;
         if ((u8)slot == (u8)curSlot) {
-            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tag, (u32)(base + 0x319), 0);
+            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x319, NULL);
         } else {
-            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tag, (u32)(base + 0x32d), 0);
+            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x32d, NULL);
         }
         if (tex == 0) {
-            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tag, (u32)(base + 0x341), 0);
+            tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x341, NULL);
         }
         if (tex != 0) {
             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, buf2, tex);
@@ -1473,7 +1283,7 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
         // Retail re-fetches the item interface at each use; it is never held
         // live across calls, so keep it scoped to avoid burning a
         // callee-saved register and shifting the whole allocation window.
-        u16 count = (u16)((CItemImplVt*)CItem_initItemImplInstances(record))->_v30(record);
+        u16 count = (u16)CItem_initItemImplInstances((CItemData*)record)->vf30((CItemData*)record);
         u32 tag = 0x74696D67;
         for (u32 i = 0; i < 3; i++) {
             u32 idx = (u8)i + 1;
@@ -1485,8 +1295,8 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                 u8 itemCount = 0;
                 s16 value = 0;
                 u32 tex = 0;
-                CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(record);
-                s16 v40 = (s16)inst->_v40(record, (u8)i);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)record);
+                s16 v40 = (s16)inst->vf40((CItemData*)record, (u8)i);
                 if (v40 != -1) {
                     // regular item path: look the item up and format its name.
                     void* rec = func_80157C4C(3, v40);
@@ -1499,13 +1309,13 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                     // retail mtctr 8-byte-pair loop.
                     CItemBoxNameRecord2 rec2b = rec2;
                     switch (rec2b.e1) {
-                        case 0: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x36e), 0); break;
-                        case 4: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x384), 0); break;
-                        case 5: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x39a), 0); break;
-                        case 6: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3b0), 0); break;
-                        case 7: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3c6), 0); break;
-                        case 8: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3dc), 0); break;
-                        case 9: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3f2), 0); break;
+                        case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
+                        case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
+                        case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
+                        case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
+                        case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
+                        case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
+                        case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
                     }
                     if (rec2b.name[0] == '0') {
                         sprintf(buf, base + 0x408, idx);
@@ -1521,15 +1331,15 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                         sprintf(buf, base + 0x408, idx);
                         func_80136B4C(info->state.layout, buf, text.c_str(), 0);
                     }
-                    inst = (CItemImplVt*)CItem_initItemImplInstances(rec);
-                    itemVal = inst->_v54(rec);
-                    itemCount = (u8)inst->_v08(rec);
-                    value = (s16)inst->_v90(rec);
+                    inst = CItem_initItemImplInstances((CItemData*)rec);
+                    itemVal = inst->vf54((CItemData*)rec);
+                    itemCount = (u8)inst->vf08((CItemData*)rec);
+                    value = (s16)inst->vf90((CItemData*)rec);
                 } else {
                     // equipped-gear path via the sub-record; no-item fallback.
-                    CItemBoxSubRecord* sub = inst->_v2C(record, (u8)i);
+                    CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst->vf2C((CItemData*)record, (u8)i);
                     if (sub == NULL || (sub->field_04 & 1) == 0) {
-                        tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x36e), 0);
+                        tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
                         text.format(base + 0x18, func_80136190(base + 0x130, base + 0x139, 0x2a));
                     } else {
                         u16 equip = (u16)((sub->field_04 >> 16) & 0xFFF);
@@ -1537,13 +1347,13 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                         char* label = func_80136190(base + 0x130, base + 0x139, 0x1e - ((w >> 22 & 7) - 1));
                         u32 st = func_801361E8((u32)lbl_eu_806640D8, base + 0x20b, equip);
                         switch (st & 0xFF) {
-                            case 0: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x36e), 0); break;
-                            case 4: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x384), 0); break;
-                            case 5: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x39a), 0); break;
-                            case 6: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3b0), 0); break;
-                            case 7: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3c6), 0); break;
-                            case 8: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3dc), 0); break;
-                            case 9: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3f2), 0); break;
+                            case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
+                            case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
+                            case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
+                            case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
+                            case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
+                            case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
+                            case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
                         }
                         s16 val = (s16)((w >> 11) & 0x7FF);
                         if (val != 0) {
@@ -1608,20 +1418,20 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                 text.format(base + 0x43b, idx);
                 u16 nameId = (u16)func_80136254((void*)obj, text.c_str(), (u16)cat);
                 if (nameId == 0) {
-                    tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x36e), 0);
+                    tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
                     text.format(base + 0x18, func_80136190(base + 0x130, base + 0x139, 0x2a));
                 } else {
                     CItemBoxNameRecord2 rec3;
                     func_801D5564(&rec3, info, (void*)nameId, 0);
                     CItemBoxNameRecord2 rec3b = rec3;
                     switch (rec3b.e1) {
-                        case 0: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x36e), 0); break;
-                        case 4: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x384), 0); break;
-                        case 5: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x39a), 0); break;
-                        case 6: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3b0), 0); break;
-                        case 7: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3c6), 0); break;
-                        case 8: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3dc), 0); break;
-                        case 9: tex = ((CItemNameLookupVt*)info->state.resource)->findName(tag, (u32)(base + 0x3f2), 0); break;
+                        case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
+                        case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
+                        case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
+                        case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
+                        case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
+                        case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
+                        case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
                     }
                     if (rec3b.name[0] == '0') {
                         sprintf(buf2, base + 0x408, idx);
@@ -1814,7 +1624,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     // ABI return register instead of living across the whole state!=4 block.
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x472,
                   (arg3 != NULL)
-                      ? (const char*)((CItemImplVt*)CItem_initItemImplInstances(item))->_v20(item)
+                      ? CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item)
                       : func_801394D4(arg2),
                   0);
 
@@ -1827,15 +1637,15 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
                       (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
 
         *(s16*)((u8*)info + 0xB0) = (arg3 != NULL)
-            ? ((CItemImplVt*)CItem_initItemImplInstances(item))->_v54(item)
+            ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
             : func_80139358(arg2);
         *(u8*)((u8*)info + 0x158) = (arg3 != NULL) ? 3 : 9;
         *(u8*)((u8*)info + 0x164) = (u8)((arg3 != NULL)
-            ? (u16)((CItemImplVt*)CItem_initItemImplInstances(item))->_v08(item)
+            ? (u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item)
             : 0);
         setItemBoxIndex((CItemBoxInfo*)((u8*)info + 0xB0), 0,
                         (s16)((arg3 != NULL)
-                            ? (s16)((CItemImplVt*)CItem_initItemImplInstances(item))->_v90(item)
+                            ? (s16)CItem_initItemImplInstances((CItemData*)item)->vf90((CItemData*)item)
                             : 0));
         // Field-wise copy: retail expands this as three lwz/stw word pairs
         // (a whole-struct assign emits an out-of-line __as__ call).
@@ -1846,7 +1656,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     }
 
     u16 cat2 = (arg3 != NULL)
-        ? ((CItemImplVt*)CItem_initItemImplInstances(item))->_v54(item)
+        ? CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item)
         : func_80139358(arg2);
     u8 rows = (u8)func_801361E8((u32)(&lbl_eu_806640D8)[cat2], base + 0x47d, cat2);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x484,
@@ -1872,7 +1682,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textStorage, true);
         if (pane != NULL) {
-            void* colorObj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* colorObj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(colorObj, j, &cols.w[j * 2]);
             }
@@ -1892,24 +1702,21 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
         for (u32 k = 0; k < 6; k++) {
             void* hit = func_80157C4C(((u8*)&cur)[k], vals.s[k]);
             if (hit == NULL || *(u32*)hit == 0) continue;
-            u8 n = ((CItemImplVt*)CItem_initItemImplInstances(hit))->_v30(hit);
+            u8 n = CItem_initItemImplInstances((CItemData*)hit)->vf30((CItemData*)hit);
             for (u32 m = 0; (u32)(u8)m < (u32)n; m++) {
-                s16 v40 = ((CItemImplVt*)CItem_initItemImplInstances(hit))->_v40(hit, m);
+                s16 v40 = CItem_initItemImplInstances((CItemData*)hit)->vf40((CItemData*)hit, m);
                 void* rec3 = func_80157C4C(3, v40);
                 if (rec3 == NULL || *(u32*)rec3 == 0 || rec3 != arg3) continue;
                 sprintf(caption.mString, base + 0x30e, idx);
                 u8 owner = func_801392B4((u32)playerByte);
                 u32 name;
                 if (flag == owner) {
-                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                               ->findName(0x74696d67, (u32)(base + 0x319), 0);
+                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x319, NULL);
                 } else {
-                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                               ->findName(0x74696d67, (u32)(base + 0x32d), 0);
+                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x32d, NULL);
                 }
                 if (name == 0) {
-                    name = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                               ->findName(0x74696d67, (u32)(base + 0x341), 0);
+                    name = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x341, NULL);
                 }
                 if (name != 0) {
                     func_80137E7C((nw4r::lyt::Layout*)info->state.layout, caption.mString, name);
@@ -2049,7 +1856,7 @@ void func_801D8318(CItemBoxInfo* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)(&lbl_eu_805063BC[0x341]), 0);
+        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (tex != 0) {
             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, buf, tex);
         }
@@ -2108,7 +1915,7 @@ void func_801D85D8(CItemBoxInfo* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, base + 0x30e, idx);
-        u32 tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tag, (u32)(base + 0x341), 0);
+        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(tag, base + 0x341, NULL);
         if (tex != 0) {
             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, buf, tex);
         }
@@ -2173,7 +1980,7 @@ void func_801D8930(CItemBoxInfo* info) {
         sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
@@ -2260,7 +2067,7 @@ extern "C" void func_801D8C0C(CItemBoxInfo* info) {
             u32 tag = 0x74696D67u;
             u32 nameId = (u16)func_80136254(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)func_80138F78(nameId);
-            u32 found = ((CItemNameLookupVt*)func_801355F4())->findName(tag, itemId, 0);
+            u32 found = (u32)func_801355F4()->GetResource(tag, (const char*)itemId, NULL);
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
@@ -3805,17 +3612,16 @@ for (u32 w_ = 0; w_ < 7; w_++) {
         items[3] = func_80157C4C(7, legId);
         items[4] = func_80157C4C(8, footId);
         if (itemW != NULL) {
-            void* itemImpl = CItem_initItemImplInstances(itemW);
-            u8 cnt = ((u8(*)(void*, void*))(*(void***)itemImpl)[12])(itemImpl, itemW);
+            CItemImpl* itemImpl = CItem_initItemImplInstances((CItemData*)itemW);
+            u8 cnt = itemImpl->vf30((CItemData*)itemW);
             for (u8 i = 0; i < 3; i++) {
                 CItemBoxInfoEntry tmp;
                 tmp.itemId = 0;
                 tmp.value = 0;
                 tmp.state = 0;
                 if (i < cnt) {
-                    void* recordImpl = CItem_initItemImplInstances(itemW);
-                    void* e = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
-                        recordImpl, itemW, i);
+                    CItemImpl* recordImpl = CItem_initItemImplInstances((CItemData*)itemW);
+                    void* e = recordImpl->vf2C((CItemData*)itemW, i);
                     if (e != NULL) {
                         u32 w0 = *(u32*)e;
                         u16 w1 = *(u16*)((u8*)e + 4);
@@ -3844,15 +3650,12 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                         CItemBoxInfoEntry tmp = {0, 0, 0};
                         if (i == slot - 1) {
                             CItemBoxInfoEntry built;
-                            void* idImpl = CItem_initItemImplInstances(arg3);
-                            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(
-                                idImpl, arg3);
-                            void* valueImpl = CItem_initItemImplInstances(arg3);
-                            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(
-                                valueImpl, arg3);
-                            void* stateImpl = CItem_initItemImplInstances(arg3);
-                            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(
-                                stateImpl, arg3);
+                            CItemImpl* idImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u16 itemId = (u16)idImpl->vf08((CItemData*)arg3);
+                            CItemImpl* valueImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u32 value = valueImpl->vf90((CItemData*)arg3);
+                            CItemImpl* stateImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u8 state = (u8)stateImpl->vf54((CItemData*)arg3);
                             setItemBoxEntry(&built, itemId, value, state);
                             copyItemBoxEntry(&tmp, &built);
                         }
@@ -3867,14 +3670,13 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                       copyItemBoxEntry(&listB[listIdxB++], &blank); }
                 }
             } else if (arg4 != 0) {
-                void* countImpl = CItem_initItemImplInstances(arg3);
-                u8 count = ((u8(*)(void*, void*))(*(void***)countImpl)[12])(countImpl, arg3);
+                CItemImpl* countImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                u8 count = countImpl->vf30((CItemData*)arg3);
                 for (u8 i = 0; i < 3; i++) {
                     CItemBoxInfoEntry tmp = {0, 0, 0};
                     if (i < count) {
-                        void* recordImpl = CItem_initItemImplInstances(arg3);
-                        void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
-                            recordImpl, arg3, i);
+                        CItemImpl* recordImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                        void* record = recordImpl->vf2C((CItemData*)arg3, i);
                         if (record != NULL) {
                             u32 packed = *(u32*)record;
                             u16 tail = *(u16*)((u8*)record + 4);
@@ -3915,11 +3717,10 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                 tmp.state = 0;
                 void* item = items[i];
                 if (item != NULL) {
-                    void* itemImpl = CItem_initItemImplInstances(item);
-                    if (((u8(*)(void*, void*))(*(void***)itemImpl)[12])(itemImpl, item) != 0) {
-                        void* recordImpl = CItem_initItemImplInstances(item);
-                        void* e = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
-                            recordImpl, item, 0);
+                    CItemImpl* itemImpl = CItem_initItemImplInstances((CItemData*)item);
+                    if (itemImpl->vf30((CItemData*)item) != 0) {
+                        CItemImpl* recordImpl = CItem_initItemImplInstances((CItemData*)item);
+                        void* e = recordImpl->vf2C((CItemData*)item, 0);
                         if (e != NULL) {
                             u32 w0 = *(u32*)e;
                             u16 w1 = *(u16*)((u8*)e + 4);
@@ -3942,25 +3743,20 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                     if (arg3 != NULL && *(u32*)arg3 != 0 &&
                         ((*(u32*)arg3 >> 16) & 0xF) == 3) {
                             CItemBoxInfoEntry built = {0, 0, 0};
-                            void* idImpl = CItem_initItemImplInstances(arg3);
-                            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(
-                                idImpl, arg3);
-                            void* valueImpl = CItem_initItemImplInstances(arg3);
-                            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(
-                                valueImpl, arg3);
-                            void* stateImpl = CItem_initItemImplInstances(arg3);
-                            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(
-                                stateImpl, arg3);
+                            CItemImpl* idImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u16 itemId = (u16)idImpl->vf08((CItemData*)arg3);
+                            CItemImpl* valueImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u32 value = valueImpl->vf90((CItemData*)arg3);
+                            CItemImpl* stateImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u8 state = (u8)stateImpl->vf54((CItemData*)arg3);
                             setItemBoxEntry(&built, itemId, value, state);
                             copyItemBoxEntry(&tmp3, &built);
                     } else if (arg4 != 0 || arg3 != NULL) {
-                            void* countImpl = CItem_initItemImplInstances(arg3);
-                            u8 count = ((u8(*)(void*, void*))(*(void***)countImpl)[12])(
-                                countImpl, arg3);
+                            CItemImpl* countImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                            u8 count = countImpl->vf30((CItemData*)arg3);
                             if (count != 0) {
-                                void* recordImpl = CItem_initItemImplInstances(arg3);
-                                void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
-                                    recordImpl, arg3, 0);
+                                CItemImpl* recordImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                                void* record = recordImpl->vf2C((CItemData*)arg3, 0);
                                 if (record != NULL) {
                                     u32 packed = *(u32*)record;
                                     u16 tail = *(u16*)((u8*)record + 4);
@@ -4001,13 +3797,11 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                                                 equippedIds[equipmentIndex]);
                 if (equipped == NULL || *(u32*)equipped == 0) continue;
 
-                void* countImpl = CItem_initItemImplInstances(equipped);
-                u16 count = (u16)((u32(*)(void*, void*))(*(void***)countImpl)[12])(
-                    countImpl, equipped);
+                CItemImpl* countImpl = CItem_initItemImplInstances((CItemData*)equipped);
+                u16 count = (u16)countImpl->vf30((CItemData*)equipped);
                 for (u8 itemIndex = 0; itemIndex < count; itemIndex++) {
-                    void* indexImpl = CItem_initItemImplInstances(equipped);
-                    s16 crystalId = (s16)((s32(*)(void*, void*, u32))(*(void***)indexImpl)[16])(
-                        indexImpl, equipped, itemIndex);
+                    CItemImpl* indexImpl = CItem_initItemImplInstances((CItemData*)equipped);
+                    s16 crystalId = (s16)indexImpl->vf40((CItemData*)equipped, itemIndex);
                     if (crystalId != -1) {
                         void* crystal = func_80157C4C(3, crystalId);
                         if (crystal != NULL && *(u32*)crystal != 0 &&
@@ -4017,18 +3811,15 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                             break;
                         }
                     } else if (arg4 == 0) {
-                        void* recordImpl = CItem_initItemImplInstances(equipped);
-                        void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
-                            recordImpl, equipped, itemIndex);
+                        CItemImpl* recordImpl = CItem_initItemImplInstances((CItemData*)equipped);
+                        void* record = recordImpl->vf2C((CItemData*)equipped, itemIndex);
                         if (record == NULL || (*(u16*)((u8*)record + 4) & 1) == 0) continue;
 
-                        void* candidateStateImpl = CItem_initItemImplInstances(arg3);
-                        u16 candidateState = (u16)((u32(*)(void*, void*))
-                            (*(void***)candidateStateImpl)[21])(candidateStateImpl, arg3);
+                        CItemImpl* candidateStateImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                        u16 candidateState = (u16)candidateStateImpl->vf54((CItemData*)arg3);
                         s16 recordValue = (s16)((*(u32*)record >> 11) & 0x7FF);
-                        void* candidateValueImpl = CItem_initItemImplInstances(arg3);
-                        u32 candidateValue = ((u32(*)(void*, void*))
-                            (*(void***)candidateValueImpl)[36])(candidateValueImpl, arg3);
+                        CItemImpl* candidateValueImpl = CItem_initItemImplInstances((CItemData*)arg3);
+                        u32 candidateValue = candidateValueImpl->vf90((CItemData*)arg3);
                         if (((*(u16*)((u8*)record + 4) >> 4) & 0xFFF) == candidateState &&
                             recordValue == candidateValue) {
                             destination = equipmentIndex == 0 ? itemIndex + 1
@@ -4040,12 +3831,12 @@ for (u32 w_ = 0; w_ < 7; w_++) {
             }
 
             if (destination == 0) destination = slot;
-            void* idImpl = CItem_initItemImplInstances(arg3);
-            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(idImpl, arg3);
-            void* valueImpl = CItem_initItemImplInstances(arg3);
-            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(valueImpl, arg3);
-            void* stateImpl = CItem_initItemImplInstances(arg3);
-            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(stateImpl, arg3);
+            CItemImpl* idImpl = CItem_initItemImplInstances((CItemData*)arg3);
+            u16 itemId = (u16)idImpl->vf08((CItemData*)arg3);
+            CItemImpl* valueImpl = CItem_initItemImplInstances((CItemData*)arg3);
+            u32 value = valueImpl->vf90((CItemData*)arg3);
+            CItemImpl* stateImpl = CItem_initItemImplInstances((CItemData*)arg3);
+            u8 state = (u8)stateImpl->vf54((CItemData*)arg3);
             CItemBoxInfoEntry built;
             setItemBoxEntry(&built, itemId, value, state);
             copyItemBoxEntry(&candidate, &built);
@@ -4352,24 +4143,24 @@ u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
                 (s32)bytes.bytes[(u8)slot] == (s32)((*(u32*)arg3 >> 16) & 0xF))
                 item = arg3;
             if (item != NULL && *(u32*)item != 0) {
-                CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-                u8 count = inst->_v30(item);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                u32 count = (u8)inst->vf30((CItemData*)item);
                 for (j = 0; (u8)j < count; j++) {
-                    CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    v = inst2->_v40(item, (u8)j);
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                    v = inst2->vf40((CItemData*)item, (u8)j);
                     if (v != -1) {
                         void* r = func_80157C4C(3, v);
                         if (r != NULL && *(u32*)r != 0) {
-                            CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(r);
-                            u16 cat = inst3->_v54(r);
+                            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)r);
+                            u16 cat = inst3->vf54((CItemData*)r);
                             if (category == cat) {
-                                CItemImplVt* inst4 = (CItemImplVt*)CItem_initItemImplInstances(r);
-                                result += inst4->_v90(r);
+                                CItemImpl* inst4 = CItem_initItemImplInstances((CItemData*)r);
+                                result += inst4->vf90((CItemData*)r);
                             }
                         }
                     } else {
-                        CItemImplVt* inst5 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                        CItemBoxSubRecord* sub = inst5->_v2C(item, (u8)j);
+                        CItemImpl* inst5 = CItem_initItemImplInstances((CItemData*)item);
+                        CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst5->vf2C((CItemData*)item, (u8)j);
                         if (sub != NULL) {
                             u16 cat2 = (sub->field_04 >> 4) & 0xFFF;
                             if (category == cat2) {
@@ -4387,26 +4178,26 @@ u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
                     (s32)((*(u32*)arg3 >> 16) & 0xF))
                     itemB = arg3;
                 if (itemB != NULL && *(u32*)itemB != 0) {
-                    CItemImplVt* instB = (CItemImplVt*)CItem_initItemImplInstances(itemB);
+                    CItemImpl* instB = CItem_initItemImplInstances((CItemData*)itemB);
                     // j and v are shared with the branch above: retail
                     // colors them identically in both arms.
-                    u8 countB = instB->_v30(itemB);
+                    u32 countB = (u8)instB->vf30((CItemData*)itemB);
                     for (j = 0; (u8)j < countB; j++) {
-                        CItemImplVt* inst2B = (CItemImplVt*)CItem_initItemImplInstances(itemB);
-                        v = inst2B->_v40(itemB, (u8)j);
+                        CItemImpl* inst2B = CItem_initItemImplInstances((CItemData*)itemB);
+                        v = inst2B->vf40((CItemData*)itemB, (u8)j);
                         if (v != -1) {
                             void* rB = func_80157C4C(3, v);
                             if (rB != NULL && *(u32*)rB != 0) {
-                                CItemImplVt* inst3B = (CItemImplVt*)CItem_initItemImplInstances(rB);
-                                u16 catB = inst3B->_v54(rB);
+                                CItemImpl* inst3B = CItem_initItemImplInstances((CItemData*)rB);
+                                u16 catB = inst3B->vf54((CItemData*)rB);
                                 if (category == catB) {
-                                    CItemImplVt* inst4B = (CItemImplVt*)CItem_initItemImplInstances(rB);
-                                    result += inst4B->_v90(rB);
+                                    CItemImpl* inst4B = CItem_initItemImplInstances((CItemData*)rB);
+                                    result += inst4B->vf90((CItemData*)rB);
                                 }
                             }
                         } else {
-                            CItemImplVt* inst5B = (CItemImplVt*)CItem_initItemImplInstances(itemB);
-                            CItemBoxSubRecord* subB = inst5B->_v2C(itemB, (u8)j);
+                            CItemImpl* inst5B = CItem_initItemImplInstances((CItemData*)itemB);
+                            CItemBoxSubRecord* subB = (CItemBoxSubRecord*)inst5B->vf2C((CItemData*)itemB, (u8)j);
                             if (subB != NULL) {
                                 u16 cat2B = (subB->field_04 >> 4) & 0xFFF;
                                 if (category == cat2B) {
@@ -4476,11 +4267,11 @@ u32 func_801DF988(void* info, void* member, u32 category, void* candidate, s32 s
         if (id == -1) continue;
         void* item = func_80157C4C(bytes.bytes[(u8)i], id);
         if (item == NULL || *(u32*)item == 0) continue;
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        u32 count = inst->_v30(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        u8 count = inst->vf30((CItemData*)item);
         for (u32 j = 0; (u8)j < count; j++) {
-            CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-            s16 v = inst2->_v40(item, (u8)j);
+            CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+            s16 v = inst2->vf40((CItemData*)item, (u8)j);
             if (v == -1) continue;
             void* r = func_80157C4C(3, v);
             if (r == NULL || *(u32*)r == 0) continue;
@@ -4500,32 +4291,32 @@ u32 func_801DF988(void* info, void* member, u32 category, void* candidate, s32 s
         u8 slotB = bytes.bytes[(u8)i];
         void* item = func_80157C4C(slotB, id);
         if (item == NULL || *(u32*)item == 0) continue;
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        u32 count = inst->_v30(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        u8 count = inst->vf30((CItemData*)item);
         for (u32 j = 0; (u8)j < count; j++) {
             if (candidate != NULL && slotB == type && (u8)j == index) {
-                CItemImplVt* instA = (CItemImplVt*)CItem_initItemImplInstances(candidate);
-                u16 cat = instA->_v54(candidate);
+                CItemImpl* instA = CItem_initItemImplInstances((CItemData*)candidate);
+                u16 cat = instA->vf54((CItemData*)candidate);
                 if (category == (u32)cat) {
-                    CItemImplVt* instB = (CItemImplVt*)CItem_initItemImplInstances(candidate);
-                    sum += (s32)instB->_v90(candidate);
+                    CItemImpl* instB = CItem_initItemImplInstances((CItemData*)candidate);
+                    sum += (s32)instB->vf90((CItemData*)candidate);
                 }
             } else {
-                CItemImplVt* instC = (CItemImplVt*)CItem_initItemImplInstances(item);
-                s16 v = instC->_v40(item, (u8)j);
+                CItemImpl* instC = CItem_initItemImplInstances((CItemData*)item);
+                s16 v = instC->vf40((CItemData*)item, (u8)j);
                 if (v != -1) {
                     void* r = func_80157C4C(3, v);
                     if (r != NULL && *(u32*)r != 0) {
-                        CItemImplVt* instD = (CItemImplVt*)CItem_initItemImplInstances(r);
-                        u16 cat2 = instD->_v54(r);
+                        CItemImpl* instD = CItem_initItemImplInstances((CItemData*)r);
+                        u16 cat2 = instD->vf54((CItemData*)r);
                         if (category == (u32)cat2) {
-                            CItemImplVt* instE = (CItemImplVt*)CItem_initItemImplInstances(r);
-                            sum += (s32)instE->_v90(r);
+                            CItemImpl* instE = CItem_initItemImplInstances((CItemData*)r);
+                            sum += (s32)instE->vf90((CItemData*)r);
                         }
                     }
                 } else {
-                    CItemImplVt* instF = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    CItemBoxSubRecord* sub = instF->_v2C(item, (u8)j);
+                    CItemImpl* instF = CItem_initItemImplInstances((CItemData*)item);
+                    CItemBoxSubRecord* sub = (CItemBoxSubRecord*)instF->vf2C((CItemData*)item, (u8)j);
                     if (sub != NULL && category == (u32)((sub->field_04 >> 4) & 0xFFF)) {
                         sum += (s16)((sub->_00 >> 10) & 0x7FF);
                     }
@@ -4644,17 +4435,17 @@ u32 func_801DFFB8(void* unused, u16 lookup_key, void* arg3, void* unused2) {
             void* item = func_80157C4C(slot, id);
             if (arg3 != NULL && slot == (s32)((*(u32*)arg3 >> 16) & 0xF)) item = arg3;
             if (item != NULL && *(u32*)item != 0) {
-                CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-                u8 count = inst->_v30(item);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                u8 count = inst->vf30((CItemData*)item);
                 for (u8 j = 0; j < count; j++) {
-                    CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    s16 v = inst2->_v40(item, j);
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                    s16 v = inst2->vf40((CItemData*)item, j);
                     if (v != -1) {
                         void* r = func_80157C4C(3, v);
                         if (r != NULL && *(u32*)r != 0) return 0;
                     } else {
-                        CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                        CItemBoxSubRecord* sub = inst3->_v2C(item, j);
+                        CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
+                        CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst3->vf2C((CItemData*)item, j);
                         if (sub != NULL && ((sub->field_04 >> 4) & 0xFFF) != 0) return 0;
                     }
                 }
@@ -4666,17 +4457,17 @@ u32 func_801DFFB8(void* unused, u16 lookup_key, void* arg3, void* unused2) {
                 void* item = NULL;
                 if (bytes.bytes[i] == (s32)((*(u32*)arg3 >> 16) & 0xF)) item = arg3;
                 if (item != NULL && *(u32*)item != 0) {
-                    CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    u32 count = inst->_v30(item);
-                    for (u8 j = 0; j < (u8)count; j++) {
-                        CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                        s16 v = inst2->_v40(item, j);
+                    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                    u8 count = inst->vf30((CItemData*)item);
+                    for (u8 j = 0; j < count; j++) {
+                        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                        s16 v = inst2->vf40((CItemData*)item, j);
                         if (v != -1) {
                             void* r = func_80157C4C(3, v);
                             if (r != NULL && *(u32*)r != 0) return 0;
                         } else {
-                            CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                            CItemBoxSubRecord* sub = inst3->_v2C(item, j);
+                            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
+                            CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst3->vf2C((CItemData*)item, j);
                             if (sub != NULL && ((sub->field_04 >> 4) & 0xFFF) != 0) return 0;
                         }
                     }
@@ -4714,7 +4505,7 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
         bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
-        func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
+        func_8013676C(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
 
         // Seed the label textboxes with the shared text object.
         char* text = func_801355BC();
@@ -5113,10 +4904,8 @@ void func_801E13F8(CItemBoxInfo2* info) {
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
-        if (layout != 0) {
-            // Deleting destructor via vtable slot 2 (see func_801D4174).
-            reinterpret_cast<CItemBoxLayoutDtorVt*>(layout)->destroy(1);
-        }
+        // Layout deleting destructor via plain delete (see func_801D4174).
+        delete (nw4r::lyt::Layout*)layout;
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
@@ -5477,14 +5266,14 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
         func_801392E4((u32)data);
     }
     if (arg3 != NULL) {
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        cat = inst->_v54(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        cat = inst->vf54((CItemData*)item);
     } else {
         cat = func_80139358((u32)data);
     }
     if (arg3 != NULL) {
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        count = (u16)inst->_v08(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        count = (u16)inst->vf08((CItemData*)item);
     } else {
         count = (u8)func_801361E8((u32)lbl_eu_806640EC, &lbl_eu_805063BC[0x1f9], (u32)data);
     }
@@ -5496,8 +5285,8 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     rec.str = (u32)func_80136190(base + 0x130, base + 0x139, 0x1e - ((u8)count - 1));
     char* s2 = func_80136190(base + 0x202, base + 0x139, 0xf);
     if (arg3 != NULL) {
-        CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-        sprintf(rec.name, base, inst->_v90(item));
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        sprintf(rec.name, base, inst->vf90((CItemData*)item));
     } else {
         sprintf(rec.name, base + 0x18, s2);
     }
@@ -5713,19 +5502,19 @@ void func_801E27D0(u8* out, void* unused, void* item, void* arg4) {
     void* p = arg4 != 0 ? arg4 : 0;
     func_801392E4((u32)item);
     func_80139358((u32)item);
-    void* inst = CItem_initItemImplInstances(p);
-    u8 r = ((CItemImplVt*)inst)->_v08(p);
+    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)p);
+    u8 r = inst->vf08((CItemData*)p);
     char* base = (char*)&lbl_eu_805063BC;
     rec.count = r;
     rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - (r - 1));
     rec.tail[1] = 0;
     for (u32 i = 0; i < 4; i++) {
-        void* inst2 = CItem_initItemImplInstances(p);
-        int n = ((CItemImplVt*)inst2)->_v4C(p, (u8)i);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)p);
+        int n = (u16)inst2->vf4C((CItemData*)p, (u8)i);
         if (n > 0) {
             rec.text[rec.tail[1]] = (u32)func_8013639C(lbl_eu_806640D8, &base[0x139]);
-            void* inst3 = CItem_initItemImplInstances(p);
-            u8 val = ((CItemImplVt*)inst3)->_v64(p, (u8)i);
+            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)p);
+            u8 val = inst3->vf64((CItemData*)p, (u8)i);
             rec.vals[rec.tail[1]] = val;
             rec.tail[1]++;
         }
@@ -5822,7 +5611,7 @@ void func_801E2928(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
         sprintf(paneName, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(paneName, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
@@ -5839,12 +5628,12 @@ void func_801E2928(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
                         u8 otherSlot = (u8)func_801392B4(arg3);
                         u32 tex;
                         if (slot == otherSlot) {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)(base + 0x319), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x319, NULL);
                         } else {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)(base + 0x32d), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x32d, NULL);
                         }
                         if (tex == 0) {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)(base + 0x341), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, base + 0x341, NULL);
                         }
                         if (tex != 0) {
                             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, label, tex);
@@ -5941,7 +5730,7 @@ void func_801E2C5C(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u32)j * 8);
             }
@@ -5965,12 +5754,12 @@ void func_801E2C5C(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
                         sprintf(bufName, base + 0x30e, (u8)i + 1);
                         u32 tex;
                         if (slot == (u8)func_801392B4(arg4)) {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tagHi + 0x6d67, (u32)(base + 0x319), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x319, NULL);
                         } else {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tagHi + 0x6d67, (u32)(base + 0x32d), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x32d, NULL);
                         }
                         if (tex == 0) {
-                            tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(tagHi + 0x6d67, (u32)(base + 0x341), 0);
+                            tex = (u32)info->state.arcResourceAccessor->GetResource(tagHi + 0x6d67, base + 0x341, NULL);
                         }
                         if (tex != 0) {
                             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, bufName, tex);
@@ -6038,7 +5827,7 @@ void func_801E2FEC(CItemBoxInfo2* info, u16 arg2) {
         sprintf(buf, base + 0x161, (u8)i + 1, cols[0]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, &out[j]);
             }
@@ -6110,7 +5899,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     char* txt;
     if (arg3 != NULL) {
         item = arg3;
-        txt = (char*)((CItemImplVt*)CItem_initItemImplInstances(item))->_v20(item);
+        txt = (char*)CItem_initItemImplInstances((CItemData*)item)->vf20((CItemData*)item);
     } else {
         item = NULL;
         txt = ((char* (*)(u32))func_801394D4)(arg2);
@@ -6119,7 +5908,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
 
     u16 cat;
     if (arg3 != NULL) {
-        cat = (u16)((CItemImplVt54*)CItem_initItemImplInstances(item))->_v54(item);
+        cat = (u16)CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
     } else {
         cat = func_80139358(arg2);
     }
@@ -6145,7 +5934,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         nw4r::lyt::Pane* pane =
             ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(textBuf, true);
         if (pane != NULL) {
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)&cols + (u8)j * 8);
             }
@@ -6166,24 +5955,21 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         for (u32 j = 0; (u8)j < 6; j++) {
             void* cand = func_80157C4C((u8)j, entry.vals[(u8)j]);
             if (cand == NULL || *(u32*)cand == 0) continue;
-            u8 cnt = ((CItemImplVt*)CItem_initItemImplInstances(cand))->_v30(cand);
+            u8 cnt = CItem_initItemImplInstances((CItemData*)cand)->vf30((CItemData*)cand);
             for (u32 k = 0; (u8)k < cnt; k++) {
                 s16 itemVal =
-                    ((CItemImplVt*)CItem_initItemImplInstances(cand))->_v40(cand, (u8)k);
+                    CItem_initItemImplInstances((CItemData*)cand)->vf40((CItemData*)cand, (u8)k);
                 void* hit = func_80157C4C(3, itemVal);
                 if (hit == NULL || *(u32*)hit == 0 || hit != arg3) continue;
                 sprintf(buf2, base + 0x30e, idx);
                 u32 tex;
                 if (slot == (u8)func_801392B4(arg4)) {
-                    tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                              ->findName(0x74696d67, (u32)(base + 0x319), 0);
+                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x319, NULL);
                 } else {
-                    tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                              ->findName(0x74696d67, (u32)(base + 0x32d), 0);
+                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x32d, NULL);
                 }
                 if (tex == 0) {
-                    tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)
-                              ->findName(0x74696d67, (u32)(base + 0x341), 0);
+                    tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696d67, base + 0x341, NULL);
                 }
                 if (tex != 0) {
                     func_80137E7C((nw4r::lyt::Layout*)info->state.layout, buf2, tex);
@@ -6307,7 +6093,7 @@ void func_801E3918(CItemBoxInfo2* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(buf, &lbl_eu_805063BC[0x30e], idx);
-        u32 tex = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)&lbl_eu_805063BC[0x341], 0);
+        u32 tex = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (tex != 0) {
             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, buf, tex);
         }
@@ -6368,7 +6154,7 @@ void func_801E3B9C(CItemBoxInfo2* info) {
         // Item-name lookup on the shared arc resource accessor (vtable+0x0C),
         // then push the texture name onto the slot pane.
         sprintf(text, &lbl_eu_805063BC[0x30e], slot);
-        u32 texId = ((CItemNameLookupVt*)info->state.arcResourceAccessor)->findName(0x74696D67, (u32)&lbl_eu_805063BC[0x341], 0);
+        u32 texId = (u32)info->state.arcResourceAccessor->GetResource(0x74696D67, &lbl_eu_805063BC[0x341], NULL);
         if (texId != 0) {
             func_80137E7C((nw4r::lyt::Layout*)info->state.layout, text, texId);
         }
@@ -6424,9 +6210,7 @@ void func_801E3EB8(CItemBoxInfo2* info) {
         sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            // Real virtual dispatch through CItemBoxPaneVt keeps the ABI r12
-            // vtable load (a manual (*(void***)pane)[26] cast colors r5).
-            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
+            void* obj = pane->GetMaterial();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
@@ -6516,7 +6300,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
             u32 nameId = (u16)func_80136254(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
             u32 itemId = (u32)func_80138F78(nameId);
             // Item-name lookup through the shared name system (vtable+0x0C).
-            u32 found = ((CItemNameLookupVt*)func_801355F4())->findName(tag, itemId, 0);
+            u32 found = (u32)func_801355F4()->GetResource(tag, (const char*)itemId, NULL);
             if (found != 0) {
                 idx = (u32)((u8)i + 1);
                 sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
@@ -6570,9 +6354,6 @@ body:
 // NOTE: arg3 (r5) is dead in retail - clobbered by the prologue (lis r5, 0x4330).
 // ============================================================================
 // TU-local stat-object shapes (retail lha/lfs/lbz offsets from func_801E43BC).
-struct E43Quad {           // POD quad color (copy-init must stay memberwise)
-    s16 r, g, b, a;
-};
 struct E43Entry {          // 0x34-byte item-stat entry (func_801E197C/801E1E0C output)
     u16 w00;
     u16 _02;
@@ -7895,24 +7676,24 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
                     }
                 }
             } else if (item != NULL && *(u32*)item != 0) {
-                CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-                u8 count = inst->_v30(item);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                u8 count = inst->vf30((CItemData*)item);
                 for (u8 j = 0; (u8)j < count; j++) {
-                    CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    s16 v = inst2->_v40(item, (u8)j);
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                    s16 v = inst2->vf40((CItemData*)item, (u8)j);
                     if (v != -1) {
                         void* r = func_80157C4C(3, v);
                         if (r != NULL && *(u32*)r != 0) {
-                            CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(r);
-                            u16 cat = (u16)inst3->_v54(r);
+                            CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)r);
+                            u16 cat = (u16)inst3->vf54((CItemData*)r);
                             if (c == cat) {
-                                CItemImplVt* inst4 = (CItemImplVt*)CItem_initItemImplInstances(r);
-                                result += inst4->_v90(r);
+                                CItemImpl* inst4 = CItem_initItemImplInstances((CItemData*)r);
+                                result += inst4->vf90((CItemData*)r);
                             }
                         }
                     } else {
-                        CItemImplVt* inst5 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                        CItemBoxSubRecord* sub = inst5->_v2C(item, (u8)j);
+                        CItemImpl* inst5 = CItem_initItemImplInstances((CItemData*)item);
+                        CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst5->vf2C((CItemData*)item, (u8)j);
                         if (sub != NULL) {
                             u16 cat2 = (sub->field_04 >> 4) & 0xFFF;
                             if (c == cat2) {
@@ -8032,17 +7813,17 @@ bool func_801E98E4(void*, u16 b, void* c) {
                     if ((u16)func_80136254((void*)nameObj, buf, nameId) != 0) return false;
                 }
             } else if (item != NULL && *(u32*)item != 0) {
-                CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
-                u8 count = inst->_v30(item);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                u8 count = inst->vf30((CItemData*)item);
                 for (u8 j = 0; j < count; j++) {
-                    CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                    s16 v = inst2->_v40(item, j);
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                    s16 v = inst2->vf40((CItemData*)item, j);
                     if (v != -1) {
                         void* r = func_80157C4C(3, v);
                         if (r != NULL && *(u32*)r != 0) return false;
                     } else {
-                        CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(item);
-                        CItemBoxSubRecord* sub = inst3->_v2C(item, j);
+                        CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
+                        CItemBoxSubRecord* sub = (CItemBoxSubRecord*)inst3->vf2C((CItemData*)item, j);
                         if (sub != NULL && ((sub->field_04 >> 4) & 0xFFF) != 0) return false;
                     }
                 }
@@ -8082,7 +7863,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         bindLayoutAnimTransform(state.layout, &state.animTransform2, acc, &lbl_eu_805063BC[0x562]);
         nw4r::lyt::Pane* root = (nw4r::lyt::Pane*)*(void**)((u8*)state.layout + 0x10);
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, state.layout);
-        func_8013676C(root, reinterpret_cast<CItemBoxFontInfoVt*>(fontObj)->fontData());
+        func_8013676C(root, static_cast<IDeviceFontInfo*>(fontObj)->getFont());
 
         // Seed the label textboxes with the shared text object.
         char* text = func_801355BC();
@@ -8315,29 +8096,6 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 }
 #pragma pop
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern void* lbl_eu_80664518;
-extern void* lbl_eu_80664520;
-extern void* lbl_eu_80664528;
-extern void* lbl_eu_80664530;
-extern void* lbl_eu_80664538;
-extern void* lbl_eu_80664540;
-extern void* lbl_eu_80664548;
-extern void* lbl_eu_80664550;
-extern void* lbl_eu_80664558;
-extern void* lbl_eu_80664560;
-extern void* lbl_eu_80664568;
-extern void* lbl_eu_80664570;
-extern void* lbl_eu_80664578;
-extern void* lbl_eu_80664580;
-extern void* lbl_eu_80664588;
-extern void* lbl_eu_80664590;
-extern void* lbl_eu_80664598;
-extern void* lbl_eu_806645A0;
-extern void* lbl_eu_806645B8;
-extern void* lbl_eu_806645C0;
-extern void* lbl_eu_806645C8;
-extern void* lbl_eu_806645D0;
 
 void sinit_801EABC4() {
     func_801D1F9C(&lbl_eu_80664518, 0);
@@ -8417,7 +8175,7 @@ char* func_801D3C74(void* item_data, u8 index) {
                 // the category string table; entry [1+category] is the text id.
                 u32 tbl[7];
                 u32* d = tbl;
-                u32* s = (u32*)lbl_eu_80506330;
+                u32* s = (u32*)&lbl_eu_80506330;
                 for (u32 k = 0; k < 3; k++) {
                     *d++ = *s++;
                     *d++ = *s++;
@@ -8497,7 +8255,7 @@ void func_801D77A4(void* arr, u32 index, u16 value) {
 void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     char* base = (char*)&lbl_eu_805063BC;
 #define SET_PANE(_off, _val) \
-    func_80124270(((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + _off, true), (u32)(_val))
+    func_80124270(((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + _off, true), _val)
     SET_PANE(0xc2, 0x0);
     SET_PANE(0xce, 0x0);
     SET_PANE(0xda, 0x0);
@@ -8620,7 +8378,7 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     ml::FixStr<32> text(true);
     text.format(&lbl_eu_805063BC[0x13e], func_801571FC(), label);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x143],
-                  text.c_str(), 0);
+                  text.c_str(), NULL);
 }
 
 u8 func_801D4214(CItemBoxInfo* info) {
@@ -8661,3 +8419,40 @@ extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) 
     d[2] = s[2];
     d[3] = s[3];
 }
+// .data stays an opaque sized blob (extern-substituted): the TU's
+// switches lower to FIVE compiler jumptables (func_801D6394 +
+// func_801D69FC/801D8E34/801E43BC/801D4260) while retail keeps only
+// func_801D6394's, so no source declaration order can reproduce
+// retail's [jt, gap, vtbl, rtti, vtbl, rtti] layout. Relowering
+// those four switches is a code-shape task for a later wave.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_CItemBoxInfo_data[0x158] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+};

@@ -151,7 +151,18 @@ extern "C" int func_80148778(void* self, int id);
 extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" long __ptmf_test(void* ptmf);
 class CVS_THREAD;
-extern "C" u8 lbl_eu_805398C0[12];
+// PMF reference entry owned by CCharVoiceMan.cpp (retail .data
+// lbl_eu_805398C0 = {0, 0xFFFFFFFF, func_802A13B8}); compared by address
+// via __ptmf_cmpr/__ptmf_test, never dispatched here. The .p member keeps
+// the PMF shape (cf. CfGimmickObjectPmfEntry); init goes through .w.
+typedef int (cf::CCharVoiceMan::*VoiceManPmf)();
+union VoicePmfEntry {
+    struct {
+        u32 w0, w1, w2;
+    } w;
+    VoiceManPmf p;
+};
+extern "C" VoicePmfEntry lbl_eu_805398C0;
 extern "C" void* func_8016FE34(void* src);
 extern "C" void func_802AF9D0(void* r3, int voiceId, int r5);
 extern "C" void func_800B88E0(void* self, cf::IFactoryEvent* event);

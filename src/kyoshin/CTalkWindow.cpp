@@ -32,16 +32,6 @@ extern "C" void cbRenderBefore__11CTalkWindowFv(void* self);
 
 void Draw__11CTalkWindowFv() {}
 
-// Show/hide a talk-layout pane flag. Retail always clears the bit-7 field of
-// the 0xBB byte together with the flag write (MWCC merges the two bitfield
-// stores into a single read-modify-write), so every site writes both fields.
-#define twSetPaneFlag(paneExpr, setBit)                                    \
-    do {                                                                   \
-        CTalkWinPane* twFlagPane = (paneExpr);                             \
-        twFlagPane->mFlagHigh = 0;                                         \
-        if (setBit) twFlagPane->mFlag |= 1; else twFlagPane->mFlag &= ~1u; \
-    } while (0)
-
 // (lbl_eu_80664044 via blob macro)
 extern "C" void func_8012BDD0() { lbl_eu_80664044 = 0; }
 
@@ -368,8 +358,8 @@ extern "C" bool func_8012CD24() {
 }
 
 extern "C" void func_8012CD38(CTalkWindow* self) {
-    CTalkWinSrc* src =
-        reinterpret_cast<CTalkWinSrc*>(findObjectById(self->field_68));
+    cf::CfObject* src =
+        reinterpret_cast<cf::CfObject*>(findObjectById(self->field_68));
     if (src == 0) {
         IScnRender* render = reinterpret_cast<IScnRender*>(self);
         if (self != 0) {
@@ -403,7 +393,8 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
     // Resolve the talk-source anchor: the named-position lookup (0x120)
     // yields strided components (+0xc/+0x1c/+0x2c), else the +0xAC fallback.
     const nw4r::math::VEC3* wsrc;
-    CTalkWinPosObj* obj = src->vfn120(&lbl_eu_804FFCA4[0x1e3]);
+    CTalkWinPosObj* obj = reinterpret_cast<CTalkWinPosObj*>(
+        src->CfObject_UnkVirtualFunc52(&lbl_eu_804FFCA4[0x1e3]));
     if (obj != 0) {
         // Load the strided components in retail's z,y,x order.
         f32 tz = obj->field_0x2C;
@@ -414,7 +405,8 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
         tmp.z = tz;
         wsrc = &tmp;
     } else {
-        wsrc = src->vfnAC();
+        wsrc = reinterpret_cast<const nw4r::math::VEC3*>(
+            src->CfObject_UnkVirtualFunc23());
     }
     world.x = wsrc->x;
     world.y = wsrc->y;
@@ -592,8 +584,8 @@ void CTalkWindow::Init() {
     }
     field_5C = reinterpret_cast<nw4r::lyt::AnimTransform*>(tagMem);
     CTalkWinTagProc* tagProc = reinterpret_cast<CTalkWinTagProc*>(tagMem);
-    tagProc->setMessage(lbl_eu_80667278, lbl_eu_80667278,
-                        reinterpret_cast<u8*>(field_9C), field_68);
+    tagProc->Proc(reinterpret_cast<u8*>(field_9C), lbl_eu_80667278,
+                  lbl_eu_80667278, field_68);
 
     // Early-init dispatch on the tag-processor mode byte (+0x814). Modes 0-6
     // are small setups; mode 7 builds the layout; 3/8 just mark ready.
@@ -609,10 +601,10 @@ void CTalkWindow::Init() {
         field_64 = 1;
         break;
     case 2: {
-        CTalkWinSrc* s2 = reinterpret_cast<CTalkWinSrc*>(
+        cf::CfObject* s2 = reinterpret_cast<cf::CfObject*>(
             findObjectById(field_68));
         if (s2 != 0) {
-            s2->vfn158(0);
+            s2->CfObject_UnkVirtualFunc66(0);
         }
         field_64 = 1;
         break;
@@ -622,9 +614,10 @@ void CTalkWindow::Init() {
         field_64 = 1;
         break;
     case 4: {
-        CTalkWinSrc* s4 = reinterpret_cast<CTalkWinSrc*>(
+        cf::CfObject* s4 = reinterpret_cast<cf::CfObject*>(
             findObjectById(field_68));
-        func_8013E204(s4->field_0x8C);
+        func_8013E204(
+            reinterpret_cast<CTalkActorId*>(s4)->msgId8C);
         field_64 = 1;
         break;
     }
@@ -663,12 +656,12 @@ void CTalkWindow::Init() {
         // Prime the message-window pane and bind the four corner panes.
         CTalkWinPane* paneB0 = reinterpret_cast<CTalkWinPane*>(
             mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1));
-        paneB0->vfunc_0x78();
-        paneB0->vfunc_0x74(0x20);
+        paneB0->FreeStringBuffer();
+        paneB0->AllocStringBuffer(0x20);
 
-        char* msg = func_80138DA4(
-            reinterpret_cast<CTalkWinSrc*>(
-                findObjectById(field_68))->getText());
+        char* msg = func_80138DA4(reinterpret_cast<char*>(
+            reinterpret_cast<cf::CfObject*>(
+                findObjectById(field_68))->CObjectParam_UnkVirtualFunc2()));
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);
@@ -678,8 +671,8 @@ void CTalkWindow::Init() {
         // Page-select pane: attach the tag processor and name the sub-panes.
         CTalkWinPane* paneF1 = reinterpret_cast<CTalkWinPane*>(
             mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1));
-        paneF1->vfunc_0x78();
-        paneF1->vfunc_0x74(0x400);
+        paneF1->FreeStringBuffer();
+        paneF1->AllocStringBuffer(0x400);
         paneF1->mFlag |= 1;
         paneF1->field_F8 = reinterpret_cast<u32>(field_5C);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xfc], &lbl_eu_804FFCA4[0x107], 0);

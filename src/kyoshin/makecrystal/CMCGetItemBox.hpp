@@ -30,14 +30,9 @@ struct CMCItemBoxSubObj {
     u8 bytes[0x18];
 };
 
-/* Typed view of the embedded cursor widgets (CCur07/CCur09/CCur16/CCur18):
-   vtable slot 2 (vtable offset 0x10) sets the widget position from the
-   func_80137924 result. Dispatch-only - never constructed, no vtable emitted. */
-struct CMCCursorWidget {
-    virtual void vf_00() = 0;
-    virtual void vf_04() = 0;
-    virtual void setPos(nw4r::math::VEC3* pos) = 0;   // vtable offset 0x10
-};
+/* Typed view of the embedded cursor widgets (CCur07/CCur09/CCur16/CCur18).
+   Dispatch goes through CBaseCur (vtable offsets 0x08 initLayout /
+   0x10 setRootPaneTranslate); see kyoshin/CBaseCur.hpp. */
 
 /* Echo/placeholder for the CSysWin sub-object range. */
 struct CMCGetItemBoxSysWin {
@@ -179,21 +174,20 @@ public:
     virtual u32 getCount(void* entry) = 0;           // vtable offset 0x80
 };
 
-// Base-class ctor stores the shared retail vtable first (MWCC runs base
-// constructors before member constructors, matching the retail order).
+// Retail vtable lbl_eu_80539128: RTTI lbl_eu_80662C40, dtor @+0x08, then the
+// full IWorkEvent tree (OnFileEvent overridden @+0x10, rest base) -- so
+// CMCGetItemBox derives IWorkEvent. novtable + explicit label write in the
+// ctor, same shape as CMCCrystalList / CMCCrystalSupport / CSysWin.
 extern "C" void* lbl_eu_80539128[];   // CMCGetItemBox retail vtable
-struct CMCGetItemBoxVt {
-    void* mVtbl;   // 0x00 - lbl_eu_80539128
-    CMCGetItemBoxVt() { mVtbl = (void*)lbl_eu_80539128; }
-};
 
-// Non-polymorphic by design: retail stores the shared vtable (lbl_eu_80539128)
-// manually, so the class declares no virtuals beyond the vtable-slot base.
-class CMCGetItemBox : public CMCGetItemBoxVt {
+class __declspec(novtable) CMCGetItemBox : public IWorkEvent {
 public:
-    CMCGetItemBox();
-    ~CMCGetItemBox();
-    bool OnFileEvent(CEventFile* pEventFile);
+    virtual ~CMCGetItemBox();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+
+    // Overlay on the implicit vptr at +0x00 so the free-function ctor can
+    // store the retail table label (same idiom as CSysWin / CBaseCur).
+    void*& vtbl() { return *reinterpret_cast<void**>(this); }
 
     u8 func_80297D1C();
     u8 func_80297D24();
@@ -237,6 +231,11 @@ public:
     CMCItemBoxSub sub_314;           // 0x314
 };
 
+// C-ABI ctor (retail symbol __ct__CMCGetItemBox, no class-length mangling,
+// same as __ct__CSysWin / __ct__CEIBCur). Free-function form: no implicit
+// base-vptr store is emitted, the label is written explicitly via vtbl().
+extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self);
+
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -252,7 +251,7 @@ extern "C" u32 func_80157CD0(u8);
 extern "C" void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" void func_801CB9D8(u32*, void*, u32);
-extern "C" void func_80137924(void*, void*, void*, void*);
+// func_80137924 lives in kyoshin/CSysWin.hpp (typed VEC3/Pane form).
 extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" void func_80124270(void*, u32);
 extern "C" void func_801D4174(void*);
@@ -302,7 +301,7 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u
 // ---------------------------------------------------------------------------
 // Constructor imports (retail symbol names verbatim)
 // ---------------------------------------------------------------------------
-extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+// __ct__17UnkClass_8045F564Fv lives in kyoshin/CSysWin.hpp (typed form).
 extern "C" void __ct__CSysWin(void* syswin, int arg);
 extern "C" void __ct__CItemBoxInfo(void* info, int arg2, int arg3);
 extern "C" void __dt__12CItemBoxInfoFv(void* info, int flags);
@@ -325,7 +324,7 @@ extern "C" void func_8013676C(void*, u32);
 extern "C" void buildLayout__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
+// code80135FDC_setVec3 lives in kyoshin/CSysWin.hpp (VEC3-returning form).
 extern "C" void func_8003AA34();
 extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 extern "C" void* __ct__CTagProcessor(void*);

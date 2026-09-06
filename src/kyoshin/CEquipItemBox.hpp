@@ -26,13 +26,21 @@ namespace lyt {
 }
 
 /* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable.
+   Retail vtable lbl_eu_80538704: RTTI, 0, then a single virtual at +0x08
+   (func_80285994); CEIBPageCur overrides it with func_80285C84.
+   __declspec(novtable): the tables live in the data blob, the C-ABI ctors
+   store the labels manually, and the retail plain-named bodies stay
+   extern "C" free functions (only the dispatch goes through the virtual).
    Ctor is C-ABI: retail symbol __ct__CEIBCur carries no class-length
    mangling, so it is declared/defined with C linkage and called explicitly
    from derived ctors. */
-struct CEIBCur {
+struct __declspec(novtable) CEIBCur {
+    virtual void initLayout();  // +0x08 (retail: func_80285994)
     void func_80285A18();
     void func_80285B24();
-    void* mVtable;          // 0x00
+    // Overlay on the implicit vptr at +0x00 so the free-function ctors can
+    // store the retail table labels (same idiom as CBaseCur / CSysWin).
+    void*& vtbl() { return *reinterpret_cast<void**>(this); }
     void* mArcResAcc;       // 0x04
     void* mpLayout;         // 0x08
     void* mpAnimTrans0;     // 0x0C
@@ -61,10 +69,12 @@ extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 void buildLayout(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void bindLayoutAnimTransform(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
-/* CEIBPageCur - page-cursor subclass of CEIBCur, overrides vtable.
+/* CEIBPageCur - page-cursor subclass of CEIBCur, overrides the +0x08 slot
+   with func_80285C84 (vtable lbl_eu_805386EC).
    Ctor is C-ABI like __ct__CEIBCur (retail symbol __ct__CEIBPageCur, no
    class-length mangling); called explicitly by OnFileEvent. */
-struct CEIBPageCur : CEIBCur {
+struct __declspec(novtable) CEIBPageCur : CEIBCur {
+    virtual void initLayout();  // +0x08 override (retail: func_80285C84)
 };
 extern "C" CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self, void* arcResAcc);
 
@@ -244,18 +254,8 @@ struct CEquipItemBoxFourShorts {
     s16 a, b, c, d;
 };
 
-/* Font object returned by CDeviceFont::getFontInfo: vtable slot 9
-   (offset 0x24) yields the pane data bound via func_8013676C. */
-struct CEquipItemBoxFontView {
-    virtual void f2() = 0;
-    virtual void f3() = 0;
-    virtual void f4() = 0;
-    virtual void f5() = 0;
-    virtual void f6() = 0;
-    virtual void f7() = 0;
-    virtual void f8() = 0;
-    virtual u32 f9() = 0;  // vtable +0x24
-};
+/* (font-info pane data goes through IDeviceFontInfo::getFont -- vtable
+   offset 0x24; see monolib/device/CDeviceFont.hpp.) */
 
 /* Texture object returned by ArcResourceAccessor::GetResource for 'timg':
    mChain (+0x08) -> dims (+0x00) carries the 2D dimension header. */
@@ -279,13 +279,8 @@ struct CEquipItemBoxPaneSizeView {
     float mH;   // 0x50
 };
 
-/* Cursor-member vtable view: the first declared virtual lands at vtable
-   +0x08 (MWCC RTTI prefix), the slot OnFileEvent dispatches after copying
-   the temp cursor into the member. */
-class CEquipItemBoxCurMemberView {
-public:
-    virtual void vfSlot8() = 0;  // vtable +0x08
-};
+/* (cursor-member +0x08 dispatch goes through the real classes now:
+   CEIBCur::initLayout / CEIBPageCur::initLayout / CBaseCur::initLayout.) */
 
 /* Non-vtable CCur18 field block copied from the stack temp into the member
    (4 words + 2 bytes, skipping the vtable word at +0x00). */
@@ -427,14 +422,8 @@ public:
     virtual u32 vf90(CItemInstance* p);  // 0x90 (name-key sort)
 };
 
-/* CCur18 vtable view (declared index 2 -> vtable +0x10 = Move/position-set
-   virtual, dispatched by func_802870DC with a 16-byte state buffer). */
-class CEquipItemBoxCur18View {
-public:
-    virtual void vf02() = 0;        // +0x08
-    virtual void vf03(void*) = 0;   // +0x0C
-    virtual void vf04(void*) = 0;   // +0x10 Move
-};
+/* (CCur18 position updates go through CBaseCur::setRootPaneTranslate --
+   vtable offset 0x10; see kyoshin/CBaseCur.hpp.) */
 
 /* Layout-object view: the pane-finder sub-object sits at +0x10 (same shape
    as CLayoutView in CEquipChange.hpp; local copy because this TU does not
@@ -444,24 +433,8 @@ struct CEquipItemBoxLayoutView {
     void* field_10;   // 0x10
 };
 
-/* Pane-finder sub-object vtable view: slot 13 (+0x3C) looks a pane up by
-   name/mode and returns it (see CLayoutSubVtbl13 in CEquipChange.hpp). */
-struct CEquipItemBoxLayoutSubVtbl13 {
-    virtual void v0();
-    virtual void v1();
-    virtual void v2();
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6();
-    virtual void v7();
-    virtual void v8();
-    virtual void v9();
-    virtual void v10();
-    virtual void v11();
-    virtual void v12();
-    virtual nw4r::lyt::Pane* v13(u32 arg, int mode);   // +0x3C
-};
+/* (pane lookup goes through nw4r::lyt::Pane::FindPaneByName -- vtable offset
+   0x3C; the layout object is reached through CEquipItemBoxLayoutView below.) */
 
 /* Pane-layout view exposing the translate at +0x2C (Pane::mTranslate is
    protected in the nw4r header, so the equip-box helpers reach it through

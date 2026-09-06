@@ -5,6 +5,9 @@
 #include "kyoshin/CItemBoxGrid.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include <nw4r/ut/ut_TagProcessorBase.h>
 #include <stdio.h>
 #include <string.h>
 #include <nw4r/lyt.h>
@@ -259,9 +262,9 @@ extern "C" void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, int r6, in
     u32 i;
     *(u16*)(p + 0x2800) = 0;
     // Reset the three sub-objects through their vtables (+0x0C method).
-    ((CItemBoxObjVt0C*)(p + 0x34b0))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0x2ca8))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0x3cb8))->_v0C();
+    ((CVisionItem*)(p + 0x34b0))->Rebuild();
+    ((CQuestItem*)(p + 0x2ca8))->Rebuild();
+    ((CArtsBookItem*)(p + 0x3cb8))->Rebuild();
     // Clear all 0x400 cells to blank entries and stamp the hidden-flag row.
     struct { u32 pad; u8 buf[9]; } tmp;
     for (i = 0; i < 0x400; i++) {
@@ -2735,8 +2738,8 @@ void func_801CABC8(void* self, int r4) {
 
     // Virtual dispatch through the +0x44 layout object (vtable+0x38 slot);
     // method takes only the flag - this comes in r3, arg in r4.
-    CItemBoxLayoutVt38* layout = *(CItemBoxLayoutVt38**)(p + 0x44);
-    layout->_v38(0);
+    nw4r::lyt::Layout* layout = *(nw4r::lyt::Layout**)(p + 0x44);
+    layout->Animate(0);
 
     func_801D202C(p + 0x70);
     func_801D202C(p + 0x88);
@@ -2812,7 +2815,7 @@ void func_801CAE9C(void* self, int r4) {
 
     void* obj44 = *(void**)(p + 0x44);
     if (obj44) {
-        delete (CItemBoxObjVt08*)obj44;
+        delete (nw4r::lyt::Layout*)obj44;
         *(u32*)(p + 0x44) = 0;
     }
 
@@ -2821,18 +2824,23 @@ void func_801CAE9C(void* self, int r4) {
 
     void* obj5c = *(void**)(p + 0x5c);
     if (obj5c) {
-        delete (CItemBoxObjVt08*)obj5c;
+        // CTagProcessor (built by __ct__CTagProcessor above) derives from
+        // CTagProcessorBase : nw4r::ut::TagProcessorBase<wchar_t> (virtual
+        // dtor at +0x08); deleting through the nw4r base keeps the retail
+        // deleting-dtor dispatch without pulling CTagProcessor.hpp (whose
+        // C++ func_801375A0 decl clashes with this TU's extern "C" one).
+        delete (nw4r::ut::TagProcessorBase<wchar_t>*)obj5c;
         *(u32*)(p + 0x5c) = 0;
     }
 
     deleteRegion__17UnkClass_8045F564Fv(p + 0x8);
     deleteRegion__17UnkClass_8045F564Fv(p + 0x18);
 
-    ((CItemBoxObjVt0C*)(p + 0x70))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0x88))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0xa0))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0xb8))->_v0C();
-    ((CItemBoxObjVt0C*)(p + 0xd0))->_v0C();
+    ((CBaseCur*)(p + 0x70))->cleanup();
+    ((CBaseCur*)(p + 0x88))->cleanup();
+    ((CBaseCur*)(p + 0xa0))->cleanup();
+    ((CBaseCur*)(p + 0xb8))->cleanup();
+    ((CBaseCur*)(p + 0xd0))->cleanup();
 
     func_801D3258(p + 0xe8);
     func_801D4174(p + 0x1d8);
@@ -2921,9 +2929,9 @@ void func_801CB38C(void* self) {
     if (*(s32*)(p + 0x58) != 3) return;
     if (func_801D3320(p + 0xe8)) return;
     *(u32*)(p + 0x58) = 4;
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 0);
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x48), 0);
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4c), 1);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x48), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 1);
     p[0x61] = 0;
     func_801D216C(p + 0x70, 0);
     func_801D216C(p + 0x88, 0);
@@ -2983,7 +2991,7 @@ __declspec(noinline) void func_801CB56C(void* self) {
 }
 
 // Item box advance handler. optimize_for_size reproduces retail's stmw r29
-// prologue and 0x50 frame; the vt+0x10 dispatches use the CItemBoxObjA0Vt
+// prologue and 0x50 frame; the vt+0x10 dispatches use CBaseCur::setRootPaneTranslate
 // cast class so MWCC emits lwz r12,0x10(r12); mtctr; bctrl.
 #pragma push
 #pragma optimize_for_size on
@@ -3005,7 +3013,7 @@ void func_801CB5F0(void* self) {
             func_802083CC(p + 0x418);
             u8 temp[12];
             func_80208760(temp, p + 0x418);
-            ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(temp);
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
             playUISound__FUl(1);
         }
         return;
@@ -3030,7 +3038,7 @@ void func_801CB5F0(void* self) {
         }
         u32 tmp[3];
         func_801CB9D8(tmp, arr, (u8)((s8)p[0x545] * 4 + (u8)p[0x546]));
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(tmp);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         goto sound_and_return;
     }
     if (p[0x528]) {
@@ -3059,7 +3067,7 @@ void func_801CB5F0(void* self) {
                 if ((s8)p[0x529] < 0) p[0x529] = 1;
                 u8 temp[12];
                 func_8022D0F8(temp, p + 0x440, p[0x529]);
-                ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(temp);
+                ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
                 goto sound_and_return;
             }
             return;
@@ -3090,7 +3098,7 @@ void func_801CB5F0(void* self) {
             func_801D3620(p + 0xe8);
             u8 temp[12];
             func_801D3454(temp, p + 0xe8);
-            ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(temp);
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
             goto sound_and_return;
         }
         return;
@@ -3155,7 +3163,7 @@ void func_801CBA04(void* self) {
             func_8020844C(p + 0x418);
             u32 buf2c[3];
             func_80208760(buf2c, p + 0x418);
-            ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf2c);
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf2c));
             playUISound__FUl(1);
         }
         return;
@@ -3166,7 +3174,7 @@ void func_801CBA04(void* self) {
             func_801D3698(p + 0xe8);
             u32 buf20[3];
             func_801D3454(buf20, p + 0xe8);
-            ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf20);
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf20));
             goto sound_and_return2;
         }
         return;
@@ -3187,7 +3195,7 @@ void func_801CBA04(void* self) {
             } while (idx != (s8)p[0x546]);
             u32 buf14[3];
             func_801CB9D8(buf14, sub, (u32)(u8)((s8)p[0x545] * 4 + p[0x546]));
-            ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf14);
+            ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf14));
             goto sound_and_return2;
         }
         if (p[0x528]) {
@@ -3214,7 +3222,7 @@ void func_801CBA04(void* self) {
                 if ((s8)val > 1) p[0x529] = 0;
                 u32 buf08[3];
                 func_8022D0F8(buf08, p + 0x440, p[0x529]);
-                ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf08);
+                ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf08));
                 goto sound_and_return2;
             }
             goto sound_and_return2;
@@ -3294,7 +3302,7 @@ void func_801CBDE8(void* self) {
         if (!func_801D3328(p + 0xe8)) return;
         func_801D3724(p + 0xe8);
         func_801D3454(sbuf + 3, p + 0xe8);
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(sbuf + 3);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf + 3));
         playUISound__FUl(1);
         return;
     }
@@ -3310,7 +3318,7 @@ void func_801CBDE8(void* self) {
             }
         }
         func_801CB9D8(sbuf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(sbuf);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(sbuf));
         playUISound__FUl(1);
         return;
     }
@@ -3381,8 +3389,7 @@ void func_801CC0EC(void* self) {
         if (!func_801D3328(p + 0xe8)) return;
         func_801D377C(p + 0xe8);
         func_801D3454(tmp, p + 0xe8);
-        void** vtbl = *(void***)(p + 0xa0);
-        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)tmp);
         playUISound__FUl(1);
         return;
     }
@@ -3398,8 +3405,7 @@ void func_801CC0EC(void* self) {
             if (val) { p[0x545] = (u8)idx; break; }
         }
         func_801CB9D8(buf, sub, (u8)(p[0x546] + (u8)p[0x545] * 4));
-        void** vtbl = *(void***)(p + 0xa0);
-        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
         playUISound__FUl(1);
         return;
     }
@@ -3506,12 +3512,12 @@ void func_801CC5DC(void* self) {
         void* pane = *(void**)((char*)obj + 0x10);
         // MWCC evaluates args right-to-left, so listing the 0x301 fetch as
         // the third argument makes it execute first, matching retail.
-        func_80137924(&buf[3], ((CItemPaneObjVt*)pane)->_v3C((char*)strs + 0x2f8, 1),
-                      ((CItemPaneObjVt*)pane)->_v3C((char*)strs + 0x301, 1), pane);
+        func_80137924(&buf[3], ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x2f8, 1),
+                      ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)strs + 0x301, 1), pane);
         func_801D3430(p + 0xe8, &buf[3]);
         func_801D353C(p + 0xe8, (u8)(p[0x547] + p[0x548]));
         func_801D3454(buf, p + 0xe8);
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         func_801D216C(p + 0xa0, 1);
         func_801D216C(p + 0x70, 0);
         func_801D216C(p + 0xb8, 0);
@@ -3570,7 +3576,7 @@ void func_801CC7B0(void* self, int r4) {
             func_8022E3AC(p + 0x468);
             u32 buf[4];
             func_8022E498(buf, p + 0x468);
-            ((CItemBoxObjA0Vt*)(p + 0xd0))->_v10(buf);
+            ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         } else {
             func_8022DD68(p + 0x468);
             *(u32*)(p + 0x58) = 0x11;
@@ -3759,8 +3765,7 @@ after_fs:
             func_8022E3AC(p + 0x468);
             u8 temp[16];
             func_8022E498(temp, p + 0x468);
-            void** vtbl = *(void***)(p + 0xd0);
-            ((void(*)(void*, void*))vtbl[4])(p + 0xd0, temp);
+            ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)temp);
             playUISound__FUl(3);
             return;
         }
@@ -4161,7 +4166,7 @@ void func_801CDC40(void* self) {
         func_801D216C(p + 0xa0, 1);
         u32 buf[3];
         func_801CB9D8(buf, list, (u32)v);
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(buf));
         playUISound__FUl(2);
     } else {
         playUISound__FUl(5);
@@ -4218,9 +4223,9 @@ u32 func_801CDFB4(void* self) {
 __declspec(noinline) void func_801CE108(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x48), lbl_eu_80667F78)) return;
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 0);
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x48), 0);
-    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4C), 1);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x48), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4C), 1);
     *(u32*)(p + 0x58) = 2;
 }
 
@@ -4228,9 +4233,9 @@ extern "C" __declspec(noinline) void func_801CE1A0(void* self) { // noinline: di
     u8* p = (u8*)self;
     if (advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) {
         *(u32*)(p + 0x58) = 3;
-        ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x48), 0);
-        ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4c), 0);
-        ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 1);
+        ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x48), 0);
+        ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 0);
+        ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 1);
         p[0x61] = 1;
         func_801D0328(self);
         func_801D216C((void*)(p + 0x70), 1);
@@ -4266,9 +4271,9 @@ __declspec(noinline) void CheckState4_Animate(char* self) { // noinline: dispatc
 __declspec(noinline) void func_801CE2F8(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_80137510((nw4r::lyt::AnimTransform*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) return;
-    ((CItemPaneAnimVt*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4c), 0);
-    ((CItemPaneAnimVt*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 0);
-    ((CItemPaneAnimVt*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x48), 1);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x4c), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x50), 0);
+    ((nw4r::lyt::Layout*)(void*)*(u32*)(p + 0x44))->SetAnimationEnable((nw4r::lyt::AnimTransform*)(void*)*(u32*)(p + 0x48), 1);
     *(u32*)(p + 0x58) = 5;
 }
 
@@ -4312,7 +4317,7 @@ __declspec(noinline) void func_801CE4B4(void* self) { // noinline: dispatch tabl
     *(u32*)(p + 0x58) = 7;
     u8 temp[16];
     func_80208760(temp, p + 0x418);
-    ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(temp);
+    ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
     func_801D216C(p + 0xa0, 1);
 }
 
@@ -4452,7 +4457,7 @@ __declspec(noinline) void func_801CE974(void* self) { // noinline: dispatch tabl
     u8 temp[16];
     u8 val529 = p[0x529];
     func_8022D0F8(temp, p + 0x440, val529);
-    reinterpret_cast<CItemBoxObjA0Vt*>(p + 0xa0)->_v10(temp);
+    reinterpret_cast<CBaseCur*>(p + 0xa0)->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
@@ -4471,7 +4476,7 @@ __declspec(noinline) void func_801CEA30(void* self) { // noinline: dispatch tabl
     *(u32*)(p + 0x58) = 0x10;
     u8 temp[16];
     func_8022E498(temp, p + 0x468);
-    ((CItemBoxObjA0Vt*)(p + 0xd0))->_v10(temp);
+    ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)(temp));
     func_801D216C(p + 0xd0, 1);
 }
 
@@ -4579,10 +4584,10 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
             case 9: msgId = (u32)func_80138F78(0x149); break;
             }
             if (msgId) {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                     0x74696d67, (char*)msgId, 0);
             } else {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
@@ -4591,7 +4596,7 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
             if (hasArts == 0) {
                 if (func_801C6E90(obj)) {
                     msgId = (u32)func_80138F78(0x155);
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
                     u32 sub = 0;
@@ -4605,10 +4610,10 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
                     case 9: sub = (u32)func_80138F78(0x149); break;
                     }
                     if (sub) {
-                        msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                        msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                             0x74696d67, (char*)sub, 0);
                     } else {
-                        msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                        msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                             0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                     }
                 }
@@ -4625,10 +4630,10 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
                 case 9: sub2 = (u32)func_80138F78(0x149); break;
                 }
                 if (sub2) {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                         0x74696d67, (char*)sub2, 0);
                 } else {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             }
@@ -4641,14 +4646,14 @@ done:
         if (kind) {
             u16 v = func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x34d], kind);
             msgId = (u32)func_80138F78(v);
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                 0x74696d67, (char*)msgId, 0);
             if (!msgId) {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else {
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     }
@@ -4656,10 +4661,10 @@ done:
         u8* q = p + (s8)p[0x6f];
         u8 cat = q[0x62];
         if (cat == 3) {
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x357], 0);
         } else {
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x36d], 0);
         }
     }
@@ -4694,10 +4699,10 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
             case 6: msgId = (u32)func_80138F78(0x192); break;
             }
             if (msgId) {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                     0x74696d67, (char*)msgId, 0);
             } else {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
@@ -4724,10 +4729,10 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
                 case 5: msgId = (u32)func_80138F78(0x18d); break;
                 }
                 if (msgId) {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             } else {
@@ -4743,10 +4748,10 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
                 case 5: msgId = (u32)func_80138F78(0x198); break;
                 }
                 if (msgId) {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                         0x74696d67, (char*)msgId, 0);
                 } else {
-                    msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                    msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                         0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
                 }
             }
@@ -4759,14 +4764,14 @@ done_item:
         if (kind) {
             u16 v = func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050566C[0x391], kind);
             msgId = (u32)func_80138F78(v);
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(
                 0x74696d67, (char*)msgId, 0);
             if (!msgId) {
-                msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+                msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else {
-            msgId = (u32)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(
+            msgId = (u32)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(
                 0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     }
@@ -4843,21 +4848,21 @@ void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
     void* acc;
     void* pane;
     acc = *(void**)(p + 0x3c);
-    pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
+    pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     if (r4 == 1) {
         acc = *(void**)(p + 0x3c);
-        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3bb], 0);
+        pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3bb], 0);
     } else if (r4 == 2) {
         acc = *(void**)(p + 0x3c);
-        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3cf], 0);
+        pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3cf], 0);
     }
     if (r6) {
         acc = *(void**)(p + 0x3c);
-        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3e3], 0);
+        pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3e3], 0);
     }
     if (r5) {
         acc = *(void**)(p + 0x3c);
-        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3f7], 0);
+        pane = ((nw4r::lyt::ArcResourceAccessor*)acc)->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x3f7], 0);
     }
 
     if (pane) {
@@ -4896,12 +4901,12 @@ extern "C" void func_801CFA58(void* self, int r4, int r5) {
         case 12: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4dd]); break;
         case 13: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4f2]); break;
         }
-        result = (int)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(0x74696d67, buf, 0);
+        result = (int)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x40))->GetResource(0x74696d67, buf, 0);
         if (!result) {
-            result = (int)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
+            result = (int)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
         }
     } else {
-        result = (int)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
+        result = (int)((nw4r::lyt::ArcResourceAccessor*)*(void**)(p + 0x3c))->GetResource(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     }
     if (result) {
         sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], r5 + 1);
@@ -4918,7 +4923,7 @@ void func_801CFCBC(void* self, u32 val, u32 idx) {
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x513], idx + 1);
     u32 obj = *(u32*)(p + 0x44);
     u32 sub = *(u32*)(obj + 0x10);
-    void* ret = ((CItemPaneObjVt*)sub)->_v3C(buf, 1);
+    void* ret = ((nw4r::lyt::Pane*)sub)->FindPaneByName(buf, 1);
     func_80124270(ret, val);
 }
 #pragma optimize_for_size off
@@ -4958,10 +4963,10 @@ extern "C" void func_801CFD2C(void* self) {
             }
         }
         void* pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
-        void* t1 = ((CItemPaneObjVt*)pane)->_v3C(buf1, 1);
+        void* t1 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf1, 1);
         func_80124270(t1, isCurTab);
         pane = *(void**)(*(u32*)(p + 0x44) + 0x10);
-        void* t2 = ((CItemPaneObjVt*)pane)->_v3C(buf2, 1);
+        void* t2 = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf2, 1);
         func_80124270(t2, isOtherTab);
         func_801CFA58(self, cat, (u8)i);
     }
@@ -5015,7 +5020,7 @@ void func_801CFFEC(void* self) {
     rows = func_801C5E5C(sub);
     if ((u8)rows > 1) {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((CItemPaneObjVt*)pane)->_v3C((char*)&lbl_eu_8050566C[0x547], 1);
+        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
         func_80124270(ret, 1);
         u32 visRows = rows & 0xFF;
         u8 i;
@@ -5023,14 +5028,14 @@ void func_801CFFEC(void* self) {
             char buf[32];
             sprintf(buf, (char*)&lbl_eu_8050566C[0x54e], i + 1);
             void* pane2 = *(void**)(*(u32**)(p + 0x44) + 4);
-            void* ret2 = ((CItemPaneObjVt*)pane2)->_v3C(buf, 1);
+            void* ret2 = ((nw4r::lyt::Pane*)pane2)->FindPaneByName(buf, 1);
             // visible while i < visRows (borrow trick)
             func_80124270(ret2, ((u32)i - visRows) >> 31);
         }
         u8 pageDisp = (u8)(sub->field_2804 + 1);
         setLayoutTextBoxNumber(*(nw4r::lyt::Layout**)(p + 0x44), (char*)&lbl_eu_8050566C[0x55d], pageDisp);
         void* pane3 = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret3 = ((CItemPaneObjVt*)pane3)->_v3C((char*)&lbl_eu_8050566C[0x566], 1);
+        void* ret3 = ((nw4r::lyt::Pane*)pane3)->FindPaneByName((char*)&lbl_eu_8050566C[0x566], 1);
         float v[3];
         v[0] = *(float*)(p + 0x534);
         v[1] = *(float*)(p + 0x538);
@@ -5055,7 +5060,7 @@ void func_801CFFEC(void* self) {
         copyVEC3((u8*)ret3 + 0x2c, v);
     } else {
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((CItemPaneObjVt*)pane)->_v3C((char*)&lbl_eu_8050566C[0x547], 1);
+        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName((char*)&lbl_eu_8050566C[0x547], 1);
         func_80124270(ret, 0);
     }
     u8 i;
@@ -5063,7 +5068,7 @@ void func_801CFFEC(void* self) {
         char buf[32];
         sprintf(buf, (char*)&lbl_eu_8050566C[0x574], i + 1);
         void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
-        void* ret = ((CItemPaneObjVt*)pane)->_v3C(buf, 1);
+        void* ret = ((nw4r::lyt::Pane*)pane)->FindPaneByName(buf, 1);
         if (ret) {
             u8 max = (u8)LookupIndexedByte((char*)sub);
             func_80124270(ret, ((u32)i - (u32)max) >> 31);
@@ -5185,8 +5190,8 @@ extern "C" void func_801D05D4(void* self, int val) {
                     isCurTab = 0;
                     isOtherTab = 1;
                 }
-                func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane1, 1), isCurTab);
-                func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane2, 1), isOtherTab);
+                func_80124270(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane1, 1), isCurTab);
+                func_80124270(((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(pane2, 1), isOtherTab);
             }
             i++;
         } while (i < 2);
@@ -5240,16 +5245,16 @@ extern "C" __declspec(noinline) void func_801D0950(void* self) {
     nw4r::math::VEC3 posWin;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         func_8022C1B4(&posWin, (void*)(p + 0x4ac), p[0x540]);
-        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(&posWin);
+        ((CBaseCur*)(p + 0xa0))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posWin));
         return;
     }
     s8 idx = (s8)p[0x525];
     if (idx == -2) {
-        void* t1 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C((char*)&lbl_eu_8050566C[0x637], 1);
+        void* t1 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
         func_801375A0(&posT2, (void*)t1);
-        void* t2 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C((char*)&lbl_eu_8050566C[0x301], 1);
+        void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT2.x = posT2.x * *(float*)((u8*)t2 + 0x44);
-        ((CItemBoxObjA0Vt*)(p + 0xb8))->_v10(&posT2);
+        ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT2));
         func_801D216C(p + 0x70, 0);
         func_801D216C(p + 0xb8, 1);
         return;
@@ -5257,11 +5262,11 @@ extern "C" __declspec(noinline) void func_801D0950(void* self) {
     if (idx == -1) {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x507], (s8)p[0x6f] + 1);
-        void* t1 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(str, 1);
+        void* t1 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(str, 1);
         func_801375A0(&posT1, (void*)t1);
-        void* t2 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C((char*)&lbl_eu_8050566C[0x301], 1);
+        void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posT1.x = posT1.x * *(float*)((u8*)t2 + 0x44);
-        ((CItemBoxObjA0Vt*)(p + 0x70))->_v10(&posT1);
+        ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posT1));
         func_801D216C(p + 0x70, 1);
         func_801D216C(p + 0xb8, 0);
         return;
@@ -5269,11 +5274,11 @@ extern "C" __declspec(noinline) void func_801D0950(void* self) {
     {
         char str[32];
         sprintf(str, (const char*)&lbl_eu_8050566C[0x396], (s8)p[0x524] + idx * 10 + 1);
-        void* t1 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(str, 1);
+        void* t1 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName(str, 1);
         func_801375A0(&posDef, (void*)t1);
-        void* t2 = ((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C((char*)&lbl_eu_8050566C[0x301], 1);
+        void* t2 = ((nw4r::lyt::Pane*)*(void**)(*(u32*)(p + 0x44) + 0x10))->FindPaneByName((char*)&lbl_eu_8050566C[0x301], 1);
         posDef.x = posDef.x * *(float*)((u8*)t2 + 0x44);
-        ((CItemBoxObjA0Vt*)(p + 0x70))->_v10(&posDef);
+        ((CBaseCur*)(p + 0x70))->setRootPaneTranslate((const nw4r::math::VEC3*)(&posDef));
         func_801D216C(p + 0x70, 1);
         func_801D216C(p + 0xb8, 0);
     }
@@ -5724,10 +5729,10 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
         layout, (nw4r::lyt::AnimTransform**)(p + 0x4c), arcRes, (char*)&lbl_eu_8050566C[0x68b]);
     bindLayoutAnimTransform__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         layout, (nw4r::lyt::AnimTransform**)(p + 0x50), arcRes, (char*)&lbl_eu_8050566C[0x6a8]);
-    // Pane lookups go through the root-pane host object at Layout+0x10.
-    CItemPaneObjVt* paneHost = *(CItemPaneObjVt**)((char*)layout + 0x10);
+    // Pane lookups go through the layout's root pane.
+    nw4r::lyt::Pane* paneHost = layout->GetRootPane();
     void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, layout);
-    void* fontData = ((CibgFontVt24*)font)->_v24();
+    void* fontData = ((IDeviceFontInfo*)font)->getFont();
     func_8013676C(paneHost, (u32)fontData);
     u32 screenW = (u32)getPackedFont__Fv();
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
@@ -5741,13 +5746,13 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     }
     setLayoutTextBoxFont__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x59b], screenH);
     // Initial animation visibility: only the 0x48 transform starts shown.
-    ((CItemPaneAnimVt*)layout)->_v2C(*(void**)(p + 0x4c), 0);
-    ((CItemPaneAnimVt*)layout)->_v2C(*(void**)(p + 0x50), 0);
-    ((CItemPaneAnimVt*)layout)->_v2C(*(void**)(p + 0x48), 1);
-    ((CItemBoxLayoutVt38*)layout)->_v38(0);
+    (layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)(p + 0x4c), 0);
+    (layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)(p + 0x50), 0);
+    (layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)(p + 0x48), 1);
+    layout->Animate(0);
     func_80139198(0);
     // Bind the tag processor to the message pane.
-    void* tpPane = paneHost->_v3C((char*)&lbl_eu_8050566C[0x58a], 1);
+    void* tpPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x58a], 1);
     if (tpPane != NULL) *(u32*)((u8*)tpPane + 0xf8) = *(u32*)(p + 0x5c);
     // Window title / caption strings.
     char* msgA = func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 5);
@@ -5761,10 +5766,10 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     u16 msgKey = func_8013606C(&lbl_eu_8050566C[0x6ef], modeStr, 0x49);
     u32 msgId = (u32)func_80138F78(msgKey);
     void* sysWin = func_801355F4();
-    void* texRes = ((CibgSysWinVt0C*)sysWin)->_v0C(0x74696D67, msgId, 0);
+    void* texRes = ((nw4r::lyt::ArcResourceAccessor*)sysWin)->GetResource(0x74696D67, (const char*)msgId, 0);
     if (texRes != NULL) {
         func_80137E7C(layout, (void*)&lbl_eu_8050566C[0x6fd], texRes);
-        void* pane2 = paneHost->_v3C((char*)&lbl_eu_8050566C[0x6fd], 1);
+        void* pane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6fd], 1);
         if (pane2 != NULL) {
             CibgTexMat* mat = *(CibgTexMat**)((u8*)texRes + 8);
             CibgTexData* tex = *(CibgTexData**)mat->field_00;
@@ -5776,15 +5781,15 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     }
     // Hide the icons that do not apply to this box mode.
     if (p[0x527] != 1) {
-        void* iconPane = paneHost->_v3C((char*)&lbl_eu_8050566C[0x6c2], 1);
+        void* iconPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x6c2], 1);
         func_80124270(iconPane, 0);
         if (p[0x527] != 2) {
-            void* iconPane2 = paneHost->_v3C((char*)&lbl_eu_8050566C[0x59b], 1);
+            void* iconPane2 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x59b], 1);
             func_80124270(iconPane2, 0);
         }
     }
     // Snapshot the cursor pane's initial translation.
-    void* posPane = paneHost->_v3C((char*)&lbl_eu_8050566C[0x709], 1);
+    void* posPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x709], 1);
     copyVEC3(p + 0x534, (u8*)posPane + 0x2c);
     // Snapshot both cursor colour states into the global colour tables.
     CEquipBoxFourShorts colA = func_80139658(layout, &lbl_eu_8050566C[0x716], 0);
@@ -5807,12 +5812,12 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     __ct__CCur07(cur07Buf, *(void**)(p + 0x3c));
     func_8018B0FC(p + 0x70, cur07Buf);
     __dt__6CCur07Fv(cur07Buf, -1);
-    ((CItemBoxObjVt0C*)(p + 0x70))->_v08();
+    ((CBaseCur*)(p + 0x70))->initLayout();
     u8 cur09Buf[0x18];
     __ct__CCur09(cur09Buf, *(void**)(p + 0x3c));
     func_8018B0FC(p + 0x88, cur09Buf);
     __dt__6CCur09Fv(cur09Buf, -1);
-    ((CItemBoxObjVt0C*)(p + 0x88))->_v08();
+    ((CBaseCur*)(p + 0x88))->initLayout();
     // Cursor-09 move bounds.
     CibgVec3 vecMin;
     code80135FDC_setVec3((float*)&vecMin, lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
@@ -5823,21 +5828,21 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     __ct__CCur18(cur18Buf, func_801355F4());
     func_8018B0FC(p + 0xa0, cur18Buf);
     __dt__6CCur18Fv(cur18Buf, -1);
-    ((CItemBoxObjVt0C*)(p + 0xa0))->_v08();
+    ((CBaseCur*)(p + 0xa0))->initLayout();
     u8 cur16Buf[0x18];
     __ct__CCur16(cur16Buf, *(void**)(p + 0x3c));
     func_8018B0FC(p + 0xb8, cur16Buf);
     __dt__6CCur16Fv(cur16Buf, -1);
-    ((CItemBoxObjVt0C*)(p + 0xb8))->_v08();
+    ((CBaseCur*)(p + 0xb8))->initLayout();
     u8 cur11Buf[0x18];
     __ct__CCur11(cur11Buf, *(void**)(p + 0x3c));
     func_8018B0FC(p + 0xd0, cur11Buf);
     __dt__6CCur11Fv(cur11Buf, -1);
-    ((CItemBoxObjVt0C*)(p + 0xd0))->_v08();
+    ((CBaseCur*)(p + 0xd0))->initLayout();
     func_8022D614(p + 0x468, *(void**)(p + 0x3c));
     func_80207FC8(p + 0x418, *(void**)(p + 0x3c));
     // Group colour snapshot for the grid cells.
-    void* grpPane = paneHost->_v3C((char*)&lbl_eu_8050566C[0x723], 1);
+    void* grpPane = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x723], 1);
     if (grpPane != NULL) {
         CEquipBoxFourShorts gcolA = func_801397AC(grpPane, 0);
         CopyVec4s(&lbl_eu_806644D8, &gcolA);
@@ -5853,7 +5858,7 @@ extern "C" int OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event
     char* msgD = func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 7);
     func_80136B4C(layout, (char*)&lbl_eu_8050566C[0x72d], msgD, 0);
     if (p[0x527] != 4) {
-        void* iconPane3 = paneHost->_v3C((char*)&lbl_eu_8050566C[0x637], 1);
+        void* iconPane3 = paneHost->FindPaneByName((char*)&lbl_eu_8050566C[0x637], 1);
         func_80124270(iconPane3, 0);
         func_80136B4C(layout, (char*)&lbl_eu_8050566C[0x72d], (char*)&lbl_eu_8050566C[0x3af], 0);
     }

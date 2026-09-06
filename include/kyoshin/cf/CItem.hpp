@@ -379,7 +379,7 @@ public:
     virtual void vf14();                         // 0x14
     virtual void vf18();                         // 0x18
     virtual u32 vf1C(CItemData* p);                              // 0x1C
-    virtual void vf20();                                         // 0x20
+    virtual const char* vf20(CItemData* p);            // 0x20 (name string; retail passes the item in r4, no post-mask)
     virtual void vf24();                                         // 0x24
     virtual u16 vf28(CItemData* p, const char* col);              // 0x28
     virtual CItemRec* vf2C(CItemData* p, u32 x);                 // 0x2C (returns the 8-byte sub-record)
@@ -396,7 +396,7 @@ public:
     virtual void vf58(CItemData* p, u32 x);      // 0x58
     virtual void vf5C();                         // 0x5C
     virtual void vf60();                         // 0x60
-    virtual void vf64();                         // 0x64
+    virtual u32 vf64(CItemData* p, u32 x);            // 0x64 (slot value; retail passes (item,(u8)i), stb's r3)
     virtual u32 vf68(CItemData* p, u32 x, u16 y); // 0x68
     virtual void vf6C();                         // 0x6C
     virtual void vf70();                         // 0x70

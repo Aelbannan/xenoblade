@@ -5,7 +5,9 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/lyt.h>
+#include <nw4r/ut/ut_TagProcessorBase.h>
 
 /*
  * CTalkWindow - talk-window process (created by func_8012CC78 on the work
@@ -95,31 +97,31 @@ public:
 };
 
 // Talk-window views of the talk-source objects (func_800BBC0C result). The
-// character voice sub-object at +0x98 matches CSimpleTalkVoice in
-// CSimpleEveTalkWin.hpp (play at vtable 0x58); the message-state object at
-// +0xC4 carries the page flags and is fed to func_8004C5EC / func_8004B9D4.
+// character voice sub-object at +0x98 carries play at vtable 0x58 (same
+// slot as TagMemberObj::v58 in CTagProcessor.hpp); the message-state object
+// at +0xC4 carries the page flags and is fed to func_8004C5EC / func_8004B9D4.
 class CTalkWinVoice {
 public:
-    virtual ~CTalkWinVoice();  // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C(); // 0x0C
-    virtual void vfunc_0x10(); // 0x10
-    virtual void vfunc_0x14(); // 0x14
-    virtual void vfunc_0x18(); // 0x18
-    virtual void vfunc_0x1C(); // 0x1C
-    virtual void vfunc_0x20(); // 0x20
-    virtual void vfunc_0x24(); // 0x24
-    virtual void vfunc_0x28(); // 0x28
-    virtual void vfunc_0x2C(); // 0x2C
-    virtual void vfunc_0x30(); // 0x30
-    virtual void vfunc_0x34(); // 0x34
-    virtual void vfunc_0x38(); // 0x38
-    virtual void vfunc_0x3C(); // 0x3C
-    virtual void vfunc_0x40(); // 0x40
-    virtual void vfunc_0x44(); // 0x44
-    virtual void vfunc_0x48(); // 0x48
-    virtual void vfunc_0x4C(); // 0x4C
-    virtual void vfunc_0x50(); // 0x50
-    virtual void vfunc_0x54(); // 0x54
+    virtual ~CTalkWinVoice();  // 0x00 (dtor at 0x08)
+    virtual void v0C(); // 0x0C
+    virtual void v10(); // 0x10
+    virtual void v14(); // 0x14
+    virtual void v18(); // 0x18
+    virtual void v1C(); // 0x1C
+    virtual void v20(); // 0x20
+    virtual void v24(); // 0x24
+    virtual void v28(); // 0x28
+    virtual void v2C(); // 0x2C
+    virtual void v30(); // 0x30
+    virtual void v34(); // 0x34
+    virtual void v38(); // 0x38
+    virtual void v3C(); // 0x3C
+    virtual void v40(); // 0x40
+    virtual void v44(); // 0x44
+    virtual void v48(); // 0x48
+    virtual void v4C(); // 0x4C
+    virtual void v50(); // 0x50
+    virtual void v54(); // 0x54
     virtual void play(int flag, int priority); // 0x58
 };
 
@@ -149,7 +151,8 @@ struct CTalkPadView {
     u32 field_04;   // +0x4 CPad::mPressedButtonFlags
 };
 
-// Position components read from the talk-source vfn120(name) result
+// Position components read from the talk-source CfObject_UnkVirtualFunc52(name)
+// result
 // (0x10-byte stride: +0x0C / +0x1C / +0x2C).
 struct CTalkWinPosObj {
     u8  _00[0x0C];
@@ -160,109 +163,26 @@ struct CTalkWinPosObj {
     f32 field_0x2C; // +0x2C
 };
 
-// findObjectById(id) result view for Init / func_8012CD38: dispatched virtuals
-// at +0x40 (talk text), +0xAC (position fallback), +0x120 (named-position
-// lookup) and +0x158 (voice stop). Field +0x8C carries the case-4 message id.
-// Never instantiated - cast view only, so no vtable is emitted.
-class CTalkWinSrc {
-public:
-    virtual ~CTalkWinSrc();            // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();         // 0x0C
-    virtual void vfunc_0x10();         // 0x10
-    virtual void vfunc_0x14();         // 0x14
-    virtual void vfunc_0x18();         // 0x18
-    virtual void vfunc_0x1C();         // 0x1C
-    virtual void vfunc_0x20();         // 0x20
-    virtual void vfunc_0x24();         // 0x24
-    virtual void vfunc_0x28();         // 0x28
-    virtual void vfunc_0x2C();         // 0x2C
-    virtual void vfunc_0x30();         // 0x30
-    virtual void vfunc_0x34();         // 0x34
-    virtual void vfunc_0x38();         // 0x38
-    virtual void vfunc_0x3C();         // 0x3C
-    virtual char* getText();           // 0x40 talk text
-    virtual void vfunc_0x44();         // 0x44
-    virtual void vfunc_0x48();         // 0x48
-    virtual void vfunc_0x4C();         // 0x4C
-    virtual void vfunc_0x50();         // 0x50
-    virtual void vfunc_0x54();         // 0x54
-    virtual void vfunc_0x58();         // 0x58
-    virtual void vfunc_0x5C();         // 0x5C
-    virtual void vfunc_0x60();         // 0x60
-    virtual void vfunc_0x64();         // 0x64
-    virtual void vfunc_0x68();         // 0x68
-    virtual void vfunc_0x6C();         // 0x6C
-    virtual void vfunc_0x70();         // 0x70
-    virtual void vfunc_0x74();         // 0x74
-    virtual void vfunc_0x78();         // 0x78
-    virtual void vfunc_0x7C();         // 0x7C
-    virtual void vfunc_0x80();         // 0x80
-    virtual void vfunc_0x84();         // 0x84
-    virtual void vfunc_0x88();         // 0x88
-    virtual void vfunc_0x8C();         // 0x8C
-    virtual void vfunc_0x90();         // 0x90
-    virtual void vfunc_0x94();         // 0x94
-    virtual void vfunc_0x98();         // 0x98
-    virtual void vfunc_0x9C();         // 0x9C
-    virtual void vfunc_0xA0();         // 0xA0
-    virtual void vfunc_0xA4();         // 0xA4
-    virtual void vfunc_0xA8();         // 0xA8
-    virtual nw4r::math::VEC3* vfnAC();          // 0xAC position fallback
-    virtual void vfunc_0xB0();         // 0xB0
-    virtual void vfunc_0xB4();         // 0xB4
-    virtual void vfunc_0xB8();         // 0xB8
-    virtual void vfunc_0xBC();         // 0xBC
-    virtual void vfunc_0xC0();         // 0xC0
-    virtual void vfunc_0xC4();         // 0xC4
-    virtual void vfunc_0xC8();         // 0xC8
-    virtual void vfunc_0xCC();         // 0xCC
-    virtual void vfunc_0xD0();         // 0xD0
-    virtual void vfunc_0xD4();         // 0xD4
-    virtual void vfunc_0xD8();         // 0xD8
-    virtual void vfunc_0xDC();         // 0xDC
-    virtual void vfunc_0xE0();         // 0xE0
-    virtual void vfunc_0xE4();         // 0xE4
-    virtual void vfunc_0xE8();         // 0xE8
-    virtual void vfunc_0xEC();         // 0xEC
-    virtual void vfunc_0xF0();         // 0xF0
-    virtual void vfunc_0xF4();         // 0xF4
-    virtual void vfunc_0xF8();         // 0xF8
-    virtual void vfunc_0xFC();         // 0xFC
-    virtual void vfunc_0x100();        // 0x100
-    virtual void vfunc_0x104();        // 0x104
-    virtual void vfunc_0x108();        // 0x108
-    virtual void vfunc_0x10C();        // 0x10C
-    virtual void vfunc_0x110();        // 0x110
-    virtual void vfunc_0x114();        // 0x114
-    virtual void vfunc_0x118();        // 0x118
-    virtual void vfunc_0x11C();        // 0x11C
-    virtual CTalkWinPosObj* vfn120(const char* name);  // 0x120 named position
-    virtual void vfunc_0x124();        // 0x124
-    virtual void vfunc_0x128();        // 0x128
-    virtual void vfunc_0x12C();        // 0x12C
-    virtual void vfunc_0x130();        // 0x130
-    virtual void vfunc_0x134();        // 0x134
-    virtual void vfunc_0x138();        // 0x138
-    virtual void vfunc_0x13C();        // 0x13C
-    virtual void vfunc_0x140();        // 0x140
-    virtual void vfunc_0x144();        // 0x144
-    virtual void vfunc_0x148();        // 0x148
-    virtual void vfunc_0x14C();        // 0x14C
-    virtual void vfunc_0x150();        // 0x150
-    virtual void vfunc_0x154();        // 0x154
-    virtual void vfn158(u32 flag);     // 0x158 voice stop
-    u8  _04[0x8C - 0x04];
-    u16 field_0x8C;                    // 0x8C message id (case 4)
+// findObjectById(id) result (talk-source actor) for Init / func_8012CD38.
+// The actor is a cf::CfObject: its virtuals carry the dispatched slots -
+// 0x40 talk text (CObjectParam_UnkVirtualFunc2), 0xAC position fallback
+// (CfObject_UnkVirtualFunc23), 0x120 named-position lookup
+// (CfObject_UnkVirtualFunc52) and 0x158 voice stop
+// (CfObject_UnkVirtualFunc66). Call sites cast to cf::CfObject and call
+// those directly; no TU-local view is emitted. Field +0x8C carries the
+// case-4 message id.
+struct CTalkActorId {
+    u8  _00[0x8C];
+    u16 msgId8C;                       // 0x8C message id (case 4)
 };
 
 // CTagProcessor field view for Init's early-init switch: vtable+0x14 is the
-// message-setup call, +0x814..+0x81C the mode/flag/message fields.
-class CTalkWinTagProc {
+// message-setup call (retail word: func_80125B58, same (src, a, b, c) arity
+// as its free-function signature), +0x814..+0x81C the mode/flag/message
+// fields. Deriving from the real nw4r base puts Proc at 0x14 with no filler.
+class CTalkWinTagProc : public nw4r::ut::TagProcessorBase<wchar_t> {
 public:
-    virtual ~CTalkWinTagProc();        // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();         // 0x0C
-    virtual void vfunc_0x10();         // 0x10
-    virtual void setMessage(f32 scaleA, f32 scaleB, u8* msgBuf, u32 text);  // 0x14
+    virtual u16* Proc(const void* src, f32 a, f32 b, u32 c);  // 0x14
     u8  _04[0x814 - 0x04];   // 0x04..0x813 (vptr at 0x0)
     u8  field_0x814;                   // 0x814 switch type (0..8)
     u8  field_0x815;                   // 0x815 option bits (Init reads bits 0/1/2)
@@ -276,39 +196,40 @@ public:
 
 // nw4r Pane trailing-region view: the talk-window layout panes carry a flag
 // byte at +0xBB (mFlag) and, for the 0xf1 pane, a tag-processor pointer at
-// +0xF8. Custom virtuals at 0x74/0x78 are dispatched by Init (results
+// +0xF8. Slots 0x74/0x78 are the TextBox string-buffer alloc/free pair
+// (retail nw4r version places them there), dispatched by Init (results
 // discarded). Never instantiated - cast view only.
 class CTalkWinPane {
 public:
-    virtual ~CTalkWinPane();           // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();         // 0x0C
-    virtual void vfunc_0x10();         // 0x10
-    virtual void vfunc_0x14();         // 0x14
-    virtual void vfunc_0x18();         // 0x18
-    virtual void vfunc_0x1C();         // 0x1C
-    virtual void vfunc_0x20();         // 0x20
-    virtual void vfunc_0x24();         // 0x24
-    virtual void vfunc_0x28();         // 0x28
-    virtual void vfunc_0x2C();         // 0x2C
-    virtual void vfunc_0x30();         // 0x30
-    virtual void vfunc_0x34();         // 0x34
-    virtual void vfunc_0x38();         // 0x38
-    virtual void vfunc_0x3C();         // 0x3C
-    virtual void vfunc_0x40();         // 0x40
-    virtual void vfunc_0x44();         // 0x44
-    virtual void vfunc_0x48();         // 0x48
-    virtual void vfunc_0x4C();         // 0x4C
-    virtual void vfunc_0x50();         // 0x50
-    virtual void vfunc_0x54();         // 0x54
-    virtual void vfunc_0x58();         // 0x58
-    virtual void vfunc_0x5C();         // 0x5C
-    virtual void vfunc_0x60();         // 0x60
-    virtual void vfunc_0x64();         // 0x64
-    virtual void vfunc_0x68();         // 0x68
-    virtual void vfunc_0x6C();         // 0x6C
-    virtual void vfunc_0x70();         // 0x70
-    virtual void vfunc_0x74(u32 a);    // 0x74
-    virtual void vfunc_0x78();         // 0x78
+    virtual ~CTalkWinPane();           // 0x00 (dtor at 0x08)
+    virtual void v0C();                // 0x0C
+    virtual void v10();                // 0x10
+    virtual void v14();                // 0x14
+    virtual void v18();                // 0x18
+    virtual void v1C();                // 0x1C
+    virtual void v20();                // 0x20
+    virtual void v24();                // 0x24
+    virtual void v28();                // 0x28
+    virtual void v2C();                // 0x2C
+    virtual void v30();                // 0x30
+    virtual void v34();                // 0x34
+    virtual void v38();                // 0x38
+    virtual void v3C();                // 0x3C
+    virtual void v40();                // 0x40
+    virtual void v44();                // 0x44
+    virtual void v48();                // 0x48
+    virtual void v4C();                // 0x4C
+    virtual void v50();                // 0x50
+    virtual void v54();                // 0x54
+    virtual void v58();                // 0x58
+    virtual void v5C();                // 0x5C
+    virtual void v60();                // 0x60
+    virtual void v64();                // 0x64
+    virtual void v68();                // 0x68
+    virtual void v6C();                // 0x6C
+    virtual void v70();                // 0x70
+    virtual void AllocStringBuffer(u16 len);  // 0x74
+    virtual void FreeStringBuffer();          // 0x78
     u8  _04[0xBB - 0x04];    // 0x04..0xBA (vptr at 0x0)
     u8  mFlag;                         // 0xBB
     u8  _BC[0xF8 - 0xBC];    // 0xBC..0xF7
@@ -319,13 +240,13 @@ public:
 // handed to func_8013676C.
 class CTalkFontObj {
 public:
-    virtual ~CTalkFontObj();           // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();         // 0x0C
-    virtual void vfunc_0x10();         // 0x10
-    virtual void vfunc_0x14();         // 0x14
-    virtual void vfunc_0x18();         // 0x18
-    virtual void vfunc_0x1C();         // 0x1C
-    virtual void vfunc_0x20();         // 0x20
+    virtual ~CTalkFontObj();           // 0x00 (dtor at 0x08)
+    virtual void v0C();                // 0x0C
+    virtual void v10();                // 0x10
+    virtual void v14();                // 0x14
+    virtual void v18();                // 0x18
+    virtual void v1C();                // 0x1C
+    virtual void v20();                // 0x20
     virtual u32 getFontHandle();       // 0x24
 };
 

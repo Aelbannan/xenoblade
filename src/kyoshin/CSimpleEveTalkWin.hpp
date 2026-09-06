@@ -5,8 +5,10 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 
 #include <nw4r/lyt.h>
+#include <nw4r/ut/ut_TagProcessorBase.h>
 
 class CScn;
 
@@ -113,25 +115,16 @@ struct CSimpleEveTalkWin {
 // The retail objects these describe live in other TUs; only the vtable
 // offsets and fields below are accessed from this one.
 
-// CTagProcessorSE view: vtable+0x14 = message setup (two scales, message
-// buffer, text id). The retail ctor is C-ABI (__ct__CTagProcessorSE, no
-// class-length mangling) and the object is a raw 0x840-byte heap block, so
-// this is a plain cast view, never constructed here.
-//
-// MWCC vtable note: a virtual dtor occupies THREE slots (0x00/0x04/0x08), so
-// the dummy virtuals below are named by their ACTUAL vtable offset.
-class CSimpleTagProc {
+// CTagProcessorSE view: vtable+0x14 is the message-setup call (retail word:
+// func_80125B58, same (src, a, b, c) arity as its free-function signature).
+// The retail ctor is C-ABI (__ct__CTagProcessorSE, no class-length mangling)
+// and the object is a raw 0x840-byte heap block, so this is a plain cast
+// view, never constructed here. Deriving from the real nw4r base puts Proc
+// at 0x14 with no filler.
+class CSimpleTagProc : public nw4r::ut::TagProcessorBase<wchar_t> {
 public:
-    virtual ~CSimpleTagProc();                   // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();                   // 0x0C
-    virtual void vfunc_0x10();                   // 0x10
-    virtual void setMessage(float scaleA, float scaleB, u8* msgBuf,
-                            u32 text);           // 0x14
-};
-
-// CTagProcessorSE field view for the early-init check fields.
-struct CSimpleTagProcFields {
-    u8  _pad0[0x814];
+    virtual u16* Proc(const void* src, f32 a, f32 b, u32 c);  // 0x14
+    u8  _04[0x814 - 0x04];
     u8  field_0x814;              // 0x814 layout-needed flag (== 1 -> early out)
     u8  _pad1[0x81A - 0x815];
     u8  field_0x81A;              // 0x81A
@@ -139,67 +132,52 @@ struct CSimpleTagProcFields {
     f32 field_0x81C;              // 0x81C
 };
 
-// findObjectById(id) result view (retail CfObject-ish "talk source"): the
-// vtable+0x40 getter returns the talk text, and +0x98 is a voice sub-object
-// whose vtable+0x58 plays/stops the character voice. Data members start at
-// vptr+4 (standard C++ model), hence the 0x04-based pad.
+// findObjectById(id) result (retail CfObject-ish "talk source"): the
+// vtable+0x40 getter is the talk text (CObjectParam_UnkVirtualFunc2), and
+// +0x98 is a voice sub-object whose vtable+0x58 plays/stops the character
+// voice. Call sites cast to cf::CfObject for the text and to
+// CSimpleTalkFields for the voice pointer.
 class CSimpleTalkVoice {          // voice sub-object at src+0x98
 public:
-    virtual ~CSimpleTalkVoice();  // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();    // 0x0C
-    virtual void vfunc_0x10();    // 0x10
-    virtual void vfunc_0x14();    // 0x14
-    virtual void vfunc_0x18();    // 0x18
-    virtual void vfunc_0x1C();    // 0x1C
-    virtual void vfunc_0x20();    // 0x20
-    virtual void vfunc_0x24();    // 0x24
-    virtual void vfunc_0x28();    // 0x28
-    virtual void vfunc_0x2C();    // 0x2C
-    virtual void vfunc_0x30();    // 0x30
-    virtual void vfunc_0x34();    // 0x34
-    virtual void vfunc_0x38();    // 0x38
-    virtual void vfunc_0x3C();    // 0x3C
-    virtual void vfunc_0x40();    // 0x40
-    virtual void vfunc_0x44();    // 0x44
-    virtual void vfunc_0x48();    // 0x48
-    virtual void vfunc_0x4C();    // 0x4C
-    virtual void vfunc_0x50();    // 0x50
-    virtual void vfunc_0x54();    // 0x54
+    virtual ~CSimpleTalkVoice();  // 0x00 (dtor at 0x08)
+    virtual void v0C();           // 0x0C
+    virtual void v10();           // 0x10
+    virtual void v14();           // 0x14
+    virtual void v18();           // 0x18
+    virtual void v1C();           // 0x1C
+    virtual void v20();           // 0x20
+    virtual void v24();           // 0x24
+    virtual void v28();           // 0x28
+    virtual void v2C();           // 0x2C
+    virtual void v30();           // 0x30
+    virtual void v34();           // 0x34
+    virtual void v38();           // 0x38
+    virtual void v3C();           // 0x3C
+    virtual void v40();           // 0x40
+    virtual void v44();           // 0x44
+    virtual void v48();           // 0x48
+    virtual void v4C();           // 0x4C
+    virtual void v50();           // 0x50
+    virtual void v54();           // 0x54
     virtual void play(int flag, int priority);  // 0x58
 };
 
-class CSimpleTalkSrc {            // findObjectById(id) result
-public:
-    virtual ~CSimpleTalkSrc();    // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();    // 0x0C
-    virtual void vfunc_0x10();    // 0x10
-    virtual void vfunc_0x14();    // 0x14
-    virtual void vfunc_0x18();    // 0x18
-    virtual void vfunc_0x1C();    // 0x1C
-    virtual void vfunc_0x20();    // 0x20
-    virtual void vfunc_0x24();    // 0x24
-    virtual void vfunc_0x28();    // 0x28
-    virtual void vfunc_0x2C();    // 0x2C
-    virtual void vfunc_0x30();    // 0x30
-    virtual void vfunc_0x34();    // 0x34
-    virtual void vfunc_0x38();    // 0x38
-    virtual void vfunc_0x3C();    // 0x3C
-    virtual char* getText();      // 0x40 talk text getter
-    u8  _pad[0x98 - 0x04];        // 0x04..0x97
-    CSimpleTalkVoice* field_0x98; // 0x98 voice sub-object
+struct CSimpleTalkFields {        // findObjectById(id) result data
+    u8  _00[0x98];               // 0x00 vtable + data
+    CSimpleTalkVoice* voice98;   // 0x98 voice sub-object
 };
 
 // getFontInfo(1, layout) result view: vtable+0x24 returns the font handle
 // handed to func_8013676C (CDeviceFont/root-pane font binding).
 class CSimpleFontObj {
 public:
-    virtual ~CSimpleFontObj();    // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();    // 0x0C
-    virtual void vfunc_0x10();    // 0x10
-    virtual void vfunc_0x14();    // 0x14
-    virtual void vfunc_0x18();    // 0x18
-    virtual void vfunc_0x1C();    // 0x1C
-    virtual void vfunc_0x20();    // 0x20
+    virtual ~CSimpleFontObj();    // 0x00 (dtor at 0x08)
+    virtual void v0C();           // 0x0C
+    virtual void v10();           // 0x10
+    virtual void v14();           // 0x14
+    virtual void v18();           // 0x18
+    virtual void v1C();           // 0x1C
+    virtual void v20();           // 0x20
     virtual u32 getFontHandle();  // 0x24
 };
 

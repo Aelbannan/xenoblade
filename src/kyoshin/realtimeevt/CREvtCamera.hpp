@@ -17,6 +17,8 @@
 
 #include <types.h>
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 
 // Opaque event-file descriptor (mField88 target; +0x04 is a flag word)
 struct CREvtCamFile {
@@ -31,88 +33,44 @@ struct CREvtCamTaskEvent {
     u32 field_1B8;
 };
 
-// Camera manager returned by cf::CfGameManager::getCameraDataBlock(). Slot names
-// are vtable byte offsets. MWCC puts the Nth declared virtual at vtable
-// offset (N+1)*4 (two leading slots), so declaring vfunc_0x08 first and
-// counting up makes the names match the real offsets.
+// Camera manager returned by cf::CfGameManager::getCameraDataBlock() (the
+// retail object behind the forward-declared UnkClass_800821F8). Only slots
+// 0x14 (set camera position), 0x3C (set fov) and 0x58 (get fov) are
+// dispatched from this TU; sibling pluginCam.cpp drives the same object
+// (setPosition/setLookAt/setDirection/setRotation/setFov/setTarget/offset
+// setters). Slot 0x10 is a CREvtCamera-side virtual (retail word:
+// func_80180620); self-calls go through cf::CREvtObj::vfunc_10, not here.
 class CREvtCamManager {
 public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14(const f32* pos);  // +0x14: set camera position
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C(f32 value);  // +0x3C: set float (fov)
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual f32 vfunc_0x58();            // +0x58: get float
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void setPosition(const f32* pos);  // +0x14: set camera position
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void setFov(f32 value);  // +0x3C: set float (fov)
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void v4C();
+    virtual void v50();
+    virtual void v54();
+    virtual f32 getFov();            // +0x58: get float
     u8 field_0x4[0x0C - 0x4];
     u32 field_0x0C;                      // +0x0C: player object pointer
 };
 
 // Scene model object stored in CREvtCamera::mField1C (created by
-// func_80495E8C). Slot names are vtable byte offsets (see CREvtCamManager).
-class CREvtSceneModel {
-public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual u32 vfunc_0x3C(const char* name);  // +0x3C: get animation handle by name
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C();
-    virtual void vfunc_0x50();
-    virtual void vfunc_0x54();
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C();
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64();
-    virtual void vfunc_0x68();
-    virtual void vfunc_0x6C();
-    virtual void vfunc_0x70();
-    virtual void vfunc_0x74();
-    virtual void vfunc_0x78();
-    virtual void vfunc_0x7C();
-    virtual void vfunc_0x80();
-    virtual void vfunc_0x84();
-    virtual void vfunc_0x88();
-    virtual void vfunc_0x8C();
-    virtual void vfunc_0x90();
-    virtual void vfunc_0x94();
-    virtual void vfunc_0x98();
-    virtual void vfunc_0x9C();
-    virtual void vfunc_0xA0();
-    virtual void vfunc_0xA4();
-    virtual void vfunc_0xA8();
-    virtual void vfunc_0xAC();
-    virtual void vfunc_0xB0();
-    virtual void vfunc_0xB4(int value); // +0xB4: set visible (CREvtModelMap dispatch)
-    u8 field_0x4[0x7A8 - 0x4];
-    u32 field_0x7A8;
-};
+// func_80495E8C) is a CScnItemModel: slot 0x3C is vfunc3C (animation handle
+// by name) and +0x7A8 is flags7A8. Call sites use CScnItemModel directly;
+// no TU-local view is emitted.
 
 // Camera object returned by func_80496264 (camera state block).
 struct CREvtCamObj {

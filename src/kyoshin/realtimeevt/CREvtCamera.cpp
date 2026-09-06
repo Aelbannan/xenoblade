@@ -18,16 +18,16 @@ extern "C" {
     void deactivateLOD__8CTaskLODFv(s16 taskID);
     void attachLODObject__8CTaskLODFv(s16 taskID, int flag);
     int getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(const char*, u8**, u32*);
-    CREvtSceneModel* func_80495E8C(u32 mgr, u8* handle, int flag, int flag2);
+    CScnItemModel* func_80495E8C(u32 global, u8* handle, int flag, int flag2);
     void func_80495E60(void* ptr);
     void* func_80495EAC(void* mgr, void* param, int flag);
     void func_8049EB60();
     void func_8049F774(CREvtCamObj* camObj, const f32 mtx[3][4]);
     CREvtCamObj* func_80496264(u32 mgr, int a);
-    void func_804827DC(CREvtSceneModel* obj, int flag);
-    void func_80484E5C(CREvtSceneModel* obj, float val);
+    void func_804827DC(CScnItemModel* obj, int flag);
+    void func_80484E5C(CScnItemModel* obj, float val);
     float func_804850A4(void* obj);
-    nw4r::g3d::ChrAnmResult* func_8048BAD4(CREvtSceneModel* model, const char* name, f32 time);
+    nw4r::g3d::ChrAnmResult* func_8048BAD4(CScnItemModel* model, const char* name, f32 time);
     int func_8016A35C();
     void* func_801644B4();
     void func_8016841C();
@@ -157,7 +157,7 @@ extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
     // getCameraDataBlock() call is a separate retrieval (MWCC cannot CSE calls).
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
         if (getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C) {
-            self->mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x58();
+            self->mField8C = getCameraDataBlock__Q22cf13CfGameManagerFv()->getFov();
             self->mField440 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1EC;
             self->mField444 = ((CREvtPlayerObj*)getCameraDataBlock__Q22cf13CfGameManagerFv()->field_0x0C)->field_0x1F0;
         }
@@ -196,10 +196,10 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
                     f32 y = self->mMatrix58[1][3];
                     f32 x = self->mMatrix58[0][3];
                     f32 pos[3] = { x, y, z };
-                    getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x14(pos);
+                    getCameraDataBlock__Q22cf13CfGameManagerFv()->setPosition(pos);
                 }
 
-                getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mField8C);
+                getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(self->mField8C);
 
                 // Restore the player object's stored fields. Declaring both
                 // locals first then assigning keeps MWCC's f30/f31 allocation
@@ -216,10 +216,10 @@ extern "C" CREvtCamera* __ct__80180088(CREvtCamera* self, int deleteFlag) {
             }
         }
 
-        // vtable+0x10: virtual cleanup callback on self. Casting through
-        // CREvtCamManager (vtable slot 0x10 = 3rd declared virtual) makes
-        // MWCC emit the r12 two-step virtual call matching retail.
-        ((CREvtCamManager*)self)->vfunc_0x10();
+        // vtable+0x10 on self (retail word: func_80180620) dispatched
+        // through the real base so MWCC emits the r12 two-step virtual
+        // call matching retail.
+        ((cf::CREvtObj*)self)->vfunc_10();
 
         if (self->mField20) {
             if (lbl_eu_80663E14) func_80495E60((void*)self->mField20);
@@ -292,13 +292,13 @@ extern "C" void func_80180414(CREvtCamera* self) {
     u8* handle;
     getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(lbl_eu_805036D8, &handle, 0);
     if (handle) {
-        CREvtSceneModel* obj = func_80495E8C(lbl_eu_80663E14, handle, -1, 1);
+        CScnItemModel* obj = func_80495E8C((u32)lbl_eu_80663E14, handle, -1, 1);
         self->mField1C = (u32)obj;
         func_804827DC(obj, 1);
-        func_80484E5C((CREvtSceneModel*)self->mField1C, lbl_eu_806678B0);
-        ((CREvtSceneModel*)self->mField1C)->field_0x7A8 |= 4;
-        self->mField90 = ((CREvtSceneModel*)self->mField1C)->vfunc_0x3C(lbl_eu_80662448);
-        self->mField94 = ((CREvtSceneModel*)self->mField1C)->vfunc_0x3C(lbl_eu_8066244C);
+        func_80484E5C((CScnItemModel*)self->mField1C, lbl_eu_806678B0);
+        ((CScnItemModel*)self->mField1C)->flags7A8 |= 4;
+        self->mField90 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_80662448);
+        self->mField94 = (u32)((CScnItemModel*)self->mField1C)->vfunc3C(lbl_eu_8066244C);
     }
 }
 
@@ -329,7 +329,7 @@ extern "C" void func_801804CC(CREvtCamera* self) {
     if (!self->mField1C) return;
     if (cf::CfGameManager::isSceneLoading()) return;
 
-    CREvtSceneModel* sceneObj = (CREvtSceneModel*)self->mField1C;
+    CScnItemModel* sceneObj = (CScnItemModel*)self->mField1C;
     nw4r::g3d::ChrAnmResult* result =
         func_8048BAD4(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix58);
@@ -337,11 +337,11 @@ extern "C" void func_801804CC(CREvtCamera* self) {
     result = func_8048BAD4(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
 
-    CREvtCamObj* camObj = func_80496264(lbl_eu_80663E14, -1);
+    CREvtCamObj* camObj = func_80496264((u32)lbl_eu_80663E14, -1);
     if (!camObj) return;
 
     if (getCameraDataBlock__Q22cf13CfGameManagerFv()) {
-        getCameraDataBlock__Q22cf13CfGameManagerFv()->vfunc_0x3C(self->mMatrix28[2][3]);
+        getCameraDataBlock__Q22cf13CfGameManagerFv()->setFov(self->mMatrix28[2][3]);
     }
     camObj->field_0x1E0 = self->mMatrix28[2][3];
     func_8049EB60();
@@ -370,8 +370,9 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
         self->mField9C = 0;
         self->mFieldA0 = 0;
         if (self->mField20) {
-            // vtable+0x10: virtual cleanup callback (r12 two-step).
-            ((CREvtCamManager*)self)->vfunc_0x10();
+            // vtable+0x10 on self (retail word: func_80180620) dispatched
+            // through the real base (r12 two-step).
+            ((cf::CREvtObj*)self)->vfunc_10();
             self->mField24 = self->mField20;
             self->mField20 = 0;
         }

@@ -181,7 +181,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
 
     u8* fontObj = (u8*)CDeviceFont::getFontInfo(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
-    u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
+    u32 fontVal = (u32)((IDeviceFontInfo*)fontObj)->getFont();
     func_8013676C(root, fontVal);
 
     u32 color = getPackedFont__Fv();
@@ -208,7 +208,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     u8* tex = (u8*)func_80138F78(msgId);
 
     u8* sys = (u8*)func_801355F4();
-    u8* mat = (*(u8*(*)(u8*, u32, u8*, u32))(*(u32**)sys + 3))(sys, 0x74696d67, tex, 0);
+    u8* mat = (u8*)((nw4r::lyt::ArcResourceAccessor*)sys)->GetResource(0x74696d67, (const char*)tex, 0);
     if (mat != NULL) {
         func_80137E7C(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
 

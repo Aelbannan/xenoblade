@@ -6,6 +6,9 @@
 #include "kyoshin/CItemBoxLine.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
+#include <nw4r/lyt/lyt_material.h>
+#include <nw4r/ut/ut_TagProcessorBase.h>
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
 
 // Tab entry accessors (retail symbols are plain func_XXXX names).
@@ -679,26 +682,22 @@ void func_801ED618(CItemBoxLine* self) {
     }
     nw4r::lyt::Layout* layout40 = self->field40;
     if (layout40 != 0) {
-        if (layout40 != 0) {
-            reinterpret_cast<CItemBoxLineDtorView*>(layout40)->vfdtor(1);
-        }
+        delete layout40;
         self->field40 = 0;
     }
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field38));
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->field3C));
-    CItemBoxLineDtorView* obj54 = self->field54;
+    void* obj54 = self->field54;
     if (obj54 != 0) {
-        if (obj54 != 0) {
-            obj54->vfdtor(1);
-        }
+        delete (nw4r::ut::TagProcessorBase<wchar_t>*)obj54;
         self->field54 = 0;
     }
     reinterpret_cast<UnkClass_8045F564*>(&self->field04)->func_8045F778();
     reinterpret_cast<UnkClass_8045F564*>(&self->pad_14[0])->func_8045F778();
-    reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf01();
-    reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf01();
-    reinterpret_cast<CIBLCur70View*>(&self->mCurA0)->vf01();
-    reinterpret_cast<CIBLCur70View*>(&self->mCurB8)->vf01();
+    ((CBaseCur*)&self->mCur70)->cleanup();
+    ((CBaseCur*)&self->mCur88)->cleanup();
+    ((CBaseCur*)&self->mCurA0)->cleanup();
+    ((CBaseCur*)&self->mCurB8)->cleanup();
     func_801E13F8(reinterpret_cast<CItemBoxInfo2*>(&self->mInfo2D0[0]));
     func_801EAF9C(&self->mNumSel);
     func_801F35DC(reinterpret_cast<CScrollBar*>(&self->mScrollBar310[0]));
@@ -837,7 +836,7 @@ void func_801EDC94(CItemBoxLine* self) {
             }
             u8 tmp[12];
             func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
-            reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
+            ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
         }
         playUISound__FUl(1);
         return;
@@ -855,7 +854,7 @@ void func_801EDC94(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)((s8)self->field3A1 * 4 + self->field3A2));
-        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
     } else if (func_801EB020(&self->mNumSel) != 0) {
         if (func_801EB028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
@@ -920,7 +919,7 @@ void func_801EDF40(CItemBoxLine* self) {
                 }
                 u8 tmp[12];
                 func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
-                reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
+                ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
                 playUISound__FUl(1);
             }
         }
@@ -939,7 +938,7 @@ void func_801EDF40(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)((s8)self->field3A1 * 4 + self->field3A2));
-        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
     } else if (func_801EB020(&self->mNumSel) != 0) {
         if (func_801EB028(&self->mNumSel) == 0) return;
         u8 idx = (u8)(self->unk38C + self->unk38E);
@@ -1009,7 +1008,7 @@ void func_801EE228(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
-        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(1);
         return;
     }
@@ -1073,7 +1072,7 @@ void func_801EE448(CItemBoxLine* self) {
         }
         CIBLVec3 vec;
         func_801CB9D8(&vec, page->pageWords180, (u8)(self->field3A2 + (s8)self->field3A1 * 4));
-        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(1);
         return;
     }
@@ -1361,7 +1360,7 @@ void func_801EECE8(CItemBoxLine* self) {
     }
     u8 tmp[16];
     func_801E174C(tmp, self->mInfo2D0, self->field39F);
-    reinterpret_cast<CIBLCur70View*>(&self->mCurB8)->vf02(tmp);
+    ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     func_801EFFC4(static_cast<void*>(self));
     playUISound__FUl(0xa);
 }
@@ -1381,7 +1380,7 @@ void func_801EED6C(void* self) {
     }
     unsigned char tmp[16];
     func_801E174C(tmp, p + 0xd0, p[0x39f]);
-    reinterpret_cast<CIBLCur70View*>(p + 0xb8)->vf02(tmp);
+    ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     func_801EFFC4(self);
     playUISound__FUl(0xa);
 }
@@ -1417,9 +1416,9 @@ void func_801EEDF8(CItemBoxLine* self) {
             } else {
                 obj = (u32)func_80136190(&lbl_eu_805071B0[0x1f0], &lbl_eu_805071B0[0x1fa], (u16)v);
             }
-            func_8022B90C(reinterpret_cast<CSysWin*>(&self->mSysWin), 0);
+            func_8022B90C(&self->mSysWin, 0);
             func_8022B9B4(&self->mSysWin, (u32)obj, 0);
-            func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWin), 1);
+            func_8022BFC8(&self->mSysWin, 1);
             func_8022B8B8(&self->mSysWin);
         }
         return;
@@ -1445,7 +1444,7 @@ void func_801EEDF8(CItemBoxLine* self) {
         func_801D216C(&self->mCur88, 1);
         CIBLVec3 vec;
         func_801CB9D8(&vec, page2->pageWords180, sel);
-        reinterpret_cast<CIBLCur70View*>(&self->mCur88)->vf02(&vec);
+        ((CBaseCur*)&self->mCur88)->setRootPaneTranslate((const nw4r::math::VEC3*)(&vec));
         playUISound__FUl(2);
     } else {
         playUISound__FUl(5);
@@ -1502,7 +1501,7 @@ void func_801EF260(CItemBoxLine* self) {
     func_801D216C(&self->mCurB8, 1);
     u8 tmp[16];
     func_801E174C(tmp, &self->mInfo2D0[0], self->field39F);
-    reinterpret_cast<CIBLCur70View*>(&self->mCurB8)->vf02(tmp);
+    ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     func_801F071C(self);
 }
 
@@ -1544,7 +1543,7 @@ void func_801EF3E8(CItemBoxLine* self) {
         func_801D216C(&self->mCur70, 1);
         u8 tmp[0x10];
         func_8022C1B4(tmp, &self->mSysWin, self->field3A3);
-        reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(tmp);
+        ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     }
 }
 
@@ -1637,12 +1636,12 @@ void func_801EF734(CItemBoxLine* self, u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
         u32 v = func_80136254((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x1ff], arg2);
-        result = self->field3C->vf01(0x74696d67, func_80138F78((u16)v), 0);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, func_80138F78((u16)v), 0);
         if (result == 0) {
-            result = self->field38->vf01(0x74696d67, &lbl_eu_805071B0[0x209], 0);
+            result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
         }
     } else {
-        result = self->field38->vf01(0x74696d67, &lbl_eu_805071B0[0x209], 0);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
     }
     if (result != 0) {
         char buf[0x20];
@@ -1655,12 +1654,12 @@ void func_801EF844(CItemBoxLine* self, u32 arg2, u32 arg3) {
     u32 result;
     if (arg2 != 0) {
         u32 v = func_80136254((u32)lbl_eu_806640EC, &lbl_eu_805071B0[0x22a], arg2);
-        result = self->field3C->vf01(0x74696d67, func_80138F78((u16)v), 0);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, func_80138F78((u16)v), 0);
         if (result == 0) {
-            result = self->field38->vf01(0x74696d67, &lbl_eu_805071B0[0x209], 0);
+            result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
         }
     } else {
-        result = self->field38->vf01(0x74696d67, &lbl_eu_805071B0[0x209], 0);
+        result = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x209], 0);
     }
     if (result != 0) {
         char buf[0x20];
@@ -1748,7 +1747,7 @@ void func_801EFE6C(CItemBoxLine* self) {
         func_80124270(self->field40->GetRootPane()->FindPaneByName(nameA, true), visA);
         func_80124270(self->field40->GetRootPane()->FindPaneByName(nameB, true), visB);
         if (self->unk64[i] == 0) {
-            u32 tex = self->field38->vf01(0x74696d67, &lbl_eu_805071B0[0x387], 0);
+            u32 tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(0x74696d67, &lbl_eu_805071B0[0x387], 0);
             if (tex != 0) {
                 func_80137E7C(self->field40, nameB, tex);
             }
@@ -1772,7 +1771,7 @@ extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, 
     char buf[0x20];
     u32 tex;
     if (kind == 0) {
-        tex = self->field38->vf01(tag, &lbl_eu_805071B0[0x209], 0);
+        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(tag, &lbl_eu_805071B0[0x209], 0);
     } else {
         switch (kind) {
         case 1:  sprintf(buf, &lbl_eu_805071B0[0x255]); break;
@@ -1788,9 +1787,9 @@ extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, 
         case 11: sprintf(buf, &lbl_eu_805071B0[0x327]); break;
         case 12: sprintf(buf, &lbl_eu_805071B0[0x33c]); break;
         }
-        tex = self->field3C->vf01(tag, buf, 0);
+        tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(tag, buf, 0);
             if (tex == 0) {
-                tex = self->field38->vf01(tag, &lbl_eu_805071B0[0x209], 0);
+                tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field38)->GetResource(tag, &lbl_eu_805071B0[0x209], 0);
         }
     }
     if (tex != 0) {
@@ -1805,9 +1804,11 @@ extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, 
             col.a = self->field396.a;
             nw4r::lyt::Pane* pane = self->field40->GetRootPane()->FindPaneByName(nameB, true);
             if (pane != NULL) {
-                CIBLColorSrc* src = reinterpret_cast<CIBLNameplateView*>(pane)->vf24();
-                if (src != NULL) {
-                    __as__11_GXColorS10FRC11_GXColorS10(&src->color, &col);
+                // +0x68 is Pane::GetMaterial; the material's mTevCols[0]
+                // lives at +0x10 (see CIBLColorSrc).
+                nw4r::lyt::Material* mat = pane->GetMaterial();
+                if (mat != NULL) {
+                    mat->SetTevColor(0, col);
                 }
             }
         }
@@ -1930,7 +1931,7 @@ extern "C" void func_801F071C(void* selfPtr) {
         void* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= *(f32*)((u8*)refPane + 68);
-        reinterpret_cast<CIBLCur70View*>(&self->mCurA0)->vf02(&pos);
+        ((CBaseCur*)&self->mCurA0)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         func_801D216C(&self->mCurA0, 1);
         func_801D216C(&self->mCur70, 0);
     } else {
@@ -1943,7 +1944,7 @@ extern "C" void func_801F071C(void* selfPtr) {
         void* refPane =
             self->field40->GetRootPane()->FindPaneByName(&lbl_eu_805071B0[0x3cc], true);
         pos.x *= *(f32*)((u8*)refPane + 68);
-        reinterpret_cast<CIBLCur70View*>(&self->mCur70)->vf02(&pos);
+        ((CBaseCur*)&self->mCur70)->setRootPaneTranslate((const nw4r::math::VEC3*)(&pos));
         func_801D216C(&self->mCur70, 1);
         func_801D216C(&self->mCurA0, 0);
     }
@@ -2404,24 +2405,24 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
                 u8 sel = (u8)func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805071B0[0x651],
                                           (u16)func_80139358(v));
                 if (sel == 0) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
                 } else if (sel == 4) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x670], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x670], 0);
                 } else if (sel == 5) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x686], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x686], 0);
                 } else if (sel == 6) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x69c], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x69c], 0);
                 } else if (sel == 7) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x6b2], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x6b2], 0);
                 } else if (sel == 8) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x6c8], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x6c8], 0);
                 } else if (sel == 9) {
-                    tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x6de], 0);
+                    tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x6de], 0);
                 }
                 buf.format(&lbl_eu_805071B0[0x57], func_801394D4(v));
                 kindV = func_80139358(v);
             } else {
-                tex = self->field3C->vf01(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
+                tex = (u32)((nw4r::lyt::ArcResourceAccessor*)self->field3C)->GetResource(0x74696d67, &lbl_eu_805071B0[0x65a], 0);
                 buf.format(&lbl_eu_805071B0[0x57],
                            func_80136190(&lbl_eu_805071B0[0x248], &lbl_eu_805071B0[0x6c], 0x2a));
             }
@@ -2536,7 +2537,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* root = this->field40->GetRootPane();
         void* fontObj = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
                                                                           this->field40);
-        func_8013676C(root, reinterpret_cast<CItemBoxFontView*>(fontObj)->vf7());
+        func_8013676C(root, ((IDeviceFontInfo*)fontObj)->getFont());
 
         // Seed the seven slot-name textboxes with the line text.
         char* text = func_801355BC();
@@ -2559,8 +2560,10 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* namePane = this->field40->GetRootPane()->
                                         FindPaneByName(&lbl_eu_805071B0[0x761], true);
         if (namePane != 0) {
-            CIBLColorSrc* src = reinterpret_cast<CIBLNameplateView*>(namePane)->vf24();
-            GXColorS10 colorTmp = src->color;
+            // +0x68 is Pane::GetMaterial; seed the nameplate colour from
+            // the material's mTevCols[0].
+            nw4r::lyt::Material* mat = namePane->GetMaterial();
+            GXColorS10 colorTmp = mat->GetTevColor(0);
             __as__11_GXColorS10FRC11_GXColorS10(&this->field396, &colorTmp);
         }
 
@@ -2654,25 +2657,25 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         __ct__CCur18((CBaseCur*)cur70, func_801355F4());
         func_8018B0FC(&this->mCur70, cur70);
         __dt__6CCur18Fv((CBaseCur*)cur70, -1);
-        reinterpret_cast<CIBLCur70View*>(&this->mCur70)->vf00();
+        ((CBaseCur*)&this->mCur70)->initLayout();
 
         u8 cur88[0x18];
         __ct__CCur18((CBaseCur*)cur88, func_801355F4());
         func_8018B0FC(&this->mCur88, cur88);
         __dt__6CCur18Fv((CBaseCur*)cur88, -1);
-        reinterpret_cast<CIBLCur70View*>(&this->mCur88)->vf00();
+        ((CBaseCur*)&this->mCur88)->initLayout();
 
         u8 curA0[0x18];
         __ct__CIBLTabCur((CBaseCur*)curA0, this->field38);
         func_8018B0FC(&this->mCurA0, curA0);
         __dt__8CBaseCurFv((CBaseCur*)curA0, 0);
-        reinterpret_cast<CIBLCur70View*>(&this->mCurA0)->vf00();
+        ((CBaseCur*)&this->mCurA0)->initLayout();
 
         u8 curB8[0x18];
         __ct__CSubCur((CBaseCur*)curB8, (nw4r::lyt::ArcResourceAccessor*)this->field38);
         func_8018B0FC(&this->mCurB8, curB8);
         __dt__7CSubCurFv((CBaseCur*)curB8, -1);
-        reinterpret_cast<CIBLCur70View*>(&this->mCurB8)->vf00();
+        ((CBaseCur*)&this->mCurB8)->initLayout();
 
         func_801D2E4C(&this->mCurB8, 0);
         func_801EF518(this);

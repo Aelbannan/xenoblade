@@ -118,10 +118,10 @@ void CSimpleEveTalkWin::Init() {
     field_88 = (nw4r::lyt::AnimTransform*)tagProc;
 
     reinterpret_cast<CSimpleTagProc*>(tagProc)
-        ->setMessage(lbl_eu_80667CA0, lbl_eu_80667CA0, mMsgBuf, field_68);
+        ->Proc(mMsgBuf, lbl_eu_80667CA0, lbl_eu_80667CA0, field_68);
 
-    CSimpleTagProcFields* tagFields =
-        reinterpret_cast<CSimpleTagProcFields*>(field_88);
+    CSimpleTagProc* tagFields =
+        reinterpret_cast<CSimpleTagProc*>(field_88);
     if (tagFields->field_0x814 == 1) {
         // Tag processor claims the message needs no layout: play its voice
         // and finish without building the window. Retail loads the 0x81C
@@ -164,9 +164,9 @@ void CSimpleEveTalkWin::Init() {
 
     if (field_68 != 0) {
         // Real message: fill the five name fields from the talk source.
-        char* msgText =
-            reinterpret_cast<CSimpleTalkSrc*>(findObjectById(field_68))
-                ->getText();
+        char* msgText = reinterpret_cast<char*>(
+            reinterpret_cast<cf::CfObject*>(findObjectById(field_68))
+                ->CObjectParam_UnkVirtualFunc2());
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
@@ -236,7 +236,7 @@ void CSimpleEveTalkWin::Move() {
         if (advanceAnimTransform(field_8C, lbl_eu_80667CB0) != 0) {
             void* src = findObjectById(field_68);
             if (src != 0) {
-                reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
+                reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
             }
             mpLayout->SetAnimationEnable(field_94, 0);
             mpLayout->SetAnimationEnable(field_8C, 0);
@@ -375,11 +375,11 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
     owner->field_88 = (nw4r::lyt::AnimTransform*)tagProc;
 
     reinterpret_cast<CSimpleTagProc*>(tagProc)
-        ->setMessage(lbl_eu_80667CA0, lbl_eu_80667CA0, owner->mMsgBuf,
-                     owner->field_68);
+        ->Proc(owner->mMsgBuf, lbl_eu_80667CA0, lbl_eu_80667CA0,
+               owner->field_68);
 
-    CSimpleTagProcFields* tagFields =
-        reinterpret_cast<CSimpleTagProcFields*>(owner->field_88);
+    CSimpleTagProc* tagFields =
+        reinterpret_cast<CSimpleTagProc*>(owner->field_88);
     if (tagFields->field_0x814 == 1) {
         f32 voiceVol = tagFields->field_0x81C;
         u8 voiceId = tagFields->field_0x81A;
@@ -431,9 +431,9 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
     if (owner->field_68 != 0) {
         // Real message: fill the five name fields from the talk source, then
         // start the voice line.
-        char* msgText =
-            reinterpret_cast<CSimpleTalkSrc*>(findObjectById(owner->field_68))
-                ->getText();
+        char* msgText = reinterpret_cast<char*>(
+            reinterpret_cast<cf::CfObject*>(findObjectById(owner->field_68))
+                ->CObjectParam_UnkVirtualFunc2());
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
@@ -441,7 +441,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xfd], msgText, 0);
         void* src = findObjectById(owner->field_68);
         if (src != 0) {
-            reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
+            reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
         }
     } else {
         // No talk source: leave the name fields empty.
@@ -508,7 +508,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
         func_80128740(self->field_88, pane);
         void* src = findObjectById(self->field_68);
         if (src != 0) {
-            reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(1, 0);
+            reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(1, 0);
         }
     } else if (state == 2) {
         // Page transition animations (4 -> 5 -> 6 -> 7 -> 4 loop).
@@ -547,7 +547,7 @@ extern "C" void func_801A2624(CSimpleEveTalkWin* self) {
         // animation set and let the window close when the page ends.
         void* src = findObjectById(self->field_68);
         if (src != 0) {
-            reinterpret_cast<CSimpleTalkSrc*>(src)->field_0x98->play(0, 0);
+            reinterpret_cast<CSimpleTalkFields*>(src)->voice98->play(0, 0);
         }
         self->mpLayout->SetAnimationEnable(self->field_94, 0);
         self->mpLayout->SetAnimationEnable(self->field_90, 0);

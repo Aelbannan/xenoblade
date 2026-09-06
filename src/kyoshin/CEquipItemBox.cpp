@@ -3,11 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include "kyoshin/CBaseCur.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include <nw4r/math/math_types.h>
 #include "nw4r/lyt/lyt_pane.h"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
@@ -1245,7 +1247,7 @@ extern "C" __declspec(noinline) u8 func_80285890(CEquipItemBox* self, CItemInsta
 #pragma auto_inline off
 // C-ABI ctor (retail symbol __ct__CEIBCur, no class-length mangling).
 extern "C" CEIBCur* __ct__CEIBCur(CEIBCur* self, void* arcResAcc) {
-    self->mVtable = (void*)lbl_eu_80538704;
+    self->vtbl() = (void*)lbl_eu_80538704;
     self->mArcResAcc = arcResAcc;
     self->mpLayout = 0;
     self->mpAnimTrans0 = 0;
@@ -1272,16 +1274,6 @@ void* __dt__80285954(void* self, int mode) {
 //   4. virtual slot 36 (vtable+0x24) on mpLayout
 //   5. func_80285B70(cur)
 // The name strings are pooled at lbl_eu_8050EFDC+0x97/0xAF/0xCC.
-struct CEIBCurLayoutVt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();  // vtable+0x24 (slot 36)
-};
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_80285994(CEIBCur* cur) {
@@ -1296,7 +1288,7 @@ extern "C" void func_80285994(CEIBCur* cur) {
                   (nw4r::lyt::AnimTransform**)&cur->mpAnimTrans1,
                   (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
                   &lbl_eu_8050EFDC[0xCC]);
-    reinterpret_cast<CEIBCurLayoutVt*>(cur->mpLayout)->_v24();
+    ((nw4r::lyt::Layout*)cur->mpLayout)->UnbindAllAnimation();
     func_80285B70(cur);
 }
 #pragma pop
@@ -1370,7 +1362,7 @@ void func_80285B70(CEIBCur* self) {
 
 extern "C" __declspec(noinline) CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self, void* arcResAcc) {
     __ct__CEIBCur(self, arcResAcc);  // base ctor (C-ABI)
-    self->mVtable = (void*)lbl_eu_805386EC;
+    self->vtbl() = (void*)lbl_eu_805386EC;
     return self;
 }
 // noinline: retail callers (OnFileEvent) emit a `bl` to __ct__CEIBPageCur.
@@ -1623,7 +1615,7 @@ extern "C" void func_80286454(CEquipItemBox* self) {
     deleteRegion__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
     func_80285ABC((CEIBCur*)((u8*)self + 0x44));
     func_80285ABC((CEIBCur*)((u8*)self + 0x5c));
-    ((CEquipItemBoxSysWinView*)&self->ccur18[0])->v01();
+    ((CBaseCur*)&self->ccur18[0])->cleanup();
     func_801D3258(self->_padSortMenu);
     func_8022B7F4(&self->_padSysWin1[0]);
     func_8022B7F4(&self->_padSysWin2[0]);
@@ -1724,7 +1716,7 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
         func_801D3620(&self->_padSortMenu[0]);
         char tmp[0xC];
         func_801D3454(tmp, &self->_padSortMenu[0]);
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(tmp);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Sort menu idle: retail dispatches on unk_375 FIRST -- no sel==-1
         // gate here; that check happens in the caller/dispatch above.
@@ -1745,7 +1737,7 @@ extern "C" void func_802867E0(CEquipItemBox* self) {
             nw4r::math::VEC3 tmp;
             func_801CB9D8(&tmp, arr,
                           (u32)((u8)((s8)self->unk_376 * 4 + self->unk_377)));
-            ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         } else {
             // Decrement unk_1f5 with wrap
             u8 cur = self->unk_1f5;
@@ -1781,7 +1773,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
             func_801D3698(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             func_801D3454(&tmp, &self->_padSortMenu[0]);
-            ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
             return;
         }
@@ -1804,7 +1796,7 @@ extern "C" __declspec(noinline) void func_802869B4(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         func_801CB9D8(&tmp2, arr,
                       (u8)((s8)self->unk_377 + (s8)self->unk_376 * 4));
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -1828,7 +1820,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
             func_801D3724(&self->_padSortMenu[0]);
             nw4r::math::VEC3 tmp;
             func_801D3454(&tmp, &self->_padSortMenu[0]);
-            ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+            ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
             playUISound__FUl(1);
         }
         return;
@@ -1850,7 +1842,7 @@ extern "C" __declspec(noinline) void func_80286B94(CEquipItemBox* self) {
         nw4r::math::VEC3 tmp2;
         func_801CB9D8(&tmp2, arr,
                       (u8)(self->unk_377 + (s8)self->unk_376 * 4));
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -1891,7 +1883,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
         func_801D377C(&self->_padSortMenu[0]);
         nw4r::math::VEC3 tmp;
         func_801D3454(&tmp, &self->_padSortMenu[0]);
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         playUISound__FUl(1);
         return;
     }
@@ -1910,7 +1902,7 @@ extern "C" void func_80286D7C(CEquipItemBox* self) {
         }
         nw4r::math::VEC3 tmp2;
         func_801CB9D8(&tmp2, arr, (u8)(self->unk_377 + (s8)self->unk_376 * 4));
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp2);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp2);
         playUISound__FUl(1);
         return;
     }
@@ -2010,7 +2002,7 @@ extern "C" void func_802870DC(CEquipItemBox* self) {
     func_801D353C(&self->_padSortMenu[0], (u8)(self->unk_379 + self->unk_37a));
     self->unk_58 = 0;
     func_801D3454(&tmp, &self->_padSortMenu[0]);
-    ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+    ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
     func_801D216C(&self->ccur18[0], 1);
     func_801D3330(&self->_padSortMenu[0]);
     self->unk_1f6 = 0;
@@ -2226,7 +2218,7 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
         func_801D216C(&self->ccur18[0], 1);
         nw4r::math::VEC3 tmp;
         func_801CB9D8(&tmp, &list->field_00[0], sel);
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)&tmp);
         self->unk_378 = 1;
         playUISound__FUl(2);
         return;
@@ -2901,7 +2893,7 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
     // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
     if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
         func_8022C1B4(winName, &self->_padSysWin1[0], self->unk_374);
-        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(winName);
+        ((CBaseCur*)&self->ccur18[0])->setRootPaneTranslate((nw4r::math::VEC3*)winName);
     } else {
         s8 sel = self->unk_1f5;
         if (sel == -1) {
@@ -2909,11 +2901,11 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
             nw4r::math::VEC3 pos;
             sprintf(pageName, &lbl_eu_8050EFDC[0x2C8], (s8)self->unk_373 + 1);
             nw4r::lyt::Pane* pane =
-                ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                    ->v13((u32)pageName, 1);
+                ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                    ->FindPaneByName(pageName, true);
             func_801375A0(&pos, pane);
-            pane = ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                       ->v13((u32)&lbl_eu_8050EFDC[0x193], 1);
+            pane = ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                       ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
             pos.x *= pane->GetScale().x;
             copyVEC3((float*)(*(void**)((char*)(*(void**)((char*)self + 0x4C)) + 0x10)) + 11,
                      &pos);
@@ -2922,11 +2914,11 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
             nw4r::math::VEC3 pos;
             sprintf(itemName, &lbl_eu_8050EFDC[0x20C], (s8)self->unk_1f4 + sel * 5 + 1);
             nw4r::lyt::Pane* pane =
-                ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                    ->v13((u32)itemName, 1);
+                ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                    ->FindPaneByName(itemName, true);
             func_801375A0(&pos, pane);
-            pane = ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                       ->v13((u32)&lbl_eu_8050EFDC[0x193], 1);
+            pane = ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                       ->FindPaneByName(&lbl_eu_8050EFDC[0x193], true);
             pos.x *= pane->GetScale().x;
             copyVEC3((float*)(*(void**)((char*)(*(void**)((char*)self + 0x4C)) + 0x10)) + 11,
                      &pos);
@@ -3481,20 +3473,20 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
     char* base = lbl_eu_8050EFDC;
     // All pane lookups in this handler go through the layout's pane-finder
     // sub-object (vtable slot 13), not the root pane.
-    func_80124270(((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                      ->v13((u32)(base + 0x4b3), 1),
+    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                      ->FindPaneByName(base + 0x4b3, true),
                   1);
-    func_80124270(((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                      ->v13((u32)(base + 0x5dc), 1),
+    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                      ->FindPaneByName(base + 0x5dc, true),
                   1);
-    func_80124270(((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                      ->v13((u32)(base + 0x5e7), 1),
+    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                      ->FindPaneByName(base + 0x5e7, true),
                   1);
-    func_80124270(((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                      ->v13((u32)(base + 0x5f2), 1),
+    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                      ->FindPaneByName(base + 0x5f2, true),
                   1);
-    func_80124270(((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-                      ->v13((u32)(base + 0x5fe), 1),
+    func_80124270(((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+                      ->FindPaneByName(base + 0x5fe, true),
                   1);
     func_801392E4(kind);
     CItemInstance* obj = (CItemInstance*)item;
@@ -3532,11 +3524,11 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
     // Cursor anchor: midpoint helper between the detail pane and anchor pane
     // (both looked up again through the pane-finder sub-object).
     nw4r::lyt::Pane* paneDetail =
-        ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-            ->v13((u32)(base + 0x5e7), 1);
+        ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+            ->FindPaneByName(base + 0x5e7, true);
     nw4r::lyt::Pane* paneAnchor =
-        ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
-            ->v13((u32)(base + 0x193), 1);
+        ((nw4r::lyt::Pane*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
+            ->FindPaneByName(base + 0x193, true);
     float pos[3];
     func_80137924(pos, paneDetail, paneAnchor,
                   ((CEquipItemBoxLayoutView*)self->field_38)->field_10);
@@ -3867,7 +3859,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         bindLayoutAnimTransform(field_38, (nw4r::lyt::AnimTransform**)&field_3C, field_30, base + 0x734);
         nw4r::lyt::Pane* root = field_38->GetRootPane();
         void* font = getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
-        func_8013676C(root, (void*)((CEquipItemBoxFontView*)font)->f9());
+        func_8013676C(root, ((IDeviceFontInfo*)font)->getFont());
         char* msg = getPackedFont();
         setLayoutTextBoxFont(field_38, base + 0x29b, (u32)msg);
         setLayoutTextBoxFont(field_38, base + 0x27c, (u32)msg);
@@ -3930,15 +3922,17 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         // Cursor objects: construct stack temps, copy into the members and
         // dispatch the member vtable slot (CEIBCur has no dtor, so its temp
         // is left; the page-cur and CCur18 temps are destroyed).
-        CEIBCur temp1;
-        __ct__CEIBCur(&temp1, field_30);
-        func_801FA220((u8*)&_pad44[0], (const u8*)&temp1);
-        ((CEquipItemBoxCurMemberView*)&_pad44[0])->vfSlot8();
-        CEIBPageCur temp2;
-        __ct__CEIBPageCur(&temp2, field_30);
-        func_801FA220((u8*)&pagecur[0], (const u8*)&temp2);
-        __dt__80285C44(&temp2, -1);
-        ((CEquipItemBoxCurMemberView*)&pagecur[0])->vfSlot8();
+        // Stack byte buffers (not typed temps): CEIBCur is polymorphic, so a
+        // typed temp would need vptr init; the C-ABI ctor writes the vtable.
+        u8 temp1Buf[0x18];
+        __ct__CEIBCur((CEIBCur*)temp1Buf, field_30);
+        func_801FA220((u8*)&_pad44[0], (const u8*)temp1Buf);
+        ((CEIBCur*)&_pad44[0])->initLayout();
+        u8 temp2Buf[0x18];
+        __ct__CEIBPageCur((CEIBPageCur*)temp2Buf, field_30);
+        func_801FA220((u8*)&pagecur[0], (const u8*)temp2Buf);
+        __dt__80285C44(temp2Buf, -1);
+        ((CEIBPageCur*)&pagecur[0])->initLayout();
         u8 tempCur[0x1A];
         __ct__CCur18(tempCur, func_801355F4());
         CEquipItemBoxCCur18CopyView* curSrc = (CEquipItemBoxCCur18CopyView*)&tempCur[4];
@@ -3950,7 +3944,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         curDst->b0 = curSrc->b0;
         curDst->b1 = curSrc->b1;
         __dt__6CCur18Fv(tempCur, -1);
-        ((CEquipItemBoxCurMemberView*)&ccur18[0])->vfSlot8();
+        ((CBaseCur*)&ccur18[0])->initLayout();
         char* msg3 = func_801355BC();
         setLayoutTextBoxFont(field_38, base + 0x522, (u32)msg3);
         setLayoutTextBoxFont(field_38, base + 0x546, (u32)msg3);

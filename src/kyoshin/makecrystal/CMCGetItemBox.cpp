@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/CSysWin.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/device/CDeviceSC.hpp"
@@ -34,10 +36,9 @@ void func_801D216C(void*, int);
 u32 CSysWin_getUnk34(CMCGetItemBoxSysWin*);
 int  CSysWin_isActive(CMCGetItemBoxSysWin*);
 void func_8022B8E4(CMCGetItemBoxSysWin*);
-void func_8022B90C(CMCGetItemBoxSysWin*, int);
 void func_8022B9B4(CMCGetItemBoxSysWin*, void*, int);
-void func_8022BFC8(CMCGetItemBoxSysWin*, int);
 void func_8022B8B8(CMCGetItemBoxSysWin*);
+// func_8022B90C / func_8022BFC8 come from kyoshin/CSysWin.hpp (CSysWin* forms).
 }
 // C++-linkage (mangled) retail symbols.
 void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);   // setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc
@@ -66,31 +67,8 @@ extern "C" void __dt__6CCur09Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 
-// Dispatch shim for the CSysWin vtable entry at vtable offset 0x88. MWCC
-// places the first user virtual at vtable offset 8, so declared slot 32
-// (init) lands at 0x88.
-// Dispatch-only shim for the CCur18 sub-object vtable entry at offset 0x10
-// (MWCC RTTI occupies slots 0,4, so the third declared virtual lands there).
-struct CMCItemBoxSubObjCall {
-    virtual void vt08() = 0;
-    virtual void vt0C() = 0;
-    virtual void call(void* arg) = 0;   // vtable offset 0x10
-};
-
-struct CMCGetItemBoxSysWinInit {
-    virtual void slot0() = 0; virtual void slot1() = 0; virtual void slot2() = 0;
-    virtual void slot3() = 0; virtual void slot4() = 0; virtual void slot5() = 0;
-    virtual void slot6() = 0; virtual void slot7() = 0; virtual void slot8() = 0;
-    virtual void slot9() = 0; virtual void slot10() = 0; virtual void slot11() = 0;
-    virtual void slot12() = 0; virtual void slot13() = 0; virtual void slot14() = 0;
-    virtual void slot15() = 0; virtual void slot16() = 0; virtual void slot17() = 0;
-    virtual void slot18() = 0; virtual void slot19() = 0; virtual void slot20() = 0;
-    virtual void slot21() = 0; virtual void slot22() = 0; virtual void slot23() = 0;
-    virtual void slot24() = 0; virtual void slot25() = 0; virtual void slot26() = 0;
-    virtual void slot27() = 0; virtual void slot28() = 0; virtual void slot29() = 0;
-    virtual void slot30() = 0; virtual void slot31() = 0;
-    virtual void init() = 0;   // vtable offset 0x88
-};
+// (the CSysWin slot-0x88 virtual goes through CSysWin::loadSystemArc --
+// see kyoshin/CSysWin.hpp.)
 
 // Same-unit helper functions (retail relocs are unmangled -> C linkage).
 // func_80296BF0's extra params carry defaults so func_80299530's 1-arg call
@@ -119,7 +97,8 @@ void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
 #pragma push
 #pragma optimize_for_size on
 // noinline: retail keeps this init helper out-of-line (bl from __ct__CMCGetItemBox).
-__declspec(noinline) void func_80296B44(CMCItemBoxSub* x) {
+// C linkage: retail symbol is the plain name (reloc-site gate).
+extern "C" __declspec(noinline) void func_80296B44(CMCItemBoxSub* x) {
     // Retail walks a pointer over the table (cmplw loop); the inline bound is
     // CSE-hoisted as an r0 temp, matching retail coloring. Known residual:
     // retail emits the hoisted addi before the param copy; every tested shape
@@ -403,56 +382,60 @@ __declspec(noinline) char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
 // stack and copy them member-wise into the embedded item-box info, cursor
 // table and sub-object storage (everything past each temp's first dword).
 // Cursor pair for the rolled pointer-walk copies below.
-CMCGetItemBox::CMCGetItemBox() {
-    // mVtbl is stored by the CMCGetItemBoxVt base constructor.
-    // memRegion1/memRegion2 are constructed implicitly (declaration order).
+// C-ABI ctor (retail symbol __ct__CMCGetItemBox, no class-length mangling).
+// Free-function form so no implicit base-vptr store is emitted (same as
+// __ct__CSysWin / __ct__CEIBCur); the retail label goes in first via vtbl().
+extern "C" CMCGetItemBox* __ct__CMCGetItemBox(CMCGetItemBox* self) {
+    self->vtbl() = (void*)lbl_eu_80539128;
+    __ct__17UnkClass_8045F564Fv(&self->memRegion1);
+    __ct__17UnkClass_8045F564Fv(&self->memRegion2);
 
-    fileHandle1 = 0;
-    fileHandle2 = 0;
-    fileHandle3 = 0;
-    fileHandle4 = 0;
-    memManagerPtr = 0;
-    arcAcc1 = 0;
-    arcAcc2 = 0;
-    layout40 = 0;
-    animTrans1 = 0;
-    animTrans2 = 0;
-    field_4C = 0;
-    field_4D = 0;
-    objAt50 = 0;
-    field_54 = 0;
-    mField55 = 1;
+    self->fileHandle1 = 0;
+    self->fileHandle2 = 0;
+    self->fileHandle3 = 0;
+    self->fileHandle4 = 0;
+    self->memManagerPtr = 0;
+    self->arcAcc1 = 0;
+    self->arcAcc2 = 0;
+    self->layout40 = 0;
+    self->animTrans1 = 0;
+    self->animTrans2 = 0;
+    self->field_4C = 0;
+    self->field_4D = 0;
+    self->objAt50 = 0;
+    self->field_54 = 0;
+    self->mField55 = 1;
 
-    __ct__CCur07(&subObj_58, 0);
-    __ct__CCur09(&subObj_70, 0);
-    __ct__CCur16(&subObj_88, 0);
-    __ct__CCur18(&subObj_A0, 0);
-    __ct__CSysWin(&sysWin_B8, 0);
-    __ct__CItemBoxInfo(itemBox, 0, 0);
+    __ct__CCur07(&self->subObj_58, 0);
+    __ct__CCur09(&self->subObj_70, 0);
+    __ct__CCur16(&self->subObj_88, 0);
+    __ct__CCur18(&self->subObj_A0, 0);
+    __ct__CSysWin(&self->sysWin_B8, 0);
+    __ct__CItemBoxInfo(self->itemBox, 0, 0);
 
-    field_300 = 0;
-    field_301 = 0;
-    mField303 = 0;
-    field_304 = 0;
-    field_305 = 0;
-    func_80296B44(&sub_314);
+    self->field_300 = 0;
+    self->field_301 = 0;
+    self->mField303 = 0;
+    self->field_304 = 0;
+    self->field_305 = 0;
+    func_80296B44(&self->sub_314);
 
     // --- default item-box temp -> embedded info: one member-wise struct
     //     assignment (dest = src + 0xf4); word-array members lower to the
     //     retail paired lwzu/stwu bdnz loops. ---
     u8 boxTmp[0x210];
     __ct__CItemBoxInfo(boxTmp, 0, 0);
-    *(CMCBoxMember*)&itemBox[0x04] = *(CMCBoxMember*)&boxTmp[0x04];
+    *(CMCBoxMember*)&self->itemBox[0x04] = *(CMCBoxMember*)&boxTmp[0x04];
     // trailing 128-byte run starts one byte past a word boundary (retail
     // keeps it outside the aligned member block)
-    *(CMCW32*)&itemBox[0x189] = *(CMCW32*)&boxTmp[0x189];
+    *(CMCW32*)&self->itemBox[0x189] = *(CMCW32*)&boxTmp[0x189];
     __dt__12CItemBoxInfoFv(boxTmp, -1);
 
     // --- default sys-win temp -> embedded window: one struct assignment ---
     {
         u8 winTmp[0x40];
         __ct__CSysWin(winTmp, 0);
-        *(CMCSysWinMember*)&sysWin_B8.bytes[4] = *(CMCSysWinMember*)&winTmp[4];
+        *(CMCSysWinMember*)&self->sysWin_B8.bytes[4] = *(CMCSysWinMember*)&winTmp[4];
         __dt__7CSysWinFv(winTmp, -1);
     }
 
@@ -463,18 +446,19 @@ CMCGetItemBox::CMCGetItemBox() {
     {
         u8 subTmp[0x1d8];
         func_80296B44((CMCItemBoxSub*)subTmp);
-        *(CMCSubTableCopy*)sub_314.table = *(CMCSubTableCopy*)subTmp;
+        *(CMCSubTableCopy*)self->sub_314.table = *(CMCSubTableCopy*)subTmp;
         // FixStr operator= inlines to the retail strlen/strcpy pair.
         CMCItemBoxSub* t = (CMCItemBoxSub*)subTmp;
-        sub_314.count = t->count;
-        sub_314.pad_102 = t->pad_102;
-        sub_314.limit = t->limit;
-        sub_314.counter = t->counter;
-        *(ml::FixStr<64>*)&sub_314.shortName = *(ml::FixStr<64>*)&t->shortName;
-        *(ml::FixStr<128>*)&sub_314.name = *(ml::FixStr<128>*)&t->name;
-        sub_314.listBase = t->listBase;
-        sub_314.field_1D4 = t->field_1D4;
+        self->sub_314.count = t->count;
+        self->sub_314.pad_102 = t->pad_102;
+        self->sub_314.limit = t->limit;
+        self->sub_314.counter = t->counter;
+        *(ml::FixStr<64>*)&self->sub_314.shortName = *(ml::FixStr<64>*)&t->shortName;
+        *(ml::FixStr<128>*)&self->sub_314.name = *(ml::FixStr<128>*)&t->name;
+        self->sub_314.listBase = t->listBase;
+        self->sub_314.field_1D4 = t->field_1D4;
     }
+    return self;
 }
 
 // Free-function dtor form: the member dtor's implicit vptr re-store (lis/addi/stw
@@ -516,7 +500,7 @@ void func_80297928(CMCGetItemBox* self) {
     self->fileHandle4 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xfd], (IWorkEvent*)self, 0, 0);
     func_801D4054((CItemBoxInfo*)self->itemBox);
-    ((CMCGetItemBoxSysWinInit*)&self->sysWin_B8)->init();
+    ((CSysWin*)&self->sysWin_B8)->loadSystemArc();
 }
 #pragma pop
 
@@ -680,7 +664,7 @@ extern "C" void func_80297E90(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
+        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         u8 v = (u8)(self->field_301 - 1);
         self->field_301 = v;
@@ -714,7 +698,7 @@ void func_80297FB4(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
+        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         u8 v = self->field_301 + 1;
         self->field_301 = v;
@@ -748,7 +732,7 @@ void func_802980DC(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
+        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
@@ -789,7 +773,7 @@ void func_80298228(CMCGetItemBox* self) {
         u8 tmp[12];
         func_801CB9D8((u32*)tmp, arr,
                       (u8)((s8)self->field_304 * 4 + self->field_305));
-        ((CMCItemBoxSubObjCall*)&self->subObj_A0)->call((void*)tmp);
+        ((CBaseCur*)&self->subObj_A0)->setRootPaneTranslate((nw4r::math::VEC3*)tmp);
     } else {
         // Retail reuses the loaded field_300 for the decrement (subi r3-based).
         u8 s = self->field_300;
@@ -942,9 +926,9 @@ void func_80298614(CMCGetItemBox* self) {
                     res = func_80136190(&lbl_eu_8050FF8C[0x119],
                                         &lbl_eu_8050FF8C[0x123], r);
                 }
-                func_8022B90C(&self->sysWin_B8, 0);
+                func_8022B90C((CSysWin*)&self->sysWin_B8, 0);
                 func_8022B9B4(&self->sysWin_B8, res, 0);
-                func_8022BFC8(&self->sysWin_B8, 1);
+                func_8022BFC8((CSysWin*)&self->sysWin_B8, 1);
                 func_8022B8B8(&self->sysWin_B8);
                 func_801D216C(&self->subObj_A0, 0);
             }
@@ -1049,23 +1033,11 @@ void func_80298A78(CMCGetItemBox* self) {
     self->field_4C = 1;
 }
 
-// nw4r ArcResourceAccessor virtual GetResource at vtable[3] (offset 0x0C).
-// MWCC RTTI occupies vtable slots 0,4, so the second declared virtual lands at
-// offset 0x0C: one dummy slot + GetResource3.
-struct AccessorGetRes3 {
-    virtual void _v00();
-    virtual void* GetResource3(u32 tag, const char* name, int r6);
-};
+// (uses nw4r::lyt::ArcResourceAccessor::GetResource directly -- vtable
+// offset 0x0C, same dispatch; see lyt_arcResourceAccessor.h.)
 
-// Dispatch shim for the device-font vtable entry at offset 0x24
-// (MWCC RTTI occupies slots 0,4, so the eighth declared virtual lands there):
-// makes MWCC emit the lwz r12 / lwz r12,0x24(r12) / bctrl chain.
-struct CDeviceFontVt9 {
-    virtual void _v00() = 0; virtual void _v04() = 0; virtual void _v08() = 0;
-    virtual void _v0C() = 0; virtual void _v10() = 0; virtual void _v14() = 0;
-    virtual void _v18() = 0;
-    virtual void* getResource() = 0;   // vtable offset 0x24
-};
+// (uses IDeviceFontInfo::getFont directly -- vtable offset 0x24, same
+// dispatch; see monolib/device/CDeviceFont.hpp.)
 
 // Retail 0x80298AC8: resolve the icon resource for a selected item-box entry
 // and stamp it into a numbered layout pane. Mirrors func_80298FB4 but uses the
@@ -1092,9 +1064,9 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
                 case 9: h = func_80138F78(0x149); break;
             }
             if (h != 0)
-                h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
+                h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
             else
-                h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
             u32 cnt = inst->getCount(e);
@@ -1102,7 +1074,7 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
                 // Empty slot: a bdat-managed entry uses the 0x155 chain,
                 // otherwise the gem-icon chain keyed on byte 7 >> 2.
                 if (func_801C6E90(e) != 0) {
-                    h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)func_80138F78(0x155), 0);
+                    h = self->arcAcc2->GetResource(0x74696d67u, (const char*)func_80138F78(0x155), 0);
                 } else {
                     char* s = 0;
                     switch ((e->bytes[3] >> 2) & 0x3F) {
@@ -1114,9 +1086,9 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
                         case 9: s = func_80138F78(0x149); break;
                     }
                     if (s != 0)
-                        h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, s, 0);
+                        h = self->arcAcc2->GetResource(0x74696d67u, s, 0);
                     else
-                        h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                        h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
                 }
             } else {
                 char* s = 0;
@@ -1129,20 +1101,20 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
                     case 9: s = func_80138F78(0x149); break;
                 }
                 if (s != 0)
-                    h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, s, 0);
+                    h = self->arcAcc2->GetResource(0x74696d67u, s, 0);
                 else
-                    h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                    h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
             }
         }
     }
     if (h == 0) {
         if (idx != 0) {
             char* name = func_80138F78((u16)func_80136254((void*)lbl_eu_806640EC, &lbl_eu_8050FF8C[0x144], idx));
-            h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, name, 0);
+            h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
-                h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else {
-            h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+            h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         }
     }
     if (h != 0) {
@@ -1175,9 +1147,9 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                 case 6: h = func_80138F78(0x192); break;
             }
             if (h != 0)
-                h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
+                h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
             else
-                h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else if (type == 9) {
             CMCItemImplShim* inst = (CMCItemImplShim*)CItem_initItemImplInstances(e);
             if ((u16)inst->getCount(e) == 0) {
@@ -1200,9 +1172,9 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                         case 5: h = func_80138F78(0x18d); break;
                     }
                     if (h != 0)
-                        h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
+                        h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
                     else
-                        h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                        h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
                 } while (0);
             } else {
                 // Item present: kind-keyed name chain 0x19c..
@@ -1216,20 +1188,20 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
                     case 5: h = func_80138F78(0x198); break;
                 }
                 if (h != 0)
-                    h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, (const char*)h, 0);
+                    h = self->arcAcc2->GetResource(0x74696d67u, (const char*)h, 0);
                 else
-                    h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                    h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
             }
         }
     }
     if (h == 0) {
         if (idx != 0) {
             char* name = func_80138F78((u16)func_80136254(lbl_eu_806640EC, &lbl_eu_8050FF8C[0x15c], idx));
-            h = ((AccessorGetRes3*)self->arcAcc2)->GetResource3(0x74696d67u, name, 0);
+            h = self->arcAcc2->GetResource(0x74696d67u, name, 0);
             if (h == 0)
-                h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+                h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         } else {
-            h = ((AccessorGetRes3*)self->arcAcc1)->GetResource3(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
+            h = self->arcAcc1->GetResource(0x74696d67u, &lbl_eu_8050FF8C[0x131], 0);
         }
     }
     if (h != 0) {
@@ -1406,7 +1378,7 @@ extern "C" __declspec(noinline) void func_802999B0(CMCGetItemBox* self) {
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1dc], true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         func_80137924(&posIf, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
-        ((CMCCursorWidget*)&self->subObj_88)->setPos(&posIf);
+        ((CBaseCur*)&self->subObj_88)->setRootPaneTranslate(&posIf);
         func_801D216C(&self->subObj_88, 1);
         func_801D216C(&self->subObj_58, 0);
     } else {
@@ -1415,7 +1387,7 @@ extern "C" __declspec(noinline) void func_802999B0(CMCGetItemBox* self) {
         p1 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(nameBuf, true);
         p2 = (*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x1e9], true);
         func_80137924(&posElse, p1, p2, *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10));
-        ((CMCCursorWidget*)&self->subObj_58)->setPos(&posElse);
+        ((CBaseCur*)&self->subObj_58)->setRootPaneTranslate(&posElse);
         func_801D216C(&self->subObj_88, 0);
         func_801D216C(&self->subObj_58, 1);
     }
@@ -1461,7 +1433,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         // root pane in a callee-saved register only across these calls.
         nw4r::lyt::Pane* rootPane = this->layout40->GetRootPane();
         void* font = CDeviceFont::getFontInfo(1, this->layout40);
-        void* fontData = ((CDeviceFontVt9*)font)->getResource();
+        void* fontData = ((IDeviceFontInfo*)font)->getFont();
         func_8013676C(rootPane, (u32)fontData);
 
         u32 w = (u32)getPackedFont();
@@ -1502,13 +1474,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur07(cur07Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_58, cur07Buf);
         __dt__6CCur07Fv(cur07Buf, -1);
-        ((CMCCursorWidget*)&this->subObj_58)->vf_00();
+        ((CBaseCur*)&this->subObj_58)->initLayout();
 
         u8 cur09Buf[0x18];
         __ct__CCur09(cur09Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_70, cur09Buf);
         __dt__6CCur09Fv(cur09Buf, -1);
-        ((CMCCursorWidget*)&this->subObj_70)->vf_00();
+        ((CBaseCur*)&this->subObj_70)->initLayout();
 
         // Two anchor vectors on cursor 09: the second pair swaps the x base.
         nw4r::math::VEC3 s1;
@@ -1525,13 +1497,13 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __ct__CCur16(cur16Buf, this->arcAcc1);
         func_8018B0FC(&this->subObj_88, cur16Buf);
         __dt__6CCur16Fv(cur16Buf, -1);
-        ((CMCCursorWidget*)&this->subObj_88)->vf_00();
+        ((CBaseCur*)&this->subObj_88)->initLayout();
 
         u8 cur18Buf[0x18];
         __ct__CCur18(cur18Buf, func_801355F4());
         func_8018B0FC(&this->subObj_A0, cur18Buf);
         __dt__6CCur18Fv(cur18Buf, -1);
-        ((CMCCursorWidget*)&this->subObj_A0)->vf_00();
+        ((CBaseCur*)&this->subObj_A0)->initLayout();
 
         func_80298A78(this);
         this->fileHandle1 = 0;

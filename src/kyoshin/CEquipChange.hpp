@@ -103,76 +103,6 @@ extern "C" int func_802031A0(CEquipChange* self);
 // C++ linkage so MWCC mangles to the retail symbol advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf.
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 
-// Cast-only view of the layout object at field_34 (vtable slot 11 = +0x2C,
-// method (arg, mode)). A real virtual call makes MWCC load the vtable into
-// r12 (retail's `lwz r12,0(r3); lwz r12,0x2c(r12); bctrl`), where a
-// function-pointer temp would allocate it to a scratch register. MWCC reserves
-// 2 leading vtable slots, so v9 lands at +0x2C.
-struct CLayoutVtbl11 {
-    virtual void v0(int arg);      // +0x08 (slot 0 after 2 reserved)
-    virtual void v1();
-    virtual void v2();
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6();
-    virtual void v7();
-    virtual void v8();
-    virtual void v9(void* arg, int mode);
-    virtual void v10();            // +0x30
-    virtual void v11();            // +0x34
-    virtual void v12(int arg);     // +0x38
-};
-
-// Cast-only view of the sub-cursor at self+0x80 (vtable slot 4 = +0x10,
-// method (arg)). Real virtual call emits the retail r12 dispatch chain;
-// MWCC reserves 2 leading vtable slots, so v2 lands at +0x10.
-struct CSubCurVtblView {
-    virtual void v0();
-    virtual void v1();
-    virtual void v2(void* arg);
-};
-
-// Cast-only view of the cursors at self+0x50/0x68/0x80 (vtable slot 3 =
-// +0x0C, no-arg method). v1 lands at +0x0C (2 reserved leading slots); v2
-// lands at +0x10 (position/colour setter used by func_802040FC).
-struct CCurVtblView {
-    virtual void v0();
-    virtual void v1();            // +0x0C
-    virtual void v2(void* arg);   // +0x10
-};
-
-// Cast-only view of the layout object at field_34: the pane-finder
-// sub-object pointer sits at +0x10 (its vtable carries the +0x3C pane
-// method - see CLayoutSubVtbl13).
-struct CLayoutView {
-    u8 _pad[0x10];
-    void* field_10;   // 0x10
-};
-
-// Cast-only view of the layout sub-object at *(field_34 + 0x10) (vtable slot
-// 15 = +0x3C, method (arg, mode) returning a Pane*). A real virtual call
-// makes MWCC load the vtable into r12 (retail dispatch), same rationale as
-// CLayoutVtbl11. MWCC reserves 2 leading vtable slots, so v13 lands at +0x3C.
-struct CLayoutSubVtbl13 {
-    virtual void v0();
-    virtual void v1();
-    virtual void v2();
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6();
-    virtual void v7();
-    virtual void v8();
-    virtual void v9();
-    virtual void v10();
-    virtual void v11();
-    virtual void v12();
-    virtual nw4r::lyt::Pane* v13(u32 arg, int mode);   // +0x3C
-};
-
-// Cursor-entry record accumulated by func_802042C0 ({u16 id, u32 item} pairs,
-// copied into the cursor sub-objects through func_80205294).
 struct CEqChCursorRec {
     u16 field_00;
     u32 field_04;
@@ -182,14 +112,6 @@ struct CEqChCursorRec {
 // (lbl_eu_806640D8 is an array of handles; the scalar extern comes from
 // CEquipItemBox.hpp).
 #define lbl_eu_806640D8_arr ((void**)(void*)&lbl_eu_806640D8)
-
-// Cast-only view of the resource-loading object at field_2C/field_30:
-// vtable slot +0x0C loads a texture/resource (args: magic 0x74696D67, name,
-// flag) returning the resource pointer.
-typedef void* (*CEqChTexFn)(u32 obj, u32 magic, const char* name, u32 flag);
-struct CEqChTexVtbl {
-    CEqChTexFn fn[16];
-};
 
 // Character-data table returned by func_8009EC9C; +0x176C holds a state word
 // that is 1 when the character is busy (same object as CPartyCharData). The
@@ -420,52 +342,7 @@ extern char lbl_eu_80508168[];
 extern u8 lbl_eu_806682A0[8];
 extern u8 lbl_eu_806682A4[8];
 
-// Cast-only view of the object returned by CItem_initItemImplInstances
-// (vtable slot 0x30 = +0x30, method (item) returning the equipped count as
-// u8). MWCC reserves 2 leading vtable slots, so the +0x30 method is the
-// 11th declared (v10). v9 at +0x2C is the item-impl fetch used by
-// func_802052A8; v15 at +0x44 is the equip/unequip hook used by
-// func_80203210 (args item, mode, -1).
-struct CItemImplVtblView {
-    virtual u8 v0(void* item);               // +0x08 category byte
-    virtual void v1();                       // +0x0C
-    virtual void v2();                       // +0x10
-    virtual void v3();                       // +0x14
-    virtual void v4();                       // +0x18
-    virtual void v5();                       // +0x1C
-    virtual char* v6(void* item);            // +0x20 display-name string
-    virtual void v7();                       // +0x24
-    virtual void v8();                       // +0x28
-    virtual void* v9(void* item, u32 flag);  // +0x2C
-    virtual u8 v10(void* item);              // +0x30 equipped count
-    virtual void v11();                      // +0x34
-    virtual void v12();                      // +0x38
-    virtual void v13();                      // +0x3C
-    virtual u32 v14(void* item, u8 flag);    // +0x40
-    virtual void v15(void* item, u8 flag, int arg);  // +0x44
-    virtual void v16();                      // +0x48
-    virtual void v17();                      // +0x4C
-    virtual void v18();                      // +0x50
-    virtual u32 v19(void* item);             // +0x54 bdat icon row
-    virtual void v20();
-    virtual void v21();
-    virtual void v22();
-    virtual void v23();
-    virtual void v24();
-    virtual void v25();
-    virtual void v26();
-    virtual void v27();
-    virtual void v28();
-    virtual void v29();
-    virtual void v30();
-    virtual void v31();
-    virtual void v32();
-    virtual void v33();
-    virtual void* v34(void* item);                   // +0x90 equip record
-    virtual void v35(void* item, s16 value);  // +0x94
-};
-
-// Result of the item-impl fetch hook (CItemImplVtblView::v9) read by
+// Result of the item-impl fetch hook
 // func_802052A8: packed word at +0 and a halfword at +4 whose low bit picks
 // between the direct-equip and bdat-rebuild paths.
 struct CEquipV9Result {

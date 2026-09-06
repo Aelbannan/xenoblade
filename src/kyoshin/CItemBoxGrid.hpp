@@ -8,24 +8,36 @@ namespace nw4r { namespace lyt {
 class AnimTransform; class Layout; class ArcResourceAccessor; class DrawInfo;
 } }
 
-class CQuestItem {
+// Retail vtable (lbl_eu_80534818): dtor at +0x08, Rebuild at +0x0C
+// (retail func_801C4BB4). novtable: the table lives in the data blob and
+// the ctor stores the label manually, so no TU emits a __vt__ (same shape
+// as CBaseCur/CItemBoxObjVt08 delete sites); Rebuild has no body here -
+// virtual calls land on the blob's slot.
+class __declspec(novtable) CQuestItem {
 public:
-    virtual ~CQuestItem();
+    virtual ~CQuestItem();  // +0x08
+    virtual void Rebuild();  // +0x0C - retail func_801C4BB4
 
     // TODO: add fields
 };
 
-class CVisionItem {
+// Retail vtable (lbl_eu_805347F8): dtor at +0x08, Rebuild at +0x0C
+// (retail func_801C5254). novtable, no Rebuild body (see CQuestItem).
+class __declspec(novtable) CVisionItem {
 public:
-    virtual ~CVisionItem();
+    virtual ~CVisionItem();  // +0x08
+    virtual void Rebuild();  // +0x0C - retail func_801C5254
 
     // TODO: add fields
 };
 
-class CArtsBookItem {
+// Retail vtable (lbl_eu_805347D8): dtor at +0x08, Rebuild at +0x0C
+// (retail func_801C53D8). novtable, no Rebuild body (see CQuestItem).
+class __declspec(novtable) CArtsBookItem {
 public:
     CArtsBookItem();
-    virtual ~CArtsBookItem();
+    virtual ~CArtsBookItem();  // +0x08
+    virtual void Rebuild();  // +0x0C - retail func_801C53D8
 
     // TODO: add fields
 };
@@ -51,32 +63,17 @@ struct CItemBoxSlotState {
     u16 state;
 };
 
-// Cast-only class with a virtual destructor at vtable+0x08 (the first
-// declared virtual after the 2 RTTI header entries). Used for delete-style
-// release calls with mode 1 on the +0x44/+0x5C sub-objects: retail's
-// `if (ptr) delete ptr` shows two identical null tests (the if plus the
-// delete expansion's own guard), which the plain manual-cast form cannot
-// reproduce.
-struct CItemBoxObjVt08 {
-    virtual ~CItemBoxObjVt08();  // vtable+0x08
-};
+// (Fake-vtable cleanup: CItemBoxObjVt08 deleted - the +0x44 delete is now
+// `delete (nw4r::lyt::Layout*)` and the +0x5C delete goes through the
+// nw4r::ut::TagProcessorBase<wchar_t> base, both with the virtual dtor at
+// +0x08.)
 
-// Cast-only vtable interface for the +0x3C/+0x40 accessor objects: method at
-// vtable+0x0C (raw slot 3, takes a tag string id, an output buffer and a
-// flag, returns the created pane). MWCC prepends 2 RTTI header entries, so
-// the second declared virtual lands here.
-struct CItemBoxAccVt0C {
-    virtual void _v08();
-    virtual void* _v0C(int tag, char* buf, int flag);  // vtable+0x0C
-};
+// (Fake-vtable cleanup: CItemBoxAccVt0C deleted - accessor calls are now
+// ArcResourceAccessor::GetResource.)
 
-// Cast-only vtable interface for the +0x70..+0xD0 sub-objects: method at
-// vtable+0x0C (raw slot 3, no args). MWCC prepends 2 RTTI header entries,
-// so the second declared virtual lands here.
-struct CItemBoxObjVt0C {
-    virtual void _v08();
-    virtual void _v0C();  // vtable+0x0C
-};
+// (Fake-vtable cleanup: CItemBoxObjVt0C deleted - cursor calls are now
+// CBaseCur::cleanup/initLayout; the +0x2ca8/+0x34b0/+0x3cb8 resets are now
+// CQuestItem/CVisionItem/CArtsBookItem::Rebuild.)
 
 // Cast-only vtable interface for the CItemImplInstances object: method at
 // vtable+0x2C (raw slot 11). MWCC prepends 2 RTTI header entries, so 9
@@ -94,21 +91,8 @@ struct CItemInstVt2C {
     virtual void* _v2C(void* arg, u8 slot);  // vtable+0x2C
 };
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x2C taking a pointer and an int flag (no u8 mask on the third
-// argument). Used by sites that pass a full-word 0/1 selector.
-struct CItemInstVt2CInt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C(void* arg, int flag);  // vtable+0x2C
-};
+// (Fake-vtable cleanup: CItemInstVt2CInt deleted - layout animation-flag
+// calls are now Layout::SetAnimationEnable.)
 // Cast-only vtable interface for the CItemImplInstances object: method at
 // vtable+0x40 (raw slot 16). MWCC prepends 2 RTTI header entries, so 14
 // dummy virtuals precede the method.
@@ -130,70 +114,15 @@ struct CItemInstVt40 {
     virtual u32 _v40(void* arg, u8 slot);  // vtable+0x40
 };
 
-// Cast-only vtable interface for the +0x44 layout object: method at
-// vtable+0x38 (raw slot 14). MWCC prepends 2 RTTI header entries, so 12
-// dummy virtuals precede the method.
-struct CItemBoxLayoutVt38 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38(int n);  // vtable+0x38
-};
+// (Fake-vtable cleanup: CItemBoxLayoutVt38 deleted - now Layout::Animate.)
 
-// Cast-only vtable interface for the +0xA0/+0xD0 sub-objects: with -RTTI on,
-// the third declared virtual lands at vtable+0x10 (slots 0/4 hidden RTTI),
-// matching retail's lwz r12,16(r12) dispatch that the manual-cast form
-// colors r5 instead of r12.
-struct CItemBoxObjA0Vt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10(void* arg);  // vtable+0x10
-};
+// (Fake-vtable cleanup: CItemBoxObjA0Vt deleted - cursor calls are now
+// CBaseCur::setRootPaneTranslate.)
 
-// Cast-only vtable interface for the layout-pane sub-object reached via
-// *(*(self+0x44)+0x10): method at raw vtable slot 15 (offset 0x3C). MWCC
-// prepends 2 RTTI header entries, so 13 dummy virtuals precede the method.
-struct CItemPaneObjVt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void* _v3C(char* buf, int n);  // vtable+0x3C
-};
+// (Fake-vtable cleanup: CItemPaneObjVt deleted - now Pane::FindPaneByName.)
 
-// Cast-only vtable interface for the layout-pane sub-object reached via
-// *(self+0x44): method at raw vtable slot 11 (offset 0x2C). MWCC prepends
-// 2 RTTI header entries, so 9 dummy virtuals precede the method.
-struct CItemPaneAnimVt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void* _v2C(void* arg, int n);  // vtable+0x2C
-};
+// (Fake-vtable cleanup: CItemPaneAnimVt deleted - now
+// Layout::SetAnimationEnable.)
 
 // Cast-only vtable interface for the CItemImplInstances object: method at
 // vtable+0x08 (raw slot 2, the first declared virtual after the 2 RTTI
@@ -389,25 +318,11 @@ struct CibgTexData {
     u16 field_02;
 };
 
-// Cast-only vtable interface for the CDeviceFont object: method at
-// vtable+0x24 (raw slot 9, no args, returns the font payload).
-struct CibgFontVt24 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void* _v24();  // vtable+0x24
-};
+// (Fake-vtable cleanup: CibgFontVt24 deleted - font calls are now
+// IDeviceFontInfo::getFont.)
 
-// Cast-only vtable interface for the system-window object: texture lookup at
-// vtable+0x0C (raw slot 3; fourcc tag, message id, flag -> resource entry).
-struct CibgSysWinVt0C {
-    virtual void _v08();
-    virtual void* _v0C(u32 tag, u32 id, u32 flag);  // vtable+0x0C
-};
+// (Fake-vtable cleanup: CibgSysWinVt0C deleted - texture lookups are now
+// ArcResourceAccessor::GetResource.)
 
 // 24-byte category-filter row copied around by value in func_801C56D8
 // (MWCC lowers the struct copies to unrolled lwz/lwzu pairs).

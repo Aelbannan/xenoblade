@@ -15,35 +15,40 @@ extern PluginFuncData lbl_eu_80526560[];
 // lbl_eu_80666170 instead of a synthesised @N entry.
 __declspec(section ".sdata2") extern const f64 lbl_eu_80666170 = 4503601774854144.0;
 
-// Camera interface (from CfGameManager)
+// Camera manager driven by the cam plugin VM funcs (retail object behind
+// getCameraDataBlock). Each used slot is named after its caller: 0x14 set
+// camera position, 0x3C set fov, 0x4C set direction, 0x50/0x54 set rotation,
+// 0x58 get fov float, 0x5C set target, 0x64 set look-at, 0x68/0x6C set
+// position/look-at offsets. Same slots as CREvtCamManager in
+// realtimeevt/CREvtCamera.hpp.
 class UnkCamIntf {
 public:
-    virtual void vfunc_0x08();
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14(void* pos);
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual void vfunc_0x24();
-    virtual void vfunc_0x28();
-    virtual void vfunc_0x2C();
-    virtual void vfunc_0x30();
-    virtual void vfunc_0x34();
-    virtual void vfunc_0x38();
-    virtual void vfunc_0x3C(f32 fov);
-    virtual void vfunc_0x40();
-    virtual void vfunc_0x44();
-    virtual void vfunc_0x48();
-    virtual void vfunc_0x4C(void* dir);
-    virtual void vfunc_0x50(f32 rotX);
-    virtual void vfunc_0x54(f32 rotY);
-    virtual void vfunc_0x58();
-    virtual void vfunc_0x5C(u32 targetId);
-    virtual void vfunc_0x60();
-    virtual void vfunc_0x64(void* lookat);
-    virtual void vfunc_0x68(void* obj, void* pos, int flags);
-    virtual void vfunc_0x6C(void* obj, void* lookat, int flags);
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void setPosition(void* pos);  // 0x14
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void setFov(f32 fov);  // 0x3C
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void setDirection(void* dir);  // 0x4C
+    virtual void setRotationX(f32 rotX);  // 0x50
+    virtual void setRotationY(f32 rotY);  // 0x54
+    virtual f32 getFov();  // 0x58
+    virtual void setTarget(u32 targetId);  // 0x5C
+    virtual void v60();
+    virtual void setLookAt(void* lookat);  // 0x64
+    virtual void setPositionOfs(void* obj, void* pos, int flags);  // 0x68
+    virtual void setLookAtOfs(void* obj, void* lookat, int flags);  // 0x6C
     u8 field_0x04[0x0C - 0x04];
     CamStateObj* objPtr;
 };
@@ -139,7 +144,7 @@ extern "C" int setPos(VMThread* pThread) {
     pos.z = (f32)fixedZ / lbl_eu_80666168;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x14(&pos);
+    cam->setPosition(&pos);
     cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
@@ -155,7 +160,7 @@ extern "C" int setLookat(VMThread* pThread) {
     lookat.z = (f32)fixedZ / lbl_eu_80666168;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x64(&lookat);
+    cam->setLookAt(&lookat);
     func_8016FD84(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
 }
@@ -171,7 +176,7 @@ extern "C" int setDir(VMThread* pThread) {
     dir.z = lbl_eu_80666178;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x4C(&dir);
+    cam->setDirection(&dir);
     cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
@@ -182,7 +187,7 @@ extern "C" int setRotX(VMThread* pThread) {
     f32 rotX = value * lbl_eu_8066A210;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x50(rotX);
+    cam->setRotationX(rotX);
     return 0;
 }
 
@@ -192,7 +197,7 @@ extern "C" int setRotY(VMThread* pThread) {
     f32 rotY = value * lbl_eu_8066A210;
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x54(rotY);
+    cam->setRotationY(rotY);
     return 0;
 }
 
@@ -200,7 +205,7 @@ extern "C" int setFov(VMThread* pThread) {
     s32 fixedFov = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x3C(fixedToFloat(fixedFov));
+    cam->setFov(fixedToFloat(fixedFov));
     return 0;
 }
 
@@ -208,7 +213,7 @@ extern "C" int setTarget(VMThread* pThread) {
     CamOCHandle* oc = (CamOCHandle*)vmArgOCGet(2, vmArgPtrGet(pThread, 1));
 
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
-    cam->vfunc_0x5C(oc->field_0x04);
+    cam->setTarget(oc->field_0x04);
     cleanupMapEffects__Q22cf13CfGameManagerFv();
     return 0;
 }
@@ -234,7 +239,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0();
     void* slot = func_801864DC(obj, oc->field_0x04);
-    cam->vfunc_0x68(slot, &pos, -flags);
+    cam->setPositionOfs(slot, &pos, -flags);
     return 0;
 }
 
@@ -259,7 +264,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     UnkCamIntf* cam = getCameraDataBlock__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0();
     void* slot = func_801864DC(obj, oc->field_0x04);
-    cam->vfunc_0x6C(slot, &lookat, -flags);
+    cam->setLookAtOfs(slot, &lookat, -flags);
     func_8016FD84(lbl_eu_80666178, lbl_eu_8066617C);
     return 0;
 }

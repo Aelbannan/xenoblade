@@ -402,7 +402,11 @@ int CItemInfo_isEnabled0(CItemInfo*) { return 0; }
 
 int CItemInfo_getFlag0(CItemInfo*) { return 0; }
 
-extern "C" void func_80156050(CItemImpl* self) { self->vf20(); }
+// Tail-thunk into slot +0x20: forwards the incoming item pointer (r4) to
+// vf20, so the body stays a bare lwz/mtctr/bctr (retail shape). The thunk
+// itself is only reached through the vtable (never called by name), so the
+// extra param is free - r4 already holds it on entry.
+extern "C" void func_80156050(CItemImpl* self, CItemData* p) { self->vf20(p); }
 
 // Lazy-init the shared sort scratch buffer, then collect the per-category
 // impl counts (vtable slots 0x4C/0x80/0x78/0x08) plus the packed field_07

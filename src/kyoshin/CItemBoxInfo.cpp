@@ -193,6 +193,7 @@ __attribute__((used)) u32 lbl_eu_806645D4;
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
+#include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam slots (+0xA4/+0x108/...) for char-data stats
 #include <new>
 
 // Retail is 2-arg (category index + s16 item id); the real declaration now
@@ -1308,14 +1309,16 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                     // Whole-struct assign: MWCC expands the POD copy to the
                     // retail mtctr 8-byte-pair loop.
                     CItemBoxNameRecord2 rec2b = rec2;
-                    switch (rec2b.e1) {
-                        case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
-                        case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
-                        case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
-                        case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
-                        case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
-                        case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
-                        case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
+                    {
+                        // (was switch: retail compiles this dispatch as compares)
+                        u32 _e = (u32)(rec2b.e1);
+                        if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
+                        else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
+                        else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
+                        else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
+                        else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
+                        else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
+                        else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
                     }
                     if (rec2b.name[0] == '0') {
                         sprintf(buf, base + 0x408, idx);
@@ -1346,14 +1349,16 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                         u32 w = sub->_00;
                         char* label = func_80136190(base + 0x130, base + 0x139, 0x1e - ((w >> 22 & 7) - 1));
                         u32 st = func_801361E8((u32)lbl_eu_806640D8, base + 0x20b, equip);
-                        switch (st & 0xFF) {
-                            case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
-                            case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
-                            case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
-                            case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
-                            case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
-                            case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
-                            case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
+                        {
+                            // (was switch: retail compiles this dispatch as compares)
+                            u32 _e = (u32)(st & 0xFF);
+                            if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
+                            else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
+                            else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
+                            else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
+                            else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
+                            else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
+                            else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
                         }
                         s16 val = (s16)((w >> 11) & 0x7FF);
                         if (val != 0) {
@@ -1424,14 +1429,16 @@ void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
                     CItemBoxNameRecord2 rec3;
                     func_801D5564(&rec3, info, (void*)nameId, 0);
                     CItemBoxNameRecord2 rec3b = rec3;
-                    switch (rec3b.e1) {
-                        case 0: tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL); break;
-                        case 4: tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL); break;
-                        case 5: tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL); break;
-                        case 6: tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL); break;
-                        case 7: tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL); break;
-                        case 8: tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL); break;
-                        case 9: tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL); break;
+                    {
+                        // (was switch: retail compiles this dispatch as compares)
+                        u32 _e = (u32)(rec3b.e1);
+                        if (_e == 0) tex = (u32)info->state.resource->GetResource(tag, base + 0x36e, NULL);
+                        else if (_e == 4) tex = (u32)info->state.resource->GetResource(tag, base + 0x384, NULL);
+                        else if (_e == 5) tex = (u32)info->state.resource->GetResource(tag, base + 0x39a, NULL);
+                        else if (_e == 6) tex = (u32)info->state.resource->GetResource(tag, base + 0x3b0, NULL);
+                        else if (_e == 7) tex = (u32)info->state.resource->GetResource(tag, base + 0x3c6, NULL);
+                        else if (_e == 8) tex = (u32)info->state.resource->GetResource(tag, base + 0x3dc, NULL);
+                        else if (_e == 9) tex = (u32)info->state.resource->GetResource(tag, base + 0x3f2, NULL);
                     }
                     if (rec3b.name[0] == '0') {
                         sprintf(buf2, base + 0x408, idx);
@@ -2191,7 +2198,6 @@ struct D8EStatB {
     u8 _00[0x10];
     f32 f10;
 };
-typedef void (*D8EVF)(void*, u32);
 
 static inline void applyItemBoxDeltaColor(void* valuePane, void* labelPane, s16 delta) {
     D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
@@ -2307,7 +2313,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
-                    ((D8EVF*)(*(void***)actor))[0x29](actor, 0);
+                    ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc4(NULL);
                 }
             }
         }
@@ -2319,27 +2325,26 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     if (func_800B8B94(member) == NULL) {
         func_800A13C4(charObj, 1);
     }
-    void* stats = (u8*)charObj + 0x17C;
-    void** vt = *(void***)stats;
+    cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
     // ---- HP values (clamped to 9999) ----
-    s32 hp1 = (s32)((float(*)(void*))vt[0x4A])(stats);
+    s32 hp1 = (s32)stats->CActorParam_UnkVirtualFunc37();
     if (hp1 > 9999) hp1 = 9999;
-    s32 hp2 = (s32)((float(*)(void*))vt[0x4B])(stats);
+    s32 hp2 = (s32)stats->CActorParam_UnkVirtualFunc38();
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_UnkVirtualFunc29());
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
-    D8EStatA* stA = (D8EStatA*)((void*(*)(void*))vt[0x8A])(stats);
-    D8EStatB* stB = (D8EStatB*)((void*(*)(void*))vt[0x83])(stats);
-    D8EStatC* stC = (D8EStatC*)((void*(*)(void*))vt[0x8B])(stats);
+    D8EStatA* stA = (D8EStatA*)stats->CActorParam_UnkVirtualFunc101();
+    D8EStatB* stB = (D8EStatB*)stats->CActorParam_UnkVirtualFunc94();
+    D8EStatC* stC = (D8EStatC*)stats->CActorParam_UnkVirtualFunc102();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
@@ -2546,7 +2551,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
-            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -2572,14 +2577,13 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
-        switch (type) {
-            case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
-            case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
-            case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
-            case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
-            case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
-            case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
-        }
+        // (was switch: retail compiles this dispatch as compares)
+        if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
+        else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
+        else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
+        else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
+        else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
+        else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         D8EComparisonStorage comparisonStorage;
         void* item = func_80157C4C(type, slotId);
         if (type == 2) {
@@ -3106,7 +3110,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
         s16 hpDelta = (s16)(newHp - oldHp);
-        if (((float(*)(void*))vt[0x4A])(stats) > (f32)newHp) {
+        if (stats->CActorParam_UnkVirtualFunc37() > (f32)newHp) {
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], newHp);
         }
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], newHp);
@@ -3328,14 +3332,13 @@ for (u32 w_ = 0; w_ < 13; w_++) {
         if (type != 2 && func_801DFDC0(info, member, arg3)) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
-            switch (type) {
-                case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
-                case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
-                case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
-                case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
-                case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
-                case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
-            }
+            // (was switch: retail compiles this dispatch as compares)
+            if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
+            else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
+            else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
+            else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
+            else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
+            else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
             void* item = func_80157C4C(type, slotId);
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry e_cur;
@@ -3370,7 +3373,7 @@ for (u32 w_ = 0; w_ < 7; w_++) {
             s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
-            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -6400,7 +6403,6 @@ struct E43StatB {          // vtable[0x20C] result - f32 block
     f32 f10;
 };
 
-typedef void (*E43VF)(void*, u32);
 struct ItemBoxInfoCopy {
     unsigned short itemId;
     unsigned short _02;
@@ -6434,7 +6436,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
-                    ((E43VF*)(*(void***)actor))[0x29](actor, 0);
+                    ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc4(NULL);
                 }
             }
         }
@@ -6446,27 +6448,26 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     if (func_800B8B94(member) == NULL) {
         func_800A13C4(charObj, 1);
     }
-    void* stats = (u8*)charObj + 0x17C;
-    void** vt = *(void***)stats;
+    cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
     // ---- HP values (clamped to 9999) ----
-    s32 hp1 = (s32)((float(*)(void*))vt[0x4A])(stats);
+    s32 hp1 = (s32)stats->CActorParam_UnkVirtualFunc37();
     if (hp1 > 9999) hp1 = 9999;
-    s32 hp2 = (s32)((float(*)(void*))vt[0x4B])(stats);
+    s32 hp2 = (s32)stats->CActorParam_UnkVirtualFunc38();
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_UnkVirtualFunc29());
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
-    E43StatA* stA = (E43StatA*)((void*(*)(void*))vt[0x8A])(stats);
-    E43StatB* stB = (E43StatB*)((void*(*)(void*))vt[0x83])(stats);
-    E43StatC* stC = (E43StatC*)((void*(*)(void*))vt[0x8B])(stats);
+    E43StatA* stA = (E43StatA*)stats->CActorParam_UnkVirtualFunc101();
+    E43StatB* stB = (E43StatB*)stats->CActorParam_UnkVirtualFunc94();
+    E43StatC* stC = (E43StatC*)stats->CActorParam_UnkVirtualFunc102();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
@@ -6643,7 +6644,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
-            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -6669,14 +6670,13 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
         }
         // ---- type switch: slot id + item ----
         s16 slotId = 0;
-        switch (type) {
-            case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
-            case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
-            case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
-            case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
-            case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
-            case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
-        }
+        // (was switch: retail compiles this dispatch as compares)
+        if (type == 2) slotId = *(s16*)((u8*)charObj + 0x26);
+        else if (type == 4) slotId = *(s16*)((u8*)charObj + 0x1C);
+        else if (type == 5) slotId = *(s16*)((u8*)charObj + 0x1E);
+        else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
+        else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
+        else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
@@ -7075,7 +7075,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801E9310(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
-            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -8271,61 +8271,41 @@ void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
             SET_PANE(0x121, 0x1);
         } else {
             SET_PANE(0x113, 0x1);
-            switch (arg2) {
-                case 2:
+            // (was switch: retail compiles this dispatch as compares)
+            if (arg2 == 2) {
                     SET_PANE(0xc2, 0x1);
                     SET_PANE(0x10b, 0x1);
-                    break;
-                case 3:
+                } else if (arg2 == 3) {
                     SET_PANE(0xda, 0x1);
-                    break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                case 8:
+                } else if (arg2 >= 4 && arg2 <= 8) {
                     SET_PANE(0xc2, 0x1);
                     SET_PANE(0x10b, 0x1);
-                    break;
-                case 9:
+                } else if (arg2 == 9) {
                     SET_PANE(0xce, 0x1);
-                    break;
-                case 0xa:
+                } else if (arg2 == 0xa) {
                     SET_PANE(0xe6, 0x1);
-                    break;
-                case 0xd:
+                } else if (arg2 == 0xd) {
                     SET_PANE(0xf2, 0x1);
-                    break;
-            }
+                }
         }
     } else {
         SET_PANE(0x113, 0x1);
-        switch (arg2) {
-            case 2:
+        // (was switch: retail compiles this dispatch as compares)
+        if (arg2 == 2) {
                 SET_PANE(0xc2, 0x1);
                 SET_PANE(0x10b, 0x1);
-                break;
-            case 3:
+            } else if (arg2 == 3) {
                 SET_PANE(0xda, 0x1);
-                break;
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            case 8:
+            } else if (arg2 >= 4 && arg2 <= 8) {
                 SET_PANE(0xc2, 0x1);
                 SET_PANE(0x10b, 0x1);
-                break;
-            case 9:
+            } else if (arg2 == 9) {
                 SET_PANE(0xce, 0x1);
-                break;
-            case 0xa:
+            } else if (arg2 == 0xa) {
                 SET_PANE(0xe6, 0x1);
-                break;
-            case 0xd:
+            } else if (arg2 == 0xd) {
                 SET_PANE(0xf2, 0x1);
-                break;
-        }
+            }
     }
 #undef SET_PANE
 }
@@ -8419,40 +8399,88 @@ extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) 
     d[2] = s[2];
     d[3] = s[3];
 }
-// .data stays an opaque sized blob (extern-substituted): the TU's
-// switches lower to FIVE compiler jumptables (func_801D6394 +
-// func_801D69FC/801D8E34/801E43BC/801D4260) while retail keeps only
-// func_801D6394's, so no source declaration order can reproduce
-// retail's [jt, gap, vtbl, rtti, vtbl, rtti] layout. Relowering
-// those four switches is a code-shape task for a later wave.
-__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) unsigned char __absorb_kyoshin_CItemBoxInfo_data[0x158] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+// Typified wave7: retail .data tables. The TU's switches in
+// func_801D69FC/801D8E34/801E43BC/801D4260 are relowered above to
+// if-chains (retail compiles them as compares), so the only native
+// .data jumptable left is func_801D6394's keeper (anchored at that
+// function, first in the section); MWCC 8-aligns A90 over the
+// retail gap word. Own-TU OnFileEvent slots use dummy-(int) decls
+// (CNBanner/CMenuEnemyState recipe: same-signature member decls are
+// MWCC 10322 poison); RTTI uses an UNDEF stand-in (zero bytes).
+// RTTI stand-in (spelling __RTTI__10IWorkEvent is MWCC 10322 poison).
+extern const void* rtti_10IWorkEvent[];
+extern "C" {
+extern void WorkEvent1__10IWorkEventFPvPCc();
+extern void WorkEvent3__10IWorkEventFPv();
+extern void WorkEvent4__10IWorkEventFv();
+extern void OnPauseTrigger__10IWorkEventFb();
+extern void WorkEvent6__10IWorkEventFv();
+extern void WorkEvent7__10IWorkEventFv();
+extern void WorkEvent8__10IWorkEventFv();
+extern void WorkEvent9__10IWorkEventFv();
+extern void WorkEvent10__10IWorkEventFv();
+extern void WorkEvent11__10IWorkEventFv();
+extern void WorkEvent12__10IWorkEventFv();
+extern void WorkEvent13__10IWorkEventFv();
+extern void WorkEvent14__10IWorkEventFv();
+extern void WorkEvent15__10IWorkEventFv();
+extern void WorkEvent16__10IWorkEventFv();
+extern void WorkEvent17__10IWorkEventFv();
+extern void WorkEvent18__10IWorkEventFv();
+extern void WorkEvent19__10IWorkEventFv();
+extern void WorkEvent20__10IWorkEventFv();
+extern void WorkEvent21__10IWorkEventFv();
+extern void WorkEvent22__10IWorkEventFv();
+extern void WorkEvent23__10IWorkEventFv();
+extern void WorkEvent24__10IWorkEventFv();
+extern void WorkEvent25__10IWorkEventFv();
+extern void WorkEvent26__10IWorkEventFv();
+extern void WorkEvent27__10IWorkEventFv();
+extern void WorkEvent28__10IWorkEventFv();
+extern void WorkEvent29__10IWorkEventFv();
+extern void WorkEvent30__10IWorkEventFv();
+extern void WorkEvent31__10IWorkEventFv();
+extern void OnFileEvent__13CItemBoxInfo2FP10CEventFile(int);
+extern void OnFileEvent__12CItemBoxInfoFP10CEventFile(int);
+
+// .data 0x88: CItemBoxInfo2 vtable (RTTI + dtor + IWorkEvent slots).
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+void* lbl_eu_80534A90[34] = {
+    (void*)lbl_eu_806626D0, 0, (void*)__dt__13CItemBoxInfo2Fv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0x28+0
+    (void*)OnFileEvent__13CItemBoxInfo2FP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0x28+10
+    (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0x28+20
+    (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0x28+30
+    (void*)WorkEvent14__10IWorkEventFv, (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv, (void*)WorkEvent17__10IWorkEventFv, // +0x28+40
+    (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0x28+50
+    (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0x28+60
+    (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0x28+70
+    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, // +0x28+80
 };
+
+// .data 0x10: RTTI descriptor + pad.
+__declspec(section ".data") __attribute__((used))
+const void* lbl_eu_80534B18[4] = {
+    rtti_10IWorkEvent, 0, 0, 0
+};
+
+// .data 0x88: CItemBoxInfo vtable.
+__declspec(section ".data") __attribute__((used))
+void* lbl_eu_80534B28[34] = {
+    (void*)lbl_eu_806626D8, 0, (void*)__dt__12CItemBoxInfoFv, (void*)WorkEvent1__10IWorkEventFPvPCc, // +0xC0+0
+    (void*)OnFileEvent__12CItemBoxInfoFP10CEventFile, (void*)WorkEvent3__10IWorkEventFPv, (void*)WorkEvent4__10IWorkEventFv, (void*)OnPauseTrigger__10IWorkEventFb, // +0xC0+10
+    (void*)WorkEvent6__10IWorkEventFv, (void*)WorkEvent7__10IWorkEventFv, (void*)WorkEvent8__10IWorkEventFv, (void*)WorkEvent9__10IWorkEventFv, // +0xC0+20
+    (void*)WorkEvent10__10IWorkEventFv, (void*)WorkEvent11__10IWorkEventFv, (void*)WorkEvent12__10IWorkEventFv, (void*)WorkEvent13__10IWorkEventFv, // +0xC0+30
+    (void*)WorkEvent14__10IWorkEventFv, (void*)WorkEvent15__10IWorkEventFv, (void*)WorkEvent16__10IWorkEventFv, (void*)WorkEvent17__10IWorkEventFv, // +0xC0+40
+    (void*)WorkEvent18__10IWorkEventFv, (void*)WorkEvent19__10IWorkEventFv, (void*)WorkEvent20__10IWorkEventFv, (void*)WorkEvent21__10IWorkEventFv, // +0xC0+50
+    (void*)WorkEvent22__10IWorkEventFv, (void*)WorkEvent23__10IWorkEventFv, (void*)WorkEvent24__10IWorkEventFv, (void*)WorkEvent25__10IWorkEventFv, // +0xC0+60
+    (void*)WorkEvent26__10IWorkEventFv, (void*)WorkEvent27__10IWorkEventFv, (void*)WorkEvent28__10IWorkEventFv, (void*)WorkEvent29__10IWorkEventFv, // +0xC0+70
+    (void*)WorkEvent30__10IWorkEventFv, (void*)WorkEvent31__10IWorkEventFv, // +0xC0+80
+};
+
+// .data 0x10: RTTI descriptor + pad.
+__declspec(section ".data") __attribute__((used))
+const void* lbl_eu_80534BB0[4] = {
+    rtti_10IWorkEvent, 0, 0, 0
+};
+} // extern "C"
+

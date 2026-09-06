@@ -34,60 +34,23 @@ struct CModelDispMakeCrystalFull {
 
 // CMCryAnim folded into cf::CActParamAnimGame (vtable +0xE0 is func_8005A524) - use void* vptr to avoid header conflict
 
-// Virtual dispatch on the crystal-charged actor's embedded CfObjectMove at
-// +0x3e9c: method +0x74 (index 29) and +0x148 (index 82, one int arg).
-// MWCC reserves 2 hidden vtable slots (RTTI): 81 declared methods place the
-// first call at declared index 27 and the second at declared index 80.
-struct CMCryMove {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26();
-    virtual int  m74();                              // declared index 27 => +0x74
-    virtual int  m28(); virtual int  m29(); virtual int  m2A(); virtual int  m2B();
-    virtual int  m2C(); virtual int  m2D(); virtual int  m2E(); virtual int  m2F();
-    virtual int  m30(); virtual int  m31(); virtual int  m32(); virtual int  m33();
-    virtual int  m34(); virtual int  m35(); virtual int  m36(); virtual int  m37();
-    virtual int  m38(); virtual int  m39(); virtual int  m3A(); virtual int  m3B();
-    virtual int  m3C(); virtual int  m3D(); virtual int  m3E(); virtual int  m3F();
-    virtual int  m40(); virtual int  m41(); virtual int  m42(); virtual int  m43();
-    virtual int  m44(); virtual int  m45(); virtual int  m46(); virtual int  m47();
-    virtual int  m48(); virtual int  m49(); virtual int  m4A(); virtual int  m4B();
-    virtual int  m4C(); virtual int  m4D(); virtual int  m4E(); virtual int  m4F();
-    virtual int  m50(); virtual int  m51(); virtual int  m52(); virtual int  m53();
-    virtual int  m54(); virtual int  m55(); virtual int  m56(); virtual int  m57();
-    virtual int  m58(); virtual int  m59(); virtual int  m5A(); virtual int  m5B();
-    virtual int  m82(int arg);                       // declared index 80 => +0x148
-};
+// (was CMCryMove: virtual dispatch on the crystal-charged actor's embedded
+// CfObjectMove at +0x3e9c, at +0x74 (no args) and +0x148 (index arg). These
+// are cf::CfObject::CfObject_UnkVirtualFunc9 (bool, +0x74) and
+// cf::CfObject::CfObject_UnkVirtualFunc62 (u32, +0x148, retail index arity)
+// (cf. CModelDispEquip.hpp); call sites now use the owning class directly.)
 
-// Virtual dispatch on the built model object (sub->field_00): method +0x48
-// (index 18, one float) and +0x9c (index 39, two ints). MWCC reserves 2
-// hidden vtable slots (RTTI): declared indices 16 and 37.
-struct CMCModel {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11();
-    virtual void m12(float f1);                  // declared index 16 => +0x48
-    virtual void m17(); virtual void m18(); virtual void m19(); virtual void m1A();
-    virtual void m1B(); virtual void m1C(); virtual void m1D(); virtual void m1E();
-    virtual void m1F(); virtual void m20(); virtual void m21(); virtual void m22();
-    virtual void m23(); virtual void m24(); virtual void m25(); virtual void m26();
-    virtual void m27(int a, int b);              // declared index 37 => +0x9c
-};
+// (was CMCModel: virtual dispatch on the built model object (sub->field_00)
+// at +0x48 (float) and +0x9C (2 ints). Retail table lbl_eu_8056DD70 words 18
+// and 39 are CScnItemModel::vfunc48/vfunc9C (cf. CModelDispEquip.hpp); call
+// sites now use the owning class directly.)
 
-// Virtual dispatch at +0x8 on the per-crystal param object (returns a ptr).
-// MWCC reserves 2 hidden vtable slots (RTTI): declared index 0 => +0x8.
-struct CMCCryParamObj {
-    virtual void* m02();   // declared index 0 => +0x8
-};
+// (was CMCCryParamObj: virtual dispatch at +0x8 on the per-crystal param
+// object. The +0x2C word is a ::CResLookup (cf. CfResPcTableEntry in
+// CfResPcImpl.hpp and CModelDispEquip.hpp); its first virtual is
+// getResourceBase(void*, int) at +0x8. Call sites now use the owning class
+// directly.)
+class CResLookup;
 
 // 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
 struct CMCryListHolder {
@@ -119,10 +82,10 @@ struct CMCryVec3 {
 };
 
 
-// Per-crystal param slot (stride 0x3c); +0x2c holds a vtable-slot-2 object.
+// Per-crystal param slot (stride 0x3c); +0x2c holds a CResLookup.
 struct CMCCryParamSlot {
     u8 _00[0x2c];
-    CMCCryParamObj* field_2c;            // +0x2c
+    CResLookup* field_2c;            // +0x2c
     u8 _30[0x3c - 0x30];
 };
 
@@ -251,7 +214,7 @@ extern "C" char* strcpy(char* dst, const char* src);
 extern "C" int func_80167A18();   // item-menu active gate (CMainMenu.cpp)
 
 // Constructor data imports.
-extern u8 lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)
+extern "C" const void* lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)
 extern const f32 lbl_eu_806684A8;
 extern const f32 lbl_eu_806684B0;
 extern const f32 lbl_eu_806684B4;

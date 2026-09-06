@@ -94,6 +94,52 @@ extern "C" u8 code80135FDC_getByte_64077();
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
 
+// Tag processor used by func_80136A1C/func_80136D74: vtable slot 0x14
+// rewrites a UTF-16 string in place.
+class CTagProcIf36D74 {
+public:
+    virtual void _v04();
+    virtual void _v08();
+    virtual void _v10();
+    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b);  // 0x14
+};
+
+// String-setter interface called by func_80136D74: vtable slot 0x7C sets a
+// UTF-16 string entry.
+class CLytSetStrIf36D74 {
+public:
+    virtual void _v004();
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v078();
+    virtual void SetString(u16* text, int index);  // 0x7C
+};
+
 struct CViewFrame37038 {
     /* 0x000 */ u8 pad00[0xCC];
     /* 0x0CC */ nw4r::math::MTX34 mtx;
@@ -114,8 +160,7 @@ extern "C" u8 func_801392B4(u32);
 
 // Anim target whose vtable slot 0x28 is Set(idx, value*) dispatcher called
 // by func_80137C1C (and siblings); ten placeholder virtuals put Set at 0x28.
-// Renamed from CAnimTargetIf37038 to real class (folded onto owning type).
-class CAnimTarget {
+class CAnimTargetIf37038 {
 public:
     virtual void v00();
     virtual void v04();
@@ -240,12 +285,13 @@ extern u32 lbl_eu_80664060;
 extern u8 lbl_eu_80664064;
 extern u32 lbl_eu_80664068;
 extern u32 lbl_eu_8066406C;
-extern u8 lbl_eu_80664070;
+// 7-byte indexed buffer (func_801392B4 indexes &lbl[idx]); was scalar u8.
+extern u8 lbl_eu_80664070[7];
 extern u8 lbl_eu_80664077;
 extern u16 lbl_eu_80664078[3];
 extern u8 lbl_eu_8066407E;
 extern u8 lbl_eu_8066407F;
-extern u8 lbl_eu_80664080;
+extern u8 lbl_eu_80664080[8];
 extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_806640F0;
 extern u32 lbl_eu_806640F4;
@@ -261,24 +307,28 @@ extern f32 lbl_eu_806672E0;
 extern f32 lbl_eu_806672E4;
 extern f32 lbl_eu_806672E8;
 extern f32 lbl_eu_806672EC;
-extern f32 lbl_eu_806672F0;
+// 672F0 is const: MWCC routes a non-const 0.0f to .sbss2 despite the
+// section attribute (all other pool floats survive as non-const).
+extern const f32 lbl_eu_806672F0;
 extern f64 lbl_eu_806672F8;
 extern f32 lbl_eu_80667300;
 extern f32 lbl_eu_80667304;
 extern f32 lbl_eu_80667308;
 extern f32 lbl_eu_8066730C;
-extern f32 lbl_eu_80667310;
-extern f32 lbl_eu_80667314;
-extern f32 lbl_eu_80667318;
-extern f32 lbl_eu_8066731C;
-extern f32 lbl_eu_80667320;
-extern f32 lbl_eu_80667324;
-extern f32 lbl_eu_80667328;
-extern f32 lbl_eu_8066732C;
-extern f32 lbl_eu_80667330;
-extern f32 lbl_eu_80667334;
-extern f32 lbl_eu_80667338;
-extern f32 lbl_eu_8066733C;
+// 67310-6733C hold face-string pointers (read as u32 bit patterns via the
+// float externs below by func_8013A7D0/AC3C); typed as pointers here.
+extern const char* lbl_eu_80667310;
+extern const char* lbl_eu_80667314;
+extern const char* lbl_eu_80667318;
+extern const char* lbl_eu_8066731C;
+extern const char* lbl_eu_80667320;
+extern const char* lbl_eu_80667324;
+extern const char* lbl_eu_80667328;
+extern const char* lbl_eu_8066732C;
+extern const char* lbl_eu_80667330;
+extern const char* lbl_eu_80667334;
+extern const char* lbl_eu_80667338;
+extern const char* lbl_eu_8066733C;
 extern f32 lbl_eu_80667340;
 extern f32 lbl_eu_80667344;
 extern f32 lbl_eu_80667348;
@@ -289,7 +339,14 @@ extern f64 lbl_eu_80667360;
 #endif
 extern const float lbl_eu_8066A20C;
 extern u32 lbl_eu_806621F4;
-extern char lbl_eu_80500664[];
+extern const char lbl_eu_80500664[];
+
+// Face pane names (defined in code_80135FDC.cpp .rodata; fwd here so the
+// .sdata2 pointer table can precede them in TU layout experiments).
+extern const char lbl_eu_80500248[0x0C];
+extern const char lbl_eu_80500254[0x0C];
+extern const char lbl_eu_80500260[0x0C];
+extern const char lbl_eu_8050026C[0x0C];
 
 // string/rodata data (Block B)
 extern u8 lbl_eu_8052CB40[];
@@ -304,8 +361,9 @@ extern u8 lbl_eu_805262F0[];
 extern u8 lbl_eu_805262C8[];
 extern u8 lbl_eu_80500108[];
 extern u8 lbl_eu_80500230[];
-extern u8 lbl_eu_80500480[];
-extern u8 lbl_eu_805005A8[];
+// Minimap pointer tables: heterogeneous (strings + NULLs); entries are relocs.
+extern const void* lbl_eu_80500480[32];
+extern const void* lbl_eu_805005A8[34];
 // 13-entry float table copied wholesale to the stack by func_8013B380.
 struct FloatTable13 { f32 w[13]; };
 extern FloatTable13 lbl_eu_80500630;

@@ -16,15 +16,6 @@ namespace nw4r { namespace math { struct VEC3; } }
 void func_801390E0(CFileHandle**);
 void releaseArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 
-// Fake SI interface for the nw4r::lyt::Layout deleting-destructor dispatch at
-// vtable slot 2 (2 hidden RTTI prefix slots, so the first declared virtual is
-// at +0x8). Real virtual dispatch reproduces the retail `lwz r12,0(r3);
-// lwz r12,8(r12); mtctr; bcctrl` sequence; the manual `(*(void***)layout)[2]`
-// cast emits a scratch r5 vtable load (see MWCC_CASES: manual vtable cast
-// -> real virtual dispatch, r12 ABI register). CCur.cpp CBaseCurVt5 precedent.
-struct CItemBoxLayoutDtorVt {
-    virtual void destroy(u32 flags);  // slot 2 => +0x8, arg in r4
-};
 
 // Opaque item sub-record returned by CItemImpl::vf2C: a u32 at +0 and a
 // u16 flag field at +4 whose bits [16..27] select the equip state.
@@ -34,47 +25,6 @@ struct CItemBoxSubRecord {
     u8 _06[2];
 };
 
-// Cast-only vtable interface for nw4r::lyt::Pane: method at vtable+0x68
-// (raw slot 26) returns the vertex-colour object consumed by
-// func_801D62F8. With -RTTI on, 2 hidden slots shift the first declared
-// virtual to +0x08; real virtual dispatch keeps the ABI r12 vtable load.
-struct CItemBoxPaneVt {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void* getColorObject();  // vtable+0x68 (raw slot 26)
-};
-
-// Cast-only vtable for the object returned by func_801355F4 (item-name
-// system): the tag lookup method is at vtable+0x0C (raw slot 3). Real virtual
-// dispatch reproduces the retail `lwz r12,0(r3); lwz r12,0xc(r12); mtctr;
-// bcctrl` sequence; a manual (*(void***)obj)[3] cast colors a scratch
-// register instead of the ABI r12.
-struct CItemNameLookupVt {
-    virtual void _v00();
-    virtual u32 findName(u32 tag, u32 itemId, u32 unk);  // vtable+0x0C
-};
 
 struct CItemBoxInfoState {
     u8 _00[0x04];
@@ -502,20 +452,7 @@ struct CItemBoxGXColor {
 // Pane/material vertex-colour getter (flat retail symbol; returns in r3:r4).
 extern "C" CItemBoxGXColor func_801397AC(void* obj, int index);
 
-// Vtable view of the font-info object from CDeviceFont::getFontInfo:
-// virtual index 7 (vtable+0x24) returns the pane data bound via func_8013676C.
-struct CItemBoxFontInfoVt {
-    virtual void _v00();
-    virtual void _v04();
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void* fontData();  // vtable+0x24 (raw slot 9)
-};
 
-// 0x24-byte item-box slot record (built by func_801E27D0 and copied by the
 // renderers): count byte, string pointer, per-slot text pointers, a 4-byte
 // gap, per-slot byte values, and a tail whose byte 1 doubles as the build
 // counter. Whole-struct copies of this size compile to the retail mtctr

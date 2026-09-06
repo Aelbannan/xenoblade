@@ -79,6 +79,293 @@ extern "C" void func_800B88E0(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
 // chain/CChainActorList.hpp, included above - no local copy needed.)
 
 // ============================================================
+// CActorParam slot-0x2C4 caller without depending on the base-class
+// C++ signature (CActorParam.hpp currently carries an extra int id that
+// the CfObjectActor override lacks; the id is runtime-ignored). Routing
+// through the vtable slot reproduces the previous virtual-call codegen
+// exactly (lwz vtable + lwz slot + indirect call).
+// ============================================================
+typedef void (*CBmVFn2C4)(void*, void*, f32, f32, f32);
+// CActorParam slot-0x2BC bool query without depending on the CVisionBattleObj
+// header shape (its CActorParam_* names were replaced by f### placeholders).
+typedef s32 (*CBmVFn2BC)(void*);
+// CBattleState slot-0x70 call without depending on the header signature
+// (CBattleState.hpp currently declares it argless; these sites pass the
+// actor id in r4, matching the previous virtual-call codegen).
+typedef void (*CBmBS27Fn)(void*, u32);
+
+// ============================================================
+// Retail .sdata2 pool (0xC0, lbl_eu_80666DD0..lbl_eu_80666E8C) as typed
+// definitions in retail order. Non-const to match the existing
+// `extern "C" f32/f64` declarations (header + body); the explicit
+// section attribute keeps them in .sdata2. Code already references
+// most of these by name; the rest (E34/E38/E3C/E40/E48/E50/E88)
+// back the float/double literals MWCC would otherwise pool anonymously.
+extern "C" {
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DD0 = 0.6f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DD4 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DD8 = 0.01f;
+// DDC (0.0f) has no definition here: a zero-initialized non-const float
+// migrates to .sbss2 despite the section attribute, and a const/volatile
+// definition would clash with the shared header's plain `extern "C" float`
+// declaration. The 4 bytes at +0xC come from MWCC's alignment pad before
+// the DE0 double, so the section bytes still match retail exactly; code
+// keeps referring to the extern symbol as before.
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666DE0 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DE8 = 0.5f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DEC = 0.033333335f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DF0 = 20.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DF4 = 15.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DF8 = 25.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666DFC = 2.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E00 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666E08 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E10 = 0.024543693f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E14 = 95.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E18 = 50.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E1C = 0.25f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E20 = 200.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E24 = 0.15f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E28 = 90.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E2C = -1.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E30 = 0.9f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E34 = 10.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E38 = 0.75f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E3C = 1.5f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E40 = 1.25f;
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666E48 = 1.0;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E50 = 150.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E54 = 32.0f;
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666E58 = 0.5;
+__declspec(section ".sdata2") __attribute__((used)) double lbl_eu_80666E60 = -0.5;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E68 = 3.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E6C = 5.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E70 = 0.35f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E74 = 0.010000001f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E78 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E7C = 75.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E80 = 2.5f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E84 = 0.1f;
+// Retail E88 is one 8-byte object holding two floats (99.0, 0.0); a real-named
+// array reproduces it exactly (and keeps the trailing zero in .sdata2).
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80666E88[2] = {99.0f, 0.0f};
+}
+
+// ============================================================
+// Retail .sdata pointer tables (6 pairs, 0x30, lbl_eu_80661D50..78).
+// Cross-TU members stay extern (804FC7F8/8052AEC8 live in other objects);
+// the reslist name strings are defined with .rodata below. The three .data
+// tables (BD20/BD38/BD5C) have no decomp emitter (reslist.hpp gap: MWCC
+// emits only the vtables/RTTI here), so those three members stay UNDEF
+// extern refs by retail name; data-diff ignores relocs once bytes match.
+// ============================================================
+// BA0-region note: an earlier revision split the 34 content bytes into
+// sized pieces to dodge an MWCC pad quirk; unsized arrays pack correctly
+// so the retail names stand directly (sdata below references them).
+extern const char lbl_eu_804FCB70[];
+extern const char lbl_eu_804FCB84[];
+extern const char lbl_eu_804FCBA0[];
+extern const char lbl_eu_804FCBC4[];
+extern const char lbl_eu_804FCBE4[];
+extern "C" u8 lbl_eu_804FC7F8[];
+extern "C" u8 lbl_eu_8052AEC8[];
+extern "C" u8 lbl_eu_8052BD20[];
+extern "C" u8 lbl_eu_8052BD38[];
+extern "C" u8 lbl_eu_8052BD5C[];
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D50[2] = { lbl_eu_804FC7F8, lbl_eu_8052AEC8 };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D58[2] = { lbl_eu_804FCB70, lbl_eu_8052BD20 };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D60[2] = { lbl_eu_804FCB84, lbl_eu_8052BD38 };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D68[2] = { lbl_eu_804FCBA0, 0 };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D70[2] = { lbl_eu_804FCBC4, lbl_eu_8052BD5C };
+__declspec(section ".sdata") __attribute__((used)) const void* lbl_eu_80661D78[2] = { lbl_eu_804FCBE4, 0 };
+
+// ============================================================
+// Retail .rodata (lbl_eu_804FC828..lbl_eu_804FCBE4) as typed definitions
+// in retail order. Tables are word-exact transcriptions of retail;
+// comments note the float/string views code uses. Strings are unsized
+// arrays: MWCC 4-packs string starts, reproducing the retail gaps exactly
+// (explicit sizes take a stricter path that pads after >32-byte runs).
+// first table carries aligned(8) (section alignment); the rest pack
+// tightly like retail. Linkage matches the existing declarations:
+// 804FC828/804FCA3C/804FCAE4 are `extern "C"`; the rest are C++ globals.
+// ============================================================
+extern "C" {
+// 804FC828: 40 battle-event entries
+// and entry 30 at +0x168).
+__declspec(section ".rodata") __attribute__((aligned(8)))
+BattleTableEntry lbl_eu_804FC828[40] = {
+    {0x00000003u, 100, 0, 0x00, 0x00000032u},
+    {0x00000003u, 50, 0, 0x00, 0x00000032u},
+    {0x00000003u, 50, 0, 0x01, 0x00000000u},
+    {0x00000000u, 5, 0, 0x00, 0x00000000u},
+    {0x00000000u, 10, 0, 0x00, 0x00000000u},
+    {0x00000000u, 10, 0, 0x00, 0x00000000u},
+    {0x00000001u, 0, 5, 0x01, 0x00000000u},
+    {0x00000001u, 25, 5, 0x01, 0x00000000u},
+    {0x00000001u, 25, 5, 0x01, 0x00000000u},
+    {0x00000001u, 25, 5, 0x01, 0x00000000u},
+    {0x00000000u, 50, 0, 0x00, 0x00000000u},
+    {0x00000000u, 5, 0, 0x00, 0x00000000u},
+    {0x00000000u, -25, 0, 0x00, 0x00000000u},
+    {0x00000000u, -25, 0, 0x00, 0x00000000u},
+    {0x00000000u, -10, 0, 0x00, 0x00000000u},
+    {0x00000000u, 0, 0, 0x00, 0x00000000u},
+    {0x00000000u, 0, 0, 0x00, 0x00000000u},
+    {0x00000000u, -100, 0, 0x00, 0x00000000u},
+    {0x00000000u, -200, 0, 0x00, 0x00000000u},
+    {0x00000000u, -100, 0, 0x00, 0x00000000u},
+    {0x00000000u, -100, 0, 0x00, 0x00000000u},
+    {0x00000000u, -25, 0, 0x00, 0x00000000u},
+    {0x00000000u, -40, 0, 0x00, 0x00000000u},
+    {0x00000003u, 999, 0, 0x00, 0x00000000u},
+    {0x00000003u, 100, 0, 0x00, 0x00000000u},
+    {0x00000003u, 50, 0, 0x00, 0x00000000u},
+    {0x00000003u, 25, 0, 0x00, 0x00000000u},
+    {0x00000003u, 20, 0, 0x00, 0x00000000u},
+    {0x00000000u, 0, 0, 0x00, 0x00000000u},
+    {0x3DCCCCCDu, 15948, -52, 0xCD, 0x00000000u},
+    {0x0000003Du, 0, 0, 0x3D, 0x0000003Du},
+    {0x0000003Du, 0, 0, 0x3E, 0x0000004Du},
+    {0x0000003Fu, 0, 0, 0x40, 0x0000004Eu},
+    {0x00000040u, 0, 0, 0x40, 0x0000004Fu},
+    {0x00000042u, 0, 0, 0x42, 0x00000042u},
+    {0x0000004Cu, 0, 0, 0x4C, 0x0000004Cu},
+    {0x00000044u, 0, 0, 0x44, 0x00000044u},
+    {0x00000046u, 0, 0, 0x46, 0x00000046u},
+    {0x0000004Au, 0, 0, 0x4A, 0x0000004Au},
+    {0x00000048u, 0, 0, 0x48, 0x00000048u}
+};
+
+} // extern "C"
+// 804FCA08: 13 x u32 attack sound-id table (code indexes by element type).
+__declspec(section ".rodata") __attribute__((used))
+u32 lbl_eu_804FCA08[13] = {
+    0x00000000u,
+    0x000001ADu,
+    0x000001AAu,
+    0x000001B0u,
+    0x000001B6u,
+    0x000001BAu,
+    0x000001B5u,
+    0x000001B7u,
+    0x000001B8u,
+    0x000001B9u,
+    0xFFECFFF6u,
+    0x0000000Fu,
+    0x001E0000u
+};
+
+extern "C" {
+// 804FCA3C: 6 x s16 (code indexes by actor vfunc result).
+__declspec(section ".rodata") __attribute__((used))
+s16 lbl_eu_804FCA3C[6] = {0, 0, 10, 15, 30, 0};
+
+} // extern "C"
+// 804FCA48: 36 x u32 rate table (tail words are 8.0f/4.0f/2.0f views).
+__declspec(section ".rodata") __attribute__((used))
+u32 lbl_eu_804FCA48[36] = {
+    0x00000000u,
+    0x00000000u,
+    0x00000100u,
+    0x00000020u,
+    0x00000020u,
+    0x00000100u,
+    0x00000020u,
+    0x00000100u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000020u,
+    0x00000100u,
+    0x00000000u,
+    0x00000000u,
+    0x00000064u,
+    0x41000000u,
+    0x40800000u,
+    0x40000000u,
+    0x00000000u,
+    0x00000000u,
+    0x00000064u,
+    0x41000000u,
+    0x40800000u,
+    0x40000000u
+};
+
+// 804FCAD8: 3 x u32 (code uses [2] as the int 100; never as float).
+__declspec(section ".rodata") __attribute__((used))
+u32 lbl_eu_804FCAD8[3] = {0, 0, 100};
+
+extern "C" {
+// 804FCAE4: 3 x float rate table {8.0, 4.0, 2.0}.
+__declspec(section ".rodata") __attribute__((used))
+float lbl_eu_804FCAE4[3] = {8.0f, 4.0f, 2.0f};
+
+} // extern "C"
+// 804FCAF0: 32 x u32 arts-power table; last 4 words are the
+// "cf::CfObjectEff" name string code-adjacent in retail.
+__declspec(section ".rodata") __attribute__((used))
+u32 lbl_eu_804FCAF0[32] = {
+    0x00000050u,
+    0x0000003Cu,
+    0x00000028u,
+    0x00000019u,
+    0x0000000Au,
+    0x00000058u,
+    0x00000059u,
+    0x0000005Au,
+    0x0000005Bu,
+    0x0000005Cu,
+    0x00000002u,
+    0x00000005u,
+    0x00000028u,
+    0x00000019u,
+    0x00000019u,
+    0x00000064u,
+    0x00000006u,
+    0x00000004u,
+    0x00000007u,
+    0x00000008u,
+    0x00000009u,
+    0x00000005u,
+    0x00000125u,
+    0x00000126u,
+    0x00000127u,
+    0x00000128u,
+    0x00000129u,
+    0x0000012Au,
+    0x63663A3Au,  // "cf::CfObjectEff" (retail-adjacent name string)
+    0x43664F62u,
+    0x6A656374u,
+    0x45666600u
+};
+
+// Strings as unsized arrays: MWCC 4-packs string starts, reproducing the
+// retail gaps exactly (explicit sizes take a stricter path that pads after
+// >32-byte runs). Sizes below are content+NUL: B70=19, B84=28, BA0=34,
+// BC4=29, BE4=36.
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FCB70[] = "cf::CBattleManager";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FCB84[] = "reslist<cf::IBattleEvent *>";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FCBA0[] = "_reslist_base<cf::IBattleEvent *>";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FCBC4[] = "reslist<cf::CfObjectActor *>";
+__declspec(section ".rodata") __attribute__((used))
+const char lbl_eu_804FCBE4[] = "_reslist_base<cf::CfObjectActor *>";
+
+// ============================================================
 // Explicit template specializations: _reslist_base / reslist
 // destructors for CfObjectActor* and IBattleEvent*
 // Must appear before any ODR-use of these templates so they
@@ -527,7 +814,7 @@ extern "C" void func_80109874(u8);
 extern "C" void func_8010975C(u8);
 extern "C" void func_80109770(u8);
 extern "C" void func_80109734(void*, u32);
-extern "C" float lbl_eu_804FCAD8[3];// {0.0f,0.0f,1.4e-43f} (3rd used as int 0x2)
+extern u32 lbl_eu_804FCAD8[3];  // {0,0,100} (3rd used as int)
 extern "C" float lbl_eu_804FCAE4[3];// {8.0f,4.0f,2.0f} rate table
 // --- forward decls for same-TU battle functions defined later in this file ---
 extern "C" void func_800E64CC(cf::CBattleManager*, void*, void*, void*);
@@ -944,7 +1231,7 @@ extern "C" s32 func_800EC918(
                 typedef void (*VF2C4)(EC918_BattleObjAccessor*, void*, f32, f32, f32);
                 VF2C4 vf2C4 = (VF2C4)(*(void**)((u8*)vtbl + 0x2C4));
                 f32 fprod = (f32)(s32)product;
-                ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc140(pc, lbl_eu_80666DDC, f28 * fprod, lbl_eu_80666DDC);
+                ((CBmVFn2C4)(*(void**)((u8*)*(void**)acc + 0x2C4)))(acc, pc, lbl_eu_80666DDC, f28 * fprod, lbl_eu_80666DDC);
 
             } else if (func_80145C00(evt->eventType)) {
                 void* vtbl = *(void**)pc;
@@ -1230,7 +1517,7 @@ extern "C" s32 func_800EC918(
         }
 
         // acc->3ED4 ((cf::CBattleState*)pc->3F10)
-        ((cf::CBattleState*)acc->field_3ED4)->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)pc + 0x3F10));
+        ((CBmBS27Fn)(*(void**)((u8*)*(void**)acc->field_3ED4 + 0x70)))(acc->field_3ED4, *(u32*)((u8*)pc + 0x3F10));
 
         // If the acc's sub-identifier object == player 0 -> HUD refresh
         cf::CfObjectMove* subIdent = getObjectMove(acc);
@@ -1254,7 +1541,7 @@ extern "C" s32 func_800EC918(
             );
 
             // pc->3ED4 ((cf::CBattleState*)acc->3F10)
-            ((cf::CBattleState*)*(void**)((u8*)pc + 0x3ED4))->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)acc + 0x3F10));
+            ((CBmBS27Fn)(*(void**)((u8*)*(void**)*(void**)((u8*)pc + 0x3ED4) + 0x70)))(*(void**)((u8*)pc + 0x3ED4), *(u32*)((u8*)acc + 0x3F10));
 
             cf::CfObjectMove* pcSubIdent = getObjectMove(pc);
             if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
@@ -2162,7 +2449,7 @@ extern "C" s32 func_800EC918(
         s32 level = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc29();             // addi r4, r3, 0xe
         s32 product = evt->field_10 * (level + 14);  // mullw
         // ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc140(r14, 0.0f, f28 * (f32)(s32)product, 0.0f)
-        ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc140(r14, lbl_eu_80666DDC, f28 * (f32)(s32)product, lbl_eu_80666DDC);
+        ((CBmVFn2C4)(*(void**)((u8*)*(void**)acc + 0x2C4)))(acc, r14, lbl_eu_80666DDC, f28 * (f32)(s32)product, lbl_eu_80666DDC);
         break;                                      // b .L_800F4000
     }
 
@@ -2215,12 +2502,12 @@ extern "C" s32 func_800EC918(
             for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
                 void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
                 // ((cf::CActorParam*)actorAcc)->CActorParam_UnkVirtualFunc140(pc, 0.0f, 0.0f, (f32)(s32)r15)
-                ((cf::CActorParam*)actorAcc)->CActorParam_UnkVirtualFunc140(pc, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
+                ((CBmVFn2C4)(*(void**)((u8*)*(void**)actorAcc + 0x2C4)))(actorAcc, pc, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
             }
             __dt__80043E88(&holder, -1);
         } else {
             // .L_800F0644: ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc140(r14, 0.0f, 0.0f, (f32)(s32)r15)
-            ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc140(r14, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
+            ((CBmVFn2C4)(*(void**)((u8*)*(void**)acc + 0x2C4)))(acc, r14, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
         }
 
         // .L_800F0678: ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc47(0.0f)
@@ -2485,8 +2772,8 @@ extern "C" s32 func_800EC918(
             void* vtbl = *(void**)obj3ED4;
             typedef void (*VF70)(void*, u32);
             VF70 vf70 = (VF70)(*(void**)((u8*)vtbl + 0x70));
-            ((cf::CBattleState*)obj3ED4)->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)pc + 0x3F10));
-            ((cf::CBattleState*)obj3ED4)->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)pc + 0x3F10));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
         }
 
         // eventType 0xEE recursion with pc=0 and acc=pc (!).
@@ -2639,7 +2926,7 @@ extern "C" s32 func_800EC918(
                     void* actorVtbl = *(void**)actorAcc;
                     typedef void (*VF2C4)(void*, void*, f32, f32, f32);
                     VF2C4 vf2C4 = (VF2C4)(*(void**)((u8*)actorVtbl + 0x2C4));
-                    ((cf::CActorParam*)actorAcc)->CActorParam_UnkVirtualFunc140(pc, lbl_eu_80666DDC, f29 * (f32)product, lbl_eu_80666DDC);
+                    ((CBmVFn2C4)(*(void**)((u8*)*(void**)actorAcc + 0x2C4)))(actorAcc, pc, lbl_eu_80666DDC, f29 * (f32)product, lbl_eu_80666DDC);
                 }
             }
         }
@@ -2685,7 +2972,7 @@ extern "C" s32 func_800EC918(
             void* vtbl = *(void**)obj3ED4;
             typedef void (*VF70)(void*, u32);
             VF70 vf70 = (VF70)(*(void**)((u8*)vtbl + 0x70));
-            ((cf::CBattleState*)obj3ED4)->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)pc + 0x3F10));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
         }
 
         // eventType 0x60 recursion with pc=0, acc=pc.
@@ -3155,7 +3442,7 @@ extern "C" s32 func_800EC918(
             void* result = ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc144(*(u32*)((u8*)acc + 0x3F10));
             if (result != nullptr) {
                 // Each vector component is evaluated independently in the original.
-                ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc140(pc, *(f32*)((u8*)result + 0x10) * ((f32)(s32)evt->field_10 / 100.0f), *(f32*)((u8*)result + 0x00) * ((f32)(s32)evt->field_10 / 100.0f), *(f32*)((u8*)result + 0x04) * ((f32)(s32)evt->field_10 / 100.0f));
+                ((CBmVFn2C4)(*(void**)((u8*)*(void**)actor + 0x2C4)))(actor, pc, *(f32*)((u8*)result + 0x10) * ((f32)(s32)evt->field_10 / 100.0f), *(f32*)((u8*)result + 0x00) * ((f32)(s32)evt->field_10 / 100.0f), *(f32*)((u8*)result + 0x04) * ((f32)(s32)evt->field_10 / 100.0f));
                 *(f32*)((u8*)result + 0x10) *=
                     1.0f - ((f32)(s32)evt->field_10 / 100.0f);
                 *(f32*)((u8*)result + 0x00) *=
@@ -3518,7 +3805,7 @@ extern "C" s32 func_800EC918(
         eventWorkspace.case267SecondaryEvent.field_10 = *(s32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x190
         if (!func_800EC918(self, pc, acc, &eventWorkspace.case267SecondaryEvent, tgt)) return 0;
         // .L_800F3BC0
-        ((cf::CBattleState*)acc->field_3ED4)->CBattleState_UnkVirtualFunc27(*(u32*)((u8*)pc + 0x3F10));
+        ((CBmBS27Fn)(*(void**)((u8*)*(void**)acc->field_3ED4 + 0x70)))(acc->field_3ED4, *(u32*)((u8*)pc + 0x3F10));
         eventWorkspace.case267PrimaryEvent.eventType = 0x62;                          // sth r3(0x62), 0x1c0
         eventWorkspace.case267PrimaryEvent.field_10 = 0x32;                           // stw r0(0x32), 0x1c4
         func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &eventWorkspace.case267PrimaryEvent, tgt);     // acc arg = pc
@@ -3992,10 +4279,10 @@ extern "C" void func_800D9978(void* selfV, void* actorV) {
 
     if (cur != head1) {
         // Already registered: refresh the busy check.
-        ((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138();
-    } else if (((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138() != 0) {
+        ((CBmVFn2BC)(*(void**)((u8*)*(void**)actor + 0x2BC)))(actor);
+    } else if (((CBmVFn2BC)(*(void**)((u8*)*(void**)actor + 0x2BC)))(actor) != 0) {
         // Busy and unregistered: retail re-runs the check call.
-        ((cf::CVisionBattleObj*)actor)->CActorParam_UnkVirtualFunc138();
+        ((CBmVFn2BC)(*(void**)((u8*)*(void**)actor + 0x2BC)))(actor);
     } else {
         // Register the actor in the lists.
         self->mActorList1.push_back(actor);
@@ -10409,7 +10696,7 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
         cf::CfObjectActor* obj; \
         while ((cur = cur->mNext) != *pHead) { \
             obj = cur->mItem; \
-            if (obj != target && ((cf::CVisionBattleObj*)obj)->CActorParam_UnkVirtualFunc138() == 0) { \
+            if (obj != target && ((CBmVFn2BC)(*(void**)((u8*)*(void**)obj + 0x2BC)))(obj) == 0) { \
                 if (arg5 == 1) { \
                     if ((u32)(uintptr_t)arg6 == ((cf::CChainBattleObjB38*)obj)->mSub.v17()) { \
                         cvt[0].w[1] = (u32)arg2 ^ 0x80000000; \
@@ -11593,10 +11880,18 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
 // anything else -> every entry of the manager's second actor list.
 // Signature matches the single shared decl on CBattleManagerApi.hpp; the
 // typed views are recovered up front (pointer casts emit no code).
+// f3970_tbl is an UNDEF alias for lbl_eu_804FC828 used only by this
+// function (see note at its use); UNIT_RULES add_symbols anchors it at
+// the table's address for the link.
+extern BattleTableEntry f3970_tbl[];
 void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
     // Declaration order drives the saved-register colors. Signed selector so
     // the dispatch compares with retail cmpwi (cmpli would come from unsigned).
-    const BattleTableEntry* entry = &lbl_eu_804FC828[idx];
+    // NOTE: indexed through f3970_tbl (an UNDEF alias of lbl_eu_804FC828,
+    // anchored by UNIT_RULES add_symbols): with the table defined in-TU,
+    // MWCC -ipa miscompiles entry->selector to arr[0] here, so this TU's
+    // dispatch keeps the extern-array codegen while linking to the real table.
+    const BattleTableEntry* entry = &f3970_tbl[idx];
     s32 selector = entry->selector;
     s32 val3 = entry->val;
     s32 val2 = -1;
@@ -11612,7 +11907,7 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
 
     // Read the byte once: retail keeps it in a saved register across the
     // lookup call (extsb re-uses it for both the test and the multiply).
-    s8 byteVal = lbl_eu_804FC828[idx].byteVal;
+    s8 byteVal = f3970_tbl[idx].byteVal;
     if (byteVal != 0) {
         // Cross-actor id lookup (CfGameManager); feeds a /1000 multiplier.
         s32 result = getTableValueByPair__Q22cf13CfGameManagerFv(
@@ -12178,113 +12473,12 @@ __declspec(section ".data") __attribute__((aligned(8))) __attribute__((used)) vo
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
 };
-__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_cf_CBattleManager_rodata[0x3E0] = {
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x32,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x32,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x32, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x19, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x19, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x19, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xF6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0x9C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0x9C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0x9C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0xFF, 0xD8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x03, 0x03, 0xE7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x3E, 0x4C, 0xCC, 0xCD, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x3D, 0x00, 0x00, 0x00, 0x3D, 0x00, 0x00, 0x00, 0x3D,
-    0x00, 0x00, 0x00, 0x3D, 0x00, 0x00, 0x00, 0x3E, 0x00, 0x00, 0x00, 0x4D,
-    0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E,
-    0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4F,
-    0x00, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x42,
-    0x00, 0x00, 0x00, 0x4C, 0x00, 0x00, 0x00, 0x4C, 0x00, 0x00, 0x00, 0x4C,
-    0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x44,
-    0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x46,
-    0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x4A,
-    0x00, 0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x48,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xAD, 0x00, 0x00, 0x01, 0xAA,
-    0x00, 0x00, 0x01, 0xB0, 0x00, 0x00, 0x01, 0xB6, 0x00, 0x00, 0x01, 0xBA,
-    0x00, 0x00, 0x01, 0xB5, 0x00, 0x00, 0x01, 0xB7, 0x00, 0x00, 0x01, 0xB8,
-    0x00, 0x00, 0x01, 0xB9, 0xFF, 0xEC, 0xFF, 0xF6, 0x00, 0x00, 0x00, 0x0F,
-    0x00, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x0F,
-    0x00, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20,
-    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x01, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
-    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x64, 0x41, 0x00, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00,
-    0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x64, 0x41, 0x00, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00,
-    0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x64, 0x41, 0x00, 0x00, 0x00, 0x40, 0x80, 0x00, 0x00,
-    0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00, 0x3C,
-    0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x19, 0x00, 0x00, 0x00, 0x0A,
-    0x00, 0x00, 0x00, 0x58, 0x00, 0x00, 0x00, 0x59, 0x00, 0x00, 0x00, 0x5A,
-    0x00, 0x00, 0x00, 0x5B, 0x00, 0x00, 0x00, 0x5C, 0x00, 0x00, 0x00, 0x02,
-    0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x19,
-    0x00, 0x00, 0x00, 0x19, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x06,
-    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x08,
-    0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x01, 0x25,
-    0x00, 0x00, 0x01, 0x26, 0x00, 0x00, 0x01, 0x27, 0x00, 0x00, 0x01, 0x28,
-    0x00, 0x00, 0x01, 0x29, 0x00, 0x00, 0x01, 0x2A, 0x63, 0x66, 0x3A, 0x3A,
-    0x43, 0x66, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x45, 0x66, 0x66, 0x00,
-    0x63, 0x66, 0x3A, 0x3A, 0x43, 0x42, 0x61, 0x74, 0x74, 0x6C, 0x65, 0x4D,
-    0x61, 0x6E, 0x61, 0x67, 0x65, 0x72, 0x00, 0x00, 0x72, 0x65, 0x73, 0x6C,
-    0x69, 0x73, 0x74, 0x3C, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x42, 0x61, 0x74,
-    0x74, 0x6C, 0x65, 0x45, 0x76, 0x65, 0x6E, 0x74, 0x20, 0x2A, 0x3E, 0x00,
-    0x5F, 0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x5F, 0x62, 0x61, 0x73,
-    0x65, 0x3C, 0x63, 0x66, 0x3A, 0x3A, 0x49, 0x42, 0x61, 0x74, 0x74, 0x6C,
-    0x65, 0x45, 0x76, 0x65, 0x6E, 0x74, 0x20, 0x2A, 0x3E, 0x00, 0x00, 0x00,
-    0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x3C, 0x63, 0x66, 0x3A, 0x3A,
-    0x43, 0x66, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x41, 0x63, 0x74, 0x6F,
-    0x72, 0x20, 0x2A, 0x3E, 0x00, 0x00, 0x00, 0x00, 0x5F, 0x72, 0x65, 0x73,
-    0x6C, 0x69, 0x73, 0x74, 0x5F, 0x62, 0x61, 0x73, 0x65, 0x3C, 0x63, 0x66,
-    0x3A, 0x3A, 0x43, 0x66, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x41, 0x63,
-    0x74, 0x6F, 0x72, 0x20, 0x2A, 0x3E, 0x00, 0x00
-};
-__attribute__((used)) unsigned int __absorb_kyoshin_cf_CBattleManager_sbss[0x2];
-__declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) volatile unsigned char __absorb_kyoshin_cf_CBattleManager_sdata[0x30] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-};
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const unsigned char __absorb_kyoshin_cf_CBattleManager_sdata2[0xC0] = {
-    0x3F, 0x19, 0x99, 0x9A, 0x3F, 0x80, 0x00, 0x00, 0x3C, 0x23, 0xD7, 0x0A,
-    0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
-    0x3F, 0x00, 0x00, 0x00, 0x3D, 0x08, 0x88, 0x89, 0x41, 0xA0, 0x00, 0x00,
-    0x41, 0x70, 0x00, 0x00, 0x41, 0xC8, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
-    0x42, 0xC8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x30, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x3C, 0xC9, 0x0F, 0xDB, 0x42, 0xBE, 0x00, 0x00,
-    0x42, 0x48, 0x00, 0x00, 0x3E, 0x80, 0x00, 0x00, 0x43, 0x48, 0x00, 0x00,
-    0x3E, 0x19, 0x99, 0x9A, 0x42, 0xB4, 0x00, 0x00, 0xBF, 0x80, 0x00, 0x00,
-    0x3F, 0x66, 0x66, 0x66, 0x41, 0x20, 0x00, 0x00, 0x3F, 0x40, 0x00, 0x00,
-    0x3F, 0xC0, 0x00, 0x00, 0x3F, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x16, 0x00, 0x00,
-    0x42, 0x00, 0x00, 0x00, 0x3F, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0xBF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00,
-    0x40, 0xA0, 0x00, 0x00, 0x3E, 0xB3, 0x33, 0x33, 0x3C, 0x23, 0xD7, 0x0B,
-    0x41, 0xF0, 0x00, 0x00, 0x42, 0x96, 0x00, 0x00, 0x40, 0x20, 0x00, 0x00,
-    0x3D, 0xCC, 0xCC, 0xCD, 0x42, 0xC6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+// (rodata absorb deleted: typified above as tables + strings)
+// Retail lbl_eu_80663F00 is an 8-byte .sbss object: the singleton pointer above
+// + one trailing word that no code in this TU names (zero at boot). A plain
+// tentative definition is enough: MWCC auto-routes small zero-init data to
+// .sbss, and an explicit section declspec is rejected here (error 33044).
+// Typed so the section raw-matches without an absorb blob.
+unsigned int lbl_eu_80663F00_tail[1];
+// (sdata absorb deleted: typified above as six .sdata pointer tables)
+// (sdata2 absorb deleted: typified above as individual .sdata2 defs)

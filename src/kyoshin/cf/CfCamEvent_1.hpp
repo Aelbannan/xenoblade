@@ -778,6 +778,7 @@ struct CfCamDataTable {
     f32 f40;
     f32 f44;
     f32 f48;
+    u32 _pad4C;   // retail .bss 0x50 (struct 0x4C + 4 pad)
 };
 // Integer word region of a shake-table element used by func_80074F4C's
 // base-anchor copy: retail copies the x0/x4/x8 words with lwz/stw (GPR
@@ -1338,12 +1339,12 @@ extern "C" f32   lbl_eu_8066644C;
 extern "C" f32   lbl_eu_80666454;
 extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
-extern "C" u8    lbl_eu_804FB5D0[];
+extern "C" const char lbl_eu_804FB5D0[0x1E0];
 extern "C" u32   func_8003B1EC(void* self);
 extern "C" void* func_8003AA34(void);
 extern "C" u32   func_8003B41C(void* bdat);
 extern void* lbl_eu_80664164;      // sbss bdat-table pointer (set by func_8003AA34)
-extern char  lbl_eu_80661BB8[6];   // sdata column-name buffer (digit at +4)
+extern char  lbl_eu_80661BB8[8];   // sdata column-name buffer (digit at +4)
 extern char  lbl_eu_80527638[0xA]; // data column-name buffer (digit at +8)
 extern f32   lbl_eu_8066645C;      // sdata2 compare constant
 extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);

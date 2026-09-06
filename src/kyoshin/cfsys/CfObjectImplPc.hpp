@@ -1000,7 +1000,9 @@ bool func_802799F0(void* chain, void* obj);
 bool func_80260264(void* obj, s32 idx, s32* out);
 void func_800BF29C(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
 void func_800BF2B0(void* sub, u32 a, u32 b);
-void func_800BE12C(void* sub, u32 a, u32 b, s32 c, u32 d);
+// func_800BE12C is TU-local in CfObjectImplPc.cpp (same (void*,u32,u32,s32,u32)
+// form as below): the shared CfObjectMove.hpp owner decl (u8*,int x4) is a
+// distinct overload here (MWCC 10197), and only this TU uses it.
 void func_8004CEF8(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
 void func_802A300C(void* obj);
 void func_800EC8FC(void* mgr, void* obj, void* evtCopy, s32 flag);
@@ -1012,7 +1014,8 @@ void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 // (func_800F3970: single shared import lives on CBattleManagerApi.hpp.)
 void func_800CD5DC(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 int func_8004B9B8(void* obj);
-void func_8004B9D4(void* obj, u32 a, u32 b, void* c, u32 d);
+// func_8004B9D4 is TU-local in CfObjectImplPc.cpp (same 5-arg form as below):
+// the shared CfObjectMove.hpp decl is a 4-arg overload (MWCC 10197).
 void func_801BFE8C(u32 a, u32 b, u32 c);
 void func_802A3074(void* obj);
 void func_800CC964(void);
@@ -1029,7 +1032,7 @@ void* func_80149154(void* obj, int id);
 void func_80133F48(int a, float b);
 int func_800DA06C(void* mgr, void* obj);
 void func_800451D8(u32 entry, void* sub);
-u8* func_8009EC9C(int id);
+void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* func_8009D7E4(u8* info, int a);
 }
 

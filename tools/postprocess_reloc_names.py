@@ -2173,15 +2173,17 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CfCamEvent_1.o": UnitRules(
-        # Camera-event float pools: 2^52 -> lbl_eu_80666420, int->double magic
-        # -> lbl_eu_80666438 (both content-equal unit-ref'd labels); the lone
-        # zero-word slot maps to lbl_eu_805273C8 per site correspondence.
+        # Typified: .rodata strings (multi-string char[0x1E0]) + .sdata "rate1"
+        # + .sdata2 struct own the full retail pools; .data/.bss still absorb.
+        # MWCC appends 0x14 trailing code-const pool after our defs
+        # (@5849 unsigned 2^52, @5850 signed magic, @6574 0.0f from int->double
+        # conversions) -> trim trailing only to retail 0x80.
         pool_patterns=(
             (struct.pack(">d", 4503599627370496.0), "lbl_eu_80666420"),
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666438"),
             (struct.pack(">I", 0x00000000), "lbl_eu_805273C8"),
         ),
-        extern_data_sections=(".sdata2",),
+        drop_data_tail=((".sdata2", 0x80),),
     ),
     "CMenuCollepedia.o": UnitRules(
         # retail's CMenuCollepedia dtor calls the game-side CProcess dtor
@@ -3006,9 +3008,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CItemBoxInfo.o": UnitRules(
-        # Typified wave6: .rodata/.sdata/.sdata2/.sbss are owned source defs
+        # Typified wave7: .rodata/.sdata/.sdata2/.sbss are owned source defs
         # (8-pack rule: only 8-aligned labels are real symbols; interior
-        # names keep UNDEF reads), .data is hand vtables + compiler jt.
+        # names keep UNDEF reads). .data is raw: the 8 retail-absent
+        # switches (801D69FC x3 / 801D8E34 x2 / 801E43BC / 801D4260 x2)
+        # are relowered to if-chains, so the only native jumptable left is
+        # func_801D6394's keeper (first in section); typed vtables/RTTI
+        # follow with MWCC's 8-align hole over the retail gap word.
         # MWCC still pools literal/magic duplicates after the sdata2 struct.
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668020"),
@@ -3018,20 +3024,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x3F000000), "lbl_eu_80668048"),   # 0.5f
         ),
         drop_data_tail=((".sdata2", 0x80),),
-        retarget_relocs=(
-            (".text", 0x5B8, "lbl_eu_80668010"),
-            (".text", 0xD418, "lbl_eu_80668010"),
-            (".text", 0xD4E8, "lbl_eu_80668010"),
-            (".text", 0x1E32, "jumptable_eu_80534A68"),
-            (".text", 0x1E3A, "jumptable_eu_80534A68"),
-        ),
-        # Opaque .data (extern-substituted sized blob): the TU's switches
-        # lower to FIVE compiler jumptables (func_801D6394 + 801D69FC /
-        # 801D8E34 / 801E43BC / 801D4260) while retail keeps only
-        # func_801D6394's, so no source declaration order reproduces
-        # retail's [jt, gap, vtbl, rtti, vtbl, rtti] layout. Relowering
-        # those four switches is a code-shape task for a later wave.
-        extern_data_sections=(".data",),
+        # (wave7: the old retarget_relocs (.text pool/jt offsets) went inert
+        # once the 8 switches were relowered - .text moved and the keeper jt
+        # is native now, so its refs stay local. Dropped with the .data rule.)
     ),
     "CNumSelect.o": UnitRules(
         # Data dissolve: magic0 double -> lbl_eu_80668090.
@@ -7164,37 +7159,21 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".sdata2"),
     ),
 
-    # code_80135FDC: the tick-switch jump table is gone via the range-chain
-    # source reshape (retail compiles it as a compare tree). Remaining live
-    # phantoms map onto split1.s labels:
+    # code_80135FDC (typified wave6-A): .rodata/.sdata/.bss/.sbss are real TU defs
+    # (raw MATCH, no rules). .sdata2 pool and .data strings are fully typified
+    # in-TU, each declared first so MWCC emits them before its own trailing
+    # anonymous tables (enables drop_data_tail). .data keeps a static 0x38
+    # jumptable blob: func_801393CC's dispatch targets are local .text labels
+    # and cannot be expressed in C++ (documented residual, not an absorb).
+    # Dropped tails' .text users (switch dispatches; u32->float conversions;
+    # literal 0.0f) must be retargeted onto the named pool/tables (or the
+    # conversions/switches reshaped) before the final link; retail carries
+    # neither MWCC trailing table nor pool.
+    # patch_data zeroes the jumptable canary (MWCC cannot emit an all-zero
+    # .data object: it routes those to .bss despite the section attribute).
     "code_80135FDC.o": UnitRules(
-        # CONTENT-keyed float pools (section-aware on purpose):
-        #   .sdata2@0x00 2^52 unsigned double -> lbl_eu_806672F8
-        #   .sdata2@0x08 lone 0.0f            -> lbl_eu_806672F0
-        #   .sdata2@0x10 signed HI magic      -> lbl_eu_80667360
-        # Do NOT use pool_patterns here: the .data jumptable @12110 sits at
-        # st_value 0 and rename_pool_symbols matches every @N symbol against
-        # .sdata2 bytes at st_value regardless of home section - it steals
-        # the table onto lbl_eu_806672F8 before any exact_renames can fire.
-        data_pool_patterns=(
-            (".sdata2", struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806672F8"),
-            (".sdata2", struct.pack(">I", 0x00000000), "lbl_eu_806672F0"),
-            (".sdata2", struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80667360"),
-        ),
-        # func_801393CC dispatch table -> retail lis/addi jumptable_eu_8052E488
-        # @80139DF8/80139E00. exact_renames because BOTH .data tables are
-        # all-zero, so a bytes(0x38) content pattern would ambiguously match
-        # @12110 too (rename_data_pool_symbols skips ambiguous patterns).
-        # KNOWN-DANGLING: @12110 (.data@0x0, 21-entry switch of
-        # func_80138574) has NO retail counterpart - retail compiles that
-        # switch to compare chains (no blob table references
-        # func_80138574), so it intentionally stays an anonymous UNDEF until
-        # func_80138574's code converges. Expect exactly one U @N in audits
-        # of this unit; more than one means a rename regressed.
-        exact_renames=(
-            ("@12261", "jumptable_eu_8052E488"),  # func_801393CC dispatch
-        ),
-        extern_data_sections=(".data", ".sdata2"),
+        drop_data_tail=((".sdata2", 0x90), (".data", 0x118)),
+        patch_data=((".data", 0x00, b"\x00"),),
     ),
 
     "CCol6Invite.o": UnitRules(
@@ -7792,10 +7771,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=((struct.pack(">I", 0x3F800000), "lbl_eu_80668498"),),
     ),
     "CModelDispMakeCrystal.o": UnitRules(
-        # Typified wave6: .rodata/.sdata/.sdata2/.bss/.sbss are owned source
+        # Typified wave7: .rodata/.sdata/.sdata2/.bss/.sbss are owned source
         # defs; MWCC pools one anon conversion double after the struct.
-        # .data stays opaque (byte table + 2 compiler jumptables bracketing
-        # the vtable/RTTI words; hand decls cannot reproduce that interleave).
+        # .data is raw: typed color table (0x18) + the TU's two native
+        # switches lowering to same-size jts (0xA4/0x20, same order) +
+        # MWCC's 8-align hole (retail gap word) + typed vtable/RTTI.
+        # data_pool_patterns keeps the DOL jumptable names stable.
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806684F0"),
         ),
@@ -7804,7 +7785,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", bytes(0x20), "jumptable_eu_80535E4C"),
         ),
         drop_data_tail=((".sdata2", 0xA4),),
-        extern_data_sections=(".data",),
     ),
     "CMCCylinderGauge.o": UnitRules(
         # Full float-pool dissolve; every slot content-matches its retail
@@ -8222,16 +8202,17 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata"),
     ),
     "CfObjectImplPc.o": UnitRules(
-        # Typified wave6: .rodata is a sized string table, .sdata2 an owned
+        # Typified wave7: .rodata is a sized string table, .sdata2 an owned
         # struct (doubles included); MWCC still pools an anon int->double
-        # magic duplicate after it, trimmed to retail 0x40. .data stays
-        # extern (vtable + vbtable-ish table + 2 compiler jumptables).
+        # magic duplicate after it, trimmed to retail 0x40. .data is raw:
+        # typed vtable (0x108) + xTU table (0x30) + the TU's two native
+        # switches lowering to same-size jts (0xC8/0x8C, same order) +
+        # MWCC's 8-align pad for the retail gap word.
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, 0x00000000), "lbl_eu_80666BD8"),
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666BE0"),
         ),
         drop_data_tail=((".sdata2", 0x40),),
-        extern_data_sections=(".data",),
     ),
     "CfObjectImplMove.o": UnitRules(
         # Switch jumptables -> split1.s jumptable_eu_8052AB40 (11 slots,
@@ -8374,45 +8355,27 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__35_reslist_base<PQ22cf12IBattleEvent>", "lbl_eu_8052BD44"),
             ("__vt__29reslist<PQ22cf12IBattleEvent>", "lbl_eu_8052BD2C"),
             # rodata id/string pools (content + retail-ref verified).
+            # (@17348/@17350 used to rename the sTable_28C/ CAD8-duplicate
+            # pools onto the retail labels; both labels are real in-source
+            # definitions now, so those renames are gone.)
             ("@stringBase0", "lbl_eu_804FCC78"),
-            ("@17348", "lbl_eu_804FCAE4"),
-            ("@17350", "lbl_eu_804FCAD8"),
         ),
-        # sdata2 float cluster -> split1.s labels (content + unit-ref'd
-        # sda21 sites). 0.0f -> DDC (DD0 is 0.6!). Two WIP constants have
-        # no unit-ref'd counterpart and map to matching-value blob labels:
-        # 0.001f -> 689F0, double 0.0 -> EE0.
+        # sdata2 is typified in-source (retail-ordered defs + DD8/DDC and
+        # E88 arrays); MWCC's trailing literal pool is trimmed to retail
+        # 0xC0. Only the two WIP constants with no in-TU counterpart keep
+        # content renames (0.001f -> 689F0, double 0.0 -> EE0); every other
+        # pool value is now a real local definition, so its pattern is gone
+        # (renaming onto an existing definition would duplicate the symbol).
         pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80666DDC"),
-            (struct.pack(">I", 0x40A00000), "lbl_eu_80666E6C"),
-            (struct.pack(">I", 0x42960000), "lbl_eu_80666E7C"),
-            (struct.pack(">I", 0x42480000), "lbl_eu_80666E18"),
-            (struct.pack(">I", 0x41C80000), "lbl_eu_80666DF8"),
-            (struct.pack(">I", 0x41700000), "lbl_eu_80666DF4"),
-            (struct.pack(">I", 0x41200000), "lbl_eu_80666E34"),
-            (struct.pack(">I", 0x40200000), "lbl_eu_80666E80"),
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80666DD4"),
-            (struct.pack(">I", 0x42C80000), "lbl_eu_80666E00"),
-            (struct.pack(">II", 0x3FE00000, 0x00000000), "lbl_eu_80666E58"),
-            (struct.pack(">II", 0xBFE00000, 0x00000000), "lbl_eu_80666E60"),
-            (struct.pack(">I", 0x3FA00000), "lbl_eu_80666E40"),
-            (struct.pack(">I", 0x3E800000), "lbl_eu_80666E1C"),
-            (struct.pack(">I", 0x3C23D70A), "lbl_eu_80666DD8"),
-            (struct.pack(">I", 0x42C60000), "lbl_eu_80666E88"),
-            (struct.pack(">I", 0x40000000), "lbl_eu_80666DFC"),
-            (struct.pack(">I", 0x3F000000), "lbl_eu_80666DE8"),
-            (struct.pack(">I", 0x3DCCCCCD), "lbl_eu_80666E84"),
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666DE0"),
-            (struct.pack(">I", 0x3F400000), "lbl_eu_80666E38"),
-            (struct.pack(">I", 0x3FC00000), "lbl_eu_80666E3C"),
-            (struct.pack(">I", 0xBF800000), "lbl_eu_80666E2C"),
-            (struct.pack(">II", 0x3FF00000, 0x00000000), "lbl_eu_80666E48"),
-            (struct.pack(">I", 0x43160000), "lbl_eu_80666E50"),
-            (struct.pack(">I", 0x42000000), "lbl_eu_80666E54"),
             (struct.pack(">I", 0x3A83126F), "lbl_eu_806689F0"),
             (struct.pack(">d", 0.0), "lbl_eu_80666EE0"),
         ),
-        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".sbss"),
+        drop_data_tail=((".sdata2", 0xC0), (".sdata", 0x30), (".rodata", 0x3E0)),
+        # f3970_tbl anchors F3970's UNDEF table alias at the real table for
+        # the link (see note at func_800F3970); data-diff ignores symbols.
+        add_symbols=(("f3970_tbl", ".rodata", 0x0, 0x1E0),),
+        # .sbss raw-matches now (typed singleton pointer + tail word, no absorb).
+        extern_data_sections=(".data",),
     ),
     "CfObjectImplWalker.o": UnitRules(
         # int->double magics: 2^52 -> lbl_eu_80666B98, unsigned variant ->

@@ -1268,10 +1268,15 @@ struct CamEventMtx {
 // 0x34-byte cam-table entry: two aim vectors at +0x04/+0x10 plus four floats
 // (+0x1C..+0x28). The 12-entry table lives at 0x805273C8 and is filled by
 // sinit_8007BE74 (which also fills a discarded local prototype array).
+// POD triplet for static .data init (ml::CVec3 has user ctors, so it cannot
+// hold retail static bytes; layout/offsets identical, member access same).
+struct CamEventVecPOD {
+    f32 x, y, z;
+};
 struct CamEventTableEntry {
     u8        _00[0x04];
-    ml::CVec3 v0;    // +0x04
-    ml::CVec3 v1;    // +0x10
+    CamEventVecPOD v0;    // +0x04
+    CamEventVecPOD v1;    // +0x10
     f32       f_1C;  // +0x1C
     f32       f_20;  // +0x20
     f32       f_24;  // +0x24

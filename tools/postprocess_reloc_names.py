@@ -2174,14 +2174,17 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CfCamEvent_1.o": UnitRules(
         # Typified: .rodata strings (multi-string char[0x1E0]) + .sdata "rate1"
-        # + .sdata2 struct own the full retail pools; .data/.bss still absorb.
+        # + .sdata2 struct own the full retail pools; .data fully typed
+        # (CfCamFollow/CfCam vtables as const void* arrays, assert strings as
+        # sized char, cam float table as CamEventTableEntry[12] (POD triplets),
+        # cam_name char[0xA], sdata2-ptr table as {ptr,int}[21], int tail as
+        # u32[14]); .bss typed (CfCamDataTable). Zero-absorb.
         # MWCC appends 0x14 trailing code-const pool after our defs
         # (@5849 unsigned 2^52, @5850 signed magic, @6574 0.0f from int->double
         # conversions) -> trim trailing only to retail 0x80.
         pool_patterns=(
             (struct.pack(">d", 4503599627370496.0), "lbl_eu_80666420"),
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666438"),
-            (struct.pack(">I", 0x00000000), "lbl_eu_805273C8"),
         ),
         drop_data_tail=((".sdata2", 0x80),),
     ),
@@ -8312,41 +8315,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
     "CBattleManager.o": UnitRules(
-        # Switch jumptables map by owning function + slot shape (decomp
-        # case offsets drift from retail because several switch bodies are
-        # still WIP-elided; counts and equality-shapes anchor the choice):
-        #   func_800EC918: 4 small dispatches (site order eda2c/edb28/edbc8/
-        #     edcc4 -> BCB4/BC8C/BC64/BC3C) + the 0x4A0 mega-table -> B79C.
-        #   func_800DCB54: six early tables in site order (dde4..e4b4 ->
-        #     B3AC/B384/B35C/B334/B30C/B2E4); end cluster (decomp 0x38+2x0x28
-        #     at +0x2bea..) -> B1BC/B144/B194 (retail cluster e0d34 loads
-        #     B1BC,B144,B194,B16C,B11C; last two serve elided switches).
-        #   func_800E08E8: lone 0x38 table -> B3D4 (only site, size drifted).
-        #   func_800E2A9C: 0x3C -> B504; [top][asc x9] table -> B43C
-        #     (shape-equal, late sites e5824/e597c).
-        #   func_800E64CC: 0x38 -> B540 (size-unique); early cluster first
-        #     0x28 -> B630; [top][asc x9] -> B5E0 (shape-equal).
+        # .data is typified in-source (B080/B110/B784/B790 + switch-slot
+        # reservations + MWCC vtable run) and needs no jumptable renames:
+        # switch tables stay MWCC-local (@N, link-consistent in-TU), and the
+        # old @31218/@33055/@33211/@34366/@34737 renames went stale with MWCC
+        # renumbering (current emission is @35078+/@36679+/@36835/@37719+/
+        # @38092+) so they were dead no-ops. Only the vtable ctor mapping
+        # below is still needed for the link.
         exact_renames=(
-            ("@31218", "jumptable_eu_8052B79C"),
-            ("@31214", "jumptable_eu_8052BCB4"),
-            ("@31215", "jumptable_eu_8052BC8C"),
-            ("@31216", "jumptable_eu_8052BC64"),
-            ("@31217", "jumptable_eu_8052BC3C"),
-            ("@33055", "jumptable_eu_8052B3AC"),
-            ("@33056", "jumptable_eu_8052B384"),
-            ("@33057", "jumptable_eu_8052B35C"),
-            ("@33058", "jumptable_eu_8052B334"),
-            ("@33059", "jumptable_eu_8052B30C"),
-            ("@33060", "jumptable_eu_8052B2E4"),
-            ("@33061", "jumptable_eu_8052B1BC"),
-            ("@33062", "jumptable_eu_8052B144"),
-            ("@33063", "jumptable_eu_8052B194"),
-            ("@33211", "jumptable_eu_8052B3D4"),
-            ("@34366", "jumptable_eu_8052B504"),
-            ("@34367", "jumptable_eu_8052B43C"),
-            ("@34737", "jumptable_eu_8052B630"),
-            ("@34738", "jumptable_eu_8052B540"),
-            ("@34739", "jumptable_eu_8052B5E0"),
             # Ctor positional mapping (retail ctor 800D8FE8 loads BCE0,
             # BD68, BD50, BD44, BD2C in sub-object order):
             ("__vt__Q22cf14CBattleManager", "lbl_eu_8052BCE0"),
@@ -8370,12 +8346,22 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x3A83126F), "lbl_eu_806689F0"),
             (struct.pack(">d", 0.0), "lbl_eu_80666EE0"),
         ),
-        drop_data_tail=((".sdata2", 0xC0), (".sdata", 0x30), (".rodata", 0x3E0)),
+        drop_data_tail=((".sdata2", 0xC0), (".sdata", 0x30), (".rodata", 0x3E0), (".data", 0xCF4)),
         # f3970_tbl anchors F3970's UNDEF table alias at the real table for
         # the link (see note at func_800F3970); data-diff ignores symbols.
-        add_symbols=(("f3970_tbl", ".rodata", 0x0, 0x1E0),),
-        # .sbss raw-matches now (typed singleton pointer + tail word, no absorb).
-        extern_data_sections=(".data",),
+        # BD20/BD38/BD5C do the same for the .sdata typeinfo pairs: those point
+        # at MWCC's anonymous reslist RTTI companions, whose @N numbers drift
+        # per build, so offset-anchored local symbols (stable by construction:
+        # the vtable run lands at retail 0xC60-0xCF4) are used instead.
+        add_symbols=(("f3970_tbl", ".rodata", 0x0, 0x1E0),
+                       ("lbl_eu_8052BD20", ".data", 0xCA0, 0xC),
+                       ("lbl_eu_8052BD38", ".data", 0xCB8, 0xC),
+                       ("lbl_eu_8052BD5C", ".data", 0xCDC, 0xC)),
+        # .data extern removed with the absorb: the section is fully typed
+        # in-source; only MWCC's trailing redundant vtables (CChain x3,
+        # IFactoryEvent, CChainEffect + RTTI, all with zero .text xrefs) are
+        # trimmed by the .data drop tail above. .sbss raw-matches (typed
+        # singleton pointer + tail word, no absorb).
     ),
     "CfObjectImplWalker.o": UnitRules(
         # int->double magics: 2^52 -> lbl_eu_80666B98, unsigned variant ->

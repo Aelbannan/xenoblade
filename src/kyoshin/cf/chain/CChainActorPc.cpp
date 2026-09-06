@@ -40,41 +40,41 @@ bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
 // Real class tree: CChainActorPc is novtable, vptr at +0x70 (0x70 pad), ctor writes lbl_eu_805384E0 (JP __vt__Q22cf13CChainActorPc).
-// Slot +0x48 (index 18 overall, vt offset 0x48) is vf48: int(void* p) – owned by cf::CChainActorPc (leaf override of base A9FC).
-// Thunk at +0x44 (func_8028246C) forwards via this->vf48(*(void**)arg).
+// Slot +0x48 (index 18 overall, vt offset 0x48) is CChain_getZero_A9FC: int(void* p) - owned by cf::CChainActorPc (leaf override of base A9FC).
+// Thunk at +0x44 (func_8028246C) forwards via this->CChain_getZero_A9FC(*(void**)arg).
 namespace cf {
 CChainActorPc::CChainActorPc() { vtbl() = &lbl_eu_805384E0; }
 CChainActorPc::~CChainActorPc() {}
-void CChainActorPc::_vf0C(int) {}
-void CChainActorPc::_vf10() {}
-void CChainActorPc::_vf14() {}
-void CChainActorPc::_vf18(int) {}
-void CChainActorPc::_vf1C(int) {}
-int CChainActorPc::_vf20(int) { return 0; }
-int CChainActorPc::_vf24(int) { return 0; }
-int CChainActorPc::_vf28() { return 0; }
-int CChainActorPc::_vf2C() { return 0; }
-void CChainActorPc::_vf30(int, cf::CChainActor*, int) {}
-void CChainActorPc::_vf34() {}
-void CChainActorPc::_vf38(int, int) {}
-int CChainActorPc::_vf3C() { return 0; }
-int CChainActorPc::_vf40() { return 0; }
-int CChainActorPc::_vf44(void* arg) { return this->vf48(*(void**)arg); }
-int CChainActorPc::vf48(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
-int CChainActorPc::_vf4C() { return 0; }
-void CChainActorPc::_vf50() {}
-int CChainActorPc::_vf54() { return 0; }
-int CChainActorPc::_vf58() { return 0; }
-int CChainActorPc::_vf5C() { return 0; }
-int CChainActorPc::_vf60() { return 0; }
-void CChainActorPc::_vf64(int) {}
-int CChainActorPc::_vf68() { return 0; }
-void CChainActorPc::_vf6C(int) {}
-int CChainActorPc::_vf70() { return 0; }
-int CChainActorPc::_vf74() { return 0; }
+void CChainActorPc::CChain_setFieldAndClear(int) {}
+void CChainActorPc::func_80279B34() {}
+void CChainActorPc::func_80279DC0() {}
+void CChainActorPc::func_80279E48(int) {}
+void CChainActorPc::func_80279F6C(int) {}
+int CChainActorPc::func_8027A024(int) { return 0; }
+int CChainActorPc::func_8027A338(int) { return 0; }
+int CChainActorPc::func_8027A58C() { return 0; }
+int CChainActorPc::func_8027A8C8() { return 0; }
+void CChainActorPc::CChain_noop_AA0C(int, cf::CChainActor*, int) {}
+void CChainActorPc::CChain_noop_795D0() {}
+void CChainActorPc::CChain_noop_78E00(int, int) {}
+int CChainActorPc::CChain_getZero_78E04() { return 0; }
+int CChainActorPc::CChain_getZero_AA04() { return 0; }
+int CChainActorPc::CChain_getZero_A9F4(void* arg) { return this->CChain_getZero_A9FC(*(void**)arg); }
+int CChainActorPc::CChain_getZero_A9FC(void* p) { return ((*(int*)((char*)p + 0x3f00) >> 1) & 1); }
+int CChainActorPc::CChain_getZero_A9EC() { return 0; }
+void CChainActorPc::CChain_noop_A9E8() {}
+int CChainActorPc::CChain_getZero_A9E0() { return 0; }
+int CChainActorPc::CChain_getChainCount() { return 0; }
+int CChainActorPc::CChain_getZero_A584() { return 0; }
+int CChainActorPc::CChain_getZero_A9D8() { return 0; }
+void CChainActorPc::CChain_noop_79768(int) {}
+int CChainActorPc::func_80278F70() { return 0; }
+void CChainActorPc::func_80278F5C(int) {}
+int CChainActorPc::func_8027A324() { return 0; }
+int CChainActorPc::CChain_getZero_A9D0() { return 0; }
 }
 extern "C" void func_8028246C(cf::CChainActorPc* self, void* arg) {
-    self->vf48(*(void**)arg);
+    self->CChain_getZero_A9FC(*(void**)arg);
 }
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);

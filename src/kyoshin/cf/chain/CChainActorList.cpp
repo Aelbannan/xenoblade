@@ -92,7 +92,7 @@ namespace cf {
             mChainActorList.mStartNodePtr->mNext;
         while (node != mChainActorList.mStartNodePtr) {
             cf::CChainActor* actor = node->mItem;
-            actor->_vf14();
+            actor->func_80279DC0();
             node = node->mNext;
         }
         // Pass 2: unlink every node, marking its slot free (mNext = 0).
@@ -142,7 +142,7 @@ void func_8027B164(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        node->mItem->_vf14();
+        node->mItem->func_80279DC0();
         node = node->mNext;
     }
     // Pass 2: detach every node (marking each slot free via mNext = 0).
@@ -167,7 +167,7 @@ void func_8027B200(cf::CChainActorList* self){
         if (base != 0) base += 0x3e9c;
         if (func_800B8920((void*)base) == 0) {
             cf::CChainActor* actor = node->mItem;
-            actor->_vf14();
+            actor->func_80279DC0();
             // Pass the node's own item slot so the inlined remove compares
             // curr->mItem against a re-read r30->mItem (retail shape).
             self->mChainActorList.remove(node->mItem);
@@ -190,13 +190,13 @@ void func_8027B2CC(cf::CChainActorList* self){
     while (node != self->mChainActorList.mStartNodePtr) {
         int chainCount = 0;
         int otherCount = 0;
-        int key = node->mItem->_vf68();
+        int key = node->mItem->func_80278F70();
         _reslist_node<cf::CChainActor*>* cur = node;
         while (true) {
             // Both hooks run on the current node; the member is grabbed after
             // the chainable test so no node temp lives across the calls.
-            cur->mItem->_vf10();
-            if (cur->mItem->_vf20(key) != 0) {
+            cur->mItem->func_80279B34();
+            if (cur->mItem->func_8027A024(key) != 0) {
                 cf::CChainActor* actor = cur->mItem;
                 cur = cur->mNext;
                 chainArr[chainCount++] = actor;
@@ -206,7 +206,7 @@ void func_8027B2CC(cf::CChainActorList* self){
                 otherArr[otherCount++] = actor;
             }
             if (cur == self->mChainActorList.mStartNodePtr) break;
-            if (node->mItem->_vf44(cur->mItem) == 0) break;
+            if (node->mItem->CChain_getZero_A9F4(cur->mItem) == 0) break;
         }
 
         // Pass: link chainable and non-chainable actors into a ring.  When
@@ -216,54 +216,54 @@ void func_8027B2CC(cf::CChainActorList* self){
         int chk = 0;
         if (chainCount >= 2) {
             cf::CChainActor* first = chainArr[0];
-            chk = (first != 0) ? first->_vf4C() : 0;
+            chk = (first != 0) ? first->CChain_getZero_A9EC() : 0;
         }
         if (chainCount >= 2 && chk != 0) {
             if (chainCount == 1) {
-                chainArr[0]->_vf30(0, 0, 0);
+                chainArr[0]->CChain_noop_AA0C(0, 0, 0);
             } else if (chainCount == 2) {
-                chainArr[0]->_vf30(1, chainArr[1], 1);
-                chainArr[1]->_vf30(0, 0, 0);
+                chainArr[0]->CChain_noop_AA0C(1, chainArr[1], 1);
+                chainArr[1]->CChain_noop_AA0C(0, 0, 0);
             } else if (chainCount >= 3) {
                 for (int i = 0; i < chainCount; i++) {
                     int next = (i + 1 < chainCount) ? i + 1 : 0;
-                    chainArr[i]->_vf30(1, chainArr[next], 1);
+                    chainArr[i]->CChain_noop_AA0C(1, chainArr[next], 1);
                 }
             }
         } else {
             if (chainCount == 1) {
-                chainArr[0]->_vf30(0, 0, 0);
+                chainArr[0]->CChain_noop_AA0C(0, 0, 0);
             } else if (chainCount == 2) {
-                chainArr[0]->_vf30(0, chainArr[1], 1);
-                chainArr[1]->_vf30(0, 0, 0);
+                chainArr[0]->CChain_noop_AA0C(0, chainArr[1], 1);
+                chainArr[1]->CChain_noop_AA0C(0, 0, 0);
             } else if (chainCount >= 3) {
                 for (int i = 0; i < chainCount; i++) {
                     int next = (i + 1 < chainCount) ? i + 1 : 0;
-                    chainArr[i]->_vf30(0, chainArr[next], 1);
+                    chainArr[i]->CChain_noop_AA0C(0, chainArr[next], 1);
                 }
             }
             // Retail tail-duplicates the non-chainable linkage in both arms.
             if (otherCount == 1) {
-                otherArr[0]->_vf30(0, 0, 0);
+                otherArr[0]->CChain_noop_AA0C(0, 0, 0);
             } else if (otherCount == 2) {
-                otherArr[0]->_vf30(0, otherArr[1], 1);
-                otherArr[1]->_vf30(0, 0, 0);
+                otherArr[0]->CChain_noop_AA0C(0, otherArr[1], 1);
+                otherArr[1]->CChain_noop_AA0C(0, 0, 0);
             } else if (otherCount >= 3) {
                 for (int i = 0; i < otherCount; i++) {
                     int next = (i + 1 < otherCount) ? i + 1 : 0;
-                    otherArr[i]->_vf30(0, otherArr[next], 1);
+                    otherArr[i]->CChain_noop_AA0C(0, otherArr[next], 1);
                 }
             }
         }
         if (otherCount == 1) {
-            otherArr[0]->_vf30(0, 0, 0);
+            otherArr[0]->CChain_noop_AA0C(0, 0, 0);
         } else if (otherCount == 2) {
-            otherArr[0]->_vf30(0, otherArr[1], 1);
-            otherArr[1]->_vf30(0, 0, 0);
+            otherArr[0]->CChain_noop_AA0C(0, otherArr[1], 1);
+            otherArr[1]->CChain_noop_AA0C(0, 0, 0);
         } else if (otherCount >= 3) {
             for (int i = 0; i < otherCount; i++) {
                 int next = (i + 1 < otherCount) ? i + 1 : 0;
-                otherArr[i]->_vf30(0, otherArr[next], 1);
+                otherArr[i]->CChain_noop_AA0C(0, otherArr[next], 1);
             }
         }
 
@@ -279,7 +279,7 @@ cf::CChainActor* func_8027B770(cf::CChainActorList* self, u32 key){
         cf::CChainActor* newActor = func_8028120C(self);
         func_8027B8C8(self, newActor);
         if (self->unk1DA8[0]) {
-            newActor->_vf1C(1);
+            newActor->func_80279F6C(1);
         }
     } else {
         // Returning the found actor here colors the merged search result
@@ -296,7 +296,7 @@ int func_8027B814(cf::CChainActorList* self, u32 key) {
     while (node != head) {
         cf::CChainActor* actor = node->mItem;
         if (key == actor->unk0) {
-            actor->_vf14();
+            actor->func_80279DC0();
             // Pass the node's own item slot: the inlined remove re-reads
             // node->mItem each iteration (retail keeps the node in r31).
             self->mChainActorList.remove(node->mItem);
@@ -314,15 +314,15 @@ int func_8027B814(cf::CChainActorList* self, u32 key) {
 // node array, as reslist::insert does. Retail's symbol is the unmangled C-ABI
 // name func_8027B8C8 (call sites must reference it unmangled).
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor) {
-    int myVal = actor->_vf54();
+    int myVal = actor->CChain_getZero_A9E0();
     _reslist_node<cf::CChainActor*>* pre =
         self->mChainActorList.mStartNodePtr->mNext;
     while (pre != self->mChainActorList.mStartNodePtr) {
-        if (pre->mItem->_vf44(actor)) {
+        if (pre->mItem->CChain_getZero_A9F4(actor)) {
             while (pre != self->mChainActorList.mStartNodePtr &&
-                   pre->mItem->_vf44(actor)) {
+                   pre->mItem->CChain_getZero_A9F4(actor)) {
                 if (myVal <
-                    pre->mItem->_vf54()) goto place;
+                    pre->mItem->CChain_getZero_A9E0()) goto place;
                 pre = pre->mNext;
             }
             goto place;
@@ -375,8 +375,8 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     _reslist_node<cf::CChainActor*>* node =
         self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        if (node->mItem->vf48((void*)(int)target) != 0) {
-            if (node->mItem->_vf20(
+        if (node->mItem->CChain_getZero_A9FC((void*)(int)target) != 0) {
+            if (node->mItem->func_8027A024(
                     reinterpret_cast<cf::CChainBattleObj*>(target)->mSub.v17()) != 0) {
                 func_8027C5CC(other, node->mItem);
                 self->mChainActorList.remove(node->mItem);
@@ -391,7 +391,7 @@ void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other,
                    cf::CfObjectActor* target) {
     // 1. Activate the resident actor whose unk0 references @p target.
     cf::CChainActor* found = findActorByTarget((u32)target, self);
-    if (found != 0) found->_vf50();
+    if (found != 0) found->CChain_noop_A9E8();
     func_8027C45C(other);
     // 2. Sweep every actor; the ones chainable against target move into @p other.
     sweepChainable(self, other, target);
@@ -458,14 +458,14 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
     cf::CChainActor* actor = findActorForKey(self, key);
     if (actor == 0) return 0;
     // The candidate must pass its own activation gate (vtable[19]).
-    int gate = (actor != 0) ? actor->_vf4C() : 0;
+    int gate = (actor != 0) ? actor->CChain_getZero_A9EC() : 0;
     if (gate == 0) return 0;
     // ... and must be chainable against the key's voice sub-object.
-    if (actor->_vf20(
+    if (actor->func_8027A024(
             reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub.v17()) == 0)
         return 0;
     // ... and must pass the "already chained" anti-gate (vtable[29]).
-    if (actor->_vf74() != 0) return 0;
+    if (actor->CChain_getZero_A9D0() != 0) return 0;
     // The battle object's probed address must not be in any of three states.
     if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub8, 0xeb) != 0) return 0;
     if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub8, 0xcb) != 0) return 0;
@@ -475,15 +475,15 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
     if (func_80174C98((void*)key, &local, 0x1f) != 0) return 0;
     if (func_8004C5EC(reinterpret_cast<cf::CChainBattleObj*>((void*)key)->field_3F60) == 0x31)
         return 0;
-    if (actor->_vf24(1) == 0) return 0;
+    if (actor->func_8027A338(1) == 0) return 0;
     // Count how many other actors are chainable against the candidate. The
     // sentinel is NOT cached here: retail re-reads self->... every iteration.
     int count = 0;
     _reslist_node<cf::CChainActor*>* cur;
     for (cur = self->mChainActorList.mStartNodePtr->mNext;
          cur != self->mChainActorList.mStartNodePtr; cur = cur->mNext) {
-        if (cur->mItem->vf48((void*)(int)key) != 0) {
-            if (cur->mItem->_vf20(
+        if (cur->mItem->CChain_getZero_A9FC((void*)(int)key) != 0) {
+            if (cur->mItem->func_8027A024(
                     reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub.v17()) != 0) {
                 count++;
             }
@@ -709,7 +709,7 @@ void func_8027C49C(cf::CChainList* self){
         if (base != 0) base += 0x3e9c;
         if (func_800B8920((void*)base) == 0) {
             cf::CChainActor* actor = *p;
-            actor->_vf14();
+            actor->func_80279DC0();
             if ((int)self->mCount - i - 1 > 0) {
                 memcpy(p, p + 1, ((int)self->mCount - 1 - i) * 4);
             }
@@ -725,7 +725,7 @@ void func_8027C49C(cf::CChainList* self){
 void func_8027C560(cf::CChainList* self) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* a = self->mActors[i];
-        a->_vf10();
+        a->func_80279B34();
     }
 }
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
@@ -734,7 +734,7 @@ int func_8027C5E4(cf::CChainList* self, u32 key){
         if (self->mActors[i]->unk0 == key) {
             cf::CChainActor** p = &self->mActors[i];
             cf::CChainActor* actor = self->mActors[i];
-            actor->_vf14();
+            actor->func_80279DC0();
             if ((int)self->mCount - i - 1 > 0) {
                 memcpy(p, p + 1, ((int)self->mCount - 1 - i) * 4);
             }
@@ -758,7 +758,7 @@ int func_8027C5E4(cf::CChainList* self, u32 key){
         int next = (((idxVar) + 1 < (int)self->mCount) ? (idxVar) + 1 : 0); \
         cf::CChainActor* nextActor = \
             (next < (int)self->mCount) ? self->mActors[next] : 0; \
-        actor->_vf30(target, nextActor, 0); \
+        actor->CChain_noop_AA0C(target, nextActor, 0); \
     } while (0)
 
 // Drives the chain-link call for one slot (@p index), or for every slot when
@@ -808,8 +808,8 @@ extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
 // ? i+1 : 0` (the retail min idiom yields 0, not count, when i+1 >= count).
 void func_8027C924(cf::CChainList* self, int target){
     for (int i = 0; i < (int)self->mCount; i++) {
-        self->mActors[i]->_vf18(target);
-        if (target != 0 && self->mActors[i]->_vf5C() != 0) {
+        self->mActors[i]->func_80279E48(target);
+        if (target != 0 && self->mActors[i]->CChain_getZero_A584() != 0) {
             int next = (i + 1 < (int)self->mCount) ? (i + 1) : 0;
             if (i != next) {
                 cf::CChainActor* other = self->mActors[next];
@@ -824,7 +824,7 @@ void func_8027C924(cf::CChainList* self, int target){
 int func_8027CA0C(cf::CChainList* self, int key) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* actor = self->mActors[i];
-        if (actor->_vf58() == key)
+        if (actor->CChain_getChainCount() == key)
             return 1;
     }
     return 0;

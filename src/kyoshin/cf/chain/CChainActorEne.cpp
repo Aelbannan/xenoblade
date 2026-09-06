@@ -64,7 +64,7 @@ extern "C" void func_80281308(cf::CChainActorEne* self, int val) {
 }
 
 extern "C" void func_8028133C(cf::CChainActorEne* self) {
-    self->_vf50();
+    self->CChain_noop_A9E8();
     func_802A0904(self->mChainEffectRaw);
     func_80279DC0(self);
 }
@@ -231,7 +231,7 @@ extern "C" int func_8028183C(cf::CChainActorEne* self) {
     if (obj != 0) {
         if (obj->type == 0x96b) return 0;
         if (obj->type == 0x96c) return 1;
-        int v = self->_vf40();
+        int v = self->CChain_getZero_AA04();
         // 3 when hook false, 2 when true - a small-constant ternary if-converts
         // to MWCC's branchless neg/or/srawi/addi (sign mask of v plus 3).
         return (v != 0) ? 2 : 3;
@@ -249,39 +249,7 @@ s32 cf::CChainActorEne::func_802818DC() {
     return 1;
 }
 
-namespace cf {
-CChainActorEne::CChainActorEne() { vtbl() = &lbl_eu_80538458; }
-CChainActorEne::~CChainActorEne() {}
-void CChainActorEne::_vf0C(int) {}
-void CChainActorEne::_vf10() {}
-void CChainActorEne::_vf14() {}
-void CChainActorEne::_vf18(int) {}
-void CChainActorEne::_vf1C(int) {}
-int CChainActorEne::_vf20(int) { return 0; }
-int CChainActorEne::_vf24(int) { return 0; }
-int CChainActorEne::_vf28() { return 0; }
-int CChainActorEne::_vf2C() { return 0; }
-void CChainActorEne::_vf30(int, CChainActor*, int) {}
-void CChainActorEne::_vf34() {}
-void CChainActorEne::_vf38(int, int) {}
-int CChainActorEne::_vf3C() { return 0; }
-int CChainActorEne::_vf40() { return 0; }
-int CChainActorEne::_vf44(void *a) { return 0; }
-int CChainActorEne::vf48(void *a) { return 0; }
-int CChainActorEne::_vf4C() { return 0; }
-void CChainActorEne::_vf50() {}
-int CChainActorEne::_vf54() { return 0; }
-int CChainActorEne::_vf58() { return 0; }
-int CChainActorEne::_vf5C() { return 0; }
-int CChainActorEne::_vf60() { return 0; }
-void CChainActorEne::_vf64(int) {}
-int CChainActorEne::_vf68() { return 0; }
-void CChainActorEne::_vf6C(int) {}
-int CChainActorEne::_vf70() { return 0; }
-int CChainActorEne::_vf74() { return 0; }
-}
-
-extern "C" int func_802818E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->vf48(*(void**)arg); }
+extern "C" int func_802818E4(void* self, void* arg) { return static_cast<cf::CChainActorEne*>(self)->CChain_getZero_A9FC(*(void**)arg); }
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
 extern "C" void func_802818F8(void) {

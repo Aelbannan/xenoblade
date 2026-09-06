@@ -107,11 +107,11 @@ void func_80277A7C(cf::CChain* self, cf::CChainFlag* flag, float f1) {
                 if (inHigh == 0) flag = 0;
             }
             if (flag == 0) return;
-            cf::CChainChanceTail* tail =
-                reinterpret_cast<cf::CChainChanceTail*>(&self->mChainChance);
-            int sum = tail->field_0x14 + (int)f1;
-            tail->field_0x14 = sum;
-            if (sum > 0x98967F) tail->field_0x14 = 0x98967F;
+            cf::CChainChanceInit* tail =
+                &self->mChainChance;
+            int sum = tail->field_14 + (int)f1;
+            tail->field_14 = sum;
+            if (sum > 0x98967F) tail->field_14 = 0x98967F;
         }
     }
 }
@@ -165,7 +165,7 @@ __declspec(noinline) void func_80276C58() {
 // new voice node, and dispatch it against the battle-object sub-object.
 // @p c (unused) mirrors the retail three-arg call shape.
 void func_80276CAC(u8* a, CChainBattleObjTail* b, int c) {
-    int ret = func_80276D30((int)a, (u8*)b, reinterpret_cast<u8*>(c));
+    int ret = func_80276D30((int)a, reinterpret_cast<cf::CChainBattleObj*>(b), reinterpret_cast<cf::CChainBattleObj*>(c));
     if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
         func_802A35B8((u32)lbl_eu_80662A20);
         lbl_eu_80662A20 = -1;
@@ -182,7 +182,7 @@ void func_80276CAC(u8* a, CChainBattleObjTail* b, int c) {
 // maps both objects' +0x3F28 chain types to internal ids, rolls whether the
 // voice falls on the "continue" id range (0x7D3..) and switches on the second
 // object's mapped type.
-int func_80276D30(int mode, u8* p1, u8* p2) {
+int func_80276D30(int mode, cf::CChainBattleObj* p1, cf::CChainBattleObj* p2) {
     switch (mode) {
     case 0:
         return ml::math::mtRand(2) + 0x7d1;
@@ -192,7 +192,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         int t2;
         bool cont;
         cont = ml::math::mtRand(2) != 0;
-        int v1 = ((CChainTypeView*)p1)->field_3F28;
+        int v1 = p1->field_3F28;
         if (v1 == 8) m1 = 3;
         else if (v1 == 9) m1 = 8;
         else if (v1 == 0xa) m1 = 9;
@@ -200,7 +200,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
         else if (v1 == 0xc) m1 = 0xb;
         else if (v1 == 0xd) m1 = 0xc;
         else m1 = v1;
-        int v2 = ((CChainTypeView*)p2)->field_3F28;
+        int v2 = p2->field_3F28;
         if (v2 == 8) t2 = 3;
         else if (v2 == 9) t2 = 8;
         else if (v2 == 0xa) t2 = 9;
@@ -236,7 +236,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
     }
     case 2: {
         int m;
-        int v = ((CChainTypeView*)p1)->field_3F28;
+        int v = p1->field_3F28;
         if (v == 8) m = 3;
         else if (v == 9) m = 8;
         else if (v == 0xa) m = 9;
@@ -250,7 +250,7 @@ int func_80276D30(int mode, u8* p1, u8* p2) {
     }
     case 3: {
         int m;
-        int v = ((CChainTypeView*)p1)->field_3F28;
+        int v = p1->field_3F28;
         if (v == 8) m = 3;
         else if (v == 9) m = 8;
         else if (v == 0xa) m = 9;
@@ -327,7 +327,7 @@ void func_8027732C(cf::CChain* self) {
 // gauge-accumulating ranges (0xA..0xC or 0x14..0x15); resolves the member
 // entry for the target battle object, registers the combo, and refreshes the
 // arts-voice flag from the current arts id.
-void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* target) {
+void func_802773EC(cf::CChain* chain, cf::CChainBattleObj* target) {
     // Mirror-typed base keeps head-byte/member accesses on one register.
     cf::CChainMemberListMirror* self = (cf::CChainMemberListMirror*)chain;
     int flag = 1;
@@ -403,7 +403,7 @@ void func_802773EC(cf::CChain* chain, cf::CChainBattleObj2A4* target) {
         (g)->field_58 += mul; \
     } while (0)
 
-void func_8027750C(cf::CChain* self, cf::CChainBattleObj750* target) {
+void func_8027750C(cf::CChain* self, cf::CChainBattleObj* target) {
     cf::CChainMemberListMirror* mv = (cf::CChainMemberListMirror*)self;
     cf::CChainHeadView* h = (cf::CChainHeadView*)self;
     int flag = 1;
@@ -523,7 +523,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         processFieldEffects__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
+            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         self->mChainCombo.func1();
         func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
@@ -688,7 +688,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        cf::CChainBattleObj214* battleObj = (cf::CChainBattleObj214*)actor->unk0;
+        cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)actor->unk0;
         int local14 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local14, 0xa) == 0) {
             if (((cf::CChainHeadView*)self)->field_6 != 0) {
@@ -949,7 +949,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        cf::CChainBattleObj214* battleObj = (cf::CChainBattleObj214*)actor->unk0;
+        cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)actor->unk0;
         int local10 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local10, 6) != 0) {
             ((cf::CChainHeadView*)self)->field_2 = 5;
@@ -967,10 +967,9 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        cf::CChainBattleObjB38* battleObj =
-            (actor != 0) ? (cf::CChainBattleObjB38*)actor->unk0 : 0;
+        cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)(actor != 0 ? actor->unk0 : 0);
         ((cf::CChainHeadView*)self)->field_C =
-            ((cf::CChainBattleObjB38*)battleObj)->mSub.v17();
+            battleObj->mSub.v17();
         ((cf::CChainHeadView*)self)->field_2++;
         break;
     }
@@ -987,10 +986,10 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
-        cf::CChainBattleObjB38* battleObj =
-            (actor != 0) ? (cf::CChainBattleObjB38*)actor->unk0 : 0;
+        cf::CChainBattleObj* battleObj =
+            (actor != 0) ? (cf::CChainBattleObj*)actor->unk0 : 0;
         if (((cf::CChainHeadView*)self)->field_C ==
-            ((cf::CChainBattleObjB38*)battleObj)->mSub.v17()) {
+            battleObj->mSub.v17()) {
             if (self->mChainTimer1.unk0 > 0) break;
             if ((int)(s8)((cf::CChainHeadView*)self)->field_0 <
                 (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
@@ -999,7 +998,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             } else {
                 actor = 0;
             }
-            cf::CChainBattleObj214* b214 = (cf::CChainBattleObj214*)actor->unk0;
+            cf::CChainBattleObj* b214 = (cf::CChainBattleObj*)actor->unk0;
             int localC = *(int*)b214->field_04->f30();
             if (func_80174C98(b214, &localC, 6) == 0) break;
         } else {
@@ -1019,7 +1018,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
     }
     case 0x15: {
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
+            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         u8 newState = (u8)(((cf::CChainHeadView*)self)->field_2 + 1);
         self->mChainTime.mTimer = lbl_eu_80668A18;
@@ -1093,7 +1092,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             processFieldEffects__Q22cf13CfGameManagerFv();
             func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
             if (((cf::CChainHeadView*)self)->field_8 != 0) {
-                func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
+                func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
             }
             self->mChainCombo.func1();
             func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
@@ -1157,7 +1156,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         processFieldEffects__Q22cf13CfGameManagerFv();
         func_802B4B84((CErrMesEntry*)&self->unk1F0C[8]);
         if (((cf::CChainHeadView*)self)->field_8 != 0) {
-            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.unk14[0]);
+            func_8027CBE8((cf::CChainCounter*)&self->mChainChance.field_14);
         }
         self->mChainCombo.func1();
         func_802AB4B8((CBattleChainMenuState*)&self->unk1F0C[0]);
@@ -1264,7 +1263,7 @@ void func_80278E0C(cf::CChain* self) {
         // mActors sits at CChain+0x1DC8 (0x772 pointer slots from self).
         p[0x772]->_vf6C(runKey);
     }
-    ((cf::CChainBattleObjE*)actor->unk0)->mSub8.e06(0xeb);
+    ((cf::CChainBattleObj*)actor->unk0)->mSub8.s06(0xeb);
     u8* spot = (u8*)actor->unk0;
     if (spot != 0) spot += 0x3e9c;
     syncBattleState__Q22cf13CfGameManagerFv(spot);
@@ -1390,8 +1389,8 @@ void func_80279214(cf::CChain* self) {
     } else {
         actor = 0;
     }
-    cf::CChainBattleObj214* battleObj =
-        (cf::CChainBattleObj214*)(actor != 0 ? actor->unk0 : 0);
+    cf::CChainBattleObj* battleObj =
+        (cf::CChainBattleObj*)(actor != 0 ? actor->unk0 : 0);
     if (battleObj->field_3594 != 0) {
         u32 rem = battleObj->field_3590 % battleObj->field_3598;
         cf::CChainArt214Entry* entry =
@@ -1479,7 +1478,7 @@ int func_8027936C(cf::CChain* self, u32 param) {
     int i;
     cf::CChainActor** p;
     cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
-    moveSub = reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)param)->field_0x3E9C)->v17();
+    moveSub = reinterpret_cast<cf::CChainBattleObj*>(param)->mSub.v17();
     for (i = 0, p = (cf::CChainActor**)self; i < (int)v->mChainMember.mCount;
          p++, i++) {
         // mActors sits at CChain+0x1DC8 (0x772 pointer slots from self).
@@ -1501,7 +1500,7 @@ int func_8027936C(cf::CChain* self, u32 param) {
     ((s8*)self->unk0)[1] = -1;
     self->unk0[0] = 0;
     self->unk0[8] = (u8)((((cf::CChainFlag*)param)->field_0x3F00 >> 1) & 1);
-    reinterpret_cast<cf::CChainChanceTail*>(&self->mChainChance)->field_0x14 = 0;
+    self->mChainChance.field_14 = 0;
     self->mChainCombo.func1();
     func_802AB3D0((CBattleChainMenuState*)&self->unk1F0C[0]);
     func_802B48A0((CErrMesEntry*)&self->unk1F0C[8]);
@@ -1565,13 +1564,13 @@ extern "C" int func_80279A4C(cf::CChain* self) {
     CChainGimmickListNode* head = list->head;
     CChainGimmickListNode* node;
     int local;
-    cf::CChainBattleObj2A4* obj;
+    cf::CChainBattleObj* obj;
     for (node = head->next; node != head; node = node->next) {
         // Retail folds the null check into a conditional subtract on the
         // same register (a null entry just faults through the id read).
-        obj = (cf::CChainBattleObj2A4*)node->object;
+        obj = (cf::CChainBattleObj*)node->object;
         if (obj != 0) {
-            obj = (cf::CChainBattleObj2A4*)((u8*)obj - 0x3e9c);
+            obj = (cf::CChainBattleObj*)((u8*)obj - 0x3e9c);
         }
         if (obj->field_3F28 == 0x9C5) {
             local = *(int*)((cf::CChainSub4*)obj->field_04)->f30();
@@ -1675,45 +1674,45 @@ bool func_802799F0(cf::CChain* self, CChainBattleObjTail* target) {
 // the flag again at the end.
 void func_80279B34(cf::CChainActor* self) {
     if (self->unk6C & 1) {
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0x6) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0x6);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0x9) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0x9);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0xa) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0xa);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0xb) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0xb);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0xc) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0xc);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0xf) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0xf);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0x10) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0x10);
-        if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0xcb) != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0xcb);
-        if (((cf::CChainBattleObjE*)self->unk0)->field_0x3E98 != 0)
-            ((cf::CChainBattleObjE*)self->unk0)->field_0x3E98 = 0;
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x6) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x6);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x9) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x9);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xa) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0xa);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xb) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0xb);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xc) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0xc);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xf) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0xf);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x10) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x10);
+        if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0xcb) != 0)
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0xcb);
+        if (((cf::CChainBattleObj*)self->unk0)->field_0x3E98 != 0)
+            ((cf::CChainBattleObj*)self->unk0)->field_0x3E98 = 0;
     }
     if (self->unk6C & 2) {
         // volatile RMW keeps the retail reload of the flag word (the test
         // load and the or/store load are two separate lhz in the retail).
-        if ((((cf::CChainBattleObjF*)self->unk0)->field_0x3388 & 2) == 0) {
-            *(volatile u16*)&((cf::CChainBattleObjF*)self->unk0)->field_0x3388 |= 2;
+        if ((((cf::CChainBattleObj*)self->unk0)->field_0x3388 & 2) == 0) {
+            *(volatile u16*)&((cf::CChainBattleObj*)self->unk0)->field_0x3388 |= 2;
         }
-        cf::CChainBattleObjE* battleObj = (cf::CChainBattleObjE*)self->unk0;
-        int local = *(int*)battleObj->field_4->f30();
+        cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+        int local = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local, 0x4000) == 0) {
-            func_80174B4C((cf::CChainBattleObjE*)self->unk0, 0x4000);
+            func_80174B4C((cf::CChainBattleObj*)self->unk0, 0x4000);
         }
     }
     if (self->unk6C & 1) {
-        if ((*(u16*)((u8*)&((cf::CChainBattleObjE*)self->unk0)->mField3380 + 8) & 4) == 0) {
-            func_801537F0(&((cf::CChainBattleObjE*)self->unk0)->mField3380);
+        if ((*(u16*)((u8*)&((cf::CChainBattleObj*)self->unk0)->mField3380 + 8) & 4) == 0) {
+            func_801537F0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
         }
     }
     if (self->unk6C & 2) {
-        if ((((cf::CChainBattleObjF*)self->unk0)->field_0x3388 & 2) == 0)
-            *(volatile u16*)&((cf::CChainBattleObjF*)self->unk0)->field_0x3388 |= 2;
+        if ((((cf::CChainBattleObj*)self->unk0)->field_0x3388 & 2) == 0)
+            *(volatile u16*)&((cf::CChainBattleObj*)self->unk0)->field_0x3388 |= 2;
     }
 }
 // Chain-end cleanup: run the actor's begin/end hooks (vtable slots 6/7) on
@@ -1744,17 +1743,17 @@ void func_80279E48(cf::CChainActor* self, u32 param) {
     if (param != (self->unk6C & 1)) {
         if (param != 0) {
             func_8027CC3C(&self->mChainTemp, (void*)self->unk0);
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e03(0x2e);
-            if (func_80148778(&((cf::CChainBattleObjE*)self->unk0)->mSub8, 0x11) != 0) {
-                ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0x11);
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s03(0x2e);
+            if (func_80148778(&((cf::CChainBattleObj*)self->unk0)->mSub8, 0x11) != 0) {
+                ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x11);
             }
-            func_801537F0(&((cf::CChainBattleObjE*)self->unk0)->mField3380);
-            ((cf::CChainBattleObj2A4*)self->unk0)->v042();
+            func_801537F0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            ((cf::CChainBattleObj*)self->unk0)->v042();
         } else {
             func_8027CD08(&self->mChainTemp, (void*)self->unk0);
-            func_8014AE00(&((cf::CChainBattleObjE*)self->unk0)->mField3380);
-            func_801537E0(&((cf::CChainBattleObjE*)self->unk0)->mField3380);
-            ((cf::CChainBattleObjE*)self->unk0)->mSub8.e06(0x2e);
+            func_8014AE00(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            func_801537E0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            ((cf::CChainBattleObj*)self->unk0)->mSub8.s06(0x2e);
         }
         if (param != 0) {
             self->unk6C |= 1;
@@ -1770,11 +1769,11 @@ void func_80279E48(cf::CChainActor* self, u32 param) {
 void func_80279F6C(cf::CChainActor* self, u32 param) {
     if (param != ((self->unk6C >> 1) & 1)) {
         if (param != 0) {
-            ((cf::CChainBattleObjF*)self->unk0)->field_0x3388 |= 2;
+            ((cf::CChainBattleObj*)self->unk0)->field_0x3388 |= 2;
             func_80174B4C((void*)self->unk0, 0x4000);
         } else {
-            func_801537E0(&((cf::CChainBattleObjF*)self->unk0)->field_0x3380);
-            ((cf::CChainBattleObjF*)self->unk0)->field_4->f06(0x4000);
+            func_801537E0(&((cf::CChainBattleObj*)self->unk0)->mField3380);
+            ((cf::CChainBattleObj*)self->unk0)->field_04->f06(0x4000);
         }
         if (param != 0) {
             self->unk6C |= 2;
@@ -1833,10 +1832,9 @@ int func_8027A024(cf::CChainActor* self, int param) {
                 void* src = func_8016FE34(findObjectById(param));
                 if (src != 0) {
                     nw4r::math::VEC3* targetPos =
-                        ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
+                        ((cf::CChainBattleObj*)src)->mSub.v41();
                     nw4r::math::VEC3* selfPos =
-                        ((cf::CChainVoiceSub*)((u8*)self->unk0 + 0x3e9c))
-                            ->v41();
+                        ((cf::CChainBattleObj*)self->unk0)->mSub.v41();
                     nw4r::math::VEC3 delta;
                     nw4r::math::VEC3 scratch;
                     nw4r::math::VEC3Sub(&delta, selfPos, targetPos);
@@ -1861,19 +1859,16 @@ int func_8027A024(cf::CChainActor* self, int param) {
             if (distOk == 0) {
                 ret = 0;
             } else {
-                cf::CChainVoiceSubC* voiceSub =
-                    (cf::CChainVoiceSubC*)((u8*)self->unk0 + 0x3e9c);
+                cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+                cf::CChainField3F60* f = battleObj->field_3F60;
                 int flag = 1;
-                if (voiceSub->field_C4 != 0 &&
-                    (((cf::CChainVoiceSubC4EC*)voiceSub->field_C4)
-                         ->field_4EC &
-                     0x10000) != 0) {
+                if (f != 0 && (f->field_4EC & 0x10000) != 0) {
                     flag = 0;
                 }
                 if (flag != 0) {
                     ret = 0;
                 } else {
-                    ret = voiceSub->v01(0x200) == 0;
+                    ret = battleObj->mSub.v01(0x200) == 0;
                 }
             }
         }
@@ -1959,9 +1954,9 @@ int func_8027A58C(cf::CChainActor* self) {
     if (src != 0) {
         f32 gauge = ((cf::CChainBattleObj*)self->unk0)->v363();
         nw4r::math::VEC3* minePos =
-            ((cf::CChainVoiceSub*)((u8*)self->unk0 + 0x3e9c))->v41();
+            ((cf::CChainBattleObj*)self->unk0)->mSub.v41();
         nw4r::math::VEC3* srcPos =
-            ((cf::CChainVoiceSub*)((u8*)src + 0x3e9c))->v41();
+            ((cf::CChainBattleObj*)src)->mSub.v41();
         // Componentwise paired-single delta (source - self), then the FIdx
         // angle of it scaled into chain-angle units.
         nw4r::math::VEC3 delta;
@@ -2031,12 +2026,12 @@ int func_8027A58C(cf::CChainActor* self) {
 int func_8027A8C8(cf::CChainVoiceHolder* self) {
     f32 t = self->field_0->mSub.v066()->field_14;
     if (lbl_eu_80668A60 < t) return 0;
-    cf::CChainBattleObjVoice* battleObj = self->field_0;
+    cf::CChainBattleObj* battleObj = self->field_0;
     int local1 = *(int*)battleObj->field_04->f30();
     if (func_80174C98(battleObj, &local1, 0x1000) != 0) return 0;
     cf::CChainField3F60* f = self->field_0->field_3F60;
     if (f != 0 && func_8004C5EC(f) == 0x31) return 0;
-    cf::CChainBattleObjVoice* battleObj2 = self->field_0;
+    cf::CChainBattleObj* battleObj2 = self->field_0;
     int local2 = *(int*)battleObj2->field_04->f30();
     if (func_80174C98(battleObj2, &local2, 0x6) == 0) return 0;
     return 1;

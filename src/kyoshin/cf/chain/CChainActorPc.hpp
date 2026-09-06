@@ -43,7 +43,7 @@ public:
     virtual void _vf64(int key) override;
     virtual int _vf68() override;
     virtual void _vf6C(int val) override;
-    virtual void _vf70() override;
+    virtual int _vf70() override;
     virtual int _vf74() override;
     // overlay for manual vptr at +0x70 (CChainActor::mVTable)
     CChainActorPcVtbl*& vtbl() { return *reinterpret_cast<CChainActorPcVtbl**>(reinterpret_cast<u8*>(this) + 0x70); }

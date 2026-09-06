@@ -4,6 +4,16 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CItemBoxLine.hpp"
+// Real CSysWin owner for the +0x88 loadSystemArc dispatch: rename the two
+// decls whose signatures clash with this TU's stale void* forms so the TU
+// decls keep the retail names (identical decls need no guard).
+#define func_8022B90C func_8022B90C_csys_dup
+#define func_8022BFC8 func_8022BFC8_csys_dup
+#define CSysWinFull CSysWinFull_csys_dup
+#include "kyoshin/CSysWin.hpp"
+#undef func_8022B90C
+#undef func_8022BFC8
+#undef CSysWinFull
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_material.h>
@@ -590,7 +600,7 @@ void func_801ED31C(CItemBoxLine* self) {
     func_801E12E0(&self->mInfo2D0[0]);
     func_801EAE8C(&self->mNumSel);
     func_801F34F4(&self->mScrollBar310[0]);
-    reinterpret_cast<CSysWinVtblView*>(&self->mSysWin)->vf32();
+    reinterpret_cast<CSysWin*>(&self->mSysWin)->loadSystemArc();
 }
 #pragma pop
 

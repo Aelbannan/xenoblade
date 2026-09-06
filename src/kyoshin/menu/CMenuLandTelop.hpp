@@ -175,19 +175,8 @@ extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
                                               int flags);
 
-// View of the object returned by CDeviceFont::getFontInfo: vtable+0x24
-// returns the font handle handed to func_8013676C (root-pane font binding).
-class CLandTelopFontObj {
-public:
-    virtual ~CLandTelopFontObj(); // 0x00 (3 dtor slots)
-    virtual void vfunc_0x0C();
-    virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
-    virtual void vfunc_0x18();
-    virtual void vfunc_0x1C();
-    virtual void vfunc_0x20();
-    virtual u32 getFontHandle();  // 0x24
-};
+// Font handles dispatch through IDeviceFontInfo::getFont at +0x24 (real
+// owner in monolib/device/CDeviceFont.hpp); no TU-local view is kept.
 
 // Land-telop string/layout-name table plus the anim timing constants used by
 // Move / func_8014548C.

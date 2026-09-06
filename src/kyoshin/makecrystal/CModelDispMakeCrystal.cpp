@@ -126,10 +126,12 @@ void func_8021FB14(CModelDispMakeCrystal*);
 void __dt__21CModelDispMakeCrystalFv(void*);
 void func_80220E14(CModelDispMakeCrystal*, CMCrystalDispSub*);
 void func_802211CC(CModelDispMakeCrystal*, u8*);
-// state-machine helpers defined later in this TU
-void func_8021CC60(CModelDispMakeCrystal*);
-void func_8021CD8C(CModelDispMakeCrystal*);
-void func_80220C34(CModelDispMakeCrystal*);
+// state-machine helpers defined later in this TU (retail C-linkage plain
+// names; the extern "C" decl makes the later definitions inherit it, so
+// call-site relocs bind to the bare retail names).
+extern "C" void func_8021CC60(CModelDispMakeCrystal*);
+extern "C" void func_8021CD8C(CModelDispMakeCrystal*);
+extern "C" void func_80220C34(CModelDispMakeCrystal*);
 // crystal-slot array element ctor/dtor (defined later in this TU; the ctor
 // passes their addresses to __construct_array). C linkage keeps the
 // __construct_array relocs bound to the bare retail names.
@@ -171,7 +173,6 @@ void func_8022B7F4(void*);
 int func_80222A58(void*);
 void func_8004CF00(void*);
 void func_8021FEDC(void*);
-void func_80220C34(void*);
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void func_8004B6BC(void*, void*);
 void func_80495E60(void*);
@@ -336,32 +337,8 @@ void __dt__16CMCCylinderGaugeFv(void*, int);
 void __dt__17UnkClass_8045F564Fv(void*, int);
 void __dl__FPv(void*);
 }
-extern const f32 lbl_eu_806684D4;
-extern const f32 lbl_eu_806684A0;
-extern const f32 lbl_eu_806684A4;
-extern const f32 lbl_eu_806684DC;
-extern const f32 lbl_eu_806684D8;
-extern const f32 lbl_eu_80668508;
-extern const f32 lbl_eu_806684AC;
-extern const f32 lbl_eu_8066850C;
-extern const f32 lbl_eu_80668510;
-extern const f32 lbl_eu_806684CC;
-extern const f32 lbl_eu_806684D0;
-extern const f64 lbl_eu_806684F0;
-extern const u16 lbl_eu_806684E0;
-extern const f32 lbl_eu_806684EC;
-extern const f64 lbl_eu_806684F0;
-extern const f32 lbl_eu_806684F8;
-extern const f32 lbl_eu_806684FC;
-extern const f32 lbl_eu_80668500;
-extern const f32 lbl_eu_80668504;
-extern const f32 lbl_eu_806684C4;
-extern const f32 lbl_eu_806684C8;
 extern void* lbl_eu_806640EC;   // sdata: character/enum table pointer (func_802203D8)
 extern void* lbl_eu_806640D8;   // sdata: item-source pointer (func_802203D8)
-extern const u8 lbl_eu_806684E2;
-extern const u32 lbl_eu_806684E4;
-extern const u16 lbl_eu_806684E8;
 extern u8 lbl_eu_80576658[0xC];
 extern u8 lbl_eu_80576664[0xC];
 extern u32 lbl_eu_8065FC18[];
@@ -393,67 +370,50 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
     lbl_eu_805090E4, lbl_eu_80535F38
 };
 
-// .sdata2 0xA4: crystal float pool + tag words + owned 2^52 doubles, retail
-// order (Elv-style struct). Int tags (E0/E2/E4/E8) keep their UNDEF extern
-// reads: a known const would fold into immediates and regress .text (MES
-// u3C precedent). MWCC pools one anon conversion double after this struct
-// -> drop_data_tail 0xA4 in UNIT_RULES.
-struct Sdata2_MCMC {
-    float f_A0, f_A4, f_A8, f_AC, f_B0, f_B4, f_B8, f_BC;
-    float f_C0, f_C4, f_C8, f_CC, f_D0, f_D4, f_D8, f_DC;
-    u16 u_E0; u8 b_E2; u8 pad_E3; u32 u_E4; u16 u_E8; u16 pad_EA;
-    float f_EC;
-    double d_F0;
-    float f_F8, f_FC, f_500, f_504, f_508, f_50C;
-    float f_510a, f_510b;
-    float f_518; u32 pad_51C;
-    double d_520;
-    float f_528, f_52C;
-    double d_530;
-    float f_538a, f_538b;
-    float f_540;
-};
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const Sdata2_MCMC sdata2_MCMC = {
-    1.0f, 0.0f, 0.063f, -0.15f, -1.659f, 2.037f, -0.941f, 70.0f,
-    -110.0f, -86.0f, 72.0f, 5.0f, 0.2f, 50.0f, 30.0f, 20.0f,
-    0xFFFF, 0xFF, 0, 0xFFFFFFFF, 0xFFFF, 0,
-    0.01f,
-    4503599627370496.0,
-    100.0f, 0.04f, 25.0f, 1.5f, 1.05f, -1.3f,
-    -20.0f, 0.0f,
-    0.0f, 0,
-    4503599627370496.0,
-    30.0f, 0.01f,
-    4503601774854144.0,
-    1.0f, 0.0f,
-    0.0f
-};
-#define lbl_eu_806684A0 sdata2_MCMC.f_A0
-#define lbl_eu_806684A4 sdata2_MCMC.f_A4
-#define lbl_eu_806684A8 sdata2_MCMC.f_A8
-#define lbl_eu_806684AC sdata2_MCMC.f_AC
-#define lbl_eu_806684B0 sdata2_MCMC.f_B0
-#define lbl_eu_806684B4 sdata2_MCMC.f_B4
-#define lbl_eu_806684B8 sdata2_MCMC.f_B8
-#define lbl_eu_806684BC sdata2_MCMC.f_BC
-#define lbl_eu_806684C0 sdata2_MCMC.f_C0
-#define lbl_eu_806684C4 sdata2_MCMC.f_C4
-#define lbl_eu_806684C8 sdata2_MCMC.f_C8
-#define lbl_eu_806684CC sdata2_MCMC.f_CC
-#define lbl_eu_806684D0 sdata2_MCMC.f_D0
-#define lbl_eu_806684D4 sdata2_MCMC.f_D4
-#define lbl_eu_806684D8 sdata2_MCMC.f_D8
-#define lbl_eu_806684DC sdata2_MCMC.f_DC
-#define lbl_eu_806684EC sdata2_MCMC.f_EC
-#define lbl_eu_806684F8 sdata2_MCMC.f_F8
-#define lbl_eu_806684FC sdata2_MCMC.f_FC
-#define lbl_eu_80668500 sdata2_MCMC.f_500
-#define lbl_eu_80668504 sdata2_MCMC.f_504
-#define lbl_eu_80668508 sdata2_MCMC.f_508
-#define lbl_eu_8066850C sdata2_MCMC.f_50C
-#define lbl_eu_80668510 sdata2_MCMC.f_510a
-#define lbl_eu_80668528 sdata2_MCMC.f_528
-#define lbl_eu_8066852C sdata2_MCMC.f_52C
+// .sdata2 0xA4: retail-ordered individual globals (one label each, so
+// every use compiles to an SDA21 load like retail). Floats/doubles are
+// const (PPC has no float immediates, so uses stay loads); the int tags
+// are plain (non-const) globals so their uses stay SDA21 loads too -- a
+// visible const would fold into immediates and regress .text.
+extern "C" {
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A0 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A4 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A8 = 0.063f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684AC = -0.15f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B0 = -1.659f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B4 = 2.037f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B8 = -0.941f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684BC = 70.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C0 = -110.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C4 = -86.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C8 = 72.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684CC = 5.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D0 = 0.2f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D4 = 50.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D8 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684DC = 20.0f;
+__declspec(section ".sdata2") __attribute__((used)) u16 lbl_eu_806684E0 = 0xFFFF;
+__declspec(section ".sdata2") __attribute__((used)) u8 lbl_eu_806684E2 = 0xFF;
+__declspec(section ".sdata2") __attribute__((used)) u8 gap_11_806684E3_sdata2 = 0;
+__declspec(section ".sdata2") __attribute__((used)) u32 lbl_eu_806684E4 = 0xFFFFFFFF;
+__declspec(section ".sdata2") __attribute__((used)) u16 lbl_eu_806684E8 = 0xFFFF;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684EC = 0.01f;
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_806684F0 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684F8 = 100.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684FC = 0.04f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668500 = 25.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668504 = 1.5f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668508 = 1.05f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066850C = -1.3f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668510[2] = {-20.0f, 0.0f};
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668518 = 0.0f;
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_80668520 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668528 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066852C = 0.01f;
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_80668530 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668538[2] = {1.0f, 0.0f};
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668540 = 0.0f;
+}
 
 // .bss 2x0xC (crystal vec work) + .sbss crystal-state bytes (hpp declares u8[8]).
 // Plain zero-init: MWCC sorts by size into .bss/.sbss like the old absorbs.
@@ -1037,16 +997,14 @@ u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDis
 // Retail 0x8021E894: "ready to advance" gate - every crystal display slot
 // must be built, plus the crystal-list / scrollbar / syswin gates, then the
 // crystal-box file state machine answers.
+#pragma optimize_for_size on
 int func_8021CA3C(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    // Two-entry gate: counted loop so MWCC emits the ctr form.
-    u8 i = 0;
-    u32 n = 2;
-    do {
+    // Single-counter constant-trip loop so -O4,s uses the CTR (bdnz) form.
+    for (u8 i = 0; i < 2; i++) {
         if (base[(u32)i * 0x5cc + 0x60c] == 0) return 0;
-        i++;
-    } while (--n);
+    }
     if (base[0xbe9] == 0) return 0;
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
     if (func_80222A50(base + 0xc18) == 0) return 0;
@@ -1054,6 +1012,7 @@ int func_8021CA3C(CModelDispMakeCrystal* self)
     if (CSysWin_isReady(base + 0xe78) == 0) return 0;
     return func_80297CC0(base + 0xecc);
 }
+#pragma optimize_for_size off
 
 u8 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DC3; }
 
@@ -1062,12 +1021,14 @@ u8 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDis
 #pragma optimize_for_size on
 void func_8021CB20(CModelDispMakeCrystal* self)
 {
-    u8* base;
-    if (self->field_BDC) return;
-    self->field_BDC = 1;
-    self->field_BE8 = 0;
-    base = reinterpret_cast<u8*>(self);
-    int r0 = func_801392B4(self->field_5F0);
+    // Single live pointer (base) so MWCC keeps the small -O4,s frame with
+    // two saved regs like retail; the table base materializes after the
+    // second char-state call so the lis/addi pair lands after it.
+    u8* base = reinterpret_cast<u8*>(self);
+    if (base[0xbdc]) return;
+    base[0xbdc] = 1;
+    base[0xbe8] = 0;
+    int r0 = func_801392B4(base[0x5f0]);
     if (r0 == 3 || r0 == 8) {
         reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->setLevel(3);
     } else {
@@ -1088,8 +1049,8 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     func_801392B4(base[0x5f0]);
     // Table lookup: byte-array indexing through a named offset so MWCC
     // keeps the scaled offset in a register (mulli) for both loads.
-    const u8* tbl = lbl_eu_80535D90->c;
     int off = ((int)func_801392B4(bbc) - 1) * 3;
+    const u8* tbl = lbl_eu_80535D90->c;
     u8 c0 = tbl[off];
     u8 c1 = tbl[off + 1];
     u8 c2 = tbl[off + 2];
@@ -1108,8 +1069,7 @@ void func_8021CC60(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe4 = reinterpret_cast<f32*>(base + 0xbe4);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
-    f32 v4 = *fbe4 + lbl_eu_806684A0;
-    *fbe4 = v4;
+    f32 v4 = (*fbe4 += lbl_eu_806684A0);
     if (v4 >= lbl_eu_806684CC) {
         f32 v0 = *fbe0 - lbl_eu_806684D0;
         *fbe0 = v0;
@@ -1273,8 +1233,7 @@ void __declspec(noinline) func_8021D168(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = *vel + lbl_eu_806684A0;
-    *vel = v;
+    f32 v = (*vel += lbl_eu_806684A0);
     if (v < lbl_eu_806684DC) return;
     u32 f44 = *reinterpret_cast<u32*>(base + 0x44);
     *vel = lbl_eu_806684A4;
@@ -1324,8 +1283,10 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
     base[0x2dd0] = 0;
     u8 chArg = base[0x5f0];
     base[0xbdd] = 6;
+    // Named call-result temp so the phase init lands after the extract.
+    int cres = (func_801392B4(chArg) & 0xFF);
     u8 phase = 0;
-    if ((func_801392B4(chArg) & 0xFF) == 1) phase = 1;
+    if (cres == 1) phase = 1;
     s32 rv = ml::MTRand::getInstance()->rand31();
     int q = rv / 128;
     if ((s8)(rv - q * 128) > (int)(phase + base[0x2dd3])) return;
@@ -1340,15 +1301,24 @@ void __declspec(noinline) func_8021D200(CModelDispMakeCrystal* self)
                                     *reinterpret_cast<void**>(base + 0xc), 1, 1, 1);
             *reinterpret_cast<void**>(base + 0x14) = e;
             if (e != nullptr) {
-                func_804E3D0C(e, self ? reinterpret_cast<void*>(base + 0x8) : nullptr);
+                void* arg = reinterpret_cast<void*>(self);
+                if (self != nullptr) {
+                    arg = reinterpret_cast<void*>(base + 0x8);
+                }
+                func_804E3D0C(e, arg);
                 u32 r = reinterpret_cast<CScnItemModel*>(*reinterpret_cast<void**>(base + 0x20))->vfuncA8();
                 *reinterpret_cast<u32*>(reinterpret_cast<u8*>(*reinterpret_cast<void**>(base + 0x14)) + 0x14) = r;
             }
         }
         for (u8 i = 0; i < 2; i++) {
             u8* s = base + (u32)i * 0x5cc;
-            if (*reinterpret_cast<u32*>(s + 0x44) != 0) {
-                func_8004B9D4(s + 0x4c, 0x25, 0, -1, 0);
+            // Reload the slot pointer (CSE'd with the test load) so MWCC
+            // emits retail's dead duplicate beq before the call setup.
+            if (*reinterpret_cast<u32*>(s + 0x44)) {
+                void* m = *reinterpret_cast<void**>(s + 0x44);
+                if (m != 0) {
+                    func_8004B9D4(s + 0x4c, 0x25, 0, -1, 0);
+                }
             }
         }
         incrementEventCounter__FUl(0x7c);
@@ -1362,8 +1332,7 @@ void __declspec(noinline) func_8021D3E4(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = *f2dcc + lbl_eu_806684A0;
-    *f2dcc = v;
+    f32 v = (*f2dcc += lbl_eu_806684A0);
     if (v < lbl_eu_806684DC) return;
     *f2dcc = lbl_eu_806684A4;
     base[0x13bf]++;
@@ -1379,10 +1348,11 @@ void __declspec(noinline) func_8021D3E4(CModelDispMakeCrystal* self)
         for (u8 i = 0; i < 2; i++) {
             // Reload the slot pointer (CSE'd with the test load) so MWCC emits
             // retail's dead duplicate beq before the call setup.
-            if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
-                void* m = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
+            u8* s = base + (u32)i * 0x5cc;
+            if (*reinterpret_cast<u32*>(s + 0x44)) {
+                void* m = *reinterpret_cast<void**>(s + 0x44);
                 if (m != 0) {
-                    func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x21, 0, -1, 0);
+                    func_8004B9D4(s + 0x4c, 0x21, 0, -1, 0);
                 }
             }
         }
@@ -1395,8 +1365,14 @@ void __declspec(noinline) func_8021D3E4(CModelDispMakeCrystal* self)
             base[0x13bf] = 0;
             if (p) reinterpret_cast<u8*>(p)[0x59] = 1;
             for (u8 i = 0; i < 2; i++) {
-                if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
-                    func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x21, 0, -1, 0);
+                // Reload the slot pointer (CSE'd with the test load) so MWCC
+                // emits retail's dead duplicate beq before the call setup.
+                u8* s = base + (u32)i * 0x5cc;
+                if (*reinterpret_cast<u32*>(s + 0x44)) {
+                    void* m = *reinterpret_cast<void**>(s + 0x44);
+                    if (m != 0) {
+                        func_8004B9D4(s + 0x4c, 0x21, 0, -1, 0);
+                    }
                 }
             }
         }
@@ -1409,8 +1385,7 @@ void __declspec(noinline) func_8021D564(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* f2dcc = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = *f2dcc + lbl_eu_806684A0;
-    *f2dcc = v;
+    f32 v = (*f2dcc += lbl_eu_806684A0);
     if (v < lbl_eu_806684DC) return;
     *f2dcc = lbl_eu_806684A4;
     u8 n = base[0x2dc8] + 1;
@@ -1670,8 +1645,7 @@ void __declspec(noinline) func_8021DD0C(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     if (isFinished__11CMCEffStartFv(base + 0xdcc) == 0) return;
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
-    f32 v = *vel + lbl_eu_806684A0;
-    *vel = v;
+    f32 v = (*vel += lbl_eu_806684A0);
     if (v < lbl_eu_806684D8) return;
     *vel = lbl_eu_806684A4;
     u16 count = *reinterpret_cast<u16*>(*reinterpret_cast<u8**>(base + 0xe1c) + 4);
@@ -1754,13 +1728,18 @@ void __declspec(noinline) func_8021DF84(CModelDispMakeCrystal* self)
     // Once the cylinder effect finishes and the gauge is full, start the
     // cylinder-count anim: rebuild the step list and flush the buffered entry.
     if (isFinished__14CMCEffCylinderFv(base + 0xdfc) == 0) return;
-    if (reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->isReady() == 0) return;
-    base[0xbdd] = 0x12;
-    func_801D216C(base + 0xe20, 1);
-    u8 buf[16];
-    func_80222F64(buf, base + 0xc18, base[0x2dc1]);
-    reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
-    func_80223334(base + 0xc18);
+    // Branch/else-return (not early-return): retail branches to the body with
+    // bne when the gauge is ready and skips it with b otherwise.
+    if (reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->isReady() != 0) {
+        base[0xbdd] = 0x12;
+        func_801D216C(base + 0xe20, 1);
+        u8 buf[16];
+        func_80222F64(buf, base + 0xc18, base[0x2dc1]);
+        reinterpret_cast<CBaseCur*>(base + 0xe20)->setRootPaneTranslate(reinterpret_cast<const nw4r::math::VEC3*>(buf));
+        func_80223334(base + 0xc18);
+    } else {
+        return;
+    }
 }
 
 // Retail 0x8021FE6C: input-driven cursor/trigger dispatch for the cylinder
@@ -2086,25 +2065,25 @@ void func_8021E840(CModelDispMakeCrystal* self, u16 idx)
 
 // Retail 0x802206E0: refresh the crystal slot entry list, then find the first
 // entry whose param u16 (at +2) is zero and record its index in byte 0.
-// NOTE: -O4,p static cap - retail keeps this as an mtctr/bdnz countdown loop
-// (-O4,s shape); plain -O4,p unrolls it (MWCC_CASES §856).
+// NOTE: -O4,s keeps this as an mtctr/bdnz countdown loop; plain -O4,p
+// unrolls it (MWCC_CASES Sec.856).
+#pragma optimize_for_size on
 void func_8021E888(CModelDispMakeCrystal* self)
 {
     CMCrySlotEntry* entries = reinterpret_cast<CMCrySlotEntry*>(self);
     func_8021E8E4(self);
-    u8 i = 0;
-    s32 n = 0x20;
-    do {
+    // Single-counter constant-trip loop so -O4,s uses the CTR (bdnz) form.
+    for (u8 i = 0; i < 0x20; i++) {
         if (*reinterpret_cast<u16*>(reinterpret_cast<u8*>(self) + (i << 3) + 2) == 0) {
             reinterpret_cast<u8*>(self)[0] = i;
             break;
         }
-        i++;
-    } while (--n);
+    }
 }
+#pragma optimize_for_size off
 
 // Retail 0x8022073C: two-pass bubble-sort of the crystal-slot entries,
-// then clear their +9 flag bytes. Pass 1 sorts by the u16 key at entry+4,
+// then clear their +9 flag bytes.
 // pass 2 by the byte at entry+9 (both ascending, early-exit when a pass
 // makes no swap). Swaps move the 8-byte param record at entry+2 through
 // the retail copy helpers (func_802165E8 reads, func_80213E20 writes).
@@ -2175,8 +2154,7 @@ void __declspec(noinline) func_8021EB00(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
-    f32 v = *fbe0 + lbl_eu_806684D0;
-    *fbe0 = v;
+    f32 v = (*fbe0 += lbl_eu_806684D0);
     if (v > lbl_eu_806684A0) {
         *fbe0 = lbl_eu_806684A0;
         base[0xbdc] = 0;
@@ -2214,7 +2192,8 @@ void func_8021EC04(CModelDispMakeCrystal* self)
     u8 count = base[0x2dc0];
     int found = 0;
     for (u8 i = 0; i < count; i++) {
-        CMCStep* p = reinterpret_cast<CMCStep*>(base + (u32)i * 0x34 + 0x13c0);
+        u32 off = reinterpret_cast<u32>(base) + (u32)i * 0x34;
+        CMCStep* p = reinterpret_cast<CMCStep*>(off + 0x13c0);
         if (p && p->type == 9) {
             found = 1;
             break;
@@ -3844,7 +3823,7 @@ void CModelDispMakeCrystal::destroyCrystalDispThunk8() { ((void(*)(void*))__dt__
 void sinit_80221DDC() {
     initCrystalData(lbl_eu_80664718);
     func_8004B60C(lbl_eu_80576658, lbl_eu_80668508, lbl_eu_806684AC, lbl_eu_8066850C);
-    func_8004B60C(lbl_eu_80576664, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510), lbl_eu_806684A4);
+    func_8004B60C(lbl_eu_80576664, lbl_eu_806684A4, scaleByGlobal(lbl_eu_80668510[0]), lbl_eu_806684A4);
 }
 
 

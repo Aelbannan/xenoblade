@@ -2,7 +2,6 @@
 
 #include <types.h>
 class CBaseCur;
-class CItemImplInstances;
 class UnkClass_8045F564;
 namespace nw4r { namespace lyt {
 class AnimTransform; class Layout; class ArcResourceAccessor; class DrawInfo;
@@ -75,44 +74,11 @@ struct CItemBoxSlotState {
 // CBaseCur::cleanup/initLayout; the +0x2ca8/+0x34b0/+0x3cb8 resets are now
 // CQuestItem/CVisionItem/CArtsBookItem::Rebuild.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x2C (raw slot 11). MWCC prepends 2 RTTI header entries, so 9
-// dummy virtuals precede the method.
-struct CItemInstVt2C {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void* _v2C(void* arg, u8 slot);  // vtable+0x2C
-};
+// (Fake-vtable cleanup: item-impl +0x2C view deleted - now CItemImpl::vf2C.)
 
 // (Fake-vtable cleanup: CItemInstVt2CInt deleted - layout animation-flag
 // calls are now Layout::SetAnimationEnable.)
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x40 (raw slot 16). MWCC prepends 2 RTTI header entries, so 14
-// dummy virtuals precede the method.
-struct CItemInstVt40 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual u32 _v40(void* arg, u8 slot);  // vtable+0x40
-};
+// (Fake-vtable cleanup: item-impl +0x40 view deleted - now CItemImpl::vf40.)
 
 // (Fake-vtable cleanup: CItemBoxLayoutVt38 deleted - now Layout::Animate.)
 
@@ -124,179 +90,21 @@ struct CItemInstVt40 {
 // (Fake-vtable cleanup: CItemPaneAnimVt deleted - now
 // Layout::SetAnimationEnable.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x08 (raw slot 2, the first declared virtual after the 2 RTTI
-// header entries).
-struct CItemInstVt08 {
-    virtual u32 _v08(void* arg);  // vtable+0x08
-};
+// (Fake-vtable cleanup: item-impl +0x08 view deleted - now CItemImpl::vf08.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x10 (raw slot 4, takes the item and returns void). MWCC prepends
-// 2 RTTI header entries, so 2 dummy virtuals precede the method.
-struct CItemInstVt10 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10(void* arg);  // vtable+0x10
-};
+// (Fake-vtable cleanup: item-impl +0x10 view deleted - now CItemImpl::vf10.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x30 (raw slot 12). MWCC prepends 2 RTTI header entries, so 10
-// dummy virtuals precede the method.
-struct CItemInstVt30 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual u32 _v30(void* arg);  // vtable+0x30
-};
+// (Fake-vtable cleanup: item-impl +0x30 view deleted - now CItemImpl::vf30.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x90 (raw slot 36). MWCC prepends 2 RTTI header entries, so 34
-// dummy virtuals precede the method.
-struct CItemInstVt90 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual void _v80();
-    virtual void _v84();
-    virtual void _v88();
-    virtual void _v8C();
-    virtual u32 _v90(void* arg);  // vtable+0x90
-};
+// (Fake-vtable cleanup: item-impl +0x90 view deleted - now CItemImpl::vf90.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x20 (raw slot 8). MWCC prepends 2 RTTI header entries, so 6 dummy
-// virtuals precede the method.
-struct CItemInstVt20 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void* _v20(void* arg);  // vtable+0x20
-};
+// (Fake-vtable cleanup: item-impl +0x20 view deleted - now CItemImpl::vf20.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x4C (raw slot 19, takes the item and a u8 slot index). MWCC
-// prepends 2 RTTI header entries, so 17 dummy virtuals precede the method.
-struct CItemInstVt4C {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual u32 _v4C(void* arg, u8 slot);  // vtable+0x4C
-};
+// (Fake-vtable cleanup: item-impl +0x4C view deleted - now CItemImpl::vf4C.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x80 (raw slot 32). MWCC prepends 2 RTTI header entries, so 30
-// dummy virtuals precede the method.
-struct CItemInstVt80 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual void _v54();
-    virtual void _v58();
-    virtual void _v5C();
-    virtual void _v60();
-    virtual void _v64();
-    virtual void _v68();
-    virtual void _v6C();
-    virtual void _v70();
-    virtual void _v74();
-    virtual void _v78();
-    virtual void _v7C();
-    virtual u32 _v80(void* arg);  // vtable+0x80
-};
+// (Fake-vtable cleanup: item-impl +0x80 view deleted - now CItemImpl::vf80.)
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x54 (raw slot 21). MWCC prepends 2 RTTI header entries, so 19
-// dummy virtuals precede the method.
-struct CItemInstVt54 {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44();
-    virtual void _v48();
-    virtual void _v4C();
-    virtual void _v50();
-    virtual u32 _v54(void* arg);  // vtable+0x54
-};
+// (Fake-vtable cleanup: item-impl +0x54 view deleted - now CItemImpl::vf54.)
 
 // Plain 3-float vector passed by value into func_801D24E8 (the caller-side
 // struct copies land in the argument area).
@@ -819,23 +627,4 @@ struct CibgExchMember {   // p+0x444.. <- CExchangeWin temp +4
     u8 e, f, g, h;
 };
 
-// Cast-only vtable interface for the CItemImplInstances object: method at
-// vtable+0x44 (raw slot 17) clears the given equipped slot.
-struct CItemInstVt44Clear {
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual void _v1C();
-    virtual void _v20();
-    virtual void _v24();
-    virtual void _v28();
-    virtual void _v2C();
-    virtual void _v30();
-    virtual void _v34();
-    virtual void _v38();
-    virtual void _v3C();
-    virtual void _v40();
-    virtual void _v44(void* item, u8 slot, s16 val);  // vtable+0x44
-};
+// (Fake-vtable cleanup: item-impl +0x44 view deleted - now CItemImpl::vf44.)

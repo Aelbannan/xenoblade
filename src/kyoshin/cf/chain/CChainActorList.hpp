@@ -144,19 +144,12 @@ extern const double lbl_eu_80668A78;
 extern "C" int func_800B8920(void* addr);
 extern "C" int func_80148778(void*, int);
 extern "C" void addTableValueWithClamp__Q22cf13CfGameManagerFv(int, int, int);
-// Read-only view of a chain actor's +0x0 target key (the battle object
-// whose identity chain lookups compare against).
-class CChainActorKeyView {
-public:
-    u32 mTargetObj; //0x0 battle-object pointer/key
-};
-
 // CfGameManager pair-value query (retail Fv-form symbol; call sites pass
 // two ids even though the suffix does not reflect them) and the tuning-value
 // accessor (owner: code_8025FB10.cpp). Single winning decls: extern "C" s32
 // form matches CfGameManagerUnityHelpers.hpp; int(void*,u32) form matches
 // CChainTimer.hpp so both headers co-exist without rename guards.
-class CChainActorObjId;
+namespace cf { class CChainBattleObj; }
 extern "C" s32 getTableValueByPair__Q22cf13CfGameManagerFv(s32 firstId, s32 secondId);
 extern "C" int func_8025FB10(void* data, u32 flag);
 extern "C" int func_8017FD44(void);
@@ -171,37 +164,17 @@ extern "C" u32 func_8027EE88(int, int);
 // record), so it keeps C linkage here like the other imports above; the
 // definition in the .cpp inherits it from this declaration.
 extern "C" int func_8027C1A8(cf::CChainChanceS* self,
-                             CChainActorObjId* objA, CChainActorObjId* objB);
+                             cf::CChainBattleObj* objA,
+                             cf::CChainBattleObj* objB);
 extern "C" __declspec(noinline) void func_802811FC(cf::CChainActorList* self);
 extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
 extern "C" u32 func_8004C5EC(void* battleObj);
 
-// Minimal mirror of the object referenced by a chain actor's unk0 (probed by
-// func_8027BE84 / func_8027CAE0): vtable at +0x0, move sub-object pointer at
-// +0x4, probed address at +0x8.
-class CChainTargetObj {
-public:
-    u32 field_0;  //0x0 vtable
-    u32 field_4;  //0x4 move sub-object pointer
-    u32 field_8;  //0x8
-};
-
-// Tail view of the battle object at a chain actor's unk0: the u16 arts/battle
-// id at +0x3F28 (func_8027C924 accumulates the chain arts pair from these)
-// and the battle-object pointer at +0x3F60 queried by func_8004C5EC.
-class CChainActorObjId {
-public:
-    u8 field_0[0x3F28];  //0x0
-    u16 field_0x3F28;    //0x3F28
-    u8 field_0x3F2A[0x3F60 - 0x3F2A];
-    u32 field_0x3F60;    //0x3F60
-};
-
-// Tail view used by func_8027BC14: an embedded sub-object with a manual
-// vtable sits at +0x3E9C (its vtable slot 19 returns the move sub-object
-// pointer), and +0x3F60 holds a battle-object pointer queried by
-// func_8004C5EC.
+// Tail view of the battle object (shared with CChain.cpp / CSuddenCommu):
+// an embedded sub-object with a manual vtable sits at +0x3E9C, and +0x3F60
+// holds a battle-object pointer queried by func_8004C5EC. This TU now calls
+// the same slots through cf::CChainBattleObj (CChainTimer.hpp) instead.
 class CChainBattleObjTail {
 public:
     u8 field_0[0x3E9C];  //0x0

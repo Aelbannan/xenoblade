@@ -3,11 +3,15 @@
 #include <types.h>
 #include "kyoshin/cf/chain/CChainActor.hpp"
 
+extern "C" cf::CChainActorVtbl lbl_eu_80538458;
+
 namespace cf {
     class __declspec(novtable) CChainActorEne : public CChainActor {
     public:
         CChainActorEne();
         virtual ~CChainActorEne();
+        void func_802818D4();
+        s32 func_802818DC();
         virtual void _vf0C(int val) override;
         virtual void _vf10() override;
         virtual void _vf14() override;
@@ -33,7 +37,7 @@ namespace cf {
         virtual void _vf64(int key) override;
         virtual int _vf68() override;
         virtual void _vf6C(int val) override;
-        virtual void _vf70() override;
+        virtual int _vf70() override;
         virtual int _vf74() override;
     };
 }

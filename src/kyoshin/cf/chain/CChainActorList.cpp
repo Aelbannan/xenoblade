@@ -33,30 +33,6 @@ void func_8027BFE0(s32 param);
 // retail emits a real bl func_8027C45C (MWCC_CASES §8720).
 extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self);
 
-// Battle-object vtable shim for func_8027C1A8: slot 162 (+0x290) is a
-// gate/value query and slot 194 (+0x308) returns the tuning-pool selector.
-// kyoshin compiles with -RTTI on, so declared virtual #k lands at vtable byte
-// offset (k+2)*4.
-
-// Vtable-layout shim so the arts-set getter (vtable slot 0x9f = offset 0x27c)
-// can be invoked as a genuine virtual call (MWCC uses r12 for virtual calls).
-
-// Fake single-inheritance "interface" mirroring CChainActor's manually-managed
-// vtable at +0x70.  kyoshin compiles with -RTTI on, so every vtable carries two
-// hidden typeinfo slots (byte 0 and 4) and DECLARED virtual #k lands at vtable
-// byte offset (k+2)*4.  Casting a CChainActor* to this interface and calling a
-// virtual makes MWCC emit retail's `lwz r12,0x70(r3); lwz r12,off(r12); bcctrl`
-// dispatch instead of a function-pointer cast that colors the vptr load r4/r5.
-
-// Function-pointer types for CChainActor's manually-managed vtable (mVTable at
-// 0x70).
-typedef void (*CChainActorVFn)(cf::CChainActor*);
-typedef int (*CChainActorIVFn)(cf::CChainActor*);
-typedef int (*CChainActorIVFn2)(cf::CChainActor*, void*);
-typedef int (*CChainActorChkFn)(cf::CChainActor*, int);
-typedef int (*CChainActorChkFn2)(cf::CChainActor*, cf::CChainActor*);
-typedef void (*CChainActorChainFn)(cf::CChainActor*, int, cf::CChainActor*, int);
-
 namespace cf {
     // Retail ctor stores the manual vtables, zeroes the CChainTemp-ish buffer
     // and its flag byte. The dtor is the plain empty+delete shape (no base or
@@ -385,13 +361,13 @@ static cf::CChainActor* findActorByTarget(u32 key, cf::CChainActorList* self) {
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
     while (node != head) {
         cf::CChainActor* x = node->mItem;
-        if (key == ((CChainActorKeyView*)x)->mTargetObj) return x;
+        if (key == x->unk0) return x;
         node = node->mNext;
     }
     return 0;
 }
 
-// Sweep body kept as a helper so MWCC inlines it with target as a fresh
+// Sweep body kept as a helper
 // parameter web (retail recomputes target+0x3E9C per iteration instead of
 // caching it across the loop).
 static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
@@ -401,7 +377,7 @@ static void sweepChainable(cf::CChainActorList* self, cf::CChainList* other,
     while (node != self->mChainActorList.mStartNodePtr) {
         if (node->mItem->vf48((void*)(int)target) != 0) {
             if (node->mItem->_vf20(
-                    reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)target)->field_0x3E9C)->v17()) != 0) {
+                    reinterpret_cast<cf::CChainBattleObj*>(target)->mSub.v17()) != 0) {
                 func_8027C5CC(other, node->mItem);
                 self->mChainActorList.remove(node->mItem);
                 node = node->mPrev;
@@ -455,7 +431,7 @@ void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list){
     cf::CChainList* l = list;
     for (int i = 0; i < (int)l->mCount; i++) {
         cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
-        if (findActorForBB4C(((CChainActorKeyView*)actor)->mTargetObj, self) == 0)
+        if (findActorForBB4C(actor->unk0, self) == 0)
             func_8027B8C8(self, actor);
     }
     func_8027C45C(list);
@@ -468,13 +444,13 @@ static cf::CChainActor* findActorForKey(cf::CChainActorList* self, u32 key) {
     _reslist_node<cf::CChainActor*>* node = head->mNext;
     while (node != head) {
         cf::CChainActor* x = node->mItem;
-        if (key == ((CChainActorKeyView*)x)->mTargetObj) return x;
+        if (key == x->unk0) return x;
         node = node->mNext;
     }
     return 0;
 }
 
-// Chain-activation validator for the actor whose unk0 == @p key. Returns 1
+// Chain-activation validator
 // when the candidate passes its activation gates AND at least two actors in
 // the list are chainable against it, else 0.
 int func_8027BC14(cf::CChainActorList* self, u32 key){
@@ -484,20 +460,20 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
     // The candidate must pass its own activation gate (vtable[19]).
     int gate = (actor != 0) ? actor->_vf4C() : 0;
     if (gate == 0) return 0;
-    // ... and must be chainable against the key's move sub-object.
+    // ... and must be chainable against the key's voice sub-object.
     if (actor->_vf20(
-            reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)key)->field_0x3E9C)->v17()) == 0)
+            reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub.v17()) == 0)
         return 0;
     // ... and must pass the "already chained" anti-gate (vtable[29]).
     if (actor->_vf74() != 0) return 0;
     // The battle object's probed address must not be in any of three states.
-    if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xeb) != 0) return 0;
-    if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xcb) != 0) return 0;
-    if (func_80148778(&((CChainTargetObj*)key)->field_8, 0xf8) != 0) return 0;
+    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub8, 0xeb) != 0) return 0;
+    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub8, 0xcb) != 0) return 0;
+    if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub8, 0xf8) != 0) return 0;
     // The battle object's arts-selection state must not match the no-chain id.
-    int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(((CChainTargetObj*)key)->field_4)->f30());
-    if (func_80174C98((CChainTargetObj*)key, &local, 0x1f) != 0) return 0;
-    if (func_8004C5EC((void*)((CChainBattleObjTail*)key)->field_0x3F60) == 0x31)
+    int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>((void*)key)->field_04->f30());
+    if (func_80174C98((void*)key, &local, 0x1f) != 0) return 0;
+    if (func_8004C5EC(reinterpret_cast<cf::CChainBattleObj*>((void*)key)->field_3F60) == 0x31)
         return 0;
     if (actor->_vf24(1) == 0) return 0;
     // Count how many other actors are chainable against the candidate. The
@@ -508,7 +484,7 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
          cur != self->mChainActorList.mStartNodePtr; cur = cur->mNext) {
         if (cur->mItem->vf48((void*)(int)key) != 0) {
             if (cur->mItem->_vf20(
-                    reinterpret_cast<cf::CChainVoiceSub*>(&((CChainBattleObjTail*)key)->field_0x3E9C)->v17()) != 0) {
+                    reinterpret_cast<cf::CChainBattleObj*>((void*)key)->mSub.v17()) != 0) {
                 count++;
             }
         }
@@ -524,13 +500,13 @@ int func_8027BC14(cf::CChainActorList* self, u32 key){
 // callee-saved register (retail r31), matching the func_8027B200 pattern.
 int func_8027BE84(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* node;
-    CChainTargetObj* obj;
+    cf::CChainBattleObj* obj;
     node = self->mChainActorList.mStartNodePtr->mNext;
     while (node != self->mChainActorList.mStartNodePtr) {
-        if (func_80148778(&((CChainTargetObj*)node->mItem->unk0)->field_8, 0x10c) == 0 &&
-            func_80148778(&((CChainTargetObj*)node->mItem->unk0)->field_8, 0xf8) == 0) {
-            obj = (CChainTargetObj*)node->mItem->unk0;
-            int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(((CChainTargetObj*)node->mItem->unk0)->field_4)->f30());
+        if (func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)node->mItem->unk0)->mSub8, 0x10c) == 0 &&
+            func_80148778(&reinterpret_cast<cf::CChainBattleObj*>((void*)node->mItem->unk0)->mSub8, 0xf8) == 0) {
+            obj = reinterpret_cast<cf::CChainBattleObj*>((void*)node->mItem->unk0);
+            int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainBattleObj*>((void*)node->mItem->unk0)->field_04->f30());
             if (func_80174C98(obj, &local, 0x801) != 0) return 1;
         }
         node = node->mNext;
@@ -608,17 +584,17 @@ void func_8027C0B0(cf::CChainChanceS* self) {
 // C linkage comes from the func_8027C1A8 declaration in the TU header
 // (retail callers bl the unmangled label; MWCC_CASES func_800F41A0 record).
 int func_8027C1A8(cf::CChainChanceS* self,
-                  CChainActorObjId* objA,
-                  CChainActorObjId* objB) {
+                  cf::CChainBattleObj* objA,
+                  cf::CChainBattleObj* objB) {
     if (self->mField08 >= 0xf) {
         return 0;
     }
-    int tblOff = lbl_eu_8050EDD0[reinterpret_cast<cf::CChainBattleObj*>(objA)->v192()];
+    int tblOff = lbl_eu_8050EDD0[objA->v192()];
     u32 pair = (u16)getTableValueByPair__Q22cf13CfGameManagerFv(
-        objA->field_0x3F28, objB->field_0x3F28);
+        objA->field_3F28, objB->field_3F28);
     u32 val;
-    if (reinterpret_cast<cf::CChainBattleObj*>(objA)->v160() != 0) {
-        reinterpret_cast<cf::CChainBattleObj*>(objA)->v160();
+    if (objA->v160() != 0) {
+        objA->v160();
         val = (u16)func_8025FB10(objA, 0x6b);
     } else {
         val = 0;
@@ -838,8 +814,8 @@ void func_8027C924(cf::CChainList* self, int target){
             if (i != next) {
                 cf::CChainActor* other = self->mActors[next];
                 addTableValueWithClamp__Q22cf13CfGameManagerFv(
-                    ((CChainActorObjId*)self->mActors[i]->unk0)->field_0x3F28,
-                    ((CChainActorObjId*)other->unk0)->field_0x3F28, 0xa);
+                    reinterpret_cast<cf::CChainBattleObj*>((void*)self->mActors[i]->unk0)->field_3F28,
+                    reinterpret_cast<cf::CChainBattleObj*>((void*)other->unk0)->field_3F28, 0xa);
             }
         }
     }
@@ -857,13 +833,13 @@ int func_8027CA0C(cf::CChainList* self, int key) {
 // the polarity of the result depends on @p check.
 int func_8027CAE0(cf::CChainList* self, int target, int check){
     cf::CChainActor** p;
-    CChainTargetObj* obj;
+    cf::CChainBattleObj* obj;
     if (check == 0) {
         obj = 0;
         p = self->mActors;
         for (int i = 0; i < (int)self->mCount; i++) {
-            obj = (CChainTargetObj*)(*p)->unk0;
-            int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(obj->field_4)->f30());
+            obj = reinterpret_cast<cf::CChainBattleObj*>((void*)(*p)->unk0);
+            int local = *reinterpret_cast<int*>(obj->field_04->f30());
             if (func_80174C98(obj, &local, target) != 0) return 1;
             p++;
         }
@@ -872,8 +848,8 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
     obj = 0;
     p = self->mActors;
     for (int i = 0; i < (int)self->mCount; i++) {
-        obj = (CChainTargetObj*)(*p)->unk0;
-        int local = *reinterpret_cast<int*>(reinterpret_cast<cf::CChainSub4*>(obj->field_4)->f30());
+        obj = reinterpret_cast<cf::CChainBattleObj*>((void*)(*p)->unk0);
+        int local = *reinterpret_cast<int*>(obj->field_04->f30());
         if (func_80174C98(obj, &local, target) == 0) return 0;
         p++;
     }

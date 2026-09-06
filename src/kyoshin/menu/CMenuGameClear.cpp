@@ -3,8 +3,8 @@
 
 #include "kyoshin/menu/CMenuGameClear.hpp"
 
+#include "kyoshin/CBaseCur.hpp"
 #include "monolib/device/CDeviceVI.hpp"
-#include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -115,8 +115,8 @@ void CMenuGameClear::Term() {
     mScene->removeRenderCB(render);
 
     func_8022B7F4(&mSysWin);
-    reinterpret_cast<CCursor18*>(&mCursor)->vf3();
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    ((CBaseCur*)&mCursor[0])->cleanup();
+    deleteRegion__17UnkClass_8045F564Fv(&mMemRegion[0]);
 
     lbl_eu_80664C08 = 0;
 
@@ -138,7 +138,7 @@ void CMenuGameClear::cbRenderBefore() {
     // (exit label BEFORE the body label) keeps the body off the fallthrough
     // so MWCC emits retail's branch-over-branch: `bne end` for the first
     // disjunct, `beq body; b end` for the second (MWCC_CASES
-    // §&&-gate branch-over-branch).
+    // sec.&&-gate branch-over-branch).
     if (CTaskGame::isFlag01Set() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto body;
@@ -197,7 +197,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
-        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
@@ -205,7 +205,7 @@ extern "C" void func_802B22F4(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
-        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }
@@ -239,7 +239,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
-        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     } else if (up != 0) {
         if (++self->mField71 > 1) {
@@ -247,7 +247,7 @@ extern "C" void func_802B2488(CMenuGameClear* self) {
         }
         nw4r::math::VEC3 pos;
         func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
-        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        ((CBaseCur*)&self->mCursor[0])->setRootPaneTranslate(&pos);
         playUISound(1);
     }
 }

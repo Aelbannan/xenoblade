@@ -23,7 +23,7 @@ namespace cf {
         CChainActor();
         virtual ~CChainActor();
 
-        // 28 entries (dt at +0x08 + 27) to reach +0x74 – covers full retail table lbl_eu_80538290 (0x78 bytes, header2+28)
+        // 28 entries (dt at +0x08 + 27) to reach +0x74 - covers full retail table lbl_eu_80538290 (0x78 bytes, header2+28)
         virtual void _vf0C(int val);
         virtual void _vf10();
         virtual void _vf14();

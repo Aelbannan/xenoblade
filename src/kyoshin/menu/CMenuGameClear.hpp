@@ -2,7 +2,18 @@
 
 #include <types.h>
 
+// CSysWin.hpp declares typed __ct__/__dt__17UnkClass_8045F564Fv forms that
+// clash with the void* forms in CItemBoxInfo.hpp (via CtrlObjectParam.hpp
+// below); hide them while CSysWin.hpp is processed so the void* forms own
+// the real names (same trick as CItemBoxGrid.cpp). This TU only touches
+// UnkClass_8045F564 storage through the void* free functions.
+#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
+#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
+#define func_80137924 func_80137924_csys_dup
 #include "kyoshin/CSysWin.hpp"
+#undef __dt__17UnkClass_8045F564Fv
+#undef __ct__17UnkClass_8045F564Fv
+#undef func_80137924
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include <nw4r/lyt/lyt_drawInfo.h>
 
@@ -69,14 +80,9 @@ public:
     // size 0x12E60
 };
 
-// Abstract view into the embedded CCur18 vtable. MWCC inserts an offset-to-top
-// + RTTI prefix (2 entries), so the second declared virtual lands at vtable
-// +0x0C (slot 3) - the cursor update virtual invoked by Term.
-class CCursor18 {
-public:
-    virtual void vf2(int) = 0;  // slot 2 (+0x08)
-    virtual void vf3() = 0;     // slot 3 (+0x0C)
-};
+// Embedded CCur18 cursor is driven through the real CBaseCur interface
+// (kyoshin/CBaseCur.hpp): cleanup() is vtable slot +0x0C (called by Term),
+// setRootPaneTranslate() is slot +0x10 (called by the input handlers).
 
 // Minimal CTaskGame decl (retail symbols getInstance__9CTaskGameFv /
 // isFlag01Set__9CTaskGameFv; same scheme as CSysWinSave.hpp).
@@ -97,15 +103,8 @@ public:
 };
 } // namespace cf
 
-// Abstract view of the embedded CCur18 vtable for the input handlers.
-// MWCC inserts an offset-to-top + RTTI prefix (2 entries), so declared
-// virtual N lands at vtable offset (N+2)*4: _v10 below is retail slot 0x10.
-class CCur18Vt10 {
-public:
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10(nw4r::math::VEC3* pos);
-};
+// (Pad view deleted: input handlers call
+// ((CBaseCur*)&mCursor[0])->setRootPaneTranslate(&pos) instead.)
 
 // cf pad data view used by the input handlers (fields at +0x04/+0x104).
 struct CfPadDataView {
@@ -128,6 +127,7 @@ void __ct__CSysWin(void* syswin, int arg);
 void __dt__7CSysWinFv(void* syswin, int flags);
 void __ct__CCur18(void* cursor, void* accessor);
 void __dt__6CCur18Fv(void* cursor, int flags);
+void deleteRegion__17UnkClass_8045F564Fv(void* region);
 void* func_8009D764(cf::CtrlObjectParamInit* p);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);

@@ -12,6 +12,9 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/math/CVec3.hpp"
+// CScnEnvLgtCtrlListItem is the real owner of the +0x2F3C map-effect object
+// (v24 at slot 0x68 takes the retail int flag; cf. CfObjectMap.cpp).
+#include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 
 // Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
 // declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
@@ -69,9 +72,9 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
             // Notify the object behind the game manager's +0x2F3C pointer.
             if (cf::CfGameManager::getGameSubManager() != nullptr) {
                 if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                    UnkMapFxObj* fx =
-                        (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                    fx->vfunc_0x68(1);
+                    CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
+                        void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                    fx->v24(1);
                 }
             }
         }
@@ -103,9 +106,9 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
             if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                UnkMapFxObj* fx =
-                    (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                fx->vfunc_0x68(1);
+                CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
+                    void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                fx->v24(1);
             }
         }
     }
@@ -118,9 +121,9 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
             if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                UnkMapFxObj* fx =
-                    (UnkMapFxObj*)*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                fx->vfunc_0x68(func_80180940());
+                CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
+                    void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                fx->v24(func_80180940());
             }
         }
     }

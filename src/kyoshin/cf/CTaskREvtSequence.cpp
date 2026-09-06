@@ -31,16 +31,51 @@
 #include "monolib/math/CCol4.hpp"
 // CGame::setTaskManagerUpdateCount (static) is called by func_8016A480.
 #include "kyoshin/CGame.hpp"
-// UnkMapFxObj (+0x2F3C game-manager sub-object interface) is called
-// by func_8016A480 (real owner in src/kyoshin/cf/object/CfObjectMap.hpp).
-struct UnkMapFxObjREvtSeq {
-    virtual void v08(); virtual void v0C(); virtual void v10(); virtual void v14();
-    virtual void v18(); virtual void v1C(); virtual void v20(); virtual void v24();
-    virtual void v28(); virtual void v2C(); virtual void v30(); virtual void v34();
-    virtual void v38(); virtual void v3C(); virtual void v40(); virtual void v44();
-    virtual void v48(); virtual void v4C(); virtual void v50(); virtual void v54();
-    virtual void v58(); virtual void v5C(); virtual void v60(); virtual void v64();
-    virtual void vfunc_0x68(int arg);
+// The +0x2F3C game-manager sub-object is a CScnEnvLgtCtrlListItem (real
+// owner in libs/monolib/src/scn/CScnEnvLgtCtrl.hpp, which cannot be
+// included here over this TU's conflicting decls). TU-local view under the
+// real owner name with retail arities (CfObjectMap.cpp idiom); func_8016A480
+// dispatches its v24 slot (0x68) directly. No fake-named iface is kept.
+class CScnEnvLgtCtrlListItem {
+public:
+    virtual void v0(int flag);
+    virtual void v1();
+    virtual void v2(void* arg);
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8(void* arg);
+    virtual void v9(void* arg);
+    virtual void v10(void* arg, void* data);
+    virtual void v11(void* arg, u8 byte);
+    virtual int v12(void* vec);
+    virtual int v13(void* vec);
+    virtual void v14(void* data);
+    virtual int v15(float f, void* data, void* arg, u32 count);
+    virtual void v16(void* arg);
+    virtual void v17(void* arg);
+    virtual void v18(void* arg, float f);
+    virtual int v19(void* bits, int flag);
+    virtual int v20(void* base, int flag);
+    virtual void v21();
+    virtual void v22(float f, s32 mode, s32 submode);
+    virtual int v23();
+    virtual void v24(int flag);  // slot 0x68 - retail passes r4
+    virtual void v25(int flag);
+    virtual void v26(void* a, void* b);
+    virtual void v27(void* a, void* b, float f);
+    virtual int v28(void* out, int flag);
+    virtual int v29();
+    virtual int v30();
+    virtual void v31(u32 a, u32 b);
+    virtual void v32(u32 a, u32 b, void* c, void* d);
+    virtual void v33(u32 a, u32 b, void* c);
+    virtual void v34();
+    virtual void v35(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g);
+    virtual void v36();
+    virtual void v37(int flag);
 };
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 // nw4r g3d resource walk used by func_8016AF4C / func_8016B5A4.
@@ -49,6 +84,9 @@ struct UnkMapFxObjREvtSeq {
 #include "nw4r/db/db_assert.h"
 // CX streaming-uncompression context (func_8016ABA8 / func_80169050).
 #include "revolution/cx/CXStreamingUncompression.h"
+// Scene-window color helper (retail flat name; cf. CTaskGame.hpp canonical
+// decl). Declared here: this TU does not include that header.
+extern "C" void func_8049602C(void* scene, int index, void* vec);
 extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
 
@@ -1469,7 +1507,8 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     if (mgr != 0) {
         CfEvtCamManager* mgr2 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
         if (mgr2->field_0xC != 0) {
-            getCameraDataBlock__Q22cf13CfGameManagerFv()->vf_0x3C(lbl_eu_80667674);
+            ((CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv())
+                ->vf_0x3C(lbl_eu_80667674);
             CfEvtCamManager* mgr4 = (CfEvtCamManager*)getCameraDataBlock__Q22cf13CfGameManagerFv();
             // Local keeps the player object in one register (retail reuses r3
             // across the two float stores and the func_8049EB60 call).
@@ -2088,9 +2127,9 @@ void func_8016A480(void* selfv) {
     if (cf::CfGameManager::getGameSubManager() != nullptr) {
         if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) !=
             nullptr) {
-            UnkMapFxObjREvtSeq* fx = (UnkMapFxObjREvtSeq*)*(void**)(
-                (u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-            fx->vfunc_0x68(1);
+            CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
+                void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+            fx->v24(1);
         }
     }
     if (isEventPending() != 0) {

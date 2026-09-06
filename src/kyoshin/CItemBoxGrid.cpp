@@ -1,11 +1,53 @@
 // Auto-scaffolded catalog TU for kyoshin/CItemBoxGrid
 // Replace stubs with high-level C/C++ during decomp.
 
+// Real item-impl owner (kyoshin/cf/CItem.hpp): the harness chain declares a
+// stale extern "C" void* CItem_initItemImplInstances that conflicts with the
+// real CItemImpl*(CItemData*) form, so it is renamed away for this TU (same
+// workaround as CEquipChange.cpp).
+#define CItem_initItemImplInstances CItem_initItemImplInstances_staleVoid
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 #include "kyoshin/CUIWindowManagerApi.hpp"
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/CBaseCur.hpp"
+#undef CItem_initItemImplInstances
+// This TU declares six table handles + two helpers with stale types that
+// clash with cf/CItem.hpp's decls; rename CItem.hpp's copies so the TU decls
+// keep the retail names (same #define-rename pattern as CEquipChange.cpp).
+#define lbl_eu_806640D8 lbl_eu_806640D8_citem_dup
+#define lbl_eu_806640EC lbl_eu_806640EC_citem_dup
+#define lbl_eu_806640F4 lbl_eu_806640F4_citem_dup
+#define lbl_eu_806640F8 lbl_eu_806640F8_citem_dup
+#define lbl_eu_80664104 lbl_eu_80664104_citem_dup
+#define lbl_eu_80664110 lbl_eu_80664110_citem_dup
+#define func_80157C4C func_80157C4C_grid_stale
+#define func_801576C8 func_801576C8_grid_stale
+#include "kyoshin/cf/CItem.hpp"
+#undef lbl_eu_806640D8
+#undef lbl_eu_806640EC
+#undef lbl_eu_806640F4
+#undef lbl_eu_806640F8
+#undef lbl_eu_80664104
+#undef lbl_eu_80664110
+#undef func_80157C4C
+#undef func_801576C8
+// Real CSysWin owner for the +0x88 loadSystemArc dispatch: rename the five
+// decls whose signatures clash with this TU's stale void*/int forms so the
+// TU decls keep the retail names (identical decls need no guard).
+#define __dt__17UnkClass_8045F564Fv __dt__17UnkClass_8045F564Fv_csys_dup
+#define __ct__17UnkClass_8045F564Fv __ct__17UnkClass_8045F564Fv_csys_dup
+#define func_80137924 func_80137924_csys_dup
+#define code80135FDC_setVec3 code80135FDC_setVec3_csys_dup
+#define func_8022BFC8 func_8022BFC8_csys_dup
+#define func_8022B90C func_8022B90C_csys_dup
+#include "kyoshin/CSysWin.hpp"
+#undef __dt__17UnkClass_8045F564Fv
+#undef __ct__17UnkClass_8045F564Fv
+#undef func_80137924
+#undef code80135FDC_setVec3
+#undef func_8022BFC8
+#undef func_8022B90C
 #include "monolib/device/CDeviceFont.hpp"
 #include <nw4r/ut/ut_TagProcessorBase.h>
 #include <stdio.h>
@@ -303,16 +345,14 @@ extern "C" void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, int r6, in
                     void* subItem = func_80157C4C(subCat, subId);
                     if (!subItem) continue;
                     if (!*(u32*)subItem) continue;
-                    void* inst = CItem_initItemImplInstances(subItem);
-                    void** vtbl = *(void***)inst;
-                    u16 numSlots = (u16)((u32(*)(void*, void*))vtbl[0xc])(inst, subItem);
+                    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)subItem);
+                    u16 numSlots = (u16)inst->vf30((CItemData*)subItem);
                     u32 slot;
                     u8 matched = 0;
                     u16 keptSubId = 0;
                     for (slot = 0; slot < (u32)numSlots; slot++) {
-                        void* inst2 = CItem_initItemImplInstances(subItem);
-                        void** vtbl2 = *(void***)inst2;
-                        s16 equipId = (s16)((s32(*)(void*, void*, u32))vtbl2[0x10])(inst2, subItem, slot);
+                        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)subItem);
+                        s16 equipId = (s16)inst2->vf40((CItemData*)subItem, slot);
                         if (equipId == -1) continue;
                         if (equipId == (s16)id) {
                             entry[2] = 2;
@@ -665,14 +705,14 @@ extern "C" __declspec(noinline) s32 func_801C6388(CItemBoxGridFull* self, u16 id
         // Equipment categories: count slots; if none are visible report the
         // cell state flag, otherwise scan for empty-but-equipped slots.
         {
-            u8 n = (u8)((CItemInstVt30*)CItem_initItemImplInstances(obj))->_v30(obj);
+            u8 n = (u8)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
             if (n != 0) {
                 // Scan slots for ones that are free (-1) but whose equipped
                 // state object reports the equipped flag.
                 for (u8 j = 0; j < n; j++) {
-                    if ((s16)((CItemInstVt40*)CItem_initItemImplInstances(obj))->_v40(obj, j) == -1) {
+                    if ((s16)CItem_initItemImplInstances((CItemData*)obj)->vf40((CItemData*)obj, j) == -1) {
                         void* res =
-                            ((CItemInstVt2C*)CItem_initItemImplInstances(obj))->_v2C(obj, j);
+                            CItem_initItemImplInstances((CItemData*)obj)->vf2C((CItemData*)obj, j);
                         if (res && (((CItemBoxSlotState*)res)->state & 1)) return -3;
                     }
                 }
@@ -838,8 +878,8 @@ void func_801C68A0(CItemBoxGridFull* self) {
         if (entry->flags[6] != 0) continue;
         void* obj = func_80157C4C(self->field_2802, entry->id);
         if (!obj || !*(u32*)obj) continue;
-        void* inst = CItem_initItemImplInstances(obj);
-        ((CItemInstVt10*)inst)->_v10(obj);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
+        inst->vf10((CItemData*)obj);
     }
 }
 #pragma optimize_for_size off
@@ -860,14 +900,14 @@ u32 func_801C6938(void* self, u32 idx) {
     void* obj = func_80157C4C(cat, val);
     if (!obj || !*(u32*)obj) goto fail;
 
-    void* inst = CItem_initItemImplInstances(obj);
-    void* name = ((CItemInstVt20*)inst)->_v20(obj);
+    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
+    const char* name = inst->vf20((CItemData*)obj);
 
     sprintf((char*)(p + 0x2805), (const char*)&lbl_eu_8050566C[0x14c], name);
 
     if (p[0x2802] == 3) {
-        void* inst2 = CItem_initItemImplInstances(obj);
-        u32 count = ((CItemInstVt08*)inst2)->_v08(obj);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)obj);
+        u32 count = inst2->vf08((CItemData*)obj);
         u8 b = (u8)count;
         u32 r = (u32)func_80136190((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
         sprintf((char*)(p + 0x2805), (const char*)&lbl_eu_8050566C[0x15d], (char*)(p + 0x2805), r);
@@ -903,8 +943,8 @@ char* func_801C6A44(CItemBoxGridFull* self, u16 idx) {
     if (!*(u32*)item) goto fail;
 
     if (func_801C6E90(item)) {
-        void* inst = CItem_initItemImplInstances(item);
-        u32 v = ((CItemInstVt80*)inst)->_v80(item);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+        u32 v = inst->vf80((CItemData*)item);
         int sel = 0x9d;
         if ((u16)v != 0) sel = 0x9e;
         char* msg = func_80136190((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158], sel);
@@ -914,12 +954,12 @@ char* func_801C6A44(CItemBoxGridFull* self, u16 idx) {
         sprintf((char*)(p + 0x2825), (const char*)&lbl_eu_8050566C[0x14c], msg);
     } else if (p[0x2802] == 3) {
         u32 tbl = lbl_eu_806640D8;
-        void* inst1 = CItem_initItemImplInstances(item);
-        u32 slotStatus = ((CItemInstVt54*)inst1)->_v54(item);
-        void* inst2 = CItem_initItemImplInstances(item);
-        u8 slotByte = (u8)((CItemInstVt08*)inst2)->_v08(item);
-        void* inst3 = CItem_initItemImplInstances(item);
-        char* name90 = (char*)((CItemInstVt90*)inst3)->_v90(item);
+        CItemImpl* inst1 = CItem_initItemImplInstances((CItemData*)item);
+        u16 slotStatus = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+        u8 slotByte = (u8)inst2->vf08((CItemData*)item);
+        CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)item);
+        char* name90 = (char*)inst3->vf90((CItemData*)item);
         char buf48[32];
         sprintf(buf48, (const char*)&lbl_eu_8050566C[0x162], name90);
         u32 nameKey = func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x165], (u16)slotStatus);
@@ -1464,19 +1504,19 @@ __declspec(noinline) u32 func_801C7958(void* self, void* item) {
     u32 result = 0;
 
     if (type == 3) {
-        u32 key = (u32)((CItemInstVt54*)CItem_initItemImplInstances(item))->_v54(item);
-        u16 slot = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
+        u16 key = CItem_initItemImplInstances((CItemData*)item)->vf54((CItemData*)item);
+        u16 slot = (u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], (u16)key);
         CItemPriceScaleRow row;
         row = *(const CItemPriceScaleRow*)&lbl_eu_8050560C;
         result = (u32)((float)lookup * row.v[slot & 0x3F]);
     } else if (type == 9) {
-        u16 slot = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
+        u16 slot = (u16)CItem_initItemImplInstances((CItemData*)item)->vf08((CItemData*)item);
         CItemPriceScaleRow rowA;
         rowA = *(const CItemPriceScaleRow*)&lbl_eu_8050560C;
         u32 i;
         for (i = 0; i < 4; i++) {
-            u16 v = (u16)((CItemInstVt4C*)CItem_initItemImplInstances(item))->_v4C(item, (u8)i);
+            u16 v = (u16)CItem_initItemImplInstances((CItemData*)item)->vf4C((CItemData*)item, (u8)i);
             if (v == 0) continue;
             u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], v);
             // Retail re-copies the row inside the loop before each scale.
@@ -1488,7 +1528,7 @@ __declspec(noinline) u32 func_801C7958(void* self, void* item) {
     } else if (type >= 2 && type <= 8) {
         func_801393CC(kind);
         u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], (u16)shortKind);
-        u8 count = (u8)((CItemInstVt30*)CItem_initItemImplInstances(item))->_v30(item);
+        u8 count = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
         float f = lbl_eu_80667F78;
         while (count-- != 0) f += lbl_eu_80667F7C;
         result = (u32)((float)lookup * f);
@@ -1522,8 +1562,8 @@ __declspec(noinline) s32 func_801C7C7C(void* self, u32 id, void* item) {
         u32 key;
         u32 slot;
         if (item) {
-            key = (u32)((CItemInstVt54*)CItem_initItemImplInstances(obj))->_v54(obj);
-            slot = (u16)((CItemInstVt08*)CItem_initItemImplInstances(obj))->_v08(obj);
+            key = (u32)CItem_initItemImplInstances((CItemData*)obj)->vf54((CItemData*)obj);
+            slot = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf08((CItemData*)obj);
         } else {
             key = shortKind;
             slot = (u8)func_801361E8((u32)lbl_eu_806640EC, &lbl_eu_8050566C[0x200], shortKind & 0xFFFF);
@@ -1539,7 +1579,7 @@ __declspec(noinline) s32 func_801C7C7C(void* self, u32 id, void* item) {
         u32 tbl = func_801393CC(kind & 0xFFFF);
         u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], shortKind & 0xFFFF);
         u32 count;
-        if (item) count = (u16)((CItemInstVt30*)CItem_initItemImplInstances(obj))->_v30(obj);
+        if (item) count = (u16)CItem_initItemImplInstances((CItemData*)obj)->vf30((CItemData*)obj);
         else count = (u8)func_801361E8(tbl, &lbl_eu_8050566C[0x209], shortKind & 0xFFFF);
         float f = lbl_eu_80667F78;
         while (count-- != 0) f += lbl_eu_80667F7C;
@@ -1565,9 +1605,9 @@ void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
             CItemBoxGridEntry* e1 = &self->entries[j];
             CItemBoxGridEntry* e2 = &self->entries[j + 1];
             if (mode == 3) {
-                // Compare (u16) inst->_v54(item) keys; obj2's chain runs first.
-                u16 key2 = (u16)((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
-                u16 key1 = (u16)((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
+                // Compare (u16) inst->vf54(item) keys; obj2's chain runs first.
+                u16 key2 = (u16)CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
+                u16 key1 = (u16)CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
                 if (key1 > key2) {
                     char tmp1[9];
                     char tmp2[9];
@@ -1580,9 +1620,9 @@ void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
             } else if (mode == 9) {
                 int a = func_801C6E90(obj1);
                 int b = func_801C6E90(obj2);
-                // A non-zero _v80 result zeroes that side's key.
-                if (((CItemInstVt80*)CItem_initItemImplInstances(obj1))->_v80(obj1) != 0) a = 0;
-                if (((CItemInstVt80*)CItem_initItemImplInstances(obj2))->_v80(obj2) != 0) b = 0;
+                // A non-zero vf80 result zeroes that side's key.
+                if (CItem_initItemImplInstances((CItemData*)obj1)->vf80((CItemData*)obj1) != 0) a = 0;
+                if (CItem_initItemImplInstances((CItemData*)obj2)->vf80((CItemData*)obj2) != 0) b = 0;
                 if (a != 0 || b != 0) {
                     if (a > b) {
                         char tmp1[9];
@@ -1847,9 +1887,9 @@ void func_801C8994(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            v2 = (u16)((CItemInstVt08*)CItem_initItemImplInstances(obj2))->_v08(obj2);
+            v2 = (u16)CItem_initItemImplInstances((CItemData*)obj2)->vf08((CItemData*)obj2);
             u16 v1;
-            v1 = (u16)((CItemInstVt08*)CItem_initItemImplInstances(obj1))->_v08(obj1);
+            v1 = (u16)CItem_initItemImplInstances((CItemData*)obj1)->vf08((CItemData*)obj1);
             if (v1 >= v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -1876,8 +1916,8 @@ void func_801C8ACC(CItemBoxGridFull* self, u32 target) {
             CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
             void* obj1 = func_80157C4C(self->field_2802, e1->id);
             void* obj2 = func_80157C4C(self->field_2802, e2->id);
-            u32 v1 = ((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
-            u32 v2 = ((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
+            u16 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
+            u16 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
             u32 c1 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
             u32 c2 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
             u32 m1 = (u8)c1 == target;
@@ -1907,8 +1947,8 @@ void func_801C8C58(CItemBoxGridFull* self, u32 target) {
             CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
             void* obj1 = func_80157C4C(self->field_2802, e1->id);
             void* obj2 = func_80157C4C(self->field_2802, e2->id);
-            u32 v1 = ((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
-            u32 v2 = ((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
+            u16 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf54((CItemData*)obj1);
+            u16 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf54((CItemData*)obj2);
             u32 c1 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
             u32 c2 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
             u32 m1 = (u8)c1 == target;
@@ -1967,8 +2007,8 @@ void func_801C8F04(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            u32 v2 = ((CItemInstVt30*)CItem_initItemImplInstances(obj2))->_v30(obj2);
-            u32 v1 = ((CItemInstVt30*)CItem_initItemImplInstances(obj1))->_v30(obj1);
+            u32 v2 = CItem_initItemImplInstances((CItemData*)obj2)->vf30((CItemData*)obj2);
+            u32 v1 = CItem_initItemImplInstances((CItemData*)obj1)->vf30((CItemData*)obj1);
             if ((u16)v1 >= (u16)v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2272,8 +2312,8 @@ void func_801C9B8C(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            u32 v1 = ((CItemInstVt90*)CItem_initItemImplInstances(obj1))->_v90(obj1);
-            u32 v2 = ((CItemInstVt90*)CItem_initItemImplInstances(obj2))->_v90(obj2);
+            u32 v1 = (u32)CItem_initItemImplInstances((CItemData*)obj1)->vf90((CItemData*)obj1);
+            u32 v2 = (u32)CItem_initItemImplInstances((CItemData*)obj2)->vf90((CItemData*)obj2);
             if ((u8)v1 >= (u8)v2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2390,12 +2430,12 @@ float func_801C9F88(void* self, void* entry) {
 
 #pragma optimize_for_size on
 __declspec(noinline) u32 func_801CA070(void* self, void* item) {
-    void* inst = CItem_initItemImplInstances(item);
-    u16 count = (u16)((CItemInstVt30*)inst)->_v30(item);
+    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+    u16 count = (u16)inst->vf30((CItemData*)item);
     u8 i;
     for (i = 0; i < count; i++) {
-        void* inst2 = CItem_initItemImplInstances(item);
-        void* obj = ((CItemInstVt2C*)inst2)->_v2C(item, i);
+        CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+        void* obj = inst2->vf2C((CItemData*)item, i);
         if (obj && (*(u16*)((u8*)obj + 4) & 1)) return 1;
     }
     return 0;
@@ -2651,8 +2691,8 @@ void func_801CAA6C(void* self, int r4) {
         func_8022CF2C(p + 0x440);
     }
 
-    ((CItemInstVt90*)(p + 0x4ac))->_v88();
-    ((CItemInstVt90*)(p + 0x4e8))->_v88();
+    ((CSysWin*)(p + 0x4ac))->loadSystemArc();
+    ((CSysWin*)(p + 0x4e8))->loadSystemArc();
 }
 #pragma pop
 
@@ -3655,14 +3695,12 @@ void func_801CCAF0(void* self) {
             void* item = func_801C631C((CItemBoxGridFull*)sub, entry);
             u32 type = (*(u32*)item >> 12) & 0xF;
             if (type == 2 || ((type + 0xfc) & 0xFF) <= 4) {
-                void* inst = CItem_initItemImplInstances(item);
-                void** vtbl = *(void***)inst;
-                u32 count = (u32)((u32(*)(void*, void*))vtbl[0xc])(inst, item);
+                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                u32 count = (u32)inst->vf30((CItemData*)item);
                 u32 j;
                 for (j = 0; j < count; j++) {
-                    void* inst2 = CItem_initItemImplInstances(item);
-                    void** vtbl2 = *(void***)inst2;
-                    s16 subId = (s16)((s32(*)(void*, void*, u32))vtbl2[0x10])(inst2, item, j);
+                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                    s16 subId = (s16)inst2->vf40((CItemData*)item, j);
                     if (subId != -1) {
                         p[0x541] = 1;
                         break;
@@ -3670,9 +3708,7 @@ void func_801CCAF0(void* self) {
                 }
             }
             if (item) {
-                void* inst = CItem_initItemImplInstances(item);
-                void** vtbl = *(void***)inst;
-                ((void(*)(void*, void*))vtbl[4])(inst, item);
+                CItem_initItemImplInstances((CItemData*)item)->vf10((CItemData*)item);
             }
             func_801CFF28(self);
             playUISound__FUl(0x7a);
@@ -3856,14 +3892,12 @@ after_fs:
                         func_801D0E88(self, type, (int)sid);
                     }
                     if (type == 2 || ((type + 0xfc) & 0xFF) <= 4) {
-                        void* inst = CItem_initItemImplInstances(item);
-                        void** vtbl = *(void***)inst;
-                        u32 numSlots = (u32)((u32(*)(void*, void*))vtbl[0xc])(inst, item);
+                        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                        u32 numSlots = (u32)inst->vf30((CItemData*)item);
                         u32 j;
                         for (j = 0; j < numSlots; j++) {
-                            void* inst2 = CItem_initItemImplInstances(item);
-                            void** vtbl2 = *(void***)inst2;
-                            s16 subId = (s16)((s32(*)(void*, void*, u32))vtbl2[0x10])(inst2, item, j);
+                            CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
+                            s16 subId = (s16)inst2->vf40((CItemData*)item, j);
                             if (subId != -1) {
                                 p[0x541] = 1;
                                 break;
@@ -4572,8 +4606,8 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
         u32 type = (*(u32*)obj >> 16) & 0xF;
         if (type == 3) {
             msgId = 0;
-            void* inst = CItem_initItemImplInstances(obj);
-            u32 st = ((CItemInstVt54*)inst)->_v54(obj);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
+            u16 st = inst->vf54((CItemData*)obj);
             u8 c = (u8)func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x331], (u16)st);
             switch (c) {
             case 4: msgId = (u32)func_80138F78(0x144); break;
@@ -4591,8 +4625,8 @@ void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
-            void* inst = CItem_initItemImplInstances(obj);
-            u16 hasArts = (u16)((CItemInstVt80*)inst)->_v80(obj);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
+            u16 hasArts = (u16)inst->vf80((CItemData*)obj);
             if (hasArts == 0) {
                 if (func_801C6E90(obj)) {
                     msgId = (u32)func_80138F78(0x155);
@@ -4688,8 +4722,8 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
         u32 type = (*(u32*)obj >> 16) & 0xF;
         if (type == 3) {
             msgId = 0;
-            void* inst = CItem_initItemImplInstances(obj);
-            u16 v = (u16)((CItemInstVt08*)inst)->_v08(obj);
+            CItemImpl* inst = CItem_initItemImplInstances((CItemData*)obj);
+            u16 v = (u16)inst->vf08((CItemData*)obj);
             switch (v) {
             case 1: msgId = (u32)func_80138F78(0x197); break;
             case 2: msgId = (u32)func_80138F78(0x196); break;
@@ -4706,8 +4740,8 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
                     0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
             }
         } else if (type == 9) {
-            void* inst = CItem_initItemImplInstances(obj);
-            u16 hasArts = (u16)((CItemInstVt80*)inst)->_v80(obj);
+            void* inst = CItem_initItemImplInstances((CItemData*)obj);
+            u16 hasArts = (u16)((CItemImpl*)inst)->vf80((CItemData*)obj);
             if (hasArts == 0) {
                 if (func_801C6E90(obj)) {
                     // skill item - use the 0x191..0x18d mapping below
@@ -4719,8 +4753,8 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
                     if (!isArts && t != 9) goto done_item;
                 }
                 msgId = 0;
-                void* inst2 = CItem_initItemImplInstances(obj);
-                u16 v = (u16)((CItemInstVt08*)inst2)->_v08(obj);
+                CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)obj);
+                u16 v = (u16)inst2->vf08((CItemData*)obj);
                 switch (v) {
                 case 1: msgId = (u32)func_80138F78(0x191); break;
                 case 2: msgId = (u32)func_80138F78(0x190); break;
@@ -4738,8 +4772,8 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
             } else {
                 // origin arts - use the 0x19c..0x198 mapping
                 msgId = 0;
-                void* inst3 = CItem_initItemImplInstances(obj);
-                u16 v = (u16)((CItemInstVt08*)inst3)->_v08(obj);
+                CItemImpl* inst3 = CItem_initItemImplInstances((CItemData*)obj);
+                u16 v = (u16)inst3->vf08((CItemData*)obj);
                 switch (v) {
                 case 1: msgId = (u32)func_80138F78(0x19c); break;
                 case 2: msgId = (u32)func_80138F78(0x19b); break;
@@ -4811,8 +4845,8 @@ void func_801CF71C(void* self, s8 kind, void* item, u16 idx) {
     }
 
     if ((u8)sel == 3 || (u8)sel == 9) {
-        void* inst = CItem_initItemImplInstances(it);
-        u32 cnt = (u32)((CItemInstVt08*)inst)->_v08(it);
+        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)it);
+        u32 cnt = (u32)inst->vf08((CItemData*)it);
         char* msg = func_80136190((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158],
                                   (u32)(0x1e - ((cnt & 0xFF) - 1)));
         sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
@@ -5322,16 +5356,16 @@ void func_801D0E88(void* self, int kind, int id) {
                     void* item = func_80157C4C(cat, j);
                     if (!item) continue;
                     if (!*(u32*)item) continue;
-                    void* inst = CItem_initItemImplInstances(item);
-                    u8 num = (u8)((CItemInstVt30*)inst)->_v30(item);
+                    CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
+                    u8 num = (u8)inst->vf30((CItemData*)item);
                     u8 k;
                     for (k = 0; k < num; k++) {
-                        int sv = (s16)((CItemInstVt40*)CItem_initItemImplInstances(item))->_v40(
-                            item, k);
+                        int sv = (s16)CItem_initItemImplInstances((CItemData*)item)->vf40(
+                            (CItemData*)item, k);
                         if (sv == -1) continue;
                         if (sv != id) continue;
-                        ((CItemInstVt44Clear*)CItem_initItemImplInstances(item))->_v44(
-                            item, k, -1);
+                        CItem_initItemImplInstances((CItemData*)item)->vf44(
+                            (CItemData*)item, k, -1);
                         found = 1;
                         break;
                     }
@@ -5413,23 +5447,11 @@ void func_801D0E88(void* self, int kind, int id) {
     }
 }
 
-// Cast-only vtable interface for the object returned by
-// CItem_initItemImplInstances: with -RTTI on, MWCC prepends 2 hidden RTTI
-// header entries, so the Nth declared virtual sits at 4*(N+2). Real virtual
-// dispatch reproduces the retail `lwz r12,0(r3); lwz r12,<off>(r12)`
-// sequence; manual `(*(void***)x)[N]` casts color a scratch r5 instead.
-struct CItemInstVtLocal {
-    virtual void v0();                   // +0x08
-    virtual void v1();                   // +0x0C
-    virtual void v2(void* item);         // +0x10
-};
-
 // Handle item event dispatch.
 void func_801D11B8(void* self, void* item, int eventType) {
     if (!item) return;
     if (eventType < 1) {
-        CItemInstVtLocal* inst = (CItemInstVtLocal*)CItem_initItemImplInstances(item);
-        inst->v2(item);
+        CItem_initItemImplInstances((CItemData*)item)->vf10((CItemData*)item);
     } else {
         u32 w = *(u32*)item;
         func_80158118(item, w >> 20);

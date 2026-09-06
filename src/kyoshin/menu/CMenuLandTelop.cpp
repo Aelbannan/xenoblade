@@ -10,6 +10,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <nw4r/lyt.h>
@@ -589,12 +590,13 @@ void func_8014548C(CMenuLandTelop* self) {
         break;
     }
 
-    // Bind the font and hand the loaded font object to the root pane.
-    func_8013676C(
-        self->field_54->GetRootPane(),
-        reinterpret_cast<CLandTelopFontObj*>(
-            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
-                1, self->field_54))->getFontHandle());
+    // Font handle dispatches through the owning IDeviceFontInfo::getFont
+    // slot (+0x24); the import returns void* and is cast at the call site
+    // (CEquipChange.cpp idiom).
+    func_8013676C(self->field_54->GetRootPane(),
+                   (u32)static_cast<IDeviceFontInfo*>(
+                       getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+                           1, self->field_54))->getFont());
 
     self->field_88->SetFrame(lbl_eu_806673C8);
     self->field_54->Animate();

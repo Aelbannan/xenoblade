@@ -3045,7 +3045,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the added lbl_ symbols below via extern-const decls (single SDA
         # loads with CSE like retail); the const cam_ storage provides bytes
         # without letting values fold. MWCC appends a trailing code-const
-        # pool to .sdata2 and tail-pad to .data (thin trims, blessed); the
+        # pool to .sdata2 (thin trim, blessed; .data tail-pad proved no-op
+        # and was deleted); the
         # splitter records .bss/.sdata2 align 4 vs MWCC's 8.
         add_symbols=(
             ("lbl_eu_8066629C", ".sdata2", 0x0, 4),
@@ -3124,7 +3125,9 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_eu_806662E8", ".sdata2", 0x4c, 8),
             ("lbl_eu_80666374", ".sdata2", 0xd8, 4)
         ),
-        drop_data_tail=((".sdata2", 0x17C), (".data", 0x58)),
+        # .data tail-pad trim proved no-op (raw .data already retail 0x58);
+        # only .sdata2 trailing code-const pool still trimmed.
+        drop_data_tail=((".sdata2", 0x17C),),
         set_data_align=((".bss", 4), (".sdata2", 4)),
     ),
     "CUIBattleManager.o": UnitRules(
@@ -3259,8 +3262,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_nobits_range=((".bss", 0x404, 0x408),),
     ),
     "l2c_api.o": UnitRules(
-        # MWCC pads .data to 8 (0x790); retail split ends at 0x78B.
-        drop_data_tail=((".data", 0x78B),),
+        # .data is exact 0x78B via typed s_l2ca_qbuf[0x33] (no extra pad).
     ),
     "l2c_csm.o": UnitRules(
         # (trace strings now natural literals in source - raw data MATCH;
@@ -3271,17 +3273,15 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".data", 0xE7), (".sdata", 0xE),),
     ),
     "rfc_mx_fsm.o": UnitRules(
-        # MWCC pads .data to 4 (0x2B8); retail ends at 0x2B6. One jumptable
+        # .data is exact 0x2B6 via typed string (no \0\0 pad); one jumptable
         # case-label addend drifts (rfc_mx_sm_state_disc_wait_ua dispatch at
         # +0x270: retail 300 vs decomp 296) - pin the retail value.
-        drop_data_tail=((".data", 0x2B6),),
         addend_sets=((".data", 624, 300),),
     ),
     "rfc_port_fsm.o": UnitRules(
-        # MWCC pads .data to 8 (0x328); retail ends at 0x326. One jumptable
-        # case-label addend drifts (rfc_port_sm_orig_wait_sec_check dispatch
-        # at +0x228: retail 192 vs decomp 272) - pin the retail value.
-        drop_data_tail=((".data", 0x326),),
+        # .data is exact 0x326 via typed sdata (rfc_pn_disc_str[0x26]);
+        # one jumptable case-label addend drifts (rfc_port_sm_orig_wait_sec_check
+        # dispatch at +0x228: retail 192 vs decomp 272) - pin the retail value.
         addend_sets=((".data", 552, 192), (".data", 556, 272),),
     ),
     "rfc_ts_frames.o": UnitRules(
@@ -3451,8 +3451,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
     "OSError.o": UnitRules(
-        # MWCC pads .data to 8 (0x2E0 vs retail 0x2D9) and .bss (0x50 vs 0x44).
-        drop_data_tail=((".data", 0x2D9),),
+        # .data is exact 0x2D9 via typed string (no \0 pad); .bss still
+        # pads (0x50 vs retail 0x44).
         drop_nobits_range=((".bss", 0x44, 0x50),),
     ),
     "CSysWinSave.o": UnitRules(
@@ -3462,8 +3462,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_nobits_range=((".sbss", 0x8, 0xC),),
     ),
     "OSFont.o": UnitRules(
-        # MWCC pads .data to 8 (0xB10); retail split ends at 0xB0A.
-        drop_data_tail=((".data", 0xB0A),),
+        # .data is exact 0xB0A via typed Zenkaku2Code (single trailing 0x0000).
     ),
     "OSRtc.o": UnitRules(
         # MWCC pads .bss to 8 (0x58); retail ends at 0x54.
@@ -3486,8 +3485,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         exact_renames=(("@1024", "lbl_8055F138"),),
     ),
     "usb.o": UnitRules(
-        # MWCC pads .data to 8 (0x830 vs retail 0x82F) and .sbss (0x10 vs 9).
-        drop_data_tail=((".data", 0x82F),),
+        # .data is exact 0x82F via typed lbl_usb_last[0x17]; .sbss still
+        # pads (0x10 vs retail 9).
         drop_nobits_range=((".sbss", 0x9, 0x10),),
     ),
     "CScnEnvLgtCtrl.o": UnitRules(
@@ -4727,9 +4726,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         # The dropped function's pre-drop alignment pad survives the shift;
         # re-lay survivors at func_align=16 like the retail linker's GC did.
         repack_after_drop=16,
-        # MWCC 4-pads the final format string (0xF08); retail .data ends at
-        # 0xF06.
-        drop_data_tail=((".data", 0xF06),),
+        # .data is exact 0xF06 via typed UnusedStr_enableDvdVideo[0x3E].
     ),
     "ut_ResFontBase.o": UnitRules(
         # MWCC emits the weak inline-empty Font dtor
@@ -7514,12 +7511,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         pad_data_section=((".data", 0x1328),),
     ),
     "WUDHidHost.o": UnitRules(
-        # Same tail story, inverted: retail ends at "bta_hh_co_close()\n\0"
-        # (0x297) but MWCC pads the final string one byte further (0x298).
-        # No relocs point into the dropped byte.
-        drop_data_tail=((".data", 0x297),),
+        # .data is exact 0x297 via typed s_btaHhCoClose[19] (no extra pad).
     ),
-    # === kyoshin data dissolve, batch 2 (retail split objects are .text-only;
+    # === kyoshin data dissolve, batch 2
     # all class data ships from split1.s; ground truth = each unit's split-asm
     # lbl_eu_*@sda21/@ha/@l refs + jumptable target-function correspondence) ===
     "CTaskGamePic.o": UnitRules(

@@ -529,5 +529,5 @@ char s_l2ca_flush_no_ccb[0x27] = "L2CAP - no CCB for L2CA_Flush, CID: %d";
 char s_l2ca_flush[0x2d] = "L2CA_Flush()  CID: 0x%04x flushed %d buffers";
 char s_l2ca_qbuf_abnormal[0x3d] =
     "L2CA_GetNumQueuedBufs()  CID: 0x%04x  abmormally returning 0";
-char s_l2ca_qbuf[0x38] =
+char s_l2ca_qbuf[0x33] =
     "L2CA_GetNumQueuedBufs()  CID: 0x%04x  returning %d";

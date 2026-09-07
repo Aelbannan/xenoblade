@@ -254,7 +254,7 @@ void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData) {
 /* After callback string pool + jumptable; sizes include retail pad. */
 static char s_invalidAppId[24] = "Invalid app_id [%d]\n";
 static char s_btaHhCoOpen[20] = "bta_hh_co_open()\n";
-static char s_btaHhCoClose[20] = "bta_hh_co_close()\n";
+static char s_btaHhCoClose[19] = "bta_hh_co_close()\n";
 
 void bta_hh_co_data(UINT8 handle, UINT8* pReport, UINT16 len,
                     tBTA_HH_PROTO_MODE mode, UINT8 subClass, UINT8 appId) {

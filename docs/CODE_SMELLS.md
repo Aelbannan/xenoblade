@@ -15,9 +15,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7444 |
 | extern "C" definitions (forced names) | 4105 |
 | `self`/register-style params | 13436 |
-| `void*` (params + locals) | 7896 |
-| raw pointer offset arithmetic | 7507 |
-| deref-through-cast arithmetic | 2896 |
+| `void*` (params + locals) | 7888 |
+| raw pointer offset arithmetic | 7499 |
+| deref-through-cast arithmetic | 2890 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3681 |
@@ -30,7 +30,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 3685 |
+| src/kyoshin/cf/CBattleManager.cpp | 3639 |
 | src/kyoshin/CItemBoxGrid.cpp | 2187 |
 | src/kyoshin/cf/CfCam.cpp | 1738 |
 | src/kyoshin/CItemBoxInfo.cpp | 1704 |
@@ -372,7 +372,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CActParamAnimGame.cpp | 64 | 6 | 49 | 19 | 30 | 24 | 0 | 1 | 21 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 8 | 4 | 26 | 44 | 29 | 13 | 0 | 18 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 12 | 7 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 329 | 562 | 1210 | 589 | 1 | 89 | 141 | 0 | 5 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 329 | 554 | 1202 | 583 | 1 | 89 | 141 | 0 | 5 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 5 | 6 | 8 | 17 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -4015,16 +4015,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CBattleManager.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 0,
-  "deref_arith": 589,
+  "deref_arith": 583,
   "extern_c_nonlbl_decl": 177,
   "extern_c_nonlbl_def": 17,
   "goto_count": 141,
   "init_side_effect": 0,
-  "ptr_arith": 1210,
+  "ptr_arith": 1202,
   "rn_params": 89,
   "schedule_pragma": 5,
   "self_params": 329,
-  "void_ptr": 562
+  "void_ptr": 554
  },
  "src/kyoshin/cf/CCharEffect.cpp": {
   "asm_insn_shim": 0,

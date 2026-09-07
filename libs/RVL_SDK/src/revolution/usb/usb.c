@@ -647,5 +647,5 @@ __declspec(section ".init") void FORCEACTIVEusb_c_4_keep(void) {
                   "IUSB_RegisterInsertionNotifyWithIdAsync",
                   "%s: Not enough memory\n");
 }
-/* last .data slot is 0x17 + 1 pad byte = retail .data 8-align tail */
-char lbl_usb_last[0x18] = "Failed to open %s: %d\n";
+/* last .data slot is exactly 0x17 (retail 0x82F); no pad. */
+char lbl_usb_last[0x17] = "Failed to open %s: %d\n";

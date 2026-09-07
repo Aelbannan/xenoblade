@@ -193,7 +193,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
         break;
     }
 
-    OSReport("\nLast interrupt (%d): SRR0 = 0x%08x  TB = 0x%016llx\n\0\0\0\0\0\0\0",
+    OSReport("\nLast interrupt (%d): SRR0 = 0x%08x  TB = 0x%016llx\n",
              __OSLastInterrupt, __OSLastInterruptSrr0, __OSLastInterruptTime);
     PPCHalt();
 }

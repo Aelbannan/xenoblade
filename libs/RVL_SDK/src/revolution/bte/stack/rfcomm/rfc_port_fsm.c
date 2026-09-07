@@ -7,7 +7,7 @@
 #include <harness_catalog.h>
 
 // Last trace string; definition at file end keeps it last in .data.
-extern char rfc_pn_disc_str[0x28];
+extern char rfc_pn_disc_str[0x26];
 #include <string.h>
 
 /* ------------------------------------------------------------------ */
@@ -827,5 +827,5 @@ void rfc_set_port_state(u8 *p_port_state, MX_FRAME *p_frame)
     }
 }
 
-// Retail .data ends at 0x328: this trace string padded to 0x28 bytes.
-char rfc_pn_disc_str[0x28] = "***** MX PN while disconnecting *****";
+// Retail .data ends at 0x326: exact 0x26-byte trace string (no pad).
+char rfc_pn_disc_str[0x26] = "***** MX PN while disconnecting *****";

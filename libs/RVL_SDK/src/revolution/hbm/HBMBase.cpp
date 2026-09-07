@@ -1,3 +1,11 @@
+// Suppress MWCC's unreferenced gui::EventHandler companion emission
+// (auto vtable/RTTI/typestr cluster appended after the explicit retail tail;
+// the explicit strong __vt__ + tables/strings below already carry the retail
+// bytes, and no code in this TU references the auto companions). CDeviceVI
+// novtable-forward-decl precedent; the full class definition follows via
+// the headers.
+namespace homebutton { namespace gui { class __declspec(novtable) EventHandler; } }
+
 #include <homebuttonLib.h>
 #include <HBMRes.h>
 
@@ -3261,28 +3269,46 @@ namespace lyt {
 } // namespace nw4hbm
 
 /******************************************************************************
- * Retail .data tail (+0xCD0): 0x20 zero pad followed by the gui::Interface
- * typeinfo name string (27 chars + NUL, zero-filled to 0x28). Defined here so
- * the bytes land at the end of this TU's .data exactly like retail.
+ * Retail .data tail (C50..D18): HomeButtonEventHandler vtable, Home typestr,
+ * Home hierarchy, Home RTTI (+gui vtable tail), gui typestr, gui RTTI with
+ * embedded Interface typestr. Typed definitions so MWCC emits the retail
+ * bytes directly: the strong __vt__ suppresses MWCC's weak auto vtable (code
+ * vptr stores resolve here), and referenced pointer tables stay in .data
+ * instead of exiling to .bss as zero blobs. No copy_data_sections.
  ******************************************************************************/
-// Retail tail from 0xC50 onward: 6 symbols that were previously mis-ordered.
-// Decomp had pad(0x20) + gui::Interface(0x28) at 0xC50/0xC70 with extra vtables
-// at 0xC98/0xCE0, while retail has the sequence below at 0xC50..0xD18.
-// Defining them explicitly in retail order makes the bytes and symbols match.
-extern "C" __declspec(section ".data") const unsigned char lbl_8054D4F0[0x10] = {0};
-extern "C" __declspec(section ".data") char lbl_8054D500[0x23] = "homebutton::HomeButtonEventHandler";
-extern "C" __declspec(section ".data") const unsigned char lbl_8054D524[0xC] = {0};
-extern "C" __declspec(section ".data") const unsigned char lbl_8054D530[0x18] = {0};
-extern "C" __declspec(section ".data") char lbl_8054D548[0x1E] = "homebutton::gui::EventHandler";
-extern "C" __declspec(section ".data") const unsigned char lbl_8054D568[0x50] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x68, 0x6F, 0x6D, 0x65, 0x62, 0x75, 0x74, 0x74,
-    0x6F, 0x6E, 0x3A, 0x3A, 0x67, 0x75, 0x69, 0x3A,
-    0x3A, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61,
-    0x63, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+extern "C" {
+extern u32 __vt__Q210homebutton22HomeButtonEventHandler[4];
+extern char lbl_8054D500[0x23];
+extern u32 lbl_8054D524[3];
+extern u32 lbl_8054D530[6];
+extern char lbl_8054D548[0x1E];
+struct HBMGuiEventRTTI {
+    const void* name;
+    u32 filler[9];
+    char iface[0x1C];
+    u32 tail[3];
+};
+extern HBMGuiEventRTTI lbl_8054D568;
+// Virtuals referenced by the tables above (strong out-of-line copies for the
+// gui base live in HBMGUIManager.o; Home's onEvent is defined in this TU).
+extern void onEvent__Q210homebutton22HomeButtonEventHandlerFUlUlPv(u32, u32, void*);
+extern void onEvent__Q310homebutton3gui12EventHandlerFUlUlPv(u32, u32, void*);
+extern void setManager__Q310homebutton3gui12EventHandlerFPQ310homebutton3gui7Manager(void*);
+}
+
+extern "C" u32 __vt__Q210homebutton22HomeButtonEventHandler[4] __attribute__((aligned(8))) = {
+    (u32)&lbl_8054D530, 0,
+    (u32)&onEvent__Q210homebutton22HomeButtonEventHandlerFUlUlPv,
+    (u32)&setManager__Q310homebutton3gui12EventHandlerFPQ310homebutton3gui7Manager,
+};
+extern "C" char lbl_8054D500[0x23] = "homebutton::HomeButtonEventHandler";
+extern "C" u32 lbl_8054D524[3] = { (u32)&lbl_8054D568, 0, 0 };
+extern "C" u32 lbl_8054D530[6] = {
+    (u32)&lbl_8054D500, (u32)&lbl_8054D524, (u32)&lbl_8054D568, 0,
+    (u32)&onEvent__Q310homebutton3gui12EventHandlerFUlUlPv,
+    (u32)&setManager__Q310homebutton3gui12EventHandlerFPQ310homebutton3gui7Manager,
+};
+extern "C" char lbl_8054D548[0x1E] = "homebutton::gui::EventHandler";
+extern "C" HBMGuiEventRTTI lbl_8054D568 = {
+    &lbl_8054D548, {0}, "homebutton::gui::Interface", {0}
 };

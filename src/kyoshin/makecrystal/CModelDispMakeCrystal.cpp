@@ -370,50 +370,89 @@ __declspec(section ".sdata") __attribute__((aligned(8))) __attribute__((used)) c
     lbl_eu_805090E4, lbl_eu_80535F38
 };
 
-// .sdata2 0xA4: retail-ordered individual globals (one label each, so
-// every use compiles to an SDA21 load like retail). Floats/doubles are
-// const (PPC has no float immediates, so uses stay loads); the int tags
-// are plain (non-const) globals so their uses stay SDA21 loads too -- a
-// visible const would fold into immediates and regress .text.
-extern "C" {
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A0 = 1.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A4 = 0.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A8 = 0.063f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684AC = -0.15f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B0 = -1.659f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B4 = 2.037f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B8 = -0.941f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684BC = 70.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C0 = -110.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C4 = -86.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C8 = 72.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684CC = 5.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D0 = 0.2f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D4 = 50.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D8 = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684DC = 20.0f;
-__declspec(section ".sdata2") __attribute__((used)) u16 lbl_eu_806684E0 = 0xFFFF;
-__declspec(section ".sdata2") __attribute__((used)) u8 lbl_eu_806684E2 = 0xFF;
-__declspec(section ".sdata2") __attribute__((used)) u8 gap_11_806684E3_sdata2 = 0;
+// .sdata2 0xA4: individual retail-ordered globals (one symbol per label).
+// MWCC 4.3 (-ipa file) rules, verified by micro-probes against this TU's flags:
+//  - scalar const-float/double reads fold into an anonymous first-use pool
+//    (named defs dropped, pool order diverges) and const-int reads fold into
+//    immediates; struct/array member reads at nonzero offset cost an extra
+//    address instruction. So every code-referenced constant is its own
+//    NON-CONST global: uses stay single SDA21 loads, emission follows
+//    declaration order (hpp decls for A8..C0 updated to match).
+//  - any all-zero object exiles to .sbss2 despite section+used (plain,
+//    const, volatile, scalar and aggregate alike), and every aggregate
+//    (struct or array) is 8-aligned in .sdata2, so no aggregate can own the
+//    0x04 word. Zero words therefore live where MWCC leaves them: A4's 0.0
+//    is the orphan pad MWCC emits before the 8-aligned arr08, the 0x43 gap
+//    hides in E2's u8[2], and the unreferenced 0.0 tails ride in wider
+//    const arrays. A4 itself reads from zeroAnchor[0] in the (dropped)
+//    pool tail -- same shape as CfGimmickJump's trimmed literal pool.
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684A0[1] = {1.0f};
+#define lbl_eu_806684A0 (lbl_eu_806684A0[0])
+__declspec(section ".sdata2") __attribute__((used)) const float arr08[1] __attribute__((aligned(8))) = {0.063f};
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684AC[1] = {-0.15f};
+#define lbl_eu_806684AC (lbl_eu_806684AC[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B0[1] = {-1.659f};
+#define lbl_eu_806684B0 (lbl_eu_806684B0[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B4[1] = {2.037f};
+#define lbl_eu_806684B4 (lbl_eu_806684B4[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684B8[1] = {-0.941f};
+#define lbl_eu_806684B8 (lbl_eu_806684B8[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684BC[1] = {70.0f};
+#define lbl_eu_806684BC (lbl_eu_806684BC[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C0[1] = {-110.0f};
+#define lbl_eu_806684C0 (lbl_eu_806684C0[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C4[1] = {-86.0f};
+#define lbl_eu_806684C4 (lbl_eu_806684C4[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684C8[1] = {72.0f};
+#define lbl_eu_806684C8 (lbl_eu_806684C8[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684CC[1] = {5.0f};
+#define lbl_eu_806684CC (lbl_eu_806684CC[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D0[1] = {0.2f};
+#define lbl_eu_806684D0 (lbl_eu_806684D0[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D4[1] = {50.0f};
+#define lbl_eu_806684D4 (lbl_eu_806684D4[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684D8[1] = {30.0f};
+#define lbl_eu_806684D8 (lbl_eu_806684D8[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684DC[1] = {20.0f};
+#define lbl_eu_806684DC (lbl_eu_806684DC[0])
+// E2's 0xFF + the 0x43 gap ride here: u8 aggregates will not pack at 0x42
+// (4-aligned minimum), but this 4-byte struct lands at 0x40 with exact C
+// packing e0@+0/e2@+2, so only E2's single red-function use costs extra.
+__declspec(section ".sdata2") __attribute__((used)) struct Tag42 { u16 e0; u8 e2[2]; } tag42 = {0xFFFF, 0xFF, 0x00};
+#define lbl_eu_806684E0 (tag42.e0)
+#define lbl_eu_806684E2 (tag42.e2[0])
 __declspec(section ".sdata2") __attribute__((used)) u32 lbl_eu_806684E4 = 0xFFFFFFFF;
 __declspec(section ".sdata2") __attribute__((used)) u16 lbl_eu_806684E8 = 0xFFFF;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684EC = 0.01f;
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_806684F0 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684F8 = 100.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684FC = 0.04f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668500 = 25.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668504 = 1.5f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668508 = 1.05f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066850C = -1.3f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668510[2] = {-20.0f, 0.0f};
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668518 = 0.0f;
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_80668520 = 4503599627370496.0;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668528 = 30.0f;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066852C = 0.01f;
-__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) const double lbl_eu_80668530 = 4503601774854144.0;
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668538[2] = {1.0f, 0.0f};
-__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668540 = 0.0f;
-}
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684EC[1] = {0.01f};
+#define lbl_eu_806684EC (lbl_eu_806684EC[0])
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_806684F0 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684F8[1] = {100.0f};
+#define lbl_eu_806684F8 (lbl_eu_806684F8[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_806684FC[1] = {0.04f};
+#define lbl_eu_806684FC (lbl_eu_806684FC[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668500[1] = {25.0f};
+#define lbl_eu_80668500 (lbl_eu_80668500[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668504[1] = {1.5f};
+#define lbl_eu_80668504 (lbl_eu_80668504[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668508[1] = {1.05f};
+#define lbl_eu_80668508 (lbl_eu_80668508[0])
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066850C[1] = {-1.3f};
+#define lbl_eu_8066850C (lbl_eu_8066850C[0])
+__declspec(section ".sdata2") __attribute__((used)) const float arr70[3] = {-20.0f, 0.0f, 0.0f};
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668520 = 4503599627370496.0;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_80668528 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) float lbl_eu_8066852C = 0.01f;
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) double lbl_eu_80668530 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used)) const float arr98[3] = {1.0f, 0.0f, 0.0f};
+// A4's readable zero (see above); lands in the MWCC pool tail past 0xA4
+// next to the conversion double, trimmed by drop_data_tail like Jump's.
+__declspec(section ".sdata2") __attribute__((used)) const float zeroAnchor[2] = {0.0f, 1.0f};
+#define lbl_eu_806684A4 (zeroAnchor[0])
+#define lbl_eu_806684A8 (arr08[0])
+#define lbl_eu_80668510 (arr70)
+#define lbl_eu_80668518 (arr70[2])
+#define lbl_eu_80668538 (arr98)
+#define lbl_eu_80668540 (arr98[2])
 
 // .bss 2x0xC (crystal vec work) + .sbss crystal-state bytes (hpp declares u8[8]).
 // Plain zero-init: MWCC sorts by size into .bss/.sbss like the old absorbs.

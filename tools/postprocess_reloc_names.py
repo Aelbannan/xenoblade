@@ -3263,13 +3263,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".data", 0x78B),),
     ),
     "l2c_csm.o": UnitRules(
-        # TODO P0: copy_data_sections is a residual crutch. Natural .data is
-        # 0x6A0 vs retail 0x837 (missing 9 trace strings + 9-word execute
-        # table). Strings are used via trace_pool+OFF (no literals), so they
-        # must be added without shifting existing offsets/codegen; the 9-word
-        # table (all &l2c_csm_execute) is trivial. Code is Matching - do not
-        # regress it.
-        copy_data_sections=(".data",),
+        # (trace strings now natural literals in source - raw data MATCH;
+        # kept as anchor in case MWCC re-pools).
     ),
     "l2c_utils.o": UnitRules(
         # MWCC pads .data to 4 (0xE8 vs 0xE7) and .sdata to 8 (0x10 vs 0xE).
@@ -3809,11 +3804,13 @@ UNIT_RULES: dict[str, UnitRules] = {
             # objects under '<'-names that cannot be spelled in source; the
             # retail split references the same structs by address label
             # (lbl_eu_80663520/28/30 in monolibdata1d, 8 bytes each). The
-            # vtable RTTI slots (+0xD0/+0xDC/+0xE8/+0xF4) then carry the
-            # retail names and the data gate passes.
+            # CMsgParam/reslist slots (+0xD0/+0xDC) already carry the retail
+            # names via explicit defs (renames below are no-op guards); the
+            # _reslist_base slot (+0xF4) is retargeted to the strong struct
+            # (see retarget_relocs) so its weak copy can be dropped without
+            # a duplicate-name collision.
             ("__RTTI__12CMsgParam<8>", "lbl_eu_80663520"),
             ("__RTTI__23reslist<P11CWorkThread>", "lbl_eu_80663528"),
-            ("__RTTI__29_reslist_base<P11CWorkThread>", "lbl_eu_80663530"),
         ),
         # The RTTI name strings / typeinfo pool entries the .sdata RTTI
         # structs point at, renamed content-based (their @N numbering drifts
@@ -3836,12 +3833,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # packs the structs at +0x4/+0xC/+0x14. Drop the pad (and the same
         # 4-byte pad in .sbss before lbl_eu_80665598) so sizes/offsets match
         # the retail split, and write the splitter's align=4 convention.
-        # (TODO P0: copy_data_sections below is a residual crutch. Path to
-        # removal proven: pure-decl 8052249C (no explicit def) dedups rodata
-        # to 3 strings, then pad .rodata to 0x4C + trim .sdata/.sbss. BLOCKED:
-        # MWCC auto-emission of _reslist_base RTTI-name is nondeterministic
-        # (3 vs 4 strings across builds); find+remove the ODR-use first.)
-        copy_data_sections=(".rodata", ".sdata", ".sbss"),
+        # (P0 copy removed: CProcess recipe - retarget 1D4 RTTI slot to the
+        # strong struct, drop the sdata pad + weak RTTI tail, drop the rodata
+        # duplicate _reslist_base string tail, drop the sbss pad.)
+        retarget_relocs=((".data", 0xF4, "lbl_eu_80663530"),),
+        drop_data_range=((".sdata", 0x4, 0x8),),
+        drop_nobits_range=((".sbss", 0x4, 0x8),),
+        drop_data_tail=((".rodata", 0x4C), (".sdata", 0x1C),),
         set_data_align=((".rodata", 4), (".sdata", 4), (".sbss", 4)),
     ),
     "CLODCacheManagerS.o": UnitRules(
@@ -6441,12 +6439,15 @@ UNIT_RULES: dict[str, UnitRules] = {
         # object's .data already byte-matches retail (verified 0x00-diff over
         # the full section), and the stale swaps were scattering the
         # "homebutton::HomeButtonEventHandler" typeinfo string.
-        # TODO P0: copy_data_sections is a residual crutch. Natural .data is
-        # +0x48 (+0x38 .bss) over retail (duplicate homebutton typeinfo-name
-        # strings from explicit defs + MWCC auto-emission). Dedup path proven
-        # on CWorkThread (pure-decl + pool rename); apply to D500/D548/D568
-        # zero/string blobs at HBMBase.cpp:3272-3277.
-        copy_data_sections=(".data", ".bss"),
+        # Typed tail (HBMBase.cpp: explicit strong __vt__ + tables/strings)
+        # reproduces the retail C50..D18 bytes; MWCC still appends its
+        # unreferenced Home/EventHandler companion RTTI/typestr cluster after
+        # the explicit defs (the gui vtable companion is already suppressed
+        # by the TU-local novtable forward declaration). Trim that trailing
+        # emission so the section ends at the retail size (thin trailing
+        # drop for MWCC extra pool — blessed per playbook; no retail bytes
+        # are copied).
+        drop_data_tail=((".data", 0xD18),),
     ),
     # NOTE: do NOT add a second "CGXCache.o" UnitRules entry — duplicate dict keys
     # silently shadow the real pool rule above (line ~475) and regress every
@@ -7832,11 +7833,17 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=((struct.pack(">I", 0x3F800000), "lbl_eu_80668498"),),
     ),
     "CModelDispMakeCrystal.o": UnitRules(
-        # Typified wave7: .rodata/.sdata/.sdata2/.bss/.sbss are owned source
-        # defs; MWCC pools one anon conversion double after the struct.
-        # .data is raw: typed color table (0x18) + the TU's two native
-        # switches lowering to same-size jts (0xA4/0x20, same order) +
-        # MWCC's 8-align hole (retail gap word) + typed vtable/RTTI.
+        # Typified: .rodata/.sdata/.sdata2/.bss/.sbss are owned source defs
+        # (see the .cpp .sdata2 block for the MWCC rules). .sdata2 is
+        # retail-exact for the first 0xA4: one symbol per label in retail
+        # order (non-const scalars would sink loads; const scalars fold;
+        # const [1]s hoist like retail; zeros hide in nonzero aggregates).
+        # MWCC appends its pool tail after 0xA4 (zeroAnchor reads +
+        # conversion double, both text-referenced like CfGimmickJump's) ->
+        # trim trailing, keep pool_patterns so the DOL double keeps its
+        # retail name. .data is raw: typed color table (0x18) + the TU's
+        # two native switches lowering to same-size jts (0xA4/0x20, same
+        # order) + MWCC's 8-align hole (retail gap word) + typed vtable/RTTI.
         # data_pool_patterns keeps the DOL jumptable names stable.
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_806684F0"),

@@ -214,7 +214,7 @@ void forward_peer_data(tL2C_CCB *p_ccb, BT_HDR *p_buf)
 
         if (event < L2CAP_PKT_TYPE_CONNECT_REQ)
         {
-            L2CAP_TRACE_ERROR1("L2CAP - cannot send buffer, offset: %d\0", event);
+            L2CAP_TRACE_ERROR1("L2CAP - cannot send buffer, offset: %d", event);
             GKI_freebuf(p_buf);
             p_buf = (BT_HDR *)GKI_dequeue(&p_ccb->xmit_hold_q);
         }
@@ -297,22 +297,20 @@ void l2c_csm_w4_l2ca_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 
 void l2c_csm_w4_l2cap_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 {
-    /* Trace strings are reached through the shared retail pool base (see
-     * l2c_csm_config). */
-    char *trace_pool = "L2CAP - st: CLOSED evt: %d";
     tL2CA_DISCONNECT_CFM_CB *p_disconnect_cfm_cb =
         p_ccb->p_rcb->api.pL2CA_DisconnectCfm_Cb;
     tL2CA_DISCONNECT_IND_CB *p_disconnect_ind_cb =
         p_ccb->p_rcb->api.pL2CA_DisconnectInd_Cb;
     UINT16 local_cid = p_ccb->local_cid;
 
-    L2CAP_TRACE_EVENT1(trace_pool + 0x6b0, event);
+    L2CAP_TRACE_EVENT1("L2CAP - st: W4_L2CAP_DISC_RSP evt: %d", event);
 
     switch (event)
     {
     case L2CEVT_LP_DISCONNECT_IND:      /* Link went down */
-        L2CAP_TRACE_API1(trace_pool + 0x40,
-                         p_ccb->local_cid);
+        L2CAP_TRACE_API1(
+            "L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  No Conf Needed",
+            p_ccb->local_cid);
         l2cu_release_ccb(p_ccb);
         (*p_disconnect_ind_cb)(local_cid, FALSE);
         break;
@@ -321,7 +319,7 @@ void l2c_csm_w4_l2cap_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data
         l2cu_release_ccb(p_ccb);
         if (p_disconnect_cfm_cb)
         {
-            L2CAP_TRACE_API1(trace_pool + 0x6d8,
+            L2CAP_TRACE_API1("L2CAP - Calling DisconnectCfm_Cb(), CID: 0x%04x",
                              local_cid);
             (*p_disconnect_cfm_cb)(local_cid, 0);
         }
@@ -333,7 +331,7 @@ void l2c_csm_w4_l2cap_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data
         l2cu_release_ccb(p_ccb);
         if (p_disconnect_cfm_cb)
         {
-            L2CAP_TRACE_API1(trace_pool + 0x6d8,
+            L2CAP_TRACE_API1("L2CAP - Calling DisconnectCfm_Cb(), CID: 0x%04x",
                              local_cid);
             (*p_disconnect_cfm_cb)(local_cid, 0);
         }
@@ -343,7 +341,7 @@ void l2c_csm_w4_l2cap_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data
         l2cu_release_ccb(p_ccb);
         if (p_disconnect_cfm_cb)
         {
-            L2CAP_TRACE_API1(trace_pool + 0x6d8,
+            L2CAP_TRACE_API1("L2CAP - Calling DisconnectCfm_Cb(), CID: 0x%04x",
                              local_cid);
             (*p_disconnect_cfm_cb)(local_cid, L2CAP_CONN_TIMEOUT);
         }
@@ -356,22 +354,21 @@ void l2c_csm_w4_l2cap_disconnect_rsp(tL2C_CCB *p_ccb, UINT16 event, void *p_data
     }
 }
 
+
 void l2c_csm_open(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 {
-    /* Trace strings are reached through the shared retail pool base (see
-     * l2c_csm_config). */
-    char *trace_pool = "L2CAP - st: CLOSED evt: %d";
     tL2CA_DISCONNECT_IND_CB *p_disconnect_ind_cb =
         p_ccb->p_rcb->api.pL2CA_DisconnectInd_Cb;
     UINT16 local_cid = p_ccb->local_cid;
 
-    L2CAP_TRACE_EVENT1(trace_pool + 0x628, event);
+    L2CAP_TRACE_EVENT1("L2CAP - st: OPEN evt: %d", event);
 
     switch (event)
     {
     case L2CEVT_LP_DISCONNECT_IND:      /* Link went down */
-        L2CAP_TRACE_API1(trace_pool + 0x40,
-                         p_ccb->local_cid);
+        L2CAP_TRACE_API1(
+            "L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  No Conf Needed",
+            p_ccb->local_cid);
         l2cu_release_ccb(p_ccb);
         (*p_disconnect_ind_cb)(local_cid, FALSE);
         break;
@@ -415,7 +412,7 @@ void l2c_csm_open(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
         p_ccb->chnl_state = CST_W4_L2CA_DISCONNECT_RSP;
         btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_L2CAP_CHNL,
                         L2CAP_CHNL_CFG_TOUT);
-        L2CAP_TRACE_API1(trace_pool + 0x54c,
+        L2CAP_TRACE_API1("L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  Conf Needed",
                          p_ccb->local_cid);
         (*p_ccb->p_rcb->api.pL2CA_DisconnectInd_Cb)(p_ccb->local_cid, TRUE);
         break;
@@ -447,25 +444,22 @@ void l2c_csm_open(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
     }
 }
 
+
 void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 {
     tL2CA_DISCONNECT_IND_CB *p_disconnect_ind_cb =
         p_ccb->p_rcb->api.pL2CA_DisconnectInd_Cb;
     UINT16 local_cid = p_ccb->local_cid;
     tL2CAP_CFG_INFO *p_cfg = (tL2CAP_CFG_INFO *)p_data;
-    /* Retail pools the trace strings under one base label (@1658) and reaches
-       them with fixed offsets (+0x40 .. +0x58c); mirror that with a base-var
-       anchored to the pool's first string so MWCC emits the pool label
-       instead of a ...data.0 section reloc. */
-    char *trace_pool = "L2CAP - st: CLOSED evt: %d";
 
-    L2CAP_TRACE_EVENT1(trace_pool + 0x494, event);
+    L2CAP_TRACE_EVENT1("L2CAP - st: CONFIG evt: %d", event);
 
     switch (event)
     {
     case L2CEVT_LP_DISCONNECT_IND:      /* Link went down */
-        L2CAP_TRACE_API1(trace_pool + 0x40,
-                         p_ccb->local_cid);
+        L2CAP_TRACE_API1(
+            "L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  No Conf Needed",
+            p_ccb->local_cid);
         l2cu_release_ccb(p_ccb);
         (*p_disconnect_ind_cb)(local_cid, FALSE);
         break;
@@ -473,7 +467,7 @@ void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
     case L2CEVT_L2CAP_CONFIG_REQ:       /* Peer config request */
         if (l2cu_process_peer_cfg_req(p_ccb, p_cfg))
         {
-            L2CAP_TRACE_API1(trace_pool + 0x4b0,
+            L2CAP_TRACE_API1("L2CAP - Calling Config_Req_Cb(), CID: 0x%04x",
                              p_ccb->local_cid);
             (*p_ccb->p_rcb->api.pL2CA_ConfigInd_Cb)(p_ccb->local_cid, p_cfg);
         }
@@ -492,14 +486,14 @@ void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
             btu_stop_timer(&p_ccb->timer_entry);
             forward_peer_data(p_ccb, NULL);
         }
-        L2CAP_TRACE_API1(trace_pool + 0x4e0,
+        L2CAP_TRACE_API1("L2CAP - Calling Config_Rsp_Cb(), CID: 0x%04x",
                          p_ccb->local_cid);
         (*p_ccb->p_rcb->api.pL2CA_ConfigCfm_Cb)(p_ccb->local_cid, p_cfg);
         break;
 
     case L2CEVT_L2CAP_CONFIG_RSP_NEG:   /* Peer config response (negative) */
         btu_stop_timer(&p_ccb->timer_entry);
-        L2CAP_TRACE_API2(trace_pool + 0x510,
+        L2CAP_TRACE_API2("L2CAP - Calling Config_Rsp_Cb(), CID: 0x%04x, Failure: %d",
                          p_ccb->local_cid,
                          p_cfg->result);
         (*p_ccb->p_rcb->api.pL2CA_ConfigCfm_Cb)(p_ccb->local_cid, p_cfg);
@@ -509,7 +503,7 @@ void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
         btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_L2CAP_CHNL,
                         L2CAP_CHNL_CFG_TOUT);
         p_ccb->chnl_state = CST_W4_L2CA_DISCONNECT_RSP;
-        L2CAP_TRACE_API1(trace_pool + 0x54c,
+        L2CAP_TRACE_API1("L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  Conf Needed",
                          p_ccb->local_cid);
         (*p_ccb->p_rcb->api.pL2CA_DisconnectInd_Cb)(p_ccb->local_cid, TRUE);
         break;
@@ -547,7 +541,7 @@ void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
         break;
 
     case L2CEVT_L2CAP_DATA:             /* Peer data */
-        L2CAP_TRACE_API1(trace_pool + 0x58c,
+        L2CAP_TRACE_API1("L2CAP - Calling DataInd_Cb(), CID: 0x%04x",
                          p_ccb->local_cid);
         (*p_ccb->p_rcb->api.pL2CA_DataInd_Cb)(p_ccb->local_cid, p_data);
         break;
@@ -565,8 +559,9 @@ void l2c_csm_config(tL2C_CCB *p_ccb, UINT16 event, void *p_data)
 
     case L2CEVT_TIMEOUT:                /* Timeout */
         l2cu_send_peer_disc_req(p_ccb);
-        L2CAP_TRACE_API1(trace_pool + 0x40,
-                         p_ccb->local_cid);
+        L2CAP_TRACE_API1(
+            "L2CAP - Calling Disconnect_Ind_Cb(), CID: 0x%04x  No Conf Needed",
+            p_ccb->local_cid);
         l2cu_release_ccb(p_ccb);
         (*p_disconnect_ind_cb)(local_cid, FALSE);
         break;

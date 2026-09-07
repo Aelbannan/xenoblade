@@ -215,11 +215,14 @@ extern "C" int func_80167A18();   // item-menu active gate (CMainMenu.cpp)
 
 // Constructor data imports.
 extern "C" const void* lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)
-extern const f32 lbl_eu_806684A8;
-extern const f32 lbl_eu_806684B0;
-extern const f32 lbl_eu_806684B4;
-extern const f32 lbl_eu_806684B8;
-extern const f32 lbl_eu_806684BC;
-extern const f32 lbl_eu_806684C0;
+// Non-const singletons would sink MWCC's SDA loads below aliasing stores
+// (see CModelDispMakeCrystal.cpp .sdata2 notes); each is a const [1] whose
+// [0] reads hoist like retail. Defined by the TU's .cpp pool block.
+extern const f32 lbl_eu_806684A8[1];
+extern const f32 lbl_eu_806684B0[1];
+extern const f32 lbl_eu_806684B4[1];
+extern const f32 lbl_eu_806684B8[1];
+extern const f32 lbl_eu_806684BC[1];
+extern const f32 lbl_eu_806684C0[1];
 extern const f32 lbl_eu_8066A210;
 

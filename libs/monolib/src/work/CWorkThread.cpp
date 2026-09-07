@@ -890,7 +890,7 @@ u32 lbl_eu_8066351C = 0xFFFFFFFF;
 extern "C" u32 lbl_eu_8056B1C8[3];
 extern "C" const char lbl_eu_80522474[] = "CMsgParam<8>";
 extern "C" const char lbl_eu_80522484[] = "reslist<CWorkThread *>";
-extern "C" const char lbl_eu_8052249C[] = "_reslist_base<CWorkThread *>";
+extern "C" const char lbl_eu_8052249C[]; // (def auto-emitted; pool_patterns renames it to this label)
 extern "C" u32 lbl_eu_80663520[2] = { (u32)lbl_eu_80522474, 0 };
 extern "C" u32 lbl_eu_80663528[2] = { (u32)lbl_eu_80522484, (u32)lbl_eu_8056B1C8 };
 extern "C" u32 lbl_eu_80663530[2] = { (u32)lbl_eu_8052249C, 0 };

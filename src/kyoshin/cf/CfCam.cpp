@@ -49,8 +49,8 @@ class cfCamGameManagerObjMoveFwd;
 // 8-byte typeinfo decls keep them sdata-eligible -> li @sda21).
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
-extern char lbl_eu_80661B28[8];
-extern char lbl_eu_80661B30[8];
+extern const void* lbl_eu_80661B28[2];
+extern const void* lbl_eu_80661B30[2];
 // C++-linkage global; MWCC mangles it to isGlobalCamFlagSet__Fi (the retail name).
 int isGlobalCamFlagSet(int gate);
 // Cross-TU imports (flat retail names).
@@ -99,20 +99,351 @@ void* memset(void* dest, int val, u32 count);
 
 char lbl_eu_80527260[];
 char lbl_eu_805272E8[];
-cf::CfCamFollow* lbl_eu_80663DEC;
+/* (80663DEC moved to the retail-ordered .sbss block below) */
 
-extern const f32 lbl_eu_806662DC; // 0.0f
-extern const f32 lbl_eu_806662B8; // 8.0f
-extern f32 lbl_eu_80661B50;       // 40.0f (.sdata)
-extern const f32 lbl_eu_806662A0; // 0.1f
+/* Step-1 nobits for copy_data_sections removal (cannot affect codegen:
+ * zero-init nobits emit no pool/values, only symbols).
+ * .bss vec3s owned by this split (hpp extern-declares them). */
+float lbl_eu_80570A38[3];
+float lbl_eu_80570A44[3];
+float lbl_eu_80570A50[3];
+float lbl_eu_80570A5C[6];
+/* .sbss owned words missing from this TU's emission. */
+/* (moved to the retail-ordered .sbss block below) */
+
+/* (sdata/sdata2 labels now come from the typed pool structs below via
+ * macros; the old extern decls are removed so no dormant symbols linger.) */
 
 // NOTE: this declaration went missing from the include closure (concurrent
 // edit); restored TU-locally so the TU keeps compiling. Definition is at the
 // bottom of this file (_declspec(noinline) bool func_80074A74).
 extern "C" bool func_80074A74(void* self, f32 argF);
-extern const f32 lbl_eu_806662F0; // 0.4f
-extern const f32 lbl_eu_806662D0; // 1.0f
 }
+
+/* Step-1 nobits, C++ linkage (match the hpp/cpp decls exactly). */
+/* .bss fallback buffer: hpp declares incomplete u8[]; complete to retail. */
+u8 lbl_eu_80570A8C[0x204];
+/* Retail-ordered .sbss true-zero block (retail 0x80663DC8-0x80663DF8).
+ * Declaration order sets emission order; explicit = 0 forces emission.
+ * Adjacent u8 DE0/DE1 are declared together to pack like retail. */
+float lbl_eu_80663DC8 = 0;
+float lbl_eu_80663DCC = 0;
+float lbl_eu_80663DD0 = 0;
+float lbl_eu_80663DD4 = 0;
+float lbl_eu_80663DD8 = 0;
+float lbl_eu_80663DDC = 0;
+extern "C" u8 lbl_eu_80663DE0 = 0;
+u8 lbl_eu_80663DE1 = 0;
+extern "C" float lbl_eu_80663DE4 = 0;
+extern "C" float lbl_eu_80663DE8 = 0;
+extern "C" cf::CfCamFollow* lbl_eu_80663DEC = 0;
+int lbl_eu_80663DF0 = 0;
+int cfcam_sbss_pad_DF4 = 0;
+
+// ----- typified retail data (replaces copy_data_sections) -----
+// .rodata RTTI class names (exact sizes; 804FB4E0's 6-byte pad gap to
+// 804FB4F0 is filled by MWCC's alignment of the blob array).
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_804FB4D0[0x10] = "cf::CfCamFollow";
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_804FB4E0[0x0A] = "cf::CfCam";
+// .rodata camera message-format pool. Offsets match every
+// lbl_eu_804FB4F0+N site in code; tail zero-pads to 0xE0.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_804FB4F0[0xE0] =
+    "opt_camlist\0"
+    "at\0"
+    "pitch\0"
+    "CROSS WATER\0"
+    "WATER AT\0"
+    "water high wa:%.3f map:%.3f %.2f %.2f\n\0"
+    "blend:%.2f l:%.2f\0"
+    "water:%.2f y:%.3f\0"
+    "blend:%.2f %.1f\0"
+    "cliff adj:%d\0"
+    "water\0"
+    "[%.2f %.2f %.2f] [%.2f %.2f %.2f] l:%.3f %.3f\0"
+    "WALL [%.2f %.2f %.2f]\0";
+// .sdata typeinfo pairs (Select precedent). B28/B30 point at this TU's
+// rodata names above; the dispatch halves ship from other TUs.
+extern char lbl_eu_80527154[];
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_80661B28[2] = { lbl_eu_804FB4D0, lbl_eu_80527154 };
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_80661B30[2] = { lbl_eu_804FB4E0, 0 };
+// .sdata scalar pool as a struct (Eve/Item recipe): individual scalars with
+// duplicated values would merge, and the code writes several members, so the
+// struct is volatile (loads/stores stay real pool accesses, Item-proven).
+// Only this TU uses these names (verified), so retail names are macros.
+// .sdata scalar pool as MUTABLE individuals (NOT a struct: struct-member
+// accesses compile to base+offset (extra address insn per access), while
+// direct globals use single SDA loads/stores like the retail shape.
+// Mutable (never const): same-valued objects must keep distinct addresses
+// (no merging) and visible values must not fold code loads. Only this TU
+// uses these names (verified), and sdata holds no zeros (no exile risk).
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B38 = 1.25f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B3C = 0.07f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B40 = 0.3f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B44 = 0.3f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B48 = 0.65f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B4C = 7.5f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B50 = 40.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B54 = 0.5f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B58 = 0.5f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B5C = 1.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B60 = 8.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B64 = 2.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B68 = 20.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B6C = 20.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B70 = 0.25f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B74 = 0.07f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B78 = 24.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+u32 lbl_eu_80661B7C = 4;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B80 = 0.3f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B84 = 0.25f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B88 = 0.5f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B8C = 12.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B90 = 18.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B94 = 30.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B98 = 20.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661B9C = 30.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661BA0 = 45.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+u32 lbl_eu_80661BA4 = 1;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661BA8 = 0.13f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661BAC = 30.0f;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+u8 lbl_eu_80661BB0 = 1;
+__declspec(section ".sdata") __attribute__((used, aligned(4)))
+float lbl_eu_80661BB4 = 0.4f;
+// .sdata2 storage (const cam_-named; unread by code so values never
+// fold; code uses the added lbl_ symbols via extern decls, compiling to
+// single SDA loads with CSE like retail). Zero words use const-float
+// zeros; magic words use const-u32 bits. Gaps hold cam_374_5 (u32[5])
+// and the joint-strings struct (kept as-is below).
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_000 = 0.01f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_004 = 0.1f;
+struct Sdata2_CfCamMagic { u32 pad; u32 hi; u32 lo; };
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+Sdata2_CfCamMagic sdata2_CfCamMagic = {0, 0x43300000, 0x80000000};
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_014 = 0.045f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_018 = 0.65f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_01C = 8.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_020 = 20.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_024 = 30.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_028 = 12.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_02C = 18.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_030 = 1.25f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_034 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_038 = -40.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_03C = 0.75f;
+struct Sdata2_DCE0 { float dc; float e0; };
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+Sdata2_DCE0 sdata2_DCE0 = {0.0f, 0.25f};
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_048 = 40.743664f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 cam_s2_04C = 0x3f847ae1;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 cam_s2_050 = 0x40000000;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_054 = 0.4f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_058 = 0.07f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_05C = 0.3f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_060 = 7.5f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_064 = 40.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_068 = 0.5f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_06C = 2.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_070 = 24.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_074 = 45.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_078 = 0.13f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_07C = 0.8f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_080 = 0.52f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_084 = 6.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_088 = 90.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_08C = 4.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_090 = 0.024543693f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_094 = 10.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_098 = 5.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_09C = -0.6f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0A0 = 0.0001f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0A4 = -0.17f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0A8 = 0.001f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0AC = 0.95f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0B0 = 0.2f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0B4 = 0.6f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0B8 = 0.7f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0BC = -1.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0C0 = 65.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0C4 = 1.3f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0C8 = 0.15f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0CC = 0.007f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0D0 = 0.05f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0D4 = 9.0f;
+// f374 + f378 + pad word + dead double-zero as exact u32 words (float
+// arrays pad starts/ends to 8; u32 arrays pack; the nonzero f374/f378 words
+// keep the object in .sdata2; only f374 is code-read, via plain deref).
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+u32 cam_374_5[5] = {0x3727C5AC, 0x41800000, 0x00000000, 0x00000000, 0x00000000};
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0EC = 0.0625f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0F0 = 0.9f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0F4 = 15.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0F8 = 0.09f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_0FC = 0.06f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_100 = 1.1f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_104 = -5.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_108 = 0.96f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_10C = 1.8f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_110 = 7.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_114 = 3.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_118 = 35.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_11C = -0.3f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_120 = 0.005f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_124 = 1.2f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_128 = -2.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_12C = 0.02f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_130 = -0.9f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_134 = -0.999f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_138 = 0.999f;
+// Joint-name strings + zero word as one plain struct (address-taken only;
+// never value-read).
+struct Sdata2_CfCamStr { u32 m3D8; char sDC[8]; char sE4[8]; char sEC[8]; char sF4[8]; char sFC[8]; char s404[8]; };
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+Sdata2_CfCamStr sdata2_CfCamStr = {0, "JUhead", "JUhd_L", "JUhd_R", "JLhip", "JLft_L", "JLft_R"};
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_170 = -4.5f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_174 = 70.0f;
+__declspec(section ".sdata2") __attribute__((used, aligned(4)))
+float cam_s2_178 = -80.0f;
+
+// .data float lookup tables as individual scalars (NOT float[5] arrays:
+// MWCC pads each 20-byte array to 24, breaking the pack). Code indexes
+// them dynamically; array-view macros preserve the indexing (and the hpp
+// array decls stay dormant). Only this TU uses these names (verified).
+// Scalars are small-data-eligible, so each is pinned to .data explicitly.
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_0 = 0.1f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_1 = 0.08f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_2 = 0.06f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_3 = 0.045f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t208_4 = 0.03f;
+#define lbl_eu_80527208 (*((float(*)[5])&cam_t208_0))
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_0 = 0.07f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_1 = 0.05f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_2 = 0.03f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_3 = 0.02f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t21C_4 = 0.01f;
+#define lbl_eu_8052721C (*((float(*)[5])&cam_t21C_0))
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_0 = 0.27f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_1 = 0.2f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_2 = 0.13f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_3 = 0.1f;
+__declspec(section ".data") __attribute__((used, aligned(4))) float cam_t230_4 = 0.07f;
+#define lbl_eu_80527230 (*((float(*)[5])&cam_t230_0))
+// .data joint-name pointer table (all slots are relocs, zero in-file; a real
+// pointer table keeps MWCC from exiling an all-zero blob to .bss).
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const void* lbl_eu_80527244[7] = {
+    &sdata2_CfCamStr.m3D8, &sdata2_CfCamStr.sDC, &sdata2_CfCamStr.sE4,
+    &sdata2_CfCamStr.sEC, &sdata2_CfCamStr.sF4, &sdata2_CfCamStr.sFC,
+    &sdata2_CfCamStr.s404,
+};
+
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1,
                                                  void* arg2) {

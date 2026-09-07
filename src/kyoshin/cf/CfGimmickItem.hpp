@@ -129,7 +129,11 @@ extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(
 // Data symbols (global-scope objects, not mangled by MWCC).
 extern f32 lbl_eu_8066844C;            // spawn distance constant (sdata2)
 extern u8 lbl_eu_80535A98[];           // CfGimmickItem vtable (0x24)
-extern cf::CfGimmickItemState lbl_eu_80535A50[];  // 6-entry PTMF state table
+// NOTE: retail's 6-entry PTMF state table. Declared as untyped bytes (the
+// dispatch site casts to CfGimmickItemState*): a real PMF array cannot be
+// constructed from free functions, so the table is a byte blob with the
+// (0, -1, func) immediates spelled out. The cast is codegen-neutral.
+extern char lbl_eu_80535A50[];         // 6-entry PTMF state table bytes
 extern u32 lbl_eu_8066413C;            // bdat table pointer (sdata)
 extern char* lbl_eu_806627B8[2];       // { "A_Item", "A_Lost" } name ptrs (sdata)
 extern char lbl_eu_805087AC[];         // bdat column name strings (rodata)

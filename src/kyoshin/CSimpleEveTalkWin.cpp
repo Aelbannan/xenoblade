@@ -13,6 +13,105 @@
 #include <revolution/gx/GXPixel.h>
 #include <string.h>
 
+// ----- typified retail data (replaces copy_data_sections) -----
+// .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_80503E14.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_80503E00[0x14] = "CSimpleEveTalkWin";
+// .rodata layout-name pool: null-separated archive/layout names. The 0x108
+// slot is an empty string (double NUL after txt_name_u); the tail pads with
+// zeros to 0x114. Offsets match every &lbl_eu_80503E14[...] site in code.
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
+char lbl_eu_80503E14[0x114] =
+    "CSimpleEveTalkWin\0"
+    "mf70_cf01_esywin00.brlyt\0"
+    "mf70_cf01_esywin00_in.brlan\0"
+    "mf70_cf01_esywin00_cursor_in.brlan\0"
+    "mf70_cf01_esywin00_cursor_def.brlan\0"
+    "mf00_com00_btn30_anim00.tpl\0"
+    "mf00_com00_btn00_anim00.tpl\0"
+    "pic_cursor00\0"
+    "txt_name\0"
+    "txt_name_r\0"
+    "txt_name_l\0"
+    "txt_name_o\0"
+    "txt_name_u\0"
+    "\0"
+    "txt_mes\0";
+// .data composite vtable 0xC0: reloc slots are zero in-file (linker fills
+// them); the two this-adjust deltas are immediates. Spelled as a blob
+// because the RTTI/typeinfo refs are unspellable retail labels
+// (CSysWinSelect/CSysWinBuff/CSysWinSave absorb precedent).
+__declspec(section ".data") __attribute__((used, aligned(8)))
+char lbl_eu_80532EE0[0xC0] = {
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0x94, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0xFF,0xFF,0xFF,0x90, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+};
+// .data RTTI dispatch block 0x40 (subobject offsets 0x70/0x6C immediates).
+__declspec(section ".data") __attribute__((used, aligned(8)))
+char lbl_eu_80532FA0[0x40] = {
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x70, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x6C,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+};
+// .sdata typeinfo pair (RTTI name + dispatch block).
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_80662560[2] = { lbl_eu_80503E00, lbl_eu_80532FA0 };
+// .sdata2 float pool in retail order, frozen in a struct (CfGimmickElv
+// recipe): MWCC merges same-valued individual scalars (dedup) and exiles
+// zero-valued mutable scalars to .sbss2, but struct members keep exact
+// offsets/bytes. Only this TU references these labels (verified), so the
+// retail names are struct-member macros (no ELF symbols needed).
+struct Sdata2_EveTalkWin {
+    float a0;   // 80667CA0 38.0f tag-proc message scales
+    float a4;   // 80667CA4 -1.0f early-init float
+    float a8;   // 80667CA8 0.0f anim frame
+    float ac;   // 80667CAC 193.0f translate Y
+    float b0;   // 80667CB0 1.0f anim frame target
+    float pad;  // +0x14 0.0f (no retail label)
+    float b8;   // 80667CB8 5.0f
+    float bc;   // 80667CBC 30.0f
+    float c0;   // 80667CC0 50.0f
+    float c4;   // 80667CC4 0.0f
+    float c8;   // 80667CC8 1.0f
+    float cc;   // 80667CCC 0.2f
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_EveTalkWin sdata2_EveTalkWin = {
+    38.0f, -1.0f, 0.0f, 193.0f, 1.0f, 0.0f, 5.0f, 30.0f, 50.0f, 0.0f, 1.0f, 0.2f
+};
+#define lbl_eu_80667CA0 sdata2_EveTalkWin.a0
+#define lbl_eu_80667CA4 sdata2_EveTalkWin.a4
+#define lbl_eu_80667CA8 sdata2_EveTalkWin.a8
+#define lbl_eu_80667CAC sdata2_EveTalkWin.ac
+#define lbl_eu_80667CB0 sdata2_EveTalkWin.b0
+#define lbl_eu_80667CB8 sdata2_EveTalkWin.b8
+#define lbl_eu_80667CBC sdata2_EveTalkWin.bc
+#define lbl_eu_80667CC0 sdata2_EveTalkWin.c0
+#define lbl_eu_80667CC4 sdata2_EveTalkWin.c4
+#define lbl_eu_80667CC8 sdata2_EveTalkWin.c8
+#define lbl_eu_80667CCC sdata2_EveTalkWin.cc
+// .sbss singletons (MWCC auto-routes zero-init small data here; explicit
+// section names are rejected by this TU's MWCC, code_80135FDC recipe).
+// The trailing 3 bytes are retail section padding (hidden gap object).
+// Three scalars (an array would 4-align to offset 8 and bloat to 0xB).
+CSimpleEveTalkWin* lbl_eu_80664320 = 0;
+u8 lbl_eu_80664324 = 0;
+u8 eve_sbss_pad0;
+u8 eve_sbss_pad1;
+u8 eve_sbss_pad2;
+// ----- end typified retail data -----
+
 // Retail declares the constructor as a C-ABI global `__ct__CSimpleEveTalkWin`
 // (the split symbol carries no class-length mangling), so it is kept as a
 // plain C-linkage global function rather than a member ctor (MWCC would

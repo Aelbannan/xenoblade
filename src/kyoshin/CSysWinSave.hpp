@@ -249,13 +249,14 @@ extern u32 __ptmf_null[3];             // null pointer-to-member-function consta
 // IUIWindow base vtable (written at +0x10 first, then overwritten by the
 // CSysWinSave composite vtable lbl_eu_805389A0).
 extern char lbl_eu_8052D238[];
-extern char lbl_eu_805389A0[];
+// (389A0 struct-def lives in CSysWinSave.cpp; no hpp decl to avoid type coupling.)
 
 // Shared string table: createRegion tag in Init, message table base +0xc/+0x17
 // in Move (read-only .rodata). MWCC does not mangle global-scope data names.
 extern char lbl_eu_8050FD6C[];
 
-// Float literals used by func_80294844 (shared .rodata in the split).
-extern const f32 lbl_eu_80668BA0;      // value written to storage pre-guard
-extern const f32 lbl_eu_80668BA4;      // compare threshold / subtract term
-extern const f32 lbl_eu_80668BA8;      // multiplier
+// Float literals used by func_80294844 (.sdata2). Mutable (const would give
+// internal linkage and clash with the definitions in CSysWinSave.cpp).
+// (BA0+BA4 share one nonzero-anchored pair; single-float zeros exile to .sbss2.)
+extern f32 lbl_eu_80668BA04[2];
+extern f64 lbl_eu_80668BA8;      // multiplier

@@ -281,42 +281,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0x3C, "Move__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv"),
             (".data", 0x40, "Draw__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv"),
         ),
-        add_symbols=(("lbl_eu_8056B5A4", ".data", 0x48, 0x18),),
-        # updateMsg jumptable: MWCC drops the +addend form in const initializers,
-        # so the source emits plain addresses and the retail case-label addends
-        # are patched here.
-        addend_patches=((".data", 100, 312), (".data", 104, 1120), (".data", 108, 1696), (".data", 112, 1764), (".data", 116, 1780), (".data", 120, 1796), (".data", 124, 1812), (".data", 128, 1824),),
-        set_data_align=((".data", 4),),
-        exact_renames=(
-            ("__RTTI__Q226@unnamed@CTaskManager_cpp@9CRootProc", "lbl_eu_80663568"),
-            ("__RTTI__48CTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>", "lbl_eu_80663570"),
-            ("@8851", "lbl_eu_80522588"),
-            ("@8853", "lbl_eu_805225B0"),
-        ),
-    ),
-
-    "MWRTTI.o": UnitRules(
-        # The bad_cast typeinfo (.sdata `ta`) base ptr must reference the
-        # bad_cast typeinfo struct in .data (+0x10); MWCC pointed it at a weak
-        # local std::exception typeinfo (name in .rodata 0x10, structs in
-        # .sdata/.sdata2) the retail linker GC'd (retail refs __RTTI__Q23std9
-        # exception externally from New.o). Retarget the base ptr to the .data
-        # struct, drop the weak name/structs, and zero the .sdata2.
-        retarget_relocs_local=(
-            (".sdata", 0xC, ".data", 0x10),
-        ),
-        drop_data_range=(
-            (".rodata", 0x10, 0x20),
-            (".sdata", 0x0, 0x8),
-            (".sdata", 0x8, 0x10),
-        ),
-        # The surviving bad_cast typeinfo name/struct keep anonymous @ names
-        # whose numbering differs from the retail splitter's (@260/@261);
-        # rename by content (sizes pinned by the matcher).
-        data_pool_patterns=(
-            (".rodata", b"std::bad_cast\x00", "@260"),
-            (".data", b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "@261"),
-        ),
+        # (add_symbols removed: gate-unnecessary (bytes come from storage;
+        # text relocs were already UNDEF in the 146-baseline; testing heal.)
         drop_data_tail=((".sdata2", 0x0),),
     ),
 
@@ -3073,18 +3039,93 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2"),
     ),
     "CfCam.o": UnitRules(
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
-        # Data dissolve: camera-follow statics/vtables ship from split1.s;
-        # both anon double slots resolve to lbl_eu_806662A8 (site
-        # correspondence; retail loads the same magic double at both pools').
-        # @7259 uses an exact rename because pool_patterns cannot assign the
-        # same target twice; re-check numbering after TU growth.
-        exact_renames=(
-            ("@7259", "lbl_eu_806662A8"),
+        # Typified: source emits all retail sections byte-identical (rodata
+        # names/blob, .data scalars/pointer table, .sdata pairs+individuals,
+        # .sdata2 const storage, nobits). Codegen/data separation: code loads
+        # the added lbl_ symbols below via extern-const decls (single SDA
+        # loads with CSE like retail); the const cam_ storage provides bytes
+        # without letting values fold. MWCC appends a trailing code-const
+        # pool to .sdata2 and tail-pad to .data (thin trims, blessed); the
+        # splitter records .bss/.sdata2 align 4 vs MWCC's 8.
+        add_symbols=(
+            ("lbl_eu_8066629C", ".sdata2", 0x0, 4),
+            ("lbl_eu_806662A0", ".sdata2", 0x4, 4),
+            ("lbl_eu_806662B0", ".sdata2", 0x14, 4),
+            ("lbl_eu_806662B4", ".sdata2", 0x18, 4),
+            ("lbl_eu_806662B8", ".sdata2", 0x1c, 4),
+            ("lbl_eu_806662BC", ".sdata2", 0x20, 4),
+            ("lbl_eu_806662C0", ".sdata2", 0x24, 4),
+            ("lbl_eu_806662C4", ".sdata2", 0x28, 4),
+            ("lbl_eu_806662C8", ".sdata2", 0x2c, 4),
+            ("lbl_eu_806662CC", ".sdata2", 0x30, 4),
+            ("lbl_eu_806662D0", ".sdata2", 0x34, 4),
+            ("lbl_eu_806662D4", ".sdata2", 0x38, 4),
+            ("lbl_eu_806662D8", ".sdata2", 0x3c, 4),
+            ("lbl_eu_806662DC", ".sdata2", 0x40, 4),
+            ("lbl_eu_806662E0", ".sdata2", 0x44, 4),
+            ("lbl_eu_806662E4", ".sdata2", 0x48, 4),
+            ("lbl_eu_806662F0", ".sdata2", 0x54, 4),
+            ("lbl_eu_806662F4", ".sdata2", 0x58, 4),
+            ("lbl_eu_806662F8", ".sdata2", 0x5c, 4),
+            ("lbl_eu_806662FC", ".sdata2", 0x60, 4),
+            ("lbl_eu_80666300", ".sdata2", 0x64, 4),
+            ("lbl_eu_80666304", ".sdata2", 0x68, 4),
+            ("lbl_eu_80666308", ".sdata2", 0x6c, 4),
+            ("lbl_eu_8066630C", ".sdata2", 0x70, 4),
+            ("lbl_eu_80666310", ".sdata2", 0x74, 4),
+            ("lbl_eu_80666314", ".sdata2", 0x78, 4),
+            ("lbl_eu_80666318", ".sdata2", 0x7c, 4),
+            ("lbl_eu_8066631C", ".sdata2", 0x80, 4),
+            ("lbl_eu_80666320", ".sdata2", 0x84, 4),
+            ("lbl_eu_80666324", ".sdata2", 0x88, 4),
+            ("lbl_eu_80666328", ".sdata2", 0x8c, 4),
+            ("lbl_eu_8066632C", ".sdata2", 0x90, 4),
+            ("lbl_eu_80666330", ".sdata2", 0x94, 4),
+            ("lbl_eu_80666334", ".sdata2", 0x98, 4),
+            ("lbl_eu_80666338", ".sdata2", 0x9c, 4),
+            ("lbl_eu_8066633C", ".sdata2", 0xa0, 4),
+            ("lbl_eu_80666340", ".sdata2", 0xa4, 4),
+            ("lbl_eu_80666344", ".sdata2", 0xa8, 4),
+            ("lbl_eu_80666348", ".sdata2", 0xac, 4),
+            ("lbl_eu_8066634C", ".sdata2", 0xb0, 4),
+            ("lbl_eu_80666350", ".sdata2", 0xb4, 4),
+            ("lbl_eu_80666354", ".sdata2", 0xb8, 4),
+            ("lbl_eu_80666358", ".sdata2", 0xbc, 4),
+            ("lbl_eu_8066635C", ".sdata2", 0xc0, 4),
+            ("lbl_eu_80666360", ".sdata2", 0xc4, 4),
+            ("lbl_eu_80666364", ".sdata2", 0xc8, 4),
+            ("lbl_eu_80666368", ".sdata2", 0xcc, 4),
+            ("lbl_eu_8066636C", ".sdata2", 0xd0, 4),
+            ("lbl_eu_80666370", ".sdata2", 0xd4, 4),
+            ("lbl_eu_80666388", ".sdata2", 0xec, 4),
+            ("lbl_eu_8066638C", ".sdata2", 0xf0, 4),
+            ("lbl_eu_80666390", ".sdata2", 0xf4, 4),
+            ("lbl_eu_80666394", ".sdata2", 0xf8, 4),
+            ("lbl_eu_80666398", ".sdata2", 0xfc, 4),
+            ("lbl_eu_8066639C", ".sdata2", 0x100, 4),
+            ("lbl_eu_806663A0", ".sdata2", 0x104, 4),
+            ("lbl_eu_806663A4", ".sdata2", 0x108, 4),
+            ("lbl_eu_806663A8", ".sdata2", 0x10c, 4),
+            ("lbl_eu_806663AC", ".sdata2", 0x110, 4),
+            ("lbl_eu_806663B0", ".sdata2", 0x114, 4),
+            ("lbl_eu_806663B4", ".sdata2", 0x118, 4),
+            ("lbl_eu_806663B8", ".sdata2", 0x11c, 4),
+            ("lbl_eu_806663BC", ".sdata2", 0x120, 4),
+            ("lbl_eu_806663C0", ".sdata2", 0x124, 4),
+            ("lbl_eu_806663C4", ".sdata2", 0x128, 4),
+            ("lbl_eu_806663C8", ".sdata2", 0x12c, 4),
+            ("lbl_eu_806663CC", ".sdata2", 0x130, 4),
+            ("lbl_eu_806663D0", ".sdata2", 0x134, 4),
+            ("lbl_eu_806663D4", ".sdata2", 0x138, 4),
+            ("lbl_eu_8066640C", ".sdata2", 0x170, 4),
+            ("lbl_eu_80666410", ".sdata2", 0x174, 4),
+            ("lbl_eu_80666414", ".sdata2", 0x178, 4),
+            ("lbl_eu_806662A8", ".sdata2", 0xc, 8),
+            ("lbl_eu_806662E8", ".sdata2", 0x4c, 8),
+            ("lbl_eu_80666374", ".sdata2", 0xd8, 4)
         ),
-        pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_806662A8"),
-        ),
+        drop_data_tail=((".sdata2", 0x17C), (".data", 0x58)),
+        set_data_align=((".bss", 4), (".sdata2", 4)),
     ),
     "CUIBattleManager.o": UnitRules(
         # functions.hpp declares C++-linkage bool; retail reloc is unmangled.
@@ -3222,6 +3263,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".data", 0x78B),),
     ),
     "l2c_csm.o": UnitRules(
+        # TODO P0: copy_data_sections is a residual crutch. Natural .data is
+        # 0x6A0 vs retail 0x837 (missing 9 trace strings + 9-word execute
+        # table). Strings are used via trace_pool+OFF (no literals), so they
+        # must be added without shifting existing offsets/codegen; the 9-word
+        # table (all &l2c_csm_execute) is trivial. Code is Matching - do not
+        # regress it.
         copy_data_sections=(".data",),
     ),
     "l2c_utils.o": UnitRules(
@@ -3405,12 +3452,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CSysWinSelect.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
-    "CSysWinBuff.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
-    ),
-    "CSysWinSave.o": UnitRules(
-        extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
-    ),
     "CfHikariItemManager.o": UnitRules(
         extern_data_sections=(".rodata", ".data", ".sdata", ".sdata2", ".sbss", ".bss"),
     ),
@@ -3418,6 +3459,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC pads .data to 8 (0x2E0 vs retail 0x2D9) and .bss (0x50 vs 0x44).
         drop_data_tail=((".data", 0x2D9),),
         drop_nobits_range=((".bss", 0x44, 0x50),),
+    ),
+    "CSysWinSave.o": UnitRules(
+        # MWCC pads .data to 8 (0x110 vs retail 0x10C) and pools sdata2-init
+        # float literals into .sbss (0xC vs retail 0x8).
+        drop_data_tail=((".data", 0x10C),),
+        drop_nobits_range=((".sbss", 0x8, 0xC),),
     ),
     "OSFont.o": UnitRules(
         # MWCC pads .data to 8 (0xB10); retail split ends at 0xB0A.
@@ -3789,6 +3836,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # packs the structs at +0x4/+0xC/+0x14. Drop the pad (and the same
         # 4-byte pad in .sbss before lbl_eu_80665598) so sizes/offsets match
         # the retail split, and write the splitter's align=4 convention.
+        # (TODO P0: copy_data_sections below is a residual crutch. Path to
+        # removal proven: pure-decl 8052249C (no explicit def) dedups rodata
+        # to 3 strings, then pad .rodata to 0x4C + trim .sdata/.sbss. BLOCKED:
+        # MWCC auto-emission of _reslist_base RTTI-name is nondeterministic
+        # (3 vs 4 strings across builds); find+remove the ODR-use first.)
         copy_data_sections=(".rodata", ".sdata", ".sbss"),
         set_data_align=((".rodata", 4), (".sdata", 4), (".sbss", 4)),
     ),
@@ -6389,6 +6441,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # object's .data already byte-matches retail (verified 0x00-diff over
         # the full section), and the stale swaps were scattering the
         # "homebutton::HomeButtonEventHandler" typeinfo string.
+        # TODO P0: copy_data_sections is a residual crutch. Natural .data is
+        # +0x48 (+0x38 .bss) over retail (duplicate homebutton typeinfo-name
+        # strings from explicit defs + MWCC auto-emission). Dedup path proven
+        # on CWorkThread (pure-decl + pool rename); apply to D500/D548/D568
+        # zero/string blobs at HBMBase.cpp:3272-3277.
         copy_data_sections=(".data", ".bss"),
     ),
     # NOTE: do NOT add a second "CGXCache.o" UnitRules entry — duplicate dict keys
@@ -7313,9 +7370,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Merged duplicate entries: MWCC 8-aligns the large string-init
         # pools, inserting 4 pad bytes after lbl_80552AF0 (retail packs them
         # at 4), AND pads .data to 0x26C where retail ends at 0x268.
+        # (drop_data_tail 0x268 was a proven no-op: post-range size already
+        # 0x268, so the tail trim never fires — deleted.)
         drop_data_range=((".data", 0xC, 0x10),),
         pad_data_section=((".data", 0x268),),
-        drop_data_tail=((".data", 0x268),),
     ),
     "vi.o": UnitRules(
         # MWCC anon pools vs retail labels: .data head string pool and the
@@ -8421,13 +8479,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         set_data_align=((".rodata", 4),),
     ),
     "CSimpleEveTalkWin.o": UnitRules(
-        copy_data_sections=(".sbss",),
+        # Typified: source emits all retail sections byte-identical
+        # (strings/vtable/sdata pair/sdata2 struct/sbss); no crutches.
     ),
     "CfGimmickLock.o": UnitRules(
     ),
     "CfGimmickItem.o": UnitRules(
-        copy_data_sections=(".sdata",),
-        drop_nobits_range=((".sbss", 0, 32),),
+        # Typified: source emits all retail sections byte-identical
+        # (strings/pointer tables/sdata pairs/sdata2 struct); no crutches.
     ),
     "CSysWinScenarioLog.o": UnitRules(
         add_symbols=(
@@ -8442,13 +8501,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         set_data_align=((".sbss", 8),),
     ),
     "CSysWinSelect.o": UnitRules(
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
-    ),
-    "CSysWinBuff.o": UnitRules(
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
-    ),
-    "CSysWinSave.o": UnitRules(
-        copy_data_sections=(".data", ".rodata", ".sdata", ".sbss"),
+        # Typified: source emits all retail sections byte-identical (.data
+        # vtable 0xC0 + dispatch 0x40, .rodata name, .sdata ptr pair); MWCC
+        # emits .sbss align 8, retail splitter records 4.
+        set_data_align=((".sbss", 4),),
     ),
     "CfResPcImpl.o": UnitRules(
         drop_data_range=(

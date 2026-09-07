@@ -29,22 +29,17 @@ extern "C" void* func_8004B3F0(void*, void*);
 extern "C" int func_8006C1B0(void* arg);           // CfCam sibling (FULL_MATCH us-8006cc08)
 extern "C" void func_8006B720(int arg1, int arg2); // CfCam sibling (us-8006c178)
 extern "C" float lbl_eu_80527230[];
-extern "C" float lbl_eu_80661BA8;
 extern "C" float lbl_eu_80663DE4;     // .sbss float (retail 0x80663DE4)
 extern "C" float lbl_eu_80663DE8;     // .sbss float (retail 0x80663DE8)
-extern "C" float lbl_eu_8066632C;     // .sdata2 float constant
 extern "C" float lbl_eu_80570A38[3];  // .bss vec3 (retail 0x80570A38)
 // .bss float (retail 0x80570A44). Sized >8B so MWCC uses full lis/@l addressing
 // (SDA threshold) - only [0] is ever referenced.
 extern "C" float lbl_eu_80570A44[3];
 extern "C" float lbl_eu_80570A50[3];  // .bss vec3 (retail 0x80570A50)
-extern "C" float lbl_eu_80570A5C[3];  // .bss vec3 (retail 0x80570A5C)
+extern "C" float lbl_eu_80570A5C[6];  // .bss 6 floats (retail 0x80570A5C, size 0x18)
 extern "C" void func_804BE4B4(void*, int);
 extern "C" void* func_804BE4E0(void*, int);
 extern "C" float scaleByGlobal(float val);
-extern "C" float lbl_eu_80661B60;     // .sdata float (retail 0x80661B60)
-extern "C" float lbl_eu_80661B4C;     // .sdata float (retail 0x80661B4C)
-extern "C" int lbl_eu_80661BA4;       // .sdata word (retail 0x80661BA4)
 extern "C" u32 func_80061FE8();                          // mtl heap handle for cf allocations
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 // func_8006F5C8 callees (flat retail names, same naming class)
@@ -60,7 +55,6 @@ extern "C" int func_801B0F8C();
 extern "C" int func_8017FD44();
 extern "C" int func_802751F8(void* self);
 extern "C" int isSceneActive__Q22cf13CfGameManagerFv();
-extern "C" float lbl_eu_80666358; // .sdata2 constant
 extern "C" int func_8006C6B4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
 extern "C" void func_8006D734(void* self, void* src);     // CfCam sibling (retail 0x8006E18C)
 extern "C" __declspec(noinline) u8* func_8006BF14(u8*, int); // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp; noinline keeps the retail bl at call sites
@@ -77,17 +71,6 @@ extern "C" float lbl_eu_80527208[5];
 extern "C" float lbl_eu_8052721C[5];
 // .sdata floats (retail 0x80661B3C, 0x80661B40, 0x80661B44, 0x80661B48,
 // 0x80661B74). Scalar stores - only the .data tables below are indexed.
-extern "C" float lbl_eu_80661B3C;
-extern "C" float lbl_eu_80661B40;
-extern "C" float lbl_eu_80661B44;
-extern "C" float lbl_eu_80661B48;
-extern "C" float lbl_eu_80661B74;
-extern "C" float lbl_eu_806662B0;     // .sdata2 constant (retail 0x806662B0)
-extern "C" float lbl_eu_806662B4;     // .sdata2 constant (retail 0x806662B4)
-extern "C" float lbl_eu_806662D8;     // .sdata2 angle offset (retail 0x806662D8)
-extern "C" float lbl_eu_806662E0;     // .sdata2 divisor (retail 0x806662E0)
-extern "C" float const lbl_eu_806662E4;     // .sdata2 sine multiplier (retail 0x806662E4)
-extern "C" double lbl_eu_806662E8;    // .sdata2 fmod wrap divisor, double (retail 0x806662E8)
 extern "C" float lbl_eu_8066A200;     // .sdata2 pi/2 (retail 0x8066A200)
 extern "C" u8 lbl_eu_80663DE0;        // .sdata byte gate (retail 0x80663DE0)
 extern "C" void func_80059610(void*, float);        // retail 0x80059C78
@@ -117,15 +100,11 @@ extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b); // vec3 sub
 extern "C" float func_800A3EF4(float x);   // FSqrt-style sqrt with nw4r assert (retail 0x800A3EF4)
 extern "C" f32 func_8004CC40(f32 a, f32 b); // sin wrapper; CfCam call sites pass 2 args (retail 0x8004D2D8)
 extern "C" f32 func_8004BC28(f32 value);   // wrap angle into [-pi, pi) (retail 0x8004C300)
-extern "C" float lbl_eu_80666368;          // .sdata2 step increment (retail 0x80666368)
-extern "C" float lbl_eu_806662F8;          // .sdata2 follow-distance cap (retail 0x806662F8)
-extern "C" float lbl_eu_8066636C;          // .sdata2 decay step (retail 0x8066636C)
 extern "C" float lbl_eu_8066A1F8;          // .sdata2 pi (retail 0x8066A1F8)
 extern char lbl_eu_80526324[];              // nw4r FSqrt assert source-file string (retail .data)
 extern char lbl_eu_80526300[];              // nw4r FSqrt assert message string (retail .data)
 extern char lbl_eu_805262F0[];              // nw4r assert source-file string (retail .data)
 extern char lbl_eu_805262C8[];              // nw4r assert message string (retail .data)
-extern const float lbl_eu_80666340;         // .sdata2 constant
 // func_8006E884 cross-TU imports (flat retail names).
 extern "C" int func_8007560C();             // gate probe
 extern "C" void func_80071B78(void* self, float f);
@@ -383,11 +362,7 @@ int func_804BE4AC();
 ml::CVec3* func_804BE50C(u32 index);
 ml::CVec3* func_804BE520(int index);
 int func_804BE2E8(void* vec, u32 mask, int a, int b);
-float lbl_eu_806663CC;                               // .sdata2 constant
-float lbl_eu_806663D0;                               // .sdata2 constant
-float lbl_eu_806663D4;                               // .sdata2 constant
-extern const float lbl_eu_806663BC;                  // .sdata2 constant
-float lbl_eu_8066AF20;                               // .sdata2 constant
+extern float lbl_eu_8066AF20;                               // owned elsewhere (not this split)
 // The CfCam_ps.inl kernel body is visible in this TU; MWCC would otherwise
 // inline it. noinline keeps the retail `bl func_8006C6E8` at call sites.
 extern "C" __declspec(noinline) void func_8006C6E8(nw4r::math::VEC3* out,
@@ -396,68 +371,19 @@ extern "C" __declspec(noinline) void func_8006C6E8(nw4r::math::VEC3* out,
 // In-TU definition (CfCam.cpp) whose nw4r VEC3LenSq body MWCC would inline;
 // noinline keeps the retail `bl func_8006DFC8` at call sites.
 extern "C" __declspec(noinline) f32 func_8006DFC8(const nw4r::math::VEC3* vector);
-float lbl_eu_80663DD4;                               // .sbss float (retail 0x80663DD4)
-float lbl_eu_80663DD8;                               // .sbss float
-extern const float lbl_eu_80666330;                             // .sdata2 constant
-float lbl_eu_806662D4;                               // .sdata2 constant
-float lbl_eu_80666370;                               // .sdata2 constant
-float lbl_eu_80666374;                               // .sdata2 constant
-float lbl_eu_80663DC8;                               // .sbss float
-float lbl_eu_80663DCC;                               // .sbss float
-float lbl_eu_8066635C;                               // .sdata2 constant
-float lbl_eu_8066638C;                               // .sdata2 constant
-float lbl_eu_80666324;                               // .sdata2 constant
-float lbl_eu_8066A1FC;                               // .sdata2 constant (2*pi)
-extern const float lbl_eu_80666308;                               // .sdata2 constant
-extern const float lbl_eu_80666390;                               // .sdata2 constant
-extern const float lbl_eu_806662CC;                               // .sdata2 constant
+extern float lbl_eu_8066A1FC;                               // owned elsewhere (not this split)
 extern const float lbl_eu_8066A210;                               // .sdata2 constant (degrees-to-radians scale)
-extern float lbl_eu_806662BC;                               // .sdata2 constant
-extern float lbl_eu_806662C0;                               // .sdata2 constant
-extern float lbl_eu_806662C4;                               // .sdata2 constant
-extern float lbl_eu_806662C8;                               // .sdata2 constant
-extern const float lbl_eu_80666318;                               // .sdata2 constant
-float lbl_eu_80661B58;                               // .sdata float (retail 0x80661B58)
 // .bss camera-defaults block (retail 0x80570A20): nine vec3 slots followed by
 // trailing state words zeroed by the sinit.
 struct CamDefaultsBlock {
     ml::CVec3 dir[9]; // 0x00..0x6c
     u8 rest[0x194];   // 0x6c..0x200
 };
-CamDefaultsBlock lbl_eu_80570A20;
-float lbl_eu_80661B54;                               // .sdata float (retail 0x80661B54)
-float lbl_eu_80661B5C;                               // .sdata float (retail 0x80661B5C)
-float lbl_eu_80661B64;                               // .sdata float (retail 0x80661B64)
-float lbl_eu_80661B68;                               // .sdata float (retail 0x80661B68)
-float lbl_eu_80661B6C;                               // .sdata float (retail 0x80661B6C)
-float lbl_eu_80661B70;                               // .sdata float (retail 0x80661B70)
-float lbl_eu_80661B78;                               // .sdata float (retail 0x80661B78)
-float lbl_eu_80661B80;                               // .sdata float (retail 0x80661B80)
-float lbl_eu_80661B84;                               // .sdata float (retail 0x80661B84)
-float lbl_eu_80661B88;                               // .sdata float (retail 0x80661B88)
-float lbl_eu_80661BAC;                               // .sdata float (retail 0x80661BAC)
-float lbl_eu_80663DDC;                               // .sdata float (retail 0x80663DDC)
-extern unsigned int lbl_eu_80527244[];               // .data word table (retail 0x80527244)
-extern const float lbl_eu_80666304;                  // .sdata2 constant
-extern const float lbl_eu_806662F4;                  // .sdata2 constant
-extern const float lbl_eu_806662FC;                  // .sdata2 constant
-extern const float lbl_eu_8066630C;                  // .sdata2 constant
-extern const float lbl_eu_80666310;                  // .sdata2 constant
-extern const float lbl_eu_80666314;                  // .sdata2 constant
-float lbl_eu_80661B38;                               // .sdata float (retail 0x80661B38)
-u32 lbl_eu_80661B7C;                                  // .sdata word (retail 0x80661B7C)
-float lbl_eu_80661B8C;                               // .sdata float (retail 0x80661B8C)
-float lbl_eu_80661B90;                               // .sdata float (retail 0x80661B90)
-float lbl_eu_80661B94;                               // .sdata float (retail 0x80661B94)
-u8 lbl_eu_80661BB0;                                  // .sdata byte gate (retail 0x80661BB0)
-extern const float lbl_eu_80666344;                  // .sdata2 constant
-extern const float lbl_eu_80666348;                  // .sdata2 constant
-extern const float lbl_eu_80666350;                  // .sdata2 constant
-float lbl_eu_80661BA0;                               // .sdata float (retail 0x80661BA0)
-float lbl_eu_80661B98;                               // .sdata float (retail 0x80661B98)
-float lbl_eu_80661B9C;                               // .sdata float (retail 0x80661B9C)
-u8 lbl_eu_80663DE1;                                  // .sdata byte (retail 0x80663DE1)
-float lbl_eu_80663DD0;                               // .sbss float (retail 0x80663DD0)
+// Owned by another TU (CfScript.o defines the 0xC bss instance); this TU
+// only references it, so declare extern (a tentative here would wrongly
+// emit 0x200 into this TU's .bss).
+extern CamDefaultsBlock lbl_eu_80570A20;
+extern const void* lbl_eu_80527244[7];               // .data joint-name table (retail 0x80527244)
 float lbl_eu_80570A74[3];                            // .bss vec3 (retail 0x80570A74)
 float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x80570A80)
 extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
@@ -478,9 +404,10 @@ struct CamDefTable {
     CamDefEntry entries[3]; // 0x00..0xcc
     u8 tail[0x34];          // 0xcc..0x100
 };
-CamDefTable lbl_eu_80527160;
+// Owned by another TU (CfCamEvent.o defines the .data instance); extern
+// here so this TU's .bss does not gain a bogus 0x88 tentative.
+extern CamDefTable lbl_eu_80527160;
 extern const char* lbl_eu_805271FC[];                // .data bdat-table-name entries (retail 0x805271FC)
-float lbl_eu_80666328;                               // .sdata2 constant
 void* func_8006D400(void* obj);                      // CfCam sibling (retail 0x8006D400)
 float func_8006D408(void* pose);                     // CfCam sibling (retail 0x8006D408)
 void* func_80496264(void* scene, int index);         // scene pose/xform block lookup
@@ -491,13 +418,6 @@ void func_8006DFE0(void* self, const void* arg2, float* out1, float* out2,
                    int flag, float dist);
 void func_8006E0C8(void* self, const void* arg2, float* out1, float* out2,
                    int flag);
-extern const double lbl_eu_806662A8;                 // .sdata2 double constant (retail 0x806662A8)
-extern const f32 lbl_eu_8066639C;                    // .sdata2 constant
-extern const f32 lbl_eu_8066640C;                    // .sdata2 constant
-extern const f32 lbl_eu_80666410;                    // .sdata2 constant
-extern const f32 lbl_eu_80666414;                    // .sdata2 constant
-extern const f32 lbl_eu_806663C8;                    // .sdata2 constant
-extern const f32 lbl_eu_80666354;                    // .sdata2 constant
 }
 
 class CfCamEventManager;
@@ -533,12 +453,6 @@ int func_8006DC94(void* x);
 int func_8004B848(void* x);               // vec helper probe
 void func_8004B0B4(void* v);              // vec helper
 void* func_8016FE34(void* source);        // object state getter
-float lbl_eu_8066629C;                    // .sdata2 constant
-float lbl_eu_80666300;                    // .sdata2 constant
-float lbl_eu_8066631C;                    // .sdata2 constant
-float lbl_eu_80666320;                    // .sdata2 constant
-float lbl_eu_80666334;                    // .sdata2 constant
-float lbl_eu_80666338;                    // .sdata2 constant
 float lbl_eu_80570A2C[3];                 // .bss vec3 (retail 0x80570A2C)
 u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
 // In-TU definitions (CfCam.cpp) whose differing signatures keep the bl at
@@ -562,10 +476,6 @@ int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* actor);
 int func_8006DFBC(void* obj);
 float func_800504BC(const f32* a, const f32* b); // vec dot product
 float func_8006D410(float x);
-extern const float lbl_eu_8066633C; // .sdata2 constant
-extern const float lbl_eu_80666360; // .sdata2 constant
-extern const float lbl_eu_8066634C; // .sdata2 constant
-extern const float lbl_eu_80666364; // .sdata2 blend gain
 }
 
 // 48-byte / 12-word camera data block copied whole by func_8006EF1C.
@@ -574,3 +484,82 @@ struct CfCamWordBlock48 {
 };
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1, void* arg2);
+
+// .sdata2 pool code symbols (added postprocess by UnitRules; storage lives
+// in CfCam.cpp as const cam_ objects so values never fold, while these
+// extern-const decls compile code loads with CSE like retail).
+extern const float lbl_eu_8066629C;
+extern const float lbl_eu_806662A0;
+extern const float lbl_eu_806662B0;
+extern const float lbl_eu_806662B4;
+extern const float lbl_eu_806662B8;
+extern const float lbl_eu_806662BC;
+extern const float lbl_eu_806662C0;
+extern const float lbl_eu_806662C4;
+extern const float lbl_eu_806662C8;
+extern const float lbl_eu_806662CC;
+extern const float lbl_eu_806662D0;
+extern const float lbl_eu_806662D4;
+extern const float lbl_eu_806662D8;
+extern const float lbl_eu_806662DC;
+extern const float lbl_eu_806662E0;
+extern const float lbl_eu_806662E4;
+extern const float lbl_eu_806662F0;
+extern const float lbl_eu_806662F4;
+extern const float lbl_eu_806662F8;
+extern const float lbl_eu_806662FC;
+extern const float lbl_eu_80666300;
+extern const float lbl_eu_80666304;
+extern const float lbl_eu_80666308;
+extern const float lbl_eu_8066630C;
+extern const float lbl_eu_80666310;
+extern const float lbl_eu_80666314;
+extern const float lbl_eu_80666318;
+extern const float lbl_eu_8066631C;
+extern const float lbl_eu_80666320;
+extern const float lbl_eu_80666324;
+extern const float lbl_eu_80666328;
+extern const float lbl_eu_8066632C;
+extern const float lbl_eu_80666330;
+extern const float lbl_eu_80666334;
+extern const float lbl_eu_80666338;
+extern const float lbl_eu_8066633C;
+extern const float lbl_eu_80666340;
+extern const float lbl_eu_80666344;
+extern const float lbl_eu_80666348;
+extern const float lbl_eu_8066634C;
+extern const float lbl_eu_80666350;
+extern const float lbl_eu_80666354;
+extern const float lbl_eu_80666358;
+extern const float lbl_eu_8066635C;
+extern const float lbl_eu_80666360;
+extern const float lbl_eu_80666364;
+extern const float lbl_eu_80666368;
+extern const float lbl_eu_8066636C;
+extern const float lbl_eu_80666370;
+extern const float lbl_eu_80666388;
+extern const float lbl_eu_8066638C;
+extern const float lbl_eu_80666390;
+extern const float lbl_eu_80666394;
+extern const float lbl_eu_80666398;
+extern const float lbl_eu_8066639C;
+extern const float lbl_eu_806663A0;
+extern const float lbl_eu_806663A4;
+extern const float lbl_eu_806663A8;
+extern const float lbl_eu_806663AC;
+extern const float lbl_eu_806663B0;
+extern const float lbl_eu_806663B4;
+extern const float lbl_eu_806663B8;
+extern const float lbl_eu_806663BC;
+extern const float lbl_eu_806663C0;
+extern const float lbl_eu_806663C4;
+extern const float lbl_eu_806663C8;
+extern const float lbl_eu_806663CC;
+extern const float lbl_eu_806663D0;
+extern const float lbl_eu_806663D4;
+extern const float lbl_eu_8066640C;
+extern const float lbl_eu_80666410;
+extern const float lbl_eu_80666414;
+extern const double lbl_eu_806662A8;
+extern const double lbl_eu_806662E8;
+extern const float lbl_eu_80666374;

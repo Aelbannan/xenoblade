@@ -167,8 +167,8 @@ struct CSysWinDataBuff {
 };
 
 // Global data imports (MWCC does not mangle global-scope data names).
-extern CSysWinBuff* lbl_eu_806648E0;  // singleton instance pointer (.sbss)
-extern u32 lbl_eu_806648E4;           // loaded-FP / buff state word (.sbss)
+// (singleton/word moved to CSysWinBuff.cpp as single global defs to dodge
+// a MWCC-1.1 decl-merging fault (10322) on these two.)
 extern u32 lbl_eu_806640E0;           // message-table word read by Move's label lookup
 extern char lbl_eu_8052D238[];        // temp IUIWindow vtable (.data)
 extern char lbl_eu_80537DC0[];        // CSysWinBuff composite vtable (.data)

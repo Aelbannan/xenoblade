@@ -11,15 +11,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16537 |
-| extern "C" declarations (non-lbl_*, imports) | 7444 |
-| extern "C" definitions (forced names) | 4106 |
-| `self`/register-style params | 13430 |
-| `void*` (params + locals) | 7888 |
-| raw pointer offset arithmetic | 7535 |
+| extern "C" (total lines) | 16541 |
+| extern "C" declarations (non-lbl_*, imports) | 7445 |
+| extern "C" definitions (forced names) | 4105 |
+| `self`/register-style params | 13436 |
+| `void*` (params + locals) | 7905 |
+| raw pointer offset arithmetic | 7536 |
 | deref-through-cast arithmetic | 2896 |
-| inline asm / `register` | 125 |
-| rN-named params | 466 |
+| inline asm / `register` | 128 |
+| rN-named params | 472 |
 | goto | 3681 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 10 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
@@ -32,7 +32,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 3735 |
 | src/kyoshin/CItemBoxGrid.cpp | 2187 |
-| src/kyoshin/cf/CfCam.cpp | 1728 |
+| src/kyoshin/cf/CfCam.cpp | 1738 |
 | src/kyoshin/CItemBoxInfo.cpp | 1704 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1647 |
 | libs/monolib/src/coli/code_804A6C60.cpp | 1556 |
@@ -347,8 +347,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CSkipTimer.cpp | 13 | 14 | 72 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSortMenu.cpp | 5 | 29 | 0 | 3 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWin.cpp | 1 | 21 | 25 | 8 | 3 | 3 | 0 | 0 | 14 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinBuff.cpp | 6 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinSave.cpp | 4 | 7 | 9 | 5 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinBuff.cpp | 2 | 5 | 14 | 14 | 0 | 0 | 3 | 6 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinSave.cpp | 4 | 7 | 9 | 11 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -389,7 +389,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CTaskREvtSequence.cpp | 3 | 12 | 51 | 29 | 5 | 8 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CVision.cpp | 20 | 3 | 49 | 51 | 45 | 11 | 0 | 16 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 32 | 0 | 0 | 38 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCam.cpp | 17 | 143 | 396 | 138 | 18 | 11 | 0 | 4 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfCam.cpp | 22 | 143 | 396 | 143 | 18 | 11 | 0 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamDirectionIntf.cpp | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent.cpp | 17 | 3 | 32 | 12 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent_1.cpp | 12 | 3 | 35 | 36 | 6 | 5 | 0 | 1 | 9 | 0 | 0 | 0 |
@@ -3742,13 +3742,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 8
  },
  "src/kyoshin/CSysWinBuff.cpp": {
+  "asm_code": 3,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 6,
-  "extern_c_nonlbl_def": 6,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
+  "rn_params": 6,
   "schedule_pragma": 0,
-  "self_params": 8,
-  "void_ptr": 8
+  "self_params": 14,
+  "void_ptr": 14
  },
  "src/kyoshin/CSysWinSave.cpp": {
   "asm_insn_shim": 0,
@@ -3756,9 +3758,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 7,
   "goto_count": 2,
   "init_side_effect": 0,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 9,
-  "void_ptr": 5
+  "void_ptr": 11
  },
  "src/kyoshin/CSysWinScenarioLog.cpp": {
   "asm_insn_shim": 0,
@@ -4193,14 +4196,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CfCam.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 11,
-  "extern_c_nonlbl_decl": 17,
+  "extern_c_nonlbl_decl": 22,
   "extern_c_nonlbl_def": 143,
   "init_side_effect": 0,
   "ptr_arith": 18,
   "rn_params": 4,
   "schedule_pragma": 0,
   "self_params": 396,
-  "void_ptr": 138
+  "void_ptr": 143
  },
  "src/kyoshin/cf/CfCamDirectionIntf.cpp": {
   "asm_insn_shim": 0,

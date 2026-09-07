@@ -154,7 +154,7 @@ enum {
 
 void func_80210668(cf::CfGimmickItem* self) {
     // Dispatch the current state through the 12-byte PTMF table.
-    (self->*lbl_eu_80535A50[self->field_9E])();
+    (self->*((cf::CfGimmickItemState*)lbl_eu_80535A50)[self->field_9E])();
 
     if (self->field_74 & kItemFlagWork) {
         if (self->field_66 & 1) {
@@ -394,3 +394,111 @@ void func_802108D8(cf::CfGimmickItem* self) {
 // ---------------------------------------------------------------------------
 
 extern "C" void func_80210C1C() {}
+
+// ----- typified retail data (replaces copy_data_sections) -----
+// .rodata RTTI class-name (0x12) + 2-byte pad gap to lbl_eu_805087AC.
+__declspec(section ".rodata") __attribute__((used, aligned(8)))
+char lbl_eu_80508798[0x14] = "cf::CfGimmickItem";
+// .rodata BDAT column-name pool. Offsets match every lbl_eu_805087AC+N site
+// in the ctor (0x00 rectype .. 0x57 quest_Min); tail zero-pads to 0x64.
+// .rodata BDAT column-name pool as an UNREFERENCED pad object with exact
+// retail bytes. Rationale: defining the code-referenced lbl_eu_805087AC
+// locally perturbs MWCC's whole-function scheduling for the ctor
+// (92.1% -> 21.4% with ANY local def, even zero-init), while an
+// unreferenced object with identical bytes is codegen-neutral (proven by
+// the lbl_eu_80508798 control). lbl_eu_805087AC itself stays extern, so
+// the ctor keeps its baseline schedule; the pad supplies the section bytes.
+__declspec(section ".rodata") __attribute__((used, aligned(4)))
+static char gimmickitem_rodata_87AC_pad[0x64] =
+    "rectype\0"
+    "geItem\0"
+    "MSG1\0"
+    "MSG2\0"
+    "time\0"
+    "LODObj\0"
+    "LODSub\0"
+    "LODType\0"
+    "EFF\0"
+    "camID\0"
+    "swtSE\0"
+    "finSE\0"
+    "ct\0"
+    "quest_Max\0"
+    "quest_Min\0";
+// .data vtable-shaped blocks as real pointer tables (in-file bytes are
+// zero at reloc sites, matching retail; all-zero char blobs would be exiled
+// to .bss by MWCC). 80535A18 is referenced by CfGimmickJump's code; 80535A3C
+// feeds this TU's .sdata pair B0. Forward-declared with exact types.
+extern const void* lbl_eu_806627B0[2];   // defined below (.sdata)
+extern const void* lbl_eu_80535A3C[5];   // defined below (.data)
+extern char lbl_eu_80661BE0[];
+extern char lbl_eu_80662708[];
+extern "C" {
+void func_8020896C(void);
+void func_8020F484(void);
+void func_801F4B64(void);
+void func_801F4BF8(void);
+void func_801F4C8C(void);
+void func_8020F38C(void);
+void __dt__Q22cf13CfGimmickJumpFv(void*, int);
+}
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const void* lbl_eu_80535A18[9] = {
+    lbl_eu_806627B0, 0,
+    (const void*)__dt__Q22cf13CfGimmickJumpFv,
+    (const void*)func_8020896C, (const void*)func_8020F484,
+    (const void*)func_801F4B64, (const void*)func_801F4BF8,
+    (const void*)func_801F4C8C, (const void*)func_8020F38C,
+};
+__declspec(section ".data") __attribute__((used, aligned(8)))
+const void* lbl_eu_80535A3C[5] = {
+    lbl_eu_80661BE0, 0, lbl_eu_80662708, 0, 0,
+};
+// .data PTMF state table: 6 x (this-delta 0, -1 marker, func addr).
+// Func slots are zero in-file (linker fills them); -1 words are immediates.
+__declspec(section ".data") __attribute__((used, aligned(8)))
+char lbl_eu_80535A50[0x48] = {
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF, 0x00,0x00,0x00,0x00,
+};
+// .sdata2 item-name strings (7 chars + NUL + 1 pad byte each). Declared
+// before the .sdata pair that takes their addresses.
+__declspec(section ".sdata2") __attribute__((used, aligned(1)))
+char lbl_eu_80668438[8] = "A_Item";
+__declspec(section ".sdata2") __attribute__((used, aligned(1)))
+char lbl_eu_80668440[8] = "A_Lost";
+// .sdata typeinfo pairs. A0/A8/B0 point at other TUs' labels (Select
+// precedent: reloc slots are zero in-file); B8 points at this TU's sdata2
+// strings below.
+extern char lbl_eu_805086D8[];
+extern char lbl_eu_80535924[];
+extern char lbl_eu_805086F8[];
+extern char lbl_eu_805359D4[];
+extern char lbl_eu_80508728[];
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_806627A0[2] = { lbl_eu_805086D8, lbl_eu_80535924 };
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_806627A8[2] = { lbl_eu_805086F8, lbl_eu_805359D4 };
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+const void* lbl_eu_806627B0[2] = { lbl_eu_80508728, lbl_eu_80535A3C };
+__declspec(section ".sdata") __attribute__((used, aligned(8)))
+char* lbl_eu_806627B8[2] = { lbl_eu_80668438, lbl_eu_80668440 };
+// .sdata2 float pool as a struct (Eve/Elv recipe): individual scalars would
+// dedup (two 0.0f) and exile zero mutable scalars to .sbss2. CONST (Elv
+// precedent): struct members keep exact offsets; code loads stay pool loads.
+// Only this TU uses these names.
+struct Sdata2_GimmickItem {
+    float lod;    // 80668448 0.0f LOD constant
+    float dist;   // 8066844C 5.0f spawn distance
+    float unk50;  // 80668450 0.0f
+    float unk54;  // 80668454 20.0f
+};
+__declspec(section ".sdata2") __attribute__((used, aligned(8)))
+const Sdata2_GimmickItem sdata2_GimmickItem = {0.0f, 5.0f, 0.0f, 20.0f};
+#define lbl_eu_80668448 sdata2_GimmickItem.lod
+#define lbl_eu_8066844C sdata2_GimmickItem.dist
+// ----- end typified retail data -----

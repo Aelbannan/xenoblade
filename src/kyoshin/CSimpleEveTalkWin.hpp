@@ -241,6 +241,7 @@ extern char lbl_eu_8052D238[];              // temp base vtable
 extern char lbl_eu_80532EE0[];              // composite vtable
 extern char lbl_eu_80503E14[];              // rodata string blob
 extern const f32 lbl_eu_80667CA0;           // tag-proc message scales
+// (defined as struct members in the .cpp, Elv recipe; decls kept for docs)
 extern const f32 lbl_eu_80667CA4;           // early-init float
 extern const f32 lbl_eu_80667CA8;           // anim frame
 extern const f32 lbl_eu_80667CAC;           // translate Y

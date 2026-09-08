@@ -283,7 +283,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         # (add_symbols removed: gate-unnecessary (bytes come from storage;
         # text relocs were already UNDEF in the 146-baseline; testing heal.)
-        drop_data_tail=((".sdata2", 0x0),),
+        # .sdata2 @0 was a dead no-op (raw empty both); removed 2026-09-08.
     ),
 
     "New.o": UnitRules(
@@ -4323,16 +4323,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".rodata", 0x4B8), (".sdata2", 0x18)),
     ),
     "CArcItem.o": UnitRules(
-        # Vtable (lbl_eu_8056FFE0) + RTTI/typeinfo live in the retail data
-        # slice; the code TU must emit none. Retarget the vtable relocs to the
-        # retail name and drop .data/.rodata/.sdata.
+        # Vtable (lbl_eu_8056FFE0) + RTTI/typeinfo: raw data MATCH (136/40/8)
+        # so the old .data/.rodata/.sdata @0 drops were dead no-ops
+        # (postprocess skipped); removed 2026-09-08. Retarget keeps link.
         retarget_relocs=(
             (".text", 0xA, "lbl_eu_8056FFE0"),
-        ),
-        drop_data_tail=(
-            (".data", 0),
-            (".rodata", 0),
-            (".sdata", 0),
         ),
         # The inline-empty ~IWorkEvent (IWORK_EVENT_INLINE_DTOR) is still
         # emitted as a weak 0x40 copy between the ctor and dtor; retail keeps
@@ -6115,7 +6110,8 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CDevice.o": UnitRules(
         zero_data_range=((".data", 0x168, 0x170),),
-        drop_data_tail=((".data", 0x170), (".rodata", 0xA0), (".sdata", 0x10), (".sdata2", 0x0)),
+        # .sdata2 @0 was a dead no-op (raw empty both); removed 2026-09-08.
+        drop_data_tail=((".data", 0x170), (".rodata", 0xA0), (".sdata", 0x10)),
         drop_nobits_range=((".bss", 0x88, 0xB8),),
         exact_renames=(
             ("@8686", "lbl_eu_80522AA8"),
@@ -8148,19 +8144,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # it.
         extern_data_sections=(".rodata",),
     ),
-    "ahx_dcd.o": UnitRules(
-        # Absorbed .rodata 0xB10 (prime table 0x800 + tail). MWCC pools
-        # a duplicate hi-magic double at +0xB10 (site 8039226C); retail
-        # lfd's it from lbl_eu_80517630@B00. Trim the duplicate and
-        # materialize the 4 text-referenced interior labels.
-        drop_data_tail=((".rodata", 0xB10),),
-        add_symbols=(
-            ("lbl_eu_80516B30", ".rodata", 0x0, 0x800),
-            ("lbl_eu_80517628", ".rodata", 0xAF8, 0x4),
-            ("lbl_eu_80517630", ".rodata", 0xB00, 0x8),
-            ("lbl_eu_80517638", ".rodata", 0xB08, 0x7),
-        ),
-    ),
+    # ahx_dcd.o: raw MATCH after s32->double manual-bias helper
+    # (ahx_s32_to_double reuses lbl_eu_80517630, no pooled duplicate).
+    # Former drop_data_tail=(('.rodata', 0xB10),) + add_symbols removed.
 
     # ------------------------------------------------------------------
     # CriWare sofdec data-dissolve batch.

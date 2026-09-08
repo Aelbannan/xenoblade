@@ -468,10 +468,23 @@ extern u32 lbl_eu_80565B08[];   /* (1 << levels) - 1 mask table */
 extern double lbl_eu_80517630;  /* 2^52 constant-pool entry */
 extern f32 lbl_eu_80517628;     /* 0.0f constant-pool entry */
 
+/* s32 -> double without MWCC's pooled conversion magic: build the
+ * 0x43300000_xxxxxxxx stack double with immediates (lis/stw) and subtract
+ * the retail extern, so MWCC reuses lbl_eu_80517630 instead of pooling a
+ * duplicate @N double (raw +8). Mirrors retail's lis/stw + lfd + fsub. */
+static inline double ahx_s32_to_double(s32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } u;
+    u.w[0] = 0x43300000u;
+    u.w[1] = (u32)v ^ 0x80000000u;
+    return u.d - lbl_eu_80517630;
+}
+
 void AHXDCD_GetSample_Dequantize_Denormalize(void* bsf, AHXDcdInf* inf, s32 (*bitalloc)[32],
                                              s32 (*scale2)[32], s32 chOfs, f32* pcm,
                                              f32* coefTbl) {
-    const double twoPow52 = lbl_eu_80517630;
     const f32 zero = lbl_eu_80517628;
     s32 chCount = inf->chCount;
     s32 maxLev = inf->maxLev;
@@ -499,14 +512,14 @@ void AHXDCD_GetSample_Dequantize_Denormalize(void* bsf, AHXDcdInf* inf, s32 (*bi
                         s32 dA = v & mask;
                         s32 dB = (v >> levels) & mask;
                         s32 dC = (v >> levels >> levels) & mask;
-                        out[64] = (f32)((double)dA - twoPow52) * fa + fb;
-                        out[32] = (f32)((double)dB - twoPow52) * fa + fb;
-                        out[0] = (f32)((double)dC - twoPow52) * fa + fb;
+                        out[64] = (f32)ahx_s32_to_double(dA) * fa + fb;
+                        out[32] = (f32)ahx_s32_to_double(dB) * fa + fb;
+                        out[0] = (f32)ahx_s32_to_double(dC) * fa + fb;
                     } else {
                         /* wide levels: three separate reads */
-                        out[0] = (f32)((double)AHXBSR_GetBitStm(bsf, levels) - twoPow52) * fa + fb;
-                        out[32] = (f32)((double)AHXBSR_GetBitStm(bsf, levels) - twoPow52) * fa + fb;
-                        out[64] = (f32)((double)AHXBSR_GetBitStm(bsf, levels) - twoPow52) * fa + fb;
+                        out[0] = (f32)ahx_s32_to_double(AHXBSR_GetBitStm(bsf, levels)) * fa + fb;
+                        out[32] = (f32)ahx_s32_to_double(AHXBSR_GetBitStm(bsf, levels)) * fa + fb;
+                        out[64] = (f32)ahx_s32_to_double(AHXBSR_GetBitStm(bsf, levels)) * fa + fb;
                     }
                 } else {
                     /* base-N digit decomposition of one packed read */
@@ -535,9 +548,9 @@ void AHXDCD_GetSample_Dequantize_Denormalize(void* bsf, AHXDcdInf* inf, s32 (*bi
                         d2 = (v / levels / levels) % levels;
                         break;
                     }
-                    out[0] = (f32)((double)d0 - twoPow52) * fa + fb;
-                    out[32] = (f32)((double)d1 - twoPow52) * fa + fb;
-                    out[64] = (f32)((double)d2 - twoPow52) * fa + fb;
+                    out[0] = (f32)ahx_s32_to_double(d0) * fa + fb;
+                    out[32] = (f32)ahx_s32_to_double(d1) * fa + fb;
+                    out[64] = (f32)ahx_s32_to_double(d2) * fa + fb;
                 }
             } else {
                 out[0] = zero;

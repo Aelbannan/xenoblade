@@ -500,7 +500,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="Wii/1.1"),  # VERIFIED 2026-08: Wii/1.1 emits retail early-stw-before-args for address-taken gate locals (GC/3.0a5.2 sinks them) - net 9->12 FULL_MATCH, func_800D2A5C 98.5%/func_800D4F30 91.5%/func_800D6720 94.8% now pure reg-swap; split PASS 0x2C4 spare
-            Object(NonMatching, "kyoshin/cf/CBattleManager.cpp"),  # A/B verified Wii/1.1: GC/3.0a5.2 scores 31/78 vs 46/78 (attempts.jsonl us-800ed400)
+            Object(NonMatching, "kyoshin/cf/CBattleManager.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI data in this TU; -RTTI off kills trailing typeinfo/RTTI so .data drop shrinks 0x60→0x2C, .rodata 0x1D6→0xCA, .sdata 0x58→0x0
             Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectSelectorObj.cpp"),
@@ -1940,7 +1940,7 @@ config.libs = [
             Object(Matching, "monolib/src/scn/UnkClass_8047CD0C.cpp"),
             Object(NonMatching, "monolib/src/scn/code_8047D2AC.cpp"),
             Object(NonMatching, "monolib/src/scn/UnkClass_8047E110.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp", extra_cflags=["-RTTI off"]),
             Object(NonMatching, "monolib/src/scn/CScnItemId.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemLight.cpp"),
             Object(Matching, "monolib/src/scn/CScnItemLightNw4r.cpp"),

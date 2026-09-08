@@ -323,7 +323,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0x84, "__RTTI__Q46nw4hbm3lyt6detail8PaneBase"),
             (".data", 0x8C, "__RTTI__Q36nw4hbm3lyt4Pane"),
         ),
-        drop_data_tail=((".data", 0xA0),),
+        # .data 0x78 < retail absent; extern_data_sections strips it.
+        # drop_data_tail was a no-op (0x78 < 0xA0); removed.
         # merged from nw4r same-basename unit (nw4r_data.s shared pool)
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
@@ -438,7 +439,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066ABA8"),
         ),
-        drop_data_tail=((".sdata2", 0),),
+        extern_data_sections=(".sdata2",),
     ),
     "CScnTexWorkMan.o": UnitRules(
         # MWCC 4-pads the assert/format string literals in .data; the retail
@@ -1947,7 +1948,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066AC08"),
         ),
         extern_data_sections=(".sdata2",),
-        drop_data_tail=((".sdata2", 0x0),),
     ),
     "CVirtualLightObj.o": UnitRules(
         # pool-coupled: lone unsigned int->double magic constant
@@ -3293,12 +3293,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         # kept as anchor in case MWCC re-pads).
     ),
     "btm_acl.o": UnitRules(
-        # dead 8-byte zero pool; retail .sdata2 empty.
-        drop_data_tail=((".sdata2", 0x0),),
+        extern_data_sections=(".sdata2",),
     ),
     "bta_hh_utils.o": UnitRules(
-        # dead 32-byte zero .rodata blob; retail .rodata empty.
-        drop_data_tail=((".rodata", 0x0),),
+        extern_data_sections=(".rodata",),
     ),
     "btm_pm.o": UnitRules(
         # MWCC pads .data to 4 (0x40); retail split ends at 0x3D.
@@ -3329,8 +3327,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pad_sdata2_size=8,
     ),
     "port_rfc.o": UnitRules(
-        # dead 8-byte zero pool; retail .sdata2 empty.
-        drop_data_tail=((".sdata2", 0x0),),
+        extern_data_sections=(".sdata2",),
     ),
     "ai.o": UnitRules(
         # RVL SDK version-string dissolve: the AI banner literal is anon @N in
@@ -3456,9 +3453,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_nobits_range=((".bss", 0x44, 0x50),),
     ),
     "CSysWinSave.o": UnitRules(
-        # MWCC pads .data to 8 (0x110 vs retail 0x10C) and pools sdata2-init
-        # float literals into .sbss (0xC vs retail 0x8).
-        drop_data_tail=((".data", 0x10C),),
+        # MWCC .data is retail-exact 0x10C (drop_data_tail was a no-op; removed).
+        # .sbss pads to 8 (0xC vs retail 0x8): pools sdata2-init float literals.
         drop_nobits_range=((".sbss", 0x8, 0xC),),
     ),
     "OSFont.o": UnitRules(
@@ -4059,10 +4055,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CWorkSystemCache.o": UnitRules(
-        # Retail .sdata2 is empty; MWCC still materializes a dead 4-byte
-        # @LOCAL@wkUpdate@zero pool constant that nothing references (wkUpdate
-        # has no float ops). Strip the section back to retail size.
-        drop_data_tail=((".sdata2", 0x0),),
+        extern_data_sections=(".sdata2",),
         # DECOMP_FORCEACTIVE keep-alive stubs for the RTTI-name/locator pools
         # were removed (all six symbols have live in-TU references); no
         # drop_text_symbols needed anymore.
@@ -4239,7 +4232,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x1B4, "lbl_eu_80669FC0"),  # GetValue: sin idx (s8) -> f32
             (".text", 0x1D4, "lbl_eu_80669FD8"),  # GetValue: range (u8) -> f32
         ),
-        drop_data_tail=((".sdata2", 0x0),),
+        extern_data_sections=(".sdata2",),
     ),
     "snd_MmlSeqTrackAllocator.o": UnitRules(
         # The class vtable ships from the retail data unit (nw4r_data.s); the
@@ -4346,15 +4339,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".data", 0x88), (".rodata", 0x0C), (".sdata", 0x08),),
     ),
     "CScnItemCameraNw4r.o": UnitRules(
-        # Vtable (lbl_eu_8056DC90) + RTTI/typeinfo live in the retail data
-        # slice; the code TU must emit none.
+        # -RTTI off suppresses .rodata (typeinfo strings) and .sdata (typeinfo
+        # pointers), both now genuinely empty. The local vtable (lbl_eu_8056DC90)
+        # still lives in the retail data slice; the code TU must emit none. The
+        # Remaining .data drop hides the 4-word RTTI stub MWCC emits even
+        # with -RTTI off (0x10 bytes of zero-padding + relocs).
         retarget_relocs=(
             (".text", 0x1A, "lbl_eu_8056DC90"),
         ),
         drop_data_tail=(
             (".data", 0),
-            (".rodata", 0),
-            (".sdata", 0),
         ),
     ),
     "dw_Window.o": UnitRules(
@@ -5290,7 +5284,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@5540", "lbl_8054DA68"),
             ("@5541", "lbl_8054DA80"),
         ),
-        drop_data_tail=((".data", 0xB0),),
+        # .data 0x90 < retail absent; extern_data_sections strips it.
+        # drop_data_tail was a no-op (0x90 < 0xB0); removed.
         extern_data_sections=(".sdata2",),
     ),
 
@@ -5564,7 +5559,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x16DA, "lbl_eu_80569688"),
         ),
         pad_data_section=((".data", 0x138), (".rodata", 0x10)),
-        drop_data_tail=((".sdata2", 0),),
+        extern_data_sections=(".sdata2",),
         drop_text_symbols=("__dt__Q34nw4r3g3d7ScnLeafFv",),
     ),
 
@@ -5711,10 +5706,10 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x11C, "lbl_eu_80669E14"),
             (".text", 0x120, "lbl_eu_80669E18"),
         ),
-        drop_data_tail=((".sdata2", 0),),
+        extern_data_sections=(".sdata2",),
     ),
 
-    # g3d_resanmlight / g3d_resanmamblight: retail splits are .text-only; the
+    # g3d_resanmlight / g3d_resanmamblight:
     # 0.0f literal and the u16->f32 conversion magic double pool into the TU's
     # .sdata2 but are owned by nw4r_data.s. Retarget the pool relocs to the
     # retail names and drop the pool.
@@ -5723,14 +5718,14 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x4C, "lbl_eu_80669B20"),
             (".text", 0x6C, "lbl_eu_80669B28"),
         ),
-        drop_data_tail=((".sdata2", 0),),
+        extern_data_sections=(".sdata2",),
     ),
     "g3d_resanmamblight.o": UnitRules(
         retarget_relocs=(
             (".text", 0x38, "lbl_eu_80669B10"),
             (".text", 0x58, "lbl_eu_80669B18"),
         ),
-        drop_data_tail=((".sdata2", 0),),
+        extern_data_sections=(".sdata2",),
     ),
 
     "g3d_resanmchr.o": UnitRules(
@@ -6154,7 +6149,7 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A420"),
         ),
-        drop_data_tail=((".sdata2", 0x0),),
+        extern_data_sections=(".sdata2",),
     ),
     "CLibLayout.o": UnitRules(
         # The TU compiles -RTTI on, so the vtable's base-list slots reference
@@ -8115,11 +8110,18 @@ UNIT_RULES: dict[str, UnitRules] = {
     # owned lbl_eu_805DFDA8; removed after absorb into adx_fini.c.)
     "adx_tlk.o": UnitRules(
         # Absorbed .rodata 0x7B8 (D0 0x4+pad, D8 0x18, F0 0x8, F8 0x790).
-        # MWCC pools an extra hi-magic double at +0x7B8 for the three
-        # (float)(s32) sites; retail lfd's it from lbl_eu_805162D8@8.
-        # Trim the duplicate and materialize the 4 interior labels so
-        # the text relocs resolve inside the single blob. .bss is
-        # defined with aligned(8) to satisfy MWCC but retail is 4.
+        # MWCC pools an extra hi-magic double at +0x7B8 (@576) for the
+        # (float)(s32) casts in ADXT_GetTimeReal + adxt_Pause; retail
+        # lfd's it from lbl_eu_805162D8@8.  Retarget the 4 text relocs
+        # that load @576 to the existing blob label, then trim the
+        # duplicate. .bss is defined with aligned(8) to satisfy MWCC
+        # but retail is 4.
+        retarget_relocs=(
+            (".text", 0x1186, "lbl_eu_805162D8"),
+            (".text", 0x1196, "lbl_eu_805162D8"),
+            (".text", 0x1DB2, "lbl_eu_805162D8"),
+            (".text", 0x1DC2, "lbl_eu_805162D8"),
+        ),
         drop_data_tail=((".rodata", 0x7B8),),
         add_symbols=(
             ("lbl_eu_805162D0", ".rodata", 0x0, 0x4),
@@ -8453,6 +8455,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">d", 0.0), "lbl_eu_80666EE0"),
         ),
         drop_data_tail=((".sdata2", 0xC0), (".sdata", 0x30), (".rodata", 0x3E0), (".data", 0xCF4)),
+        # -RTTI off (configure.py): retail has no RTTI data in this TU's
+        # .rodata/.data/.sdata. Suppressing RTTI shrinks trailing orphans:
+        #   .data  trailing 0x60→0x2C (orphaned vtables lost RTTI slots)
+        #   .rodata trailing 0x1D6→0xCA (typeinfo name strings gone)
+        #   .sdata  trailing 0x58→0x0  (typeinfo pairs gone)
         # f3970_tbl anchors F3970's UNDEF table alias at the real table for
         # the link (see note at func_800F3970); data-diff ignores symbols.
         # BD20/BD38/BD5C do the same for the .sdata typeinfo pairs: those point
@@ -8466,8 +8473,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # .data extern removed with the absorb: the section is fully typed
         # in-source; only MWCC's trailing redundant vtables (CChain x3,
         # IFactoryEvent, CChainEffect + RTTI, all with zero .text xrefs) are
-        # trimmed by the .data drop tail above. .sbss raw-matches (typed
-        # singleton pointer + tail word, no absorb).
+        # trimmed by the .data drop tail above. -RTTI off reduced the trailing
+        # from 0x60 to 0x2C bytes (RTTI pointers in vtables zeroed). .sbss
+        # raw-matches (typed singleton pointer + tail word, no absorb).
     ),
     "CfObjectImplWalker.o": UnitRules(
         # int->double magics: 2^52 -> lbl_eu_80666B98, unsigned variant ->

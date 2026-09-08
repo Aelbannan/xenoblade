@@ -59,6 +59,17 @@ static inline void* getBdatStringColumnValue_str(void* bdat, const char* col,
 #define getBdatStringColumnValue(bdat, col, row) \
     getBdatStringColumnValue_str(bdat, col, row)
 
+// Tag-proc owner for func_80136A1C/func_80136D74's slot-0x14 dispatch.
+// The full CTagProcessorBase lives in kyoshin/CTagProcessor.hpp, which
+// cannot be included here: it defines its own byte-wise nw4r::ut::Color
+// that clashes with the real lyt headers used by this TU. Only the vtable
+// prefix matters for the virtual call below (the base provides slots
+// 0x08/0x0C/0x10, so Proc lands at retail slot 0x14 = func_80125B58);
+// keep this in sync with CTagProcessor.hpp. No TU may include both headers.
+struct CTagProcessorBase : public nw4r::ut::TagProcessorBase<wchar_t> {
+    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b); // 0x14
+};
+
 // nt: .sdata2 pool is declared FIRST so MWCC emits it before its own
 // anonymous conversion pool (enables drop_data_tail=((".sdata2", 0x90))).
 
@@ -531,10 +542,10 @@ extern "C" void func_80136A1C(
     }
 
     if (tagProc != 0) {
-        typedef const wchar_t* (*TagProcFn)(void*, wchar_t*, int, float, float);
-        TagProcFn fn = (*reinterpret_cast<TagProcFn*>(tagProc));
-        const wchar_t* res = fn(reinterpret_cast<void*>(tagProc),
-            reinterpret_cast<wchar_t*>(buf), 0, lbl_eu_806672D8, lbl_eu_806672D8);
+        // CTagProcessorBase::Proc (slot 0x14, retail func_80125B58)
+        const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
+            reinterpret_cast<wchar_t*>(buf), 0,
+            lbl_eu_806672D8, lbl_eu_806672D8);
         wcscpy(reinterpret_cast<wchar_t*>(buf), res);
     }
 
@@ -588,15 +599,17 @@ extern "C" void func_80136D74(
     }
 
     if (tagProc != 0) {
-        // virtual slot 0x14; retail passes the same float in f1 and f2
-        const wchar_t* res = reinterpret_cast<CTagProcIf36D74*>(tagProc)->Proc(
+        // CTagProcessorBase::Proc (slot 0x14, retail func_80125B58);
+        // retail passes the same float in f1 and f2
+        const wchar_t* res = reinterpret_cast<CTagProcessorBase*>(tagProc)->Proc(
             reinterpret_cast<wchar_t*>(buf), 0,
             lbl_eu_806672D8, lbl_eu_806672D8);
         wcscpy(reinterpret_cast<wchar_t*>(buf), res);
     }
 
-    // layout vtable slot 0x7C
-    reinterpret_cast<CLytSetStrIf36D74*>(layout)->SetString(buf, 0);
+    // TextBox::SetString (slot 0x7C); the target is a text pane
+    reinterpret_cast<nw4r::lyt::TextBox*>(layout)->SetString(
+        reinterpret_cast<const wchar_t*>(buf), 0);
 }
 
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -1019,18 +1032,14 @@ extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
 
 extern "C" void func_80137B44(void* a, u32 b, u32 c) {
     if (a == NULL) return;
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
-    CAnimTargetIf37038* result = (CAnimTargetIf37038*)owner->FindAnim(b, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
+    nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
     if (result == NULL) return;
 
-    u32 v0 = c;
-    u32 v1 = c;
-    u32 v2 = c;
-    u32 v3 = c;
-    result->Set(0, &v0);
-    result->Set(2, &v2);
-    result->Set(1, &v1);
-    result->Set(3, &v3);
+    { u32 v = c; result->SetVtxColor(0, *(nw4r::ut::Color*)&v); }
+    { u32 v = c; result->SetVtxColor(2, *(nw4r::ut::Color*)&v); }
+    { u32 v = c; result->SetVtxColor(1, *(nw4r::ut::Color*)&v); }
+    { u32 v = c; result->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
 extern "C" void func_80137C1C(void* obj, u32 value) {
@@ -1039,26 +1048,26 @@ extern "C" void func_80137C1C(void* obj, u32 value) {
     // true virtual call so MWCC emits the r12 -> r12 dispatch sequence.
     u32 vInit = value;
     if (obj == NULL) return;
-    { u32 v = vInit; ((CAnimTargetIf37038*)obj)->Set(0, &v); }
-    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(2, &v); }
-    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(1, &v); }
-    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(3, &v); }
+    { u32 v = vInit; ((nw4r::lyt::Pane*)obj)->SetVtxColor(0, *(nw4r::ut::Color*)&v); }
+    { u32 v = value; ((nw4r::lyt::Pane*)obj)->SetVtxColor(2, *(nw4r::ut::Color*)&v); }
+    { u32 v = value; ((nw4r::lyt::Pane*)obj)->SetVtxColor(1, *(nw4r::ut::Color*)&v); }
+    { u32 v = value; ((nw4r::lyt::Pane*)obj)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
 extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
     if (a == NULL) return;
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
-    CAnimTargetIf37038* result = (CAnimTargetIf37038*)owner->FindAnim(b, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
+    nw4r::lyt::Pane* result = owner->FindPaneByName((const char*)b, true);
     if (result == NULL) return;
 
     u32 v0 = c;
     u32 v1 = c;
     u32 v2 = d;
     u32 v3 = d;
-    result->Set(0, &v0);
-    result->Set(2, &v2);
-    result->Set(1, &v1);
-    result->Set(3, &v3);
+    result->SetVtxColor(0, *(nw4r::ut::Color*)&v0);
+    result->SetVtxColor(2, *(nw4r::ut::Color*)&v2);
+    result->SetVtxColor(1, *(nw4r::ut::Color*)&v1);
+    result->SetVtxColor(3, *(nw4r::ut::Color*)&v3);
 }
 
 extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
@@ -1068,22 +1077,21 @@ extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
     // Four distinct temporaries - retail gives every call its own stack
     // slot and keeps obj/b/c in saved regs r29/r30/r31.
     if (a == NULL) return;
-    { u32 v = b; ((CAnimTargetIf37038*)a)->Set(0, &v); }
-    { u32 v = c; ((CAnimTargetIf37038*)a)->Set(2, &v); }
-    { u32 v = b; ((CAnimTargetIf37038*)a)->Set(1, &v); }
-    { u32 v = c; ((CAnimTargetIf37038*)a)->Set(3, &v); }
+    { u32 v = b; ((nw4r::lyt::Pane*)a)->SetVtxColor(0, *(nw4r::ut::Color*)&v); }
+    { u32 v = c; ((nw4r::lyt::Pane*)a)->SetVtxColor(2, *(nw4r::ut::Color*)&v); }
+    { u32 v = b; ((nw4r::lyt::Pane*)a)->SetVtxColor(1, *(nw4r::ut::Color*)&v); }
+    { u32 v = c; ((nw4r::lyt::Pane*)a)->SetVtxColor(3, *(nw4r::ut::Color*)&v); }
 }
 
 extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
     if (a == NULL) return;
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)a + 0x10);
-    void* res = owner->FindAnim(b, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)a + 0x10);
+    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)b, true);
     if (res == NULL) return;
     if (palette == NULL) return;
 
-    // res is an anim-owner object; its 0x68 vtable slot returns the material
-    nw4r::lyt::Material* mat =
-        (nw4r::lyt::Material*)((CAnmOwner*)res)->GetAnmData();
+    // res is a pane; its 0x68 vtable slot (Pane::GetMaterial) returns the material
+    nw4r::lyt::Material* mat = res->GetMaterial();
 
     nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
     if (mat->GetTextureNum() == 0) {
@@ -1096,8 +1104,7 @@ extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
 extern "C" void func_80137F88(void* a, void* palette) {
     if (a != NULL) {
         if (palette != NULL) {
-            void** vt = *(void***)a;
-            nw4r::lyt::Material* mat = (nw4r::lyt::Material*)((void*(*)(void*))vt[0x68 / 4])(a);
+            nw4r::lyt::Material* mat = ((nw4r::lyt::Pane*)a)->GetMaterial();
 
             nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
             if (mat->GetTextureNum() == 0) {
@@ -1798,14 +1805,14 @@ extern "C" char* func_801394D4(const char* name) {
 }
 
 extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
-    CAnmOwner* cur = owner->FindAnim((u32)arg2, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* cur = owner->FindPaneByName((const char*)arg2, true);
     if (cur == 0) {
         FourShorts r;
         r.a = 0; r.b = 0; r.c = 0; r.d = 0;
         return r;
     }
-    u8* data = (u8*)cur->GetAnmData();
+    u8* data = (u8*)cur->GetMaterial();
     if (data == NULL) {
         FourShorts r;
         r.a = 0; r.b = 0; r.c = 0; r.d = 0;
@@ -1821,10 +1828,10 @@ extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
     return r;
 }
 
-extern "C" FourShorts func_801397AC(CAnmOwner* owner, u32 idx) {
+extern "C" FourShorts func_801397AC(nw4r::lyt::Pane* owner, u32 idx) {
     FourShorts r = {0, 0, 0, 0};
     if (owner == NULL) return r;
-    u8* data = (u8*)owner->GetAnmData();
+    u8* data = (u8*)owner->GetMaterial();
     if (data != NULL) {
         if (idx >= 3) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
@@ -1840,11 +1847,11 @@ extern "C" FourShorts func_801397AC(CAnmOwner* owner, u32 idx) {
 }
 
 extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
-    CAnmOwner* res = owner->FindAnim((u32)arg2, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
     if (res == 0) return;
     if (res == 0) return;
-    u8* data = (u8*)res->GetAnmData();
+    u8* data = (u8*)res->GetMaterial();
     if (data == NULL) return;
     if (idx >= 3) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
@@ -1865,9 +1872,9 @@ extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
     d[3] = tb;
 }
 
-extern "C" void func_8013996C(CAnmOwner* owner, void* src, u32 idx) {
+extern "C" void func_8013996C(nw4r::lyt::Pane* owner, void* src, u32 idx) {
     if (owner == NULL) return;
-    u8* data = (u8*)owner->GetAnmData();
+    u8* data = (u8*)owner->GetMaterial();
     if (data == NULL) return;
     if (idx >= 3) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
@@ -1889,11 +1896,11 @@ extern "C" void func_8013996C(CAnmOwner* owner, void* src, u32 idx) {
 }
 
 extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
-    CAnmOwner* res = owner->FindAnim((u32)arg2, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    nw4r::lyt::Pane* res = owner->FindPaneByName((const char*)arg2, true);
     if (res == NULL) return;
     if (res == NULL) return;
-    s16* data = (s16*)res->GetAnmData();
+    s16* data = (s16*)res->GetMaterial();
     if (data == NULL) return;
     s16* s1 = (s16*)src1;
     s16* s2 = (s16*)src2;
@@ -1907,9 +1914,9 @@ extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
     data[15] = s2[3];
 }
 
-extern "C" void func_80139AC8(CAnmOwner* owner, void* src1, void* src2) {
+extern "C" void func_80139AC8(nw4r::lyt::Pane* owner, void* src1, void* src2) {
     if (owner == NULL) return;
-    s16* data = (s16*)owner->GetAnmData();
+    s16* data = (s16*)owner->GetMaterial();
     if (data == NULL) return;
     s16* s1 = (s16*)src1;
     s16* s2 = (s16*)src2;
@@ -1924,8 +1931,8 @@ extern "C" void func_80139AC8(CAnmOwner* owner, void* src1, void* src2) {
 }
 
 extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
-    void* result = owner->FindAnim((u32)arg2, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits THREE beq's on the same null test (dead-duplicated-test
     // family); the direct goto-gate with the tripled condition reproduces it.
     if (result == NULL) goto out;
@@ -1948,8 +1955,8 @@ out:
 }
 
 extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
-    CAnmOwner* owner = *(CAnmOwner**)((u8*)obj + 0x10);
-    void* result = owner->FindAnim((u32)arg2, 1);
+    nw4r::lyt::Pane* owner = *(nw4r::lyt::Pane**)((u8*)obj + 0x10);
+    void* result = owner->FindPaneByName((const char*)arg2, true);
     // Retail emits the null test three times (three beq to the epilogue).
     if (result != NULL) {
         if (result != NULL) {
@@ -2746,15 +2753,15 @@ extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080[0]; }
 // direct item list / vt58 slot, recursing into child lists. The retail returns
 // the raw call result (nonzero) rather than a literal 1.
 extern "C" void* func_8013B9AC(void* self, void* arg) {
-    CAnmList* owner = (CAnmList*)self;
+    nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
     void* anchor;
     void* current;
-    void* found = owner->GetAnmRoot();
+    void* found = owner->FindAnimationLinkSelf(*(const nw4r::lyt::AnimResource*)arg);
     if (found != 0) return found;
-    u8 n = owner->GetCount();
+    u8 n = owner->GetMaterialNum();
     for (u8 i = 0; i < n; i++) {
-        CAnmItem* item = (CAnmItem*)owner->GetItem(i);
-        void* r = item->Find(arg);
+        nw4r::lyt::Material* item = owner->GetMaterial(i);
+        void* r = item->FindAnimationLink(*(const nw4r::lyt::AnimResource*)arg);
         if (r != 0) return r;
     }
     anchor = (u8*)self + 0x14;
@@ -2777,15 +2784,15 @@ extern "C" void* func_8013B9AC(void* self, void* arg) {
 }
 
 extern "C" void func_8013BAD8(void* self, void* arg, f32 val) {
-    CAnmList* owner = (CAnmList*)self;
-    void* r0 = owner->GetAnmRoot();
+    nw4r::lyt::Pane* owner = (nw4r::lyt::Pane*)self;
+    void* r0 = owner->FindAnimationLinkSelf(*(const nw4r::lyt::AnimResource*)arg);
     if (r0 != 0) {
         *(f32*)(*(u32*)((u8*)r0 + 8) + 0x10) = val;
     }
-    u8 n = owner->GetCount();
+    u8 n = owner->GetMaterialNum();
     for (u8 i = 0; i < n; i++) {
-        CAnmItem* item = (CAnmItem*)owner->GetItem(i);
-        if (item->Find(arg) != 0) {
+        nw4r::lyt::Material* item = owner->GetMaterial(i);
+        if (item->FindAnimationLink(*(const nw4r::lyt::AnimResource*)arg) != 0) {
             *(f32*)(*(u32*)((u8*)item + 8) + 0x10) = val;
         }
     }

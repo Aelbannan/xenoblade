@@ -21,7 +21,7 @@ struct CtrlNpcVec3W {
 // found). Never instantiated here, so no vtable is emitted.
 class CCtrlNpcSearch {
 public:
-    virtual int findNameIndex(const char* name);   // +0x44 retail (was _v44)
+    virtual int findNameIndex(const char* name);   // +0x44 retail slot
 
     u8 _pad00[0x7A0];
     u32 field_7A4;   // flags word (bit 0x00010000 tested by func_8009398C)

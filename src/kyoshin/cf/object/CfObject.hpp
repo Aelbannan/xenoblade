@@ -85,7 +85,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
         virtual float CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61(u32 a, u32 b);     //0x144
-        virtual void CfObject_UnkVirtualFunc62();     //0x148
+        virtual u32 CfObject_UnkVirtualFunc62(u32 arg);     //0x148 (retail takes an index, returns bits)
         virtual u32 CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64(int flag);     //0x150
         virtual void CfObject_UnkVirtualFunc65(int flag);     //0x154

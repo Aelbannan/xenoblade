@@ -114,7 +114,8 @@ struct CfGlobalSettings {
     u32 field_214;            // 0x214 flag bits
 };
 
-// State sub-object returned by CMoveObj::get68 (f32 at +0x14, s16 at +0x1AC).
+// State sub-object returned by CfObject::UVF48 (void* at vtable 0x110 on the
+// embedded move object; f32 at +0x14, s16 at +0x1AC).
 struct CfObjState {
     u8 pad_00[0x14];
     f32 mField14;             // 0x14
@@ -141,83 +142,14 @@ struct CfPartyList {
     u32 mField0C;             // 0x0C second slot character id
 };
 
-// Embedded move-object interface (object at CfObjWrap +0x3E9C). MWCC lays out
-// the vtable at declared idx P -> offset 4*P; the class is never instantiated.
-class CMovePosIntf {
-public:
-    virtual void vf00();  virtual void vf01();  virtual void vf02();
-    virtual void vf03();  virtual void vf04();  virtual void vf05();
-    virtual void vf06();  virtual void vf07();  virtual void vf08();
-    virtual void vf09();  virtual void vf10();  virtual void vf11();
-    virtual void vf12();  virtual void vf13();  virtual void vf14();
-    virtual void vf15();  virtual void vf16();  virtual void vf17();
-    virtual void vf18();  virtual void vf19();  virtual void vf20();
-    virtual void vf21();  virtual void vf22();  virtual void vf23();
-    virtual void vf24();  virtual void vf25();  virtual void vf26();
-    virtual void vf27();  virtual void vf28();  virtual void vf29();
-    virtual void vf30();  virtual void vf31();  virtual void vf32();
-    virtual void vf33();  virtual void vf34();  virtual void vf35();
-    virtual void vf36();  virtual void vf37();  virtual void vf38();
-    virtual void vf39();  virtual void vf40();  virtual void vf41();
-    virtual void* getHandle();      // idx 42 -> vtable 0xA8
-    virtual ml::CVec3* getPosition();   // idx 43 -> vtable 0xAC
-    virtual void vf44();  virtual void vf45();  virtual void vf46();
-    virtual void vf47();  virtual void vf48();  virtual void vf49();
-    virtual void setAngle(f32 a);   // idx 50 -> vtable 0xC8
-    virtual void vf51();  virtual void vf52();  virtual void vf53();
-    virtual void vf54();  virtual void vf55();  virtual void vf56();
-    virtual void vf57();  virtual void vf58();  virtual void vf59();
-    virtual void vf60();  virtual void vf61();  virtual void vf62();
-    virtual void vf63();  virtual void vf64();  virtual void vf65();
-    virtual void vf66();  virtual void vf67();  virtual void vf68();
-    virtual void vf69();  virtual void vf70();  virtual void vf71();
-    virtual void vf72();  virtual void vf73();  virtual void vf74();
-    virtual void vf75();  virtual void vf76();  virtual void vf77();
-    virtual void vf78();  virtual void vf79();  virtual void vf80();
-    virtual void vf81();  virtual void vf82();  virtual void vf83();
-    virtual void vf84();  virtual void vf85();  virtual void vf86();
-    virtual void vf87();  virtual void vf88();  virtual void vf89();
-    virtual void setState(f32 a);   // idx 90 -> vtable 0x168
-};
-
-// Player-embedded move object (CfObject at wrapper+0x3E9C) used by
-// func_801999C0: vf03(int) at vtable 0xC, getPosition at 0xAC, get68 at 0x110.
-class CMoveObj {
-public:
-    virtual void vf00();  virtual void vf01();  virtual void vf02();
-    virtual void* vf03(int a);   // idx 3 -> vtable 0xC
-    virtual void vf04();  virtual void vf05();  virtual void vf06();
-    virtual void vf07();  virtual void vf08();  virtual void vf09();
-    virtual void vf10();  virtual void vf11();  virtual void vf12();
-    virtual void vf13();  virtual void vf14();  virtual void vf15();
-    virtual void vf16();  virtual void vf17();  virtual void vf18();
-    virtual void vf19();  virtual void vf20();  virtual void vf21();
-    virtual void vf22();  virtual void vf23();  virtual void vf24();
-    virtual void vf25();  virtual void vf26();  virtual void vf27();
-    virtual void vf28();  virtual void vf29();  virtual void vf30();
-    virtual void vf31();  virtual void vf32();  virtual void vf33();
-    virtual void vf34();  virtual void vf35();  virtual void vf36();
-    virtual void vf37();  virtual void vf38();  virtual void vf39();
-    virtual void vf40();  virtual void vf41();  virtual void vf42();
-    virtual ml::CVec3* getPosition();   // idx 43 -> vtable 0xAC
-    virtual void vf44();  virtual void vf45();  virtual void vf46();
-    virtual void vf47();  virtual void vf48();  virtual void vf49();
-    virtual void vf50();  virtual void vf51();  virtual void vf52();
-    virtual void vf53();  virtual void vf54();  virtual void vf55();
-    virtual void vf56();  virtual void vf57();  virtual void vf58();
-    virtual void vf59();  virtual void vf60();  virtual void vf61();
-    virtual void vf62();  virtual void vf63();  virtual void vf64();
-    virtual void vf65();  virtual void vf66();  virtual void vf67();
-    virtual void* get68();           // idx 68 -> vtable 0x110
-    virtual void vf69();  virtual void vf70();  virtual void vf71();
-    virtual void vf72();  virtual void vf73();  virtual void vf74();
-    virtual void vf75();  virtual void vf76();  virtual void vf77();
-    virtual void vf78();  virtual void vf79();  virtual void vf80();
-    virtual void vf81();  virtual void vf82();  virtual void vf83();
-    virtual void vf84();  virtual void vf85();  virtual void vf86();
-    virtual void vf87();  virtual void vf88();  virtual void vf89();
-    virtual void vf90();  virtual void vf91();
-};
+// Embedded move-object slots (object at CfObjWrap +0x3E9C, a CfObjectMove) are
+// called as real virtuals; retail slot map (verified against the CfObjectPc
+// vtable group at lbl_eu_80529DA0):
+//   +0x8C CfObject::UVF15 (float)      +0xAC CfObject::UVF23 (CVec3*)
+//   +0xA8 CfObject::UVF22 (const vec*) +0xC8 CfObject::UVF30 (float)
+//   +0x110 CfObject::UVF48 (void*)     +0x168 CfObject::UVF70 (float)
+//   +0x0C CObjectState::UVF2 (int)     +0x4C CObjectParam::UVF5 (BOOL)
+// Full-actor slots: +0x5B4 CfObjectActor::UVF6, +0x128 CActorParam::UVF37.
 
 } // namespace cf
 
@@ -297,7 +229,8 @@ extern const f32 lbl_eu_80667C4C;   // raycast param
 extern const f32 lbl_eu_80667C50;   // max follow distance
 extern const f32 lbl_eu_8066A200;   // 1.5707964f (pi/2)
 
-extern const u32 lbl_eu_80663E28;    // .sbss global flag word
+// lbl_eu_80663E28 is declared by kyoshin/cf/object/CfObjectMove.hpp (canonical
+// non-const form); do not redeclare here.
 
 // Wall-steer helper shared with CtrlMoveEne (retail name).
 extern u8 lbl_eu_80571810[0x38];

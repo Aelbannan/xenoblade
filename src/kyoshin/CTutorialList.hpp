@@ -4,6 +4,8 @@
 #include <nw4r/lyt.h>
 
 #include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, func_801F367C
+#include "kyoshin/CBaseCur.hpp"         // CBaseCur (embedded cursor virtuals)
+#include "monolib/device/CDeviceFont.hpp" // IDeviceFontInfo / CDeviceFont
 #include "kyoshin/code_80135FDC.hpp"  // func_80137510, advanceAnimTransform, func_80136190, func_80136B4C
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, func_802A77E8/802A330C/802A3D54
 
@@ -42,16 +44,6 @@ extern char lbl_eu_80510B78[];       // string pool base
 
 class CTutorialList;
 
-// Phantom view over the embedded CCur vtable at +0x2C (MWCC prefixes 2
-// implicit vtable entries, so declared index N lands at offset (N+2)*4).
-// All-pure so no vtable is emitted; only cast + dispatch a slot.
-class CTutorialCurView {
-public:
-    virtual void vf0() = 0;                          // index 0 -> +0x08
-    virtual void vf1() = 0;                          // index 1 -> +0x0C - cleanup
-    virtual void vf2(const nw4r::math::VEC3*) = 0;   // index 2 -> +0x10 - setRootPaneTranslate
-};
-
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
 extern "C" u32 func_801D32DC(void*);
 extern "C" int func_801D3320(void*);
@@ -70,6 +62,7 @@ extern "C" void func_801D3454(nw4r::math::VEC3*, void*);  // copy cursor target
 extern "C" void func_801D216C(void*, int);
 // Device/memory helper (retail unmangled C symbol).
 extern "C" int func_800A9D90();
+void func_801390E0(CFileHandle**);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 // UI sound: retail symbol is the C++-mangled playUISound__FUl.
 void playUISound(u32);
@@ -139,8 +132,6 @@ extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void setMemInitFlag__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg,
-                                                                     nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void validateHeap__17UnkClass_8045F564Fv(void*);
@@ -167,18 +158,8 @@ struct CTutorialMsgObj {
     CTutorialMsgChain* chain;  // 0x8
 };
 
-// Vtable view of the font-info object returned by CDeviceFont::getFontInfo:
-// virtual index 7 (vtable+0x24) returns the value bound via func_8013676C.
-struct CTutorialFontView {
-    virtual void _v00();
-    virtual void _v04();
-    virtual void _v08();
-    virtual void _v0C();
-    virtual void _v10();
-    virtual void _v14();
-    virtual void _v18();
-    virtual u32 fontData();  // vtable+0x24 (raw slot 9)
-};
+// (Font dispatch goes through IDeviceFontInfo::getFont from
+// monolib/device/CDeviceFont.hpp; no local view needed.)
 
 // Field view of the embedded CCur18 cursor (+0x2C). OnFileEvent copies a
 // stack-constructed cursor into it without touching the +0x00 vtable.

@@ -1487,7 +1487,7 @@ void func_8008E2D4(cf::CfObjectMove* self) {
     view->field_0x5C = state;
     view->field_0x60 = 0;
     view->field_0x72 = 0;
-    // Movement-rate divisor: *_v1D8() / *_v138() when the denominator probe
+    // Movement-rate divisor: slot 0x1D8 over slot 0x138 when the denominator probe
     // is nonzero (both slots re-probed fresh, matching the retail reloads).
     f32 rate = lbl_eu_806665C0;
     if (*self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58() != lbl_eu_806665C0) {

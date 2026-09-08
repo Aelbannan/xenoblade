@@ -28,6 +28,93 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 #include "nw4r/math/math_triangular.h"
 #include <new>
 
+// ---------------------------------------------------------------------------
+// Retail data-slice definitions owned by this TU (splits.txt: .data
+// 0x80526354-0x80526418, .rodata 0x804FB098-0x804FB0C8, .sdata
+// 0x806619C8-0x806619D8, .sbss 0x80663D58-0x80663D60). MWCC emits no data
+// for this TU (the C++ vtable key functions are free-function entry
+// points), so the assert strings, vtables/base tables, RTTI names, typeinfo
+// pairs and manager pointer are defined here explicitly in retail order.
+// Unspeakable CTTask<> template slots are zero here and injected by
+// UNIT_RULES["CTaskEnvironment.o"] inject_relocs (CTaskManager precedent).
+// ---------------------------------------------------------------------------
+
+// .rodata: RTTI names.
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used))
+char lbl_eu_804FB098[] = "CTaskEnvironment";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FB0AC[] = "CTTask<CTaskEnvironment>";
+
+// Foreign slots/labels referenced by the tables below. Reset/Tail and the
+// monolib RTTI pairs live in other TUs (CTaskManager.cpp precedent); the
+// Draw slot is declared-but-undefined (Draw is not written yet), so its
+// extern "C" name cannot collide with a compiler-generated object (the
+// MWCC 10322 trigger) and stays a link-time UNDEF until Draw is defined.
+extern "C" {
+extern void Reset__14CChildListNodeFv();
+extern void Tail__8CProcessFv();
+extern void Draw__16CTaskEnvironmentFv();
+extern u32 lbl_eu_80661958[2];
+extern u32 lbl_eu_80661950[2];
+extern u32 lbl_eu_80661948[2];
+}
+// Forward declarations: the .sdata pairs below are referenced by the .data
+// vtables above (CMCEffStart.cpp precedent).
+extern "C" u32 lbl_eu_806619C8[2];
+extern "C" u32 lbl_eu_806619D0[2];
+
+// .data: NW4R assert strings.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+char lbl_eu_80526354[] = "NW4R:Failed assertion !((u32)p & 0x1f)";
+__declspec(section ".data") __attribute__((used))
+char lbl_eu_8052637C[] = "g3d_resfile_ac.h";
+
+// .data: CTaskEnvironment vtable (0x24). Member slots that MWCC did not
+// auto-emit are zero here and bound by inject_relocs; the Draw slot uses
+// its extern "C" declaration above.
+extern "C" u32 lbl_eu_80526390[9] = {
+    (u32)&lbl_eu_806619C8, 0,
+    0, /* +0x44 __dt__16CTaskEnvironmentFv (injected) */
+    (u32)&Reset__14CChildListNodeFv,
+    0, /* +0x4C Init__16CTaskEnvironmentFv (injected) */
+    0, /* +0x50 Term__16CTaskEnvironmentFv (injected) */
+    0, /* +0x54 Move__16CTaskEnvironmentFv (injected) */
+    (u32)&Draw__16CTaskEnvironmentFv,
+    (u32)&Tail__8CProcessFv
+};
+// .data: CProcess-family RTTI base table (0x24).
+extern "C" u32 lbl_eu_805263B4[9] = {
+    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0,
+    (u32)&lbl_eu_806619D0, 0, 0
+};
+// .data: interim CTTask<CTaskEnvironment> vtable (0x24). Template slots
+// ('<'-unspellable) are zero here and injected.
+extern "C" u32 lbl_eu_805263D8[9] = {
+    (u32)&lbl_eu_806619D0, 0,
+    0, /* +0x8C __dt__26CTTask<16CTaskEnvironment>Fv (injected) */
+    (u32)&Reset__14CChildListNodeFv,
+    0, 0,
+    0, /* +0x9C Move__26CTTask<16CTaskEnvironment>Fv (injected) */
+    0, /* +0xA0 Draw__26CTTask<16CTaskEnvironment>Fv (injected) */
+    (u32)&Tail__8CProcessFv
+};
+// .data: CTTask RTTI base table (0x1C).
+extern "C" u32 lbl_eu_805263FC[7] = {
+    (u32)&lbl_eu_80661958, 0, (u32)&lbl_eu_80661950, 0, (u32)&lbl_eu_80661948, 0, 0
+};
+
+// .sdata: RTTI typeinfo pairs { name, base }.
+extern "C" u32 lbl_eu_806619C8[2] = { (u32)&lbl_eu_804FB098, (u32)&lbl_eu_805263B4 };
+extern "C" u32 lbl_eu_806619D0[2] = { (u32)&lbl_eu_804FB0AC, (u32)&lbl_eu_805263FC };
+
+// .sbss: global environment manager pointer (CTaskManager.cpp precedent:
+// the zero initializer makes this the definition, zero-fill -> .sbss).
+// Retail keeps an 8-byte object here (pointer + one trailing boot-zero word
+// no code in this TU names); the tail word below reproduces the size
+// (CBattleManager lbl_eu_80663F00 precedent).
+CTaskEnvGlobal* lbl_eu_80663D58 = 0;
+unsigned int lbl_eu_80663D5C_tail[1];
+
 // Retail-symbol import: sdata2 s32->f32 conversion magic
 // (0x4330000080000000); MWCC's inline int->float cast pulls its pool double
 // from here (CREvtModelMap.cpp convention).

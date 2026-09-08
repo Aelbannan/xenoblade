@@ -80,9 +80,9 @@ extern "C" void func_8018CBE8(u8* obj);                   // CfResPcImpl.cpp
 extern "C" void func_8012FAA8();                          // camera/screen reset
 extern "C" void func_801765A4(void* actor, f32 value, u32 arg); // CActorParam.cpp
 extern "C" int func_8013EB90(int flag);                   // CfObjectImplWalker.cpp
-extern float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc4)
-extern float lbl_eu_80666B28;
-extern double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
+extern const float lbl_eu_80666B24;   // .sdata2 gauge constants (UnkVirtualFunc4)
+extern const float lbl_eu_80666B28;
+extern const double lbl_eu_80666B30; // 4503601774854144.0 (2^52+2^51): doubles as the int->double biased-magic constant
 extern "C" void func_8010CE50(u8* obj, int a, int b, int c);
 extern "C" void func_802617B8(u8* obj, u32 value, int a);
 extern "C" void func_800A282C(u8* obj, int flag);
@@ -95,12 +95,13 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove
 extern void* lbl_eu_80664090;
 
 // sdata2 literals referenced by the CfObjectPc methods.
-extern float lbl_eu_80666B14;
-extern float lbl_eu_80666B0C;
-extern float lbl_eu_80666B10;
-extern float lbl_eu_80666B18;
-extern float lbl_eu_80666B1C;
-extern float lbl_eu_80666B20;
+extern const float lbl_eu_80666B08;
+extern const float lbl_eu_80666B14;
+extern const float lbl_eu_80666B0C;
+extern const float lbl_eu_80666B10;
+extern const float lbl_eu_80666B18;
+extern const float lbl_eu_80666B1C;
+extern const float lbl_eu_80666B20;
 
 // 10-byte .rodata literal copied onto the stack by UnkVirtualFunc4.
 struct Lit10 {
@@ -127,8 +128,8 @@ struct Res10View {
 extern u16 lbl_eu_80663E42;
 extern u16 lbl_eu_80663E44;
 extern void* lbl_eu_806640D4;
-extern float lbl_eu_80666B38;
-extern double lbl_eu_80666B40;
+extern const float lbl_eu_80666B38;
+extern const double lbl_eu_80666B40;
 extern "C" {
 void* func_8003AA34();                         // bdat manager refresh (void* return - must match CArtsInfo.hpp:679 / the other ~40 decls; divergent extern "C" types = 10197)
 u32 func_8003B41C(void* mgr);                  // first bdat row index (canonical form per ocBdat.cpp def)

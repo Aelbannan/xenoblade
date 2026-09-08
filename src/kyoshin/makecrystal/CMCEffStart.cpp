@@ -11,6 +11,185 @@
 
 #include "nw4r/lyt/lyt_pane.h"
 
+// (data_vtables.hpp is intentionally NOT included: its extern "C" __RTTI__*
+// decls trip MWCC 10322 under -ipa file. Slots are declared locally in the
+// sibling-TU style instead.)
+// RTTI stand-in: spelling __RTTI__10IWorkEvent is MWCC 10322 poison under
+// -ipa file (CModelDispMakeCrystal/CMenuEnemyState recipe). The gate only
+// needs zero bytes here; a UnitRules exact_renames binds it to the retail
+// name for the link.
+extern const void* rtti_10IWorkEvent[];
+
+extern "C" {
+extern void WorkEvent1__10IWorkEventFPvPCc();
+extern void WorkEvent3__10IWorkEventFPv();
+extern void WorkEvent4__10IWorkEventFv();
+extern void OnPauseTrigger__10IWorkEventFb();
+extern void WorkEvent6__10IWorkEventFv();
+extern void WorkEvent7__10IWorkEventFv();
+extern void WorkEvent8__10IWorkEventFv();
+extern void WorkEvent9__10IWorkEventFv();
+extern void WorkEvent10__10IWorkEventFv();
+extern void WorkEvent11__10IWorkEventFv();
+extern void WorkEvent12__10IWorkEventFv();
+extern void WorkEvent13__10IWorkEventFv();
+extern void WorkEvent14__10IWorkEventFv();
+extern void WorkEvent15__10IWorkEventFv();
+extern void WorkEvent16__10IWorkEventFv();
+extern void WorkEvent17__10IWorkEventFv();
+extern void WorkEvent18__10IWorkEventFv();
+extern void WorkEvent19__10IWorkEventFv();
+extern void WorkEvent20__10IWorkEventFv();
+extern void WorkEvent21__10IWorkEventFv();
+extern void WorkEvent22__10IWorkEventFv();
+extern void WorkEvent23__10IWorkEventFv();
+extern void WorkEvent24__10IWorkEventFv();
+extern void WorkEvent25__10IWorkEventFv();
+extern void WorkEvent26__10IWorkEventFv();
+extern void WorkEvent27__10IWorkEventFv();
+extern void WorkEvent28__10IWorkEventFv();
+extern void WorkEvent29__10IWorkEventFv();
+extern void WorkEvent30__10IWorkEventFv();
+extern void WorkEvent31__10IWorkEventFv();
+}
+
+// Retail data-slice imports for the hand-built prefix below: CMCCrystalList's
+// key functions (defined in CMCCrystalList.cpp) and its RTTI name string
+// (defined by CMCCrystalList.o's .rodata when that TU emits it).
+extern "C" void __dt__14CMCCrystalListFv();
+extern "C" int OnFileEvent__14CMCCrystalListFP10CEventFile(void*);
+extern "C" char lbl_eu_805092B0[];
+// Forward declaration: the .sdata pair below is referenced by the .data prefix.
+extern "C" const void* lbl_eu_806627F8[2];
+
+// ---------------------------------------------------------------------------
+// Retail data-slice definitions owned by this TU.
+//
+// splits.txt gives this TU .data 0x80535F80-0x80536128, .rodata
+// 0x80509548-0x80509A00, .sdata 0x806627F8-0x80662858 and .sdata2
+// 0x80668550-0x80668568. MWCC auto-emits only this TU's own 11 vtables /
+// typeinfo pairs / RTTI names / literal pool, so the slice heads (the
+// CMCCrystalList vtable + IWorkEvent base pair, the shared layout-name
+// pool, the sdata2 constants) are defined here explicitly in retail order;
+// the compiler-generated run trails them exactly as in retail.
+// ---------------------------------------------------------------------------
+extern "C" {
+// .data prefix: CMCCrystalList vtable (0x88 = 34 words). First table carries
+// aligned(8) for the section alignment.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+const void* lbl_eu_80535F80[34] = {
+    (const void*)lbl_eu_806627F8,
+    (const void*)0,
+    (const void*)__dt__14CMCCrystalListFv,
+    (const void*)WorkEvent1__10IWorkEventFPvPCc,
+    (const void*)OnFileEvent__14CMCCrystalListFP10CEventFile,
+    (const void*)WorkEvent3__10IWorkEventFPv,
+    (const void*)WorkEvent4__10IWorkEventFv,
+    (const void*)OnPauseTrigger__10IWorkEventFb,
+    (const void*)WorkEvent6__10IWorkEventFv,
+    (const void*)WorkEvent7__10IWorkEventFv,
+    (const void*)WorkEvent8__10IWorkEventFv,
+    (const void*)WorkEvent9__10IWorkEventFv,
+    (const void*)WorkEvent10__10IWorkEventFv,
+    (const void*)WorkEvent11__10IWorkEventFv,
+    (const void*)WorkEvent12__10IWorkEventFv,
+    (const void*)WorkEvent13__10IWorkEventFv,
+    (const void*)WorkEvent14__10IWorkEventFv,
+    (const void*)WorkEvent15__10IWorkEventFv,
+    (const void*)WorkEvent16__10IWorkEventFv,
+    (const void*)WorkEvent17__10IWorkEventFv,
+    (const void*)WorkEvent18__10IWorkEventFv,
+    (const void*)WorkEvent19__10IWorkEventFv,
+    (const void*)WorkEvent20__10IWorkEventFv,
+    (const void*)WorkEvent21__10IWorkEventFv,
+    (const void*)WorkEvent22__10IWorkEventFv,
+    (const void*)WorkEvent23__10IWorkEventFv,
+    (const void*)WorkEvent24__10IWorkEventFv,
+    (const void*)WorkEvent25__10IWorkEventFv,
+    (const void*)WorkEvent26__10IWorkEventFv,
+    (const void*)WorkEvent27__10IWorkEventFv,
+    (const void*)WorkEvent28__10IWorkEventFv,
+    (const void*)WorkEvent29__10IWorkEventFv,
+    (const void*)WorkEvent30__10IWorkEventFv,
+    (const void*)WorkEvent31__10IWorkEventFv
+};
+// .data prefix: IWorkEvent RTTI base table (0x10).
+__declspec(section ".data") __attribute__((used))
+const void* lbl_eu_80536008[4] = {
+    (const void*)rtti_10IWorkEvent,
+    (const void*)0,
+    (const void*)0,
+    (const void*)0
+};
+} // extern "C"
+
+// .sdata prefix: IWorkEvent typeinfo pair { name, base }.
+__declspec(section ".sdata") __attribute__((used))
+const void* lbl_eu_806627F8[2] = {
+    (const void*)lbl_eu_805092B0,
+    (const void*)lbl_eu_80536008
+};
+
+// .sdata2 constants in retail order (0.0f, 1.0f, int->float magic, 5.0f;
+// MWCC 8-pads the section, reproducing the trailing zero word).
+extern "C" {
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668550 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668554 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+const double lbl_eu_80668558 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used))
+const float lbl_eu_80668560 = 5.0f;
+} // extern "C"
+
+// .rodata RTTI names in retail order. Explicit char arrays (one per class)
+// so MWCC 4-packs them exactly like retail; the compiler-pooled @ copies
+// trail the pool below and are tail-dropped by UnitRules.
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509548[] = "CMCEffCylinder";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509558[] = "CMCEffDivide";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509568[] = "CMCEffUpRank";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509578[] = "CMCEffCrystal";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509588[] = "CMCEffFailure";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_80509598[] = "CMCEffSuccess";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095A8[] = "CMCEffUpPrm";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095B4[] = "CMCEffUpGreen";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095C4[] = "CMCEffUpBlue";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095D4[] = "CMCEffUpRed";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095E0[] = "CMCEffStart";
+
+// .rodata pool: shared layout/animation resource names (0x414). Single
+// unsized array so MWCC packs it contiguously like retail.
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_805095EC[] =
+"mf10_cry06_start.brlyt\0mf10_cry06_start_in.brlan\0mf10_cry02_prt00.brlyt\0"
+"mf10_cry02_prt00_in.brlan\0mf10_cry02_prt01.brlyt\0mf10_cry02_prt01_in.brlan\0"
+"mf10_cry02_prt02.brlyt\0mf10_cry02_prt02_in.brlan\0mf10_cry02_prt03.brlyt\0"
+"mf10_cry02_prt03_in.brlan\0txt_bns\0mf10_cry06_comp.brlyt\0"
+"mf10_cry06_comp_in.brlan\0mf10_cry06_comp_out.brlan\0mf10_cry06_fail.brlyt\0"
+"mf10_cry06_fail_in.brlan\0mf10_cry02_trc.brlyt\0mf10_cry02_trc_in.brlan\0"
+"mf10_cry02_trc_out.brlan\0mf10_cry03_crys.brlyt\0mf10_cry03_crys_in.brlan\0"
+"mf10_cry03_crys_change.brlan\0mf10_cry03_crys_spl.brlan\0"
+"mf10_cry03_crys_out.brlan\0mf10_cry04_lst.brlyt\0mf10_cry04_lst_roop.brlan\0"
+"nul_trc01\0name\0MNU_item\0%s%s\0txt_listname01\0atr_type\0"
+"mf00_com00_dmy.tpl\0mf10_cry00_crys01.tpl\0mf10_cry00_crys02.tpl\0"
+"mf10_cry00_crys03.tpl\0mf10_cry00_crys04.tpl\0mf10_cry00_crys05.tpl\0"
+"mf10_cry00_crys06.tpl\0pic_crs\0pic_crs01\0mf10_cry05_rank.brlyt\0"
+"mf10_cry05_rank_in.brlan\0mf10_cry05_spl.brlyt\0mf10_cry05_spl_in.brlan\0"
+"mf10_cry06_chn.brlyt\0mf10_cry06_chn_in.brlan\0mf10_cry06_chn_change.brlan\0"
+"mf10_cry06_chn_out.brlan\0txt_num\0\0\0\0\0\0";
+
 // Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 
@@ -101,7 +280,7 @@ void CMCEffUpRed::init() {
 }
 
 void CMCEffUpRed::play() {
-    startInAnim();
+    CMCEffStart::startInAnim();
     playUISound__FUl(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -122,7 +301,7 @@ void CMCEffUpBlue::init() {
 }
 
 void CMCEffUpBlue::play() {
-    startInAnim();
+    CMCEffStart::startInAnim();
     playUISound__FUl(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -143,7 +322,7 @@ void CMCEffUpGreen::init() {
 }
 
 void CMCEffUpGreen::play() {
-    startInAnim();
+    CMCEffStart::startInAnim();
     playUISound__FUl(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -668,7 +847,7 @@ void CMCEffUpRank::init() {
 }
 
 void CMCEffUpRank::play() {
-    startInAnim();
+    CMCEffStart::startInAnim();
     playUISound__FUl(0x8d);
 }
 /******************************************************************************
@@ -690,7 +869,7 @@ void CMCEffDivide::init() {
 }
 
 void CMCEffDivide::play() {
-    startInAnim();
+    CMCEffStart::startInAnim();
     playUISound__FUl(0x8d);
 }
 /******************************************************************************

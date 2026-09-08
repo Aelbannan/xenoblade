@@ -94,51 +94,12 @@ extern "C" u8 code80135FDC_getByte_64077();
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
 
-// Tag processor used by func_80136A1C/func_80136D74: vtable slot 0x14
-// rewrites a UTF-16 string in place.
-class CTagProcIf36D74 {
-public:
-    virtual void _v04();
-    virtual void _v08();
-    virtual void _v10();
-    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b);  // 0x14
-};
-
-// String-setter interface called by func_80136D74: vtable slot 0x7C sets a
-// UTF-16 string entry.
-class CLytSetStrIf36D74 {
-public:
-    virtual void _v004();
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void _v02C();
-    virtual void _v030();
-    virtual void _v034();
-    virtual void _v038();
-    virtual void _v03C();
-    virtual void _v040();
-    virtual void _v044();
-    virtual void _v048();
-    virtual void _v04C();
-    virtual void _v050();
-    virtual void _v054();
-    virtual void _v058();
-    virtual void _v05C();
-    virtual void _v060();
-    virtual void _v064();
-    virtual void _v068();
-    virtual void _v06C();
-    virtual void _v070();
-    virtual void _v078();
-    virtual void SetString(u16* text, int index);  // 0x7C
-};
+// func_80136A1C/func_80136D74 dispatch through real classes (no local pads):
+// - tagProc slot 0x14 is CTagProcessorBase::Proc (kyoshin/CTagProcessor.hpp,
+//   retail func_80125B58); the TU-local decl lives in code_80135FDC.cpp
+//   (CTagProcessor.hpp cannot be included here: its byte-wise ut::Color
+//   clashes with the lyt headers above).
+// - the slot-0x7C string setter is nw4r::lyt::TextBox::SetString.
 
 struct CViewFrame37038 {
     /* 0x000 */ u8 pad00[0xCC];
@@ -158,94 +119,11 @@ struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 extern "C" u8 func_801392B4(u32);
 #endif
 
-// Anim target whose vtable slot 0x28 is Set(idx, value*) dispatcher called
-// by func_80137C1C (and siblings); ten placeholder virtuals put Set at 0x28.
-class CAnimTargetIf37038 {
-public:
-    virtual void v00();
-    virtual void v04();
-    virtual void v08();
-    virtual void v0C();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1C();
-    virtual void Set(u32 idx, void* value);
-};
-
-// Real class tree recovered from retail vtables.
-// Retail vtables are large (0x68/0x6C); intermediate slots are kept as named placeholders
-// so the dispatched slots land at their retail offsets.
-struct __declspec(novtable) CAnmOwner {
-public:
-    virtual void vf08();
-    virtual void vf0C();
-    virtual void vf10();
-    virtual void vf14();
-    virtual void vf18();
-    virtual void vf1C();
-    virtual void vf20();
-    virtual void vf24();
-    virtual void vf28();
-    virtual void vf2C();
-    virtual void vf30();
-    virtual void vf34();
-    virtual void vf38();
-    virtual CAnmOwner* FindAnim(u32 id, u32 flag); // 0x3C
-    virtual void vf40();
-    virtual void vf44();
-    virtual void vf48();
-    virtual void vf4C();
-    virtual void vf50();
-    virtual void vf54();
-    virtual void vf58();
-    virtual void vf5C();
-    virtual void vf60();
-    virtual void vf64();
-    virtual void* GetAnmData(); // 0x68
-};
-
-struct __declspec(novtable) CAnmList {
-public:
-    virtual void vf08();
-    virtual void vf0C();
-    virtual void vf10();
-    virtual void vf14();
-    virtual void vf18();
-    virtual void vf1C();
-    virtual void vf20();
-    virtual void vf24();
-    virtual void vf28();
-    virtual void vf2C();
-    virtual void vf30();
-    virtual void vf34();
-    virtual void vf38();
-    virtual void vf3C();
-    virtual void vf40();
-    virtual void vf44();
-    virtual void vf48();
-    virtual void vf4C();
-    virtual void vf50();
-    virtual void vf54();
-    virtual void* GetAnmRoot(); // 0x58
-    virtual void vf5C();
-    virtual void vf60();
-    virtual u8 GetCount(); // 0x64
-    virtual void vf68();
-    virtual void* GetItem(u32 idx); // 0x6C
-};
-
-struct __declspec(novtable) CAnmItem {
-public:
-    virtual void vf08();
-    virtual void vf0C();
-    virtual void vf10();
-    virtual void vf14();
-    virtual void vf18();
-    virtual void vf1C();
-    virtual void vf20();
-    virtual void* Find(void* arg); // 0x24
-};
+// Pane colour / material dispatches (func_80137B44 and siblings) go through
+// real nw4r virtuals: slot 0x28 is Pane::SetVtxColor, slot 0x3C is
+// Pane::FindPaneByName, slot 0x68 is Pane::GetMaterial, slots 0x58/0x64/0x6C
+// are Pane::FindAnimationLinkSelf/GetMaterialNum/GetMaterial, and slot 0x24
+// is Material::FindAnimationLink. No local pads.
 
 // ---------------------------------------------------------------------------
 // C-linkage imports - moved verbatim from code_80135FDC.cpp. These are retail

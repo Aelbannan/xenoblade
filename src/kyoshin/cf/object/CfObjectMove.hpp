@@ -394,7 +394,7 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
         virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
         virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
-        virtual void CfObjectMove_UnkVirtualFunc23(); //0x220
+        virtual void* CfObjectMove_UnkVirtualFunc23(u32 id); //0x220: retail 0x800BF1C4 takes id in r4, returns loader result (0 when mField6DC/mField6E0 NULL); forced-name impl CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv
 
         //0x0: vtable
         //0x0-BE: CfObjectModel

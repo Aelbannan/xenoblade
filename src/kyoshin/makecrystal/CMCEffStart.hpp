@@ -27,7 +27,10 @@ public:
     void update();
     void destroy();
     u8 isFinished();
-    void startInAnim();
+    // Retail vtable lbl_eu_80536114 word 4 (+0x10) is startInAnim (the slot
+    // dispatched by CModelDispMakeCrystal's state runners; the UpRed/UpBlue/
+    // UpGreen/UpRank/Divide leaves carry their play() at the same +0x10 word).
+    virtual void startInAnim();
     void updateInAnim();
 
     u8 unk4;
@@ -43,7 +46,7 @@ public:
  * CMCEffUpRed
  *
  ******************************************************************************/
-class CMCEffUpRed : CMCEffStart {
+class CMCEffUpRed : public CMCEffStart {
 public:
     CMCEffUpRed(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpRed();
@@ -58,7 +61,7 @@ public:
  * CMCEffUpBlue
  *
  ******************************************************************************/
-class CMCEffUpBlue : CMCEffStart {
+class CMCEffUpBlue : public CMCEffStart {
 public:
     CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpBlue();
@@ -73,7 +76,7 @@ public:
  * CMCEffUpGreen
  *
  ******************************************************************************/
-class CMCEffUpGreen : CMCEffStart {
+class CMCEffUpGreen : public CMCEffStart {
 public:
     CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpGreen();
@@ -164,7 +167,7 @@ public:
  * CMCEffFailure
  *
  ******************************************************************************/
-class CMCEffFailure : CMCEffStart {
+class CMCEffFailure : public CMCEffStart {
 public:
     CMCEffFailure(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffFailure();
@@ -250,7 +253,7 @@ public:
  * CMCEffUpRank
  *
  ******************************************************************************/
-class CMCEffUpRank : CMCEffStart {
+class CMCEffUpRank : public CMCEffStart {
 public:
     CMCEffUpRank(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffUpRank();
@@ -265,7 +268,7 @@ public:
  * CMCEffDivide
  *
  ******************************************************************************/
-class CMCEffDivide : CMCEffStart {
+class CMCEffDivide : public CMCEffStart {
 public:
     CMCEffDivide(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffDivide();
@@ -339,7 +342,7 @@ extern "C" u32 getPackedFont__Fv();
 
 // Retail string pool (SDA-data base for pooled string literals).
 extern "C" char lbl_eu_805095EC[];
-extern "C" float lbl_eu_80668550;         // 0.0f (SetFrame reset)
+extern "C" const float lbl_eu_80668550;  // 0.0f (SetFrame reset)
 extern "C" const float lbl_eu_80668554;   // 1.0f (anim done threshold)
 extern "C" const double lbl_eu_80668558;  // int->float magic (0x4330000080000000)
 extern "C" const float lbl_eu_80668560;   // 5.0f (crystal change frame)

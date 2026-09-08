@@ -60,7 +60,10 @@ extern f32 lbl_eu_80665DB8;
 
 // Message string tables / buffers used by the mesVision commands.
 extern char lbl_eu_804FABF0[];
-extern char lbl_eu_80525D68[];
+// VM plugin command table (retail .data 0x80525D68, 38 name/function pairs).
+// Defined in pluginUi.cpp as a typed pointer table; vmPluginRegist takes its
+// address (decays identically for any array type, so call code is unchanged).
+extern const void* lbl_eu_80525D68[];
 
 // Player RTTI source type / pointer table entry used by the talk commands.
 // Complete scalar type so MWCC emits EMB_SDA21 addressing (retail `li @sda21`),

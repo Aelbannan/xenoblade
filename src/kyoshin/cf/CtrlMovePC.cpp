@@ -10,14 +10,13 @@
 #include "kyoshin/cf/CBattleManagerApi.hpp"
 #include "kyoshin/cf/CfMapItemManager.hpp"
 #include "kyoshin/cf/CtrlMovePC.hpp"
-#include "kyoshin/cf/CtrlMovePC_intf.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/math/Random.hpp"
 #include <nw4r/math/math_types.h>
 #include <monolib/math/CVec3.hpp>
 
 using cf::CCtrlMovePC;
-using cf::CMoveWrapper;
 
 // ---- external runtime / engine symbols (exact retail names) ----
 extern "C" {
@@ -78,7 +77,7 @@ extern const f32 lbl_eu_80667C10;
 extern const f32 lbl_eu_80667C34;
 extern const f32 lbl_eu_80667C38;
 extern const f32 lbl_eu_80667C3C;
-extern const f32 lbl_eu_8066AF20;
+extern f32 lbl_eu_8066AF20;  // canonical non-const form per CfObjectMove.hpp
 extern const f32 lbl_eu_8066A204;
 extern const f32 lbl_eu_8066A210;
 extern const f32 lbl_eu_80667B6C;
@@ -214,10 +213,10 @@ extern "C" int func_8019EE08(CCtrlMovePC* self) {
 extern "C" int func_8019CCDC(CCtrlMovePC* self) {
     if (self->mFlags4C & 0x00040000u) {        // rlwinm. bit 13
         self->mVec90.y = lbl_eu_80667B60;      // 0x94 = 0.0
-        CMoveWrapper* w = (CMoveWrapper*)self->mObject;
-        f32 s = w->getAngle();                 // vtable 0x5b4
+        cf::CfObjectActor* w = (cf::CfObjectActor*)self->mObject;
+        f32 s = w->CfObjectActor_UnkVirtualFunc6();                 // vtable 0x5b4
         self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * s);
-        f32 c = ((CMoveWrapper*)self->mObject)->getAngle();
+        f32 c = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6();
         self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * c);
         func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
     } else {
@@ -234,13 +233,13 @@ extern "C" int func_8019EEB8(CCtrlMovePC* self) {
     s16 old = self->mArr124[15];               // 0x142
     self->mArr124[15] = (s16)(old + 1);
     if (old < 30) {
-        CMoveWrapper* w = (CMoveWrapper*)self->mObject;
+        cf::CfObjectActor* w = (cf::CfObjectActor*)self->mObject;
         void* sub = *(void**)((char*)w + 0x3f60);
         u16 flag = *(u16*)((char*)sub + 0x530);
         if ((flag & 1u) == 0) {                // clrlwi. bit 31
-            f32 a = w->getAngle();             // vtable 0x5b4
+            f32 a = w->CfObjectActor_UnkVirtualFunc6();             // vtable 0x5b4
             self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
-            f32 b = ((CMoveWrapper*)self->mObject)->getAngle();
+            f32 b = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6();
             self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * b);
             func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
             return 0;
@@ -256,8 +255,8 @@ extern "C" int func_8019EEB8(CCtrlMovePC* self) {
 // state-machine dispatch loop (0xAC).
 // ============================================================================
 extern "C" void func_8019956C(CCtrlMovePC* self) {
-    cf::CMoveEmbedded* emb = (cf::CMoveEmbedded*)((char*)self->mObject + 0x3e9c);
-    f32 v = emb->getF35();
+    cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
+    f32 v = emb->CfObject_UnkVirtualFunc15();
     if (lbl_eu_80667B60 == v) {
         return;
     }
@@ -403,23 +402,23 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     // Retail control flow: every outcome here converges on the main per-tick
     // section; passing the checks merely sets the contact flag bit 0x80.
     {
-        ml::CVec3* pl = ((cf::CMovePosIntf*)((char*)self->mPlayer + 0x3e9c))->getPosition();
-        ml::CVec3* ob = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* pl = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc23();
+        ml::CVec3* ob = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         ml::CVec3 d = *pl - *ob;
         if (!(d.x * d.x + d.y * d.y + d.z * d.z <= lbl_eu_80667BAC
               || ml::math::abs(d.y) <= lbl_eu_80667BB0)) {
             // Busy-state query twice: resolve an entity handle and run a
             // second proximity pass against it.
-            if (((cf::CMoveEmbedded*)((char*)self->mPlayer + 0x3e9c))->get19() == 0) {
+            if (((cf::CObjectParam*)((char*)self->mPlayer + 0x3e9c))->CObjectParam_UnkVirtualFunc5() == 0) {
                 self->mFlags4C |= 0x80u;
             } else {
-                int id = (int)((cf::CMoveEmbedded*)((char*)self->mPlayer + 0x3e9c))->get19();
+                int id = (int)((cf::CObjectParam*)((char*)self->mPlayer + 0x3e9c))->CObjectParam_UnkVirtualFunc5();
                 void* ent = func_8016FE34(findObjectById__Fi(id));
                 if (ent == 0) {
                     self->mFlags4C |= 0x80u;
                 } else {
-                    ml::CVec3* pl2 = ((cf::CMovePosIntf*)((char*)self->mPlayer + 0x3e9c))->getPosition();
-                    ml::CVec3* eb = ((cf::CMovePosIntf*)((char*)ent + 0x3e9c))->getPosition();
+                    ml::CVec3* pl2 = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc23();
+                    ml::CVec3* eb = ((cf::CfObject*)((char*)ent + 0x3e9c))->CfObject_UnkVirtualFunc23();
                     ml::CVec3 e = *pl2 - *eb;
                     if (e.x * e.x + e.y * e.y + e.z * e.z <= lbl_eu_80667BAC
                         || ml::math::abs(e.y) <= lbl_eu_80667BB0) {
@@ -441,8 +440,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     }
 
     self->mVec6C = self->mPos;
-    self->mPos = *((cf::CMovePosIntf*)((char*)self->mPlayer + 0x3e9c))->getPosition();
-    self->mFloat100 = ((cf::CMoveWrapper*)self->mPlayer)->getAngle();   // vtable 0x5b4
+    self->mPos = *((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc23();
+    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObjectActor_UnkVirtualFunc6();   // vtable 0x5b4
     if (self->mFlags4C & 0x80000000u) {
         self->mFlags4C &= 0x7FFFFFFFu;
         self->mVec6C = self->mPos;
@@ -454,19 +453,19 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     int condC = 1;   // r31
     {
         u32 q;
-        q = *(u32*)((cf::CMoveEmbedded*)objW->mField04)->getCtrl();
+        q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_UnkVirtualFunc11();
         int hit10a = func_80174C98(objW, (int*)&q, 0xa);
         if (hit10a == 0) {
-            q = *(u32*)((cf::CMoveEmbedded*)objW->mField04)->getCtrl();
+            q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_UnkVirtualFunc11();
             if (func_80174C98(objW, (int*)&q, 0x9) != 0) {
                 condC = 0;
             }
         }
-        q = *(u32*)((cf::CMoveEmbedded*)objW->mField04)->getCtrl();
+        q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_UnkVirtualFunc11();
         if (func_80174C98(objW, (int*)&q, 0x1a) != 0) {
             condA = 0;
         } else {
-            q = *(u32*)((cf::CMoveEmbedded*)objW->mField04)->getCtrl();
+            q = *(u32*)((cf::CObjectState*)objW->mField04)->CObjectState_UnkVirtualFunc11();
             if (func_80174C98(objW, (int*)&q, 0x19) == 0 && condC != 0) {
                 condB = 1;
             }
@@ -504,20 +503,20 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         }
     }
     if (inBattle) {
-        self->mVecA8 = *((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        self->mVecA8 = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         self->mArr124[8] = 0;
         return;
     }
 
     // --- follow-anchor bookkeeping ---
     {
-        ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         ml::CVec3 delta = self->mVecA8 - *op;
-        void* st = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->get68();
+        void* st = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc48();
         bool anchorOk = (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z <= lbl_eu_80667B68)
                         && (((cf::CfObjState*)st)->mField14 >= lbl_eu_80667B6C)
                         && (condC == 0);
-        op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         if (!anchorOk) {
             self->mVecA8 = *op;
             self->mArr124[8] = 0;
@@ -535,7 +534,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     cf::CfGlobalSettings* gs = getUnk80664658();
     if ((gs->field_214 & 0x8000u) && !(self->mFlags4C & 0x20u)) {
-        ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         if (func_801F4ED8(gs, pos) != 0) {
             self->mFlags4C |= 0x20u;
         } else {
@@ -545,7 +544,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- arrival gate: give up once the counter expires or we drift away ---
     {
-        ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         ml::CVec3 dv = self->mPos - *op;
         s16 cnt = self->mArr124[8];
         if (!(cnt < 0xD2 && dv.x * dv.x + dv.y * dv.y + dv.z * dv.z <= lbl_eu_80667BB8)) {
@@ -557,7 +556,7 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
 
     // --- commit step: gate on the wrapper float, plan a party spot ---
     {
-        f32 gate = ((cf::CMoveWrapper*)self->mObject)->getF74();   // vtable 0x128
+        f32 gate = ((cf::CActorParam*)self->mObject)->CActorParam_UnkVirtualFunc37();   // vtable 0x128
         if (gate <= lbl_eu_80667B60) {
             return;
         }
@@ -625,9 +624,9 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
         }
     }
     self->mFlags4C &= ~0x100u;
-    cf::CMovePosIntf* emb = (cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c);
-    emb->getHandle();                                // vtable 0xa8
-    emb->setState(lbl_eu_80667B68);                  // vtable 0x168 setState(1.0)
+    cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
+    emb->CfObject_UnkVirtualFunc22(&out);                  // vtable 0xa8
+    emb->CfObject_UnkVirtualFunc70(lbl_eu_80667B68);        // vtable 0x168
     func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
     cf::CfMoveSub* sub2 = ((cf::CfObjWrap*)self->mObject)->mSub;
     if (sub2 != 0) {
@@ -675,10 +674,10 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
             self->mArr124[3] = 0;
         } else {
             ml::CVec3 tgt;
-            tgt.x = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->x;
+            tgt.x = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->x;
             tgt.y = lbl_eu_80667BC8
-                  + ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->y;
-            tgt.z = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->z;
+                  + ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->y;
+            tgt.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->z;
             ml::CVec3 dir = self->mVec90 * lbl_eu_80667B70;
             ml::CVec3 sum = tgt + dir;
             if (func_804B526C(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
@@ -696,7 +695,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                     f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
                     ml::CVec3 facing(s, lbl_eu_80667B60, c);
                     ml::CVec3 off = facing * lbl_eu_80667BDC;
-                    ml::CVec3 spot = *((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()
+                    ml::CVec3 spot = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()
                                      + off;
                     self->mVecC0 = spot;
                     if (func_80089E88(self, &spot, 1) != 0) {
@@ -729,7 +728,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
             self->mArr124[3] = 0;
             self->mFlags4C &= 0xE1FFFFFFu;
         } else {
-            ml::CVec3 delta = *((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()
+            ml::CVec3 delta = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()
                               - self->mVecC0;
             u32 flags = self->mFlags4C;
             if (flags & 0x04000000u) {
@@ -768,10 +767,10 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                 dir.y = lbl_eu_80667B60;
                 dir.z = cosv;
                 ml::CVec3 probe;
-                probe.x = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->x;
+                probe.x = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->x;
                 probe.y = f28
-                        + ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->y;
-                probe.z = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()->z;
+                        + ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->y;
+                probe.z = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()->z;
                 ml::CVec3 side = dir * sideScale;
                 ml::CVec3 dest = probe + side;
                 if (func_804B526C(lbl_eu_80665958, (char*)self->mObject + 0x44a8,
@@ -796,7 +795,7 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                     self->mArr124[3] = -60;
                     self->mFlags4C &= 0xE1FFFFFFu;
                 }
-                ml::CVec3 delta = *((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()
+                ml::CVec3 delta = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()
                                   - self->mVecC0;
                 if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
                     <= lbl_eu_80667B74) {
@@ -809,15 +808,15 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
 
     // ---- common tail: move-task contact / wall-slide handling ----
     if (self->mBase30 != 0) {
-        ml::CVec3* tp = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
-                            ->getPosition();
+        ml::CVec3* tp = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
+                            ->CfObject_UnkVirtualFunc23();
         if (walkPathCheck__17UnkClass_8047D2ACFv(self->mBase30, (Vec*)tp, (Vec*)goalPtr,
                 lbl_eu_80667B60, lbl_eu_80667B60, 1) != 0) {
             // Contact: slide along the surface normal toward the goal.
             self->mFlags4C &= ~0x01000000u;
             ml::CVec3 delta = *goalPtr
-                - *((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
-                      ->getPosition();
+                - *((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
+                      ->CfObject_UnkVirtualFunc23();
             ml::CVec3 dirTmp = delta;
             ml::CVec3 n = dirTmp;
             if (n.x != lbl_eu_80667B60 || n.y != lbl_eu_80667B60 || n.z != lbl_eu_80667B60) {
@@ -843,14 +842,14 @@ extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) {
                     self->mFlags50 |= 0x400u;
                     ml::CVec3 probe;
                     probe.x = lbl_eu_80667BC8 * out.x
-                            + ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
-                                  ->getPosition()->x;
+                            + ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
+                                  ->CfObject_UnkVirtualFunc23()->x;
                     probe.y = lbl_eu_80667B70
-                            + ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
-                                  ->getPosition()->y;
+                            + ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
+                                  ->CfObject_UnkVirtualFunc23()->y;
                     probe.z = lbl_eu_80667BC8 * out.z
-                            + ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)
-                                  ->getPosition()->z;
+                            + ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)
+                                  ->CfObject_UnkVirtualFunc23()->z;
                     if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4,
                                       lbl_eu_80667B60) == 0) {
                         self->mFlags50 |= 0x800u;
@@ -997,11 +996,11 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
                     cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
                     if (p == 0) continue;
                     if (self->mShort122 == i) continue;
-                    ml::CVec3* pp = ((cf::CMovePosIntf*)p)->getPosition();
+                    ml::CVec3* pp = ((cf::CfObject*)p)->CfObject_UnkVirtualFunc23();
                     ml::CVec3 d = *pp - self->mPos;
                     if (!(d.x * d.x + d.y * d.y + d.z * d.z <= self->mDistFC * self->mDistFC)) break;
-                    ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
-                    ml::CVec3* pp2 = ((cf::CMovePosIntf*)p)->getPosition();
+                    ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
+                    ml::CVec3* pp2 = ((cf::CfObject*)p)->CfObject_UnkVirtualFunc23();
                     ml::CVec3 d2 = *pp2 - *op;
                     if (!(d2.x * d2.x + d2.y * d2.y + d2.z * d2.z <= lbl_eu_80667BF8)) break;
                     bail = 1;
@@ -1048,7 +1047,7 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
     }
 
     // --- goal distance bookkeeping ---
-    ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+    ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
     ml::CVec3 delta = *pos - self->mVec54;
     f32 dist2;
     if (delta.y * delta.y <= lbl_eu_80667C04 || (self->mFlags50 & 1u)) {
@@ -1135,13 +1134,13 @@ extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
             if (!(f50 & 0x400u)) {
                 // Obstacle probe ahead: steer around or mark blocked.
                 self->mFlags50 |= 0x400u;
-                ml::CVec3* p1 = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)->getPosition();
+                ml::CVec3* p1 = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)->CfObject_UnkVirtualFunc23();
                 f32 pz = p1->z;
-                ml::CVec3* p2 = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)->getPosition();
+                ml::CVec3* p2 = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)->CfObject_UnkVirtualFunc23();
                 f32 tz = lbl_eu_80667BC8 * self->mVec90.z + pz;
-                ml::CVec3* p3 = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)->getPosition();
+                ml::CVec3* p3 = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)->CfObject_UnkVirtualFunc23();
                 f32 ty = lbl_eu_80667B70 + p3->y;
-                ml::CVec3* p4 = ((cf::CMovePosIntf*)((cf::CfMoveData*)self->mBaseData)->field_28)->getPosition();
+                ml::CVec3* p4 = ((cf::CfObject*)((cf::CfMoveData*)self->mBaseData)->field_28)->CfObject_UnkVirtualFunc23();
                 ml::CVec3 probe(lbl_eu_80667BC8 * self->mVec90.x + p4->x, ty, tz);
                 if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_80667B60) == 0) {
                     self->mFlags50 |= 0x800u;
@@ -1270,7 +1269,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
             }
             self->mTask = 0;
         }
-        ml::CVec3* pos = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         self->mVecD8 = *pos;
         self->mBase38 = lbl_eu_80667B64;      // 32.0
         ((cf::CfObjWrap*)self->mObject)->mField455A = 100;
@@ -1347,15 +1346,15 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     }
 
     self->mVec6C = self->mPos;
-    ml::CVec3* pp = ((cf::CMoveObj*)((char*)self->mPlayer + 0x3e9c))->getPosition();
+    ml::CVec3* pp = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc23();
     self->mPos = *pp;
-    self->mFloat100 = ((cf::CMoveWrapper*)self->mPlayer)->getAngle();
+    self->mFloat100 = ((cf::CfObjectActor*)self->mPlayer)->CfObjectActor_UnkVirtualFunc6();
     if (self->mFlags4C & 0x80000000u) {
         self->mFlags4C &= 0x7FFFFFFFu;
         self->mVec6C = self->mPos;
     }
 
-    ml::CVec3* op = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+    ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
     self->mVec84.x = self->mPos.x - op->x;
     self->mVec84.y = self->mPos.y - op->y;
     self->mVec84.z = self->mPos.z - op->z;
@@ -1409,7 +1408,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         } else {
             if ((self->mFlags50 & 0x8u) == 0) {
                 self->mVec9C = self->mPos;
-                ml::CVec3* p = ((cf::CMoveObj*)((char*)self->mPlayer + 0x3e9c))->getPosition();
+                ml::CVec3* p = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc23();
                 self->mVec9C.y = p->y;
                 if (own->mField0C & 0x2u) {
                     self->mFlags50 |= 0x8u;
@@ -1443,7 +1442,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     if ((self->mFlags4C & 0x1000u) == 0) {
         cf::CfGlobalSettings* gs = getUnk80664658();
         if (gs->field_214 & 0x8000u) {
-            ml::CVec3* pos = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
             if (func_801F4ED8(getUnk80664658(), pos) == 0) {
                 self->mFlags4C |= 0x1000u;
                 self->mVecCC = self->mPos;
@@ -1470,9 +1469,9 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
             self->mFlags4C &= 0xFFFF5FFFu;
         }
         if (self->mFlags4C & 0x1000u) {
-            ml::CVec3* pos = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
             f32 dx = self->mVecCC.x - pos->x;
-            ml::CVec3* pos2 = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3* pos2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
             f32 dz = self->mVecCC.z - pos2->z;
             if (dx * dx + dz * dz <= lbl_eu_80667B74) {   // 0.25
                 self->mFlags4C |= 0x2000u;
@@ -1487,7 +1486,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         self->mFlags4C |= 0x400u;
     }
 
-    void* st = ((cf::CMoveObj*)((char*)self->mPlayer + 0x3e9c))->get68();
+    void* st = ((cf::CfObject*)((char*)self->mPlayer + 0x3e9c))->CfObject_UnkVirtualFunc48();
     if (st != 0) {
         f32 h = ((cf::CfObjState*)st)->mField14;
         if (h >= lbl_eu_80667B7C) {       // 0.6
@@ -1503,17 +1502,17 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
     u32 x;
     void* sub = obj->mField04;
-    void* r = ((cf::CMoveEmbedded*)sub)->getCtrl();
+    void* r = ((cf::CObjectState*)sub)->CObjectState_UnkVirtualFunc11();
     x = *(u32*)r;
     if (func_80174C98(obj, (int*)&x, 4) != 0) {
         self->mFlags4C |= 0x40000u;
     }
     cf::CfObjWrap* pObj = (cf::CfObjWrap*)self->mPlayer;
     void* sub2 = pObj->mField04;
-    void* r2 = ((cf::CMoveEmbedded*)sub2)->getCtrl();
+    void* r2 = ((cf::CObjectState*)sub2)->CObjectState_UnkVirtualFunc11();
     u32 x2;
     void* subP = pObj->mField04;
-    void* rP = ((cf::CMoveEmbedded*)subP)->getCtrl();
+    void* rP = ((cf::CObjectState*)subP)->CObjectState_UnkVirtualFunc11();
     x2 = *(u32*)rP;
     if (func_80174C98(pObj, (int*)&x2, 4) != 0) {
         s16 v = self->mArr124[11];
@@ -1532,7 +1531,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
     }
 
     ml::CVec3 dd;   // shared delta temp (retail reuses one stack slot)
-    ml::CVec3* op2 = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+    ml::CVec3* op2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
     dd.x = self->mVecA8.x - op2->x;
     dd.y = self->mVecA8.y - op2->y;
     dd.z = self->mVecA8.z - op2->z;
@@ -1543,7 +1542,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
             self->mArr124[0] = 1000;
         }
     } else {
-        ml::CVec3* op3 = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* op3 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         self->mVecA8 = *op3;
         self->mArr124[0] = 0;
         self->mArr124[1] = 0;
@@ -1564,7 +1563,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
 
     if ((self->mFlags4C & 0x8u) == 0) {
         if (own->mField530 & 1) {
-            if (((cf::CMoveObj*)((char*)self->mPlayer + 0x3e9c))->vf03(0x100) != 0) {
+            if (((cf::CObjectState*)((char*)self->mPlayer + 0x3e9c))->CObjectState_UnkVirtualFunc2(0x100) != 0) {
                 if (self->mArr124[17] <= 0) {
                     self->mFlags4C = (self->mFlags4C & ~0x100u) | 0x8u;
                     const MoveFn* sel = (const MoveFn*)((const char*)tbl + 0x3c);
@@ -1616,7 +1615,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
                                 self->mArr124[7] = 0;
                             }
                         } else {
-                            ml::CVec3* op4 = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+                            ml::CVec3* op4 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                             ml::CVec3 dD8;
                             dD8.x = self->mVecD8.x - op4->x;
                             dD8.y = self->mVecD8.y - op4->y;
@@ -1634,7 +1633,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
                                     }
                                 }
                             } else {
-                                ml::CVec3* op5 = ((cf::CMoveObj*)((char*)self->mObject + 0x3e9c))->getPosition();
+                                ml::CVec3* op5 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                                 self->mVecD8 = *op5;
                                 self->mArr124[10] = 0;
                             }
@@ -1668,7 +1667,7 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         self->mFlags50 &= ~0x80000u;
     } else {
         cf::CfObjectMove* p = cf::CfGameManager::getPlayer(other);
-        cf::CfObjState* st2 = (cf::CfObjState*)((cf::CMoveObj*)p)->get68();
+        cf::CfObjState* st2 = (cf::CfObjState*)((cf::CfObject*)p)->CfObject_UnkVirtualFunc48();
         if (st2 != 0) {
             if (st2->mField1AC == 2) {
                 self->mShort120 = 1;
@@ -1705,13 +1704,13 @@ extern "C" int func_801999C0(cf::CCtrlMovePC* self) {
         cf::CfObjWrap* obj2 = (cf::CfObjWrap*)self->mObject;
         u32 y;
         void* sub3 = obj2->mField04;
-        void* r3 = ((cf::CMoveEmbedded*)sub3)->getCtrl();
+        void* r3 = ((cf::CObjectState*)sub3)->CObjectState_UnkVirtualFunc11();
         y = *(u32*)r3;
         if (func_80174C98(obj2, (int*)&y, 8) != 0) {
             ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
             return 0;
         }
-        f32 g = ((cf::CMoveWrapper*)self->mObject)->getF74();
+        f32 g = ((cf::CActorParam*)self->mObject)->CActorParam_UnkVirtualFunc37();
         if (g > lbl_eu_80667B60) {
             return 1;
         }
@@ -1747,12 +1746,12 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
     // Two separate position queries: goal delta and self delta.
     ml::CVec3 dGoal;
     {
-        ml::CVec3* p = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* p = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         dGoal = *p - goalSel;
     }
     ml::CVec3 dSelf;
     {
-        ml::CVec3* p = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* p = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         dSelf = *p - self->mPos;
     }
     f32 dist = dSelf.x * dSelf.x + dSelf.y * dSelf.y + dSelf.z * dSelf.z;
@@ -1764,7 +1763,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
         cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
         if (p == 0) continue;
         if (self->mShort122 == i) continue;
-        ml::CVec3* pp = ((cf::CMovePosIntf*)p)->getPosition();
+        ml::CVec3* pp = ((cf::CfObject*)p)->CfObject_UnkVirtualFunc23();
         ml::CVec3 d = *pp - self->mPos;
         f32 pd = d.x * d.x + d.y * d.y + d.z * d.z;
         if (dist > pd) {
@@ -1776,8 +1775,8 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
     }
 
     if (best != 0) {
-        ml::CVec3* bp = ((cf::CMovePosIntf*)best)->getPosition();
-        ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* bp = ((cf::CfObject*)best)->CfObject_UnkVirtualFunc23();
+        ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         ml::CVec3 db = *op - *bp;
         f32 bd = db.x * db.x + db.y * db.y + db.z * db.z;
         if (dist > bd) {
@@ -1844,9 +1843,9 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
 
         // --- steer: rotate the facing toward the approach vector ---
         f32 cosA = CosFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((CMoveWrapper*)self->mObject)->getAngle());
+            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6());
         f32 sinA = SinFIdx__Q24nw4r4mathFf(
-            lbl_eu_80667B9C * ((CMoveWrapper*)self->mObject)->getAngle());
+            lbl_eu_80667B9C * ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6());
 
         ml::CVec3 facing(sinA, lbl_eu_80667B60, cosA);
         ml::CVec3 up(lbl_eu_80667B60, lbl_eu_80667B68, lbl_eu_80667B60);
@@ -1909,7 +1908,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
                     }
                 }
                 ml::CVec3 scaled = v * lbl_eu_80667C08;   // 0.3
-                ml::CVec3* p3 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+                ml::CVec3* p3 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
@@ -1938,7 +1937,7 @@ extern "C" int func_8019CDA0(cf::CCtrlMovePC* self) {
                     }
                 }
                 ml::CVec3 scaled = v * lbl_eu_80667C08;   // 0.3
-                ml::CVec3* p3 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+                ml::CVec3* p3 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                 ml::CVec3 a = *p3 - scaled;
                 ml::CVec3 diff = a - facing;
                 ml::CVec3 sum = a + facing;
@@ -2010,7 +2009,7 @@ extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
         for (int i = 1; i < 3; i++) {
             cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
             if (p != NULL && self->mShort122 != i) {
-                ml::CVec3* pp = ((cf::CMovePosIntf*)p)->getPosition();
+                ml::CVec3* pp = ((cf::CfObject*)p)->CfObject_UnkVirtualFunc23();
                 ml::CVec3 d;
                 ml::CVec3* pd = &d;
                 nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(pd),
@@ -2021,8 +2020,8 @@ extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
 
                 // Distance between the member and our own embedded object; warn if
                 // it slipped below the threshold.
-                ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
-                ml::CVec3* pp2 = ((cf::CMovePosIntf*)p)->getPosition();
+                ml::CVec3* op = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
+                ml::CVec3* pp2 = ((cf::CfObject*)p)->CfObject_UnkVirtualFunc23();
                 nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(pd),
                                     reinterpret_cast<nw4r::math::VEC3*>(pp2),
                                     reinterpret_cast<nw4r::math::VEC3*>(op));
@@ -2052,7 +2051,7 @@ extern "C" int func_8019D9E0(cf::CCtrlMovePC* self) {
                 self->mFlags4C &= ~0x20000000u;
             } else if (self->mFlags4C & 0x20000000u) {
                 // Steer toward the chosen target via the move helper.
-                ml::CVec3* op2 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+                ml::CVec3* op2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                 ml::CVec3 delta;
                 nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(&delta),
                                     reinterpret_cast<nw4r::math::VEC3*>(op2),
@@ -2163,7 +2162,7 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
             if (p == 0 || (void*)self->mObject == p) {
                 continue;
             }
-            ml::CVec3* pp = ((cf::CMovePosIntf*)((char*)p + 0x3e9c))->getPosition();
+            ml::CVec3* pp = ((cf::CfObject*)((char*)p + 0x3e9c))->CfObject_UnkVirtualFunc23();
             v = *pp - target;
             if (v.x * v.x + v.z * v.z < lbl_eu_80667C30
                 && ml::math::abs(v.y) < lbl_eu_80667B70) {
@@ -2268,10 +2267,10 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
 
     // Reset the embedded move object: query handle, apply facing angle and
     // state, then clear the move-sub velocity.
-    cf::CMovePosIntf* emb = (cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c);
-    emb->getHandle();
-    emb->setAngle(self->mFloat100);
-    emb->setState(lbl_eu_80667B68);
+    cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
+    emb->CfObject_UnkVirtualFunc22((const ml::CVec3*)&goal);
+    emb->CfObject_UnkVirtualFunc30(self->mFloat100);
+    emb->CfObject_UnkVirtualFunc70(lbl_eu_80667B68);
     func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
 
     if (obj->mSub != 0) {
@@ -2344,7 +2343,7 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
                             } else {
                                 PSVECNormalize((const Vec*)vp, (Vec*)vp);
                             }
-                            ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+                            ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
                             ml::CVec3 tmp = *pos + *vp;
                             ml::CVec3 probe(tmp.x, tmp.y + lbl_eu_80667B68, tmp.z);
                             if (func_804BE398(&probe, 0x44a05, 0, 0, lbl_eu_80667C34, lbl_eu_8066AF20) != 0) {
@@ -2396,14 +2395,14 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
                 self->mFlags4C = g;
             }
         } else {
-            ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
             ml::CVec3 delta = *pos - self->mVec78;
             ml::CVec3 deltaArg = delta;
             func_800896F4(self, &self->mVec90, &deltaArg);
 
             ml::CVec3 scaled = self->mVec90 * lbl_eu_80667BC4;
             ml::CVec3 scaledCopy = scaled;
-            ml::CVec3* pos2 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3* pos2 = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
             ml::CVec3 sum = *pos2 + scaledCopy;
             ml::CVec3 probePos(sum.x, sum.y + lbl_eu_80667BE4, sum.z);
             ml::CVec3 probeArg = probePos;
@@ -2477,7 +2476,7 @@ extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) {
     ml::CVec3 diff;
     ml::CVec3 sum;
     for (int i = 0; i < 2; i++) {
-        f32 ang = ((CMoveWrapper*)self->mObject)->getAngle();   // vtable 0x5b4
+        f32 ang = ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6();   // vtable 0x5b4
         for (int j = 0; j < 4; j++) {
             dir.z = lbl_eu_80667B70 * CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
             dir.y = lbl_eu_80667B60;
@@ -2497,7 +2496,7 @@ extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) {
         }
         goal.y = goal.y - lbl_eu_80667BDC;
     }
-    return ((CMoveWrapper*)self->mObject)->getAngle();
+    return ((cf::CfObjectActor*)self->mObject)->CfObjectActor_UnkVirtualFunc6();
 }
 // ============================================================================
 // func_8019F1E0 - pair-follow mode update (0x2A8 bytes)
@@ -2521,7 +2520,7 @@ extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {
                 // Spot occupied: confirm we actually reached the goal area.
                 int arrived = 1;
                 if ((ownW->mSub->mField4EC & 0x100u) != 0) {
-                    const ml::CVec3& d = *((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition()
+                    const ml::CVec3& d = *((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23()
                                          - self->mVecF0;
                     f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
                     if (!(d2 > lbl_eu_80667C44)) {
@@ -2599,7 +2598,7 @@ extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {
             self->mArr124[16] = 0;
             continue;
         }
-        ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+        ml::CVec3* pos = ((cf::CfObject*)((char*)self->mObject + 0x3e9c))->CfObject_UnkVirtualFunc23();
         probe.x = pos->x;
         probe.z = pos->z;
         probe.y = pos->y + heightStep;

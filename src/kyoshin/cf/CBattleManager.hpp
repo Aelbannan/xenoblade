@@ -71,12 +71,12 @@ namespace cf{
         virtual void setPartyMaskFlag(u32 r4, u32 r5); //0x1C
         virtual void func_800E2584(u32 mask); //0x20
         virtual void func_800F42A0(); //0x24
-        virtual void func_800885F0(); //0x28
+        virtual s32 CheckUnk84Flag(u32 mask); //0x28
         virtual void func_800EA410(); //0x2C
         virtual void* func_800EA420(); //0x30
         virtual void func_800EA460(float a, float b, unsigned long c); //0x34
         virtual void func_800EA470(); //0x38
-        virtual void func_800EA998(); //0x3C
+        virtual void func_800EA998(void* arg); //0x3C
 
         void* func_800EA444();
 

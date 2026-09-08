@@ -169,8 +169,11 @@ extern const u8 lbl_eu_805708C0[];
 
 // Retail CTaskEnvironment vtables (.data): interim CTask<CTaskEnvironment>
 // vtable written right after the raw CProcess base ctor, then the final one.
-extern const u8 lbl_eu_805263D8[];
-extern const u8 lbl_eu_80526390[];
+// Defined as u32 word arrays in CTaskEnvironment.cpp (CTaskManager.cpp
+// precedent); the ctor takes their addresses, so the element type is
+// codegen-neutral here.
+extern "C" u32 lbl_eu_805263D8[9];
+extern "C" u32 lbl_eu_80526390[9];
 
 // Global null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];

@@ -7,13 +7,13 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
-extern float lbl_eu_80667738;   // CActorParam_UnkVirtualFunc34 / CfObjectActor_UnkVirtualFunc5 threshold
+extern const float lbl_eu_80667738;   // CActorParam_UnkVirtualFunc34 / CfObjectActor_UnkVirtualFunc5 threshold
 
-extern float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
+extern const float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
 
-extern float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
+extern const float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
 
-extern float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
+extern const float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
 
 
 extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
@@ -24,15 +24,21 @@ extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_UnkVirtu
 
 extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_UnkVirtualFunc35 gauge)
 
-extern float lbl_eu_80667760;         // CActorParam_UnkVirtualFunc35 0xC3 ratio divisor
+extern const float lbl_eu_80667760;         // CActorParam_UnkVirtualFunc35 0xC3 ratio divisor
 
-extern float lbl_eu_80667764;         // CActorParam_UnkVirtualFunc35 0xFC/0x100 gauge scale
+extern const float lbl_eu_80667764;         // CActorParam_UnkVirtualFunc35 0xFC/0x100 gauge scale
 
-extern float lbl_eu_80667768;         // CActorParam_UnkVirtualFunc35 0x100 decay add
+extern const float lbl_eu_80667768;         // CActorParam_UnkVirtualFunc35 0x100 decay add
+
+extern const float lbl_eu_80667770;         // code-orphaned tail float (touch-anchored)
+
+extern const float lbl_eu_80667774;         // code-orphaned tail float (touch-anchored)
+
+extern const float lbl_eu_80667778;         // code-orphaned tail float (touch-anchored)
 
 // ptmf constant (3 words: this-offset / fn / this) compared against
 // CBattleManager+0x28354 by CActorParam_UnkVirtualFunc35.
-extern u32 lbl_eu_80531090[3];
+extern const u32 lbl_eu_80531090[3];
 
 // Vtable-group symbol the CfObjectActor constructor copies its four vtable
 // pointers from (retail label; the implicit __vt symbol sits -32 bytes away).

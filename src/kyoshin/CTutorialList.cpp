@@ -165,7 +165,7 @@ extern "C" void func_802AD404(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         func_801D3620(&self->mSortMenu84[0]);
         func_801D3454(&pos, &self->mSortMenu84[0]);
-        ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
         // idle page-up: wrap to the previous 10-row block of the content
         u8 page = self->mField178;
@@ -206,7 +206,7 @@ extern "C" void func_802AD514(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         func_801D3698(&self->mSortMenu84[0]);
         func_801D3454(&pos, &self->mSortMenu84[0]);
-        ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
         // idle page-up: step the page byte and wrap to the previous block
         u8 count = (u8)self->mField280;
@@ -244,7 +244,7 @@ extern "C" void func_802AD638(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         func_801D3724(&self->mSortMenu84[0]);
         func_801D3454(&pos, &self->mSortMenu84[0]);
-        ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
         u8 count = (u8)self->mField280;
     if (count >= 10) {
@@ -279,7 +279,7 @@ extern "C" void func_802AD728(CTutorialList* self) {
         nw4r::math::VEC3 pos;
         func_801D377C(&self->mSortMenu84[0]);
         func_801D3454(&pos, &self->mSortMenu84[0]);
-        ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+        ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&pos);
     } else {
         // idle page-down: advance one full 10-row block
         u8 count = (u8)self->mField280;
@@ -386,7 +386,7 @@ extern "C" void func_802AD858(CTutorialList* self) {
     func_801D3330(&self->mSortMenu84[0]);
     nw4r::math::VEC3 curPos;
     func_801D3454(&curPos, &self->mSortMenu84[0]);
-    ((CTutorialCurView*)self->mGap2C)->vf2(&curPos);
+    ((CBaseCur*)self->mGap2C)->setRootPaneTranslate(&curPos);
     playUISound(2);
 }
 
@@ -493,7 +493,7 @@ extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {
     nw4r::lyt::Pane* barPane =
         self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
     func_80137924((nw4r::math::VEC3*)pos, pagePane, barPane, self->mLayout20->GetRootPane());
-    ((CTutorialCurView*)self->mGap2C)->vf2((const nw4r::math::VEC3*)pos);
+    ((CBaseCur*)self->mGap2C)->setRootPaneTranslate((const nw4r::math::VEC3*)pos);
 }
 
 // func_802ADEE4 - rebuild the sort menu entries: reset the menu, push the
@@ -587,9 +587,9 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         // Bind the device font onto the layout's root pane. Retail hoists
         // the root-pane fetch (+0x10 raw field) above the font lookup.
         nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((char*)mLayout20 + 0x10);
-        CTutorialFontView* fontObj = reinterpret_cast<CTutorialFontView*>(
-            getFontInfo__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout20));
-        func_8013676C(rootPane, fontObj->fontData());
+        u32 fontResult = (u32)static_cast<IDeviceFontInfo*>(
+            CDeviceFont::getFontInfo(1, mLayout20))->getFont();
+        func_8013676C(rootPane, fontResult);
 
         func_802ADC28(this);
         mLayout20->Animate(0);
@@ -654,7 +654,7 @@ int CTutorialList::OnFileEvent(CEventFile* event) {
         curDst->field_14 = curSrc->field_14;
         curDst->field_15 = curSrc->field_15;
         __dt__6CCur18Fv(tmpCur, -1);
-        ((CTutorialCurView*)mGap2C)->vf1();
+        ((CBaseCur*)mGap2C)->cleanup();
 
         func_802AE004(this);
         mField14 = 0;
@@ -763,7 +763,7 @@ extern "C" void func_802AD1F4(CTutorialList* self) {
     }
     releaseArcResourceAccessor((nw4r::lyt::ArcResourceAccessor*)self->mField1C);
     lbl_eu_80664BF0 = 0;
-    ((CTutorialCurView*)self->mGap2C)->vf1();
+    ((CBaseCur*)self->mGap2C)->cleanup();
     func_801F35DC(&self->mScrollBar);
     func_801D3258(&self->mSortMenu84[0]);
     deleteRegion__17UnkClass_8045F564Fv(&self->mGap04[0]);

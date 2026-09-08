@@ -5,6 +5,148 @@
 
 using namespace ml;
 
+// ---------------------------------------------------------------------------
+// Retail data-slice definitions owned by this TU (splits.txt: .rodata
+// 0x804FA9F0-0x804FAC20, .data 0x80525D68-0x80525E98, .sdata2
+// 0x80665DB8-0x80665DF8). The command-name strings, slot table and plugin
+// table are defined here explicitly in retail order; MWCC's literal pool
+// (int->float conversion magic copies) trails the .sdata2 defs and is
+// trimmed by UnitRules after its relocs are rebound to the real defs.
+// ---------------------------------------------------------------------------
+
+// .sdata2: fade alpha constant + int->float magic + plugin-name strings.
+__declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used))
+float lbl_eu_80665DB8 = -1.0f;
+__declspec(section ".sdata2") __attribute__((used))
+double lbl_eu_80665DC0 = 4503601774854144.0;
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DC8[] = "winTalk";
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DD0[] = "pcTalk";
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DD8[] = "fadeIn";
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DE0[] = "fadeOut";
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DE8[] = "winSys";
+__declspec(section ".sdata2") __attribute__((used))
+char lbl_eu_80665DF0[] = "save";
+
+// .rodata: effect-slot table + VM command names + shared message strings.
+__declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used))
+CfSlotTable lbl_eu_804FA9F0 = {{0x00000010u, 0x00100000u, 0x00200000u}};
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FA9FC[] = "winTalkWait";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA08[] = "winTalkNoName";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA18[] = "fadeWait";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA24[] = "createCol6Sys";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA34[] = "createCol6Hint";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA44[] = "createCol6Invite";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA58[] = "createCol6Init";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA68[] = "checkCol6Bat";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA78[] = "simpleEventStart";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA8C[] = "simpleEventEnd";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAA9C[] = "setTrust";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAA8[] = "setItemMulti";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAB8[] = "setKizunaTalk";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAC8[] = "winSysSelect";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAD8[] = "getSelectNum";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAE8[] = "mesGetArts";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAAF4[] = "mesAddPT";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB00[] = "mesSubPT";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB0C[] = "mesVisionON";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB18[] = "mesVisionOFF";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB28[] = "mesMonadoON";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB34[] = "mesMonadoOFF";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB44[] = "ptChangeNotice";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB58[] = "kizunaTalkStart";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB68[] = "kizunaTalkEnd";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB78[] = "isPrioReq";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB84[] = "gameClear";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FAB90[] = "setLastTalkNpc";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABA0[] = "isSETalkVoiceWait";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABB4[] = "setSETalkVoiceWait";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABC8[] = "clearSETalkVoiceWait";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABE0[] = "cf::CfObjectPc";
+__declspec(section ".rodata") __attribute__((used))
+char lbl_eu_804FABF0[] =
+"name\0pc_arts\0MNU_sysmes\0%s%s%s\0rlt_meet\0ui\0\0\0\0\0";
+
+// .data: VM plugin command table (38 name/function pairs + null terminator).
+// First table carries aligned(8) for the section alignment.
+__declspec(section ".data") __attribute__((aligned(8))) __attribute__((used))
+const void* lbl_eu_80525D68[76] = {
+    (const void*)lbl_eu_80665DC8, (const void*)winTalk,
+    (const void*)lbl_eu_80665DD0, (const void*)pcTalk,
+    (const void*)lbl_eu_804FA9FC, (const void*)winTalkWait,
+    (const void*)lbl_eu_804FAA08, (const void*)winTalkNoName,
+    (const void*)lbl_eu_80665DD8, (const void*)fadeIn_1,
+    (const void*)lbl_eu_80665DE0, (const void*)fadeOut_1,
+    (const void*)lbl_eu_804FAA18, (const void*)fadeWait_1,
+    (const void*)lbl_eu_804FAA24, (const void*)createCol6Sys,
+    (const void*)lbl_eu_804FAA34, (const void*)createCol6Hint,
+    (const void*)lbl_eu_804FAA44, (const void*)createCol6Invite,
+    (const void*)lbl_eu_804FAA58, (const void*)createCol6Init,
+    (const void*)lbl_eu_804FAA68, (const void*)checkCol6Bat,
+    (const void*)lbl_eu_804FAA78, (const void*)simpleEventStart,
+    (const void*)lbl_eu_804FAA8C, (const void*)simpleEventEnd,
+    (const void*)lbl_eu_804FAA9C, (const void*)setTrust,
+    (const void*)lbl_eu_804FAAA8, (const void*)setItemMulti,
+    (const void*)lbl_eu_804FAAB8, (const void*)setKizunaTalk,
+    (const void*)lbl_eu_80665DE8, (const void*)winSys,
+    (const void*)lbl_eu_804FAAC8, (const void*)winSysSelect,
+    (const void*)lbl_eu_804FAAD8, (const void*)getSelectNum,
+    (const void*)lbl_eu_804FAAE8, (const void*)mesGetArts,
+    (const void*)lbl_eu_804FAAF4, (const void*)mesAddPT,
+    (const void*)lbl_eu_804FAB00, (const void*)mesSubPT,
+    (const void*)lbl_eu_804FAB0C, (const void*)mesVisionON,
+    (const void*)lbl_eu_804FAB18, (const void*)mesVisionOFF,
+    (const void*)lbl_eu_804FAB28, (const void*)mesMonadoON,
+    (const void*)lbl_eu_804FAB34, (const void*)mesMonadoOFF,
+    (const void*)lbl_eu_804FAB44, (const void*)ptChangeNotice,
+    (const void*)lbl_eu_80665DF0, (const void*)save,
+    (const void*)lbl_eu_804FAB58, (const void*)kizunaTalkStart,
+    (const void*)lbl_eu_804FAB68, (const void*)kizunaTalkEnd,
+    (const void*)lbl_eu_804FAB78, (const void*)isPrioReq,
+    (const void*)lbl_eu_804FAB84, (const void*)gameClear,
+    (const void*)lbl_eu_804FAB90, (const void*)setLastTalkNpc,
+    (const void*)lbl_eu_804FABA0, (const void*)isSETalkVoiceWait,
+    (const void*)lbl_eu_804FABB4, (const void*)func_eu_80046DA0,
+    (const void*)lbl_eu_804FABC8, (const void*)func_eu_80046DC4,
+    (const void*)0, (const void*)0
+};
+
 void ui_mesGetArts(VMThread* pThread) {
     int num1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int num2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));

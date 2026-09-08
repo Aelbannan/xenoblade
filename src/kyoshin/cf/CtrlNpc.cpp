@@ -155,7 +155,7 @@ void func_8009377C(cf::CtrlNpc* self, u32 param) {
             // Kernel output vector declared first; snapshot copy second.
             // VEC3Sub emits the paired-single subtraction kernel;
             // VEC3LenSq's register-bound param keeps &diff materialized in a
-            // callee-saved register across the _v160 call, like retail.
+            // callee-saved register across the offset 0x160 slot call, like retail.
             ml::CVec3 v;
             nw4r::math::VEC3Sub(
                 reinterpret_cast<nw4r::math::VEC3*>(&v),

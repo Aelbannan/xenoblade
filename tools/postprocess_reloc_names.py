@@ -3502,13 +3502,37 @@ UNIT_RULES: dict[str, UnitRules] = {
         # drop the local two-magic pool after the rename.
         exact_renames=(("@3905", "lbl_eu_80665FF0"),),
         drop_data_tail=((".sdata2", 0x0),),
+        # The hand-built .data vtables (see the data block in
+        # CTaskEnvironment.cpp) reference member/template slots MWCC did
+        # not auto-emit. Bind the zero placeholder words to the real
+        # (local) symbols for the link (CTaskManager.o precedent for the
+        # '<'-unspellable CTTask<> slots); the gate only needs zero bytes.
+        inject_relocs=(
+            (".data", 0x44, "__dt__16CTaskEnvironmentFv"),
+            (".data", 0x4C, "Init__16CTaskEnvironmentFv"),
+            (".data", 0x50, "Term__16CTaskEnvironmentFv"),
+            (".data", 0x54, "Move__16CTaskEnvironmentFv"),
+            (".data", 0x8C, "__dt__26CTTask<16CTaskEnvironment>Fv"),
+            (".data", 0x9C, "Move__26CTTask<16CTaskEnvironment>Fv"),
+            (".data", 0xA0, "Draw__26CTTask<16CTaskEnvironment>Fv"),
+        ),
+        # Retail .rodata carries linker alignment padding after the last
+        # RTTI name (MWCC packs the two explicit names contiguously); pad
+        # the section back to the retail 0x30.
+        pad_data_section=((".rodata", 0x30),),
     ),
     "pluginUi.o": UnitRules(
-        # lone signed int->double magic; retail keeps TU .sdata2 empty and
-        # loads lbl_eu_80665DC0 (split1 sdata2) via SDA21 - rename the @N
-        # pool symbol and drop the local copy.
-        exact_renames=(("@2082", "lbl_eu_80665DC0"),),
-        drop_data_tail=((".sdata2", 0x0),),
+        # Typified: the TU owns its retail data slice and emits it from
+        # source (see the data block at the top of pluginUi.cpp): the
+        # .rodata slot table + command names and the .data plugin table are
+        # raw-exact, as is the .sdata2 head (fade constant, conversion
+        # magic, plugin-name strings). MWCC pools one extra copy of the
+        # int->double magic for the fadeIn_1/fadeOut_1 (float) casts after
+        # the defs; rename its .text relocs onto the real def and trim it.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80665DC0"),
+        ),
+        drop_data_tail=((".sdata2", 0x40),),
     ),
     "bte_logmsg.o": UnitRules(
         # MWCC pads the "%s\\n" sdata string to 8 (retail keeps 4) and spills
@@ -4230,36 +4254,73 @@ UNIT_RULES: dict[str, UnitRules] = {
         retarget_relocs=((".text", 0x4, "lbl_eu_80665550"),),
     ),
     "CMCEffStart.o": UnitRules(
-        # Vtable/RTTI/typeinfo live in the retail data slice (lbl_eu_805360xx);
-        # the code TU must emit none. Retarget each __vt__* reloc to the retail
-        # name (UNDEF) and drop the .data/.rodata/.sdata sections.
+        # Typified: the TU owns its retail data slice and emits it from
+        # source (see the data block at the top of CMCEffStart.cpp). .data
+        # is raw-exact: the hand-built CMCCrystalList vtable + IWorkEvent
+        # base prefix, then MWCC's vtable/base run (public inheritance
+        # reproduces retail's interleaved base tables). .sdata is raw-exact
+        # (hand pair + auto pairs). .rodata keeps the explicit RTTI names +
+        # pool; MWCC's duplicate @ name pool trails and is trimmed. .sdata2
+        # keeps the four typed constants; MWCC's separate literal pool
+        # trails and is trimmed after its .text relocs are retargeted onto
+        # the real defs.
+        # .sdata auto typeinfo pairs reference the compiler-pooled @ names;
+        # retarget them onto the explicit RTTI-name defs (runs before the
+        # .rodata drop so the link keeps live references).
         retarget_relocs=(
-            (".text", 0x2, "lbl_eu_80536114"),
-            (".text", 0x26A, "lbl_eu_805360F4"),
-            (".text", 0x39E, "lbl_eu_805360D4"),
-            (".text", 0x4D2, "lbl_eu_805360B4"),
-            (".text", 0x5EE, "lbl_eu_805360A8"),
-            (".text", 0x9AE, "lbl_eu_80536098"),
-            (".text", 0xE1A, "lbl_eu_80536078"),
-            (".text", 0xF0E, "lbl_eu_80536068"),
-            (".text", 0x1D72, "lbl_eu_80536048"),
-            (".text", 0x1EA6, "lbl_eu_80536028"),
-            (".text", 0x1FC2, "lbl_eu_80536018"),
+            (".sdata", 0x08, "lbl_eu_80509548"),
+            (".sdata", 0x10, "lbl_eu_80509558"),
+            (".sdata", 0x18, "lbl_eu_80509568"),
+            (".sdata", 0x20, "lbl_eu_80509578"),
+            (".sdata", 0x28, "lbl_eu_80509588"),
+            (".sdata", 0x30, "lbl_eu_80509598"),
+            (".sdata", 0x38, "lbl_eu_805095A8"),
+            (".sdata", 0x40, "lbl_eu_805095B4"),
+            (".sdata", 0x48, "lbl_eu_805095C4"),
+            (".sdata", 0x50, "lbl_eu_805095D4"),
+            (".sdata", 0x58, "lbl_eu_805095E0"),
         ),
-        drop_data_tail=(
-            (".data", 0),
-            (".rodata", 0),
-            (".sdata", 0),
+        # Auto vtables/typeinfo carry MWCC-mangled names; rename onto the
+        # retail labels so .text/.data relocs resolve to the local defs at
+        # link (mangled names never drift, unlike @ pools).
+        exact_renames=(
+            ("__vt__14CMCEffCylinder", "lbl_eu_80536018"),
+            ("__vt__12CMCEffDivide", "lbl_eu_80536028"),
+            ("__vt__12CMCEffUpRank", "lbl_eu_80536048"),
+            ("__vt__13CMCEffCrystal", "lbl_eu_80536068"),
+            ("__vt__13CMCEffFailure", "lbl_eu_80536078"),
+            ("__vt__13CMCEffSuccess", "lbl_eu_80536098"),
+            ("__vt__11CMCEffUpPrm", "lbl_eu_805360A8"),
+            ("__vt__13CMCEffUpGreen", "lbl_eu_805360B4"),
+            ("__vt__12CMCEffUpBlue", "lbl_eu_805360D4"),
+            ("__vt__11CMCEffUpRed", "lbl_eu_805360F4"),
+            ("__vt__11CMCEffStart", "lbl_eu_80536114"),
+            ("__RTTI__14CMCEffCylinder", "lbl_eu_80662800"),
+            ("__RTTI__12CMCEffDivide", "lbl_eu_80662808"),
+            ("__RTTI__12CMCEffUpRank", "lbl_eu_80662810"),
+            ("__RTTI__13CMCEffCrystal", "lbl_eu_80662818"),
+            ("__RTTI__13CMCEffFailure", "lbl_eu_80662820"),
+            ("__RTTI__13CMCEffSuccess", "lbl_eu_80662828"),
+            ("__RTTI__11CMCEffUpPrm", "lbl_eu_80662830"),
+            ("__RTTI__13CMCEffUpGreen", "lbl_eu_80662838"),
+            ("__RTTI__12CMCEffUpBlue", "lbl_eu_80662840"),
+            ("__RTTI__11CMCEffUpRed", "lbl_eu_80662848"),
+            ("__RTTI__11CMCEffStart", "lbl_eu_80662850"),
+            # RTTI stand-in (spelling __RTTI__10IWorkEvent is MWCC 10322
+            # poison): bind the slot to the retail name for the link.
+            ("rtti_10IWorkEvent", "__RTTI__10IWorkEvent"),
         ),
-        # updateOut's SetFrame(GetFrameSize() - 1) int→float pools the magic
-        # and activateSlots' SetFrame(0.0f) pools 0.0f (hoisted into f31,
-        # retail shape); retail references lbl_eu_80668558 / lbl_eu_80668550
-        # by name (1.0f/5.0f are named externs in source).
+        # MWCC pools its own literal copies (0.0f for activateSlots'
+        # SetFrame(0.0f) literal, 1.0f/5.0f/magic for the conversion sites)
+        # instead of reusing the typed consts; rename those .text relocs
+        # onto the real defs, then trim the trailing pool.
         pool_patterns=(
-            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80668558"),
             (struct.pack(">I", 0x00000000), "lbl_eu_80668550"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80668554"),
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80668558"),
+            (struct.pack(">I", 0x40A00000), "lbl_eu_80668560"),
         ),
-        trim_sdata2_size=0,
+        drop_data_tail=((".rodata", 0x4B8), (".sdata2", 0x18)),
     ),
     "CArcItem.o": UnitRules(
         # Vtable (lbl_eu_8056FFE0) + RTTI/typeinfo live in the retail data

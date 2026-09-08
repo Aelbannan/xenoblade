@@ -294,8 +294,8 @@ public:
     virtual CFunc8008B580Word* CObjectState_UnkVirtualFunc11();;  // vtable +0x30
 };
 
-// +0x3E9C Move sub-object view (CObjectState / CfObject virtuals). Former
-// CFunc8008A2C8SubVtbl FP pad deleted - call real UVFs via cast.
+// +0x3E9C Move sub-object view (CObjectState / CfObject virtuals). Old
+// CFunc8008A2C8Sub table deleted - call real UVFs via cast.
 struct CFunc8008A2C8Sub {
     void* vptr;                                         // 0x00
 };
@@ -973,13 +973,13 @@ struct CFunc8008E760Vec3W {
     u32 z;                          // 0x08
 };
 
-// +0x3E9C Move sub-object (CfObject::UVF29 at +0xC4). Former FP SubVtbl deleted.
+// +0x3E9C Move sub-object (CfObject::UVF29 at +0xC4). Old function table deleted.
 struct CFunc8008E760Sub {
     void* vptr;                                         // 0x00
 };
 
-// Battle/actor view: +0x5B4 = CfObjectActor::UVF6 -> float. Former BattleVtbl
-// / ActorVtbl FP pads deleted - cast to CfObjectActor*.
+// Battle/actor view: +0x5B4 = CfObjectActor::UVF6 -> float. Old battle/actor tables
+// deleted - cast to CfObjectActor*.
 struct CFunc8008E760BattleObj {
     void* vptr;                                         // 0x00
     u8 _pad04[0x3E9C - 0x04];                           // 0x04-0x3E9B
@@ -1052,7 +1052,7 @@ struct CFunc8008E760Data {
 // uses lwz/stw word stores (the float-store path goes through CfObjectMove).
 struct CFunc8008E760View {
     CFunc8008E760Vec3W mPos0W;          // 0x00
-    u8 field_0C[4];                     // 0x0C (arg to _v9C / func_8019876C)
+    u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / func_8019876C)
     f32 field_0x10;                     // 0x10
     u8 _pad14[0x34 - 0x14];             // 0x14-0x33
     CNpcBaseDataView* field_0x34;       // 0x34
@@ -1295,7 +1295,7 @@ struct CFunc80091864Sub {
     void* vtable;                       // 0x00
 };
 
-// Battle-object view: +0x5B4 = CfObjectActor::UVF6. Former ActorVtbl FP pad
+// Battle-object view: +0x5B4 = CfObjectActor::UVF6. Old actor table
 // deleted - cast to CfObjectActor*.
 struct CFunc80091864Actor {
     void* vptr;                                         // 0x00

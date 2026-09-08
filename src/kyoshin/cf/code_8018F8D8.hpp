@@ -66,12 +66,8 @@ struct UnkR31_8019E88 {
 };
 
 // (Fake vtable proxies removed: player slots now dispatch through real
-// cf::CfObject virtuals - UVF22/30/31/33/9. See code_8018F8D8.cpp.)
-// Accessor for the player flag word at offset 0x68 (func_8018FCA8).
-struct CPlayerFlags {
-    u8 pad[0x68];
-    u32 flags; // 0x68
-};
+// cf::CfObject virtuals - UVF22/30/31/33/9; flag word is CfObject::mFlags68.
+// See code_8018F8D8.cpp.)
 
 // (Fake actor/pos vtable proxies removed: slots now dispatch through real
 // cf::CObjectState (0x30), cf::CActorParam (0x158/0x18C/0x190/0x2BC/0x308)

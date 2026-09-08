@@ -1183,7 +1183,7 @@ unk28_done:
                 void* actor = func_8016FE34(findObjectById(v));
                 if (!actor) break;
                 if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc138()) break;
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc140(self->CActorParam_UnkVirtualFunc2(), e->unk14, (float)e->unk10, (float)e->unk14, (float)e->unk16);
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc140(self->CActorParam_UnkVirtualFunc2(), (float)e->unk10, (float)e->unk14, (float)e->unk16);
                 break;
             }
             case 0xC6: {
@@ -2931,6 +2931,12 @@ extern "C" void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self) 
 void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, cf::CActorParam179Arg* arg);
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv)((void*)((char*)self - 8));
+}
+
+// us-80180178: battle thunk adjusting this by -8, tail-calling UVF1.
+extern "C" const char* CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self);
+extern "C" const char* CBattleState_UnkVirtualFunc3__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return ((const char*(*)(cf::CActorParam*))CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv)((cf::CActorParam*)((char*)self - 8));
 }
 
 // us-80180180

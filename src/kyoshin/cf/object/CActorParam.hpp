@@ -548,9 +548,9 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc7();   //0xB0
         virtual void CActorParam_UnkVirtualFunc8();   //0xB4
         virtual void CActorParam_UnkVirtualFunc9();   //0xB8
-        virtual void CActorParam_UnkVirtualFunc10();  //0xBC
-        virtual void CActorParam_UnkVirtualFunc11();  //0xC0
-        virtual void CActorParam_UnkVirtualFunc12();  //0xC4
+        virtual void CActorParam_UnkVirtualFunc10(CActorParam10Arg* arg);  //0xBC
+        virtual void CActorParam_UnkVirtualFunc11(CActorParam11Arg* arg);  //0xC0
+        virtual void CActorParam_UnkVirtualFunc12(CActorParam12Arg* arg);  //0xC4
         virtual void CActorParam_UnkVirtualFunc13();  //0xC8
         virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
@@ -641,16 +641,16 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc98(const void* src);  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
         virtual void* CActorParam_UnkVirtualFunc100(); //0x224
-        virtual void CActorParam_UnkVirtualFunc101(); //0x228
-        virtual void CActorParam_UnkVirtualFunc102(); //0x22C
+        virtual void* CActorParam_UnkVirtualFunc101(); //0x228 (retail impl returns the +0x185c block)
+        virtual void* CActorParam_UnkVirtualFunc102(); //0x22C (retail impl returns the +0x18d4 block)
         virtual void CActorParam_UnkVirtualFunc103(); //0x230
         virtual void CActorParam_UnkVirtualFunc104(); //0x234
         virtual void CActorParam_UnkVirtualFunc105(); //0x238
         virtual void CActorParam_UnkVirtualFunc106(); //0x23C
         virtual void CActorParam_UnkVirtualFunc107(); //0x240
         virtual void CActorParam_UnkVirtualFunc108(); //0x244
-        virtual void CActorParam_UnkVirtualFunc109(); //0x248
-        virtual void CActorParam_UnkVirtualFunc110(); //0x24C
+        virtual u32 CActorParam_UnkVirtualFunc109(); //0x248
+        virtual u32 CActorParam_UnkVirtualFunc110(); //0x24C
         virtual void CActorParam_UnkVirtualFunc111(); //0x250
         virtual void CActorParam_UnkVirtualFunc112(); //0x254
         virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
@@ -680,7 +680,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
         virtual bool CActorParam_UnkVirtualFunc138(); //0x2BC
         virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
-        virtual void CActorParam_UnkVirtualFunc140(void* arg, int id, float x, float y, float z); //0x2C4
+        virtual void CActorParam_UnkVirtualFunc140(void* arg, float x, float y, float z); //0x2C4
         virtual void CActorParam_UnkVirtualFunc141(void* arg); //0x2C8
         virtual void CActorParam_UnkVirtualFunc142(); //0x2CC
         virtual void CActorParam_UnkVirtualFunc143(); //0x2D0
@@ -790,10 +790,7 @@ namespace cf {
         u8 unk3378[4];
         float unk337C;
     CActorParam();
-    void* CBattleState_UnkVirtualFunc18();
     void CBattleState_UnkVirtualFunc17();
-    int CBattleState_UnkVirtualFunc3();
-    void CBattleState_UnkVirtualFunc2();
     };
 
 inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }

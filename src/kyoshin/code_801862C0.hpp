@@ -107,7 +107,8 @@ public:
     virtual void unk98(); virtual void unk9C(); virtual void unkA0(); virtual void unkA4();
     virtual void placeOnGround(const ml::CVec3* pos, float scale); // 0xA8
     virtual ml::CVec3* getPos(); // 0xAC
-    virtual void unkB0(); virtual void unkB4();
+    virtual ml::CVec3* unkB0(); // +0xB0 position triplet (CfObject view: CfObject_UnkVirtualFunc24)
+    virtual void unkB4();
     virtual void placeInAir(const ml::CVec3* pos, float scale); // 0xB8
     virtual void applyRot(const ml::CVec3* rot); // 0xBC
     virtual void unkC0(); virtual void unkC4(); virtual void unkC8(); virtual void unkCC();

@@ -146,7 +146,7 @@ struct CScnEnvLgtCtrlListItem {
     // v22(f, 0, 0) on the idle pass.
     virtual void v22(float f, s32 mode, s32 submode) = 0;
     virtual int v23() = 0;                     // vtable slot 25 (0x64)
-    virtual void v24() = 0;
+    virtual void v24(int flag) = 0;            // vtable slot 26 (0x68) - retail passes r4 (CREvtLight / CTaskREvtSequence)
     virtual void v25(int flag) = 0;            // vtable slot 27 (0x6C) - teardown pass (func_804C1D7C)
     virtual void v26(void* a, void* b) = 0;    // vtable slot 28 (0x70)
     virtual void v27(void* a, void* b, float f) = 0;  // vtable slot 29 (0x74)

@@ -799,6 +799,55 @@ Two families, read from the US split1 objects (JP `__vt__Q22cf16CHelp_ArtsAttack
 Switch-family leaves inherit `CHelpSwitch` and call `this->func_802B7CBC(...)`
 (slot +0x1C). Direct-family inherit `CHelp` only. Do not put `f1C` on `CHelp`.
 
+## CAttackParam/CArtsParam record tables -> prefix-vptr real classes (novtable)
+
+- Symptom: TU-local `CAttackParamTailIf` / `*VtblRec` pure-virtual views plus a
+  manual `((Slot*)unk84)[2](this)` function-pointer dispatch; ctor stuck at
+  81% with a pure `r12 -> r4` reg_swap (virtual calls use `r12`, hand-rolled
+  function pointers color `r4`).
+- Cause: the record vptr lives at +0x84 (0x84 data bytes first). MWCC puts the
+  derived vptr after a non-polymorphic prefix base (same as `CHelpPrefix` ->
+  vptr at +8, `_sArtsSet` union -> vptr at +0x34), so the real shape is a
+  prefix struct + `__declspec(novtable)` class with four real virtuals.
+- Fix: `CAttackParamPrefix` (0x84 bytes of named fields) +
+  `class __declspec(novtable) CAttackParam : public CAttackParamPrefix` with
+  the four table slots as real virtuals (retail `lbl_eu_8052F610`, RTTI
+  `lbl_eu_80662280`); ctor installs the blob label via `vtbl()` and calls
+  the base virtual. Differently-named derived functions (`CArtsParam_*`,
+  `vtableFunc3`) stay NON-virtual members (a same-signature rename would
+  append, and the mangled retail names must be kept); calls go through the
+  base name so dispatch stays on slot +0x08. Return-type-only fixes
+  (`void` -> `u8`/`float`) do not re-mangle (`Fv` suffix kept).
+- Result: `CArtsSet.cpp` 15/15 held while deleting `TailIf`/`*VtblRec`/
+  `CArtsRecord`; `CArtsParam.cpp` 13/18 -> 15/18 with both record ctors at
+  100% (MWCC inlines the base ctor into the derived one, matching retail's
+  store-call-store-call with no `bl` to the base ctor).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any vptr-at-offset record (`CfEneAtkVtblRec` in
+  `CfObjectEne.cpp` is the same slot +0x08 dispatch); the `mVtbl->mSlots[N]`
+  ban; `_Fv` is not signature evidence.
+
+## Foreign sub-object dtor slot -> real `delete` (single `if` + delete guard)
+
+- Symptom: `CfTboxSubB0Vt` pad (`u8 pad[0x10]` + `_v008(u32)`) wrapping a
+  `lwz r12,0x10(r3)` / `lwz r12,0x8(r12)` / `li r4,1` release call on the
+  +0xB0 sub-object.
+- Cause: the table at slot +0x08 is the owning class's deleting destructor
+  (`__dt__Q22cf13CfResTboxImplFv` in `lbl_eu_80535204`; its body frees on
+  flag != 0). The owner (`CfResTboxImpl`, vptr at +0x10 via its own prefix)
+  already declares `virtual ~CfResTboxImpl()` at that slot.
+- Fix: `delete (CfResTboxImpl*)mSubObjB0;` inside a SINGLE `if (p != 0)`
+  (complete type via the hot-header include in the `.cpp`). The explicit
+  `if` is retail's first `beq`, `delete`'s own null guard is the second
+  `beq` (one `cmpwi`, two `beq`s, then the virtual call with `r4 = 1`). A
+  doubled `if` + `delete` regresses (three branches); a doubled `if` +
+  manual view call was the old 100% shape this replaces.
+- Result: `CfObjectTbox` ctor held at 100% with the pad deleted.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any `flag = 1` slot +0x08 call on a foreign object
+  whose table head is `__dt__`; `delete` vs manual-dispatch branch-count
+  rule.
+
 The evaluate function **is** the +0x10 virtual, not a regular method that
 casts `this` through a view. `CHelp_ArtsAttack::func_802B7D00` is slot +0x10
 on `__vt__Q22cf16CHelp_ArtsAttack`; its body then calls Switch +0x1C. Same
@@ -4238,3 +4287,30 @@ n, true))->flagsBB &= ...` — not via a pre-loaded pointer temp.
 
 Applies to/a.k.a.: "Fake vtables -> real classes" playbook (CHelp flow); any TU-local dispatch pad over
 cf::/nw4r:: classes with named slots; conversion-flavor preservation when folding.
+
+## Same-name non-virtual shadow of a base virtual APPENDS a vtable slot (Wii/1.1 -O4,p -RTTI on)
+- Symptom:   virtual calls through a derived type emit `lwz r12, K+0xC` (3 slots late) vs retail;
+  every downstream slot in the primary table shifts by the shadow count. Isolated with .scratch
+  replica hierarchies: a derived class redeclaring a SECONDARY-base virtual's name appends +1 slot
+  per same-signature redeclaration, with or without the `virtual` keyword; different-signature
+  redeclarations and the ctor add nothing. Concretely `void* g18(); int g03(); void g02();` (same
+  signatures as base, no bodies) shifted a probe call 0x5B0 -> 0x5BC (+3); adding `virtual` did NOT
+  fix it; only deletion restored the layout.
+- Cause:     MWCC 1.1 does not merge same-name redeclarations of secondary-base virtuals into the
+  base slot (no override matching without an exact override declaration path); each becomes a new
+  primary-table entry. Real case: `CActorParam` redeclared `CBattleState` UVF18/UVF3/UVF2 with
+  identical signatures and no bodies, shifting `CfObjectActor`-own virtuals (UVF6 0x5B4 -> 0x5C0)
+  and breaking every primary-table fold onto them. Verified against the retail vtable group
+  (DOL .data dump: `CfObjectActor_UnkVirtualFunc6` sits at group +0x5B4).
+- Fix:       delete the bodyless same-signature shadows (they were uncalled and undefined); keep
+  different-signature shadows (harmless, hidden) and inline-defined same-signature ones (proper
+  overrides/definitions, no append). If retail owns a same-named thunk (e.g. battle -8-adjust
+  thunks `CBattleState_UnkVirtualFunc3__Q22cf11CActorParamFv`: `subi r3,-8; b CActorParam UVF1`),
+  define it as an `extern "C"` free function with the mangled name (forward-declare the target
+  `extern "C"` too, or the reference drifts to `...__FP...`).
+- Result:    FULL_MATCH restored on all affected callers; dependent TUs held or improved
+  (CfObjectPc 23/36 -> 29/36, CAIAction 10/23 -> 11/23).
+- Confidence: repo_proven
+- Applies to/a.k.a.: any hierarchy where a derived header redeclares secondary-base virtual names
+  (the CHelpSwitch `func_802B7CB0 stayed non-virtual` rule is the same quirk from the other side);
+  vtable-offset forensics via DOL-group dump + .scratch replica bisection.

@@ -27,7 +27,7 @@ struct CREvtModelMapNameInfo {
 // Game-manager core dispatch now via cf::CfObject (0x158) and
 // CfObjectMove extension (0x190); pads deleted.
 
-// Emote model dispatch via CREvtSceneModel (0xB4); pad deleted.
+// Emote model dispatch via CScnItemModel (0xB4); pad deleted.
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
 
 // Self dispatch now via CREvtModel virtuals (setVisible/onEvent/reset)
@@ -42,8 +42,8 @@ struct CCreatureNode {
     void* obj;      // +0x08
 };
 
-// Emote model dispatch via CREvtSceneModel (real owner of 0xB4).
-// Keep alias for field_7A8 access compatibility.
+// Emote model is a CScnItemModel (real owner of 0xB4 vfuncB4 and +0x7A8
+// flags7A8).
 
 // Flattened layout of the retail CREvtModelMap object. The retail class
 // inherits cf::CREvtObj / CREvtModel / IWorkEvent; the base headers are
@@ -86,7 +86,7 @@ public:
     /* 0x9D */ u8 _pad9D[0x3F];
     /* 0xDC */ void* mUnkDC;
     /* 0xE0 */ void* mLoadedModelData;
-    /* 0xE4 */ CREvtSceneModel* mEmoteModel;
+    /* 0xE4 */ CScnItemModel* mEmoteModel;
     /* 0xE8 */ char mModelName[0x100];
     /* 0x1E8 */ s32 mCreatureCount;
     /* 0x1EC */ s32 mCreatureId;

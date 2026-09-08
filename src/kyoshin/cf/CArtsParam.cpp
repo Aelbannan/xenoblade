@@ -53,13 +53,11 @@ extern const float lbl_eu_8066A1FC;
 extern const float lbl_eu_8066A210;
 
 namespace cf {
-    // Manual dispatch tables installed at CAttackParam+0x84 by the ctor
-    // (retail sinit/ctor store these blob labels there and call slot +0x8
-    // through them via bctrl - the class's virtual-dispatch scheme).
+    // Retail record tables installed at +0x84 by the ctors (CAttackParam:
+    // lbl_eu_8052F610, CArtsParam: lbl_eu_8052F5E8). The init call is the
+    // real base virtual (slot +0x08), so MWCC emits the retail r12 dispatch.
     extern "C" void* lbl_eu_8052F610[];
     extern "C" void* lbl_eu_8052F5E8[];
-
-    typedef void (*AttackParamSlot)(CAttackParam* self);
 
     // Out-of-line (retail keeps this a standalone 0xE8 function that callers
     // reach with a direct bl; the in-class inline body made MWCC auto-inline
@@ -112,16 +110,16 @@ namespace cf {
     extern CArtsParam lbl_80577580;
 
     CAttackParam::CAttackParam(){
-        unk84 = lbl_eu_8052F610;
+        vtbl() = lbl_eu_8052F610;
         unk0 = 0;
         unk20 = 0;
         unk78 = 0;
-        ((AttackParamSlot*)unk84)[2](this);
+        CAttackParam_UnkVirtualFunc1();
     }
 
     CArtsParam::CArtsParam(){
-        unk84 = lbl_eu_8052F5E8;
-        ((AttackParamSlot*)unk84)[2](this);
+        vtbl() = lbl_eu_8052F5E8;
+        CAttackParam_UnkVirtualFunc1();
     }
 
     void CArtsParam::CArtsParam_UnkVirtualFunc1(){

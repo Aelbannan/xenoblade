@@ -136,10 +136,6 @@ struct CGameMgrCoreFlagsView {
     u8 pad[0x100];
     u32 field_100;
 };
-struct EmoteModelView {
-    u8 pad[0x7A8];
-    u32 field_7A8;
-};
 
 extern "C" {
 
@@ -451,10 +447,10 @@ void func_8018140C(CREvtModelMap* self)
 {
     if (self->mFlags & 2) {
         if (!self->mFileHandle1 && self->mFileData1 && !self->mEmoteModel) {
-            self->mEmoteModel = (CREvtSceneModel*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
+            self->mEmoteModel = (CScnItemModel*)func_80495E8C(lbl_eu_80663E14, self->mFileData1, 7, 1);
             func_804838DC(self->mEmoteModel, 0);
             func_80484E5C(self->mEmoteModel, lbl_eu_806678C0);
-            reinterpret_cast<EmoteModelView*>(self->mEmoteModel)->field_7A8 |= 4;
+            reinterpret_cast<CScnItemModel*>(self->mEmoteModel)->flags7A8 |= 4;
             self->mVisible = 0;
             if (lbl_eu_806642B4 == self) {
                 lbl_eu_806642B4 = 0;

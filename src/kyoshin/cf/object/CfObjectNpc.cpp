@@ -204,7 +204,11 @@ void CfObjectNpc::func_800BF764() {
     f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
     static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc35(val2);
 
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc23();
+    // Retail leaves a stale word in r4 here (leftover column-key pointer);
+    // the slot ignores it when mField6DC/mField6E0 are NULL. Pass 0: any
+    // explicit arg costs one li vs retail, so this stays a known +1-insn
+    // residual on this non-matching function (see hexdiff func_800BF764).
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc23(0);
 }
 
 // 0x800C0314

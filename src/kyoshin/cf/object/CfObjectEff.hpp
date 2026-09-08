@@ -268,7 +268,7 @@ public:
     virtual u32 hasChildEffs_();               // +0x188 - active-sub-object check
     virtual void teardownEff__(u8* arg);       // +0x18C - teardown (Sub iface op)
     virtual void detachChildEf();              // +0x190 - detach child effect
-    virtual void setEffLockFg_(bool flag);     // +0x194
+    virtual void setEffLockFg_(u32 flag);     // +0x194: retail passes the raw u32 bit (Ene CF90 leaves r4 live); a bool param inserts neg/or/srwi +0xC at callers
     virtual bool detachPrtnrA_(u8* obj);       // +0x198 - detach partner
     virtual bool detachBoundO_(u8* arg);       // +0x19C - detach bound object
     virtual void setChildFlag_(int flag);      // +0x1A0

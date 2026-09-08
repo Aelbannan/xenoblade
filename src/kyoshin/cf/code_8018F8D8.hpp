@@ -65,71 +65,17 @@ struct UnkR31_8019E88 {
     u16 field_0x2;
 };
 
-// Typed vtable-proxy for issuing virtual calls at exact retail vtable slot
-// byte offsets (PPC32: one pointer per 4 bytes). Only the slots actually
-// called by this TU's functions get typed members; the rest are opaque
-// padding. Used by func_8018FCA8 against the player (CfObjectMove) object.
-struct CPlayerVtbl {
-    void* padA8[0xa8 / 4];            // 0x000 - 0x0A4
-    void (*fw_a8)(void* self, float* pos); // 0x0A8
-    void* padAC[(0xc8 - 0xac) / 4];   // 0x0AC - 0x0C4
-    void (*fw_c8)(void* self);        // 0x0C8
-    void (*fw_cc)(void* self);        // 0x0CC
-    void* padD0[(0xd4 - 0xd0) / 4];   // 0x0D0
-    void (*fw_d4)(void* self, float* pos, float extra); // 0x0D4
-    void* padD8[(0xdc - 0xd8) / 4];   // 0x0D8
-    int (*fw_74)(void* self);         // 0xDC
-    void* padE0[(0x168 - 0xe0) / 4];  // 0x0E0 - 0x164
-    void (*fw_168)(void* self, float value); // 0x168
-};
-
+// (Fake vtable proxies removed: player slots now dispatch through real
+// cf::CfObject virtuals - UVF22/30/31/33/9. See code_8018F8D8.cpp.)
 // Accessor for the player flag word at offset 0x68 (func_8018FCA8).
 struct CPlayerFlags {
     u8 pad[0x68];
     u32 flags; // 0x68
 };
 
-// Vtable proxy for the actor objects used by func_80190940 (slots 0x2BC,
-// 0x308) and the sub-object held at +0x4 (slot 0x30).
-struct CActorSubVtbl {
-    void* pad[0x30 / 4];
-    void* (*fw_30)(void* self); // 0x30, returns a pointer read at [0]
-};
-
-struct CActorVtbl {
-    void* padA[0x2bc / 4];
-    void (*fw_2bc)(void* self);       // 0x2BC
-    void* padB[(0x308 - 0x2c0) / 4];  // 0x2C0 - 0x304
-    void* (*fw_308)(void* self);      // 0x308
-};
-
-// Extended actor vtable proxy for func_80190940: adds the 0x158 float getter.
-struct CActorVtblExt {
-    u32 padA[0x158 / 4];
-    float (*fw_158)(void* self);      // 0x158
-    void* padB[(0x2bc - 0x15c) / 4];
-    long (*fw_2bc)(void* self);       // 0x2BC
-    void* padC[(0x308 - 0x2c0) / 4];
-    long (*fw_308)(void* self);       // 0x308
-};
-
-// Comparison-slot proxy (func_80190940 equality probe).
-struct CActorCmpVtbl {
-    void* pad[0x18c / 4];
-    long (*fw_18c)(void* self);       // 0x18C
-    long (*fw_190)(void* self);       // 0x190
-};
-
-// Position sub-object (actor + 0x3E9C) vtable views.
-struct CSubPosVtbl84 {
-    void* pad[0x84 / 4];
-    long (*fw_84)(void* self);        // 0x84
-};
-struct CSubPosVtblAC {
-    void* pad[0xac / 4];
-    float* (*fw_ac)(void* self);      // 0xAC, returns Vec3 pointer
-};
-
+// (Fake actor/pos vtable proxies removed: slots now dispatch through real
+// cf::CObjectState (0x30), cf::CActorParam (0x158/0x18C/0x190/0x2BC/0x308)
+// and cf::CfObject (0x84/0xAC) virtuals. See code_8018F8D8.cpp.)
 // Actor reference used by func_80190940 (both the queried actor and the
 // enum-list candidates share this layout prefix).
 struct FuncActorRef {
@@ -622,17 +568,9 @@ extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
 extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
                                                         float value);
 
-// Character-data block returned by func_8009EC9C; the +0x17C sub-object gets
-// two virtual calls (slots 0xA4/0xA8) from func_8018FA2C.
-struct CCharDataSubVtbl {
-    void* pad[0xa4 / 4];
-    void (*fw_a4)(void* self, int arg); // 0xA4
-    void (*fw_a8)(void* self, int arg); // 0xA8
-};
-struct CCharDataView {
-    u8 _0[0x17c];
-    CCharDataSubVtbl* vtbl17c; // 0x17C
-};
+// (Fake char-data vtable proxy removed: +0x17C sub-object slots 0xA4/0xA8
+// now dispatch through real cf::CActorParam virtuals Func4/Func5.
+// See code_8018F8D8.cpp.)
 
 // Slot list returned by func_8009ECB0 (arr1[3] + arr2[6] packed at +4;
 // func_8018FA2C walks nine u32 slots).

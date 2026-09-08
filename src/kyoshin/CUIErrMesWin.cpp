@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CfMapItemManager.hpp"
 
 #include "kyoshin/CUIErrMesWin.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -55,7 +56,7 @@ void CUIErrMesWin::Init() {
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
     mScene->addRenderCB(render, 0xd, 1);
-    reinterpret_cast<CErrMesSysWinView*>(mSysWin)->v32();
+    reinterpret_cast<CSysWin*>(mSysWin)->loadSystemArc();
 }
 
 // CUIErrMesWin::Term (us-802b7768) - detach the render callback, release the
@@ -283,22 +284,20 @@ extern "C" void func_802B58A4(CErrMesSub* self) {
 // and allocates a 0xA0 voice handle before playing through the attacker's
 // embedded +0x3E9C sub-object. Always returns 0.
 int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
-    // Declared hB first so MWCC's allocator hands hA the higher register
-    // (retail keeps hA in r31, hB in r30); computed hA first (retail order).
-    CErrMesVoiceHandle* hB;
+    // Retail keeps hA in r31, hB in r30; computed hA first (retail order).
     CErrMesVoiceHandle* hA = reinterpret_cast<CErrMesVoiceHandle*>(
         func_8016FE34(findObjectById(actorA)));
-    hB = reinterpret_cast<CErrMesVoiceHandle*>(
+    CErrMesVoiceHandle* hB = reinterpret_cast<CErrMesVoiceHandle*>(
         func_8016FE34(findObjectById(actorB)));
     if (hA == 0 || hB == 0) return 0;
-    if (hA->isActive() != 0) return 0;
-    if (hB->isActive() != 0) return 0;
+    if (reinterpret_cast<cf::CActorParam*>(hA)->CActorParam_UnkVirtualFunc138() != 0) return 0;
+    if (reinterpret_cast<cf::CActorParam*>(hB)->CActorParam_UnkVirtualFunc138() != 0) return 0;
     int voiceId = func_802B5AC8(owner, reinterpret_cast<CErrMesOwner*>(hA),
                                 reinterpret_cast<CErrMesOwner*>(hB));
     if (voiceId <= 0) return 0;
 
     // Query the attacker's +4 arts-state sub-object and gate on its word.
-    u32 val = *(u32*)hA->unk4->v10();
+    u32 val = *hA->unk4->vf30();
     if (func_80174C98(hA, &val, 0x803) == 0) return 0;
     if (func_802A330C(0xa0, 1) == 0) return 0;
 

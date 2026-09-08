@@ -44,47 +44,7 @@ struct CErrMesPad {
     u32 field_0x4;
 };
 
-// Abstract view over the embedded CSysWin so Init can dispatch the layout-build
-// virtual at vtable offset 0x88 (declared index 32 after MWCC's RTTI prefix
-// slots). Pure virtuals only - no vtable emitted.
-class CErrMesSysWinView {
-public:
-    virtual void v00() = 0;
-    virtual void v01() = 0;
-    virtual void v02() = 0;
-    virtual void v03() = 0;
-    virtual void v04() = 0;
-    virtual void v05() = 0;
-    virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09() = 0;
-    virtual void v10() = 0;
-    virtual void v11() = 0;
-    virtual void v12() = 0;
-    virtual void v13() = 0;
-    virtual void v14() = 0;
-    virtual void v15() = 0;
-    virtual void v16() = 0;
-    virtual void v17() = 0;
-    virtual void v18() = 0;
-    virtual void v19() = 0;
-    virtual void v20() = 0;
-    virtual void v21() = 0;
-    virtual void v22() = 0;
-    virtual void v23() = 0;
-    virtual void v24() = 0;
-    virtual void v25() = 0;
-    virtual void v26() = 0;
-    virtual void v27() = 0;
-    virtual void v28() = 0;
-    virtual void v29() = 0;
-    virtual void v30() = 0;
-    virtual void v31() = 0;
-    virtual void v32() = 0;  // offset 0x88 - layout build
-};
 
-// CSysWin release helper (retail C-linkage; same declaration as CSystemWindow.hpp).
 extern "C" void func_8022B7F4(void*);
 
 // CMenuTitle +0x60 sub-object advance/release helpers (retail C-linkage, CTitle.cpp).
@@ -226,76 +186,21 @@ struct CErrMesObjView {
     cf::CObjectParam objectParam;  // +0x3E9C
 };
 
-// Phantom vtable view over the voice-handle vtable (vtable pointer at +0) so
-// the voice-idle check at byte offset 0x2BC is dispatched as a real
-// r12-chained virtual call (lwz r12,0(r3); lwz r12,0x2BC(r12); ...) matching
-// retail. Retail data vtable, never constructed from C++ - only cast + call a
-// slot, so no vtable is emitted and no method needs a definition.
-struct CErrMesVoiceVtbl {
-    virtual void f0();  virtual void f1();  virtual void f2();  virtual void f3();
-    virtual void f4();  virtual void f5();  virtual void f6();  virtual void f7();
-    virtual void f8();  virtual void f9();  virtual void f10(); virtual void f11();
-    virtual void f12(); virtual void f13(); virtual void f14(); virtual void f15();
-    virtual void f16(); virtual void f17(); virtual void f18(); virtual void f19();
-    virtual void f20(); virtual void f21(); virtual void f22(); virtual void f23();
-    virtual void f24(); virtual void f25(); virtual void f26(); virtual void f27();
-    virtual void f28(); virtual void f29(); virtual void f30(); virtual void f31();
-    virtual void f32(); virtual void f33(); virtual void f34(); virtual void f35();
-    virtual void f36(); virtual void f37(); virtual void f38(); virtual void f39();
-    virtual void f40(); virtual void f41(); virtual void f42(); virtual void f43();
-    virtual void f44(); virtual void f45(); virtual void f46(); virtual void f47();
-    virtual void f48(); virtual void f49(); virtual void f50(); virtual void f51();
-    virtual void f52(); virtual void f53(); virtual void f54(); virtual void f55();
-    virtual void f56(); virtual void f57(); virtual void f58(); virtual void f59();
-    virtual void f60(); virtual void f61(); virtual void f62(); virtual void f63();
-    virtual void f64(); virtual void f65(); virtual void f66(); virtual void f67();
-    virtual void f68(); virtual void f69(); virtual void f70(); virtual void f71();
-    virtual void f72(); virtual void f73(); virtual void f74(); virtual void f75();
-    virtual void f76(); virtual void f77(); virtual void f78(); virtual void f79();
-    virtual void f80(); virtual void f81(); virtual void f82(); virtual void f83();
-    virtual void f84(); virtual void f85(); virtual void f86(); virtual void f87();
-    virtual void f88(); virtual void f89(); virtual void f90(); virtual void f91();
-    virtual void f92(); virtual void f93(); virtual void f94(); virtual void f95();
-    virtual void f96(); virtual void f97(); virtual void f98(); virtual void f99();
-    virtual void f100(); virtual void f101(); virtual void f102(); virtual void f103();
-    virtual void f104(); virtual void f105(); virtual void f106(); virtual void f107();
-    virtual void f108(); virtual void f109(); virtual void f110(); virtual void f111();
-    virtual void f112(); virtual void f113(); virtual void f114(); virtual void f115();
-    virtual void f116(); virtual void f117(); virtual void f118(); virtual void f119();
-    virtual void f120(); virtual void f121(); virtual void f122(); virtual void f123();
-    virtual void f124(); virtual void f125(); virtual void f126(); virtual void f127();
-    virtual void f128(); virtual void f129(); virtual void f130(); virtual void f131();
-    virtual void f132(); virtual void f133(); virtual void f134(); virtual void f135();
-    virtual void f136(); virtual void f137(); virtual void f138(); virtual void f139();
-    virtual void f140(); virtual void f141(); virtual void f142(); virtual void f143();
-    virtual void f144(); virtual void f145(); virtual void f146(); virtual void f147();
-    virtual void f148(); virtual void f149(); virtual void f150(); virtual void f151();
-    virtual void f152(); virtual void f153(); virtual void f154(); virtual void f155();
-    virtual void f156(); virtual void f157(); virtual void f158(); virtual void f159();
-    virtual void f160(); virtual void f161(); virtual void f162(); virtual void f163();
-    virtual void f164(); virtual void f165(); virtual void f166(); virtual void f167();
-    virtual void f168(); virtual void f169(); virtual void f170(); virtual void f171();
-    virtual void f172();
-    virtual int isActive();  // slot 173 = 0x2BC - voice-idle check
-};
-
 // Voice/actor record base (func_8016FE34 result, e.g. func_802B5970's actor
-// sources and func_802B5254's candidate): vtable at +0 (voice-idle check at
-// 0x2BC via CErrMesVoiceVtbl::isActive), a sub-object at +4 (virtual at 0x30),
-// and the embedded voice-owner interface at +0x3E9C (getPosition at 0xAC).
-struct CErrMesArtsSubVtbl {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09();
-    virtual void* v10();  // slot 10 = 0x30 - returns pointer read at [0]
-};
-struct CErrMesVoiceHandle : CErrMesVoiceVtbl {
-    CErrMesArtsSubVtbl* unk4;   // 0x04
+// sources and func_802B5254's candidate): vtable at +0 is the real actor
+// table (cf::CActorParam lineage; the voice-idle check is slot 138 at 0x2BC
+// via CActorParam_UnkVirtualFunc138, same as CVS_THREAD_HAGE / CBattleManager),
+// +0x4 is the actor-state sub-object (slot 0x30 via cf::CHelpBattleSub4::vf30
+// from CTitle.hpp), and +0x3E9C is the embedded voice-owner interface
+// (getPosition at 0xAC). Plain data - the pad vtables are gone.
+struct CErrMesVoiceHandle {
+    void* vtable;               // 0x00 - real actor vtable
+    cf::CHelpBattleSub4* unk4;  // 0x04 - actor-state sub-object
     u8 _08[0x3E9C - 0x08];      // 0x08..0x3E9B
     CVoiceOwnerIntf sub;        // 0x3E9C - embedded voice-owner interface
 };
 
-// d80 scene-object view (func_802B5254 arg4): position triple at +0x10C.
+// d80 scene-object view
 struct CErrMesD80 {
     u8 _00[0x10C];
     f32 field_0x10C;  // +0x10C x
@@ -380,9 +285,11 @@ int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 // C++-mangled retail helper (actor id -> action source).
 void* findObjectById(int id);
 
-// Player accessor (retail pre-mangled cf::CfGameManager static).
-namespace cf { class CfObjectMove; }
-extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(int index);
+// Player accessor (retail pre-mangled cf::CfGameManager static). Canonical
+// void* form (matches CfObjectMove.hpp / CfObjectImplMove.hpp / CtrlEnemy.hpp
+// and every other TU); the CfObjectMove* spelling is an illegal overload
+// when both are visible in one TU.
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 // Null pointer-to-member-function constant + the CUIErrMesWin vtable regions
 // (retail .data, written by the factory ctor).

@@ -12,8 +12,10 @@
 // CMenuPTState::Move call site leaves r4/r5 unset in retail; shadow the
 // 3-arg declaration during include and re-declare the 1-arg form below.
 #define func_801F941C func_801F941C_3arg_unused
+#define create__8CScnNw4rFv create__8CScnNw4rFv_party_shadow
 #include "kyoshin/cf/code_8018F8D8.hpp"
 #undef func_801F941C
+#undef create__8CScnNw4rFv
 
 #include "kyoshin/CTaskGame.hpp"
 // NOTE: CfObjectActor.hpp is deliberately NOT included here:
@@ -23,6 +25,7 @@
 // TU includes CfObjectMove.hpp directly for the func_800BE12C owner decl and
 // the other CfObject* declarations CfObjectActor would have provided.
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
+#include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam real virtuals (0x158/0x18C/0x190/0x2BC/0x308)
 // CfGameManager.hpp (via code_8018F8D8.hpp) internally mixes a void* and a
 // CBattleManagerView* declaration of this getter; this TU calls none of them,
 // so rename it out of the way for every include below.
@@ -181,9 +184,8 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         for (int i = 0; i < 3; i++) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
             if (player != 0) {
-                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
-                if (tag != 0) pf->flags |= 0x10;
-                else pf->flags &= ~0x10;
+                if (tag != 0) player->mFlags68 |= 0x10;
+                else player->mFlags68 &= ~0x10;
                 float* src = &base[i * 4];
                 offset[0] = ox;
                 offset[1] = oy;
@@ -194,9 +196,8 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
                 pPos[0] = pSum[0];
                 pPos[1] = pSum[1];
                 pPos[2] = pSum[2];
-                (*reinterpret_cast<CPlayerVtbl**>(player))->fw_a8(player, pPos);
-                (*reinterpret_cast<CPlayerVtbl**>(player))
-                    ->fw_d4(player, src, src[3]);
+                static_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(pPos));
+                player->CfObject_UnkVirtualFunc33(src[3]);
             }
         }
     }
@@ -209,10 +210,10 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         if (entry == 0) continue;
         void* data = func_8009EC9C((u16)entry);
         func_800A30E4(data);
-        CCharDataView* cd = reinterpret_cast<CCharDataView*>(data);
-        cd->vtbl17c->fw_a4(cd->vtbl17c, 0);
-        cd->vtbl17c->fw_a8(cd->vtbl17c, 1);
-        func_800A1370(cd);
+        cf::CActorParam* cdParam = reinterpret_cast<cf::CActorParam*>(reinterpret_cast<u8*>(data) + 0x17c);
+        cdParam->CActorParam_UnkVirtualFunc4(NULL);
+        cdParam->CActorParam_UnkVirtualFunc5(1);
+        func_800A1370(data);
     }
 
     if (found != 0) {
@@ -224,8 +225,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         for (int i = 0; i < 3; i++) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
             if (player == 0) continue;
-            CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
-            pf->flags |= 0x10000000;
+            player->mFlags68 |= 0x10000000;
         }
     }
     return 0;
@@ -264,9 +264,8 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
             for (int i = 0; i < 3; i++) {
                 cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
                 if (p != 0) {
-                    CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(p);
-                    if (tag != 0) pf->flags |= 0x10;
-                    else pf->flags &= ~0x10;
+                    if (tag != 0) p->mFlags68 |= 0x10;
+                    else p->mFlags68 &= ~0x10;
                     const float* src = &base[i * 4];
                     offset[0] = ox;
                     offset[1] = oy;
@@ -279,9 +278,8 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                     pPos[0] = pSum[0];
                     pPos[1] = pSum[1];
                     pPos[2] = pSum[2];
-                    (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, pPos);
-                    (*reinterpret_cast<CPlayerVtbl**>(p))->fw_d4(
-                        p, const_cast<float*>(src), src[3]);
+                    static_cast<cf::CfObject*>(p)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(pPos));
+                    p->CfObject_UnkVirtualFunc33(src[3]);
                 }
                 byteOfs += 0x10;
             }
@@ -294,9 +292,9 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                 if (p != 0) {
                     func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
                     if (!(lbl_eu_80663E28 & 0x100)) {
-                        (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, stk);
-                        (*reinterpret_cast<CPlayerVtbl**>(self->manager->unk94[0]))->fw_cc(self->manager->unk94[0]);
-                        (*reinterpret_cast<CPlayerVtbl**>(p))->fw_c8(p);
+                        static_cast<cf::CfObject*>(p)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(stk));
+                        float ccRet90940 = self->manager->unk94[0]->CfObject_UnkVirtualFunc31();
+                        p->CfObject_UnkVirtualFunc30(ccRet90940);
                     }
                 }
             }
@@ -304,7 +302,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     }
 
     cf::CfObjectMove* e0 = self->manager->unk94[0];
-    if (e0 != 0 && (*reinterpret_cast<CPlayerVtbl**>(e0))->fw_74(e0) == 0) {
+    if (e0 != 0 && e0->CfObject_UnkVirtualFunc9() == 0) {
         func_80061A80((u32)self, 4, a, b, c, d);
         return 1;
     }
@@ -509,8 +507,7 @@ int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
             if (player != 0 && cmd == 0) {
                 // Clear the tint-request bit (bit 3 from MSB) then run the
                 // +0x168 virtual tint setter and the gauge reset helper.
-                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(player);
-                pf->flags &= ~0x10000000;
+                player->mFlags68 &= ~0x10000000;
                 player->CfObject_UnkVirtualFunc70(lbl_eu_80667A8C);
                 func_800BC3B0(player, lbl_eu_80667A88);
             }
@@ -633,8 +630,9 @@ float func_80190938() { return lbl_eu_80667A90; }
 // +0x4 sub-object's slot-0x30 getter, then test it against `gate` via
 // func_80174C98. Inlined by MWCC at every retail call site.
 static int probeGate90940(FuncActorRef* actor, u32 gate) {
-    u32 val = *(u32*)(*reinterpret_cast<CActorSubVtbl**>(actor->field_0004))
-                  ->fw_30(actor->field_0004);
+    void* ret = reinterpret_cast<cf::CObjectState*>(actor->field_0004)
+                      ->CObjectState_UnkVirtualFunc11();
+    u32 val = *(u32*)ret;
     return func_80174C98(actor, &val, gate);
 }
 
@@ -669,7 +667,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         reinterpret_cast<Sub3F60View*>(actor->field_3f60)->field_0x374 == 0) {
         return 0;
     }
-    if ((*reinterpret_cast<CActorVtblExt**>(actor))->fw_2bc(actor) != 0) {
+    if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc138() != 0) {
         return 0;
     }
 
@@ -690,13 +688,13 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x1a) == 0) return 0;
     if (func_8004C5EC(actor->field_3f60) == 0x31) return 0;
 
-    long r190 = (*reinterpret_cast<CActorCmpVtbl**>(actor))->fw_190(actor);
-    long r18c = (*reinterpret_cast<CActorCmpVtbl**>(actor))->fw_18c(actor);
+    int r190 = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc63();
+    int r18c = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc62();
     if (r190 == r18c) return 0;
 
     // While in state 5 the actor's voice-height must stay below the cap.
     if (actor->field_3f28 == 5 &&
-        (*reinterpret_cast<CActorVtblExt**>(actor))->fw_158(actor) >=
+        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc49() >=
             lbl_eu_80667A94) {
         return 0;
     }
@@ -729,10 +727,10 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         // subtracts into ps_sub.
         u8* posSubA = reinterpret_cast<u8*>(&actor->field_3e9c);
         u8* posSubB = reinterpret_cast<u8*>(&cand->field_3e9c);
-        const float* posA =
-            (*reinterpret_cast<CSubPosVtblAC**>(posSubA))->fw_ac(posSubA);
-        const float* posB =
-            (*reinterpret_cast<CSubPosVtblAC**>(posSubB))->fw_ac(posSubB);
+        const float* posA = reinterpret_cast<const float*>(
+            reinterpret_cast<cf::CfObject*>(posSubA)->CfObject_UnkVirtualFunc23());
+        const float* posB = reinterpret_cast<const float*>(
+            reinterpret_cast<cf::CfObject*>(posSubB)->CfObject_UnkVirtualFunc23());
         Vec diff;
         diff.x = posB[0] - posA[0];
         diff.y = posB[1] - posA[1];
@@ -765,10 +763,10 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) == 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() == 0)
                 continue;
             u8* candPos = reinterpret_cast<u8*>(&cand->field_3e9c);
-            if ((*reinterpret_cast<CSubPosVtbl84**>(candPos))->fw_84(candPos) == 0)
+            if (reinterpret_cast<cf::CfObject*>(candPos)->CfObject_UnkVirtualFunc13() == 0)
                 continue;
             if (func_8004C5EC(cand->field_3f60) != 5) continue;
             if (probeGate90940(cand, 0x1d) != 0) continue;
@@ -783,7 +781,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
                 continue;
             u8* tags2 = cand->field_0008;
             if (!(func_80148778(tags2, 0xf) != 0 ||
@@ -800,7 +798,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
                 continue;
             if (func_80148778(cand->field_0008, 0x10) == 0) continue;
             if (probeGate90940(cand, 0x16) != 0) continue;
@@ -840,7 +838,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             const float thr = lbl_eu_80667A90;
             for (int k = 0; k < count; k++) {
                 FuncActorRef* cand = cands[k];
-                if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) !=
+                if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() !=
                     0)
                     continue;
                 if (dists[k] > thr) continue;
@@ -855,10 +853,10 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_2bc(cand) != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
                 continue;
             if (probeGate90940(cand, 0x1d) != 0) continue;
-            if ((*reinterpret_cast<CActorVtblExt**>(cand))->fw_308(cand) >=
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc157() >=
                 2)
                 continue;
             if (dists[k] > thr) continue;

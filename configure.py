@@ -748,7 +748,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp"),
             Object(Matching, "kyoshin/cf/CfGimmickSaveOff.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorialList.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CTutorialList.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CTutorialList.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "kyoshin/CLoad.cpp"),
             Object(NonMatching, "kyoshin/CNandData.cpp"),
             Object(NonMatching, "kyoshin/ErrMesData.cpp", shift_jis = False, extra_cflags=["-enc UTF8"]), #JP only

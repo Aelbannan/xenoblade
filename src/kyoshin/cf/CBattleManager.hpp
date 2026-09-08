@@ -232,7 +232,8 @@ struct BattleRemoveObjAccessor {
 
 // Enemy/status object view for func_800DB4FC's arg3: status region base at
 // +0x8 (func_80148778 operates on &+0x8), flags at +0x3374, embedded move
-// sub-object at +0x3E9C (vtable slot 0x140, BMSubVtIf140 view).
+// sub-object at +0x3E9C (vtable slot 0x140, dispatched as a real virtual
+// on the owning move class).
 struct DB4FC_EnemyObj {
     u8 pad_00[0x8];
     u8 statusBase;              // +0x8
@@ -264,7 +265,7 @@ struct BattleScanActorView {
     u8 pad_00[0x15F0];
     u32 field_15F0;                    // +0x15F0 type id
     u8 pad_15F4[0x3E9C - 0x15F4];
-    u8 field_3E9C; // embedded move sub-object (was BMSubVtIf4C; now raw byte, real vt on cf::CfObjectMove)
+    u8 field_3E9C; // embedded move sub-object (real vt on cf::CfObjectMove)
 };
 
 // Sentinel-pointer view (offset-typed alias of CBattleManager used to keep
@@ -353,7 +354,8 @@ typedef char DB0FC_ck80[(offsetof(DB0FC_MoveTable, pad_80)   == 0x80) ? 1 : -1];
 typedef char DB0FC_ck84[(offsetof(DB0FC_MoveTable, table)    == 0x84) ? 1 : -1];
 
 // Object layout for func_800D9978's actor param: flags at +0x3374,
-// vtable-holder at +0x3ED4 (BMSub3ED4Vt view), flags at +0x3F00.
+// vtable-holder at +0x3ED4 (dispatched as a real virtual on the owning
+// holder class), flags at +0x3F00.
 struct BattleRegObjAccessor {
     u8 pad_00[0x3374];
     u32 field_3374;             // +0x3374
@@ -430,34 +432,8 @@ struct D7D24_Obj {
     u32* field_B8;          // +0xB8 entry block
 };
 
-// BMVtIf828 lives in CBattleManagerApi.hpp (single shared copy).
-
-// Fake single-inheritance interface for the battle-actor vtable slots
-// dispatched by func_800F3970: 0x2F8 (#188), 0x2FC (#189) and 0x304 (#191)
-// under the kyoshin -RTTI layout ((k+2)*4). Never instantiated.
-// Manual-vtable interface for battle actors dispatched by func_800D81A8:
-// slots 0x130 (#74), 0x290 (#158) and 0x5C0 (#366) under the kyoshin -RTTI
-// layout ((k+2)*4). Real C++ dispatch makes MWCC emit the canonical
-// lwz r12 / mtctr / bctrl sequence instead of pointer-cast helper calls.
-// Never instantiated.
-// Manual-vtable interface for the embedded sub-object at actor+0x3E9C
-// (func_800DB7F8): the caller casts (actor + 0x3E9C) to this type and the
-// vptr is read from offset 0; slot 0x140 (#78) is called with this =
-// actor + 0x3E9C. Never instantiated.
-// Manual-vtable interface for the move sub-object's +0x84 sub-vtable
-// (func_800DB7F8): the vptr is read from +0x84 and slot 0xC (#1) is called
-// with this = the move sub-object. Never instantiated.
-// Plain vtable interface for slot 0x2A8 (#166) on the actor object
-// (func_800DB4FC's arts-type check calls it and compares the result +1
-// against the arts byte at +0x44). Never instantiated, so no vtable emits.
-// Vtable interface for a battle event's slot 0xC (#1), called with
-// (self, actor) by func_800D9978's registration broadcast. Never
-// instantiated.
-// Vtable interface for the vtable-holder at actor+0x3ED4 (func_800D9978):
-// slots 0x78 (#28) and 0x100 (#62) are dispatched on registration. The
-// holder pointer is read from +0x3ED4; this = the holder. Never instantiated.
-// Plain vtable interface for slot 0x290 (#162) on the actor object
-// (func_800DB7F8's type-2 path calls it twice). Never instantiated.
+// Battle-event slot 0xC (#1) dispatch shared copy lives in
+// CBattleManagerApi.hpp.
 // Move sub-object view for func_800DB7F8 (arg4->artsData): u16 type at
 // +0x58 and the sub-vtable pointer at +0x84.
 struct DB7F8_MoveSub {

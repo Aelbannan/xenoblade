@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16618 |
-| extern "C" declarations (non-lbl_*, imports) | 7527 |
+| extern "C" (total lines) | 16524 |
+| extern "C" declarations (non-lbl_*, imports) | 7455 |
 | extern "C" definitions (forced names) | 4106 |
 | `self`/register-style params | 13436 |
-| `void*` (params + locals) | 7807 |
+| `void*` (params + locals) | 7802 |
 | raw pointer offset arithmetic | 7443 |
 | deref-through-cast arithmetic | 2891 |
 | inline asm / `register` | 128 |
@@ -521,7 +521,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 39 | 5 | 17 | 29 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 286 | 0 | 244 | 89 | 107 | 1 | 0 | 6 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/code_80213488.cpp | 2 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuArtsSelect.cpp | 149 | 18 | 41 | 95 | 22 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
+| src/kyoshin/menu/CMenuArtsSelect.cpp | 77 | 18 | 41 | 90 | 22 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 16 | 64 | 231 | 24 | 47 | 1 | 0 | 0 | 27 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleChain.cpp | 6 | 7 | 22 | 11 | 4 | 2 | 3 | 1 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -5577,14 +5577,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_code": 3,
   "asm_insn_shim": 3,
   "deref_arith": 8,
-  "extern_c_nonlbl_decl": 149,
+  "extern_c_nonlbl_decl": 77,
   "extern_c_nonlbl_def": 18,
   "goto_count": 40,
   "init_side_effect": 0,
   "ptr_arith": 22,
   "schedule_pragma": 0,
   "self_params": 41,
-  "void_ptr": 95
+  "void_ptr": 90
  },
  "src/kyoshin/menu/CMenuArtsSet.cpp": {
   "asm_insn_shim": 0,

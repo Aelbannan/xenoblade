@@ -84,13 +84,7 @@ struct ArtsParamInfo {
     u16 mCheckFlag;  // +0x74: non-zero when skill has gauge
     u8 _pad76[0x80 - 0x76];
     f32 mRatioNum;   // +0x80: current gauge value
-    void* mTablePtr; // +0x84: pointer to function table
-};
-
-// Function table for arts param info (+0x14 = getMax vtable slot).
-struct ArtsParamTable {
-    u8 _pad00[0x14];
-    void* mGetMaxFn; // +0x14: vtable entry for getMax()
+    void* mTablePtr; // +0x84: vptr of ArtsParamLocal (real virtual mFn14)
 };
 
 // Battle actor container: CfObjectMove lives at offset 0x3e9c.
@@ -130,101 +124,13 @@ struct ArtsActionSource {
     u32 mFlags;              // +0x64 - bit2 gates arts-select availability
 };
 
-// Fake SI interfaces: REAL virtuals (never defined/constructed) so MWCC emits
-// the retail lwz r12 / lwz r12,off(r12) / mtctr / bcctrl dispatch chain
-// (manual casts color the vtable base into a scratch reg instead). This TU
-// reserves 2 vtable slots: vtable offset = (declared index + 2) * 4.
-struct ArtsSubVtbl {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09();
-    virtual void* mFn30();  // #10 => +0x30: party-status getter
-};
-
-struct ArtsMoveVtbl {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10();
-    virtual void* mFn4C();  // #17 => +0x4C: CfObjectMove status getter
-    // fillers #18..#40
-    virtual void m11(); virtual void m12(); virtual void m13(); virtual void m14();
-    virtual void m15(); virtual void m16(); virtual void m17(); virtual void m18();
-    virtual void m19(); virtual void m1A(); virtual void m1B(); virtual void m1C();
-    virtual void m1D(); virtual void m1E(); virtual void m1F(); virtual void m20();
-    virtual void m21(); virtual void m22(); virtual void m23(); virtual void m24();
-    virtual void m25(); virtual void m26(); virtual void m27(); virtual void m28();
-    virtual nw4r::math::VEC3* mFnAC();  // #41 => +0xAC: position getter
-};
-
-// Battle action source (findObjectById result) vtable view.
-struct ArtsActionSrcVtbl {
-    // fillers #0..#40
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual nw4r::math::VEC3* mFnAC();  // #41 => +0xAC: position getter
-};
-
-struct ArtsActorVtbl {
-    // fillers #0..#71 (m00..m47)
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
-    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
-    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
-    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
-    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
-    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
-    virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
-    virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
-    virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();
-    virtual void m34(); virtual void m35(); virtual void m36(); virtual void m37();
-    virtual void m38(); virtual void m39(); virtual void m3A(); virtual void m3B();
-    virtual void m3C(); virtual void m3D(); virtual void m3E(); virtual void m3F();
-    virtual void m40(); virtual void m41(); virtual void m42(); virtual void m43();
-    virtual void m44(); virtual void m45(); virtual void m46(); virtual void m47();
-    virtual f32 mFn128();  // #72 => +0x128: party gauge
-    // fillers #73..#155 (m48..m9A)
-    virtual void m48(); virtual void m49(); virtual void m4A(); virtual void m4B();
-    virtual void m4C(); virtual void m4D(); virtual void m4E(); virtual void m4F();
-    virtual void m50(); virtual void m51(); virtual void m52(); virtual void m53();
-    virtual void m54(); virtual f32 mFn160(); // #86 => +0x160: party arts gauge ratio
-    virtual void m56(); virtual void m57();
-    virtual void m58(); virtual void m59(); virtual void m5A(); virtual void m5B();
-    virtual void m5C(); virtual void m5D(); virtual void m5E(); virtual void m5F();
-    virtual void m60(); virtual void m61(); virtual void m62(); virtual void m63();
-    virtual void m64(); virtual void m65(); virtual void m66(); virtual void m67();
-    virtual void m68(); virtual void m69(); virtual void m6A(); virtual void m6B();
-    virtual void m6C(); virtual void m6D(); virtual void m6E(); virtual void m6F();
-    virtual void m70(); virtual void m71(); virtual void m72(); virtual void m73();
-    virtual void m74(); virtual void m75(); virtual void m76(); virtual void m77();
-    virtual void m78(); virtual void m79(); virtual void m7A(); virtual void m7B();
-    virtual void m7C(); virtual void m7D(); virtual void m7E(); virtual void m7F();
-    virtual void m80(); virtual void m81(); virtual void m82(); virtual void m83();
-    virtual void m84(); virtual void m85(); virtual void m86(); virtual void m87();
-    virtual void m88(); virtual void m89(); virtual void m8A(); virtual void m8B();
-    virtual void m8C(); virtual void m8D(); virtual void m8E(); virtual void m8F();
-    virtual void m90(); virtual void m91(); virtual void m92(); virtual void m93();
-    virtual void m94(); virtual void m95(); virtual void m96(); virtual void m97();
-    virtual void m98(); virtual void m99(); virtual void m9A();
-    virtual void* mFn278();  // #156 => +0x278: arts list
-};
-
-struct ArtsTableVtbl {
-    virtual void m00(); virtual void m01(); virtual void m02();
-    virtual f32 mFn14();  // #3 => +0x14: getMax
-};
+// Fake vtables folded onto real owners (Wave 31):
+// +0x30 -> cf::CObjectState::CObjectState_UnkVirtualFunc11 (party status)
+// +0x4C -> cf::CObjectParam::CObjectParam_UnkVirtualFunc5 (move id)
+// +0xAC -> cf::CfObject::CfObject_UnkVirtualFunc23 (position)
+// +0x54 -> cf::CBattleState::CBattleState_UnkVirtualFunc20 (arts slot)
+// +0x128/+0x160/+0x278/+0x27C/+0x158 -> cf::CActorParam Unk37/51/121/122/49
+// +0x14 -> ArtsParamLocal::mFn14 (gauge getMax, vptr at +0x84)
 
 // func_80105D54 support types.
 
@@ -830,11 +736,6 @@ void CMenuArtsSelect::Init() {
     unk6C.func_8045F810();
 }
 
-template <typename Fn>
-static inline Fn artsVslot(void* obj, u32 offset) {
-    return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
-}
-
 void CMenuArtsSelect::Term() {
     // Retail clears lbl_eu_80663F24 (not a mangled spInstance).
     if (lbl_eu_80663F24 != NULL) {
@@ -1142,25 +1043,22 @@ after_ce48:
                         if (skillSrc != NULL) {
                             typedef u16* (*GetU16Fn)(void*);
                             u16* p =
-                                artsVslot<GetU16Fn>(skillSrc, 0x27c)(skillSrc);
+                                (u16*)reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_UnkVirtualFunc122();
                             if (p[0] != 0) {
                                 ready = 1;
                             }
                         }
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
-                            artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
+                            reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_UnkVirtualFunc121();
                         ArtsParamInfo* infoRaw = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(skill, i));
                         if (ready == 0) {
                             ArtsParamInfo* info = infoRaw;
                             if (info->mCheckFlag != 0) {
-                                typedef f32 (*GetF32Fn)(void*);
-                                ArtsParamTable* table = static_cast<ArtsParamTable*>(info->mTablePtr);
-                                GetF32Fn getMax = reinterpret_cast<GetF32Fn>(table->mGetMaxFn);
-                                f32 denom = getMax(infoRaw);
+                                f32 denom = reinterpret_cast<ArtsParamLocal*>(infoRaw)->mFn14();
                                 f32 ratio;
                                 if (denom != zeroF) {
-                                    denom = getMax(infoRaw);
+                                    denom = reinterpret_cast<ArtsParamLocal*>(infoRaw)->mFn14();
                                     ratio = info->mRatioNum / denom;
                                 } else {
                                     ratio = lbl_eu_80666F44;
@@ -1199,7 +1097,7 @@ after_ce48:
                     }
                     if (bit != 0) {
                         typedef f32 (*GetF32Fn)(void*);
-                        f32 v = artsVslot<GetF32Fn>(actor, 0x128)(actor);
+                        f32 v = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc37();
                         if (v > lbl_eu_80666F28) {
                             unk334 = 1;
                         }
@@ -1604,7 +1502,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 void* adj = pl;
                 if (pl != NULL) adj = (char*)pl - 0x3e9c;
                 if (adj != NULL) {
-                    f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                    f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
                     if (g <= lbl_eu_80666F28) {
                         battle = true;
                     } else {
@@ -1630,7 +1528,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = artsVslot<AtFn>((char*)adj + 8, 0x54)((char*)adj + 8, i);
+                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_UnkVirtualFunc20(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1645,7 +1543,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = artsVslot<AtFn>((char*)adj + 8, 0x54)((char*)adj + 8, i);
+                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_UnkVirtualFunc20(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1737,7 +1635,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     void* adj = pl;
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
-                        f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
                         if (g <= lbl_eu_80666F28) {
                             battle2 = true;
                         } else {
@@ -1863,7 +1761,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     void* adj = pl;
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
-                        f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
                         if (g <= lbl_eu_80666F28) {
                             battle3 = true;
                         } else {
@@ -1970,7 +1868,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     }
     if (b31) {
         // prev-art scan
-        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
         s8 idx = (s8)(self->unk324 - 1);
         while ((s8)idx != self->unk324) {
             if (idx < 0) idx = 8;
@@ -2024,7 +1922,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
             if (adj != NULL) {
-                void* arts2 = artsVslot<GetPtrFn>(adj, 0x278)(adj);
+                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc121();
                 s32 q = self->unk324;
                 if (q > 4) q--;
                 ArtsParamInfo* p =
@@ -2045,7 +1943,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     }
     if (b0) {
         // next-art scan
-        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
         s8 idx = (s8)(self->unk324 + 1);
         while ((s8)idx != self->unk324) {
             if (idx > 8) idx = 0;
@@ -2099,7 +1997,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
             if (adj != NULL) {
-                void* arts2 = artsVslot<GetPtrFn>(adj, 0x278)(adj);
+                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc121();
                 s32 q = self->unk324;
                 if (q > 4) q--;
                 ArtsParamInfo* p =
@@ -2139,7 +2037,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 } else {
                     void* mgr = func_8009EC9C(v);
                     void* sub = (char*)mgr + 0x17C;
-                    f32 val = artsVslot<GetF32Fn>(sub, 0x158)(sub);
+                    f32 val = reinterpret_cast<cf::CActorParam*>(sub)->CActorParam_UnkVirtualFunc49();
                     if (val == lbl_eu_80666F50) {
                         /* ok */
                     } else {
@@ -2152,7 +2050,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         }
         if (func_801088CC(self) != 0) goto useFail;
 
-        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
         s32 q3 = self->unk324;
         if (q3 > 4) q3--;
         ArtsParamInfo* p =
@@ -2164,7 +2062,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
                     void* obj = func_800B8B94(cfg[i + 1]);
-                    if (artsVslot<GetF32Fn>(obj, 0x128)(obj) > lbl_eu_80666F28) {
+                    if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_UnkVirtualFunc37() > lbl_eu_80666F28) {
                         self->unk330 = i;
                         break;
                     }
@@ -2286,7 +2184,7 @@ void CMenuArtsSelect::func_80105A34() {
                         }
                         if (a2 != NULL) {
                             u8* arts2 = static_cast<u8*>(
-                                reinterpret_cast<ArtsActorVtbl*>(a2)->mFn278());
+                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121());
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p2 = reinterpret_cast<ArtsParamInfo*>(
@@ -2515,7 +2413,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
 
     bool hasGauge = false;
     if (listIdx < 8) {
-        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
         ArtsParamInfo* p =
             reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, listIdx));
         if (func_8015419C(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
@@ -2532,7 +2430,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
                 reinterpret_cast<char*>(mv) + 0x3e9c);
         }
         if (mv == NULL) continue;
-        f32 g = artsVslot<GetF32Fn>(cand, 0x128)(cand);
+        f32 g = reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc37();
         if (g <= zeroF) continue;
         if (hasGauge) {
             if (entryId == actor->mField3F28) continue;
@@ -2635,7 +2533,7 @@ void CMenuArtsSelect::func_80106450() {
                         BattleActor* a2 = reinterpret_cast<BattleActor*>(pl);
                         if (pl != NULL) a2 = (BattleActor*)((char*)pl - 0x3e9c);
                         if (a2 != NULL) {
-                            void* arts = reinterpret_cast<ArtsActorVtbl*>(a2)->mFn278();
+                            void* arts = reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121();
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
@@ -2680,7 +2578,7 @@ void CMenuArtsSelect::func_801065E4() {
         // conversion literal against the named constant in this function's
         // schedule, so the @N pool entry here stays a known residual.
         f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
-        f32 v = frameLimit * reinterpret_cast<ArtsActorVtbl*>(actor)->mFn160();
+        f32 v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc51();
         if (v != unk9C->GetFrame() || (unk308 & 0x4) != 0) {
             unk308 |= 0x1;
         } else {
@@ -2706,7 +2604,7 @@ void CMenuArtsSelect::func_801065E4() {
         s32 flag = 0;
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(
             static_cast<u8*>(
-                reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278()),
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121()),
             2, 0));
         if (rc->mCheckFlag != 0) {
             if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
@@ -2771,7 +2669,7 @@ void CMenuArtsSelect::func_80106900() {
             conv.w[0] = 0x43300000;
             frameLimit = static_cast<f32>(conv.d - magic) - lbl_eu_80666F2C;
         }
-        v = frameLimit * reinterpret_cast<ArtsActorVtbl*>(actor)->mFn160();
+        v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc51();
         if (v < frameLimit) {
             unk98->SetAnimationEnable(unkA0, false);
             unk98->SetAnimationEnable(unk9C, true);
@@ -2788,7 +2686,7 @@ void CMenuArtsSelect::func_80106900() {
         } else {
             s32 flag = 0;
             u8* arts = static_cast<u8*>(
-                reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag != 0) {
                 if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
@@ -2840,7 +2738,7 @@ void CMenuArtsSelect::func_80106C30(s32 index) {
     BattleActor* actor = reinterpret_cast<BattleActor*>(move);
     if (move != NULL) actor = (BattleActor*)((char*)move - 0x3e9c);
     if (actor != NULL) {
-        void* arts = reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
         ArtsParamLocal* info =
             reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
         if (info->mCheckFlag != 0) {
@@ -2905,7 +2803,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
     }
     if (actor == NULL) return;
-    void* arts = reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278();
+    void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
 
     s32 flag = 0;
     if (index < 8) {
@@ -2913,7 +2811,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
         if (pl != NULL) {
             void* other = func_8016FE34(pl);
-            void* arts2 = reinterpret_cast<ArtsActorVtbl*>(other)->mFn278();
+            void* arts2 = reinterpret_cast<cf::CActorParam*>(other)->CActorParam_UnkVirtualFunc121();
             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
                 getArtsParamAtCnt(arts2, index));
             if (p->mCheckFlag != 0) {
@@ -3254,7 +3152,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
             return func_80174C98(actor, &localVal, 0x803);
         }
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 0;
         if ((func_80154280(p, actor, 0) & 0x20) == 0) return 0;
@@ -3293,7 +3191,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
         if (mv == NULL) return 0;
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
         if (rc->mCheckFlag == 0) return 0;
         if ((func_80154280(rc, actor, 0) & 0x20) == 0) {
@@ -3319,7 +3217,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         }
         if (actor == NULL) return 0;
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
         p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 1;
         if (func_80154280(p, actor, 0) & 0xd0) return 1;
@@ -3363,7 +3261,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
     if (actor != NULL) {
         if (unk328 == 4) {
             u8* arts = static_cast<u8*>(
-                reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag == 0) return 1;
             if (func_80154280(rc, actor, 0) & 0xc0) return 1;
@@ -3439,7 +3337,7 @@ void CMenuArtsSelect::func_801080F8() {
 
     BattleActor* actor = reinterpret_cast<BattleActor*>(
         func_8016FE34(cf::CfGameManager::getPlayer(0)));
-    u8* arts = static_cast<u8*>(reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+    u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
 
     f32 zeroF = lbl_eu_80666F28;
     s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
@@ -3476,7 +3374,7 @@ void CMenuArtsSelect::func_801080F8() {
                         }
                         if (a2 != NULL) {
                             u8* arts2 = static_cast<u8*>(
-                                reinterpret_cast<ArtsActorVtbl*>(a2)->mFn278());
+                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121());
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p2 = reinterpret_cast<ArtsParamInfo*>(
@@ -3607,7 +3505,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
     // (.L_80109394), so the whole body is wrapped in `if (actor != NULL)`.
     if (actor != NULL) {
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
-            getArtsParamAtCnt(reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278(),
+            getArtsParamAtCnt(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121(),
                               idx));
         if (func_80148778(&actor->mArtsList, 0xeb) != 0 && p->mField28 == 0x16) {
             return 0;
@@ -3637,7 +3535,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
                     if (pl != NULL) a2 = (BattleActor*)((char*)pl - 0x3e9c);
                     // Flat: one shared battle=0 else (retail .L_80109300).
                     if (a2 != NULL &&
-                        reinterpret_cast<ArtsActorVtbl*>(a2)->mFn128() <=
+                        reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc37() <=
                             lbl_eu_80666F28) {
                         battle = 1;
                     } else {
@@ -3657,10 +3555,10 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
         // lbl_eu_80666F28/44 relocs (literals pool into TU-local @N labels).
         // The division arm is the fall-through; the -1.0f fallback is the
         // branch target placed after it (retail .L_8010937C layout).
-        f32 max = reinterpret_cast<ArtsTableVtbl*>(p->mTablePtr)->mFn14();
+        f32 max = reinterpret_cast<ArtsParamLocal*>(p)->mFn14();
         f32 ratio;
         if (max != lbl_eu_80666F28) {
-            max = reinterpret_cast<ArtsTableVtbl*>(p->mTablePtr)->mFn14();
+            max = reinterpret_cast<ArtsParamLocal*>(p)->mFn14();
             ratio = p->mRatioNum / max;
         } else {
             ratio = lbl_eu_80666F44;

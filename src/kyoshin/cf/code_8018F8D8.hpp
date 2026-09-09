@@ -268,7 +268,9 @@ struct SCopy_80192268 {
     vu8 b_1fe;
     u8 pad_1ff;
     vu32 f_200, f_204, f_208, f_20c, f_210, f_214, f_218, f_21c, f_220, f_224;
-    u8 pad_225[3];
+    // NOTE: no pad here - retail's arr2 loop is based at 0x224, so arr2[18]
+    // starts immediately at 0x228 (a stale pad_225[3] shifted every later
+    // field +4 versus retail).
     SCopyPair arr2[18];
     vu32 f_2b8, f_2bc, f_2c0, f_2c4, f_2c8, f_2cc, f_2d0, f_2d4, f_2d8, f_2dc, f_2e0, f_2e4;
     vu8 b_2e8;

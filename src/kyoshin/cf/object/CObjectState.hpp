@@ -12,11 +12,11 @@ namespace cf {
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
         virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual void CObjectState_clearStateFlags8(int arg);  //0x20
         virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual int CObjectState_UnkVirtualFunc9();  //0x28
         virtual int CObjectState_UnkVirtualFunc10(int mask, int flag); //0x2C
-        virtual void* CObjectState_UnkVirtualFunc11(); //0x30
+        virtual void* CObjectState_getStateData(); //0x30
         virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
 

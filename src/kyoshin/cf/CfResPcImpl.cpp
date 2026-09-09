@@ -745,7 +745,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         (lbl_eu_80663E24 & 0x4000)) {
         // Position the player: add a fixed offset to its current position,
         // optionally corrected by func_804BE470, then place it (slot +0xB8).
-        nw4r::math::VEC3* p = reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc23());
+        nw4r::math::VEC3* p = reinterpret_cast<nw4r::math::VEC3*>(reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getPosVector());
         nw4r::math::VEC3 pos = *p;
         nw4r::math::VEC3 off;
         off.x = lbl_eu_80667A40;
@@ -1084,7 +1084,7 @@ void func_8018EE18(cf::CfResPcImpl* self) {
             if (parent != 0) {
                 parent = (cf::CfResPcParent*)((char*)parent - 0x3E9C);
             }
-            if (reinterpret_cast<cf::CActorParam*>(parent)->CActorParam_UnkVirtualFunc138() != 0) {
+            if (reinterpret_cast<cf::CActorParam*>(parent)->CActorParam_isBattleLocked() != 0) {
                 ok = 0;
             }
         }
@@ -1350,7 +1350,7 @@ int func_8018F5A4(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg
     int result = 0;
     cf::CfGameManager* manager = self->field_408;
     UnkClass_80083298* obj = manager->unk90;
-    if (obj != 0 && obj->isReady() == 0) {
+    if (obj != 0 && reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc9() == 0) {
         func_80061A80((u32)self, 2, arg2, arg3, arg4, arg5);
         result = 1;
     } else {

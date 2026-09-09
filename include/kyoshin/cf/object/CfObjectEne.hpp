@@ -344,7 +344,7 @@ struct CActorParam17ECView {
         virtual void CBattleState_UnkVirtualFunc4(int val); //0x14
         virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry); //0x18
         virtual void _b01C();
-        virtual void CBattleState_UnkVirtualFunc7(u32 id); //0x20
+        virtual void CBattleState_clearStatusId(u32 id); //0x20
         virtual void _b024(); virtual void _b028(); virtual void _b02C(); virtual void _b030();
         virtual void _b034(); virtual void _b038(); virtual void _b03C(); virtual void _b040();
         virtual void _b044(); virtual void _b048(); virtual void _b04C(); virtual void _b050();

@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
-extern const float lbl_eu_80667738;   // CActorParam_UnkVirtualFunc34 / CfObjectActor_UnkVirtualFunc5 threshold
+extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_UnkVirtualFunc5 threshold
 
 extern const float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
 
@@ -54,9 +54,9 @@ extern "C" void func_8014AA10(void* obj, unsigned int value);
 extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value helper
 
 // Retail symbol is Fv but the real ABI passes (self, arg, f1, f2, f3);
-// CfObjectActor::CActorParam_UnkVirtualFunc140 tail-calls this base entry
+// CfObjectActor::CActorParam_addHate tail-calls this base entry
 // (defined in CActorParam.cpp).
-extern "C" void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, int id, f32 a, f32 b, f32 c);
+extern "C" void CActorParam_addHate__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, int id, f32 a, f32 b, f32 c);
 
 // Retail symbols are Fv; the real ABI passes (self, arg). The CfObjectActor
 // overrides of 179/180 forward to these base entries (defined in CActorParam.cpp).
@@ -110,7 +110,7 @@ namespace cf {
         virtual float CfObjectActor_UnkVirtualFunc6();  //0x5B4
         virtual float CfObjectActor_UnkVirtualFunc7();  //0x5B8 (retail returns a float in f1)
         virtual float CfObjectActor_UnkVirtualFunc8();  //0x5BC (retail returns a float in f1)
-        virtual void* CfObjectActor_UnkVirtualFunc9(void* arg);  //0x5C0
+        virtual void* CfObjectActor_sharesMoveFlags(void* arg);  //0x5C0
         virtual void CfObjectActor_UnkVirtualFunc10(float value); //0x5C4
         virtual void CfObjectActor_UnkVirtualFunc11(void* arg); //0x5C8
         virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
@@ -124,12 +124,12 @@ namespace cf {
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
     const char* CActorParam_UnkVirtualFunc1();
-    void CActorParam_UnkVirtualFunc140(void* arg, float x, float y, float z);
+    void CActorParam_addHate(void* arg, float x, float y, float z);
     void CActorParam_UnkVirtualFunc179(void* arg);
     void CActorParam_UnkVirtualFunc180(void* arg);
     void CActorParam_UnkVirtualFunc33(float val);
     void CActorParam_UnkVirtualFunc35(float value, int a, int b, int c);
-    void CActorParam_UnkVirtualFunc34(float val);
+    void CActorParam_addHp(float val);
     void CActorParam_UnkVirtualFunc54(int delta);
     void CActorParam_UnkVirtualFunc60(int delta);
     void CActorParam_UnkVirtualFunc4(void* arts);
@@ -175,7 +175,7 @@ namespace cf {
 
     // View of CfObjectActor's word at absolute offset 0x3F10 (the
     // CfObjectModel.field_0x74 slot inside the CfObjectMove subobject) - used
-    // by CActorParam_UnkVirtualFunc140 to compare two actors.
+    // by CActorParam_addHate to compare two actors.
     struct CfActorField3F10 {
         u8 _pad[0x3F10];
         u32 field_0x3F10;  // 0x3F10
@@ -183,7 +183,7 @@ namespace cf {
 
     // View of CfObjectActor's flag word at absolute offset 0x3F00
     // (CfObjectMove+0x64) - compared between two actors by
-    // CfObjectActor_UnkVirtualFunc9 (bits 0x2 / 0x4 select the dispatch).
+    // CfObjectActor_sharesMoveFlags (bits 0x2 / 0x4 select the dispatch).
     struct CfActorField3F00 {
         u8 _pad[0x3F00];
         u32 field_0x3F00;  // 0x3F00

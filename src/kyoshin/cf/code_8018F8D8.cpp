@@ -631,7 +631,7 @@ float func_80190938() { return lbl_eu_80667A90; }
 // func_80174C98. Inlined by MWCC at every retail call site.
 static int probeGate90940(FuncActorRef* actor, u32 gate) {
     void* ret = reinterpret_cast<cf::CObjectState*>(actor->field_0004)
-                      ->CObjectState_UnkVirtualFunc11();
+                      ->CObjectState_getStateData();
     u32 val = *(u32*)ret;
     return func_80174C98(actor, &val, gate);
 }
@@ -667,7 +667,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         reinterpret_cast<Sub3F60View*>(actor->field_3f60)->field_0x374 == 0) {
         return 0;
     }
-    if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc138() != 0) {
+    if (reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_isBattleLocked() != 0) {
         return 0;
     }
 
@@ -728,9 +728,9 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         u8* posSubA = reinterpret_cast<u8*>(&actor->field_3e9c);
         u8* posSubB = reinterpret_cast<u8*>(&cand->field_3e9c);
         const float* posA = reinterpret_cast<const float*>(
-            reinterpret_cast<cf::CfObject*>(posSubA)->CfObject_UnkVirtualFunc23());
+            reinterpret_cast<cf::CfObject*>(posSubA)->CfObject_getPosVector());
         const float* posB = reinterpret_cast<const float*>(
-            reinterpret_cast<cf::CfObject*>(posSubB)->CfObject_UnkVirtualFunc23());
+            reinterpret_cast<cf::CfObject*>(posSubB)->CfObject_getPosVector());
         Vec diff;
         diff.x = posB[0] - posA[0];
         diff.y = posB[1] - posA[1];
@@ -763,7 +763,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() == 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() == 0)
                 continue;
             u8* candPos = reinterpret_cast<u8*>(&cand->field_3e9c);
             if (reinterpret_cast<cf::CfObject*>(candPos)->CfObject_UnkVirtualFunc13() == 0)
@@ -781,7 +781,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() != 0)
                 continue;
             u8* tags2 = cand->field_0008;
             if (!(func_80148778(tags2, 0xf) != 0 ||
@@ -798,7 +798,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() != 0)
                 continue;
             if (func_80148778(cand->field_0008, 0x10) == 0) continue;
             if (probeGate90940(cand, 0x16) != 0) continue;
@@ -838,7 +838,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             const float thr = lbl_eu_80667A90;
             for (int k = 0; k < count; k++) {
                 FuncActorRef* cand = cands[k];
-                if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() !=
+                if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() !=
                     0)
                     continue;
                 if (dists[k] > thr) continue;
@@ -853,10 +853,10 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         const float thr = lbl_eu_80667A90;
         for (int k = 0; k < count; k++) {
             FuncActorRef* cand = cands[k];
-            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc138() != 0)
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() != 0)
                 continue;
             if (probeGate90940(cand, 0x1d) != 0) continue;
-            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc157() >=
+            if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_getStatusCount() >=
                 2)
                 continue;
             if (dists[k] > thr) continue;
@@ -1150,10 +1150,11 @@ void CMenuPTState::Init() {
 // (loop counts: 52, 16, 16). Retail is size-optimized here: under unit -O4,p
 // the long runs unroll and the float copies get batched into f14-f31 (which
 // drags in _savegpr/_restgpr prologue code retail doesn't have), so this one
-// function compiles with optimize_for_size like other rolled-copy sites.
-// NOTE: no codegen-steering pragmas here: the vu*/vf* volatile field types
-// already force the retail load/store program order and keep the pair runs
-// rolled (see SCopy_80191C88 above).
+// function compiles with optimize_for_size like other rolled-copy sites
+// (retail keeps the three pair runs rolled as mtctr/bdnz lwzu+stwu loops;
+// under the unit default -O4,p the runs unroll and bloat .text by ~0x2E8).
+// The vu*/vf* volatile field types force the retail load/store program order.
+#pragma optimize_for_size on
 void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->f_04 = src->f_04;
     dst->f_08 = src->f_08;
@@ -1206,13 +1207,26 @@ void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->f_268 = src->f_268;
     dst->f_26c = src->f_26c;
 
-    for (int i = 0; i < 16; i++) {
-        dst->arrB[i].lo = src->arrB[i].lo;
-        dst->arrB[i].hi = src->arrB[i].hi;
+    // Biased walks matching retail (bases 0x26C/0x2EC, count 16 each).
+    u32* sB = (u32*)&src->arrB[0].lo - 1;
+    u32* dB = (u32*)&dst->arrB[0].lo - 1;
+    for (int n = 16; n != 0; n--) {
+        u32 lo = *(sB + 1);
+        u32 hi = *(sB + 2);
+        *(dB + 1) = lo;
+        *(dB + 2) = hi;
+        sB += 2;
+        dB += 2;
     }
-    for (int i = 0; i < 16; i++) {
-        dst->arrC[i].lo = src->arrC[i].lo;
-        dst->arrC[i].hi = src->arrC[i].hi;
+    u32* sC = (u32*)&src->arrC[0].lo - 1;
+    u32* dC = (u32*)&dst->arrC[0].lo - 1;
+    for (int n = 16; n != 0; n--) {
+        u32 lo = *(sC + 1);
+        u32 hi = *(sC + 2);
+        *(dC + 1) = lo;
+        *(dC + 2) = hi;
+        sC += 2;
+        dC += 2;
     }
 
     dst->f_370 = src->f_370; dst->f_374 = src->f_374;
@@ -1285,11 +1299,17 @@ void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
     dst->h_532 = src->h_532; dst->h_534 = src->h_534;
     dst->h_536 = src->h_536; dst->h_538 = src->h_538;
 }
+#pragma optimize_for_size off
 
 // Per-field copy of a large (~0x27A8-byte) state blob from src to dst, in the
 // exact order retail reads them. The five runs of 8-byte elements compile to
 // mtctr/bdnz lwzu+stwu copy loops (loop counts: 16, 18, 16, 0x400, 0x80).
-void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
+// Same size story as func_80191C88 above: retail keeps the runs rolled, so
+// this function also compiles with optimize_for_size (saves ~0x400 .text).
+// __declspec(noinline): retail Init keeps a real bl to this symbol; without
+// it MWCC inlines the shrunken body into Init's single call site (+0x5C8).
+#pragma optimize_for_size on
+__declspec(noinline) void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_04 = src->f_04; dst->f_08 = src->f_08;
     dst->f_0c = src->f_0c; dst->f_10 = src->f_10;
     dst->f_14 = src->f_14; dst->f_18 = src->f_18;
@@ -1335,9 +1355,17 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_f0 = src->f_f0;
     dst->b_f4 = src->b_f4;
 
-    for (int i = 0; i < 16; i++) {
-        dst->arr1[i].lo = src->arr1[i].lo;
-        dst->arr1[i].hi = src->arr1[i].hi;
+    // Biased one element back so the accesses fuse into lwzu/stwu forms
+    // (retail mtctr/bdnz walk shape, base 0xF4, count 16).
+    u32* sA1 = (u32*)&src->arr1[0].lo - 1;
+    u32* dA1 = (u32*)&dst->arr1[0].lo - 1;
+    for (int n = 16; n != 0; n--) {
+        u32 lo = *(sA1 + 1);
+        u32 hi = *(sA1 + 2);
+        *(dA1 + 1) = lo;
+        *(dA1 + 2) = hi;
+        sA1 += 2;
+        dA1 += 2;
     }
 
     dst->b_178 = src->b_178; dst->b_179 = src->b_179;
@@ -1380,9 +1408,16 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_220 = src->f_220;
     dst->f_224 = src->f_224;
 
-    for (int i = 0; i < 18; i++) {
-        dst->arr2[i].lo = src->arr2[i].lo;
-        dst->arr2[i].hi = src->arr2[i].hi;
+    // Same biased walk shape (retail base 0x224, count 18).
+    u32* sA2 = (u32*)&src->arr2[0].lo - 1;
+    u32* dA2 = (u32*)&dst->arr2[0].lo - 1;
+    for (int n = 18; n != 0; n--) {
+        u32 lo = *(sA2 + 1);
+        u32 hi = *(sA2 + 2);
+        *(dA2 + 1) = lo;
+        *(dA2 + 2) = hi;
+        sA2 += 2;
+        dA2 += 2;
     }
 
     dst->f_2b8 = src->f_2b8; dst->f_2bc = src->f_2bc;
@@ -1393,9 +1428,16 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_2e0 = src->f_2e0; dst->f_2e4 = src->f_2e4;
     dst->b_2e8 = src->b_2e8;
 
-    for (int i = 0; i < 16; i++) {
-        dst->arr3.items[i].lo = src->arr3.items[i].lo;
-        dst->arr3.items[i].hi = src->arr3.items[i].hi;
+    // Retail-misaligned run: biased base 0x2E5, count 16.
+    u32* sA3 = (u32*)&src->arr3.items[0].lo - 1;
+    u32* dA3 = (u32*)&dst->arr3.items[0].lo - 1;
+    for (int n = 16; n != 0; n--) {
+        u32 lo = *(sA3 + 1);
+        u32 hi = *(sA3 + 2);
+        *(dA3 + 1) = lo;
+        *(dA3 + 2) = hi;
+        sA3 += 2;
+        dA3 += 2;
     }
 
     dst->f_36c = src->f_36c;
@@ -1407,9 +1449,16 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->b_37a = src->b_37a; dst->b_37b = src->b_37b;
     dst->b_37c = src->b_37c;
 
-    for (int i = 0; i < 1024; i++) {
-        dst->arr4.items[i].lo = src->arr4.items[i].lo;
-        dst->arr4.items[i].hi = src->arr4.items[i].hi;
+    // Retail-misaligned big run: biased base 0x37A, count 0x400.
+    u32* sA4 = (u32*)&src->arr4.items[0].lo - 1;
+    u32* dA4 = (u32*)&dst->arr4.items[0].lo - 1;
+    for (int n = 1024; n != 0; n--) {
+        u32 lo = *(sA4 + 1);
+        u32 hi = *(sA4 + 2);
+        *(dA4 + 1) = lo;
+        *(dA4 + 2) = hi;
+        sA4 += 2;
+        dA4 += 2;
     }
 
     dst->h_237e = src->h_237e;
@@ -1420,13 +1469,21 @@ void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
     dst->f_2394 = src->f_2394; dst->f_2398 = src->f_2398;
     dst->f_239c = src->f_239c; dst->f_23a0 = src->f_23a0;
 
-    for (int i = 0; i < 128; i++) {
-        dst->arr5[i].lo = src->arr5[i].lo;
-        dst->arr5[i].hi = src->arr5[i].hi;
+    // Same biased walk shape (retail base 0x23A0, count 0x80).
+    u32* sA5 = (u32*)&src->arr5[0].lo - 1;
+    u32* dA5 = (u32*)&dst->arr5[0].lo - 1;
+    for (int n = 128; n != 0; n--) {
+        u32 lo = *(sA5 + 1);
+        u32 hi = *(sA5 + 2);
+        *(dA5 + 1) = lo;
+        *(dA5 + 2) = hi;
+        sA5 += 2;
+        dA5 += 2;
     }
 
     dst->f_27a4 = src->f_27a4;
 }
+#pragma optimize_for_size off
 
 void CMenuPTState::Term() {
     CDeviceVI::waitForDrawDone();

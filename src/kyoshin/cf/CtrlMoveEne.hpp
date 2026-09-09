@@ -3,12 +3,14 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/cf/object/CfObjectModel.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 namespace cf {
 
-// Target-state object behind CfObjectMove::mTargetC4: CfObject_UnkVirtualFunc18
+// Target-state object behind CCtrlMoveEne::mTargetC4: CfObject_UnkVirtualFunc18
 // reads bit 23 of the +0x270 state word.
 struct CfObjectMoveC4Target {
     u8 _pad[0x270];         // 0x00-0x26F
@@ -17,14 +19,8 @@ struct CfObjectMoveC4Target {
 
 struct CNpcBaseDataView;  // forward decl (movement data block, defined below)
 
-class CfObjectMove {
+class CCtrlMoveEne {
 public:
-    int CfObject_UnkVirtualFunc18();
-
-    // TODO: add fields
-    void CfObject_UnkVirtualFunc58();
-    void CfObjectMove_UnkVirtualFunc5();
-
     // 0x00: vtable
     u8 _pad[0x34];                    // 0x00-0x33
     CNpcBaseDataView* field_0x34;     // 0x34 movement data block
@@ -40,7 +36,7 @@ public:
     u8 _pad60[0xC4 - 0x60];           // 0x60-0xC3
     CfObjectMoveC4Target* mTargetC4;  // 0xC4
     u8 _padC8[0x12C - 0xC8];          // 0xC8-0x12B
-    void (CfObjectMove::*mMoveHook)();  // 0x12C-0x137 ptmf hook (func_8008A23C / ctor)
+    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C-0x137 ptmf hook (func_8008A23C / ctor)
     ml::CVec3 mVec138;                  // 0x138 (ctor copies ml::CVec3::zero)
     ml::CVec3 mVec144;                  // 0x144 (ctor copies ml::CVec3::zero)
     u8 _pad150[0x160 - 0x150];          // 0x150-0x15F
@@ -68,10 +64,10 @@ public:
     f32 field_0x19C;                    // 0x19C (zeroed by func_8008D444)
 };
 
-// View of the CfObjectMove layout used by the func_8009156C / func_8008EF04 /
+// View of the CCtrlMoveEne layout used by the func_8009156C / func_8008EF04 /
 // func_8008F9EC family: the base CCtrlMoveBase position/velocity words and
 // the +0x60..+0x72 / +0x15C / +0x18E fields those functions touch. Kept as a
-// separate view so the matched CfObjectMove stays byte-for-byte the same.
+// separate view so the matched CCtrlMoveEne stays byte-for-byte the same.
 struct CfObjectMoveView9 {
     u8 _pad[0x0C];                    // 0x00-0x0B
     ml::CVec3 mPosition;              // 0x0C (base CCtrlMoveBase)
@@ -107,7 +103,7 @@ struct CfObjectMoveView9 {
     s16 field_0x198;                  // 0x198
 };
 
-// Word view of CfObjectMove::field_0x4C: func_8008E06C clears it with an
+// Word view of CCtrlMoveEne::field_0x4C: func_8008E06C clears it with an
 // integer store and ORs bit 2 into it, while the ctor stores a float there.
 struct CfObjectMove4CView {
     u8 _pad[0x4C];                  // 0x00-0x4B
@@ -129,169 +125,12 @@ struct CFunc8008B580F60 {
     s16 field_532;                  // 0x532
 };
 
-// Sub-object embedded at +0x3E9C of the enemy battle object passed to
-// func_8008D444 / func_8008E06C: vtable slot +0x8 (declared index 0 with
-// -RTTI) is called with a u32 by func_8008D444, slot +0xC4 with a float
-// angle by func_8008E06C, and slot +0x150 (no args) by func_8008B580.
-// Declared virtuals only; never instantiated, so no vtable emitted.
-class CFunc8008D444Sub {
-public:
-    virtual void sv08(u32 a);           // index 0 -> vtable +0x8
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);     // index 0x30 -> vtable +0xC4 (func_8008E06C)
-};
 
-// func_8008B580's view of the +0x3E9C embedded sub-object: same base virtuals
-// plus the +0x150 slot (index 0x52). Separate class so the embedded
-// CFunc8008D444Sub used by the matched functions stays at its original size.
-class CFunc8008B580Sub150 {
-public:
-    virtual void sv08(u32 a);
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;
-    virtual void CfObject_UnkVirtualFunc49();;
-    virtual void CfObject_UnkVirtualFunc50();;
-    virtual void CfObject_UnkVirtualFunc51();;
-    virtual void CfObject_UnkVirtualFunc52();;
-    virtual void CfObject_UnkVirtualFunc53();;
-    virtual void CfObject_UnkVirtualFunc54();;
-    virtual void CfObject_UnkVirtualFunc55();;
-    virtual void CfObject_UnkVirtualFunc56();;
-    virtual void CfObject_UnkVirtualFunc57();;
-    virtual float* CfObject_UnkVirtualFunc58();
-    virtual void CfObject_UnkVirtualFunc59();;
-    virtual void CfObject_UnkVirtualFunc60();;
-    virtual void CfObject_UnkVirtualFunc61();;
-    virtual void CfObject_UnkVirtualFunc62();;
-    virtual void CfObject_UnkVirtualFunc63();;
-    virtual void CfObject_UnkVirtualFunc64(u32 arg);;        // index 0x52 -> vtable +0x150 (func_8008B580 passes 0)
-};
 
 // The +0x04 object of the enemy battle object (func_8008B580 reads the first
-// word of its +0x30 vtable-slot result). Declared virtuals only.
+// word of its +0x30 vtable-slot result (a CObjectState).
 struct CFunc8008B580Word {
     u32 field_0;                        // 0x00
-};
-class CFunc8008B580Sub4 {
-public:
-    virtual void CObjectState_UnkVirtualFunc1();;
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual CFunc8008B580Word* CObjectState_UnkVirtualFunc11();;  // vtable +0x30
 };
 
 // +0x3E9C Move sub-object view (CObjectState / CfObject virtuals). Old
@@ -318,11 +157,13 @@ struct CFunc8008A2C8F60 {
 // func_8008C4F0 toggles, +0x4550 flags. func_8008B580's separate polymorphic
 // view with the vtable slots +0x11C / +0x128 / +0x2BC and the +0x04 word.
 struct CFunc8008B580Obj {
-    // Declared virtuals first so the vptr lands at offset 0 (retail loads
-    // it with lwz r12,0(rObj)); never instantiated here -> no vtable emitted.
-    // -RTTI places the Nth declared virtual at vtable offset (N+2)*4.
-    virtual void CObjectState_UnkVirtualFunc1();;
-    CFunc8008B580Sub4* field_04;        // 0x04 (func_8008B580 reads a word via its +0x30 vtable slot)
+    // Former virtual mirror deleted. The main object is a CActorParam
+    // (retail slots +0x11C addHp / +0x128 getHp / +0x2A4 getMoveRecord /
+    // +0x2BC isBattleLocked, called via CActorParam*); the +0x3E9C
+    // sub-object is CfObject-family (called via CfObject*). Data only;
+    // never instantiated, so no vtable emitted.
+    void* vtable;                       // 0x00
+    CObjectState* field_04;             // 0x04 (func_8008B580 reads a word via its +0x30 vtable slot)
     u8 _pad08[0x3374 - 0x08];           // 0x08-0x3373
     u32 field_3374;                     // 0x3374 flags
     u8 _pad3378[0x3E9C - 0x3378];       // 0x3378-0x3E9B
@@ -339,100 +180,6 @@ struct CFunc8008B580Obj {
     u16 field_45C4;                     // 0x45C4
     u16 field_45C6;                     // 0x45C6
 
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;
-    virtual void CfObject_UnkVirtualFunc49();;
-    virtual void CfObject_UnkVirtualFunc50();;
-    virtual float CfObject_UnkVirtualFunc51(float f);;       // vtable +0x11C (func_8008B580: negated HP)
-    virtual void CfObject_UnkVirtualFunc52();;
-    virtual void CfObject_UnkVirtualFunc53();;
-    virtual float CfObject_UnkVirtualFunc54();;              // vtable +0x128 (func_8008B580: HP query)
-    virtual void CfObject_UnkVirtualFunc55();;
-    virtual void CfObject_UnkVirtualFunc56();;
-    virtual void CfObject_UnkVirtualFunc57();;
-    virtual float* CfObject_UnkVirtualFunc58();
-    virtual void CfObject_UnkVirtualFunc59();;
-    virtual void CfObject_UnkVirtualFunc60();;
-    virtual void CfObject_UnkVirtualFunc61();;
-    virtual void CfObject_UnkVirtualFunc62();;
-    virtual void CfObject_UnkVirtualFunc63();;
-    virtual void CfObject_UnkVirtualFunc64();;
-    virtual void CfObject_UnkVirtualFunc65();;
-    virtual void CfObject_UnkVirtualFunc66();;
-    virtual void CfObject_UnkVirtualFunc67();;
-    virtual void CfObject_UnkVirtualFunc68();;
-    virtual void CfObject_UnkVirtualFunc69();;
-    virtual void CfObject_UnkVirtualFunc70();;
-    virtual void CfObject_UnkVirtualFunc71();;
-    virtual void CfObject_UnkVirtualFunc72();;
-    virtual void CfObject_UnkVirtualFunc73();;
-    virtual void CfObjectModel_UnkVirtualFunc_1A0();
-    virtual float* CfObjectMove_UnkVirtualFunc5();
-    virtual void* CActorParam_UnkVirtualFunc_2A4();              // vtable +0x2A4 (func_8008A2C8: sub-object ptr)
-    virtual int CActorParam_UnkVirtualFunc_2BC();                 // vtable +0x2BC (func_8008B580 busy/active query)
 };
 
 // Plain (non-polymorphic) view of the enemy battle object used by the
@@ -442,308 +189,28 @@ struct CFunc8008D444Obj {
     u8 _pad[0x3374];                    // 0x00-0x3373
     u32 field_3374;                     // 0x3374 flags
     u8 _pad3378[0x3E9C - 0x3378];       // 0x3378-0x3E9B
-    CFunc8008D444Sub mSub;              // 0x3E9C embedded sub-object
+    void* mSub;                           // 0x3E9C embedded sub-object vptr (called via CfObject*)
     u8 _pad3EA0[0x3F60 - 0x3EA0];       // 0x3EA0-0x3F5F
     CfObj3F60View* field_3F60;          // 0x3F60 (func_8008C4F0 flag object)
     u8 _pad3F64[0x4550 - 0x3F64];       // 0x3F64-0x454F
     u32 field_4550;                     // 0x4550 flags
 };
 
-// Movement sub-object behind CNpcBaseDataView::field_0x28 (the same object
-// CtrlMoveNpc.cpp names CNpcMoveSub). func_80093618 calls vtable +0x74
-// (returns a state word) and +0xC4 (no args). Declared virtuals only; never
-// instantiated here, so no vtable is emitted.
-class CNpcMoveSubView {
-public:
-    virtual void CObjectState_UnkVirtualFunc1();;
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();               // vtable +0x74
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();             // vtable +0x8C (func_8008A23C compares to 0.0f)
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);              // vtable +0xC4
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (returns a float; ctor / func_8008E06C)
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;
-    virtual void CfObject_UnkVirtualFunc49();;
-    virtual void CfObject_UnkVirtualFunc50();;
-    virtual void CfObject_UnkVirtualFunc51();;
-    virtual void CfObject_UnkVirtualFunc52();;
-    virtual void CfObject_UnkVirtualFunc53();;
-    virtual void CfObject_UnkVirtualFunc54();;
-    virtual void CfObject_UnkVirtualFunc55();;
-    virtual void CfObject_UnkVirtualFunc56();;
-    virtual void CfObject_UnkVirtualFunc57();;
-    virtual float* CfObject_UnkVirtualFunc58();           // vtable +0x138 (movement-rate divisor query)
-    virtual void CfObject_UnkVirtualFunc59();;
-    virtual void CfObject_UnkVirtualFunc60();;
-    virtual void CfObject_UnkVirtualFunc61();;
-    virtual void CfObject_UnkVirtualFunc62();;
-    virtual void CfObject_UnkVirtualFunc63();;
-    virtual void CfObject_UnkVirtualFunc64();;
-    virtual void CfObject_UnkVirtualFunc65();;
-    virtual void CfObject_UnkVirtualFunc66();;
-    virtual void CfObject_UnkVirtualFunc67();;
-    virtual void CfObject_UnkVirtualFunc68();;
-    virtual void CfObject_UnkVirtualFunc69();;
-    virtual void CfObject_UnkVirtualFunc70();;
-    virtual void CfObject_UnkVirtualFunc71();;
-    virtual void CfObject_UnkVirtualFunc72();;
-    virtual void CfObject_UnkVirtualFunc73();;
-    virtual void CfObjectModel_UnkVirtualFunc_1A0();
-    virtual float* CfObjectMove_UnkVirtualFunc5();           // vtable +0x1D8 (movement-rate query)
-};
 
-// func_8008F9EC / func_8009156C view of the move sub-object: same virtual
-// layout as CNpcMoveSubView but with +0x98 typed int, +0xAC returning the
-// position, and a +0xC4 data word. Kept as a separate view so the matched
-// func_8008C4F0 / func_8008A23C keep their exact CNpcMoveSubView.
-class CFunc8008F9ECSub {
-public:
-    virtual void CObjectState_UnkVirtualFunc1();;
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();               // vtable +0x74
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();             // vtable +0x8C
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();               // vtable +0x98 (func_8008F9EC: nonzero = active)
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();        // vtable +0xAC (position getter)
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);              // vtable +0xC4
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (heading index)
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;
-    virtual void CfObject_UnkVirtualFunc49();;
-    virtual void CfObject_UnkVirtualFunc50();;
-    virtual void CfObject_UnkVirtualFunc51();;
-    virtual void CfObject_UnkVirtualFunc52();;
-    virtual void CfObject_UnkVirtualFunc53();;
-    virtual void CfObject_UnkVirtualFunc54();;
-    virtual void CfObject_UnkVirtualFunc55();;
-    virtual void CfObject_UnkVirtualFunc56();;
-    virtual void CfObject_UnkVirtualFunc57();;
-    virtual float* CfObject_UnkVirtualFunc58();           // vtable +0x138 (movement-rate divisor query)
-    virtual void CfObject_UnkVirtualFunc59();;
-    virtual void CfObject_UnkVirtualFunc60();;
-    virtual void CfObject_UnkVirtualFunc61();;
-    virtual void CfObject_UnkVirtualFunc62();;
-    virtual void CfObject_UnkVirtualFunc63();;
-    virtual void CfObject_UnkVirtualFunc64();;
-    virtual void CfObject_UnkVirtualFunc65();;
-    virtual void CfObject_UnkVirtualFunc66();;
-    virtual void CfObject_UnkVirtualFunc67();;
-    virtual void CfObject_UnkVirtualFunc68();;
-    virtual void CfObject_UnkVirtualFunc69();;
-    virtual void CfObject_UnkVirtualFunc70();;
-    virtual void CfObject_UnkVirtualFunc71();;
-    virtual void CfObject_UnkVirtualFunc72();;
-    virtual void CfObject_UnkVirtualFunc73();;
-    virtual void CfObjectModel_UnkVirtualFunc_1A0();
-    virtual float* CfObjectMove_UnkVirtualFunc5();           // vtable +0x1D8 (movement-rate query)
-
+// +0xC4 data word of the move sub-object (read by func_8008F9EC /
+// func_8009156C). Former virtual mirror deleted: all calls now go through
+// CCtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
+struct CFunc8008F9ECSub {
+    void* vtable;                       // 0x00
     u8 _pad04[0xC4 - 0x04];           // 0x04-0xC3
     void* field_C4;                   // 0xC4 target word (null-checked)
 };
 
-// func_8008EF04's view of the move sub-object: same object as CNpcMoveSubView
-// but the +0xC4 vtable slot is called WITH a float heading (the no-arg +0xC4
-// slot on CNpcMoveSubView is pinned by the matched func_80093618), and the
-// +0x98 / +0xC4 words are read as data. Declared virtuals only; never
-// instantiated, so no vtable emitted.
-class CFunc8008EF04Sub {
-public:
-    virtual void CObjectState_UnkVirtualFunc1();;
-    virtual int CObjectState_UnkVirtualFunc2(int arg);;        // vtable +0x0C
-    virtual void CObjectState_UnkVirtualFunc3(int arg);;       // vtable +0x10
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);   // vtable +0xC4 (func_8008EF04 passes field_0x4C)
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();             // vtable +0xCC (heading index)
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;
-    virtual void CfObject_UnkVirtualFunc49();;
-    virtual void CfObject_UnkVirtualFunc50();;
-    virtual void CfObject_UnkVirtualFunc51();;
-    virtual void CfObject_UnkVirtualFunc52();;
-    virtual void CfObject_UnkVirtualFunc53();;
-    virtual void CfObject_UnkVirtualFunc54();;
-    virtual void CfObject_UnkVirtualFunc55();;
-    virtual void CfObject_UnkVirtualFunc56();;
-    virtual void CfObject_UnkVirtualFunc57();;
-    virtual float* CfObject_UnkVirtualFunc58();
-    virtual void CfObject_UnkVirtualFunc59();;
-    virtual void CfObject_UnkVirtualFunc60();;
-    virtual void CfObject_UnkVirtualFunc61();;
-    virtual void CfObject_UnkVirtualFunc62();;
-    virtual void CfObject_UnkVirtualFunc63();;
-    virtual void CfObject_UnkVirtualFunc64(int arg);;      // vtable +0x150
-
+// +0x98 / +0xC4 data words of the move sub-object (read by func_8008EF04 /
+// func_80091864). Former virtual mirror deleted: all calls now go through
+// CCtrlMoveEneSub (inherited CfObject virtuals) or CfObject*.
+struct CFunc8008EF04Sub {
+    void* vtable;                       // 0x00
     u8 _pad04[0x98 - 0x04];           // 0x04-0x97
     void* field_98;                   // 0x98
     u8 _pad9C[0xC4 - 0x9C];           // 0x9C-0xC3
@@ -756,6 +223,26 @@ struct CFunc8008EF04Sub98 {
     u32 field_7A4;                  // 0x7A4 flags
 };
 
+// Movement sub-object behind CNpcBaseDataView::field_0x28 (the same object
+// CtrlMoveNpc.cpp calls through CfObject*). Its retail vtable carries the
+// CfObject chain plus the CfObjectMove leg: this TU provides the +0x1D8 slot
+// body (CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv, returning the
+// +0x6E8 float), and call sites dereference the +0x138 / +0x1D8 results as
+// floats. object/CfObjectMove.hpp cannot be included here (its 4-arg
+// func_8004B9D4 clashes with this TU's retail 5-arg form, and its 5-arg
+// func_800BE12C takes u8* while this TU passes through void*), so the Move
+// leg is redeclared here with retail names and arity (Move1-4 copied from
+// object/CfObjectMove.hpp; Move5 is float* per the +0x6E8 impl and the
+// dereference/divide call sites). Never instantiated, so no vtable emitted.
+class __declspec(novtable) CCtrlMoveEneSub : public CfObjectModel {
+public:
+    virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
+    virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
+    virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
+    virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
+    virtual float* CfObjectMove_UnkVirtualFunc5();  //0x1D8 (movement-rate query)
+};
+
 // View of the movement-data object func_80093618 operates on (same layout as
 // CCtrlMoveNpc::mBaseData / CNpcBaseData in CtrlMoveNpc.cpp): +0xC holds a
 // float, +0x28 the movement sub-object.
@@ -763,7 +250,7 @@ struct CNpcBaseDataView {
     u8 _pad[0xC];                   // 0x00-0x0B
     f32 field_0xC;                  // 0x0C
     u8 _pad10[0x28 - 0x10];         // 0x10-0x27
-    CNpcMoveSubView* field_0x28;    // 0x28
+    CfObject* field_0x28;    // 0x28
 };
 
 // func_8008EF04 / func_8008F9EC / func_8009156C extension of the move-data
@@ -795,7 +282,7 @@ struct CfMoveSubEntry {
     f32 field_0x10;                 // 0x10
 };
 
-// func_8008E2D4's word/halfword view of CfObjectMove fields 0x58-0x72: the
+// func_8008E2D4's word/halfword view of CCtrlMoveEne fields 0x58-0x72: the
 // init path stores u16s at 0x58/0x5A and words at 0x5C/0x60, while the
 // matched func_8008E06C / func_8008F9EC read the same storage as f32s.
 struct CfObjectMoveInitView {
@@ -817,7 +304,7 @@ struct CfObjectMoveInitView {
     u8 _pad74[0x78 - 0x74];         // 0x74-0x77
     CfMoveSubEntry field_0x78[8];   // 0x78 move-list array (8 * 0x14 = 0xA0; overlaps later words)
     u8 _pad118[0x12C - 0x118];      // 0x118-0x12B
-    void (CfObjectMove::*mMoveHook)();  // 0x12C ptmf hook
+    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf hook
     u8 _pad138[0x17C - 0x138];      // 0x138-0x17B
     u32 field_0x17C;                // 0x17C flags
     u32 field_0x180;                // 0x180 flags
@@ -825,78 +312,6 @@ struct CfObjectMoveInitView {
     u16 field_0x18C;                // 0x18C
 };
 
-// Gimmick object from the func_800B6BC8 circular list scanned by
-// func_8009156C: vtable +0xAC yields the position, +0x110 a target object.
-// Declared virtuals only; never instantiated, so no vtable emitted.
-class CFunc8009156CGimmick {
-public:
-    virtual void CObjectState_UnkVirtualFunc1();;
-    virtual void CObjectState_UnkVirtualFunc2();;
-    virtual void CObjectState_UnkVirtualFunc3();;
-    virtual void CObjectState_UnkVirtualFunc4();;
-    virtual void CObjectState_UnkVirtualFunc5();;
-    virtual void CObjectState_UnkVirtualFunc6();;
-    virtual void CObjectState_UnkVirtualFunc7();;
-    virtual void CObjectState_UnkVirtualFunc8();;
-    virtual void CObjectState_UnkVirtualFunc9();;
-    virtual void CObjectState_UnkVirtualFunc10();;
-    virtual void CObjectState_UnkVirtualFunc11();;
-    virtual void CObjectState_UnkVirtualFunc12();;
-    virtual void CObjectState_UnkVirtualFunc13();;
-    virtual void CObjectParam_UnkVirtualFunc1();;
-    virtual void CObjectParam_UnkVirtualFunc2();;
-    virtual void CObjectParam_UnkVirtualFunc3();;
-    virtual void CObjectParam_UnkVirtualFunc4();;
-    virtual void CObjectParam_UnkVirtualFunc5();;
-    virtual void CObjectParam_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc2();;
-    virtual void CfObject_UnkVirtualFunc3();;
-    virtual void CfObject_UnkVirtualFunc4();;
-    virtual void CfObject_UnkVirtualFunc5();;
-    virtual void CfObject_UnkVirtualFunc6();;
-    virtual void CfObject_UnkVirtualFunc7();;
-    virtual void CfObject_UnkVirtualFunc8();;
-    virtual int CfObject_UnkVirtualFunc9();
-    virtual void CfObject_UnkVirtualFunc10();;
-    virtual void CfObject_UnkVirtualFunc11();;
-    virtual void CfObject_UnkVirtualFunc12();;
-    virtual void CfObject_UnkVirtualFunc13();;
-    virtual void CfObject_UnkVirtualFunc14();;
-    virtual float CfObject_UnkVirtualFunc15();
-    virtual void CfObject_UnkVirtualFunc16();;
-    virtual void CfObject_UnkVirtualFunc17();;
-    virtual int CfObject_UnkVirtualFunc18();
-    virtual void CfObject_UnkVirtualFunc19();;
-    virtual void CfObject_UnkVirtualFunc20();;
-    virtual void CfObject_UnkVirtualFunc21();;
-    virtual void CfObject_UnkVirtualFunc22();;
-    virtual ml::CVec3* CfObject_UnkVirtualFunc23();       // vtable +0xAC (position getter)
-    virtual void CfObject_UnkVirtualFunc24();;
-    virtual void CfObject_UnkVirtualFunc25();;
-    virtual void CfObject_UnkVirtualFunc26();;
-    virtual void CfObject_UnkVirtualFunc27();;
-    virtual void CfObject_UnkVirtualFunc28();;
-    virtual void CfObject_UnkVirtualFunc29(float value);
-    virtual void CfObject_UnkVirtualFunc30();;
-    virtual float CfObject_UnkVirtualFunc31();
-    virtual void CfObject_UnkVirtualFunc32();;
-    virtual void CfObject_UnkVirtualFunc33();;
-    virtual void CfObject_UnkVirtualFunc34();;
-    virtual void CfObject_UnkVirtualFunc35();;
-    virtual void CfObject_UnkVirtualFunc36();;
-    virtual void CfObject_UnkVirtualFunc37();;
-    virtual void CfObject_UnkVirtualFunc38();;
-    virtual void CfObject_UnkVirtualFunc39();;
-    virtual void CfObject_UnkVirtualFunc40();;
-    virtual void CfObject_UnkVirtualFunc41();;
-    virtual void CfObject_UnkVirtualFunc42();;
-    virtual void CfObject_UnkVirtualFunc43();;
-    virtual void CfObject_UnkVirtualFunc44();;
-    virtual void CfObject_UnkVirtualFunc45();;
-    virtual void CfObject_UnkVirtualFunc46(void*);
-    virtual void CfObject_UnkVirtualFunc47();;
-    virtual void* CfObject_UnkVirtualFunc48();;           // vtable +0x110 (target object)
-};
 
 // Target object returned by the gimmick's +0x110 slot (func_8009156C marks it
 // when the move data's +0x28 sub-object has a +0xC4 target and the distance is
@@ -926,7 +341,7 @@ struct CFunc8008B9C0Target {
     f32 field_0x508;            // 0x508
 };
 
-// func_8008CDE8's view of CfObjectMove: +0x150 target position, +0x17C flags
+// func_8008CDE8's view of CCtrlMoveEne: +0x150 target position, +0x17C flags
 // and +0x18A timer halfword.
 struct CFunc8008CDE8View {
     u8 _pad[0xC];               // 0x00-0x0B
@@ -954,7 +369,7 @@ struct CFunc8008CDE8Probe {
 struct CFunc8009156CNode {
     CFunc8009156CNode* next;        // 0x00
     u8 _pad04[0x08 - 0x04];         // 0x04-0x07
-    CFunc8009156CGimmick* object;   // 0x08
+    CfObject* object;                 // 0x08
 };
 struct CFunc8009156CList {
     u8* field_00;                   // 0x00
@@ -1046,10 +461,10 @@ struct CFunc8008E760Data {
     u16 field_74;                                       // 0x74
 };
 
-// func_8008E760's view of CfObjectMove: the position words at +0x00, the
+// func_8008E760's view of CCtrlMoveEne: the position words at +0x00, the
 // hook ptmf at +0x12C, the word-triple mVec144 and the fields the function
 // initializes. field_4C/field_50/field_54 are u32 here because the pos copy
-// uses lwz/stw word stores (the float-store path goes through CfObjectMove).
+// uses lwz/stw word stores (the float-store path goes through CCtrlMoveEne).
 struct CFunc8008E760View {
     CFunc8008E760Vec3W mPos0W;          // 0x00
     u8 field_0C[4];                     // 0x0C (arg to slot 0x9C / func_8019876C)
@@ -1057,7 +472,7 @@ struct CFunc8008E760View {
     u8 _pad14[0x34 - 0x14];             // 0x14-0x33
     CNpcBaseDataView* field_0x34;       // 0x34
     u8 _pad38[0x4C - 0x38];             // 0x38-0x4B
-    u32 field_4C;                       // 0x4C (word stores; float store via CfObjectMove)
+    u32 field_4C;                       // 0x4C (word stores; float store via CCtrlMoveEne)
     u32 field_50;                       // 0x50
     u32 field_54;                       // 0x54
     u16 field_0x58;                     // 0x58
@@ -1071,7 +486,7 @@ struct CFunc8008E760View {
     u8 _pad74[0x76 - 0x74];             // 0x74-0x75
     u16 field_0x76;                     // 0x76
     u8 _pad78[0x12C - 0x78];            // 0x78-0x12B
-    void (CfObjectMove::*mMoveHook)();  // 0x12C ptmf
+    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
     u8 _pad138[0x144 - 0x138];          // 0x138-0x143
     CFunc8008E760Vec3W mVec144W;        // 0x144
     u8 _pad150[0x160 - 0x150];          // 0x150-0x15F
@@ -1089,7 +504,7 @@ struct CFunc8008E760View {
     u16 field_0x18E;                    // 0x18E
 };
 
-// func_80090DB4's view of CfObjectMove: base position/velocity words, the
+// func_80090DB4's view of CCtrlMoveEne: base position/velocity words, the
 // move-list entry pointer arithmetic at +0x78, the hook ptmf at +0x12C, the
 // mVec138 words and the timers/flags.
 struct CFunc80090DB4View {
@@ -1113,7 +528,7 @@ struct CFunc80090DB4View {
     u8 _pad74[0x78 - 0x74];             // 0x74-0x77
     CfMoveSubEntry field_0x78[8];       // 0x78 move-list entries
     u8 _pad118[0x12C - 0x118];          // 0x118-0x12B
-    void (CfObjectMove::*mMoveHook)();  // 0x12C ptmf
+    void (CCtrlMoveEne::*mMoveHook)();  // 0x12C ptmf
     CFunc8008E760Vec3W mVec138W;        // 0x138
     u8 _pad144[0x160 - 0x144];          // 0x144-0x15F
     f32 field_0x160;                    // 0x160
@@ -1173,7 +588,7 @@ struct CFunc8008D51CObj {
     u16 field_455A;                                     // 0x455A
 };
 
-// func_8008D51C's view of CfObjectMove: the +0x144/+0x168..+0x19C fields it
+// func_8008D51C's view of CCtrlMoveEne: the +0x144/+0x168..+0x19C fields it
 // reads and writes (0x188 / 0x18E are s16s read with lha).
 struct CFunc8008D51CView {
     u8 _pad[0x34];                              // 0x00-0x33
@@ -1198,7 +613,7 @@ struct CFunc8008D51CView {
     f32 field_0x19C;                            // 0x19C
 };
 
-// func_8008FE8C's view of CfObjectMove: base position/velocity words, the
+// func_8008FE8C's view of CCtrlMoveEne: base position/velocity words, the
 // move-list entries at +0x78, the mVec138 words, the heading/turn state and
 // the timers.
 struct CFunc8008FE8CView {
@@ -1250,7 +665,7 @@ struct CFunc8008FE8CSub {
     f32 field_63C;                                      // 0x63C
 };
 
-// func_8008A2C8's view of CfObjectMove: the velocity words, the mVec138 /
+// func_8008A2C8's view of CCtrlMoveEne: the velocity words, the mVec138 /
 // mVec144 copies, the heading/timer halfwords and the +0x164..+0x19C floats.
 struct CFunc8008A2C8View {
     u8 _pad[0x0C];                              // 0x00-0x0B
@@ -1321,7 +736,7 @@ struct CFunc80091864Target {
     u32 field_200;                                      // 0x200 flags
 };
 
-// func_80091864's view of CfObjectMove: the +0x4 height float, the base
+// func_80091864's view of CCtrlMoveEne: the +0x4 height float, the base
 // position words copied into mVec144, the word/halfword state fields and the
 // flags words. 0x4C/0x50/0x54 are word-copied from the sub position.
 struct CFunc80091864View {
@@ -1374,22 +789,22 @@ extern const f32 lbl_eu_804FB9C8[];
 // defined in CtrlMoveBase.cpp; func_8008C4F0 / func_8008D51C in this TU. The
 // extern "C" keeps the call-site relocs at the unmangled retail names.
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void func_800895A8(cf::CfObjectMove* self);
-extern "C" void func_8008C4F0(cf::CfObjectMove* self);
-extern "C" int func_8008D51C(cf::CfObjectMove* self);
+extern "C" void func_800895A8(cf::CCtrlMoveEne* self);
+extern "C" void func_8008C4F0(cf::CCtrlMoveEne* self);
+extern "C" int func_8008D51C(cf::CCtrlMoveEne* self);
 // Defined in CtrlMoveBase.cpp (func_80089990) and CtrlAct.cpp / CtrlMoveBase
 // (func_800D581C / func_800D59FC); called by func_8008D444 on the move-data
 // block / controller.
-extern "C" void func_80089990(cf::CfObjectMove* self);
+extern "C" void func_80089990(cf::CCtrlMoveEne* self);
 extern "C" void func_800D581C(cf::CNpcBaseDataView* data);
 extern "C" void func_800D59FC(cf::CNpcBaseDataView* data);
 // Per-frame move helpers (CtrlMoveBase.cpp / CtrlMoveNpc.cpp): func_80088974
 // computes the approach direction, func_80089694 commits a velocity.
-extern "C" int func_80088974(cf::CfObjectMove* self, ml::CVec3* out,
+extern "C" int func_80088974(cf::CCtrlMoveEne* self, ml::CVec3* out,
                              const ml::CVec3* src, int flagA, int flagB);
-extern "C" void func_80089694(cf::CfObjectMove* self, const ml::CVec3* vec,
+extern "C" void func_80089694(cf::CCtrlMoveEne* self, const ml::CVec3* vec,
                               f32 f);
-extern "C" void func_800896F4(cf::CfObjectMove* self, ml::CVec3* out,
+extern "C" void func_800896F4(cf::CCtrlMoveEne* self, ml::CVec3* out,
                               const ml::CVec3* src);
 // Circular gimmick-object list accessor (CfGimmick.cpp) and battle-event
 // helper (CfObjectImpl.cpp); func_80174C98 queries an actor word (CfAct.cpp).
@@ -1400,12 +815,12 @@ extern "C" void func_8004B9D4(void* w, int a, int b, int c, int d);
 extern "C" u32 func_800AF82C(void* self, const char* column, int row);
 // Move-data approach helper (CtrlMoveBase.cpp) and coli segment probe used by
 // func_8008CDE8 (retail C-ABI names).
-extern "C" int func_80089E88(cf::CfObjectMove* self, ml::CVec3* pos, int flag);
+extern "C" int func_80089E88(cf::CCtrlMoveEne* self, ml::CVec3* pos, int flag);
 extern "C" int func_804B526C(void* a, void* b, void* c, void* d, int e, int f,
                              void* g);
 // Global coli probe object (retail .sdata pointer) and the probe-block buffer
 // func_8008CDE8 passes to func_804B526C.
-// Typed as void* to match CfObjectMove.hpp (same .sbss global).
+// Typed as void* to match CCtrlMoveEne.hpp (same .sbss global).
 extern void* lbl_eu_80665958;
 extern u8 lbl_eu_80571810[0x38];
 // Collision-list height probe API used by func_8008B9C0 (retail C-ABI names;
@@ -1418,11 +833,11 @@ extern "C" void* func_804BE50C(u32 index);
 extern "C" void* func_804BE520(int index);
 extern "C" int func_804BE5A4(int a, int b);
 // CtrlMoveBase.cpp helper func_8008B9C0 re-probes with (retail C-ABI name).
-extern "C" int func_8008A01C(cf::CfObjectMove* self, ml::CVec3* pos);
+extern "C" int func_8008A01C(cf::CCtrlMoveEne* self, ml::CVec3* pos);
 // In-unit approach probe (retail func_8008B9C0): extern "C" keeps the
 // call-site relocs in func_8008F9EC / func_8008F2E0 at the unmangled name.
-extern "C" int func_8008B9C0(cf::CfObjectMove* self, ml::CVec3* out,
-                             cf::CfObjectMove* other, f32 f1, f32 f2, int arg);
+extern "C" int func_8008B9C0(cf::CCtrlMoveEne* self, ml::CVec3* out,
+                             cf::CCtrlMoveEne* other, f32 f1, f32 f2, int arg);
 // nw4r fixed-point math kernels (C-ABI SDK functions; names are the retail
 // mangled identifiers - keep C linkage so the call relocs match).
 extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
@@ -1546,53 +961,53 @@ extern const char lbl_eu_804FB9E8[];
 // Ptmf hook constants (retail data symbols): the ctor installs __ptmf_null
 // and then the hook at lbl_eu_805278E4; func_8008E06C installs the hooks at
 // lbl_eu_80527830 + 0x118 / 0x124 / 0x130.
-extern void (cf::CfObjectMove::*const __ptmf_null)();
-extern void (cf::CfObjectMove::*const lbl_eu_805278E4)();
-typedef void (cf::CfObjectMove::*CfMoveDispatchPtmf)(void* a, void* b);
+extern void (cf::CCtrlMoveEne::*const __ptmf_null)();
+extern void (cf::CCtrlMoveEne::*const lbl_eu_805278E4)();
+typedef void (cf::CCtrlMoveEne::*CfMoveDispatchPtmf)(void* a, void* b);
 struct CfMoveHookPtmfs {
     u8 _pad[0x118];                                  // 0x00-0x117
-    void (cf::CfObjectMove::*hook118)();             // 0x118
-    void (cf::CfObjectMove::*hook124)();             // 0x124
-    void (cf::CfObjectMove::*hook130)();             // 0x130
+    void (cf::CCtrlMoveEne::*hook118)();             // 0x118
+    void (cf::CCtrlMoveEne::*hook124)();             // 0x124
+    void (cf::CCtrlMoveEne::*hook130)();             // 0x130
 };
 // Full hook-table view (adds the +0x13C..+0x1B4 records used by
 // func_8008E2D4 / func_8008E760 / func_80090DB4). Declared as the symbol's
 // extern type so member access emits the retail addi + base-load ptmf copy.
 struct CfMoveHookPtmfsAll {
     u8 _pad[0x118];                                  // 0x00-0x117
-    void (cf::CfObjectMove::*hook118)();             // 0x118
-    void (cf::CfObjectMove::*hook124)();             // 0x124
-    void (cf::CfObjectMove::*hook130)();             // 0x130
-    void (cf::CfObjectMove::*hook13C)();             // 0x13C
-    void (cf::CfObjectMove::*hook148)();             // 0x148
-    void (cf::CfObjectMove::*hook154)();             // 0x154
-    void (cf::CfObjectMove::*hook160)();             // 0x160
-    void (cf::CfObjectMove::*hook16C)();             // 0x16C
-    void (cf::CfObjectMove::*hook178)();             // 0x178
-    void (cf::CfObjectMove::*hook184)();             // 0x184
-    void (cf::CfObjectMove::*hook190)();             // 0x190
-    void (cf::CfObjectMove::*hook19C)();             // 0x19C
-    void (cf::CfObjectMove::*hook1A8)();             // 0x1A8 (func_80090DB4)
-    void (cf::CfObjectMove::*hook1B4)();             // 0x1B4 (func_80090DB4)
+    void (cf::CCtrlMoveEne::*hook118)();             // 0x118
+    void (cf::CCtrlMoveEne::*hook124)();             // 0x124
+    void (cf::CCtrlMoveEne::*hook130)();             // 0x130
+    void (cf::CCtrlMoveEne::*hook13C)();             // 0x13C
+    void (cf::CCtrlMoveEne::*hook148)();             // 0x148
+    void (cf::CCtrlMoveEne::*hook154)();             // 0x154
+    void (cf::CCtrlMoveEne::*hook160)();             // 0x160
+    void (cf::CCtrlMoveEne::*hook16C)();             // 0x16C
+    void (cf::CCtrlMoveEne::*hook178)();             // 0x178
+    void (cf::CCtrlMoveEne::*hook184)();             // 0x184
+    void (cf::CCtrlMoveEne::*hook190)();             // 0x190
+    void (cf::CCtrlMoveEne::*hook19C)();             // 0x19C
+    void (cf::CCtrlMoveEne::*hook1A8)();             // 0x1A8 (func_80090DB4)
+    void (cf::CCtrlMoveEne::*hook1B4)();             // 0x1B4 (func_80090DB4)
 };
 extern const CfMoveHookPtmfsAll lbl_eu_80527830;
 // func_8008E2D4's extension of the hook table (+0x13C / +0x148 records).
 struct CfMoveHookPtmfsE2D4 {
     u8 _pad[0x13C];                                  // 0x00-0x13B
-    void (cf::CfObjectMove::*hook13C)();             // 0x13C
-    void (cf::CfObjectMove::*hook148)();             // 0x148
+    void (cf::CCtrlMoveEne::*hook13C)();             // 0x13C
+    void (cf::CCtrlMoveEne::*hook148)();             // 0x148
 };
 // func_8008E760's extension of the hook table (+0x154 / +0x160 / +0x16C
 // records).
 struct CfMoveHookPtmfsE760 {
     u8 _pad[0x154];                                  // 0x00-0x153
-    void (cf::CfObjectMove::*hook154)();             // 0x154
-    void (cf::CfObjectMove::*hook160)();             // 0x160
-    void (cf::CfObjectMove::*hook16C)();             // 0x16C
+    void (cf::CCtrlMoveEne::*hook154)();             // 0x154
+    void (cf::CCtrlMoveEne::*hook160)();             // 0x160
+    void (cf::CCtrlMoveEne::*hook16C)();             // 0x16C
 };
 // Ptmf hook constant installed by func_8009156C (3-word record at
 // lbl_eu_805279F0).
-extern void (cf::CfObjectMove::*const lbl_eu_805279F0)();
+extern void (cf::CCtrlMoveEne::*const lbl_eu_805279F0)();
 // Secondary vtable installed at +0x48 by the ctor.
 extern const u8 lbl_eu_805279FC[];
 
@@ -1602,11 +1017,11 @@ extern const u8 lbl_eu_805279FC[];
 // site. __ct__80088904 / func_80089684 / func_800899AC are defined in
 // CtrlMoveBase.cpp; func_8004B8B0 in CActParamAnim.cpp; func_800AF7E4 in
 // CfObjectEne.cpp; func_8008D444 / func_8008BEEC in this TU.
-extern "C" void __ct__80088904(cf::CfObjectMove* self);
-extern "C" void func_80089684(cf::CfObjectMove* self);
+extern "C" void __ct__80088904(cf::CCtrlMoveEne* self);
+extern "C" void func_80089684(cf::CCtrlMoveEne* self);
 extern "C" void func_8004B8B0(void* self, u32 a, u32 b, f32 value);
 extern "C" void func_800899AC(void* obj, f32 value);
 extern "C" u32 func_800AF7E4(void* self, const char* column);
-extern "C" void func_8008D444(cf::CfObjectMove* self, cf::CFunc8008D444Obj* obj, int flag);
-extern "C" void func_8008BEEC(cf::CfObjectMove* self, void* obj, int arg2, u32 arg3);
-extern "C" void func_8008CDE8(cf::CfObjectMove* self, ml::CVec3* out, f32 f1);
+extern "C" void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag);
+extern "C" void func_8008BEEC(cf::CCtrlMoveEne* self, void* obj, int arg2, u32 arg3);
+extern "C" void func_8008CDE8(cf::CCtrlMoveEne* self, ml::CVec3* out, f32 f1);

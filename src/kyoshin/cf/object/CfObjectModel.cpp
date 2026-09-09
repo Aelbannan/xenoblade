@@ -49,6 +49,15 @@ struct __declspec(novtable) SubObjB0Real : SubObjB0Head {
 cf::CfObjectModel::CfObjectModel() {
     // Unnamed gap fields reached through small overlays; everything else
     // uses the real inherited members.
+    // NOTE (CObjectParam::field_30): the shared header declares field_30
+    // right after unk14, landing at +0x20, but retail reads that member at
+    // +0x30 (cf. CtrlObjectParam's CObjectParamRetailView: pad[0x30] then
+    // field_30). So the +0x30 word here is the unnamed CfObject gap word,
+    // NOT the header's field_30; retail zeroes it (stw 48) and never writes
+    // +0x20 in this ctor. Fixing the header layout belongs to the owning
+    // wave (it shifts every CfObject-family class); this TU writes the
+    // retail offsets directly.
+    struct Gap30 { u8 _p00[0x30]; u32 w30; };          // 0x30 (unnamed gap word)
     struct Gap34 { u8 _p00[0x34]; u32 w34; };          // 0x34
     struct Gap10 { u8 _p00[0x10]; u8 b10; };           // 0x10 (retail zeroes only the byte)
     struct Gap48 { u8 _p00[0x48]; float f48; };        // 0x48
@@ -57,6 +66,10 @@ cf::CfObjectModel::CfObjectModel() {
     struct Gap6C { u8 _p00[0x6C]; u32 w6c; u32 w70; u32 w74; u8 b78; };  // 0x6C-0x78
     struct Gap88 { u8 _p00[0x88]; u32 w88; u16 h8c; u16 h8e; };           // 0x88-0x8F
     struct Tail90 {                                    // 0x90-0xC3
+        // The old struct missed this prefix: every phase-2 store landed
+        // 0x90 too low (clobbering the just-built base) and the +0x00 base
+        // vtable store was dead-stripped to a zero store.
+        u8 _pad00[0x90];                               // 0x00-0x8F
         u32 w90, w94;
         cf::CfObjectModelSub98* sub98;
         u32 w9c;
@@ -69,17 +82,23 @@ cf::CfObjectModel::CfObjectModel() {
         u32 wc0;
     };
     Gap10* g10 = reinterpret_cast<Gap10*>(this);
+    Gap30* g30 = reinterpret_cast<Gap30*>(this);
     Gap34* g34 = reinterpret_cast<Gap34*>(this);
     Gap48* g48 = reinterpret_cast<Gap48*>(this);
     Gap50* g50 = reinterpret_cast<Gap50*>(this);
     Gap6C* g6c = reinterpret_cast<Gap6C*>(this);
     Gap88* g88 = reinterpret_cast<Gap88*>(this);
     Tail90* t90 = reinterpret_cast<Tail90*>(this);
+    // NOTE: do NOT hoist the two pool constants into float locals here.
+    // A phase-1 scoped {one, zero} pair makes MWCC synthesize its generated
+    // __vt__Q22cf13CfObjectModel materialize (+12 bytes + UNDEF link break)
+    // for a vtable this TU never emits. Direct pool refs keep f0 (retail
+    // uses f1 for the zero group: pure reg-swap residual, size-neutral).
     unk4 = 0;
     unk8 = 0;
     unkC = 0;
     g10->b10 = 0;  // retail stores only the byte at 0x10
-    field_30 = 0;
+    g30->w30 = 0;  // +0x30 gap word (retail stw 48)
     g34->w34 = 0;
     *(void**)this = (void*)lbl_eu_805294E0;
     mSubObj38 = 0;
@@ -102,18 +121,34 @@ cf::CfObjectModel::CfObjectModel() {
     g88->w88 = 0;
     g88->h8c = 0;
     g88->h8e = 0;
+    // NOTE: this MUST stay a proxy call, not this->CfObject_UnkVirtualFunc3().
+    // A real virtual call on this in the ctor makes MWCC materialize its
+    // generated __vt__Q22cf13CfObjectModel symbol (lis/addi r4 + stw r4,0)
+    // for a vtable this TU never emits (same reason CScnItemModel uses a
+    // fragment ctor): +12 bytes and an UNDEF link break. The novtable proxy
+    // dispatches the identical slot (+0x5C) with no implicits.
     reinterpret_cast<ModelDtorReal*>(this)->m5C();  // vtable +0x5C
-    // Phase 2: flag bit, base vtable install, model-tail init.
-    mFlags68 |= 0x00100000;
+    // Phase 2: flag bit, base vtable install, model-tail init. Fresh scoped
+    // constants (retail reloads both pools after the call: lfs f0 then lfs
+    // f1); the flags word is hoisted (retail loads it into r0 right after
+    // the call, well before the oris). The vtable store stays inline: a
+    // named local gets LICM-hoisted into the prologue.
+    u32 saveFlags = mFlags68;
+    mFlags68 = saveFlags | 0x00100000;
     *(void**)this = (void*)lbl_eu_80529318;
     t90->w90 = 0;
     t90->w94 = 0;
     t90->sub98 = 0;
     t90->w9c = 0;
-    t90->fa0 = lbl_eu_80666A68;
-    t90->fa4[0] = lbl_eu_80666A6C;
-    t90->fa4[1] = lbl_eu_80666A6C;
-    t90->fa4[2] = lbl_eu_80666A6C;
+    // Phase-2-only constants (defined after the call, so they cannot go
+    // nonvolatile; they let MWCC reuse one load per pool across the four
+    // stores instead of reloading per use).
+    float one2 = lbl_eu_80666A6C;
+    float zero2 = lbl_eu_80666A68;
+    t90->fa0 = zero2;
+    t90->fa4[0] = one2;
+    t90->fa4[1] = one2;
+    t90->fa4[2] = one2;
     t90->subB0 = 0;
     t90->wb4 = 0;
     t90->wb8 = 0;
@@ -408,12 +443,14 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
     ml::CVec3 lifted;
 
     u32 flags = self->unk64;
-    // Filter word: default mid variant; bit30 clear picks the narrow one,
-    // bit29 (when bit30 set) picks the wide one. Each unk64 bit test is
-    // normalized through the double-cntlzw booleanize idiom (retail
+    // Filter word: default mid variant; bit30 SET picks the narrow one
+    // (retail pairs 0x4a05 with the taken path: the beq at +0x38 falls
+    // through to the li, and the final beq takes the if-path for the same
+    // bit). Bit29 (when bit30 clear) picks the wide one. Each unk64 bit
+    // test is normalized through the double-cntlzw booleanize idiom (retail
     // booleanizes twice).
     u32 filter = 0x44a09;
-    if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) == 0) {
+    if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x2) >> 5)) >> 5) != 0) {
         filter = 0x4a05;
     } else if ((((u32)__cntlzw((u32)__cntlzw(flags & 0x4) >> 5)) >> 5) != 0) {
         filter = 0x44a11;
@@ -441,7 +478,10 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
             probe.y -= lbl_eu_80666A6C;
         }
     } else {
-        func_800A7094(pos, &probe, 0x4a05, scale, lbl_eu_80666A68);
+        // Same call shape with the selected filter (retail reuses the filter
+        // word here: r5 is not reloaded on this path, so the else probe uses
+        // the default 0x44a09, not a fresh 0x4a05 immediate).
+        func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
     }
     self->CfObject_UnkVirtualFunc19(&probe);
 }
@@ -459,7 +499,7 @@ void CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
 
 // Return a pointer-typed word: the sub-object's derived value +0xB8, or
 // this +0x3C when there is no sub-object.
-ml::CVec3* cf::CfObjectModel::CfObject_UnkVirtualFunc23() {
+ml::CVec3* cf::CfObjectModel::CfObject_getPosVector() {
     if (mSubObj98 != 0) {
         return reinterpret_cast<ml::CVec3*>(reinterpret_cast<uintptr_t>(func_8048315C(mSubObj98)) + 0xB8);
     }
@@ -737,6 +777,9 @@ void CfObjectModel_UnkVirtualFunc13__Q22cf13CfObjectModelFv(cf::CfObjectModel* s
 // this object via the sub-object, remembering the source and name.
 void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
     cf::CfObjectModel* self, cf::CfObjectModel* other, const char* name) {
+    // Hoisted: retail caches the name in r31 first (prologue or r31,r5),
+    // then other in r30 and self in r29.
+    const char* target = name;
     if (self->field_BC == 0) {
         self->field_B4 = 0;
         self->field_B8 = 0;
@@ -746,14 +789,19 @@ void CfObjectModel_UnkVirtualFunc14__Q22cf13CfObjectModelFv(
         return;
     }
     if (other != 0) {
-        if (other->mSubObj98 == 0 || name == 0) {
+        // Two separate null checks (retail beq's straight to the epilogue
+        // for each; an || pair emits an extra branch).
+        if (other->mSubObj98 == 0) {
+            return;
+        }
+        if (name == 0) {
             return;
         }
 
         // Resolve the name through the source object; fall back to the retail
-        // placeholder label (+1) when the lookup reports failure.
-        const char* target = name;
-        if (static_cast<cf::CfObject*>(other)->CfObject_UnkVirtualFunc52(name) == nullptr) {
+        // placeholder label (+1) when the lookup reports failure. The lookup
+        // takes the cached target (r31), not the incoming r5.
+        if (static_cast<cf::CfObject*>(other)->CfObject_UnkVirtualFunc52(target) == nullptr) {
             target = reinterpret_cast<const char*>(&lbl_eu_804FC548[1]);
         }
 
@@ -854,14 +902,19 @@ u32 cf::CfObjectModel::CfObjectModel_UnkVirtualFunc8() {
     return 0;
 }
 
-// Tail-call the sub-object's vtable slot 0xB4 (CfObject_UnkVirtualFunc25
-// in the base vtable layout) when a sub-object is present.
-void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc7() {
-    if (mSubObj98 != 0) {
-        // Sub-object is itself a CfObject; snap using its +0x3C position.
-        cf::CfObject* sub = reinterpret_cast<cf::CfObject*>(mSubObj98);
-        sub->CfObject_UnkVirtualFunc25(
-            reinterpret_cast<ml::CVec3*>(&sub->mPos3C), lbl_eu_80666A84);
+// Forwards the caller's (pos, scale) to the sub-object's vtable slot +0xB4
+// (CfObject_UnkVirtualFunc25) as a tail call: retail leaves r4/f1 live with
+// no setup (bctr, 0x20 bytes), so this slot really takes (pos, scale) even
+// though the Fv linker name claims no params. Free-function form (same as
+// CfObject_UnkVirtualFunc55/70/72 below): the vtable's bare-Fv reference
+// resolves to this definition; the widened member decl in the header serves
+// call-site codegen only.
+void CfObjectModel_UnkVirtualFunc7__Q22cf13CfObjectModelFv(
+    cf::CfObjectModel* self, ml::CVec3* pos, float scale) {
+    if (self->mSubObj98 != 0) {
+        // Sub-object is itself a CfObject; forward r4/f1 untouched.
+        cf::CfObject* sub = reinterpret_cast<cf::CfObject*>(self->mSubObj98);
+        sub->CfObject_UnkVirtualFunc25(pos, scale);
     }
 }
 
@@ -974,11 +1027,11 @@ void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv();
+void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv();
+void CObjectState_getStateData__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv();
 void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
@@ -1040,7 +1093,7 @@ void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv();
 void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
 void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv();
+void CfObject_getPosVector__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv();
 void CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv();
@@ -1064,7 +1117,7 @@ void CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv();
-void CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv();
+void CfObject_getPosVector__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv();
 void CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv();
@@ -1074,7 +1127,6 @@ void CfObjectModel_UnkVirtualFunc1__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc3__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv();
-void CfObjectModel_UnkVirtualFunc7__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc8__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc9__Q22cf13CfObjectModelFv();
 void CfObjectModel_UnkVirtualFunc11__Q22cf13CfObjectModelFv();
@@ -1104,11 +1156,11 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
@@ -1139,7 +1191,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_getPosVector__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
@@ -1225,11 +1277,11 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
@@ -1260,7 +1312,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_getPosVector__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
@@ -1341,11 +1393,11 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
@@ -1375,7 +1427,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv,
+    (const void*)CfObject_getPosVector__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,

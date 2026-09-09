@@ -40,7 +40,7 @@ namespace cf {
         // Same ABI as UVF19 (copy vec into +0x3C). Eff's override is a pure
         // forward to UVF19 (callVirt19); Model/Move override with extra work.
         virtual void CfObject_UnkVirtualFunc22(const ml::CVec3* vec); //0xA8
-        virtual ml::CVec3* CfObject_UnkVirtualFunc23();      //0xAC
+        virtual ml::CVec3* CfObject_getPosVector();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         // Retail ground-snap / moveEffOfs: (pos, scale) in r4/f1.
         virtual void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale); //0xB4

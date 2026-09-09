@@ -77,7 +77,7 @@ namespace cf {
         virtual void* CfObjectModel_UnkVirtualFunc4();  //0x184
         virtual u32 CfObjectModel_UnkVirtualFunc5();  //0x188
         virtual void* CfObjectModel_UnkVirtualFunc6(void* arg);  //0x18C (retail returns a pointer)
-        virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
+        virtual void CfObjectModel_UnkVirtualFunc7(ml::CVec3* pos, float scale);  //0x190 (retail forwards r4/f1)
         virtual u32 CfObjectModel_UnkVirtualFunc8();   //0x194 (retail returns a bit value)
         virtual void CfObjectModel_UnkVirtualFunc9();  //0x198
         virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
@@ -116,7 +116,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     CfObjectModel* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
     void CfObject_UnkVirtualFunc20();
-    ml::CVec3* CfObject_UnkVirtualFunc23();
+    ml::CVec3* CfObject_getPosVector();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();

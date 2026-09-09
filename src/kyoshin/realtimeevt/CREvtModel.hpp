@@ -26,22 +26,20 @@ public:
     /* vtable 0x18 */ virtual bool isBusy(); // vfunc_18
     /* vtable 0x1C */ virtual void vfunc_1C();
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
-    /* vtable 0x24 */ virtual void vfunc_24();
+    /* vtable 0x24 */ virtual void func_80169F24();
     /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28
-    /* vtable 0x2C */ virtual void vfunc_2C(void* pData, void* pModelData);
+    /* vtable 0x2C */ virtual void func_801729F0(void* pData, void* pModelData);
     /* vtable 0x30 */ virtual void onEvent(unsigned int visible); // vfunc_30
     /* vtable 0x34 */ virtual bool reset(); // vfunc_34
-    /* vtable 0x38 */ virtual void vfunc_38();     // called from func_801729F0
+    /* vtable 0x38 */ virtual void func_80172768();
 
     // Non-virtual methods
     int func_801726DC();
-    void func_80172768();
     void* func_801727D0();
     void func_801727DC();
     void func_801728F8();
     void func_8017298C();
     int func_801729D0();
-    void func_801729F0(void* pData, void* pModelData);
     void func_80172CC0();
     void func_80172CC4();
     void func_80172CE4(CScnItemModel* pModel);

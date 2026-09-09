@@ -125,9 +125,9 @@ struct ArtsActionSource {
 };
 
 // Fake vtables folded onto real owners (Wave 31):
-// +0x30 -> cf::CObjectState::CObjectState_UnkVirtualFunc11 (party status)
+// +0x30 -> cf::CObjectState::CObjectState_getStateData (party status)
 // +0x4C -> cf::CObjectParam::CObjectParam_UnkVirtualFunc5 (move id)
-// +0xAC -> cf::CfObject::CfObject_UnkVirtualFunc23 (position)
+// +0xAC -> cf::CfObject::CfObject_getPosVector (position)
 // +0x54 -> cf::CBattleState::CBattleState_UnkVirtualFunc20 (arts slot)
 // +0x128/+0x160/+0x278/+0x27C/+0x158 -> cf::CActorParam Unk37/51/121/122/49
 // +0x14 -> ArtsParamLocal::mFn14 (gauge getMax, vptr at +0x84)
@@ -187,6 +187,7 @@ void* func_8012FD04(const char* name);
 
 int func_8012FA5C();
 void func_80138078__FUl(u32);
+void playUISound__FUl(u32); // retail sound callee in func_80104454 (cf code_80135FDC owns 38078)
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int func_8010EDD4(void*);
 int func_8010A840(void*);
@@ -904,7 +905,7 @@ after_ce48:
         if (actor != NULL) {
             typedef void* (*GetPtrFn)(void*);
             void* sub = actor->mSecondaryVtable;
-            u32* pVal = reinterpret_cast<u32*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
+            u32* pVal = reinterpret_cast<u32*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
             int localVal = pVal[0];
             if (func_80174C98(actor, &localVal, 0x803) != 0) {
                 if (unk348 == 0) {
@@ -1097,7 +1098,7 @@ after_ce48:
                     }
                     if (bit != 0) {
                         typedef f32 (*GetF32Fn)(void*);
-                        f32 v = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc37();
+                        f32 v = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getHp();
                         if (v > lbl_eu_80666F28) {
                             unk334 = 1;
                         }
@@ -1478,7 +1479,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
         func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, NULL,
                       reinterpret_cast<u32>(self->unk294));
-        func_80138078__FUl(67);
+        playUISound__FUl(67);
         self->unk298 = 3;
     }
 
@@ -1502,7 +1503,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 void* adj = pl;
                 if (pl != NULL) adj = (char*)pl - 0x3e9c;
                 if (adj != NULL) {
-                    f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
+                    f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
                     if (g <= lbl_eu_80666F28) {
                         battle = true;
                     } else {
@@ -1560,7 +1561,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
 
     if (self->unk320 != 0) {
         void* sub = actor->mSecondaryVtable;
-        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
+        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
         if (func_80174C98(actor, &v, 31) == 0) self->unk320 = 0;
     }
 
@@ -1569,7 +1570,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     if (pl1 != NULL) a2 = (BattleActor*)((char*)pl1 - 0x3e9c);
     if (a2 != NULL && self->unk320 == 0) {
         void* sub = a2->mSecondaryVtable;
-        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
+        int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
         if (func_80174C98(a2, &v, 0x803) != 0) {
             if (self->unk324 == 4 && self->unk328 == 0) {
                 self->unk328 = 4;
@@ -1635,7 +1636,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     void* adj = pl;
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
-                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
+                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
                         if (g <= lbl_eu_80666F28) {
                             battle2 = true;
                         } else {
@@ -1650,20 +1651,14 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle2) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
-                if (func_80174C98(actor, &v11, 11) != 0) {
-                    func_80138078__FUl(5);
-                    goto end_body;
-                }
-                if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
-                    void* sub2 = actor->mSecondaryVtable;
-                    int v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_UnkVirtualFunc11());
-                    if (func_80174C98(actor, &v18, 18) != 0) {
-                        func_80138078__FUl(5);
-                        goto end_body;
-                    }
-                }
-                switch (self->unk328) {
+                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+                int v18;
+                // Retail funnels both guard failures into one shared
+                // playUISound(5) tail (no early sound calls here).
+                if (func_80174C98(actor, &v11, 11) != 0 &&
+                    (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), func_80174C98(actor, &v18, 18) != 0))) {
+                    switch (self->unk328) {
                 case 0:
                     self->unk328 = 4;
                     break;
@@ -1679,7 +1674,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 2;
                     void* sub4 = actor->mSecondaryVtable;
-                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_UnkVirtualFunc11());
+                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
                     if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 3;
@@ -1703,7 +1698,10 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
-                func_80138078__FUl(85);
+                playUISound__FUl(85);
+                } else {
+                    playUISound__FUl(5);
+                }
                 goto end_body;
             }
             // adopt slot 4
@@ -1761,7 +1759,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     void* adj = pl;
                     if (pl != NULL) adj = (char*)pl - 0x3e9c;
                     if (adj != NULL) {
-                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc37();
+                        f32 g = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getHp();
                         if (g <= lbl_eu_80666F28) {
                             battle3 = true;
                         } else {
@@ -1776,20 +1774,13 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle3) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
-                if (func_80174C98(actor, &v11, 11) != 0) {
-                    func_80138078__FUl(5);
-                    goto end_body;
-                }
-                if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
-                    void* sub2 = actor->mSecondaryVtable;
-                    int v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_UnkVirtualFunc11());
-                    if (func_80174C98(actor, &v18, 18) != 0) {
-                        func_80138078__FUl(5);
-                        goto end_body;
-                    }
-                }
-                switch (self->unk328) {
+                int v11 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
+                int v18;
+                // Same shared-tail funnel as the b1 block.
+                if (func_80174C98(actor, &v11, 11) != 0 &&
+                    (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                     ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), func_80174C98(actor, &v18, 18) != 0))) {
+                    switch (self->unk328) {
                 case 0:
                     self->unk328 = 2;
                     break;
@@ -1805,7 +1796,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 0;
                     void* sub4 = actor->mSecondaryVtable;
-                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_UnkVirtualFunc11());
+                    int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
                     if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 1;
@@ -1829,41 +1820,12 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
                                   reinterpret_cast<u32>(self->unk294));
                 }
-                func_80138078__FUl(85);
+                playUISound__FUl(85);
+                } else {
+                    playUISound__FUl(5);
+                }
                 goto end_body;
             }
-            self->unk324 = 4;
-            nw4r::lyt::Pane* pane =
-                self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
-            {
-            s16* posX = reinterpret_cast<s16*>(tbl + 0x00);
-            s16* posY = reinterpret_cast<s16*>(tbl + 0x14);
-            f32* scale = reinterpret_cast<f32*>(tbl + 0x28);
-                nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[self->unk324]);
-                trans.y = static_cast<f32>(posY[self->unk324]);
-                pane->SetTranslate(trans);
-                f32 s = scale[self->unk324];
-                pane->SetScale(nw4r::math::VEC2(s, s));
-            }
-            if (self->unk328 == 4) {
-                func_801072E0(self);
-            } else {
-                s16* selTab = reinterpret_cast<s16*>(tbl + 0x4C);
-                s16 v = reinterpret_cast<s16*>(tbl + 0x4C)[self->unk328];
-                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                              lbl_eu_804FD1E0 + 0x254, v);
-                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                              lbl_eu_804FD1E0 + 0x259, v);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
-                              reinterpret_cast<u32>(self->unk294));
-            }
-            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
-                ->SetVisible(true);
-            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
-                ->SetVisible(true);
-            goto end_body;
         }
     }
     if (b31) {
@@ -1938,7 +1900,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(false);
         }
-        func_80138078__FUl(84);
+        playUISound__FUl(84);
         goto end_body;
     }
     if (b0) {
@@ -2013,7 +1975,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(false);
         }
-        func_80138078__FUl(84);
+        playUISound__FUl(84);
         goto end_body;
     }
     if (bX) {
@@ -2062,14 +2024,14 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 for (s32 i = 0; i < 3; i++) {
                     if (cfg[i + 1] == (s32)actor->mField3F28) continue;
                     void* obj = func_800B8B94(cfg[i + 1]);
-                    if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_UnkVirtualFunc37() > lbl_eu_80666F28) {
+                    if (reinterpret_cast<cf::CActorParam*>(obj)->CActorParam_getHp() > lbl_eu_80666F28) {
                         self->unk330 = i;
                         break;
                     }
                 }
             }
             self->unk8C->GetRootPane()->SetVisible(false);
-            func_80138078__FUl(95);
+            playUISound__FUl(95);
             self->unk298 = 5;
             if (func_80110A70() != NULL) {
                 func_8010EDDC((u8*)func_80110A70() + 0x7E4, (u8)self->unk330);
@@ -2121,7 +2083,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk7D = (s8)q4;
             self->unk7E = -1;
         }
-        func_80138078__FUl(95);
+        playUISound__FUl(95);
         self->unk298 = 4;
         self->unk8C->SetAnimationEnable(self->unk94, false);
         self->unk8C->SetAnimationEnable(self->unk90, true);
@@ -2132,7 +2094,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     goto end_body;
 
 useFail:
-    func_80138078__FUl(5);
+    playUISound__FUl(5);
 end_body:
     func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->unk94, lbl_eu_80666F2C);
 }
@@ -2148,7 +2110,7 @@ void CMenuArtsSelect::func_80105A34() {
     }
     if (actor != NULL) {
         u32* pVal = reinterpret_cast<u32*>(
-            reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_UnkVirtualFunc11());
+            reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
         int localVal = pVal[0];
         if (func_80174C98(actor, &localVal, 0x803) != 0) {
             if (unk324 == 4) {
@@ -2430,13 +2392,13 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
                 reinterpret_cast<char*>(mv) + 0x3e9c);
         }
         if (mv == NULL) continue;
-        f32 g = reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_UnkVirtualFunc37();
+        f32 g = reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_getHp();
         if (g <= zeroF) continue;
         if (hasGauge) {
             if (entryId == actor->mField3F28) continue;
         }
         nw4r::math::VEC3* pos =
-            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(mv)->CfObject_UnkVirtualFunc23();
+            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(mv)->CfObject_getPosVector();
         f32 d;
         func_8049B59C(&d, pose, pos);
         dist[count] = d;
@@ -2520,7 +2482,7 @@ void CMenuArtsSelect::func_80106450() {
     if (actor != NULL) {
         void* sub = actor->mSecondaryVtable;
         u32* pVal = reinterpret_cast<u32*>(
-            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11());
+            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData());
         int localVal = pVal[0];
         if (func_80174C98(actor, &localVal, 0x803) != 0) {
             if (unk324 != 4) {
@@ -3101,7 +3063,7 @@ extern "C" int func_8010784C(CMenuArtsSelect* self) {
     if (move != NULL) actor = (BattleActor*)((char*)move - 0x3e9c);
     if (actor != NULL) {
         void* sub = actor->mSecondaryVtable;
-        void* pv = reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc11();
+        void* pv = reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_getStateData();
         u32* pVal = reinterpret_cast<u32*>(pv);
         int localVal = pVal[0];
         if (func_80174C98(actor, &localVal, 0x803) == 0) {
@@ -3147,7 +3109,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         if (mv == NULL) {
             // Party-status probe through the secondary MI vtable.
             u32* pVal = reinterpret_cast<u32*>(
-                reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_UnkVirtualFunc11());
+                reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
             int localVal = pVal[0];
             return func_80174C98(actor, &localVal, 0x803);
         }
@@ -3168,9 +3130,9 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         // Squared distance between the action source position and the player;
         // threshold constant depends on srcFlags bit 3.
         nw4r::math::VEC3* srcPos =
-            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(srcRaw)->CfObject_UnkVirtualFunc23();
+            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(srcRaw)->CfObject_getPosVector();
         nw4r::math::VEC3* myPos =
-            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(&actor->mMoveStart)->CfObject_UnkVirtualFunc23();
+            (nw4r::math::VEC3*)reinterpret_cast<cf::CfObject*>(&actor->mMoveStart)->CfObject_getPosVector();
         nw4r::math::VEC3 d;
         d.x = myPos->x - srcPos->x;
         d.y = myPos->y - srcPos->y;
@@ -3307,7 +3269,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
             } else if (unk328 == 3) {
                 if (func_8009CF8C(0x3357) == 0) return 1;
                 u32* pVal = reinterpret_cast<u32*>(
-                    reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_UnkVirtualFunc11());
+                    reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData());
                 int localVal = pVal[0];
                 if (func_80174C98(actor, &localVal, 0xb) != 0) return 1;
             }
@@ -3535,7 +3497,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
                     if (pl != NULL) a2 = (BattleActor*)((char*)pl - 0x3e9c);
                     // Flat: one shared battle=0 else (retail .L_80109300).
                     if (a2 != NULL &&
-                        reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc37() <=
+                        reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_getHp() <=
                             lbl_eu_80666F28) {
                         battle = 1;
                     } else {

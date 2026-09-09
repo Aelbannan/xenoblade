@@ -3997,12 +3997,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CWorkRoot.o": UnitRules(
         # Retail GC'd the reslist<P11CWorkThread> member data (the strong copies
         # live in CWorkThread.o): MWCC appends the reslist + _reslist_base
-        # vtables to .data (+0xB8, 0x24), their two name strings to .rodata
-        # (+0x78, 0x42), and the RTTI structs to .sdata (+0x8, 0x10), plus an
-        # 8-align pad in .sbss. Drop all of it; the reslist methods stay in
+        # vtables to .data. With -RTTI off (2026-09-09) the reslist name
+        # strings (.rodata +0x78) and RTTI structs (.sdata +0x8) are gone -
+        # .rodata/.sdata are raw MATCH; only the .data vtable tail remains
+        # (0xB8..0xD0, shrunk from 0xDC). The reslist methods stay in
         # .text and resolve to the CWorkThread copies at link.
-        drop_data_range=((".data", 0xB8, 0xDC), (".sdata", 0x8, 0x18),),
-        drop_data_tail=((".rodata", 0x78),),
+        drop_data_range=((".data", 0xB8, 0xD0),),
         exact_renames=(
             ("__RTTI__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread", "lbl_eu_806635C0"),
             ("__dt__Q217CWorkRootThreadNS15CWorkRootThreadFv", "__dt__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv"),
@@ -4335,6 +4335,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         # emits the section at align 8, plus extra weak RTTI/vtable copies
         # (second vtable at +0x88, RTTI names at +0x0C, RTTI structs at +0x08)
         # that retail linker GC'd (strong copies live in other TUs).
+        # NEW angle (weak-dtor kill, CLibStaticData pattern): IWORK_EVENT_INLINE_DTOR
+        # makes MWCC emit a weak local __dt__10IWorkEventFv (0x40 text) that retail
+        # keeps external (strong copy in IWorkEvent.o). Drop as UNDEF so extab
+        # resolves externally; shrinks .text toward split budget without touching
+        # data keeps (.data 0x88/.rodata 0x0C/.sdata 0x08 still thin-trimmed).
+        drop_text_symbols_as_undef=("__dt__10IWorkEventFv",),
         set_data_align=((".rodata", 4),),
         drop_data_tail=((".data", 0x88), (".rodata", 0x0C), (".sdata", 0x08),),
     ),
@@ -4778,41 +4784,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         repack_after_drop=16,
         # .data is exact 0xF06 via typed UnusedStr_enableDvdVideo[0x3E].
     ),
-    "ut_ResFontBase.o": UnitRules(
-        # MWCC emits the weak inline-empty Font dtor
-        # (__dt__Q36nw4hbm2ut4FontFv / __dt__Q34nw4r2ut4FontFv, 0x40 deleting
-        # wrapper) wherever the Font vtable is emitted. The retail linker GC'd
-        # the weak copies: the DOL-extracted retail .o shows the Font vtable's
-        # dtor slot referencing the strong copy in the lyt_textBox TU (UNDEF
-        # here; lyt_textBox.o defines __dt__FontFv at 0x1270/0x153c). Dropping
-        # as UNDEF lets the live vtable ref resolve to that strong copy at
-        # link (resFontBase ctor also references __vt__Font, so the vtable is
-        # NOT orphaned — plain drop would leave a dangling ABS pointer).
-        drop_text_symbols_as_undef=(
-            "__dt__Q36nw4hbm2ut4FontFv",
-            "__dt__Q34nw4r2ut4FontFv",
-        ),
-        # ResFontBase vtable typeinfo ptr (+0x10) and the Font vtable
-        # typeinfo ptr (+0x88) reference the class RTTI externally in retail
-        # (strong copies in the lyt_textBox TU); MWCC emits weak local names +
-        # structs (+0x58 .data over the 0xC0 slice). Retarget, drop the
-        # mid-section ResFontBase name (0x68..0x88), then cut the Font name +
-        # RTTI tail.
-        retarget_relocs=(
-            (".data", 0x10, "__RTTI__Q46nw4hbm2ut6detail11ResFontBase"),
-            (".data", 0x88, "__RTTI__Q36nw4hbm2ut4Font"),
-        ),
-        drop_data_range=((".data", 0x68, 0x88),),
-        # Retail carries one extra vtable slot our shape lacks: the Font
-        # vtable dtor ptr at final +0x70. Inject at PRE-DROP +0x90 so it
-        # lands at +0x70 after the 0x68..0x88 range drop shifts it back.
-        inject_relocs=((".data", 0x90, "__dt__Q36nw4hbm2ut4FontFv"),),
-        # Trim the weak Font-vtable leftovers (shifted dtor dup at +0x74,
-        # anon name/parent pair at +0x78/+0x7C, dup RTTI at +0x80) that have
-        # no retail counterpart, then restore the retail 0xC0 size.
-        drop_data_tail=((".data", 0x74),),
-        pad_data_section=((".data", 0xC0),),
-    ),
+    # ut_ResFontBase.o: DELETED 2026-09-09 via -RTTI off on the hbm twin
+    # (configure.py) + already-raw nw4r twin. Both TUs are now raw MATCH
+    # (.data 0xC0 hbm / 0x1AC nw4r) with no postprocess; the old
+    # drop_data_tail=((".data", 0x74),) + range/retarget/inject/pad rule
+    # is stale (raw-skipped) and removed.
     # ut_ResFont (homebuttonLib twin): byte-identical .data; only anon-name
     # renumbering on the typeinfo-name strings / chain structs (retail
     # "@2461".."@2465" vs MWCC @2821..@2825). @N numbering drifts with
@@ -6095,6 +6071,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CScn.o": UnitRules(
     ),
     "CDeviceVI.o": UnitRules(
+        # NEW angle (weak-dtor kill, CDeviceSC pattern): MWCC emits a weak local
+        # __dt__11CDeviceBaseFv (0x58 text) that retail keeps external (UNDEF,
+        # strong copy in CDeviceBase.o). Drop as UNDEF so extab resolves
+        # externally; shrinks link .text toward split budget without touching
+        # data keeps (.data 0x170/.rodata 0xB9/.sdata 0x18 still thin-trimmed).
+        drop_text_symbols_as_undef=("__dt__11CDeviceBaseFv",),
         drop_data_tail=((".data", 0x170), (".rodata", 0xB9), (".sdata", 0x18)),
         exact_renames=(
             ("thunk_456_dt", "@456@__dt__9CDeviceVIFv"),
@@ -6126,6 +6108,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CDeviceClock.o": UnitRules(
+        # NEW angle (weak-dtor kill, CDeviceSC pattern): MWCC emits a weak local
+        # __dt__11CDeviceBaseFv (0x58 text) that retail keeps external (UNDEF).
+        # Drop as UNDEF; data keeps unchanged.
+        drop_text_symbols_as_undef=("__dt__11CDeviceBaseFv",),
         drop_data_tail=((".data", 0xE0), (".rodata", 0x58), (".sdata", 0x18)),
         drop_nobits_range=((".sbss", 0, 4),),
         exact_renames=(
@@ -8106,6 +8092,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the duplicate. .bss is defined with aligned(8) to satisfy MWCC
         # but retail is 4. Offsets re-derived 2026-09-08 after inlining
         # ADXT_BiasDouble (standalone .text -0x1C shifted all sites).
+        # 2026-09-09: D8 is now a typed const f64 at +0x8 (pre/suf split);
+        # MWCC still pools @575 for raw (float)(s32) (value-numbering miss),
+        # so the retarget+drop stay. D8 add_symbols removed (real def).
         retarget_relocs=(
             (".text", 0x116A, "lbl_eu_805162D8"),
             (".text", 0x117A, "lbl_eu_805162D8"),
@@ -8117,7 +8106,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".rodata", 0x7B8),),
         add_symbols=(
             ("lbl_eu_805162D0", ".rodata", 0x0, 0x4),
-            ("lbl_eu_805162D8", ".rodata", 0x8, 0x18),
             ("lbl_eu_805162F0", ".rodata", 0x20, 0x8),
             ("lbl_eu_805162F8", ".rodata", 0x28, 0x790),
         ),

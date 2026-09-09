@@ -1251,7 +1251,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_LinkList.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp"),
-            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp", extra_cflags=["-RTTI off"]),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align overruns 0x5470 (retail packed align 4; 2 PrintImpl bodies reg-swap-only; cf. lyt_picture/lyt_textBox)
             Object(Matching, "RVL_SDK/src/revolution/hbm/mix.c"),
@@ -1839,7 +1839,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiMenu.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiReset.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiPowerOff.cpp"),
-            Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),
             Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),
             Object(Matching, "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-func_align 16"]),
             Object(Matching, "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"], link_transform={

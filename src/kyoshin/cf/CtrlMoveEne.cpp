@@ -20,7 +20,7 @@ extern "C" u32 func_8004C5EC(u32 arg);
 // CfObjectActor UVF6 - forced-name call avoids including CfObjectActor.hpp
 // (that pulls CCtrlMoveEne.hpp and clashes with this TU's func_8004B9D4 decl).
 namespace cf { class CfObjectActor; }
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+extern "C" float CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
     cf::CfObjectActor* self);
 
 // In-TU forward declarations (definitions below).
@@ -53,7 +53,7 @@ cf::CCtrlMoveEne* __ct__8008A104(cf::CCtrlMoveEne* self) {
     self->field_0x18A = (u16)ml::math::mtRand(0x3c);
     func_80089684(self);
     self->mMoveHook = lbl_eu_805278E4;
-    self->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+    self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
     self->field_0x180 |= 0x800;
     self->field_0x38 = lbl_eu_806665C0;
     self->field_0x170 = lbl_eu_806665C8;
@@ -64,7 +64,7 @@ cf::CCtrlMoveEne* __ct__8008A104(cf::CCtrlMoveEne* self) {
 // Dispatches the +0x12C move hook when the movement sub-object's +0x8C slot
 // reports a nonzero rate, the +0x12C hook is set, and func_8008D51C accepts.
 void func_8008A23C(cf::CCtrlMoveEne* self) {
-    if (self->field_0x34->field_0x28->CfObject_UnkVirtualFunc15() != lbl_eu_806665C0) {
+    if (self->field_0x34->field_0x28->CfObject_getMoveSpeedRate() != lbl_eu_806665C0) {
         func_800895A8(self);
         func_8008C4F0(self);
         if (__ptmf_test(&self->mMoveHook) != 0) {
@@ -114,7 +114,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             // Face the move-sub heading.
             cf::CFunc8008FE8CSub* sub =
                 (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
-            f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc31();
+            f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getMoveHeadAngle();
             view->mVelocity.z =
                 CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
             view->mVelocity.x =
@@ -138,7 +138,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
                 view->field_0x17C &= ~0x8000u;
                 func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+                reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
             }
             return;
         }
@@ -160,17 +160,17 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                     u32 w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                     if (func_80174C98(obj, &w3, 0x1C) != 0) {
                         func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
                     } else if ((view->field_0x17C & 0x800000u) != 0) {
                         func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(0);
                     } else {
                         // Approach: resolve the action source and probe.
-                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc64(1);
+                        reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_setMoveBusyState(1);
                         // +0x4C on Move subobject is CObjectParam::UVF5 (Fv id getter).
                         void* src = (void*)findObjectById__Fi(
                             reinterpret_cast<cf::CObjectParam*>(A2C8Sub(obj))
-                                ->CObjectParam_UnkVirtualFunc5());
+                                ->CObjectParam_getSelfObjectId());
                         cf::CFunc8008B580Obj* r26 =
                             (cf::CFunc8008B580Obj*)func_8016FE34(src);
                         if (r26 != 0) {
@@ -289,7 +289,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                 f60->field_4EC |= 4;
             }
             // Heading / pursuit gates.
-            f32 f29 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc15();
+            f32 f29 = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
             f32 f31 = func_80496288(lbl_eu_80663E14) * f29;
             int r27 = 0;
             if (r31 != 0) {
@@ -382,7 +382,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
             u8 b1aa = bm->field_1AA;
             if (b1aa >= 1 && b1aa <= 0x18) return;
             // Battle-state / damage gate.
-            f32 f29b = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_UnkVirtualFunc15();
+            f32 f29b = reinterpret_cast<cf::CfObject*>(&obj->mSub2)->CfObject_getMoveSpeedRate();
             f32 f28 = func_80496288(lbl_eu_80663E14) * f29b;
             if (f28 == lbl_eu_806665C0) {
                 f28 = lbl_eu_806665E4;
@@ -420,7 +420,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                         if (ro->field_3F60 != 0) {
                             // mSub2 = Move at +0x3E9C; +0x110 = CfObject::UVF48 -> void*.
                             void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
-                                            ->CfObject_UnkVirtualFunc48();
+                                            ->CfObject_getCurrentTarget();
                             if (tgt != 0 &&
                                 (*(u32*)((u8*)tgt + 0x200) &
                                  0x08000000u) != 0) {
@@ -654,7 +654,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                             cf::CFunc8008B580Obj* ro =
                                 (cf::CFunc8008B580Obj*)r3;
                             void* tgt = reinterpret_cast<cf::CfObject*>(&ro->mSub2)
-                                            ->CfObject_UnkVirtualFunc48();
+                                            ->CfObject_getCurrentTarget();
                             if (tgt != 0) {
                                 u32 w = *(u32*)((u8*)tgt + 0x200);
                                 if ((w & 0x08000000u) != 0) {
@@ -689,7 +689,7 @@ void func_8008A2C8(cf::CCtrlMoveEne* self) {
                 : 0);
         // +0x0C on Move = CObjectState::UVF2(mask).
         if (reinterpret_cast<cf::CObjectState*>(&obj2->mSub2)
-                ->CObjectState_UnkVirtualFunc2(0x200) == 0) {
+                ->CObjectState_checkStateFlags(0x200) == 0) {
             obj2->field_3374 &= 0xFBFFFFFF;
             view->field_0x17C &= 0xEFFFFFFF;
         }
@@ -708,9 +708,9 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
     if ((flags & 0x08000000u) == 0) {
         // Face the +0xCC heading: velocity = {sin, 0, cos} of the scaled index.
         f32 cz = CosFIdx__Q24nw4r4mathFf(
-            lbl_eu_806665CC * self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+            lbl_eu_806665CC * self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         v->mVelocity.x = SinFIdx__Q24nw4r4mathFf(
-            lbl_eu_806665CC * self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+            lbl_eu_806665CC * self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         v->mVelocity.y = lbl_eu_806665C0;
         v->mVelocity.z = cz;
     }
@@ -734,7 +734,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
         if ((self->field_0x180 & 0x8u) == 0) return;
         self->field_0x17C &= ~0x10000u;
         func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-        ((cf::CfObject*)&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+        ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
         return;
     }
     if (f60 == 0) return;
@@ -749,7 +749,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
             u32 w1 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
             if (func_80174C98(obj, &w1, 0x1C) != 0) {
                 func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                ((cf::CfObject*)&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+                ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
             } else {
                 u32 w2 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0;
                 u32 w3;
@@ -757,7 +757,7 @@ void func_8008B580(cf::CCtrlMoveEne* self) {
                     (w3 = ((cf::CFunc8008B580Word*)obj->field_04->CObjectState_getStateData())->field_0,
                      func_80174C98(obj, &w3, 0x18)) != 0) {
                     func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                    ((cf::CfObject*)&obj->mSub2)->CfObject_UnkVirtualFunc64(0);
+                    ((cf::CfObject*)&obj->mSub2)->CfObject_setMoveBusyState(0);
                 }
             }
         }
@@ -842,7 +842,7 @@ __declspec(noinline) int func_8008B9C0(cf::CCtrlMoveEne* self,
     // Heading index: the move sub's own heading, or a random half-turn.
     f32 ang;
     if (arg != 0) {
-        ang = ((cf::CfObject*)sub)->CfObject_UnkVirtualFunc31();
+        ang = ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle();
     } else {
         ang = (f32)ml::math::mtRand(0x168) * lbl_eu_8066A210;
     }
@@ -1137,7 +1137,7 @@ void func_8008D444(cf::CCtrlMoveEne* self, cf::CFunc8008D444Obj* obj, int flag) 
     self->field_0x196 = 0;
     func_80089990(self);
     if (flag != 0) {
-        reinterpret_cast<cf::CObjectState*>(&obj->mSub)->CObjectState_UnkVirtualFunc1(0x200);
+        reinterpret_cast<cf::CObjectState*>(&obj->mSub)->CObjectState_setStateBitMask(0x200);
     } else {
         self->field_0x17C |= 0x2000;
     }
@@ -1193,19 +1193,19 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
             if (view->field_0x18E != 0) {
                 func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
                 func_8004B7C0(f60, &ml::CVec3::zero);
-                reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc64(1);
-                reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc19(&view->mVec144);
+                reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
+                reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
             } else {
                 func_8004B8B0(f60, 1, 0, view->mVec144.y);
             }
         }
-        f32 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc15();
+        f32 f31 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_getMoveSpeedRate();
         view->field_0x168 =
             func_80496288(lbl_eu_80663E14) * f31 + view->field_0x168;
         if (view->field_0x168 >= lbl_eu_806665EC) {
             view->field_0x17C &= 0xDDFFC7FF;
             D51CZeroSlots(obj);
-            reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_UnkVirtualFunc6(0);
+            reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
             if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                 func_80174B4C(obj, 3);
             }
@@ -1240,13 +1240,13 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                                           : lbl_eu_806665E4;
         if (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z <= th) {
             if (view->field_0x18E != 0) {
-                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc19(&view->mVec144);
+                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveTargetVec(&view->mVec144);
             }
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
             view->field_0x17C |= 0x20000000;
             D51CZeroSlots(obj);
-            reinterpret_cast<cf::CObjectParam*>(sub2)->CObjectParam_UnkVirtualFunc6(0);
+            reinterpret_cast<cf::CObjectParam*>(sub2)->CObjectParam_signalActionEnd(0);
             if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                 func_80174B4C(obj, 3);
             }
@@ -1258,7 +1258,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                     func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
                     func_8004B7C0(w, &ml::CVec3::zero);
                 }
-                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc64(1);
+                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveBusyState(1);
             }
         } else {
             // Far: flee / close in with the +0x180 & 8 flag set.
@@ -1279,7 +1279,7 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                 if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z >
                     lbl_eu_80666640) {
                     f32 rate = lbl_eu_80666644 /
-                               *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc58();
+                               *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_getMoveRateScale();
                     func_80089694(self, &dir, rate);
                 } else {
                     ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
@@ -1289,18 +1289,18 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                 ml::CVec3 dir;
                 func_80088974(self, &dir, &view->mVec144, 1, 0);
                 f32 rate = lbl_eu_80666644 /
-                           *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc58();
+                           *(float*)reinterpret_cast<cf::CfObject*>(sub2)->CfObject_getMoveRateScale();
                 func_80089694(self, &dir, rate);
             }
         }
     } else {
         // Timer / flag gate: reset the object and hand off to the +0x150 slot.
-        reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc19(&view->mVec144);
+        reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
         ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
             lbl_eu_806665C0;
         view->field_0x17C |= 0x20000000;
         D51CZeroSlots(obj);
-        reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_UnkVirtualFunc6(0);
+        reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
         if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
             func_80174B4C(obj, 3);
         }
@@ -1311,19 +1311,19 @@ __declspec(noinline) int func_8008D51C(cf::CCtrlMoveEne* self) {
                 func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
                 func_8004B7C0(w, &ml::CVec3::zero);
             }
-            reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc64(1);
+            reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
         }
     }
     goto d51c_918;
 
 d51c_780:
     // No flag object: reset and hand off.
-    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc19(&view->mVec144);
+    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(&view->mVec144);
     ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
         lbl_eu_806665C0;
     view->field_0x17C |= 0x20000000;
     D51CZeroSlots(obj);
-    reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_UnkVirtualFunc6(0);
+    reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
     if (((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
         func_80174B4C(obj, 3);
     }
@@ -1334,12 +1334,12 @@ d51c_780:
             func_8004B8B0(w, 0, 1, lbl_eu_806665C0);
             func_8004B7C0(w, &ml::CVec3::zero);
         }
-        reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc64(1);
+        reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveBusyState(1);
     }
     goto d51c_918;
 
 d51c_918:
-    reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_UnkVirtualFunc6(0);
+    reinterpret_cast<cf::CObjectParam*>(&obj->mSub)->CObjectParam_signalActionEnd(0);
     r28 = 0;
     goto d51c_97c;
 
@@ -1382,7 +1382,7 @@ d51c_97c:
 }
 
 
-void* CfObject_UnkVirtualFunc58__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e4); }
+void* CfObject_getMoveRateScale__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e4); }
 
 // Enemy movement-controller (re)initialisation (retail func_8008E06C): picks a
 // state from a bdat column, installs the matching move hook, seeds the +0x4C
@@ -1416,22 +1416,22 @@ void func_8008E06C(cf::CCtrlMoveEne* self) {
         if (state != 0) {
             self->field_0x18C = 2;
             f32 angle = (f32)ml::math::mtRand(0x168) * lbl_eu_8066A210;
-            reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc29(angle);
+            reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveHeadAngle(angle);
             ((cf::CfObjectMove4CView*)self)->field_4C |= 4;
         } else {
             func_80089684(self);
             self->mMoveHook = lbl_eu_80527830.hook130;
-            self->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+            self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 |= 0x800;
         }
     }
     self->field_0x54 = 0;
     f32 rate;
-    if (*(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58() == lbl_eu_806665C0) {
+    if (*(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale() == lbl_eu_806665C0) {
     } else {
         cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-        rate = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+        rate = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
     }
     self->field_0x58 = rate;
     union {
@@ -1491,10 +1491,10 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
     // Movement-rate divisor: slot 0x1D8 over slot 0x138 when the denominator probe
     // is nonzero (both slots re-probed fresh, matching the retail reloads).
     f32 rate = lbl_eu_806665C0;
-    if (*(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58() != lbl_eu_806665C0) {
+    if (*(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale() != lbl_eu_806665C0) {
         cf::CCtrlMoveEneSub* sub2 = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub2->CfObject_UnkVirtualFunc58();
-        rate = *((cf::CCtrlMoveEneSub*)sub2)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub2->CfObject_getMoveRateScale();
+        rate = *((cf::CCtrlMoveEneSub*)sub2)->CfObjectMove_getMovementRate() / denom;
     }
     view->field_0x60 = (s32)rate;
     int count = initPadSubSystem__Q22cf13CfGameManagerFv();
@@ -1603,7 +1603,7 @@ void func_8008E2D4(cf::CCtrlMoveEne* self) {
         view->field_0x6C = lbl_eu_806665C0;
         func_80089684(self);
         self->mMoveHook = hooks->hook148;
-        view->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+        view->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
         self->field_0x180 |= 0x800;
     } else {
         // Dispatch the state record and commit the entry count / scaled timer.
@@ -1664,7 +1664,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         if ((view->field_0x17C & 0x40u) != 0) {
             func_80089684(self);
             self->mMoveHook = hooks->hook154;
-            self->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+            self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 = (self->field_0x180 | 0x800) & ~0x80000u;
         } else {
             union {
@@ -1680,7 +1680,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
             } else {
                 func_80089684(self);
                 self->mMoveHook = hooks->hook160;
-                self->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+                self->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
                 self->field_0x180 |= 0x800;
             }
         }
@@ -1699,10 +1699,10 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                 // +0x5B4 = CfObjectActor::UVF6 -> float; +0xC4 = CfObject::UVF29(float).
                 // First call leaves f1 live into UVF29 (retail Fv on both).
                 {
-                    f32 h = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+                    f32 h = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
                                 reinterpret_cast<cf::CfObjectActor*>(r31b));
                     reinterpret_cast<cf::CfObject*>(&obj->mSub)
-                        ->CfObject_UnkVirtualFunc29(h);
+                        ->CfObject_setMoveHeadAngle(h);
                 }
                 u16 r27 = obj->field_45C4;
                 if (r27 == 0) r27 = 1;
@@ -1714,7 +1714,7 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                     f31 += obj->field_44D8;
                 }
                 ml::CVec3 tmp20 = *reinterpret_cast<cf::CfObject*>(&r31b->mSub)->CfObject_getPosVector();
-                f32 f1 = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+                f32 f1 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
                              reinterpret_cast<cf::CfObjectActor*>(r31b));
                 f32 sum = obj->field_44D8 + r31b->field_44D8;
                 cf::CFunc8008E760PartyInfo info;
@@ -1724,10 +1724,10 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
                 if ((obj->field_3374 & 0x100u) != 0) {
                     view->field_0x58 |= 4;
                     view->field_0x10 = reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_getPosVector()->y;
-                    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc19(reinterpret_cast<const ml::CVec3*>(&view->field_0C));
+                    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(reinterpret_cast<const ml::CVec3*>(&view->field_0C));
                 } else if (r != 0) {
                     view->field_0x58 |= 4;
-                    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_UnkVirtualFunc19(reinterpret_cast<const ml::CVec3*>(&view->field_0C));
+                    reinterpret_cast<cf::CfObject*>(&obj->mSub)->CfObject_setMoveTargetVec(reinterpret_cast<const ml::CVec3*>(&view->field_0C));
                 }
                 if ((self->field_0x180 & 1) != 0) view->field_0x17C |= 0x200;
             }
@@ -1738,10 +1738,10 @@ void func_8008E760(cf::CCtrlMoveEne* self) {
         view->field_50 = pw[1];
         view->field_54 = pw[2];
         f32 f1 = lbl_eu_806665C0;
-        if (*(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58() != lbl_eu_806665C0) {
+        if (*(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale() != lbl_eu_806665C0) {
             cf::CCtrlMoveEneSub* sub2 = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub2->CfObject_UnkVirtualFunc58();
-            f1 = *((cf::CCtrlMoveEneSub*)sub2)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub2->CfObject_getMoveRateScale();
+            f1 = *((cf::CCtrlMoveEneSub*)sub2)->CfObjectMove_getMovementRate() / denom;
         }
         view->field_0x60 = f1;
         view->field_0x64 = lbl_eu_806665C0;
@@ -1842,7 +1842,7 @@ void func_8008EF04(cf::CCtrlMoveEne* self) {
             ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)->field_C4;
         if (c4 != 0) {
             func_8004B8B0(c4, 0, 1, lbl_eu_806665C0);
-            self->field_0x34->field_0x28->CfObject_UnkVirtualFunc64(1);
+            self->field_0x34->field_0x28->CfObject_setMoveBusyState(1);
         }
     }
     // Clear the +1 state flag when the target is gone / the +0x10000 talk
@@ -1857,7 +1857,7 @@ void func_8008EF04(cf::CCtrlMoveEne* self) {
             if (sub->field_C4 != 0) {
                 func_8004B9D4(sub->field_C4, 1, 0, -1, 0);
             }
-        } else if (sub->field_C4 != 0 && ((cf::CfObject*)sub)->CObjectState_UnkVirtualFunc2(4) != 0) {
+        } else if (sub->field_C4 != 0 && ((cf::CfObject*)sub)->CObjectState_checkStateFlags(4) != 0) {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
             done = 1;
@@ -1874,11 +1874,11 @@ check:
         // heading through the cos of their difference.
         f32 cosA = CosFIdx__Q24nw4r4mathFf(
             lbl_eu_806665CC *
-                self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+                self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         f32 cosB = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
         f32 sinA = SinFIdx__Q24nw4r4mathFf(
             lbl_eu_806665CC *
-                self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+                self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         f32 sinB = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
         if (cosB * cosA + sinB * sinA <= lbl_eu_806665DC) {
             // Facing the target: turn toward +0x4C and engage the +0x98 state
@@ -1887,12 +1887,12 @@ check:
             f32 h4c = self->field_0x4C;
             cf::CFunc8008EF04Sub* sub =
                 (cf::CFunc8008EF04Sub*)data->field_0x28;
-            ((cf::CfObject*)sub)->CfObject_UnkVirtualFunc29(h4c);
+            ((cf::CfObject*)sub)->CfObject_setMoveHeadAngle(h4c);
             cf::CFunc8008EF04Sub98* p98 = (cf::CFunc8008EF04Sub98*)sub->field_98;
             if (sub->field_C4 != 0 && p98 != 0 &&
                 (p98->field_7A4 & 0x10000u) == 0) {
                 func_800BE12C(sub, 3, 0, -1, 1);
-                ((cf::CfObject*)sub)->CObjectState_UnkVirtualFunc3(4);
+                ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
                 self->field_0x17C |= 1;
             }
         } else {
@@ -1910,7 +1910,7 @@ check:
                             ->field_C4,
                         0, 1, lbl_eu_806665C0);
                     if ((self->field_0x180 & 0x8u) != 0) {
-                        self->field_0x34->field_0x28->CfObject_UnkVirtualFunc64(1);
+                        self->field_0x34->field_0x28->CfObject_setMoveBusyState(1);
                     }
                 } else if (mode == 3) {
                     func_800BE12C(self->field_0x34->field_0x28, 1, 0, 1, 1);
@@ -1919,16 +1919,16 @@ check:
                             ->field_C4,
                         0, 1, lbl_eu_806665C0);
                     if ((self->field_0x180 & 0x8u) != 0) {
-                        self->field_0x34->field_0x28->CfObject_UnkVirtualFunc64(1);
+                        self->field_0x34->field_0x28->CfObject_setMoveBusyState(1);
                     }
                 }
             }
         }
         // Commit the heading as the movement direction and zero the move data.
         f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                        self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+                                        self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         f32 s = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                        self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31());
+                                        self->field_0x34->field_0x28->CfObject_getMoveHeadAngle());
         v->mVelocity.x = s;
         v->mVelocity.z = c;
         v->mVelocity.y = lbl_eu_806665C0;
@@ -1941,7 +1941,7 @@ void func_8008F2E0(){}
 
 // Returns bit 8 of the +0x270 state word of the +0xC4 target object, or 1
 // when the target is absent.
-extern "C" int CfObject_UnkVirtualFunc18__Q22cf12CfObjectMoveFv(cf::CCtrlMoveEne* self) {
+extern "C" int CfObject_checkTargetState__Q22cf12CfObjectMoveFv(cf::CCtrlMoveEne* self) {
     if (self->mTargetC4 != 0) {
         return (self->mTargetC4->field_0x270 >> 8) & 1;
     }
@@ -1958,7 +1958,7 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
     cf::CFunc8008F9ECSub* sub =
         (cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28;
     if (sub->field_C4 != 0) {
-    if (((cf::CfObject*)sub)->CfObject_UnkVirtualFunc18() != 0) {
+    if (((cf::CfObject*)sub)->CfObject_checkTargetState() != 0) {
     if ((self->field_0x17C & 0x20u) == 0) {
         // Wander: refresh the movement-rate divisor, then either pick a
         // random direction (when the +0x5C-scaled probe succeeds) or idle.
@@ -1966,10 +1966,10 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
             v->field_0x58 = lbl_eu_806665E4;
         } else {
             f32 rate;
-            if (*(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58() != lbl_eu_806665C0) {
+            if (*(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale() != lbl_eu_806665C0) {
                 cf::CCtrlMoveEneSub* s = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-                f32 denom = *(float*)s->CfObject_UnkVirtualFunc58();
-                rate = *((cf::CCtrlMoveEneSub*)s)->CfObjectMove_UnkVirtualFunc5() / denom;
+                f32 denom = *(float*)s->CfObject_getMoveRateScale();
+                rate = *((cf::CCtrlMoveEneSub*)s)->CfObjectMove_getMovementRate() / denom;
             }
             v->field_0x58 = rate;
         }
@@ -1983,10 +1983,10 @@ void func_8008F9EC(cf::CCtrlMoveEne* self) {
             // Cosine is evaluated first into a temp (live across the sine
             // call), then the direction vector is filled in x, y, z order.
             f32 cz = CosFIdx__Q24nw4r4mathFf(
-                lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_UnkVirtualFunc31());
+                lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle());
             ml::CVec3 dir;
             dir.x = SinFIdx__Q24nw4r4mathFf(
-                lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_UnkVirtualFunc31());
+                lbl_eu_806665CC * ((cf::CfObject*)sub)->CfObject_getMoveHeadAngle());
             dir.y = lbl_eu_806665C0;
             dir.z = cz;
             func_80089694(self, &dir, v->field_0x58);
@@ -2149,12 +2149,12 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                 *(u32*)&view->mVelocity.y = *(u32*)&d.y;
                 *(u32*)&view->mVelocity.z = *(u32*)&d.z;
                 f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
-                reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc29(lbl_eu_80666638 * ang);
+                reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     func_800BE12C(sub, 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc3(4);
+                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
             } else if ((view->field_0x70 & 0x100u) != 0) {
@@ -2180,12 +2180,12 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                 *(u32*)&view->mVelocity.y = *(u32*)&d.y;
                 *(u32*)&view->mVelocity.z = *(u32*)&d.z;
                 f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
-                reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc29(lbl_eu_80666638 * ang);
+                reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub->field_C4 != 0 && sub->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     func_800BE12C(sub, 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc3(4);
+                    reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
             }
@@ -2208,12 +2208,12 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         }
         sub = (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
         f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
-        reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc29(lbl_eu_80666638 * ang);
+        reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
              0x10000u) == 0) {
             func_800BE12C(sub, 3, 0, -1, 1);
-            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc3(4);
+            reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_setStateBitFlag(4);
             view->field_0x17C |= 1;
         }
         *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2237,7 +2237,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
             }
         } else {
             if (sub->field_C4 != 0 &&
-                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc2(4) != 0) {
+                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_checkStateFlags(4) != 0) {
                 ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                     lbl_eu_806665C0;
                 r0 = 1;
@@ -2283,7 +2283,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         ml::CVec3 vel = view->mVelocity;
         func_80088974(self, &dir74, &view->mPosition, 0, 0);
         view->mVelocity = vel;
-        f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc31();
+        f32 h = reinterpret_cast<cf::CfObject*>(sub)->CfObject_getMoveHeadAngle();
         f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
         f32 sin = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
         f32 dot = dir74.x * sin + dir74.z * cos;
@@ -2363,7 +2363,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
                         stk.y -= lbl_eu_80666640;
                     }
                 }
-                reinterpret_cast<cf::CfObject*>(sub)->CfObject_UnkVirtualFunc19(&stk);
+                reinterpret_cast<cf::CfObject*>(sub)->CfObject_setMoveTargetVec(&stk);
             }
             return;
         }
@@ -2383,7 +2383,7 @@ void func_8008FE8C(cf::CCtrlMoveEne* self) {
         if ((entry5->field_0xC & 0x80u) != 0) {
             func_80089684(self);
             self->mMoveHook = lbl_eu_80527830.hook190;
-            view->field_0x4C = self->field_0x34->field_0x28->CfObject_UnkVirtualFunc31();
+            view->field_0x4C = self->field_0x34->field_0x28->CfObject_getMoveHeadAngle();
             self->field_0x180 |= 0x800;
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
@@ -2535,12 +2535,12 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
                     }
                 }
                 f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
-                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc29(lbl_eu_80666638 * ang);
+                reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
                 if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                      0x10000u) == 0) {
                     func_800BE12C(sub2, 3, 0, -1, 1);
-                    reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_UnkVirtualFunc3(4);
+                    reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                     view->field_0x17C |= 1;
                 }
                 *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2566,12 +2566,12 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
             cf::CFunc80090DB4Sub* sub2 =
                 (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
-            reinterpret_cast<cf::CfObject*>(sub2)->CfObject_UnkVirtualFunc29(lbl_eu_80666638 * ang);
+            reinterpret_cast<cf::CfObject*>(sub2)->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
             if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
                  0x10000u) == 0) {
                 func_800BE12C(sub2, 3, 0, -1, 1);
-                reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_UnkVirtualFunc3(4);
+                reinterpret_cast<cf::CObjectState*>(sub2)->CObjectState_setStateBitFlag(4);
                 view->field_0x17C |= 1;
             }
             *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
@@ -2597,7 +2597,7 @@ void func_80090DB4(cf::CCtrlMoveEne* self) {
             }
         } else {
             if (sub->field_C4 != 0 &&
-                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_UnkVirtualFunc2(4) != 0) {
+                reinterpret_cast<cf::CObjectState*>(sub)->CObjectState_checkStateFlags(4) != 0) {
                 ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                     lbl_eu_806665C0;
                 done = 1;
@@ -2710,7 +2710,7 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
                 nw4r::math::VEC3Sub(diff, *sub->CfObject_getPosVector(), *gp);
                 if (diff.x * diff.x + diff.z * diff.z <= th) {
                     cf::CFunc8009156CTarget* t =
-                        (cf::CFunc8009156CTarget*)gimmick->CfObject_UnkVirtualFunc48();
+                        (cf::CFunc8009156CTarget*)gimmick->CfObject_getCurrentTarget();
                     if (t != 0) {
                         int flag7 = (v->field_0x180 >> 7) & 1;
                         if (t->field_B8->field_28->field_C4 != 0) {
@@ -2807,7 +2807,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
             if (movesub->field_C4 != 0) {
                 func_8004B9D4(movesub, 1, 0, -1, 0);
             }
-        } else if (movesub->field_C4 != 0 && ((cf::CfObject*)movesub)->CObjectState_UnkVirtualFunc2(4) != 0) {
+        } else if (movesub->field_C4 != 0 && ((cf::CfObject*)movesub)->CObjectState_checkStateFlags(4) != 0) {
             data14->field_0x14 = lbl_eu_806665C0;
             blocked = 1;
         }
@@ -2826,7 +2826,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     int tgtActive = 0;
     {
         cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
-            reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_UnkVirtualFunc48());
+            reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getCurrentTarget());
         if (t != 0) tgtActive = (int)((t->field_200 >> 3) & 1);
     }
 
@@ -2878,7 +2878,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         s32 rem360 = sv - sv / 360 * 360;
         s32 rem100 = sv - sv / 100 * 100;
         f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) * lbl_eu_8066A210;
-        f32 head = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+        f32 head = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
                        reinterpret_cast<cf::CfObjectActor*>(player)) +
                    ang;
         f32 dist = lbl_eu_80666658 * (f32)((f64)rem100 - lbl_eu_80666620) *
@@ -2897,7 +2897,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
             if (cand == 0) continue;
             cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
-                reinterpret_cast<cf::CfObject*>(&cand->mSub)->CfObject_UnkVirtualFunc48());
+                reinterpret_cast<cf::CfObject*>(&cand->mSub)->CfObject_getCurrentTarget());
             if (t == 0) continue;
             s32 iv = (s32)t->field_E0;
             s32 irem360 = iv - iv / 360 * 360;
@@ -2932,7 +2932,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     // Common tail: rebuild the party info block around the player's current
     // position / heading, then refresh the height latch under the flag bits.
     ml::CVec3 pos = *reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
-    f32 head2 = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+    f32 head2 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
         reinterpret_cast<cf::CfObjectActor*>(player));
     cf::CFunc8008E760PartyInfo pi;
     func_80198710(&pi, &pos, head2, (int)esc, (int)seed, radius,
@@ -2982,9 +2982,9 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     // Face the player: heading-alignment check between the two objects; when
     // aligned, poke the move-sub target through its event helpers.
     self->mVel18W.x = *(u32*)&lbl_eu_806665C0;
-    f32 eh = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+    f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
         reinterpret_cast<cf::CfObjectActor*>(ene));
-    f32 ph = CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(
+    f32 ph = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
         reinterpret_cast<cf::CfObjectActor*>(player));
     f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
                     CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
@@ -2998,7 +2998,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         (((cf::CFunc8008EF04Sub98*)movesub->field_98)->field_7A4 & 0x8000) ==
             0) {
         func_800BE12C(data->field_0x28, 3, 0, -1, 1);
-        ((cf::CfObject*)movesub)->CObjectState_UnkVirtualFunc3(4);
+        ((cf::CfObject*)movesub)->CObjectState_setStateBitFlag(4);
         self->field_0x17C |= 1;
     }
     f32 pvz = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
@@ -3009,7 +3009,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     data14->field_0x14 = lbl_eu_806665C0;
 }
 
-void* CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
+void* CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
 
 void func_80092CB0(void* a, void* b, void* c) {
     *(unsigned long*)b = 0;
@@ -3021,12 +3021,12 @@ void func_80092CB0(void* a, void* b, void* c) {
 // receives 0.
 void func_80092CC4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0;
-    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
     if (scale != lbl_eu_806665C0) {
         cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
     } else {
         result = lbl_eu_806665C0;
     }
@@ -3035,12 +3035,12 @@ void func_80092CC4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
 
 void func_80092D78(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x12C;
-    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
     if (scale != lbl_eu_806665C0) {
         cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
     } else {
         result = lbl_eu_806665C0;
     }
@@ -3049,12 +3049,12 @@ void func_80092D78(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
 
 void func_80092E2C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x258;
-    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
     if (scale != lbl_eu_806665C0) {
         cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
     } else {
         result = lbl_eu_806665C0;
     }
@@ -3063,12 +3063,12 @@ void func_80092E2C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
 
 void func_80092EE0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     *out1 = 0x384;
-    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+    f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
     f32 result;
     if (scale != lbl_eu_806665C0) {
         cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-        f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+        f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+        result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
     } else {
         result = lbl_eu_806665C0;
     }
@@ -3103,12 +3103,12 @@ void func_80092FE4(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         *out2 = lbl_eu_806665E4;
     } else {
-        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 result;
         if (scale != lbl_eu_806665C0) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3122,12 +3122,12 @@ void func_800930C0(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x46) {
         *out2 = lbl_eu_806665E4;
     } else {
-        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 result;
         if (scale != lbl_eu_806665C0) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3141,12 +3141,12 @@ void func_8009319C(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x3C) {
         *out2 = lbl_eu_806665E4;
     } else {
-        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 result;
         if (scale != lbl_eu_806665C0) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3160,12 +3160,12 @@ void func_80093278(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x32) {
         *out2 = lbl_eu_806665E4;
     } else {
-        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 scale = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 result;
         if (scale != lbl_eu_806665C0) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3181,12 +3181,12 @@ void func_80093278(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
 void func_80093354(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         f32 result;
-        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 zero = lbl_eu_806665C0;
         if (div != zero) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3195,12 +3195,12 @@ void func_80093354(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
         self->field_0x17C |= 0x80;
     } else {
         f32 result;
-        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 zero = lbl_eu_806665C0;
         if (div != zero) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3217,12 +3217,12 @@ void func_800934AC(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
     int r = ml::math::mtRand(100);
     if (r >= 0x5A) {
         f32 result;
-        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+        f32 div = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
         f32 zero = lbl_eu_806665C0;
         if (div != zero) {
             cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-            f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+            f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+            result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
         } else {
             result = lbl_eu_806665C0;
         }
@@ -3234,12 +3234,12 @@ void func_800934AC(cf::CCtrlMoveEne* self, u32* out1, f32* out2) {
             *out2 = lbl_eu_806665E4;
         } else {
             f32 result;
-            f32 div = *(float*)self->field_0x34->field_0x28->CfObject_UnkVirtualFunc58();
+            f32 div = *(float*)self->field_0x34->field_0x28->CfObject_getMoveRateScale();
             f32 zero = lbl_eu_806665C0;
             if (div != zero) {
                 cf::CCtrlMoveEneSub* sub = (cf::CCtrlMoveEneSub*)self->field_0x34->field_0x28;
-                f32 denom = *(float*)sub->CfObject_UnkVirtualFunc58();
-                result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_UnkVirtualFunc5() / denom;
+                f32 denom = *(float*)sub->CfObject_getMoveRateScale();
+                result = *((cf::CCtrlMoveEneSub*)sub)->CfObjectMove_getMovementRate() / denom;
             } else {
                 result = lbl_eu_806665C0;
             }
@@ -3256,8 +3256,8 @@ void func_80093618(cf::CNpcBaseDataView* self, f32 f) {
     self->field_0xC = f;
     cf::CfObject* sub = self->field_0x28;
     if (sub) {
-        sub->CfObject_UnkVirtualFunc29(f);
-        if (self->field_0x28->CfObject_UnkVirtualFunc9() != 0) {
+        sub->CfObject_setMoveHeadAngle(f);
+        if (self->field_0x28->CfObject_isMoveActiveNow() != 0) {
             func_800BE12C(self->field_0x28, 3, 0, -1, 1);
         }
     }

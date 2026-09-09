@@ -542,7 +542,7 @@ namespace cf {
         virtual const char* CActorParam_UnkVirtualFunc1();   //0x98
         virtual void* CActorParam_UnkVirtualFunc2();   //0x9C
         virtual void CActorParam_UnkVirtualFunc3();   //0xA0
-        virtual void CActorParam_UnkVirtualFunc4(void* arts);   //0xA4
+        virtual void CActorParam_resetArtsStatus(void* arts);   //0xA4
         virtual void CActorParam_UnkVirtualFunc5(int flag);   //0xA8
         virtual void CActorParam_UnkVirtualFunc6(int val);   //0xAC
         virtual void CActorParam_UnkVirtualFunc7();   //0xB0
@@ -585,7 +585,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc44();  //0x144
         virtual void CActorParam_UnkVirtualFunc45();  //0x148
         virtual void CActorParam_UnkVirtualFunc46();  //0x14C
-        virtual void CActorParam_UnkVirtualFunc47(float val);  //0x150
+        virtual void CActorParam_setTensionPoints(float val);  //0x150
         virtual void CActorParam_addArtsGauge(float delta);  //0x154
         virtual float CActorParam_UnkVirtualFunc49();  //0x158
         virtual float CActorParam_UnkVirtualFunc50();  //0x15C
@@ -634,7 +634,7 @@ namespace cf {
         virtual u32 CActorParam_UnkVirtualFunc91();  //0x200
         virtual void CActorParam_UnkVirtualFunc92(const void* src);  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
-        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void* CActorParam_getArtsDataBlock();  //0x20C
         virtual void CActorParam_UnkVirtualFunc95();  //0x210
         virtual void CActorParam_UnkVirtualFunc96();  //0x214
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
@@ -693,10 +693,10 @@ namespace cf {
         virtual void* CActorParam_UnkVirtualFunc150(); //0x2EC
         virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
         virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
-        virtual void CActorParam_UnkVirtualFunc153(int arg); //0x2F8
-        virtual void CActorParam_UnkVirtualFunc154(int arg); //0x2FC
+        virtual void CActorParam_accumulateTension(int arg); //0x2F8
+        virtual void CActorParam_raiseTensionValue(int arg); //0x2FC
         virtual void CActorParam_UnkVirtualFunc155(); //0x300
-        virtual void CActorParam_UnkVirtualFunc156(int arg); //0x304
+        virtual void CActorParam_resetTensionState(int arg); //0x304
         virtual int CActorParam_getStatusCount(); //0x308
         virtual void CActorParam_UnkVirtualFunc158(); //0x30C
         virtual void CActorParam_UnkVirtualFunc159(); //0x310
@@ -704,8 +704,8 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc161(); //0x318
         virtual void CActorParam_UnkVirtualFunc162(); //0x31C
         virtual void* CActorParam_UnkVirtualFunc163(); //0x320
-        virtual void* CActorParam_UnkVirtualFunc164(); //0x324
-        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void* CActorParam_getActorModeFlags(); //0x324
+        virtual void* CActorParam_getBattleHitFlags(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167(); //0x330
         virtual void CActorParam_UnkVirtualFunc168(); //0x334

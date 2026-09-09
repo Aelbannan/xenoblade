@@ -17,14 +17,14 @@ class CScnItemModel;
 class __declspec(novtable) CREvtModel : public cf::CREvtObj {
 public:
     CREvtModel(void* pData, void* pArg);
-    /* vtable 0x00 */ virtual ~CREvtModel();
-    /* vtable 0x04 */ virtual void vfunc_04();           // called from func_801726DC
-    /* vtable 0x08 */ virtual void vfunc_08();
-    /* vtable 0x0C */ virtual void vfunc_0C();
-    /* vtable 0x10 */ virtual void vfunc_10();           // cleanup virtual
-    /* vtable 0x14 */ virtual void vfunc_14();
-    /* vtable 0x18 */ virtual bool isBusy(); // vfunc_18
-    /* vtable 0x1C */ virtual void vfunc_1C();
+    /* vtable 0x00 */ virtual ~CREvtModel(); // slot +0x00: __ct__80172668 (overrides __dt__Q22cf8CREvtObjFv)
+    /* vtable 0x04 */ virtual void vfunc_04();           // slot +0x04: func_801728F8 (overrides base pure slot)
+    /* vtable 0x08 */ virtual void vfunc_08();           // slot +0x08: func_8017298C (overrides func_80169A34)
+    /* vtable 0x0C */ virtual void vfunc_0C();           // slot +0x0C: func_8016A354, cross-TU (overrides func_80185758)
+    /* vtable 0x10 */ virtual void vfunc_10();           // slot +0x10: func_801731A0, tests (mFlags>>4)&1 (overrides func_80169048)
+    /* vtable 0x14 */ virtual void vfunc_14();           // slot +0x14: func_80173194, tests mFlags&1 (overrides func_801809A8)
+    /* vtable 0x18 */ virtual bool isBusy(); // slot +0x18: func_801696C4, same as base = inherited, cross-TU
+    /* vtable 0x1C */ virtual void vfunc_1C();           // slot +0x1C: func_801727DC (overrides func_80185700)
     /* vtable 0x20 */ virtual int getGuestState(); // vfunc_20
     /* vtable 0x24 */ virtual void func_80169F24();
     /* vtable 0x28 */ virtual void setVisible(int visible); // vfunc_28

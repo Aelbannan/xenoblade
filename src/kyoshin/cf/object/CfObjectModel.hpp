@@ -51,6 +51,22 @@ namespace cf {
         u8 _pad1480[0x14AC - 0x1480]; // 0x1480-0x14AB
         u32 field_14AC;               // 0x14AC (read by CfObject_UnkVirtualFunc54)
     };
+    // Tiny iface for the +0xB0 resource-impl word: a foreign sub-object
+    // owned by CfObjectModel (per-subclass impls live here: CfResTboxImpl /
+    // CfResObjImpl / the CfSubB0 family, cf. CfObjectTbox / CfObjectObj /
+    // CfObjectMove). Retail dtor evidence (us-800BB2D4: lwz r12,0x10(r3) /
+    // li r4,1 / lwz r12,0x08(r12) / bctrl): the vtable pointer lives at
+    // +0x10, not +0x00, so the iface inherits a 0x10-byte prefix base and
+    // table +0x08 is the deleting destructor (called with flag 1).
+    // novtable: never constructed, only reinterpret_cast, so MWCC emits no
+    // vtable data and the destroy() call compiles to a genuine
+    // load-vptr/load-slot/bctrl dispatch.
+    struct CfObjectModelSubB0Prefix {
+        u8 _pad00[0x10];  // 0x00-0x0F
+    };
+    struct __declspec(novtable) CfObjectModelSubB0 : CfObjectModelSubB0Prefix {
+        virtual void destroy(s32 flag);  // table +0x08: deleting destructor
+    };
     // vtable proxy for calling a cf-chain vtable slot +0x44 with an explicit
     // int argument (retail CfObject_UnkVirtualFunc55 forwards its flag
     // through; the base CObjectParam header declares the slot without args).
@@ -111,14 +127,14 @@ namespace cf {
     CfObjectModel();
     void CfObject_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc6();
-    void CfObject_UnkVirtualFunc8();
+    void CfObject_notifyEventDone();
     virtual u32 CfObject_UnkVirtualFunc63() override;
-    void CfObject_UnkVirtualFunc19();
+    void CfObject_setMoveTargetVec();
     CfObjectModel* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
     void CfObject_UnkVirtualFunc20();
     ml::CVec3* CfObject_getPosVector();
     void CfObject_UnkVirtualFunc27(void* src);
-    void CfObject_UnkVirtualFunc29();
+    void CfObject_setMoveHeadAngle();
     void CfObject_UnkVirtualFunc32();
     float CfObject_UnkVirtualFunc34();
     void CfObject_UnkVirtualFunc33(float amount);
@@ -136,7 +152,7 @@ namespace cf {
     int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr) override;
     void CfObject_UnkVirtualFunc24();
     void CfObject_UnkVirtualFunc28();
-    float CfObject_UnkVirtualFunc31();
+    float CfObject_getMoveHeadAngle();
     void CfObject_UnkVirtualFunc35();
     float CfObject_UnkVirtualFunc36();
     void CfObject_UnkVirtualFunc72();

@@ -7,7 +7,7 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
-extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_UnkVirtualFunc5 threshold
+extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_takeDamageValue threshold
 
 extern const float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
 
@@ -106,8 +106,8 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc2();  //0x5A4
         virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
         virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
-        virtual void CfObjectActor_UnkVirtualFunc5(float a, u32 b);  //0x5B0
-        virtual float CfObjectActor_UnkVirtualFunc6();  //0x5B4
+        virtual void CfObjectActor_takeDamageValue(float a, u32 b);  //0x5B0
+        virtual float CfObjectActor_readFacingAngle();  //0x5B4
         virtual float CfObjectActor_UnkVirtualFunc7();  //0x5B8 (retail returns a float in f1)
         virtual float CfObjectActor_UnkVirtualFunc8();  //0x5BC (retail returns a float in f1)
         virtual void* CfObjectActor_sharesMoveFlags(void* arg);  //0x5C0
@@ -132,7 +132,7 @@ namespace cf {
     void CActorParam_addHp(float val);
     void CActorParam_UnkVirtualFunc54(int delta);
     void CActorParam_UnkVirtualFunc60(int delta);
-    void CActorParam_UnkVirtualFunc4(void* arts);
+    void CActorParam_resetArtsStatus(void* arts);
     void CActorParam_UnkVirtualFunc21();
     void CActorParam_UnkVirtualFunc23();
     void destroyActorParam();

@@ -20,8 +20,8 @@ class CScn;  // monolib scene (CfGameManager owns the shared lbl_eu_80663E14 glo
 // Base +0x9C implementation (defined in CfObjectModel.cpp as a forced-name
 // free function: the retail symbol is Fv but the body reads r4 as a position
 // vector). Plain global so the call-site reloc references the retail name
-// (CfObjectMove::CfObject_UnkVirtualFunc19 forwards its hidden r4 through).
-void CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec);
+// (CfObjectMove::CfObject_setMoveTargetVec forwards its hidden r4 through).
+void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec);
 
 // Cross-TU dispatch targets for the CfObjectMove mTarget6C0 wrappers (defined
 // in kyoshin/cf/CtrlNpc.cpp, retail func_800948F8 family). extern "C" keeps
@@ -138,7 +138,7 @@ public:
 extern void* lbl_eu_806640A8;   // spFldMapListFileData
 extern u32 lbl_eu_80664184;     // cached fld-map row index
 // One-arg call form of the CActParamAnim translation helper (defined 2-arg
-// in kyoshin/action/CActParamAnim.cpp). Retail CfObject_UnkVirtualFunc19
+// in kyoshin/action/CActParamAnim.cpp). Retail CfObject_setMoveTargetVec
 // calls it with only r3 set. C linkage keeps the retail unmangled name.
 extern "C" void func_8004B354(void* self);
 // Second heap handle query (retail unmangled name, same family as
@@ -354,7 +354,7 @@ extern "C" void CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv(cf::CfObjectMo
 // plain global). extern "C" keeps the call-site reloc at the unmangled
 // retail name (a plain C++ declaration inside namespace cf makes MWCC
 // append a __2cfF<params> mangling at the call site).
-extern "C" void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
+extern "C" void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 // Base +0xA0 forced-name implementation (defined in CfObjectModel.cpp as a
 // plain global taking the hidden float arg).
 extern "C" void CfObject_UnkVirtualFunc70__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value);
@@ -376,7 +376,7 @@ namespace cf {
         virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
         virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
         virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
-        virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
+        virtual void CfObjectMove_getMovementRate();  //0x1D8
         virtual void CfObjectMove_UnkVirtualFunc6(u32 arg);  //0x1DC
         virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
         virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
@@ -444,13 +444,13 @@ namespace cf {
     void CfObject_UnkVirtualFunc46(void* arg);
     void CfObject_UnkVirtualFunc47();
     void CfObject_UnkVirtualFunc49();
-    void CfObject_UnkVirtualFunc64(int flag);
+    void CfObject_setMoveBusyState(int flag);
     void CfObject_UnkVirtualFunc65();
-    void CfObject_UnkVirtualFunc19();
+    void CfObject_setMoveTargetVec();
     CfObjectMove* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
     void CfObject_UnkVirtualFunc25();
     void CfObject_UnkVirtualFunc26(u32 value, float amount);
-    ml::CVec3* CfObject_UnkVirtualFunc23();
+    ml::CVec3* CfObject_getPosVector();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc30(float value);
     void CfObject_UnkVirtualFunc32();
@@ -458,12 +458,12 @@ namespace cf {
     int CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57(float value);
     void* CObjectParam_UnkVirtualFunc2();
-    void* CfObject_UnkVirtualFunc14(float value);
-    float CfObject_UnkVirtualFunc15();
+    void* CfObject_pushRefreshValue(float value);
+    float CfObject_getMoveSpeedRate();
     void* CfObject_UnkVirtualFunc16(float value);
     void CfObject_UnkVirtualFunc17();
     void CfObjectModel_UnkVirtualFunc18();
-    bool CfObject_UnkVirtualFunc9();
+    bool CfObject_isMoveActiveNow();
     void CfObject_UnkVirtualFunc10();
     void CfObject_UnkVirtualFunc61(u32 a, u32 b);
     void CfObject_UnkVirtualFunc62();
@@ -482,7 +482,7 @@ namespace cf {
     int CfObject_UnkVirtualFunc50();
     int CfObject_UnkVirtualFunc51();
     float CfObject_UnkVirtualFunc60();
-    void CfObject_UnkVirtualFunc29(float value);
+    void CfObject_setMoveHeadAngle(float value);
     void setMoveSpeed(float value);
     void resetMoveSpeed();
     void updatePos();
@@ -511,10 +511,10 @@ namespace cf {
     // CfObject_UnkVirtualFunc4 / 14 / 57 and read by 15 / 17).
     struct CfObjectMoveTargetC4 {
         u8 _pad000[0x388];      // 0x00-0x387
-        float field_388;        // 0x388 (CfObject_UnkVirtualFunc14 write / 15 read)
+        float field_388;        // 0x388 (CfObject_pushRefreshValue write / 15 read)
         float field_38C;        // 0x38C (CfObject_UnkVirtualFunc17 read / 16 write)
         u8 _pad390[0x3A8 - 0x390];  // 0x390-0x3A7
-        float field_3A8;        // 0x3A8 (CfObject_UnkVirtualFunc23 returns &field_3A8)
+        float field_3A8;        // 0x3A8 (CfObject_getPosVector returns &field_3A8)
         float field_3AC;        // 0x3AC (func_800BCD04 position copy)
         float field_3B0;        // 0x3B0 (func_800BCD04 position copy)
         u8 _pad3B4[0x430 - 0x3B4];  // 0x3B4-0x42F
@@ -641,7 +641,7 @@ namespace cf {
     // vtable view of the CfObject-family sub-object at CfObjectModel+0x38
     // (mSubObj38): slots 0x8 (release-with-delete-flag), 0x2C (attach parent),
     // 0xA0 (activate) and 0xAC (release) are called by
-    // CfObject_UnkVirtualFunc6 / CfObject_UnkVirtualFunc8. Dummy slots pin
+    // CfObject_UnkVirtualFunc6 / CfObject_notifyEventDone. Dummy slots pin
     // the offsets (MWCC puts the Nth declared virtual at (N+1)*4).
     // vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning
     // query): retail CfObjectMove_UnkVirtualFunc21 calls it, tests the

@@ -10,7 +10,7 @@
 
 namespace cf {
 
-// Target-state object behind CCtrlMoveEne::mTargetC4: CfObject_UnkVirtualFunc18
+// Target-state object behind CCtrlMoveEne::mTargetC4: CfObject_checkTargetState
 // reads bit 23 of the +0x270 state word.
 struct CfObjectMoveC4Target {
     u8 _pad[0x270];         // 0x00-0x26F
@@ -226,7 +226,7 @@ struct CFunc8008EF04Sub98 {
 // Movement sub-object behind CNpcBaseDataView::field_0x28 (the same object
 // CtrlMoveNpc.cpp calls through CfObject*). Its retail vtable carries the
 // CfObject chain plus the CfObjectMove leg: this TU provides the +0x1D8 slot
-// body (CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv, returning the
+// body (CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv, returning the
 // +0x6E8 float), and call sites dereference the +0x138 / +0x1D8 results as
 // floats. object/CfObjectMove.hpp cannot be included here (its 4-arg
 // func_8004B9D4 clashes with this TU's retail 5-arg form, and its 5-arg
@@ -240,7 +240,7 @@ public:
     virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
     virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
     virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
-    virtual float* CfObjectMove_UnkVirtualFunc5();  //0x1D8 (movement-rate query)
+    virtual float* CfObjectMove_getMovementRate();  //0x1D8 (movement-rate query)
 };
 
 // View of the movement-data object func_80093618 operates on (same layout as

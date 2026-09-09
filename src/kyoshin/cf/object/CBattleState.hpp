@@ -60,7 +60,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
         virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_clearStatusId(u32 id);  //0x20 (retail fake-Fv ABI passes id in r4)
-        virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
+        virtual void CBattleState_applyEventEntry(CBattleStateEntry* entry);  //0x24
         virtual void CBattleState_UnkVirtualFunc9(int index);  //0x28
         virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
         virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
@@ -70,10 +70,10 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
         virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
-        virtual void* CBattleState_UnkVirtualFunc18(); //0x4C
+        virtual void* CBattleState_getLinkedActorId(); //0x4C
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void* CBattleState_UnkVirtualFunc20(int index); //0x54
-        virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc21(int index); //0x58
+        virtual cf::CBattleStateEntry* CBattleState_fetchStatusEntry(int index); //0x58
         virtual cf::CBattleStateEntry* CBattleState_getEventEntry(int index); //0x5C
         virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc23(int index); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64

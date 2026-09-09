@@ -83,7 +83,7 @@ extern "C" void func_800B88E0(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
 // 0x2BC is CActorParam::CActorParam_isBattleLocked; call sites use the
 // real virtuals directly.)
 // (Former CBmBS27Fn manual-slot typedef removed: slot 0x70 on the
-// +0x3ED4 holder is CfObject::CfObject_UnkVirtualFunc8; call sites use the
+// +0x3ED4 holder is CfObject::CfObject_notifyEventDone; call sites use the
 // real virtual directly.)
 
 extern "C" {
@@ -1421,7 +1421,7 @@ extern "C" s32 func_800EC918(
             if (func_80145DBC(evt->eventType)) {
                 void* entryCE = func_801491F4((&acc->subObject), 0xCE);
                 if (entryCE != nullptr && artsData != nullptr) {
-                    s32 artsVal = ((cf::CObjectState*)artsData)->CObjectState_UnkVirtualFunc2(0);
+                    s32 artsVal = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
                     s32 entryVal = *(s32*)((u8*)entryCE + 0x10);
                     if (entryVal >= artsVal) {
                         tgt->field_74 |= 0x80002000;
@@ -1571,7 +1571,7 @@ extern "C" s32 func_800EC918(
         // acc->3ED4 holder slot 0x70 (CfObject UVF8; retail passes the
         // +0x3F10 effect-target in r4 - hidden arg, base decl is deficient
         // and widening it breaks CfObjectModel/Eff/Pc no-arg callers).
-        ((cf::CfObject*)acc->field_3ED4)->CfObject_UnkVirtualFunc8();
+        ((cf::CfObject*)acc->field_3ED4)->CfObject_notifyEventDone();
 
         // If the acc's sub-identifier object == player 0 -> HUD refresh
         cf::CfObjectMove* subIdent = getObjectMove(acc);
@@ -1595,7 +1595,7 @@ extern "C" s32 func_800EC918(
             );
 
             // pc->3ED4 holder slot 0x70 (CfObject UVF8; r4 hidden arg, see above).
-            ((cf::CfObject*)(*(void**)((u8*)pc + 0x3ED4)))->CfObject_UnkVirtualFunc8();
+            ((cf::CfObject*)(*(void**)((u8*)pc + 0x3ED4)))->CfObject_notifyEventDone();
 
             cf::CfObjectMove* pcSubIdent = getObjectMove(pc);
             if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
@@ -1733,7 +1733,7 @@ extern "C" s32 func_800EC918(
         s32 flag = 0;                           // li r16, 0
 
         // acc->vf324()[0] == 7 (u16)
-        if (*(u16*)((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc164() == 7) flag = 1;  // lhz + cmplwi 7
+        if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getActorModeFlags() == 7) flag = 1;  // lhz + cmplwi 7
 
         // acc->vf108() - pc->vf108() > 10
         if ((((cf::CActorParam*)acc)->CActorParam_getActorLevel() - ((cf::CActorParam*)pc)->CActorParam_getActorLevel()) > 10) flag = 1;  // subf + cmpwi 0xa
@@ -1764,7 +1764,7 @@ extern "C" s32 func_800EC918(
                 // pcStat->+0x50 artsData: f28 += 2.5 * (f32)artsLevel
                 void* pcArts = *(void**)((u8*)pcStat + 0x50);   // lwz r3, 0x50(r15)
                 if (pcArts != nullptr) {
-                    f28 += k2_5f * (f32)((cf::CObjectState*)pcArts)->CObjectState_UnkVirtualFunc2(0);   // fmadds f28, f0(2.5), f1, f28
+                    f28 += k2_5f * (f32)((cf::CObjectState*)pcArts)->CObjectState_checkStateFlags(0);   // fmadds f28, f0(2.5), f1, f28
                 }
                 s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
@@ -1842,7 +1842,7 @@ extern "C" s32 func_800EC918(
             if (!(evt->field_10 & 0x4)) {                // rlwinm. 0,0,29,29; bne .L_800EE950
                 // Menu gate: vf324()[0] & 0x8, status 0x3A, status 0x32
                 s32 menuFlag = 0;                       // li r15, 0
-                if (*(u16*)((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc164() & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
+                if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getActorModeFlags() & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
                 if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
                 if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r15,0; beq .L_800EE950
@@ -1889,7 +1889,7 @@ extern "C" s32 func_800EC918(
             // .L_800EEAE4 -- pc == nullptr branch
             if (!(evt->field_10 & 0x4)) {                // rlwinm. 0,0,29,29; bne .L_800EEB68
                 s32 menuFlag = 0;                       // li r14, 0
-                if (*(u16*)((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc164() & 0x8) menuFlag = 1;
+                if (*(u16*)((cf::CActorParam*)acc)->CActorParam_getActorModeFlags() & 0x8) menuFlag = 1;
                 if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
                 if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r14,0; beq .L_800EEB68
@@ -2213,8 +2213,8 @@ extern "C" s32 func_800EC918(
 
     case 51: {
         if (artsData != nullptr) {                    // cmpwi r16,0; beq .L_800EF880
-            // (chunk 0) s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_UnkVirtualFunc2(0);
-            s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_UnkVirtualFunc2(0);
+            // (chunk 0) s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
+            s32 artsLevel = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);
 
             // 0x800EF860..0x800EF87C (chunk 1):
             //   lbz r4, 0x6f(r16); subi r3, r3, 1; lha r0, 0x4a(r16)
@@ -2235,7 +2235,7 @@ extern "C" s32 func_800EC918(
     case 206: {
         if (evt->field_10 != 0) break;               // bne .L_800F4000
         if (artsData != nullptr) {                  // beq .L_800F4000
-            evt->field_10 = ((cf::CObjectState*)artsData)->CObjectState_UnkVirtualFunc2(0);          // stw r3, 0x10(r25)
+            evt->field_10 = ((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0);          // stw r3, 0x10(r25)
         }
         break;                                      // b .L_800F4000
     }
@@ -2243,7 +2243,7 @@ extern "C" s32 func_800EC918(
     case 54: {
         if (artsData != nullptr) {                  // beq .L_800F4000
             // subi r3, r3, 1; lha r0, 0x14(r25); extsh; add; sth
-            evt->field_14 = (s16)((s32)evt->field_14 + (((cf::CObjectState*)artsData)->CObjectState_UnkVirtualFunc2(0) - 1));
+            evt->field_14 = (s16)((s32)evt->field_14 + (((cf::CObjectState*)artsData)->CObjectState_checkStateFlags(0) - 1));
         }
         break;                                      // b .L_800F4000
     }
@@ -2371,9 +2371,9 @@ extern "C" s32 func_800EC918(
                           (void*)(uintptr_t)r14);
         }
 
-        // .L_800EFE98: ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5((f32)(s32)r17, tgt->field_74)
+        // .L_800EFE98: ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue((f32)(s32)r17, tgt->field_74)
         {
-            ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5((f32)(s32)r17, tgt->field_74);  // lwz r4, 0x74(r26)
+            ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue((f32)(s32)r17, tgt->field_74);  // lwz r4, 0x74(r26)
         }
         break;                                      // b .L_800F4000
     }
@@ -2406,7 +2406,7 @@ extern "C" s32 func_800EC918(
             // prevEventType classifier 0 AND (field_08 & 0x7000) == 0
             if (func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0 &&
                 (*(u32*)((u8*)evt2 + 0x08) & 0x7000) == 0) {   // rlwinm 17-19
-                ((cf::CBattleState*)(&acc->subObject))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)evt2);   // slot 0x24
+                ((cf::CBattleState*)(&acc->subObject))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)evt2);   // slot 0x24
             }
         }
 
@@ -2424,12 +2424,12 @@ extern "C" s32 func_800EC918(
             // Start at a random slot and wrap through all 32 signed indices.
             s32 start = rand() % 32;
             for (s32 i = 0; i < 0x20; i++) {        // cmpwi r14,0x20; blt
-                void* evt2 = ((cf::CBattleState*)(&acc->subObject))->CBattleState_UnkVirtualFunc21((start + i) % 32);
+                void* evt2 = ((cf::CBattleState*)(&acc->subObject))->CBattleState_fetchStatusEntry((start + i) % 32);
                 if (*(u16*)((u8*)evt2 + 0x0C) != 0 &&
                     (*(u16*)((u8*)evt2 + 0x2E) == 0 ||
                      func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0) &&
                     (*(u32*)((u8*)evt2 + 0x08) & 0x7000) == 0) {
-                    ((cf::CBattleState*)(&acc->subObject))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)evt2);   // slot 0x24
+                    ((cf::CBattleState*)(&acc->subObject))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)evt2);   // slot 0x24
                     if (evt->field_14 != 0) {        // lha 0x14; beq tail
                         // ((cf::CActorParam*)pc)->CActorParam_addArtsGauge((f32)(s32)field_14 * (vf15C(pc)/100))
                         f32 f = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc50() / lbl_eu_80666E00;
@@ -2440,7 +2440,7 @@ extern "C" s32 func_800EC918(
             }
         } else if (f10 == 0) {                     // cmpwi r4,0; bne .L_800F0274
             for (u32 i = 0; i < 0x20; i++) {
-                void* evt2 = ((cf::CBattleState*)(&acc->subObject))->CBattleState_UnkVirtualFunc21(i);
+                void* evt2 = ((cf::CBattleState*)(&acc->subObject))->CBattleState_fetchStatusEntry(i);
                 if (*(u16*)((u8*)evt2 + 0x0C) != 0 &&
                     (*(u16*)((u8*)evt2 + 0x2E) == 0 ||
                      func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0) &&
@@ -2449,7 +2449,7 @@ extern "C" s32 func_800EC918(
                         f32 f = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc50() / lbl_eu_80666E00;
                         ((cf::CActorParam*)pc)->CActorParam_addArtsGauge((f32)(s32)evt->field_14 * f);
                     }
-                    ((cf::CBattleState*)(&acc->subObject))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)evt2);   // slot 0x24
+                    ((cf::CBattleState*)(&acc->subObject))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)evt2);   // slot 0x24
                 }
             }
         } else {
@@ -2499,7 +2499,7 @@ extern "C" s32 func_800EC918(
                 }
                 // .L_800F04B0: 0x68 bonus only when acc->3E9C ecVf4C() != pc->3F10
                 if (func_80260264(((cf::CActorParam*)pc)->CActorParam_getStatusTable(), 0x68, &sv)) {
-                    if (((cf::CBattleState*)((u8*)acc + 0x3E9C))->CBattleState_UnkVirtualFunc18() != *(void**)((u8*)pc + 0x3F10)) {
+                    if (((cf::CBattleState*)((u8*)acc + 0x3E9C))->CBattleState_getLinkedActorId() != *(void**)((u8*)pc + 0x3F10)) {
                         f28 += (f32)(s32)sv / lbl_eu_80666E00;
                     }
                 }
@@ -2537,8 +2537,8 @@ extern "C" s32 func_800EC918(
             ((cf::CfObjectActor*)acc)->CActorParam_addHate(r14, lbl_eu_80666DDC, lbl_eu_80666DDC, (f32)(s32)r15);
         }
 
-        // .L_800F0678: ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc47(0.0f)
-        ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc47(lbl_eu_80666DDC);
+        // .L_800F0678: ((cf::CActorParam*)pc)->CActorParam_setTensionPoints(0.0f)
+        ((cf::CActorParam*)pc)->CActorParam_setTensionPoints(lbl_eu_80666DDC);
         break;                                      // b .L_800F4000
     }
 
@@ -2572,8 +2572,8 @@ extern "C" s32 func_800EC918(
                 // .L_800F079C
                 if (pc != acc) {               // beq .L_800F07E4
                     if (evt->field_30 & 0x20000) {   // rlwinm 0,14,14; beq .L_800F084C
-                        // ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5(-vf12C(acc), 0x90000000)
-                        ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5(-((cf::CActorParam*)acc)->CActorParam_getDamageScale(), 0x90000000);
+                        // ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue(-vf12C(acc), 0x90000000)
+                        ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue(-((cf::CActorParam*)acc)->CActorParam_getDamageScale(), 0x90000000);
                     }
                 } else {
                     ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc33(lbl_eu_80666DDC);
@@ -2584,8 +2584,8 @@ extern "C" s32 func_800EC918(
             if (mtRand__Q22ml4mathFi(100) >= evt->field_10) {
                 return 0;                           // li r3,0; b .L_800F41D4
             }
-            // .L_800F081C: ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5(-vf128(acc), 0x90000000)
-            ((cf::CfObjectActor*)acc)->CfObjectActor_UnkVirtualFunc5(-((cf::CActorParam*)acc)->CActorParam_getHp(), 0x90000000);
+            // .L_800F081C: ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue(-vf128(acc), 0x90000000)
+            ((cf::CfObjectActor*)acc)->CfObjectActor_takeDamageValue(-((cf::CActorParam*)acc)->CActorParam_getHp(), 0x90000000);
         }
 
         // .L_800F084C: status 0x33 clear
@@ -2789,8 +2789,8 @@ extern "C" s32 func_800EC918(
         // acc->field_3ED4 holder slot 0x70 called TWICE (CfObject UVF8;
         // retail passes pc->field_3F10 in r4 - hidden arg, see above).
         // (retail has no null check here).
-        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_UnkVirtualFunc8();
-        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_UnkVirtualFunc8();
+        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_notifyEventDone();
+        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_notifyEventDone();
 
         // eventType 0xEE recursion with pc=0 and acc=pc (!).
         eventWorkspace.case238PlayerEvent.eventType = 0xEE;                    // li r0,0xEE
@@ -2914,7 +2914,7 @@ extern "C" s32 func_800EC918(
                 // skip actors whose subIdent->vf4C() == pc->field_3F10
                 {
                     u32 pcId = *(u32*)((u8*)pc + 0x3F10);
-                    if ((u32)((cf::CObjectParam*)((u8*)actorAcc + 0x3E9C))->CObjectParam_UnkVirtualFunc5() == pcId) continue; // beq .L_800F1700
+                    if ((u32)((cf::CObjectParam*)((u8*)actorAcc + 0x3E9C))->CObjectParam_getSelfObjectId() == pcId) continue; // beq .L_800F1700
 
                     // level = pc->vf108(); product = artsId * (level + 14)
                     s32 level = ((cf::CActorParam*)pc)->CActorParam_getActorLevel();
@@ -2963,7 +2963,7 @@ extern "C" s32 func_800EC918(
 
         // acc->field_3ED4 holder slot 0x70 called ONCE (CfObject UVF8;
         // retail passes pc->field_3F10 in r4 - hidden arg, see above).
-        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_UnkVirtualFunc8();
+        ((cf::CfObject*)(*(void**)((u8*)acc + 0x3ED4)))->CfObject_notifyEventDone();
 
         // eventType 0x60 recursion with pc=0, acc=pc.
         eventWorkspace.case244PlayerEvent.eventType = 0x60;                    // li r3,0x60
@@ -3112,7 +3112,7 @@ extern "C" s32 func_800EC918(
         // cap: if (pc->vf158() > 99.0f) pc->vf150(99.0f);
         {
             if (((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc49() > k99_0f) {
-                ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc47(k99_0f);
+                ((cf::CActorParam*)pc)->CActorParam_setTensionPoints(k99_0f);
             }
         }
 
@@ -3162,13 +3162,13 @@ extern "C" s32 func_800EC918(
 
         // acc->vf150(0.0f)
         {
-            ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc47(lbl_eu_80666DDC);
+            ((cf::CActorParam*)acc)->CActorParam_setTensionPoints(lbl_eu_80666DDC);
         }
 
         // Target the actor owning the accessory/unit id; if unavailable,
         // pick a random actor from the party list.
         {
-            void* obj = findObjectById((int)((cf::CObjectParam*)((u8*)acc + 0x3E9C))->CObjectParam_UnkVirtualFunc5());
+            void* obj = findObjectById((int)((cf::CObjectParam*)((u8*)acc + 0x3E9C))->CObjectParam_getSelfObjectId());
             void* acc = func_8016FE34(obj);
             if (acc != nullptr) {
                 if (((cf::CActorParam*)acc)->CActorParam_isBattleLocked() == 0) {
@@ -3258,7 +3258,7 @@ extern "C" s32 func_800EC918(
 
         // acc->vf150(0.0f)
         {
-            ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc47(lbl_eu_80666DDC);
+            ((cf::CActorParam*)acc)->CActorParam_setTensionPoints(lbl_eu_80666DDC);
         }
         break; // b .L_800F4000 (shared tail)
     }
@@ -3361,7 +3361,7 @@ extern "C" s32 func_800EC918(
             if (func_80145C00(*(u16*)((u8*)r + 0x2E))) continue; // bne
             if (*(u32*)((u8*)r + 0x08) & 0x1C00) continue;       // rlwinm 17-19
 
-            ((cf::CBattleState*)((u8*)acc + 0x08))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)r);
+            ((cf::CBattleState*)((u8*)acc + 0x08))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)r);
         }
         break; // b .L_800F4000 (shared tail)
     }
@@ -3440,10 +3440,10 @@ extern "C" s32 func_800EC918(
                 if (actor != nullptr && actor != acc) {   // cmplw r3,r24 ; beq
                     SubAccessor* sub = (SubAccessor*)((u8*)actor + 8);
                     for (s32 j = 0; j < 0x20; j++) {  // vfunc 0x58 list
-                        void* item = ((cf::CBattleState*)sub)->CBattleState_UnkVirtualFunc21(j);
+                        void* item = ((cf::CBattleState*)sub)->CBattleState_fetchStatusEntry(j);
                         if (*(u16*)((u8*)item + 0x2E) == prevType) {
                             // Reacquire the matching entry before mutating it.
-                            item = ((cf::CBattleState*)sub)->CBattleState_UnkVirtualFunc21(j);
+                            item = ((cf::CBattleState*)sub)->CBattleState_fetchStatusEntry(j);
                             *(f32*)((u8*)item + 0x20) += evt->field_20;
                         }
                     }
@@ -3462,7 +3462,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 285: {
-        ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc153((u32)evt->field_10);
+        ((cf::CActorParam*)acc)->CActorParam_accumulateTension((u32)evt->field_10);
         break;                                         // b .L_800F4000
     }
 
@@ -3574,11 +3574,11 @@ extern "C" s32 func_800EC918(
                 eventWorkspace.case260PlayerEvent.eventType = 0x58;                  // r19 = 0x58
                 eventWorkspace.case260PlayerEvent.field_18 = 50;                     // r21 = 0x32
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc94();
+                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
                     s32 v1 = *(s16*)((u8*)accArts + 0x1C);
                     f32 t = 0.1f * (f32)(s32)v1;       // f28 = 0.1 (80666E84)
                     s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));  // E58/E60
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc94();
+                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
                     s32 v2 = *(s16*)((u8*)pcArts + 0x1C);
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;     // mulli 0x64 ; divw
                 }
@@ -3591,11 +3591,11 @@ extern "C" s32 func_800EC918(
                 eventWorkspace.case260PlayerEvent.eventType = 0x59;                  // r14 = 0x59
                 eventWorkspace.case260PlayerEvent.field_18 = 50;
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc94();
+                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
                     s32 v1 = *(s16*)((u8*)accArts + 0x1E);
                     f32 t = 0.1f * (f32)(s32)v1;
                     s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc94();
+                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
                     s32 v2 = *(s16*)((u8*)pcArts + 0x1E);
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;
                 }
@@ -3608,11 +3608,11 @@ extern "C" s32 func_800EC918(
                 eventWorkspace.case260PlayerEvent.eventType = 0x5A;
                 eventWorkspace.case260PlayerEvent.field_18 = 50;
                 {
-                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc94();
+                    void* accArts = ((cf::CActorParam*)acc)->CActorParam_getArtsDataBlock();
                     s32 v1 = *(s16*)((u8*)accArts + 0x20);
                     f32 t = 0.1f * (f32)(s32)v1;
                     s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));
-                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_UnkVirtualFunc94();
+                    void* pcArts = ((cf::CActorParam*)pc)->CActorParam_getArtsDataBlock();
                     s32 v2 = *(s16*)((u8*)pcArts + 0x20);
                     eventWorkspace.case260PlayerEvent.field_10 = pct * 100 / v2;
                 }
@@ -3667,7 +3667,7 @@ extern "C" s32 func_800EC918(
             void* item = ((cf::CBattleState*)&acc->subObject)->CBattleState_getEventEntry(i);
             if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
                 if (!(*(u32*)((u8*)item + 0x08) & 0xE000)) {   // rlwinm 0,17,19
-                    ((cf::CBattleState*)&acc->subObject)->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)item);
+                    ((cf::CBattleState*)&acc->subObject)->CBattleState_applyEventEntry((cf::CBattleStateEntry*)item);
                 }
             }
         }
@@ -3713,7 +3713,7 @@ extern "C" s32 func_800EC918(
             void* item = ((cf::CBattleState*)&acc->subObject)->CBattleState_getEventEntry(i);
             if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
                 if (!(*(u32*)((u8*)item + 0x08) & 0xE000)) {   // rlwinm 0,17,19
-                    ((cf::CBattleState*)&acc->subObject)->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)item);
+                    ((cf::CBattleState*)&acc->subObject)->CBattleState_applyEventEntry((cf::CBattleStateEntry*)item);
                 }
             }
         }
@@ -3747,7 +3747,7 @@ extern "C" s32 func_800EC918(
         eventWorkspace.case267SecondaryEvent.field_10 = *(s32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x190
         if (!func_800EC918(self, pc, acc, &eventWorkspace.case267SecondaryEvent, tgt)) return 0;
         // .L_800F3BC0 (acc->3ED4 holder slot 0x70: CfObject UVF8, r4 hidden).
-        ((cf::CfObject*)acc->field_3ED4)->CfObject_UnkVirtualFunc8();
+        ((cf::CfObject*)acc->field_3ED4)->CfObject_notifyEventDone();
         eventWorkspace.case267PrimaryEvent.eventType = 0x62;                          // sth r3(0x62), 0x1c0
         eventWorkspace.case267PrimaryEvent.field_10 = 0x32;                           // stw r0(0x32), 0x1c4
         func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &eventWorkspace.case267PrimaryEvent, tgt);     // acc arg = pc
@@ -3800,12 +3800,12 @@ extern "C" s32 func_800EC918(
 
     case 292: {
         for (s32 i = 0; i < 0x20; i++) {               // vfunc 0x58 list
-            if (!func_80145C00(*(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_UnkVirtualFunc21(i) + 0x2E))) {
+            if (!func_80145C00(*(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_fetchStatusEntry(i) + 0x2E))) {
                 if (tgt != nullptr &&
-                    *(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_UnkVirtualFunc21(i) + 0x2C) == tgt->field_80) {
+                    *(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_fetchStatusEntry(i) + 0x2C) == tgt->field_80) {
                     continue;                          // beq .L_800F3F04
                 }
-                ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(*(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_UnkVirtualFunc21(i) + 0x0C));
+                ((cf::CBattleState*)&acc->subObject)->CBattleState_clearStatusId(*(u16*)((u8*)((cf::CBattleState*)&acc->subObject)->CBattleState_fetchStatusEntry(i) + 0x0C));
             }
         }
         for (s32 i = 0; i < 0x20; i++) {               // vfunc 0x5C list
@@ -4403,7 +4403,7 @@ void func_800D9CA0(void* mgrV, void* targetV){
             ((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc7();
             ((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc9();
             // Call secondary vtable at +0x3E9C, vtable[0x50]
-            ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc6(0);
+            ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_signalActionEnd(0);
         }
 
         // Notify all battle events (retail re-reads the sentinel each pass)
@@ -4541,7 +4541,7 @@ void func_800DA0A4(void* self_, void* actor_) {
         if (sub->unk4 != 0) {
             action = (void*)sub->unk4;
         } else {
-            action = ((cf::CBattleState*)(artsOwner ? (void*)&(*(u8*)((u8*)artsOwner + 0x3E9C)) : (void*)artsOwner))->CBattleState_UnkVirtualFunc18();
+            action = ((cf::CBattleState*)(artsOwner ? (void*)&(*(u8*)((u8*)artsOwner + 0x3E9C)) : (void*)artsOwner))->CBattleState_getLinkedActorId();
         }
         if (action == nullptr) return;
         if ((artsOwner ? (void*)&(*(u8*)((u8*)artsOwner + 0x3E9C)) : (void*)artsOwner) ==
@@ -4549,7 +4549,7 @@ void func_800DA0A4(void* self_, void* actor_) {
             ((cf::CBattleManager*)mgr)->CheckUnk84Flag(1);
         }
     } else {
-        action = ((cf::CBattleState*)&(*(u8*)((u8*)actor + 0x3E9C)))->CBattleState_UnkVirtualFunc18();
+        action = ((cf::CBattleState*)&(*(u8*)((u8*)actor + 0x3E9C)))->CBattleState_getLinkedActorId();
     }
 
     // The action's stats must carry one of the two active bits.
@@ -4835,11 +4835,11 @@ void func_800DA0A4(void* self_, void* actor_) {
             if (func_8026178C(skill3, 0x3C) != 0) {
                 if (sub->mFlagsArray[1].flags & 0x00100000) {
                     if (subObj->field_28 != 1) {
-                        ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc156(((cf::CActorParam*)actor)->CActorParam_getStatusCount() + 1);
+                        ((cf::CActorParam*)actor)->CActorParam_resetTensionState(((cf::CActorParam*)actor)->CActorParam_getStatusCount() + 1);
                     }
                 } else if (sub->mFlagsArray[1].flags & 0x00200000) {
                     if (subObj->unk78 & 0x8000) {
-                        ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc156(((cf::CActorParam*)actor)->CActorParam_getStatusCount() + 1);
+                        ((cf::CActorParam*)actor)->CActorParam_resetTensionState(((cf::CActorParam*)actor)->CActorParam_getStatusCount() + 1);
                     }
                 }
             }
@@ -4881,7 +4881,7 @@ extern "C" void func_800DB0FC(void* self, void* obj, void* enemy, void* arg4){
         f32 f30 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
         f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_UnkVirtualFunc7();
     }else{
-        void* subRet = ((cf::CfObject*)(u8*)enemy + 0x3E9C)->CfObject_UnkVirtualFunc48();
+        void* subRet = ((cf::CfObject*)(u8*)enemy + 0x3E9C)->CfObject_getCurrentTarget();
         f32 f30 = *(f32*)((u8*)subRet + 0xC);
         f31 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z) - f30;
     }
@@ -5451,7 +5451,8 @@ struct BattleVec {
 // Static tables decoded from retail .data (see notes for full listing).
 static const f32 sTable_150[5] = { 0.0f, 0.0f, 0.0f, 0.1f, 0.2f };
 static const s16 sTable_208[8]  = { -20, -10, 0, 15, 30, 0, 0, 0 };
-static const f32 sTable_28C[3]  = { 8.0f, 4.0f, 2.0f };
+// sTable_28C removed: identical to retail lbl_eu_804FCAE4 {8.0,4.0,2.0};
+// code uses the retail label directly so MWCC emits no duplicate pool.
 
 // (Former VFn* manual-slot typedefs removed: slots 0x224/0x20C/0x328/0x2A4/
 // 0x108/0xE0/0x290/0x308/0x158/0x12C/0x2BC/0x30/0x54/0x5C are
@@ -5497,7 +5498,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     BattleParamData* tgtParam =
         (BattleParamData*)(BattleParamData*)((cf::CActorParam*)(target))->CActorParam_getBattleParams();
     {
-        void* res20C = ((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc94();
+        void* res20C = ((cf::CActorParam*)(target))->CActorParam_getArtsDataBlock();
 
         // 0x5230: type gate -- only 1 and 5 take the main block
         if (sub->type_3C != 1 && sub->type_3C != 5) {
@@ -5522,13 +5523,13 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             {
                 u32 tag = move->field_74;
                 if (tag & 0x2000000) {
-                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                     if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
                 } else if (tag & 0x4000000) {
-                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                     if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
                 } else if (tag & 0x1000000) {
-                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                    u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                     if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
                 }
             }
@@ -5840,13 +5841,13 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         {
             u32 tag = move->field_74;
             if (tag & 0x2000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                 if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
             } else if (tag & 0x4000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                 if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
             } else if (tag & 0x1000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_UnkVirtualFunc165();
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
                 if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
             }
         }
@@ -6501,7 +6502,7 @@ post_dispatch:;
             s32 acc = rem;
             for (int i = 0; i < 3; i++) {
                 acc -= steps[i];
-                if (acc < 0) { mult = sTable_28C[i]; break; }
+                if (acc < 0) { mult = lbl_eu_804FCAE4[i]; break; }
             }
             if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable() != 0) {
                 u32 sv;
@@ -6776,7 +6777,7 @@ static void func_staleMove(void* self, void* arg1, void* arg2, void* move) {
             break;
         case 0x08: {
             void* m = (u8*)arg2 + 0x3E9C;
-            void* r = (void*)(uintptr_t)((cf::CObjectParam*)m)->CObjectParam_UnkVirtualFunc5();
+            void* r = (void*)(uintptr_t)((cf::CObjectParam*)m)->CObjectParam_getSelfObjectId();
             if (r == *(void**)((u8*)arg1 + 0x3F10)) r30 = 1;
             break;
         }
@@ -7294,7 +7295,7 @@ void func_800E08E8(void* self_, void* attacker_, void* target_, void* move_) {
         if (func_80148778((u8*)target + 8, 0x0F)) hit = 1;
         break;
     case 0x08:
-        if (((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_UnkVirtualFunc18() ==
+        if (((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_getLinkedActorId() ==
             *(void**)((u8*)attacker + 0x3F10)) {
             hit = 1;
         }
@@ -7746,16 +7747,16 @@ void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outF
     }
 
     // Clear the selection flag on the action, the 3 party members, and obj.
-    action->CActorParam_UnkVirtualFunc4(0);
+    action->CActorParam_resetArtsStatus(0);
     for (s32 i = 0; i < 3; i++) {
         cf::CActorParam* player =
             (cf::CActorParam*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
         if (player != nullptr && player != action) {
-            player->CActorParam_UnkVirtualFunc4(0);
+            player->CActorParam_resetArtsStatus(0);
         }
     }
-    objM->CActorParam_UnkVirtualFunc4(0);
-    action->CActorParam_UnkVirtualFunc4(0);
+    objM->CActorParam_resetArtsStatus(0);
+    action->CActorParam_resetArtsStatus(0);
 
     *(u32*)((u8*)actor + 0x88) &= ~0x1000;
 
@@ -8678,7 +8679,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             bool flag_3C8 = false;                          // 0x3C8 stack byte
             if (isGlobalCamFlagSet__Fi(0x400) == 0) {
                 bool r14ok = true;
-                if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc5() != *(u32*)((u8*)attacker + 0x3F10)) {
+                if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId() != *(u32*)((u8*)attacker + 0x3F10)) {
                     r14ok = false;
                 }
                 int sid = (int)getStatusId(target);
@@ -8766,7 +8767,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     }
                     if (func_80148778((u8*)target + 8, 0xF)) {
                         void* e = func_80149154((u8*)attacker + 8, 0xBD);
-                        if (e != nullptr) ((cf::CActorParam*)(attacker))->CActorParam_UnkVirtualFunc153((int)(*(u32*)((u8*)e + 0x10)));
+                        if (e != nullptr) ((cf::CActorParam*)(attacker))->CActorParam_accumulateTension((int)(*(u32*)((u8*)e + 0x10)));
                     }
                 }
 
@@ -8983,14 +8984,14 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
                             void* st = *(void**)((u8*)target + 0x3F60);
                             if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
-                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_UnkVirtualFunc29(lbl_eu_8066A1F8 + ((cf::CfObjectActor*)(attacker))->CfObjectActor_UnkVirtualFunc6());
+                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(lbl_eu_8066A1F8 + ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             // retail: horizontal dist^2 = x^2+z^2 only (y stored, unused)
                             f32 dist2 = d.x * d.x + d.z * d.z;
                             void* st2 = *(void**)((u8*)target + 0x3F60);
                             if (dist2 <= lbl_eu_80666E74) {
-                                *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_UnkVirtualFunc6();
+                                *(f32*)((u8*)st2 + 0x46C) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x46C) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
@@ -9007,13 +9008,13 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                         if (!hasStatus(target, 0xA) && !hasStatus(target, 0xB)) {
                             void* st = *(void**)((u8*)target + 0x3F60);
                             if (!(*(u16*)((u8*)st + 0x530) & 0x1)) {
-                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_UnkVirtualFunc29(lbl_eu_8066A1F8 + ((cf::CfObjectActor*)(attacker))->CfObjectActor_UnkVirtualFunc6());
+                                ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(lbl_eu_8066A1F8 + ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle());
                             }
                             nw4r::math::VEC3 d = actorDelta(attacker, target);
                             f32 dist2 = d.x * d.x + d.z * d.z;   // horizontal only
                             void* st2 = *(void**)((u8*)target + 0x3F60);
                             if (dist2 <= lbl_eu_80666E74) {
-                                *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_UnkVirtualFunc6();
+                                *(f32*)((u8*)st2 + 0x478) = ((cf::CfObjectActor*)(attacker))->CfObjectActor_readFacingAngle();
                             } else {
                                 *(f32*)((u8*)st2 + 0x478) =
                                     lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
@@ -9101,7 +9102,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
             func_801BAD24(&self->mSuddenCommu, attacker, target);
 
             bool r15ok = true;
-            if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc5() != *(u32*)((u8*)attacker + 0x3F10)) {
+            if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId() != *(u32*)((u8*)attacker + 0x3F10)) {
                 r15ok = false;
             }
             {
@@ -9132,7 +9133,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
                     } else if (localMove.field_78 & 0x400) {
                         if (rand() & 1) r14b = 1;
                     }
-                    *(s32*)((u8*)((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_UnkVirtualFunc48() + 0x1C) = r14b;
+                    *(s32*)((u8*)((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_getCurrentTarget() + 0x1C) = r14b;
                     if (!hasStatus(target, 0x802)) {
                         func_800BE12C((u8*)target + 0x3E9C, 0x2C, 0, -1, 1);
                     }
@@ -9186,8 +9187,8 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
         ((cf::CfObjectActor*)(attacker))->CActorParam_addHate(target, f26 * f25 * (f32)i2d(-r14), 0.0f, 0.0f);
     }
 
-    if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc5() == 0) {
-        ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc6((int)(*(u32*)((u8*)attacker + 0x3F10)));
+    if ((u32)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId() == 0) {
+        ((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_signalActionEnd((int)(*(u32*)((u8*)attacker + 0x3F10)));
     }
 
     if (hasStatus(target, 0x1000)) {
@@ -9716,7 +9717,7 @@ postLoop:
                     if (func_80148778((u8*)target + 8, 0x0F)) hit = 1;
                     break;
                 case 8:   // 0x81C4
-                    if ((void*)(uintptr_t)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_UnkVirtualFunc5()
+                    if ((void*)(uintptr_t)((cf::CObjectParam*)((u8*)target + 0x3E9C))->CObjectParam_getSelfObjectId()
                             == *(void**)((u8*)actor + 0x3F10))
                         hit = 1;
                     break;
@@ -9857,7 +9858,7 @@ postLoop:
                     func_800EC918(self, actor, target, &ev, move);
                     break;
                 case 4:                               // 0x86D0
-                    ((cf::CActorParam*)(actor))->CActorParam_UnkVirtualFunc153((int)(sub->mVal68));
+                    ((cf::CActorParam*)(actor))->CActorParam_accumulateTension((int)(sub->mVal68));
                     break;
                 case 5:                               // 0x86EC
                     ev.mTargetId = *(u32*)((u8*)actor + 0x3F10);
@@ -9961,8 +9962,8 @@ postLoop:
                 if (bm->mFlags74 & 0x10000) {       // 0x8C24
                     BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
                     if (!(md->mFlags530 & 1)) {
-                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_UnkVirtualFunc6();
-                        ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_UnkVirtualFunc29(lbl_eu_8066A1F8 + f1);
+                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                        ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(lbl_eu_8066A1F8 + f1);
                     }
                     // face the actor (0x8C70-0x8D24)
                     {
@@ -9972,7 +9973,7 @@ postLoop:
                         f32 dz = pt->z - pa->z;
                         BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
                         if (dx * dx + dz * dz <= lbl_eu_80666E74) {
-                            md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObjectActor_UnkVirtualFunc6();
+                            md2->mFacing46C = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
                         } else {
                             md2->mFacing46C = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * lbl_eu_80666E10;
                         }
@@ -9986,8 +9987,8 @@ postLoop:
                 } else if (bm->mFlags74 & 0x4000) { // 0x8D84
                     BtlMoveData* md = *(BtlMoveData**)((u8*)target + 0x3F60);
                     if (!(md->mFlags530 & 1)) {
-                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_UnkVirtualFunc6();
-                        ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_UnkVirtualFunc29(lbl_eu_8066A1F8 + f1);
+                        f32 f1 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
+                        ((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_setMoveHeadAngle(lbl_eu_8066A1F8 + f1);
                     }
                     // approach values (0x8DCC-0x8EF4)
                     {
@@ -9997,7 +9998,7 @@ postLoop:
                         f32 dz = pt->z - pa->z;
                         BtlMoveData* md2 = *(BtlMoveData**)((u8*)target + 0x3F60);
                         if (dx * dx + dz * dz <= lbl_eu_80666E74) {
-                            md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObjectActor_UnkVirtualFunc6();
+                            md2->mFacing478 = ((cf::CfObjectActor*)(actor))->CfObjectActor_readFacingAngle();
                         } else {
                             md2->mFacing478 = Atan2FIdx__Q24nw4r4mathFff(dx, dz) * lbl_eu_80666E10;
                         }
@@ -10373,7 +10374,7 @@ extern "C" void func_800E85F0(void* self, void* actor, void* target, void* move)
                     tbl[4] = lbl_eu_804FCAF0[4];
                     s32 idx = (s32)(u32)((cf::CActorParam*)(actor))->CActorParam_getStatusCount();           // 0x800E95BC
                     if ((s32)((E85F0_Move*)move)->field_90 < (s32)tbl[idx]) { // 0x800E9600
-                        ((cf::CActorParam*)(actor))->CActorParam_UnkVirtualFunc47(lbl_eu_80666DDC);
+                        ((cf::CActorParam*)(actor))->CActorParam_setTensionPoints(lbl_eu_80666DDC);
                     }
                 }
             }
@@ -10406,13 +10407,13 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     else *outCount = 1;
 
     // Clear the selection flag on the action, the 3 party members, and obj.
-    ((cf::CActorParam*)(action))->CActorParam_UnkVirtualFunc4((void*)(0));                                       // 0x800E9708
+    ((cf::CActorParam*)(action))->CActorParam_resetArtsStatus((void*)(0));                                       // 0x800E9708
     for (s32 i = 0; i < 3; i++) {                            // 0x800E9724
         void* p = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
-        if (p != nullptr && p != action) ((cf::CActorParam*)(p))->CActorParam_UnkVirtualFunc4((void*)(0));
+        if (p != nullptr && p != action) ((cf::CActorParam*)(p))->CActorParam_resetArtsStatus((void*)(0));
     }
-    ((cf::CActorParam*)(obj))->CActorParam_UnkVirtualFunc4((void*)(0));                                          // 0x800E9760
-    ((cf::CActorParam*)(action))->CActorParam_UnkVirtualFunc4((void*)(0));                                       // 0x800E9778
+    ((cf::CActorParam*)(obj))->CActorParam_resetArtsStatus((void*)(0));                                          // 0x800E9760
+    ((cf::CActorParam*)(action))->CActorParam_resetArtsStatus((void*)(0));                                       // 0x800E9778
     ((cf::CActorParam*)(obj))->CActorParam_UnkVirtualFunc136();                                            // 0x800E9790
 
     // Seed the workspace block with the target's current move data.
@@ -10504,7 +10505,7 @@ extern "C" void func_800E9B54(void* self, void* target, void* attacker, void* mo
     }
 
     if (attacker == nullptr) {                               // 0x800EA720
-        s32 subId = (s32)(uintptr_t)((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_UnkVirtualFunc18();
+        s32 subId = (s32)(uintptr_t)((cf::CBattleState*)((u8*)target + 0x3E9C))->CBattleState_getLinkedActorId();
         attacker = func_8016FE34(findObjectById(subId));
     }
 
@@ -10649,7 +10650,7 @@ extern "C" void func_800E2594(void* self, void* actor, void* target, void* move)
 
     if (local.field_78 & 0x2) {                              // 0x800E32F4
         if ((u32)((cf::CActorParam*)(r28))->CActorParam_getStatusCount() == 0) {
-            ((cf::CActorParam*)(r28))->CActorParam_UnkVirtualFunc156((int)(2));
+            ((cf::CActorParam*)(r28))->CActorParam_resetTensionState((int)(2));
         }
     }
 
@@ -10712,7 +10713,7 @@ extern "C" void func_800E2594(void* self, void* actor, void* target, void* move)
                 if (keep && ((local.field_74 & 1) || (local.field_78 & 0x100))) {
                     CE_Entry* entry = (CE_Entry*)func_801491F4((u8*)r29 + 8, 0xCE);
                     if (entry->h2C != local.field_80) {      // 0x800E3548
-                        ((cf::CBattleState*)((u8*)r29 + 8))->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)entry);
+                        ((cf::CBattleState*)((u8*)r29 + 8))->CBattleState_applyEventEntry((cf::CBattleStateEntry*)entry);
                     }
                 }
             }
@@ -10862,7 +10863,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
         for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
             void* o = func_800F6EAC(func_80043F18(&h1), i);
             void* c = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-            ((cf::CfObject*)c)->CfObject_UnkVirtualFunc14((float)value);
+            ((cf::CfObject*)c)->CfObject_pushRefreshValue((float)value);
         }
     }
 
@@ -10872,12 +10873,12 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
         for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
             void* o = func_800F6EAC(func_80043F18(&h1), i);
             void* r28 = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
-            ((cf::CfObject*)r28)->CfObject_UnkVirtualFunc14((float)value);
+            ((cf::CfObject*)r28)->CfObject_pushRefreshValue((float)value);
             for (u32 j = 0; j < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; j++) {
                 void* o2 = func_800F6EAC(func_80043F18(&h2), j);
                 void* r26 = __dynamic_cast(o2, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
                 if (((E484_TypeObj*)r26)->field_9C == r28)
-                    ((cf::CfObject*)r26)->CfObject_UnkVirtualFunc14((float)value);
+                    ((cf::CfObject*)r26)->CfObject_pushRefreshValue((float)value);
                 void* a = func_8016FE34(findObjectById((s32)(uintptr_t)r28));
                 if (a != nullptr) {
                     void* b = ((E484_VisionActor*)a)->field_45B8;
@@ -10885,7 +10886,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                         void* c = func_8016FE34(findObjectById((s32)(uintptr_t)b));
                         if (c != nullptr) c = (u8*)c + 0x3E9C;
                         if (((E484_TypeObj*)r26)->field_9C == c)
-                            ((cf::CfObject*)r26)->CfObject_UnkVirtualFunc14((float)value);
+                            ((cf::CfObject*)r26)->CfObject_pushRefreshValue((float)value);
                     }
                 }
             }
@@ -10916,7 +10917,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
             case 0x56: case 0x57: case 0x58: case 0x59:
             case 0x65: case 0x66:
             case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D:
-                ((cf::CfObject*)r3)->CfObject_UnkVirtualFunc14((float)value);
+                ((cf::CfObject*)r3)->CfObject_pushRefreshValue((float)value);
                 break;
             default:
                 break;
@@ -10931,7 +10932,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
             void* r3 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
             int t = ((E484_TypeObj*)r3)->type8C;
             if ((u32)(t - 0xA1) <= 3 || (u32)(t - 0xC0) <= 2 || t == 0xB8)
-                ((cf::CfObject*)r3)->CfObject_UnkVirtualFunc14((float)value);
+                ((cf::CfObject*)r3)->CfObject_pushRefreshValue((float)value);
         }
     }
 
@@ -10955,14 +10956,14 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
                 // actor (or its embedded move sub-object at +0x3E9C).
                 if ((r26 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r26 + 0x3E9C) ||
                     (r27 != nullptr && ((E484_TypeObj*)r29)->field_9C == (u8*)r27 + 0x3E9C))
-                    ((cf::CfObject*)r29)->CfObject_UnkVirtualFunc14((float)value);
+                    ((cf::CfObject*)r29)->CfObject_pushRefreshValue((float)value);
                 if (r26 != nullptr) {
                     void* b = ((E484_VisionActor*)r26)->field_45B8;
                     if (b != nullptr) {
                         void* c = func_8016FE34(findObjectById((s32)(uintptr_t)b));
                         if (c != nullptr) c = (u8*)c + 0x3E9C;
                         if (((E484_TypeObj*)r29)->field_9C == c)
-                            ((cf::CfObject*)r29)->CfObject_UnkVirtualFunc14((float)value);
+                            ((cf::CfObject*)r29)->CfObject_pushRefreshValue((float)value);
                     }
                 }
             }
@@ -11387,7 +11388,7 @@ extern "C" s32 func_800EAA2C(void* mgr /*r24*/, void* actorA /*r25*/, void* acto
             if (func_80174C98(actorB, &val2, 0x802) != 0) return 0;
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;                                   // r29
-                if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_UnkVirtualFunc164() & 8) r = 1;
+                if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getActorModeFlags() & 8) r = 1;
                 if (func_80148778((u8*)actorB + 8, 58) != nullptr) r = 1;
                 if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
                 if (r) goto fail_1000;
@@ -11415,7 +11416,7 @@ extern "C" s32 func_800EAA2C(void* mgr /*r24*/, void* actorA /*r25*/, void* acto
             if (func_80174C98(actorB, &val3, 0x802) != 0) return 0;
             if (!(evt->field_10 & 4)) {
                 u32 r = 0;
-                if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_UnkVirtualFunc164() & 8) r = 1;
+                if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getActorModeFlags() & 8) r = 1;
                 if (func_80148778((u8*)actorB + 8, 58) != nullptr) r = 1;
                 if (func_80148778((u8*)actorB + 8, 50) != nullptr) r = 1;
                 if (r) goto fail_1000;
@@ -11694,7 +11695,7 @@ extern "C" s32 func_800EAA2C(void* mgr /*r24*/, void* actorA /*r25*/, void* acto
 
         void* a298 = (void*)((cf::CActorParam*)(actorA))->CActorParam_getBattleStats();                       // r31
         u32 brk = 0;                                             // r29
-        if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_UnkVirtualFunc164() == 7) brk = 1;
+        if (*(u16*)((cf::CActorParam*)(actorB))->CActorParam_getActorModeFlags() == 7) brk = 1;
         s32 d = (s32)((cf::CActorParam*)(actorB))->CActorParam_getActorLevel() - (s32)((cf::CActorParam*)(actorA))->CActorParam_getActorLevel();   // r30/r3
         if (d > 10) brk = 1;
 
@@ -11926,31 +11927,31 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
 
     if (selector == 0) {
         if (val2 != -1) {
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc156(val2);
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc154(val3);
+            ((cf::CActorParam*)obj1)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)obj1)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc153(val3);
+            ((cf::CActorParam*)obj1)->CActorParam_accumulateTension(val3);
         }
     } else if (selector == 1) {
         if (val2 != -1) {
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc156(val2);
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc154(val3);
+            ((cf::CActorParam*)o2)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)o2)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc153(val3);
+            ((cf::CActorParam*)o2)->CActorParam_accumulateTension(val3);
         }
     } else if (selector == 2) {
         if (val2 != -1) {
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc156(val2);
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc154(val3);
+            ((cf::CActorParam*)obj1)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)obj1)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)obj1)->CActorParam_UnkVirtualFunc153(val3);
+            ((cf::CActorParam*)obj1)->CActorParam_accumulateTension(val3);
         }
 
         if (val2 != -1) {
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc156(val2);
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc154(val3);
+            ((cf::CActorParam*)o2)->CActorParam_resetTensionState(val2);
+            ((cf::CActorParam*)o2)->CActorParam_raiseTensionValue(val3);
         } else {
-            ((cf::CActorParam*)o2)->CActorParam_UnkVirtualFunc153(val3);
+            ((cf::CActorParam*)o2)->CActorParam_accumulateTension(val3);
         }
     } else {
         // Iterate every node of mActorList2, dispatching to each item.
@@ -11959,10 +11960,10 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
         while (cur != ((cf::CBattleManager*)self)->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             if (val2 != -1) {
-                ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc156(val2);
-                ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc154(val3);
+                ((cf::CActorParam*)actor)->CActorParam_resetTensionState(val2);
+                ((cf::CActorParam*)actor)->CActorParam_raiseTensionValue(val3);
             } else {
-                ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc153(val3);
+                ((cf::CActorParam*)actor)->CActorParam_accumulateTension(val3);
             }
             cur = cur->mNext;
         }
@@ -12035,7 +12036,7 @@ s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
         cur = mgr->mActorList1.mStartNodePtr->mNext;
         while (cur != mgr->mActorList1.mStartNodePtr) {
             BattleScanActorView* actor = (BattleScanActorView*)cur->mItem;
-            s32 vresult = (s32)(uintptr_t)((cf::CBattleState*)((u8*)actor + 0x3E9C))->CBattleState_UnkVirtualFunc18();
+            s32 vresult = (s32)(uintptr_t)((cf::CBattleState*)((u8*)actor + 0x3E9C))->CBattleState_getLinkedActorId();
             if (vresult != 0) {
                 BattleScanStateView* found =
                     (BattleScanStateView*)func_8016FE34(findObjectById(vresult));

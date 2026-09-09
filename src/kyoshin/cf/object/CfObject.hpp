@@ -21,20 +21,20 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6(int flag);      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
-        virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual bool CfObject_UnkVirtualFunc9();      //0x74
+        virtual void CfObject_notifyEventDone() = 0;  //0x70
+        virtual bool CfObject_isMoveActiveNow();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
         virtual int CfObject_UnkVirtualFunc13();     //0x84
-        virtual void* CfObject_UnkVirtualFunc14(float value);     //0x88
-        virtual float CfObject_UnkVirtualFunc15();    //0x8C (Move/Coll return float; retail Fv)
+        virtual void* CfObject_pushRefreshValue(float value);     //0x88
+        virtual float CfObject_getMoveSpeedRate();    //0x8C (Move/Coll return float; retail Fv)
         virtual void* CfObject_UnkVirtualFunc16(float value);     //0x90
         virtual void CfObject_UnkVirtualFunc17();     //0x94
-        virtual int CfObject_UnkVirtualFunc18();     //0x98
+        virtual int CfObject_checkTargetState();     //0x98
         // Retail bodies read r4 as a position vector (setEffPosVec_ /
         // Model/Move/ocUnit UVF19). Fv linker names are uneducated.
-        virtual void CfObject_UnkVirtualFunc19(const ml::CVec3* vec); //0x9C
+        virtual void CfObject_setMoveTargetVec(const ml::CVec3* vec); //0x9C
         virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         // Same ABI as UVF19 (copy vec into +0x3C). Eff's override is a pure
@@ -49,9 +49,9 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27(void* src);     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
-        virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
+        virtual void CfObject_setMoveHeadAngle(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30(float value);     //0xC8
-        virtual float CfObject_UnkVirtualFunc31();     //0xCC
+        virtual float CfObject_getMoveHeadAngle();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
         virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
         virtual float CfObject_UnkVirtualFunc34();     //0xD8
@@ -71,7 +71,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc46(void* arg);     //0x108
         virtual void CfObject_UnkVirtualFunc47();
         // Move override returns target object pointer (pluginCfs: +0xC4/+0x6C0).
-        virtual void* CfObject_UnkVirtualFunc48();     //0x110
+        virtual void* CfObject_getCurrentTarget();     //0x110
         virtual void CfObject_UnkVirtualFunc49(u32 value);     //0x114
         virtual int CfObject_UnkVirtualFunc50();     //0x118
         virtual int CfObject_UnkVirtualFunc51();     //0x11C
@@ -81,13 +81,13 @@ namespace cf {
         virtual void* CfObject_UnkVirtualFunc55(int arg);     //0x12C
         virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57(float value);     //0x134
-        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
+        virtual u32* CfObject_getMoveRateScale();     //0x138
         virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
         virtual float CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61(u32 a, u32 b);     //0x144
         virtual u32 CfObject_UnkVirtualFunc62(u32 arg);     //0x148 (retail takes an index, returns bits)
         virtual u32 CfObject_UnkVirtualFunc63();     //0x14C
-        virtual void CfObject_UnkVirtualFunc64(int flag);     //0x150
+        virtual void CfObject_setMoveBusyState(int flag);     //0x150
         virtual void CfObject_UnkVirtualFunc65(int flag);     //0x154
 
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158

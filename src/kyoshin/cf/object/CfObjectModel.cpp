@@ -16,6 +16,16 @@ namespace {
 // 0x08-0x50, the first CfObject slot lands at 0x54). novtable: never
 // constructed, only reinterpret_cast, so MWCC emits no vtable data and the
 // m68() call compiles to a genuine load-vptr/load-slot/bctrl dispatch.
+// NOTE (retained blocker): only the +0x68 slot (CfObject_UnkVirtualFunc6)
+// still goes through here (complete-object dtor, twice). The +0x5C slot
+// already calls the real CfObject_UnkVirtualFunc3() (ctor). The +0x68 call
+// cannot go real yet: the CfObject base decl takes (int flag) and retail
+// CREvtModelMap call sites set r4 explicitly (us-80182BC8: li r4,0 /
+// us-80182C40: li r4,1), while this dtor leaves r4 as post-call residue
+// (no r4 setup before either bctrl) - any explicit arg grows the dtor and
+// drops its FULL. Narrowing the base decl to () is Fv-evidenced but needs
+// the two CREvtModelMap sites fixed in the same move (another wave's TU).
+// Next angle: cross-wave arity split for CfObject_UnkVirtualFunc6.
 struct __declspec(novtable) ModelDtorReal : public cf::CObjectParam {
     virtual void m54();  // 0x54 (base-dtor placeholder)
     virtual void m58();  // 0x58
@@ -25,15 +35,8 @@ struct __declspec(novtable) ModelDtorReal : public cf::CObjectParam {
     virtual void m68();  // 0x68: cleanup slot called by the model dtor
 };
 
-// View of the +0xB0 sub-object: it stores its function-table pointer at
-// +0x10 (not +0x00), so the proxy derives from a 0x10-byte prefix base and
-// inherits the vptr slot right after it; slot +0x08 is the deleting dtor.
-struct SubObjB0Head {
-    u8 _pad00[0x10];   // 0x00-0x0F
-};
-struct __declspec(novtable) SubObjB0Real : SubObjB0Head {
-    virtual void m08(s32 flag);  // table +0x08: deleting destructor
-};
+// (SubObjB0 view now lives in CfObjectModel.hpp as the owner-named tiny
+// iface cf::CfObjectModelSubB0; the dtor destroys leftovers through it.)
 } // namespace
 
 // Complete-object constructor (retail __ct__Q22cf13CfObjectModelFv). Two
@@ -121,13 +124,11 @@ cf::CfObjectModel::CfObjectModel() {
     g88->w88 = 0;
     g88->h8c = 0;
     g88->h8e = 0;
-    // NOTE: this MUST stay a proxy call, not this->CfObject_UnkVirtualFunc3().
-    // A real virtual call on this in the ctor makes MWCC materialize its
-    // generated __vt__Q22cf13CfObjectModel symbol (lis/addi r4 + stw r4,0)
-    // for a vtable this TU never emits (same reason CScnItemModel uses a
-    // fragment ctor): +12 bytes and an UNDEF link break. The novtable proxy
-    // dispatches the identical slot (+0x5C) with no implicits.
-    reinterpret_cast<ModelDtorReal*>(this)->m5C();  // vtable +0x5C
+    // NOTE: real virtual dispatch through the CfObject base (slot +0x5C =
+    // CfObject_UnkVirtualFunc3). The manual vtable store above dominates,
+    // so MWCC reuses r12 for the slot load exactly like retail (no implicits
+    // materialize: the TU never emits a compiler __vt__ for this class).
+    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc3();  // vtable +0x5C
     // Phase 2: flag bit, base vtable install, model-tail init. Fresh scoped
     // constants (retail reloads both pools after the call: lfs f0 then lfs
     // f1); the flags word is hoisted (retail loads it into r0 right after
@@ -161,7 +162,7 @@ cf::CfObjectModel::CfObjectModel() {
 // void; defined with the verbatim mangled name so the vtable slot 0x58
 // (pure-virtual override) still resolves to this symbol.
 int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
-    self->CfObject_UnkVirtualFunc8();  // vtable +0x70
+    self->CfObject_notifyEventDone();  // vtable +0x70
     self->mFlags68 |= 0x00400000;
     return 1;
 }
@@ -190,8 +191,9 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
         if (self->mSubObjB0 != 0) {
             if (self->mSubObjB0 != 0) {
                 // Redundant nested re-check reproduces retail's dead second
-                // beq (MWCC keeps both branch targets).
-                reinterpret_cast<SubObjB0Real*>(self->mSubObjB0)->m08(1);
+                // beq (MWCC keeps both branch targets). Destroy through
+                // the owner-named +0xB0 tiny iface (table +0x08).
+                reinterpret_cast<cf::CfObjectModelSubB0*>(self->mSubObjB0)->destroy(1);
             }
             self->mSubObjB0 = 0;
         }
@@ -279,7 +281,7 @@ void func_800BAB64(cf::CfObjectModel* self) {
 // 0x8-with-flag), store the new one and attach it (vtable 0x2C with this
 // as parent, then 0xA0). Retail symbol is Fv even though the body reads the
 // new object from r4 - forced-name form.
-void CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, void* newObj) {
+void CfObject_notifyEventDone__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, void* newObj) {
     if (self->mSubObj38 != 0) {
         reinterpret_cast<cf::CfObjectSub38*>(self->mSubObj38)->mAC();
     }
@@ -398,7 +400,7 @@ u32 func_800BAE28(cf::CfObject* obj) {
 // Copies the vector into the sub-object transform's position and refreshes
 // it, then mirrors the vector into this object's +0x3C position (retail
 // symbol is Fv even though the body reads r4).
-void CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
+void CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const ml::CVec3* vec) {
     if (self->mSubObj98 != 0) {
         ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
         transform->mPos = *vec;
@@ -483,7 +485,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf8CfObjectFv(
         // the default 0x44a09, not a fresh 0x4a05 immediate).
         func_800A7094(pos, &probe, filter, scale, lbl_eu_80666A68);
     }
-    self->CfObject_UnkVirtualFunc19(&probe);
+    self->CfObject_setMoveTargetVec(&probe);
 }
 
 // Retail symbol is Fv (no params) but the body consumes two floats in f1/f2 -
@@ -544,7 +546,7 @@ void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
 // Stores the value into the sub-object transform's rotation-Y and refreshes
 // it, then stores it at +0x4C (retail symbol is Fv even though the body
 // reads f1).
-void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
+void CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     if (self->mSubObj98 != 0) {
         ml::CAttrTransform* transform = static_cast<ml::CAttrTransform*>(func_8048315C(self->mSubObj98));
         transform->mRot.y = value;
@@ -553,7 +555,7 @@ void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, 
     self->mField4C = value;
 }
 
-float CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv(void* self) {
+float CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv(void* self) {
     void* ptr = *(void**)((unsigned char*)self + 0x98);
     if (ptr != 0) {
         void* result = func_8048315C(ptr);
@@ -565,15 +567,15 @@ float CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv(void* self) {
 
 extern "C" void CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float f) {
     // Scale f by the global factor, then tail-call the virtual
-    // CfObject_UnkVirtualFunc29 (vtable+0xC4) with the scaled value. The
+    // CfObject_setMoveHeadAngle (vtable+0xC4) with the scaled value. The
     // upcast to CfObject resolves the base (float) overload that CfObjectModel
     // hides with its no-arg override.
-    ((cf::CfObject*)self)->CfObject_UnkVirtualFunc29(f * lbl_eu_8066A210);
+    ((cf::CfObject*)self)->CfObject_setMoveHeadAngle(f * lbl_eu_8066A210);
 }
 
-// Scale the CfObject_UnkVirtualFunc31 result by the global scale factor.
+// Scale the CfObject_getMoveHeadAngle result by the global scale factor.
 float cf::CfObjectModel::CfObject_UnkVirtualFunc34() {
-    float value = CfObject_UnkVirtualFunc31();
+    float value = CfObject_getMoveHeadAngle();
     return value * lbl_eu_8066A20C;
 }
 
@@ -886,11 +888,11 @@ void func_800BBA08(cf::CfObjectModel* self) {
     }
 }
 
-// Tail-call the sub-object's vtable slot 0x8C (CfObject_UnkVirtualFunc15
+// Tail-call the sub-object's vtable slot 0x8C (CfObject_getMoveSpeedRate
 // in the base vtable layout); the 2nd argument rides along untouched in r4.
 void func_800BBA7C(cf::CfObjectModel* self, f32* vec) {
     if (self->mSubObj98 != 0) {
-        ((cf::CfObject*)self->mSubObj98)->CfObject_UnkVirtualFunc15();
+        ((cf::CfObject*)self->mSubObj98)->CfObject_getMoveSpeedRate();
     }
 }
 
@@ -1021,25 +1023,25 @@ ret0:
 // so pointer tables cannot take those spellings in this TU; UNIT_RULES
 // exact_renames maps them onto the retail labels for the link.
 extern "C" {
-void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask__Q22cf12CObjectStateFv();
+void CObjectState_checkStateFlags__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv();
 void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
 void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask0__Q22cf12CObjectStateFv();
 void CObjectState_getStateData__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv();
-void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
+void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
 void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
 void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv();
 void CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv();
 void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv();
-void CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv();
-void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv();
+void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
+void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv();
 void __dt__Q22cf11CfObjectMapFv();
 void checkTarget__Q22cf11CfObjectMapFv();
 void clearStatus__Q22cf11CfObjectMapFv();
@@ -1055,16 +1057,16 @@ void __dt__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv();
+void CfObject_isMoveActiveNow__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf();
-void CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv();
+void CfObject_pushRefreshValue__Q22cf8CfObjectFf();
+void CfObject_getMoveSpeedRate__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv();
+void CfObject_checkTargetState__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv();
@@ -1078,28 +1080,28 @@ void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv();
+void CfObject_getCurrentTarget__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv();
+void CfObject_getMoveRateScale__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi();
+void CfObject_setMoveBusyState__Q22cf8CfObjectFi();
 void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv();
 void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
-void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv();
+void CfObject_setMoveTargetVec__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv();
 void CfObject_getPosVector__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv();
 void CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc29__Q22cf8CfObjectFf();
+void CfObject_setMoveHeadAngle__Q22cf8CfObjectFf();
 void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv();
-void CfObject_UnkVirtualFunc31__Q22cf8CfObjectFv();
+void CfObject_getMoveHeadAngle__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv();
 void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv();
@@ -1150,25 +1152,25 @@ extern const void* modelVtable294E0[94];
 // CfObjectMap/CfObject slots, then the CfObjectModel tail.
 __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu_80529128[114] = {
     lbl_eu_80661D08, 0,
-    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
     (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
     (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
     (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFv,
     (const void*)__dt__Q22cf11CfObjectMapFv,
     (const void*)checkTarget__Q22cf11CfObjectMapFv,
     (const void*)clearStatus__Q22cf11CfObjectMapFv,
@@ -1176,18 +1178,18 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
     (const void*)cleanupMap__Q22cf11CfObjectMapFv,
     (const void*)nopMap__Q22cf11CfObjectMapFv,
-    (const void*)CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv,
     (const void*)isObjectMapReady__Q22cf11CfObjectMapFv,
     (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
     (const void*)setMapScale__Q22cf11CfObjectMapFv,
-    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_getMoveSpeedRate__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_checkTargetState__Q22cf8CfObjectFv,
+    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
@@ -1197,9 +1199,9 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv,
@@ -1216,7 +1218,7 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_getCurrentTarget__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
@@ -1226,13 +1228,13 @@ __declspec(section ".data") __attribute__((used, aligned(8))) const void* lbl_eu
     (const void*)CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_getMoveRateScale__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_setMoveBusyState__Q22cf8CfObjectFi,
     (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
     (const void*)setMapVisibility__Q22cf11CfObjectMapFv,
     (const void*)CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFv,
@@ -1271,25 +1273,25 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_805292F0[10
 // CfObjectModel vtable (0x1C8) -> lbl_eu_80529318 via UNIT_RULES rename.
 __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[114] = {
     lbl_eu_806618E8, 0,
-    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
     (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
     (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
     (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFv,
     (const void*)__dt__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
@@ -1297,18 +1299,18 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv,
     0,
-    (const void*)CfObject_UnkVirtualFunc8__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv,
+    (const void*)CfObject_notifyEventDone__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_isMoveActiveNow__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf,
-    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_pushRefreshValue__Q22cf8CfObjectFf,
+    (const void*)CfObject_getMoveSpeedRate__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_checkTargetState__Q22cf8CfObjectFv,
+    (const void*)CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf13CfObjectModelFv,
@@ -1318,9 +1320,9 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv,
     (const void*)CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv,
+    (const void*)CfObject_getMoveHeadAngle__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv,
@@ -1337,7 +1339,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_getCurrentTarget__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
@@ -1347,13 +1349,13 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
     (const void*)CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_getMoveRateScale__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc63__Q22cf13CfObjectModelFv,
-    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_setMoveBusyState__Q22cf8CfObjectFi,
     (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc66__Q22cf13CfObjectModelFv,
     (const void*)CfObject_UnkVirtualFunc67__Q22cf13CfObjectModelFv,
@@ -1387,25 +1389,25 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable29318[1
 // CfObject vtable (0x178) -> lbl_eu_805294E0 via UNIT_RULES rename.
 __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[94] = {
     lbl_eu_806618F0, 0,
-    (const void*)CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
     (const void*)CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     (const void*)CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask0__Q22cf12CObjectStateFv,
     (const void*)CObjectState_getStateData__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv,
-    (const void*)CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask2__Q22cf12CObjectStateFv,
+    (const void*)CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     (const void*)CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
     (const void*)CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv,
-    (const void*)CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
+    (const void*)CObjectParam_signalActionEnd__Q22cf12CObjectParamFv,
     (const void*)__dt__Q22cf8CfObjectFv,
     0,
     (const void*)CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv,
@@ -1413,17 +1415,17 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv,
     0, 0,
-    (const void*)CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv,
+    (const void*)CfObject_isMoveActiveNow__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc14__Q22cf8CfObjectFf,
-    (const void*)CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv,
+    (const void*)CfObject_pushRefreshValue__Q22cf8CfObjectFf,
+    (const void*)CfObject_getMoveSpeedRate__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv,
+    (const void*)CfObject_checkTargetState__Q22cf8CfObjectFv,
+    (const void*)CfObject_setMoveTargetVec__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv,
@@ -1433,9 +1435,9 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv,
     (const void*)CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc29__Q22cf8CfObjectFf,
+    (const void*)CfObject_setMoveHeadAngle__Q22cf8CfObjectFf,
     (const void*)CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc31__Q22cf8CfObjectFv,
+    (const void*)CfObject_getMoveHeadAngle__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv,
@@ -1452,7 +1454,7 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc46__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv,
+    (const void*)CfObject_getCurrentTarget__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
@@ -1462,13 +1464,13 @@ __declspec(section ".data") __attribute__((used)) const void* modelVtable294E0[9
     (const void*)CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv,
+    (const void*)CfObject_getMoveRateScale__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
     (const void*)CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv,
-    (const void*)CfObject_UnkVirtualFunc64__Q22cf8CfObjectFi,
+    (const void*)CfObject_setMoveBusyState__Q22cf8CfObjectFi,
     (const void*)CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
     0,
     (const void*)CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv,

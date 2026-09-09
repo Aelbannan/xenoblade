@@ -6333,9 +6333,6 @@ UNIT_RULES: dict[str, UnitRules] = {
         # generated from the gate's drift dump. @N numbering drifts with
         # source edits - regenerate rather than hand-patch.
         exact_renames=(
-            ("@9533", "lbl_8054D548"),
-            ("__RTTI__Q210homebutton22HomeButtonEventHandler", "lbl_8054D530"),
-            ("__RTTI__Q310homebutton3gui12EventHandler", "lbl_8054D568"),
             ("@7739", "lbl_8054C924"),
             ("@7773", "lbl_8054CBF4"),
             ("@7774", "lbl_8054CC00"),
@@ -6484,19 +6481,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@7772", "lbl_8054CBA8"),
             ("@7738", "lbl_8054C918"),
         ),
-        # The original tail-rotation swap chain is OBSOLETE: the natural
-        # object's .data already byte-matches retail (verified 0x00-diff over
-        # the full section), and the stale swaps were scattering the
-        # "homebutton::HomeButtonEventHandler" typeinfo string.
-        # Typed tail (HBMBase.cpp: explicit strong __vt__ + tables/strings)
-        # reproduces the retail C50..D18 bytes; MWCC still appends its
-        # unreferenced Home/EventHandler companion RTTI/typestr cluster after
-        # the explicit defs (the gui vtable companion is already suppressed
-        # by the TU-local novtable forward declaration). Trim that trailing
-        # emission so the section ends at the retail size (thin trailing
-        # drop for MWCC extra pool — blessed per playbook; no retail bytes
-        # are copied).
-        drop_data_tail=((".data", 0xD18),),
+        # -RTTI off (configure.py) suppresses MWCC's unreferenced
+        # Home/EventHandler companion RTTI/typestr cluster after the explicit
+        # defs, so raw .data ends at the retail 0xD18 with no drop. Former
+        # drop_data_tail=((".data", 0xD18),) deleted 2026-09-08 after raw
+        # MATCH (novtable-forward-decl alone only killed vtable companions).
     ),
     # NOTE: do NOT add a second "CGXCache.o" UnitRules entry — duplicate dict keys
     # silently shadow the real pool rule above (line ~475) and regress every
@@ -8110,17 +8099,20 @@ UNIT_RULES: dict[str, UnitRules] = {
     # owned lbl_eu_805DFDA8; removed after absorb into adx_fini.c.)
     "adx_tlk.o": UnitRules(
         # Absorbed .rodata 0x7B8 (D0 0x4+pad, D8 0x18, F0 0x8, F8 0x790).
-        # MWCC pools an extra hi-magic double at +0x7B8 (@576) for the
-        # (float)(s32) casts in ADXT_GetTimeReal + adxt_Pause; retail
-        # lfd's it from lbl_eu_805162D8@8.  Retarget the 4 text relocs
-        # that load @576 to the existing blob label, then trim the
-        # duplicate. .bss is defined with aligned(8) to satisfy MWCC
-        # but retail is 4.
+        # MWCC pools an extra hi-magic double at +0x7B8 (@575) for the
+        # (float)(s32) casts in ADXT_GetTimeReal + adxt_Pause + ADXT_DiscardSmpl;
+        # retail lfd's it from lbl_eu_805162D8@8.  Retarget the 6 text relocs
+        # (3 loads x HA/LO) that load @575 to the existing blob label, then trim
+        # the duplicate. .bss is defined with aligned(8) to satisfy MWCC
+        # but retail is 4. Offsets re-derived 2026-09-08 after inlining
+        # ADXT_BiasDouble (standalone .text -0x1C shifted all sites).
         retarget_relocs=(
-            (".text", 0x1186, "lbl_eu_805162D8"),
-            (".text", 0x1196, "lbl_eu_805162D8"),
-            (".text", 0x1DB2, "lbl_eu_805162D8"),
-            (".text", 0x1DC2, "lbl_eu_805162D8"),
+            (".text", 0x116A, "lbl_eu_805162D8"),
+            (".text", 0x117A, "lbl_eu_805162D8"),
+            (".text", 0x1D96, "lbl_eu_805162D8"),
+            (".text", 0x1DA6, "lbl_eu_805162D8"),
+            (".text", 0x1F5E, "lbl_eu_805162D8"),
+            (".text", 0x1F6E, "lbl_eu_805162D8"),
         ),
         drop_data_tail=((".rodata", 0x7B8),),
         add_symbols=(

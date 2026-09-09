@@ -129,7 +129,7 @@ typedef struct ADXT_CST_ {
 /* Materialize the 0x43300000_<lo> bias double from explicit halfwords;
  * MWCC lowers this to the retail lis/stw + lfd stack-double shape instead of
  * pooling a local 2^52 constant. */
-static f64 ADXT_BiasDouble(u32 lo) {
+static inline f64 ADXT_BiasDouble(u32 lo) {
     union {
         u32 w[2];
         f64 d;

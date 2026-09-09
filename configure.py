@@ -1221,7 +1221,7 @@ config.libs = [
                 ],
             }),
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMCommon.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMBase.cpp"),
+            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMBase.cpp", extra_cflags=["-RTTI off"]),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation.cpp"),
             Object(
                 Matching,

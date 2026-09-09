@@ -326,7 +326,7 @@ extern "C" __declspec(noinline) void func_8009D7F4(s16* arr, u32 index, void* se
     }
 }
 
-void* cf::CActorParam::CActorParam_UnkVirtualFunc94() {
+void* cf::CActorParam::CActorParam_getArtsDataBlock() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_1650;
 }
 
@@ -418,7 +418,7 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
         }
         if (item2 != NULL) {
             // Slot 0x20C returns the level multiplier directly (its u16 form).
-            u16 mult = (u16)(u32)SELF->mParam.CActorParam_UnkVirtualFunc94();
+            u16 mult = (u16)(u32)SELF->mParam.CActorParam_getArtsDataBlock();
             if ((SELF->field_E6 & 4) != 0) {
                 const char* strBase = lbl_eu_804FBCB0;
                 union { u32 w[2]; f64 d; } c1;
@@ -437,15 +437,15 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
         }
     }
     func_800A30E4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
-    reinterpret_cast<cf::CActorParam*>(&SELF->mParam)->CActorParam_UnkVirtualFunc4(
+    reinterpret_cast<cf::CActorParam*>(&SELF->mParam)->CActorParam_resetArtsStatus(
         reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
     if (lbl_eu_80663E24 & (1 << 20)) {
         reinterpret_cast<cf::CActorParam*>(&SELF->mParam)->CActorParam_UnkVirtualFunc5(1);
     } else {
-        f32 v38 = SELF->mParam.CActorParam_UnkVirtualFunc38();
-        if (SELF->mParam.CActorParam_UnkVirtualFunc37() > v38) {
+        f32 v38 = SELF->mParam.CActorParam_getDamageScale();
+        if (SELF->mParam.CActorParam_getHp() > v38) {
             SELF->mParam.CActorParam_UnkVirtualFunc33(
-                SELF->mParam.CActorParam_UnkVirtualFunc38());
+                SELF->mParam.CActorParam_getDamageScale());
         }
         static_cast<cf::CBattleState*>(&SELF->mParam)->CBattleState_UnkVirtualFunc4(0x35);
     }
@@ -460,7 +460,7 @@ void func_8009DFC8(cf::CtrlObjectParamActorOwner* self) {
     // Activate the owner: init via func_800A30E4, then dispatch virtual
     // slots 0xA4 / 0xA8 through the CActorParam embedded at +0x17C.
     func_800A30E4(self);
-    self->mParam.CActorParam_UnkVirtualFunc4(self);
+    self->mParam.CActorParam_resetArtsStatus(self);
     self->mParam.CActorParam_UnkVirtualFunc5(1);
 }
 
@@ -961,7 +961,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
     reinterpret_cast<cf::CtrlObjectParamEF9CTail*>(&self->mParam)->field_3DA0 = self->field_00;
     if (arg2 == 0) {
         void* bdat = reinterpret_cast<void*>(lbl_eu_80664090);
-        int result = self->mParam.CActorParam_UnkVirtualFunc29();
+        int result = self->mParam.CActorParam_getActorLevel();
         if (result > 0) {
             const char* strBase = lbl_eu_804FBCB0;
             u32 v86 = getBdatStringColumnValue(bdat, &strBase[0x86], self->field_00);
@@ -980,7 +980,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
                 lbl_eu_80666798 * (lbl_eu_8066A1F8 / lbl_eu_8066679C));
             u32 v98 = getBdatStringColumnValue(bdat, &strBase[0x98], self->field_00);
             self->mParam.CActorParam_UnkVirtualFunc14((u8)v98);
-            *reinterpret_cast<u16*>(self->mParam.CActorParam_UnkVirtualFunc165()) |= 7;
+            *reinterpret_cast<u16*>(self->mParam.CActorParam_getBattleHitFlags()) |= 7;
             int rowType = self->field_00;
             if (rowType == 4) {
                 volatile u32 v = getBdatStringColumnValue(
@@ -1026,7 +1026,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             self->mParam.CActorParam_UnkVirtualFunc14((u8)v98);
             cf::CtrlObjectParamStats* record =
                 reinterpret_cast<cf::CtrlObjectParamStats*>(
-                    self->mParam.CActorParam_UnkVirtualFunc94());
+                    self->mParam.CActorParam_getArtsDataBlock());
             // Arts-stat record init (column offsets mirror func_800A0860).
             record->field_00 = (u8)getBdatStringColumnValue(bdat, &strBase[0x83], self->field_00);
             union { u32 w[2]; f64 d; } conv2;
@@ -1045,7 +1045,7 @@ void func_8009EF9C(cf::CtrlObjectParamEF9C* self, u32 arg2) {
             record->field_56 = (u8)vF1;
             volatile u32 vF9 = getBdatStringColumnValue(bdat, &strBase[0xF9], self->field_00);
             record->field_57 = (u8)vF9;
-            *reinterpret_cast<u16*>(self->mParam.CActorParam_UnkVirtualFunc165()) |= 7;
+            *reinterpret_cast<u16*>(self->mParam.CActorParam_getBattleHitFlags()) |= 7;
             int rowType = self->field_00;
             if (rowType == 4) {
                 volatile u32 v = getBdatStringColumnValue(
@@ -1114,7 +1114,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc14(u8 val) {
     unk15F4[0] = val;
 }
 
-void* cf::CActorParam::CActorParam_UnkVirtualFunc165() {
+void* cf::CActorParam::CActorParam_getBattleHitFlags() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_164C;
 }
 
@@ -1147,16 +1147,16 @@ extern "C" void func_8009F6D4(void* selfV) {
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
-        self->mParam.CActorParam_UnkVirtualFunc4(self);
+        self->mParam.CActorParam_resetArtsStatus(self);
     }
-    self->mParam.CActorParam_UnkVirtualFunc156(2);
+    self->mParam.CActorParam_resetTensionState(2);
     cf::CtrlObjectParamF2F4View* rec = reinterpret_cast<cf::CtrlObjectParamF2F4View*>(
         self->mParam.CActorParam_UnkVirtualFunc152());
     const u8* p = reinterpret_cast<const u8*>(rec) + rec->field_02;
     // (f32)(u32): MWCC inline-expands to its own 0x43300000/2^52 .sdata2 pool
     // constant + single-precision fsub/fmul sequence (matches retail bytes).
     s32 x = (s32)(rec->field_10 * (f32)(u32)p[4]);
-    self->mParam.CActorParam_UnkVirtualFunc154(x / 2);
+    self->mParam.CActorParam_raiseTensionValue(x / 2);
     if (actor != 0) {
         void* a3 = func_800B8B94(self->field_00);
         if (a3 != 0) {
@@ -1301,11 +1301,11 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc76() {
 
 extern "C" u32 func_800A082C(void* selfV) {
     cf::CtrlObjectParamActorOwner* self = reinterpret_cast<cf::CtrlObjectParamActorOwner*>(selfV);
-    // Virtual dispatch to CActorParam_UnkVirtualFunc94 (vtable slot 0x20C)
+    // Virtual dispatch to CActorParam_getArtsDataBlock (vtable slot 0x20C)
     // through the param embedded at +0x17C; the caller uses the low 16 bits
     // of the returned struct's first word.
     cf::CtrlObjectParamWordView* p =
-        reinterpret_cast<cf::CtrlObjectParamWordView*>(self->mParam.CActorParam_UnkVirtualFunc94());
+        reinterpret_cast<cf::CtrlObjectParamWordView*>(self->mParam.CActorParam_getArtsDataBlock());
     return p->word0 & 0xFFFF;
 }
 
@@ -1328,7 +1328,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     convB.w[0] = 0x43300000;
     const char* cols = lbl_eu_804FBCB0;
     cf::CtrlObjectParamStats* stats = reinterpret_cast<cf::CtrlObjectParamStats*>(
-        self->mParam.CActorParam_UnkVirtualFunc94());
+        self->mParam.CActorParam_getArtsDataBlock());
 
     // Column results spill to stack slots in retail (stw + later lbz/lhz/lha
     // reloads), reproduced here with volatile locals of the raw return type.
@@ -1351,7 +1351,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
             void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
             func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
         } else {
-            self->mParam.CActorParam_UnkVirtualFunc4(self);
+            self->mParam.CActorParam_resetArtsStatus(self);
         }
     }
     u16 count = stats->field_00;
@@ -1361,7 +1361,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     int cap = 0x3E7;             // display-field cap
     while ((u32)count < val) {
         cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-            self->mParam.CActorParam_UnkVirtualFunc94());
+            self->mParam.CActorParam_getArtsDataBlock());
         u16 target = (u16)(v94->word0 + 1);
         u32 cur = v94->word0;
         while (cur < target && cur < 99) {
@@ -1374,7 +1374,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
         }
         if (item != 0) {
             cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-                self->mParam.CActorParam_UnkVirtualFunc94());
+                self->mParam.CActorParam_getArtsDataBlock());
             u16 w0 = (u16)v94b->word0;
             if ((self->field_E6 & 4) != 0) {
                 u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item))->vf28(reinterpret_cast<CItemData*>(item), &lbl_eu_804FBCB0[0x22]);
@@ -1399,7 +1399,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     }
     stats->field_04 = stats->field_10;
     cf::CtrlObjectParamStats* other = reinterpret_cast<cf::CtrlObjectParamStats*>(
-        self->mParam.CActorParam_UnkVirtualFunc100());
+        self->mParam.CActorParam_getBattleParams());
     *other = *stats;
     void* item2 = 0;
     if (self->shortArr[5] > -1) {
@@ -1407,7 +1407,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     }
     if (item2 != 0) {
         cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-            self->mParam.CActorParam_UnkVirtualFunc94());
+            self->mParam.CActorParam_getArtsDataBlock());
         u16 w0 = (u16)v94->word0;
         if ((self->field_E6 & 4) != 0) {
             u16 v1 = (u16)CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item2))->vf28(reinterpret_cast<CItemData*>(item2), &lbl_eu_804FBCB0[0x22]);
@@ -1422,7 +1422,7 @@ extern "C" void __declspec(noinline) func_800A0860(void* selfV, u16 val) {
     }
 }
 
-void* cf::CActorParam::CActorParam_UnkVirtualFunc100() {
+void* cf::CActorParam::CActorParam_getBattleParams() {
     return &reinterpret_cast<cf::CActorParamRetailView*>(this)->field_17E4;
 }
 
@@ -1441,7 +1441,7 @@ extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
     void* statBdat;
     int i;
     param = reinterpret_cast<cf::CtrlObjectParamStats*>(
-        self->mParam.CActorParam_UnkVirtualFunc94());
+        self->mParam.CActorParam_getArtsDataBlock());
     if (param->field_00 == value) return;
     if (value > 99) return;
     // Loop-invariant handles/constants stay live across
@@ -1480,7 +1480,7 @@ extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
     } while ((u32)i < 4);
     param->field_00 = value;
     cf::CtrlObjectParamStats* other = reinterpret_cast<cf::CtrlObjectParamStats*>(
-        self->mParam.CActorParam_UnkVirtualFunc100());
+        self->mParam.CActorParam_getBattleParams());
     // Field-by-field copy (retail does not struct-assign).
     other->field_00 = param->field_00;
     other->field_04 = param->field_04;
@@ -1534,7 +1534,7 @@ void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
     union { u32 w[2]; double d; } c1;
     union { u32 w[2]; double d; } c2;
     cf::CtrlObjectParamWordView* view = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-        self->mParam.CActorParam_UnkVirtualFunc94());
+        self->mParam.CActorParam_getArtsDataBlock());
     u16 target = (u16)(view->word0 + amount);
     while (amount != 0 && view->word0 < target && view->word0 < 0x63) {
         // one level per iteration; func_800A0E64 updates view->word0
@@ -1546,7 +1546,7 @@ void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
     }
     if (item != 0) {
         cf::CtrlObjectParamWordView* view2 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-            self->mParam.CActorParam_UnkVirtualFunc94());
+            self->mParam.CActorParam_getArtsDataBlock());
         u32 w0 = (u16)view2->word0;
         if ((self->field_E6 & 4) != 0) {
             CItemImpl* impl1 = CItem_initItemImplInstances(reinterpret_cast<CItemData*>(item));
@@ -1591,7 +1591,7 @@ void func_800A13C4(cf::CtrlObjectParamArtsView* self, u32 arg2) {
         void* value = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->field_17C), reinterpret_cast<cf::CActorParam*>(value));
     } else {
-        reinterpret_cast<cf::CActorParam*>(&reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self)->mParam)->CActorParam_UnkVirtualFunc4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
+        reinterpret_cast<cf::CActorParam*>(&reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self)->mParam)->CActorParam_resetArtsStatus(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
     }
 }
 
@@ -1616,7 +1616,7 @@ extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(value), reinterpret_cast<cf::CActorParam*>(&self->mParam));
     } else {
-        self->mParam.CActorParam_UnkVirtualFunc4(self);
+        self->mParam.CActorParam_resetArtsStatus(self);
     }
     func_8003AA34();
     const char* strBase = lbl_eu_804FBCB0;
@@ -1754,7 +1754,7 @@ extern "C" void func_800A18A4(cf::CtrlObjectParamArtsSlotOwner* self, int arg2) 
         void* value = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc126();
         func_80175A50(reinterpret_cast<cf::CActorParam*>(&self->mParam), reinterpret_cast<cf::CActorParam*>(value));
     } else {
-        self->mParam.CActorParam_UnkVirtualFunc4(self);
+        self->mParam.CActorParam_resetArtsStatus(self);
     }
     const char* strBase = lbl_eu_804FBCB0;   // materialized before func_8003AA34 (retail lis/addi r22)
     u16 rowKey = self->field_0C;
@@ -1863,7 +1863,7 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
         }
         if (r28 > 0) break;
         cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-            self->mParam.CActorParam_UnkVirtualFunc94());
+            self->mParam.CActorParam_getArtsDataBlock());
         u16 target = (u16)(v94->word0 + 1);
         u32 cur = v94->word0;
         while (cur < target && cur < 0x63) {
@@ -1876,7 +1876,7 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
         }
         if (item != 0) {
             cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
-                self->mParam.CActorParam_UnkVirtualFunc94());
+                self->mParam.CActorParam_getArtsDataBlock());
             u16 w0 = (u16)v94b->word0;
             if ((self->field_E6 & 4) != 0) {
                 union { u32 w[2]; f64 d; } c1;
@@ -1945,10 +1945,10 @@ extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v
     int tmpIndex;
     int tmpType;
     int diff;
-    u32 result = self->mParam.CActorParam_UnkVirtualFunc29();
+    u32 result = self->mParam.CActorParam_getActorLevel();
     void* actor = func_800B8B94(self->field_00);
     if (actor != 0) {
-        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc29();
+        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getActorLevel();
     }
     a = 0;
     b = 0;
@@ -2085,7 +2085,7 @@ extern "C" void func_800A1CA0(u8* self, int* outLevel, int* outRank,
                 cf::CtrlObjectParamArtsOwner* owner =
                     reinterpret_cast<cf::CtrlObjectParamArtsOwner*>(
                         reinterpret_cast<u8*>(lbl_eu_80663E88) + (u16)id * 0x3DD4);
-                void* result = owner->mParam.CActorParam_UnkVirtualFunc94();
+                void* result = owner->mParam.CActorParam_getArtsDataBlock();
                 ++count;
                 sum += (u16)(reinterpret_cast<cf::CtrlObjectParamWordView*>(result)->word0);
             }
@@ -2578,11 +2578,11 @@ extern "C" u32 func_800A33C8(void* arg) {
     return 0;
 }
 
-void cf::CObjectState::CObjectState_UnkVirtualFunc13() {
+void cf::CObjectState::CObjectState_setStateBitMask3() {
     unkC = unk8;
 }
 
-void* cf::CObjectState::CObjectState_UnkVirtualFunc12() {
+void* cf::CObjectState::CObjectState_setStateBitMask2() {
     return &unkC;
 }
 

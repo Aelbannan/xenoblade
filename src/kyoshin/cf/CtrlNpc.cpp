@@ -149,7 +149,7 @@ void func_8009377C(cf::CtrlNpc* self, u32 param) {
     if (param != c0) {
         if (c0 == 4 || c0 == 5) {
             const ml::CVec3* posf =
-                reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+                reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
             const ml::CVec3* tgt =
                 reinterpret_cast<const ml::CVec3*>(&self->field_AC);
             // Kernel output vector declared first; snapshot copy second.
@@ -227,8 +227,8 @@ gateFail:
 bodyStart:
     {
             if ((NpcCharView(self->field_28)->field_68 & 0x00100000) == 0 &&
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(1) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(1);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
             reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_UnkVirtualFunc14(nullptr, lbl_eu_804FBB0C);
         }
 
@@ -255,7 +255,7 @@ bodyStart:
 
         if ((self->field_2C & 0x10) != 0) {
             // retail keeps this as an int tested with cmpi, not a bool.
-            int ready = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc18();
+            int ready = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_checkTargetState();
             if (ready == 0) {
                 cf::CCtrlNpcSearch* s = NpcCharView(self->field_28)->field_98;
                 if (s != 0 && (s->field_7A4 & 0x00010000) != 0)
@@ -369,14 +369,14 @@ bodyStart:
         goto tail;
 
     tail:
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(4) == 0)
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(4) == 0)
             return;
         if (NpcCharView(self->field_28)->field_C4 == 0)
             return;
         self->field_14 = lbl_eu_80666698;
-        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(self->field_0C);
+        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
         func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
-        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(4);
+        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(4);
             return;
     }
 }
@@ -408,24 +408,24 @@ void func_80093F28(cf::CtrlNpc* self) {
         msg.text[0] = 0;
         msg.len = 0;
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(8) != 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(8) != 0) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc5(0x2000);
         } else {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc7(0x2000);
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_clearStateFlags8(0x2000);
         }
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(1);
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
         } else if (self->field_172 != 0) {
-            f32 d = self->field_178 - reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc31();
+            f32 d = self->field_178 - reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveHeadAngle();
             if (ml::math::abs(d) <= lbl_eu_806666A8)
                 self->field_172 = 0;
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(1) != 0 &&
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0 &&
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
             cf::CfObject* target =
-                (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_UnkVirtualFunc5());
+                (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getSelfObjectId());
             if (target != 0 && NpcCharView(self->field_28)->field_C4 != 0) {
                 int page = (int)func_8004C5EC(NpcCharView(self->field_28)->field_C4);
                 int flag = 1;
@@ -452,11 +452,11 @@ void func_80093F28(cf::CtrlNpc* self) {
                     if (self->field_174 == 0)
                         self->field_174 = (u16)page;
                     if (self->field_172 == 0)
-                        self->field_178 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc31();
+                        self->field_178 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveHeadAngle();
                     const ml::CVec3* selfPos = reinterpret_cast<
-                        const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+                        const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
                     const ml::CVec3* tgtPos = reinterpret_cast<
-                        const ml::CVec3*>(target->CfObject_UnkVirtualFunc23());
+                        const ml::CVec3*>(target->CfObject_getPosVector());
                     // Paired-single kernel: diff = tgt - self, snapshot copy,
                     // then heading from the x/z components.
                     nw4r::math::VEC3Sub(
@@ -468,14 +468,14 @@ void func_80093F28(cf::CtrlNpc* self) {
                     // the copy's f1/f2 loads for the call arguments).
                     f32 h = lbl_eu_806666AC *
                             nw4r::math::Atan2FIdx(diffCopy.x, diffCopy.z);
-                    reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(h);
+                    reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(h);
                     func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
                 } else {
                     self->field_174 = 0;
                 }
             }
             if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(1);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc5(1);
                 if (target != 0)
                     self->field_172 = 1;
@@ -483,9 +483,9 @@ void func_80093F28(cf::CtrlNpc* self) {
         }
 
         // Not in the talk state: run the page cleanup/advance logic.
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(1) == 0) {
-            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc10(1, 0) != 0 && self->field_174 != 0) {
-                reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(self->field_178);
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) == 0) {
+            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(1, 0) != 0 && self->field_174 != 0) {
+                reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_178);
                 func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
                 if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
                     func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
@@ -510,7 +510,7 @@ void func_80093F28(cf::CtrlNpc* self) {
         func_8003AA34();
         void* fp2 = getFP__FPCc(sbuf);
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc10(0x2000, 1) != 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 1) != 0) {
             self->field_17C = 0;
             // Scan the 6 NPC-kind rows; each column gate must pass before the
             // message column is copied into strbuf and handed to the text
@@ -625,12 +625,12 @@ void func_80093F28(cf::CtrlNpc* self) {
                                 3];
             v08.w = getBdatStringColumnValue(fp2, col3, self->field_17C);
             if (v08.b == 0) {
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc7(0x2000);
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc3(8);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_clearStateFlags8(0x2000);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(8);
             }
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc10(0x2000, 0) != 0)
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(0x2000, 0) != 0)
             func_8013D1E8(NpcCharView(self->field_28)->field_74);
     }
 }
@@ -641,7 +641,7 @@ void func_80093F28(cf::CtrlNpc* self) {
 // under the literal retail name with the caller's real arg shape.
 extern "C" void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv(cf::CObjectState* self, int arg) {
     if ((u32)arg < 0x3f)
-        self->CObjectState_UnkVirtualFunc7(0x3f);
+        self->CObjectState_clearStateFlags8(0x3f);
     self->unk8 |= (u32)arg;
 }
 
@@ -674,7 +674,7 @@ void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
 void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
                                         const ml::CVec3* vec, f32 scale,
                                         f32 paramB) {
-    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     const u32* vw = reinterpret_cast<const u32*>(vec);
     u32 px = pos->x;
     u32 py = pos->y;
@@ -703,7 +703,7 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
     f32 len = (len2 <= lbl_eu_80666698) ? lbl_eu_80666698
                                         : len2 * nw4r::math::FrSqrt(len2);
     f32 f0 = (lbl_eu_806666B0 * len) / scale;
-    f0 = f0 / *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc58());
+    f0 = f0 / *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveRateScale());
     f32 f1 = f0 < lbl_eu_806666A8 ? lbl_eu_806666A8
              : (f0 > lbl_eu_806666A4 ? lbl_eu_806666A4 : f0);
     self->field_14 = lbl_eu_80666698;
@@ -714,8 +714,8 @@ void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
     f32 heading = nw4r::math::Atan2FIdx(v2.x, v2.z) * lbl_eu_806666AC;
     self->field_0C = heading;
     if (self->field_28 != 0) {
-        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(heading);
-        if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc9() != 0)
+        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(heading);
+        if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
             func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
     }
 }
@@ -747,7 +747,7 @@ int func_80094D1C(const cf::CtrlNpc* self) {
                 result = 1;
         } else {
             if (self->field_BE == 2) {
-                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc2(1) != 0)
+                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0)
                     result = 0;
                 else
                     result = 1;
@@ -788,7 +788,7 @@ void func_80094E44(cf::CtrlNpc* self, u32 val) {
     self->field_16C = val;
     self->field_16E = val;
     self->field_170 = val;
-    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 x = pos->x;
     u32 y = pos->y;
     self->field_B0.u = y;
@@ -810,7 +810,7 @@ void func_80094EDC(cf::CtrlNpc* self, int r4, int r5, int r6) {
     self->field_16E = ok5 ? r5 : 0;
     int ok6 = (r6 >= 0) && !(r6 >= 0x68);
     self->field_170 = ok6 ? r6 : 0;
-    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 x = pos->x;
     u32 y = pos->y;
     self->field_B0.u = y;
@@ -884,7 +884,7 @@ void func_8009519C() {}
 // getter (vtable +0xac), record it, and either bump the busy counter or reset
 // the movement flag.
 void func_800951A0(cf::CtrlNpc* self) {
-    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    cf::CtrlNpcVec3W* pos = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 x = pos->x;
     self->field_CC = pos->y;
     self->field_C8 = x;
@@ -905,7 +905,7 @@ void func_80095224(cf::CtrlNpc* self) {
     if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0)
         return;
     const ml::CVec3* posf =
-        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     const ml::CVec3* tgt = reinterpret_cast<const ml::CVec3*>(&self->field_C8);
     // Inline VEC3Sub into a stack temp, then a component copy, like retail.
     ml::CVec3* posm = const_cast<ml::CVec3*>(posf);
@@ -938,8 +938,8 @@ void func_80095224(cf::CtrlNpc* self) {
     }
     self->field_0C = f1;
     if (self->field_28 != 0) {
-        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(f1);
-        if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc9() != 0)
+        reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(f1);
+        if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
             func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
     }
     self->field_BE = 2;
@@ -952,7 +952,7 @@ void func_80095450(cf::CtrlNpc* self) {
     // CVec3::sub lowers to the VEC3Sub paired-single kernel into an inner
     // temp plus component copy; retail keeps both stack regions alive.
     const ml::CVec3* posf =
-        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     ml::CVec3 diff =
         *reinterpret_cast<const ml::CVec3*>(&self->field_C8) - *posf;
     f32 rangeSq = self->field_D4 * self->field_D4;
@@ -1101,7 +1101,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         ratio = lbl_eu_80666698;
 
     // Minimum progress implied by the character's movement rate.
-    f32 scale = *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc58());
+    f32 scale = *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveRateScale());
     f32 prog = reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc60();
     f32 adj = lbl_eu_806666C8 *
               (f32)((f64)(int)self->field_16A * (prog * scale)) /
@@ -1120,7 +1120,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
     pt.y = *reinterpret_cast<const f32*>(&self->field_E0[0].y);
     pt.z = *reinterpret_cast<const f32*>(&self->field_E0[0].z);
 
-    f32 heading = reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc31();
+    f32 heading = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveHeadAngle();
     flag20 = lbl_eu_80663E28 & 0x20;
 
     if (!(ratio >= lbl_eu_806666A4)) {
@@ -1150,7 +1150,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         }
 
         const ml::CVec3* pos =
-            reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc23());
+            reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector());
         ml::CVec3 d = pt - *pos;
         f32 lenSq = d.x * d.x + d.z * d.z;
         bool far = lenSq > lbl_eu_806666D4 ||
@@ -1183,8 +1183,8 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             } else {
                 self->field_0C = heading;
                 if (ch != 0) {
-                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc29(self->field_0C);
-                    if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc9() != 0)
+                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveHeadAngle(self->field_0C);
+                    if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_isMoveActiveNow() != 0)
                         func_800BE12C((u8*)ch, 3, 0, -1, 1);
                 }
             }
@@ -1195,8 +1195,8 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             } else {
                 self->field_0C = heading;
                 if (ch != 0) {
-                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc29(self->field_0C);
-                    if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc9() != 0)
+                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveHeadAngle(self->field_0C);
+                    if (reinterpret_cast<cf::CfObject*>(ch)->CfObject_isMoveActiveNow() != 0)
                         func_800BE12C((u8*)ch, 3, 0, -1, 1);
                 }
             }
@@ -1213,7 +1213,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         nw4r::math::Atan2FIdx(hd.x, hd.z);
         reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc26(&last, lbl_eu_806666D0);
         func_804B0B54((u8*)ch + 0x60C,
-                      reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc23()));
+                      reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector()));
 
         f32 f158 = self->field_158;
         if ((int)f158 != 0x168) {
@@ -1246,7 +1246,7 @@ void func_80095F44(cf::CtrlNpc* self) {
     ml::CVec3* curTgt =
         reinterpret_cast<ml::CVec3*>(&self->field_E0[idx]);
     const ml::CVec3* posf =
-        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+        reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     // Kernel diff + component copy (same shape as func_80093F28).
     ml::CVec3 diff = *curTgt - *posf;
     f32 distSq = diff.x * diff.x + diff.z * diff.z;
@@ -1331,8 +1331,8 @@ void func_80095F44(cf::CtrlNpc* self) {
             if ((int)f158 != 0x168) {
                 self->field_0C = f158 * lbl_eu_8066A210;
                 if (obj2 != 0) {
-                    reinterpret_cast<cf::CfObject*>(obj2)->CfObject_UnkVirtualFunc29(self->field_0C);
-                    if (reinterpret_cast<cf::CfObject*>(obj2)->CfObject_UnkVirtualFunc9() != 0)
+                    reinterpret_cast<cf::CfObject*>(obj2)->CfObject_setMoveHeadAngle(self->field_0C);
+                    if (reinterpret_cast<cf::CfObject*>(obj2)->CfObject_isMoveActiveNow() != 0)
                         func_800BE12C((u8*)obj2, 3, 0, -1, 1);
                 }
             }
@@ -1348,7 +1348,7 @@ void func_80095F44(cf::CtrlNpc* self) {
         // MWCC emit kernel + return-temp copy + assign-copy, matching the
         // three retail stack regions.
         const ml::CVec3* pos2 = reinterpret_cast<const ml::CVec3*>(
-            reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+            reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
         ml::CVec3* tgt2 = reinterpret_cast<ml::CVec3*>(
             &self->field_E0[self->field_C4]);
         diff = *tgt2 - *pos2;
@@ -1360,7 +1360,7 @@ void func_80095F44(cf::CtrlNpc* self) {
     self->field_0C = lbl_eu_806666AC * ang;
     self->field_14 = self->field_D8 *
                      (f32)(f64)frames;
-    cf::CtrlNpcVec3W* posw = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    cf::CtrlNpcVec3W* posw = reinterpret_cast<cf::CtrlNpcVec3W*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     u32 px = posw->x;
     u32 py = posw->y;
     self->field_B0.u = py;
@@ -1387,7 +1387,7 @@ void func_80096488(cf::CtrlNpc* self) {
 // move helper; otherwise decay the remaining-duration timer and advance the
 // action state.
 int func_800964EC(cf::CtrlNpc* self) {
-    ml::CVec3* posf = reinterpret_cast<ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc23());
+    ml::CVec3* posf = reinterpret_cast<ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
     ml::CVec3* tgt = reinterpret_cast<ml::CVec3*>(&self->field_E0[1]);
     // operator- emits the paired-single diff kernel matching retail.
     ml::CVec3 diff = *tgt - *posf;
@@ -1426,8 +1426,8 @@ int func_800964EC(cf::CtrlNpc* self) {
     if (self->field_158 < lbl_eu_80666714) {
         self->field_0C = self->field_158 * lbl_eu_8066A210;
         if (self->field_28 != 0) {
-            reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc29(self->field_0C);
-            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc9() != 0)
+            reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_0C);
+            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_isMoveActiveNow() != 0)
                 func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
         }
     }

@@ -332,11 +332,11 @@ extern "C" void func_8020D998(WarpData* self) {
             WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
+                u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
                 if (func_80174C98(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
-                        tail->CObjectState_UnkVirtualFunc1(0x200);
+                    if (!tail->CObjectState_checkStateFlags(0x200)) {
+                        tail->CObjectState_setStateBitMask(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -412,11 +412,11 @@ extern "C" void func_8020D998(WarpData* self) {
             WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-                u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
+                u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
                 if (func_80174C98(player, &value, 0x803) != 0) {
                     cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-                    if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
-                        tail->CObjectState_UnkVirtualFunc1(0x200);
+                    if (!tail->CObjectState_checkStateFlags(0x200)) {
+                        tail->CObjectState_setStateBitMask(0x200);
                     }
                     self->state = 4;
                     self->timer = lbl_eu_806683C8;
@@ -525,11 +525,11 @@ extern "C" void func_8020DF04(WarpData* self) {
     WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
-        u32 value = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
+        u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
         if (func_80174C98(player, &value, 0x803) != 0) {
             cf::CfObjectMove* tail = reinterpret_cast<cf::CfObjectMove*>(reinterpret_cast<u8*>(player) + 0x3E9C);
-            if (!tail->CObjectState_UnkVirtualFunc2(0x200)) {
-                tail->CObjectState_UnkVirtualFunc1(0x200);
+            if (!tail->CObjectState_checkStateFlags(0x200)) {
+                tail->CObjectState_setStateBitMask(0x200);
             }
             self->state = 4;
             self->timer = lbl_eu_806683C8;
@@ -638,9 +638,9 @@ extern "C" void func_8020E3F0(WarpData* self) {
             continue;
         }
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(ctl) + 4);
-        u32 stateA = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
+        u32 stateA = *static_cast<u32*>(sub->CObjectState_getStateData());
         if (func_80174C98(ctl, &stateA, 8) == 0) {
-            u32 stateB = *static_cast<u32*>(sub->CObjectState_UnkVirtualFunc11());
+            u32 stateB = *static_cast<u32*>(sub->CObjectState_getStateData());
             if (func_80174C98(ctl, &stateB, 7) == 0) {
                 continue;
             }
@@ -772,7 +772,7 @@ extern "C" void func_8020E704(WarpData* self) {
             if (func_8019876C(&out68, &out4c) != 0) {
                 reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&out4c));
                 reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc30(distance);
-                WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_UnkVirtualFunc48());
+                WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_getCurrentTarget());
                 if (object != 0) {
                     func_80199810(object->field_8c, &centre);
                 }
@@ -781,7 +781,7 @@ extern "C" void func_8020E704(WarpData* self) {
 
         cf::CObjectState* manager = reinterpret_cast<cf::CObjectState*>(getCameraDataBlock__Q22cf13CfGameManagerFv());
         if (manager != 0) {
-            manager->CObjectState_UnkVirtualFunc2(0);
+            manager->CObjectState_checkStateFlags(0);
         }
         self->state = 7;
         self->timer = lbl_eu_806683D0;

@@ -667,7 +667,7 @@ void func_801AA04C(void* param) {
 // ----------------------------------------------------------------------------
 
 // CfGameManager imports (retail mangled symbols). Player objects are
-// cf::CfObject instances; the +0xAC slot is CfObject_UnkVirtualFunc23.
+// cf::CfObject instances; the +0xAC slot is CfObject_getPosVector.
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern "C" u32 getCurrentSlotIndex__Q22cf13CfGameManagerFv();
 extern "C" u32 getControllerWordA33C__Q22cf13CfGameManagerFv();
@@ -934,7 +934,7 @@ void func_801AA2A8(UpdWork* self) {
             // Retail forwards the +0xAC position pointer into r4 (unused by
             // the callee); keep the forwarding so the call shape matches.
             func_801A96A0((SndCtrlObj*)((char*)entry + 0x20),
-                          player->CfObject_UnkVirtualFunc23(), prio,
+                          player->CfObject_getPosVector(), prio,
                           (int)((char*)entry));
         } else {
             // Not playing this frame: fade out and clear any active handle.

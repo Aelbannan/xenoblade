@@ -509,9 +509,9 @@ void CMenuBattlePlayerState::Init() {
                 }
                 slot.unk218 = slot.unk21C = actor->CActorParam_UnkVirtualFunc91();
                 slot.unk210 = static_cast<u32>(
-                    actor->CActorParam_UnkVirtualFunc37());
+                    actor->CActorParam_getHp());
                 slot.unk214 = static_cast<u32>(
-                    actor->CActorParam_UnkVirtualFunc38());
+                    actor->CActorParam_getDamageScale());
             }
         }
 
@@ -633,8 +633,8 @@ after_bit21:
             slot = &mSlots[i];
             func_8010D1B4(this, actor, slot);
 
-            hp = static_cast<u32>(actor->CActorParam_UnkVirtualFunc37());
-            maxHp = static_cast<u32>(actor->CActorParam_UnkVirtualFunc38());
+            hp = static_cast<u32>(actor->CActorParam_getHp());
+            maxHp = static_cast<u32>(actor->CActorParam_getDamageScale());
 
             // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
@@ -651,15 +651,15 @@ after_bit21:
             slot->unk204 = static_cast<u8>(
                 reinterpret_cast<MenuBpsActorFields*>(actor)->unk3f28);
             slot->unk208 = reinterpret_cast<u32>(
-                actor->CActorParam_UnkVirtualFunc127());
+                actor->CActorParam_getStatusTable());
 
             {
-                u32 statusId = actor->CActorParam_UnkVirtualFunc29();
+                u32 statusId = actor->CActorParam_getActorLevel();
                 if (slot->unk20C != statusId) {
                     slot->unk25C |= 0x1;
                 }
             }
-            slot->unk20C = actor->CActorParam_UnkVirtualFunc29();
+            slot->unk20C = actor->CActorParam_getActorLevel();
 
             if (slot->unk210 != hp) {
                 goto hp_dirty;
@@ -733,7 +733,7 @@ after_bit21:
                     cf::CfObjectMove* player =
                         cf::CfGameManager::getPlayer(0);
                     if (player != NULL) {
-                        int id = player->CObjectParam_UnkVirtualFunc5();
+                        int id = player->CObjectParam_getSelfObjectId();
                         if (id != 0) {
                             Func800B708C_Ret* handle = reinterpret_cast<Func800B708C_Ret*>(findObjectById(id));
                             if (handle != NULL) {
@@ -1362,7 +1362,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
                 cursor = 0;
             }
             cf::CBattleStateEntry* rec =
-                actor->CBattleState_UnkVirtualFunc22(
+                actor->CBattleState_getEventEntry(
                     static_cast<int>(cursor & 0xFF));
             if (rec->unk30 != 0x800 && rec->unk0C != 0 && rec->unk0C != 0xF &&
                 rec->unk0C != 0x10 && rec->unk0C != 0x12) {
@@ -1401,7 +1401,7 @@ void func_8010D1B4(CMenuBattlePlayerState* self,
         // u8 counter: retail zero-extends it for the Func21 arg and derives
         // the ids index as j*2 from the extended value.
         for (u8 j = 0; j < 32; j++) {
-            actor->CBattleState_UnkVirtualFunc21(j);
+            actor->CBattleState_fetchStatusEntry(j);
             MenuBpsActorBattleHead* head =
                 reinterpret_cast<MenuBpsActorBattleHead*>(actor);
             ids[j] = (head->unk38 == 0x800u) ? 0 : head->unk14;

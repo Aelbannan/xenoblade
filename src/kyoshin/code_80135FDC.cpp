@@ -2500,7 +2500,7 @@ extern "C" void func_8013ACFC() {
     XBMapTable1 t1 = *(const XBMapTable1*)&tbl[0x418];
 
     cf::CfObject* pif = (cf::CfObject*)player;
-    nw4r::math::VEC3* pos = (nw4r::math::VEC3*)pif->CfObject_UnkVirtualFunc23();
+    nw4r::math::VEC3* pos = (nw4r::math::VEC3*)pif->CfObject_getPosVector();
     f32 sx = pos->x / scale * lbl_eu_80667344;
     f32 sy = pos->y;
     f32 sz = pos->z / scale * lbl_eu_80667344;

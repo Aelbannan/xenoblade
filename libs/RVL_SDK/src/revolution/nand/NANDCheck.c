@@ -20,9 +20,9 @@ const char* USER_DIR_LIST[] = {
 
 void nandUserAreaCallback(s32 result, void* arg);
 
-/* Land at retail 0xAC / 0xC4; postprocess renames + sizes to lbl_805512*. */
+/* Land at retail 0xAC / 0xC4; postprocess renames + sizes to lbl_805512*. Raw MATCH: no trailing pad. */
 static char s_nandUserAreaCallbackName[] = "nandUserAreaCallback";
-static char s_nandUserAreaCallbackFmt[] = "Illegal status is detected at %s()\0";
+static char s_nandUserAreaCallbackFmt[] = "Illegal status is detected at %s()";
 
 static u32 nandCheck(u32 reqBlocks, u32 reqInodes, u32 homeBlocks,
                      u32 homeInodes, u32 userBlocks, u32 userInodes) {

@@ -3364,7 +3364,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     if (actor != nullptr) {
         crystalCount = actor->field_3f2c;
         if (crystalCount == 0) ready = 0;
-        if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc9() == 0) ready = 0;
+        if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_isMoveActiveNow() == 0) ready = 0;
         if (sub->field_5a4 == 0) {
             if (sub->field_5a0 == 0) {
                 // Load the crystal model file for this actor.

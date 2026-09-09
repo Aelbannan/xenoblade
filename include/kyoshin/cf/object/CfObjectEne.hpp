@@ -1205,7 +1205,7 @@ extern "C" void func_800ADDA8__Q22cf11CfObjectEneFv(void* self);
 // MI hierarchy per the headers; see the CfObjectActor dtor note in
 // CfObjectEne.cpp). Plain C++ declaration keeps the verbatim name.
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self);
-extern "C" void CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);
 extern "C" void updateEnemyBattleState__Q22cf11CfObjectEneFv(void* self);

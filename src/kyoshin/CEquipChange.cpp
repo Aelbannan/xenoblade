@@ -35,7 +35,7 @@
 // itemimplshim macro from CItemBoxInfo.hpp (other TUs keep using it).
 #undef CItem_initItemImplInstances
 #include "monolib/device/CDeviceFont.hpp"  // IDeviceFontInfo::getFont (+0x24)
-#include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam_UnkVirtualFunc100 (+0x224)
+#include "kyoshin/cf/object/CActorParam.hpp"  // CActorParam_getBattleParams (+0x224)
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -1175,9 +1175,9 @@ extern "C" void func_802042C0(CEquipChange* self) {
     CBdatCharData* cd = (CBdatCharData*)func_8009EC9C(func_801392B4(self->field_99));
     func_800A13C4(cd, 1);
     // Stats sub-object at +0x17C is an embedded cf::CActorParam; refresh it
-    // through its real +0x224 slot (CActorParam_UnkVirtualFunc100), not a
+    // through its real +0x224 slot (CActorParam_getBattleParams), not a
     // manual vtable-word call (CfNandManager subSlot precedent).
-    ((cf::CActorParam*)((u8*)cd + 0x17C))->CActorParam_UnkVirtualFunc100();
+    ((cf::CActorParam*)((u8*)cd + 0x17C))->CActorParam_getBattleParams();
     func_8009D7E4(&cd->field_1C, 5);
 
     s16 w4 = cd->field_1C;

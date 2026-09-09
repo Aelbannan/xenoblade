@@ -1084,7 +1084,7 @@ void func_8024830C(void* self, void* arg2) {
         void* player = cf::CfGameManager::getPlayer(0);
         if (player == NULL)
             goto done;
-        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
+        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_getPosVector();
         result[0] = pos->x;
         result[1] = pos->y;
         result[2] = pos->z;
@@ -1801,7 +1801,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
                  node = node->next) {
                 CFloorMapObj* obj = (CFloorMapObj*)node->object;
                 if (obj->m8C != rowId) continue;
-                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_UnkVirtualFunc23();
+                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_getPosVector();
                 sprintf(buf, &tbl[0x3BC], obj->m74);
                 placed = 1;
                 found = 1;
@@ -1846,7 +1846,7 @@ void func_80249C1C(CFloorMapLayoutSlots* slots) {
                 CFloorMapObj* obj = (CFloorMapObj*)node->object;
                 if (!((obj->m64 & 0x4000) || (obj->m64 & 0x8000))) continue;
                 if (obj->m8C != rowId) continue;
-                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_UnkVirtualFunc23();
+                foundPos = *(nw4r::math::VEC3*)((cf::CfObject*)obj)->CfObject_getPosVector();
                 sprintf(buf, &tbl[0x3ED], obj->m74);
                 placed = 1;
                 break;
@@ -2017,7 +2017,7 @@ void func_8024A448(void* self) {
         // Word-wise snapshot of the position; the y is cached in a scalar so
         // MWCC dedicates a callee-saved FPR to it across the row loop
         // (retail f26).
-        CFloorMapVec3 pv = *(CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
+        CFloorMapVec3 pv = *(CFloorMapVec3*)((cf::CfObject*)g)->CfObject_getPosVector();
         f32 py = pv.y;
 
         u8 found = 0;
@@ -2105,7 +2105,7 @@ void func_8024A748(void* self) {
             for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
-                CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
+                CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_getPosVector();
                 vec.x = pos->x;
                 vec.y = pos->y;
                 vec.z = pos->z;
@@ -2138,7 +2138,7 @@ void func_8024A748(void* self) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if ((g->m64 & 0x8000) != 0 || (g->m64 & 0x10000) != 0) {
                     if (g->m8C == (u16)type) {
-                        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
+                        CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_getPosVector();
                         vec.x = pos->x;
                         vec.y = pos->y;
                         vec.z = pos->z;
@@ -2156,7 +2156,7 @@ void func_8024A748(void* self) {
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if (g->m8C == (u16)type) {
-                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
+                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_getPosVector();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
@@ -2206,7 +2206,7 @@ void func_8024A748(void* self) {
                  node = node->next) {
                 CFloorMapObj* g = (CFloorMapObj*)node->object;
                 if (g->m8C == (u16)type) {
-                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_UnkVirtualFunc23();
+                    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)g)->CfObject_getPosVector();
                     vec.x = pos->x;
                     vec.y = pos->y;
                     vec.z = pos->z;
@@ -2312,7 +2312,7 @@ void func_8024AEEC(void* self) {
 
     void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
-    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
+    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_getPosVector();
     u8 found = 0;
     // Word-wise snapshot so the position lives in frame slots (retail
     // 0x40-0x4B) instead of nonvolatile FPRs across the table walk.
@@ -2424,7 +2424,7 @@ void func_8024B234(CFloorMapFull* self) {
     void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
 
-    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
+    CFloorMapVec3* pos = (CFloorMapVec3*)((cf::CfObject*)player)->CfObject_getPosVector();
     // Word-wise snapshot so the loop compares a cached float (retail f30)
     // and the projection reads pre-projection x/z.
     ((u32*)&ppos)[0] = ((u32*)pos)[0];
@@ -2471,7 +2471,7 @@ void func_8024B234(CFloorMapFull* self) {
     root->AppendChild((nw4r::lyt::Pane*)pic);
 
     // Scale the marker by the player object's zoom factor.
-    f32 zoom = ((cf::CfObject*)player)->CfObject_UnkVirtualFunc31();
+    f32 zoom = ((cf::CfObject*)player)->CfObject_getMoveHeadAngle();
     // Reset of the position snapshot: dead in retail but kept by MWCC since
     // ppos's address was taken for the word-wise copy above.
     ppos.y = lbl_eu_80668764;
@@ -4468,7 +4468,7 @@ u32 func_8024FB78(void*) {
                 for (u8 i = 1; i <= count; i++) {
                     // Compare floor height against player y in double precision.
                     s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-                    f32 y = ((cf::CfObject*)player)->CfObject_UnkVirtualFunc23()->y;
+                    f32 y = ((cf::CfObject*)player)->CfObject_getPosVector()->y;
                     conv.w[1] = (u32)(s16)val ^ 0x80000000;
                     conv.w[0] = 0x43300000;
                     if ((f32)(conv.d - lbl_eu_80668770) > y) {

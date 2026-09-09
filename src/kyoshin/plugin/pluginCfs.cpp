@@ -1200,7 +1200,7 @@ int makeParty(VMThread* pThread) {
     return 0;
 }
 
-float cf::CfObject::CfObject_UnkVirtualFunc31() {
+float cf::CfObject::CfObject_getMoveHeadAngle() {
     return *(float*)((u8*)this + 0x4C);
 }
 
@@ -2017,7 +2017,7 @@ void func_8004A400() {
     // Intentionally empty
 }
 
-void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
+void* CfObject_getCurrentTarget__Q22cf12CfObjectMoveFv(void* self) {
     void* ptr = *(void**)((u8*)self + 0xC4);
     if (ptr == NULL) {
         return *(void**)((u8*)self + 0x6C0);

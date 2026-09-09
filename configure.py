@@ -1951,7 +1951,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnMaruShadowNw4r.cpp"),  # NOT GC/3.0a5.2 (tested 2026: EA48/EA74 regress 100->90, ctor unchanged 75); ctor open item = source-shape scheduling
             Object(NonMatching, "monolib/src/scn/CScnMem.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnRoot.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnRootNw4r.cpp"),
+            Object(NonMatching, "monolib/src/scn/CScnRootNw4r.cpp", extra_cflags=["-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0x40 strings, .sdata 0); -RTTI off kills duplicate type name + __RTTI__ copy
             Object(NonMatching, "monolib/src/scn/CScnTexWorkMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnVirtualLight.cpp"),
             Object(NonMatching, "monolib/src/scn/code_8049431C.cpp"),
@@ -2001,7 +2001,7 @@ config.libs = [
             Object(Matching, "monolib/src/effect/CERand.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804DB938.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
-            Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),  # NEW angle wave-8 retry: retail has no RTTI structs in TU (.data head is sdata ptr+0, .rodata 0xC "CPackItem", .sdata 0x8 pair); -RTTI off kills MWCC duplicate type names + __RTTI__ copies
             Object(NonMatching, "monolib/src/core/CArcItem.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: func_804DFB88 duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for func_804DF4BC path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),

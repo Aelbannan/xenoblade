@@ -254,7 +254,7 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
     return (unk6 & mask) != 0;
 }
 
-// vt+0x4C tail-call: this->CBattleState_UnkVirtualFunc18(entry).
+// vt+0x4C tail-call: this->CBattleState_getLinkedActorId(entry).
 
 // exclusively. Do not touch the ctor / vfunc6 / other vfuncs above.
 //
@@ -282,7 +282,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
         int stillActive;
 
         if ((entry->unk30 & mask) != 0) {
-            this->CBattleState_UnkVirtualFunc18(entry);
+            this->CBattleState_getLinkedActorId(entry);
             id = entry->unk0C;
             memset(entry, 0, 0x34);
 
@@ -467,7 +467,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
     }
 }
 
-// Batch 2026-07-14j: battlestate-vfunc8 owns CBattleState_UnkVirtualFunc8
+// Batch 2026-07-14j: battlestate-vfunc8 owns CBattleState_applyEventEntry
 // exclusively. Do not touch ctor / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
@@ -478,7 +478,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
 // vt+0x2C -> id-dup scan / clear unk15AC bit -> vt+0x4C; stop early if
 // arg->unk0C == 0.
 //
-// Duplicate of findBattleEntry for CBattleState_UnkVirtualFunc8: a separate
+// Duplicate of findBattleEntry for CBattleState_applyEventEntry: a separate
 // static body lets -ipa inline it there independently.
 static int isBattleIdUsed(cf::CBattleState* self, u32 id) {
     cf::CBattleStateEntryArray* v;
@@ -496,7 +496,7 @@ static int isBattleIdUsed(cf::CBattleState* self, u32 id) {
 // vt+0x2C/+0x48/+0x4C dispatches are direct member calls:
 // CBattleState_UnkVirtualFunc10 / 17 / 18.
 
-void cf::CBattleState::CBattleState_UnkVirtualFunc8(cf::CBattleStateEntry* entry) {
+void cf::CBattleState::CBattleState_applyEventEntry(cf::CBattleStateEntry* entry) {
     // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
     // r28/r29 and one/thirteen in r26/r27 (block-local slot/i stole r27/r28).
     cf::CBattleStateEntry* slot;
@@ -758,7 +758,7 @@ kind_done:
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        this->CBattleState_UnkVirtualFunc18(
+        this->CBattleState_getLinkedActorId(
             (cf::CBattleStateEntry*)savedWords);
 
         if (entry->unk0C == 0) {
@@ -1064,7 +1064,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        this->CBattleState_UnkVirtualFunc18(
+        this->CBattleState_getLinkedActorId(
             (cf::CBattleStateEntry*)savedWords);
     }
 }
@@ -1803,7 +1803,7 @@ F_slot_done:
 }
 
 // func_80145C00: r3 = status id. Classifies the id through the same
-// cmpwi/beq/bge decision tree as CBattleState_UnkVirtualFunc8 (kind 0/1/2/3)
+// cmpwi/beq/bge decision tree as CBattleState_applyEventEntry (kind 0/1/2/3)
 // and returns (kind == 3) via the branchless subi/cntlzw/srwi boolify.
 // Flat if+goto mirrors retail's tree 1:1; shared kind leaves keep the
 // single merge at the end (retail 0x801467B0).
@@ -2136,7 +2136,7 @@ extern "C" bool func_80146384(unsigned int value) { return value - 0x125u <= 5u;
 extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
 extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0; }
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
-extern "C" void CBattleState_UnkVirtualFunc18__Q22cf12CBattleStateFv() {}
+extern "C" void CBattleState_getLinkedActorId__Q22cf12CBattleStateFv() {}
 
 // Batch 2026-08: battlestate-vfunc12 owns CBattleState_UnkVirtualFunc12
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
@@ -2382,16 +2382,16 @@ extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(
         (const WordBlock*)&((cf::CBattleStateEntryArray*)self)->entries[id];
 
     *dst = *src;
-    self->CBattleState_UnkVirtualFunc8(&entry);
+    self->CBattleState_applyEventEntry(&entry);
 }
 
-// Batch 2026-08: battlestate-vfunc7 owns CBattleState_UnkVirtualFunc7
+// Batch 2026-08: battlestate-vfunc7 owns CBattleState_clearStatusId
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
 // in r4 (fake-Fv ABI, same as UnkVirtualFunc9/12). Guards: id >= 0x12f,
 // id == 0, and func_80148778(self, id) == 0 all bail early. Otherwise
 // builds a zeroed CBattleStateEntry (unk0C = id, unk30 |= 0x200,
 // unk2E = id) and dispatches it through vt+0x24 (UnkVirtualFunc8).
-extern "C" void CBattleState_UnkVirtualFunc7__Q22cf12CBattleStateFv(
+extern "C" void CBattleState_clearStatusId__Q22cf12CBattleStateFv(
     cf::CBattleState* self, u32 id) {
     cf::CBattleStateEntry entry;
 
@@ -2409,7 +2409,7 @@ extern "C" void CBattleState_UnkVirtualFunc7__Q22cf12CBattleStateFv(
     entry.unk0C = id;
     entry.unk30 |= 0x200;
     entry.unk2E = id;
-    self->CBattleState_UnkVirtualFunc8(&entry);
+    self->CBattleState_applyEventEntry(&entry);
 }
 
 // func_80148778: r3 = self, r4 = status id. Returns whether status `id` is

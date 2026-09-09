@@ -159,7 +159,7 @@ struct CModelDispParamSlot {
 
 // (was a move-dispatch pad here: virtual dispatch on the actor's embedded CfObjectMove
 // (actor+0x3E9C) at +0x74 (no args), +0x148 (index arg), +0x184 / +0x188
-// (no args). These are cf::CfObject::CfObject_UnkVirtualFunc9 (bool, +0x74),
+// (no args). These are cf::CfObject::CfObject_isMoveActiveNow (bool, +0x74),
 // cf::CfObject::CfObject_UnkVirtualFunc62 (u32, +0x148, widened to the retail
 // index arity), cf::CfObjectModel::CfObjectModel_UnkVirtualFunc4 (void*,
 // +0x184) and CfObjectModel_UnkVirtualFunc5 (u32, +0x188); call sites now use

@@ -25,7 +25,7 @@ namespace cf{
 void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
-        (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
+        (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_getMoveRecord();
     CChainCombo_ArtsCategory* category = (CChainCombo_ArtsCategory*)holder->mArtsCategory;
     int newArtsType = category->mArtsCategory;
     int oldArtsType = self->mArtsType;
@@ -53,12 +53,12 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending != 0) {
-        // Slot +0x4C is CObjectParam_UnkVirtualFunc5 on the CfObjectMove
+        // Slot +0x4C is CObjectParam_getSelfObjectId on the CfObjectMove
         // sub-object at actor+0x3E9C (same shape as CAIAction aiMoveBaseVt4C);
         // its id result resolves through findObjectById -> func_8016FE34 to
         // a CActorParam whose slot +0x184 is CActorParam_UnkVirtualFunc60.
         cf::CActorParam* vobj = (cf::CActorParam*)func_8016FE34(findObjectById(
-            ((cf::CObjectParam*)((u8*)actor + 0x3E9C))->CObjectParam_UnkVirtualFunc5()));
+            ((cf::CObjectParam*)((u8*)actor + 0x3E9C))->CObjectParam_getSelfObjectId()));
 
         if (vobj != nullptr) {
             // Random selection from a 3-entry table based on probability thresholds.

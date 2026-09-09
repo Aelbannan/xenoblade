@@ -179,7 +179,7 @@ struct CErrMesOwner {
 
 // CfObjectMove-like view (func_8016FE34 result / error-message owner): the
 // embedded CObjectParam sub-object sits at +0x3E9C and its +0x4C virtual
-// (CObjectParam_UnkVirtualFunc5) returns the actor/action id fed to
+// (CObjectParam_getSelfObjectId) returns the actor/action id fed to
 // findObjectById.
 struct CErrMesObjView {
     u8 _00[0x3E9C];
@@ -189,7 +189,7 @@ struct CErrMesObjView {
 // Voice/actor record base (func_8016FE34 result, e.g. func_802B5970's actor
 // sources and func_802B5254's candidate): vtable at +0 is the real actor
 // table (cf::CActorParam lineage; the voice-idle check is slot 138 at 0x2BC
-// via CActorParam_UnkVirtualFunc138, same as CVS_THREAD_HAGE / CBattleManager),
+// via CActorParam_isBattleLocked, same as CVS_THREAD_HAGE / CBattleManager),
 // +0x4 is the actor-state sub-object (slot 0x30 via cf::CHelpBattleSub4::vf30
 // from CTitle.hpp), and +0x3E9C is the embedded voice-owner interface
 // (getPosition at 0xAC). Plain data - the pad vtables are gone.

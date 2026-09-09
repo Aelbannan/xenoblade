@@ -223,7 +223,7 @@ case studies of that contract.
   fake SI with a **non-polymorphic base** — `struct Shift { char pad[0x10]; };
   struct ObjVtIf : Shift { virtual … };` puts the vptr at obj+0x10 and MWCC
   emits the retail form byte-for-byte (vptr load into r12, this stays obj).
-  CfObjectMove CfObject_UnkVirtualFunc9/10/61/62, CfObjectModel_UnkVirtualFunc6,
+  CfObjectMove CfObject_isMoveActiveNow/10/61/62, CfObjectModel_UnkVirtualFunc6,
   func_800BEE1C/800BF29C/B0/CC/E0/F8/eu_800BFC7C — all FULL_MATCH.
 
 - **`extern const float` hoists the sdata2 pool load above the frame stores:**
@@ -8130,7 +8130,7 @@ never use the inline-empty form (weak-copy budget spread).
   stack struct, vt[46](obj, &vec, float-const), flag-gated func_800BDB4C
   (0xAFA40000 + unk64&8), obj==getPlayer(0) + 0x00400000 gate for
   func_80085878. 0 structural.
-- `CObjectState_UnkVirtualFunc10` (0xcc): two vt-dispatch branches with INVERTED
+- `CObjectState_setStateBitMask0` (0xcc): two vt-dispatch branches with INVERTED
   tests per arg2 (vt[10] then vt[9](self,arg)); the `result = 0` init must be
   duplicated inside EACH branch (retail `li r31, 0` at both) — a single pre-init
   gets elided to one store.
@@ -10741,3 +10741,28 @@ intermediate forms do not break the coalescing.
 - Applies to/a.k.a.: CfCamEvent_1.cpp bodies (holds the tables); CfCamEvent.hpp vtable
   (24 decls, missing 0x68-0x74 - separate task); CfGameManager unity-helpers raw-vt
   pads (separate task, out of scope).
+
+## CfObjectModel UVF7 (+0x190) - argument-forwarding tail call (Wii/1.1, FULL_MATCH)
+- Symptom:   decomp 0x28 (addi r4 + lfs f1 setup, bctrl+blr) vs retail 0x20 (no setup, bctr tail call into sub slot +0xB4)
+- Cause:     slot really takes (pos, scale) in r4/f1; Fv name/parameter-less decl hid the arity (same family as CfObject UVF19/25/26/35)
+- Fix:       widen member decl (ml::CVec3*, float) + free-function def (UVF55/70/72 precedent: vtable bare-Fv ref resolves to the re-mangled DEF); forward (pos, scale) untouched; DROP the extern "C" Fv decl for the widened name (second decl makes the vtable use site ambiguous -> 10247 error). Member-def form does NOT work (vtable ref goes UNDEF).
+- Result:    FULL_MATCH 0x20/0x20, split -8
+- Applies to/a.k.a.: Model UVF7 sub-B4 forward; func_800BBA7C is the same shape (free function, r4 rides along)
+
+## CfObjectModel UVF14 (+0x1AC) - prologue register-cache order + || branch shape (Wii/1.1, FULL_MATCH)
+- Symptom:   6.7%: prologue cached r30/r29 up front but r31 late; || pair emitted bne-fallthrough + extra b (+4 bytes)
+- Cause:     retail caches name->r31 FIRST (or r31,r5 before stw r30); retail null-checks beq straight to the epilogue
+- Fix:       hoist const char* target = name to function top; pass target (not name) to the UVF52 call; split || into two nested ifs
+- Result:    FULL_MATCH 0x164/0x164, split -4 (unit PASS exact)
+
+## CfObjectModel UVF25 base (+0xB4) - filter polarity + else-filter var reuse (Wii/1.1, near-miss 84.3%)
+- Symptom:   68%: bc inversion at +0x38 + extra li r5,18949 on the else path (+4 bytes)
+- Cause:     retail pairs 0x4a05 with the taken/if path (bit30 SET), not bit-clear; retail does NOT reload r5 on the else path (else probe reuses the selected filter word)
+- Fix:       flip first filter arm ==0 -> !=0; else branch passes filter var instead of 0x4a05 literal
+- Result:    84.3% at exact size 0x198/0x198; remainder is the CVec3 lifted-sum PS/scheduling block (by-value copy at sp+32) + colors - size-neutral, may-stay
+
+## CfObjectModel ctor - Tail90/-0x30 offsets, vtable-store revive, phase-2 float dedup (Wii/1.1, near-miss 48.6%)
+- Symptom:   25.7% with phase-2 stores 0x90 too low (Tail90 overlay missed its prefix), +0x00 base-vtable store dead-stripped to zero, +0x20 written instead of +0x30
+- Cause:     overlay/thunk bugs, not scheduling: Tail90 lacked u8 _pad00[0x90]; +0x30 word is an unnamed CfObject gap (shared CObjectParam.hpp declares field_30 at +0x20 but retail reads it at +0x30 - cf. CtrlObjectParam CObjectParamRetailView; header fix belongs to owning wave)
+- Fix:       Tail90 prefix + Gap30 overlay (stw 48, not field_30) + phase-2-only one2/zero2 locals (dedup 4 float loads -> 2, safe: defined post-call) + saveFlags hoist (r0 load) + inline vtable store
+- Result:    48.6% at EXACT size 0x118/0x118 with all offsets correct; remainder is phase-1 first-load f0-vs-f1 (regswap) + phase-2 vtable r3-vs-r4/store-order

@@ -1397,7 +1397,7 @@ __declspec(noinline) void func_8006E5CC(void* dst, void* src) { *static_cast<uns
 // accumulates the +0x1DC follow distance.
 void func_8006CA2C(cf::CfCamFollow* self, void* arg2, float f1) {
     if (self->unk164 != 0) {
-        if (self->unk164->CfObject_UnkVirtualFunc9() == 0) {
+        if (self->unk164->CfObject_isMoveActiveNow() == 0) {
             func_8006BBF4(self, 0x40, 1);
         }
     }
@@ -1434,7 +1434,7 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
     ml::CVec3 local_20;
     ml::CVec3 local_14;
     ml::CVec3 local_8;
-    func_8004B79C(&local_2c, self->unk164->CfObject_UnkVirtualFunc23());
+    func_8004B79C(&local_2c, self->unk164->CfObject_getPosVector());
     void* f = func_8006C670(self->unk164);
     if (f != 0 && func_8006C6B4(reinterpret_cast<int>(self), 0x2000) != 0) {
         func_8004B3F0(&local_2c, self->unk168 + 0x54);
@@ -1445,7 +1445,7 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
     func_8004B0B0(&local_14);
     func_8004B79C(&local_8, &local_2c);
     local_8.y += lbl_eu_806662F8;
-    if (func_804BE348(self->unk164->CfObject_UnkVirtualFunc23(), &local_8, 0,
+    if (func_804BE348(self->unk164->CfObject_getPosVector(), &local_8, 0,
                       0x40000, 0) != 0) {
         func_804BE4B4(&local_20, 0);
         f32 h = lbl_eu_8066631C + local_20.y;
@@ -1459,9 +1459,9 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
         }
     } else if (f != 0) {
         if (func_8006CA20(f) != 0 || func_8006C6B4(reinterpret_cast<int>(self), 0x40000) != 0) {
-            func_8004B3F0(&local_8, self->unk164->CfObject_UnkVirtualFunc23());
+            func_8004B3F0(&local_8, self->unk164->CfObject_getPosVector());
             local_8.y += lbl_eu_80666320;
-            if (func_804BE348(self->unk164->CfObject_UnkVirtualFunc23(), &local_8,
+            if (func_804BE348(self->unk164->CfObject_getPosVector(), &local_8,
                               0, 0x40000, 0) != 0) {
                 func_804BE4B4(&local_20, 0);
                 f32 h = lbl_eu_8066631C + local_20.y;
@@ -1489,7 +1489,7 @@ void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self) {
 void func_8006CB0C(void* arg1, cf::CfCamFollow* self, void* arg3, void* arg4) {
     f32 f;
     if (self->unk164 != 0) {
-        f = self->unk164->CfObject_UnkVirtualFunc31();
+        f = self->unk164->CfObject_getMoveHeadAngle();
     } else {
         f = lbl_eu_806662DC;
     }
@@ -1611,7 +1611,7 @@ func_8006CE24__FPvPviiiii(cf::CfCamFollow* self, void* arg, int a, int b,
         func_8004B60C(
             &l74.x, self->field_0x180,
             self->unk164 != 0
-                ? self->unk164->CfObject_UnkVirtualFunc31()
+                ? self->unk164->CfObject_getMoveHeadAngle()
                 : lbl_eu_806662DC,
             lbl_eu_806662DC);
         func_80073C7C(&l20, self, arg, &l74, self->unk244);
@@ -2793,7 +2793,7 @@ void func_8006F9EC(cf::CfCamFollow* self, void* arg, void* srcPos) {
         p = func_8004B3F0(self->unk1C + 0x30, p);
         p = func_8004B3F0(self->unk1C + 0x24, p);
         func_8004B3F0(arg, p);
-        f32 scale = self->unk164->CfObject_UnkVirtualFunc31();
+        f32 scale = self->unk164->CfObject_getMoveHeadAngle();
         nw4r::math::VEC3 v;
         func_8004B60C(&v, lbl_eu_80570A38[0], scale, lbl_eu_806662DC);
         self->func_8006CA2C(&v, lbl_eu_80661B60);
@@ -2840,7 +2840,7 @@ int func_8006FC44(cf::CfCamFollow* self, float* angle) {
     int result = 0;
     if (func_8006C6B4((int)self, 0x400) != 0 && self->unk164 != 0) {
         f32 w = func_8004BC28(lbl_eu_8066A1F8 +
-                              self->unk164->CfObject_UnkVirtualFunc31());
+                              self->unk164->CfObject_getMoveHeadAngle());
         f32 lo = w - lbl_eu_8066635C * lbl_eu_8066A200 / lbl_eu_80666324;
         f32 hi = w + lbl_eu_8066635C * lbl_eu_8066A200 / lbl_eu_80666324;
         if (*angle < lo - lbl_eu_8066A200) {
@@ -3728,7 +3728,7 @@ extern "C" void func_80074090(ml::CVec3* out, cf::CfObject* src, ml::CVec3* pos,
     nw4r::math::MTX33 pad; // retail reserves this unused stack space
     nopFunc(&pad);
     ml::CVec3 cur;
-    func_8004B79C(&cur, src->CfObject_UnkVirtualFunc23());
+    func_8004B79C(&cur, src->CfObject_getPosVector());
     if (sel > 0) {
         ml::CVec3 v;
         func_8007420C(&v.x, reinterpret_cast<const float*>(src->CfObject_UnkVirtualFunc55(sel)));
@@ -3751,7 +3751,7 @@ extern "C" void func_80074090(ml::CVec3* out, cf::CfObject* src, ml::CVec3* pos,
     }
     func_80074010(reinterpret_cast<nw4r::math::VEC3*>(out),
                   reinterpret_cast<nw4r::math::VEC3*>(&cur),
-                  reinterpret_cast<nw4r::math::VEC3*>(pos), src->CfObject_UnkVirtualFunc31());
+                  reinterpret_cast<nw4r::math::VEC3*>(pos), src->CfObject_getMoveHeadAngle());
 }
 // func_8007351C: collision-adjusted camera reset helper. Probes arg3 against
 // a copy of itself lowered by lbl_eu_80661B58 (func_804BE348, mask
@@ -4103,8 +4103,8 @@ void func_80074230(cf::CfObject* src, ml::CVec3* dst1, ml::CVec3* dst2) {
     }
     nw4r::math::MTX34 mtx;
     func_8006BEC0(&mtx);
-    func_800742FC(mtx.a, src->CfObject_UnkVirtualFunc31());
-    func_800743A4(mtx.a, reinterpret_cast<const float*>(src->CfObject_UnkVirtualFunc23()));
+    func_800742FC(mtx.a, src->CfObject_getMoveHeadAngle());
+    func_800743A4(mtx.a, reinterpret_cast<const float*>(src->CfObject_getPosVector()));
     func_800743C0(static_cast<void*>(&mtx));
     ml::CVec3 tmp1;
     func_8006D6A8(&tmp1, mtx.mtx, dst1);
@@ -4301,12 +4301,12 @@ extern "C" void func_80074CEC(void* self, void* arg2) {
         __ct__cf_CfCamFollow(cam, self, arg2);
     }
 }
-extern "C" int CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv() { return 0; }
+extern "C" int CfObject_getCurrentTarget__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
 // cf::CfObject base virtuals (retail: li r3,0; blr / li r3,1; blr)
 extern "C" u32 CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv(void* self) { return 0; }
-extern "C" u32 CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv(void* self) { return 1; }
+extern "C" u32 CfObject_isMoveActiveNow__Q22cf8CfObjectFv(void* self) { return 1; }
 // cf::CActorParam base virtual (retail: lwz r3,0x15e4(r3); blr)
 extern "C" int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
 

@@ -518,6 +518,6 @@ extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectMo
 }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
-    // Retail forwarder at 0xC8 -> slot 0xC4 (CfObject_UnkVirtualFunc29).
-    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc29(value);
+    // Retail forwarder at 0xC8 -> slot 0xC4 (CfObject_setMoveHeadAngle).
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_setMoveHeadAngle(value);
 }

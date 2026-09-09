@@ -10,8 +10,8 @@ class CfGimmickJump;
 // Work object returned by createBattleActor (CfGameManager's per-gimmick
 // manager object). Retail factory builds it as a CfObject-derived with
 // vtable lbl_eu_80528600 (cf::CfObjectColl) or similar; the only slots
-// used here are +0x9C setPosition (CfObject_UnkVirtualFunc19) and
-// +0xC4 setHeight (CfObject_UnkVirtualFunc29, float). The back-pointer
+// used here are +0x9C setPosition (CfObject_setMoveTargetVec) and
+// +0xC4 setHeight (CfObject_setMoveHeadAngle, float). The back-pointer
 // at +0xB0 is the CfObject::mSubObjB0 field (0xB0) reused as the
 // owning gimmick link.
 class __declspec(novtable) CfGimmickWork : public CfObject {

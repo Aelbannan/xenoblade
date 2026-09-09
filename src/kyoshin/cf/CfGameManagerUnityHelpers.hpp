@@ -42,7 +42,7 @@ extern "C" void updatePresentationTick__Q22cf13CfGameManagerFv() {
         if (func_8007CBD4(0x1000)) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
             if (player != nullptr) {
-                func_8016EC58(player->CfObject_UnkVirtualFunc23());
+                func_8016EC58(player->CfObject_getPosVector());
             }
         }
     }
@@ -328,7 +328,7 @@ struct PlayerObjectContainer : public ItemContainerPrefix,
 
 extern "C" cf::UnkClass_80082D90* getPlayerContainerForCam__Q22cf13CfGameManagerFv();
 extern "C" bool isGlobalCamFlagSet__Fi(s32 mask);
-extern "C" bool CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(
+extern "C" bool CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(
     cf::CfObjectMove* player);
 extern "C" u32 func_8006C670(cf::CfObjectMove* player);
 extern "C" bool isField4ECFlag16__Q22cf13CfGameManagerFv(u32 state);
@@ -345,7 +345,7 @@ extern "C" bool func_80083118__Q22cf13CfGameManagerFv() {
     PlayerObjectContainer* container = static_cast<PlayerObjectContainer*>(
         reinterpret_cast<PlayerVirtualInterface*>(player));
     if (container != nullptr &&
-        CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(player) &&
+        CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(player) &&
         isObjectFlagMaskSet__Q22cf13CfGameManagerFv(player, 0x100000)) {
         u32 state = func_8006C670(player);
         if (state != 0) {
@@ -381,7 +381,7 @@ extern "C" bool isPlayerInEventRange__Q22cf13CfGameManagerFv() {
         return false;
     }
     if (container != nullptr) {
-        if (CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(
+        if (CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(
                 reinterpret_cast<cf::CfObjectMove*>(
                     &static_cast<PlayerVirtualInterface&>(*container))) &&
             isObjectFlagMaskSet__Q22cf13CfGameManagerFv(
@@ -550,7 +550,7 @@ struct CItemImplInstances {
     void resetItemSlot(u32 first, u32 second) { (void)first; (void)second; }
 };
 
-extern "C" void CObjectState_UnkVirtualFunc7__Q22cf12CObjectStateFv(UnkFlags8Data* data,
+extern "C" void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv(UnkFlags8Data* data,
                                                                      u32 mask) {
     data->flags_0x8 &= ~mask;
 }
@@ -677,7 +677,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue,
                 }
             }
             if (triggerFirstPlayer && i == 0) {
-                const ml::CVec3* playerValue = player->CfObject_UnkVirtualFunc23();
+                const ml::CVec3* playerValue = player->CfObject_getPosVector();
                 func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
@@ -702,7 +702,7 @@ extern "C" void resetPlayerEffectsB__Q22cf13CfGameManagerFv(u32 objectValue,
                 }
             }
             if (triggerFirstPlayer && i == 0) {
-                const ml::CVec3* playerValue = player->CfObject_UnkVirtualFunc23();
+                const ml::CVec3* playerValue = player->CfObject_getPosVector();
                 func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
@@ -2344,7 +2344,7 @@ extern "C" u32 updatePlayerCameraLink__Q22cf13CfGameManagerFv(s32 playerIndex, u
     CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
     if (composite != nullptr) {
         cf::UnkClass_CActorParam15E0* data =
-            composite->CActorParam_UnkVirtualFunc127();
+            composite->CActorParam_getStatusTable();
         if (data != nullptr) {
             return cleanupPlayerEffectList__Q22cf13CfGameManagerFv(data, value);
         }
@@ -2357,7 +2357,7 @@ extern "C" u32 isEffectListEmpty__Q22cf13CfGameManagerFv(s32 playerIndex, u32 va
     CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
     if (composite != nullptr) {
         cf::UnkClass_CActorParam15E0* data =
-            composite->CActorParam_UnkVirtualFunc127();
+            composite->CActorParam_getStatusTable();
         if (data != nullptr) {
             return func_8025FB10(data, value);
         }
@@ -2371,7 +2371,7 @@ extern "C" bool isPlayerReadyForEvent__Q22cf13CfGameManagerFv(s32 playerIndex,
                                                         bool requireFlag) {
     bool result = false;
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
-    if (player != nullptr && player->CfObject_UnkVirtualFunc9()) {
+    if (player != nullptr && player->CfObject_isMoveActiveNow()) {
         if (requireFlag &&
             !isObjectFlagMaskSet__Q22cf13CfGameManagerFv(player, 0x100000)) {
             return false;

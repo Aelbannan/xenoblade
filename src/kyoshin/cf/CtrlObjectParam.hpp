@@ -429,7 +429,7 @@ namespace cf {
 
     // -- func_800A1CA0 view: CActorParam at entry base +0x436C -------------
     // The loop loads the vtable word at base+0x436C and dispatches vtable
-    // slot 0x20C (CActorParam_UnkVirtualFunc94). Calling through the embedded
+    // slot 0x20C (CActorParam_getArtsDataBlock). Calling through the embedded
     // member reproduces the retail lwzu r12,0x436c / lwz r12,0x20c sequence.
     struct CtrlObjectParamArtsOwner {
         u8 pad_0000[0x436C];

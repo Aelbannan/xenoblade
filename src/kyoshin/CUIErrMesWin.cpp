@@ -220,7 +220,7 @@ extern "C" void func_802B515C(CErrMesSub* self, int flag) {
         if (p2 == 0) {
             candidate = 0;
         } else {
-            BOOL id = p2->objectParam.CObjectParam_UnkVirtualFunc5();
+            BOOL id = p2->objectParam.CObjectParam_getSelfObjectId();
             if (id == 0) {
                 candidate = 0;
             } else {
@@ -290,8 +290,8 @@ int func_802B5970(CErrMesOwner* owner, int actorA, int actorB) {
     CErrMesVoiceHandle* hB = reinterpret_cast<CErrMesVoiceHandle*>(
         func_8016FE34(findObjectById(actorB)));
     if (hA == 0 || hB == 0) return 0;
-    if (reinterpret_cast<cf::CActorParam*>(hA)->CActorParam_UnkVirtualFunc138() != 0) return 0;
-    if (reinterpret_cast<cf::CActorParam*>(hB)->CActorParam_UnkVirtualFunc138() != 0) return 0;
+    if (reinterpret_cast<cf::CActorParam*>(hA)->CActorParam_isBattleLocked() != 0) return 0;
+    if (reinterpret_cast<cf::CActorParam*>(hB)->CActorParam_isBattleLocked() != 0) return 0;
     int voiceId = func_802B5AC8(owner, reinterpret_cast<CErrMesOwner*>(hA),
                                 reinterpret_cast<CErrMesOwner*>(hB));
     if (voiceId <= 0) return 0;
@@ -475,7 +475,7 @@ void func_802B4968(CErrMesEntry* self, CErrMesOwner* owner) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
                 func_8016FE34(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
-                        ->objectParam.CObjectParam_UnkVirtualFunc5())));
+                        ->objectParam.CObjectParam_getSelfObjectId())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps
             // it in r0 and re-tests it) rather than fusing it into a branch.
             int cond;
@@ -516,7 +516,7 @@ void func_802B4A68(CErrMesEntry* self, CErrMesOwner* owner) {
             CErrMesActor15E4* src = reinterpret_cast<CErrMesActor15E4*>(
                 func_8016FE34(findObjectById(
                     reinterpret_cast<CErrMesObjView*>(owner)
-                        ->objectParam.CObjectParam_UnkVirtualFunc5())));
+                        ->objectParam.CObjectParam_getSelfObjectId())));
             // Materialise the battle-counter check as a 0/1 word (retail keeps
             // it in r0 and re-tests it) rather than fusing it into a branch.
             int cond;

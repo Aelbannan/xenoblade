@@ -1026,7 +1026,7 @@ after_bit21:
         }
 
         if (actor2 != NULL) {
-            f32 stateVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
+            f32 stateVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getHp();
             // Retail: state==FEC && panelData[0x1c]==0 → always cull.
             if (animMarker == stateVal) {
                 if (panel.unk1C == 0) {
@@ -1043,9 +1043,9 @@ after_bit21:
         // Distance cull + frustum test only when panelType==0 and pc!=NULL.
         // Retail skips both when either gate fails (falls through to flag work).
         if (panel.panelType == 0 && pc != NULL) {
-            ml::CVec3* handlePos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+            ml::CVec3* handlePos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosVector();
             PcEmbedLayout* pcEmbed = reinterpret_cast<PcEmbedLayout*>(pc);
-            ml::CVec3* pcPos = reinterpret_cast<cf::CfObject*>(pcEmbed)->CfObject_UnkVirtualFunc23();
+            ml::CVec3* pcPos = reinterpret_cast<cf::CfObject*>(pcEmbed)->CfObject_getPosVector();
 
             nw4r::math::VEC3Sub(
                 pDelta,
@@ -1070,7 +1070,7 @@ after_bit21:
                 b.y = pose->vec138_y;
                 b.z = pose->vec138_z;
 
-                ml::CVec3* qpos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+                ml::CVec3* qpos = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosVector();
                 Vec3f c = *reinterpret_cast<const Vec3f*>(qpos);
 
                 if (!func_8013A4B4(&a, &b, &c)) {
@@ -1125,11 +1125,11 @@ after_bit21:
                 posTmpPtr->z = r->val2C;
                 posA = *posTmpPtr;
             } else {
-                ml::CVec3* p = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+                ml::CVec3* p = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosVector();
                 posA = *reinterpret_cast<const Vec3f*>(p);
             }
 
-            ml::CVec3* p2 = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc23();
+            ml::CVec3* p2 = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosVector();
             posB = *reinterpret_cast<const Vec3f*>(p2);
 
             Obj64_91* hf = handle;
@@ -1157,7 +1157,7 @@ after_bit21:
                 panel.drawLayout0Flag = (count == 0) ? 1 : 0;
             } else {
                 void* subObj = actor2->subObj4;
-                void* resultRaw = reinterpret_cast<cf::CObjectState*>(subObj)->CObjectState_UnkVirtualFunc11();
+                void* resultRaw = reinterpret_cast<cf::CObjectState*>(subObj)->CObjectState_getStateData();
                 int* result = static_cast<int*>(resultRaw);
                 int localVal = *result;
                 u32 ret = func_80174C98(actor2, &localVal, 0x803);
@@ -1165,12 +1165,12 @@ after_bit21:
             }
 
             if (panel.drawLayout0Flag == 0) {
-                f32 v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc38();
-                f32 v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
+                f32 v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getDamageScale();
+                f32 v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getHp();
                 func_80111B08(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
-                v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc38();
-                v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc37();
+                v12c = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getDamageScale();
+                v128 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getHp();
                 func_80111E70(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
                 func_801132A8(this, reinterpret_cast<u8*>(&panel), actor2);
@@ -1463,10 +1463,10 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
         layoutPos.z = r->val2C;
         posPtr = &layoutPos;
     } else {
-        posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+        posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
     }
     posA = *posPtr;
-    posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+    posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
     func_80111080(self, reinterpret_cast<u8*>(panel), &posA, &posB);
 
@@ -1518,11 +1518,11 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     if (actor2 == NULL) return;
 
     typedef int* (*SubGetFn)(void*);
-    int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
+    int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
     panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
     typedef void* (*GetObjFn)(void*);
-    panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
+    panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
     func_80111C50(self, reinterpret_cast<u8*>(panel), (panel->unk1C != 0) ? 1 : 2);
 
@@ -1635,10 +1635,10 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             tmp.z = r->val2C;
             posPtr = &tmp;
         } else {
-            posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+            posPtr = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
         }
         posA = *posPtr;
-        Vec3f posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+        Vec3f posB = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
         func_80111080(self, panelData, &posA, &posB);
 
@@ -1700,11 +1700,11 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
                 typedef int* (*SubGetFn)(void*);
-                int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
+                int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
                 typedef void* (*GetObjFn)(void*);
-                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
+                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
@@ -1803,10 +1803,10 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             tmp2.z = r2->val2C;
             posPtr2 = &tmp2;
         } else {
-            posPtr2 = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+            posPtr2 = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
         }
         posA2 = *posPtr2;
-        Vec3f posB2 = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23());
+        Vec3f posB2 = *reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosVector());
 
         func_80111080(self, panelData, &posA2, &posB2);
 
@@ -1868,11 +1868,11 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
                 typedef int* (*SubGetFn2)(void*);
-                int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
+                int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v2, 0x802));
 
                 typedef void* (*GetObjFn2)(void*);
-                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29();
+                panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
@@ -1994,7 +1994,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
             posTmp.z = fz;
             src = &posTmp;
         } else {
-            src = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc23());
+            src = reinterpret_cast<const Vec3f*>(reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector());
         }
         pos = *src;
 
@@ -2023,7 +2023,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
         pos = out;
         if (out.y > lbl_eu_80666FFC) {
             out.y = lbl_eu_80666FFC;
-            ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc23();
+            ml::CVec3* tmpPos = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosVector();
             func_8049B59C(&tmp, pose, reinterpret_cast<const Vec3f*>(tmpPos));
             tmp.y = (tmp.y - lbl_eu_80666FF4) * lbl_eu_80666FF8 - lbl_eu_80667000;
             f32 sel = (tmp.y >= out.y) ? tmp.y : out.y;
@@ -2053,7 +2053,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     if (pc == NULL) return;
     // Retail keeps this value in r29 and later reuses the same register for
     // the unk24 difference (subf r29,r29,r0), so one variable serves both.
-    s32 tgt = (s32)reinterpret_cast<cf::CActorParam*>(pc)->CActorParam_UnkVirtualFunc29();
+    s32 tgt = (s32)reinterpret_cast<cf::CActorParam*>(pc)->CActorParam_getActorLevel();
 
     // Tail locals declared early; birth order pins tail colours.
     // OPEN ITEM (us-80112c4c): residual is a pure reg_swap - sub lands in r30
@@ -2242,7 +2242,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         // Retail compares the pane id with signed cmpw.
         // Real virtual calls - retail dispatches through r12.
         s32 a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29()));
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (special != 0) {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x1b2],
                           func_80136190(&lbl_eu_804FDBF8[0x256],
@@ -2253,10 +2253,10 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
             func_80136A1C(self->unk74, &lbl_eu_804FDBF8[0x1b2], buf, 0);
         }
         a2id = static_cast<s32>(static_cast<u32>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29()));
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel()));
         if (static_cast<s32>(panel->unk24) != a2id) {
             panel->unk24 = static_cast<u32>(
-                reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc29());
+                reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel());
             func_80112170(self, panelData);
         }
         func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x278],
@@ -2286,9 +2286,9 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         }
 
         typedef int* (*SubGetFn)(void*);
-        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
+        int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
         if (func_80174C98(actor2, &v1, 0xa) == 0) {
-            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_UnkVirtualFunc11());
+            int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
             if (func_80174C98(actor2, &v2, 9) == 0) {
                 goto tail;
             }
@@ -2296,7 +2296,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         // Slot 164: MWCC prepends 2 dtor entries to the view vtable
         // (dispatch offset = n*4 + 8), so 0x298 == m164.
         Obj298View* v298 = reinterpret_cast<Obj298View*>(
-            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc129());
+            reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getBattleStats());
         if (v298->field50 != NULL) {
             Obj50View* o50 = static_cast<Obj50View*>(v298->field50);
             if ((o50->word78 & (1 << 30)) != 0 && o50->f7C == lbl_eu_80666FEC) {
@@ -2477,7 +2477,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
             ObjBBFlag* f94 = reinterpret_cast<ObjBBFlag*>(self->field94);
             f94->flagBB &= 0xFE;
             SubSlot5CResult* res =
-                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc22(idx));
+                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(idx));
             if (res->word30 != 0x800 && res->id0C != 0 && res->id0C != 0xF &&
                 res->id0C != 0x10 && res->id0C != 0x12) {
                 u16 id = func_80136254(lbl_eu_806640E0,
@@ -2505,7 +2505,7 @@ extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2) {
             u16 arr16[0x21];
             for (u8 i = 0; i < 0x20; i++) {
                 SubSlot5CResult* res =
-                    reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc21(i));
+                    reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_fetchStatusEntry(i));
                 arr16[i] = (res->word30 == 0x800) ? 0 : res->id0C;
             }
             arr16[0x20] = (u16)actor2->field1530;
@@ -2746,7 +2746,7 @@ void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {
     for (u8 oi = 0; oi < 4; oi++) {
         for (u8 ii = 0; ii < 0x20; ii++) {
             SubSlot5CResult* res =
-                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_UnkVirtualFunc22(ii));
+                reinterpret_cast<SubSlot5CResult*>(reinterpret_cast<cf::CBattleState*>(&actor2->sub8)->CBattleState_getEventEntry(ii));
             // Retail reads the pattern byte after the id check (short-circuit)
             // and the texture index inside the load call.
             if (res->id0C != 0 && res->id0C == *((u8*)&bits + oi)) {

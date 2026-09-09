@@ -274,7 +274,7 @@ static s32 __OSStateEventHandler(s32 result, void* arg) {
 
     // clang-format off
 #line 820
-    OS_ASSERT(result == IPC_RESULT_OK, "Error on STM state event handler\n\0\0");
+    OS_ASSERT(result == IPC_RESULT_OK, "Error on STM state event handler\n");
     // clang-format on
 
     StmEhRegistered = FALSE;

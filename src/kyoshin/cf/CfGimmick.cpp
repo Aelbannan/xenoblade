@@ -262,18 +262,18 @@ void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
         cf::CfObject* player = (cf::CfObject*)cf::CfGameManager::getPlayer(0);
         // Integer-copy the target position (retail lwz/stw, no f32 path):
         // loads are hoisted x,y then stored y,x, then z - mirror with temps.
-        CfGimmickVec3u* target = (CfGimmickVec3u*)player->CfObject_UnkVirtualFunc23();
+        CfGimmickVec3u* target = (CfGimmickVec3u*)player->CfObject_getPosVector();
         u32 tx = target->x;
         u32 ty = target->y;
         CfGimmickVec3u& dst = (CfGimmickVec3u&)lbl_eu_805765A0;
         dst.y = ty;
         dst.x = tx;
         dst.z = target->z;
-        lbl_eu_806646B0 = player->CfObject_UnkVirtualFunc31();
+        lbl_eu_806646B0 = player->CfObject_getMoveHeadAngle();
         lbl_eu_806646B4 = (u32)partyId;
         if (flagA) lbl_eu_806646BC |= 0x20;
         if (flagB) lbl_eu_806646BC |= 0x40;
-        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_UnkVirtualFunc9() && player->CfObject_UnkVirtualFunc68() &&
+        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && player->CfObject_UnkVirtualFunc68() &&
             (lbl_eu_80663E24 & 0x80) != 0) {
             lbl_eu_806646BC |= 0x2;
         }
@@ -552,7 +552,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         CfGimmickList* list = func_800B6BC8();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_UnkVirtualFunc23();
+            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -564,7 +564,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                 if (base != 0)
                     base = (CfPlayerBase*)((char*)base - 0x3E9C);
                 int ok;
-                if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > lbl_eu_80668350) {
+                if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp() > lbl_eu_80668350) {
                     if (base->subField3F60 == 0 ||
                         ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                         ok = 1;
@@ -574,7 +574,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                     ok = 0;
                 if (ok == 0)
                     return 0;
-                CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
+                CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
                 if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                     return 1;
             } else {
@@ -590,7 +590,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                     if (base != 0)
                         base = (CfPlayerBase*)((char*)base - 0x3E9C);
                     int ok;
-                    if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > zero) {
+                    if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp() > zero) {
                         if (base->subField3F60 == 0 ||
                             ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                             ok = 1;
@@ -600,7 +600,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
                         ok = 0;
                     if (ok == 0)
                         continue;
-                    CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
+                    CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
                     if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                         return 1;
                 }
@@ -614,7 +614,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         CfGimmickList* list = func_800B6BEC();
         CfGimmickListNode* n = list->head->next;
         while (n != list->head) {
-            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_UnkVirtualFunc23();
+            CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)n->object)->CfObject_getPosVector();
             if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
                 return 1;
             n = n->next;
@@ -627,7 +627,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         int ok;
-        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > lbl_eu_80668350) {
+        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp() > lbl_eu_80668350) {
             if (base->subField3F60 == 0 ||
                 ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                 ok = 1;
@@ -637,7 +637,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
             ok = 0;
         if (ok == 0)
             return 0;
-        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
+        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
         return 0;
@@ -651,7 +651,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         int ok;
-        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37() > zero) {
+        if (base != 0 && ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp() > zero) {
             if (base->subField3F60 == 0 ||
                 ((((CfPlayerSub3F60*)base->subField3F60)->field_4EC & 0x800) == 0))
                 ok = 1;
@@ -661,7 +661,7 @@ int func_802098EC(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
             ok = 0;
         if (ok == 0)
             continue;
-        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_UnkVirtualFunc23();
+        CfGimmickVec3* target = (CfGimmickVec3*)((cf::CfObject*)&base->spot)->CfObject_getPosVector();
         if (jumptable_eu_80535830[gimmick->field_44](gimmick, target, point))
             return 1;
     }
@@ -771,7 +771,7 @@ int func_8020A294(u32 playerId) {
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
         if ((int)((CfPlayerIdView*)base)->id456C >> 4 == playerId) {
-            float hp = ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_UnkVirtualFunc37();
+            float hp = ((cf::CActorParam*)((char*)base - 0x3E9C))->CActorParam_getHp();
             // Retail materializes the le-test through cror/mfcr/extrwi.
             int lowHP = hp <= zero;
             if (!lowHP)

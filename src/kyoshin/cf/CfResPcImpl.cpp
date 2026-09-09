@@ -62,7 +62,7 @@ cf::CfResPcImpl::~CfResPcImpl() {
     if (state >= 0) {
         ok = 0;
         if (field_00->field_68 & 0x200000) {
-            if (reinterpret_cast<cf::CfObject*>(field_00)->CfObject_UnkVirtualFunc9() != 0) {
+            if (reinterpret_cast<cf::CfObject*>(field_00)->CfObject_isMoveActiveNow() != 0) {
                 ok = 1;
             }
         }
@@ -170,7 +170,7 @@ void func_8018CD9C(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, 
     cf::CfResPcParent* parent = self->field_00;
     int ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_isMoveActiveNow() != 0) {
             ok = 1;
         }
     }
@@ -192,7 +192,7 @@ void func_8018CE70(cf::CfResPcImpl* self, int arg2, int arg3) {
     cf::CfResPcParent* parent = self->field_00;
     int ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_isMoveActiveNow() != 0) {
             ok = 1;
         }
     }
@@ -216,7 +216,7 @@ void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     cf::CfResPcParent* parent = self->field_00;
     ok = 0;
     if (parent->field_68 & 0x200000) {
-        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_isMoveActiveNow() != 0) {
             ok = 1;
         }
     }
@@ -238,7 +238,7 @@ int func_8018CF90(cf::CfResPcImpl* self) {
         cf::CfResPcParent* parent = self->field_00;
         ok = 0;
         if (parent->field_68 & 0x200000) {
-            if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_UnkVirtualFunc9() != 0) {
+            if (reinterpret_cast<cf::CfObject*>(parent)->CfObject_isMoveActiveNow() != 0) {
                 ok = 1;
             }
         }
@@ -1350,7 +1350,7 @@ int func_8018F5A4(cf::CfResPcHostGM* self, u32 arg2, u32 arg3, u32 arg4, u32 arg
     int result = 0;
     cf::CfGameManager* manager = self->field_408;
     UnkClass_80083298* obj = manager->unk90;
-    if (obj != 0 && reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc9() == 0) {
+    if (obj != 0 && reinterpret_cast<cf::CfObject*>(obj)->CfObject_isMoveActiveNow() == 0) {
         func_80061A80((u32)self, 2, arg2, arg3, arg4, arg5);
         result = 1;
     } else {

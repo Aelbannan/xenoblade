@@ -144,7 +144,7 @@ void func_80275454(UnkCode8027513C* self) {
             // Position-vector getter at CfObject vtable +0xAC (UVF23). The
             // static type is CfObject* so the call binds the real virtual
             // (CfObjectModel/CfObjectMove declare a non-virtual homonym).
-            ml::CVec3* pos = static_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc23();
+            ml::CVec3* pos = static_cast<cf::CfObject*>(obj)->CfObject_getPosVector();
 
             obj = self->field_0x14;
             if (obj != nullptr) {
@@ -174,7 +174,7 @@ void func_80275454(UnkCode8027513C* self) {
                     nw4r::math::VEC3 out = sum;
                     // Position sink at CfObject vtable +0x9C (UVF19): position
                     // passed by const pointer.
-                    eff->CfObject_UnkVirtualFunc19((const ml::CVec3*)&out);
+                    eff->CfObject_setMoveTargetVec((const ml::CVec3*)&out);
 
                     // Load position from obj->field_0x90[8] (offset 0x98)
                     UnkPosContainer* posContainer =

@@ -49,7 +49,7 @@ struct CChainCombo {
 
 } // namespace cf
 
-// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2A4]).
+// Object returned by CActorParam_getMoveRecord (vtable[0x2A4]).
 // Has a pointer at +0x50 to an arts category struct.
 struct CChainCombo_ArtsCategoryHolder {
     u8 pad[0x50];

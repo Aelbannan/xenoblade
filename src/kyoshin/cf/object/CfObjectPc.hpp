@@ -152,8 +152,8 @@ struct Obj89cField {
 };
 
 // Foreign sub-object at +0x4 is a CObjectState pointer (owner: CObjectState).
-// Slot 0x30 is CObjectState_UnkVirtualFunc11 (void*). Deleted fake iface;
-// call via *(CObjectState**)((u8*)this+4)->CObjectState_UnkVirtualFunc11().
+// Slot 0x30 is CObjectState_getStateData (void*). Deleted fake iface;
+// call via *(CObjectState**)((u8*)this+4)->CObjectState_getStateData().
 
 // Foreign sub-object at +0x8 is the embedded CBattleState (owner: CBattleState).
 // Slots 0x14/0x20 are CBattleState_UnkVirtualFunc4 / 7 (void(u32)). Deleted
@@ -266,13 +266,13 @@ namespace cf {
         virtual void handleMoveState(u32 a, u32 b, u32 c, u32 d, u32 e); //0x608
 
         inline UNKTYPE* unkInline1(){
-            BOOL thing = CObjectParam_UnkVirtualFunc5();
+            BOOL thing = CObjectParam_getSelfObjectId();
             UNKTYPE* idk = findObjectById(thing);
             return func_800AD860(idk);
         }
 
         inline UNKTYPE* unkInline2(){
-            BOOL thing2 = CObjectParam_UnkVirtualFunc5();
+            BOOL thing2 = CObjectParam_getSelfObjectId();
             UNKTYPE* idk2 = findObjectById(thing2);
             return getValidObject(idk2);
         }
@@ -289,14 +289,14 @@ namespace cf {
     inline cf::CfObjectMove& pcMoveRefB() { struct ViewB { u8 pad[0x3E9C]; cf::CfObjectMove m; }; return ((ViewB*)this)->m; }
     void CActorParam_UnkVirtualFunc166();
     void CActorParam_UnkVirtualFunc167();
-    void CActorParam_UnkVirtualFunc4();
+    void CActorParam_resetArtsStatus();
     void CActorParam_UnkVirtualFunc176();
     int CActorParam_UnkVirtualFunc86();
     void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);
     virtual void CActorParam_UnkVirtualFunc173();
-    virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127();
+    virtual UnkClass_CActorParam15E0* CActorParam_getStatusTable();
     virtual int CActorParam_UnkVirtualFunc178();
-    virtual int CActorParam_UnkVirtualFunc157();
+    virtual int CActorParam_getStatusCount();
     void CObjectParam_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
     void CfObject_UnkVirtualFunc2();

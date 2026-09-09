@@ -191,13 +191,13 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 
     // The base data pointer is re-loaded for each access in the retail.
     self->mField74 =
-        *reinterpret_cast<float*>(((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc58());
+        *reinterpret_cast<float*>(((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getMoveRateScale());
     self->mField78 = lbl_eu_80663D90;
     self->mField70 = lbl_eu_80667C58;
     ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc23();
+    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getPosVector();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
@@ -334,7 +334,7 @@ void func_8019FD2C() {
 namespace cf {
 void func_8019F93C(CCtrlMoveNpc* self) {
     const ml::CVec3* pos =
-        ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_UnkVirtualFunc23();
+        ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getPosVector();
 
     // PS vector subtraction: delta = target - current position.
     ml::CVec3 diff = self->mField58 - *pos;

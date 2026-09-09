@@ -48,7 +48,7 @@ extern "C" void capdatatouch_CfObjectPc(void) {
 // fake MI structs deleted - real virtuals on CfObjectMove
 
 namespace cf {
-// CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_UnkVirtualFunc8
+// CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_notifyEventDone
 // (deleted local _vNNN pad list). novtable - never constructed in this TU.
 class __declspec(novtable) CfObjectPoint : public CfObject {
 public:
@@ -286,7 +286,7 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
         self->CActorParam_UnkVirtualFunc98(
-            reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_UnkVirtualFunc94());
+            reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         // Copies the arts entry INTO this object's CActorParam (opposite
         // direction of syncArtsEntry).
         func_80175A50(reinterpret_cast<cf::CActorParam*>(self->CActorParam_UnkVirtualFunc126()),
@@ -383,15 +383,15 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     void* st2;
     void* st3;
     cf::CObjectState* s4a = *(cf::CObjectState**)((u8*)self + 4);
-    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)s4a->CObjectState_UnkVirtualFunc11()), 0xE);
+    int chk1 = func_80174C98(self, (int*)&(st1 = *(void**)s4a->CObjectState_getStateData()), 0xE);
     cf::CObjectState* s4b = *(cf::CObjectState**)((u8*)self + 4);
-    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)s4b->CObjectState_UnkVirtualFunc11()), 0x803);
+    int chk2 = func_80174C98(self, (int*)&(st2 = *(void**)s4b->CObjectState_getStateData()), 0x803);
 
     int any = (chk1 | chk2) != 0;
     int dd = func_800C0DD4(self, any);
     if ((any | dd) != 0) {
         if (func_80148778((u8*)self + 8, 0x35)) {
-            reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc7(0x35);
+            reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
         }
     } else {
         // Count entries in the battle-manager list at +0x48.
@@ -414,7 +414,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
             func_80148778((u8*)self + 8, 0x6c) ||
             func_80148778((u8*)self + 8, 0x6d)) {
             if (func_80148778((u8*)self + 8, 0x35)) {
-                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc7(0x35);
+                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_clearStatusId(0x35);
             }
         } else {
             if (!func_80148778((u8*)self + 8, 0x35)) {
@@ -424,12 +424,12 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     }
 
     // Gauge scale: slot 0x8C value times the global scale factor.
-    float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc15();
+    float gauge = reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_getMoveSpeedRate();
     float scaled = func_80496288(lbl_eu_80663E14) * gauge;
     func_801765A4(self, scaled, 1);
 
     cf::CObjectState* s4c = *(cf::CObjectState**)((u8*)self + 4);
-    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)s4c->CObjectState_UnkVirtualFunc11()), 1);
+    int chkFlag = func_80174C98(self, (int*)&(st3 = *(void**)s4c->CObjectState_getStateData()), 1);
     if (chkFlag != 0 && f->mPtr3F60 != NULL) {
         f->mPtr3F60->field_0x4EC |= 0x1000;
     }
@@ -444,7 +444,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         if (isGlobalCamFlagSet__Fi(0x100000)) {
             // Distinct fake types per +0x3E9C dispatch so MWCC re-materializes
             // addi r3, r31, 0x3E9C like retail instead of caching one temp.
-            if (chkFlag == 0 && self->pcMove()->CObjectState_UnkVirtualFunc2(1) == 0) {
+            if (chkFlag == 0 && self->pcMove()->CObjectState_checkStateFlags(1) == 0) {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
@@ -455,7 +455,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
         } else {
             if (chkFlag != 0 && func_8013EB90(1) == 0) {
                 func_80174B4C(self, 3);
-                self->pcMove()->CObjectParam_UnkVirtualFunc6(0);
+                self->pcMove()->CObjectParam_signalActionEnd(0);
                 reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectModel_UnkVirtualFunc14(0,
                     (const char*)lbl_eu_804FC5EC + 0x2D);
             }
@@ -468,14 +468,14 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
 // Gauge-scale refresh: runs the CActorParam base handler, then reads a text
 // literal through slot 0x308 and scales/divides +0x1824 by an indexed s16
 // from it, normalized by the three float constants.
-void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {
+void cf::CfObjectPc::CActorParam_resetArtsStatus() {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)this;
     // Direct (non-virtual) call to the CActorParam base implementation.
-    ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_UnkVirtualFunc4(nullptr);
+    ((cf::CActorParam*)this)->cf::CActorParam::CActorParam_resetArtsStatus(nullptr);
     Lit10 buf = lbl_eu_804FC5E0;
-    int n = this->CActorParam_UnkVirtualFunc157();
+    int n = this->CActorParam_getStatusCount();
     if (n <= 1) {
-        int idx = this->CActorParam_UnkVirtualFunc157();
+        int idx = this->CActorParam_getStatusCount();
         // (float)(s32) builtin cast: MWCC emits the 0x43300000 biased-magic
         // conversion (single-rounded fsubs) whose pooled constant is the
         // retail lbl_eu_80666B30 literal.
@@ -483,9 +483,9 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {
         f->field_0x1824 =
             f->field_0x1824 * (lbl_eu_80666B24 + v / lbl_eu_80666B28);
     } else {
-        int n2 = this->CActorParam_UnkVirtualFunc157();
+        int n2 = this->CActorParam_getStatusCount();
         if (n2 >= 3) {
-            int idx = this->CActorParam_UnkVirtualFunc157();
+            int idx = this->CActorParam_getStatusCount();
             float v = (float)((s16*)buf.d)[idx];
             f->field_0x1824 =
                 f->field_0x1824 / (lbl_eu_80666B24 + v / lbl_eu_80666B28);
@@ -538,7 +538,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     if (v1608 > 0x05F60000u - 0x1F01u) {
         f->field_0x1608 = 0x05F60000u - 0x1F01u;
     }
-    Obj89cField* obj = (Obj89cField*)self->CActorParam_UnkVirtualFunc127();
+    Obj89cField* obj = (Obj89cField*)self->CActorParam_getStatusTable();
     func_802617B8((u8*)obj, obj->field_0x89C, arg3);
     int acted = 0;
     // Drain the action queue through slot 0x35C.
@@ -552,7 +552,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     }
     if (acted != 0) {
         func_80276148(f->field_0x3F10,
-            (u32)self->CActorParam_UnkVirtualFunc127());
+            (u32)self->CActorParam_getStatusTable());
         BattleMgrRangeView* bm =
             (BattleMgrRangeView*)getInstance__Q22cf14CBattleManagerFv();
         int inBattle = 0;
@@ -563,9 +563,9 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     bmCheck:
         if (inBattle != 0) goto actedDone;
         if (bm->field_0x20C8 != 0) goto actedDone;
-        state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_UnkVirtualFunc11();
+        state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData();
         if (func_80174C98(self, (int*)&state, 6) ||
-            ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_UnkVirtualFunc11()),
+            ((state = *(void**)(*(cf::CObjectState**)((u8*)self + 4))->CObjectState_getStateData()),
                 func_80174C98(self, (int*)&state, 9))) {
             func_800BE12C((u8*)self + 0x3E9C, 0x1B, 0, 6, 1);
         }
@@ -586,7 +586,7 @@ int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
             (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
         func_800A11A4((u8*)data, 1);
         self->CActorParam_UnkVirtualFunc92(
-            (const void*)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_UnkVirtualFunc94());
+            (const void*)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         u32 gained = self->CActorParam_UnkVirtualFunc85();
         u32 cur = f->field_0x1600;
         u32 total = (u32)spent + gained;
@@ -628,7 +628,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             }
         }
         if ((((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100) == 0 ||
-            self->CActorParam_UnkVirtualFunc138() != 0) {
+            self->CActorParam_isBattleLocked() != 0) {
             goto resetGauge;
         }
         BattleMgrRangeView* bm =
@@ -660,7 +660,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             u32 vB = getBdatStringColumnValue(mgr, names + 0x45, i);
             if ((int)(u16)vB != channel) continue;
             u32 vC = getBdatStringColumnValue(mgr, names + 0x49, i);
-            float sv = reinterpret_cast<cf::CfObjectPc*>(self)->pcMoveRefB().CfObject_UnkVirtualFunc15();
+            float sv = reinterpret_cast<cf::CfObjectPc*>(self)->pcMoveRefB().CfObject_getMoveSpeedRate();
             float newGauge = func_80496288(lbl_eu_80663E14) * sv +
                 ((CfObjectPcSubFields*)self)->field_0x45C0;
             ((CfObjectPcSubFields*)self)->field_0x45C0 = newGauge;
@@ -669,7 +669,7 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
             u32 vD = getBdatStringColumnValue(mgr, names + 0x52, i);
             double base = (double)(int)(vD & 0xFF) - lbl_eu_80666B40;
             float dmg = lbl_eu_80666B38 *
-                (base * self->CActorParam_UnkVirtualFunc38());
+                (base * self->CActorParam_getDamageScale());
             if (func_80148778((u8*)self + 8, 0xE9)) {
                 Res10View* e = (Res10View*)func_80149154((u8*)self + 8, 0xE9);
                 double dT = (double)(int)e->field_0x10;
@@ -683,14 +683,14 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
                 moveSub += 0x3E9C;
             }
             if (moveSub != (u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
-                float hp = self->CActorParam_UnkVirtualFunc37();
+                float hp = self->CActorParam_getHp();
                 if (hp <= dv) {
-                    dv = self->CActorParam_UnkVirtualFunc37() -
+                    dv = self->CActorParam_getHp() -
                         lbl_eu_80666B24;
                 }
             }
             if (dv != lbl_eu_80666B14) {
-                self->CActorParam_UnkVirtualFunc34(-dv);
+                self->CActorParam_addHp(-dv);
                 cf::CfSoundMan::playActorSound(0, 0x1AE, 0, 0, lbl_eu_80666B24);
             }
             ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
@@ -735,7 +735,7 @@ UNKTYPE* getValidObject(UNKTYPE* r3) {
 }
 
 int cf::CfObjectPoint::validatePointState() {
-    CfObject_UnkVirtualFunc8();
+    CfObject_notifyEventDone();
     return 1;
 }
 

@@ -211,7 +211,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         void* data = func_8009EC9C((u16)entry);
         func_800A30E4(data);
         cf::CActorParam* cdParam = reinterpret_cast<cf::CActorParam*>(reinterpret_cast<u8*>(data) + 0x17c);
-        cdParam->CActorParam_UnkVirtualFunc4(NULL);
+        cdParam->CActorParam_resetArtsStatus(NULL);
         cdParam->CActorParam_UnkVirtualFunc5(1);
         func_800A1370(data);
     }
@@ -293,7 +293,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                     func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
                     if (!(lbl_eu_80663E28 & 0x100)) {
                         static_cast<cf::CfObject*>(p)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(stk));
-                        float ccRet90940 = self->manager->unk94[0]->CfObject_UnkVirtualFunc31();
+                        float ccRet90940 = self->manager->unk94[0]->CfObject_getMoveHeadAngle();
                         p->CfObject_UnkVirtualFunc30(ccRet90940);
                     }
                 }
@@ -302,7 +302,7 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
     }
 
     cf::CfObjectMove* e0 = self->manager->unk94[0];
-    if (e0 != 0 && e0->CfObject_UnkVirtualFunc9() == 0) {
+    if (e0 != 0 && e0->CfObject_isMoveActiveNow() == 0) {
         func_80061A80((u32)self, 4, a, b, c, d);
         return 1;
     }

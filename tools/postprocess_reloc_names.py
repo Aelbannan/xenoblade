@@ -360,8 +360,9 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "NANDCheck.o": UnitRules(
         # RVL NANDCheck (MWCC_CASES "RVL NANDCheck"): cosmetic renames of the
-        # callback statics onto their retail labels, plus MWCC emits one extra
-        # trailing NUL in .data over the retail 0xE7 slice.
+        # callback statics onto their retail labels. Raw MATCH 2026-09-09:
+        # removed the explicit trailing NUL in s_nandUserAreaCallbackFmt so
+        # MWCC emits the retail 0xE7 slice with no tail (drop deleted).
         exact_renames=(
             ("s_nandUserAreaCallbackName", "lbl_8055127C"),
             ("s_nandUserAreaCallbackFmt", "lbl_80551294"),
@@ -380,7 +381,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", b"/title/00010006\x00", "lbl_80551220"),
             (".data", b"/title/00010007\x00", "lbl_80551230"),
         ),
-        drop_data_tail=((".data", 0xE7),),
     ),
     "CEquipItemBox.o": UnitRules(
         # Retail declares CItem_initItemImplInstances with C linkage
@@ -3256,11 +3256,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC pads .bss to 8 (0x3B0); retail ends at 0x3AC.
         drop_nobits_range=((".bss", 0x3AC, 0x3B0),),
     ),
-    "hidh_api.o": UnitRules(
-        # MWCC 4-pads .data (0x118 vs retail 0x113) and .bss (0x408 vs 0x404).
-        drop_data_tail=((".data", 0x113),),
-        drop_nobits_range=((".bss", 0x404, 0x408),),
-    ),
+    # hidh_api.o: DELETED 2026-09-09 raw MATCH — string-pack resize
+    # (removed 5 explicit NULs from last Security string -> .data 0x113 exact)
+    # + deleted 4 bss pad uchars (-> .bss 0x404 exact). No postprocess.
     "l2c_api.o": UnitRules(
         # .data is exact 0x78B via typed s_l2ca_qbuf[0x33] (no extra pad).
     ),
@@ -3268,10 +3266,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # (trace strings now natural literals in source - raw data MATCH;
         # kept as anchor in case MWCC re-pools).
     ),
-    "l2c_utils.o": UnitRules(
-        # MWCC pads .data to 4 (0xE8 vs 0xE7) and .sdata to 8 (0x10 vs 0xE).
-        drop_data_tail=((".data", 0xE7), (".sdata", 0xE),),
-    ),
+    # l2c_utils.o: DELETED 2026-09-09 raw MATCH — string-pack resize
+    # (.data sized array 0x28->0x27 trims 1 pad byte to retail 0xE7;
+    # .sdata FALSE [8]->[6] trims 2 pad bytes to retail 0xE). No postprocess.
     "rfc_mx_fsm.o": UnitRules(
         # .data is exact 0x2B6 via typed string (no \0\0 pad); one jumptable
         # case-label addend drifts (rfc_mx_sm_state_disc_wait_ua dispatch at
@@ -3405,10 +3402,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # strings are supplied by source (dead retail pool entries).
         drop_data_tail=((".sdata", 0x12),),
     ),
-    "dsp_task.o": UnitRules(
-        # MWCC pads .data to 8 (0x140); retail split ends at 0x13B.
-        drop_data_tail=((".data", 0x13B),),
-    ),
+    # dsp_task.o: DELETED 2026-09-09 raw MATCH — string-pack resize
+    # (removed 5 explicit trailing NULs from the GC'd __DSP_add_task string;
+    # MWCC now emits the retail 0x13B slice with no tail). No postprocess.
     "OSContext.o": UnitRules(
         # MWCC pads .data to 8 (0x1E0); retail split ends at 0x1DB.
         drop_data_tail=((".data", 0x1DB),),
@@ -3464,10 +3460,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC pads .bss to 8 (0x58); retail ends at 0x54.
         drop_nobits_range=((".bss", 0x54, 0x58),),
     ),
-    "OSStateTM.o": UnitRules(
-        # MWCC pads .data to 8 (0xC8); retail ends at 0xC6.
-        drop_data_tail=((".data", 0xC6),),
-    ),
+    # OSStateTM.o: DELETED 2026-09-09 raw MATCH — string-pack resize
+    # (removed 2 explicit NULs from the STM handler assert string;
+    # MWCC now emits the retail 0xC6 slice with no tail). No postprocess.
     "OSNandbootInfo.o": UnitRules(
         # MWCC pads .data to 8 (0x20); retail split ends at 0x1A.
         drop_data_tail=((".data", 0x1A),),
@@ -4332,17 +4327,23 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CPackItem.o": UnitRules(
         # monolibdata2 dissolve: ppcdis splitter writes the retail .rodata
         # slice at align 4 (same 12-byte "CPackItem" string content); MWCC
-        # emits the section at align 8, plus extra weak RTTI/vtable copies
-        # (second vtable at +0x88, RTTI names at +0x0C, RTTI structs at +0x08)
-        # that retail linker GC'd (strong copies live in other TUs).
+        # emits the section at align 8, plus extra weak vtable copy
+        # (second vtable at +0x88) that retail linker GC'd (strong copy lives
+        # in this TU as lbl_eu_8056FF58).
         # NEW angle (weak-dtor kill, CLibStaticData pattern): IWORK_EVENT_INLINE_DTOR
         # makes MWCC emit a weak local __dt__10IWorkEventFv (0x40 text) that retail
         # keeps external (strong copy in IWorkEvent.o). Drop as UNDEF so extab
-        # resolves externally; shrinks .text toward split budget without touching
-        # data keeps (.data 0x88/.rodata 0x0C/.sdata 0x08 still thin-trimmed).
+        # resolves externally.
+        # WAVE-8 RETRY (-RTTI off, configure.py): retail has no RTTI structs in
+        # TU (.data head is sdata ptr+0, .rodata 0xC, .sdata 0x8 pair); -RTTI off
+        # kills the duplicate "CPackItem"/"IWorkEvent" type names + __RTTI__ copies
+        # + 0xC RTTI base array, so .rodata/.sdata are now raw MATCH (drops
+        # deleted 2026-09-09); only .data still thin-trimmed to 0x88 for the
+        # remaining MWCC __vt__9CPackItem duplicate (novtable would need explicit
+        # vptr stores + header change; deferred - would touch shared header).
         drop_text_symbols_as_undef=("__dt__10IWorkEventFv",),
         set_data_align=((".rodata", 4),),
-        drop_data_tail=((".data", 0x88), (".rodata", 0x0C), (".sdata", 0x08),),
+        drop_data_tail=((".data", 0x88),),
     ),
     "CScnItemCameraNw4r.o": UnitRules(
         # -RTTI off suppresses .rodata (typeinfo strings) and .sdata (typeinfo
@@ -7477,42 +7478,34 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "WUD.o": UnitRules(
-        # Retail .data pools rebuilt as named byte arrays in WUD.c; MWCC pads
-        # the larger arrays to 4/8 (retail packs at 1/4) — drop the seven
-        # zero pads, then trim the compiler's switch table off the tail.
-        # The retail table slot is the zero-filled jumptable_80562FA0 array;
-        # its ADDR32 case-label relocs are injected below and __wudSecurity-
+        # Retail .data pools rebuilt as named byte arrays in WUD.c; all MWCC
+        # 8-align pads killed via retail-size arrays (14 shrinks) + off-grid
+        # splits (2544 52+52, 27BC 100+108, 2C2C 124+124, FC4 100+204).
+        # Raw .data 0x11E8->0x11CC (pads 0x1C->0, auto 0x24 remains); only the
+        # compiler switch table tail is trimmed. Jumptable at retail 0xCD8.
+        # Its ADDR32 case-label relocs are injected below and __wudSecurity-
         # EventStackCallback's lis/addi are retargeted onto it.
-        drop_data_range=(
-            (".data", 0x21C, 0x220),
-            (".data", 0x308, 0x30C),
-            (".data", 0x4F4, 0x4F8),
-            (".data", 0x720, 0x724),
-            (".data", 0x79C, 0x7A0),
-            (".data", 0x818, 0x81C),
-            (".data", 0x964, 0x968),
-        ),
         retarget_relocs=(
             (".text", 0x51EA, "jumptable_80562FA0"),
             (".text", 0x51F2, "jumptable_80562FA0"),
         ),
         inject_relocs=(
             (".data", 0x144, "@etb_80010138"),
-            (".data", 0xCF4, "__wudSecurityEventStackCallback+92"),
-            (".data", 0xCF8, "__wudSecurityEventStackCallback+264"),
-            (".data", 0xCFC, "__wudSecurityEventStackCallback+292"),
-            (".data", 0xD00, "__wudSecurityEventStackCallback+452"),
-            (".data", 0xD04, "__wudSecurityEventStackCallback+720"),
-            (".data", 0xD08, "__wudSecurityEventStackCallback+736"),
-            (".data", 0xD0C, "__wudSecurityEventStackCallback+972"),
-            (".data", 0xD10, "__wudSecurityEventStackCallback+1312"),
-            (".data", 0xD14, "__wudSecurityEventStackCallback+1328"),
+            (".data", 0xCD8, "__wudSecurityEventStackCallback+92"),
+            (".data", 0xCDC, "__wudSecurityEventStackCallback+264"),
+            (".data", 0xCE0, "__wudSecurityEventStackCallback+292"),
+            (".data", 0xCE4, "__wudSecurityEventStackCallback+452"),
+            (".data", 0xCE8, "__wudSecurityEventStackCallback+720"),
+            (".data", 0xCEC, "__wudSecurityEventStackCallback+736"),
+            (".data", 0xCF0, "__wudSecurityEventStackCallback+972"),
+            (".data", 0xCF4, "__wudSecurityEventStackCallback+1312"),
+            (".data", 0xCF8, "__wudSecurityEventStackCallback+1328"),
         ),
         # retail names the patch-table ETB pointer "@etb_80010138".
         exact_renames=(("etb_80010138", "@etb_80010138"),),
         # jumptable_80562FA0's last byte is initialized to 1 to keep the array
         # out of .bss; re-zero it (no reloc points at that word).
-        zero_data_range=((".data", 0xD17, 0xD18),),
+        zero_data_range=((".data", 0xCFB, 0xCFC),),
         drop_data_tail=((".data", 0x11A8),),
     ),
     "OSNet.o": UnitRules(
@@ -8434,7 +8427,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x3A83126F), "lbl_eu_806689F0"),
             (struct.pack(">d", 0.0), "lbl_eu_80666EE0"),
         ),
-        drop_data_tail=((".sdata2", 0xC0), (".sdata", 0x30), (".rodata", 0x3E0), (".data", 0xCF4)),
+        drop_data_tail=((".sdata2", 0xC0), (".rodata", 0x3E0), (".data", 0xCF4)),
         # -RTTI off (configure.py): retail has no RTTI data in this TU's
         # .rodata/.data/.sdata. Suppressing RTTI shrinks trailing orphans:
         #   .data  trailing 0x60→0x2C (orphaned vtables lost RTTI slots)
@@ -8501,15 +8494,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".sdata2",),
     ),
     "CScnRootNw4r.o": UnitRules(
-        # Retail .data 0x68 (vtable group 0x5C + 0xC at 8056E768/8056E7C4), .rodata 0x40 ("CScnRootNw4r" + NW4R Mem strings), .sdata 0. MWCC emits extra local __vt__12CScnRootNw4r (0x38) + __RTTI__12CScnRootNw4r (0x8 in .sdata) + duplicate "CScnRootNw4r" string in .rodata tail (0xD), causing size drift. Strip the tails to retail sizes. Reloc drift is just the mangled vs unmangled func_8048FC68 name.
+        # Retail .data 0x68 (vtable group 0x5C + 0xC at 8056E768/8056E7C4), .rodata 0x40 ("CScnRootNw4r" + NW4R Mem strings), .sdata 0. MWCC emits extra local __vt__12CScnRootNw4r (0x38) causing .data drift. Reloc drift is just the mangled vs unmangled func_8048FC68 name.
+        # WAVE-8 RETRY (-RTTI off, configure.py): retail has no RTTI structs in TU; -RTTI off kills the duplicate "CScnRootNw4r" type name + __RTTI__ copy, so .rodata/.sdata are now raw MATCH (drops deleted 2026-09-09); only .data still thin-trimmed to 0x68 for the remaining MWCC __vt__ duplicate (novtable would need header change; deferred).
         exact_renames=(
             ("func_8048FC68__FP12CScnRootNw4r", "func_8048FC68"),
         ),
-        drop_data_tail=(
-            (".data", 0x68),
-            (".rodata", 0x40),
-            (".sdata", 0),
-        ),
+        drop_data_tail=((".data", 0x68),),
     ),
     "adx_suwii.o": UnitRules(
         set_data_align=((".rodata", 4),),

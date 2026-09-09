@@ -104,14 +104,9 @@ typedef struct {
     u8 pad_402[2];          /* offset 0x402 */
 } tHID_HOST_CTB;
 
-// Retail .bss is 0x408: 4 pad bytes after hh_cb. Declared before hh_cb so
-// the reverse-order .bss emission places them after it.
-#pragma sdata_threshold 0
-unsigned char hidh_bss_pad4;
-unsigned char hidh_bss_pad3;
-unsigned char hidh_bss_pad2;
-unsigned char hidh_bss_pad1;
-#pragma sdata_threshold 8
+// Retail .bss is 0x404 (hh_cb only): raw MATCH with no pad bytes.
+// (Old rule padded to 0x408 via 4 trailing pad uchars + drop_nobits_range;
+// deleted 2026-09-09.)
 tHID_HOST_CTB hh_cb;
 
 void hidh_search_callback(u16 result, void *p_data);
@@ -523,7 +518,7 @@ tHID_STATUS HID_HostSetSecurityLevel (char *p_name, UINT8 sec_lvl)
 
     if (!BTM_SetSecurityLevel(FALSE, p_name, HID_SERVICE_ID + 2, 0,
                               HID_PSM_INTERRUPT, BTM_SEC_PROTO_HID, 0)) {
-        HIDH_TRACE_ERROR0("Security Registration 6 failed\x00\x00\x00\x00\x00");
+        HIDH_TRACE_ERROR0("Security Registration 6 failed");
         return (HID_ERR_NO_RESOURCES);
     }
 

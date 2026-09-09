@@ -1374,8 +1374,8 @@ bool checkFlag40000__Q22cf17CActParamAnimGame(void* self) {
 }
 
 // Walks the game-manager linked list: for each node resolves its action
-// source via func_8016FE34 and compares scale * CActorParam_UnkVirtualFunc38
-// against CActorParam_UnkVirtualFunc37; when
+// source via func_8016FE34 and compares scale * CActorParam_getDamageScale
+// against CActorParam_getHp; when
 // any source passes, notifies the region via func_8004BC94. The list head is
 // re-fetched from the manager every iteration (retail reloads it at the loop
 // bottom).
@@ -1391,8 +1391,8 @@ bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
     while (node !=
            (CActParamAnimGameListNode*)((CActParamAnimGameMgr*)getGimmickListHead__Q22cf13CfGameManagerFv())->head) {
         void* item = func_8016FE34(node->f08);
-        f32 limit = ((cf::CActorParam*)item)->CActorParam_UnkVirtualFunc37();
-        f32 value = ((cf::CActorParam*)item)->CActorParam_UnkVirtualFunc38();
+        f32 limit = ((cf::CActorParam*)item)->CActorParam_getHp();
+        f32 value = ((cf::CActorParam*)item)->CActorParam_getDamageScale();
         if (scale * value >= limit) {
             found = true;
             break;
@@ -1406,7 +1406,7 @@ bool cf::CActParamAnimGame::func_8005DB1C(u32 type) {
     return false;
 }
 
-float cf::CActorParam::CActorParam_UnkVirtualFunc38() { return *(float*)((u8*)this + 0x17F4); }
+float cf::CActorParam::CActorParam_getDamageScale() { return *(float*)((u8*)this + 0x17F4); }
 
 // Returns true (and notifies the linked region) when the +0x4F4 link is
 // active; otherwise falls back to the +0x4E8 link when +0x4F4 is null.
@@ -2277,20 +2277,20 @@ l60418:
 
 
 // Actor-facing position/heading update: reads the +0x4E8 link's current
-// position (CObjectParam_UnkVirtualFunc5 id gate, then findObjectById),
+// position (CObjectParam_getSelfObjectId id gate, then findObjectById),
 // diffs the action source's CObject_UnkVirtualFunc23 position vector against
 // this object's position, and when the delta is non-trivial, orients the
-// link toward the actor (CfObject_UnkVirtualFunc29) with the heading from
+// link toward the actor (CfObject_setMoveHeadAngle) with the heading from
 // Atan2FIdx.
 void cf::CActParamAnimGame::func_80060110() {
     CActParamAnimGameView* v = (CActParamAnimGameView*)this;
     // Retail reloads the +0x4E8 link for every dispatch; keep the loads
     // independent so MWCC colors them like retail.
     if (v->link4E8 == 0) return;
-    if (((cf::CfObject*)v->link4E8)->CObjectParam_UnkVirtualFunc5() == 0) return;
-    void* src = findObjectById((int)((cf::CfObject*)v->link4E8)->CObjectParam_UnkVirtualFunc5());
+    if (((cf::CfObject*)v->link4E8)->CObjectParam_getSelfObjectId() == 0) return;
+    void* src = findObjectById((int)((cf::CfObject*)v->link4E8)->CObjectParam_getSelfObjectId());
     if (src == 0) return;
-    ml::CVec3* p = ((cf::CfObject*)src)->CfObject_UnkVirtualFunc23();
+    ml::CVec3* p = ((cf::CfObject*)src)->CfObject_getPosVector();
     ml::CVec3 d;
     nw4r::math::VEC3Sub(reinterpret_cast<nw4r::math::VEC3*>(&d),
                          reinterpret_cast<const nw4r::math::VEC3*>(p),
@@ -2305,18 +2305,18 @@ void cf::CActParamAnimGame::func_80060110() {
     bool nearAll = nearXY && b3;
     if (nearAll) return;
     v->flags0C |= 0x1000000;
-    ((cf::CfObject*)v->link4E8)->CfObject_UnkVirtualFunc29(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
+    ((cf::CfObject*)v->link4E8)->CfObject_setMoveHeadAngle(lbl_eu_806660E0 * nw4r::math::Atan2FIdx(dx, dz));
 }
 
 // Forwards the +0x444 scalar to the +0xC4 virtual slot of the object at
 // +0x4E8 (tail call; retail keeps no stack frame). Real virtual dispatch
-// (CfObject_UnkVirtualFunc29) so MWCC emits the r12 vtable load.
+// (CfObject_setMoveHeadAngle) so MWCC emits the r12 vtable load.
 void cf::CActParamAnimGame::syncYawToLink() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     cf::CfObject* region = (cf::CfObject*)self->region4E8;
     if (region == 0) return;
     f32 value = self->f444;
-    region->CfObject_UnkVirtualFunc29(value);
+    region->CfObject_setMoveHeadAngle(value);
 }
 
 extern "C" bool func_80060290(void* r3) {

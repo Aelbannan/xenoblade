@@ -58,7 +58,7 @@ void func_802A70C8(CVS_THREAD_HAGE* self) {
 
         if (handle != NULL) {
             // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
-            if (((cf::CActorParam*)handle)->CActorParam_UnkVirtualFunc138() == 0) {
+            if (((cf::CActorParam*)handle)->CActorParam_isBattleLocked() == 0) {
                 // Voice is not active -- try to play a random voice
                 // Use conditional bias pattern to match retail (no else branch)
                 CVoiceHandle* tmpHandle = self->field_0x24;
@@ -152,7 +152,7 @@ void func_802A6F8C(CVS_THREAD_HAGE* self) {
     if (self->field_0x24 == NULL) return;
 
     // Voice idle check: real CActorParam slot 138 (vtable 0x2BC).
-    if (((cf::CActorParam*)handle)->CActorParam_UnkVirtualFunc138() != 0) return;
+    if (((cf::CActorParam*)handle)->CActorParam_isBattleLocked() != 0) return;
 
     // Get voice iterator from slot 2 handle
     int iter = func_802A77E8(self->field_0x24);

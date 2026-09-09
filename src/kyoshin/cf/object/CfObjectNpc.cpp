@@ -85,7 +85,7 @@ struct CfObjectNpc_model98 {
 // vtable slot 0x8C returns a f32 in retail even though the base header declares
 // it void; the proxy's getScale8C() reads f1.
 float CfObjectNpc::readSlot8c() {
-    return static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc15();
+    return static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate();
 }
 
 // 0x800BFE00
@@ -109,7 +109,7 @@ bool CfObjectNpc::initNpcFlags() {
 // Per-frame NPC update: decides whether to show the NPC's dialogue bubble
 // and advances the trigger timer.
 void CfObjectNpc::updateNpcDialog() {
-    this->CObjectState_UnkVirtualFunc13();
+    this->CObjectState_setStateBitMask3();
 
     bool resetTimer = true;
 
@@ -122,8 +122,8 @@ void CfObjectNpc::updateNpcDialog() {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet__Fi(0x40000) == 0 &&
             this->CObjectState_UnkVirtualFunc8(1) == 0 &&
-            this->CObjectState_UnkVirtualFunc2(1) == 0 &&
-            this->CObjectState_UnkVirtualFunc2(0x10) == 0) {
+            this->CObjectState_checkStateFlags(1) == 0 &&
+            this->CObjectState_checkStateFlags(0x10) == 0) {
             // Fast path: flag the model and reset the trigger timer.
             CfObjectNpc_model98* model =
                 *reinterpret_cast<CfObjectNpc_model98**>(
@@ -140,14 +140,14 @@ void CfObjectNpc::updateNpcDialog() {
         // Dialogue-decided path.
         if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666AE0 &&
             this->CObjectState_UnkVirtualFunc8(1) != 0 &&
-            this->CObjectState_UnkVirtualFunc2(1) == 0 &&
-            this->CObjectState_UnkVirtualFunc2(0x10) == 0 &&
+            this->CObjectState_checkStateFlags(1) == 0 &&
+            this->CObjectState_checkStateFlags(0x10) == 0 &&
             func_8013EB90(1) == 0) {
             if (this->mTimer > lbl_eu_80666AEC) {
                 this->CObjectState_UnkVirtualFunc5(3);
                 // Slots 0x50 and 0x1AC take arguments though the base headers
                 // declare them argument-less; call through the vtable proxy.
-                static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc6(0);
+                static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);
                 static_cast<cf::CfObjectModel*>(this)->CfObjectModel_UnkVirtualFunc14(nullptr, (const char*)lbl_eu_804FC580);
                 this->mTimer = lbl_eu_80666AE0;
             } else {
@@ -195,7 +195,7 @@ void CfObjectNpc::func_800BF764() {
     u32 col11 = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
     f32 val1 = (f32)(u32)(u8)col11 /
-        *(f32*)static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc58();
+        *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale();
     static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc59(val1);
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.

@@ -193,7 +193,7 @@ void CfObjectPoint::releasePointLink() {
             // Redundant nested check on the reloaded value mirrors retail's
             // two beq targets (MWCC keeps both branches).
             if (mSubObj38 != nullptr) {
-                mSubObj38->CObjectState_UnkVirtualFunc1(1);
+                mSubObj38->CObjectState_setStateBitMask(1);
             }
             mSubObj38 = nullptr;
         }
@@ -203,13 +203,13 @@ void CfObjectPoint::releasePointLink() {
 }
 
 void CfObjectPoint::updatePointState() {
-    CObjectState_UnkVirtualFunc13();
+    CObjectState_setStateBitMask3();
 
     if ((lbl_eu_80663E24 & 0x01000000) != 0) {
         if (CObjectState_UnkVirtualFunc8(1) != 0) {
             goto main_body;
         }
-        if (CObjectState_UnkVirtualFunc2(1) == 0) {
+        if (CObjectState_checkStateFlags(1) == 0) {
             goto done;
         }
     }
@@ -219,18 +219,18 @@ main_body:
         float dist = func_80496288(lbl_eu_80663E14);
         if (dist > lbl_eu_80666B48) {
             if (CObjectState_UnkVirtualFunc8(1) != 0) {
-                if (CObjectState_UnkVirtualFunc2(1) == 0) {
+                if (CObjectState_checkStateFlags(1) == 0) {
                     if (func_8013EB90(1) == 0) {
-                        CObjectState_UnkVirtualFunc7(1);
+                        CObjectState_clearStateFlags8(1);
                     }
                 }
             }
         }
     }
 
-    if (CObjectState_UnkVirtualFunc2(1) != 0) {
+    if (CObjectState_checkStateFlags(1) != 0) {
         CObjectState_UnkVirtualFunc5(1);
-        CObjectState_UnkVirtualFunc3(1);
+        CObjectState_setStateBitFlag(1);
     }
 
     if (mSubObj38 != nullptr) {
@@ -263,14 +263,14 @@ extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* old = self->mSubObj38;
     if (old != nullptr) {
         if (old != nullptr) {
-            old->CObjectState_UnkVirtualFunc1(1);
+            old->CObjectState_setStateBitMask(1);
         }
         self->mSubObj38 = nullptr;
     }
 
     self->mSubObj38 = child;
     if (child != nullptr) {
-        child->CObjectState_UnkVirtualFunc10(self);
+        child->CObjectState_setStateBitMask0(self);
         ((cf::CfObjectBase*)self->mSubObj38)->cfVtA0();
     }
 }

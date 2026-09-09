@@ -22,7 +22,7 @@ namespace cf {
 
 class CfObject {
 public:
-    float CfObject_UnkVirtualFunc31();
+    float CfObject_getMoveHeadAngle();
 
     // TODO: add fields
 };

@@ -9,7 +9,7 @@
 #include <string.h>
 
 // Last trace string; definition at file end keeps it last in .data.
-extern char l2c_nobuf_create_conn_str[0x28];
+extern char l2c_nobuf_create_conn_str[0x27];
 
 #include <revolution/BTE/include/bt_target.h>
 #include <revolution/BTE/stack/include/bt_types.h>
@@ -58,7 +58,7 @@ enum {
    Non-const fixed-size arrays so MWCC keeps them in .sdata (sda21-accessed),
    matching the retail layout: TRUE at +0x0, FALSE at +0x8, 8 bytes each. */
 static char lbl_80665948[8] = "TRUE";
-static char lbl_80665950[8] = "FALSE";
+static char lbl_80665950[6] = "FALSE";
 
 /*******************************************************************************
  * Internal types (normally in l2c_int.h). Field offsets match the retail
@@ -1258,5 +1258,5 @@ BOOLEAN l2cu_lcb_disconnecting (void)
     return (status);
 }
 
-// Retail .data ends at 0xE8: this trace string padded to 0x28 bytes.
-char l2c_nobuf_create_conn_str[0x28] = "L2CAP - no buffer for l2cu_create_conn";
+// Retail .data ends at 0xE7: raw MATCH sized array (no pad byte).
+char l2c_nobuf_create_conn_str[0x27] = "L2CAP - no buffer for l2cu_create_conn";

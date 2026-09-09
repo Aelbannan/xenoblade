@@ -394,11 +394,11 @@ void CfObject_UnkVirtualFunc46__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, vo
     if (self->mTargetC4 != 0) {
         func_8004B730(self->mTargetC4, arg);
         self->mTarget6C0 = arg;
-        float x = *(float*)self->CfObject_UnkVirtualFunc58();
+        float x = *(float*)self->CfObject_getMoveRateScale();
         cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
         c4->field_430 = x;
         c4->field_43C = c4->field_438 * x;
-        float y = *(float*)self->CfObject_UnkVirtualFunc58();
+        float y = *(float*)self->CfObject_getMoveRateScale();
         cf::CfObjectMoveTargetC4* c4b = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
         c4b->field_434 = lbl_eu_80666AD0 * y;
     } else {
@@ -443,7 +443,7 @@ extern "C" void CfObject_UnkVirtualFunc47__Q22cf12CfObjectMoveFv(cf::CfObjectMov
             __ct__cf_CtrlPc(obj, self, 0);
         }
     } else {
-        float f = self->CfObject_UnkVirtualFunc31();
+        float f = self->CfObject_getMoveHeadAngle();
         if (arg >= 0 && arg <= 3) {
             obj = allocate__Q23mtl10MemManagerFUlUl(0x264, heap);
             if (obj != 0) {
@@ -488,7 +488,7 @@ void CfObject_UnkVirtualFunc49__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, in
     }
 }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc64(int flag) {
+void cf::CfObjectMove::CfObject_setMoveBusyState(int flag) {
     if (flag != 0) {
         mFlags68 |= 0x01000000;
     } else {
@@ -506,7 +506,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc64(int flag) {
 }
 
 // Retail symbol is Fv but the body reads r4 (a flag) - forced-name form
-// (same scheme as CfObject_UnkVirtualFunc64, whose symbol carries the Fi).
+// (same scheme as CfObject_setMoveBusyState, whose symbol carries the Fi).
 void CfObject_UnkVirtualFunc65__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag) {
     if (flag != 0) {
         self->mFlags68 |= 0x02000000;
@@ -533,19 +533,19 @@ void cf::CfObjectMove::updatePos() {
 // Retail symbol is Fv but the body reads r4 (a position vector forwarded to
 // the base +0x9C implementation) - forced-name form, same scheme as the
 // CfObjectModel sibling defined in CfObjectModel.cpp.
-void CfObject_UnkVirtualFunc19__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
+void CfObject_setMoveTargetVec__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
     void* target = self->mTargetC4;
     if (target != 0) {
         // One-arg call: retail leaves r4 (the vec) untouched for the base
         // call below, so the source passes only the C4 target.
         func_8004B354(target);
     }
-    CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv(self, vec);
+    CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv(self, vec);
 }
 
 // Retail symbol is Fv but the body reads r4 (a position vector forwarded to
 // the base +0x9C implementation) - forced-name form, same scheme as the
-// CfObject_UnkVirtualFunc19 sibling. The C4 target and +0x98 sub-object are
+// CfObject_setMoveTargetVec sibling. The C4 target and +0x98 sub-object are
 // processed when present before the base call.
 void CfObject_UnkVirtualFunc22__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec) {
     cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
@@ -560,7 +560,7 @@ void CfObject_UnkVirtualFunc22__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, co
 
 // Retail symbol is Fv but the body consumes r4 (a position vector) and f1
 // (an amount) - forced-name form carrying the hidden args (same scheme as
-// CfObject_UnkVirtualFunc19/22/26). Each unk64 bit test is normalized through
+// CfObject_setMoveTargetVec/22/26). Each unk64 bit test is normalized through
 // the double-cntlzw booleanize idiom (retail booleanizes twice).
 extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec, float amount) {
     u32 flags = self->unk64;
@@ -596,7 +596,7 @@ extern "C" void CfObject_UnkVirtualFunc25__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 
 // Retail symbol is Fv but the body consumes r4 (a position vector) and f1
 // (an amount) - forced-name form carrying the hidden args (same scheme as
-// CfObject_UnkVirtualFunc19/22). extern "C" so the definition symbol is the
+// CfObject_setMoveTargetVec/22). extern "C" so the definition symbol is the
 // exact retail name.
 extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, const ml::CVec3* vec, float amount) {
     // Each unk64 bit test is normalized through the double-cntlzw booleanize
@@ -631,14 +631,14 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     }
 }
 
-ml::CVec3* cf::CfObjectMove::CfObject_UnkVirtualFunc23() {
+ml::CVec3* cf::CfObjectMove::CfObject_getPosVector() {
     // Both sub-objects present + busy flag bit 2 (mFlags68 & 4) -> return a
     // pointer into the C4 target; otherwise defer to the base implementation.
     if (mSubObj98 != 0 && *(const u32*)field_0x9C != 0 && (mFlags68 & 0x4) != 0) {
         cf::CfObjectMoveTargetC4* target = (cf::CfObjectMoveTargetC4*)mTargetC4;
         return (ml::CVec3*)&target->field_3A8;
     }
-    return CfObjectModel::CfObject_UnkVirtualFunc23();
+    return CfObjectModel::CfObject_getPosVector();
 }
 
 
@@ -662,8 +662,8 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc27(void* src) {
     cf::CfObjectModel::CfObject_UnkVirtualFunc27(src);
 }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc29(float value) {
-    CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(this);
+void cf::CfObjectMove::CfObject_setMoveHeadAngle(float value) {
+    CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(this);
     void* target = mTargetC4;
     if (target != 0 && ((mFlags68 & 0x4) != 0)) {
         func_8004B4A4(target, value);
@@ -675,12 +675,12 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc29(float value) {
 }
 
 // Retail symbol is Fv but the body consumes f1 - forced-name form carrying
-// the hidden float arg (same scheme as CfObject_UnkVirtualFunc29). Base
+// the hidden float arg (same scheme as CfObject_setMoveHeadAngle). Base
 // call, then the C4 target's busy flag (bit 2) gates a func_8004B52C call
 // plus a +0x400 flag set (mTargetC4 is re-read after the call), and the
 // 6C0 target's +0xC word receives the value.
 void CfObject_UnkVirtualFunc30__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
-    CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(self);
+    CfObject_setMoveHeadAngle__Q22cf13CfObjectModelFv(self);
     void* target = self->mTargetC4;
     if (target != 0 && ((self->mFlags68 & 0x4) != 0)) {
         func_8004B52C(target, value);
@@ -743,7 +743,7 @@ void CfObjectMove_nullsub_17(){}
 // (this) for the THIRD target load/store (this is dead after); retail keeps r4
 // for all three (3 reg_swap, 0 structural). Witness rejects the r4<->r3 ABI
 // permutation. Separated locals + (void)this invariant.
-void* cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
+void* cf::CfObjectMove::CfObject_pushRefreshValue(float value) {
     void* target = this->mTargetC4;
     if (target != 0) {
         *(float*)((char*)target + 0x388) = value;
@@ -767,8 +767,8 @@ extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(cf::CfObjec
 // Retail symbols are Fv but both bodies return a float (load from the C4
 // target, else the shared time source) - forced-name forms carrying the
 // float return (the base header declares the overrides void).
-extern "C" float CfObject_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
-    // Getter for the value CfObject_UnkVirtualFunc14's target writes at
+extern "C" float CfObject_getMoveSpeedRate__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+    // Getter for the value CfObject_pushRefreshValue's target writes at
     // +0x388; falls back to the shared time source when no target. The
     // shared header declares func_80069EA0 void; it really returns float,
     // so call it through a cast (same as CtrlNpc.cpp).
@@ -1033,7 +1033,7 @@ void cf::CfObjectMove::setSubFieldE(unsigned short val) {
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
 
-extern "C" void CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+extern "C" void CfObject_isMoveActiveNow__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<cf::CfSubB0Real*>(*(void**)((u8*)self + 0xb0))->func14();
 }
 
@@ -1351,7 +1351,7 @@ void cf::CfObjectMove::setBit6c9(unsigned long bit) {
 // Retail symbol is Fv but the body consumes f1 (forwarded to the base
 // implementation, then subtracted from the shared constant) - forced-name
 // form carrying the hidden float arg (same scheme as
-// CfObject_UnkVirtualFunc29/30). Base call first, then the usual +0x38
+// CfObject_setMoveHeadAngle/30). Base call first, then the usual +0x38
 // sub-object +0xE4 double-query; on success call the camera-time helper
 // with (query result, lbl_eu_80666A94 - value).
 void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
@@ -1379,7 +1379,7 @@ extern "C" void func_800BE9AC(void* self) { reinterpret_cast<CScnItemModel*>(sel
 // Retail symbol is Fv but the body tail-calls vtable+0xC4 with a scaled
 // float argument - forced-name form (same as the CfObjectModel sibling).
 extern "C" void CfObject_UnkVirtualFunc32__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float f) {
-    self->CfObject_UnkVirtualFunc29(f * lbl_eu_8066A210);
+    self->CfObject_setMoveHeadAngle(f * lbl_eu_8066A210);
 }
 
 // Retail symbol is Fv but the body tail-calls vtable+0xC8 with a scaled
@@ -1453,7 +1453,7 @@ extern "C" int func_800BC4CC(cf::CfObjectMove* self) {
         } else {
             if (((u32)__cntlzw((u32)__cntlzw(flags & 0x100) >> 5) >> 5) != 0) {
                 const nw4r::math::VEC3* pos =
-                    (const nw4r::math::VEC3*)self->CfObject_UnkVirtualFunc23();
+                    (const nw4r::math::VEC3*)self->CfObject_getPosVector();
                 nw4r::math::VEC3 scratch;
                 nw4r::math::VEC3 delta;
                 nw4r::math::VEC3* pDelta = &delta;
@@ -1640,7 +1640,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         return;
     }
     // Snapshot the position query result and the movement target's state.
-    const ml::CVec3* pos = (const ml::CVec3*)self->CfObject_UnkVirtualFunc23();
+    const ml::CVec3* pos = (const ml::CVec3*)self->CfObject_getPosVector();
     ml::CVec3 origPos;
     origPos.x = pos->x;
     origPos.y = pos->y;
@@ -1651,7 +1651,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     // Declared angle-first so MWCC colours rate into f30 (retail order).
     f32 angle = tgt->field_C;
     f32 rate = tgt->field_14;
-    if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_UnkVirtualFunc9() == 0) {
+    if (getPlayer__Q22cf13CfGameManagerFi(0) == (void*)self && self->CfObject_isMoveActiveNow() == 0) {
         rate = lbl_eu_80666A88;
         func_804B0B54(self->_60C_region, &self->mPos3C);
     }
@@ -1668,14 +1668,14 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
     if (ml::math::abs(rate) > lbl_eu_8066A208 || force != 0) {
         // Circular sweep: scale the position X by the rate, sweep the angle
         // through Sin/Cos, then step the +0x60C region toward the swept point.
-        float sx = rate * *(const float*)self->CfObject_UnkVirtualFunc58();
+        float sx = rate * *(const float*)self->CfObject_getMoveRateScale();
         rate = lbl_eu_80666AB8 * sx;
         f32 ang = lbl_eu_80666ABC * angle;
         ml::CVec3 step;
         step.x = rate * SinFIdx__Q24nw4r4mathFf(ang);
         step.y = lbl_eu_80666A88;
         step.z = rate * CosFIdx__Q24nw4r4mathFf(ang);
-        const ml::CVec3* base = (const ml::CVec3*)self->CfObject_UnkVirtualFunc23();
+        const ml::CVec3* base = (const ml::CVec3*)self->CfObject_getPosVector();
         ml::CVec3 tmp;
         func_804B1164(self->_60C_region, &tmp, base, &step);
         step.x += tmp.x;
@@ -1768,11 +1768,11 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
             if (self->mTarget6C0 != 0) {
                 func_8004B730(self->mTargetC4, self->mTarget6C0);
             }
-            float x = *(float*)self->CfObject_UnkVirtualFunc58();
+            float x = *(float*)self->CfObject_getMoveRateScale();
             cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
             c4->field_430 = x;
             c4->field_43C = c4->field_438 * x;
-            float y = *(float*)self->CfObject_UnkVirtualFunc58();
+            float y = *(float*)self->CfObject_getMoveRateScale();
             ((cf::CfObjectMoveTargetC4*)self->mTargetC4)->field_434 = lbl_eu_80666AD0 * y;
             void* c4b = self->mTargetC4;
             ((cf::CfObjectMoveC8View*)c4b)->field_4 = self->mSubObj38;
@@ -1794,7 +1794,7 @@ extern "C" void func_800BCFA0(cf::CfObjectMove* self) {
         }
     }
     if ((self->mFlags68 & 0x1000000) != 0) {
-        self->CfObject_UnkVirtualFunc64(1);
+        self->CfObject_setMoveBusyState(1);
     }
     if ((self->mFlags68 & 0x2000000) != 0) {
         ((cf::CfObject*)self)->CfObject_UnkVirtualFunc65(1);

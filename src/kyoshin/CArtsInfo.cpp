@@ -762,7 +762,7 @@ extern "C" __declspec(noinline) void func_80236CF4(CArtsInfo* self) {
 // explicit extsh (retail codegen).
 int func_80236DB8(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return st->field_0x1C;
 }
 
@@ -774,7 +774,7 @@ int func_80236DB8(CArtsInfo* self) {
 // a bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
 extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return st->field_0x20;
 }
 
@@ -784,7 +784,7 @@ extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
 // bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
 extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc100();
+    CArtsStatBlock* st = (CArtsStatBlock*)((cf::CActorParam*)&obj->stats)->CActorParam_getBattleParams();
     return (int)st->field_0x10;
 }
 

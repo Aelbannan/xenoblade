@@ -865,7 +865,7 @@ void func_801742D4(CfMapItemManager* self) {
     if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) return;
 
     // Player feet position + small Y offset, fed to the item lookup.
-    ml::CVec3* pp = ((cf::CfObject*)pv)->CfObject_UnkVirtualFunc23();
+    ml::CVec3* pp = ((cf::CfObject*)pv)->CfObject_getPosVector();
     ml::CVec3 pos;
     pos.x = pp->x;
     pos.y = pp->y;

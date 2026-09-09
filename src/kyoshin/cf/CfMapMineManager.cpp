@@ -91,8 +91,8 @@ struct CfMapMineManager {
 
 // MineSceneObjectIf was a fake vtable pad. Retail tables at
 // lbl_eu_80528600 (CfObjectColl) and lbl_eu_805294E0 (CfObject base)
-// show setPosition at 0x9C = CfObject_UnkVirtualFunc19,
-// unk0AC at 0xAC = CfObject_UnkVirtualFunc23, and unk158 at 0x158 =
+// show setPosition at 0x9C = CfObject_setMoveTargetVec,
+// unk0AC at 0xAC = CfObject_getPosVector, and unk158 at 0x158 =
 // CfObject_UnkVirtualFunc66.  Use the real cf::CfObject hierarchy.
 
 // ---------------------------------------------------------------------------
@@ -590,7 +590,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
         strcpy(name.mText, nm);
         func_800C13FC(obj, &name, 0xC);
         ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc66(1);
-        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc19((const ml::CVec3*)&pt->mPosX);
+        ((cf::CfObject*)obj)->CfObject_setMoveTargetVec((const ml::CVec3*)&pt->mPosX);
         ((MineSceneObjData*)obj)->unk90 = 0;
     }
 
@@ -661,7 +661,7 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
     void* obj = createNpcActor__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
     bindPartnerO_(obj, player, 0);
-    ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc19((const ml::CVec3*)pos);
+    ((cf::CfObject*)obj)->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
 }
 
 // ---------------------------------------------------------------------------
@@ -1134,7 +1134,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     // Player position (virtual getter at vtable+0xAC); Y gets a small offset.
     f32 pos[3];
     {
-        void* pv = (void*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
+        void* pv = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
         pos[0] = ((f32*)pv)[0];
         pos[1] = ((f32*)pv)[1] + lbl_eu_806682E8;
         pos[2] = ((f32*)pv)[2];

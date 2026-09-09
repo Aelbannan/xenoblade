@@ -36,7 +36,7 @@ struct CModelDispMakeCrystalFull {
 
 // (was CMCryMove: virtual dispatch on the crystal-charged actor's embedded
 // CfObjectMove at +0x3e9c, at +0x74 (no args) and +0x148 (index arg). These
-// are cf::CfObject::CfObject_UnkVirtualFunc9 (bool, +0x74) and
+// are cf::CfObject::CfObject_isMoveActiveNow (bool, +0x74) and
 // cf::CfObject::CfObject_UnkVirtualFunc62 (u32, +0x148, retail index arity)
 // (cf. CModelDispEquip.hpp); call sites now use the owning class directly.)
 

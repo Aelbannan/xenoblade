@@ -514,7 +514,7 @@ extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::C
     ml::CVec3 d2Tmp;   // 0x24
     ml::CVec3 d3Tmp;   // 0x18
     ml::CVec3 tAdd;    // 0xc
-    d.set(*self->CfObject_UnkVirtualFunc23());
+    d.set(*self->CfObject_getPosVector());
     if (out != 0) *out = d;
     float R = lbl_eu_806667FC + radius;
     float R2 = R * R;
@@ -540,7 +540,7 @@ extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::C
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_getPosVector(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, closest);
             d3.set(d3Tmp);
@@ -564,7 +564,7 @@ extern "C" int func_800A4C48(cf::CfObject* self, const ml::CVec3& a, const ml::C
         float R2b = lbl_eu_806667FC + radius;
         d.x = dir.x * R2b;
         d.z = dir.z * R2b;
-        d.y = self->CfObject_UnkVirtualFunc23()->y - closest.y;
+        d.y = self->CfObject_getPosVector()->y - closest.y;
         nw4r::math::VEC3Add(tAdd, d, closest);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -601,7 +601,7 @@ extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float 
     ml::CVec3 d2Tmp;
     ml::CVec3 d3Tmp;
     ml::CVec3 tAdd;
-    ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
+    ml::CVec3* pos = self->CfObject_getPosVector();
     d.set(*pos);
     if (out != 0) *out = d;
     float R = lbl_eu_806667FC + radius;
@@ -625,7 +625,7 @@ extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float 
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_getPosVector(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, point);
             d3.set(d3Tmp);
@@ -650,7 +650,7 @@ extern "C" int func_800A50AC(cf::CfObject* self, nw4r::math::VEC3* point, float 
         float R2 = lbl_eu_806667FC + radius;
         d.x = dir.x * R2;
         d.z = dir.z * R2;
-        d.y = self->CfObject_UnkVirtualFunc23()->y - point->y;
+        d.y = self->CfObject_getPosVector()->y - point->y;
         nw4r::math::VEC3Add(tAdd, d, point);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -723,7 +723,7 @@ extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius,
     ml::CVec3 d;
     {
         // Scoped so the vcall result's live range ends before the body.
-        ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
+        ml::CVec3* pos = self->CfObject_getPosVector();
         d.x = pos->x;
         d.y = pos->y;
         d.z = pos->z;
@@ -758,7 +758,7 @@ extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius,
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
+            nw4r::math::VEC3Sub(d2Tmp, *self->CfObject_getPosVector(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, *point);
             d3.set(d3Tmp);
@@ -782,7 +782,7 @@ extern "C" int func_800A5738(cf::CfObject* self, ml::CVec3* point, float radius,
         float R2 = lbl_eu_806667FC + radius;
         d.x = dir.x * R2;
         d.z = dir.z * R2;
-        d.y = self->CfObject_UnkVirtualFunc23()->y - point->y;
+        d.y = self->CfObject_getPosVector()->y - point->y;
         nw4r::math::VEC3Add(tAdd, d, *point);
         outTmp.set(tAdd);
         *out = outTmp;
@@ -809,7 +809,7 @@ extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVe
     ml::CVec3 d2Tmp;
     ml::CVec3 d3Tmp;
     ml::CVec3 tAdd;
-    d.set(*self->CfObject_UnkVirtualFunc23());
+    d.set(*self->CfObject_getPosVector());
     if (out != 0) *out = d;
     d.y += lbl_eu_806667E8;
     nw4r::math::VEC3Sub(dvTmp, d, point);
@@ -836,7 +836,7 @@ extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVe
             }
             if (zero) {
                 // Coincident centers: retry from the object's reference point.
-                ml::CVec3* pos = self->CfObject_UnkVirtualFunc23();
+                ml::CVec3* pos = self->CfObject_getPosVector();
                 nw4r::math::VEC3Sub(d2Tmp, *pos, *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
                 d2.set(d2Tmp);
                 nw4r::math::VEC3Sub(d3Tmp, d2, point);
@@ -862,7 +862,7 @@ extern "C" int func_800A5B18(cf::CfObject* self, const ml::CVec3& point, ml::CVe
             float R2 = lbl_eu_806667FC + radius;
             d.x = dir.x * R2;
             d.z = dir.z * R2;
-            d.y = self->CfObject_UnkVirtualFunc23()->y - point.y;
+            d.y = self->CfObject_getPosVector()->y - point.y;
             }
             nw4r::math::VEC3Add(tAdd, d, point);
             outTmp.set(tAdd);
@@ -916,7 +916,7 @@ extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::C
     ml::CVec3 diff2;   // 0x20 - clamped - proj
     ml::CVec3 tC;      // 0x14 - VEC3Scale result
     ml::CVec3 proj;    // 0x8 - scaled direction
-    d.set(*self->CfObject_UnkVirtualFunc23());
+    d.set(*self->CfObject_getPosVector());
     if (out != 0) *out = d;
     min.x = a.x - lbl_eu_806667F4;
     min.y = a.y - lbl_eu_806667F4;
@@ -938,7 +938,7 @@ extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::C
     float R = lbl_eu_806667D8;
     bool cond = nw4r::math::VEC3Dot(diff, diff) <= R * R;
     if (cond && out != 0) {
-        nw4r::math::VEC3Sub(dirTmp, *self->CfObject_UnkVirtualFunc23(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
+        nw4r::math::VEC3Sub(dirTmp, *self->CfObject_getPosVector(), *reinterpret_cast<const ml::CVec3*>(&self->mSubObj54));
         dir.x = dirTmp.x;
         dir.y = dirTmp.y;
         dir.z = dirTmp.z;
@@ -967,7 +967,7 @@ extern "C" int func_800A5FE8(cf::CfObject* self, const ml::CVec3& a, const ml::C
         nw4r::math::VEC3Sub(diff2, clamped, proj);
         outTmp.set(diff2);
         *out = outTmp;
-        out->y = self->CfObject_UnkVirtualFunc23()->y;
+        out->y = self->CfObject_getPosVector()->y;
     }
     return cond;
 }

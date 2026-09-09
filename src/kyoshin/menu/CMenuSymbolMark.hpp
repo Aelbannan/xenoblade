@@ -326,7 +326,7 @@ extern const f32 lbl_eu_80667130;
 extern const f32 lbl_eu_8066A1FC;
 extern const f32 lbl_eu_8066A210;
 
-// Real CActorParam provides CActorParam_UnkVirtualFunc37 at 0x128 (replaces PlayerHpGate pad)
+// Real CActorParam provides CActorParam_getHp at 0x128 (replaces PlayerHpGate pad)
 
 // Raw field views over the arrow resource blob pointed to by mDataPtr (+0x5C).
 struct ArrowResPtrView {

@@ -406,7 +406,7 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
         wsrc = &tmp;
     } else {
         wsrc = reinterpret_cast<const nw4r::math::VEC3*>(
-            src->CfObject_UnkVirtualFunc23());
+            src->CfObject_getPosVector());
     }
     world.x = wsrc->x;
     world.y = wsrc->y;

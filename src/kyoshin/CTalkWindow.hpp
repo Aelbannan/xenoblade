@@ -166,7 +166,7 @@ struct CTalkWinPosObj {
 // findObjectById(id) result (talk-source actor) for Init / func_8012CD38.
 // The actor is a cf::CfObject: its virtuals carry the dispatched slots -
 // 0x40 talk text (CObjectParam_UnkVirtualFunc2), 0xAC position fallback
-// (CfObject_UnkVirtualFunc23), 0x120 named-position lookup
+// (CfObject_getPosVector), 0x120 named-position lookup
 // (CfObject_UnkVirtualFunc52) and 0x158 voice stop
 // (CfObject_UnkVirtualFunc66). Call sites cast to cf::CfObject and call
 // those directly; no TU-local view is emitted. Field +0x8C carries the

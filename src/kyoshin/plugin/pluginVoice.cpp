@@ -25,7 +25,7 @@ int voice_play(VMThread* pThread) {
         // Items point at the embedded CfObjectMove (base+0x3E9C);
         // recover the owning actor base (NULL stays NULL).
         u8* object = node->object != 0 ? node->object - 0x3E9C : node->object;
-        if(((cf::CfObjectPc*)object)->CActorParam_UnkVirtualFunc138() == 0){
+        if(((cf::CfObjectPc*)object)->CActorParam_isBattleLocked() == 0){
             if(voiceId == ((VoiceActorVoiceId*)object)->field_3F28){
                 ((cf::CfObject*)(object + 0x3E9C))->requestVoice(vol, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
                 break;

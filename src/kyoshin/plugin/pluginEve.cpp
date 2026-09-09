@@ -187,7 +187,7 @@ int waitRealtimeEvent(VMThread* pThread) {
 
 // View of CfObjectActor's CfObjectMove subobject at absolute offset 0x3E9C.
 // The retail "is talking?" dispatch is a virtual call on a CObjectState
-// subobject at +0x3E9C (vtable slot +0x2C = CObjectState_UnkVirtualFunc10,
+// subobject at +0x3E9C (vtable slot +0x2C = CObjectState_setStateBitMask0,
 // this = actor+0x3E9C). The C++ hierarchy layout in the headers places that
 // subobject later than retail, so the call goes through this view class:
 // CfActorTalkView's CObjectState base lands at +0x3E9C and a virtual call on
@@ -212,8 +212,8 @@ int onTalk(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_UnkVirtualFunc10((void*)0x10001) != 0 ||
-        view->CObjectState_UnkVirtualFunc10((void*)0x10002) != 0) {
+    if (view->CObjectState_setStateBitMask0((void*)0x10001) != 0 ||
+        view->CObjectState_setStateBitMask0((void*)0x10002) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -231,8 +231,8 @@ int onTalkEnd(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_UnkVirtualFunc10((void*)0x10001) != 0 ||
-        view->CObjectState_UnkVirtualFunc10((void*)0x10002) != 0) {
+    if (view->CObjectState_setStateBitMask0((void*)0x10001) != 0 ||
+        view->CObjectState_setStateBitMask0((void*)0x10002) != 0) {
         ret = 1;
     } else {
         ret = 2;

@@ -36,7 +36,7 @@ extern "C" void func_800AAE24(void* /*ctx*/, cf::CfObjectColl* coll) {
     mat.m[2][3] = lbl_eu_80666910;
 
     // world position via CfObject virtual at +0xAC
-    mat.replaceTranslation(*coll->CfObject_UnkVirtualFunc23());
+    mat.replaceTranslation(*coll->CfObject_getPosVector());
 
     ml::CCol4 lineCol;
     if (aabb->field_94 == 1) {

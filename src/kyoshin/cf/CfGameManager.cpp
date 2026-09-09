@@ -960,7 +960,7 @@ void cf::CfGameManager::dispatchObjectFunc53() {
 }
 
 void cf::CfGameManager::dispatchObjectFunc48() {
-    field_0x4->CfObject_UnkVirtualFunc48();
+    field_0x4->CfObject_getCurrentTarget();
 }
 
 void cf::CfGameManager::dispatchObjectFunc46() {
@@ -972,11 +972,11 @@ void cf::CfGameManager::dispatchObjectFunc56() {
 }
 
 void cf::CfGameManager::dispatchObjectFunc58() {
-    field_0x4->CfObject_UnkVirtualFunc58();
+    field_0x4->CfObject_getMoveRateScale();
 }
 
 void cf::CfGameManager::dispatchObjectFunc31() {
-    field_0x4->CfObject_UnkVirtualFunc31();
+    field_0x4->CfObject_getMoveHeadAngle();
 }
 
 void cf::CfGameManager::dispatchObjectFuncC4() {
@@ -984,14 +984,14 @@ void cf::CfGameManager::dispatchObjectFuncC4() {
 }
 
 void cf::CfGameManager::dispatchObjectFunc23() {
-    field_0x4->CfObject_UnkVirtualFunc23();
+    field_0x4->CfObject_getPosVector();
 }
 
 // Retail Fv symbol: callers leave r4 = vec for UVF19; forced-name form keeps
 // the Fv linker name while forwarding the live argument.
 extern "C" void dispatchObjectFunc19__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, const ml::CVec3* vec) {
-    self->field_0x4->CfObject_UnkVirtualFunc19(vec);
+    self->field_0x4->CfObject_setMoveTargetVec(vec);
 }
 
 #pragma dont_inline on
@@ -1088,7 +1088,7 @@ void* cf::CfGameManager::func_8007C8C8() {
                 if (func_8007CBD4(0x1000)) {
                     cf::CfObjectMove* player = getPlayer(0);
                     if (player != nullptr) {
-                        func_8016EC58(player->CfObject_UnkVirtualFunc23());
+                        func_8016EC58(player->CfObject_getPosVector());
                     }
                 }
             }
@@ -1240,7 +1240,7 @@ cf::CfObject* cf::CfObject::CfObject_UnkVirtualFunc53() {
     return nullptr;
 }
 extern u32 lbl_eu_80661BC0;
-u32* cf::CfObject::CfObject_UnkVirtualFunc58() {
+u32* cf::CfObject::CfObject_getMoveRateScale() {
     return &lbl_eu_80661BC0;
 }
 // lwz getters - return global vars
@@ -1600,7 +1600,7 @@ extern "C" u32 CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv(const u8* data
     return *reinterpret_cast<const u32*>(data + 0x1608);
 }
 
-extern "C" cf::UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127__Q22cf11CActorParamFv(
+extern "C" cf::UnkClass_CActorParam15E0* CActorParam_getStatusTable__Q22cf11CActorParamFv(
     u8* data) {
     return *reinterpret_cast<cf::UnkClass_CActorParam15E0**>(data + 0x15E0);
 }
@@ -1851,7 +1851,7 @@ extern "C" void func_8007CF64__Q22cf13CfGameManagerFv(cf::CfGameManager* self) {
     }
 
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    if (player == nullptr || player->CfObject_UnkVirtualFunc9() == 0) {
+    if (player == nullptr || player->CfObject_isMoveActiveNow() == 0) {
         return;
     }
     if ((lbl_eu_806642E0 & 1) != 0) {

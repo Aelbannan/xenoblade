@@ -416,7 +416,7 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
             if (actor != 0) {
                 m = actor->field_3F2C;
                 if (m == 0) ready = 0;
-                if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc9() == 0) ready = 0;
+                if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_isMoveActiveNow() == 0) ready = 0;
                 if (func_80200C20(self, actor->field_3F28) == 0) ready = 0;
             }
             if (holder->field_0x00 == 0 && ready != 0) {

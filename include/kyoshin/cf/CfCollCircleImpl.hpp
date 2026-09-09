@@ -15,7 +15,7 @@ namespace cf {
 // Collision circle shape implementation.
 // Layout offsets derived from CfCollCircleImpl.s. The debug-draw functions
 // in this TU take the shape as cf::CfObjectColl (radius at 0xB8, position
-// via CfObject_UnkVirtualFunc23 at +0xAC, cf. CfCollSphereImpl), so this
+// via CfObject_getPosVector at +0xAC, cf. CfCollSphereImpl), so this
 // struct only documents the layout; the pad vtable view is deleted.
 struct CfCollCircleImpl {
     u8 pad_00[0xB8];    // 0x00: vtable + unknown fields

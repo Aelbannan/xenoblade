@@ -19,11 +19,11 @@
 using cf::CCtrlMoveBase;
 
 // Position source: data->mPosObj is a CfObject (vtable slot 0xAC is
-// CfObject_UnkVirtualFunc23). Real owning class is CfObject, not a TU-local
+// CfObject_getPosVector). Real owning class is CfObject, not a TU-local
 // pad with _vNNN dummies. Call the real virtual directly.
 static inline ml::CVec3* getPos(CCtrlMoveBase* self) {
     cf::CCtrlMoveData* data = (cf::CCtrlMoveData*)self->mpDataPtr;
-    return data->mPosObj->CfObject_UnkVirtualFunc23();
+    return data->mPosObj->CfObject_getPosVector();
 }
 
 // Normalize a vector; a zero-length vector is replaced by ml::CVec3::zero.
@@ -329,7 +329,7 @@ fail:
 // ============================================================================
 void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
                    int flag) {
-    ml::CVec3* pos = ((cf::CCtrlMoveData*)self->mpDataPtr)->mPosObj->CfObject_UnkVirtualFunc23();
+    ml::CVec3* pos = ((cf::CCtrlMoveData*)self->mpDataPtr)->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *src - *pos;
     *dst = diff;
     if (dst->x != 0.0f || dst->y != 0.0f || dst->z != 0.0f) {

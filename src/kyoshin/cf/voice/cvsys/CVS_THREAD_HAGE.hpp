@@ -27,7 +27,7 @@ extern "C" {
 }
 
 // Voice-idle check: cf::CActorParam slot 138 at vtable offset 0x2BC (retail
-// CActorParam_UnkVirtualFunc138__Q22cf11CActorParamFv, Fv arity). Voice
+// CActorParam_isBattleLocked__Q22cf11CActorParamFv, Fv arity). Voice
 // handles are CActorParam-derived (CfObjectPc lineage), so call the real
 // slot through cf::CActorParam instead of a phantom view.
 

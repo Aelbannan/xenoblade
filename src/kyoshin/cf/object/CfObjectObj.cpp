@@ -99,7 +99,7 @@ void cf::CfObjectObj::update() {
     // Qualified call forces direct (non-virtual) dispatch to CfObjectMove's
     // member impl (retail uses a plain bl, not a vtable dispatch).
     this->CfObjectMove::CfObject_UnkVirtualFunc4();
-    if (this->CfObject_UnkVirtualFunc9() != 0 && this->field_71C != 0) {
+    if (this->CfObject_isMoveActiveNow() != 0 && this->field_71C != 0) {
         func_800CA580(this->mSubObj38, this->field_71C);
         this->field_71C = 0;
     }
@@ -110,7 +110,7 @@ void cf::CfObjectObj::update() {
 // then); the id is stored only when mSubObj38 != 0 but the virtual check fails.
 void func_800BFBF4(cf::CfObjectObj* self, u16 id) {
     if (self->mSubObj38 != 0) {
-        if (self->CfObject_UnkVirtualFunc9() != 0) {
+        if (self->CfObject_isMoveActiveNow() != 0) {
             func_800CA580(self->mSubObj38, id);
             self->field_71C = 0;
         } else {

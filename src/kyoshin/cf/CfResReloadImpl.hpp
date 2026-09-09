@@ -69,7 +69,7 @@ struct CfResReloadParent {
 };
 
 // CfResParent deleted: use cf::CfObject / CfObjectModel real virtuals
-// slot98 -> CfObject_UnkVirtualFunc18 (0x98, int)
+// slot98 -> CfObject_checkTargetState (0x98, int)
 // slot168 -> CfObject_UnkVirtualFunc70 (0x168, float)
 // slot178 -> CfObjectModel_UnkVirtualFunc1 (0x178)
 // slot17C -> CfObjectModel_UnkVirtualFunc2 (0x17C)

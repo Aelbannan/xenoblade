@@ -422,7 +422,7 @@ CfCamEventObj* func_800784A0(u32 first, CfCamEventObj* second,
                 CfCamEventObj* player = 0;
                 if (second != 0) {
                     CfCamEventObj* v =
-                        (CfCamEventObj*)((cf::CObjectParam*)second)->CObjectParam_UnkVirtualFunc5();
+                        (CfCamEventObj*)((cf::CObjectParam*)second)->CObjectParam_getSelfObjectId();
                     if (v != 0) player = (CfCamEventObj*)findObjectById__Fi((int)v);
                     if (player == 0)
                         player = (CfCamEventObj*)getPlayer__Q22cf13CfGameManagerFi(1);
@@ -1376,7 +1376,7 @@ int func_80076D8C(int unused, int type_, CamEventSrc* src, CamEventTargetInfo* o
     return 0;
 }
 
-cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_UnkVirtualFunc129() {
+cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_getBattleStats() {
     return (cf::CActorParam_UnkStruct1*)((u8*)this + *(u8*)((u8*)this + 0x3354) * 0xbc + 0x2a84);
 }
 
@@ -1413,7 +1413,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
         cam->h0E == 2 || cam->h0E == 3 ||
         (u16)(cam->h10 - 2) <= 1) {
         if (p31 == 0) {
-        void* v = (void*)(uintptr_t)((cf::CObjectParam*)&src->voice)->CObjectParam_UnkVirtualFunc5();
+        void* v = (void*)(uintptr_t)((cf::CObjectParam*)&src->voice)->CObjectParam_getSelfObjectId();
         followObj = func_800BBC0C(findObjectById__Fi((int)v));
         if (unk34 == 0x2B) {
             void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -1546,7 +1546,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34,
     self->field_0x4C = cam->h04;
     void* blk = ((CfCamEventSlot*)self->slots[0])->field_0x0C;
     void* va = ((CamEventVoice*)followObj)->getVecOut();
-    void* vb = ((cf::CfObject*)&src->voice)->CfObject_UnkVirtualFunc23();
+    void* vb = ((cf::CfObject*)&src->voice)->CfObject_getPosVector();
     if (func_800A4050((u8*)blk + 0x10C, vb, va) != 0 &&
         (self->field_0x48 & 0x10) == 0) {
         self->field_0x48 |= 0x10000;

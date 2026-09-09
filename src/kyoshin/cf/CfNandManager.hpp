@@ -495,7 +495,7 @@ struct CfNandWorkEntrySrc {
     u32 arr0E8[36]; // 0xE8..0x177
     u16 f178;
     u16 gap17A;
-    u32 subSlot; // 0x17C: vtable slot dispatched at +0x224 via CActorParam::CActorParam_UnkVirtualFunc100()
+    u32 subSlot; // 0x17C: vtable slot dispatched at +0x224 via CActorParam::CActorParam_getBattleParams()
     u8 gap180[0x159C]; // 0x180..0x177B
     u32 f177C;
     u32 f1780;

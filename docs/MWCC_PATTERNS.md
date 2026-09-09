@@ -4301,7 +4301,7 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
   primary-table entry. Real case: `CActorParam` redeclared `CBattleState` UVF18/UVF3/UVF2 with
   identical signatures and no bodies, shifting `CfObjectActor`-own virtuals (UVF6 0x5B4 -> 0x5C0)
   and breaking every primary-table fold onto them. Verified against the retail vtable group
-  (DOL .data dump: `CfObjectActor_UnkVirtualFunc6` sits at group +0x5B4).
+  (DOL .data dump: `CfObjectActor_getActorHeading` sits at group +0x5B4).
 - Fix:       delete the bodyless same-signature shadows (they were uncalled and undefined); keep
   different-signature shadows (harmless, hidden) and inline-defined same-signature ones (proper
   overrides/definitions, no append). If retail owns a same-named thunk (e.g. battle -8-adjust
@@ -4314,3 +4314,11 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Applies to/a.k.a.: any hierarchy where a derived header redeclares secondary-base virtual names
   (the CHelpSwitch `func_802B7CB0 stayed non-virtual` rule is the same quirk from the other side);
   vtable-offset forensics via DOL-group dump + .scratch replica bisection.
+
+## Phantom __vt__ materialize from pre-call float locals in a hand-vtable ctor (Wii/1.1)
+- Symptom:   ctor gains lis/addi + stw of __vt__Q2... (compiler-generated vtable symbol the TU never emits) in the prologue: +12 bytes and an UNDEF link break; goes away when the float locals are removed
+- Cause:     hand-written vtable stores (lbl_eu_* casts) + float locals whose scope spans most of phase 1 before a (proxy or real) virtual call: MWCC -ipa synthesizes its own __vt__ reference (bisected: phase-1 scoped {one, zero} triggers it, phase-2-only post-call locals do not; real this->virtual call is NOT required - proxy m5C build also showed it)
+- Fix:       keep pre-call float usage to direct pool refs (accept f0-vs-f1 regswap, size-neutral); float locals are safe ONLY when defined after the last call of their span (phase-2 one2/zero2 pattern). Same reason CScnItemModel uses a fragment ctor (header comment there)
+- Result:    CfObjectModel ctor: phantom-free, exact size 0x118
+- Confidence: repo_proven (bisect in-TU + CScnItemModel corroboration)
+- Applies to/a.k.a.: any TU with hand-written .data vtables + explicit vtable stores in ctor/dtor; -ipa file devirtualization analysis

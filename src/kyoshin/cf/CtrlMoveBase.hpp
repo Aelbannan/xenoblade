@@ -6,7 +6,7 @@
 
 namespace cf {
 
-    class CfObject; // real owner of position slot at +0xAC (CfObject_UnkVirtualFunc23)
+    class CfObject; // real owner of position slot at +0xAC (CfObject_getPosVector)
 
     // CCtrlMoveBase layout: 0x48 bytes of data (field_0x00..field_0x46) then
     // the vptr for its single virtual unk08 at +0x48. Retail secondary table
@@ -42,7 +42,7 @@ namespace cf {
         u8 field_0x10[4];                  // 0x10..0x13
         f32 field_0x14;                    // cached x component
         u8 field_0x18[0x10];               // 0x18..0x27
-        CfObject* mPosObj;          // 0x28 real type is CfObject (vtable +0xAC is CfObject_UnkVirtualFunc23)
+        CfObject* mPosObj;          // 0x28 real type is CfObject (vtable +0xAC is CfObject_getPosVector)
     };
 
     // Interface dispatched through the secondary vtable pointer at

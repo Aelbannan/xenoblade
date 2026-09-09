@@ -84,7 +84,7 @@ void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 
 namespace cf {
 bool CfObjectEff::initEffState_() {
-    CfObject_UnkVirtualFunc8();
+    CfObject_notifyEventDone();
     return true;
 }
 extern "C" u32 hasChildEffs___Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)((u8*)self + 0x94) != 0; }
@@ -325,12 +325,12 @@ namespace cf {
 // name) but the body consumes a float scale argument in f1 - forced-name form.
 extern "C" void scaleVirt29____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) {
     // Scale the value by the global factor, then dispatch through vtable
-    // slot 0xC4 (CfObject_UnkVirtualFunc29 - float scale, matches the
+    // slot 0xC4 (CfObject_setMoveHeadAngle - float scale, matches the
     // retail occupant ACDFC(float) at that slot).
-    self->CfObject_UnkVirtualFunc29(value * lbl_eu_8066A210);
+    self->CfObject_setMoveHeadAngle(value * lbl_eu_8066A210);
 }
 float CfObjectEff::getScaledVal_() {
-    float result = CfObject_UnkVirtualFunc31();
+    float result = CfObject_getMoveHeadAngle();
     return result * lbl_eu_8066A20C;
 }
 } // namespace cf
@@ -478,7 +478,7 @@ void createEffect_(cf::CfObjectEff* self) {
         }
         self->mField98 = static_cast<u8*>(bdat);
         if (self->mChildEff != 0) {
-            self->CfObject_UnkVirtualFunc19(
+            self->CfObject_setMoveTargetVec(
                 reinterpret_cast<const ml::CVec3*>(&self->mPos3C));
             self->CfObject_UnkVirtualFunc27(reinterpret_cast<u8*>(self) + 0x48);
             self->CfObject_UnkVirtualFunc35(self->mFloat60);
@@ -734,7 +734,7 @@ void* getEffOwner__(void* obj) {
 // bctr thunk (retail callVirt19).
 extern "C" void callVirt19_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
                                                     const ml::CVec3* vec) {
-    self->CfObject_UnkVirtualFunc19(vec);
+    self->CfObject_setMoveTargetVec(vec);
 }
 
 // Eff UVF26 (+0xB8): pure forward to UVF25. MWCC keeps r4/f1 live → 0x10-byte
@@ -747,7 +747,7 @@ extern "C" void callVirt25_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self,
 
 extern "C" void callVirt32_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { self->CfObject_UnkVirtualFunc32(); }
 
-extern "C" void callVirtC4_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) { self->CfObject_UnkVirtualFunc29(value); }
+extern "C" void callVirtC4_____Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float value) { self->CfObject_setMoveHeadAngle(value); }
 
 
 namespace cf {

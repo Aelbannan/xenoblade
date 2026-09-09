@@ -148,8 +148,8 @@ void func_801C37C8(void) {}
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
 f32 func_801C37CC(CREvtLight* self, cf::CfObject* target) {
-    // Get target position via CfObject vtable slot 0xAC (CfObject_UnkVirtualFunc23)
-    ml::CVec3* rawPos = target->CfObject_UnkVirtualFunc23();
+    // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
+    ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
     // diff = targetPos - thisPos; copied through a temporary so MWCC emits
@@ -170,8 +170,8 @@ f32 func_801C37CC(CREvtLight* self, cf::CfObject* target) {
 // based on angle thresholds.
 // ============================================================================
 int func_801C3850(CREvtLight* self, cf::CfObject* target) {
-    // Get target position via CfObject vtable slot 0xAC (CfObject_UnkVirtualFunc23)
-    ml::CVec3* rawPos = target->CfObject_UnkVirtualFunc23();
+    // Get target position via CfObject vtable slot 0xAC (CfObject_getPosVector)
+    ml::CVec3* rawPos = target->CfObject_getPosVector();
     nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(rawPos);
 
     // diff = targetPos - thisPos (paired-single ops)

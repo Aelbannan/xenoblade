@@ -122,8 +122,8 @@ __declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
             func_80174C98(player, (int*)&(vB = *player->field_4->vf30()), 0xB) != 0) {
             // Commu armed: the current voice action must be in the 7..9 window
             // (anything else means the commu is blocked).
-            if ((s32)((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc129()->unk48 >= 7 &&
-                (s32)((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc129()->unk48 <= 9) return 0;
+            if ((s32)((cf::CActorParam*)player)->CActorParam_getBattleStats()->unk48 >= 7 &&
+                (s32)((cf::CActorParam*)player)->CActorParam_getBattleStats()->unk48 <= 9) return 0;
         }
     }
     return 1;
@@ -162,7 +162,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 CSuddenCommuActor* other = (CSuddenCommuActor*)spot2;
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
-                if (((cf::CActorParam*)other)->CActorParam_UnkVirtualFunc138() == 0) {
+                if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
                     func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), other, &cmd, 0x34, 0);
                 }
             }
@@ -181,16 +181,16 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 CSuddenCommuActor* other = (CSuddenCommuActor*)spot2;
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
-                if (((cf::CActorParam*)other)->CActorParam_UnkVirtualFunc138() == 0) {
+                if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
                     getInstance__Q22cf14CBattleManagerFv();
                     f32 res = func_800D81A8(0, other, 0);
-                    f32 w = res * (prod * ((cf::CActorParam*)other)->CActorParam_UnkVirtualFunc38()) + scale;
+                    f32 w = res * (prod * ((cf::CActorParam*)other)->CActorParam_getDamageScale()) + scale;
                     // Truncate -> back-to-float -> truncate -> back-to-float;
                     // each u32->f32 step compiles to the shared 0x4330 trick.
                     s32 i2 = (s32)w;
                     f32 g = (f32)(u32)i2;
                     s32 j2 = (s32)g;
-                    ((cf::CActorParam*)other)->CActorParam_UnkVirtualFunc34((f32)(u32)j2);
+                    ((cf::CActorParam*)other)->CActorParam_addHp((f32)(u32)j2);
                 }
             }
         }
@@ -221,7 +221,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         if (player0 != 0) {
             u32 v = *(u32*)player0->field_4->vf30();
             if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
-                ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc156(4);
+                ((cf::CActorParam*)player0)->CActorParam_resetTensionState(4);
             }
         }
     } else {
@@ -230,13 +230,13 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
             u32 v = *(u32*)player0->field_4->vf30();
             if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
                 if (self->field_C == 0) {
-                    if (((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc157() == 0) {
+                    if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 0) {
                         ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc160();
                     }
                 } else {
-                    if (((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc157() == 3) {
-                        ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc156(4);
-                    } else if (((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc157() == 0) {
+                    if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 3) {
+                        ((cf::CActorParam*)player0)->CActorParam_resetTensionState(4);
+                    } else if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 0) {
                         ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc160();
                     }
                 }
@@ -295,8 +295,8 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
             self->field_14 = 0xB;
             u32 v = *player->field_4->vf30();
             if (func_80174C98(player, (int*)&v, 0x803) != 0) {
-                if (((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc157() == 1) {
-                    ((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc156(0);
+                if (((cf::CActorParam*)player)->CActorParam_getStatusCount() == 1) {
+                    ((cf::CActorParam*)player)->CActorParam_resetTensionState(0);
                 }
             }
         } else {
@@ -358,7 +358,7 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
         if (spot != 0) player = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
         if (player == 0) continue;
         if (player != attacker) continue;
-        if (((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc37() <= lbl_eu_80667E48) {
+        if (((cf::CActorParam*)target)->CActorParam_getHp() <= lbl_eu_80667E48) {
             CSuddenCommuBmList* bm = (CSuddenCommuBmList*)getInstance__Q22cf14CBattleManagerFv();
             CSuddenCommuListNode* node;
             int count;
@@ -381,8 +381,8 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
             }
             if (!(flags & 0x40)) return;
             for (;;) {
-                if ((s32)((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc19() == 1 ||
-                    (s32)((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc19() == 2) {
+                if ((s32)((cf::CActorParam*)target)->CActorParam_getActorType() == 1 ||
+                    (s32)((cf::CActorParam*)target)->CActorParam_getActorType() == 2) {
                     func_801BB464(self, i, 0, player, 0);
                 }
                 break;
@@ -496,11 +496,11 @@ extern "C" void func_801BADE4(CSuddenCommu* self) {
                     u32 gvB;
                     if (func_80174C98(pG, (int*)&(gvA = *pG->field_4->vf30()), 0xa) != 0 ||
                         func_80174C98(pG, (int*)&(gvB = *pG->field_4->vf30()), 0xb) != 0) {
-                        if ((s32)((cf::CActorParam*)pG)->CActorParam_UnkVirtualFunc129()->unk48 >= 7 &&
-                            (s32)((cf::CActorParam*)pG)->CActorParam_UnkVirtualFunc129()->unk48 <= 9) goto commu_end;
+                        if ((s32)((cf::CActorParam*)pG)->CActorParam_getBattleStats()->unk48 >= 7 &&
+                            (s32)((cf::CActorParam*)pG)->CActorParam_getBattleStats()->unk48 <= 9) goto commu_end;
                     }
                 }
-                if (((cf::CActorParam*)pG)->CActorParam_UnkVirtualFunc157() > 1) goto commu_end;
+                if (((cf::CActorParam*)pG)->CActorParam_getStatusCount() > 1) goto commu_end;
                 int allFound = 1;
                 for (int i2 = 1; i2 < 3; i2++) {
                     void* spot2 = cf::CfGameManager::getPlayer(i2);
@@ -562,13 +562,13 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
     int thresh; // int: retail keeps the table byte in a full register
     // (no rlwinm re-mask after the += below).
     if (type == 0) {
-        thresh = (&lbl_eu_806625E8)[((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc157()];
+        thresh = (&lbl_eu_806625E8)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
     }
     if (type == 1) {
-        thresh = (&lbl_eu_806625F0)[((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc157()];
+        thresh = (&lbl_eu_806625F0)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
     }
     if (type == 2) {
-        thresh = (&lbl_eu_806625F8)[((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc157()];
+        thresh = (&lbl_eu_806625F8)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
         void* obj = player->field_15E0;
         if (obj != 0) {
             u32 v;
@@ -576,7 +576,7 @@ __declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int t
         }
     }
     if (type == 3) {
-        thresh = (&lbl_eu_80662600)[((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc157()];
+        thresh = (&lbl_eu_80662600)[((cf::CActorParam*)player)->CActorParam_getStatusCount()];
         self->field_E = 1;
     }
     if (arg5 >= thresh) return;
@@ -649,7 +649,7 @@ void func_801BB81C(CSuddenCommu* self) {
         cue = (CSuddenCommuVoiceCue*)func_800451D8(0xC0, (int)player);
         self->field_20p = cue;
         if (cue != 0) {
-            ((cf::CfObject*)cue)->CfObject_UnkVirtualFunc14(lbl_eu_80667E58);
+            ((cf::CfObject*)cue)->CfObject_pushRefreshValue(lbl_eu_80667E58);
             // Typed re-read through field_20p (see header note): the typed
             // access path lets MWCC order the float-arg load before this
             // store, matching retail.
@@ -889,7 +889,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         if (flags & 0x8) {
             // Cue countdown active: tick it and park on timeout.
             if (self->field_20p != 0) {
-                ((cf::CfObject*)self->field_20p)->CfObject_UnkVirtualFunc14(lbl_eu_80667E58);
+                ((cf::CfObject*)self->field_20p)->CfObject_pushRefreshValue(lbl_eu_80667E58);
             }
             self->field_1C += func_80496288(lbl_eu_80663E14);
             if (self->field_1C >= lbl_eu_80667E5C) {
@@ -919,7 +919,7 @@ int func_801BBCBC(CSuddenCommu* self) {
         if (self->field_20p != 0) {
             self->field_20p->field_B0 = 0;
             setChildB59__((void*)self->field_20p, 1);
-            ((cf::CfObject*)self->field_20p)->CfObject_UnkVirtualFunc14(lbl_eu_80667E38);
+            ((cf::CfObject*)self->field_20p)->CfObject_pushRefreshValue(lbl_eu_80667E38);
             self->field_20p = 0;
         }
         if (padBit != 0) {

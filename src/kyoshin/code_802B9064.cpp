@@ -15,7 +15,7 @@ struct BattleGauge {
 
 // (Gauge slots fold onto cf::CActorParam -- getScale at +0x15C is
 // CActorParam_UnkVirtualFunc50, isActive at +0x2BC is
-// CActorParam_UnkVirtualFunc138.)
+// CActorParam_isBattleLocked.)
 
 
 // Overlay of the CBattleManager trailing fields read by this helper (the
@@ -41,7 +41,7 @@ extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
         return false;
     }
     // A related gauge action is already in flight -- don't double-trigger.
-    if (battle->CActorParam_UnkVirtualFunc138()) {
+    if (battle->CActorParam_isBattleLocked()) {
         return false;
     }
 

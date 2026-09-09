@@ -85,10 +85,10 @@ struct CfGimmickObject : public cf::CfObject {
     void CfObject_UnkVirtualFunc2() override {}
     void CfObject_UnkVirtualFunc4() override {}
     void CfObject_UnkVirtualFunc7() override {}
-    void CfObject_UnkVirtualFunc8() override {}
-    void CfObject_UnkVirtualFunc19(const ml::CVec3* vec) override { (void)vec; }
+    void CfObject_notifyEventDone() override {}
+    void CfObject_setMoveTargetVec(const ml::CVec3* vec) override { (void)vec; }
     void CfObject_UnkVirtualFunc66(int flag) override { field_90 = (u8)flag; }
-    void setPos(const CfGimmickVec3* pos) { CfObject_UnkVirtualFunc19((const ml::CVec3*)pos); }
+    void setPos(const CfGimmickVec3* pos) { CfObject_setMoveTargetVec((const ml::CVec3*)pos); }
     void activate(int flag) { CfObject_UnkVirtualFunc66(flag); }
 };
 
@@ -117,7 +117,7 @@ struct CfPlayerSub3F60 {
 struct CfPlayerSpot {
     void** vtable;              // 0x00 (object at player+0x3E9C; slot 0xAC yields the target)
 };
-// Player base object scanned by func_8020A294.  HP is CActorParam::CActorParam_UnkVirtualFunc37 at +0x128.
+// Player base object scanned by func_8020A294.  HP is CActorParam::CActorParam_getHp at +0x128.
 struct CfPlayerBase {
     u8 pad[0x3E9C];
     CfPlayerSpot spot;          // 0x3E9C - object handed to the jumptable checkers

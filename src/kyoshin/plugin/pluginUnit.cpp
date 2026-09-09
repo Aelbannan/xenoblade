@@ -73,8 +73,8 @@ using namespace cf;
 // The actor HP getters dispatch real CActorParam-chain virtuals on the
 // resolved actor (cf::CfObjectActor, whose primary base at offset 0 is
 // cf::CActorParam). Retail slot map (US lbl_eu_80529DA0 CfObjectPc primary
-// vtable): +0x128 = CActorParam_UnkVirtualFunc37 (lfs f1, 0x17E8(r3); current
-// HP) and +0x12C = CActorParam_UnkVirtualFunc38 (lfs f1, 0x17F4(r3); max HP).
+// vtable): +0x128 = CActorParam_getHp (lfs f1, 0x17E8(r3); current
+// HP) and +0x12C = CActorParam_getDamageScale (lfs f1, 0x17F4(r3); max HP).
 // Both are declared with the correct float signature in object/CActorParam.hpp,
 // so the calls go through the real type - no cast-only interface needed.
 // (The earlier CfObjectHpIf pad guessed these were CfObject slots 54/55, whose
@@ -83,7 +83,7 @@ using namespace cf;
 /// Script command: return the current HP of a player character (PC) actor,
 /// ceiled and converted to int. The actor is resolved by id (arg 2) via
 /// func_800B8B94 (pc list lookup); the HP value comes from the CActorParam
-/// virtual at vtable+0x128 (CActorParam_UnkVirtualFunc37, float in f1). On
+/// virtual at vtable+0x128 (CActorParam_getHp, float in f1). On
 /// miss, returns -1.
 extern "C" int getPcHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -91,11 +91,11 @@ extern "C" int getPcHp(VMThread* pThread) {
     VMArg result;
     if (actor != nullptr) {
         // Dispatch the CActorParam vtable slot at 0x128
-        // (CActorParam_UnkVirtualFunc37).
+        // (CActorParam_getHp).
         CActorParam* obj = reinterpret_cast<CActorParam*>(actor);
         result.type = VM_TYPE_INT;
         // Force ceil(double) and explicit float round before fctiwz.
-        float val = (float)ceil(obj->CActorParam_UnkVirtualFunc37());
+        float val = (float)ceil(obj->CActorParam_getHp());
         result.value.intVal = (int)val;
     } else {
         result.type = VM_TYPE_INT;
@@ -108,8 +108,8 @@ extern "C" int getPcHp(VMThread* pThread) {
 /// Script command: return the current HP rate (%) of a player character (PC)
 /// actor. Resolves the actor by id (arg 2) via func_800B8B94 (pc list
 /// lookup), then reads the max-HP value (vtable+0x12C,
-/// CActorParam_UnkVirtualFunc38) and current-HP value (vtable+0x128,
-/// CActorParam_UnkVirtualFunc37) from the CActorParam vtable, computing
+/// CActorParam_getDamageScale) and current-HP value (vtable+0x128,
+/// CActorParam_getHp) from the CActorParam vtable, computing
 /// `ceil(100.0f * (cur / max))`. On miss, returns -1.
 int getPcHpRate(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -118,10 +118,10 @@ int getPcHpRate(VMThread* pThread) {
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
         // First virtual: vtable+0x12C returns max-HP (saved in f31 by retail).
-        float maxHp = actor->CActorParam_UnkVirtualFunc38();
+        float maxHp = actor->CActorParam_getDamageScale();
         // Second virtual: vtable+0x128 returns current-HP (result in f1, then
         // fdivs against f31 yields cur/max). Order is fixed by retail codegen.
-        float curHp = actor->CActorParam_UnkVirtualFunc37();
+        float curHp = actor->CActorParam_getHp();
         // (float)ceil(...) forces MWCC to emit fdivs+fmuls before ceil,
         // then frsp+fctiwz to round to int (matching retail).
         result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
@@ -144,7 +144,7 @@ extern "C" int getEneHp(VMThread* pThread) {
         CActorParam* obj = reinterpret_cast<CActorParam*>(actor);
         result.type = VM_TYPE_INT;
         // Force ceil(double) and explicit float round before fctiwz.
-        float val = (float)ceil(obj->CActorParam_UnkVirtualFunc37());
+        float val = (float)ceil(obj->CActorParam_getHp());
         result.value.intVal = (int)val;
     } else {
         result.type = VM_TYPE_INT;
@@ -163,8 +163,8 @@ int getEneHpRate(VMThread* pThread) {
     VMArg result;
     if (actor != nullptr) {
         result.type = VM_TYPE_INT;
-        float maxHp = actor->CActorParam_UnkVirtualFunc38();
-        float curHp = actor->CActorParam_UnkVirtualFunc37();
+        float maxHp = actor->CActorParam_getDamageScale();
+        float curHp = actor->CActorParam_getHp();
         result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
     } else {
         result.type = VM_TYPE_INT;
@@ -208,14 +208,14 @@ int onPcArtsAttack(VMThread* pThread) {
         *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
     // Try selector 0xa against the sub-object's vtable slot +0x34 value.
-    u32 val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc12());
+    u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
 
     bool matched = false;
     if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
-        val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc11());
+        val = *static_cast<u32*>(subObj->CObjectState_getStateData());
         if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
@@ -224,7 +224,7 @@ int onPcArtsAttack(VMThread* pThread) {
     if (matched) {
         // Retrieve the actor's CActorParam_UnkStruct1 via vtable[102] (0x298).
         CActorParam* actorParam = reinterpret_cast<CActorParam*>(actor);
-        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_UnkVirtualFunc129();
+        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_getBattleStats();
         if (unk1 != nullptr && unk1->unk50 != nullptr) {
             // Compare byte at offset 0x77 of unk50 against the requested arts type.
             CActorParam_UnkStruct2* unk2 =
@@ -327,14 +327,14 @@ int onEneArtsAttack(VMThread* pThread) {
         *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(actor) + 4);
 
     // Try selector 0xa against the sub-object's vtable slot +0x34 value.
-    u32 val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc12());
+    u32 val = *static_cast<u32*>(subObj->CObjectState_setStateBitMask2());
 
     bool matched = false;
     if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable slot +0x30 value.
-        val = *static_cast<u32*>(subObj->CObjectState_UnkVirtualFunc11());
+        val = *static_cast<u32*>(subObj->CObjectState_getStateData());
         if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
@@ -342,7 +342,7 @@ int onEneArtsAttack(VMThread* pThread) {
 
     if (matched) {
         CActorParam* actorParam = reinterpret_cast<CActorParam*>(actor);
-        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_UnkVirtualFunc129();
+        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_getBattleStats();
         if (unk1 != nullptr && unk1->unk50 != nullptr) {
             CActorParam_UnkStruct2* unk2 =
                 reinterpret_cast<CActorParam_UnkStruct2*>(unk1->unk50);

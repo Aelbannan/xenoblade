@@ -31,10 +31,10 @@ public:
 }
 
 // (Actor slots now fold onto their owners: tension 0x304 ->
-// cf::CActorParam::CActorParam_UnkVirtualFunc156, TP 0x150 ->
-// CActorParam_UnkVirtualFunc47, attack flags +0x08/+0x10 ->
+// cf::CActorParam::CActorParam_resetTensionState, TP 0x150 ->
+// CActorParam_setTensionPoints, attack flags +0x08/+0x10 ->
 // cf::CfWalkMoveSub::m08/m10, target getter +0xAC ->
-// cf::CfObject::CfObject_UnkVirtualFunc23.)
+// cf::CfObject::CfObject_getPosVector.)
 
 // --- C-linkage retail helpers ---
 // (Declarations already provided by included headers: func_800F3C08,
@@ -238,8 +238,8 @@ int selectTgt(VMThread* pThread) {
         func_800F4A98((CfMoveEnumList*)list, 0x100, 0x802);
         void* player = cf::CfGameManager::getPlayer(0);
         // Target getter at vtable+0xAC is
-        // cf::CfObject::CfObject_UnkVirtualFunc23 on the player object.
-        void* target = (void*)((cf::CfObject*)player)->CfObject_UnkVirtualFunc23();
+        // cf::CfObject::CfObject_getPosVector on the player object.
+        void* target = (void*)((cf::CfObject*)player)->CfObject_getPosVector();
         list = func_80043F18((CfMoveEnumHolder*)holder);
         func_800F6ED0((CfMoveEnumList*)list, target);
         void* cam = func_800FE68C();
@@ -319,7 +319,7 @@ int setTensionLv(VMThread* pThread) {
         void* player = cf::CfGameManager::getPlayer(i);
         void* action = func_8016FE34(player);
         if (action != 0) {
-            ((cf::CActorParam*)action)->CActorParam_UnkVirtualFunc156(level - 1);
+            ((cf::CActorParam*)action)->CActorParam_resetTensionState(level - 1);
         }
     }
     return 0;
@@ -362,8 +362,8 @@ int setTP(VMThread* pThread) {
                 conv.w.hi = 0x43300000;
                 conv.w.lo = (u32)tp ^ 0x80000000;
                 // TP setter at vtable+0x150 takes the converted float:
-                // cf::CActorParam::CActorParam_UnkVirtualFunc47.
-                ((cf::CActorParam*)action)->CActorParam_UnkVirtualFunc47((f32)(conv.d - cvtBias));
+                // cf::CActorParam::CActorParam_setTensionPoints.
+                ((cf::CActorParam*)action)->CActorParam_setTensionPoints((f32)(conv.d - cvtBias));
             }
         }
     }

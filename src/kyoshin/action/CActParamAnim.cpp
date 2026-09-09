@@ -4200,7 +4200,7 @@ void CActParamAnim::func_80052934() {
 
 // Retail symbol is Fv but the body reads r4/r5: two extra args forwarded to
 // func_804BD94C's (a, b) slots (forced-name global, same scheme as
-// CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv).
+// CfObject_setMoveTargetVec__Q22cf13CfObjectModelFv).
 void initAnimBlendVectors__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
     func_804BD94C(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
                   lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,

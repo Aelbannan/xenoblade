@@ -624,7 +624,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 7: {
             // State-tag probe must be accepted by the handler.
             u32 v;
-            u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_UnkVirtualFunc11();
+            u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
             v = *p;
             if (func_80174C98(p, &v, 0x800) == 0)
                 return 0;
@@ -788,10 +788,10 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             u32 acc = 0;
             if (func_80148778((u8*)party + 8, 0x8D))
                 acc = *(u32*)func_80149154((u8*)party + 8, 0x8D);
-            s32 probe = (s32)(uintptr_t)((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc127();
+            s32 probe = (s32)(uintptr_t)((cf::CActorParam*)party)->CActorParam_getStatusTable();
             if (probe != 0) {
                 s32 val;
-                if (func_80260264((void*)((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc127(), 0x57, &val))
+                if (func_80260264((void*)((cf::CActorParam*)party)->CActorParam_getStatusTable(), 0x57, &val))
                     acc += (u32)val;
             }
             if (k == 0x4E) {
@@ -846,7 +846,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
                 if (obj == 0)
                     continue;
                 u32 v;
-                u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_UnkVirtualFunc11();
+                u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
                 v = *p;
                 if (func_80174C98(p, &v, 0x1F) != 0) {
                     __dt__80043E88(&h, -1);
@@ -908,7 +908,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d == 5) {
         // State probe + arts-slot-2 parameter fetch.
         u32 v;
-        u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_UnkVirtualFunc11();
+        u32* p = (u32*)((cf::CObjectState*)party->unk04)->CObjectState_getStateData();
         v = *p;
         if (func_80174C98(p, &v, 6) == 0)
             return 0;
@@ -1006,7 +1006,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         void* obj = func_8016FE34(findObjectById((int)out->unk00));
         if (obj != 0) {
             u32 v;
-            u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_UnkVirtualFunc11();
+            u32* p = (u32*)((cf::CObjectState*)((CAIPartyObj*)obj)->unk04)->CObjectState_getStateData();
             v = *p;
             if (func_80174C98(p, &v, 0x1A) != 0)
                 return 0;
@@ -1178,7 +1178,7 @@ void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
                 u32 mf = move->moveFlags;
                 u32 of = ((CAIPartyObj*)obj)->move.moveFlags;
                 if (!((mf & 2) && (of & 4)) && !((mf & 4) && (of & 2))) {
-                    result = (void*)(uintptr_t)((cf::CObjectParam*)move)->CObjectParam_UnkVirtualFunc5();
+                    result = (void*)(uintptr_t)((cf::CObjectParam*)move)->CObjectParam_getSelfObjectId();
                 }
             }
         } else if (which == 2) {
@@ -1242,7 +1242,7 @@ static f32 mlAbs(f32 x) { return x < 0.0f ? -x : x; }
 // moveBase = unkB14 + 0x3E9C; retail pattern is lwzu on the base+0x3E9C,
 // so the vtable call always targets (base + 0x3E9C) even when base is 0.
 static inline void* aiMoveBaseVt4C(void* partyBase) {
-    return (void*)(uintptr_t)((cf::CObjectParam*)((u8*)partyBase + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+    return (void*)(uintptr_t)((cf::CObjectParam*)((u8*)partyBase + 0x3E9C))->CObjectParam_getSelfObjectId();
 }
 
 extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
@@ -1263,7 +1263,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = func_8016FE34(findObjectById((int)self->unkB18));
-            if (v && ((cf::CActorParam*)v)->CActorParam_UnkVirtualFunc138() == 0)
+            if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
@@ -1274,9 +1274,9 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 u32 mf = *(u32*)(moveBase + 0x64);
                 if (mf & 0x2) {
                     if (!(*(u32*)((u8*)v + 0x3F00) & 0x2))
-                        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_UnkVirtualFunc5());
+                        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
                 } else if (!(*(u32*)((u8*)v + 0x3F00) & 0x4)) {
-                    func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_UnkVirtualFunc5());
+                    func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((cf::CObjectParam*)moveBase)->CObjectParam_getSelfObjectId());
                 }
             }
         }
@@ -1301,7 +1301,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = func_8016FE34(findObjectById((int)self->unkB18));
-            if (v && ((cf::CActorParam*)v)->CActorParam_UnkVirtualFunc138() == 0)
+            if (v && ((cf::CActorParam*)v)->CActorParam_isBattleLocked() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
@@ -1491,7 +1491,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             CAIEnumSlot* slot = (CAIEnumSlot*)func_800F6EC0(func_80043F18(&holder), 0);
             void* obj = slot ? func_8016FE34(slot->unk04) : 0;
             if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x4) &&
-                  ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc19() == (s32)(op - 151)))
+                  ((cf::CActorParam*)obj)->CActorParam_getActorType() == (s32)(op - 151)))
                 aiListClear(func_80043F18(&holder));
         }
         break;
@@ -1507,13 +1507,13 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback1;
-                if (((cf::CActorParam*)v)->CActorParam_UnkVirtualFunc138() != 0)
+                if (((cf::CActorParam*)v)->CActorParam_isBattleLocked() != 0)
                     goto fallback1;
                 if (v != 0)
                     goto done1;
             fallback1:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_UnkVirtualFunc5();
+                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
             }
         done1:
             func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)obj);
@@ -1531,13 +1531,13 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback2;
-                if (((cf::CActorParam*)v)->CActorParam_UnkVirtualFunc138() != 0)
+                if (((cf::CActorParam*)v)->CActorParam_isBattleLocked() != 0)
                     goto fallback2;
                 if (v != 0)
                     goto done2;
             fallback2:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_UnkVirtualFunc5();
+                    obj = (void*)(uintptr_t)((cf::CObjectParam*)getPlayer__Q22cf13CfGameManagerFi(0))->CObjectParam_getSelfObjectId();
             }
         done2:
             func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)obj);
@@ -1604,7 +1604,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 57: {
         void* moveBase = (u8*)self->unkB14 + 0x3E9C;
-        func_800F6ED0(func_80043F18(&holder), ((cf::CfObject*)moveBase)->CfObject_UnkVirtualFunc23());
+        func_800F6ED0(func_80043F18(&holder), ((cf::CfObject*)moveBase)->CfObject_getPosVector());
         break;
     }
 
@@ -1894,7 +1894,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         for (i = 0; i < aiListCount(func_80043F18(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)func_800F6EC0(func_80043F18(&holder), i);
             void* obj = slot ? func_8016FE34(slot->unk04) : 0;
-            if (!obj || ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() != 0) {
+            if (!obj || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                 slot->unk18 = slot->unk18 | 0x70;
                 continue;
             }
@@ -1910,23 +1910,23 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 goto L175;
             goto next137;
         L174:
-            if (((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157() <= 3)
+            if (((cf::CActorParam*)obj)->CActorParam_getStatusCount() <= 3)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L137:
-            if (((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157() <= 2)
+            if (((cf::CActorParam*)obj)->CActorParam_getStatusCount() <= 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L173:
-            if (((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157() != 2)
+            if (((cf::CActorParam*)obj)->CActorParam_getStatusCount() != 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L138:
-            if (((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157() >= 2)
+            if (((cf::CActorParam*)obj)->CActorParam_getStatusCount() >= 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L175:
-            if (((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157() >= 1)
+            if (((cf::CActorParam*)obj)->CActorParam_getStatusCount() >= 1)
                 slot->unk18 = slot->unk18 | 0x70;
         next137:
             ;
@@ -2074,7 +2074,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 }
                 if (self->unkB18 != 0) {
                     void* obj = func_8016FE34(findObjectById((int)self->unkB18));
-                    if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() == 0) {
+                    if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                         func_800F6D50(func_80043F18(&it), self->unkB18);
                     } else {
                         self->unkB18 = 0;
@@ -2087,7 +2087,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                     void* list = func_80043F18(&it);
                     func_800F4A98(list, filter, 0x800);
                     if (aiListCount(list) != 0) {
-                        void* id = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                        void* id = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                         func_800F6D50(func_80043F18(&it), (u32)(uintptr_t)id);
                     }
                 }
@@ -2109,7 +2109,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 if (aiListCount(l2) != 0) {
                     void* base = func_800F6EAC(l2, 0);   // entries[0][1]
                     if (base) base = (u8*)base - 0x3E9C;
-                    u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                    u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
                     func_800F6D50(func_80043F18(&it), id);
                 }
                 __dt__80043E88(&it2, -1);
@@ -2125,7 +2125,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 }
                 if (self->unkB18 != 0) {
                     void* obj = func_8016FE34(findObjectById((int)self->unkB18));
-                    if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() == 0) {
+                    if (obj != 0 && ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                         func_800F6D50(func_80043F18(&it), self->unkB18);
                     } else {
                         self->unkB18 = 0;
@@ -2134,21 +2134,21 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 }
                 // +0x62F4 battle-object dance
                 {
-                    u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                    u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                     CfObjBase* obj = (CfObjBase*)func_8016FE34(findObjectById((int)id));
-                    if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() != 0) {
+                    if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                         u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
                         func_800F4A98(func_80043F18(&it), filter, 0x800);
                         break;
                     }
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         if (obj->moveFlags & 0x2) break;
-                        u32 id2 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                        u32 id2 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                         func_800F6D50(func_80043F18(&it), id2);
                         break;
                     }
                     if (obj->moveFlags & 0x4) break;
-                    u32 id3 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                    u32 id3 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                     func_800F6D50(func_80043F18(&it), id3);
                 }
                 break;
@@ -2161,13 +2161,13 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                 void* l3 = func_80043F18(&it3);
                 u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
                 func_800F4A98(l3, filter, 0);
-                u32 id0 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                u32 id0 = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                 func_800F6D50(func_80043F18(&it), id0);
                 for (u32 i = 0; i < aiListCount(l3); i++) {
                     void* base = func_800F6EAC(l3, i);
                     if (base) base = (u8*)base - 0x3E9C;
                     if (base != ((CfObjBase*)self->unkB14)) {
-                        u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                        u32 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)base + 0x3E9C))->CObjectParam_getSelfObjectId();
                         func_800F6D50(func_80043F18(&it), id);
                     }
                 }
@@ -2224,12 +2224,12 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc149();
             u32 id = 0;
             if (battleObj != 0) {
-                id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                 void* obj = func_8016FE34(findObjectById((int)id));
-                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() != 0) {
+                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
-                        id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_UnkVirtualFunc5();
+                        id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_getSelfObjectId();
                     }
                 }
             }
@@ -2247,12 +2247,12 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc150();
             u32 id = 0;
             if (battleObj != 0) {
-                id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+                id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
                 void* obj = func_8016FE34(findObjectById((int)id));
-                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() != 0) {
+                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() != 0) {
                     if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
                         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
-                        id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_UnkVirtualFunc5();
+                        id = (u32)(uintptr_t)((cf::CObjectParam*)player)->CObjectParam_getSelfObjectId();
                     }
                 }
             }
@@ -2297,7 +2297,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
         case 57: {
             // +0x6A20 : position-based action
-            void* pos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_UnkVirtualFunc23();
+            void* pos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
             func_800F6ED0(func_80043F18(&it), pos);
             break;
         }
@@ -2420,11 +2420,11 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             for (u32 i = 0; i < aiListCount(list); i++) {
                 CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
                 CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
-                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc138() == 0) {
+                if (obj == 0 || ((cf::CActorParam*)obj)->CActorParam_isBattleLocked() == 0) {
                     if (e) e->unk18 = e->unk18 | 0x70;
                     continue;
                 }
-                int state = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc157();
+                int state = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getStatusCount();
                 if (b5 == 174) { if (state <= 3) e->unk18 = e->unk18 | 0x70; }
                 else if (b5 == 137) { if (state <= 2) e->unk18 = e->unk18 | 0x70; }
                 else if (b5 == 173) { if (state != 2) e->unk18 = e->unk18 | 0x70; }
@@ -2564,43 +2564,43 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                     }
                     case 25: {
                         // +0x77DC : vt[0x328] returns struct; u16 flag bits
-                        void* st = ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc165();
+                        void* st = ((cf::CActorParam*)obj)->CActorParam_getBattleHitFlags();
                         if (*(u16*)st & 1) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 26: {
-                        void* st = ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc165();
+                        void* st = ((cf::CActorParam*)obj)->CActorParam_getBattleHitFlags();
                         if (*(u16*)st & 4) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 27: {
-                        void* st = ((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc165();
+                        void* st = ((cf::CActorParam*)obj)->CActorParam_getBattleHitFlags();
                         if (*(u16*)st & 2) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 60: {
                         // +0x786C : vt[0x108] value difference
-                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc29();
-                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc29();
+                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_getActorLevel();
+                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getActorLevel();
                         if (theirs - mine < (int)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 61: {
-                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc29();
-                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc29();
+                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_getActorLevel();
+                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getActorLevel();
                         if (theirs - mine > (int)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 72: {
                         // +0x7904 : reversed difference
-                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc29();
-                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc29();
+                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_getActorLevel();
+                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getActorLevel();
                         if (mine - theirs < (int)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 73: {
-                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc29();
-                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_UnkVirtualFunc29();
+                        int mine = (int)(uintptr_t)((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_getActorLevel();
+                        int theirs = (int)(uintptr_t)((cf::CActorParam*)obj)->CActorParam_getActorLevel();
                         if (mine - theirs > (int)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
@@ -2609,15 +2609,15 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                         // Retail: fabs(f1,f0); frsp f1,f1  -> fabsf(). Use
                         // ml::math::abs (NW4R FAbs) per MWCC_CASES
                         // (fabs+frsp pair), NOT libc fabsf.
-                        void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_UnkVirtualFunc23();
-                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_UnkVirtualFunc23();
+                        void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
+                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_getPosVector();
                         f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
                         if (mlAbs(dz) >= (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;
                     }
                     case 75: {
-                        void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_UnkVirtualFunc23();
-                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_UnkVirtualFunc23();
+                        void* selfPos = ((cf::CfObject*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CfObject_getPosVector();
+                        void* objPos  = ((cf::CfObject*)(u8*)obj + 0x3E9C)->CfObject_getPosVector();
                         f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
                         if (mlAbs(dz) < (f32)other) e->unk18 = e->unk18 | 0x70;
                         break;
@@ -2690,13 +2690,13 @@ extern "C" void func_801537F0(cf::CAIAction* self) {
     u32 tagC;
     {
         CAIPartyObj* pr1 = (CAIPartyObj*)self->unkB14;
-        tagA = *(u32*)((cf::CObjectState*)pr1->unk04)->CObjectState_UnkVirtualFunc11();
+        tagA = *(u32*)((cf::CObjectState*)pr1->unk04)->CObjectState_getStateData();
         if (func_80174C98(pr1, &tagA, 3) == 0) {
             CAIPartyObj* pr2 = (CAIPartyObj*)self->unkB14;
-            tagB = *(u32*)((cf::CObjectState*)pr2->unk04)->CObjectState_UnkVirtualFunc11();
+            tagB = *(u32*)((cf::CObjectState*)pr2->unk04)->CObjectState_getStateData();
             if (func_80174C98(pr2, &tagB, 0x1c) == 0) {
                 CAIPartyObj* pr3 = (CAIPartyObj*)self->unkB14;
-                tagC = *(u32*)((cf::CObjectState*)pr3->unk04)->CObjectState_UnkVirtualFunc11();
+                tagC = *(u32*)((cf::CObjectState*)pr3->unk04)->CObjectState_getStateData();
                 if (func_80174C98(pr3, &tagC, 0x805) == 0) {
                     func_800BE12C(
                         (u8*)(CAIPartyObj*)self->unkB14 + 0x3E9C, 0x31, 0, -1, 1);
@@ -2709,11 +2709,11 @@ extern "C" void func_801537F0(cf::CAIAction* self) {
     // clear its action when it matches this party (or the party reports an
     // active battle via vt slot 0x5C0, probed with the resolved object).
     CAIPartyObj* cur = (CAIPartyObj*)self->unkB14;
-    void* src = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)cur + 0x3E9C))->CObjectParam_UnkVirtualFunc5();
+    void* src = (void*)(uintptr_t)((cf::CObjectParam*)((u8*)cur + 0x3E9C))->CObjectParam_getSelfObjectId();
     void* obj = func_8016FE34(findObjectById((int)(intptr_t)src));
     cur = (CAIPartyObj*)self->unkB14;
-    if (obj == (void*)cur || ((cf::CfObjectActor*)cur)->CfObjectActor_UnkVirtualFunc9(obj) != 0) {
-        ((cf::CObjectParam*)((u8*)self->unkB14 + 0x3E9C))->CObjectParam_UnkVirtualFunc6(0);
+    if (obj == (void*)cur || ((cf::CfObjectActor*)cur)->CfObjectActor_sharesMoveFlags(obj) != 0) {
+        ((cf::CObjectParam*)((u8*)self->unkB14 + 0x3E9C))->CObjectParam_signalActionEnd(0);
     }
 }
 // Walks the AI config table (*lbl_eu_806641B0): finds the entry whose id

@@ -2313,7 +2313,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
-                    ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc4(NULL);
+                    ((cf::CActorParam*)actor)->CActorParam_resetArtsStatus(NULL);
                 }
             }
         }
@@ -2328,14 +2328,14 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
     // ---- HP values (clamped to 9999) ----
-    s32 hp1 = (s32)stats->CActorParam_UnkVirtualFunc37();
+    s32 hp1 = (s32)stats->CActorParam_getHp();
     if (hp1 > 9999) hp1 = 9999;
-    s32 hp2 = (s32)stats->CActorParam_UnkVirtualFunc38();
+    s32 hp2 = (s32)stats->CActorParam_getDamageScale();
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_UnkVirtualFunc29());
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
@@ -2343,7 +2343,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // ---- stat sub-objects ----
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_UnkVirtualFunc101();
-    D8EStatB* stB = (D8EStatB*)stats->CActorParam_UnkVirtualFunc94();
+    D8EStatB* stB = (D8EStatB*)stats->CActorParam_getArtsDataBlock();
     D8EStatC* stC = (D8EStatC*)stats->CActorParam_UnkVirtualFunc102();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
@@ -2551,7 +2551,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
-            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
+            if (stats->CActorParam_getHp() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -3110,7 +3110,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
         s16 hpDelta = (s16)(newHp - oldHp);
-        if (stats->CActorParam_UnkVirtualFunc37() > (f32)newHp) {
+        if (stats->CActorParam_getHp() > (f32)newHp) {
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], newHp);
         }
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], newHp);
@@ -3373,7 +3373,7 @@ for (u32 w_ = 0; w_ < 7; w_++) {
             s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
-            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
+            if (stats->CActorParam_getHp() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -6436,7 +6436,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
-                    ((cf::CActorParam*)actor)->CActorParam_UnkVirtualFunc4(NULL);
+                    ((cf::CActorParam*)actor)->CActorParam_resetArtsStatus(NULL);
                 }
             }
         }
@@ -6451,14 +6451,14 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
     // ---- HP values (clamped to 9999) ----
-    s32 hp1 = (s32)stats->CActorParam_UnkVirtualFunc37();
+    s32 hp1 = (s32)stats->CActorParam_getHp();
     if (hp1 > 9999) hp1 = 9999;
-    s32 hp2 = (s32)stats->CActorParam_UnkVirtualFunc38();
+    s32 hp2 = (s32)stats->CActorParam_getDamageScale();
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_UnkVirtualFunc29());
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
@@ -6466,7 +6466,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 
     // ---- stat sub-objects ----
     E43StatA* stA = (E43StatA*)stats->CActorParam_UnkVirtualFunc101();
-    E43StatB* stB = (E43StatB*)stats->CActorParam_UnkVirtualFunc94();
+    E43StatB* stB = (E43StatB*)stats->CActorParam_getArtsDataBlock();
     E43StatC* stC = (E43StatC*)stats->CActorParam_UnkVirtualFunc102();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
@@ -6644,7 +6644,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
-            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
+            if (stats->CActorParam_getHp() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
@@ -7075,7 +7075,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801E9310(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
-            if (stats->CActorParam_UnkVirtualFunc37() > (f32)nb) {
+            if (stats->CActorParam_getHp() > (f32)nb) {
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);

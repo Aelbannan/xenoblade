@@ -126,7 +126,7 @@ struct ArtsActionSource {
 
 // Fake vtables folded onto real owners (Wave 31):
 // +0x30 -> cf::CObjectState::CObjectState_getStateData (party status)
-// +0x4C -> cf::CObjectParam::CObjectParam_UnkVirtualFunc5 (move id)
+// +0x4C -> cf::CObjectParam::CObjectParam_getSelfObjectId (move id)
 // +0xAC -> cf::CfObject::CfObject_getPosVector (position)
 // +0x54 -> cf::CBattleState::CBattleState_UnkVirtualFunc20 (arts slot)
 // +0x128/+0x160/+0x278/+0x27C/+0x158 -> cf::CActorParam Unk37/51/121/122/49
@@ -3071,7 +3071,7 @@ extern "C" int func_8010784C(CMenuArtsSelect* self) {
             if (subObj != NULL && (subObj->mFlag530 & 1)) return 1;
             // CfObjectMove sub-object virtual call: getMax-ish slot 0x4c.
             void* moveObj = &actor->mMoveStart;
-            void* ret = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(moveObj)->CObjectParam_UnkVirtualFunc5();
+            void* ret = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(moveObj)->CObjectParam_getSelfObjectId();
             if (ret == NULL) return 1;
             ArtsActionSource* src =
                 static_cast<ArtsActionSource*>(findObjectById((int)ret));
@@ -3105,7 +3105,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
     }
 
     if (index < 8) {
-        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
+        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
         if (mv == NULL) {
             // Party-status probe through the secondary MI vtable.
             u32* pVal = reinterpret_cast<u32*>(
@@ -3122,7 +3122,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
     }
 
     if (unk328 == 2) {
-        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
+        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
         if (mv == NULL) return 0;
         ArtsActionSource* srcRaw =
             static_cast<ArtsActionSource*>(findObjectById(index));
@@ -3150,7 +3150,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
     }
 
     if (unk328 == 4) {
-        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
+        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
         if (mv == NULL) return 0;
         u8* arts = static_cast<u8*>(
             reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
@@ -3200,7 +3200,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         }
         // Talent-skill availability: the move sub-object's status getter, the
         // action source and the skill object's flag bit 23 must all be set.
-        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
+        void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
         if (mv != NULL) {
             void* src = findObjectById((int)mv);
             if (src != NULL) {
@@ -3252,7 +3252,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
             if (func_80148778(&actor->mArtsList, 0xf0) != 0) return 1;
             if (func_80148778(&actor->mArtsList, 0xf1) != 0) return 1;
         } else {
-            void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_UnkVirtualFunc5();
+            void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
             if (mv != NULL) {
                 void* src = findObjectById((int)mv);
                 if (src != NULL) {

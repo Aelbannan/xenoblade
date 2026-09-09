@@ -96,7 +96,7 @@ struct CfActorObj89CView {
     u32 field_0x89C; // 0x89C
 };
 
-// Vtable proxy for the CfObjectActor/CActorParam primary vtable (offset
+// Call proxy for the CfObjectActor/CActorParam primary table (offset
 // 0x00), slots +0x1DC (no-arg) and +0x1FC (r4 arg), dispatched by
 // CActorParam_UnkVirtualFunc88. Dummy slots pin the offsets (the first
 // declared virtual lands at vtable+0x08).
@@ -163,9 +163,9 @@ struct CActorParam17ECView {
     // vtable slots, the reload child pointer and the tail fields through raw
     // views pinning the retail offsets.
 
-    // Vtable-pointer slots rewritten by the CfObjectEne ctor/dtor (retail
+    // Table-pointer slots rewritten by the CfObjectEne ctor/dtor (retail
     // stores lbl_eu_80528A18 + 0x0/0xC/0x36C/0x37C at these positions).
-    struct CfEneVtables {
+    struct CfEneTablePtrs {
         u32 vt0;             // +0x00 primary vtable (lbl_eu_80528A18)
         u8 _pad4[0x8 - 0x4];
         u32 vt8;             // +0x08 secondary vtable (+0xC)
@@ -175,85 +175,10 @@ struct CActorParam17ECView {
         u32 vt3E9C;          // +0x3E9C CfObjectMove subobject vtable (+0x37C)
     };
 
-    // +0x3E9C CfObjectMove primary-vtable SHAPE (Fake MI).
-    // Full CfObjectMove as second base CSEs the subobject address
-    // (frame +0x10); a thin novtable with the REAL slot names/arities
-    // keeps the folded `lwz r12, 0x3E9C(rX)` shape. Fillers pin
-    // offsets only - dispatched slots match CfObject/CObjectParam/
-    // CfObjectMove retail names.
-    class __declspec(novtable) CfObjectMoveVt {
-    public:
-        virtual void _008(); virtual void _00C(); virtual void _010(); virtual void _014();
-        virtual void _018(); virtual void _01C(); virtual void _020(); virtual void _024();
-        virtual void _028(); virtual void _02C(); virtual void _030(); virtual void _034();
-        virtual void _038();
-        virtual void CObjectParam_UnkVirtualFunc1(const char* name); //0x3C
-        virtual void _040(); virtual void _044(); virtual void _048(); virtual void _04C();
-        virtual void _050(); virtual void _054(); virtual void _058(); virtual void _05C();
-        virtual void _060();
-        virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void CfObject_UnkVirtualFunc6();      //0x68
-        virtual void _06C(); virtual void _070(); virtual void _074(); virtual void _078();
-        virtual void _07C();
-        virtual void CfObject_UnkVirtualFunc12();     //0x80
-        virtual void _084(); virtual void _088();
-        virtual float CfObject_UnkVirtualFunc15();    //0x8C
-        virtual void _090(); virtual void _094(); virtual void _098(); virtual void _09C();
-        virtual void _0A0(); virtual void _0A4(); virtual void _0A8(); virtual void _0AC();
-        virtual void _0B0(); virtual void _0B4(); virtual void _0B8(); virtual void _0BC();
-        virtual void _0C0(); virtual void _0C4(); virtual void _0C8(); virtual void _0CC();
-        virtual void _0D0(); virtual void _0D4(); virtual void _0D8(); virtual void _0DC();
-        virtual void _0E0(); virtual void _0E4(); virtual void _0E8(); virtual void _0EC();
-        virtual void _0F0(); virtual void _0F4(); virtual void _0F8(); virtual void _0FC();
-        virtual void _100(); virtual void _104(); virtual void _108(); virtual void _10C();
-        virtual void _110(); virtual void _114(); virtual void _118(); virtual void _11C();
-        virtual void _120(); virtual void _124(); virtual void _128(); virtual void _12C();
-        virtual void _130();
-        virtual void CfObject_UnkVirtualFunc57(float value); //0x134
-        virtual void _138();
-        virtual void CfObject_UnkVirtualFunc59(float value); //0x13C
-        virtual void _140(); virtual void _144(); virtual void _148(); virtual void _14C();
-        virtual void _150(); virtual void _154();
-        virtual void CfObject_UnkVirtualFunc66(int flag); //0x158
-        virtual void _15C(); virtual void _160(); virtual void _164(); virtual void _168();
-        virtual void _16C(); virtual void _170(); virtual void _174(); virtual void _178();
-        virtual void _17C(); virtual void _180(); virtual void _184(); virtual void _188();
-        virtual void _18C(); virtual void _190(); virtual void _194(); virtual void _198();
-        virtual void _19C(); virtual void _1A0(); virtual void _1A4(); virtual void _1A8();
-        virtual void _1AC(); virtual void _1B0(); virtual void _1B4(); virtual void _1B8();
-        virtual void _1BC(); virtual void _1C0(); virtual void _1C4(); virtual void _1C8();
-        virtual void _1CC(); virtual void _1D0();
-        virtual void CfObjectMove_UnkVirtualFunc4(float value); //0x1D4
-    };
+
     struct CfEneMovePad {
         u8 _pad[0x3E9C];
     };
-    struct CfEneMoveAt : CfEneMovePad, CfObjectMoveVt {};
-    struct CfEneMoveAtB : CfEneMovePad, CfObjectMoveVt {};
-    struct CfEneMoveAtC : CfEneMovePad, CfObjectMoveVt {};
-    struct CfEneMoveAtD : CfEneMovePad, CfObjectMoveVt {};
-
-    // Small +0x3E9C shape for updateEnemyBattleState / func_800AF870
-    // (slots +0x64/+0x80/+0x8C only). The full CfObjectMoveVt Fake MI
-    // CSEs the subobject address in that function; this compact shape
-    // restores the folded lwz. Method names = owning-class retail names.
-    class __declspec(novtable) CfObjectMoveVt64 {
-    public:
-        virtual void _s008(); virtual void _s00C(); virtual void _s010(); virtual void _s014();
-        virtual void _s018(); virtual void _s01C(); virtual void _s020(); virtual void _s024();
-        virtual void _s028(); virtual void _s02C(); virtual void _s030(); virtual void _s034();
-        virtual void _s038(); virtual void _s03C(); virtual void _s040(); virtual void _s044();
-        virtual void _s048(); virtual void _s04C(); virtual void _s050(); virtual void _s054();
-        virtual void _s058(); virtual void _s05C(); virtual void _s060();
-        virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void _s068(); virtual void _s06C(); virtual void _s070(); virtual void _s074();
-        virtual void _s078(); virtual void _s07C();
-        virtual void CfObject_UnkVirtualFunc12();     //0x80
-        virtual void _s084(); virtual void _s088();
-        virtual float CfObject_UnkVirtualFunc15();    //0x8C
-    };
-    struct CfEneMoveVt64 : CfEneMovePad, CfObjectMoveVt64 {};
-
 
     // CfResReloadImpl child pointer stored by the ctor at +0x3F4C.
     struct CfEneReloadSlot {
@@ -281,28 +206,12 @@ struct CActorParam17ECView {
         u16 field_0xB2; // 0xB2
     };
 
-    // --- initEnemyBdatParams / updateEnemyBattleState / func_800AF870 raw views ---
-
     // Name/state fields used by initEnemyBdatParams: the bdat lookup name at
     // +0x3F14 (getFP arg) and the u16 row id at +0x3F28.
     struct CfEneLookupView {
         u8 _pad[0x3F14];
         char field_0x3F14[0x28 - 0x14]; // 0x3F14 (getFP name)
         u16 field_0x3F28;               // 0x3F28 (bdat row id)
-    };
-
-    // Base of the +0x3380 CAIAction subobject (func_8014B7B0 /
-    // func_8015396C args in initEnemyBdatParams). The two calls go through
-    // DIFFERENT view types so MWCC re-materializes the addi r3, rX, 0x3380
-    // per call (a CSE'd address would live in a callee-saved register and
-    // grow the frame - same trick as the func_800ADB2C dispatch sites).
-    struct CfEneAI3380View {
-        u8 _pad[0x3380];
-        u8 field_0x3380; // 0x3380 (subobject base)
-    };
-    struct CfEneAI3380View2 {
-        u8 _pad[0x3380];
-        u8 field_0x3380; // 0x3380 (subobject base)
     };
 
     // Distinct absolute-offset views of the +0x3E9C CfObjectMove subobject
@@ -336,31 +245,19 @@ struct CActorParam17ECView {
         u8 field_0x8; // 0x8 (subobject base)
     };
 
-    // +0x8 CBattleState vtable SHAPE (Fake MI). Same CSE reason as
-    // CfObjectMoveVt - thin novtable with real CBattleState names.
-    class __declspec(novtable) CfBattleStateVt {
-    public:
-        virtual void _b008(); virtual void _b00C(); virtual void _b010();
-        virtual void CBattleState_UnkVirtualFunc4(int val); //0x14
-        virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry); //0x18
-        virtual void _b01C();
-        virtual void CBattleState_clearStatusId(u32 id); //0x20
-        virtual void _b024(); virtual void _b028(); virtual void _b02C(); virtual void _b030();
-        virtual void _b034(); virtual void _b038(); virtual void _b03C(); virtual void _b040();
-        virtual void _b044(); virtual void _b048(); virtual void _b04C(); virtual void _b050();
-        virtual void _b054(); virtual void _b058(); virtual void _b05C(); virtual void _b060();
-        virtual void _b064(); virtual void _b068(); virtual void _b06C(); virtual void _b070();
-        virtual void _b074(); virtual void _b078();
-        virtual void CBattleState_UnkVirtualFunc30(u32 flags); //0x7C
-        virtual void _b080();
-        virtual void CBattleState_UnkVirtualFunc32(u32 flags); //0x84
-    };
+
     struct CfEneB8Pad {
         u8 _pad[0x8];
     };
-    struct CfEneB8Battle : CfEneB8Pad, CfBattleStateVt {};
 
-
+    // Real-owner views of the +0x3E9C CfObjectMove subobject (retail offsets).
+    // Thin MI (pad + real base) keeps the folded lwz r12,0x3E9C(rX) shape;
+    // dispatched methods are the owning-class virtuals (no dummy slots).
+    struct CfObjectAt3E9C : CfEneMovePad, cf::CfObject {};
+    struct CObjectParamAt3E9C : CfEneMovePad, cf::CObjectParam {};
+    struct CfObjectMoveAt3E9C : CfEneMovePad, cf::CfObjectMove {};
+    // Real-owner view of the +0x8 CBattleState subobject.
+    struct CBattleStateAt8 : CfEneB8Pad, cf::CBattleState {};
     // Flags/pointer fields touched by updateEnemyBattleState: the +0x3F34 target
     // pointer and the +0x7A4 flag word behind it.
     struct CfEneField3F34 {
@@ -413,103 +310,8 @@ struct CActorParam17ECView {
     // (no-arg, x6 loop) on the CfObjectEne primary vtable. Dummy slots pin
     // the offsets (RTTI 8-byte vtable header; Nth declared virtual at
     // (N+1)*4).
-    class CfEneVtD4 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0();
-        virtual void mD4(float val); // vtable +0xD4 (float arg)
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC();
-        virtual float mF0();         // vtable +0xF0 (returns float)
-        virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC();
-        virtual void _v100(); virtual void _v104(); virtual void _v108(); virtual void _v10C();
-        virtual void _v110(); virtual void _v114(); virtual void _v118(); virtual void _v11C();
-        virtual void _v120(); virtual void _v124(); virtual void _v128(); virtual void _v12C();
-        virtual void _v130(); virtual void _v134(); virtual void _v138(); virtual void _v13C();
-        virtual void _v140(); virtual void _v144(); virtual void _v148(); virtual void _v14C();
-        virtual void _v150(); virtual void _v154(); virtual void _v158(); virtual void _v15C();
-        virtual void _v160(); virtual void _v164(); virtual void _v168(); virtual void _v16C();
-        virtual void _v170(); virtual void _v174(); virtual void _v178(); virtual void _v17C();
-        virtual void _v180(); virtual void _v184(); virtual void _v188(); virtual void _v18C();
-        virtual void _v190(); virtual void _v194(); virtual void _v198(); virtual void _v19C();
-        virtual void _v1A0(); virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC();
-        virtual void _v1B0(); virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC();
-        virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8(); virtual void _v1CC();
-        virtual void _v1D0(); virtual void _v1D4(); virtual void _v1D8(); virtual void _v1DC();
-        virtual void _v1E0(); virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC();
-        virtual void _v1F0(); virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC();
-        virtual void _v200(); virtual void _v204(); virtual void _v208(); virtual void _v20C();
-        virtual void _v210(); virtual void _v214(); virtual void _v218(); virtual void _v21C();
-        virtual void _v220(); virtual void _v224(); virtual void _v228(); virtual void _v22C();
-        virtual void _v230(); virtual void _v234(); virtual void _v238(); virtual void _v23C();
-        virtual void _v240(); virtual void _v244(); virtual void _v248(); virtual void _v24C();
-        virtual void _v250(); virtual void _v254(); virtual void _v258(); virtual void _v25C();
-        virtual void _v260(); virtual void _v264(); virtual void _v268(); virtual void _v26C();
-        virtual void _v270(); virtual void _v274(); virtual void _v278(); virtual void _v27C();
-        virtual void _v280(); virtual void _v284();
-        virtual void m288(); // vtable +0x288
-    };
 
     // Primary-vtable +0x2BC dispatch (func_800AF870 guard; returns int).
-    class CfEneVt2BC {
-    public:
-        virtual void _b008(); virtual void _b00C(); virtual void _b010(); virtual void _b014();
-        virtual void _b018(); virtual void _b01C(); virtual void _b020(); virtual void _b024();
-        virtual void _b028(); virtual void _b02C(); virtual void _b030(); virtual void _b034();
-        virtual void _b038(); virtual void _b03C(); virtual void _b040(); virtual void _b044();
-        virtual void _b048(); virtual void _b04C(); virtual void _b050(); virtual void _b054();
-        virtual void _b058(); virtual void _b05C(); virtual void _b060(); virtual void _b064();
-        virtual void _b068(); virtual void _b06C(); virtual void _b070(); virtual void _b074();
-        virtual void _b078(); virtual void _b07C(); virtual void _b080(); virtual void _b084();
-        virtual void _b088(); virtual void _b08C(); virtual void _b090(); virtual void _b094();
-        virtual void _b098(); virtual void _b09C(); virtual void _b0A0(); virtual void _b0A4();
-        virtual void _b0A8(); virtual void _b0AC(); virtual void _b0B0(); virtual void _b0B4();
-        virtual void _b0B8(); virtual void _b0BC(); virtual void _b0C0(); virtual void _b0C4();
-        virtual void _b0C8(); virtual void _b0CC(); virtual void _b0D0(); virtual void _b0D4();
-        virtual void _b0D8(); virtual void _b0DC(); virtual void _b0E0(); virtual void _b0E4();
-        virtual void _b0E8(); virtual void _b0EC(); virtual void _b0F0(); virtual void _b0F4();
-        virtual void _b0F8(); virtual void _b0FC(); virtual void _b100(); virtual void _b104();
-        virtual void _b108(); virtual void _b10C(); virtual void _b110(); virtual void _b114();
-        virtual void _b118(); virtual void _b11C(); virtual void _b120(); virtual void _b124();
-        virtual void _b128(); virtual void _b12C(); virtual void _b130(); virtual void _b134();
-        virtual void _b138(); virtual void _b13C(); virtual void _b140(); virtual void _b144();
-        virtual void _b148(); virtual void _b14C(); virtual void _b150(); virtual void _b154();
-        virtual void _b158(); virtual void _b15C(); virtual void _b160(); virtual void _b164();
-        virtual void _b168(); virtual void _b16C(); virtual void _b170(); virtual void _b174();
-        virtual void _b178(); virtual void _b17C(); virtual void _b180(); virtual void _b184();
-        virtual void _b188(); virtual void _b18C(); virtual void _b190(); virtual void _b194();
-        virtual void _b198(); virtual void _b19C(); virtual void _b1A0(); virtual void _b1A4();
-        virtual void _b1A8(); virtual void _b1AC(); virtual void _b1B0(); virtual void _b1B4();
-        virtual void _b1B8(); virtual void _b1BC(); virtual void _b1C0(); virtual void _b1C4();
-        virtual void _b1C8(); virtual void _b1CC(); virtual void _b1D0(); virtual void _b1D4();
-        virtual void _b1D8(); virtual void _b1DC(); virtual void _b1E0(); virtual void _b1E4();
-        virtual void _b1E8(); virtual void _b1EC(); virtual void _b1F0(); virtual void _b1F4();
-        virtual void _b1F8(); virtual void _b1FC(); virtual void _b200(); virtual void _b204();
-        virtual void _b208(); virtual void _b20C(); virtual void _b210(); virtual void _b214();
-        virtual void _b218(); virtual void _b21C(); virtual void _b220(); virtual void _b224();
-        virtual void _b228(); virtual void _b22C(); virtual void _b230(); virtual void _b234();
-        virtual void _b238(); virtual void _b23C(); virtual void _b240(); virtual void _b244();
-        virtual void _b248(); virtual void _b24C(); virtual void _b250(); virtual void _b254();
-        virtual void _b258(); virtual void _b25C(); virtual void _b260(); virtual void _b264();
-        virtual void _b268(); virtual void _b26C(); virtual void _b270(); virtual void _b274();
-        virtual void _b278(); virtual void _b27C(); virtual void _b280(); virtual void _b284();
-        virtual void _b288(); virtual void _b28C(); virtual void _b290(); virtual void _b294();
-        virtual void _b298(); virtual void _b29C(); virtual void _b2A0(); virtual void _b2A4();
-        virtual void _b2A8(); virtual void _b2AC(); virtual void _b2B0(); virtual void _b2B4();
-        virtual void _b2B8();
-        virtual int m2BC(); // vtable +0x2BC
-    };
 
     // --- CActorParam_UnkVirtualFunc123/120 record structs ---
     // --- CActorParam_UnkVirtualFunc123/120 record structs ---
@@ -760,15 +562,18 @@ struct CActorParam17ECView {
         u32 field_0x78;           // 0x78 (flag word)
     };
 
-    // Record vtable dispatch (proven CArtsSet.cpp CAttackParamVtblRec
+    // Record init dispatch (proven CArtsSet.cpp attack-record
     // pattern): the 0x84-byte data base places the record's vptr at +0x84,
     // the first virtual at vtable slot 2 (offset +0x8). The per-record init
     // routine is dispatched by UnkVirtualFunc166 through this shape.
     struct CfEneAtkData84 {
         u8 field_0[0x84];
     };
-    struct CfEneAtkVtblRec : CfEneAtkData84 {
-        virtual void vtInit() = 0;  // vtable slot 2 (offset 8)
+    // Real-owner spelling of the record init dispatch above (same 0x84 data
+    // + vptr shape, slot 2). New code uses this record init type.
+    // once its last call site migrates.
+    struct CfEneAtkRec : CfEneAtkData84 {
+        virtual void initRec() = 0;  // vtable slot 2 (offset 8)
     };
 
     // --- func_800ADDA8 views ---
@@ -865,331 +670,21 @@ struct CActorParam17ECView {
     // (u8 arg) and +0xE8 (float arg), used by the func_800ADDA8 bdat setup.
     // Dummy slots pin the offsets (RTTI 8-byte header; Nth declared virtual
     // at (N+1)*4 + 4 = slot 8 + 4N).
-    class CfEneVtSetup1 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8();
-        virtual void vfDC(u8 value);         // vtable +0xDC
-        virtual void _v0E0();
-        virtual void vfE4(u8 value);         // vtable +0xE4
-        virtual void vfE8(float value);      // vtable +0xE8
-    };
 
     // Primary-vtable slots +0x170/+0x188 (int arg), +0x198/+0x1A4/+0x1BC
     // (float arg) used by func_800ADDA8's actor-state setup.
-    class CfEneVtSetup2 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-        virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-        virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-        virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-        virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-        virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-        virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-        virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-        virtual void _v168(); virtual void _v16C();
-        virtual void vf170(int value);       // vtable +0x170
-        virtual void _v174(); virtual void _v178(); virtual void _v17C(); virtual void _v180();
-        virtual void _v184();
-        virtual void vf188(int value);       // vtable +0x188
-        virtual void _v18C(); virtual void _v190(); virtual void _v194();
-        virtual void vf198(float value);     // vtable +0x198
-        virtual void _v19C(); virtual void _v1A0();
-        virtual void vf1A4(float value);     // vtable +0x1A4
-        virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-        virtual void _v1B8();
-        virtual void vf1BC(float value);     // vtable +0x1BC
-    };
 
     // Primary-vtable slots +0x21C (ptr arg), +0x254 (u8 arg), +0x25C (int
     // arg), +0x264/+0x26C (float arg) used by func_800ADDA8's tail setup.
-    class CfEneVtSetup3 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-        virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-        virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-        virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-        virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-        virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-        virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-        virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-        virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
-        virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
-        virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
-        virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
-        virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-        virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4();
-        virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
-        virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
-        virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
-        virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
-        virtual void _v208(); virtual void _v20C(); virtual void _v210(); virtual void _v214();
-        virtual void _v218();
-        virtual void vf21C(void* arg);       // vtable +0x21C
-        virtual void _v220(); virtual void _v224(); virtual void _v228(); virtual void _v22C();
-        virtual void _v230(); virtual void _v234(); virtual void _v238(); virtual void _v23C();
-        virtual void _v240(); virtual void _v244(); virtual void _v248(); virtual void _v24C();
-        virtual void _v250();
-        virtual void vf254(u8 value);        // vtable +0x254
-        virtual void _v258();
-        virtual void vf25C(int value);       // vtable +0x25C
-        virtual void _v260();
-        virtual void vf264(float value);     // vtable +0x264
-        virtual void _v268();
-        virtual void vf26C(float value);     // vtable +0x26C
-    };
 
     // Primary-vtable call proxy for the arts/attack loader slots (166/167)
     // and func_800ADDA8's rates read: +0x1C4 (rates float view), +0x20C
     // (rates view), +0x27C (arts-set base), +0x288 (arts-slot u16 array).
-    class CfEneVtActs {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-        virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-        virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-        virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-        virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-        virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-        virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-        virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-        virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
-        virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
-        virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
-        virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
-        virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-        virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0();
-        virtual CfEneMoveRateView* vf1C4();  // vtable +0x1C4
-        virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
-        virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
-        virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
-        virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
-        virtual void _v208();
-        virtual CfEneRatesView* vf20C();     // vtable +0x20C
-        virtual void _v210(); virtual void _v214(); virtual void _v218(); virtual void _v21C();
-        virtual void _v220(); virtual void _v224(); virtual void _v228(); virtual void _v22C();
-        virtual void _v230(); virtual void _v234(); virtual void _v238(); virtual void _v23C();
-        virtual void _v240(); virtual void _v244(); virtual void _v248(); virtual void _v24C();
-        virtual void _v250(); virtual void _v254(); virtual void _v258(); virtual void _v25C();
-        virtual void _v260(); virtual void _v264(); virtual void _v268(); virtual void _v26C();
-        virtual void _v270(); virtual void _v274(); virtual void _v278();
-        virtual void* vf27C();               // vtable +0x27C
-        virtual void _v280(); virtual void _v284();
-        virtual u16* vf288();                // vtable +0x288
-    };
 
     // Primary-vtable slots +0x32C/+0x330 (no-arg) and +0x334 (float arg)
     // used by func_800ADDA8's tail dispatch.
-    class CfEneVtTail {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-        virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-        virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-        virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-        virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-        virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-        virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-        virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-        virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
-        virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
-        virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
-        virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
-        virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-        virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4();
-        virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
-        virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
-        virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
-        virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
-        virtual void _v208(); virtual void _v20C(); virtual void _v210(); virtual void _v214();
-        virtual void _v218(); virtual void _v21C(); virtual void _v220(); virtual void _v224();
-        virtual void _v228(); virtual void _v22C(); virtual void _v230(); virtual void _v234();
-        virtual void _v238(); virtual void _v23C(); virtual void _v240(); virtual void _v244();
-        virtual void _v248(); virtual void _v24C(); virtual void _v250(); virtual void _v254();
-        virtual void _v258(); virtual void _v25C(); virtual void _v260(); virtual void _v264();
-        virtual void _v268(); virtual void _v26C(); virtual void _v270(); virtual void _v274();
-        virtual void _v278(); virtual void _v27C(); virtual void _v280(); virtual void _v284();
-        virtual void _v288(); virtual void _v28C(); virtual void _v290(); virtual void _v294();
-        virtual void _v298(); virtual void _v29C(); virtual void _v2A0(); virtual void _v2A4();
-        virtual void _v2A8(); virtual void _v2AC(); virtual void _v2B0(); virtual void _v2B4();
-        virtual void _v2B8(); virtual void _v2BC(); virtual void _v2C0(); virtual void _v2C4();
-        virtual void _v2C8(); virtual void _v2CC(); virtual void _v2D0(); virtual void _v2D4();
-        virtual void _v2D8(); virtual void _v2DC(); virtual void _v2E0(); virtual void _v2E4();
-        virtual void _v2E8(); virtual void _v2EC(); virtual void _v2F0(); virtual void _v2F4();
-        virtual void _v2F8(); virtual void _v2FC(); virtual void _v300(); virtual void _v304();
-        virtual void _v308(); virtual void _v30C(); virtual void _v310(); virtual void _v314();
-        virtual void _v318(); virtual void _v31C(); virtual void _v320(); virtual void _v324();
-        virtual void _v328();
-        virtual void vf32C();                // vtable +0x32C
-        virtual void vf330();                // vtable +0x330
-        virtual void vf334(float value);     // vtable +0x334
-    };
 
     // Primary-vtable slot +0x5E0 (no-arg) used by func_800ADDA8.
-    class CfEneVt5E0 {
-    public:
-        virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
-        virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
-        virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
-        virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
-        virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-        virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
-        virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
-        virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
-        virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
-        virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-        virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-        virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
-        virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
-        virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
-        virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
-        virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
-        virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
-        virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-        virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
-        virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
-        virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
-        virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-        virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
-        virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
-        virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
-        virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
-        virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
-        virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4();
-        virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
-        virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
-        virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
-        virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
-        virtual void _v208(); virtual void _v20C(); virtual void _v210(); virtual void _v214();
-        virtual void _v218(); virtual void _v21C(); virtual void _v220(); virtual void _v224();
-        virtual void _v228(); virtual void _v22C(); virtual void _v230(); virtual void _v234();
-        virtual void _v238(); virtual void _v23C(); virtual void _v240(); virtual void _v244();
-        virtual void _v248(); virtual void _v24C(); virtual void _v250(); virtual void _v254();
-        virtual void _v258(); virtual void _v25C(); virtual void _v260(); virtual void _v264();
-        virtual void _v268(); virtual void _v26C(); virtual void _v270(); virtual void _v274();
-        virtual void _v278(); virtual void _v27C(); virtual void _v280(); virtual void _v284();
-        virtual void _v288(); virtual void _v28C(); virtual void _v290(); virtual void _v294();
-        virtual void _v298(); virtual void _v29C(); virtual void _v2A0(); virtual void _v2A4();
-        virtual void _v2A8(); virtual void _v2AC(); virtual void _v2B0(); virtual void _v2B4();
-        virtual void _v2B8(); virtual void _v2BC(); virtual void _v2C0(); virtual void _v2C4();
-        virtual void _v2C8(); virtual void _v2CC(); virtual void _v2D0(); virtual void _v2D4();
-        virtual void _v2D8(); virtual void _v2DC(); virtual void _v2E0(); virtual void _v2E4();
-        virtual void _v2E8(); virtual void _v2EC(); virtual void _v2F0(); virtual void _v2F4();
-        virtual void _v2F8(); virtual void _v2FC(); virtual void _v300(); virtual void _v304();
-        virtual void _v308(); virtual void _v30C(); virtual void _v310(); virtual void _v314();
-        virtual void _v318(); virtual void _v31C(); virtual void _v320(); virtual void _v324();
-        virtual void _v328(); virtual void _v32C(); virtual void _v330(); virtual void _v334();
-        virtual void _v338(); virtual void _v33C(); virtual void _v340(); virtual void _v344();
-        virtual void _v348(); virtual void _v34C(); virtual void _v350(); virtual void _v354();
-        virtual void _v358(); virtual void _v35C(); virtual void _v360(); virtual void _v364();
-        virtual void _v368(); virtual void _v36C(); virtual void _v370(); virtual void _v374();
-        virtual void _v378(); virtual void _v37C(); virtual void _v380(); virtual void _v384();
-        virtual void _v388(); virtual void _v38C(); virtual void _v390(); virtual void _v394();
-        virtual void _v398(); virtual void _v39C(); virtual void _v3A0(); virtual void _v3A4();
-        virtual void _v3A8(); virtual void _v3AC(); virtual void _v3B0(); virtual void _v3B4();
-        virtual void _v3B8(); virtual void _v3BC(); virtual void _v3C0(); virtual void _v3C4();
-        virtual void _v3C8(); virtual void _v3CC(); virtual void _v3D0(); virtual void _v3D4();
-        virtual void _v3D8(); virtual void _v3DC(); virtual void _v3E0(); virtual void _v3E4();
-        virtual void _v3E8(); virtual void _v3EC(); virtual void _v3F0(); virtual void _v3F4();
-        virtual void _v3F8(); virtual void _v3FC(); virtual void _v400(); virtual void _v404();
-        virtual void _v408(); virtual void _v40C(); virtual void _v410(); virtual void _v414();
-        virtual void _v418(); virtual void _v41C(); virtual void _v420(); virtual void _v424();
-        virtual void _v428(); virtual void _v42C(); virtual void _v430(); virtual void _v434();
-        virtual void _v438(); virtual void _v43C(); virtual void _v440(); virtual void _v444();
-        virtual void _v448(); virtual void _v44C(); virtual void _v450(); virtual void _v454();
-        virtual void _v458(); virtual void _v45C(); virtual void _v460(); virtual void _v464();
-        virtual void _v468(); virtual void _v46C(); virtual void _v470(); virtual void _v474();
-        virtual void _v478(); virtual void _v47C(); virtual void _v480(); virtual void _v484();
-        virtual void _v488(); virtual void _v48C(); virtual void _v490(); virtual void _v494();
-        virtual void _v498(); virtual void _v49C(); virtual void _v4A0(); virtual void _v4A4();
-        virtual void _v4A8(); virtual void _v4AC(); virtual void _v4B0(); virtual void _v4B4();
-        virtual void _v4B8(); virtual void _v4BC(); virtual void _v4C0(); virtual void _v4C4();
-        virtual void _v4C8(); virtual void _v4CC(); virtual void _v4D0(); virtual void _v4D4();
-        virtual void _v4D8(); virtual void _v4DC(); virtual void _v4E0(); virtual void _v4E4();
-        virtual void _v4E8(); virtual void _v4EC(); virtual void _v4F0(); virtual void _v4F4();
-        virtual void _v4F8(); virtual void _v4FC(); virtual void _v500(); virtual void _v504();
-        virtual void _v508(); virtual void _v50C(); virtual void _v510(); virtual void _v514();
-        virtual void _v518(); virtual void _v51C(); virtual void _v520(); virtual void _v524();
-        virtual void _v528(); virtual void _v52C(); virtual void _v530(); virtual void _v534();
-        virtual void _v538(); virtual void _v53C(); virtual void _v540(); virtual void _v544();
-        virtual void _v548(); virtual void _v54C(); virtual void _v550(); virtual void _v554();
-        virtual void _v558(); virtual void _v55C(); virtual void _v560(); virtual void _v564();
-        virtual void _v568(); virtual void _v56C(); virtual void _v570(); virtual void _v574();
-        virtual void _v578(); virtual void _v57C(); virtual void _v580(); virtual void _v584();
-        virtual void _v588(); virtual void _v58C(); virtual void _v590(); virtual void _v594();
-        virtual void _v598(); virtual void _v59C(); virtual void _v5A0(); virtual void _v5A4();
-        virtual void _v5A8(); virtual void _v5AC(); virtual void _v5B0(); virtual void _v5B4();
-        virtual void _v5B8(); virtual void _v5BC(); virtual void _v5C0(); virtual void _v5C4();
-        virtual void _v5C8(); virtual void _v5CC(); virtual void _v5D0(); virtual void _v5D4();
-        virtual void _v5D8();
-        virtual void vf5E0();                 // vtable +0x5E0
-    };
 
 };
 

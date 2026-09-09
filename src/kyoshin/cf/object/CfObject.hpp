@@ -19,18 +19,18 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc3(); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void CfObject_UnkVirtualFunc6(int flag);      //0x68
+        virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_notifyEventDone() = 0;  //0x70
         virtual bool CfObject_isMoveActiveNow();      //0x74
-        virtual void CfObject_UnkVirtualFunc10();     //0x78
+        virtual void CfObject_forwardSubObject();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
-        virtual int CfObject_UnkVirtualFunc13();     //0x84
+        virtual int CfObject_queryTargetState();     //0x84
         virtual void* CfObject_pushRefreshValue(float value);     //0x88
         virtual float CfObject_getMoveSpeedRate();    //0x8C (Move/Coll return float; retail Fv)
-        virtual void* CfObject_UnkVirtualFunc16(float value);     //0x90
-        virtual void CfObject_UnkVirtualFunc17();     //0x94
+        virtual void* CfObject_pushRefreshExtra(float value);     //0x90
+        virtual void CfObject_readRefreshValue();     //0x94
         virtual int CfObject_checkTargetState();     //0x98
         // Retail bodies read r4 as a position vector (setEffPosVec_ /
         // Model/Move/ocUnit UVF19). Fv linker names are uneducated.
@@ -68,11 +68,11 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc43();     //0xFC
         virtual void CfObject_UnkVirtualFunc44();     //0x100
         virtual void CfObject_UnkVirtualFunc45();     //0x104
-        virtual void CfObject_UnkVirtualFunc46(void* arg);     //0x108
-        virtual void CfObject_UnkVirtualFunc47();
+        virtual void CfObject_setMoveTargetPtr(void* arg);     //0x108
+        virtual void CfObject_createMoveTarget();
         // Move override returns target object pointer (pluginCfs: +0xC4/+0x6C0).
         virtual void* CfObject_getCurrentTarget();     //0x110
-        virtual void CfObject_UnkVirtualFunc49(u32 value);     //0x114
+        virtual void CfObject_forwardNpcAction(u32 value);     //0x114
         virtual int CfObject_UnkVirtualFunc50();     //0x118
         virtual int CfObject_UnkVirtualFunc51();     //0x11C
         virtual void* CfObject_UnkVirtualFunc52(const char* name);     //0x120
@@ -84,11 +84,11 @@ namespace cf {
         virtual u32* CfObject_getMoveRateScale();     //0x138
         virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
         virtual float CfObject_UnkVirtualFunc60();     //0x140
-        virtual void CfObject_UnkVirtualFunc61(u32 a, u32 b);     //0x144
+        virtual void CfObject_setAnimSlotEntry(u32 a, u32 b);     //0x144
         virtual u32 CfObject_UnkVirtualFunc62(u32 arg);     //0x148 (retail takes an index, returns bits)
         virtual u32 CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_setMoveBusyState(int flag);     //0x150
-        virtual void CfObject_UnkVirtualFunc65(int flag);     //0x154
+        virtual void CfObject_setMoveReadyFlag(int flag);     //0x154
 
         virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         void func_800BFB90();
@@ -124,7 +124,16 @@ namespace cf {
     };
 
     class CfObjectModel;
-    // Vtable view for the CfObject-family sub-object at CfObject+0x38
+    // Vtable view for the CfObject-family sub-object at CfObject+0x38.
+    // Recovered slot map (all proven byte-identical in CfObjectModel.cpp,
+    // UVF6 + notifyEventDone, both FULL): +0x08 = CObjectState_setStateBitMask
+    // (r4=1), +0x2C = CScnItemModel::vfunc2C(u32) (r4=ptr, r5 residue), +0xA0 =
+    // CScnItemModel::vfuncA0() (no FP setup), +0xAC = CfObject_getPosVector
+    // (no args, return discarded). A CObjectState_setStateBitMask0 1-arg
+    // spelling does not compile (MWCC 10248 vs the (int,int) decl) and the
+    // CfObject-family +0xA0 slot (UVF20(float,float)) needs f1/f2 setups, so
+    // the arity-exact scene slots are used at those two sites. Kept for
+    // CfObjectEff/CfObjectMove/CfObjectActor, which still dispatch through it.
     class CfObjectSub38 {
     public:
         virtual void m08(int flag);

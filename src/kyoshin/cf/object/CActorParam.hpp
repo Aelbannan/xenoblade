@@ -540,7 +540,7 @@ namespace cf {
         CActorParam(UNKTYPE* r4, UNKTYPE* r5);
     #pragma region vtable
         virtual const char* CActorParam_UnkVirtualFunc1();   //0x98
-        virtual void* CActorParam_UnkVirtualFunc2();   //0x9C
+        virtual void* CActorParam_getActor();   //0x9C (base returns NULL; actors return self)
         virtual void CActorParam_UnkVirtualFunc3();   //0xA0
         virtual void CActorParam_resetArtsStatus(void* arts);   //0xA4
         virtual void CActorParam_UnkVirtualFunc5(int flag);   //0xA8
@@ -556,12 +556,12 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
         virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
         virtual void CActorParam_UnkVirtualFunc17();  //0xD8
-        virtual void CActorParam_UnkVirtualFunc18();  //0xDC
+        virtual void CActorParam_UnkVirtualFunc18(u32 val);  //0xDC
         virtual u32 CActorParam_getActorType();  //0xE0
-        virtual void CActorParam_UnkVirtualFunc20();  //0xE4
-        virtual void CActorParam_UnkVirtualFunc21();  //0xE8
+        virtual void CActorParam_UnkVirtualFunc20(u32 val);  //0xE4
+        virtual void CActorParam_setScale(float val);  //0xE8
         virtual void CActorParam_UnkVirtualFunc22();  //0xEC
-        virtual void CActorParam_UnkVirtualFunc23();  //0xF0
+        virtual float CActorParam_getScale();  //0xF0
         virtual void CActorParam_UnkVirtualFunc24();  //0xF4
         virtual void CActorParam_UnkVirtualFunc25();  //0xF8
         virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
@@ -592,7 +592,7 @@ namespace cf {
         virtual float CActorParam_UnkVirtualFunc51();  //0x160
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53(int val);  //0x168
-        virtual void CActorParam_UnkVirtualFunc54(int delta);  //0x16C
+        virtual void CActorParam_addGauge(int delta);  //0x16C
         virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
         // int (not s16): Unk179 passes the getter result to Unk54 via mr r4,r3;
         // s16 forces MWCC to insert extsh and breaks the 0x94 match.
@@ -635,8 +635,8 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc92(const void* src);  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
         virtual void* CActorParam_getArtsDataBlock();  //0x20C
-        virtual void CActorParam_UnkVirtualFunc95();  //0x210
-        virtual void CActorParam_UnkVirtualFunc96();  //0x214
+        virtual void* CActorParam_UnkVirtualFunc95();  //0x210 (retail impl returns the +0x16C8 block)
+        virtual void* CActorParam_UnkVirtualFunc96();  //0x214 (retail impl returns the +0x1740 block)
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98(const void* src);  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
@@ -652,13 +652,13 @@ namespace cf {
         virtual u32 CActorParam_UnkVirtualFunc109(); //0x248
         virtual u32 CActorParam_UnkVirtualFunc110(); //0x24C
         virtual void CActorParam_UnkVirtualFunc111(); //0x250
-        virtual void CActorParam_UnkVirtualFunc112(); //0x254
+        virtual void CActorParam_UnkVirtualFunc112(u32 val); //0x254
         virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
-        virtual void CActorParam_UnkVirtualFunc114(); //0x25C
+        virtual void CActorParam_UnkVirtualFunc114(u8 val); //0x25C
         virtual bool CActorParam_UnkVirtualFunc115(); //0x260
         virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
         virtual float* CActorParam_UnkVirtualFunc117(); //0x268
-        virtual void CActorParam_UnkVirtualFunc118(); //0x26C
+        virtual void CActorParam_UnkVirtualFunc118(float val); //0x26C
         virtual float* CActorParam_UnkVirtualFunc119(); //0x270
         virtual void CActorParam_UnkVirtualFunc120(); //0x274
         virtual void* CActorParam_UnkVirtualFunc121(); //0x278 (impl returns +0x19e8 block)
@@ -708,7 +708,7 @@ namespace cf {
         virtual void* CActorParam_getBattleHitFlags(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167(); //0x330
-        virtual void CActorParam_UnkVirtualFunc168(); //0x334
+        virtual void CActorParam_UnkVirtualFunc168(float val); //0x334
         virtual void CActorParam_UnkVirtualFunc169(); //0x338
         virtual float CActorParam_UnkVirtualFunc170(); //0x33C
         virtual float CActorParam_UnkVirtualFunc171(); //0x340

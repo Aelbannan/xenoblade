@@ -34,7 +34,7 @@ extern "C" void func_80094E44(cf::CtrlNpc* self);
 extern "C" void func_80094EDC(cf::CtrlNpc* self);
 extern "C" void func_80094FC8(cf::CtrlNpc* self);
 // NPC movement-target action setter (CtrlNpc.cpp, retail func_8009377C):
-// CfObject_UnkVirtualFunc49 tail-dispatches the incoming action id.
+// CfObject_forwardNpcAction tail-dispatches the incoming action id.
 extern "C" void func_8009377C(cf::CtrlNpc* self, u32 param);
 // Action-advance query on the NPC movement target (CtrlNpc.cpp, retail
 // func_80094D1C / US 0x800956F4): whether the NPC may advance.
@@ -86,7 +86,7 @@ extern const float lbl_eu_80666A88;
 extern const float lbl_eu_80666A94;
 // Movement-speed constants (sdata2, retail unmangled names) used by
 // func_800BC68C (lbl_eu_80666AA4/AA8/AAC/AB0 + ml::epsilon) and
-// CfObject_UnkVirtualFunc46 (lbl_eu_80666AD0 scale).
+// CfObject_setMoveTargetPtr (lbl_eu_80666AD0 scale).
 extern const float lbl_eu_80666AA4;
 extern const float lbl_eu_80666AA8;
 extern const float lbl_eu_80666AAC;
@@ -96,7 +96,7 @@ extern const float lbl_eu_80666AB4;   // CfObject_UnkVirtualFunc5 movement-rate 
 // CfObject_UnkVirtualFunc26 constants: lbl_eu_80666AD4 is the amount clamp
 // threshold, lbl_eu_80666AD8 the sum-vector Y offset.
 extern const float lbl_eu_80666AD4;
-extern const float lbl_eu_80666AD8;
+extern const float lbl_eu_80666AD8[2];
 extern const float lbl_eu_8066A208;   // ml::epsilon (sdata2)
 // Movement constants for func_800BC4CC: lbl_eu_80666A98 is the squared-
 // distance threshold, lbl_eu_80666A9C the fallback distance, lbl_eu_80666AA0
@@ -121,7 +121,7 @@ extern const float lbl_eu_80666ACC;
 
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
-// call-site reloc at the unmangled retail name (docs/MWCC_CASES.md §2).
+// call-site reloc at the unmangled retail name (docs/MWCC_CASES.md sec 2).
 extern "C" f32 func_80496288(void* scene);
 // Minimal bdat imports (CfBdat.hpp cannot be included here: its
 // getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
@@ -142,7 +142,7 @@ extern u32 lbl_eu_80664184;     // cached fld-map row index
 // calls it with only r3 set. C linkage keeps the retail unmangled name.
 extern "C" void func_8004B354(void* self);
 // Second heap handle query (retail unmangled name, same family as
-// func_80061FE8): used by CfObject_UnkVirtualFunc47's CtrlEnemy/CtrlNpc
+// func_80061FE8): used by CfObject_createMoveTarget's CtrlEnemy/CtrlNpc
 // allocations.
 extern "C" u32 func_80061FFC();
 // CActParamAnim translation helper (defined in kyoshin/action/CActParamAnim.cpp
@@ -266,12 +266,12 @@ extern "C" void func_804876DC(cf::CfObjectModelSub98* sub);
 extern "C" void func_eu_8015D258(void* self, float value);
 // No-arg call form of the CCharEffect slot-release helper (defined in
 // kyoshin/cf/CCharEffect.cpp with a self param). Retail
-// CfObjectMove_UnkVirtualFunc21 calls it with the vtable query result
+// CfObjectMove_flushEffectSlots calls it with the vtable query result
 // leftover in r3 - the call site passes no argument.
 extern "C" void func_8015C100();
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp with (CCharEffect*, u32)). Retail
-// CfObjectMove_UnkVirtualFunc17/18/20 pass the +0x38 sub-object's vtable
+// CfObjectMove_setEffectSlotBit/18/20 pass the +0x38 sub-object's vtable
 // +0xE4 query result leftover in r3 and the incoming r4 as the index; C
 // linkage keeps the call relocs at the unmangled retail names (same scheme
 // as the func_8015C100 no-arg form).
@@ -281,7 +281,7 @@ extern "C" void func_8015BD24(void* self, u32 param);
 // Two-arg call forms of the CCharEffect slot helpers (defined in
 // kyoshin/cf/CCharEffect.cpp). func_8015C214 removes a pointer from the
 // effect slot lists; func_8015C294 returns whether a slot is occupied.
-// Retail CfObjectModel_UnkVirtualFunc18 / CfObjectMove_UnkVirtualFunc19
+// Retail CfObjectModel_UnkVirtualFunc18 / CfObjectMove_isEffectSlotUsed
 // forward the +0x38 sub-object's vtable +0xE4 query result leftover in r3
 // plus the incoming r4 (same scheme as the func_8015C074 family above).
 extern "C" void func_8015C214(void* self, void* p);
@@ -333,7 +333,7 @@ extern "C" void __ct__8005A3FC(void* self, void* parent);
 extern "C" void func_80482918(cf::CfObjectModelSub98* model, int flag);
 // CModelDisp release helper (defined in kyoshin/makecrystal/
 // CModelDispMakeCrystal.cpp, retail unmangled name). Called by
-// CfObjectMove_UnkVirtualFunc2 for each +0xC8/+0xCC target while the
+// CfObjectMove_detachModelList for each +0xC8/+0xCC target while the
 // +0x6D8 model list is present.
 extern "C" void func_8004B6BC(void* self, void* obj);
 // CActParamAnim field setter (defined in kyoshin/action/CActParamAnim.cpp,
@@ -372,29 +372,29 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObjectMove();
         //vtable 1 (CfObjectMove)
-        virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
-        virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
-        virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
-        virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
+        virtual void CfObjectMove_dropMoveRequest();  //0x1C8
+        virtual void CfObjectMove_detachModelList();  //0x1CC
+        virtual void CfObjectMove_releaseSlotById(int arg);  //0x1D0
+        virtual void CfObjectMove_recordMoveValue(float value);  //0x1D4
         virtual void CfObjectMove_getMovementRate();  //0x1D8
         virtual void CfObjectMove_UnkVirtualFunc6(u32 arg);  //0x1DC
-        virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
-        virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
-        virtual int CfObjectMove_UnkVirtualFunc9();   //0x1E8 (retail returns int: 1 or the CtrlNpc action-advance query)
+        virtual void CfObjectMove_refreshNpcState();  //0x1E0
+        virtual void CfObjectMove_updateNpcTarget();  //0x1E4
+        virtual int CfObjectMove_queryNpcAdvance();   //0x1E8 (retail returns int: 1 or the CtrlNpc action-advance query)
         virtual void CfObjectMove_UnkVirtualFunc10(); //0x1EC
-        virtual void CfObjectMove_UnkVirtualFunc11(); //0x1F0
-        virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
-        virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
-        virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
+        virtual void CfObjectMove_writeTargetField(); //0x1F0
+        virtual void CfObjectMove_advanceNpcTarget(); //0x1F4
+        virtual void CfObjectMove_commandNpcTarget(); //0x1F8
+        virtual void CfObjectMove_restartNpcTarget(); //0x1FC
         virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
-        virtual void CfObjectMove_UnkVirtualFunc16(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
-        virtual void CfObjectMove_UnkVirtualFunc17(u32 arg); //0x208
-        virtual void CfObjectMove_UnkVirtualFunc18(u32 flag); //0x20C
-        virtual int CfObjectMove_UnkVirtualFunc19(u32 flag); //0x210
-        virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
-        virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
-        virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
-        virtual void* CfObjectMove_UnkVirtualFunc23(u32 id); //0x220: retail 0x800BF1C4 takes id in r4, returns loader result (0 when mField6DC/mField6E0 NULL); forced-name impl CfObjectMove_UnkVirtualFunc23__Q22cf12CfObjectMoveFv
+        virtual void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e); //0x204
+        virtual void CfObjectMove_setEffectSlotBit(u32 arg); //0x208
+        virtual void CfObjectMove_transferSlotBits(u32 flag); //0x20C
+        virtual int CfObjectMove_isEffectSlotUsed(u32 flag); //0x210
+        virtual void CfObjectMove_signalEffectSlot(u32 arg); //0x214
+        virtual void CfObjectMove_flushEffectSlots(); //0x218
+        virtual void CfObjectMove_setAllEffectBits(); //0x21C
+        virtual void* CfObjectMove_loadResourceById(u32 id); //0x220: retail 0x800BF1C4 takes id in r4, returns loader result (0 when mField6DC/mField6E0 NULL); forced-name impl CfObjectMove_loadResourceById__Q22cf12CfObjectMoveFv
 
         //0x0: vtable
         //0x0-BE: CfObjectModel
@@ -417,18 +417,18 @@ namespace cf {
         s16 _6D0;               // 0x6D0-0x6D1 (ctor stores 0)
         u8 _6D2[2];             // 0x6D2-0x6D3
         void* mField6D4;         // 0x6D4-0x6D7 (model list released by func_800BE3E8)
-        void* mField6D8;         // 0x6D8-0x6DB (CfObjectMove_UnkVirtualFunc2 model list)
-        void* mField6DC;         // 0x6DC-0x6DF (CfObjectMove_UnkVirtualFunc23)
-        void* mField6E0;         // 0x6E0-0x6E3 (CfObjectMove_UnkVirtualFunc23)
+        void* mField6D8;         // 0x6D8-0x6DB (CfObjectMove_detachModelList model list)
+        void* mField6DC;         // 0x6DC-0x6DF (CfObjectMove_loadResourceById)
+        void* mField6E0;         // 0x6E0-0x6E3 (CfObjectMove_loadResourceById)
         float mField6E4;          // 0x6E4-0x6E7 (CfObject_UnkVirtualFunc57 stores f1)
-        float mField6E8;          // 0x6E8-0x6EB (CfObjectMove_UnkVirtualFunc4)
+        float mField6E8;          // 0x6E8-0x6EB (CfObjectMove_recordMoveValue)
         float mField6EC;          // 0x6EC-0x6EF (ctor stores lbl_eu_80666A88)
         float mMoveSpeed;         // 0x6F0-0x6F3
         u8 _6F4;                 // 0x6F4 (ctor stores 0)
         u8 _6F5[3];             // 0x6F5-0x6F7
         void* mField6F8[2];      // 0x6F8-0x6FF (slots walked by CfObjectModel_UnkVirtualFunc19)
         u32 mField700;           // 0x700-0x703 (ctor stores 0)
-        void* mField704;         // 0x704-0x707 (CfObjectMove_UnkVirtualFunc2 clears with 0x6D8)
+        void* mField704;         // 0x704-0x707 (CfObjectMove_detachModelList clears with 0x6D8)
         u32 mField708;           // 0x708-0x70B (ctor stores 0)
         u16 field_70C[2];        // 0x70C-0x70F (bdat id array written by CfObject_UnkVirtualFunc45)
         u16 field_710[2];        // 0x710-0x713 (bdat index array read by func_800BED80 / func_800BEDC4)
@@ -441,43 +441,25 @@ namespace cf {
     void CfObjectModel_UnkVirtualFunc1();
     void CfObjectModel_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc5();
-    void CfObject_UnkVirtualFunc46(void* arg);
-    void CfObject_UnkVirtualFunc47();
-    void CfObject_UnkVirtualFunc49();
+    void CfObject_setMoveTargetPtr(void* arg);
     void CfObject_setMoveBusyState(int flag);
-    void CfObject_UnkVirtualFunc65();
-    void CfObject_setMoveTargetVec();
-    CfObjectMove* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
-    void CfObject_UnkVirtualFunc25();
     void CfObject_UnkVirtualFunc26(u32 value, float amount);
     ml::CVec3* CfObject_getPosVector();
     void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc30(float value);
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc33(float amount);
-    int CfObject_UnkVirtualFunc13();
+    int CfObject_queryTargetState();
     void CfObject_UnkVirtualFunc57(float value);
     void* CObjectParam_UnkVirtualFunc2();
     void* CfObject_pushRefreshValue(float value);
     float CfObject_getMoveSpeedRate();
-    void* CfObject_UnkVirtualFunc16(float value);
-    void CfObject_UnkVirtualFunc17();
-    void CfObjectModel_UnkVirtualFunc18();
     bool CfObject_isMoveActiveNow();
-    void CfObject_UnkVirtualFunc10();
-    void CfObject_UnkVirtualFunc61(u32 a, u32 b);
-    void CfObject_UnkVirtualFunc62();
+    void CfObject_setAnimSlotEntry(u32 a, u32 b);
     void CfObject_UnkVirtualFunc12();
     void CfObject_UnkVirtualFunc66(int);
     void CfObjectModel_UnkVirtualFunc19(int flag);
     void* CfObjectModel_UnkVirtualFunc6(void* arg);
-    void CfObject_UnkVirtualFunc37();
-    void CfObject_UnkVirtualFunc38();
-    void CfObject_UnkVirtualFunc39();
-    float CfObject_UnkVirtualFunc40();
-    void CfObject_UnkVirtualFunc42();
-    void CfObject_UnkVirtualFunc43();
-    void CfObject_UnkVirtualFunc45();
     void CfObject_UnkVirtualFunc70(float value);
     int CfObject_UnkVirtualFunc50();
     int CfObject_UnkVirtualFunc51();
@@ -512,7 +494,7 @@ namespace cf {
     struct CfObjectMoveTargetC4 {
         u8 _pad000[0x388];      // 0x00-0x387
         float field_388;        // 0x388 (CfObject_pushRefreshValue write / 15 read)
-        float field_38C;        // 0x38C (CfObject_UnkVirtualFunc17 read / 16 write)
+        float field_38C;        // 0x38C (CfObject_readRefreshValue read / 16 write)
         u8 _pad390[0x3A8 - 0x390];  // 0x390-0x3A7
         float field_3A8;        // 0x3A8 (CfObject_getPosVector returns &field_3A8)
         float field_3AC;        // 0x3AC (func_800BCD04 position copy)
@@ -525,7 +507,7 @@ namespace cf {
         u8 _pad440[0x444 - 0x440];  // 0x440-0x443
         float field_444;        // 0x444 (func_800BCD04 writes to mField4C)
     };
-    // View of the CtrlNpc movement-target fields CfObject_UnkVirtualFunc49
+    // View of the CtrlNpc movement-target fields CfObject_forwardNpcAction
     // reads (the +0xC0 action-id word). CtrlNpc.hpp is not included here:
     // its func_800BE12C 5-arg declaration conflicts with the 4-arg form
     // this unit needs, so a local view is used (same scheme as
@@ -535,25 +517,25 @@ namespace cf {
         u16 field_C0;        // 0xC0 action id
     };
     // vtable proxy for the CfObjectMove mTargetC4 object's slot +0x80: retail
-    // CfObject_UnkVirtualFunc13 tail-calls it with a 0 arg and returns its int
+    // CfObject_queryTargetState tail-calls it with a 0 arg and returns its int
     // result (the null path returns 1). Dummy slots pin the offset.
     // vtable proxy for the CfObjectModel+0x98 sub-object's slot +0x64 with an
     // explicit int arg: retail func_800BE0F8 forwards a 4-bit flag extracted
     // from mFlags6C9 (the base CfObjectModelSub98vt proxy declares the slot
     // no-arg). Dummy slots pin the offset.
     // vtable proxy for calling the CfObjectMove slot +0x108
-    // (CfObject_UnkVirtualFunc46) with an explicit pointer arg (retail
-    // CfObject_UnkVirtualFunc47 dispatches the newly constructed target
+    // (CfObject_setMoveTargetPtr) with an explicit pointer arg (retail
+    // CfObject_createMoveTarget dispatches the newly constructed target
     // through it; the base header declares the slot Fv). Dummy slots pin
     // the offset (same scheme as CfObjectMoveC4vt80).
     // vtable proxy for calling the CfObjectMove slot +0x208 as an int-taking
-    // virtual (retail CfObjectMove_UnkVirtualFunc22 loops a counter through
+    // virtual (retail CfObjectMove_setAllEffectBits loops a counter through
     // it; the base header declares the slot Fv). Inherits CfObjectModel so
     // the new virtuals land in the CfObjectMove vtable range; the dummy slots
     // pin 0x1C8..0x204 and m208 lands at +0x208.
     // vtable proxy for calling a CfObjectMove vtable slot +0x144 with two
     // explicit args (retail CfObject_UnkVirtualFunc39/42 dispatch the bdat
-    // result through it; the base header declares CfObject_UnkVirtualFunc61
+    // result through it; the base header declares CfObject_setAnimSlotEntry
     // no-arg). Extends the cf-chain sub-object proxy (CObjectParam root,
     // last slot +0xA8); dummy slots pin +0xAC..+0x140.
     // View of the CfObjectModel field_0x90 area: retail
@@ -644,7 +626,7 @@ namespace cf {
     // CfObject_UnkVirtualFunc6 / CfObject_notifyEventDone. Dummy slots pin
     // the offsets (MWCC puts the Nth declared virtual at (N+1)*4).
     // vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning
-    // query): retail CfObjectMove_UnkVirtualFunc21 calls it, tests the
+    // query): retail CfObjectMove_flushEffectSlots calls it, tests the
     // result, then re-calls it. CfObjectSub38 stops at +0xAC, so dummy
     // slots pin the range up to +0xE4.
     // View of the +0xD0 CActParamAnimGame sub-object fields func_800BCFA0
@@ -757,7 +739,7 @@ namespace cf {
     // the base header declares CfObjectModel_UnkVirtualFunc14 no-arg).
     // vtable proxy for calling the CfObjectMove slot +0x154 with an explicit
     // int arg (retail func_800BCFA0 passes 1; the header declares
-    // CfObject_UnkVirtualFunc65 no-arg). m150 pins +0x150.
+    // CfObject_setMoveReadyFlag no-arg). m150 pins +0x150.
     // vtable proxy for calling the CfObjectMove slot +0xA8 with an explicit
     // position-vector arg (retail func_800BCFA0 passes self+0x3C; the header
     // declares CfObject_UnkVirtualFunc22 no-arg). Dummy slots pin +0x08..+0xA4.

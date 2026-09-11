@@ -11,10 +11,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16531 |
-| extern "C" declarations (non-lbl_*, imports) | 7455 |
-| extern "C" definitions (forced names) | 4113 |
-| `self`/register-style params | 13445 |
+| extern "C" (total lines) | 16534 |
+| extern "C" declarations (non-lbl_*, imports) | 7454 |
+| extern "C" definitions (forced names) | 4118 |
+| `self`/register-style params | 13450 |
 | `void*` (params + locals) | 7796 |
 | raw pointer offset arithmetic | 7440 |
 | deref-through-cast arithmetic | 2891 |
@@ -459,8 +459,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectEff.cpp | 4 | 18 | 50 | 15 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectEne.cpp | 1 | 0 | 182 | 33 | 87 | 60 | 0 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectMap.cpp | 7 | 18 | 24 | 41 | 8 | 3 | 0 | 2 | 4 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectModel.cpp | 117 | 7 | 58 | 29 | 12 | 8 | 0 | 0 | 8 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectMove.cpp | 0 | 48 | 119 | 57 | 38 | 16 | 0 | 1 | 1 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectModel.cpp | 116 | 8 | 59 | 29 | 12 | 8 | 0 | 0 | 8 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectMove.cpp | 0 | 52 | 123 | 57 | 38 | 16 | 0 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 4 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 8 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 8 | 66 | 13 | 44 | 2 | 0 | 2 | 5 | 0 | 0 | 0 |
@@ -4908,25 +4908,25 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/object/CfObjectModel.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 8,
-  "extern_c_nonlbl_decl": 117,
-  "extern_c_nonlbl_def": 7,
+  "extern_c_nonlbl_decl": 116,
+  "extern_c_nonlbl_def": 8,
   "goto_count": 8,
   "init_side_effect": 0,
   "ptr_arith": 12,
   "schedule_pragma": 0,
-  "self_params": 58,
+  "self_params": 59,
   "void_ptr": 29
  },
  "src/kyoshin/cf/object/CfObjectMove.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 16,
-  "extern_c_nonlbl_def": 48,
+  "extern_c_nonlbl_def": 52,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 38,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 119,
+  "self_params": 123,
   "void_ptr": 57
  },
  "src/kyoshin/cf/object/CfObjectNpc.cpp": {

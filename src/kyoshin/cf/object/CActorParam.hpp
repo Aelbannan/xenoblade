@@ -617,7 +617,9 @@ namespace cf {
         virtual float CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
         virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
-        virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
+        // Retail func_8003CC0C leaves a booleanized int in r4 into the bctr
+        // (ocUnit.cpp); the CfObjectEne Fv impl ignores it.
+        virtual void CActorParam_UnkVirtualFunc75(int flag);  //0x1C0
         virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
         virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
         virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
@@ -725,6 +727,60 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc180(); //0x364
         virtual void CActorParam_UnkVirtualFunc181(); //0x368
     #pragma endregion
+
+    // Wave-36 caller aliases (non-virtual, inline): behavior-derived names
+    // for the densest UnkVirtual slots used by CtrlObjectParam.cpp. Each
+    // alias forwards to the same virtual slot, so MWCC inlines it to
+    // identical virtual-dispatch code at call sites. The virtuals keep
+    // their Unk names until CREvtModel.cpp (hand-built vtable spelling the
+    // current mangled names) can be updated; then these become real
+    // virtuals by a mechanical rename. New code must call the alias.
+    void CActorParam_resetActorState(int val) { CActorParam_UnkVirtualFunc6(val); } //0xAC
+    void CActorParam_commitArtsStatus(int flag) { CActorParam_UnkVirtualFunc5(flag); } //0xA8
+    void CActorParam_setupActorState() { CActorParam_UnkVirtualFunc7(); } //0xB0
+    void CActorParam_setStatByte(u8 val) { CActorParam_UnkVirtualFunc14(val); } //0xCC
+    void CActorParam_setStatScale(float val) { CActorParam_UnkVirtualFunc16(val); } //0xD4
+    u32 CActorParam_getArtsLevel() { return CActorParam_UnkVirtualFunc26(); } //0xFC
+    void CActorParam_setGaugeFlagA(u16 val) { CActorParam_UnkVirtualFunc55(val); } //0x170
+    void CActorParam_setGaugeFlagB(u16 val) { CActorParam_UnkVirtualFunc61(val); } //0x188
+    void CActorParam_setGaugeRateA(float val) { CActorParam_UnkVirtualFunc65(val); } //0x198
+    void CActorParam_setGaugeRateB(float val) { CActorParam_UnkVirtualFunc68(val); } //0x1A4
+    void CActorParam_setMoveRate(float val) { CActorParam_UnkVirtualFunc74(val); } //0x1BC
+    void* CActorParam_getMoveRate() { return CActorParam_UnkVirtualFunc76(); } //0x1C4
+    void CActorParam_setSpentCurrency(u32 val) { CActorParam_UnkVirtualFunc81(val); } //0x1D8
+    void CActorParam_addSpentCurrency(u32 val) { CActorParam_UnkVirtualFunc82(val); } //0x1DC
+    void CActorParam_addAccumCurrency(u32 addend) { CActorParam_UnkVirtualFunc83(addend); } //0x1E0
+    u32 CActorParam_getSpentCurrency() { return CActorParam_UnkVirtualFunc85(); } //0x1E8
+    void CActorParam_applyCurrencyChange(u32 a, u32 b, u32 c) { CActorParam_UnkVirtualFunc88(a, b, c); } //0x1F4
+    void CActorParam_addSecondCurrency(u32 val) { CActorParam_UnkVirtualFunc90(val); } //0x1FC
+    void CActorParam_setGaugeFloat(float val) { CActorParam_UnkVirtualFunc116(val); } //0x264
+    void* CActorParam_getArtsSlotIds() { return CActorParam_UnkVirtualFunc125(); } //0x288
+    void* CActorParam_getCopyParam() { return CActorParam_UnkVirtualFunc126(); } //0x28C
+    void* CActorParam_getTensionStatus() { return CActorParam_UnkVirtualFunc152(); } //0x2F4
+    void CActorParam_rearmArtsList() { CActorParam_UnkVirtualFunc166(); } //0x32C
+    void CActorParam_rearmAttackList() { CActorParam_UnkVirtualFunc167(); } //0x330: attack-set loader (getAtkParam records)
+    void CActorParam_setActorType(u32 val) { CActorParam_UnkVirtualFunc18(val); } //0xDC: type at +0x15EC (pairs with getActorType)
+    void CActorParam_setEnemyType(u32 val) { CActorParam_UnkVirtualFunc20(val); } //0xE4: enemy type at +0x15E4 (resistance/power tables)
+    void CActorParam_setHitRange(float val) { CActorParam_UnkVirtualFunc168(val); } //0x334: range at +0x1630 (pairs with getHitRange)
+    float CActorParam_getHitRate() { return CActorParam_UnkVirtualFunc39(); } //0x130: ratio at +0x17E8/+0x17F4, hit-chance gate
+    float CActorParam_getHitRange() { return CActorParam_UnkVirtualFunc171(); } //0x340: range at +0x1630, position tolerance
+    void* CActorParam_getStateFlags() { return CActorParam_UnkVirtualFunc163(); } //0x320: flags at +0x1648, u16 bit test
+    void CActorParam_applyEventStatus(CActorParam12Arg* arg) { CActorParam_UnkVirtualFunc12(arg); } //0xC4: arts-gauge + status-id apply
+    float CActorParam_getArtsScale() { return CActorParam_UnkVirtualFunc50(); } //0x15C: +0x17FC arts-scale (/100 at call sites)
+    void CActorParam_initStatusCounter() { CActorParam_UnkVirtualFunc160(); } //0x314: sets 0x335A=2, derives 0x3358
+    void* CActorParam_findGaugeEntry(unsigned int id) { return CActorParam_UnkVirtualFunc144(id); } //0x2D4: gauge entry by id or NULL
+    void CActorParam_pushBattleStats() { CActorParam_UnkVirtualFunc137(); } //0x2B8: advance slot idx, inherit previous
+    void* CActorParam_getStatsEntry(int index) { return CActorParam_UnkVirtualFunc130(index); } //0x29C: indexed entry into +0x2A84 array
+    u32 CActorParam_getGradeByte() { return CActorParam_UnkVirtualFunc110(); } //0x24C: byte at +0x183B, rank gate
+    void* CActorParam_getStagingStats() { return CActorParam_UnkVirtualFunc131(); } //0x2A0: +0x31DC work slot, snapshot dest
+    void CActorParam_resetStatsSlot() { CActorParam_UnkVirtualFunc134(); } //0x2AC: clears slot idx +0x3354 (cf. getStatsSlot)
+    void CActorParam_resetGaugeEntry(void* id) { CActorParam_UnkVirtualFunc141(id); } //0x2C8: reset gauge entry by id to default
+    void CActorParam_resetGaugeEntries() { CActorParam_UnkVirtualFunc148(); } //0x2E4: init all 8 +0x1928 gauge entries
+    float CActorParam_getHitCenter() { return CActorParam_UnkVirtualFunc170(); } //0x33C: pi - hit range, window center
+    void CActorParam_addHitCharge(float val) { CActorParam_UnkVirtualFunc42(val); } //0x13C: clamped add to +0x17EC charge
+    u32 CActorParam_getRankByte() { return CActorParam_UnkVirtualFunc109(); } //0x248: byte at +0x183A, rank gate
+    void CActorParam_applyTargetEvent(CActorParam10Arg* arg) { CActorParam_UnkVirtualFunc10(arg); } //0xBC: target arts-magnitude apply
+    void CActorParam_applyStatusHeal(CActorParam11Arg* arg) { CActorParam_UnkVirtualFunc11(arg); } //0xC0: status-scaled HP add
 
         UNKTYPE* unk15DC;
         UnkClass_CActorParam15E0* unk15E0;

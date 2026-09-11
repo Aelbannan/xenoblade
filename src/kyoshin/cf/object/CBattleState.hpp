@@ -12,7 +12,7 @@ namespace cf {
 
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
-    // shape reused for both (see MWCC_CASES §CBattleState_UnkVirtualFunc6).
+    // shape reused for both (see MWCC_CASES sect.CBattleState_UnkVirtualFunc6).
     struct CBattleStateEntry {
         u32 unk00; // 0x00
         u32 unk04; // 0x04
@@ -70,7 +70,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
         virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
-        virtual void* CBattleState_getLinkedActorId(); //0x4C
+virtual void* CBattleState_getLinkedActorId(); //0x4C (retail Fv: CBattleManager call sites pass no arg; this TU's entry stays live only via the alias below)
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void* CBattleState_UnkVirtualFunc20(int index); //0x54
         virtual cf::CBattleStateEntry* CBattleState_fetchStatusEntry(int index); //0x58
@@ -86,6 +86,24 @@ namespace cf {
         virtual int CBattleState_UnkVirtualFunc31(u32 id); //0x80
         virtual void CBattleState_UnkVirtualFunc32(u32 flags); //0x84 (OR into +0x6; retail Fv)
         virtual int CBattleState_UnkVirtualFunc33(u32 id); //0x88
+
+        void CBattleState_setBattleParam(int val) { CBattleState_UnkVirtualFunc4(val); } //0x14 alias
+        void CBattleState_applyArtsTable(const CBattleStateSrcEntry* src) { CBattleState_UnkVirtualFunc26(src); } //0x6C alias
+
+        // Wave-37 UnkVirtual mop-up aliases (non-virtual, inline):
+        // behavior-derived names for the densest UnkVirtual slots called
+        // from this TU. Each alias forwards to the same virtual slot, so
+        // MWCC inlines it to identical virtual-dispatch code at call
+        // sites. The virtuals keep their Unk names (the retail vtable at
+        // lbl_eu_8052E9B0 spells the Fv symbols); new code must call the alias.
+        void* CBattleState_getOwner() { return CBattleState_UnkVirtualFunc1(); } //0x08: owner object (base returns null; overrides return the container)
+        void CBattleState_notifyEntryUpdated(CBattleStateEntry* entry) { CBattleState_UnkVirtualFunc17(entry); } //0x48: post-update notify (base is an empty stub)
+        void CBattleState_enterStatusEntry(CBattleStateEntry* entry) { CBattleState_UnkVirtualFunc5(entry); } //0x18: full enter-status pipeline (state machine + slot scan + copy)
+        void CBattleState_addStagingEntry(CBattleStateEntry* entry) { CBattleState_UnkVirtualFunc6(entry); } //0x1C: bitfield set + 8-slot staging match/clamp/fill
+        void CBattleState_removeKeyedEntries(CBattleStateEntry* arg) { CBattleState_UnkVirtualFunc10(arg); } //0x2C: remove all slots sharing the unk2E key
+        void CBattleState_clearStagingEntries() { CBattleState_UnkVirtualFunc29(); } //0x78: clear the 8 staging slots + dead-id status bits
+        void* CBattleState_getEntryByIndex(int index) { return CBattleState_UnkVirtualFunc20(index); } //0x54: indexed entry via Func13, r3 passthrough
+        int CBattleState_getEventMask(u32 id) { return CBattleState_UnkVirtualFunc31(id); } //0x80: event-id to bit mask (0 = unknown)
 
         CBattleState();
 

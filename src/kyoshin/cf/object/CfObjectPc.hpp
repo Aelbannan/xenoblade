@@ -290,7 +290,7 @@ namespace cf {
     void CActorParam_UnkVirtualFunc166();
     void CActorParam_UnkVirtualFunc167();
     void CActorParam_resetArtsStatus();
-    void CActorParam_UnkVirtualFunc176();
+    void CActorParam_decayArtsMatrix();
     int CActorParam_UnkVirtualFunc86();
     void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);
     virtual void CActorParam_UnkVirtualFunc173();
@@ -300,7 +300,7 @@ namespace cf {
     void CObjectParam_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
     void CfObject_UnkVirtualFunc2();
-    void CfObjectMove_UnkVirtualFunc16(u32 a, u32 b, u32 c, u32 d, u32 e);
+    void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e);
     void CfObject_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc4();
     void finalizePcCleanup();

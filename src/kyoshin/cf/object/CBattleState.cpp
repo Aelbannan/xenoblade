@@ -2357,7 +2357,7 @@ int func_80146300(u32 id, u32 flag) {
     }
 }
 
-// Batch 2026-08: battlestate-vfunc9 owns CBattleState_UnkVirtualFunc9
+// Batch 2026-08: battlestate-vfunc9 owns CBattleState_reapplyStatusEntry
 // exclusively. Retail symbol mangles Fv but the caller leaves the slot
 // index in r4 (fake-Fv ABI, same as UnkVirtualFunc7/12). Copies the
 // 0x34-byte status slot at self + 0x8 + id*0x34 to a stack entry

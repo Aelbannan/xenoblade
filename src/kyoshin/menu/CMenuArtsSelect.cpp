@@ -1044,7 +1044,7 @@ after_ce48:
                         if (skillSrc != NULL) {
                             typedef u16* (*GetU16Fn)(void*);
                             u16* p =
-                                (u16*)reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_UnkVirtualFunc122();
+                                (u16*)reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_getArtsSet();
                             if (p[0] != 0) {
                                 ready = 1;
                             }
@@ -1999,7 +1999,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 } else {
                     void* mgr = func_8009EC9C(v);
                     void* sub = (char*)mgr + 0x17C;
-                    f32 val = reinterpret_cast<cf::CActorParam*>(sub)->CActorParam_UnkVirtualFunc49();
+                    f32 val = reinterpret_cast<cf::CActorParam*>(sub)->CActorParam_getArtsGauge();
                     if (val == lbl_eu_80666F50) {
                         /* ok */
                     } else {

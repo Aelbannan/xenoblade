@@ -683,7 +683,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         case 0x1C: case 0x19 + 4: { // 0x1C..0x27
             if (k > 0x27)
                 break;
-            void* artsSet = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122();
+            void* artsSet = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
             func_80153DCC(artsSet, k - 0x1C);
             if (func_801541B0(party, 0) == 0)
                 return 0;
@@ -871,7 +871,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         u32 buf[8];
         u32 count = 0;
         for (u32 j = 0; j < 8; j++) {
-            void* set = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122();
+            void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
             if (getArtsSlotAtCnt(set, j)) {
                 buf[count] = j;
                 count++;
@@ -884,9 +884,9 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         int idx = (int)(rand() % (count * 100) / 100);
         out->unk12 = (s16)buf[idx];
         if (out->unk18 == 0) {
-            void* set = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122();
+            void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
             if (getArtsSlotAtCnt(set, idx)) {
-                out->unk18 = (u32)(uintptr_t)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122(), idx);
+                out->unk18 = (u32)(uintptr_t)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), idx);
             }
         }
 
@@ -900,7 +900,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc43() >= 0.0f))
             return 0;
         if (func_80148778((u8*)party + 8, 0x31) == 0
-            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc49()))
+            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
         return 1;
     }
@@ -915,10 +915,10 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (func_80148778((u8*)party + 8, 0xCC) != 0)
             return 0;
         int idx = d - 5; // always 0 here
-        void* set = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122();
+        void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
         if (getArtsSlotRC(set, 2, idx) == 0)
             return 0;
-        getArtsParamRC2(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122(), idx, 2);
+        getArtsParamRC2(((cf::CActorParam*)party)->CActorParam_getArtsSet(), idx, 2);
         return 1;
     }
 
@@ -940,9 +940,9 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         int want = d - 0x11;
         int sel = -1;
         for (int j = 0; j < 0x10; j++) {
-            void* set = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122();
+            void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSet();
             if (func_80153CAC(set, j)) {
-                CAIArtsParamView* p = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122(), j);
+                CAIArtsParamView* p = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), j);
                 if (p->field77 == want) {
                     out->unk12 = (s16)j;
                     sel = j;
@@ -953,9 +953,9 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (out->unk12 == -1)
             return 0;
 
-        if (!func_80153CAC(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122(), sel))
+        if (!func_80153CAC(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel))
             return 0;
-        CAIArtsParamView* param = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc122(), sel);
+        CAIArtsParamView* param = (CAIArtsParamView*)getArtsParamByIdx(((cf::CActorParam*)party)->CActorParam_getArtsSet(), sel);
         if (func_80148778((u8*)party + 8, 0x117) != 0 && func_80145C00(param->field48) != 0)
             return 0;
         if (func_801554DC(param, party, 0x200) == 0)
@@ -968,7 +968,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc43() >= 0.0f))
             return 0;
         if (func_80148778((u8*)party + 8, 0x31) == 0
-            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc49()))
+            && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
             return 0;
 
         // Vision exclusion, relaxed when either flag bit is set.

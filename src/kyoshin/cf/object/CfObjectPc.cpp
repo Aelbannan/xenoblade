@@ -201,7 +201,7 @@ void cf::CfObjectPc::CfObject_UnkVirtualFunc6() { ((cf::CfObjectPc*)((char*)this
 
 void cf::CfObjectPc::syncArtsEntry() {
     CActorParam_UnkVirtualFunc7();
-    CActorParam_UnkVirtualFunc9();
+    CActorParam_refreshBattleStatus();
     CActorParam_UnkVirtualFunc160();
     // Look up the arts data object for this PC's index, then write the
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
@@ -241,7 +241,7 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
     reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc57(lbl_eu_80666B18);
     reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc59(lbl_eu_80666B1C);
-    reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80666B20);
+    reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectMove_recordMoveValue(lbl_eu_80666B20);
 }
 
 
@@ -257,7 +257,7 @@ void handleMoveState__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, u32 a, u32 b, u3
         // CfObjectMove sub-object at this+0x3E9C. Forward all five args so
         // r4-r8 stay live into the base UVF16 bctr thunk.
         u8* subObj = reinterpret_cast<u8*>(self) + 0x3e9c;
-        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_UnkVirtualFunc16(a, b, c, d, e);
+        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_attachEffectSlot(a, b, c, d, e);
     } else {
         u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
         if (obj != NULL) {
@@ -619,12 +619,12 @@ extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag) {
     if (((CfObjectPcSubFields*)self)->mPtr3F60 != NULL) {
         if (((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100000) {
             // slot 0x210 false -> primary slot 0x608 cancel call
-            if (!self->pcMove()->CfObjectMove_UnkVirtualFunc19(0x25)) {
+            if (!self->pcMove()->CfObjectMove_isEffectSlotUsed(0x25)) {
                 self->handleMoveState(0x25, 0, -1, 0, 0);
             }
         } else {
-            if (self->pcMove()->CfObjectMove_UnkVirtualFunc19(0x25)) {
-                self->pcMove()->CfObjectMove_UnkVirtualFunc18(0x25);
+            if (self->pcMove()->CfObjectMove_isEffectSlotUsed(0x25)) {
+                self->pcMove()->CfObjectMove_transferSlotBits(0x25);
             }
         }
         if ((((CfObjectPcSubFields*)self)->mPtr3F60->field_0x4EC & 0x100) == 0 ||
@@ -711,7 +711,7 @@ void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*
 // Tail-calls into initialize on the -0x3E9C adjusted this.
 void cf::CfObjectPc::CfObject_UnkVirtualFunc2() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::initialize(); }
 
-extern "C" void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void CfObjectMove_attachEffectSlot__Q22cf10CfObjectPcFv(void* self) {
     // Tail into handleMoveState with this adjusted; r4-r8 stay live for the
     // five hidden args (retail Fv thunk is 0x8 bytes).
     ((void (*)(void*))handleMoveState__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c);

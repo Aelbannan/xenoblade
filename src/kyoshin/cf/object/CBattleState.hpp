@@ -61,7 +61,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_clearStatusId(u32 id);  //0x20 (retail fake-Fv ABI passes id in r4)
         virtual void CBattleState_applyEventEntry(CBattleStateEntry* entry);  //0x24
-        virtual void CBattleState_UnkVirtualFunc9(int index);  //0x28
+        virtual void CBattleState_reapplyStatusEntry(int index);  //0x28
         virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
         virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
         virtual void CBattleState_UnkVirtualFunc12(); //0x34
@@ -75,11 +75,11 @@ namespace cf {
         virtual void* CBattleState_UnkVirtualFunc20(int index); //0x54
         virtual cf::CBattleStateEntry* CBattleState_fetchStatusEntry(int index); //0x58
         virtual cf::CBattleStateEntry* CBattleState_getEventEntry(int index); //0x5C
-        virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc23(int index); //0x60
+        virtual cf::CBattleStateEntry* CBattleState_getStatusEntry(int index); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
         virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
-        virtual void* CBattleState_UnkVirtualFunc27(); //0x70
+        virtual void* CBattleState_getStatusBlock(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(u32 flags); //0x7C (OR into +0x4; retail Fv)

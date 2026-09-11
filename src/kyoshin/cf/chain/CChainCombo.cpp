@@ -56,7 +56,7 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         // Slot +0x4C is CObjectParam_getSelfObjectId on the CfObjectMove
         // sub-object at actor+0x3E9C (same shape as CAIAction aiMoveBaseVt4C);
         // its id result resolves through findObjectById -> func_8016FE34 to
-        // a CActorParam whose slot +0x184 is CActorParam_UnkVirtualFunc60.
+        // a CActorParam whose slot +0x184 is CActorParam_addSecondGauge.
         cf::CActorParam* vobj = (cf::CActorParam*)func_8016FE34(findObjectById(
             ((cf::CObjectParam*)((u8*)actor + 0x3E9C))->CObjectParam_getSelfObjectId()));
 
@@ -72,8 +72,8 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
                 value = lbl_eu_80538988[2];
             }
 
-            // Slot +0x184 is CActorParam_UnkVirtualFunc60 (takes the id).
-            vobj->CActorParam_UnkVirtualFunc60(value);
+            // Slot +0x184 is CActorParam_addSecondGauge (takes the id).
+            vobj->CActorParam_addSecondGauge(value);
             func_802A07F4(0xbf, vobj);
         }
     }

@@ -2261,7 +2261,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         }
         func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x278],
                       reinterpret_cast<char*>(
-                          const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc1())),
+                          const_cast<char*>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorName())),
                       0);
         // Retail materialises 0xEDE8DAFF as lis 0xEDE8 / subi 0x2501.
         func_80137B44(self->unk74, &lbl_eu_804FDBF8[0x278],

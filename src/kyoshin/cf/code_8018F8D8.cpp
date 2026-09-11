@@ -688,13 +688,13 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
     if (probeGate90940(actor, 0x1a) == 0) return 0;
     if (func_8004C5EC(actor->field_3f60) == 0x31) return 0;
 
-    int r190 = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc63();
-    int r18c = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc62();
+    int r190 = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGaugeMax();
+    int r18c = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getSecondGauge();
     if (r190 == r18c) return 0;
 
     // While in state 5 the actor's voice-height must stay below the cap.
     if (actor->field_3f28 == 5 &&
-        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc49() >=
+        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGauge() >=
             lbl_eu_80667A94) {
         return 0;
     }
@@ -766,7 +766,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
             if (reinterpret_cast<cf::CActorParam*>(cand)->CActorParam_isBattleLocked() == 0)
                 continue;
             u8* candPos = reinterpret_cast<u8*>(&cand->field_3e9c);
-            if (reinterpret_cast<cf::CfObject*>(candPos)->CfObject_UnkVirtualFunc13() == 0)
+            if (reinterpret_cast<cf::CfObject*>(candPos)->CfObject_queryTargetState() == 0)
                 continue;
             if (func_8004C5EC(cand->field_3f60) != 5) continue;
             if (probeGate90940(cand, 0x1d) != 0) continue;

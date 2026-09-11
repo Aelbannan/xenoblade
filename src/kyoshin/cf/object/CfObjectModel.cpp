@@ -12,31 +12,11 @@
 #include "kyoshin/code_801862C0.hpp"
 
 namespace {
-// Cast-only replica of the cf-chain vtable head (CObjectParam occupies
-// 0x08-0x50, the first CfObject slot lands at 0x54). novtable: never
-// constructed, only reinterpret_cast, so MWCC emits no vtable data and the
-// m68() call compiles to a genuine load-vptr/load-slot/bctrl dispatch.
-// NOTE (retained blocker): only the +0x68 slot (CfObject_UnkVirtualFunc6)
-// still goes through here (complete-object dtor, twice). The +0x5C slot
-// already calls the real CfObject_UnkVirtualFunc3() (ctor). The +0x68 call
-// cannot go real yet: the CfObject base decl takes (int flag) and retail
-// CREvtModelMap call sites set r4 explicitly (us-80182BC8: li r4,0 /
-// us-80182C40: li r4,1), while this dtor leaves r4 as post-call residue
-// (no r4 setup before either bctrl) - any explicit arg grows the dtor and
-// drops its FULL. Narrowing the base decl to () is Fv-evidenced but needs
-// the two CREvtModelMap sites fixed in the same move (another wave's TU).
-// Next angle: cross-wave arity split for CfObject_UnkVirtualFunc6.
-struct __declspec(novtable) ModelDtorReal : public cf::CObjectParam {
-    virtual void m54();  // 0x54 (base-dtor placeholder)
-    virtual void m58();  // 0x58
-    virtual void m5C();  // 0x5C
-    virtual void m60();  // 0x60
-    virtual void m64();  // 0x64
-    virtual void m68();  // 0x68: cleanup slot called by the model dtor
-};
-
 // (SubObjB0 view now lives in CfObjectModel.hpp as the owner-named tiny
-// iface cf::CfObjectModelSubB0; the dtor destroys leftovers through it.)
+// iface cf::CfObjectModelSubB0; the dtor destroys leftovers through it.
+// The former ModelDtorReal cast-only replica is gone: both dtor cleanup
+// calls go through the real CfObject_UnkVirtualFunc6 virtual (slot +0x68),
+// dispatched off the just-installed vtable (CfObject, then CfObjectModel).
 } // namespace
 
 // Complete-object constructor (retail __ct__Q22cf13CfObjectModelFv). Two
@@ -187,7 +167,12 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
         if (flags & 0x40000000) {
             func_80186474(func_801862C0(), self);
         }
-        reinterpret_cast<ModelDtorReal*>(self)->m68();
+        // Real virtual dispatch through the installed CfObject vtable
+        // (slot +0x68 = CfObject_UnkVirtualFunc6). The static_cast picks
+        // the CfObject virtual (CfObjectModel hides the name with a
+        // non-virtual member); no-arg call emits no r4 setup, matching
+        // retail's residue-r4 bctrl.
+        static_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc6();
         if (self->mSubObjB0 != 0) {
             if (self->mSubObjB0 != 0) {
                 // Redundant nested re-check reproduces retail's dead second
@@ -199,7 +184,9 @@ extern "C" __declspec(noinline) cf::CfObjectModel* __dt__Q22cf13CfObjectModelFv(
         }
         if (self != 0) {
             *(void**)self = (void*)lbl_eu_805294E0;
-            reinterpret_cast<ModelDtorReal*>(self)->m68();
+            // Same slot through the reinstalled model vtable: dispatches
+            // CfObject_UnkVirtualFunc6__Q22cf13CfObjectModelFv.
+            static_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc6();
         }
     if (deleteFlag > 0) {
         operator delete(self);

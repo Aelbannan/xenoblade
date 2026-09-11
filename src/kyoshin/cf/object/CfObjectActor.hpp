@@ -13,22 +13,22 @@ extern const float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback 
 
 extern const float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
 
-extern const float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
+extern const float lbl_eu_80667740;   // CActorParam_setHp clamp threshold
 
 
 extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
 
 extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_UnkVirtualFunc7 s16 -> float)
 
-extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_UnkVirtualFunc35 gauge)
+extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_applyDamage gauge)
 
-extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_UnkVirtualFunc35 gauge)
+extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_applyDamage gauge)
 
-extern const float lbl_eu_80667760;         // CActorParam_UnkVirtualFunc35 0xC3 ratio divisor
+extern const float lbl_eu_80667760;         // CActorParam_applyDamage 0xC3 ratio divisor
 
-extern const float lbl_eu_80667764;         // CActorParam_UnkVirtualFunc35 0xFC/0x100 gauge scale
+extern const float lbl_eu_80667764;         // CActorParam_applyDamage 0xFC/0x100 gauge scale
 
-extern const float lbl_eu_80667768;         // CActorParam_UnkVirtualFunc35 0x100 decay add
+extern const float lbl_eu_80667768;         // CActorParam_applyDamage 0x100 decay add
 
 extern const float lbl_eu_80667770;         // code-orphaned tail float (touch-anchored)
 
@@ -37,7 +37,7 @@ extern const float lbl_eu_80667774;         // code-orphaned tail float (touch-a
 extern const float lbl_eu_80667778;         // code-orphaned tail float (touch-anchored)
 
 // ptmf constant (3 words: this-offset / fn / this) compared against
-// CBattleManager+0x28354 by CActorParam_UnkVirtualFunc35.
+// CBattleManager+0x28354 by CActorParam_applyDamage.
 extern const u32 lbl_eu_80531090[3];
 
 // Vtable-group symbol the CfObjectActor constructor copies its four vtable
@@ -123,23 +123,23 @@ namespace cf {
         //0x3e9c: vtable 3
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
-    const char* CActorParam_UnkVirtualFunc1();
+    const char* CActorParam_getActorName();
     void CActorParam_addHate(void* arg, float x, float y, float z);
     void CActorParam_UnkVirtualFunc179(void* arg);
     void CActorParam_UnkVirtualFunc180(void* arg);
-    void CActorParam_UnkVirtualFunc33(float val);
-    void CActorParam_UnkVirtualFunc35(float value, int a, int b, int c);
+    void CActorParam_setHp(float val);
+    void CActorParam_applyDamage(float value, int a, int b, int c);
     void CActorParam_addHp(float val);
     void CActorParam_UnkVirtualFunc54(int delta);
-    void CActorParam_UnkVirtualFunc60(int delta);
+    void CActorParam_addSecondGauge(int delta);
     void CActorParam_resetArtsStatus(void* arts);
-    void CActorParam_UnkVirtualFunc21();
-    void CActorParam_UnkVirtualFunc23();
+    virtual void CActorParam_UnkVirtualFunc21(float val);
+    virtual float CActorParam_UnkVirtualFunc23();
     void destroyActorParam();
     };
 
     // Status-entry view for the func_80149154 results used by
-    // CActorParam_UnkVirtualFunc35: u32 marker at +0x8, s32 value at +0x10,
+    // CActorParam_applyDamage: u32 marker at +0x8, s32 value at +0x10,
     // s16 gauge at +0x14.
     struct CfStatusEntry {
         u8 _pad[0x8];
@@ -151,7 +151,7 @@ namespace cf {
         s16 field_0x1A;  // 0x1A (E08E8 s1A)
     };
 
-    // 12-byte ptmf copy built by CActorParam_UnkVirtualFunc35 from
+    // 12-byte ptmf copy built by CActorParam_applyDamage from
     // lbl_eu_80531090 and compared against CBattleManager+0x28354.
     struct CfPtmf3 {
         u32 field_0;  // 0x0

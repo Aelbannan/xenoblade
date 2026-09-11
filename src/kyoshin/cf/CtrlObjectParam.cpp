@@ -444,7 +444,7 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
     } else {
         f32 v38 = SELF->mParam.CActorParam_getDamageScale();
         if (SELF->mParam.CActorParam_getHp() > v38) {
-            SELF->mParam.CActorParam_UnkVirtualFunc33(
+            SELF->mParam.CActorParam_setHp(
                 SELF->mParam.CActorParam_getDamageScale());
         }
         static_cast<cf::CBattleState*>(&SELF->mParam)->CBattleState_UnkVirtualFunc4(0x35);
@@ -452,7 +452,7 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
 #undef SELF
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc33(float val) {
+void cf::CActorParam::CActorParam_setHp(float val) {
     reinterpret_cast<float&>(unk17E4.unk0[4]) = val;
 }
 
@@ -1135,11 +1135,11 @@ extern "C" void func_8009F6D4(void* selfV) {
     if (actor != 0) {
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc6(0);
         reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc7();
-        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc9();
+        reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_refreshBattleStatus();
     } else {
         self->mParam.CActorParam_UnkVirtualFunc6(0);
         self->mParam.CActorParam_UnkVirtualFunc7();
-        self->mParam.CActorParam_UnkVirtualFunc9();
+        self->mParam.CActorParam_refreshBattleStatus();
     }
     actor2 = func_800B8B94(self->field_00);
     if (actor2 != 0) {
@@ -1712,11 +1712,11 @@ extern "C" u8 func_800A145C(cf::CtrlObjectParamArtsLearnView* self) {
                 if (*slot == 0) {
                     *slot = artsId;
                     rows[0x30] = 1;
-                    void* artsSet = self->mParam.CActorParam_UnkVirtualFunc122();
+                    void* artsSet = self->mParam.CActorParam_getArtsSet();
                     cf::CtrlObjectParamArtsRecRC2* rec = reinterpret_cast<cf::CtrlObjectParamArtsRecRC2*>(
                         getArtsParamRC2(artsSet, sel, off));
                     rec->field_88 = reinterpret_cast<u32>(slotRow);
-                    artsSet = self->mParam.CActorParam_UnkVirtualFunc122();
+                    artsSet = self->mParam.CActorParam_getArtsSet();
                     setArtsSlotRC(artsSet, (u16)artsId, (u16)sel, (u16)off);
                     break;
                 }

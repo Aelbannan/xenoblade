@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16525 |
+| extern "C" (total lines) | 16531 |
 | extern "C" declarations (non-lbl_*, imports) | 7455 |
-| extern "C" definitions (forced names) | 4107 |
-| `self`/register-style params | 13437 |
-| `void*` (params + locals) | 7795 |
-| raw pointer offset arithmetic | 7439 |
+| extern "C" definitions (forced names) | 4113 |
+| `self`/register-style params | 13445 |
+| `void*` (params + locals) | 7796 |
+| raw pointer offset arithmetic | 7440 |
 | deref-through-cast arithmetic | 2891 |
 | inline asm / `register` | 128 |
 | rN-named params | 471 |
@@ -452,7 +452,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/code_8018F8D8.cpp | 48 | 1 | 27 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/code_801C2C14.cpp | 2 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 9 | 33 | 110 | 150 | 45 | 0 | 0 | 20 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CActorParam.cpp | 45 | 11 | 145 | 90 | 298 | 197 | 0 | 10 | 9 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CActorParam.cpp | 45 | 17 | 153 | 91 | 299 | 197 | 0 | 10 | 9 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 4 | 22 | 23 | 9 | 36 | 13 | 0 | 0 | 916 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectActor.cpp | 8 | 16 | 60 | 20 | 33 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 35 | 49 | 11 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4827,14 +4827,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 197,
   "extern_c_nonlbl_decl": 45,
-  "extern_c_nonlbl_def": 11,
+  "extern_c_nonlbl_def": 17,
   "goto_count": 9,
   "init_side_effect": 0,
-  "ptr_arith": 298,
+  "ptr_arith": 299,
   "rn_params": 10,
   "schedule_pragma": 0,
-  "self_params": 145,
-  "void_ptr": 90
+  "self_params": 153,
+  "void_ptr": 91
  },
  "src/kyoshin/cf/object/CBattleState.cpp": {
   "asm_insn_shim": 0,

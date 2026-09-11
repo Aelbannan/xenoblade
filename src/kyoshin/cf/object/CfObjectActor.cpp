@@ -75,13 +75,13 @@ extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
 extern "C" const char* CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
 // Retail symbol is Fv; the real ABI passes (self, f1, r4). Delegates to the
-// CActorParam_UnkVirtualFunc35 vtable slot (+0x120, takes (float, int, int,
+// CActorParam_applyDamage vtable slot (+0x120, takes (float, int, int,
 // int)) with the float arg = value itself, passed through unchanged.
 extern "C" void CfObjectActor_takeDamageValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int arg) {
     if (value <= lbl_eu_80667738) {
-        self->CActorParam_UnkVirtualFunc35(value, 0, 0, arg);
+        self->CActorParam_applyDamage(value, 0, 0, arg);
     } else {
-        self->CActorParam_UnkVirtualFunc35(value, 3, 0, arg);
+        self->CActorParam_applyDamage(value, 3, 0, arg);
     }
 }
 
@@ -290,8 +290,8 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     u32 id = *idPtr;
     if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
-        if (self->CActorParam_UnkVirtualFunc56() == self->CActorParam_UnkVirtualFunc57()) {
-            self->CActorParam_UnkVirtualFunc53(self->CActorParam_UnkVirtualFunc57() - 1);
+        if (self->CActorParam_getGauge() == self->CActorParam_getGaugeMax()) {
+            self->CActorParam_UnkVirtualFunc53(self->CActorParam_getGaugeMax() - 1);
         }
     }
 }
@@ -365,23 +365,23 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
             f->field_0x1614 = (u16)max2;
         }
         // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
-        if (self->CActorParam_UnkVirtualFunc62() == self->CActorParam_UnkVirtualFunc63()) {
-            self->CActorParam_UnkVirtualFunc59(self->CActorParam_UnkVirtualFunc63() - 1);
+        if (self->CActorParam_getSecondGauge() == self->CActorParam_getSecondGaugeMax()) {
+            self->CActorParam_UnkVirtualFunc59(self->CActorParam_getSecondGaugeMax() - 1);
         }
     }
 }
 // Retail symbol is Fv; the real ABI passes the float in f1. Slot +0x120
-// (CActorParam_UnkVirtualFunc35) takes (float, int, int, int); the float arg
+// (CActorParam_applyDamage) takes (float, int, int, int); the float arg
 // is value itself, passed through unchanged.
 extern "C" void CActorParam_addHp__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
     if (value <= lbl_eu_80667738) {
-        self->CActorParam_UnkVirtualFunc35(value, 0, 0, 0);
+        self->CActorParam_applyDamage(value, 0, 0, 0);
     } else {
-        self->CActorParam_UnkVirtualFunc35(value, 3, 0, 0);
+        self->CActorParam_applyDamage(value, 3, 0, 0);
     }
 }
 // Retail symbol is Fv; the real ABI passes (self, value, a, b, c). Slot
-// +0x120 (CActorParam_UnkVirtualFunc35): applies the rounded float delta to
+// +0x120 (CActorParam_applyDamage): applies the rounded float delta to
 // the 0x17E8 gauge and dispatches status-driven follow-ups (33/120/C3/92/
 // FC/100) on the +8 sub-object plus battle-manager effects.
 extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int a, int b, int c) {
@@ -493,7 +493,7 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
                     f = (float)(s32)ep->field_0x10 * (g / lbl_eu_80667760);
                 }
                 if (self->CActorParam_getHp() < f) {
-                    self->CActorParam_UnkVirtualFunc33(f);
+                    self->CActorParam_setHp(f);
                 }
             }
         }
@@ -518,9 +518,9 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
                         s32 val = ep->field_0x10;
                         if (ep->field_0x8 == 0x2000) val += v27b;
                         if ((c & 0xA0000000) != 0) {
-                            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
+                            self->CActorParam_setHp(lbl_eu_80667740);
                         } else if (rand() % 100 < val) {
-                            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
+                            self->CActorParam_setHp(lbl_eu_80667740);
                         }
                     }
                 }
@@ -560,7 +560,7 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
     }
     if (self->CActorParam_getHp() < lbl_eu_80667740) {
         if (func_8027990C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self) != 0) {
-            self->CActorParam_UnkVirtualFunc33(lbl_eu_80667740);
+            self->CActorParam_setHp(lbl_eu_80667740);
         }
     }
     func_801A891C(self, 0);

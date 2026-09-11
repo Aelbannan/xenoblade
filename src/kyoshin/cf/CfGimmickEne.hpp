@@ -174,7 +174,7 @@ extern "C" nw4r::g3d::ScnObj* func_8048EC14(CScn* scene, unsigned int index);
 // Gimmick-state setter on the CfGimmickGlobal (sound/event dispatcher).
 extern void func_801F4B68(int value, int id);
 
-// CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_UnkVirtualFunc122()).
+// CArtsSet helpers (the arts set pointer comes from CActorParam::CActorParam_getArtsSet()).
 extern cf::CArtsParam* getArtsParamByIdx(cf::CArtsSet* artsSet, int index);
 extern int func_80153CAC(const void* artsSet, int index);
 

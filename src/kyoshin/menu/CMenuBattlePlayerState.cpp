@@ -500,7 +500,7 @@ void CMenuBattlePlayerState::Init() {
                 slot.unk224 = static_cast<f32>(static_cast<int>(
                     actor->CActorParam_UnkVirtualFunc85()));
                 slot.unk228 = static_cast<f32>(
-                    actor->CActorParam_UnkVirtualFunc87());
+                    actor->CActorParam_getLevelExp());
                 if (oneF == slot.unk228) {
                     slot.unk224 = zeroF2;
                 }
@@ -680,11 +680,11 @@ after_bit21:
                 // Retail converts this getter as signed here (the pad
                 // declared it int); hop through int to keep the flavor.
                 f32 tB = static_cast<f32>(static_cast<int>(
-                    actor->CActorParam_UnkVirtualFunc87()));
+                    actor->CActorParam_getLevelExp()));
                 // Constant on the left → retail fcmpu cr0,fNV,f0 (not f0,fNV).
                 if (lbl_eu_80666F90 == tB) {
                     f32 tB2 = static_cast<f32>(static_cast<int>(
-                        actor->CActorParam_UnkVirtualFunc87()));
+                        actor->CActorParam_getLevelExp()));
                     if (slot->unk228 != tB2) {
                         slot->unk25C |= 0x4;
                     }
@@ -699,7 +699,7 @@ after_bit21:
                         goto tension_flag;
                     }
                     f32 tB2 = static_cast<f32>(static_cast<int>(
-                        actor->CActorParam_UnkVirtualFunc87()));
+                        actor->CActorParam_getLevelExp()));
                     if (slot->unk228 == tB2) {
                         goto tension_store;
                     }
@@ -710,7 +710,7 @@ after_bit21:
                 slot->unk224 =
                     static_cast<f32>(actor->CActorParam_UnkVirtualFunc85());
                 slot->unk228 = static_cast<f32>(static_cast<int>(
-                    actor->CActorParam_UnkVirtualFunc87()));
+                    actor->CActorParam_getLevelExp()));
             }
         tension_done:
 

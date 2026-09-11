@@ -1172,8 +1172,8 @@ void cf::CActParamAnimGame::func_8005D2C4() {
     if ((v->flags4EC & 2) != 0 && (v->flags4F0 & 2) == 0) {
         void* link = func_8016FE34(v->link4E8);
         if (link != 0) {
-            ((cf::CActorParam*)link)->CActorParam_UnkVirtualFunc64();
-            ((cf::CActorParam*)link)->CActorParam_UnkVirtualFunc58();
+            ((cf::CActorParam*)link)->CActorParam_clearSecondGauge();
+            ((cf::CActorParam*)link)->CActorParam_clearGauge();
         }
     }
 }

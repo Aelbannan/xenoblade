@@ -684,21 +684,21 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
     const char* tbl = (const char*)lbl_eu_804FC168;
     u16 row = v->field_0x3F28;
     u32 a0 = getBdatStringColumnValue(bdat, tbl + 0x1A7, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a0, 0);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a0, 0);
     u32 a1 = getBdatStringColumnValue(bdat, tbl + 0x1AD, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a1, 1);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a1, 1);
     u32 a2 = getBdatStringColumnValue(bdat, tbl + 0x1B3, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a2, 2);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a2, 2);
     u32 a3 = getBdatStringColumnValue(bdat, tbl + 0x1B9, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a3, 3);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a3, 3);
     u32 a4 = getBdatStringColumnValue(bdat, tbl + 0x1BF, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a4, 4);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a4, 4);
     u32 a5 = getBdatStringColumnValue(bdat, tbl + 0x1C5, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a5, 5);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a5, 5);
     u32 a6 = getBdatStringColumnValue(bdat, tbl + 0x1CB, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a6, 6);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a6, 6);
     u32 a7 = getBdatStringColumnValue(bdat, tbl + 0x1D1, row);
-    setArtsSlotByIdx(this->CActorParam_UnkVirtualFunc122(), a7, 7);
+    setArtsSlotByIdx(this->CActorParam_getArtsSet(), a7, 7);
 
     func_8003AA34();
     void* bdat2 = getFP(&tbl[0x1D7]);
@@ -710,9 +710,9 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
     int i;
     s16 zero46 = 0;  // retail keeps a dedicated zero reg for field_0x46
     for (i = 0; i < 8; i++) {
-        u16 slot = func_80153CAC(this->CActorParam_UnkVirtualFunc122(), (s16)i);
+        u16 slot = func_80153CAC(this->CActorParam_getArtsSet(), (s16)i);
         if (slot == 0) continue;
-        cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(this->CActorParam_UnkVirtualFunc122(), i);
+        cf::CfEneArtsParamView* arts = (cf::CfEneArtsParamView*)getArtsParamByIdx(this->CActorParam_getArtsSet(), i);
         // name column referenced through the raw label (not tbl), as in retail
         char* nm = (char*)getBdatStringColumnValue(bdat2, (char*)lbl_eu_804FC168, slot);
         arts->field_0x20 = strlen(nm);
@@ -1285,7 +1285,7 @@ void CActorParam_UnkVirtualFunc36__Q22cf11CActorParamFv(cf::CActorParam* self, f
 // amount to the 0x17E8 gauge, stores it, rounds to the nearest int (half
 // away from zero: (s32)(v +/- 0.5) via the fctiwz + s32->f32 magic pair),
 // floors sub-1.0 results back to 0.0f, then clamps into [0.0f, 0x17F4].
-// Same rounding tail as CActorParam_UnkVirtualFunc35 (CfObjectActor.cpp).
+// Same rounding tail as CActorParam_applyDamage (CfObjectActor.cpp).
 void CActorParam_addHp__Q22cf11CActorParamFv(cf::CActorParam* self, float amount) {
     float v = ((cf::CfActorParamFields*)self)->field_0x17E8 + amount;
     ((cf::CfActorParamFields*)self)->field_0x17E8 = v;

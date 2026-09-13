@@ -78,9 +78,11 @@ namespace cf {
     // The CArtsSet init virtual's body, defined under the retail mangled name
     // (see the _sArtsSet_UnkVirtualFunc1 note above).
     extern "C" void CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv(CArtsSet* self) {
-        // Public _sArtsSet base: same typed clears as _sArtsSet_UnkVirtualFunc1.
-        self->unk0 = 0;
-        std::memset(self->unk4, 0, 0x30);
+        // Raw byte access: _sArtsSet is a private base, and the retail
+        // operates on the shared layout (u16 count at +0, 0x30 bytes at +4).
+        u8* base = reinterpret_cast<u8*>(self);
+        *reinterpret_cast<u16*>(base) = 0;
+        std::memset(base + 4, 0, 0x30);
 
         // Function-scope rowBase/p/row declaration order drives the Chaitin
         // homes to r31/r30/r29, matching the retail init loop.

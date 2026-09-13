@@ -14,19 +14,19 @@ extern CLibCriMoviePlay* lbl_eu_806656E0;
 struct MovieEntry;
 struct MwPly; // opaque CRI Sofdec player handle
 extern "C" {
-    u32 mwPlyCalcWorkCprmSfd(void* cprm);
+    u32 mwPlyCalcWorkCprmSfd(u32* cprm);
     void mwPlyStartFname(MwPly* ply, const char* filename);
     int mwPlyGetStat(MwPly* ply);
     void mwPlyStop(MwPly* ply);
     void mwPlyPause(MwPly* ply, int pause);
     int mwPlyGetOutVol(MwPly* ply);
     void mwPlySetOutVol(MwPly* ply, int vol);
-    void mwPlyInitSfdFx(void* fxprm);
-    void mwPlyGetCurFrm(MwPly* ply, void* frm);
+    void mwPlyInitSfdFx(u32* fxprm);
+    void mwPlyGetCurFrm(MwPly* ply, u32* frm);
     void mwPlyRelCurFrm(MwPly* ply);
     void mwPlyFxSetOutBufPitchHeight(MwPly* ply, u16 pitch, u16 height);
-    void mwPlyFxCnvFrmY84C44(MwPly* ply, void* frm, void* yBuf, void* cbcrBuf);
-    MwPly* criware_8039FF34(void* cprm);
+    void mwPlyFxCnvFrmY84C44(MwPly* ply, u32* frm, u8* yBuf, u8* cbcrBuf);
+    MwPly* criware_8039FF34(u32* cprm);
     void criware_803A09B4(MwPly* ply);
     void ADXM_ExecMain(void);
     void VIWaitForRetrace(void);

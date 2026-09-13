@@ -485,23 +485,25 @@ if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 
                             reinterpret_cast<u32>(func_800BED80(reinterpret_cast<cf::CfObjectMove*>(&actor->move), 1)), 0);
                     }
                 }
+                // Retail nests the actParam walk inside both 0x20000 and
+                // getAnimFlags() so the two beqs skip the loop as well.
                 if ((actor->field_3F08 & 0x20000) != 0) {
                     if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags() != 0) {
                         __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                         holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
+                        for (u8 i = 0; i < 2; i++) {
+                            CScnItemModel* am =
+                                reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
+                            if (am == 0 || holder->unk_55C == 0)
+                                continue;
+                            holder->actParams[i].field_0x378 = i;
+                            func_8005A594(&holder->actParams[i]);
+                            func_8004B624(&holder->actParams[i], am, holder->unk_55C,
+                                          reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
+                            func_8004B9D4(&holder->actParams[i],
+                                          func_8004C5EC(&holder->actParam), 0, -1, 0);
+                        }
                     }
-                }
-                for (u8 i = 0; i < 2; i++) {
-                    CScnItemModel* am =
-                        reinterpret_cast<CScnItemModel*>(holder->animModelPtrs[i]);
-                    if (am == 0 || holder->unk_55C == 0)
-                        continue;
-                    holder->actParams[i].field_0x378 = i;
-                    func_8005A594(&holder->actParams[i]);
-                    func_8004B624(&holder->actParams[i], am, holder->unk_55C,
-                                  reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
-                    func_8004B9D4(&holder->actParams[i],
-                                  func_8004C5EC(&holder->actParam), 0, -1, 0);
                 }
                 if (actor->field_3F28 == 8) {
                     if (getQueuedFileEventCount__Q22cf13CfGameManagerFv() >= 0x167) {

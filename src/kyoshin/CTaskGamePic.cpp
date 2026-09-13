@@ -250,25 +250,28 @@ void cbRenderBefore__12CTaskGamePicFv(CTaskGamePic*);
 // These are secondary-vtable entries for the +0x54 file-event / +0x58 render
 // subobjects: adjust `this` back to the CTaskGamePic primary, tail-call the
 // real member.
-void OnFileEvent__12CTaskGamePicFP10CEventFile(IWorkEvent* self) {
-    ((void (*)(void*))func_8029539C)(reinterpret_cast<char*>(self) - 0x54);
+void OnFileEvent__12CTaskGamePicFP10CEventFile(IWorkEvent* ths) {
+    ((void (*)(CTaskGamePic*))func_8029539C)(
+        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
 }
 
-void func_8029554C(IWorkEvent* self) {
-    ((void (*)(void*))__dt__12CTaskGamePicFv)(reinterpret_cast<char*>(self) - 0x54);
+void func_8029554C(IWorkEvent* ths) {
+    ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
+        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x54));
 }
 
-void func_80295554(IScnRender* self) {
-    reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
+void func_80295554(IScnRender* ths) {
+    reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58)->cbRenderBefore();
 }
 
-void func_8029555C(IScnRender* self) {
-    ((void (*)(void*))__dt__12CTaskGamePicFv)(reinterpret_cast<char*>(self) - 0x58);
+void func_8029555C(IScnRender* ths) {
+    ((void (*)(CTaskGamePic*))__dt__12CTaskGamePicFv)(
+        reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(ths) - 0x58));
 }
 
 // Returns int (not s16) so callers re-sign-extend the result like retail.
-extern "C" s16 func_80295388(u8* self) {
-    return (s16)(*(s16*)(self + 2) + *(s16*)(self + 6));
+extern "C" s16 func_80295388(u8* p) {
+    return (s16)(*(s16*)(p + 2) + *(s16*)(p + 6));
 }
 // ---------------------------------------------------------------------------
 // create - factory. Retail symbol keeps the C-linkage Fv name although

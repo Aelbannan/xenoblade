@@ -205,7 +205,8 @@ class CfActorTalkView : public CfActorTalkBasePad, public cf::CObjectState {
 // map the emitted mangled name onto the retail symbol.
 int onTalk(VMThread* pThread) {
     // Report (TRUE=1 / FALSE=2) whether the player actor's embedded move
-    // object is currently talking.
+    // object is currently talking. Query via setStateBitMask0(mask, flag)
+    // (same (1|2, 1) shape as ocUnit::onEvent); packed void* 0x1000x was wrong.
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
         (void*)cf::CfGameManager::getPlayer(0), 0,
         (const void*)&__RTTI__Q22cf13CfObjectActor, (const void*)&lbl_eu_806618D8,

@@ -151,8 +151,9 @@ void KeepCERandomizerEmission() {
 // postprocess_reloc_names.py.
 void CERandSinit() {
     ceRandomizerSimpleRef()->create(CERand::defaultSeed);
-    *(void**)ceRandomizerSimpleRef() = (void*)&lbl_eu_8056FE08;
-    *(void**)ceRandomizerRef() = (void*)&lbl_eu_8056FE30;
+    // Manual vptr stores (dissolved globals); typed as u32* to match lbl arrays.
+    *reinterpret_cast<u32**>(ceRandomizerSimpleRef()) = lbl_eu_8056FE08;
+    *reinterpret_cast<u32**>(ceRandomizerRef()) = lbl_eu_8056FE30;
 }
 
 // ---- CERand statics ----

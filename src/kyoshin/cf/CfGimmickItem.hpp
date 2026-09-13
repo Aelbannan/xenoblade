@@ -75,7 +75,7 @@ public:
 struct CfGimmickItemMgr {
     void** vtable;              // +0x00
     u8 gap_B0[0xB0 - 0x04];
-    void* field_B0;             // +0xB0: owning gimmick
+    CfGimmickItem* field_B0;    // +0xB0: owning gimmick
 };
 
 // Pointer-to-member state table indexed by field_9E (12-byte entries).

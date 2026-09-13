@@ -24,10 +24,10 @@ union BdatCol {
 // ---------------------------------------------------------------------------
 
 cf::CfGimmickItem::~CfGimmickItem() {
-    this->vtable = (void*)lbl_eu_80535A98;
-    func_80208EE4((void*)this);
+    this->vtable = lbl_eu_80535A98;
+    func_80208EE4(this);
     func_8020A434(&this->field_7C);
-    __dt__Q22cf9CfGimmickFv((void*)this, 0);
+    __dt__Q22cf9CfGimmickFv(this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
     // (delete-flag ? operator delete(this) : skip) automatically.
 }

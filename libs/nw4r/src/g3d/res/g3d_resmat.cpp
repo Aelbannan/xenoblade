@@ -108,22 +108,22 @@ void ResMatTevColor::CallDisplayList(bool sync) const {
  * CopyTo
  *
  ******************************************************************************/
-ResMatPix ResMatPix::CopyTo(void* pDst) const {
+ResMatPix ResMatPix::CopyTo(ResPixDL* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResPixDL));
     return ResMatPix(pDst);
 }
 
-ResMatTevColor ResMatTevColor::CopyTo(void* pDst) const {
+ResMatTevColor ResMatTevColor::CopyTo(ResTevColorDL* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResTevColorDL));
     return ResMatTevColor(pDst);
 }
 
-ResMatIndMtxAndScale ResMatIndMtxAndScale::CopyTo(void* pDst) const {
+ResMatIndMtxAndScale ResMatIndMtxAndScale::CopyTo(ResIndMtxAndScaleDL* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResIndMtxAndScaleDL));
     return ResMatIndMtxAndScale(pDst);
 }
 
-ResMatTexCoordGen ResMatTexCoordGen::CopyTo(void* pDst) const {
+ResMatTexCoordGen ResMatTexCoordGen::CopyTo(ResTexCoordGenDL* pDst) const {
     detail::Copy32ByteBlocks(pDst, ptr(), sizeof(ResTexCoordGenDL));
     return ResMatTexCoordGen(pDst);
 }
@@ -169,7 +169,7 @@ inline void ResTexObj::Invalidate(GXTexMapID id) {
     }
 }
 
-ResTexObj ResTexObj::CopyTo(void* pDst) const {
+ResTexObj ResTexObj::CopyTo(ResTexObjData* pDst) const {
     ResTexObjData* pData = static_cast<ResTexObjData*>(pDst);
     const ResTexObjData& rSrc = ref();
 
@@ -231,7 +231,7 @@ inline void ResTlutObj::Invalidate(GXTlut tlut) {
     }
 }
 
-ResTlutObj ResTlutObj::CopyTo(void* pDst) const {
+ResTlutObj ResTlutObj::CopyTo(ResTlutObjData* pDst) const {
     ResTlutObjData* pData = static_cast<ResTlutObjData*>(pDst);
     const ResTlutObjData& rSrc = ref();
 
@@ -264,7 +264,7 @@ ResTlutObj ResTlutObj::CopyTo(void* pDst) const {
  * ResTexSrt
  *
  ******************************************************************************/
-ResTexSrt ResTexSrt::CopyTo(void* pDst) const {
+ResTexSrt ResTexSrt::CopyTo(ResTexSrtData* pDst) const {
     ResTexSrtData* pData = static_cast<ResTexSrtData*>(pDst);
     const ResTexSrtData& r = ref();
 
@@ -419,7 +419,7 @@ void ResGenMode::GXSetCullMode(GXCullMode mode) {
     }
 }
 
-ResGenMode ResGenMode::CopyTo(void* pDst) const {
+ResGenMode ResGenMode::CopyTo(ResGenModeData* pDst) const {
     ResGenModeData* pData = static_cast<ResGenModeData*>(pDst);
     const ResGenModeData& r = ref();
 
@@ -473,7 +473,7 @@ void ResMatMisc::GetIndirectTexMtxCalcMethod(
     }
 }
 
-ResMatMisc ResMatMisc::CopyTo(void* pDst) const {
+ResMatMisc ResMatMisc::CopyTo(ResMatMiscData* pDst) const {
     ResMatMiscData* pData = static_cast<ResMatMiscData*>(pDst);
     const ResMatMiscData& r = ref();
 
@@ -1205,7 +1205,7 @@ bool ResMatChan::GXGetChanCtrl(GXChannelID id, GXBool* pEnable,
     return true;
 }
 
-ResMatChan ResMatChan::CopyTo(void* pDst) const {
+ResMatChan ResMatChan::CopyTo(ResChanData* pDst) const {
     ResChanData* pData = static_cast<ResChanData*>(pDst);
     const ResChanData& r = ref();
 

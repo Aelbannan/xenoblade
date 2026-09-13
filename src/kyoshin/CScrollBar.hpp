@@ -32,6 +32,8 @@ extern const float lbl_eu_80668154; // entering-done threshold
 extern "C" void func_80127BC4(float* dst, float* src); // copy 2 floats (VEC2)
 extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag
 
+extern "C" u8 CScrollBar_isVisible(struct CScrollBar* self);
+
 /* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order:
 vtable store first, then the member ctor). Same idiom as CBatteryVtblBase. */
 struct CScrollBarVtblBase {
@@ -74,7 +76,6 @@ struct CScrollBar : CScrollBarVtblBase {
     ~CScrollBar();
     bool OnFileEvent(CEventFile* pEventFile);
 
-    u8 isVisible();
     u8 func_801F3668();
 
     void func_801F34F4();                              // read layout arc

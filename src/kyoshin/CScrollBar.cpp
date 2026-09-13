@@ -16,6 +16,7 @@
 // matched call sites (CItemBoxGridSubMenu.cpp) so the reloc binds correctly.
 void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 void func_80124288(void*, float*);
+void func_801390E0(CFileHandle**);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (func_801F36BC) reuse it as the returned pointer for func_801D2150.
 float* code80135FDC_setVec3(float*, float, float, float);
@@ -31,19 +32,13 @@ __attribute__((noinline)) void func_801F39B4(CScrollBar* bar);
 // absolute pane offset).
 struct CScrollBarPane {
     u8 pad_00[0x2C]; // +0x00..+0x2B (nw4r Pane internal state)
-    f32 field_2C;
-    f32 field_30;
-    f32 field_34;
-    f32 field_38;
-    f32 field_3C;
-    f32 field_40;
-    f32 field_44;
-    f32 field_48;
-    f32 field_4C;
-    f32 field_50;
+    nw4r::math::VEC3 mDims; // +0x2C thumb/track size (x=thumb height, y=content)
+    u8 pad_38[0x4C - 0x38];
+    f32 mDrag[2]; // +0x4C drag position (copied via func_80127BC4)
 };
 
-u8 CScrollBar::isVisible() { return mVisible; }
+/* Retail symbol is unmangled CScrollBar_isVisible(void*); typed here. */
+extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
 
 
 u8 CScrollBar::func_801F3668() { return mActive; }
@@ -216,7 +211,7 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
     if (delta <= 0) {
         // Bottom of the scroll range: park the thumb at the tail position.
         float tmp[2];
-        func_80127BC4(tmp, &pdata->field_4C);
+        func_80127BC4(tmp, pdata->mDrag);
         tmp[1] = self->mScrollPosY;
         func_80124288(pane, tmp);
         self->mScrollRatio = lbl_eu_80668138;
@@ -235,7 +230,7 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
         if (ratio < lbl_eu_8066813C)
             ratio = lbl_eu_8066813C;
         float tmp[2];
-        func_80127BC4(tmp, &pdata->field_4C);
+        func_80127BC4(tmp, pdata->mDrag);
         tmp[1] = ratio;
         func_80124288(pane, tmp);
         self->mScrollRatio = (self->mScrollPosY - ratio) / (f32)delta;

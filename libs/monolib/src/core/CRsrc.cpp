@@ -5,6 +5,21 @@
 #include "monolib/work/UnkStruct_80438AF0.hpp"
 #include "monolib/util/reslist.hpp"
 
+// Retail CRsrc::entry stores the name at +0x1C8 and length at +0x2C8
+// (header CRsrcData::mName is documented at 0x1C4; keep a local view).
+struct RsrcNameOverlay {
+    u8 pad_00[0x1C4];
+    u32 id;           // 0x1C4
+    char name[0x100]; // 0x1C8
+    u32 nameLen;      // 0x2C8
+};
+
+// reslist<CWorkThread*> at CWorkThread::mChildren (0x5C); head ptr at +0x60.
+struct WorkChildrenHead {
+    u8 pad_00[0x60];
+    _reslist_node<CWorkThread*>* head; // 0x60
+};
+
 extern "C" {
 // Data definitions moved into this TU (blob monolibdata1d dissolve):
 // .sbss lbl_eu_806655A8 (s16, 2 bytes) and .bss sRsrcPointerList (0x40).
@@ -44,7 +59,7 @@ extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* d
     _reslist_node<CWorkThread*>* node;
 
     // Retail: seed next from head->mNext, bottom-tested with per-iter lwz 0x60(parent).
-    node = (*(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60))->mNext;
+    node = ((WorkChildrenHead*)parent)->head->mNext;
     goto check;
 loop:
     if (releaseCache__9CRsrcDataFPCv(convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem),
@@ -53,7 +68,7 @@ loop:
     }
     node = node->mNext;
 check:
-    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+    if (node != ((WorkChildrenHead*)parent)->head) {
         goto loop;
     }
 
@@ -69,8 +84,9 @@ bool CRsrc::entry(void* parent, const char* name, void* arg2, void* data, u32 le
     }
 
     build__9CRsrcDataFPvPCcPvPvUlb(parent, name, arg2, data, length, flag);
-    *(u32*)((u8*)parent + 0x2C8) = strlen(name);
-    strcpy((char*)((u8*)parent + 0x1C8), name);
+    RsrcNameOverlay* rsrc = (RsrcNameOverlay*)parent;
+    rsrc->nameLen = strlen(name);
+    strcpy(rsrc->name, name);
 
     return true;
 }
@@ -112,7 +128,7 @@ bool hasChild(CWorkThread* pThread) {
     u32 diff;
     u32 diff2;
 
-    head = *(_reslist_node<CWorkThread*>**)((u8*)pThread + 0x60);
+    head = ((WorkChildrenHead*)pThread)->head;
     first = head->mNext;
     diff = (u32)head - (u32)first;
     diff2 = (u32)first - (u32)head;
@@ -131,7 +147,7 @@ CRsrcData* CRsrc::getRsrc(u32 id) {
 loop:
     off = (u32)index;
     entry = *(CRsrcData**)((u8*)sRsrcPointerList__5CRsrc + (off << 2));
-    if (id == *(u32*)((u8*)entry + 0x1C4)) {
+    if (id == ((RsrcNameOverlay*)entry)->id) {
         return entry;
     }
     index++;
@@ -214,7 +230,7 @@ loop:
     }
     node = node->mNext;
 check:
-    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+    if (node != ((WorkChildrenHead*)parent)->head) {
         goto loop;
     }
 

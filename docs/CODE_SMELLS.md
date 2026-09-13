@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4160 |
 | `self`/register-style params | 13474 |
 | `void*` (params + locals) | 7796 |
-| raw pointer offset arithmetic | 7507 |
-| deref-through-cast arithmetic | 2912 |
+| raw pointer offset arithmetic | 7500 |
+| deref-through-cast arithmetic | 2910 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -59,7 +59,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProc.cpp | 4 | 0 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProcRoot.cpp | 42 | 0 | 1 | 7 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 8 | 2 | 0 | 0 | 10 | 0 | 0 | 0 |
+| libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 1 | 0 | 0 | 0 | 10 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrcData.cpp | 47 | 0 | 3 | 11 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSchedule.cpp | 1 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -758,12 +758,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CRsrc.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 2,
   "extern_c_nonlbl_decl": 10,
   "extern_c_nonlbl_def": 4,
   "goto_count": 10,
   "init_side_effect": 0,
-  "ptr_arith": 8,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
   "void_ptr": 9
  },

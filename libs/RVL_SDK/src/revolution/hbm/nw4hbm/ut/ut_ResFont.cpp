@@ -5,8 +5,9 @@ namespace ut {
 namespace {
 
 template <typename T> inline void ResolveOffset(T*& rpPtr, void* pBase) {
-    rpPtr = reinterpret_cast<T*>(static_cast<char*>(pBase) +
-                                 reinterpret_cast<s32>(rpPtr));
+    char* base = static_cast<char*>(static_cast<void*>(pBase));
+    s32 offset = reinterpret_cast<s32>(rpPtr);
+    rpPtr = reinterpret_cast<T*>(base + offset);
 }
 
 } // namespace
@@ -24,9 +25,9 @@ bool ResFont::SetResource(void* pBuffer) {
     }
 
     if (pHeader->signature == SIGNATURE_UNPACKED) {
-        char* pHeaderBytes = reinterpret_cast<char*>(pHeader);
-        BinaryBlockHeader* pBlock = reinterpret_cast<BinaryBlockHeader*>(
-            pHeaderBytes + pHeader->headerSize);
+        u8* pCur = static_cast<u8*>(static_cast<void*>(pHeader)) + pHeader->headerSize;
+        BinaryBlockHeader* pBlock =
+            static_cast<BinaryBlockHeader*>(static_cast<void*>(pCur));
 
         for (int i = 0; i < pHeader->dataBlocks; i++) {
             if (pBlock->kind == SIGNATURE_FONTINFO) {
@@ -34,9 +35,8 @@ bool ResFont::SetResource(void* pBuffer) {
                 break;
             }
 
-            char* pBlockBytes = reinterpret_cast<char*>(pBlock);
-            pBlock = reinterpret_cast<BinaryBlockHeader*>(
-                pBlockBytes + pBlock->size);
+            pCur = static_cast<u8*>(static_cast<void*>(pBlock)) + pBlock->size;
+            pBlock = static_cast<BinaryBlockHeader*>(static_cast<void*>(pCur));
         }
     } else {
         if (pHeader->version == NW4R_VERSION(1, 4)) {
@@ -62,9 +62,9 @@ bool ResFont::SetResource(void* pBuffer) {
 }
 
 FontInformation* ResFont::Rebuild(BinaryFileHeader* pHeader) {
-    char* pHeaderBytes = reinterpret_cast<char*>(pHeader);
-    BinaryBlockHeader* pBlock = reinterpret_cast<BinaryBlockHeader*>(
-        pHeaderBytes + pHeader->headerSize);
+    u8* pCur = static_cast<u8*>(static_cast<void*>(pHeader)) + pHeader->headerSize;
+    BinaryBlockHeader* pBlock =
+        static_cast<BinaryBlockHeader*>(static_cast<void*>(pCur));
 
     FontInformation* pInfo = NULL;
 
@@ -116,9 +116,8 @@ FontInformation* ResFont::Rebuild(BinaryFileHeader* pHeader) {
         }
         }
 
-        char* pBlockBytes = reinterpret_cast<char*>(pBlock);
-        pBlock = reinterpret_cast<BinaryBlockHeader*>(
-            pBlockBytes + pBlock->size);
+        pCur = static_cast<u8*>(static_cast<void*>(pBlock)) + pBlock->size;
+        pBlock = static_cast<BinaryBlockHeader*>(static_cast<void*>(pCur));
     }
 
     pHeader->signature = SIGNATURE_UNPACKED;

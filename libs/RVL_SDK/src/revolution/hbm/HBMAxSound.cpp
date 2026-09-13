@@ -63,8 +63,8 @@ struct HBMWork {
     OSMessageQueue msgQueue;       // 0x14680 (0x20 bytes)
     OSMessage msgBuffer[4];        // 0x146A0 (0x10 bytes)
     u8* workEnd;                 // 0x146B0
-    void* seqWork1;              // 0x146B4
-    void* seqWork2;              // 0x146B8
+    u8* seqWork1;                // 0x146B4 (wt blob)
+    u8* seqWork2;                // 0x146B8 (pcm blob)
 };
 
 HBMWork* sWork;
@@ -358,9 +358,9 @@ void InitAxSound(const void* pWork, void* pWorkEnd, u32 workSize) {
 
     if (ARCInitHandle(const_cast<void*>(pWork), &work->archive) != 0) {
         if (ARCOpen(&work->archive, WT_FILENAME, &fileInfo) != 0) {
-            work->seqWork1 = ARCGetStartAddrInMem(&fileInfo);
+            work->seqWork1 = static_cast<u8*>(ARCGetStartAddrInMem(&fileInfo));
             if (ARCOpen(&work->archive, PCM_FILENAME, &fileInfo2) != 0) {
-                work->seqWork2 = ARCGetStartAddrInMem(&fileInfo2);
+                work->seqWork2 = static_cast<u8*>(ARCGetStartAddrInMem(&fileInfo2));
                 OSInitMessageQueue(&work->msgQueue, work->msgBuffer, 4);
                 if (OSCreateThread(
                         &work->thread, AudioSoundThreadProc, NULL,

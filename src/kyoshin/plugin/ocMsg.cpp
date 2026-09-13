@@ -39,13 +39,13 @@ int func_8003A5C0(VMThread* pThread, void* target) {
 
 int func_8003A5F8(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgTwoValueObj*)target)->value0 = *(u32*)((char*)prop + 4);
+    ((OcMsgTwoValueObj*)target)->value0 = ((VMArg*)prop)->value.uintVal;
     return 0;
 }
 
 int func_8003A630(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgTwoValueObj*)target)->value1 = *(u32*)((char*)prop + 4);
+    ((OcMsgTwoValueObj*)target)->value1 = ((VMArg*)prop)->value.uintVal;
     return 0;
 }
 
@@ -196,19 +196,19 @@ int func_8003A870(VMThread* pThread, void* target) {
 
 int func_8003A8A8(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value0 = *(u32*)((char*)prop + 4);
+    ((OcMsgThreeValueObj*)target)->value0 = ((VMArg*)prop)->value.uintVal;
     return 0;
 }
 
 int func_8003A8E0(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value1 = *(u32*)((char*)prop + 4);
+    ((OcMsgThreeValueObj*)target)->value1 = ((VMArg*)prop)->value.uintVal;
     return 0;
 }
 
 int func_8003A918(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value2 = *(u32*)((char*)prop + 4);
+    ((OcMsgThreeValueObj*)target)->value2 = ((VMArg*)prop)->value.uintVal;
     return 0;
 }
 

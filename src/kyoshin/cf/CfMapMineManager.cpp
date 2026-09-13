@@ -589,7 +589,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
         name.mLen = strlen(nm);
         strcpy(name.mText, nm);
         func_800C13FC(obj, &name, 0xC);
-        ((cf::CfObject*)obj)->CfObject_UnkVirtualFunc66(1);
+        ((cf::CfObject*)obj)->setPointEnabled(1);
         ((cf::CfObject*)obj)->CfObject_setMoveTargetVec((const ml::CVec3*)&pt->mPosX);
         ((MineSceneObjData*)obj)->unk90 = 0;
     }

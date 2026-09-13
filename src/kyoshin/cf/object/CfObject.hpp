@@ -56,17 +56,27 @@ namespace cf {
         virtual void CfObject_setMoveHeadAngle(float value);     //0xC4
         virtual void CfObject_setMoveYaw(float value);     //0xC8 (was UnkVirtualFunc30)
         virtual float CfObject_getMoveHeadAngle();     //0xCC
-        virtual void CfObject_UnkVirtualFunc32();     //0xD0
+        // Wave-64: Unk primary flipped. Fv bodies in CfObjectMove keep Unk
+        // linker names (hand-built tables / CREvtModel); Unk aliases below.
+        virtual void CfObject_syncMoveHead();     //0xD0 (was UnkVirtualFunc32)
         virtual void CfObject_applyMoveYaw(float amount); //0xD4 (was UnkVirtualFunc33)
         virtual float CfObject_UnkVirtualFunc34();     //0xD8
         // Retail setEffScale_ / Coll UVF35: float in f1 -> +0x60.
         virtual void CfObject_UnkVirtualFunc35(float value); //0xDC
         // Retail: lfs f1,0x60(r3); blr - scale getter used to feed UVF35.
         virtual float CfObject_UnkVirtualFunc36();     //0xE0
-        virtual void CfObject_UnkVirtualFunc37();     //0xE4
+        // Retail base stub / Coll Fv return int (Move getCharEffect sites
+        // cmpwi the result; Move's own override is a void Fv with hidden r4).
+        virtual int CfObject_UnkVirtualFunc37();     //0xE4
         virtual void CfObject_UnkVirtualFunc38();     //0xE8
-        virtual void CfObject_UnkVirtualFunc39();     //0xEC
-        virtual float CfObject_UnkVirtualFunc40();     //0xF0
+        // Wave-64: Unk primary flipped. Fv bodies in CfObjectMove keep Unk
+        // linker names (hand-built tables / CREvtModel); Unk aliases below.
+        virtual void CfObject_armAnimSlot0();     //0xEC (was UnkVirtualFunc39)
+        // Wave-64: Unk primary flipped. Fv bodies in CfObjectMove keep Unk
+        // linker names (hand-built tables / CREvtModel). Move's Fv override
+        // is the named bdat arm for slot 0 (armAnimSlot0N alias); float
+        // callers use getActorScale (CfResReloadImpl). Same Fv arity.
+        virtual float CfObject_getActorScale();     //0xF0 (was UnkVirtualFunc40)
         virtual void CfObject_UnkVirtualFunc41();     //0xF4
         virtual void CfObject_UnkVirtualFunc42();     //0xF8
         virtual void CfObject_UnkVirtualFunc43();     //0xFC
@@ -77,8 +87,8 @@ namespace cf {
         // Move override returns target object pointer (pluginCfs: +0xC4/+0x6C0).
         virtual void* CfObject_getCurrentTarget();     //0x110
         virtual void CfObject_forwardNpcAction(u32 value);     //0x114
-        virtual int CfObject_UnkVirtualFunc50();     //0x118
-        virtual int CfObject_UnkVirtualFunc51();     //0x11C
+        virtual int CfObject_getNpcActionState();     //0x118 (was UnkVirtualFunc50)
+        virtual int CfObject_getNpcTargetAction();     //0x11C (was UnkVirtualFunc51)
         virtual void* CfObject_UnkVirtualFunc52(const char* name);     //0x120
         virtual CfObject* CfObject_getIndexedNodeMatrix(); //0x124 (was UnkVirtualFunc53)
         virtual u32 CfObject_UnkVirtualFunc54();     //0x128
@@ -108,7 +118,9 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70(float value); //0x168
+        // Wave-64: Unk primary flipped. Fv bodies in CfObjectMove keep Unk
+        // linker names (hand-built tables / CREvtModel); Unk aliases below.
+        virtual void CfObject_syncModelRate(float value); //0x168 (was UnkVirtualFunc70)
         // Retail: return float in f1 (Model reads +0xA0; Coll returns const).
         // CfResPcImpl forwards that into CScnItemModel::setModelFloatRate.
         virtual float CfObject_getProgressLow();     //0x16C
@@ -159,12 +171,10 @@ namespace cf {
         void CfObject_notifyMemberRemoved() { CfObject_UnkVirtualFunc11(); } //0x7C: post-list-removal holder notify (func_800D9CA0; base tests *(+0x6C) & 1)
         void CfObject_notifyActiveMember() { CfObject_UnkVirtualFunc44(); } //0x100: 0x4-flagged holder notify (func_800D9978 / func_800E1B5C)
         // Wave-40 UnkVirtual mop-up aliases (non-virtual, inline): same-slot
-        // forwarders for the ocUnit call sites; the virtuals keep their Unk
-        // names (hand-built vtables in CfObjectModel.cpp / CfCollSphereImpl.cpp
-        // / CREvtModel.cpp spell the current mangled names). MWCC inlines the
-        // identical virtual dispatch.
-        int CfObject_getNpcActionState() { return CfObject_UnkVirtualFunc50(); } //0x118: NPC action byte (Move: field_6CE)
-        int CfObject_getNpcTargetAction() { return CfObject_UnkVirtualFunc51(); } //0x11C: NPC target action id (Move: field_6CF)
+        // forwarders for the ocUnit call sites; Unk Fv bodies stay for
+        // hand-built vtables (CfObjectModel / CfCollSphereImpl / CREvtModel).
+        int CfObject_UnkVirtualFunc50() { return CfObject_getNpcActionState(); } //0x118: NPC action byte (Move: field_6CE)
+        int CfObject_UnkVirtualFunc51() { return CfObject_getNpcTargetAction(); } //0x11C: NPC target action id (Move: field_6CF)
         void* CfObject_findNodeMatrix(const char* name) { return CfObject_UnkVirtualFunc52(name); } //0x120: named node matrix slot (Model impl)
         // Wave-50 caller alias (non-virtual, inline): behavior-derived
         // spelling for the gated sub-object word (+0x128) consumed as a
@@ -184,28 +194,25 @@ namespace cf {
         // effect family (CfObjectEff createEffect_/callVirt32). Same arity;
         // MWCC inlines them into the identical virtual dispatch.
         void CfObject_setObjScale(float value) { CfObject_UnkVirtualFunc35(value); } //0xDC: store object scale to +0x60 (Eff: setEffScale__ syncs child)
-        void CfObject_syncMoveHead() { CfObject_UnkVirtualFunc32(); } //0xD0: push pending head state to the mover (Eff: scaleVirt29__ scales then sets angle)
-        // Wave-62 Unk aliases (non-virtual, inline): legacy Unk spellings for
-        // the flipped 0xD4/0x124/0x130 slots. Same arity; MWCC inlines each
-        // into the identical virtual dispatch. Hand-built tables keep Unk
-        // Fv linker names (GameManager forced-name bodies).
+        // Wave-64 Unk aliases (non-virtual, inline): legacy Unk spellings for
+        // the flipped 0xD0/0xD4/0x124/0x130/0x168 slots. Same arity; MWCC
+        // inlines each into the identical virtual dispatch. Hand-built
+        // tables keep Unk Fv linker names (Move / GameManager forced-name
+        // bodies).
+        void CfObject_UnkVirtualFunc32() { CfObject_syncMoveHead(); } //0xD0
         void CfObject_UnkVirtualFunc33(float value) { CfObject_applyMoveYaw(value); } //0xD4
         CfObject* CfObject_UnkVirtualFunc53() { return CfObject_getIndexedNodeMatrix(); } //0x124
         float CfObject_UnkVirtualFunc56() { return CfObject_getHeightDiff(); } //0x130
-        void CfObject_syncModelRate(float value) { CfObject_UnkVirtualFunc70(value); } //0x168: store model rate to +0xA0, forward to sub-object effect slot
+        void CfObject_UnkVirtualFunc70(float value) { CfObject_syncModelRate(value); } //0x168
         // Wave-44 UnkVirtual mop-up alias (non-virtual, inline): behavior-derived
         // spelling for the object-scale getter (+0xE0, reads +0x60) feeding
         // CfObject_setObjScale. Same arity; MWCC inlines it into the
         // identical virtual dispatch.
         float CfObject_getObjScale() { return CfObject_UnkVirtualFunc36(); } //0xE0
-        // Wave-53 caller alias (non-virtual, inline): behavior-derived
-        // spelling for the actor scale getter (+0xF0) feeding the model
-        // scale triple in func_8016DCE4 (CfResReloadImpl): when the move
-        // object reports an actor scale override, the scale is read from
-        // the ene-adjusted object (parent - 0x3E9C) instead of the base
-        // +0xE0 getter. Same arity; MWCC inlines it into the identical
-        // virtual dispatch.
-        float CfObject_getActorScale() { return CfObject_UnkVirtualFunc40(); } //0xF0
+        // Wave-53 / Wave-64 Unk alias: legacy Unk spelling for +0xF0.
+        // Virtual primary is getActorScale; armAnimSlot0N is the Move-side
+        // named-bdat arm spelling of the same slot.
+        float CfObject_UnkVirtualFunc40() { return CfObject_getActorScale(); } //0xF0
         void* CfObject_getPosTriple() { return CfObject_UnkVirtualFunc24(); } //0xB0: position-triplet pointer (base: +0x3C)
         // Wave-48 UnkVirtual mop-up aliases (non-virtual, inline): behavior-derived
         // spellings for the reset-hook slots used by the NPC char reset helper
@@ -216,20 +223,27 @@ namespace cf {
         // Wave-61 caller alias: per-frame move update (+0x60). Virtual keeps
         // UnkVirtualFunc4 (Move/Obj/Npc Class_ direct bls; hand vtables).
         void CfObject_runMoveUpdate() { CfObject_UnkVirtualFunc4(); } //0x60: per-frame move refresh (Move impl)
-        // Wave-62 UnkVirtual mop-up aliases (non-virtual, inline): behavior-
-        // derived spellings for the Move-family anim-slot managers (+0xE4..
-        // +0x104). Virtuals keep Unk names (hand-built vtables in
-        // CfObjectModel.cpp / CREvtModel.cpp / CfCollSphereImpl.cpp). Base
-        // stubs return 0; Move overrides do the real work. Same Fv arity as
-        // the header virtuals; MWCC inlines into the identical dispatch.
-        // UVF41 (+0xF4) stays Unk: base stub only, no Move override, no
-        // named call-site alias yet (ASK POLICY).
+        // Wave-64 UnkVirtual mop-up aliases (non-virtual, inline): legacy Unk
+        // spellings for the Move-family anim-slot managers (+0xE4..+0x104).
+        // armAnimSlot0 (+0xEC) is the flipped virtual primary; Unk alias
+        // below. Other slots keep Unk virtuals (hand-built vtables). Base
+        // stubs return 0; Move overrides do the real work. Same Fv arity;
+        // MWCC inlines into the identical dispatch. UVF41 (+0xF4) stays Unk:
+        // base stub only, no Move override, no named call-site alias yet.
         void CfObject_resetAnimSlots() { CfObject_UnkVirtualFunc37(); } //0xE4: release slots 0/1 + model list + checkTargetNode (Move)
+        // Wave-63: int-returning spelling of +0xE4 for mSubObj38 char-effect
+        // queries (Move UVF4 / UVF1 / effect helpers). Same slot as resetAnimSlots.
+        int CfObject_getCharEffect() { return CfObject_UnkVirtualFunc37(); } //0xE4
         void CfObject_clearAnimEntry() { CfObject_UnkVirtualFunc38(); } //0xE8: releaseModelList + clear +0x94 + B0 forward (Move)
-        void CfObject_armAnimSlot0() { CfObject_UnkVirtualFunc39(); } //0xEC: bdat arm/release anim slot 0 (Move)
+        void CfObject_UnkVirtualFunc39() { CfObject_armAnimSlot0(); } //0xEC
+        // Wave-64: named bdat arm for slot 0 (Move UVF40 Fv); same slot as
+        // getActorScale (float path). Discard float on the arm spelling.
+        void CfObject_armAnimSlot0N() { (void)CfObject_getActorScale(); } //0xF0
         void CfObject_armAnimSlot1() { CfObject_UnkVirtualFunc42(); } //0xF8: bdat arm/release anim slot 1 (Move)
         void CfObject_armAnimSlot1N() { CfObject_UnkVirtualFunc43(); } //0xFC: named bdat arm/release anim slot 1 (Move)
         void CfObject_rearmAnimSlot() { CfObject_UnkVirtualFunc45(); } //0x104: stop+rearm indexed anim model from bdat name (Move)
+        // Wave-63: behavior spelling of +0xA4 (Point setPosXYZ; Coll UVF21).
+        void CfObject_setPosXYZ() { CfObject_UnkVirtualFunc21(); } //0xA4
 
         //not sure if belongs here?
         // Retail requestVoice__Q22cf8CfObjectFiUlff returns the voice

@@ -14,7 +14,7 @@ namespace cf {
         virtual void CObjectState_clearStateWord8();  //0x1C
         virtual void CObjectState_clearStateFlags8(int arg);  //0x20
         virtual int CObjectState_checkStateFlags8(int arg);  //0x24
-        virtual int CObjectState_UnkVirtualFunc9();  //0x28
+        virtual int CObjectState_checkStateFlagsC();  //0x28 (was UnkVirtualFunc9)
         virtual int CObjectState_setStateBitMask0(int mask, int flag); //0x2C
         virtual void* CObjectState_getStateData(); //0x30
         virtual void* CObjectState_setStateBitMask2(); //0x34
@@ -28,11 +28,9 @@ namespace cf {
         // spellings for the +0x14/+0x1C clear-word slots.
         void CObjectState_UnkVirtualFunc4() { CObjectState_clearStateWord4(); }
         void CObjectState_UnkVirtualFunc6() { CObjectState_clearStateWord8(); }
-        // Wave-40 UnkVirtual mop-up alias (non-virtual, inline): same-slot
-        // forwarder for the 0x28 +0xC-word query (ocUnit setStateBitMask0
-        // gate); the virtual keeps its Unk name (hand-built vtables spell
-        // the mangled name). MWCC inlines the identical virtual dispatch.
-        int CObjectState_checkStateFlagsC() { return CObjectState_UnkVirtualFunc9(); }
+        // Legacy Unk spelling for the 0x28 +0xC-word query; Unk Fv body stays
+        // for hand-built vtables. MWCC inlines into the virtual dispatch.
+        int CObjectState_UnkVirtualFunc9() { return CObjectState_checkStateFlagsC(); }
 
         //0x0: vtable
         u32 unk4;          // 0x04

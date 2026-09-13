@@ -679,7 +679,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
             mState = 1;
         }
         mFileHandle1 = nullptr;
-        mMemRegion1.func_8045F810();
+        mMemRegion1.validateHeap();
         return true;
     } else if (mFileHandle2 == pEventFile->mFileHandle) {
         // === crystal list file 2 loaded ===
@@ -702,7 +702,7 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
             mState = 1;
         }
         mFileHandle2 = nullptr;
-        mMemRegion2.func_8045F810();
+        mMemRegion2.validateHeap();
         return true;
     }
 

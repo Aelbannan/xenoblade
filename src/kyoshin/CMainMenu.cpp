@@ -601,16 +601,20 @@ extern "C" void func_800FF914(CArtsInfo* self) {
 // Pane-flag setter used by the sub-menu open blocks: find the named pane
 // through a fresh layout-root load (retail reloads it every lookup) and
 // rewrite its enable bit (mFlag bit0). All lookups recurse except the last.
+// Chained FindPaneByName→SetVisible so MWCC keeps the pane in r3 for the
+// mFlag lbz/rlwinm/ori/stb sequence. Literal true/false arms constant-fold
+// SetBit (false = rlwinm only; true adds ori 1).
 #define MENU_SET_PANE_FLAG(self_, name_, on_, rec_)                              \
     do {                                                                         \
-        nw4r::lyt::Pane* pane_ =                                                 \
+        if (on_) {                                                               \
             (*(nw4r::lyt::Pane**)((u8*)(self_)->field_0x7C + 0x10))              \
-                ->FindPaneByName((name_), (rec_));                               \
-        if (on_) {                                            \
-            pane_->SetVisible(true);                          \
-        } else {                                              \
-            pane_->SetVisible(false);                         \
-        }                                                     \
+                ->FindPaneByName((name_), (rec_))                                \
+                ->SetVisible(true);                                              \
+        } else {                                                                 \
+            (*(nw4r::lyt::Pane**)((u8*)(self_)->field_0x7C + 0x10))              \
+                ->FindPaneByName((name_), (rec_))                                \
+                ->SetVisible(false);                                             \
+        }                                                                        \
     } while (0)
 
 // Per-frame main-menu input handler (state 2): scroll the main cursor,
@@ -647,7 +651,10 @@ void func_800FF920(CMainMenu* self) {
         }
     }
 
-    u32 down, up, aPressed, bPressed, confirm;
+    // Join colors: r8=aPressed, r6=down, r7=up, r4=bPressed, r0=confirm.
+    // Decl order bPressed,aPressed,down,up,confirm lands down/up/bPressed;
+    // residual: aPressed in r5 vs retail r8 (p/t load colors).
+    u32 bPressed, aPressed, down, up, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;
@@ -659,14 +666,15 @@ void func_800FF920(CMainMenu* self) {
         up = (t >> 1) & 1;
         bPressed = (p >> 26) & 1;
     } else {
-        u32 p = pad->mPressedButtonFlags;
+        // Load turbo first so t tends to land in r0 like retail.
         u32 t = pad->mTurboPressButtonFlags;
+        u32 p = pad->mPressedButtonFlags;
         u32 c = p & 0x420;
         aPressed = (p >> 4) & 1;
         down = t & 1;
+        confirm = c != 0;
         up = (t >> 1) & 1;
         bPressed = (p >> 12) & 1;
-        confirm = c != 0;
     }
 
     if (down != 0) {
@@ -676,8 +684,10 @@ void func_800FF920(CMainMenu* self) {
         if (idx < 0) {
             self->field_0xC0 = 6;
         }
-        // "Param" anchor pane gives y/z; x comes from the cursor-x table.
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+        // Retail loads the layout via the embedded CBaseCur mpLayout (+0x98),
+        // not field_0x7C, then takes the +0x10 root pane.
+        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)(
+            (u8*)((CBaseCur*)&self->_90[0])->mpLayout + 0x10);
         nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
         nw4r::math::VEC3 vec;
         if (pane != NULL) {
@@ -706,7 +716,8 @@ void func_800FF920(CMainMenu* self) {
         if (++self->field_0xC0 > 6) {
             self->field_0xC0 = 0;
         }
-        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+        nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)(
+            (u8*)((CBaseCur*)&self->_90[0])->mpLayout + 0x10);
         nw4r::lyt::Pane* pane = root->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
         nw4r::math::VEC3 vec;
         if (pane != NULL) {
@@ -729,13 +740,161 @@ void func_800FF920(CMainMenu* self) {
         playUISound__FUl(0x6a);
         return;
     }
-    if (aPressed == 0) {
-        if (confirm == 0) {
-            if (bPressed != 0) {
-                func_8013D8A0();
-            }
+    // Retail: beq aPressed==0 → cancel/B tail; fallthrough = select path.
+    if (aPressed != 0) {
+        // Confirm: reject unavailable entries, otherwise open the selected menu.
+        s32 sel = self->field_0xC0;
+        if (self->field_0xC8[sel] != 0) {
+            playUISound__FUl(5);
             return;
         }
+        // Sub-menu open: reveal the four entries of the selected page (14 panes
+        // total), swap to the sub-cursor open animation and park the state at 5.
+        // Retail duplicates the anim tail inside every case, so each arm carries
+        // its own copy here too.
+        switch (sel) {
+        case 0:
+        case 3:
+            // Header entries: activate the main cursor and enter screen-open state.
+            func_801D2174((CBaseCur*)&self->_90[0]);
+            self->field_0xE0 = 4;
+            playUISound__FUl(0x6b);
+            return;
+        case 1: {
+            char* base = lbl_eu_804FCEBC;
+            // Retail: first three entries on, rest off (0x16c is OFF).
+            MENU_SET_PANE_FLAG(self, base + 0x142, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x150, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x15e, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0xE0 = 5;
+            playUISound__FUl(0x6c);
+            return;
+        }
+        case 2: {
+            char* base = lbl_eu_804FCEBC;
+            // Retail: 0x16c+0x17a on (page-2 pair), rest off.
+            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x16c, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x17a, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0xE0 = 5;
+            playUISound__FUl(0x6c);
+            return;
+        }
+        case 4: {
+            char* base = lbl_eu_804FCEBC;
+            // Retail: 0x188..0x1b2 on (four), rest off.
+            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x188, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x196, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1a4, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1b2, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0xE0 = 5;
+            playUISound__FUl(0x6c);
+            return;
+        }
+        case 5: {
+            char* base = lbl_eu_804FCEBC;
+            // Retail: 0x1c0+0x1ce on, rest off.
+            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1c0, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ce, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, true);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0xE0 = 5;
+            playUISound__FUl(0x6c);
+            return;
+        }
+        case 6: {
+            char* base = lbl_eu_804FCEBC;
+            // Retail: last three on (0x1dc..0x1f8); all FindPane recurse=true.
+            MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1dc, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1ea, 1, true);
+            MENU_SET_PANE_FLAG(self, base + 0x1f8, 1, true);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
+            self->field_0x88->SetFrame(lbl_eu_80666F1C);
+            self->field_0xE0 = 5;
+            playUISound__FUl(0x6c);
+            return;
+        }
+        default:
+            goto done;
+        }
+    }
+    if (confirm != 0) {
         // Cancel: same tail as the input-lock branch above.
         self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
         self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
@@ -749,153 +908,11 @@ void func_800FF920(CMainMenu* self) {
         self->field_0xE0 = 3;
         return;
     }
-
-    // Confirm: reject unavailable entries, otherwise open the selected menu.
-    u32 sel = self->field_0xC0;
-    if (self->field_0xC8[sel] != 0) {
-        playUISound__FUl(5);
-        return;
+    if (bPressed != 0) {
+        func_8013D8A0();
     }
-    // Sub-menu open: reveal the four entries of the selected page (14 panes
-    // total), swap to the sub-cursor open animation and park the state at 5.
-    // Retail duplicates the anim tail inside every case, so each arm carries
-    // its own copy here too.
-    switch (sel) {
-    case 0:
-    case 3:
-        // Header entries: activate the main cursor and enter screen-open state.
-        func_801D2174((CBaseCur*)&self->_90[0]);
-        self->field_0xE0 = 4;
-        playUISound__FUl(0x6b);
-        return;
-    case 1: {
-        char* base = lbl_eu_804FCEBC;
-        MENU_SET_PANE_FLAG(self, base + 0x142, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x150, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x15e, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x16c, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-        self->field_0x88->SetFrame(lbl_eu_80666F1C);
-        self->field_0xE0 = 5;
-        playUISound__FUl(0x6c);
-        return;
-    }
-    case 2: {
-        char* base = lbl_eu_804FCEBC;
-        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x17a, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x188, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-        self->field_0x88->SetFrame(lbl_eu_80666F1C);
-        self->field_0xE0 = 5;
-        playUISound__FUl(0x6c);
-        return;
-    }
-    case 4: {
-        char* base = lbl_eu_804FCEBC;
-        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x196, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1a4, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1b2, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1c0, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-        self->field_0x88->SetFrame(lbl_eu_80666F1C);
-        self->field_0xE0 = 5;
-        playUISound__FUl(0x6c);
-        return;
-    }
-    case 5: {
-        char* base = lbl_eu_804FCEBC;
-        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ce, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1dc, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ea, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1f8, 0, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-        self->field_0x88->SetFrame(lbl_eu_80666F1C);
-        self->field_0xE0 = 5;
-        playUISound__FUl(0x6c);
-        return;
-    }
-    case 6: {
-        char* base = lbl_eu_804FCEBC;
-        MENU_SET_PANE_FLAG(self, base + 0x142, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x150, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x15e, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x16c, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x17a, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x188, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x196, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1a4, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1b2, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1c0, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ce, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1dc, 0, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1ea, 1, true);
-        MENU_SET_PANE_FLAG(self, base + 0x1f8, 1, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x80, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
-        self->field_0x7C->SetAnimationEnable(self->field_0x88, true);
-        self->field_0x88->SetFrame(lbl_eu_80666F1C);
-        self->field_0xE0 = 5;
-        playUISound__FUl(0x6c);
-        return;
-    }
-    default:
-        return;
-    }
+done:
+    ;
 }
 
 extern "C" void func_80100E14(CMainMenu* self) {

@@ -222,7 +222,8 @@ extern "C" void* func_801984F0(void* a, u32 idx);
 extern "C" void func_80139AC8(void* a, void* b, void* c);
 extern "C" void* func_800B8A64(void);
 int sprintf(char*, const char*, ...);
-// getEffOwner____FPv: C++ linkage (MWCC re-derives the retail mangled name).
+// Retail linker name is the already-mangled C++ symbol.
+extern "C" void* getEffOwner____FPv(void* obj);
 void* func_800AD860(void* obj);
 
 // Retail .sdata singleton (created by func_801109D8, cleared by Term).

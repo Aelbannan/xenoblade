@@ -714,7 +714,8 @@ struct CFunc80091864Sub {
 // deleted - cast to CfObjectActor*.
 struct CFunc80091864Actor {
     void* vptr;                                         // 0x00
-    u8 _pad04[0x3374 - 0x04];                           // 0x04-0x3373
+    CObjectState* field_04;                             // 0x04
+    u8 _pad08[0x3374 - 0x08];                           // 0x08-0x3373
     u32 field_3374;                                     // 0x3374 flags
     u8 _pad3378[0x3E9C - 0x3378];                       // 0x3378-0x3E9B
     CFunc80091864Sub mSub;                              // 0x3E9C
@@ -730,7 +731,9 @@ struct CFunc80091864Actor {
 
 // Object returned by the +0x110 slot: +0xE0 heading index, +0x200 flags.
 struct CFunc80091864Target {
-    u8 _pad[0xE0];                                      // 0x00-0xDF
+    u8 _pad[0x14];                                      // 0x00-0x13
+    f32 field_14;                                       // 0x14
+    u8 _pad18[0xE0 - 0x18];                             // 0x18-0xDF
     u32 field_E0;                                       // 0xE0
     u8 _padE4[0x200 - 0xE4];                            // 0xE4-0x1FF
     u32 field_200;                                      // 0x200 flags
@@ -744,22 +747,28 @@ struct CFunc80091864View {
     f32 field_0x4;                                      // 0x04
     u8 _pad08[0x0C - 0x08];                             // 0x08-0x0B
     CFunc8008E760Vec3W mPos0W;                          // 0x0C
-    CFunc8008E760Vec3W mVel18W;                         // 0x18 velocity words
+    ml::CVec3 mVelocity;                                // 0x18
     u8 _pad24[0x34 - 0x24];                             // 0x24-0x33
     CNpcBaseDataView* field_0x34;                       // 0x34
-    u8 _pad38[0x4C - 0x38];                             // 0x38-0x4B
+    u8 _pad38[0x3C - 0x38];                             // 0x38-0x3B
+    f32 field_0x3C;                                     // 0x3C
+    u8 _pad40[0x4C - 0x40];                             // 0x40-0x4B
     u32 field_4C;                                       // 0x4C
     u32 field_50;                                       // 0x50
     u32 field_54;                                       // 0x54
     u16 field_0x58;                                     // 0x58 state bits
     u16 field_0x5A;                                     // 0x5A gate counter
     u32 field_0x5C;                                     // 0x5C wander seed
-    u8 _pad60[0x6C - 0x60];                             // 0x60-0x6B
+    f32 field_0x60;                                     // 0x60 current speed
+    f32 field_0x64;                                     // 0x64 smoothed speed
+    f32 field_0x68;                                     // 0x68 latched arts speed
     s16 field_0x6C;                                     // 0x6C wander timer
-    u8 _pad6E[0x70 - 0x6E];                             // 0x6E-0x6F
-    s16 field_0x70;                                     // 0x70 lost counter
-    u16 field_0x72;                                     // 0x72
-    u8 _pad74[0x144 - 0x74];                            // 0x74-0x143
+    s16 field_0x6E;                                     // 0x6E halt timer
+    s16 field_0x70;                                     // 0x70 lost / wait counter
+    s16 field_0x72;                                     // 0x72 turn timer
+    s16 field_0x74;                                     // 0x74 arts-speed timer
+    s16 field_0x76;                                     // 0x76 party-probe counter
+    u8 _pad78[0x144 - 0x78];                            // 0x78-0x143
     CFunc8008E760Vec3W mVec144W;                        // 0x144
     u8 _pad150[0x160 - 0x150];                          // 0x150-0x15F
     f32 field_0x160;                                    // 0x160
@@ -856,6 +865,13 @@ extern "C" void* func_801974CC(void* a, void* b);
 extern "C" void func_80198710(void* out, void* src, f32 a, int b, int c,
                                f32 d, f32 e);
 extern "C" int func_8019876C(void* a, void* b);
+extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);
+extern "C" void func_80089398(void* self, ml::CVec3* dst, const ml::CVec3* src,
+                              int flag);
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 extern "C" void* getFP__FPCc(const char* name);
 // func_8008D51C call sites:
 // refresh (retail C-ABI names; func_8004C5EC is declared in CtrlNpc.hpp).
@@ -924,6 +940,11 @@ extern const f32 lbl_eu_80666678;
 // func_80091864 wander-scan constants: proximity radius scale and the
 // facing-alignment cosine threshold.
 extern const f32 lbl_eu_8066667C;
+extern const f32 lbl_eu_80666680;
+extern const f32 lbl_eu_80666684;
+extern const f32 lbl_eu_80666688;
+extern const f32 lbl_eu_8066668C;
+extern const f32 lbl_eu_80666690;
 extern const f32 lbl_eu_80666694;
 extern const f32 lbl_eu_80666648;   // func_8008E06C fallback for field_0x5C
 extern const f32 lbl_eu_8066A210;   // pi/2 (func_8008E06C rand angle scale)

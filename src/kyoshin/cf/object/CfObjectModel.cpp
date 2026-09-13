@@ -225,7 +225,7 @@ void cf::CfObjectModel::CfObjectModel_teardownModel() {
         }
     }
     CfObjectModel_releaseModelList();  // vtable +0x17C
-    CfObjectModel_releaseModelSub();  // vtable +0x178 (alias for UnkVirtualFunc1)
+    CfObjectModel_releaseModelSub();  // vtable +0x178
     // The +0x70/+0x90/+0x94 words are exposed as opaque byte arrays by the
     // header, so the zero stores go through a local overlay.
     struct Model7090 {
@@ -244,6 +244,9 @@ void cf::CfObjectModel::CfObjectModel_teardownModel() {
     mFlags68 = flags;
 }
 
+// Non-virtual out-of-line body: retail Fv linker name for hand table +0x178
+// and Move's Class::CfObjectModel_UnkVirtualFunc1 base call. The C++ virtual
+// at that slot is releaseModelSub (novtable; dispatch is positional).
 void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc1() {
     if (mSubObj98 != 0) {
         func_80495E60(mSubObj98);
@@ -255,7 +258,7 @@ void CfObjectModel_releaseModelList__Q22cf13CfObjectModelFv() {}
 
 void func_800BAB64(cf::CfObjectModel* self) {
     self->CfObjectModel_releaseModelList();  // vtable +0x17C
-    self->CfObjectModel_releaseModelSub();  // vtable +0x178 (alias for UnkVirtualFunc1)
+    self->CfObjectModel_releaseModelSub();  // vtable +0x178
     // Zero the two words at +0x90/+0x94 (the header exposes them as the
     // opaque byte array field_0x90, so write through a local overlay).
     struct Model90 {

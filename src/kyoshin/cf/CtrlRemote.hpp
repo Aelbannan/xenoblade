@@ -550,7 +550,7 @@ extern "C" void func_80280ADC();
 extern "C" void func_8017FEF0(void* obj, int arg);
 extern "C" void* func_800EA444(void* bm);
 extern "C" u32 func_8004C5EC(void* obj);
-extern "C" void func_800BE12C(void* obj, int a, int b, int c, int d);
+extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 extern "C" void func_802A201C(void* a, void* b);
 extern "C" void func_801B0E88();
 extern "C" void func_8018C820(void* obj, int value);

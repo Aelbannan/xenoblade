@@ -2010,7 +2010,7 @@ void func_8024A448(void* self) {
     for (CFloorMapObjNode* node = glist->head->next; node != glist->head;
          node = node->next) {
         CFloorMapObj* g = (CFloorMapObj*)node->object;
-        if (((cf::CfObject*)g)->CfObject_UnkVirtualFunc68() == NULL) continue;
+        if (((cf::CfObject*)g)->CfObject_checkSubReady() == NULL) continue;
         if ((g->m64 & 0x8000) == 0 && (g->m64 & 0x4000) == 0) continue;
         if (g->m91 != 6) continue;
 

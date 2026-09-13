@@ -2,7 +2,13 @@
 
 #include "kyoshin/menu/CMenuGCItem.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
+// CTaskGame.hpp conflicts with CItemBoxGrid.hpp on getLanguage__9CDeviceSCFv
+// (int vs u8). Only the two statics below are used in this TU.
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool isFlag01Set();
+};
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -41,15 +47,13 @@ extern "C" __declspec(noinline) CMenuGCItem* __ct__CMenuGCItem(
         // are copied through a single pinned base pointer (retail keeps one
         // materialization of &__ptmf_null live across both copies).
         *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_8052BF70;
-        register u32* src = (u32*)__ptmf_null;
+        u32* src = (u32*)__ptmf_null;
         u32 t1 = src[1];
-        u32 t0 = src[0];
-        obj->ptmf0[0] = t0;
+        obj->ptmf0[0] = src[0];
         obj->ptmf0[1] = t1;
         obj->ptmf0[2] = src[2];
-        t0 = src[0];
         t1 = src[1];
-        obj->ptmf1[0] = t0;
+        obj->ptmf1[0] = src[0];
         obj->ptmf1[1] = t1;
         obj->ptmf1[2] = src[2];
         obj->mField54 = 0;

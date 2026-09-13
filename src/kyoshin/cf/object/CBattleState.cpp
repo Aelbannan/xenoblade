@@ -1076,14 +1076,15 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
 // fake-Fv ABI as addStagingEntry). Core battle-state-machine: id-specific
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
+//
 void cf::CBattleState::CBattleState_enterStatusEntry(cf::CBattleStateEntry* arg) {
-    u32 id;
     int kind2;
 
-    id = arg->unk0C;
-
     // -- Phase 1: id-specific init (flat if/goto to match retail's
-    //   cmpwi/beq/bge chain) -----------------------------------------
+    //   cmpwi/beq/bge chain). `id` is block-scoped so it dies at P1_done
+    //   and does not steal an extra callee-saved GPR (retail is r29-r31).
+    {
+    u32 id = arg->unk0C;
     if (id == 0xf)
         goto P1_setzero;
     if (id >= 0xf)
@@ -1124,28 +1125,30 @@ P1_ge2E:
     }
     goto P1_done;
 
+P1_setzero:
+    arg->unk04 = 0;
+    arg->unk00 = 0;
+    goto P1_done;
+
 P1_10:
     arg->unk04 = 0;
     arg->unk00 = 0;
     {
-        cf::CBattleState* obj;
-        obj = (cf::CBattleState*)this->CBattleState_getOwner();
-        if (*(u32*)((u8*)obj + 0x3374) & 0x20) {
+        u8* obj = (u8*)this->CBattleState_getOwner();
+        if (*(u32*)(obj + 0x3374) & 0x20) {
             arg->unk20 *= lbl_eu_80667404;
         } else {
-            obj = (cf::CBattleState*)this->CBattleState_getOwner();
-            if (*(u32*)((u8*)obj + 0x3374) & 0x40) {
-                arg->unk20 = (float)((double)arg->unk20 * lbl_eu_80667408);
+            obj = (u8*)this->CBattleState_getOwner();
+            if (*(u32*)(obj + 0x3374) & 0x40) {
+                f32 cur = arg->unk20;
+                arg->unk20 = (f32)((f64)cur * lbl_eu_80667408);
             }
         }
     }
-    goto P1_done;
-
-P1_setzero:
-    arg->unk04 = 0;
-    arg->unk00 = 0;
 
 P1_done:
+        ;
+    }
 
     // -- Phase 2: set unk30 bit 0 based on unk20 vs constant ---------
     if (lbl_eu_80667410 == arg->unk20) {
@@ -1154,454 +1157,1067 @@ P1_done:
         arg->unk30 &= ~1u;
     }
 
-    // -- Phase 3: kind classification #1 (r0 in retail) --------------
+    // -- Phase 3: kind == 3 writes the id into this+0x1528 -----------
     {
         int k;
-        if (id >= 0xd4) goto K1_5;
-        if (id >= 0x3e) goto K1_4;
-        if (id >= 0x2c) goto K1_3;
-        if (id == 0x27) { k = 0; goto K1_done; }
-        if (id >= 0x27) goto K1_2;
-        if (id >= 4) goto K1_1;
-        if (id >= 2) { k = 0; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_1: if (id >= 0x14) { k = 2; goto K1_done; } k = 1; goto K1_done;
-    K1_2: if (id >= 0x2a) { k = 1; goto K1_done; } k = 2; goto K1_done;
-    K1_3: if (id == 0x36) { k = 0; goto K1_done; }
-        if (id >= 0x36) { goto K1_3b; }
-        if (id >= 0x35) { k = 2; goto K1_done; }
-        if (id >= 0x33) { k = 0; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_3b: if (id >= 0x3c) { k = 1; goto K1_done; } k = 2; goto K1_done;
-    K1_4: if (id == 0x5f) { k = 0; goto K1_done; }
-        if (id >= 0x5f) goto K1_4b;
-        if (id >= 0x52) goto K1_4c;
-        if (id >= 0x46) { k = 2; goto K1_done; }
-        if (id >= 0x44) { k = 0; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_4c: if (id >= 0x5d) { k = 2; goto K1_done; } if (id >= 0x58) { k = 0; goto K1_done; } k = 1; goto K1_done;
-    K1_4b: if (id == 0x93) { k = 0; goto K1_done; }
-        if (id >= 0x93) goto K1_4d;
-        if (id >= 0x6a) { k = 2; goto K1_done; }
-        if (id >= 0x65) { k = 1; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_4d: if (id >= 0xce) { k = 0; goto K1_done; } k = 2; goto K1_done;
-    K1_5: if (id >= 0x103) goto K1_5b;
-        if (id == 0xeb) { k = 2; goto K1_done; }
-        if (id >= 0xeb) goto K1_5c;
-        if (id >= 0xdf) goto K1_5d;
-        if (id == 0xdc) { k = 1; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_5d: if (id >= 0xea) { k = 3; goto K1_done; } if (id >= 0xe3) { k = 2; goto K1_done; } k = 1; goto K1_done;
-    K1_5c: if (id == 0xf7) { k = 0; goto K1_done; }
-        if (id >= 0xf7) goto K1_5e;
-        if (id >= 0xed) { k = 3; goto K1_done; }
-        k = 0; goto K1_done;
-    K1_5e: if (id == 0xff) { k = 2; goto K1_done; } k = 3; goto K1_done;
-    K1_5b: if (id == 0x117) { k = 1; goto K1_done; }
-        if (id >= 0x117) goto K1_5f;
-        if (id >= 0x109) goto K1_5g;
-        if (id == 0x106) { k = 3; goto K1_done; }
-        k = 2; goto K1_done;
-    K1_5g: if (id >= 0x111) { k = 3; goto K1_done; } if (id >= 0x10d) { k = 2; goto K1_done; } k = 3; goto K1_done;
-    K1_5f: if (id == 0x12d) { k = 0; goto K1_done; } if (id >= 0x12d) { k = 2; goto K1_done; } if (id == 0x11e) { k = 0; goto K1_done; } k = 2;
-    K1_done:
+        int value = arg->unk0C;
+
+    if (value >= 0xd4)
+        goto P3_E8;
+    if (value >= 0x3e)
+        goto P3_80;
+    if (value >= 0x2c)
+        goto P3_54;
+    if (value == 0x27)
+        goto P3_kind0;
+    if (value >= 0x27)
+        goto P3_48;
+    if (value >= 4)
+        goto P3_3C;
+    if (value >= 2)
+        goto P3_kind0;
+    goto P3_kind2;
+P3_3C:
+    if (value >= 0x14)
+        goto P3_kind2;
+    goto P3_kind1;
+P3_48:
+    if (value >= 0x2a)
+        goto P3_kind1;
+    goto P3_kind2;
+P3_54:
+    if (value == 0x36)
+        goto P3_kind0;
+    if (value >= 0x36)
+        goto P3_74;
+    if (value >= 0x35)
+        goto P3_kind2;
+    if (value >= 0x33)
+        goto P3_kind0;
+    goto P3_kind2;
+P3_74:
+    if (value >= 0x3c)
+        goto P3_kind1;
+    goto P3_kind2;
+P3_80:
+    if (value == 0x5f)
+        goto P3_kind0;
+    if (value >= 0x5f)
+        goto P3_BC;
+    if (value >= 0x52)
+        goto P3_A8;
+    if (value >= 0x46)
+        goto P3_kind2;
+    if (value >= 0x44)
+        goto P3_kind0;
+    goto P3_kind2;
+P3_A8:
+    if (value >= 0x5d)
+        goto P3_kind2;
+    if (value >= 0x58)
+        goto P3_kind0;
+    goto P3_kind1;
+P3_BC:
+    if (value == 0x93)
+        goto P3_kind0;
+    if (value >= 0x93)
+        goto P3_DC;
+    if (value >= 0x6a)
+        goto P3_kind2;
+    if (value >= 0x65)
+        goto P3_kind1;
+    goto P3_kind2;
+P3_DC:
+    if (value >= 0xce)
+        goto P3_kind0;
+    goto P3_kind2;
+P3_E8:
+    if (value >= 0x103)
+        goto P3_48b;
+    if (value == 0xeb)
+        goto P3_kind2;
+    if (value >= 0xeb)
+        goto P3_24;
+    if (value >= 0xdf)
+        goto P3_10;
+    if (value == 0xdc)
+        goto P3_kind1;
+    goto P3_kind2;
+P3_10:
+    if (value >= 0xea)
+        goto P3_kind3;
+    if (value >= 0xe3)
+        goto P3_kind2;
+    goto P3_kind1;
+P3_24:
+    if (value == 0xf7)
+        goto P3_kind0;
+    if (value >= 0xf7)
+        goto P3_3Cb;
+    if (value >= 0xed)
+        goto P3_kind3;
+    goto P3_kind0;
+P3_3Cb:
+    if (value == 0xff)
+        goto P3_kind2;
+    goto P3_kind3;
+P3_48b:
+    if (value == 0x117)
+        goto P3_kind1;
+    if (value >= 0x117)
+        goto P3_7C;
+    if (value >= 0x109)
+        goto P3_68;
+    if (value == 0x106)
+        goto P3_kind3;
+    goto P3_kind2;
+P3_68:
+    if (value >= 0x111)
+        goto P3_kind3;
+    if (value >= 0x10d)
+        goto P3_kind2;
+    goto P3_kind3;
+P3_7C:
+    if (value == 0x12d)
+        goto P3_kind0;
+    if (value >= 0x12d)
+        goto P3_kind2;
+    if (value == 0x11e)
+        goto P3_kind0;
+    goto P3_kind2;
+P3_kind0:
+    k = 0;
+    goto P3_done;
+P3_kind1:
+    k = 1;
+    goto P3_done;
+P3_kind3:
+    k = 3;
+    goto P3_done;
+P3_kind2:
+    k = 2;
+P3_done:
+
         if (k == 3) {
-            *(u32*)this->unk1528 = id;
+            *(u32*)this->unk1528 = value;
         }
     }
 
     // -- Phase 4: set bitfield at this+0x15AC ------------------------
     {
-        u32 wordOff = (id >> 3) & ~3u;
-        u32 bitPos = id & 0x1F;
-        *(u32*)(this->unk15AC + wordOff) |= (1u << bitPos);
+        u32 one = 1;
+        u32 bitId = arg->unk0C;
+        *(u32*)(unk15AC + ((bitId >> 3) & ~3u)) |= one << (bitId & 0x1F);
     }
 
-    // -- Phase 5: kind classification #2 (r31 in retail) -------------
-    if (id >= 0xd4) goto K2_5;
-    if (id >= 0x3e) goto K2_4;
-    if (id >= 0x2c) goto K2_3;
-    if (id == 0x27) { kind2 = 0; goto K2_done; }
-    if (id >= 0x27) goto K2_2;
-    if (id >= 4) goto K2_1;
-    if (id >= 2) { kind2 = 0; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_1: if (id >= 0x14) { kind2 = 2; goto K2_done; } kind2 = 1; goto K2_done;
-K2_2: if (id >= 0x2a) { kind2 = 1; goto K2_done; } kind2 = 2; goto K2_done;
-K2_3: if (id == 0x36) { kind2 = 0; goto K2_done; }
-    if (id >= 0x36) { goto K2_3b; }
-    if (id >= 0x35) { kind2 = 2; goto K2_done; }
-    if (id >= 0x33) { kind2 = 0; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_3b: if (id >= 0x3c) { kind2 = 1; goto K2_done; } kind2 = 2; goto K2_done;
-K2_4: if (id == 0x5f) { kind2 = 0; goto K2_done; }
-    if (id >= 0x5f) goto K2_4b;
-    if (id >= 0x52) goto K2_4c;
-    if (id >= 0x46) { kind2 = 2; goto K2_done; }
-    if (id >= 0x44) { kind2 = 0; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_4c: if (id >= 0x5d) { kind2 = 2; goto K2_done; } if (id >= 0x58) { kind2 = 0; goto K2_done; } kind2 = 1; goto K2_done;
-K2_4b: if (id == 0x93) { kind2 = 0; goto K2_done; }
-    if (id >= 0x93) goto K2_4d;
-    if (id >= 0x6a) { kind2 = 2; goto K2_done; }
-    if (id >= 0x65) { kind2 = 1; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_4d: if (id >= 0xce) { kind2 = 0; goto K2_done; } kind2 = 2; goto K2_done;
-K2_5: if (id >= 0x103) goto K2_5b;
-    if (id == 0xeb) { kind2 = 2; goto K2_done; }
-    if (id >= 0xeb) goto K2_5c;
-    if (id >= 0xdf) goto K2_5d;
-    if (id == 0xdc) { kind2 = 1; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_5d: if (id >= 0xea) { kind2 = 3; goto K2_done; } if (id >= 0xe3) { kind2 = 2; goto K2_done; } kind2 = 1; goto K2_done;
-K2_5c: if (id == 0xf7) { kind2 = 0; goto K2_done; }
-    if (id >= 0xf7) goto K2_5e;
-    if (id >= 0xed) { kind2 = 3; goto K2_done; }
-    kind2 = 0; goto K2_done;
-K2_5e: if (id == 0xff) { kind2 = 2; goto K2_done; } kind2 = 3; goto K2_done;
-K2_5b: if (id == 0x117) { kind2 = 1; goto K2_done; }
-    if (id >= 0x117) goto K2_5f;
-    if (id >= 0x109) goto K2_5g;
-    if (id == 0x106) { kind2 = 3; goto K2_done; }
-    kind2 = 2; goto K2_done;
-K2_5g: if (id >= 0x111) { kind2 = 3; goto K2_done; } if (id >= 0x10d) { kind2 = 2; goto K2_done; } kind2 = 3; goto K2_done;
-K2_5f: if (id == 0x12d) { kind2 = 0; goto K2_done; } if (id >= 0x12d) { kind2 = 2; goto K2_done; } if (id == 0x11e) { kind2 = 0; goto K2_done; } kind2 = 2;
-K2_done:
+    // -- Phase 5: kind kept in r31 for the empty-slot scan -----------
+    {
+        int value = arg->unk0C;
+
+    if (value >= 0xd4)
+        goto P5_E8;
+    if (value >= 0x3e)
+        goto P5_80;
+    if (value >= 0x2c)
+        goto P5_54;
+    if (value == 0x27)
+        goto P5_kind0;
+    if (value >= 0x27)
+        goto P5_48;
+    if (value >= 4)
+        goto P5_3C;
+    if (value >= 2)
+        goto P5_kind0;
+    goto P5_kind2;
+P5_3C:
+    if (value >= 0x14)
+        goto P5_kind2;
+    goto P5_kind1;
+P5_48:
+    if (value >= 0x2a)
+        goto P5_kind1;
+    goto P5_kind2;
+P5_54:
+    if (value == 0x36)
+        goto P5_kind0;
+    if (value >= 0x36)
+        goto P5_74;
+    if (value >= 0x35)
+        goto P5_kind2;
+    if (value >= 0x33)
+        goto P5_kind0;
+    goto P5_kind2;
+P5_74:
+    if (value >= 0x3c)
+        goto P5_kind1;
+    goto P5_kind2;
+P5_80:
+    if (value == 0x5f)
+        goto P5_kind0;
+    if (value >= 0x5f)
+        goto P5_BC;
+    if (value >= 0x52)
+        goto P5_A8;
+    if (value >= 0x46)
+        goto P5_kind2;
+    if (value >= 0x44)
+        goto P5_kind0;
+    goto P5_kind2;
+P5_A8:
+    if (value >= 0x5d)
+        goto P5_kind2;
+    if (value >= 0x58)
+        goto P5_kind0;
+    goto P5_kind1;
+P5_BC:
+    if (value == 0x93)
+        goto P5_kind0;
+    if (value >= 0x93)
+        goto P5_DC;
+    if (value >= 0x6a)
+        goto P5_kind2;
+    if (value >= 0x65)
+        goto P5_kind1;
+    goto P5_kind2;
+P5_DC:
+    if (value >= 0xce)
+        goto P5_kind0;
+    goto P5_kind2;
+P5_E8:
+    if (value >= 0x103)
+        goto P5_48b;
+    if (value == 0xeb)
+        goto P5_kind2;
+    if (value >= 0xeb)
+        goto P5_24;
+    if (value >= 0xdf)
+        goto P5_10;
+    if (value == 0xdc)
+        goto P5_kind1;
+    goto P5_kind2;
+P5_10:
+    if (value >= 0xea)
+        goto P5_kind3;
+    if (value >= 0xe3)
+        goto P5_kind2;
+    goto P5_kind1;
+P5_24:
+    if (value == 0xf7)
+        goto P5_kind0;
+    if (value >= 0xf7)
+        goto P5_3Cb;
+    if (value >= 0xed)
+        goto P5_kind3;
+    goto P5_kind0;
+P5_3Cb:
+    if (value == 0xff)
+        goto P5_kind2;
+    goto P5_kind3;
+P5_48b:
+    if (value == 0x117)
+        goto P5_kind1;
+    if (value >= 0x117)
+        goto P5_7C;
+    if (value >= 0x109)
+        goto P5_68;
+    if (value == 0x106)
+        goto P5_kind3;
+    goto P5_kind2;
+P5_68:
+    if (value >= 0x111)
+        goto P5_kind3;
+    if (value >= 0x10d)
+        goto P5_kind2;
+    goto P5_kind3;
+P5_7C:
+    if (value == 0x12d)
+        goto P5_kind0;
+    if (value >= 0x12d)
+        goto P5_kind2;
+    if (value == 0x11e)
+        goto P5_kind0;
+    goto P5_kind2;
+P5_kind0:
+    kind2 = 0;
+    goto P5_done;
+P5_kind1:
+    kind2 = 1;
+    goto P5_done;
+P5_kind3:
+    kind2 = 3;
+    goto P5_done;
+P5_kind2:
+    kind2 = 2;
+P5_done:
+        ;
+    }
 
     // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
     if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
-        if (!(arg->unk30 & 0x200)) {
-            goto BranchA;
-        }
-    }
+        if (!(arg->unk30 & 0x800)) {
+            {
+                int k;
+                int value = arg->unk0C;
 
-BranchB:
-    // -- Branch B (retail jumps to 0x801476AC) -----------------------
-    {
-        int k;
-        if (id >= 0xd4) goto B5_5;
-        if (id >= 0x3e) goto B5_4;
-        if (id >= 0x2c) goto B5_3;
-        if (id == 0x27) { k = 0; goto B5_done; }
-        if (id >= 0x27) goto B5_2;
-        if (id >= 4) goto B5_1;
-        if (id >= 2) { k = 0; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_1: if (id >= 0x14) { k = 2; goto B5_done; } k = 1; goto B5_done;
-    B5_2: if (id >= 0x2a) { k = 1; goto B5_done; } k = 2; goto B5_done;
-    B5_3: if (id == 0x36) { k = 0; goto B5_done; }
-        if (id >= 0x36) { goto B5_3b; }
-        if (id >= 0x35) { k = 2; goto B5_done; }
-        if (id >= 0x33) { k = 0; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_3b: if (id >= 0x3c) { k = 1; goto B5_done; } k = 2; goto B5_done;
-    B5_4: if (id == 0x5f) { k = 0; goto B5_done; }
-        if (id >= 0x5f) goto B5_4b;
-        if (id >= 0x52) goto B5_4c;
-        if (id >= 0x46) { k = 2; goto B5_done; }
-        if (id >= 0x44) { k = 0; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_4c: if (id >= 0x5d) { k = 2; goto B5_done; } if (id >= 0x58) { k = 0; goto B5_done; } k = 1; goto B5_done;
-    B5_4b: if (id == 0x93) { k = 0; goto B5_done; }
-        if (id >= 0x93) goto B5_4d;
-        if (id >= 0x6a) { k = 2; goto B5_done; }
-        if (id >= 0x65) { k = 1; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_4d: if (id >= 0xce) { k = 0; goto B5_done; } k = 2; goto B5_done;
-    B5_5: if (id >= 0x103) goto B5_5b;
-        if (id == 0xeb) { k = 2; goto B5_done; }
-        if (id >= 0xeb) goto B5_5c;
-        if (id >= 0xdf) goto B5_5d;
-        if (id == 0xdc) { k = 1; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_5d: if (id >= 0xea) { k = 3; goto B5_done; } if (id >= 0xe3) { k = 2; goto B5_done; } k = 1; goto B5_done;
-    B5_5c: if (id == 0xf7) { k = 0; goto B5_done; }
-        if (id >= 0xf7) goto B5_5e;
-        if (id >= 0xed) { k = 3; goto B5_done; }
-        k = 0; goto B5_done;
-    B5_5e: if (id == 0xff) { k = 2; goto B5_done; } k = 3; goto B5_done;
-    B5_5b: if (id == 0x117) { k = 1; goto B5_done; }
-        if (id >= 0x117) goto B5_5f;
-        if (id >= 0x109) goto B5_5g;
-        if (id == 0x106) { k = 3; goto B5_done; }
-        k = 2; goto B5_done;
-    B5_5g: if (id >= 0x111) { k = 3; goto B5_done; } if (id >= 0x10d) { k = 2; goto B5_done; } k = 3; goto B5_done;
-    B5_5f: if (id == 0x12d) { k = 0; goto B5_done; } if (id >= 0x12d) { k = 2; goto B5_done; } if (id == 0x11e) { k = 0; goto B5_done; } k = 2;
-    B5_done:
-        if (k == 0) {
-            if (!(arg->unk30 & 0x200)) {
-                if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
-                    cf::CBattleState* obj;
-                    obj = (cf::CBattleState*)this->CBattleState_getOwner();
-                    func_80109784((u8*)obj + 0x3F10, id, 1);
-                    func_8013DB6C(6, id, 0, 0);
-                    goto after_dispatch;
-                }
-            }
-        }
-    }
+    if (value >= 0xd4)
+        goto A0_E8;
+    if (value >= 0x3e)
+        goto A0_80;
+    if (value >= 0x2c)
+        goto A0_54;
+    if (value == 0x27)
+        goto A0_kind0;
+    if (value >= 0x27)
+        goto A0_48;
+    if (value >= 4)
+        goto A0_3C;
+    if (value >= 2)
+        goto A0_kind0;
+    goto A0_kind2;
+A0_3C:
+    if (value >= 0x14)
+        goto A0_kind2;
+    goto A0_kind1;
+A0_48:
+    if (value >= 0x2a)
+        goto A0_kind1;
+    goto A0_kind2;
+A0_54:
+    if (value == 0x36)
+        goto A0_kind0;
+    if (value >= 0x36)
+        goto A0_74;
+    if (value >= 0x35)
+        goto A0_kind2;
+    if (value >= 0x33)
+        goto A0_kind0;
+    goto A0_kind2;
+A0_74:
+    if (value >= 0x3c)
+        goto A0_kind1;
+    goto A0_kind2;
+A0_80:
+    if (value == 0x5f)
+        goto A0_kind0;
+    if (value >= 0x5f)
+        goto A0_BC;
+    if (value >= 0x52)
+        goto A0_A8;
+    if (value >= 0x46)
+        goto A0_kind2;
+    if (value >= 0x44)
+        goto A0_kind0;
+    goto A0_kind2;
+A0_A8:
+    if (value >= 0x5d)
+        goto A0_kind2;
+    if (value >= 0x58)
+        goto A0_kind0;
+    goto A0_kind1;
+A0_BC:
+    if (value == 0x93)
+        goto A0_kind0;
+    if (value >= 0x93)
+        goto A0_DC;
+    if (value >= 0x6a)
+        goto A0_kind2;
+    if (value >= 0x65)
+        goto A0_kind1;
+    goto A0_kind2;
+A0_DC:
+    if (value >= 0xce)
+        goto A0_kind0;
+    goto A0_kind2;
+A0_E8:
+    if (value >= 0x103)
+        goto A0_48b;
+    if (value == 0xeb)
+        goto A0_kind2;
+    if (value >= 0xeb)
+        goto A0_24;
+    if (value >= 0xdf)
+        goto A0_10;
+    if (value == 0xdc)
+        goto A0_kind1;
+    goto A0_kind2;
+A0_10:
+    if (value >= 0xea)
+        goto A0_kind3;
+    if (value >= 0xe3)
+        goto A0_kind2;
+    goto A0_kind1;
+A0_24:
+    if (value == 0xf7)
+        goto A0_kind0;
+    if (value >= 0xf7)
+        goto A0_3Cb;
+    if (value >= 0xed)
+        goto A0_kind3;
+    goto A0_kind0;
+A0_3Cb:
+    if (value == 0xff)
+        goto A0_kind2;
+    goto A0_kind3;
+A0_48b:
+    if (value == 0x117)
+        goto A0_kind1;
+    if (value >= 0x117)
+        goto A0_7C;
+    if (value >= 0x109)
+        goto A0_68;
+    if (value == 0x106)
+        goto A0_kind3;
+    goto A0_kind2;
+A0_68:
+    if (value >= 0x111)
+        goto A0_kind3;
+    if (value >= 0x10d)
+        goto A0_kind2;
+    goto A0_kind3;
+A0_7C:
+    if (value == 0x12d)
+        goto A0_kind0;
+    if (value >= 0x12d)
+        goto A0_kind2;
+    if (value == 0x11e)
+        goto A0_kind0;
+    goto A0_kind2;
+A0_kind0:
+    k = 0;
+    goto A0_done;
+A0_kind1:
+    k = 1;
+    goto A0_done;
+A0_kind3:
+    k = 3;
+    goto A0_done;
+A0_kind2:
+    k = 2;
+A0_done:
 
-    {
-        int k;
-        if (id >= 0xd4) goto B6_5;
-        if (id >= 0x3e) goto B6_4;
-        if (id >= 0x2c) goto B6_3;
-        if (id == 0x27) { k = 0; goto B6_done; }
-        if (id >= 0x27) goto B6_2;
-        if (id >= 4) goto B6_1;
-        if (id >= 2) { k = 0; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_1: if (id >= 0x14) { k = 2; goto B6_done; } k = 1; goto B6_done;
-    B6_2: if (id >= 0x2a) { k = 1; goto B6_done; } k = 2; goto B6_done;
-    B6_3: if (id == 0x36) { k = 0; goto B6_done; }
-        if (id >= 0x36) { goto B6_3b; }
-        if (id >= 0x35) { k = 2; goto B6_done; }
-        if (id >= 0x33) { k = 0; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_3b: if (id >= 0x3c) { k = 1; goto B6_done; } k = 2; goto B6_done;
-    B6_4: if (id == 0x5f) { k = 0; goto B6_done; }
-        if (id >= 0x5f) goto B6_4b;
-        if (id >= 0x52) goto B6_4c;
-        if (id >= 0x46) { k = 2; goto B6_done; }
-        if (id >= 0x44) { k = 0; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_4c: if (id >= 0x5d) { k = 2; goto B6_done; } if (id >= 0x58) { k = 0; goto B6_done; } k = 1; goto B6_done;
-    B6_4b: if (id == 0x93) { k = 0; goto B6_done; }
-        if (id >= 0x93) goto B6_4d;
-        if (id >= 0x6a) { k = 2; goto B6_done; }
-        if (id >= 0x65) { k = 1; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_4d: if (id >= 0xce) { k = 0; goto B6_done; } k = 2; goto B6_done;
-    B6_5: if (id >= 0x103) goto B6_5b;
-        if (id == 0xeb) { k = 2; goto B6_done; }
-        if (id >= 0xeb) goto B6_5c;
-        if (id >= 0xdf) goto B6_5d;
-        if (id == 0xdc) { k = 1; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_5d: if (id >= 0xea) { k = 3; goto B6_done; } if (id >= 0xe3) { k = 2; goto B6_done; } k = 1; goto B6_done;
-    B6_5c: if (id == 0xf7) { k = 0; goto B6_done; }
-        if (id >= 0xf7) goto B6_5e;
-        if (id >= 0xed) { k = 3; goto B6_done; }
-        k = 0; goto B6_done;
-    B6_5e: if (id == 0xff) { k = 2; goto B6_done; } k = 3; goto B6_done;
-    B6_5b: if (id == 0x117) { k = 1; goto B6_done; }
-        if (id >= 0x117) goto B6_5f;
-        if (id >= 0x109) goto B6_5g;
-        if (id == 0x106) { k = 3; goto B6_done; }
-        k = 2; goto B6_done;
-    B6_5g: if (id >= 0x111) { k = 3; goto B6_done; } if (id >= 0x10d) { k = 2; goto B6_done; } k = 3; goto B6_done;
-    B6_5f: if (id == 0x12d) { k = 0; goto B6_done; } if (id >= 0x12d) { k = 2; goto B6_done; } if (id == 0x11e) { k = 0; goto B6_done; } k = 2;
-    B6_done:
-        if (k == 1) {
-            if (!(arg->unk30 & 0x200)) {
-                if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
-                    cf::CBattleState* obj;
-                    obj = (cf::CBattleState*)this->CBattleState_getOwner();
-                    if (arg->unk30 & 0x10000) {
-                        func_80109784((u8*)obj + 0x3F10, id, 0x20);
+                if (k == 0) {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
+                } else {
+                    int k2;
+
+    if (value >= 0xd4)
+        goto A1_E8;
+    if (value >= 0x3e)
+        goto A1_80;
+    if (value >= 0x2c)
+        goto A1_54;
+    if (value == 0x27)
+        goto A1_kind0;
+    if (value >= 0x27)
+        goto A1_48;
+    if (value >= 4)
+        goto A1_3C;
+    if (value >= 2)
+        goto A1_kind0;
+    goto A1_kind2;
+A1_3C:
+    if (value >= 0x14)
+        goto A1_kind2;
+    goto A1_kind1;
+A1_48:
+    if (value >= 0x2a)
+        goto A1_kind1;
+    goto A1_kind2;
+A1_54:
+    if (value == 0x36)
+        goto A1_kind0;
+    if (value >= 0x36)
+        goto A1_74;
+    if (value >= 0x35)
+        goto A1_kind2;
+    if (value >= 0x33)
+        goto A1_kind0;
+    goto A1_kind2;
+A1_74:
+    if (value >= 0x3c)
+        goto A1_kind1;
+    goto A1_kind2;
+A1_80:
+    if (value == 0x5f)
+        goto A1_kind0;
+    if (value >= 0x5f)
+        goto A1_BC;
+    if (value >= 0x52)
+        goto A1_A8;
+    if (value >= 0x46)
+        goto A1_kind2;
+    if (value >= 0x44)
+        goto A1_kind0;
+    goto A1_kind2;
+A1_A8:
+    if (value >= 0x5d)
+        goto A1_kind2;
+    if (value >= 0x58)
+        goto A1_kind0;
+    goto A1_kind1;
+A1_BC:
+    if (value == 0x93)
+        goto A1_kind0;
+    if (value >= 0x93)
+        goto A1_DC;
+    if (value >= 0x6a)
+        goto A1_kind2;
+    if (value >= 0x65)
+        goto A1_kind1;
+    goto A1_kind2;
+A1_DC:
+    if (value >= 0xce)
+        goto A1_kind0;
+    goto A1_kind2;
+A1_E8:
+    if (value >= 0x103)
+        goto A1_48b;
+    if (value == 0xeb)
+        goto A1_kind2;
+    if (value >= 0xeb)
+        goto A1_24;
+    if (value >= 0xdf)
+        goto A1_10;
+    if (value == 0xdc)
+        goto A1_kind1;
+    goto A1_kind2;
+A1_10:
+    if (value >= 0xea)
+        goto A1_kind3;
+    if (value >= 0xe3)
+        goto A1_kind2;
+    goto A1_kind1;
+A1_24:
+    if (value == 0xf7)
+        goto A1_kind0;
+    if (value >= 0xf7)
+        goto A1_3Cb;
+    if (value >= 0xed)
+        goto A1_kind3;
+    goto A1_kind0;
+A1_3Cb:
+    if (value == 0xff)
+        goto A1_kind2;
+    goto A1_kind3;
+A1_48b:
+    if (value == 0x117)
+        goto A1_kind1;
+    if (value >= 0x117)
+        goto A1_7C;
+    if (value >= 0x109)
+        goto A1_68;
+    if (value == 0x106)
+        goto A1_kind3;
+    goto A1_kind2;
+A1_68:
+    if (value >= 0x111)
+        goto A1_kind3;
+    if (value >= 0x10d)
+        goto A1_kind2;
+    goto A1_kind3;
+A1_7C:
+    if (value == 0x12d)
+        goto A1_kind0;
+    if (value >= 0x12d)
+        goto A1_kind2;
+    if (value == 0x11e)
+        goto A1_kind0;
+    goto A1_kind2;
+A1_kind0:
+    k2 = 0;
+    goto A1_done;
+A1_kind1:
+    k2 = 1;
+    goto A1_done;
+A1_kind3:
+    k2 = 3;
+    goto A1_done;
+A1_kind2:
+    k2 = 2;
+A1_done:
+
+                    if (k2 == 1) {
+                        u8* obj = (u8*)this->CBattleState_getOwner();
+                        func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
                     } else {
-                        func_80109784((u8*)obj + 0x3F10, id, 2);
+                        u8* obj = (u8*)this->CBattleState_getOwner();
+                        func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
                     }
-                    func_8013DB6C(6, id, 0, 0);
-                    goto after_dispatch;
                 }
             }
+            func_8013DB6C(6, arg->unk0C, 0, 0);
+            goto after_dispatch;
         }
     }
 
+    // -- Branch B ----------------------------------------------------
     {
         int k;
-        if (id >= 0xd4) goto B7_5;
-        if (id >= 0x3e) goto B7_4;
-        if (id >= 0x2c) goto B7_3;
-        if (id == 0x27) { k = 0; goto B7_done; }
-        if (id >= 0x27) goto B7_2;
-        if (id >= 4) goto B7_1;
-        if (id >= 2) { k = 0; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_1: if (id >= 0x14) { k = 2; goto B7_done; } k = 1; goto B7_done;
-    B7_2: if (id >= 0x2a) { k = 1; goto B7_done; } k = 2; goto B7_done;
-    B7_3: if (id == 0x36) { k = 0; goto B7_done; }
-        if (id >= 0x36) { goto B7_3b; }
-        if (id >= 0x35) { k = 2; goto B7_done; }
-        if (id >= 0x33) { k = 0; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_3b: if (id >= 0x3c) { k = 1; goto B7_done; } k = 2; goto B7_done;
-    B7_4: if (id == 0x5f) { k = 0; goto B7_done; }
-        if (id >= 0x5f) goto B7_4b;
-        if (id >= 0x52) goto B7_4c;
-        if (id >= 0x46) { k = 2; goto B7_done; }
-        if (id >= 0x44) { k = 0; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_4c: if (id >= 0x5d) { k = 2; goto B7_done; } if (id >= 0x58) { k = 0; goto B7_done; } k = 1; goto B7_done;
-    B7_4b: if (id == 0x93) { k = 0; goto B7_done; }
-        if (id >= 0x93) goto B7_4d;
-        if (id >= 0x6a) { k = 2; goto B7_done; }
-        if (id >= 0x65) { k = 1; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_4d: if (id >= 0xce) { k = 0; goto B7_done; } k = 2; goto B7_done;
-    B7_5: if (id >= 0x103) goto B7_5b;
-        if (id == 0xeb) { k = 2; goto B7_done; }
-        if (id >= 0xeb) goto B7_5c;
-        if (id >= 0xdf) goto B7_5d;
-        if (id == 0xdc) { k = 1; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_5d: if (id >= 0xea) { k = 3; goto B7_done; } if (id >= 0xe3) { k = 2; goto B7_done; } k = 1; goto B7_done;
-    B7_5c: if (id == 0xf7) { k = 0; goto B7_done; }
-        if (id >= 0xf7) goto B7_5e;
-        if (id >= 0xed) { k = 3; goto B7_done; }
-        k = 0; goto B7_done;
-    B7_5e: if (id == 0xff) { k = 2; goto B7_done; } k = 3; goto B7_done;
-    B7_5b: if (id == 0x117) { k = 1; goto B7_done; }
-        if (id >= 0x117) goto B7_5f;
-        if (id >= 0x109) goto B7_5g;
-        if (id == 0x106) { k = 3; goto B7_done; }
-        k = 2; goto B7_done;
-    B7_5g: if (id >= 0x111) { k = 3; goto B7_done; } if (id >= 0x10d) { k = 2; goto B7_done; } k = 3; goto B7_done;
-    B7_5f: if (id == 0x12d) { k = 0; goto B7_done; } if (id >= 0x12d) { k = 2; goto B7_done; } if (id == 0x11e) { k = 0; goto B7_done; } k = 2;
-    B7_done:
-        if (k == 3) {
-            if (!(arg->unk30 & 0x200)) {
-                cf::CBattleState* obj;
-                obj = (cf::CBattleState*)this->CBattleState_getOwner();
-                func_80109784((u8*)obj + 0x3F10, id, 1);
-                func_8013DB6C(6, id, 0, 0);
+        int value = arg->unk0C;
+
+    if (value >= 0xd4)
+        goto B0_E8;
+    if (value >= 0x3e)
+        goto B0_80;
+    if (value >= 0x2c)
+        goto B0_54;
+    if (value == 0x27)
+        goto B0_kind0;
+    if (value >= 0x27)
+        goto B0_48;
+    if (value >= 4)
+        goto B0_3C;
+    if (value >= 2)
+        goto B0_kind0;
+    goto B0_kind2;
+B0_3C:
+    if (value >= 0x14)
+        goto B0_kind2;
+    goto B0_kind1;
+B0_48:
+    if (value >= 0x2a)
+        goto B0_kind1;
+    goto B0_kind2;
+B0_54:
+    if (value == 0x36)
+        goto B0_kind0;
+    if (value >= 0x36)
+        goto B0_74;
+    if (value >= 0x35)
+        goto B0_kind2;
+    if (value >= 0x33)
+        goto B0_kind0;
+    goto B0_kind2;
+B0_74:
+    if (value >= 0x3c)
+        goto B0_kind1;
+    goto B0_kind2;
+B0_80:
+    if (value == 0x5f)
+        goto B0_kind0;
+    if (value >= 0x5f)
+        goto B0_BC;
+    if (value >= 0x52)
+        goto B0_A8;
+    if (value >= 0x46)
+        goto B0_kind2;
+    if (value >= 0x44)
+        goto B0_kind0;
+    goto B0_kind2;
+B0_A8:
+    if (value >= 0x5d)
+        goto B0_kind2;
+    if (value >= 0x58)
+        goto B0_kind0;
+    goto B0_kind1;
+B0_BC:
+    if (value == 0x93)
+        goto B0_kind0;
+    if (value >= 0x93)
+        goto B0_DC;
+    if (value >= 0x6a)
+        goto B0_kind2;
+    if (value >= 0x65)
+        goto B0_kind1;
+    goto B0_kind2;
+B0_DC:
+    if (value >= 0xce)
+        goto B0_kind0;
+    goto B0_kind2;
+B0_E8:
+    if (value >= 0x103)
+        goto B0_48b;
+    if (value == 0xeb)
+        goto B0_kind2;
+    if (value >= 0xeb)
+        goto B0_24;
+    if (value >= 0xdf)
+        goto B0_10;
+    if (value == 0xdc)
+        goto B0_kind1;
+    goto B0_kind2;
+B0_10:
+    if (value >= 0xea)
+        goto B0_kind3;
+    if (value >= 0xe3)
+        goto B0_kind2;
+    goto B0_kind1;
+B0_24:
+    if (value == 0xf7)
+        goto B0_kind0;
+    if (value >= 0xf7)
+        goto B0_3Cb;
+    if (value >= 0xed)
+        goto B0_kind3;
+    goto B0_kind0;
+B0_3Cb:
+    if (value == 0xff)
+        goto B0_kind2;
+    goto B0_kind3;
+B0_48b:
+    if (value == 0x117)
+        goto B0_kind1;
+    if (value >= 0x117)
+        goto B0_7C;
+    if (value >= 0x109)
+        goto B0_68;
+    if (value == 0x106)
+        goto B0_kind3;
+    goto B0_kind2;
+B0_68:
+    if (value >= 0x111)
+        goto B0_kind3;
+    if (value >= 0x10d)
+        goto B0_kind2;
+    goto B0_kind3;
+B0_7C:
+    if (value == 0x12d)
+        goto B0_kind0;
+    if (value >= 0x12d)
+        goto B0_kind2;
+    if (value == 0x11e)
+        goto B0_kind0;
+    goto B0_kind2;
+B0_kind0:
+    k = 0;
+    goto B0_done;
+B0_kind1:
+    k = 1;
+    goto B0_done;
+B0_kind3:
+    k = 3;
+    goto B0_done;
+B0_kind2:
+    k = 2;
+B0_done:
+
+    if (k == 0) {
+        if (!(arg->unk30 & 0x800)) {
+            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+                goto after_dispatch;
+            }
+            {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+                func_8013DB6C(6, arg->unk0C, 0, 0);
+                goto after_dispatch;
             }
         }
     }
-
-    goto after_dispatch;
-
-BranchA:
-    // -- Branch A: kind #3 -> if kind==0, call func_80109784(ptr, id, 5) --
-    {
-        int k;
-        if (id >= 0xd4) goto A3_5;
-        if (id >= 0x3e) goto A3_4;
-        if (id >= 0x2c) goto A3_3;
-        if (id == 0x27) { k = 0; goto A3_done; }
-        if (id >= 0x27) goto A3_2;
-        if (id >= 4) goto A3_1;
-        if (id >= 2) { k = 0; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_1: if (id >= 0x14) { k = 2; goto A3_done; } k = 1; goto A3_done;
-    A3_2: if (id >= 0x2a) { k = 1; goto A3_done; } k = 2; goto A3_done;
-    A3_3: if (id == 0x36) { k = 0; goto A3_done; }
-        if (id >= 0x36) { goto A3_3b; }
-        if (id >= 0x35) { k = 2; goto A3_done; }
-        if (id >= 0x33) { k = 0; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_3b: if (id >= 0x3c) { k = 1; goto A3_done; } k = 2; goto A3_done;
-    A3_4: if (id == 0x5f) { k = 0; goto A3_done; }
-        if (id >= 0x5f) goto A3_4b;
-        if (id >= 0x52) goto A3_4c;
-        if (id >= 0x46) { k = 2; goto A3_done; }
-        if (id >= 0x44) { k = 0; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_4c: if (id >= 0x5d) { k = 2; goto A3_done; } if (id >= 0x58) { k = 0; goto A3_done; } k = 1; goto A3_done;
-    A3_4b: if (id == 0x93) { k = 0; goto A3_done; }
-        if (id >= 0x93) goto A3_4d;
-        if (id >= 0x6a) { k = 2; goto A3_done; }
-        if (id >= 0x65) { k = 1; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_4d: if (id >= 0xce) { k = 0; goto A3_done; } k = 2; goto A3_done;
-    A3_5: if (id >= 0x103) goto A3_5b;
-        if (id == 0xeb) { k = 2; goto A3_done; }
-        if (id >= 0xeb) goto A3_5c;
-        if (id >= 0xdf) goto A3_5d;
-        if (id == 0xdc) { k = 1; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_5d: if (id >= 0xea) { k = 3; goto A3_done; } if (id >= 0xe3) { k = 2; goto A3_done; } k = 1; goto A3_done;
-    A3_5c: if (id == 0xf7) { k = 0; goto A3_done; }
-        if (id >= 0xf7) goto A3_5e;
-        if (id >= 0xed) { k = 3; goto A3_done; }
-        k = 0; goto A3_done;
-    A3_5e: if (id == 0xff) { k = 2; goto A3_done; } k = 3; goto A3_done;
-    A3_5b: if (id == 0x117) { k = 1; goto A3_done; }
-        if (id >= 0x117) goto A3_5f;
-        if (id >= 0x109) goto A3_5g;
-        if (id == 0x106) { k = 3; goto A3_done; }
-        k = 2; goto A3_done;
-    A3_5g: if (id >= 0x111) { k = 3; goto A3_done; } if (id >= 0x10d) { k = 2; goto A3_done; } k = 3; goto A3_done;
-    A3_5f: if (id == 0x12d) { k = 0; goto A3_done; } if (id >= 0x12d) { k = 2; goto A3_done; } if (id == 0x11e) { k = 0; goto A3_done; } k = 2;
-    A3_done:
-        if (k == 0) {
-            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_getOwner();
-            func_80109784((u8*)obj + 0x3F10, id, 5);
-        }
     }
 
-    // -- Branch A: kind #4 -> func_80109784 with 6 or 4 --------------
     {
         int k;
-        if (id >= 0xd4) goto A4_5;
-        if (id >= 0x3e) goto A4_4;
-        if (id >= 0x2c) goto A4_3;
-        if (id == 0x27) { k = 0; goto A4_done; }
-        if (id >= 0x27) goto A4_2;
-        if (id >= 4) goto A4_1;
-        if (id >= 2) { k = 0; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_1: if (id >= 0x14) { k = 2; goto A4_done; } k = 1; goto A4_done;
-    A4_2: if (id >= 0x2a) { k = 1; goto A4_done; } k = 2; goto A4_done;
-    A4_3: if (id == 0x36) { k = 0; goto A4_done; }
-        if (id >= 0x36) { goto A4_3b; }
-        if (id >= 0x35) { k = 2; goto A4_done; }
-        if (id >= 0x33) { k = 0; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_3b: if (id >= 0x3c) { k = 1; goto A4_done; } k = 2; goto A4_done;
-    A4_4: if (id == 0x5f) { k = 0; goto A4_done; }
-        if (id >= 0x5f) goto A4_4b;
-        if (id >= 0x52) goto A4_4c;
-        if (id >= 0x46) { k = 2; goto A4_done; }
-        if (id >= 0x44) { k = 0; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_4c: if (id >= 0x5d) { k = 2; goto A4_done; } if (id >= 0x58) { k = 0; goto A4_done; } k = 1; goto A4_done;
-    A4_4b: if (id == 0x93) { k = 0; goto A4_done; }
-        if (id >= 0x93) goto A4_4d;
-        if (id >= 0x6a) { k = 2; goto A4_done; }
-        if (id >= 0x65) { k = 1; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_4d: if (id >= 0xce) { k = 0; goto A4_done; } k = 2; goto A4_done;
-    A4_5: if (id >= 0x103) goto A4_5b;
-        if (id == 0xeb) { k = 2; goto A4_done; }
-        if (id >= 0xeb) goto A4_5c;
-        if (id >= 0xdf) goto A4_5d;
-        if (id == 0xdc) { k = 1; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_5d: if (id >= 0xea) { k = 3; goto A4_done; } if (id >= 0xe3) { k = 2; goto A4_done; } k = 1; goto A4_done;
-    A4_5c: if (id == 0xf7) { k = 0; goto A4_done; }
-        if (id >= 0xf7) goto A4_5e;
-        if (id >= 0xed) { k = 3; goto A4_done; }
-        k = 0; goto A4_done;
-    A4_5e: if (id == 0xff) { k = 2; goto A4_done; } k = 3; goto A4_done;
-    A4_5b: if (id == 0x117) { k = 1; goto A4_done; }
-        if (id >= 0x117) goto A4_5f;
-        if (id >= 0x109) goto A4_5g;
-        if (id == 0x106) { k = 3; goto A4_done; }
-        k = 2; goto A4_done;
-    A4_5g: if (id >= 0x111) { k = 3; goto A4_done; } if (id >= 0x10d) { k = 2; goto A4_done; } k = 3; goto A4_done;
-    A4_5f: if (id == 0x12d) { k = 0; goto A4_done; } if (id >= 0x12d) { k = 2; goto A4_done; } if (id == 0x11e) { k = 0; goto A4_done; } k = 2;
-    A4_done:
-        {
-            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_getOwner();
-            if (k == 1) {
-                func_80109784((u8*)obj + 0x3F10, id, 6);
+        int value = arg->unk0C;
+
+    if (value >= 0xd4)
+        goto B1_E8;
+    if (value >= 0x3e)
+        goto B1_80;
+    if (value >= 0x2c)
+        goto B1_54;
+    if (value == 0x27)
+        goto B1_kind0;
+    if (value >= 0x27)
+        goto B1_48;
+    if (value >= 4)
+        goto B1_3C;
+    if (value >= 2)
+        goto B1_kind0;
+    goto B1_kind2;
+B1_3C:
+    if (value >= 0x14)
+        goto B1_kind2;
+    goto B1_kind1;
+B1_48:
+    if (value >= 0x2a)
+        goto B1_kind1;
+    goto B1_kind2;
+B1_54:
+    if (value == 0x36)
+        goto B1_kind0;
+    if (value >= 0x36)
+        goto B1_74;
+    if (value >= 0x35)
+        goto B1_kind2;
+    if (value >= 0x33)
+        goto B1_kind0;
+    goto B1_kind2;
+B1_74:
+    if (value >= 0x3c)
+        goto B1_kind1;
+    goto B1_kind2;
+B1_80:
+    if (value == 0x5f)
+        goto B1_kind0;
+    if (value >= 0x5f)
+        goto B1_BC;
+    if (value >= 0x52)
+        goto B1_A8;
+    if (value >= 0x46)
+        goto B1_kind2;
+    if (value >= 0x44)
+        goto B1_kind0;
+    goto B1_kind2;
+B1_A8:
+    if (value >= 0x5d)
+        goto B1_kind2;
+    if (value >= 0x58)
+        goto B1_kind0;
+    goto B1_kind1;
+B1_BC:
+    if (value == 0x93)
+        goto B1_kind0;
+    if (value >= 0x93)
+        goto B1_DC;
+    if (value >= 0x6a)
+        goto B1_kind2;
+    if (value >= 0x65)
+        goto B1_kind1;
+    goto B1_kind2;
+B1_DC:
+    if (value >= 0xce)
+        goto B1_kind0;
+    goto B1_kind2;
+B1_E8:
+    if (value >= 0x103)
+        goto B1_48b;
+    if (value == 0xeb)
+        goto B1_kind2;
+    if (value >= 0xeb)
+        goto B1_24;
+    if (value >= 0xdf)
+        goto B1_10;
+    if (value == 0xdc)
+        goto B1_kind1;
+    goto B1_kind2;
+B1_10:
+    if (value >= 0xea)
+        goto B1_kind3;
+    if (value >= 0xe3)
+        goto B1_kind2;
+    goto B1_kind1;
+B1_24:
+    if (value == 0xf7)
+        goto B1_kind0;
+    if (value >= 0xf7)
+        goto B1_3Cb;
+    if (value >= 0xed)
+        goto B1_kind3;
+    goto B1_kind0;
+B1_3Cb:
+    if (value == 0xff)
+        goto B1_kind2;
+    goto B1_kind3;
+B1_48b:
+    if (value == 0x117)
+        goto B1_kind1;
+    if (value >= 0x117)
+        goto B1_7C;
+    if (value >= 0x109)
+        goto B1_68;
+    if (value == 0x106)
+        goto B1_kind3;
+    goto B1_kind2;
+B1_68:
+    if (value >= 0x111)
+        goto B1_kind3;
+    if (value >= 0x10d)
+        goto B1_kind2;
+    goto B1_kind3;
+B1_7C:
+    if (value == 0x12d)
+        goto B1_kind0;
+    if (value >= 0x12d)
+        goto B1_kind2;
+    if (value == 0x11e)
+        goto B1_kind0;
+    goto B1_kind2;
+B1_kind0:
+    k = 0;
+    goto B1_done;
+B1_kind1:
+    k = 1;
+    goto B1_done;
+B1_kind3:
+    k = 3;
+    goto B1_done;
+B1_kind2:
+    k = 2;
+B1_done:
+
+    if (k == 1) {
+        if (!(arg->unk30 & 0x800)) {
+            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+                goto after_dispatch;
+            }
+            if (arg->unk30 & 0x20000) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
             } else {
-                func_80109784((u8*)obj + 0x3F10, id, 4);
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
             }
+            func_8013DB6C(6, arg->unk0C, 0, 0);
+            goto after_dispatch;
         }
     }
+    }
 
-    func_8013DB6C(6, id, 0, 0);
+    {
+        int k;
+        int value = arg->unk0C;
+
+    if (value >= 0xd4)
+        goto B3_E8;
+    if (value >= 0x3e)
+        goto B3_80;
+    if (value >= 0x2c)
+        goto B3_54;
+    if (value == 0x27)
+        goto B3_kind0;
+    if (value >= 0x27)
+        goto B3_48;
+    if (value >= 4)
+        goto B3_3C;
+    if (value >= 2)
+        goto B3_kind0;
+    goto B3_kind2;
+B3_3C:
+    if (value >= 0x14)
+        goto B3_kind2;
+    goto B3_kind1;
+B3_48:
+    if (value >= 0x2a)
+        goto B3_kind1;
+    goto B3_kind2;
+B3_54:
+    if (value == 0x36)
+        goto B3_kind0;
+    if (value >= 0x36)
+        goto B3_74;
+    if (value >= 0x35)
+        goto B3_kind2;
+    if (value >= 0x33)
+        goto B3_kind0;
+    goto B3_kind2;
+B3_74:
+    if (value >= 0x3c)
+        goto B3_kind1;
+    goto B3_kind2;
+B3_80:
+    if (value == 0x5f)
+        goto B3_kind0;
+    if (value >= 0x5f)
+        goto B3_BC;
+    if (value >= 0x52)
+        goto B3_A8;
+    if (value >= 0x46)
+        goto B3_kind2;
+    if (value >= 0x44)
+        goto B3_kind0;
+    goto B3_kind2;
+B3_A8:
+    if (value >= 0x5d)
+        goto B3_kind2;
+    if (value >= 0x58)
+        goto B3_kind0;
+    goto B3_kind1;
+B3_BC:
+    if (value == 0x93)
+        goto B3_kind0;
+    if (value >= 0x93)
+        goto B3_DC;
+    if (value >= 0x6a)
+        goto B3_kind2;
+    if (value >= 0x65)
+        goto B3_kind1;
+    goto B3_kind2;
+B3_DC:
+    if (value >= 0xce)
+        goto B3_kind0;
+    goto B3_kind2;
+B3_E8:
+    if (value >= 0x103)
+        goto B3_48b;
+    if (value == 0xeb)
+        goto B3_kind2;
+    if (value >= 0xeb)
+        goto B3_24;
+    if (value >= 0xdf)
+        goto B3_10;
+    if (value == 0xdc)
+        goto B3_kind1;
+    goto B3_kind2;
+B3_10:
+    if (value >= 0xea)
+        goto B3_kind3;
+    if (value >= 0xe3)
+        goto B3_kind2;
+    goto B3_kind1;
+B3_24:
+    if (value == 0xf7)
+        goto B3_kind0;
+    if (value >= 0xf7)
+        goto B3_3Cb;
+    if (value >= 0xed)
+        goto B3_kind3;
+    goto B3_kind0;
+B3_3Cb:
+    if (value == 0xff)
+        goto B3_kind2;
+    goto B3_kind3;
+B3_48b:
+    if (value == 0x117)
+        goto B3_kind1;
+    if (value >= 0x117)
+        goto B3_7C;
+    if (value >= 0x109)
+        goto B3_68;
+    if (value == 0x106)
+        goto B3_kind3;
+    goto B3_kind2;
+B3_68:
+    if (value >= 0x111)
+        goto B3_kind3;
+    if (value >= 0x10d)
+        goto B3_kind2;
+    goto B3_kind3;
+B3_7C:
+    if (value == 0x12d)
+        goto B3_kind0;
+    if (value >= 0x12d)
+        goto B3_kind2;
+    if (value == 0x11e)
+        goto B3_kind0;
+    goto B3_kind2;
+B3_kind0:
+    k = 0;
+    goto B3_done;
+B3_kind1:
+    k = 1;
+    goto B3_done;
+B3_kind3:
+    k = 3;
+    goto B3_done;
+B3_kind2:
+    k = 2;
+B3_done:
+
+    if (k == 3) {
+        if (!(arg->unk30 & 0x800)) {
+            u8* obj = (u8*)this->CBattleState_getOwner();
+            func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+            func_8013DB6C(6, arg->unk0C, 0, 0);
+        }
+    }
+    }
 
 after_dispatch:
-    // -- Final: entry-slot scan + copy -------------------------------
     {
         u32 entryId = arg->unk0C;
 
-        // Decision tree matching retail's cmpwi/beq/bge chain
         if (entryId == 0x10d)
             goto F_skip_scan;
         if (entryId >= 0x10d)
@@ -1654,13 +2270,13 @@ after_dispatch:
             slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
             for (count = 0x68; count != 0; count--, slot++) {
                 if (slot->unk0C != entryId)
-                    goto F_next;
+                    continue;
                 if (slot->unk00 != arg->unk00)
-                    goto F_next;
+                    continue;
                 if (slot->unk04 != arg->unk04)
-                    goto F_next;
+                    continue;
                 if (slot->unk08 != arg->unk08)
-                    goto F_next;
+                    continue;
 
                 if (entryId - 0xf <= 1u) {
                     f32 old1C = slot->unk1C;
@@ -1675,18 +2291,21 @@ after_dispatch:
                     slot->unk16 = arg->unk16;
                     slot->unk18 = arg->unk18;
                     slot->unk1A = arg->unk1A;
-                    slot->unk1C = arg->unk1C + old1C;
-                    slot->unk20 = arg->unk20 + old20;
+                    slot->unk1C = arg->unk1C;
+                    slot->unk20 = arg->unk20;
                     slot->unk24 = arg->unk24;
-                    slot->unk28 = arg->unk28 + old28;
+                    slot->unk28 = arg->unk28;
                     slot->unk2C = arg->unk2C;
                     slot->unk2E = arg->unk2E;
+                    slot->unk1C = arg->unk1C + old1C;
+                    slot->unk20 = arg->unk20 + old20;
+                    slot->unk28 = arg->unk28 + old28;
                     slot->unk30 = arg->unk30 | 8;
                     this->CBattleState_notifyEntryUpdated(slot);
-                    goto F_slot_done;
+                    return;
                 }
 
-                if ((slot->unk30 & 8) && (arg->unk30 & 8)) {
+                if ((slot->unk30 & 4) && (arg->unk30 & 4)) {
                     s32 old10 = slot->unk10;
                     f32 old28 = slot->unk28;
                     slot->unk00 = arg->unk00;
@@ -1705,18 +2324,18 @@ after_dispatch:
                     slot->unk2C = arg->unk2C;
                     slot->unk2E = arg->unk2E;
                     slot->unk30 = arg->unk30;
-                    slot->unk1C = slot->unk20;
                     if (slot->unk18 < slot->unk10)
                         slot->unk10 = slot->unk18;
+                    slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
                     this->CBattleState_notifyEntryUpdated(slot);
-                    goto F_slot_done;
+                    return;
                 }
 
                 if (slot->unk10 > (s32)arg->unk10) {
-                    if (!(slot->unk20 < arg->unk20))
-                        goto F_next;
+                    if (slot->unk20 <= arg->unk20)
+                        return;
                 }
                 {
                     f32 old28 = slot->unk28;
@@ -1740,15 +2359,11 @@ after_dispatch:
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
                     this->CBattleState_notifyEntryUpdated(slot);
-                    goto F_slot_done;
+                    return;
                 }
-
-            F_next:
-                ;
             }
         }
 
-        // 3-array empty-slot scan
         {
             u8* base1 = (u8*)this + 0x8;
             u8* base2 = (u8*)this + 0x688;
@@ -1787,7 +2402,7 @@ after_dispatch:
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
                     this->CBattleState_notifyEntryUpdated(dst);
-                    goto F_slot_done;
+                    return;
                 }
 
                 base1 += 0x34;
@@ -1798,7 +2413,6 @@ after_dispatch:
     }
 
 F_skip_scan:
-F_slot_done:
     ;
 }
 

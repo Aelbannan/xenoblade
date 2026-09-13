@@ -2118,7 +2118,7 @@ extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {
     Obj64_91* lastObj = reinterpret_cast<Obj64_91*>(
         findObjectById(static_cast<int>(lastId)));
     if (lastObj != NULL) {
-        sub = func_800AD860(lastObj);
+        sub = getEffOwner____FPv(lastObj);
         if (sub != NULL) {
             list = func_800B8A64();
             if (list != NULL) {
@@ -2250,7 +2250,7 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
                       0xEDE80000 - 0x2501);
         func_801124C8(self, actor2);
 
-        void* sub = func_800AD860(obj);
+        void* sub = getEffOwner____FPv(obj);
         if (sub != NULL) {
             u8 v = func_801361E8(lbl_eu_806640CC, &lbl_eu_804FDBF8[0x288],
                                  static_cast<AD860Result*>(sub)->id3F28);

@@ -11,7 +11,7 @@ bool CHelp_Sp::isSpThresholdMet() {
         // Retail CfObjectPc vtable +0x160 is CActorParam_UnkVirtualFunc51
         // (float ratio: field 0x17F0 / 0x17FC). Call the owning-class virtual
         // directly; no TU-local pad.
-        f32 value = objPc->CActorParam_UnkVirtualFunc51();
+        f32 value = objPc->CActorParam_getArtsGaugeRatio();
         return mThreshold <= value;
     }
     return false;

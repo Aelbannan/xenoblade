@@ -1,3 +1,8 @@
+#include <types.h>
+#include <cstring>
+#include "kyoshin/cf/object/CActorParam.hpp"
+#include "monolib/util/MemManager.hpp"
+
 extern "C" void dummy() {}
 
 #pragma section data_type ".data" ".data"
@@ -166,3 +171,712 @@ unsigned int lbl_eu_80664780_a;
 unsigned int lbl_eu_80664780_b;
 unsigned int lbl_eu_80664788_a;
 unsigned int lbl_eu_80664788_b;
+
+#pragma section code_type ".text" ".text"
+
+// Local copies of the save-image / work-entry views (the unit header cannot
+// be included here: it redeclares this TU's .sbss/.bss labels with different
+// types). Offsets match src/kyoshin/cf/CfNandManager.hpp.
+
+#pragma pack(1)
+struct CfNandEntryHead {
+    u16 f000;
+    u32 f002;
+    u32 f006;
+    u32 f00A;
+    u32 f00E;
+    u32 f012;
+    u32 f016;
+    u16 gap01A;
+    u32 f01C;
+    u32 f020;
+    u32 f024;
+};
+#pragma pack()
+
+struct CfNandWorkEntryDst {
+    CfNandEntryHead head;
+    u32 arr028[48];
+    u32 arr0E8[36];
+    u16 f178;
+    u16 gap17A;
+    u32 f17C;
+    f32 f180;
+    f32 f184;
+    f32 f188;
+    f32 f18C;
+    f32 f190;
+    f32 f194;
+    s16 f198;
+    s16 f19A;
+    s16 f19C;
+    u16 gap19E;
+    f32 f1A0;
+    f32 f1A4;
+    s16 f1A8;
+    s16 f1AA;
+    s16 f1AC;
+    s16 f1AE;
+    s16 f1B0;
+    s16 f1B2;
+    s16 f1B4;
+    s16 f1B6;
+    u8 f1B8;
+    u8 gap1B9[3];
+    f32 f1BC;
+    f32 f1C0;
+    f32 f1C4;
+    f32 f1C8;
+    f32 f1CC;
+    u8 f1D0;
+    u8 f1D1;
+    u8 f1D2;
+    u8 f1D3;
+    u8 f1D4;
+    u8 gap1D5[3];
+    f32 f1D8;
+    u32 f1DC;
+    u32 f1E0;
+    u32 f1E4;
+    u32 f1E8;
+    u32 f1EC;
+    u32 f1F0;
+    u8 kizuna[0xAC];
+    u32 f2A0;
+    u32 f2A4;
+    u32 f2A8;
+    s16 f2AC;
+    s16 f2AE;
+    u32 f2B0;
+    u8 f2B4;
+    u8 gap2B5[3];
+    f32 f2B8;
+    f32 f2BC;
+    u8 f2C0;
+    u8 tail[0x40];
+    u8 gapEnd[3];
+};
+
+struct CfNandWorkEntrySrc {
+    CfNandEntryHead head;
+    u32 arr028[48];
+    u32 arr0E8[36];
+    u16 f178;
+    u16 gap17A;
+    u32 subSlot;
+    u8 gap180[0x159C];
+    u32 f177C;
+    u32 f1780;
+    u32 f1784;
+    u8 gap1788[0x1D4C];
+    u32 f17CC;
+    f32 f17D0;
+    f32 f17D4;
+    f32 f17D8;
+    f32 f17DC;
+    f32 f17E0;
+    f32 f17E4;
+    s16 f17E8;
+    s16 f17EA;
+    s16 f17EC;
+    u16 gap17EE;
+    f32 f17F0;
+    f32 f17F4;
+    s16 f17F8;
+    s16 f17FA;
+    s16 f17FC;
+    s16 f17FE;
+    s16 f1800;
+    s16 f1802;
+    s16 f1804;
+    s16 f1806;
+    u8 f1808;
+    u8 gap1809[3];
+    f32 f180C;
+    f32 f1810;
+    f32 f1814;
+    f32 f1818;
+    f32 f181C;
+    u8 f1820;
+    u8 f1821;
+    u8 f1822;
+    u8 f1823;
+    u8 f1824;
+    u8 gap1825[3];
+    f32 f1828;
+    u32 f182C;
+    u32 f1830;
+    u32 f1834;
+    u32 f1838;
+    u32 f183C;
+    u32 f1840;
+    s16 f34D4;
+    s16 f34D6;
+    u32 f34D8;
+    u8 f34DC;
+    u8 gap34DD[3];
+    f32 f34E0;
+    f32 f34E4;
+    u8 gap34E8[0x4C];
+    u8 kizunaSrc[0x8A0];
+};
+
+struct CfNandBattleParams {
+    u32 p00;
+    float p04;
+    float p08;
+    float p0C;
+    float p10;
+    float p14;
+    float p18;
+    s16 p1C;
+    s16 p1E;
+    s16 p20;
+    float p24;
+    float p28;
+    s16 p2C;
+    s16 p2E;
+    s16 p30;
+    s16 p32;
+    s16 p34;
+    s16 p36;
+    s16 p38;
+    s16 p3A;
+    u8 p3C;
+    u8 gap3D[3];
+    float p40;
+    float p44;
+    float p48;
+    float p4C;
+    float p50;
+    u8 p54;
+    u8 p55;
+    u8 p56;
+    u8 p57;
+    u8 p58;
+    u8 gap59[3];
+    float p5C;
+    u32 p60;
+    u32 p64;
+    u32 p68;
+    u32 p6C;
+    u32 p70;
+    u32 p74;
+};
+
+struct CfNandSaveTagBlock {
+    u32 tag;
+    u32 length;
+    u32 unk08;
+    u32 crc;
+};
+
+struct CfNandProgressArea {
+    u32 field00;
+    f32 f04;
+    u16 f08;
+    u16 f0A;
+};
+
+struct CfNandPartyEntry {
+    u32 field_00;
+    u32 field_04;
+    u32 field_08;
+    f32 field_0C;
+};
+
+struct CfNandPartySnapshot {
+    CfNandPartyEntry mEntry[3];
+    u32 field_30;
+};
+
+struct CfNandCamBlock {
+    u8 _pad0[0xC];
+    f32 f0C;
+};
+
+struct CfNandWthrBlock {
+    u8 _pad0[0xE];
+    u16 f0E;
+};
+
+struct CfNandSndArea {
+    f32 f00;
+    f32 f04;
+    f32 f08;
+    u32 f0C;
+};
+
+struct __attribute__((packed)) CfNandSaveNameEntry {
+    u32 f04;
+    u32 f08;
+    u32 f0C;
+    u32 f10;
+    f32 f14;
+    u32 f18;
+    u16 f1C;
+    u8 f1E;
+    u8 f1F;
+};
+
+struct CfNandSaveNameTable {
+    s32 count;
+    CfNandSaveNameEntry entries[20];
+};
+
+struct CfNandSaveImage {
+    u32 magic;
+    u32 totalSize;
+    u32 unk08;
+    u32 version;
+    CfNandSaveTagBlock slotTag;
+    u8 slot[0xB8];
+    u8 slotPad[0x9BE8];
+    u8 pad9CC0[0x360];
+    CfNandSaveTagBlock flagTag;
+    u8 flagData[0x1220];
+    CfNandSaveTagBlock gameTag;
+    u8 workHead[0x41F0];
+    CfNandWorkEntryDst workEntry[14];
+    u8 pad11E88[0x18];
+    CfNandSaveTagBlock timeTag;
+    CfNandProgressArea progress;
+    u8 pad11EBC[0x14];
+    CfNandSaveTagBlock partyTag;
+    CfNandPartySnapshot snapshot;
+    u8 pad11F14[0xC];
+    CfNandSaveTagBlock camTag;
+    CfNandCamBlock camBlock;
+    u8 pad11F40[0x10];
+    CfNandSaveTagBlock itemTag;
+    u8 itemBlob[0x12120];
+    CfNandSaveTagBlock wthrTag;
+    CfNandWthrBlock wthrBlock;
+    u8 pad240A0[0x10];
+    CfNandSaveTagBlock sndTag;
+    CfNandSndArea sndArea;
+    u8 pad240D0[0x10];
+    CfNandSaveTagBlock mineTag;
+    u8 mineRegion[0x384];
+    u8 pad24474[0x1C];
+    CfNandSaveTagBlock tboxTag;
+    CfNandSaveNameTable names;
+    u8 pad246D4[0x1CC];
+    CfNandSaveTagBlock optdTag;
+    u8 optdBlob[0x40];
+};
+
+// Version-0x70001 (and the 0x60002 apply path): larger ITEM region, tail
+// shifted to 0x27740+.
+struct CfNandSaveImageV1 {
+    u32 magic;
+    u32 totalSize;
+    u32 unk08;
+    u32 version;
+    CfNandSaveTagBlock slotTag;
+    u8 slot[0xB8];
+    u8 slotPad[0x9BE8];
+    u8 pad9CC0[0x360];
+    CfNandSaveTagBlock flagTag;
+    u8 flagData[0x1220];
+    CfNandSaveTagBlock gameTag;
+    u8 workHead[0x41F0];
+    CfNandWorkEntryDst workEntry[14];
+    u8 pad11E88[0x18];
+    CfNandSaveTagBlock timeTag;
+    CfNandProgressArea progress;
+    u8 pad11EBC[0x14];
+    CfNandSaveTagBlock partyTag;
+    CfNandPartySnapshot snapshot;
+    u8 pad11F14[0xC];
+    CfNandSaveTagBlock camTag;
+    CfNandCamBlock camBlock;
+    u8 pad11F40[0x10];
+    CfNandSaveTagBlock itemTag;
+    u8 itemBlob[0x157D0];
+    CfNandSaveTagBlock wthrTag;
+    CfNandWthrBlock wthrBlock;
+    u8 pad27760[0x10];
+    CfNandSaveTagBlock sndTag;
+    CfNandSndArea sndArea;
+    u8 pad277A0[0x10];
+    CfNandSaveTagBlock mineTag;
+    u8 mineRegion[0x384];
+    u8 pad27B44[0x1C];
+    CfNandSaveTagBlock tboxTag;
+    CfNandSaveNameTable names;
+    u8 pad27F34[0x1CC];
+    CfNandSaveTagBlock optdTag;
+    u8 optdBlob[0x40];
+};
+
+struct CfNandNameLiveNode {
+    CfNandNameLiveNode* p00;
+    CfNandNameLiveNode* p04;
+    u32 w00;
+    f32 f04;
+    f32 f08;
+    f32 f0C;
+    f32 f10;
+    u32 w14;
+    u16 s18;
+    u8 b1A;
+    u8 b1B;
+};
+
+struct CfNandNameLiveRoot {
+    u8 _00[4];
+    CfNandNameLiveNode* head;
+    u8 _08[0x24];
+    CfNandNameLiveNode* slots;
+    s32 slotCount;
+};
+
+extern "C" int func_8023CD9C(void* block);
+extern "C" u32 func_8009CF84();
+extern "C" u8* func_8009CF0C();
+extern "C" u8* func_8009D5FC();
+extern "C" void func_8009EF9C(void* data, u32 value);
+extern "C" void func_8025ECE4(void* src, void* dst);
+extern "C" void queueEventId__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_8006A814(u32* self);
+extern "C" void func_8006A028(f32 v);
+extern "C" void func_8006CBEC(void* v, f32 f);
+extern "C" void func_8016E100(void* p);
+extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
+extern "C" void func_80207D2C(u8* rec);
+extern "C" void func_800B72DC();
+extern "C" CfNandNameLiveRoot* func_800B6CA0();
+extern "C" void updateConfig__FPUc(u8* src, int mode);
+extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void setMasterVolume__Fff(f32 a, f32 b);
+extern "C" void func_801895F4(f32 v);
+extern "C" void func_80189510(f32 v);
+extern u16 lbl_eu_80661AF4;
+extern u16 lbl_eu_80661AF6;
+extern char* lbl_eu_806641B8;
+extern f32 lbl_eu_806686E0;
+extern u8 lbl_eu_80663E5D;
+
+#pragma inline_max_size(0x4000)
+#pragma inline_max_total_size(0x8000)
+inline static void applyWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* dst) {
+    u32 n1 = 48;
+    u32 n2 = 36;
+
+    src->head.f000 = dst->head.f000;
+    src->head.f002 = dst->head.f002;
+    src->head.f006 = dst->head.f006;
+    src->head.f00A = dst->head.f00A;
+    src->head.f00E = dst->head.f00E;
+    src->head.f012 = dst->head.f012;
+    src->head.f016 = dst->head.f016;
+    src->head.f01C = dst->head.f01C;
+    src->head.f020 = dst->head.f020;
+    src->head.f024 = dst->head.f024;
+    for (u32 k = 0; k < n1; k++) {
+        src->arr028[k] = dst->arr028[k];
+    }
+    for (u32 k = 0; k < n2; k++) {
+        src->arr0E8[k] = dst->arr0E8[k];
+    }
+    src->f178 = dst->f178;
+    cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>(&src->subSlot);
+    src->f17CC = dst->f17C;
+    src->f17D0 = dst->f180;
+    src->f17D4 = dst->f184;
+    src->f17D8 = dst->f188;
+    src->f17DC = dst->f18C;
+    src->f17E0 = dst->f190;
+    src->f17E4 = dst->f194;
+    src->f17E8 = dst->f198;
+    src->f17EA = dst->f19A;
+    src->f17EC = dst->f19C;
+    src->f17F0 = dst->f1A0;
+    src->f17F4 = dst->f1A4;
+    src->f17F8 = dst->f1A8;
+    src->f17FA = dst->f1AA;
+    src->f17FC = dst->f1AC;
+    src->f17FE = dst->f1AE;
+    src->f1800 = dst->f1B0;
+    src->f1802 = dst->f1B2;
+    src->f1804 = dst->f1B4;
+    src->f1806 = dst->f1B6;
+    src->f1808 = dst->f1B8;
+    src->f180C = dst->f1BC;
+    src->f1810 = dst->f1C0;
+    src->f1814 = dst->f1C4;
+    src->f1818 = dst->f1C8;
+    src->f181C = dst->f1CC;
+    src->f1820 = dst->f1D0;
+    src->f1821 = dst->f1D1;
+    src->f1822 = dst->f1D2;
+    src->f1823 = dst->f1D3;
+    src->f1824 = dst->f1D4;
+    src->f1828 = dst->f1D8;
+    src->f182C = dst->f1DC;
+    src->f1830 = dst->f1E0;
+    src->f1834 = dst->f1E4;
+    src->f1838 = dst->f1E8;
+    src->f183C = dst->f1EC;
+    src->f1840 = dst->f1F0;
+
+    CfNandBattleParams* bp = (CfNandBattleParams*)actor->CActorParam_getBattleParams();
+    bp->p00 = src->f17CC;
+    bp->p04 = src->f17D0;
+    bp->p08 = src->f17D4;
+    bp->p0C = src->f17D8;
+    bp->p10 = src->f17DC;
+    bp->p14 = src->f17E0;
+    bp->p18 = src->f17E4;
+    bp->p1C = src->f17E8;
+    bp->p1E = src->f17EA;
+    bp->p20 = src->f17EC;
+    bp->p24 = src->f17F0;
+    bp->p28 = src->f17F4;
+    bp->p2C = src->f17F8;
+    bp->p2E = src->f17FA;
+    bp->p30 = src->f17FC;
+    bp->p32 = src->f17FE;
+    bp->p34 = src->f1800;
+    bp->p36 = src->f1802;
+    bp->p38 = src->f1804;
+    bp->p3A = src->f1806;
+    bp->p3C = src->f1808;
+    bp->p40 = src->f180C;
+    bp->p44 = src->f1810;
+    bp->p48 = src->f1814;
+    bp->p4C = src->f1818;
+    bp->p50 = src->f181C;
+    bp->p54 = src->f1820;
+    bp->p55 = src->f1821;
+    bp->p56 = src->f1822;
+    bp->p57 = src->f1823;
+    bp->p58 = src->f1824;
+    bp->p5C = src->f1828;
+    bp->p60 = src->f182C;
+    bp->p64 = src->f1830;
+    bp->p68 = src->f1834;
+    bp->p6C = src->f1838;
+    bp->p70 = src->f183C;
+    bp->p74 = src->f1840;
+
+    src->f177C = dst->f2A0;
+    src->f1780 = dst->f2A4;
+    src->f1784 = dst->f2A8;
+    src->f34D4 = dst->f2AC;
+    src->f34D6 = dst->f2AE;
+    src->f34D8 = dst->f2B0;
+    src->f34DC = dst->f2B4;
+    src->f34E0 = dst->f2B8;
+    src->f34E4 = dst->f2BC;
+
+    u8 flag = dst->f2C0 != 0;
+    lbl_eu_80663E5D = flag;
+    lbl_eu_8066476D = flag;
+    func_8025ECE4(dst->kizuna, src->kizunaSrc);
+}
+
+inline static void restoreNameTable(CfNandSaveNameTable* names) {
+    func_800B72DC();
+    CfNandNameLiveRoot* root = func_800B6CA0();
+    CfNandSaveNameEntry* e = names->entries;
+    for (s32 i = 0; i < names->count; i++) {
+        s32 n = 0;
+        while (n < root->slotCount && root->slots[n].p00 != 0) {
+            n++;
+        }
+        CfNandNameLiveNode* slot = &root->slots[n];
+        u8* body = (u8*)slot + 8;
+        if (body != 0) {
+            slot->w00 = e->f08;
+            slot->f04 = *(float*)((u8*)e + 8);
+            slot->f08 = *(float*)((u8*)e + 12);
+            slot->f0C = *(float*)((u8*)e + 16);
+            slot->f10 = e->f14;
+            slot->w14 = e->f18;
+            slot->s18 = e->f1C;
+            slot->b1A = e->f1E;
+            slot->b1B = e->f1F;
+        }
+        CfNandNameLiveNode* head = root->head;
+        slot->p00 = head;
+        slot->p04 = head->p04;
+        head->p04->p00 = slot;
+        head->p04 = slot;
+        e++;
+    }
+}
+
+// Apply a NAND save image back into live game state (load/teardown path).
+extern "C" int func_8023D3D8(CfNandSaveImage* img) {
+    int ok = 1;
+    u32 ver = img->version - 0x70001;
+    if (ver <= 1) {
+        int valid = func_8023CD9C(img);
+        if (valid == 0) {
+            return 0;
+        }
+        u32 flagLen = func_8009CF84();
+        memcpy(func_8009CF0C(), img->flagData, flagLen);
+        lbl_eu_80664774 = img->slot[0x66];
+        u8* live = func_8009D5FC();
+        memcpy(live, img->workHead, 0x41F0);
+        CfNandWorkEntrySrc* src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+        CfNandWorkEntryDst* dst = &img->workEntry[1];
+        for (u32 i = 1; i < 14; i++) {
+            applyWorkEntry(src, dst);
+            func_8009EF9C(src, 0);
+            src++;
+            dst++;
+        }
+        u8* q = img->workHead + 0x44B1;
+        if (((u32)q & 1) != 0) {
+            q = img->workHead + 0x44B2;
+        }
+        u16* ev = (u16*)q;
+        int n = 0;
+        u16 cur = ev[0];
+        while (n < cur && n < 16) {
+            queueEventId__Q22cf13CfGameManagerFv(cur);
+            ev++;
+            n++;
+            cur = ev[0];
+        }
+        func_8006A814(&img->progress.field00);
+        func_8006A028(img->progress.f04);
+        lbl_eu_80661AF4 = img->progress.f08;
+        lbl_eu_80661AF6 = img->progress.f0A;
+        CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
+        *snapDst = img->snapshot;
+        memcpy(lbl_eu_806641B8, img->itemBlob, 0x12120);
+        func_8006CBEC(&img->camBlock, img->camBlock.f0C);
+        func_8016E100(&img->wthrBlock);
+        fadeOutGameEffects__Q22cf13CfGameManagerFv();
+        func_80207D2C(img->mineRegion);
+        restoreNameTable(&img->names);
+        if (valid != 0) {
+            updateConfig__FPUc(img->optdBlob, 1);
+        }
+        u32 cnt = func_8009CF8C(0x3F);
+        if ((cnt & 0xFFFF) == 0) {
+            cnt = img->wthrBlock.f0E;
+        }
+        if ((cnt & 0xFFFF) != 0) {
+            setEventCounterA__Q22cf13CfGameManagerFv(cnt);
+        }
+        return ok;
+    }
+
+    CfNandSaveImageV1* v1 = (CfNandSaveImageV1*)img;
+    if ((mtl::MemManager::calculateCrc(v1->flagData, func_8009CF84()) & 0xFFFF) != v1->flagTag.crc) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc(v1->workHead, 0x6C28) & 0xFFFF) != v1->gameTag.crc) {
+        ok = 0;
+    } else if (v1->gameTag.length != 0x6C50) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->progress, 0xC) & 0xFFFF) != v1->timeTag.crc) {
+        ok = 0;
+    } else if (v1->timeTag.length != 0x30) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->snapshot, 0x34) & 0xFFFF) != v1->partyTag.crc) {
+        ok = 0;
+    } else if (v1->partyTag.length != 0x50) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->camBlock, 0x10) & 0xFFFF) != v1->camTag.crc) {
+        ok = 0;
+    } else if (v1->camTag.length != 0x30) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc(v1->itemBlob, 0x157D0) & 0xFFFF) != v1->itemTag.crc) {
+        ok = 0;
+    } else if (v1->itemTag.length != 0x157F0) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->wthrBlock, 0x10) & 0xFFFF) != v1->wthrTag.crc) {
+        ok = 0;
+    } else if (v1->wthrTag.length != 0x30) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->sndArea, 0x10) & 0xFFFF) != v1->sndTag.crc) {
+        ok = 0;
+    } else if (v1->sndTag.length != 0x30) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc(v1->mineRegion, 0x384) & 0xFFFF) != v1->mineTag.crc) {
+        ok = 0;
+    } else if (v1->mineTag.length != 0x3B0) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc((const u8*)&v1->names, 0x234) & 0xFFFF) != v1->tboxTag.crc) {
+        ok = 0;
+    } else if (v1->tboxTag.length != 0x410) {
+        ok = 0;
+    }
+    if ((mtl::MemManager::calculateCrc(v1->optdBlob, 0x40) & 0xFFFF) != v1->optdTag.crc) {
+        ok = 0;
+    } else if (v1->optdTag.length != 0x50) {
+        ok = 0;
+    }
+
+    u32 flagLen = func_8009CF84();
+    memcpy(func_8009CF0C(), v1->flagData, flagLen);
+    u8* live = func_8009D5FC();
+    memcpy(live, v1->workHead, 0x41F0);
+    CfNandWorkEntrySrc* src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+    CfNandWorkEntryDst* dst = &v1->workEntry[1];
+    for (u32 i = 1; i < 14; i++) {
+        applyWorkEntry(src, dst);
+        src++;
+        dst++;
+    }
+    func_8006A814(&v1->progress.field00);
+    func_8006A028(v1->progress.f04);
+    lbl_eu_80661AF4 = v1->progress.f08;
+    lbl_eu_80661AF6 = v1->progress.f0A;
+    CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
+    *snapDst = v1->snapshot;
+
+    u8* item = (u8*)lbl_eu_806641B8;
+    u8* blob = v1->itemBlob;
+    memset(item, 0, 0x12120);
+    memcpy(item + 0x0000, blob + 0x0000, 0x211C);
+    memcpy(item + 0x211C, blob + 0x2B44, 0x211C);
+    memcpy(item + 0x4238, blob + 0x5688, 0x211C);
+    memcpy(item + 0x6354, blob + 0x81CC, 0x211C);
+    memcpy(item + 0x8470, blob + 0xAD10, 0x211C);
+    memcpy(item + 0xA58C, blob + 0xD854, 0x211C);
+    memcpy(item + 0xC6A8, blob + 0x10398, 0x20D0);
+    memcpy(item + 0xE778, blob + 0x12468, 0x12C0);
+    memcpy(item + 0xFA38, blob + 0x13728, 0x780);
+    memcpy(item + 0x101B8, blob + 0x13EA8, 0x960);
+    memcpy(item + 0x10B18, blob + 0x14808, 0x960);
+    memcpy(item + 0x11478, blob + 0x15168, 0x640);
+    memcpy(item + 0x120EC, blob + 0x157AC, 0x1C);
+    *(u32*)(item + 0x120E8) = *(u32*)(blob + 0x157A8);
+    *(u32*)(item + 0x12108) = *(u32*)(blob + 0x157C8);
+    *(u32*)(item + 0x1210C) = *(u32*)(blob + 0x157CC);
+    *(u32*)(item + 0x12110) = 0;
+    *(u16*)(item + 0x12114) = (u16)*(u32*)(blob + 0x157CC);
+    *(u16*)(item + 0x12116) = (u16)*(u32*)(blob + 0x157CC);
+    *(u16*)(item + 0x12118) = (u16)*(u32*)(blob + 0x157CC);
+    *(u16*)(item + 0x1211A) = (u16)*(u32*)(blob + 0x157CC);
+    *(u16*)(item + 0x1211C) = (u16)*(u32*)(blob + 0x157CC);
+
+    func_8006CBEC(&v1->camBlock, v1->camBlock.f0C);
+    func_8016E100(&v1->wthrBlock);
+    setMasterVolume__Fff(v1->sndArea.f00, lbl_eu_806686E0);
+    func_801895F4(v1->sndArea.f04);
+    func_80189510(v1->sndArea.f08);
+    func_80207D2C(v1->mineRegion);
+    restoreNameTable(&v1->names);
+    if (ok != 0) {
+        updateConfig__FPUc(v1->optdBlob, 1);
+    }
+    return ok;
+}

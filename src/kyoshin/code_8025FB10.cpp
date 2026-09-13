@@ -23,37 +23,49 @@ struct GXCacheTextProjection {
     s16 height;
 };
 
-#define VALIDATE_NW4R_POINTER(pointer, file, line, message)                    \
+// nw4r pointer validation (CTagProcessor-proven shape): flags declared in
+// reverse chain order so volatile GPRs color validRegs2=r4 .. validMem1=r9,
+// and masks recompute from the pointer each check so stack locals rematerialize
+// via addi from sp (retail) instead of CSE'ing a single address local.
+// `hi` is the caller's 0xFF000000 mask (retail r30), shared with compact checks.
+#define VALIDATE_NW4R_POINTER_HI(pointer, hi, file, line, message)             \
     {                                                                         \
+        /* Forward decl: in this TU's live pressure MWCC colors high→low, so  \
+         * validMem1 (first) lands in r9 like retail. */                      \
         bool validMem1 = true;                                                 \
         bool validMem2 = true;                                                 \
         bool validIo = true;                                                   \
         bool validIo2 = true;                                                  \
         bool validRegs = true;                                                 \
         bool validRegs2 = true;                                                \
-        u32 address = (u32)(pointer);                                          \
-        if ((address & 0xFF000000) != 0x80000000 &&                            \
-            (address & 0xFF800000) != 0x81000000) {                            \
+        if ((hi) != 0x80000000 &&                                              \
+            ((u32)(pointer) & 0xFF800000) != 0x81000000) {                     \
             validMem1 = false;                                                 \
         }                                                                      \
-        if (!validMem1 && (address & 0xF8000000) != 0x90000000) {              \
+        if (!validMem1 && ((u32)(pointer) & 0xF8000000) != 0x90000000) {       \
             validMem2 = false;                                                 \
         }                                                                      \
-        if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {              \
+        if (!validMem2 && (hi) != 0xC0000000) {                                \
             validIo = false;                                                   \
         }                                                                      \
-        if (!validIo && (address & 0xFF800000) != 0xC1000000) {                \
+        if (!validIo && ((u32)(pointer) & 0xFF800000) != 0xC1000000) {         \
             validIo2 = false;                                                  \
         }                                                                      \
-        if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {               \
+        if (!validIo2 && ((u32)(pointer) & 0xF8000000) != 0xD0000000) {         \
             validRegs = false;                                                 \
         }                                                                      \
-        if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {              \
+        if (!validRegs && ((u32)(pointer) & 0xFFFFC000) != 0xE0000000) {        \
             validRegs2 = false;                                                \
         }                                                                      \
         if (!validRegs2) {                                                     \
             Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
         }                                                                      \
+    }
+
+#define VALIDATE_NW4R_POINTER(pointer, file, line, message)                    \
+    {                                                                         \
+        u32 hi = (u32)(pointer) & 0xFF000000;                                  \
+        VALIDATE_NW4R_POINTER_HI(pointer, hi, file, line, message);            \
     }
 
 extern "C" {
@@ -106,78 +118,72 @@ extern f32 lbl_eu_806688C0;
 static const f64 lbl_eu_806688C8 = 4503601774854144.0;
 }
 
-#define VALIDATE_NW4R_POINTER_COMPACT(pointer, file, line, message)            \
-    {                                                                         \
-        u32 address = (u32)(pointer);                                          \
-        if (!((address & 0xFF000000) == 0x80000000 ||                          \
-              (address & 0xFF800000) == 0x81000000 ||                          \
-              (address & 0xF8000000) == 0x90000000 ||                          \
-              (address & 0xFF000000) == 0xC0000000 ||                          \
-              (address & 0xFF800000) == 0xC1000000 ||                          \
-              (address & 0xF8000000) == 0xD0000000 ||                          \
-              (address & 0xFFFFC000) == 0xE0000000)) {                         \
-            Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
-        }                                                                      \
-    }
-
-#define VALIDATE_NW4R_POINTER_FLAG(pointer, region, file, line, message)       \
+#define VALIDATE_NW4R_POINTER_COMPACT(pointer, hi, file, line, message)        \
     {                                                                         \
         bool valid = false;                                                    \
-        if (region == 0x80000000 ||                                            \
+        if ((hi) == 0x80000000 ||                                              \
             ((u32)(pointer) & 0xFF800000) == 0x81000000 ||                     \
             ((u32)(pointer) & 0xF8000000) == 0x90000000 ||                     \
-            region == 0xC0000000 ||                                            \
+            (hi) == 0xC0000000 ||                                              \
             ((u32)(pointer) & 0xFF800000) == 0xC1000000 ||                     \
             ((u32)(pointer) & 0xF8000000) == 0xD0000000 ||                     \
             ((u32)(pointer) & 0xFFFFC000) == 0xE0000000) {                     \
             valid = true;                                                      \
         }                                                                      \
-        if (!valid) {                                                         \
+        if (!valid) {                                                          \
             Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
         }                                                                      \
     }
+
+#define VALIDATE_NW4R_POINTER_FLAG(pointer, region, file, line, message)       \
+    VALIDATE_NW4R_POINTER_COMPACT(pointer, region, file, line, message)
 
 typedef nw4r::ut::TextWriterBase<wchar_t> WideTextWriter;
 
 static inline void setTagProcessorChecked(
     WideTextWriter* writer,
-    nw4r::ut::TagProcessorBase<wchar_t>* processor) {
-    VALIDATE_NW4R_POINTER(writer, lbl_eu_805377CC, 151,
+    nw4r::ut::TagProcessorBase<wchar_t>* processor,
+    u32 writerHi) {
+    VALIDATE_NW4R_POINTER_HI(writer, writerHi, lbl_eu_805377CC, 151,
                           lbl_eu_80537798);
     VALIDATE_NW4R_POINTER(processor, lbl_eu_80537784, 152,
                           lbl_eu_80537748);
     writer->SetTagProcessor(processor);
 }
 
-static inline void setDrawFlagChecked(WideTextWriter* writer, u32 flag) {
-    VALIDATE_NW4R_POINTER_COMPACT(writer, lbl_eu_8052DC70, 139,
+static inline void setDrawFlagChecked(WideTextWriter* writer, u32 writerHi,
+                                      u32 flag) {
+    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DC70, 139,
                           lbl_eu_8052DC3C);
     writer->SetDrawFlag(flag);
 }
 
-static inline void setScaleChecked(WideTextWriter* writer, f32 x, f32 y) {
-    VALIDATE_NW4R_POINTER_COMPACT(writer, lbl_eu_8052DD84, 171,
+static inline void setScaleChecked(WideTextWriter* writer, u32 writerHi,
+                                   f32 x, f32 y) {
+    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DD84, 171,
                           lbl_eu_8052DD50);
     writer->SetScale(x, y);
 }
 
-static inline void setCharSpaceChecked(WideTextWriter* writer, f32 space) {
-    VALIDATE_NW4R_POINTER_COMPACT(writer, lbl_eu_8052DC28, 98,
+static inline void setCharSpaceChecked(WideTextWriter* writer, u32 writerHi,
+                                       f32 space) {
+    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DC28, 98,
                           lbl_eu_8052DBF4);
     writer->SetCharSpace(space);
 }
 
-static inline void setFontChecked(WideTextWriter* writer,
+static inline void setFontChecked(WideTextWriter* writer, u32 writerHi,
                                   const nw4r::ut::Font* font) {
-    VALIDATE_NW4R_POINTER(writer, lbl_eu_8053785C, 65,
+    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8053785C, 65,
                           lbl_eu_80537828);
     VALIDATE_NW4R_POINTER(font, lbl_eu_80537818, 66,
                           lbl_eu_805377E0);
     writer->SetFont(*font);
 }
 
-static inline void validateTextColorPointer(WideTextWriter* writer) {
-    VALIDATE_NW4R_POINTER_COMPACT(writer, lbl_eu_8052DCFC, 135,
+static inline void validateTextColorPointer(WideTextWriter* writer,
+                                            u32 writerHi) {
+    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DCFC, 135,
                           lbl_eu_8052DCC8);
 }
 
@@ -1630,6 +1636,10 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         f32 rectRatioLeft = static_cast<f32>(rect[0]) / renderWidth;
         f32 left = static_cast<f32>(cacheWidth) * rectRatioLeft;
 
+        // Reload cacheInstance like the right→left transition so MWCC emits
+        // the interleaved lwz r30 + lha height into the left float convert.
+        cache = static_cast<GXCacheTextProjection*>(
+            cacheInstance__9CDeviceGX);
         s16 cacheHeight = cache->height;
         f32 renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
@@ -1655,16 +1665,19 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     writer.SetupGX();
     u32 writerRegion = (u32)&writer & 0xFF000000;
 
-    setTagProcessorChecked(&writer, lbl_eu_8066486C);
-    setDrawFlagChecked(&writer, 0x110);
-    setScaleChecked(&writer, lbl_eu_806688D8, lbl_eu_806688DC);
-    setCharSpaceChecked(&writer, lbl_eu_806688D0);
+    setTagProcessorChecked(&writer, lbl_eu_8066486C, writerRegion);
+    setDrawFlagChecked(&writer, writerRegion, 0x110);
+    setScaleChecked(&writer, writerRegion, lbl_eu_806688D8, lbl_eu_806688DC);
+    setCharSpaceChecked(&writer, writerRegion, lbl_eu_806688D0);
 
     const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
-    setFontChecked(&writer, font);
-    validateTextColorPointer(&writer);
-    writer.SetTextColor(nw4r::ut::Color(0, 0, 0, 255));
+    setFontChecked(&writer, writerRegion, font);
+    // Construct color before the validate so MWCC interleaves the RGBA
+    // stack stores into the compact pointer-check (retail schedule).
+    nw4r::ut::Color black(0, 0, 0, 255);
+    validateTextColorPointer(&writer, writerRegion);
+    writer.SetTextColor(black);
 
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
@@ -1680,8 +1693,9 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
                      y + lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
 
-    validateTextColorPointer(&writer);
-    writer.SetTextColor(nw4r::ut::Color(255, 255, 255, 255));
+    nw4r::ut::Color white(255, 255, 255, 255);
+    validateTextColorPointer(&writer, writerRegion);
+    writer.SetTextColor(white);
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
     printChecked(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);

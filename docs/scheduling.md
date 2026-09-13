@@ -41,15 +41,18 @@ model; default width-2 scheduling unless proven otherwise).
 
 ## Where the scheduler sits
 
-`CodeGen_Generator` (`0x004351c0`) runs the level-specific optimizer, then the
-shared backend tail in this order (trace markers confirmed in the binary):
+`CodeGen_Generator` runs the level-specific optimizer, then the shared backend
+tail. The GC/1.2.5 pipeline sketch below (addresses and stage banners) is
+**historical reference**; for Wii/1.1 prefer `mwcc-wii-1.1`
+`docs/WII_1_1_INVENTORY.md` + `docs/WII_1_1_SCHEDULER.md` (Wii dumps via
+`0x00609470`, not these banners):
 
 ```
 initial PCode
 optional instruction scheduling      <- "BEFORE SCHEDULING"
 forward peephole optimization        <- "AFTER PEEPHOLE FORWARD"
-register coloring (0x004cdef0)       <- the allocator (see register_mapping.md)
-EABI prologue/epilogue (0x004abe90)
+register coloring                    <- the allocator (see register_mapping.md)
+EABI prologue/epilogue
 prologue/epilogue merge
 final peephole optimization          <- "AFTER PEEPHOLE OPTIMIZATION"
 optional final instruction scheduling <- "FINAL CODE AFTER INSTRUCTION SCHEDULING"

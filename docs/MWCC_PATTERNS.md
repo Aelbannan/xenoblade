@@ -4352,3 +4352,13 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Confidence: repo_proven
 - Applies to/a.k.a.: any adjust-this/forwarding thunk TU (CBattleState/CActorParam/CfObjectActor
   families); alternative is `#pragma auto_inline` games (unverified, TU-wide blast radius)
+
+## MWCC treats `f32`/`fN` as FPR names in some struct members (Wii/1.1)
+- Symptom:   `undefined identifier 'f32'` on a later member such as `f32 f40`, even though earlier
+  `f32` fields in the same TU compiled
+- Cause:     MetroWerks lexes `f0`–`f31` as floating-point registers. A member named `f40` (or the
+  type token `f32` next to another `fNN` name) can be parsed as a register rather than a type/field
+- Fix:       spell the type as `float` and avoid `fNN` member names in that struct (`p40`, `field_40`)
+- Applies to/a.k.a.: any large overlay struct with `f32 f00`… style field names
+- Confidence: repo_proven
+- Example:   us-8023f51c (`func_8023D3D8` battle-param overlay)

@@ -744,13 +744,22 @@ void* func_800755B0(void* self, unsigned long idx) {
 // folding their bodies into the caller (repo convention, cf. CfGameManager).
 #pragma dont_inline on
 int func_800755BC(CfCamEventManager* /*unused*/, int idx) {
-    // Retail lowers these as subi/cmpli unsigned range checks that jump to
-    // end-of-function result blocks (jump-on-true).
-    if ((u32)(idx - 0x10) <= 27) return 1;
-    if ((u32)(idx - 8) <= 2) return 2;
-    if ((u32)idx <= 1) return 0;
-    if (idx == 11) return 2;
+    // Goto-to-end result blocks: retail is `li r3,0` then ble/beq
+    // forward to dedicated `li r3,N; blr` tails (PLAN §17.6 gate chain).
+    int result = 0;
+    if ((u32)(idx - 0x10) <= 27) goto ret1;
+    if ((u32)(idx - 8) <= 2) goto ret2;
+    if ((u32)idx <= 1) goto ret0;
+    if (idx == 11) goto ret2b;
+    return result;
+ret0:
     return 0;
+ret1:
+    return 1;
+ret2:
+    return 2;
+ret2b:
+    return 2;
 }
 #pragma dont_inline reset
 

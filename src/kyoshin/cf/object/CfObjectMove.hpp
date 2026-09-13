@@ -483,14 +483,13 @@ namespace cf {
         u8 _714;                 // 0x714
         u8 unk715[3];            // 0x715-0x717
         float mField718;         // 0x718-0x71B (ctor stores lbl_eu_80666A88)
-    void CfObject_UnkVirtualFunc4();
-    void CfObject_UnkVirtualFunc7();
-    // Wave-62: Unk primaries flipped on CfObject; Fv bodies below keep Unk
-    // linker names. Non-virtual decls here are the Move-local method table
-    // used by this TU (same arity as the base virtuals).
+    // Wave-63: Fv bodies keep Unk linker names (lbl_eu_80529690). Do NOT
+    // redeclare base behavior aliases (releaseModelSub/setModelVisible/...)
+    // as Move members - that hides the base inline and breaks UVF6. Do NOT
+    // declare C++ members whose mangled names collide with the Unk Fv bodies.
+    // Wave-62: Unk primaries flipped on CfObject; Fv bodies keep Unk names.
     void CfObject_updateMoveRate();
     void CfObject_releaseMoveTargets();
-    void CfObjectModel_UnkVirtualFunc1();
     // Wave-61: CfObjectModel_UnkVirtualFunc2 override folded onto base
     // CfObjectModel_releaseModelList (+0x17C). Body remains the Fv free
     // function CfObjectModel_UnkVirtualFunc2__Q22cf12CfObjectMoveFv.
@@ -499,19 +498,22 @@ namespace cf {
     ml::CVec3* CfObject_getPosVector();
     void CfObject_setRotVec(void* src);
     void CfObject_setMoveYaw(float value);
-    void CfObject_UnkVirtualFunc32();
-    void CfObject_UnkVirtualFunc33(float amount);
+    // Unk* below are non-colliding aliases onto base behavior names (base
+    // still owns the Unk virtual / Fv linker symbol for these slots).
+    void CfObject_UnkVirtualFunc33(float amount) { CfObject_applyMoveYaw(amount); }
     int CfObject_queryTargetState();
-    void CfObject_UnkVirtualFunc57(float value);
-    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc57(float value) { CfObject_setMoveValue(value); }
     void* CfObject_pushRefreshValue(float value);
     float CfObject_getMoveSpeedRate();
     bool CfObject_isMoveActiveNow();
     void CfObject_setAnimSlotEntry(u32 a, u32 b);
     void CfObject_refreshSubB0();
+    // Pure-virtual completions for CfObject base (W63 Model dropped these
+    // as "vestigial"; Pc View embeds need Move non-abstract). Bodies are the
+    // existing Fv free functions with matching mangled names.
+    void CfObject_UnkVirtualFunc4(); //0x60
+    void CfObject_UnkVirtualFunc7(); //0x6C
     void setPointEnabled(int flag); //0x158 override (base renamed; keeps CfObjectMove non-abstract)
-    void CfObjectModel_UnkVirtualFunc19(int flag);
-    void CfObject_UnkVirtualFunc70(float value);
     void CfObject_setMoveHeadAngle(float value);
     void setMoveSpeed(float value);
     void resetMoveSpeed();
@@ -671,7 +673,7 @@ namespace cf {
     // the offsets (MWCC puts the Nth declared virtual at (N+1)*4).
     // vtable proxy for the mSubObj38 object's slot +0xE4 (an int-returning
     // query): retail CfObjectMove_flushEffectSlots calls it, tests the
-    // result, then re-calls it. CfObjectSub38 stops at +0xAC, so dummy
+    // result, then re-calls it. CfObject +0xAC getPosVector; former Sub38 pad deleted
     // slots pin the range up to +0xE4.
     // View of the +0xD0 CActParamAnimGame sub-object fields func_800BCFA0
     // touches: owner at +0x4E8, flag word at +0x4EC, speeds at +0x504/+0x50C,

@@ -202,7 +202,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
         if (getUnk80664658() != 0) {
             func_801F4DDC(getUnk80664658(), self);
         }
-        // +0x3E9C CfObjectMove: slot +0x68 = CfObject_UnkVirtualFunc6.
+        // +0x3E9C CfObjectMove: slot +0x68 = CfObject_releaseMoveTargets.
         ((cf::CfObjectAt3E9C*)self)->CfObject_releaseMoveTargets();
         if (self != 0) {
             __dt__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((u8*)self + 0x3E9C), 0);
@@ -224,7 +224,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 }
 
 // us-800ae3f8: CfObjectEne vf2. Runs the CfObjectMove subobject's
-// CfObject_UnkVirtualFunc2 (CfObjectModel slot), dispatches the subobject
+// CfObject_initEventState (Model UVF2 / slot +0x58), dispatches the subobject
 // vtable slot +0x158 with flag 1, clears two battle-state flag words
 // (func_800BE33C / func_800BE824 on the subobject with 1), raises three
 // actor flags via func_80174B4C, seeds the +0x44A8 region via func_804B0AD4
@@ -242,6 +242,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     // Free-function bl to Model UVF2 (CfObject_initEventState slot +0x58).
     // Member alias form inlines to bctrl and grows the frame (reverted).
+    // Keep Class_/Unk Fv linker name: retail uses bl, not vdispatch.
     CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
         (cf::CfObjectModel*)&((cf::CfEneMoveBaseA*)self)->base);
     // +0x3E9C CfObjectMove: slot +0x158 = setPointEnabled.
@@ -264,7 +265,7 @@ int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
 // func_800AF870 and slot +0x20. Then accumulates `scene time * sub8C` into
 // func_801765A4, and when the game-manager bit 0x100 is set applies the
 // +0x3F34 target's bit-0x80000000 flag + subobject slots +0x80/+0x64, else
-// runs the CfObjectMove subobject's CfObject_UnkVirtualFunc4.
+// runs the CfObjectMove subobject's CfObject_runMoveUpdate (UVF4 / +0x60).
 void cf::CfObjectEne::updateEnemyBattleState() {
     // unk4 = Move subobject (this+0x3E9C); +0x30 = CObjectState::UVF11.
     u32 wordA = *(u32*)reinterpret_cast<cf::CObjectState*>(
@@ -299,7 +300,7 @@ void cf::CfObjectEne::updateEnemyBattleState() {
     func_801765A4((u8*)this, f, 1);
     getInstance__Q22cf13CfGameManagerFv();
     // retail flattens the nested guards into two branches on one shared
-    // else label (the CfObject_UnkVirtualFunc4 call); goto pins that shape
+    // else label (the CfObject_runMoveUpdate / UVF4 call); goto pins that shape
     if (isGlobalCamFlagSet__Fi(0x1000000) == 0)
         goto defaultPath;
     {
@@ -342,7 +343,7 @@ void cf::CfObjectEne::func_800ADDA8() {
     // arts-table pointer is materialised before the getFP call (retail r25)
     u8* bdatArts = lbl_eu_80664094;
     void* bdat = getFP(v->field_0x3F14);
-    // +0x3E9C CfObjectMove: slot +0x3C = CObjectParam_UnkVirtualFunc1.
+    // +0x3E9C CfObjectMove: slot +0x3C = CObjectParam_setObjectName.
     ((cf::CObjectParamAt3E9C*)this)->CObjectParam_setObjectName(
         (const char*)getBdatStringColumnValue(bdatArts, &lbl_eu_804FC168[0x0], v->field_0x3F28));
     c5.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x5], v->field_0x3F28);
@@ -881,8 +882,8 @@ void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
 void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
-// CActorState UVF1: unk4 is the Move subobject (this+0x3E9C); slot +0x38 =
-// CObjectState::UVF13 (slot +0x38 handler).
+// CActorState setObjStateBit3: unk4 is the Move subobject (this+0x3E9C); slot
+// +0x38 = CObjectState::setStateBitMask3.
 void CActorState_setObjStateBit3__Q22cf11CActorStateFv(cf::CActorState* self) {
     reinterpret_cast<cf::CObjectState*>(self->unk4)->CObjectState_setStateBitMask3();
 }
@@ -988,14 +989,14 @@ void* CActorParam_UnkVirtualFunc130__Q22cf11CActorParamFv(cf::CActorParam* self,
 
 u32 CActorParam_UnkVirtualFunc128__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x15E0); }
 
-void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); }
+void* CActorParam_UnkVirtualFunc124__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x2740); } // getAtkSetBlock +0x284
 
-// us-800b0620: CActorParam::CActorParam_UnkVirtualFunc123. Retail symbol is
-// Fv but the real ABI passes (self, r4 = attack-set data block): copies the
-// 12-byte header to self+0x2740, then for each of the six 0x88-byte
-// CAttackParam records at self+0x2750 stores strlen at +0x20, strcpy's the
-// +0x00 name and copies the +0x24..+0x80 typed fields (the +0x84 vtable
-// word is skipped).
+// us-800b0620: CActorParam::copyAtkSetBlock (virtual +0x280). Fv retail
+// linker name kept for CREvtModel; real ABI passes (self, r4 = attack-set
+// data block): copies the 12-byte header to self+0x2740, then for each of
+// the six 0x88-byte CAttackParam records at self+0x2750 stores strlen at
+// +0x20, strcpy's the +0x00 name and copies the +0x24..+0x80 typed fields
+// (the +0x84 vtable word is skipped).
 void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneAttackData* src) {
     cf::CfEneAttackArea* dst = (cf::CfEneAttackArea*)self;
@@ -1061,14 +1062,14 @@ void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
     } while (d < end);
 }
 
-void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); }
+void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x19e8); } // getArtsSetBlock +0x278
 
-// us-800b07e8: CActorParam::CActorParam_UnkVirtualFunc120 (Fv retail; real
-// ABI (self, r4 = arts-set data block)): copies the 0x34-byte arts-set
-// header to self+0x19E8, then for each of the 24 0x8C-byte CArtsParam
-// records at self+0x1A20 stores strlen at +0x20, strcpy's the name and
-// copies the +0x24..+0x80 fields plus the +0x88 word (the +0x84 vtable
-// word is skipped).
+// us-800b07e8: CActorParam::copyArtsSetBlock (virtual +0x274). Fv retail
+// linker name kept for CREvtModel; real ABI (self, r4 = arts-set data
+// block): copies the 0x34-byte arts-set header to self+0x19E8, then for
+// each of the 24 0x8C-byte CArtsParam records at self+0x1A20 stores
+// strlen at +0x20, strcpy's the name and copies the +0x24..+0x80 fields
+// plus the +0x88 word (the +0x84 vtable word is skipped).
 void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
                                                          const cf::CfEneArtsData* src) {
     cf::CfEneArtsArea* dst = (cf::CfEneArtsArea*)self;
@@ -1202,7 +1203,7 @@ void* CActorParam_UnkVirtualFunc99__Q22cf11CActorParamFv(cf::CActorParam* self) 
 
 void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1792); }
 
-void* CActorParam_UnkVirtualFunc96__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
+void* CActorParam_getArtsSyncBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
 
 void* CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
 
@@ -1395,7 +1396,7 @@ extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObj
 extern "C" void CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value);
 void CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-void CBattleState_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_callOwnerObject__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
 void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { func_800ADDA8__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 

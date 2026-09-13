@@ -7,27 +7,24 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(const char* name); //0x3C
-        virtual void* CObjectParam_UnkVirtualFunc2(); //0x40
+        // Slot 0x3C/0x40: Unk Fv bodies stay in ocUnit for hand-built tables;
+        // virtuals spell the real API (Point already mirrors these names).
+        virtual void CObjectParam_setObjectName(const char* name); //0x3C (was UnkVirtualFunc1)
+        virtual void* CObjectParam_getParamPtr(); //0x40 (was UnkVirtualFunc2)
         virtual int CObjectParam_hasObjectName(); //0x44 (was UnkVirtualFunc3)
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48 (base clears +0x34; Point overrides as loadPointData)
         virtual BOOL CObjectParam_getSelfObjectId(); //0x4C
         virtual void CObjectParam_signalActionEnd(int flag); //0x50
 
-        // Wave-36 caller alias (non-virtual, inline): sets the object name
-        // (slot 0x3C). Forwards to the same virtual slot; see CActorParam.hpp.
-        void CObjectParam_setObjectName(const char* name) { CObjectParam_UnkVirtualFunc1(name); } //0x3C
+        // Legacy Unk spellings (non-virtual, inline): same-arity aliases so
+        // other TUs / comments keep compiling; MWCC inlines into the virtual.
+        void CObjectParam_UnkVirtualFunc1(const char* name) { CObjectParam_setObjectName(name); } //0x3C
+        void* CObjectParam_UnkVirtualFunc2() { return CObjectParam_getParamPtr(); } //0x40
 
         // Wave-63 mop-up alias (non-virtual, inline): legacy UnkVirtualFunc3
         // spelling for slot 0x44 (name-length word at +0x30). Same arity;
         // MWCC inlines it into the identical virtual dispatch.
         int CObjectParam_UnkVirtualFunc3() { return CObjectParam_hasObjectName(); } //0x44
-
-        // Wave-37 named forwarder (non-virtual, inline): real API spelling
-        // for slot 0x40 (active-param pointer). Same arity; MWCC inlines it
-        // into the identical virtual dispatch. The virtual keeps its name
-        // because C++ definitions live in ocUnit/CfObjectMove.cpp.
-        void* CObjectParam_getParamPtr() { return CObjectParam_UnkVirtualFunc2(); }
 
         // Wave-63 caller alias (non-virtual, inline): slot 0x48 base clears the
         // +0x34 trailing word (CfGameManager Fv thunk). Virtual keeps its Unk

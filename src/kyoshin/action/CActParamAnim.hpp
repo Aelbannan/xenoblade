@@ -337,8 +337,8 @@ extern "C" void func_804BE4E0(void* out, int a);
 class CActParam7ECTarget {
 public:
     // Widened: CfObjectMove::func_800BCFA0 passes (1, lbl_eu_8066AF20).
-    // AnimGame one-arg sites cast through a TU-local u32-only view so f1
-    // stays live from the f4F8 compare (retail: no second lfs).
+    // AnimGame fall-notify forwards f4F8 so f1 stays live from the compare
+    // (retail: no second lfs before +0x08 bctrl).
     virtual void func08(u32 arg, float f); // +0x08 fall-state / scale gate
     virtual int func0C(int arg);        // +0x0C (mirrors CObjectState UVF2)
     virtual void func10(u32 arg);       // +0x10 (mirrors CObjectState UVF3)

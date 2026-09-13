@@ -102,6 +102,15 @@ public:
     virtual u16 getCount30(CMenuGetItemMultiEntry*) = 0;    // +0x30
 };
 
+// Init assigns getRankCount (+0x08) into a u16 that must stay live across the
+// following getName virtual call (retail clrlwi into the callee-saved). The
+// header's u16-returning view lets MWCC emit a plain mr; this u32 view forces
+// the assignment truncate.
+class CMenuGetItemImplRankWide {
+public:
+    virtual u32 getRankCount(CMenuGetItemMultiEntry*) = 0; // +0x08
+};
+
 class CMenuGetItemImpl;
 
 struct CMenuGetItemTextureHeader {
@@ -539,7 +548,8 @@ void CMenuGetItemMulti::Init() {
                     ml::FixStr<32> rankText(false);
                     rankText.mString[0] = 0;
                     rankText.mLength = 0;
-                    u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
+                    u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
+                        CItem_initItemImplInstances(entry))->getRankCount(entry);
                     itemName = CItem_initItemImplInstances(entry)->getName(entry);
                     char* rankName = func_80136190(&lbl_eu_80504A3C[0x1c1],
                                                    &lbl_eu_80504A3C[0x182],
@@ -571,9 +581,13 @@ void CMenuGetItemMulti::Init() {
                 case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
                 case 11: {
                     u32 fontCheck = lbl_eu_80664108;
+                    // Retail: clrlwi into r3, set default texture, then
+                    // neg/or/rlwinm bool-normalize (not rlwinm.+beq on a u8 local).
+                    u32 fontHit = (u8)func_801361E8(
+                        fontCheck, &lbl_eu_80504A3C[0x33b],
+                        (u16)func_80139358((u16)(entry->packed >> 20)));
                     textureName = &lbl_eu_80504A3C[0x355];
-                    if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b],
-                                     func_80139358((u16)(entry->packed >> 20)))) {
+                    if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                         textureName = &lbl_eu_80504A3C[0x340];
                     }
                     break;
@@ -598,70 +612,116 @@ void CMenuGetItemMulti::Init() {
                 func_80136B4C(mLayout, itemPaneName, &lbl_eu_80504A3C[0x19f], 0);
                 func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0, &lbl_eu_806643E8);
 
-                if ((((entry->packed >> 16) & 0xf) >= 4 &&
-                     ((entry->packed >> 16) & 0xf) <= 8) ||
-                    ((entry->packed >> 16) & 0xf) == 2) {
-                    u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
-                    if (slotCount != 0) {
-                        func_80136B4C(mLayout, itemPaneName, func_eu_802B148C(), 0);
-                        func_80139A18(mLayout, itemPaneName, &lbl_eu_806643F0,
-                                     &lbl_eu_806643F8);
-                        for (u8 slot = 0; slot < slotCount; ++slot) {
-                            if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
-                                u16* slotData = reinterpret_cast<u16*>(
-                                    CItem_initItemImplInstances(entry)->getSlot(entry, slot));
-                                if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                    func_80136B4C(mLayout, itemPaneName, func_eu_802B1474(), 0);
-                                    func_80139A18(mLayout, itemPaneName, &lbl_eu_80664400,
-                                                 &lbl_eu_80664408);
-                                    break;
+                {
+                    // Commuted high bound blocks subi/cmpli fusion
+                    // (CVS_THREAD_BATTLE_MAIN). Negating it yields retail's
+                    // cmpi/ble; body order is slots then rank (retail layout).
+                    s32 cat = (s32)((entry->packed >> 16) & 0xf);
+                    if (cat < 4) {
+                        goto check_cat_eq2;
+                    }
+                    if (!(8 < cat)) {
+                        goto do_slots;
+                    }
+                check_cat_eq2:
+                    if (cat == 2) {
+                        goto do_slots;
+                    }
+                    if (cat == 3) {
+                        goto do_rank;
+                    }
+                    if (cat == 9) {
+                        goto do_rank;
+                    }
+                    goto after_cat_dispatch;
+                do_slots:
+                    {
+                        // u32 + (u8) cast: retail clrlwi into the live slotCount
+                        // reg (r19); a u8 local truncates to r0 then mr.
+                        u32 slotCount = (u8)CItem_initItemImplInstances(entry)->hasSlot(entry);
+                        if (slotCount != 0) {
+                            func_80136B4C(mLayout, itemPaneName, func_eu_802B148C(), 0);
+                            func_80139A18(mLayout, itemPaneName, &lbl_eu_806643F0,
+                                         &lbl_eu_806643F8);
+                            for (u8 slot = 0; slot < slotCount; ++slot) {
+                                if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
+                                    u16* slotData = reinterpret_cast<u16*>(
+                                        CItem_initItemImplInstances(entry)->getSlot(entry, slot));
+                                    if (slotData != NULL && (slotData[2] & 1) != 0) {
+                                        func_80136B4C(mLayout, itemPaneName, func_eu_802B1474(), 0);
+                                        func_80139A18(mLayout, itemPaneName, &lbl_eu_80664400,
+                                                     &lbl_eu_80664408);
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                } else if (((entry->packed >> 16) & 0xf) == 3 ||
-                           ((entry->packed >> 16) & 0xf) == 9) {
-                    u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
-                    func_80136B4C(mLayout, itemPaneName,
-                                   func_80136190(&lbl_eu_80504A3C[0x1c1],
-                                                &lbl_eu_80504A3C[0x182],
-                                                30 - ((u8)rankCount - 1)), 0);
-                    func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0,
-                                 &lbl_eu_806643E8);
+                    goto after_cat_dispatch;
+                do_rank:
+                    {
+                        u16 rankCount = (u16)reinterpret_cast<CMenuGetItemImplRankWide*>(
+                            CItem_initItemImplInstances(entry))->getRankCount(entry);
+                        func_80136B4C(mLayout, itemPaneName,
+                                       func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                                    &lbl_eu_80504A3C[0x182],
+                                                    30 - ((u8)rankCount - 1)), 0);
+                        func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0,
+                                     &lbl_eu_806643E8);
+                    }
+                after_cat_dispatch:;
                 }
 
-                bool special = false;
-                if (((entry->packed >> 16) & 0xf) != 3 &&
-                    ((entry->packed >> 16) & 0xf) != 9) {
-                    special = func_801361E8(lbl_eu_806640EC,
-                                            &lbl_eu_80504A3C[0x394],
-                                            (u16)(entry->packed >> 20)) != 0;
-                }
-                if ((((entry->packed >> 16) & 0xf) == 12) || special) {
-                    mHasSpecialItem = 1;
-                }
-                u16 cat2 = (entry->packed >> 16) & 0xf;
-                if (cat2 == 0) {
-                    cat2 = func_801392E4((u16)(entry->packed >> 20));
-                }
-                func_80139358((u16)(entry->packed >> 20));
-                int special2 = 0;
-                if (cat2 >= 2 && cat2 <= 9) {
-                    if (func_80157CD0(cat2) != 0) {
-                        special2 = 1;
+                // special=0 before cat re-extract (retail li r3,0 then clrlwi
+                // into the CS cat reg). Bool-normalize the E8 hit. u32 cat
+                // selects cmpli (retail); s32 would emit cmpi.
+                {
+                    u32 special = 0;
+                    u32 catN = (entry->packed >> 16) & 0xf;
+                    if (catN != 3 && catN != 9) {
+                        u32 hit = (u8)func_801361E8(
+                            lbl_eu_806640EC, &lbl_eu_80504A3C[0x394],
+                            (u16)(entry->packed >> 20));
+                        special = (u32)(-(s32)hit | hit) >> 31;
                     }
-                } else if (cat2 >= 10 && cat2 <= 13) {
-                    int y = func_80158068((u16)(entry->packed >> 20));
-                    if (y < 1) {
+                    if (catN == 12 || special != 0) {
+                        mHasSpecialItem = 1;
+                    }
+                }
+                // Extract catScratch then itemKey from one packed load
+                // (retail clrlwi. cat / extrwi id). Residual: beq+b vs bne
+                // on catScratch==0 (next angle: force forward beq body).
+                {
+                    u32 packed = entry->packed;
+                    u32 catScratch = (packed >> 16) & 0xf;
+                    u16 itemKey = (u16)(packed >> 20);
+                    u16 cat2 = (u16)catScratch;
+                    if (catScratch == 0) {
+                        goto do_cat2_e4;
+                    }
+                    goto after_cat2_e4;
+                do_cat2_e4:
+                    cat2 = func_801392E4(itemKey);
+                after_cat2_e4:
+                    func_80139358(itemKey);
+                    int special2 = 0;
+                    if (cat2 >= 2 && cat2 <= 9) {
                         if (func_80157CD0(cat2) != 0) {
                             special2 = 1;
                         }
-                    } else if (y < 0x63) {
-                        special2 = 1;
+                    } else if (cat2 >= 10 && cat2 <= 13) {
+                        int y = func_80158068(itemKey);
+                        if (y < 1) {
+                            if (func_80157CD0(cat2) != 0) {
+                                special2 = 1;
+                            }
+                        } else if (y < 0x63) {
+                            special2 = 1;
+                        }
                     }
-                }
-                if (special2 == 0) {
-                    mPaneVisible[mVisibleItemCount] = 1;
+                    if (special2 == 0) {
+                        mPaneVisible[mVisibleItemCount] = 1;
+                    }
                 }
                 mVisibleEntries[mVisibleItemCount] = entry;
                 ++mVisibleItemCount;
@@ -736,8 +796,10 @@ void CMenuGetItemMulti::Init() {
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
+                u32 fontHit = (u8)func_801361E8(
+                    fontCheck, &lbl_eu_80504A3C[0x33b], tableId);
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
+                if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
                 break;
@@ -763,7 +825,13 @@ void CMenuGetItemMulti::Init() {
             func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
-            if ((category >= 4 && category <= 8) || category == 2) {
+            if (category >= 4) {
+                if (category <= 8) {
+                    goto do_initial_slots;
+                }
+            }
+            if (category == 2) {
+            do_initial_slots:
                 u8 slotCount = func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e], tableId);
                 if (slotCount != 0) {
                     func_80136B4C(mLayout, initialItemPaneName, func_eu_802B148C(), 0);

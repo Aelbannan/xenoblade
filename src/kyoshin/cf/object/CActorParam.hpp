@@ -546,7 +546,7 @@ virtual u32 CActorParam_getTotalCurrency();  //0x1E4
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
         virtual void* CActorParam_getArtsDataBlock();  //0x20C
         virtual void* CActorParam_getStatusSyncBlock();  //0x210 (retail impl returns the +0x16C8 block)
-        virtual void* CActorParam_UnkVirtualFunc96();  //0x214 (retail impl returns the +0x1740 block)
+        virtual void* CActorParam_getArtsSyncBlock();  //0x214 (was UnkVirtualFunc96; retail impl returns the +0x1740 block)
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98(const void* src);  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
@@ -570,11 +570,11 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual float* CActorParam_UnkVirtualFunc117(); //0x268
         virtual void CActorParam_setGauge1624(float val); //0x26C (was UnkVirtualFunc118)
         virtual float* CActorParam_UnkVirtualFunc119(); //0x270
-        virtual void CActorParam_UnkVirtualFunc120(); //0x274
-        virtual void* CActorParam_UnkVirtualFunc121(); //0x278 (impl returns +0x19e8 block)
+        virtual void CActorParam_copyArtsSetBlock(); //0x274 (was UnkVirtualFunc120)
+        virtual void* CActorParam_getArtsSetBlock(); //0x278 (was UnkVirtualFunc121; +0x19e8 block)
         virtual void* CActorParam_getArtsSet(); //0x27C
-        virtual void CActorParam_UnkVirtualFunc123(); //0x280
-        virtual void CActorParam_UnkVirtualFunc124(); //0x284
+        virtual void CActorParam_copyAtkSetBlock(); //0x280 (was UnkVirtualFunc123)
+        virtual void* CActorParam_getAtkSetBlock(); //0x284 (was UnkVirtualFunc124; +0x2740 block)
         virtual void* CActorParam_getArtsSlotIds(); //0x288
         virtual void* CActorParam_getCopyParam(); //0x28C
         virtual CActorParamStatusTable* CActorParam_getStatusTable(); //0x290
@@ -653,6 +653,13 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
     void CActorParam_UnkVirtualFunc18(u32 val) { CActorParam_setActorType(val); } //0xDC: legacy Unk spelling
     void CActorParam_UnkVirtualFunc20(u32 val) { CActorParam_setEnemyType(val); } //0xE4: legacy Unk spelling
     void CActorParam_UnkVirtualFunc168(float val) { CActorParam_setHitRange(val); } //0x334: legacy Unk spelling
+    // Wave-64: Unk primary flipped for 0x274/0x278/0x280/0x284; Unk aliases
+    // keep CREvtModel Fv spellings. getArtsSetBlock call sites (CMenuArtsSelect)
+    // now hit the real virtual.
+    void CActorParam_UnkVirtualFunc120() { CActorParam_copyArtsSetBlock(); } //0x274
+    void* CActorParam_UnkVirtualFunc121() { return CActorParam_getArtsSetBlock(); } //0x278
+    void CActorParam_UnkVirtualFunc123() { CActorParam_copyAtkSetBlock(); } //0x280
+    void* CActorParam_UnkVirtualFunc124() { return CActorParam_getAtkSetBlock(); } //0x284
     float CActorParam_getHitRate() { return CActorParam_UnkVirtualFunc39(); } //0x130: ratio at +0x17E8/+0x17F4, hit-chance gate
     float CActorParam_getHitRange() { return CActorParam_UnkVirtualFunc171(); } //0x340: range at +0x1630, position tolerance
     void* CActorParam_getStateFlags() { return CActorParam_UnkVirtualFunc163(); } //0x320: flags at +0x1648, u16 bit test
@@ -670,10 +677,10 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
     float CActorParam_getGaugeRateB() { return CActorParam_UnkVirtualFunc69(); } //0x1A8: rate at +0x1618, pairs with setGaugeRateB (Func68)
     void CActorParam_setGauge(int val) { CActorParam_UnkVirtualFunc53(val); } //0x168: store gauge current at +0x160C (base impl in CfObjectEne.cpp)
     void CActorParam_setSecondGauge(int val) { CActorParam_UnkVirtualFunc59(val); } //0x180: store second-gauge current at +0x1614 (base impl in CfObjectEne.cpp)
-    void* CActorParam_getArtsSyncBlock() { return CActorParam_UnkVirtualFunc96(); } //0x214: +0x1740 bonus-arts layer, party-sync receiver
+    void* CActorParam_UnkVirtualFunc96() { return CActorParam_getArtsSyncBlock(); } //0x214: legacy Unk spelling
     void CActorParam_setHitCharge(float val) { CActorParam_UnkVirtualFunc41(val); } //0x138: set at +0x17EC, pairs with addHitCharge (Func42)
     void CActorParam_UnkVirtualFunc103() { CActorParam_refreshBattleAction(); } //0x230: legacy Unk spelling
-    void* CActorParam_getArtsSetBlock() { return CActorParam_UnkVirtualFunc121(); } //0x278: +0x19E8 arts block feeding getArtsParamAtCnt (same object as getArtsSet's 0x27C slot; retail calls 0x278 here)
+    // (getArtsSetBlock promoted to virtual +0x278 in Wave-64)
     float CActorParam_getArtsGaugeRatio() { return CActorParam_UnkVirtualFunc51(); } //0x160: arts gauge current/max (+0x17F0/+0x17FC), frame-progress fraction
     void CActorParam_copyArtsBlock1650(const void* src) { CActorParam_UnkVirtualFunc92(src); } //0x204: copies ParamCopyBlock to +0x1650 (base impl in CfObjectEne.cpp)
     void CActorParam_copyArtsBlock17E4(const void* src) { CActorParam_UnkVirtualFunc98(src); } //0x21C: copies ParamCopyBlock to +0x17E4 (base impl in CfObjectEne.cpp)

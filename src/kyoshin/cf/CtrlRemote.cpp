@@ -17,7 +17,9 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadTask.hpp"
 #include "monolib/core/CPadManager.hpp"
+#include "monolib/math/CVec3.hpp"
 #include "monolib/util/MemManager.hpp"
+#include <nw4r/math/math_types.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -152,22 +154,24 @@ void func_80098EF8(CtrlPcVf38* self)
         ((CBattleManagerViewPc*)getInstance__Q22cf14CBattleManagerFv())->mField20C8 != 0 ? 1 : 0;
     int probe1a = probePlayerCtrl((cf::CtrlPc*)self, &v1a, 0x1a);
 
-    CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
-    if (sub3f60 != NULL) {
-        if (probe1a != 0) {
-            if ((sub3f60->mField4EC & 0x10) == 0) {
-                sub3f60->mField4EC |= 0x10;
-                CVoicePos* pos = self->mField5C->mSub3E9C.getPosition();
-                self->mField5C->mField3F60->mField510 = pos->f[1];
-            }
-        } else {
-            cf::CfGameManager::getInstance();
-            if (isGlobalCamFlagSet(0x4000000) == 0) {
-                CtrlPlayerSub3F60* s = self->mField5C->mField3F60;
-                u32 f4ec = s->mField4EC;
-                if ((f4ec & 0x10) != 0) {
-                    if ((s->mFieldC & 2) != 0 || (f4ec & 2) != 0) {
-                        s->mField4EC &= ~0x10;
+    {
+        CtrlPlayerSub3F60* sub3f60 = self->mField5C->mField3F60;
+        if (sub3f60 != NULL) {
+            if (probe1a != 0) {
+                if ((sub3f60->mField4EC & 0x10) == 0) {
+                    sub3f60->mField4EC |= 0x10;
+                    CVoicePos* pos = self->mField5C->mSub3E9C.getPosition();
+                    self->mField5C->mField3F60->mField510 = pos->f[1];
+                }
+            } else {
+                cf::CfGameManager::getInstance();
+                if (isGlobalCamFlagSet(0x4000000) == 0) {
+                    CtrlPlayerSub3F60* s = self->mField5C->mField3F60;
+                    u32 f4ec = s->mField4EC;
+                    if ((f4ec & 0x10) != 0) {
+                        if ((s->mFieldC & 2) != 0 || (f4ec & 2) != 0) {
+                            s->mField4EC &= ~0x10;
+                        }
                     }
                 }
             }
@@ -279,13 +283,14 @@ void func_80098EF8(CtrlPcVf38* self)
     if (probePlayerCtrl((cf::CtrlPc*)self, &v803, 0x803) != 0) {
         if (actionSrc != 0) {
             ml::CVec3 diff;
-            CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
-            CVoicePos* p2 = (CVoicePos*)actionSrc->vf41();
-            diff.x = p2->f[0] - p1->f[0];
-            diff.y = p2->f[1] - p1->f[1];
-            diff.z = p2->f[2] - p1->f[2];
+            nw4r::math::VEC3Sub(
+                reinterpret_cast<nw4r::math::VEC3*>(&diff),
+                reinterpret_cast<const nw4r::math::VEC3*>(actionSrc->vf41()),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    self->mField5C->mSub3E9C.getPosition()));
             ml::CVec3 d = diff;
-            f32 dist2 = d.x * d.x + d.y * d.y + d.z * d.z;
+            f32 dist2 = nw4r::math::VEC3LenSq(
+                reinterpret_cast<const nw4r::math::VEC3*>(&d));
             if (dist2 < lbl_eu_80666754) {
                 if (self->mField5C->mSub3ED4->vf14(0x1000) == 0) {
                     self->mField5C->mSub3ED4->vf10(0x1000, 1);
@@ -311,11 +316,11 @@ void func_80098EF8(CtrlPcVf38* self)
         if (actionSrc != 0 &&
             self->mField5C->mSub3ED4->vf14(0x1000) != 0) {
             ml::CVec3 diff;
-            CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
-            CVoicePos* p2 = (CVoicePos*)actionSrc->vf41();
-            diff.x = p2->f[0] - p1->f[0];
-            diff.y = p2->f[1] - p1->f[1];
-            diff.z = p2->f[2] - p1->f[2];
+            nw4r::math::VEC3Sub(
+                reinterpret_cast<nw4r::math::VEC3*>(&diff),
+                reinterpret_cast<const nw4r::math::VEC3*>(actionSrc->vf41()),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    self->mField5C->mSub3E9C.getPosition()));
             ml::CVec3 d = diff;
             if ((self->mField4 & 0x200) != 0) {
                 f32 f31v =
@@ -456,11 +461,14 @@ a89c:
         void* other = func_8016FE34(findObjectById((s32)self->mField5C->mSub3E9C.v17()));
         if (other != 0) {
             ml::CVec3 diff;
-            CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
-            CVoicePos* p2 = ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)other)->mOwner3E9C)->getPosition();
-            diff.x = p2->f[0] - p1->f[0];
-            diff.y = p2->f[1] - p1->f[1];
-            diff.z = p2->f[2] - p1->f[2];
+            nw4r::math::VEC3Sub(
+                reinterpret_cast<nw4r::math::VEC3*>(&diff),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)other)
+                         ->mOwner3E9C)
+                        ->getPosition()),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    self->mField5C->mSub3E9C.getPosition()));
             ml::CVec3 d = diff;
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
             self->mField14 = lbl_eu_80666730;
@@ -478,11 +486,13 @@ a89c:
         void* t = func_8016FE34(findObjectById((s32)sub298->mField4));
         if (t != 0 && t != self->mField5C) {
             ml::CVec3 diff;
-            CVoicePos* p1 = self->mField5C->mSub3E9C.getPosition();
-            CVoicePos* p2 = ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)t)->mOwner3E9C)->getPosition();
-            diff.x = p2->f[0] - p1->f[0];
-            diff.y = p2->f[1] - p1->f[1];
-            diff.z = p2->f[2] - p1->f[2];
+            nw4r::math::VEC3Sub(
+                reinterpret_cast<nw4r::math::VEC3*>(&diff),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    ((CVoiceOwnerIntfPc*)&((CtrlPlayerSweepView*)t)->mOwner3E9C)
+                        ->getPosition()),
+                reinterpret_cast<const nw4r::math::VEC3*>(
+                    self->mField5C->mSub3E9C.getPosition()));
             ml::CVec3 d = diff;
             f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
             self->mFieldC = ang * lbl_eu_8066674C;
@@ -1378,7 +1388,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
             func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 2:
@@ -1391,7 +1401,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
             func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 3:
@@ -1404,7 +1414,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
             func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 7:
@@ -1417,7 +1427,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
             func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 8:
@@ -1430,7 +1440,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         prm.b06 = 0x25;
         if (self->mField5C->mField3F60 != NULL) {
             func_8004C5EC(self->mField5C->mField3F60);
-            func_800BE12C(&self->mField5C->mSub3E9C, 1, 0, -1, 1);
+            func_800BE12C((u8*)&self->mField5C->mSub3E9C, 1, 0, -1, 1);
         }
         break;
     case 4:

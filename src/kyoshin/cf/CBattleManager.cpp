@@ -5483,13 +5483,18 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     // ----------------------------------------------------------
     if (target == 0) return;                        // 0x5154 cmpwi r5,0
 
-    // 0x51C0: tagged word at move+0x74; bit0 clear -> bail; else init ratios
-    if (!(move->field_74 & 0x1)) return;            // 0x51CC clrlwi. bit31(LSB)
-    move->field_54 = lbl_eu_80666DD4;               // 0x51D4
-    move->field_58 = lbl_eu_80666DD4;               // 0x51D0
-    move->field_5C = lbl_eu_80666DDC;               // 0x51D8
-    move->field_60 = lbl_eu_80666DDC;               // 0x51DC
-    move->field_64 = lbl_eu_80666DDC;               // 0x51E0
+    // 0x51C0: load tag, init ratios (58/54/5C/60/64), then bit0 gate
+    {
+        u32 tag = move->field_74;
+        f32 zero = lbl_eu_80666DDC;
+        f32 one = lbl_eu_80666DD4;
+        move->field_58 = one;                       // 0x51D0
+        move->field_54 = one;                       // 0x51D4
+        move->field_5C = zero;                      // 0x51D8
+        move->field_60 = zero;                      // 0x51DC
+        move->field_64 = zero;                      // 0x51E0
+        if (!(tag & 0x1)) return;                   // 0x51CC/0x51E4
+    }
 
     // 0x51E8: grab params
     BattleMoveSubData* sub = (BattleMoveSubData*)move->field_50;
@@ -5500,8 +5505,280 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     {
         void* res20C = ((cf::CActorParam*)(target))->CActorParam_getArtsDataBlock();
 
-        // 0x5230: type gate -- only 1 and 5 take the main block
-        if (sub->type_3C != 1 && sub->type_3C != 5) {
+        // 0x5230: type gate -- only 1 and 5 take the main block (lhz + signed cmpi)
+        if ((s32)sub->type_3C == 1 || (s32)sub->type_3C == 5) {
+        // MAIN BLOCK (types 1/5), 0x800DD730
+        // ================================================================
+        f32 f26;
+        f32 f28;
+        {
+            f26 = (f32)*(s16*)((u8*)res20C + 0x60) / lbl_eu_80666E00;
+            f28 = (f32)tgtParam->field_60 / lbl_eu_80666E00 - f26;
+        }
+        s32 r25 = atkParam->field_2C;
+        s32 r26 = tgtParam->field_2E;
+        // --- hit-flag conditional zero of f26 (0x800DD78C) ---
+        {
+            u32 tag = move->field_74;
+            if (tag & 0x2000000) {
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
+                if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
+            } else if (tag & 0x4000000) {
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
+                if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
+            } else if (tag & 0x1000000) {
+                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
+                if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
+            }
+        }
+        f28 += f26;                                     // 0x800DD804
+
+        // 0x800DD80C: sub->mFlagsArray[1].flags bit24 (0x800000) -> average r25
+        if (sub->field_78 & 0x800000) {
+            r25 = (r25 + atkParam->field_1E) / 2;
+        }
+
+        // --- clamp [-1.0, 0.9] ---
+        if (f28 < lbl_eu_80666E2C) f28 = lbl_eu_80666E2C;
+        else if (f28 > lbl_eu_80666E30) f28 = lbl_eu_80666E30;
+
+        // --- zero ratio under data-map flags ---
+        if (func_80148778((u8*)target + 8, 0x13)) {
+            r26 = 0;
+            f28 = 0.0f;
+        }
+        if ((((BattleObjAccessor*)attacker)->field_3f00 & 0x4) &&
+            (move->field_78 & 0x800)) {
+            r26 = 0;
+            f28 = 0.0f;
+        }
+
+        // --- hit quality flags (0x800DD8B8) ---
+        if (f28 > 0.0f && f28 < 0.5f) {
+            move->field_74 |= 0x80100000;
+        } else if (f28 >= 0.5f && f28 < 1.0f) {
+            move->field_74 |= 0x80200000;
+        }
+
+        // --- guard path: move->field_78 bit21 (0x200) ---
+        if (move->field_78 & 0x200) {
+            s32 vf = artsSubGetMax(sub);
+            s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
+            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+                f32 f2 = atkParam->field_24;
+                f32 f1 = atkParam->field_28 - f2;
+                s32 d = (s32)(lbl_eu_80666DD4 + f1);
+                u32 r4 = move->field_94;
+                r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
+            } else {
+                r5 = (s32)((f32)(s32)r5 *
+                           (f32)(s32)((move->field_94 % 21) + 90) /
+                           lbl_eu_80666E00);
+            }
+            move->field_54 =
+                (f32)(s32)(r25 - r26) * (f32)(s32)r5 / lbl_eu_80666E00;
+
+            if (func_80148778((u8*)attacker + 8, 0xC8)) {
+                move->field_54 *= lbl_eu_80666DE8;
+            }
+            if (move->field_54 < lbl_eu_80666DD4)
+                move->field_54 = lbl_eu_80666DD4;
+            move->field_54 = move->field_54 - move->field_54 * f28;
+            goto main_tail;
+        }
+
+        // --- non-guard: move->field_78 bits 20-21 (0x600) ---
+        if (move->field_78 & 0x600) {
+            // 0x800DDAB0: same r25 variance as above
+            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+                f32 f2 = atkParam->field_24;
+                f32 f1 = atkParam->field_28 - f2;
+                s32 d = (s32)(1.0f + f1);
+                u32 r4 = move->field_94;
+                r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
+            }
+            // three sub-vtable calls (0x800DDB20)
+            s32 v1 = artsSubGetMax(sub);
+            s32 v2 = artsSubGetMax(sub);
+            s32 v3 = artsSubGetMax(sub);
+            s32 r18 = sub->field_38 + (s32)sub->field_6C * (v1 - 1);
+            s32 r19 = sub->field_3A + (s32)sub->field_6D * (v2 - 1);
+            s32 r20 = (s32)move->field_94;
+            s32 r7 = r19 - r18 + 1;
+            s32 r0 = sub->field_38 + (s32)sub->field_6C * (v3 - 1) +
+                     (s32)(r20 % (u32)r7);
+            move->field_54 =
+                (f32)(s32)(r25 - r26) * (f32)(s32)r0 / 100.0f;       // 0x800DDBE4
+
+            // 0x800DDBF0: clamp + apply ratio
+            if (move->field_54 < lbl_eu_80666DD4)
+                move->field_54 = lbl_eu_80666DD4;
+            move->field_54 = move->field_54 - move->field_54 * f28;
+
+            // 0x800DDC10: 0x93 -> field_58 += 0.5 ; 0xC0 -> += val/10 - 1
+            if (func_80148778((u8*)attacker + 8, 0x93)) {
+                move->field_58 += lbl_eu_80666DE8;
+            }
+            if (func_80148778((u8*)attacker + 8, 0xC0)) {
+                void* entry = func_80149154((u8*)attacker + 8, 0xC0);
+                move->field_58 +=
+                    (f32)(s32)*(u32*)((u8*)entry + 0x10) / 10.0f - 1.0f;
+            }
+        }
+
+    main_tail:;
+        // ================================================================
+        // MAIN-BLOCK TAIL (0x800DDC80): combo / level-diff / vf0x308
+        // ================================================================
+        // --- 0x800DDC80: target vf0x2A4 (combo) checks ---
+        {
+            void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+            if (*(u32*)((u8*)p + 0x78) & 0x400) {
+                void* f4 = *(void**)((u8*)target + 0x4);
+                int val = *(u32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
+                bool ok = func_80174C98(target, &val, 0x806) != 0;
+                if (!ok && !(*(u16*)((u8*)target + 0x3E6C) & 0x20))
+                    goto main_combo_skip;
+                void* sub2 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                if (*(void**)((u8*)sub2 + 0x50) == 0) goto main_combo_skip;
+                void* sub3 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                void* sub4 = *(void**)((u8*)sub3 + 0x50);
+                // MAIN: bonus applies when combo target type != 1
+                if (*(u16*)((u8*)sub4 + 0x3C) == 1) goto main_combo_skip;
+                void* sub5 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
+                void* sub6 = *(void**)((u8*)sub5 + 0x50);
+                if (*(u8*)((u8*)sub6 + 0x42) == 1) goto main_combo_skip;
+                move->field_58 += 0.5f;                 // 0x800DDD48
+            }
+        main_combo_skip:;
+        }
+
+        // --- 0x800DDD58: level-difference multiplier (main thresholds) ---
+        {
+            s32 tl = (s32)((cf::CActorParam*)(target))->CActorParam_getActorLevel();
+            s32 al = (s32)((cf::CActorParam*)(attacker))->CActorParam_getActorLevel();
+            s32 diff = tl - al;
+            if (diff < -2) {
+                if (diff >= -5) move->field_54 *= 1.25f;
+                else if (diff >= -9) move->field_54 *= 1.5f;
+                else move->field_54 *= 2.0f;
+            } else {
+                if (diff >= 6) move->field_54 *= 0.5f;
+                else if (diff >= 3) move->field_54 *= 0.75f;
+            }
+        }
+
+        // --- 0x800DDE18: field_74 bit15 (0x4000) -> vf0x308 table ---
+        if (move->field_74 & 0x4000) {
+            s32 idx = ((cf::CActorParam*)(attacker))->CActorParam_getStatusCount();          // {0,0,0,0.1,0.2}
+            if (idx >= 0 && idx < 5) move->field_58 += sTable_150[idx];
+        }
+
+        // --- 0x800DDE7C: art-type dispatch (guard: !data 0x13) ---
+        if (!func_80148778((u8*)target + 8, 0x13)) {
+            BattleParamData* tgtP = tgtParam;
+            u16 artType = sub->field_40;
+            s32 r0 = 0;
+
+            // ---- dispatch A (0x800DDE90): byte 0x72, negate, thr 200 ----
+            switch (artType) {
+                case 1: case 2: case 3:
+                    r0 = (tgtP->field_72 >> 7) & 1; break;
+                case 4: case 5: case 6: case 7: case 8: case 9: {
+                    s16 val = artType == 4 ? tgtP->field_64 :
+                              artType == 5 ? tgtP->field_66 :
+                              artType == 6 ? tgtP->field_68 :
+                              artType == 7 ? tgtP->field_6A :
+                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
+                    if (val >= 200) r0 = 1;
+                    else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = (tgtP->field_72 >> 7) & 1; break;
+                            case 4: r0 = tgtP->field_72 & 1; break;
+                            case 5: r0 = (tgtP->field_72 >> 1) & 1; break;
+                            case 6: r0 = (tgtP->field_72 >> 2) & 1; break;
+                            case 7: r0 = (tgtP->field_72 >> 3) & 1; break;
+                            case 8: r0 = (tgtP->field_72 >> 4) & 1; break;
+                            case 9: r0 = (tgtP->field_72 >> 5) & 1; break;
+                        }
+                    }
+                    break;
+                }
+                default: r0 = 0; break;
+            }
+            if (r0 != 0) {
+                move->field_54 *= -1.0f;
+                move->field_74 |= 0x80000800;
+                goto post_dispatch;
+            }
+
+            // ---- dispatch B (0x800DE0F4): byte 0x70, halve, thr 100 ----
+            r0 = 0;
+            switch (artType) {
+                case 1: case 2: case 3:
+                    r0 = (tgtP->field_70 >> 7) & 1; break;
+                case 4: case 5: case 6: case 7: case 8: case 9: {
+                    s16 val = artType == 4 ? tgtP->field_64 :
+                              artType == 5 ? tgtP->field_66 :
+                              artType == 6 ? tgtP->field_68 :
+                              artType == 7 ? tgtP->field_6A :
+                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
+                    if (val >= 100) r0 = 1;
+                    else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = (tgtP->field_70 >> 7) & 1; break;
+                            case 4: r0 = tgtP->field_70 & 1; break;
+                            case 5: r0 = (tgtP->field_70 >> 1) & 1; break;
+                            case 6: r0 = (tgtP->field_70 >> 2) & 1; break;
+                            case 7: r0 = (tgtP->field_70 >> 3) & 1; break;
+                            case 8: r0 = (tgtP->field_70 >> 4) & 1; break;
+                            case 9: r0 = (tgtP->field_70 >> 5) & 1; break;
+                        }
+                    }
+                    break;
+                }
+                default: r0 = 0; break;
+            }
+            if (r0 != 0) {
+                move->field_54 *= 0.5f;
+                goto post_dispatch;
+            }
+
+            // ---- dispatch C (0x800DE344): 0x72 then 0x73, +0.25 ----
+            r0 = 0;
+            switch (artType) {
+                case 1: case 2: case 3:
+                    r0 = (tgtP->field_72 >> 7) & 1; break;
+                case 4: case 5: case 6: case 7: case 8: case 9: {
+                    s16 val = artType == 4 ? tgtP->field_64 :
+                              artType == 5 ? tgtP->field_66 :
+                              artType == 6 ? tgtP->field_68 :
+                              artType == 7 ? tgtP->field_6A :
+                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
+                    if (val < 0) r0 = 1;                 // negative -> active
+                    else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = (tgtP->field_73 >> 7) & 1; break;
+                            case 4: r0 = tgtP->field_73 & 1; break;
+                            case 5: r0 = (tgtP->field_73 >> 1) & 1; break;
+                            case 6: r0 = (tgtP->field_73 >> 2) & 1; break;
+                            case 7: r0 = (tgtP->field_73 >> 3) & 1; break;
+                            case 8: r0 = (tgtP->field_73 >> 4) & 1; break;
+                            case 9: r0 = (tgtP->field_73 >> 5) & 1; break;
+                        }
+                    }
+                    break;
+                }
+                default: r0 = 0; break;
+            }
+            if (r0 != 0) {
+                move->field_58 += 0.25f;
+            }
+        }
+        } else {
             // ============================================================
             // ALT BLOCK (0x800DE8FC): same shape as main, uses +0x62 ranges,
             // r23+0x30 / r22+0x32 hit positions.
@@ -5509,12 +5786,8 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             f32 f26;
             f32 f28;
             {
-                cf::CfActorF64Conv convA;
-                convA.w[0] = 0x43300000;
-                convA.w[1] = (u32)*(s16*)((u8*)res20C + 0x62) ^ 0x80000000;
-                f26 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00;
-                convA.w[1] = (u32)tgtParam->field_62 ^ 0x80000000;
-                f28 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00 - f26;
+                f26 = (f32)*(s16*)((u8*)res20C + 0x62) / lbl_eu_80666E00;
+                f28 = (f32)tgtParam->field_62 / lbl_eu_80666E00 - f26;
             }
             s32 r25 = atkParam->field_30;
             s32 r26 = tgtParam->field_32;
@@ -5815,288 +6088,6 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 }
             }
         dispatch_alt_done:;
-            // ============================================================
-            // 0x800DF93C onwards (shared with main-block dispatch end)
-            // ============================================================
-            goto post_dispatch;
-        }
-
-        // ================================================================
-        // MAIN BLOCK (types 1/5), 0x800DD730
-        // ================================================================
-        f32 f26;
-        f32 f28;
-        {
-            cf::CfActorF64Conv convA;
-            convA.w[0] = 0x43300000;
-            convA.w[1] = (u32)*(s16*)((u8*)res20C + 0x60) ^ 0x80000000;
-            f26 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00;
-            convA.w[1] = (u32)tgtParam->field_60 ^ 0x80000000;
-            f28 = (f32)(convA.d - lbl_eu_80666DE0) / lbl_eu_80666E00 - f26;
-        }
-        s32 r25 = atkParam->field_2C;
-        s32 r26 = tgtParam->field_2E;
-
-        // --- hit-flag conditional zero of f26 (0x800DD78C) ---
-        {
-            u32 tag = move->field_74;
-            if (tag & 0x2000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
-                if (!(hf & 0x4000)) f26 = lbl_eu_80666DDC;
-            } else if (tag & 0x4000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
-                if (!(hf & 0x2000)) f26 = lbl_eu_80666DDC;
-            } else if (tag & 0x1000000) {
-                u16 hf = *(u16*)((cf::CActorParam*)(target))->CActorParam_getBattleHitFlags();
-                if (!(hf & 0x1)) f26 = lbl_eu_80666DDC;
-            }
-        }
-        f28 += f26;                                     // 0x800DD804
-
-        // 0x800DD80C: sub->mFlagsArray[1].flags bit24 (0x800000) -> average r25
-        if (sub->field_78 & 0x800000) {
-            r25 = (r25 + atkParam->field_1E) / 2;
-        }
-
-        // --- clamp [-1.0, 0.9] ---
-        if (f28 < lbl_eu_80666E2C) f28 = lbl_eu_80666E2C;
-        else if (f28 > lbl_eu_80666E30) f28 = lbl_eu_80666E30;
-
-        // --- zero ratio under data-map flags ---
-        if (func_80148778((u8*)target + 8, 0x13)) {
-            r26 = 0;
-            f28 = 0.0f;
-        }
-        if ((((BattleObjAccessor*)attacker)->field_3f00 & 0x4) &&
-            (move->field_78 & 0x800)) {
-            r26 = 0;
-            f28 = 0.0f;
-        }
-
-        // --- hit quality flags (0x800DD8B8) ---
-        if (f28 > 0.0f && f28 < 0.5f) {
-            move->field_74 |= 0x80100000;
-        } else if (f28 >= 0.5f && f28 < 1.0f) {
-            move->field_74 |= 0x80200000;
-        }
-
-        // --- guard path: move->field_78 bit21 (0x200) ---
-        if (move->field_78 & 0x200) {
-            s32 vf = artsSubGetMax(sub);
-            s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
-            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
-                f32 f2 = atkParam->field_24;
-                f32 f1 = atkParam->field_28 - f2;
-                s32 d = (s32)(lbl_eu_80666DD4 + f1);
-                u32 r4 = move->field_94;
-                r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
-            } else {
-                r5 = (s32)((f32)(s32)r5 *
-                           (f32)(s32)((move->field_94 % 21) + 90) /
-                           lbl_eu_80666E00);
-            }
-            move->field_54 =
-                (f32)(s32)(r25 - r26) * (f32)(s32)r5 / lbl_eu_80666E00;
-
-            if (func_80148778((u8*)attacker + 8, 0xC8)) {
-                move->field_54 *= lbl_eu_80666DE8;
-            }
-            if (move->field_54 < lbl_eu_80666DD4)
-                move->field_54 = lbl_eu_80666DD4;
-            move->field_54 = move->field_54 - move->field_54 * f28;
-            goto main_tail;
-        }
-
-        // --- non-guard: move->field_78 bits 20-21 (0x600) ---
-        if (move->field_78 & 0x600) {
-            // 0x800DDAB0: same r25 variance as above
-            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
-                f32 f2 = atkParam->field_24;
-                f32 f1 = atkParam->field_28 - f2;
-                s32 d = (s32)(1.0f + f1);
-                u32 r4 = move->field_94;
-                r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
-            }
-            // three sub-vtable calls (0x800DDB20)
-            s32 v1 = artsSubGetMax(sub);
-            s32 v2 = artsSubGetMax(sub);
-            s32 v3 = artsSubGetMax(sub);
-            s32 r18 = sub->field_38 + (s32)sub->field_6C * (v1 - 1);
-            s32 r19 = sub->field_3A + (s32)sub->field_6D * (v2 - 1);
-            s32 r20 = (s32)move->field_94;
-            s32 r7 = r19 - r18 + 1;
-            s32 r0 = sub->field_38 + (s32)sub->field_6C * (v3 - 1) +
-                     (s32)(r20 % (u32)r7);
-            move->field_54 =
-                (f32)(s32)(r25 - r26) * (f32)(s32)r0 / 100.0f;       // 0x800DDBE4
-
-            // 0x800DDBF0: clamp + apply ratio
-            if (move->field_54 < lbl_eu_80666DD4)
-                move->field_54 = lbl_eu_80666DD4;
-            move->field_54 = move->field_54 - move->field_54 * f28;
-
-            // 0x800DDC10: 0x93 -> field_58 += 0.5 ; 0xC0 -> += val/10 - 1
-            if (func_80148778((u8*)attacker + 8, 0x93)) {
-                move->field_58 += lbl_eu_80666DE8;
-            }
-            if (func_80148778((u8*)attacker + 8, 0xC0)) {
-                void* entry = func_80149154((u8*)attacker + 8, 0xC0);
-                move->field_58 +=
-                    (f32)(s32)*(u32*)((u8*)entry + 0x10) / 10.0f - 1.0f;
-            }
-        }
-
-    main_tail:;
-        // ================================================================
-        // MAIN-BLOCK TAIL (0x800DDC80): combo / level-diff / vf0x308
-        // ================================================================
-        // --- 0x800DDC80: target vf0x2A4 (combo) checks ---
-        {
-            void* p = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-            if (*(u32*)((u8*)p + 0x78) & 0x400) {
-                void* f4 = *(void**)((u8*)target + 0x4);
-                int val = *(u32*)(((cf::CObjectState*)(f4))->CObjectState_getStateData());
-                bool ok = func_80174C98(target, &val, 0x806) != 0;
-                if (!ok && !(*(u16*)((u8*)target + 0x3E6C) & 0x20))
-                    goto main_combo_skip;
-                void* sub2 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                if (*(void**)((u8*)sub2 + 0x50) == 0) goto main_combo_skip;
-                void* sub3 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                void* sub4 = *(void**)((u8*)sub3 + 0x50);
-                // MAIN: bonus applies when combo target type != 1
-                if (*(u16*)((u8*)sub4 + 0x3C) == 1) goto main_combo_skip;
-                void* sub5 = ((cf::CActorParam*)(target))->CActorParam_getMoveRecord();
-                void* sub6 = *(void**)((u8*)sub5 + 0x50);
-                if (*(u8*)((u8*)sub6 + 0x42) == 1) goto main_combo_skip;
-                move->field_58 += 0.5f;                 // 0x800DDD48
-            }
-        main_combo_skip:;
-        }
-
-        // --- 0x800DDD58: level-difference multiplier (main thresholds) ---
-        {
-            s32 tl = (s32)((cf::CActorParam*)(target))->CActorParam_getActorLevel();
-            s32 al = (s32)((cf::CActorParam*)(attacker))->CActorParam_getActorLevel();
-            s32 diff = tl - al;
-            if (diff < -2) {
-                if (diff >= -5) move->field_54 *= 1.25f;
-                else if (diff >= -9) move->field_54 *= 1.5f;
-                else move->field_54 *= 2.0f;
-            } else {
-                if (diff >= 6) move->field_54 *= 0.5f;
-                else if (diff >= 3) move->field_54 *= 0.75f;
-            }
-        }
-
-        // --- 0x800DDE18: field_74 bit15 (0x4000) -> vf0x308 table ---
-        if (move->field_74 & 0x4000) {
-            s32 idx = ((cf::CActorParam*)(attacker))->CActorParam_getStatusCount();          // {0,0,0,0.1,0.2}
-            if (idx >= 0 && idx < 5) move->field_58 += sTable_150[idx];
-        }
-
-        // --- 0x800DDE7C: art-type dispatch (guard: !data 0x13) ---
-        if (!func_80148778((u8*)target + 8, 0x13)) {
-            BattleParamData* tgtP = tgtParam;
-            u16 artType = sub->field_40;
-            s32 r0 = 0;
-
-            // ---- dispatch A (0x800DDE90): byte 0x72, negate, thr 200 ----
-            switch (artType) {
-                case 1: case 2: case 3:
-                    r0 = (tgtP->field_72 >> 7) & 1; break;
-                case 4: case 5: case 6: case 7: case 8: case 9: {
-                    s16 val = artType == 4 ? tgtP->field_64 :
-                              artType == 5 ? tgtP->field_66 :
-                              artType == 6 ? tgtP->field_68 :
-                              artType == 7 ? tgtP->field_6A :
-                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
-                    if (val >= 200) r0 = 1;
-                    else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = (tgtP->field_72 >> 7) & 1; break;
-                            case 4: r0 = tgtP->field_72 & 1; break;
-                            case 5: r0 = (tgtP->field_72 >> 1) & 1; break;
-                            case 6: r0 = (tgtP->field_72 >> 2) & 1; break;
-                            case 7: r0 = (tgtP->field_72 >> 3) & 1; break;
-                            case 8: r0 = (tgtP->field_72 >> 4) & 1; break;
-                            case 9: r0 = (tgtP->field_72 >> 5) & 1; break;
-                        }
-                    }
-                    break;
-                }
-                default: r0 = 0; break;
-            }
-            if (r0 != 0) {
-                move->field_54 *= -1.0f;
-                move->field_74 |= 0x80000800;
-                goto post_dispatch;
-            }
-
-            // ---- dispatch B (0x800DE0F4): byte 0x70, halve, thr 100 ----
-            r0 = 0;
-            switch (artType) {
-                case 1: case 2: case 3:
-                    r0 = (tgtP->field_70 >> 7) & 1; break;
-                case 4: case 5: case 6: case 7: case 8: case 9: {
-                    s16 val = artType == 4 ? tgtP->field_64 :
-                              artType == 5 ? tgtP->field_66 :
-                              artType == 6 ? tgtP->field_68 :
-                              artType == 7 ? tgtP->field_6A :
-                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
-                    if (val >= 100) r0 = 1;
-                    else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = (tgtP->field_70 >> 7) & 1; break;
-                            case 4: r0 = tgtP->field_70 & 1; break;
-                            case 5: r0 = (tgtP->field_70 >> 1) & 1; break;
-                            case 6: r0 = (tgtP->field_70 >> 2) & 1; break;
-                            case 7: r0 = (tgtP->field_70 >> 3) & 1; break;
-                            case 8: r0 = (tgtP->field_70 >> 4) & 1; break;
-                            case 9: r0 = (tgtP->field_70 >> 5) & 1; break;
-                        }
-                    }
-                    break;
-                }
-                default: r0 = 0; break;
-            }
-            if (r0 != 0) {
-                move->field_54 *= 0.5f;
-                goto post_dispatch;
-            }
-
-            // ---- dispatch C (0x800DE344): 0x72 then 0x73, +0.25 ----
-            r0 = 0;
-            switch (artType) {
-                case 1: case 2: case 3:
-                    r0 = (tgtP->field_72 >> 7) & 1; break;
-                case 4: case 5: case 6: case 7: case 8: case 9: {
-                    s16 val = artType == 4 ? tgtP->field_64 :
-                              artType == 5 ? tgtP->field_66 :
-                              artType == 6 ? tgtP->field_68 :
-                              artType == 7 ? tgtP->field_6A :
-                              artType == 8 ? tgtP->field_6C : tgtP->field_6E;
-                    if (val < 0) r0 = 1;                 // negative -> active
-                    else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = (tgtP->field_73 >> 7) & 1; break;
-                            case 4: r0 = tgtP->field_73 & 1; break;
-                            case 5: r0 = (tgtP->field_73 >> 1) & 1; break;
-                            case 6: r0 = (tgtP->field_73 >> 2) & 1; break;
-                            case 7: r0 = (tgtP->field_73 >> 3) & 1; break;
-                            case 8: r0 = (tgtP->field_73 >> 4) & 1; break;
-                            case 9: r0 = (tgtP->field_73 >> 5) & 1; break;
-                        }
-                    }
-                    break;
-                }
-                default: r0 = 0; break;
-            }
-            if (r0 != 0) {
-                move->field_58 += 0.25f;
-            }
         }
     }
 

@@ -112,23 +112,24 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObjectModel();
         //vtable 1 (CfObjectModel)
-        // UVF1/19 stay Unk as the virtual name: CfObjectMove still declares
-        // C++ members with those Unk spellings (out of scope to dual-write).
-        // Locked retail Fv / hand-vtable linker names in this TU and
-        // CREvtModel / CfCollSphereImpl also pin Unk mangled spellings for
-        // slots whose C++ aliases already spell behavior (getScaledAngle,
-        // findNodeMatrix, getSubPosWord, getPosSample, checkSubReady,
-        // syncModelRate, getPosTriple, setObjScale, getObjScale, ...).
-        // ASK POLICY: no evidence for a same-length retail name beyond the
-        // existing aliases; leave Unk + document.
-        virtual void CfObjectModel_UnkVirtualFunc1();  //0x178
+        // Wave-64: UVF1/19 primaries flipped to behavior names (same as
+        // Wave-62 for the rest of this block). Hand-built vtables / Fv
+        // free-function bodies keep the Unk mangled linker names
+        // (CREvtModel / CfCollSphereImpl / Map stubs). Unk* below are
+        // non-virtual same-arity aliases. UVF1 stays an out-of-line
+        // non-virtual member so Move's Class::UnkVirtualFunc1 call and
+        // the Model hand-table Fv keep the retail Unk symbol (0x0 spare:
+        // no extra trampoline). Locked CfObject-base Unk Fv names that
+        // Model overrides (UVF24/28/34/35/36/52/54/55/67/68/69/70/72)
+        // stay Unk on CfObject.hpp: Coll.hpp still redeclares those Unk
+        // spellings (out of scope); Point's local mirror already flipped.
+        virtual void CfObjectModel_releaseModelSub();  //0x178 (teardown: release mSubObj98)
         virtual void CfObjectModel_releaseModelList();  //0x17C (teardown: release model lists; Move overrides with real work)
         void CfObjectModel_UnkVirtualFunc2() { CfObjectModel_releaseModelList(); }  // alias for legacy callers (same arity)
         virtual void* CfObjectModel_getModelName();  //0x180 (retail returns a pointer)
         // Wave-62: promote behavior aliases to the virtual decls. Hand-built
         // vtables / Fv free-function bodies keep the Unk mangled linker names;
-        // Unk* below are non-virtual same-arity aliases. UVF1/19 excluded
-        // (Move C++ member overrides would append if only the base renamed).
+        // Unk* below are non-virtual same-arity aliases.
         virtual void* CfObjectModel_getAnimState();  //0x184
         virtual u32 CfObjectModel_getAnimFlags();  //0x188
         virtual void* CfObjectModel_checkTargetNode(void* arg);  //0x18C (retail returns a pointer)
@@ -148,12 +149,14 @@ namespace cf {
         virtual void CfObjectModel_setBoneRotate(int flag); //0x1B4
         virtual u32 CfObjectModel_getBindSource(); //0x1B8 (field_B4 bind source pointer as u32)
         virtual void CfObjectModel_detachEffectSlot(void* arg); //0x1BC
-        virtual void CfObjectModel_UnkVirtualFunc19(int flag); //0x1C0
+        virtual void CfObjectModel_setModelVisible(int flag); //0x1C0 (mFlags68 bit 21; Move walks +0x6F8)
         virtual u32 CfObjectModel_getModelVisible(); //0x1C4 (+0x68 bit 21; pairs with setModelVisible)
         // Non-virtual same-arity aliases: legacy Unk spellings + densest
         // call-site names. MWCC inlines each into the identical virtual
         // dispatch. Fv linker bodies / hand-built vtables keep Unk mangled names.
-        void CfObjectModel_releaseModelSub() { CfObjectModel_UnkVirtualFunc1(); } //0x178
+        // UVF1: out-of-line non-virtual (def in .cpp) = retail Fv body + Move
+        // Class:: call target; must NOT be an inline alias (would recolor Move).
+        void CfObjectModel_UnkVirtualFunc1(); //0x178 Fv body (hand table / Move Class::)
         void* CfObjectModel_UnkVirtualFunc4() { return CfObjectModel_getAnimState(); } //0x184
         u32 CfObjectModel_UnkVirtualFunc5() { return CfObjectModel_getAnimFlags(); } //0x188
         void CfObjectModel_UnkVirtualFunc12(float value) { CfObjectModel_setModelRate(value); } //0x1A4
@@ -163,7 +166,7 @@ namespace cf {
         void CfObjectModel_UnkVirtualFunc15(cf::CfObject* other, const char* name) { CfObjectModel_snapToBone(other, name); } //0x1B0
         void CfObjectModel_UnkVirtualFunc16(int flag) { CfObjectModel_setBoneRotate(flag); } //0x1B4
         void CfObjectModel_UnkVirtualFunc18(void* eff) { CfObjectModel_detachEffectSlot(eff); } //0x1BC
-        void CfObjectModel_setModelVisible(int flag) { CfObjectModel_UnkVirtualFunc19(flag); } //0x1C0
+        void CfObjectModel_UnkVirtualFunc19(int flag) { CfObjectModel_setModelVisible(flag); } //0x1C0
         void CfObjectModel_UnkVirtualFunc7(ml::CVec3* pos, float scale) { CfObjectModel_snapSubTarget(pos, scale); } //0x190
         u32 CfObjectModel_UnkVirtualFunc8() { return CfObjectModel_getSubFlag04(); } //0x194
         float CfObjectModel_UnkVirtualFunc9() { return CfObjectModel_getModelFloatA8(); } //0x198

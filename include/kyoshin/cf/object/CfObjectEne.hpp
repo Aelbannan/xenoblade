@@ -309,7 +309,7 @@ struct CActorParam17ECView {
     // CActorParam aliases (setEnemyType / setStatScale / getArtsSlotIds / ...);
     // no TU-local proxy remains.
 
-    // --- CActorParam_UnkVirtualFunc123/120 record structs ---
+    // --- CActorParam copyArtsSetBlock/copyAtkSetBlock record structs ---
     // The 0x84 field block copied verbatim per record by both loaders
     // (strcpy 'name' + strlen stored at +0x20, then the typed fields; the
     // +0x84 vtable word is skipped). Stride 0x88 for the 6 attack records

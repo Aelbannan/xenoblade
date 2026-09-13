@@ -2746,25 +2746,18 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
 }
 
 // Enemy movement state machine (retail func_80091864). Validates the enemy
-// battle object (+0x3F60 flag object), resolves the player battle object,
-// then either wanders toward a random nearby candidate or chases the player:
-// seeds a random heading from field_0x5C, scans the actor list for candidates
-// whose predicted position is within the summed proximity radius, and feeds
-// the resulting direction into the party-info builder / movement commit.
-// NOTE: the middle stretch of the retail routine was not available when this
-// reconstruction was written; the tail state handling below is inferred from
-// the surrounding branches.
+// battle object, plans a wander / party-info goal, then either waits on the
+// +0x20 bit or pursues: arts-speed latch, distance bands, heading commit
+// (func_80089398 / func_8008CDE8 / func_80089694) or a close-range face.
 void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     cf::CFunc80091864View* self = (cf::CFunc80091864View*)selfRaw;
     cf::CNpcBaseDataView* data = self->field_0x34;
     cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
-    cf::CFunc8008EF04Sub* movesub = (cf::CFunc8008EF04Sub*)data->field_0x28;
-
-    // Enemy battle object: the move-data +0x28 sub-object sits at +0x3E9C of
-    // the containing battle object; recover the base pointer.
-    cf::CFunc80091864Actor* ene =
-        (cf::CFunc80091864Actor*)((u8*)data->field_0x28 -
-                                  offsetof(cf::CFunc80091864Actor, mSub));
+    cf::CfObject* moveObj = data->field_0x28;
+    cf::CFunc80091864Actor* ene = (cf::CFunc80091864Actor*)moveObj;
+    if (ene != 0) {
+        ene = (cf::CFunc80091864Actor*)((u8*)ene - 0x3E9C);
+    }
 
     if (ene->field_3F60 == 0) {
         data14->field_0x14 = lbl_eu_806665C0;
@@ -2788,26 +2781,22 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    // Latch the base position into mVec144 while the +0x400000 state bit is
-    // up (retail copies the three words). The bit sits above the halfword
-    // load's range, so the branch is effectively dead in retail too.
-    if ((self->field_0x58 & 0x4000) != 0) {
+    if ((self->field_0x58 & 0x200) != 0) {
         self->mVec144W = self->mPos0W;
     }
 
-    // +0x17C bit 0 pending: re-check the move-sub target gate. When the
-    // +0x98 object carries its flag, poke the icon helper instead; otherwise
-    // query the move-sub's +0x0C slot - success ends the frame early without
-    // clearing the pending bit.
     int blocked = 0;
     if ((self->field_0x17C & 1) != 0) {
+        cf::CFunc8008EF04Sub* movesub = (cf::CFunc8008EF04Sub*)moveObj;
         cf::CFunc8008EF04Sub98* s98 =
             (cf::CFunc8008EF04Sub98*)movesub->field_98;
-        if (s98 != 0 && (s98->field_7A4 & 0x8000) != 0) {
+        if (s98 != 0 && (s98->field_7A4 & 0x10000) != 0) {
             if (movesub->field_C4 != 0) {
-                func_8004B9D4(movesub, 1, 0, -1, 0);
+                func_8004B9D4(movesub->field_C4, 1, 0, -1, 0);
             }
-        } else if (movesub->field_C4 != 0 && ((cf::CfObject*)movesub)->CObjectState_checkStateFlags(4) != 0) {
+        } else if (movesub->field_C4 != 0 &&
+                   ((cf::CfObject*)movesub)->CObjectState_checkStateFlags(4) !=
+                       0) {
             data14->field_0x14 = lbl_eu_806665C0;
             blocked = 1;
         }
@@ -2822,145 +2811,531 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    // Target activity: bit 3 of the player target's +0x200 flags word.
     int tgtActive = 0;
     {
         cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
-            reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getCurrentTarget());
-        if (t != 0) tgtActive = (int)((t->field_200 >> 3) & 1);
+            reinterpret_cast<cf::CfObject*>(&player->mSub)
+                ->CfObject_getCurrentTarget());
+        if (t != 0) {
+            tgtActive = (t->field_200 & 0x10000000u) != 0;
+        }
     }
 
     u16 hw58 = self->field_0x58;
+    ml::CVec3 goal;
+    int adopted = 0;
+    int planned = 0;
+    u16 esc = 1;
     f32 radius = b89->field_8C;
-    u32 seed = self->field_0x5C;
+    u32 seedOrCount = ene->field_45C6;
+    f32 speed = lbl_eu_806665C0;
 
     if ((hw58 & 1) != 0) {
-        // Step the entry gate; past 15 entries drop back out of the state.
         u16 gate = (u16)(self->field_0x5A + 1);
         self->field_0x5A = gate;
         if (gate > 0xF) {
             self->field_0x58 = (u16)(hw58 & ~1u);
             self->field_0x5A = 0;
-            hw58 &= (u16)~1u;
         }
+        *(u32*)&goal.x = self->mPos0W.x;
+        *(u32*)&goal.y = self->mPos0W.y;
+        *(u32*)&goal.z = self->mPos0W.z;
         if ((self->field_0x180 & 0x8) != 0) {
             if ((player->field_3374 & 0x100) != 0) {
                 self->field_0x160 =
-                    reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector()->y;
+                    reinterpret_cast<cf::CfObject*>(&player->mSub)
+                        ->CfObject_getPosVector()
+                        ->y;
             } else {
                 self->field_0x160 =
                     lbl_eu_806665D0 +
-                    reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector()->y;
+                    reinterpret_cast<cf::CfObject*>(&player->mSub)
+                        ->CfObject_getPosVector()
+                        ->y;
             }
-            hw58 = self->field_0x58;
-            seed = self->field_0x5C;
-            radius = b89->field_8C;
-        }
-    }
-
-    u16 esc = ene->field_45C4;
-    if (esc == 0) esc = 1;
-
-    if ((hw58 & 2) != 0) {
-        // Wander countdown: when the timer lapses, reroll the seed and drop
-        // the wander bit.
-        s16 t = (s16)(self->field_0x6C - 1);
-        self->field_0x6C = t;
-        if (t < 0) {
-            self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
-            self->field_0x58 = (u16)(hw58 & ~2u);
         }
     } else {
-        // Pick a fresh random heading from the seed: seed mod 360 scaled to
-        // radians plus the current player heading; walk distance scales
-        // seed mod 100 by the proximity factor and adds both radii.
-        s32 sv = (s32)seed;
-        s32 rem360 = sv - sv / 360 * 360;
-        s32 rem100 = sv - sv / 100 * 100;
-        f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) * lbl_eu_8066A210;
-        f32 head = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                       reinterpret_cast<cf::CfObjectActor*>(player)) +
-                   ang;
-        f32 dist = lbl_eu_80666658 * (f32)((f64)rem100 - lbl_eu_80666620) *
-                       radius +
-                   ene->field_44D8 + player->field_44D8;
+        esc = ene->field_45C4;
+        if (esc == 0) esc = 1;
+        radius = b89->field_8C;
+        seedOrCount = ene->field_45C6;
+        if (esc == 1) {
+            seedOrCount = self->field_0x5C;
+            if ((hw58 & 2) != 0) {
+                s16 t = (s16)(self->field_0x6C - 1);
+                self->field_0x6C = t;
+                if (t < 0) {
+                    self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
+                    self->field_0x58 = (u16)(hw58 & ~2u);
+                }
+            } else {
+                s32 sv = (s32)self->field_0x5C;
+                s32 rem360 = sv - sv / 360 * 360;
+                s32 rem100 = sv - sv / 100 * 100;
+                f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) *
+                          lbl_eu_8066A210;
+                f32 head =
+                    CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+                        reinterpret_cast<cf::CfObjectActor*>(player)) +
+                    ang;
+                f32 dist =
+                    lbl_eu_80666658 *
+                        (f32)((f64)rem100 - lbl_eu_80666620) * radius +
+                    ene->field_44D8 + player->field_44D8;
+                ml::CVec3 pred =
+                    *reinterpret_cast<cf::CfObject*>(&player->mSub)
+                         ->CfObject_getPosVector();
+                pred.x += dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
+                pred.z += dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
 
-        ml::CVec3* pv = reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
-        f32 px = pv->x + dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
-        f32 pz = pv->z + dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
-
-        // Scan the actor list backwards for a candidate whose predicted
-        // position lands inside ene->field_44D8 + cand->field_44D8.
-        int found = 0;
-        for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
-            cf::CFunc80091864Actor* cand =
-                (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
-            if (cand == 0) continue;
-            cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
-                reinterpret_cast<cf::CfObject*>(&cand->mSub)->CfObject_getCurrentTarget());
-            if (t == 0) continue;
-            s32 iv = (s32)t->field_E0;
-            s32 irem360 = iv - iv / 360 * 360;
-            s32 irem100 = iv - iv / 100 * 100;
-            f32 ihead = lbl_eu_806665CC * head +
+                int found = 0;
+                for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
+                    cf::CFunc80091864Actor* cand =
+                        (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
+                    if (cand == 0) continue;
+                    cf::CFunc80091864Target* t =
+                        (cf::CFunc80091864Target*)(
+                            reinterpret_cast<cf::CfObject*>(&cand->mSub)
+                                ->CfObject_getCurrentTarget());
+                    if (t == 0) continue;
+                    s32 iv = (s32)t->field_E0;
+                    s32 irem360 = iv - iv / 360 * 360;
+                    s32 irem100 = iv - iv / 100 * 100;
+                    f32 ihead =
+                        CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+                            reinterpret_cast<cf::CfObjectActor*>(player)) +
                         (f32)((f64)irem360 - lbl_eu_80666620) *
                             lbl_eu_8066A210;
-            f32 idist =
-                lbl_eu_80666658 * (f32)((f64)irem100 - lbl_eu_80666620) *
-                    radius +
-                cand->field_44D8 + player->field_44D8;
-            ml::CVec3* cp = reinterpret_cast<cf::CfObject*>(&cand->mSub)->CfObject_getPosVector();
-            f32 cx = cp->x + idist * SinFIdx__Q24nw4r4mathFf(ihead);
-            f32 cz = cp->z + idist * CosFIdx__Q24nw4r4mathFf(ihead);
-            f32 dx = px - cx;
-            f32 dz = pz - cz;
-            f32 th = lbl_eu_8066667C * (ene->field_44D8 + cand->field_44D8);
-            if (dx * dx + dz * dz <= th) {
-                found = 1;
-                break;
+                    f32 idist =
+                        lbl_eu_80666658 *
+                            (f32)((f64)irem100 - lbl_eu_80666620) * radius +
+                        cand->field_44D8 + player->field_44D8;
+                    ml::CVec3 ip =
+                        *reinterpret_cast<cf::CfObject*>(&cand->mSub)
+                             ->CfObject_getPosVector();
+                    ip.x += idist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+                                                            ihead);
+                    ip.z += idist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
+                                                            ihead);
+                    f32 dx = pred.x - ip.x;
+                    f32 dz = pred.z - ip.z;
+                    f32 th = lbl_eu_8066667C *
+                             (ene->field_44D8 + cand->field_44D8);
+                    if (dx * dx + dz * dz <= th * th) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if (found != 0) {
+                    self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
+                } else {
+                    self->field_0x6C = 0x258;
+                    self->field_0x58 = (u16)(hw58 | 2);
+                }
             }
         }
-        if (found != 0) {
-            self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
-        } else {
-            // Nothing close: enter the wander countdown.
-            self->field_0x6C = 0x258;
-            self->field_0x58 = (u16)(hw58 | 2);
+        radius += ene->field_44D8;
+
+        ml::CVec3 pos =
+            *reinterpret_cast<cf::CfObject*>(&player->mSub)
+                 ->CfObject_getPosVector();
+        f32 head2 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+            reinterpret_cast<cf::CfObjectActor*>(player));
+        cf::CFunc8008E760PartyInfo pi;
+        func_80198710(&pi, &pos, head2, (int)esc, (int)seedOrCount, radius,
+                      ene->field_44D8 + player->field_44D8);
+        if ((self->field_0x180 & 1) != 0) pi.field_2D = 0;
+        if ((self->field_0x180 & 0x8) != 0) {
+            pi.field_2D = 0;
+            if ((player->field_3374 & 0x100) != 0) {
+                self->field_0x160 =
+                    reinterpret_cast<cf::CfObject*>(&player->mSub)
+                        ->CfObject_getPosVector()
+                        ->y;
+            } else {
+                self->field_0x160 =
+                    lbl_eu_806665D0 +
+                    reinterpret_cast<cf::CfObject*>(&player->mSub)
+                        ->CfObject_getPosVector()
+                        ->y;
+            }
+        }
+
+        planned = 1;
+        int ok = func_8019876C(&pi, &goal);
+        int accept = 1;
+        if (ok != 0) {
+            if ((self->field_0x17C & 0x80000000u) != 0 && esc == 1) {
+                s16 n = (s16)(self->field_0x76 + 1);
+                self->field_0x76 = n;
+                if (n <= 6) {
+                    ml::CVec3 lift(lbl_eu_806665E4, lbl_eu_806665C0,
+                                   lbl_eu_806665E4);
+                    ml::CVec3 from =
+                        *reinterpret_cast<cf::CfObject*>(&player->mSub)
+                             ->CfObject_getPosVector() +
+                        lift;
+                    ml::CVec3 to = goal + lift;
+                    if (func_804BE348(&from, &to, 0x44A11, 0, 0) != 0) {
+                        accept = 0;
+                    }
+                }
+            }
+            if (accept != 0) {
+                planned = 0;
+                adopted = 1;
+                u16 st = (u16)(self->field_0x58 | 0x201);
+                self->mPos0W.x = *(u32*)&goal.x;
+                self->mPos0W.y = *(u32*)&goal.y;
+                self->mPos0W.z = *(u32*)&goal.z;
+                self->mVec144W = self->mPos0W;
+                self->field_0x58 = st;
+                if ((st & 4) != 0 &&
+                    (self->field_0x17C & 0x80000000u) != 0) {
+                    reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                        ->CfObject_setMoveTargetVec(
+                            reinterpret_cast<const ml::CVec3*>(&self->mPos0W));
+                }
+                self->field_0x17C &= 0x7FFFFFFFu;
+            }
+        }
+        if (planned != 0) {
+            if ((self->field_0x58 & 0x200) != 0) {
+                *(u32*)&goal.x = self->mPos0W.x;
+                *(u32*)&goal.y = self->mPos0W.y;
+                *(u32*)&goal.z = self->mPos0W.z;
+            } else {
+                goal = *reinterpret_cast<cf::CfObject*>(&player->mSub)
+                            ->CfObject_getPosVector();
+            }
+        }
+        self->field_0x17C &= ~0x200u;
+        self->field_0x58 = (u16)(self->field_0x58 & ~4u);
+    }
+
+    {
+        cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
+            reinterpret_cast<cf::CfObject*>(&player->mSub)
+                ->CfObject_getCurrentTarget());
+        if (t != 0) {
+            f32* eneScale = (f32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                                ->CfObject_getMoveRateScale();
+            if (*eneScale != lbl_eu_806665C0) {
+                f32* pcScale =
+                    (f32*)reinterpret_cast<cf::CfObject*>(&player->mSub)
+                        ->CfObject_getMoveRateScale();
+                if (*pcScale != lbl_eu_806665C0) {
+                    t = (cf::CFunc80091864Target*)(
+                        reinterpret_cast<cf::CfObject*>(&player->mSub)
+                            ->CfObject_getCurrentTarget());
+                    if (t != 0 && t->field_14 != lbl_eu_806665C0) {
+                        u32 w = ((cf::CFunc8008B580Word*)player->field_04
+                                     ->CObjectState_getStateData())
+                                    ->field_0;
+                        if (func_80174C98(player, &w, 0x19) == 0) {
+                            u32 w2 =
+                                ((cf::CFunc8008B580Word*)player->field_04
+                                     ->CObjectState_getStateData())
+                                    ->field_0;
+                            if (func_80174C98(player, &w2, 3) != 0) {
+                                t = (cf::CFunc80091864Target*)(
+                                    reinterpret_cast<cf::CfObject*>(
+                                        &player->mSub)
+                                        ->CfObject_getCurrentTarget());
+                                f32 arts = t->field_14;
+                                f32 er =
+                                    *(f32*)reinterpret_cast<cf::CfObject*>(
+                                         &ene->mSub)
+                                         ->CfObject_getMoveRateScale();
+                                f32 pr =
+                                    *(f32*)reinterpret_cast<cf::CfObject*>(
+                                         &player->mSub)
+                                         ->CfObject_getMoveRateScale();
+                                speed = arts * (pr / er);
+                                self->field_0x74 = 0x78;
+                                self->field_0x58 =
+                                    (u16)(self->field_0x58 | 0x100);
+                                self->field_0x68 = speed;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if ((self->field_0x58 & 0x100) != 0 && speed == lbl_eu_806665C0) {
+            s16 t74 = (s16)(self->field_0x74 - 1);
+            speed = self->field_0x68;
+            self->field_0x74 = t74;
+            if (t74 <= 0) {
+                self->field_0x58 = (u16)(self->field_0x58 & ~0x100u);
+            }
         }
     }
 
-    // Common tail: rebuild the party info block around the player's current
-    // position / heading, then refresh the height latch under the flag bits.
-    ml::CVec3 pos = *reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector();
-    f32 head2 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-        reinterpret_cast<cf::CfObjectActor*>(player));
-    cf::CFunc8008E760PartyInfo pi;
-    func_80198710(&pi, &pos, head2, (int)esc, (int)seed, radius,
-                  ene->field_44D8 + player->field_44D8);
-    if ((self->field_0x180 & 1) != 0) {
-        pi.field_2D = 0;
+    int over = self->field_0x60 > speed;
+    if ((self->field_0x58 & 0x20) != 0) {
+        const u32* pw = (const u32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                            ->CfObject_getPosVector();
+        self->field_4C = pw[0];
+        self->field_50 = pw[1];
+        self->field_54 = pw[2];
+        s16 wait = (s16)(self->field_0x70 - 1);
+        self->field_0x70 = wait;
+        int give = 0;
+        if (over) {
+            give = 1;
+        } else if ((self->field_0x58 & 0x40) != 0) {
+            if (wait < 0) {
+                if (speed != lbl_eu_806665C0) give = 1;
+                else {
+                    self->field_0x70 = 0x3C;
+                    self->field_0x58 = (u16)(self->field_0x58 & ~0x40u);
+                }
+            }
+        } else if (speed != lbl_eu_806665C0) {
+            give = 1;
+        } else if (wait < 0) {
+            give = 1;
+        }
+        if (give == 0) {
+            data14->field_0x14 = lbl_eu_806665C0;
+            return;
+        }
+        self->field_0x70 = 0;
+        self->field_0x58 = (u16)(self->field_0x58 & ~0x460u);
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
     }
+
+    ml::CVec3* ep = reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                        ->CfObject_getPosVector();
+    ml::CVec3 delta = *ep - goal;
+    f32 rad = ene->field_44D8;
+    if (rad <= lbl_eu_806665C0) rad = -rad;
+    f32 distSq = delta.x * delta.x + delta.z * delta.z;
+    if (distSq <= rad * rad) {
+        self->field_0x64 = lbl_eu_806665C0;
+        const u32* pw = (const u32*)ep;
+        self->field_4C = pw[0];
+        self->field_50 = pw[1];
+        self->field_54 = pw[2];
+        self->field_0x70 = 0;
+        if ((self->field_0x58 & 8) != 0) {
+            self->field_0x58 = (u16)(self->field_0x58 | 0x18);
+        }
+        f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+            reinterpret_cast<cf::CfObjectActor*>(ene));
+        f32 ph = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+            reinterpret_cast<cf::CfObjectActor*>(player));
+        f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
+                        CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
+                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
+                        SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+        if (align > lbl_eu_80666694) {
+            data14->field_0x14 = lbl_eu_806665C0;
+            return;
+        }
+        cf::CFunc8008EF04Sub* sub = (cf::CFunc8008EF04Sub*)moveObj;
+        if (sub->field_C4 != 0 && sub->field_98 != 0 &&
+            (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 & 0x10000) ==
+                0) {
+            func_800BE12C(sub, 3, 0, -1, 1);
+            ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
+            self->field_0x17C |= 1;
+        }
+        f32 ps = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+        f32 pc = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+        self->mVelocity.x = pc;
+        self->mVelocity.y = lbl_eu_806665C0;
+        self->mVelocity.z = ps;
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    self->field_0x17C &= ~0x8000u;
+    f32 scale = *(f32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                     ->CfObject_getMoveRateScale();
+    f32 scaled = speed * scale;
+    f32 nearR;
+    f32 farR;
+    if ((self->field_0x58 & 0x400) != 0) {
+        nearR = lbl_eu_80666628 + rad;
+        if (scaled >= lbl_eu_80666680) nearR += lbl_eu_806665D4;
+        farR = lbl_eu_80666674 + rad;
+    } else {
+        nearR = lbl_eu_806665F4 + rad;
+        if (scaled >= lbl_eu_80666680) nearR += lbl_eu_806665D4;
+        farR = lbl_eu_80666684 + rad;
+    }
+
+    if (speed == lbl_eu_806665C0) {
+        if (tgtActive != 0) {
+            if (nearR * nearR > distSq) {
+                f32 len = distSq;
+                if (distSq > lbl_eu_806665C0) {
+                    if (distSq <= lbl_eu_806665C0) {
+                        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                                                     lbl_eu_80526300);
+                    }
+                    if (distSq > lbl_eu_806665C0) {
+                        len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                    }
+                }
+                speed = speed + lbl_eu_806665F0 * (len - nearR);
+                if (speed < lbl_eu_806665C0) speed = lbl_eu_806665C0;
+                self->field_0x58 = (u16)(self->field_0x58 | 0x400);
+            } else if (farR * farR > distSq) {
+                f32 len = distSq;
+                if (distSq > lbl_eu_806665C0) {
+                    if (distSq <= lbl_eu_806665C0) {
+                        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273,
+                                                     lbl_eu_80526300);
+                    }
+                    if (distSq > lbl_eu_806665C0) {
+                        len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
+                    }
+                }
+                speed = speed + lbl_eu_806665F0 * (len - farR);
+                if (speed < lbl_eu_806665C0) speed = lbl_eu_806665C0;
+                self->field_0x58 = (u16)(self->field_0x58 | 0x400);
+            } else {
+                self->field_0x58 = (u16)(self->field_0x58 & ~0x400u);
+            }
+        } else {
+            if (nearR * nearR > distSq) {
+                speed = speed * lbl_eu_80666688;
+                self->field_0x58 = (u16)(self->field_0x58 | 0x400);
+            } else if (farR * farR > distSq) {
+                speed = speed * lbl_eu_80666688;
+                self->field_0x58 = (u16)(self->field_0x58 | 0x400);
+            } else {
+                self->field_0x58 = (u16)(self->field_0x58 & ~0x400u);
+            }
+        }
+    }
+
+    if (over) {
+        self->field_0x64 = speed;
+        self->field_0x58 = (u16)(self->field_0x58 & ~0x18u);
+    } else {
+        if ((self->field_0x58 & 8) != 0) {
+            f32 haltR = lbl_eu_806665E4 + rad;
+            if (tgtActive != 0 && haltR * haltR >= distSq) {
+                self->field_0x64 = speed;
+                self->field_0x58 = (u16)(self->field_0x58 & ~0x418u);
+            } else if (distSq >= lbl_eu_8066668C) {
+                if ((self->field_0x58 & 0x10) != 0) {
+                    self->field_0x6E = (s16)(ml::math::mtRand(0x78) + 0x3C);
+                    self->field_0x58 = (u16)(self->field_0x58 & ~0x10u);
+                    speed = lbl_eu_806665C0;
+                } else {
+                    s16 ht = (s16)(self->field_0x6E - 1);
+                    self->field_0x6E = ht;
+                    if (ht < 0) {
+                        self->field_0x58 = (u16)(self->field_0x58 & ~0x418u);
+                    } else {
+                        speed = lbl_eu_806665C0;
+                    }
+                }
+            } else {
+                speed = lbl_eu_806665C0;
+            }
+        }
+        if (speed == lbl_eu_806665C0) {
+            speed = self->field_0x64 +
+                    lbl_eu_8066666C * (speed - self->field_0x64);
+        }
+        self->field_0x64 = speed;
+    }
+
+    if ((self->field_0x58 & 0x80) != 0) {
+        s16 tt = (s16)(self->field_0x72 - 1);
+        self->field_0x3C = lbl_eu_806665C0;
+        self->field_0x72 = tt;
+        if (tt <= 0) {
+            self->field_0x58 = (u16)(self->field_0x58 & ~0x80u);
+        }
+    }
+
+    if (speed == lbl_eu_806665C0) {
+        const u32* pw = (const u32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                            ->CfObject_getPosVector();
+        self->field_4C = pw[0];
+        self->field_50 = pw[1];
+        self->field_54 = pw[2];
+        self->field_0x70 = 0;
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    ml::CVec3 savedVel = self->mVelocity;
+    ml::CVec3 dir;
     if ((self->field_0x180 & 0x8) != 0) {
-        pi.field_2D = 0;
-        if ((player->field_3374 & 0x100) != 0) {
-            self->field_0x160 =
-                reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector()->y;
-        } else {
-            self->field_0x160 =
-                lbl_eu_806665D0 +
-                reinterpret_cast<cf::CfObject*>(&player->mSub)->CfObject_getPosVector()->y;
+        func_80089398(selfRaw, &dir, &goal, 0);
+    } else {
+        func_8008CDE8(selfRaw, &dir, lbl_eu_80666690 * ene->field_44D8);
+    }
+    self->mVelocity = savedVel;
+
+    cf::CFunc80090DB4Sub* sub63 = (cf::CFunc80090DB4Sub*)moveObj;
+    if (sub63->field_63C >= lbl_eu_806665E4) {
+        f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+            reinterpret_cast<cf::CfObjectActor*>(ene));
+        f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh);
+        f32 s = SinFIdx__Q24nw4r4mathFf(
+            lbl_eu_806665CC *
+            CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
+                reinterpret_cast<cf::CfObjectActor*>(ene)));
+        f32 dot = dir.x * s + dir.z * c;
+        if (dot <= lbl_eu_806665DC) {
+            if (dot <= lbl_eu_806665C0) {
+                self->mVelocity = dir;
+                cf::CFunc8008EF04Sub* sub = (cf::CFunc8008EF04Sub*)moveObj;
+                f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+                ((cf::CfObject*)sub)
+                    ->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
+                if (sub->field_C4 != 0 && sub->field_98 != 0 &&
+                    (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
+                     0x10000) == 0) {
+                    func_800BE12C(sub, 3, 0, -1, 1);
+                    ((cf::CfObject*)sub)->CObjectState_setStateBitFlag(4);
+                    self->field_0x17C |= 1;
+                }
+                self->field_0x58 = (u16)(self->field_0x58 & ~0x80u);
+            } else if ((self->field_0x58 & 0x80) == 0) {
+                self->field_0x58 = (u16)(self->field_0x58 | 0x80);
+                self->field_0x72 = 0x1E;
+            }
         }
     }
 
-    // Tail state machine: chase bookkeeping against the enemy's own sub
-    // position, then either record it, count the lost frames or turn to face
-    // the player and mark the move-sub target.
-    ml::CVec3* ep = reinterpret_cast<cf::CfObject*>(&ene->mSub)->CfObject_getPosVector();
-    f32 dxp = (f32)self->mPos0W.x - ep->x;
-    f32 dzp = (f32)self->mPos0W.z - ep->z;
-    if (dxp * dxp + dzp * dzp > lbl_eu_8066667C) {
-        // Drifting away: step the lost counter, latch at 60 frames and raise
-        // the give-up bits.
+    if (adopted != 0) {
+        self->mPos0W.x = *(u32*)&goal.x;
+        self->mPos0W.y = *(u32*)&goal.y;
+        self->mPos0W.z = *(u32*)&goal.z;
+        self->field_0x58 = (u16)(self->field_0x58 | 1);
+    }
+
+    if (speed == lbl_eu_806665C0) {
+        const u32* pw = (const u32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                            ->CfObject_getPosVector();
+        self->field_4C = pw[0];
+        self->field_50 = pw[1];
+        self->field_54 = pw[2];
+        self->field_0x70 = 0;
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    func_800898D4(selfRaw, &dir);
+    func_80089694(selfRaw, &dir, speed);
+
+    ml::CVec3* ep2 = reinterpret_cast<cf::CfObject*>(&ene->mSub)
+                         ->CfObject_getPosVector();
+    f32 lx = *(f32*)&self->field_4C - ep2->x;
+    f32 ly = *(f32*)&self->field_50 - ep2->y;
+    f32 lz = *(f32*)&self->field_54 - ep2->z;
+    if (lx * lx + ly * ly + lz * lz <= lbl_eu_806665C0) {
         s16 lost = (s16)(self->field_0x70 + 1);
         self->field_0x70 = lost;
         if (lost >= 0x3C) {
@@ -2970,44 +3345,11 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
     self->field_0x70 = 0;
-    self->field_4C = *(u32*)&ep->x;
-    self->field_50 = *(u32*)&ep->y;
-    self->field_54 = *(u32*)&ep->z;
-
-    if ((self->field_0x58 & 0x8) != 0) {
-        data14->field_0x14 = lbl_eu_806665C0;
-        return;
-    }
-
-    // Face the player: heading-alignment check between the two objects; when
-    // aligned, poke the move-sub target through its event helpers.
-    self->mVel18W.x = *(u32*)&lbl_eu_806665C0;
-    f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-        reinterpret_cast<cf::CfObjectActor*>(ene));
-    f32 ph = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-        reinterpret_cast<cf::CfObjectActor*>(player));
-    f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
-                    CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
-                SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
-                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
-    if (align < lbl_eu_80666694) {
-        data14->field_0x14 = lbl_eu_806665C0;
-        return;
-    }
-    if (movesub->field_C4 != 0 && movesub->field_98 != 0 &&
-        (((cf::CFunc8008EF04Sub98*)movesub->field_98)->field_7A4 & 0x8000) ==
-            0) {
-        func_800BE12C(data->field_0x28, 3, 0, -1, 1);
-        ((cf::CfObject*)movesub)->CObjectState_setStateBitFlag(4);
-        self->field_0x17C |= 1;
-    }
-    f32 pvz = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
-    f32 pcos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
-    self->mVel18W.z = *(u32*)&pvz;
-    self->mVel18W.y = *(u32*)&lbl_eu_806665C0;
-    self->mVel18W.x = *(u32*)&pcos;
-    data14->field_0x14 = lbl_eu_806665C0;
+    self->field_4C = *(u32*)&ep2->x;
+    self->field_50 = *(u32*)&ep2->y;
+    self->field_54 = *(u32*)&ep2->z;
 }
+
 
 void* CfObjectMove_getMovementRate__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
 

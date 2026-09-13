@@ -7,7 +7,8 @@ namespace cf {
 
     class CActorState {
     public:
-        virtual void CActorState_UnkVirtualFunc1(); //0x8
+        virtual void CActorState_setObjStateBit3(); //0x8 (was UnkVirtualFunc1)
+        void CActorState_UnkVirtualFunc1() { CActorState_setObjStateBit3(); } // legacy Unk spelling
 
         // r4 = owning actor's CfObjectMove subobject (typically this+0x3E9C).
         CActorState(UNKTYPE* r4){

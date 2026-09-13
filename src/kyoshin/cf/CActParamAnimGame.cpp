@@ -9,15 +9,11 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 #include "kyoshin/cf/object/CfObject.hpp"  // real owner of the +0x4C/+0xAC/+0xC4 link slots
-#include "kyoshin/cf/object/CBattleState.hpp"  // CBattleState_UnkVirtualFunc3 (+0x10 owner gate)
-
-// One-arg view of CActParam7ECTarget::func08 (+0x08). Retail fall-notify
-// leaves f1 live from the f4F8 compare; the shared owner decl is (u32, float)
-// for CfObjectMove::func_800BCFA0.
-class __declspec(novtable) CActParam7ECTargetU32 {
-public:
-    virtual void func08(u32 a);
-};
+#include "kyoshin/cf/object/CBattleState.hpp"
+// CBattleState +0x10 (lbl_eu_8052E9B0 / JP __vt__Q22cf12CBattleState word 3):
+// retail symbol remains CBattleState_UnkVirtualFunc3. Owner TU is out of scope;
+// no already-real same-slot alias exists (unlike getOwner for +0x08). Call sites
+// below keep the real virtual; this is a placeholder name, not a pad/If.
 
 // Retail constructor(C) at 0x8005AA64 (unmangled symbol): base-constructs
 // the ::CActParamAnim subobject, stores the retail vtable manually
@@ -1165,15 +1161,15 @@ void cf::CActParamAnimGame::func_8005D2C4() {
         void* sub = ((CActParamAnimGameObj3A0*)obj)->sub7EC;
         u32 ac = v->field4AC;
         if (sub != 0) {
-            int arg;
-            if (ac < 5 && v->f4F8 < lbl_eu_806660D4 && (v->flags4EC & 0x8000000) == 0) {
+            // Forward f4F8 as the float arg so f1 stays live from the
+            // compare into CActParam7ECTarget::func08 (+0x08), matching
+            // retail (no second lfs before the bctrl).
+            f32 air = v->f4F8;
+            int arg = 0;
+            if (ac < 5 && air < lbl_eu_806660D4 && (v->flags4EC & 0x8000000) == 0) {
                 arg = 1;
-            } else {
-                arg = 0;
             }
-            // One-arg view of CActParam7ECTarget::func08: retail leaves f1
-            // live from the f4F8 compare (no second lfs before +0x08).
-            ((CActParam7ECTargetU32*)sub)->func08(arg);
+            ((CActParam7ECTarget*)sub)->func08(arg, air);
         }
     }
 

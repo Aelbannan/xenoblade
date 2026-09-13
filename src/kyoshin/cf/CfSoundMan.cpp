@@ -561,12 +561,12 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
             CfSoundActorPos3* res =
                 (CfSoundActorPos3*)obj->vf73(slot->field_0x2C);
             if (res != 0) {
-                // Struct staging pins the frame slots (x lowest); the
-                // z,y,x assignment order matches the retail lfs sequence.
+                // x then z matches frame-slot order (98.0%, 2 FPR swaps).
+                // Named z/x locals dropped to 95% and shuffled y/z stores.
                 CfSoundPos3f t;
-                t.z = res->field_0x2C;
-                t.y = res->field_0x1C;
                 t.x = res->field_0x0C;
+                t.y = res->field_0x1C;
+                t.z = res->field_0x2C;
                 out->field_0x00 = *(u32*)&t.x;
                 out->field_0x04 = *(u32*)&t.y;
                 out->field_0x08 = *(u32*)&t.z;

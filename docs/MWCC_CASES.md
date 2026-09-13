@@ -10814,3 +10814,24 @@ intermediate forms do not break the coalescing.
   reused for 18 CActorParam slot promotions (decl + def + CREvtModel
   hand-vtable + symbols.txt us/jp/eu + targets.json id-preserving rename),
   unit holds 44/60 FULL, split PASS.
+
+## func_80277B38 / kyoshin/cf/chain/CChain — case-6 unk0 reloads + scratch store order → local alignment (Wii/1.1 -O4, ~36% near-miss)
+- Symptom:   hexdiff ~29% / 12 bytes short; case 6 `or r4,r27` vs `lwz r4,0(r27)`; scratch `li`/`stb`/`sth`/`stfs` order differed
+- Cause:     caching `battleObj = actor->unk0` killed the actor register so later uses folded the three retail reloads (exactly 12 bytes). Scratch field writes were born in source order (6, 0xe, 0, -1) instead of retail (0xe, -1, 0, 6) with the float hoisted between D and 10
+- Fix:       keep actor live; reload `actor->unk0` at each later call/store; write scratch as D, 12, float, 10, 6
+- Result:    case 5 scratch + case 6 body instruction-match; function still ~36.5% (639 structural) / 0x12bc vs 0x12c8. Residual: case 5 `lbz field_2` vs `lfs` schedule, switch `cmpli 26` vs `25`, member-wrap colors, later cascade
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
+## func_8023D3D8 / kyoshin/cf/CfNandManager — first real apply-save body, still stub-class match (Wii/1.1 -O4,p, ~0.9%)
+- Symptom:   hexdiff 0.9% (1056 structural / 137 reg_swap); decomp 0x12d0 vs retail 0x1070; frame
+  0x30 vs retail 0x60 + `_savegpr_24` + `mr r31,r1`
+- Cause:     TU had only a data stub. Retail is an unrolled two-path save apply: versions
+  0x70001/0x70002 go through `func_8023CD9C` then expand work entries 1..13 (0x304 → 0x3DD4),
+  queue events, restore progress/party/items/cam/wthr/mine/names/optd; other versions CRC the
+  0x70001 tail and remap the larger ITEM blob in 0x211C chunks
+- Fix:       drafted that control flow in `CfNandManager.cpp` (do not include the unit hpp — it
+  redeclares this TU's .sbss types). Image offsets now match (`flagData` 0xA030, `work` 0xB260)
+- Result:    0.9% near-miss. Next: inline the work-entry copy in retail schedule (actor `this` =
+  `src+0x17c` lives in r3 across the scalar copies; array copies are 0x18/0x12 `lwzu`/`stwu`
+  pairs); match name-table insert; shrink ~0x260 oversize; then recolor
+- Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp

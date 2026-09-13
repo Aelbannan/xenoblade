@@ -40,8 +40,8 @@ extern const f32 lbl_eu_8066872C; // timer increment per frame
 extern const f32 lbl_eu_80668730; // timer cap
 
 // Callee helpers (retail-unmangled names).
-// Callee helpers (retail-unmangled names).
-extern "C" int isClassicController__Q22cf13CfGameManagerFv(s16 arg);
+// Use the C++ member — a local extern "C" Fv(s16) overload conflicts with
+// CfGameManager.hpp's bool isClassicController().
 int func_800FEDF8();
 void func_800FF914();
 int func_80244510(CFade* self);
@@ -192,7 +192,7 @@ void CMenuMapSelect::func_80242368() {
     u32 triggerBit1, triggerBit2, triggerBit3;
     u32 cancel, confirm, stickDir, menu;
     u32 turboFlags, pressedFlags, cancelVal, confirmVal, menuVal, stickVal;
-    int classic = isClassicController__Q22cf13CfGameManagerFv(-1);
+    int classic = cf::CfGameManager::isClassicController(-1);
     if (classic != 0) {
         turboFlags = padData->mTurboPressButtonFlags;
         pressedFlags = padData->mPadPressedFlags;

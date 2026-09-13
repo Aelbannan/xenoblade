@@ -434,8 +434,12 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
     }
 
     // Idle timer tick, clamped at lbl_eu_806688F8.
-    f32 next = self->field_2B0 + lbl_eu_806688F4;
+    // Load field first (f2), then increment (f1), then cap (f0) — retail
+    // fadds f1,f2,f1 / fcmp f1,f0 / stfs cap into the same slot.
+    f32 cur = self->field_2B0;
+    f32 step = lbl_eu_806688F4;
     f32 cap = lbl_eu_806688F8;
+    f32 next = cur + step;
     self->field_2B0 = next;
     if (next > cap) {
         self->field_2B0 = cap;

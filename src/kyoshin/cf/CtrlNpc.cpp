@@ -871,7 +871,7 @@ void func_800950E8(cf::CtrlNpc* self) {
     cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
     if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || func_8004C5EC(flag) == 1)) {
         if (self->field_16E != 0) {
-            int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc51() == 0);
+            int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getNpcTargetAction() == 0);
             func_800BE12C((u8*)self->field_28, self->field_16E, zero, -1, 1);
         }
         self->field_BE += 1;

@@ -337,7 +337,7 @@ extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
         nw4r::lyt::Pane* text = pane->FindPaneByName(buf, true);
         func_80124270(text, 0);
         sprintf(buf, &lbl_eu_80510B78[0x6a], (u8)i + 1);
-        register u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
+        u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
         if (sel == 0) {
             func_80136B4C(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
         } else {

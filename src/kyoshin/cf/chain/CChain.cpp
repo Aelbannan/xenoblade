@@ -662,11 +662,13 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         cf::CChainScratch20 scratchB;
         memset(&scratchB.mScratch, 0, 0xe);
         memset(&scratchB, 0, sizeof(scratchB));
-        scratchB.mFields.field_6 = 6;
+        // Retail loads 0xe / -1 / 0 / 6 then stores D, 12, float, 10, 6
+        // (float is hoisted). Assignment order must match that birth order.
         scratchB.mFields.field_D = 0xe;
-        scratchB.mFields.field_10 = 0;
         scratchB.field_12 = -1;
         scratchB.field_14 = lbl_eu_80668A1C;
+        scratchB.mFields.field_10 = 0;
+        scratchB.mFields.field_6 = 6;
         func_8014B120(&((cf::CChainBattleObj*)actor->unk0)->mField3380, &scratchB);
         self->mChainTime.mTimer = lbl_eu_80668A44;
         self->mChainTime.mEnabled = 0;
@@ -688,19 +690,27 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         } else {
             actor = 0;
         }
+        // Keep actor live and reload unk0 at each later use so MWCC emits
+        // the three retail `lwz r4, 0(r27)` reloads (12 bytes).
         cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)actor->unk0;
         int local14 = *(int*)battleObj->field_04->f30();
         if (func_80174C98(battleObj, &local14, 0xa) == 0) {
             if (((cf::CChainHeadView*)self)->field_6 != 0) {
-                func_802B48E4((CErrMesEntry*)&self->unk1F0C[8], (CErrMesOwner*)battleObj);
+                func_802B48E4((CErrMesEntry*)&self->unk1F0C[8],
+                              (CErrMesOwner*)actor->unk0);
                 ((cf::CChainHeadView*)self)->field_6 = 0;
             }
             if (self->mChainTimer1.unk0 > 0) break;
-            battleObj->field_3594 = 0;
-            battleObj->field_3590 = 0;
+            {
+                cf::CChainBattleObj* cleared =
+                    (cf::CChainBattleObj*)actor->unk0;
+                cleared->field_3594 = 0;
+                cleared->field_3590 = 0;
+            }
             ((cf::CChainHeadView*)self)->field_2 = 0xd;
         } else {
-            func_802B4A68((CErrMesEntry*)&self->unk1F0C[8], (CErrMesOwner*)battleObj);
+            func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+                          (CErrMesOwner*)actor->unk0);
             self->mChainTimer1.unk0 = 5;
             ((cf::CChainHeadView*)self)->field_2++;
         }
@@ -755,13 +765,12 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             func_8027C6B4((cf::CChainList*)&self->mChainMember, 0,
                           (s8)((cf::CChainHeadView*)self)->field_1);
         }
-        ((cf::CChainHeadView*)self)->field_1 =
-            ((cf::CChainHeadView*)self)->field_0;
+        u8 idx = (u8)((cf::CChainHeadView*)self)->field_0;
+        ((cf::CChainHeadView*)self)->field_1 = idx;
         if (((cf::CChainHeadView*)self)->field_7 != 0) {
             ((cf::CChainHeadView*)self)->field_2 = 0xe;
             break;
         }
-        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
         s8 newIdx;
         if (((cf::CChainHeadView*)self)->field_5 == 0) {
             newIdx = (s8)(idx + 1);

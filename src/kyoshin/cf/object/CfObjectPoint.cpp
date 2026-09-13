@@ -187,7 +187,7 @@ public:
     //0x0: vtable
     // CObjectParam currently ends at 0x28.
     u8 field_0x28[0x10];
-    void* mSubObj38;          // 0x38-0x3B
+    CfObjectPoint* mSubObj38; // 0x38-0x3B
     float mPos3C;           // 0x3C-0x3F
     float mPos40;           // 0x40-0x43
     float mPos44;           // 0x44-0x47
@@ -275,13 +275,13 @@ void CfObjectPoint::loadPointData() {
 
 void CfObjectPoint::releasePointLink() {
     if (mSubObj38 != nullptr) {
-        CfObjectPoint* child = reinterpret_cast<CfObjectPoint*>(mSubObj38);
+        CfObjectPoint* child = mSubObj38;
         child->CfObject_getPosVector();
         if (mSubObj38 != nullptr) {
             // Redundant nested check on the reloaded value mirrors retail's
             // two beq targets (MWCC keeps both branches).
             if (mSubObj38 != nullptr) {
-                reinterpret_cast<CfObjectPoint*>(mSubObj38)->setStateBitMask(1);
+                mSubObj38->setStateBitMask(1);
             }
             mSubObj38 = nullptr;
         }
@@ -322,7 +322,7 @@ main_body:
     }
 
     if (mSubObj38 != nullptr) {
-        reinterpret_cast<CfObjectPoint*>(mSubObj38)->CfObject_setPosXYZ();
+        mSubObj38->CfObject_setPosXYZ();
     }
 
 done:
@@ -336,8 +336,7 @@ extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* self, const ml::CVec3* vec) {
     if (self->mSubObj38 == nullptr)
         return;
-    reinterpret_cast<cf::CfObjectPoint*>(self->mSubObj38)
-        ->syncMoveTarget(vec);
+    self->mSubObj38->syncMoveTarget(vec);
 }
 
 // Forced-name form: the retail symbols setChildPoint/16F4/171C end in a
@@ -348,7 +347,7 @@ extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
 // the identifier to emit the exact symbol.
 extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
     cf::CfObjectPoint* self, cf::CfObjectPoint* child) {
-    cf::CfObjectPoint* old = reinterpret_cast<cf::CfObjectPoint*>(self->mSubObj38);
+    cf::CfObjectPoint* old = self->mSubObj38;
     if (old != nullptr) {
         if (old != nullptr) {
             old->setStateBitMask(1);
@@ -359,7 +358,7 @@ extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
     self->mSubObj38 = child;
     if (child != nullptr) {
         child->setStateBitMask0(self);
-        reinterpret_cast<cf::CfObjectPoint*>(self->mSubObj38)->setPointPosition();
+        self->mSubObj38->setPointPosition();
     }
 }
 

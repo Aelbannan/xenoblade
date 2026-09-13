@@ -23,6 +23,12 @@ struct MakeCrystalTable {
     u8  current;                     // +0x1004 current row cursor
 };
 
+// First word of a func_80157C4C item record (CMCItemBoxEntry / CrystalInfo
+// word0 shape). Live check and >>20 subcategory both read this word.
+struct MakeCrystalItemObj {
+    u32 word0;
+};
+
 // --- imports ---
 // Item-table helpers (retail unmangled symbols): declared with the proper
 // C-linkage signatures in the shared kyoshin menu header.
@@ -34,7 +40,7 @@ struct MakeCrystalTable {
 // dispatched. The first declared virtual lands at memory slot 2 because MWCC
 // reserves two RTTI slots (0x0/0x4) at the head of the vtable.
 struct CrystalItemImpl {
-    virtual u32 getCrystalItemId(void* slot) = 0; // vtable offset 8
+    virtual u32 getCrystalItemId(MakeCrystalItemObj* slot) = 0; // vtable offset 8
     virtual void vf04() = 0;
     virtual void vf08() = 0;
 };
@@ -96,7 +102,7 @@ extern "C" __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
 
 // Retail 0x80213530: trivial deleting destructor (no members to destruct),
 // frees the object only when both the object and the flags-bit are non-zero.
-void* __dt__80213530(void* self, int flags) {
+MakeCrystalTable* __dt__80213530(MakeCrystalTable* self, int flags) {
     if (self != 0 && flags > 0)
         operator delete(self);
     return self;
@@ -116,8 +122,9 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
     int total = (int)func_80157C20(d->byte_1002);
     u16 i = 0;
     while ((u16)i < total) {
-        void* obj = func_80157C4C(d->byte_1002, (s16)i);
-        if (obj != 0 && *(void**)obj != 0) {
+        MakeCrystalItemObj* obj =
+            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, (s16)i);
+        if (obj != 0 && obj->word0 != 0) {
                 CrystalItemImpl* inst =
                     (CrystalItemImpl*)CItem_initItemImplInstances(obj);
             u32 rid = inst->getCrystalItemId(obj);
@@ -197,9 +204,10 @@ void func_802137B4(MakeCrystalTable* d) {
 u32 func_802137DC(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
-        void* obj = func_80157C4C(d->byte_1002, d->entries[adj].id);
+        MakeCrystalItemObj* obj =
+            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, d->entries[adj].id);
         if (obj != 0) {
-            u32 v = *(u32*)obj;
+            u32 v = obj->word0;
             if (v != 0) return v >> 20;
         }
     }
@@ -208,11 +216,12 @@ u32 func_802137DC(MakeCrystalTable* d, u8 idx) {
 
 // Retail 0x8021384C: resolve the item at the adjusted index and return the
 // object pointer (0 when out of range or unresolvable).
-void* func_8021384C(MakeCrystalTable* d, u8 idx) {
+MakeCrystalItemObj* func_8021384C(MakeCrystalTable* d, u8 idx) {
     u16 adj = (u16)(idx + (s8)d->current * 30);
     if (adj < d->count) {
-        void* obj = func_80157C4C(d->byte_1002, d->entries[adj].id);
-        if (obj != 0 && *(void**)obj != 0) return obj;
+        MakeCrystalItemObj* obj =
+            (MakeCrystalItemObj*)func_80157C4C(d->byte_1002, d->entries[adj].id);
+        if (obj != 0 && obj->word0 != 0) return obj;
     }
     return 0;
 }

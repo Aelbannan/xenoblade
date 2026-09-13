@@ -49,8 +49,9 @@ void func_80068A20() {
 // func_80068A30 - copy string with length tracking; returns dest
 __declspec(noinline) char* func_80068A30(char* dest, const char* src) {
     u32 len = strlen(src);
-    *((u32*)(dest + 0x40)) = len;
-    strcpy(dest, src);
+    CfScriptNameBuffer* buf = (CfScriptNameBuffer*)dest;
+    buf->mLength = len;
+    strcpy(buf->mString, src);
     return dest;
 }
 
@@ -554,7 +555,7 @@ void sinit_800696C8() {
     const char* src = lbl_eu_80661AC0;
     char* dest = lbl_eu_805708D0;
     u32 len = strlen(src);
-    *((u32*)(dest + 0x40)) = len;
+    ((CfScriptNameBuffer*)dest)->mLength = len;
     strcpy(dest, src);
 }
 

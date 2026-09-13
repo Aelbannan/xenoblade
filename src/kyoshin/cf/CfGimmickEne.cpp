@@ -167,7 +167,7 @@ extern "C" __declspec(noinline) void func_8026E7F8(CfGimmickEneQuad* self, int a
     // CSE or reschedule. Residual is @N vs lbl_eu_80668974/78 reloc names.
     GXPosition3f32(-1.0f, 1.0f, -1.0f);
     GXPosition3f32(1.0f, 1.0f, -1.0f);
-    GXPosition3f32(1.0f, -1.0f, 1.0f);
+    GXPosition3f32(1.0f, -1.0f, -1.0f);
     GXPosition3f32(-1.0f, -1.0f, -1.0f);
 }
 

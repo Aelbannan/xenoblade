@@ -10,7 +10,7 @@ extern const char lbl_eu_80522514[];
 // Vtable/RTTI targets referenced by the CProcRoot data definitions below.
 // NOTE: __dt__11CWorkThreadFv keeps the 2-arg C-linkage form from
 // CLibVM.hpp (data_vtables.hpp's 0-arg form would raise MWCC 10197).
-extern void __dt__9CProcRootFv(void* self, int flags);
+extern void __dt__9CProcRootFv(CProcRoot* self, int flags);
 extern bool wkStandbyLogin__9CProcRootFv();
 extern bool wkStandbyLogout__9CProcRootFv();
 // IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).

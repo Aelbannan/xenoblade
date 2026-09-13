@@ -13,7 +13,7 @@ public:
     static CProcRoot* create(CWorkThread* pParent);
     static CProcRoot* getInstance();
 
-    u8 unk1C4[4];
+    u32 unk1C4; // 0x1C4
 
 private:
     static const int MAX_CHILD = 32;

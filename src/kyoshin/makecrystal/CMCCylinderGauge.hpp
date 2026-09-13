@@ -53,4 +53,4 @@ public:
 // Retail vtable data symbol (vtable lives in split1.s at 0x80535F48).
 // The class is __declspec(novtable), so the ctor assigns the retail label
 // explicitly instead of the compiler-generated __vt__16CMCCylinderGauge.
-extern "C" u8 lbl_eu_80535F48[];
+extern "C" u32 lbl_eu_80535F48[];

@@ -16,7 +16,7 @@ extern void incrementEventCounter(u32);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
-    *(void**)this = (void*)lbl_eu_80535F48;
+    *(u32**)this = lbl_eu_80535F48;
     mArcResourceAccessor = arg;
     mLayout = nullptr;
     mAnimTransC = nullptr;

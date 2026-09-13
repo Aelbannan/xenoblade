@@ -1019,7 +1019,7 @@ stop:
     // a C++ body gets erased because a tail call to the empty
     // onMovieViBegin is indistinguishable from a plain return.
 
-    void forwardUpdateMovies__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
+    void forwardUpdateMovies__16CLibCriMoviePlayFv(CDeviceVICb* self) {
         // Thunk for CDeviceVICb update: self is the +0x1C4 VICb subobject.
         // Recover the full object from the typed vptr view's vtViCb slot.
         CLibCriMoviePlayVptrView* vp =

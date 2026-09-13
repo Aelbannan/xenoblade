@@ -12,7 +12,7 @@ extern "C" double log10(double);
 // seq.c exports (unmangled in retail).
 extern "C" void HBMSEQInit(void);
 extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE* seq, const u8* data,
-                                  void* synth, void* p1, u32 p2);
+                                  u8* synth, u8* p1, u32 p2);
 extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE* seq);
 extern "C" void HBMSEQSetState(HBMSEQSEQUENCE* seq, u32 state);
 extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE* seq);

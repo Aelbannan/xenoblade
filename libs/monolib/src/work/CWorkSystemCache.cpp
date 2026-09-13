@@ -83,7 +83,7 @@ extern "C" u32 lbl_eu_8056FD24[];
 extern "C" {
 
 // Decrement a login-state refcount if it isn't flagged.
-__attribute__((never_inline)) void func_804D91BC(CCacheItem* self);
+__attribute__((never_inline)) void func_804D91BC(CCacheItem* ths);
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
 __attribute__((never_inline)) void func_804D8EC8(CacheList* list) {
@@ -142,11 +142,11 @@ void func_804D903C(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
 }
 
 // Login-wait helper.
-__attribute__((never_inline)) bool func_804D91D8(CCacheItem* self) {
-    if (self->field_0x3c == 0 && self->field_0x4c == 0) {
+__attribute__((never_inline)) bool func_804D91D8(CCacheItem* ths) {
+    if (ths->field_0x3c == 0 && ths->field_0x4c == 0) {
         return true;
     }
-    return self->field_0x44 <= 0;
+    return ths->field_0x44 <= 0;
 }
 
 // Copy ml::CMat34::identity into out.
@@ -156,34 +156,34 @@ void func_804D920C(ml::CMat34* out) {
 
 // _reslist_base<CCacheItem>::~_reslist_base(int deleting)
 #pragma optimize_for_size on
-__attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* self, int deleting) {
-    if (self != 0) {
-        self->m_vtable = (u32)lbl_eu_8056FD3C;
-        func_804D8EC8(self);
-        if (self->unk1C == 0) {
-            if (self->mList != 0) {
-                delete[] self->mList;
-                self->mList = 0;
+__attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* ths, int deleting) {
+    if (ths != 0) {
+        ths->m_vtable = (u32)lbl_eu_8056FD3C;
+        func_804D8EC8(ths);
+        if (ths->unk1C == 0) {
+            if (ths->mList != 0) {
+                delete[] ths->mList;
+                ths->mList = 0;
             }
         }
         if (deleting > 0) {
-            delete self;
+            delete ths;
         }
     }
-    return self;
+    return ths;
 }
 #pragma optimize_for_size off
 
 // reslist<CCacheItem>::~reslist(int deleting)
 #pragma optimize_for_size on
-void* __dt__reslist_CCacheItem(CacheList* self, int deleting) {
-    if (self != 0) {
-        __dt___reslist_base_CCacheItem(self, 0);
+void* __dt__reslist_CCacheItem(CacheList* ths, int deleting) {
+    if (ths != 0) {
+        __dt___reslist_base_CCacheItem(ths, 0);
         if (deleting > 0) {
-            delete self;
+            delete ths;
         }
     }
-    return self;
+    return ths;
 }
 #pragma optimize_for_size off
 
@@ -274,9 +274,9 @@ CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     mCache.mCapacity = 32;
 }
 
-extern "C" void func_804D91BC(CCacheItem* self) {
-    if (self->field_0x48 == 0) {
-        self->field_0x44 -= 1;
+extern "C" void func_804D91BC(CCacheItem* ths) {
+    if (ths->field_0x48 == 0) {
+        ths->field_0x44 -= 1;
     }
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

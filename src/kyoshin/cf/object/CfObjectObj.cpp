@@ -8,6 +8,21 @@
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
+// Local views of locked CfObject/CfObjectModel padding words.
+struct ObjFlags90View {
+    u8 pad[0x90];
+    u32 field_90;
+    u32 field_94;
+};
+struct ObjFlags6CView {
+    u8 pad[0x6C];
+    u32 field_6C;
+};
+struct SubObjB0FlagView {
+    u8 pad[8];
+    u16 flag8;
+};
+
 // CfObjectPc.hpp (read-only) currently fails to compile due to an internal
 // virtual-override mismatch (CActorParam_getCurrencyBalance return type); only
 // the incomplete type is needed here (getCfObjectPc pointer arithmetic).
@@ -76,19 +91,21 @@ int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
     this->CfObjectModel_releaseModelList();
     this->CfObjectModel_releaseModelSub();
     // Clear helper-id / dispatch flags (0x90, 0x94 live in locked base padding).
-    *(u32*)((u8*)this + 0x90) = 0;
-    *(u32*)((u8*)this + 0x94) = 0;
+    ObjFlags90View* flags90 = (ObjFlags90View*)this;
+    flags90->field_90 = 0;
+    flags90->field_94 = 0;
     // vtable+0x144 helper dispatch (CfObject_setAnimSlotEntry, retail
     // 2-arg slot); genuine virtual dispatch reproduces the r12
     // double-load with args-then-dispatch ordering.
     this->CfObject_setAnimSlotEntry(1, arg4);
     this->CfObject_setAnimSlotEntry(0, arg5);
     // Mark the sub-object active (b0 is base-class void*; +8 is a u16 field).
-    *(u16*)((u8*)this->mSubObjB0 + 8) = 1;
+    ((SubObjB0FlagView*)this->mSubObjB0)->flag8 = 1;
+    ObjFlags6CView* flags6C = (ObjFlags6CView*)this;
     if (arg4 != 0)
-        *((u32*)((u8*)this + 0x6C)) |= 0x20;
+        flags6C->field_6C |= 0x20;
     if (arg5 != 0)
-        *((u32*)((u8*)this + 0x6C)) |= 0x10;
+        flags6C->field_6C |= 0x10;
     return 1;
 }
 

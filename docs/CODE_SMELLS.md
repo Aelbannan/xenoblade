@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4160 |
 | `self`/register-style params | 13474 |
 | `void*` (params + locals) | 7796 |
-| raw pointer offset arithmetic | 7490 |
-| deref-through-cast arithmetic | 2902 |
+| raw pointer offset arithmetic | 7485 |
+| deref-through-cast arithmetic | 2899 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -462,7 +462,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectModel.cpp | 115 | 9 | 60 | 29 | 12 | 8 | 0 | 0 | 8 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectMove.cpp | 1 | 77 | 155 | 69 | 40 | 17 | 0 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 5 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 8 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 8 | 62 | 13 | 47 | 2 | 0 | 2 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPoint.cpp | 4 | 1 | 6 | 16 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4931,9 +4931,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/object/CfObjectObj.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 3,
   "init_side_effect": 0,
-  "ptr_arith": 5,
   "schedule_pragma": 0,
   "self_params": 8,
   "void_ptr": 2

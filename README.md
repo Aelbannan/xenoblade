@@ -73,7 +73,7 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 | Accepted bytes | 2275084 / 4929516 (46.2%) of catalogued function bytes |
 | — `FULL_MATCH` bytes | 2246072 (45.6%) |
 | — `EQUIVALENT_MATCH` bytes | 29012 (0.6%) |
-| Active (in progress) | 3242 |
+| Active (in progress) | 3284 |
 
 <!-- END GENERATED COOP STATUS -->
 

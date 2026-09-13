@@ -20,31 +20,31 @@ int func_8003A53C(VMThread* pThread, void*, s16 argType) {
     return 1;
 }
 
-int func_8003A588(VMThread* pThread, void* target) {
+int func_8003A588(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg args;
     args.type = 3;
-    args.value.uintVal = ((OcMsgTwoValueObj*)target)->value0;
+    args.value.uintVal = target->value0;
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A5C0(VMThread* pThread, void* target) {
+int func_8003A5C0(VMThread* pThread, OcMsgTwoValueObj* target) {
     VMArg args;
     args.type = 3;
-    args.value.uintVal = ((OcMsgTwoValueObj*)target)->value1;
+    args.value.uintVal = target->value1;
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A5F8(VMThread* pThread, void* target) {
-    void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgTwoValueObj*)target)->value0 = ((VMArg*)prop)->value.uintVal;
+int func_8003A5F8(VMThread* pThread, OcMsgTwoValueObj* target) {
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    target->value0 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A630(VMThread* pThread, void* target) {
-    void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgTwoValueObj*)target)->value1 = ((VMArg*)prop)->value.uintVal;
+int func_8003A630(VMThread* pThread, OcMsgTwoValueObj* target) {
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    target->value1 = prop->value.uintVal;
     return 0;
 }
 
@@ -82,9 +82,9 @@ s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // but only at the cost of the prefix; consistent with the doc's birth-order
 // rule: any non-compound difference form makes x the later-born web.
 // This body is the banked best draft.
-int func_8003A68C(VMThread* pThread, void* target) {
+int func_8003A68C(VMThread* pThread, OcMsgRingHdr* target) {
     VMArg args;
-    int count = (int)((OcMsgRingHdr*)target)->count;
+    int count = (int)target->count;
     int x = count ^ 0x0a;
     // Shift-initializing temp + compound subtract is the best-known shape:
     // it reproduces retail's xori/andi/srawi stream; only the subf destination
@@ -99,8 +99,8 @@ int func_8003A68C(VMThread* pThread, void* target) {
 // type = 1 when count has exactly one bit set (power of two), else 0:
 // bit31(-count & ~count) is set iff count is not a power of two... inverted
 // by the +1 borrow trick; matches retail's nand/neg/srawi sequence.
-int func_8003A6D4(VMThread* pThread, void* target) {
-    int count = (int)((OcMsgRingHdr*)target)->count;
+int func_8003A6D4(VMThread* pThread, OcMsgRingHdr* target) {
+    int count = (int)target->count;
     VMArg args;
     *(u8*)&args.type = 1 + ((u32)((-count) & ~count) >> 31);
     vmRetValSet(pThread, &args);
@@ -126,7 +126,7 @@ s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     }
     newWriteIdx = list->writeIdx;
     OcMsgTwoValueObj* obj = reinterpret_cast<OcMsgTwoValueObj*>(list);
-    u32* slot = reinterpret_cast<u32*>(reinterpret_cast<char*>(obj) + 0x14 + newWriteIdx * 8);
+    u32* slot = reinterpret_cast<u32*>(obj->slots + newWriteIdx * 8);
     slot[0] = obj->value0;
     slot[1] = obj->value1;
     return 0;
@@ -145,7 +145,7 @@ s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     }
     newReadIdx = list->readIdx;
     OcMsgTwoValueObj* obj = reinterpret_cast<OcMsgTwoValueObj*>(list);
-    u32* slot = reinterpret_cast<u32*>(reinterpret_cast<char*>(obj) + 0x14 + newReadIdx * 8);
+    u32* slot = reinterpret_cast<u32*>(obj->slots + newReadIdx * 8);
     obj->value0 = slot[0];
     obj->value1 = slot[1];
     return 0;
@@ -166,45 +166,45 @@ int func_8003A7B4(VMThread* pThread, void*, s16 argType) {
     return 1;
 }
 
-int func_8003A800(VMThread* pThread, void* target) {
+int func_8003A800(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
-    args.value.uintVal = ((OcMsgThreeValueObj*)target)->value0;
+    args.value.uintVal = target->value0;
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A838(VMThread* pThread, void* target) {
+int func_8003A838(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
-    args.value.uintVal = ((OcMsgThreeValueObj*)target)->value1;
+    args.value.uintVal = target->value1;
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A870(VMThread* pThread, void* target) {
+int func_8003A870(VMThread* pThread, OcMsgThreeValueObj* target) {
     VMArg args;
     args.type = 3;
-    args.value.uintVal = ((OcMsgThreeValueObj*)target)->value2;
+    args.value.uintVal = target->value2;
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-int func_8003A8A8(VMThread* pThread, void* target) {
-    void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value0 = ((VMArg*)prop)->value.uintVal;
+int func_8003A8A8(VMThread* pThread, OcMsgThreeValueObj* target) {
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    target->value0 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A8E0(VMThread* pThread, void* target) {
-    void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value1 = ((VMArg*)prop)->value.uintVal;
+int func_8003A8E0(VMThread* pThread, OcMsgThreeValueObj* target) {
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    target->value1 = prop->value.uintVal;
     return 0;
 }
 
-int func_8003A918(VMThread* pThread, void* target) {
-    void* prop = vmOCPropertyGet(pThread);
-    ((OcMsgThreeValueObj*)target)->value2 = ((VMArg*)prop)->value.uintVal;
+int func_8003A918(VMThread* pThread, OcMsgThreeValueObj* target) {
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    target->value2 = prop->value.uintVal;
     return 0;
 }
 
@@ -221,7 +221,7 @@ s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     }
     newWriteIdx = list->writeIdx;
     OcMsgThreeValueObj* obj = reinterpret_cast<OcMsgThreeValueObj*>(list);
-    u32* slot = reinterpret_cast<u32*>(reinterpret_cast<char*>(obj) + 0x14 + newWriteIdx * 12);
+    u32* slot = reinterpret_cast<u32*>(obj->slots + newWriteIdx * 12);
     slot[0] = obj->value0;
     slot[1] = obj->value1;
     slot[2] = obj->value2;
@@ -241,7 +241,7 @@ s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     }
     newReadIdx = list->readIdx;
     OcMsgThreeValueObj* obj = reinterpret_cast<OcMsgThreeValueObj*>(list);
-    u32* slot = reinterpret_cast<u32*>(reinterpret_cast<char*>(obj) + 0x14 + newReadIdx * 12);
+    u32* slot = reinterpret_cast<u32*>(obj->slots + newReadIdx * 12);
     obj->value0 = slot[0];
     obj->value1 = slot[1];
     obj->value2 = slot[2];

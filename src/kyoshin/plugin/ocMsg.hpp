@@ -56,17 +56,17 @@ struct OcMsgThreeValueObj {
 
 /* Getters/setters for the two-value ring (offsets 0x64/0x68). */
 int func_8003A53C(VMThread* pThread, void* r4, s16 r5);
-int func_8003A588(VMThread* pThread, void* target);
-int func_8003A5C0(VMThread* pThread, void* target);
-int func_8003A5F8(VMThread* pThread, void* target);
-int func_8003A630(VMThread* pThread, void* target);
+int func_8003A588(VMThread* pThread, OcMsgTwoValueObj* target);
+int func_8003A5C0(VMThread* pThread, OcMsgTwoValueObj* target);
+int func_8003A5F8(VMThread* pThread, OcMsgTwoValueObj* target);
+int func_8003A630(VMThread* pThread, OcMsgTwoValueObj* target);
 
 /* Ring reset: clears indices and sets capacity = 9. */
 s32 func_8003A668(void*, OcMsgRingHdr* list);
 
 /* Typeof-style probes on the value at target+0x10. */
-int func_8003A68C(VMThread* pThread, void* target);
-int func_8003A6D4(VMThread* pThread, void* target);
+int func_8003A68C(VMThread* pThread, OcMsgRingHdr* target);
+int func_8003A6D4(VMThread* pThread, OcMsgRingHdr* target);
 
 /* Push/pop one 8-byte slot between the ring and obj+0x64/0x68. */
 s32 func_8003A714(s32 ret, OcMsgRingHdr* list);
@@ -74,12 +74,12 @@ s32 func_8003A764(s32 ret, OcMsgRingHdr* list);
 
 /* Same set for the three-value ring (offsets 0x8c/0x90/0x94). */
 int func_8003A7B4(VMThread* pThread, void* r4, s16 r5);
-int func_8003A800(VMThread* pThread, void* target);
-int func_8003A838(VMThread* pThread, void* target);
-int func_8003A870(VMThread* pThread, void* target);
-int func_8003A8A8(VMThread* pThread, void* target);
-int func_8003A8E0(VMThread* pThread, void* target);
-int func_8003A918(VMThread* pThread, void* target);
+int func_8003A800(VMThread* pThread, OcMsgThreeValueObj* target);
+int func_8003A838(VMThread* pThread, OcMsgThreeValueObj* target);
+int func_8003A870(VMThread* pThread, OcMsgThreeValueObj* target);
+int func_8003A8A8(VMThread* pThread, OcMsgThreeValueObj* target);
+int func_8003A8E0(VMThread* pThread, OcMsgThreeValueObj* target);
+int func_8003A918(VMThread* pThread, OcMsgThreeValueObj* target);
 s32 func_8003A950(s32 ret, OcMsgRingHdr* list);
 s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list);
 

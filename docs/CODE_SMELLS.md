@@ -15,12 +15,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7493 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13411 |
-| `void*` (params + locals) | 7697 |
-| raw pointer offset arithmetic | 7920 |
-| deref-through-cast arithmetic | 3311 |
+| `void*` (params + locals) | 7698 |
+| raw pointer offset arithmetic | 7918 |
+| deref-through-cast arithmetic | 3309 |
 | inline asm / `register` | 127 |
 | rN-named params | 459 |
-| goto | 3420 |
+| goto | 3430 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
@@ -87,7 +87,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 52 | 1 | 20 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 8 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceGX.cpp | 36 | 0 | 0 | 6 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceGX.cpp | 36 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVI.cpp | 84 | 0 | 2 | 0 | 2 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -535,7 +535,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 0 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuGetItemMulti.cpp | 46 | 0 | 45 | 20 | 0 | 0 | 1 | 0 | 48 | 1 | 0 | 0 |
+| src/kyoshin/menu/CMenuGetItemMulti.cpp | 46 | 0 | 45 | 20 | 0 | 0 | 1 | 0 | 58 | 1 | 0 | 0 |
 | src/kyoshin/menu/CMenuItem.cpp | 2 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
@@ -554,7 +554,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuPause.cpp | 5 | 3 | 6 | 12 | 1 | 0 | 0 | 0 | 9 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 2 | 1 | 70 | 11 | 20 | 3 | 1 | 0 | 9 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuQstCnt.cpp | 16 | 2 | 31 | 4 | 5 | 4 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuQuestLog.cpp | 3 | 14 | 19 | 1 | 23 | 2 | 0 | 0 | 7 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuQuestLog.cpp | 3 | 14 | 19 | 2 | 23 | 2 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSave.cpp | 1 | 8 | 10 | 2 | 87 | 81 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSelectShop.cpp | 3 | 6 | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuShopBuy.cpp | 2 | 10 | 8 | 2 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1029,10 +1029,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceGX.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 2,
   "extern_c_nonlbl_decl": 36,
   "init_side_effect": 0,
-  "ptr_arith": 2,
   "schedule_pragma": 0,
   "void_ptr": 6
  },
@@ -5710,7 +5708,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_code": 1,
   "asm_insn_shim": 1,
   "extern_c_nonlbl_decl": 46,
-  "goto_count": 48,
+  "goto_count": 58,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 45,
@@ -5915,7 +5913,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 23,
   "schedule_pragma": 0,
   "self_params": 19,
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "src/kyoshin/menu/CMenuSave.cpp": {
   "asm_code": 1,

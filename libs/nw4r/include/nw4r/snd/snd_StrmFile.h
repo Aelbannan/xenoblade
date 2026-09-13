@@ -113,8 +113,8 @@ public:
         return mHeader != NULL;
     }
 
-    bool IsValidFileHeader(const void* pStrmBin);
-    void Setup(const void* pStrmBin);
+    bool IsValidFileHeader(const ut::BinaryFileHeader* pFileHeader);
+    void Setup(const StrmFile::Header* pStrmBin);
 
     bool ReadStrmInfo(StrmInfo* pStrmInfo) const;
     bool ReadAdpcmInfo(AdpcmInfo* pAdpcmInfo, int channels) const;

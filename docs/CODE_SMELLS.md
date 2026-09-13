@@ -14,8 +14,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 16651 |
 | extern "C" declarations (non-lbl_*, imports) | 7497 |
 | extern "C" definitions (forced names) | 4151 |
-| `self`/register-style params | 13372 |
-| `void*` (params + locals) | 7642 |
+| `self`/register-style params | 13359 |
+| `void*` (params + locals) | 7641 |
 | raw pointer offset arithmetic | 7904 |
 | deref-through-cast arithmetic | 3307 |
 | inline asm / `register` | 127 |
@@ -430,7 +430,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CtrlEnemy.cpp | 1 | 23 | 19 | 13 | 16 | 1 | 0 | 0 | 34 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlMoveBase.cpp | 2 | 3 | 36 | 14 | 15 | 3 | 0 | 0 | 45 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlMoveEne.cpp | 4 | 1 | 107 | 26 | 23 | 8 | 0 | 3 | 7 | 0 | 0 | 0 |
-| src/kyoshin/cf/CtrlMoveNpc.cpp | 20 | 0 | 13 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CtrlMoveNpc.cpp | 20 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlMovePC.cpp | 15 | 20 | 64 | 37 | 76 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlNpc.cpp | 1 | 3 | 45 | 14 | 5 | 2 | 0 | 1 | 33 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlObjectParam.cpp | 29 | 55 | 72 | 107 | 10 | 8 | 0 | 2 | 19 | 0 | 0 | 0 |
@@ -4571,8 +4571,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 20,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 13,
-  "void_ptr": 8
+  "void_ptr": 7
  },
  "src/kyoshin/cf/CtrlMovePC.cpp": {
   "asm_insn_shim": 0,

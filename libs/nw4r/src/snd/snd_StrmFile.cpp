@@ -77,14 +77,8 @@ inline bool LoaderReaderAvailable(const StrmFileLoader* pLoader) {
 // both into StrmFileLoader::LoadFileHeader, so they are defined inline here to
 // avoid emitting extra out-of-line copies (same approach as snd_WsdFile.cpp).
 // Their signatures take the raw file image as declared in the locked header;
-// StrmBinaryData names that untyped image type locally.
-typedef const void StrmBinaryData;
-
 inline bool StrmFileReader::IsValidFileHeader(
-    const StrmBinaryData* pStrmBin) {
-    const ut::BinaryFileHeader* pFileHeader =
-        static_cast<const ut::BinaryFileHeader*>(pStrmBin);
-
+    const ut::BinaryFileHeader* pFileHeader) {
     if (pFileHeader->signature != SIGNATURE) {
         return false;
     }
@@ -102,12 +96,12 @@ inline bool StrmFileReader::IsValidFileHeader(
 
 StrmFileReader::StrmFileReader() : mHeader(NULL), mHeadBlock(NULL) {}
 
-inline void StrmFileReader::Setup(const StrmBinaryData* pStrmBin) {
-    if (!IsValidFileHeader(pStrmBin)) {
+inline void StrmFileReader::Setup(const StrmFile::Header* pStrmBin) {
+    if (!IsValidFileHeader(&pStrmBin->fileHeader)) {
         return;
     }
 
-    mHeader = static_cast<const StrmFile::Header*>(pStrmBin);
+    mHeader = pStrmBin;
 
     mHeadBlock = static_cast<const StrmFile::HeadBlock*>(
         ut::AddOffsetToPtr(mHeader, mHeader->headBlockOffset));
@@ -144,7 +138,7 @@ bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
 
     StrmFileReader reader;
 
-    if (!reader.IsValidFileHeader(pHeader)) {
+    if (!reader.IsValidFileHeader(&pHeader->fileHeader)) {
         return false;
     }
 
@@ -160,7 +154,7 @@ bool StrmFileLoader::LoadFileHeader(void* pStrmBin, u32 size) {
         return false;
     }
 
-    mReader.Setup(pStrmBin);
+    mReader.Setup(static_cast<StrmFile::Header*>(pStrmBin));
 
     return true;
 }
@@ -197,8 +191,8 @@ bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
 
 // StrmFileReader::ReadStrmInfo(StrmFileReader::StrmInfo*)
 extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
-    const StrmFileReader* self, StrmInfoLayout* pStrmInfo) {
-    const StrmFile::HeadBlock* pHead = ReaderHeadBlock(self);
+    const StrmFileReader* ths, StrmInfoLayout* pStrmInfo) {
+    const StrmFile::HeadBlock* pHead = ReaderHeadBlock(ths);
     // Pointer-local for the ref makes MWCC materialize the base address
     // before reading the ref fields (retail schedule).
     const Util::DataRef<StrmFile::StrmDataInfo>* pRef =
@@ -246,10 +240,10 @@ extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6d
 
 // StrmFileReader::ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo*, int)
 extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
-    const StrmFileReader* self, StrmTrackInfoLayout* pTrackInfo, int trackNo) {
+    const StrmFileReader* ths, StrmTrackInfoLayout* pTrackInfo, int trackNo) {
     const StrmFile::TrackTable* pTrackTable = Util::GetDataRefAddress0(
-        ReaderHeadBlock(self)->refTrackTable,
-        &ReaderHeadBlock(self)->refDataHeader);
+        ReaderHeadBlock(ths)->refTrackTable,
+        &ReaderHeadBlock(ths)->refDataHeader);
 
     if (trackNo >= pTrackTable->trackCount) {
         return false;
@@ -260,7 +254,7 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3
     case 0: {
         const StrmFile::TrackInfo* pSrcInfo = Util::GetDataRefAddress0(
             pTrackTable->refTrackHeader[trackNo],
-            &ReaderHeadBlock(self)->refDataHeader);
+            &ReaderHeadBlock(ths)->refDataHeader);
 
         if (pSrcInfo == NULL) {
             return false;
@@ -284,7 +278,7 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3
         const StrmTrackInfoV1Layout* pSrcInfo =
             reinterpret_cast<const StrmTrackInfoV1Layout*>(
                 Util::GetDataRefAddress0(pTrackTable->refTrackHeader[trackNo],
-                                         &ReaderHeadBlock(self)->refDataHeader));
+                                         &ReaderHeadBlock(ths)->refDataHeader));
 
         if (pSrcInfo == NULL) {
             return false;
@@ -310,9 +304,9 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3
 
 // StrmFileLoader::ReadStrmInfo(StrmFileReader::StrmInfo*)
 extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
-    const StrmFileLoader* self, StrmInfoLayout* pStrmInfo) {
+    const StrmFileLoader* ths, StrmInfoLayout* pStrmInfo) {
     // The reader subobject starts at the loader's mReader.mHeader field.
-    const StrmLoaderLayout* pLayout = reinterpret_cast<const StrmLoaderLayout*>(self);
+    const StrmLoaderLayout* pLayout = reinterpret_cast<const StrmLoaderLayout*>(ths);
 
     if (pLayout->readerHeader == NULL) {
         return false;
@@ -328,10 +322,10 @@ extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6d
 
 // StrmFileLoader::ReadStrmTrackInfo(StrmFileReader::StrmTrackInfo*, int)
 extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
-    const StrmFileLoader* self, StrmTrackInfoLayout* pTrackInfo, int trackNo) {
+    const StrmFileLoader* ths, StrmTrackInfoLayout* pTrackInfo, int trackNo) {
     // The embedded reader starts at the loader's mReader.mHeader field.
     const StrmLoaderLayout* pLayout =
-        reinterpret_cast<const StrmLoaderLayout*>(self);
+        reinterpret_cast<const StrmLoaderLayout*>(ths);
 
     if (pLayout->readerHeader == NULL) {
         return false;
@@ -347,13 +341,13 @@ extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3
 
 // StrmFileLoader::GetChannelCount()
 extern "C" int GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(
-    const StrmFileLoader* self) {
-    if (!LoaderReaderAvailable(self)) {
+    const StrmFileLoader* ths) {
+    if (!LoaderReaderAvailable(ths)) {
         return 0;
     }
 
     const StrmFile::HeadBlock* pHead =
-        reinterpret_cast<const StrmLoaderLayout*>(self)->readerHeadBlock;
+        reinterpret_cast<const StrmLoaderLayout*>(ths)->readerHeadBlock;
     const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
         pHead->refChannelTable, &pHead->refDataHeader);
 
@@ -370,30 +364,30 @@ LoaderReaderHeadBlock(const StrmFileLoader* pLoader) {
 
 // StrmFileLoader::ReadAdpcmInfo(AdpcmParam*, AdpcmLoopParam*, int)
 extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
-    const StrmFileLoader* self, AdpcmParam* pParam, AdpcmLoopParam* pLoopParam,
+    const StrmFileLoader* ths, AdpcmParam* pParam, AdpcmLoopParam* pLoopParam,
     int channel) {
-    if (!LoaderReaderAvailable(self)) {
+    if (!LoaderReaderAvailable(ths)) {
         return false;
     }
 
     const StrmFile::StrmDataInfo* pStrmData = Util::GetDataRefAddress0(
-        LoaderReaderHeadBlock(self)->refDataHeader,
-        &LoaderReaderHeadBlock(self)->refDataHeader);
+        LoaderReaderHeadBlock(ths)->refDataHeader,
+        &LoaderReaderHeadBlock(ths)->refDataHeader);
 
     // Both guard checks branch forward to the shared "return true" tail.
     if (pStrmData->format == WaveFile::FORMAT_ADPCM) {
         const StrmFile::ChannelTable* pChannelTable = Util::GetDataRefAddress0(
-            LoaderReaderHeadBlock(self)->refChannelTable,
-            &LoaderReaderHeadBlock(self)->refDataHeader);
+            LoaderReaderHeadBlock(ths)->refChannelTable,
+            &LoaderReaderHeadBlock(ths)->refDataHeader);
 
         if (channel < pChannelTable->channelCount) {
             const StrmFile::ChannelInfo* pChannelInfo = Util::GetDataRefAddress0(
                 pChannelTable->refChannelHeader[channel],
-                &LoaderReaderHeadBlock(self)->refDataHeader);
+                &LoaderReaderHeadBlock(ths)->refDataHeader);
 
             const AdpcmInfo* pAdpcmData = Util::GetDataRefAddress0(
                 pChannelInfo->refAdpcmInfo,
-                &LoaderReaderHeadBlock(self)->refDataHeader);
+                &LoaderReaderHeadBlock(ths)->refDataHeader);
 
             *pParam = pAdpcmData->param;
             *pLoopParam = pAdpcmData->loopParam;

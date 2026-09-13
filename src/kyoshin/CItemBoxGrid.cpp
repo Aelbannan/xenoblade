@@ -64,7 +64,7 @@ void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
 // Forward declarations for functions defined later in this file
 u32 func_801C7958(void* self, void* item);
 u32 func_801CA070(void* self, void* item);
-u32 func_801CA110(void* self, void* entry);
+extern "C" u32 func_801CA110(void* self, void* entry);
 s32 func_801C7C7C(void* self, u32 id, void* item);
 u32 func_801C6938(void* self, u32 idx);
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx);
@@ -179,8 +179,9 @@ extern const char lbl_eu_80534818[];
 extern const char lbl_eu_80573D18[];
 extern const char lbl_eu_8050566C[];
 extern u32 lbl_eu_80664514;
-// Complete-type array keeps the symbol SDA-eligible.
-extern u8 lbl_eu_806640F4[0x2800];
+// 4-byte .sbss pointer (symbols.txt size:0x4). A large u8[] decl forces
+// lis/addi; void* keeps it SDA-eligible (EMB_SDA21 lwz like retail).
+extern void* lbl_eu_806640F4;
 // Forward declarations for later-defined functions
 void func_801CC3F4(void*);
 void func_801CC4E8(void*);
@@ -2148,11 +2149,11 @@ void func_801C94E0(CItemBoxGridFull* self) {
             // Owner-table row is selected by the raw item word used as a
             // byte offset into the table data.
             u32 w1 = *(u32*)obj1;
-            u32 c1 = func_801361E8(*(u32*)(lbl_eu_806640F4 + w1),
+            u32 c1 = func_801361E8(*(u32*)((u8*)lbl_eu_806640F4 + w1),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    (u16)func_80139358(w1 >> 20));
             u32 w2 = *(u32*)obj2;
-            u32 c2 = func_801361E8(*(u32*)(lbl_eu_806640F4 + w2),
+            u32 c2 = func_801361E8(*(u32*)((u8*)lbl_eu_806640F4 + w2),
                                    (const char*)&lbl_eu_8050566C[0x22f],
                                    (u16)func_80139358(w2 >> 20));
             if ((u8)c1 >= (u8)c2) continue;
@@ -2324,19 +2325,11 @@ void func_801C9B8C(CItemBoxGridFull* self) {
     }
 }
 
-// Kind-name lookup key for one grid item: message-table (lbl_eu_80664110)
-// query with the string key at lbl_eu_8050566C+0x115 on the kind short id
-// extracted from the object's vtable bits.
-static u32 ItemBoxKindKey(void* obj) {
-    u32 w = *(u32*)obj;
-    u32 tbl = lbl_eu_80664110;
-    return func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)func_80139358(w >> 20));
-}
-
 // Bubble-sort grid entries in DESCENDING order of the kind's message-table
 // lookup key (string at lbl_eu_8050566C+0x115): adjacent pair (j, j+1) is
-// swapped when entry j's key byte exceeds entry j+1's. Same lookup chain and
-// 3-slot temp shuffle as func_801C9E1C.
+// swapped when entry j's key byte exceeds entry j+1's. Lookup is inlined
+// (same chain as the 100% sibling func_801C9E1C) so the SDA load of
+// lbl_eu_80664110 and the 39358/361E8 calls stay in this function.
 void func_801C9CCC(CItemBoxGridFull* self) {
     u32 i;
     for (i = 0; (u16)i < self->field_2800 - 1; i++) {
@@ -2344,14 +2337,20 @@ void func_801C9CCC(CItemBoxGridFull* self) {
         u32 j;
         char tmp[36];
         for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            // tbl declared first, assigned after the 57C4C calls so the SDA
+            // load stays at retail +0x70 (early assign moved it and added
+            // structural). Residual: e1↔tbl r23/r24.
+            u32 tbl;
             u8* e1 = (u8*)self + (u16)j * 10;
             u8* e2 = (u8*)self + ((u16)j + 1) * 10;
-            // id expressions written out so MWCC CSEs the (u16)j * 10 mulli
-            // into one register shared by the add/lhax pair, as in retail.
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)((u8*)self + (u16)j * 10));
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            u32 c1 = ItemBoxKindKey(obj1);
-            u32 c2 = ItemBoxKindKey(obj2);
+            u32 w1 = *(u32*)obj1;
+            tbl = lbl_eu_80664110;
+            u32 c1 = func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)func_80139358(w1 >> 20));
+            u32 w2 = *(u32*)obj2;
+            u32 tbl2 = lbl_eu_80664110;
+            u32 c2 = func_801361E8(tbl2, (const char*)&lbl_eu_8050566C[0x115], (u16)func_80139358(w2 >> 20));
             if ((u8)c1 <= (u8)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
@@ -2444,9 +2443,9 @@ __declspec(noinline) u32 func_801CA070(void* self, void* item) {
 
 // Check if entry kind exists in pool.
 #pragma optimize_for_size on
-__declspec(noinline) u32 func_801CA110(void* self, void* entry) {
+extern "C" __declspec(noinline) u32 func_801CA110(void* self, void* entry) {
     u32 val = *(u32*)entry;
-    u32 obj = (u32)(size_t)lbl_eu_806640F4;
+    u32 obj = (u32)lbl_eu_806640F4;
     u32 kind = func_80139358(val >> 20);
     u32 i;
     for (i = 1; i <= 10; i++) {
@@ -3668,7 +3667,12 @@ exit:;
 
 
 
+// A-confirm / window-result handler. optimize_for_size reproduces retail's
+// stmw r25 / 96-byte frame; entry index is the usual col + row*10 cell.
+#pragma optimize_for_size on
 void func_801CCAF0(void* self) {
+    void* item;
+    u8 nslots;
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (CSysWin_isActive(p + 0x4ac)) {
@@ -3688,20 +3692,15 @@ void func_801CCAF0(void* self) {
     }
     if (func_80208358(p + 0x418)) {
         if (!func_80208360(p + 0x418)) return;
-        u32 fsResult = func_802087B8(p + 0x418);
-        if ((fsResult & 0xFF) == 1) {
-            u8* sub = p + 0x54c;
-            u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-            void* item = func_801C631C((CItemBoxGridFull*)sub, entry);
-            u32 type = (*(u32*)item >> 12) & 0xF;
-            if (type == 2 || ((type + 0xfc) & 0xFF) <= 4) {
-                CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
-                u32 count = (u32)inst->vf30((CItemData*)item);
-                u32 j;
-                for (j = 0; j < count; j++) {
-                    CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
-                    s16 subId = (s16)inst2->vf40((CItemData*)item, j);
-                    if (subId != -1) {
+        if ((func_802087B8(p + 0x418) & 0xFF) == 1) {
+            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+            u8 entry = (u8)(p[0x524] + p[0x525] * 10);
+            item = func_801C631C(sub, entry);
+            u32 type = (*(u32*)item >> 16) & 0xF;
+            if (type == 2 || (u8)(type + 0xfc) <= 4) {
+                nslots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
+                for (u8 j = 0; j < nslots; j++) {
+                    if ((s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, j) != -1) {
                         p[0x541] = 1;
                         break;
                     }
@@ -3713,25 +3712,22 @@ void func_801CCAF0(void* self) {
             func_801CFF28(self);
             playUISound__FUl(0x7a);
             func_801D0950(self);
-            goto after_fs;
-        }
-        if (p[0x6f] >= 0) {
-            u8 listVal = p[0x62 + (s8)p[0x6f]];
-            if (listVal == 0xa) {
-                u32 count2 = 0;
-                void* ecData = func_8009ECB0();
-                u32* ptr = (u32*)((u8*)ecData + 4);
-                u32 k;
-                for (k = 0; k < 7; k++) {
+        } else {
+            u8* listRow = p + (s8)p[0x6f];
+            if (listRow[0x62] == 0xa) {
+                s32 count2 = 0;
+                void* ec = func_8009ECB0();
+                u32* ptr = (u32*)((u8*)ec + 4);
+                for (u8 k = 0; k < 7; k++) {
                     u32 val;
-                    if ((k & 0xFF) < 3) {
-                        val = ptr[k & 0xFF];
+                    if (k < 3) {
+                        val = *(u32*)((u8*)ec + 4 + (k << 2));
                     } else {
-                        val = ptr[k & 0xFF];
+                        val = ptr[k];
                     }
                     if ((s32)val > 0) {
                         void* obj = (void*)func_8009EC9C(val & 0xFFFF);
-                        if (*(u32*)((u8*)obj + 0x176c) != 1) count2++;
+                        if (*(s32*)((u8*)obj + 0x176c) != 1) count2++;
                     }
                 }
                 if (count2 <= 1) {
@@ -3741,78 +3737,75 @@ void func_801CCAF0(void* self) {
             }
             playUISound__FUl(3);
         }
-after_fs:
         func_801D216C(p + 0xa0, 0);
         func_802083A4(p + 0x418);
         *(u32*)(p + 0x58) = 8;
         return;
     }
     if (func_8022DB6C(p + 0x468)) {
-        if (func_8022DB74(p + 0x468)) {
-            if (func_8022E488(p + 0x468)) {
-                if (func_8022E490(p + 0x468)) {
-                    func_8022DD68(p + 0x468);
-                    *(u32*)(p + 0x58) = 0x11;
-                    func_801D0950(self);
-                    func_801D216C(p + 0x70, 1);
-                    func_801D216C(p + 0xd0, 0);
-                } else {
-                    u8* sub = p + 0x54c;
-                    u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-                    void* item = func_801C631C((CItemBoxGridFull*)sub, entry);
-                    u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                    s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
-                    func_8022DD90(p + 0x468);
-                    func_801D216C(p + 0xd0, 0);
-                    u32 teachType = func_8022E4FC(p + 0x468);
-                    u32 teachState = func_8022E504(p + 0x468);
-                    if (teachState == 1) {
-                        u32 k2 = func_80139358(kind & 0xFFFF);
-                        u32 catVal = func_801361E8(lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF);
-                        if ((catVal & 0xFF) == 7) incrementEventCounter__FUl(0x87);
-                    } else if (teachState == 2) {
-                        u32 w = *(u32*)item;
-                        if ((w >> 20) == 0x75a) incrementEventCounter__FUl(0x88);
-                    } else if (teachState == 4) {
-                        u32 w = *(u32*)item;
-                        if ((w >> 20) == 0x775) incrementEventCounter__FUl(0x8a);
-                    } else if (teachState == 5) {
-                        u32 k3 = func_80139358(kind & 0xFFFF);
-                        u32 catVal2 = func_801361E8(lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k3 & 0xFFFF);
-                        if ((catVal2 & 0xFF) == 2) incrementEventCounter__FUl(0x8b);
+        if (!func_8022DB74(p + 0x468)) return;
+        if (func_8022E488(p + 0x468)) {
+            if (func_8022E490(p + 0x468)) {
+                func_8022DD68(p + 0x468);
+                *(u32*)(p + 0x58) = 0x11;
+                func_801D0950(self);
+                func_801D216C(p + 0x70, 1);
+                func_801D216C(p + 0xd0, 0);
+            } else {
+                CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+                u8 entry = (u8)(p[0x524] + p[0x525] * 10);
+                void* item = func_801C631C(sub, entry);
+                u32 kind = func_801C62AC(sub, entry);
+                s32 count = func_801C6388(sub, entry);
+                func_8022DD90(p + 0x468);
+                func_801D216C(p + 0xd0, 0);
+                u32 teachType = func_8022E4FC(p + 0x468);
+                u32 teachState = func_8022E504(p + 0x468);
+                if ((u8)teachState == 1) {
+                    u32 table = lbl_eu_80664104;
+                    u32 k2 = func_80139358(kind & 0xFFFF);
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF) & 0xFF) == 7) {
+                        incrementEventCounter__FUl(0x87);
                     }
-                    if (teachType == 3 || teachType == 8) {
-                        if (teachState == 1) incrementEventCounter__FUl(0x89);
-                    } else if (teachType == 6) {
-                        u32 k4 = func_80139358(kind & 0xFFFF);
-                        u32 catVal3 = func_801361E8(lbl_eu_80664104, (const char*)&lbl_eu_8050566C[0x212], k4 & 0xFFFF);
-                        if ((catVal3 & 0xFF) == 5) incrementEventCounter__FUl(0x8d);
-                    } else if (teachType == 7) {
-                        incrementEventCounter__FUl(0x8c);
+                } else if ((u8)teachState == 2) {
+                    if ((*(u32*)item >> 20) == 0x75a) incrementEventCounter__FUl(0x88);
+                } else if ((u8)teachState == 4) {
+                    if ((*(u32*)item >> 20) == 0x775) incrementEventCounter__FUl(0x8a);
+                } else if ((u8)teachState == 5) {
+                    u32 table = lbl_eu_80664104;
+                    u32 k3 = func_80139358(kind & 0xFFFF);
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k3 & 0xFFFF) & 0xFF) == 2) {
+                        incrementEventCounter__FUl(0x8b);
                     }
-                    u32 w = *(u32*)item;
-                    if ((w >> 20) == 0x867) incrementEventCounter__FUl(0x8e);
-                    func_801D11B8(self, item, (s8)count - 1);
-                    func_801CFF28(self);
                 }
-                playUISound__FUl(3);
-                return;
+                if ((u8)teachType == 3 || (u8)teachType == 8) {
+                    if ((u8)teachState == 1) incrementEventCounter__FUl(0x89);
+                } else if ((u8)teachType == 6) {
+                    u32 table = lbl_eu_80664104;
+                    u32 k4 = func_80139358(kind & 0xFFFF);
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k4 & 0xFFFF) & 0xFF) == 5) {
+                        incrementEventCounter__FUl(0x8d);
+                    }
+                } else if ((u8)teachType == 7) {
+                    incrementEventCounter__FUl(0x8c);
+                }
+                if ((*(u32*)item >> 20) == 0x867) incrementEventCounter__FUl(0x8e);
+                func_801D11B8(self, item, (s8)count - 1);
+                func_801CFF28(self);
             }
+        } else {
             func_8022E3AC(p + 0x468);
             u8 temp[16];
             func_8022E498(temp, p + 0x468);
             ((CBaseCur*)(p + 0xd0))->setRootPaneTranslate((const nw4r::math::VEC3*)temp);
-            playUISound__FUl(3);
-            return;
         }
+        playUISound__FUl(3);
         return;
     }
     if (func_801D3320(p + 0xe8)) {
         if (func_801D3328(p + 0xe8)) {
             u32 val = func_801D37F4(p + 0xe8);
-            s8 listIdx = (s8)p[0x6f];
-            u8 listVal = p[0x62 + listIdx];
-            func_80157824(listVal, val & 0xFF);
+            func_80157824((p + (s8)p[0x6f])[0x62], val & 0xFF);
             p[0x547] = (u8)func_801D3808(p + 0xe8);
             p[0x548] = (u8)func_801D3810(p + 0xe8);
             func_801CC7B0(self, 1);
@@ -3826,296 +3819,250 @@ after_fs:
         return;
     }
     if (p[0x544]) return;
-    s8 cursor = (s8)p[0x525];
-    if (cursor == -1) return;
-    u8 mode = p[0x527];
-    if (mode == 4) {
-        if (cursor == -2) {
+    if ((s8)p[0x525] == -1) return;
+    if (p[0x527] == 4) {
+        if ((s8)p[0x525] == -2) {
             p[0x549] = 1;
             func_801C68A0((CItemBoxGridFull*)(p + 0x54c));
             playUISound__FUl(4);
             return;
         }
-        u8* sub = p + 0x54c;
-        u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-        u8 cap = func_801C6840((CItemBoxGridFull*)sub);
-        u8 active = func_801C67F8((CItemBoxGridFull*)sub);
-        if (active >= cap) {
-            if (func_801C673C((CItemBoxGridFull*)sub, entry)) {
-                func_801C6770((CItemBoxGridFull*)sub, entry);
+        CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+        u8 entry = (u8)(p[0x524] + (s8)p[0x525] * 10);
+        u8 cap = func_801C6840(sub);
+        if ((u8)func_801C67F8(sub) >= cap) {
+            if (func_801C673C(sub, entry)) {
+                func_801C6770(sub, entry);
                 func_801CFFEC(self);
                 func_801D0328(self);
                 func_801D0BD8(self);
                 playUISound__FUl(6);
                 return;
             }
-            u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-            if (kind) {
-                *(u32*)(p + 0x58) = 0x12;
-                u32 msg = (u32)func_80136190((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
-                func_8022B90C(p + 0x4e8, 0);
-                func_8022B9B4(p + 0x4e8, msg, 0);
-                func_8022BFC8(p + 0x4e8, 1);
-                func_8022B8B8(p + 0x4e8);
-                func_801D216C(p + 0x70, 0);
-                playUISound__FUl(5);
-                return;
-            }
+            if (!(func_801C62AC(sub, entry) & 0xFFFF)) return;
+            *(u32*)(p + 0x58) = 0x12;
+            u32 msg = (u32)func_80136190((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 0xa1);
+            func_8022B90C(p + 0x4e8, 0);
+            func_8022B9B4(p + 0x4e8, msg, 0);
+            func_8022BFC8(p + 0x4e8, 1);
+            func_8022B8B8(p + 0x4e8);
+            func_801D216C(p + 0x70, 0);
+            playUISound__FUl(5);
             return;
         }
-        if (func_801C6528((CItemBoxGridFull*)sub, entry)) return;
-        u32 kind2 = func_801C62AC((CItemBoxGridFull*)sub, entry);
-        if (!kind2) return;
-        func_801C6770((CItemBoxGridFull*)sub, entry);
+        if ((u8)func_801C6528(sub, entry)) return;
+        if (!(func_801C62AC(sub, entry) & 0xFFFF)) return;
+        func_801C6770(sub, entry);
         func_801CFFEC(self);
         func_801D0328(self);
         func_801D0BD8(self);
-        if (func_801C673C((CItemBoxGridFull*)sub, entry)) {
+        if (func_801C673C(sub, entry)) {
             playUISound__FUl(3);
         } else {
             playUISound__FUl(6);
         }
         return;
     }
-    if (mode == 1) {
+    if (p[0x527] == 1) {
         if (p[0x528]) {
-            if (func_801EB028(p + 0x3e4)) {
-                if (*(u32*)(p + 0x58) == 0x19) {
-                    u8* sub = p + 0x54c;
-                    u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-                    void* item = func_801C631C((CItemBoxGridFull*)sub, entry);
-                    u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                    s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
-                    u32 type = (*(u32*)item >> 12) & 0xF;
-                    if ((u8)func_801C6528((CItemBoxGridFull*)sub, entry)) {
-                        s16 sid = func_801C5F48((CItemBoxGridFull*)sub, entry);
-                        func_801D0E88(self, type, (int)sid);
-                    }
-                    if (type == 2 || ((type + 0xfc) & 0xFF) <= 4) {
-                        CItemImpl* inst = CItem_initItemImplInstances((CItemData*)item);
-                        u32 numSlots = (u32)inst->vf30((CItemData*)item);
-                        u32 j;
-                        for (j = 0; j < numSlots; j++) {
-                            CItemImpl* inst2 = CItem_initItemImplInstances((CItemData*)item);
-                            s16 subId = (s16)inst2->vf40((CItemData*)item, j);
-                            if (subId != -1) {
-                                p[0x541] = 1;
-                                break;
-                            }
-                        }
-                    }
-                    u32 cost = func_801C5FC0((CItemBoxGridFull*)sub, entry);
-                    s32 mult = (s8)p[0x529] * (s32)cost;
-                    func_801571FC();
-                    func_80157184(mult);
-                    s8 extra = (s8)count - (s8)p[0x529];
-                    func_801D11B8(self, item, extra);
-                    func_801CFF28(self);
-                    func_801EB178(p + 0x3e4);
-                    *(u32*)(p + 0x58) = 0x1a;
-                    playUISound__FUl(0x2f);
-                    return;
-                }
-                return;
+            if (!func_801EB028(p + 0x3e4)) return;
+            if (*(u32*)(p + 0x58) != 0x19) return;
+            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+            u8 entry = (u8)(p[0x524] + p[0x525] * 10);
+            void* item = func_801C631C(sub, entry);
+            func_801C62AC(sub, entry);
+            s32 count = func_801C6388(sub, entry);
+            u32 type = (*(u32*)item >> 16) & 0xF;
+            if ((u8)func_801C6528(sub, entry)) {
+                s16 sid = func_801C5F48(sub, entry);
+                func_801D0E88(self, (int)type, (int)sid);
             }
+            if (type == 2 || (u8)(type + 0xfc) <= 4) {
+                u8 numSlots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
+                for (u8 j = 0; j < numSlots; j++) {
+                    if ((s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, j) != -1) {
+                        p[0x541] = 1;
+                        break;
+                    }
+                }
+            }
+            u32 cost = func_801C5FC0(sub, entry);
+            func_80157184((u32)func_801571FC() + (s8)p[0x529] * cost);
+            func_801D11B8(self, item, (s8)count - (s8)p[0x529]);
+            func_801CFF28(self);
+            func_801EB178(p + 0x3e4);
+            *(u32*)(p + 0x58) = 0x1a;
+            playUISound__FUl(0x2f);
             return;
         }
-        if (func_801EB028(p + 0x3e4)) {
-            if (*(u32*)(p + 0x58) == 3) {
-                u8* sub = p + 0x54c;
-                u8 entry = (u8)((u8)((s8)p[0x525] * 10) + (u8)(s8)p[0x524]);
-                u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                if (kind) {
-                    p[0x529] = 1;
-                    u32 val = func_801C6938((CItemBoxGridFull*)sub, entry);
-                    func_801EB030(p + 0x3e4, (void*)val);
-                    func_801EB04C((void*)(p + 0x3e4), (u32)p[0x529]);
-                    u32 cost2 = func_801C5FC0((CItemBoxGridFull*)sub, entry);
-                    u32 total2 = (s8)p[0x529] * cost2;
-                    func_801EB064(p + 0x3e4, total2);
-                    if ((u8)func_801C6690((CItemBoxGridFull*)sub, entry)) {
-                        *(u32*)(p + 0x58) = 0x12;
-                        u32 msg2 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
-                        func_8022B90C(p + 0x4e8, 0);
-                        func_8022B9B4(p + 0x4e8, msg2, 0);
-                        func_8022BFC8(p + 0x4e8, 1);
-                        func_8022B8B8(p + 0x4e8);
-                        func_801D216C(p + 0x70, 0);
-                    } else if ((u8)func_801C6528((CItemBoxGridFull*)sub, entry)) {
-                        void* item2 = func_801C631C((CItemBoxGridFull*)sub, entry);
-                        u32 type2 = (*(u32*)item2 >> 12) & 0xF;
-                        if (type2 == 2) {
-                            *(u32*)(p + 0x58) = 0x12;
-                            u32 msg3 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
-                            func_8022B90C(p + 0x4e8, 0);
-                            func_8022B9B4(p + 0x4e8, msg3, 0);
-                            func_8022BFC8(p + 0x4e8, 1);
-                            func_8022B8B8(p + 0x4e8);
-                            func_801D216C(p + 0x70, 0);
-                        } else {
-                            *(u32*)(p + 0x58) = 0x15;
-                            u32 msg4 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
-                            u32 msg5 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
-                            u32 msg6 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                            func_8022B9B4(p + 0x4ac, msg4, 0);
-                            func_8022BF6C(p + 0x4ac, msg5, msg6);
-                            func_8022BFC8(p + 0x4ac, 0);
-                            func_8022B8B8(p + 0x4ac);
-                            func_801D216C(p + 0x70, 0);
-                            p[0x540] = 1;
-                        }
-                    } else {
-                        s8 listIdx2 = (s8)p[0x6f];
-                        u8 listVal2 = p[0x62 + listIdx2];
-                        if (listVal2 == 0xd) {
-                            u32 kind3 = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                            if (func_801D12D4(self, kind3 & 0xFFFF)) {
-                                *(u32*)(p + 0x58) = 0x15;
-                                u32 msg7 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
-                                u32 msg8 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
-                                u32 msg9 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
-                                func_8022B9B4(p + 0x4ac, msg7, 0);
-                                func_8022BF6C(p + 0x4ac, msg8, msg9);
-                                func_8022BFC8(p + 0x4ac, 0);
-                                func_8022B8B8(p + 0x4ac);
-                                func_801D216C(p + 0x70, 0);
-                                p[0x540] = 1;
-                            }
-                        }
-                        u32 lv = listVal2;
-                        if (lv >= 2 && lv <= 9) {
-                            func_801EB410(p + 0x3e4, 0);
-                        } else {
-                            func_801EB410(p + 0x3e4, 1);
-                        }
-                        func_801EB0D4(p + 0x3e4);
-                        *(u32*)(p + 0x58) = 0x18;
-                        p[0x528] = 1;
-                        func_801D216C(p + 0x70, 0);
-                    }
-                    playUISound__FUl(3);
-                    return;
+        if (!func_801EB028(p + 0x3e4)) return;
+        if (*(u32*)(p + 0x58) != 3) return;
+        {
+            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+            u8 entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
+            if (!(func_801C62AC(sub, entry) & 0xFFFF)) return;
+            p[0x529] = 1;
+            func_801EB030(p + 0x3e4, (void*)func_801C6938(sub, entry));
+            func_801EB04C(p + 0x3e4, p[0x529]);
+            func_801EB064(p + 0x3e4, (s8)p[0x529] * func_801C5FC0(sub, entry));
+            if ((u8)func_801C6690(sub, entry)) {
+                *(u32*)(p + 0x58) = 0x12;
+                u32 msg2 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
+                func_8022B90C(p + 0x4e8, 0);
+                func_8022B9B4(p + 0x4e8, msg2, 0);
+                func_8022BFC8(p + 0x4e8, 1);
+                func_8022B8B8(p + 0x4e8);
+                func_801D216C(p + 0x70, 0);
+            } else if ((u8)func_801C6528(sub, entry)) {
+                void* item2 = func_801C631C(sub, entry);
+                if (((*(u32*)item2 >> 16) & 0xF) == 2) {
+                    *(u32*)(p + 0x58) = 0x12;
+                    u32 msg3 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x16);
+                    func_8022B90C(p + 0x4e8, 0);
+                    func_8022B9B4(p + 0x4e8, msg3, 0);
+                    func_8022BFC8(p + 0x4e8, 1);
+                    func_8022B8B8(p + 0x4e8);
+                    func_801D216C(p + 0x70, 0);
+                } else {
+                    *(u32*)(p + 0x58) = 0x15;
+                    u32 msg4 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x13);
+                    u32 msg5 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
+                    u32 msg6 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
+                    func_8022B9B4(p + 0x4ac, msg4, 0);
+                    func_8022BF6C(p + 0x4ac, msg5, msg6);
+                    func_8022BFC8(p + 0x4ac, 0);
+                    func_8022B8B8(p + 0x4ac);
+                    func_801D216C(p + 0x70, 0);
+                    p[0x540] = 1;
                 }
-                return;
+            } else {
+                u8 listVal2 = p[0x62 + (s8)p[0x6f]];
+                if (listVal2 == 0xd) {
+                    if (func_801D12D4(self, func_801C62AC(sub, entry) & 0xFFFF)) {
+                        *(u32*)(p + 0x58) = 0x15;
+                        u32 msg7 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
+                        u32 msg8 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
+                        u32 msg9 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x15);
+                        func_8022B9B4(p + 0x4ac, msg7, 0);
+                        func_8022BF6C(p + 0x4ac, msg8, msg9);
+                        func_8022BFC8(p + 0x4ac, 0);
+                        func_8022B8B8(p + 0x4ac);
+                        func_801D216C(p + 0x70, 0);
+                        p[0x540] = 1;
+                    }
+                }
+                u8 lv = p[0x62 + (s8)p[0x6f]];
+                if ((u8)(lv - 2) <= 7) {
+                    func_801EB410(p + 0x3e4, 0);
+                } else {
+                    func_801EB410(p + 0x3e4, 1);
+                }
+                func_801EB0D4(p + 0x3e4);
+                *(u32*)(p + 0x58) = 0x18;
+                p[0x528] = 1;
+                func_801D216C(p + 0x70, 0);
             }
+            playUISound__FUl(3);
             return;
         }
-        return;
     }
-    if (mode == 2) {
+    if (p[0x527] == 2) {
         if (p[0x542]) return;
         if (p[0x52c]) return;
         if (p[0x528]) {
-            if (((CExchangeWin*)(p + 0x440))->getField27()) {
-                if (*(u32*)(p + 0x58) == 0xd) {
-                    if ((s8)p[0x529] == 0) {
-                        u8* sub = p + 0x54c;
-                        u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-                        void* item = func_801C631C((CItemBoxGridFull*)sub, entry);
-                        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                        s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
-                        if (kind) {
-                            u16 f52e = *(u16*)(p + 0x52e);
-                            u16 f52a = *(u16*)(p + 0x52a);
-                            u32 v1 = func_801C618C((CItemBoxGridFull*)sub, f52e, 0, f52a);
-                            u32 v2 = func_801C618C((CItemBoxGridFull*)sub, kind & 0xFFFF, item, f52a);
-                            if (v1 <= v2) {
-                                u32 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
-                                u32 test = func_801C618C((CItemBoxGridFull*)sub, nVal & 0xFFFF, 0, 0);
-                                u32 diff = (v2 - v1) - test;
-                                u32 better = (diff == 0) ? 0 : 1;
-                                p[0x52d] = (u8)better;
-                                p[0x52c] = 1;
-                                func_801D11B8(self, item, (s8)count - 1);
-                                func_801393CC(*(u16*)(p + 0x52e));
-                                func_801392E4(*(u16*)(p + 0x52e));
-                                func_80139358(*(u16*)(p + 0x52e));
-                                func_801586D4(*(u16*)(p + 0x52e), 1);
-                                func_80140E00(2, *(u16*)(p + 0x52e), 0);
-                                incrementEventCounter__FUl(0xbb);
-                                incrementEventCounter__FUl(0xbc);
-                                incrementEventCounter__FUl(0xbd);
-                                u32 eqId = *(u16*)(p + 0x52e);
-                                if (eqId == 0x7ee) incrementEventCounter__FUl(0xbe);
-                                else if (eqId == 0x835) incrementEventCounter__FUl(0xbf);
-                                else if (eqId == 0x7ef) incrementEventCounter__FUl(0xc0);
-                                else if (eqId == 0x837) incrementEventCounter__FUl(0xc1);
-                                else if (eqId == 0x836) incrementEventCounter__FUl(0xc2);
-                            }
-                        }
-                    }
-                    func_8022D0D0(p + 0x440);
-                    *(u32*)(p + 0x58) = 0xe;
-                    func_801D216C(p + 0x70, 1);
-                    func_801D216C(p + 0xa0, 0);
-                    func_801D0950(self);
-                    if ((s8)p[0x529] == 0) playUISound__FUl(0x31);
-                    else playUISound__FUl(3);
-                    return;
-                }
-                return;
+            if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
+            if (*(u32*)(p + 0x58) != 0xd) return;
+            if ((s8)p[0x529] == 0) {
+                CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+                u8 entry = (u8)(p[0x524] + p[0x525] * 10);
+                void* item = func_801C631C(sub, entry);
+                u32 kind = func_801C62AC(sub, entry);
+                s32 count = func_801C6388(sub, entry);
+                if (!(kind & 0xFFFF)) return;
+                u32 v1 = func_801C618C(sub, *(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
+                u32 v2 = func_801C618C(sub, kind & 0xFFFF, item, *(u16*)(p + 0x52a));
+                if (v1 > v2) return;
+                u32 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
+                u32 test = func_801C618C(sub, nVal & 0xFFFF, 0, 0);
+                p[0x52d] = (u8)((s8)-((v2 - v1) < test));
+                p[0x52c] = 1;
+                func_801D11B8(self, item, (s8)count - 1);
+                func_801393CC(*(u16*)(p + 0x52e));
+                func_801392E4(*(u16*)(p + 0x52e));
+                func_80139358(*(u16*)(p + 0x52e));
+                func_801586D4(*(u16*)(p + 0x52e), 1);
+                func_80140E00(2, *(u16*)(p + 0x52e), 0);
+                incrementEventCounter__FUl(0xbb);
+                incrementEventCounter__FUl(0xbc);
+                incrementEventCounter__FUl(0xbd);
+                u16 eqId = *(u16*)(p + 0x52e);
+                if (eqId == 0x7ee) incrementEventCounter__FUl(0xbe);
+                else if (eqId == 0x835) incrementEventCounter__FUl(0xbf);
+                else if (eqId == 0x7ef) incrementEventCounter__FUl(0xc0);
+                else if (eqId == 0x837) incrementEventCounter__FUl(0xc1);
+                else if (eqId == 0x836) incrementEventCounter__FUl(0xc2);
             }
+            func_8022D0D0(p + 0x440);
+            *(u32*)(p + 0x58) = 0xe;
+            func_801D216C(p + 0x70, 1);
+            func_801D216C(p + 0xa0, 0);
+            func_801D0950(self);
+            if ((s8)p[0x529] == 0) playUISound__FUl(0x31);
+            else playUISound__FUl(3);
             return;
         }
-        if (((CExchangeWin*)(p + 0x440))->getField27()) {
-            if (*(u32*)(p + 0x58) == 3) {
-                u8* sub = p + 0x54c;
-                u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
-                u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-                if (kind) {
-                    u32 itemName = (u32)func_801394D4(kind & 0xFFFF);
-                    char fmtBuf[64];
-                    sprintf(fmtBuf, (const char*)&lbl_eu_8050566C[0x14c], itemName);
-                    u32 iconName = (u32)func_801394D4(*(u16*)(p + 0x52e));
-                    func_8022D19C(p + 0x440, fmtBuf, iconName);
-                    func_8022D0A4(p + 0x440);
-                    p[0x528] = 1;
-                    p[0x529] = 1;
-                    *(u32*)(p + 0x58) = 0xc;
-                    func_801D216C(p + 0x70, 0);
-                    playUISound__FUl(3);
-                    return;
-                }
-                return;
-            }
-            return;
-        }
-        return;
-    }
-    // Default mode handling
-    if (p[0x528]) return;
-    if (func_80208360(p + 0x418)) {
-        if (func_8022DB74(p + 0x468)) {
-            u8* sub = p + 0x54c;
-            u8 entry = (u8)((s8)p[0x525] * 10 + (u8)(s8)p[0x524]);
-            if ((u8)func_801C6690((CItemBoxGridFull*)sub, entry)) {
-                playUISound__FUl(5);
-                return;
-            }
-            if (!func_801C62AC((CItemBoxGridFull*)sub, entry)) {
-                playUISound__FUl(5);
-                return;
-            }
-            if ((u8)func_801C6528((CItemBoxGridFull*)sub, entry)) {
-                playUISound__FUl(5);
-                return;
-            }
-            s8 listIdx3 = (s8)p[0x6f];
-            u8 listVal3 = p[0x62 + listIdx3];
-            if (listVal3 == 0xc) {
-                playUISound__FUl(5);
-                return;
-            }
-            u32 sendVal = (mode == 3) ? 0xFF : listVal3;
-            func_802084D4(p + 0x418, sendVal & 0xFF);
-            func_801D216C(p + 0x70, 0);
-            func_80208368(p + 0x418);
-            *(u32*)(p + 0x58) = 6;
+        if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
+        if (*(u32*)(p + 0x58) != 3) return;
+        {
+            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+            u32 kind = func_801C62AC(sub, (u8)(p[0x524] + p[0x525] * 10));
+            if (!(kind & 0xFFFF)) return;
+            char fmtBuf[0x28];
+            sprintf(fmtBuf, (const char*)&lbl_eu_8050566C[0x14c], func_801394D4(*(u16*)(p + 0x52e)));
+            func_8022D19C(p + 0x440, fmtBuf, (u32)func_801394D4(kind & 0xFFFF));
+            func_8022D0A4(p + 0x440);
             p[0x528] = 1;
+            *(u32*)(p + 0x58) = 0xc;
+            p[0x529] = 1;
+            func_801D216C(p + 0x70, 0);
             playUISound__FUl(3);
+            return;
         }
+    }
+    if (p[0x528]) return;
+    if (!func_80208360(p + 0x418)) return;
+    if (!func_8022DB74(p + 0x468)) return;
+    {
+        CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+        u8 entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
+        if ((u8)func_801C6690(sub, entry)) {
+            playUISound__FUl(5);
+            return;
+        }
+        if (!(func_801C62AC(sub, entry) & 0xFFFF)) {
+            playUISound__FUl(5);
+            return;
+        }
+        if ((u8)func_801C6528(sub, entry)) {
+            playUISound__FUl(5);
+            return;
+        }
+        u8 listVal3 = p[0x62 + (s8)p[0x6f]];
+        if (listVal3 == 0xc) {
+            playUISound__FUl(5);
+            return;
+        }
+        u32 sendVal = 0xFF;
+        if (p[0x527] != 3) sendVal = listVal3;
+        func_802084D4(p + 0x418, sendVal & 0xFF);
+        func_801D216C(p + 0x70, 0);
+        func_80208368(p + 0x418);
+        *(u32*)(p + 0x58) = 6;
+        p[0x528] = 1;
+        playUISound__FUl(3);
     }
 }
+#pragma optimize_for_size off
 
 // Store value and call helpers.
 void func_801CDB94(void* self, u32 val) {

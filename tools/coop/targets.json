@@ -4946,8 +4946,8 @@
       "size": "0x9C",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bcd7c",
@@ -4964,8 +4964,27 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
       "source_present": true,
-      "instruction_match": 99.872,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036690+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-8003d188",
@@ -45741,7 +45760,7 @@
       "size": "0x50",
       "unit": "kyoshin/cf/CfCamEvent_1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -45752,7 +45771,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCamEvent_1.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:20.323052+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamEvent_1.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80075fa8",
@@ -61723,7 +61750,7 @@
       "size": "0x21C",
       "unit": "kyoshin/cf/CtrlPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -61747,7 +61774,26 @@
       "source": "src/kyoshin/cf/CtrlPc.cpp",
       "source_present": true,
       "instruction_match": 99.926,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036684+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-80098d88",
@@ -65862,7 +65908,7 @@
       "size": "0xC4",
       "unit": "kyoshin/cf/CtrlObjectParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -65877,7 +65923,26 @@
       "source": "src/kyoshin/cf/CtrlObjectParam.cpp",
       "source_present": true,
       "instruction_match": 99.796,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963454+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-800a3c90",
@@ -67056,8 +67121,8 @@
       "size": "0x8",
       "unit": "kyoshin/code_800A3B24",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a70a4"
@@ -67069,7 +67134,16 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_800A3B24.cpp",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:26.152663+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800A3B24.cpp"
+        ],
+        "note": ""
+      },
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800a7ec4",
@@ -86005,7 +86079,7 @@
       "size": "0x15C",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -86022,7 +86096,15 @@
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
       "instruction_match": 99.885,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:09.410117+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectMove.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800bd358",
@@ -86068,7 +86150,7 @@
       "size": "0x29C",
       "unit": "kyoshin/cf/object/CfObjectMove",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -86085,7 +86167,15 @@
       "source": "src/kyoshin/cf/object/CfObjectMove.cpp",
       "source_present": true,
       "instruction_match": 99.94,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:04.034304+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectMove.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800bd90c",
@@ -97298,7 +97388,7 @@
         "_restgpr_18",
         "_savegpr_18"
       ],
-      "instruction_match": 54.304,
+      "instruction_match": 63.57,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -101403,7 +101493,7 @@
       "unit": "kyoshin/CMainMenu",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-current-pad",
@@ -101424,8 +101514,16 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CMainMenu.cpp",
       "source_present": true,
-      "instruction_match": 90.882,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 99.814,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-grok46-us-80100408",
+        "claimed_at": "2026-09-13T13:54:38.588595+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CMainMenu.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801018fc",
@@ -105499,7 +105597,7 @@
       "size": "0x358",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
@@ -105520,7 +105618,26 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 99.836,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963221+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-80112fa4",
@@ -107601,7 +107718,7 @@
       "size": "0x104",
       "unit": "kyoshin/CMiniMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -107612,7 +107729,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CMiniMap.cpp",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:14.941748+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CMiniMap.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8011cedc",
@@ -108956,7 +109081,7 @@
       "size": "0x1D4",
       "unit": "kyoshin/menu/CMenuSymbolMark",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -108976,7 +109101,26 @@
       "source": "src/kyoshin/menu/CMenuSymbolMark.cpp",
       "source_present": true,
       "instruction_match": 99.786,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963456+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-8011fa8c",
@@ -125881,7 +126025,7 @@
       "size": "0x33C",
       "unit": "kyoshin/menu/CMenuUpdate",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -125914,7 +126058,26 @@
       "source": "src/kyoshin/menu/CMenuUpdate.cpp",
       "source_present": true,
       "instruction_match": 99.879,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036687+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-80144de8",
@@ -126853,7 +127016,7 @@
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [
@@ -126866,8 +127029,16 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 34.183,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 97.356,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-grok46-us-80146dac",
+        "claimed_at": "2026-09-13T14:01:46.474079+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80148188",
@@ -127087,7 +127258,7 @@
       "size": "0x444",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -127101,7 +127272,26 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
       "instruction_match": 99.725,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963466+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-80148e5c",
@@ -128103,7 +128293,7 @@
       "size": "0x188",
       "unit": "kyoshin/menu/CMenuGetItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -128118,7 +128308,26 @@
       "source": "src/kyoshin/menu/CMenuGetItem.cpp",
       "source_present": true,
       "instruction_match": 99.745,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963461+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-8014b0fc",
@@ -145928,7 +146137,7 @@
       "size": "0x28C8",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
@@ -145959,7 +146168,15 @@
       ],
       "source_present": true,
       "instruction_match": 46.269,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-grok46-us-80179e38",
+        "claimed_at": "2026-09-13T13:54:19.496607+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CActorParam.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8017c700",
@@ -146352,7 +146569,7 @@
       "size": "0x2E0",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
@@ -146364,7 +146581,26 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 99.837,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036695+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-8017e998",
@@ -158266,7 +158502,7 @@
       "size": "0x138",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -158281,7 +158517,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CPartsChange.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:03:37.135046+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CPartsChange.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801969a0",
@@ -158986,7 +159230,7 @@
       "size": "0x568",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -159008,7 +159252,15 @@
       "source": "src/kyoshin/cf/CPartsChange.cpp",
       "source_present": true,
       "instruction_match": 99.841,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:03:44.526777+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CPartsChange.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801991bc",
@@ -166701,7 +166953,7 @@
       "size": "0x158C",
       "unit": "kyoshin/menu/CMenuGetItemMulti",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -166764,7 +167016,15 @@
       "source": "src/kyoshin/menu/CMenuGetItemMulti.cpp",
       "source_present": true,
       "instruction_match": 91.399,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-grok46-us-801b42b0",
+        "claimed_at": "2026-09-13T13:54:32.210405+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801b583c",
@@ -167335,7 +167595,7 @@
       "size": "0x1A4",
       "unit": "kyoshin/menu/CMenuGetItemMulti",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -167356,7 +167616,26 @@
       "source": "src/kyoshin/menu/CMenuGetItemMulti.cpp",
       "source_present": true,
       "instruction_match": 99.81,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963449+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-801b933c",
@@ -168510,7 +168789,7 @@
       "size": "0x11C",
       "unit": "kyoshin/cf/CSuddenCommu",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -168528,7 +168807,26 @@
       "source": "src/kyoshin/cf/CSuddenCommu.cpp",
       "source_present": true,
       "instruction_match": 99.746,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963459+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-801bde88",
@@ -170940,7 +171238,7 @@
       "size": "0x194",
       "unit": "kyoshin/cf/CfSoundMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -170954,7 +171252,26 @@
       "source": "src/kyoshin/cf/CfSoundMan.cpp",
       "source_present": true,
       "instruction_match": 99.762,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963458+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-801c1e90",
@@ -176292,8 +176609,8 @@
       "size": "0x88",
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136cbc",
@@ -176307,7 +176624,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801cbbec",
@@ -194228,7 +194546,7 @@
       "size": "0x5C4",
       "unit": "kyoshin/menu/parts/CModelDispEquip",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -194272,7 +194590,26 @@
       "source": "src/kyoshin/menu/parts/CModelDispEquip.cpp",
       "source_present": true,
       "instruction_match": 99.973,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036676+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-80202078",
@@ -202499,8 +202836,8 @@
       "size": "0x14",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -202509,9 +202846,17 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/code_80213488.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
-      "claim": null,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:36.601559+00:00",
+        "allowed_paths": [
+          "src/kyoshin/makecrystal/code_80213488.cpp"
+        ],
+        "note": ""
+      },
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80215388",
@@ -203799,7 +204144,7 @@
       "size": "0x428",
       "unit": "kyoshin/makecrystal/CMCCrystalBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -203832,7 +204177,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CMCCrystalBox.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:31.350886+00:00",
+        "allowed_paths": [
+          "src/kyoshin/makecrystal/CMCCrystalBox.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80217940",
@@ -210673,7 +211026,7 @@
       "size": "0x2F0",
       "unit": "kyoshin/makecrystal/CMCCrystalList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -210705,7 +211058,26 @@
       "source": "src/kyoshin/makecrystal/CMCCrystalList.cpp",
       "source_present": true,
       "instruction_match": 99.947,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036680+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-80225b80",
@@ -217467,8 +217839,8 @@
       "size": "0xA4",
       "unit": "kyoshin/CExchangeWin",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801382e8",
@@ -217480,9 +217852,28 @@
       "callgraph_source": "build/us/asm/kyoshin/CExchangeWin.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CExchangeWin.cpp",
-      "instruction_match": 99.878,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036688+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-8022f094",
@@ -219097,7 +219488,7 @@
       "size": "0x2CC",
       "unit": "kyoshin/menu/CMenuArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -219125,7 +219516,15 @@
       "source": "src/kyoshin/menu/CMenuArtsSet.cpp",
       "source_present": true,
       "instruction_match": 99.816,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:03:58.752784+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuArtsSet.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80231c94",
@@ -220519,7 +220918,7 @@
       "size": "0x154",
       "unit": "kyoshin/menu/CMenuArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -220534,7 +220933,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuArtsSet.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:03:51.416331+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuArtsSet.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802343bc",
@@ -224162,7 +224569,7 @@
       "size": "0x144",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224181,7 +224588,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.753,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-agent",
+        "claimed_at": "2026-09-13T13:44:19.265131+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023bca8",
@@ -224800,7 +225215,7 @@
       "size": "0x13C",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224819,7 +225234,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.747,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-agent",
+        "claimed_at": "2026-09-13T13:44:25.026958+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023cf90",
@@ -224899,7 +225322,7 @@
       "size": "0x154",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224919,7 +225342,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.765,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-agent",
+        "claimed_at": "2026-09-13T13:44:12.817673+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023d2c8",
@@ -227107,7 +227538,7 @@
       "size": "0x138",
       "unit": "kyoshin/menu/CMenuMapSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -227129,7 +227560,26 @@
       "source": "src/kyoshin/menu/CMenuMapSelect.cpp",
       "instruction_match": 99.744,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963463+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-8024450c",
@@ -228872,7 +229322,7 @@
       "size": "0x1D4",
       "unit": "kyoshin/CFloorMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -228890,7 +229340,26 @@
       "source": "src/kyoshin/CFloorMap.cpp",
       "source_present": true,
       "instruction_match": 99.915,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036685+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-80247b08",
@@ -231059,8 +231528,8 @@
       "size": "0x34",
       "unit": "kyoshin/menu/CMenuMapSelectSC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -231070,7 +231539,16 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuMapSelectSC.cpp",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b02",
+        "claimed_at": "2026-09-13T14:04:41.823754+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuMapSelectSC.cpp"
+        ],
+        "note": ""
+      },
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80253500",
@@ -239842,7 +240320,7 @@
       "size": "0x1780",
       "unit": "kyoshin/code_8025FB10",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -239871,7 +240349,15 @@
       "source": "src/kyoshin/code_8025FB10.cpp",
       "source_present": true,
       "instruction_match": 91.321,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-grok46-us-80263e48",
+        "claimed_at": "2026-09-13T13:54:25.844163+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_8025FB10.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802655c8",
@@ -240207,7 +240693,7 @@
       "size": "0x308",
       "unit": "kyoshin/menu/CMenuPassiveSkill",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -240243,7 +240729,26 @@
       "source": "src/kyoshin/menu/CMenuPassiveSkill.cpp",
       "source_present": true,
       "instruction_match": 99.742,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963464+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-802661ac",
@@ -243326,7 +243831,7 @@
       "size": "0x250",
       "unit": "kyoshin/CPassiveSkill",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -243357,7 +243862,26 @@
       "source": "src/kyoshin/CPassiveSkill.cpp",
       "source_present": true,
       "instruction_match": 99.865,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036692+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-8026f504",
@@ -245817,8 +246341,8 @@
       "size": "0x150",
       "unit": "kyoshin/menu/CMenuPlayAward",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801d4448",
@@ -245834,7 +246358,27 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuPlayAward.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036394+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      },
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802730e8",
@@ -258680,7 +259224,7 @@
       "size": "0x1B0",
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -258698,7 +259242,26 @@
       "source": "src/kyoshin/CEquipItemBox.cpp",
       "source_present": true,
       "instruction_match": 99.796,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963452+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-8028c2ec",
@@ -276976,8 +277539,8 @@
       "size": "0x80",
       "unit": "kyoshin/menu/CMenuBattleChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "scn-remove-render-cb",
@@ -276991,8 +277554,27 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuBattleChain.cpp",
       "source_present": true,
-      "instruction_match": 99.844,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036693+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-802ac674",
@@ -279302,7 +279884,7 @@
       "size": "0x130",
       "unit": "kyoshin/CTutorialList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -279322,7 +279904,26 @@
       "source": "src/kyoshin/CTutorialList.cpp",
       "source_present": true,
       "instruction_match": 99.934,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b03",
+        "claimed_at": "2026-09-13T14:03:41.036682+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CExchangeWin.cpp",
+          "src/kyoshin/CFloorMap.cpp",
+          "src/kyoshin/CPassiveSkill.cpp",
+          "src/kyoshin/CTutorialList.cpp",
+          "src/kyoshin/cf/CtrlPc.cpp",
+          "src/kyoshin/cf/object/CActorParam.cpp",
+          "src/kyoshin/makecrystal/CMCCrystalList.cpp",
+          "src/kyoshin/menu/CMenuBattleChain.cpp",
+          "src/kyoshin/menu/CMenuPlayAward.cpp",
+          "src/kyoshin/menu/CMenuUpdate.cpp",
+          "src/kyoshin/menu/parts/CModelDispEquip.cpp",
+          "src/kyoshin/plugin/ocUnit.cpp"
+        ],
+        "note": "close near-matches using mwcc-wii-1.1"
+      }
     },
     {
       "id": "us-802b0550",
@@ -281842,7 +282443,7 @@
       "size": "0x120",
       "unit": "kyoshin/menu/CMenuGCItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -281862,7 +282463,26 @@
       "source": "src/kyoshin/menu/CMenuGCItem.cpp",
       "source_present": true,
       "instruction_match": 99.722,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b04",
+        "claimed_at": "2026-09-13T14:03:47.963467+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp",
+          "src/kyoshin/cf/CSuddenCommu.cpp",
+          "src/kyoshin/cf/CfSoundMan.cpp",
+          "src/kyoshin/cf/CtrlObjectParam.cpp",
+          "src/kyoshin/cf/object/CBattleState.cpp",
+          "src/kyoshin/menu/CMenuEnemyState.cpp",
+          "src/kyoshin/menu/CMenuGCItem.cpp",
+          "src/kyoshin/menu/CMenuGetItem.cpp",
+          "src/kyoshin/menu/CMenuGetItemMulti.cpp",
+          "src/kyoshin/menu/CMenuMapSelect.cpp",
+          "src/kyoshin/menu/CMenuPassiveSkill.cpp",
+          "src/kyoshin/menu/CMenuSymbolMark.cpp"
+        ],
+        "note": "close near-matches batch"
+      }
     },
     {
       "id": "us-802b3780",

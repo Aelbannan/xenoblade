@@ -139,6 +139,8 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 #define lbl_eu_80668020 sdata2_ItemBox.d8020
 #define lbl_eu_80668028 sdata2_ItemBox.d8028
 #define lbl_eu_80668040 sdata2_ItemBox.f8040
+#define lbl_eu_80668044 sdata2_ItemBox.f8044
+#define lbl_eu_80668048 sdata2_ItemBox.f8048
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries E43Quad; first carries aligned(8)
@@ -240,13 +242,13 @@ extern "C" u32 func_801E96F0(void*, u32, u32);
 char* func_801394D4(u32);
 u32 func_801E9774(void*, u16, void*);
 bool func_801E98E4(void*, u16, void*);
-u32 func_801DFD60(void*, void*, u32);
-u32 func_801DFDC0(void*, u32, void*);
-u32 func_801DF610(void*, void*, u32, void*);
-u32 func_801DFE48(void*, u16, void*);
-u32 func_801DFFB8(void*, u16, void*, void*);
-s32 func_801DF4E0(void*, void*, s32, void*);
-s32 func_801DF578(void*, void*, s32, void*);
+extern "C" u32 func_801DFD60(void*, void*, u32);
+extern "C" u32 func_801DFDC0(void*, u32, void*);
+extern "C" u32 func_801DF610(void*, void*, u32, void*);
+extern "C" u32 func_801DFE48(void*, u16, void*);
+extern "C" u32 func_801DFFB8(void*, u16, void*, void*);
+extern "C" s32 func_801DF4E0(void*, void*, s32, void*);
+extern "C" s32 func_801DF578(void*, void*, s32, void*);
 u32 func_801E92B8(void*, void*);
 u32 func_801E9310(void*, void*, u32, void*);
 void func_801DF4B4(void*, void*);
@@ -1741,17 +1743,23 @@ struct CItemBoxLabelArgs { u32 v[4]; };
 void func_801D8058(CItemBoxInfo* info, u32 arg2) {
     func_801D8B08(info);
     func_801D85D8(info);
-    // Out-buffer copy: retail reloads all four words from the escaped buffer
-    // and re-homes them via a plain struct-style copy before the calls.
-    // vals declared first so it lands at the higher frame slot (retail
-    // places the D59C0 out-buffer below the staged copy).
+    // vals first → higher frame slot (sp+24); out second → sp+8.
+    // A struct `vals = out` lowers to `__as__` (0x84). Retail reloads all
+    // four words then stores them (0x94); first label call uses live w1,
+    // second reloads staged vals[3].
     CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
     func_801D59C0(out.v, info, (void*)arg2);
-    vals = out;
-    char* base = lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x48f, (char*)vals.v[1], 0);
-    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x49b, (char*)vals.v[3], 0);
+    u32 w0 = out.v[0];
+    u32 w1 = out.v[1];
+    u32 w2 = out.v[2];
+    u32 w3 = out.v[3];
+    vals.v[0] = w0;
+    vals.v[1] = w1;
+    vals.v[2] = w2;
+    vals.v[3] = w3;
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, (char*)w1, 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, (char*)vals.v[3], 0);
 }
 #pragma pop
 void func_801D5C38(void*, void*, void*, void*);
@@ -2270,7 +2278,7 @@ void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
 extern const u32 lbl_eu_8066806C;
 extern const u8 lbl_eu_80668070;
 extern const u32 lbl_eu_80506368[6];
-u32 func_801DF988(void*, void*, u32, void*, s32);
+extern "C" u32 func_801DF988(void*, void*, u32, void*, s32);
 
 // Named views keep the item-stat calculations readable while leaving the
 // backing entry as a plain 13-word record, which is how MWCC copies it.
@@ -2282,34 +2290,34 @@ u32 func_801DF988(void*, void*, u32, void*, s32);
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
-    // Raw-storage reference binding: retail emits NO FixStr ctor anywhere in
-    // this function (first use is format(), which fully initializes), so the
-    // out-of-line __ct__Q22ml10FixStr<32>Fb/Fb calls must be suppressed.
-    char textBufferStorage[sizeof(ml::FixStr<32>)];
-    ml::FixStr<32>& textBuffer = *reinterpret_cast<ml::FixStr<32>*>(textBufferStorage);
-    // Packed selection (retail rlwinm-decoded): low nibble is the equipment
-    // category, bits 4..7 are unused-by-extraction type?? -> retail extracts
-    // member=(arg2>>8)&0xFF and type=(arg2>>4)&0xF. Slot zero takes its
-    // category from the candidate item itself ((item>>16)&0xF).
+    // Packed selection (retail rlwinm order): slot, then member, then type.
+    // Declaration order drives the r26/r18/r27 colouring in the prologue.
+    // textBuffer POD is declared after the party ping so it does not steal
+    // a callee-saved from memberRaw during that loop.
     u8 slot = (u8)(arg2 & 0xF);
-    u8 type = (u8)((arg2 >> 4) & 0xF);
-    // member nibble-pair is extracted in the prologue region: it stays live
-    // across the party-ping calls (retail rlwinm r18 right after type).
     u8 memberRaw = (u8)((arg2 >> 8) & 0xFF);
+    u8 type = (u8)((arg2 >> 4) & 0xF);
     if (slot == 0) {
         void* selectedItem = arg3 != NULL ? arg3 : NULL;
         if (selectedItem != NULL) {
-            type = (u8)((*(u32*)selectedItem >> 12) & 0xF);
+            type = (u8)((*(u32*)selectedItem >> 16) & 0xF);
         }
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
+    // comparisonStorage is 208B and must sit above party in the frame (retail
+    // party at sp+2348); declaring it here before PartyData recovers that gap.
+    D8EComparisonStorage comparisonStorage;
     struct PartyData { u32 w[12]; };
     void* party = func_8009ECB0();
     PartyData partyData = *(PartyData*)((u8*)party + 4);
     for (u32 row = 0; row < 2; row++) {
         for (u32 col = 0; col < 3; col++) {
-            u8 id = (u8)partyData.w[col];
+            // Rematerialize base each iteration: keeps memberRaw in r18 and
+            // row/col in r19/r20 (retail colours). Open item: MWCC still
+            // strength-reduces col*4 to addi r14,4 instead of rlwinm+lwzx.
+            u32* base = partyData.w;
+            u8 id = (u8)base[col];
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
@@ -2327,10 +2335,19 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
     cf::CActorParam* stats = (cf::CActorParam*)((u8*)charObj + 0x17C);
 
+    // POD stand-in for ml::FixStr<32>: cast at format() sites so no FixStr
+    // reference web occupies a callee-saved across the prologue/party ping.
+    struct {
+        char mString[0x20];
+        u32 mLength;
+    } textBuffer;
+
     // ---- HP values (clamped to 9999) ----
+    // Both virtuals before either clamp — retail interleaves the two
+    // fctiwz conversions around the second vcall, not the first clamp.
     s32 hp1 = (s32)stats->CActorParam_getHp();
-    if (hp1 > 9999) hp1 = 9999;
     s32 hp2 = (s32)stats->CActorParam_getDamageScale();
+    if (hp1 > 9999) hp1 = 9999;
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
@@ -2401,7 +2418,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
                 if (atk1 > atk2) atk1 = atk2;
                 char* rangeSeparator = func_80136190(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
+                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
                 func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
             }
 
@@ -2415,9 +2432,9 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hpStat);
             char* percentSuffix = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
-            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.mString, 0);
 
             // ---- 20x color application ----
@@ -2584,7 +2601,6 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
         else if (type == 6) slotId = *(s16*)((u8*)charObj + 0x20);
         else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
-        D8EComparisonStorage comparisonStorage;
         void* item = func_80157C4C(type, slotId);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
@@ -2643,17 +2659,17 @@ for (u32 w_ = 0; w_ < 13; w_++) {
             s16 disp3 = v614;
             char* rangeSeparator = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            textBuffer.format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)disp1);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)disp2);
             char* percentSuffix2 = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
             char* percentSuffix3 = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            textBuffer.format(&lbl_eu_805063BC[0x13E],
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E],
                            (s32)stA->b55 + (s32)d3, percentSuffix3);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.mString, 0);
             // delta colors (5 rows)
@@ -2758,11 +2774,15 @@ for (u32 w_ = 0; w_ < 13; w_++) {
             D8EArmorEntry& e_cur = comparisonStorage.armor[0];
             func_801D5274(&e_cur, (void*)(u32)member, (void*)(u32)w0);
             D8EArmorEntry& c_cur = comparisonStorage.armor[1];
-            c_cur = e_cur;
+            for (u32 w_ = 0; w_ < 7; w_++) {
+                c_cur.words[w_] = e_cur.words[w_];
+            }
             D8EArmorEntry& e_new = comparisonStorage.armor[2];
             func_801D5274(&e_new, (void*)(u32)member, arg3);
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
-            c_new = e_new;
+            for (u32 w_ = 0; w_ < 7; w_++) {
+                c_new.words[w_] = e_new.words[w_];
+            }
             volatile s16 v484 = (s16)func_801DFE48(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
@@ -2900,7 +2920,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
                 percentDelta = (s16)(newPercent - oldPercent);
                 char* percentSuffix = func_80136190(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-                textBuffer.format(&lbl_eu_805063BC[0x13E], newPercent,
+                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newPercent,
                                    percentSuffix);
                 func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16],
                               textBuffer.mString, 0);
@@ -2936,7 +2956,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
                 attackDelta = (s16)(wd - wa);
                 char* rangeSeparator = func_80136190(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
                 func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
 
             }
@@ -3232,7 +3252,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
         s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF988(info, (void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = func_80136190(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-        textBuffer.format(&lbl_eu_805063BC[0x13E], newResistance,
+        ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
                               percentSuffix);
         func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
         s16 resistanceDelta = (s16)(newResistance - oldResistance);
@@ -3298,7 +3318,7 @@ for (u32 w_ = 0; w_ < 13; w_++) {
 
             char* rangeSeparator = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-            textBuffer.format(&lbl_eu_805063BC[0x254], displayLow,
+            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], displayLow,
                               rangeSeparator, newAttackHigh);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10],
                           textBuffer.mString, 0);
@@ -3503,7 +3523,7 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                 s32 wmin = wc < wd ? wc : wd;
                 char* rangeSeparator = func_80136190(
                     &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
-                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
                 func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.mString, 0);
             }
             // numbers
@@ -4028,14 +4048,14 @@ for (u32 w_ = 0; w_ < 7; w_++) {
                                        &lbl_eu_805063BC[0x3], id);
             if (rvs != 0) {
                 if (rvs == 0xFF || rvs == 0xFE) {
-                    textBuffer.format(&lbl_eu_805063BC[0x13E], (s32)val,
+                    ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s32)val,
                         func_80136190(&lbl_eu_805063BC[0x130],
                                       &lbl_eu_805063BC[0x139], 0x21));
                 } else {
-                    textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+                    ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x422], (s32)val);
                 }
             } else {
-                textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+                ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x422], (s32)val);
             }
             func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
                           buf2, textBuffer.mString, 0);
@@ -5987,17 +6007,19 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
 void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
     func_801E4090(info);
     func_801E3B9C(info);
-    // Out-buffer copy: retail reloads all four words from the escaped buffer
-    // and re-homes them via a plain struct-style copy before the calls.
-    // vals declared first lands at the higher frame slot (retail places the
-    // staged copy above the E2558 out-buffer).
     CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
     func_801E2558(out.v, info, (void*)arg2);
-    vals = out;
-    char* base = lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x48f, (char*)vals.v[1], 0);
-    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x49b, (char*)vals.v[3], 0);
+    u32 w0 = out.v[0];
+    u32 w1 = out.v[1];
+    u32 w2 = out.v[2];
+    u32 w3 = out.v[3];
+    vals.v[0] = w0;
+    vals.v[1] = w1;
+    vals.v[2] = w2;
+    vals.v[3] = w3;
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x48f, (char*)w1, 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC + 0x49b, (char*)vals.v[3], 0);
 }
 #pragma pop
 // Retail func_801E37C4: run the two layout preps, build a 0x24-byte slot

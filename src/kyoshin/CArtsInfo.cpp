@@ -61,17 +61,18 @@ extern "C" __declspec(noinline) int func_80236DB8(CArtsInfo*);
 
 // Forward declarations for animation state handlers. noinline: the dispatcher
 // func_8023587C must emit bl's to them through the retail jump table;
-// inlining would erase the dispatch entirely.
-__declspec(noinline) void func_80235F6C(CArtsInfo*);
-__declspec(noinline) void func_80236020(CArtsInfo*);
-__declspec(noinline) void func_8023606C(CArtsInfo*);
-__declspec(noinline) void func_80236120(CArtsInfo*);
-__declspec(noinline) void func_8023616C(CArtsInfo*);
-__declspec(noinline) void func_80236220(CArtsInfo*);
-__declspec(noinline) void func_802362D4(CArtsInfo*);
-__declspec(noinline) void func_80236334(CArtsInfo*);
-__declspec(noinline) void func_80236408(CArtsInfo*);
-__declspec(noinline) void func_80236454(CArtsInfo*);
+// inlining would erase the dispatch entirely. extern "C": retail reloc names
+// are the unmangled func_* symbols, not func_*__FP9CArtsInfo.
+extern "C" __declspec(noinline) void func_80235F6C(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236020(CArtsInfo*);
+extern "C" __declspec(noinline) void func_8023606C(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236120(CArtsInfo*);
+extern "C" __declspec(noinline) void func_8023616C(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236220(CArtsInfo*);
+extern "C" __declspec(noinline) void func_802362D4(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236334(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236408(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236454(CArtsInfo*);
 
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i): build
 // the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
@@ -197,9 +198,10 @@ void func_8023587C(CArtsInfo* self) {
     case 7: func_80236334(self); break;
     case 8: func_80236408(self); break;
     case 9: func_80236454(self); break;
-    // Cases 0xA-0xC are explicit empty cases; every spelling tried (with/
-    // without default, with/without outer range-if, optimize_for_size)
-    // still folds them so MWCC trims the jump-table bound to 9 vs retail 12.
+    // Cases 0xA-0xC share the post-dispatch with default and with the
+    // cmpli-bgt tail, so MWCC folds the table bound to 9. `return` would
+    // keep bound 12 but skip Animate (wrong table targets). Left as
+    // explicit empty cases for the 13-slot range; bound residual stands.
     case 0xA:
     case 0xB:
     case 0xC:
@@ -341,7 +343,7 @@ void func_80235AE0(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     char* base = lbl_eu_8050B00C;
     char* str1 = func_80136190(base + 0x32, base + 0x3D, 0x18);
-    int dispVal = (int)((cf::CActorParam*)&obj->stats)->CActorParam_UnkVirtualFunc91();
+    int dispVal = (int)((cf::CActorParam*)&obj->stats)->CActorParam_getSecondCurrency();
 
     char buf[32];
     sprintf(buf, base + 0x42, dispVal, str1);

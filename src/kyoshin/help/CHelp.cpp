@@ -1,6 +1,6 @@
 #include "kyoshin/help/CHelp.hpp"
 
-cf::CHelp::CHelp(void* owner, u32 param) {
+cf::CHelp::CHelp(u32 owner, u32 param) {
     this->mOwner = owner;
     this->vtbl() = &lbl_eu_8053B3A0;
     this->mParam = param;
@@ -12,7 +12,7 @@ void CHelp::dispatchHelp() {
     UNKWORD a = this->getSkipResetFlag();
     UNKWORD b = this->getHelpSceneId();
     func_80134D18(static_cast<u8>(mParam), b, a);
-    func_8009D018((u32)mOwner, 1);
+    func_8009D018(mOwner, 1);
 }
 
 } // namespace cf
@@ -29,7 +29,7 @@ extern "C" void func_802B7C64() {
 // parameter, then re-arms the interface via func_8009D018.
 void cf::CHelp::func_802B7C68() {
     func_8013DB6C(3, this->mParam, 0, 0);
-    func_8009D018((u32)this->mOwner, 1);
+    func_8009D018(this->mOwner, 1);
 }
 
 void cf::CHelpSwitch::func_802B7CB0() {

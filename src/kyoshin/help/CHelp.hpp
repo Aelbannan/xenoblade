@@ -12,7 +12,7 @@ struct CHelpVtbl {
 
 // owner@0, param@4. CHelp's C++ vptr follows at +8.
 struct CHelpPrefix {
-    void* mOwner; // 0x0
+    u32 mOwner; // 0x0 opaque owner handle (passed as u32)
     u32 mParam; // 0x4
 };
 
@@ -28,7 +28,7 @@ public:
     // No +0x1C on CHelp: that slot belongs to CHelpSwitch. Direct leaves
     // (Target, Sp, ArtsSet) stop at +0x18.
 
-    CHelp(void* owner, u32 param);
+    CHelp(u32 owner, u32 param);
     void func_802B7C68();
 
     // Overlay on the vptr at +8 so CHelpManager can swap retail tables.

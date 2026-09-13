@@ -8,19 +8,11 @@
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
-// Local views of locked CfObject/CfObjectModel padding words.
-struct ObjFlags90View {
-    u8 pad[0x90];
-    u32 field_90;
-    u32 field_94;
-};
-struct ObjFlags6CView {
-    u8 pad[0x6C];
-    u32 field_6C;
-};
-struct SubObjB0FlagView {
-    u8 pad[8];
-    u16 flag8;
+// Local overlay: base CfObjectModel keeps mSubObjB0 as void*; this TU owns a
+// CfResObjImpl at +0xB0 (same scheme as CfObjectPoint typing mSubObj38).
+struct ObjB0View {
+    u8 pad[0xB0];
+    cf::CfResObjImpl* mSubObjB0;
 };
 
 // CfObjectPc.hpp (read-only) currently fails to compile due to an internal
@@ -37,20 +29,22 @@ class CfObjectPc;
 // resource allocation behind a __dynamic_cast check (the cast succeeds only
 // when the object already carries the resource impl, in which case the
 // 0x1C-byte allocation is skipped).
-cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* self) {
-    __ct__Q22cf12CfObjectMoveFv(self);
-    *(void**)self = (void*)lbl_eu_80529B4C;
-    self->field_71C = 0;
-    if (__dynamic_cast(self, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
+cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
+    __ct__Q22cf12CfObjectMoveFv(ths);
+    // Manual vptr store (novtable); typed as u32* to match lbl array.
+    *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
+    ths->field_71C = 0;
+    if (__dynamic_cast(ths, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
         // The ctor returns the object in r3, so assigning it back keeps `res`
         // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
-        void* res = mtl::MemManager::allocate(0x1c, func_80061FFC());
+        cf::CfResObjImpl* res =
+            (cf::CfResObjImpl*)mtl::MemManager::allocate(0x1c, func_80061FFC());
         if (res != 0) {
-            res = (void*)__ct__cf_CfResObjImpl(res, self);
+            res = (cf::CfResObjImpl*)__ct__cf_CfResObjImpl(res, ths);
         }
-        self->mSubObjB0 = res;
+        ((ObjB0View*)ths)->mSubObjB0 = res;
     }
-    return self;
+    return ths;
 }
 
 // us-800c045c  - deleting destructor (retail forced-name __dt__800BFA14):
@@ -61,16 +55,16 @@ cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* self) {
 // __dt__8012596C pattern): MWCC emits the name verbatim as a real .text
 // FUNC symbol, which the acceptance certifier requires (an ABS alias on a
 // member dtor is invisible to its symbol scan).
-void* __dt__800BFA14(cf::CfObjectObj* self, int deleteFlag) {
-    if (self != 0) {
-        *(void**)self = (void*)lbl_eu_80529B4C;
-        self->CfObject_releaseMoveTargets();
-        __dt__Q22cf12CfObjectMoveFv(self, 0);
+void* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag) {
+    if (ths != 0) {
+        *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
+        ths->CfObject_releaseMoveTargets();
+        __dt__Q22cf12CfObjectMoveFv(ths, 0);
         if (deleteFlag > 0) {
-            __dl__FPv(self);
+            __dl__FPv(ths);
         }
     }
-    return self;
+    return ths;
 }
 
 // us-800c04d0  - simple bool/int return after a virtual init call.
@@ -91,7 +85,7 @@ int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
     this->CfObjectModel_releaseModelList();
     this->CfObjectModel_releaseModelSub();
     // Clear helper-id / dispatch flags (0x90, 0x94 live in locked base padding).
-    ObjFlags90View* flags90 = (ObjFlags90View*)this;
+    cf::CfObjectMove90View* flags90 = (cf::CfObjectMove90View*)this;
     flags90->field_90 = 0;
     flags90->field_94 = 0;
     // vtable+0x144 helper dispatch (CfObject_setAnimSlotEntry, retail
@@ -99,9 +93,9 @@ int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
     // double-load with args-then-dispatch ordering.
     this->CfObject_setAnimSlotEntry(1, arg4);
     this->CfObject_setAnimSlotEntry(0, arg5);
-    // Mark the sub-object active (b0 is base-class void*; +8 is a u16 field).
-    ((SubObjB0FlagView*)this->mSubObjB0)->flag8 = 1;
-    ObjFlags6CView* flags6C = (ObjFlags6CView*)this;
+    // Mark the sub-object active (+0xB0 is CfResObjImpl*; field_08 is u16).
+    ((ObjB0View*)this)->mSubObjB0->field_08 = 1;
+    cf::CfObjectMoveFlags6C* flags6C = (cf::CfObjectMoveFlags6C*)this;
     if (arg4 != 0)
         flags6C->field_6C |= 0x20;
     if (arg5 != 0)
@@ -123,13 +117,13 @@ void cf::CfObjectObj::update() {
 // us-800c063c  - dispatch a helper id, or store it if not dispatchable.
 // Retail branches straight to the epilogue when mSubObj38 is null (no store
 // then); the id is stored only when mSubObj38 != 0 but the virtual check fails.
-void func_800BFBF4(cf::CfObjectObj* self, u16 id) {
-    if (self->mSubObj38 != 0) {
-        if (self->CfObject_isMoveActiveNow() != 0) {
-            func_800CA580(self->mSubObj38, id);
-            self->field_71C = 0;
+void func_800BFBF4(cf::CfObjectObj* ths, u16 id) {
+    if (ths->mSubObj38 != 0) {
+        if (ths->CfObject_isMoveActiveNow() != 0) {
+            func_800CA580(ths->mSubObj38, id);
+            ths->field_71C = 0;
         } else {
-            self->field_71C = id;
+            ths->field_71C = id;
         }
     }
 }

@@ -54,7 +54,7 @@ extern "C" __declspec(noinline) void func_801D2264(CBaseCur* cur) {
 // func_801D202C: Per-frame cursor update
 // ============================================================================
 extern "C" void func_801D202C(CBaseCur* cur) {
-    if (cur->mpLayout == NULL) {
+    if (cur->mpLayout == nullptr) {
         return;
     }
     switch (cur->mActive) {
@@ -78,7 +78,7 @@ animate:
 // func_801D20B0: Draw cursor layout
 // ============================================================================
 extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
-    if (cur->mpLayout == NULL) return;
+    if (cur->mpLayout == nullptr) return;
     if (cur->mVisible == 0) return;
     drawLayout(cur->mpLayout, drawInfo, 0, 1);
 }
@@ -88,11 +88,11 @@ extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
 // ============================================================================
 void CBaseCur::cleanup() {
     mVisible = 0;
-    mpAnimTrans0 = NULL;
-    mpAnimTrans1 = NULL;
-    if (mpLayout != NULL) {
+    mpAnimTrans0 = nullptr;
+    mpAnimTrans1 = nullptr;
+    if (mpLayout != nullptr) {
         delete mpLayout;
-        mpLayout = NULL;
+        mpLayout = nullptr;
     }
 }
 
@@ -147,7 +147,7 @@ extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt:
 // CBaseCur destructor
 // ============================================================================
 extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -166,7 +166,7 @@ extern "C" CCur07* __ct__CCur07(CCur07* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur07 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur07Fv(CCur07* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -196,7 +196,7 @@ extern "C" CCur09* __ct__CCur09(CCur09* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur09 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur09Fv(CCur09* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -236,7 +236,7 @@ extern "C" CCur11* __ct__CCur11(CCur11* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur11 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur11Fv(CCur11* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -258,7 +258,7 @@ void CCur11::initLayout() {
 // ============================================================================
 // Same no-caching shape as func_801D24E8 (retail reloads root pane twice).
 extern "C" void func_801D2670(CBaseCur* cur, u8 visible) {
-    if (cur->mpLayout == NULL) return;
+    if (cur->mpLayout == nullptr) return;
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x13d, true), visible);
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x14d, true), visible);
 }
@@ -276,7 +276,7 @@ extern "C" CCur14* __ct__CCur14(CCur14* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur14 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur14Fv(CCur14* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -306,7 +306,7 @@ extern "C" CCur15* __ct__CCur15(CCur15* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur15 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur15Fv(CCur15* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -336,7 +336,7 @@ extern "C" CCur16* __ct__CCur16(CCur16* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur16 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur16Fv(CCur16* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -366,7 +366,7 @@ extern "C" CCur18* __ct__CCur18(CCur18* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur18 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur18Fv(CCur18* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -396,7 +396,7 @@ extern "C" CCur22* __ct__CCur22(CCur22* _this, nw4r::lyt::ArcResourceAccessor* a
 // CCur22 destructor
 // ============================================================================
 extern "C" void* __dt__6CCur22Fv(CCur22* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -464,7 +464,7 @@ extern "C" CSubCur* __ct__CSubCur(CSubCur* _this, nw4r::lyt::ArcResourceAccessor
 // CSubCur destructor
 // ============================================================================
 extern "C" void* __dt__7CSubCurFv(CSubCur* _this, int flags) {
-    if (_this != NULL && flags > 0) {
+    if (_this != nullptr && flags > 0) {
         __dl__FPv(_this);
     }
     return _this;
@@ -486,7 +486,7 @@ void CSubCur::initLayout() {
 // Retail reloads mpLayout + root pane for the second lookup (no caching).
 // ============================================================================
 extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
-    if (cur->mpLayout == NULL) return;
+    if (cur->mpLayout == nullptr) return;
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true), visible);
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true), visible);
 }
@@ -496,7 +496,7 @@ extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
 // Returns 1 if both named panes return non-zero from func_801C4648, 0 otherwise.
 // ============================================================================
 extern "C" u8 func_801D2ED8(CBaseCur* cur) {
-    if (cur->mpLayout == NULL) return 0;
+    if (cur->mpLayout == nullptr) return 0;
     u32 result0 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true));
     u32 result1 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true));
     return (result0 != 0 && result1 != 0) ? 1 : 0;

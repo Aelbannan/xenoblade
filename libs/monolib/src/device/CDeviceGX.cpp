@@ -121,41 +121,28 @@ CDeviceGX* CDeviceGX::getInstance(){
     return lbl_eu_806656A0;
 }
 
-struct MyMsgEntry {
-    u32 command;
-    u32 wid;
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
+struct DeviceGxMsgQueueData {
+    u8 pad[0x1A4];               // CWorkThread prefix through mMsgQueue.mEntries
+    CMsgParamEntry* mArrayPtr;   // 0x1A4
+    u32 mFront;                  // 0x1A8
+    u32 mSize;                   // 0x1AC
+    u32 mCapacity;               // 0x1B0
 };
-struct MyQueueData {
-    u8 pad[0x1A4];
-    MyMsgEntry* mArrayPtr;
-    u32 mFront;
-    u32 mSize;
-    u32 mCapacity;
-};
-static int FindMsgException(const MyQueueData* q, u32 msg);
+static int FindMsgException(const DeviceGxMsgQueueData* q, u32 msg);
 // Mirrors CMsgParam<8>::find (see CWorkRoot.cpp, FULL_MATCH); -inline auto
 // folds this single-call static into isInitialized so the retail-inlined
 // scan shape (sunk -1, aliased index) reproduces.
 bool CDeviceGX::isInitialized(){
     bool exception;
-    if (*(u32*)((u8*)lbl_eu_806656A0 + 0x7C) & THREAD_FLAG_EXCEPTION) {
+    if (lbl_eu_806656A0->mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = FindMsgException((const MyQueueData*)lbl_eu_806656A0, 2) >= 0;
+        exception = FindMsgException((const DeviceGxMsgQueueData*)lbl_eu_806656A0, EVT_EXCEPTION) >= 0;
     }
     bool result = false;
     if (!exception) {
         bool stateOK = true;
-        ThreadState state = *(ThreadState*)((u8*)lbl_eu_806656A0 + 0x48);
+        ThreadState state = lbl_eu_806656A0->mState;
         if (state != THREAD_STATE_LOGIN && state != THREAD_STATE_RUN) {
             stateOK = false;
         }
@@ -169,7 +156,7 @@ bool CDeviceGX::isInitialized(){
 // Mirrors CMsgParam<8>::find body (CWorkRoot.cpp holds the out-of-line
 // definition); -inline auto folds this single-call static into isInitialized
 // reproducing the retail-inlined scan shape (sunk -1, aliased index, no bl).
-static int FindMsgException(const MyQueueData* q, u32 msg) {
+static int FindMsgException(const DeviceGxMsgQueueData* q, u32 msg) {
     for (int i = 0; i < q->mSize; i++) {
         if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == msg) {
             return i;

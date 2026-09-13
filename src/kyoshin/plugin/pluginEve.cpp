@@ -212,8 +212,8 @@ int onTalk(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_setStateBitMask0((void*)0x10001) != 0 ||
-        view->CObjectState_setStateBitMask0((void*)0x10002) != 0) {
+    if (view->CObjectState_setStateBitMask0(1, 1) != 0 ||
+        view->CObjectState_setStateBitMask0(2, 1) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -231,8 +231,8 @@ int onTalkEnd(VMThread* pThread) {
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (view->CObjectState_setStateBitMask0((void*)0x10001) != 0 ||
-        view->CObjectState_setStateBitMask0((void*)0x10002) != 0) {
+    if (view->CObjectState_setStateBitMask0(1, 0) != 0 ||
+        view->CObjectState_setStateBitMask0(2, 0) != 0) {
         ret = 1;
     } else {
         ret = 2;

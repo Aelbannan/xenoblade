@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13416 |
-| `void*` (params + locals) | 7716 |
+| `void*` (params + locals) | 7714 |
 | raw pointer offset arithmetic | 7917 |
 | deref-through-cast arithmetic | 3312 |
 | inline asm / `register` | 126 |
@@ -291,7 +291,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_VoiceManager.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WaveFile.cpp | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WaveSound.cpp | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_WsdFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_WsdFile.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdPlayer.cpp | 1 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_ArchiveFontBase.cpp | 0 | 0 | 7 | 29 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_CharStrmReader.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -404,7 +404,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfGimmick.cpp | 8 | 3 | 27 | 14 | 12 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 16 | 42 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickEne.cpp | 10 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickItem.cpp | 8 | 1 | 12 | 9 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickItem.cpp | 8 | 1 | 12 | 8 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 65 | 5 | 4 | 0 | 4 | 0 | 7 | 0 | 0 | 0 |
@@ -3136,7 +3136,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_WsdPlayer.cpp": {
   "asm_insn_shim": 0,
@@ -4311,7 +4311,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 12,
-  "void_ptr": 9
+  "void_ptr": 8
  },
  "src/kyoshin/cf/CfGimmickJump.cpp": {
   "asm_insn_shim": 0,

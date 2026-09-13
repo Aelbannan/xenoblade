@@ -35,7 +35,7 @@ struct CDeviceFontLoader {
     WORK_ID mExceptionWorkID;        // 0x1C0
 
     // 0x1C4-0x20F: CDeviceFontLoader members
-    void* mSomeData;          // 0x1C4
+    u32 mSomeData;            // 0x1C4 setFontPath arg (callers pass 1)
     char mFileName[64];       // 0x1C8
     u32 mFileNameLen;         // 0x208
     CFileHandle* mFileHandle; // 0x20C
@@ -85,7 +85,7 @@ void* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
 }
 
 void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
-    self->mSomeData = arg1;
+    self->mSomeData = (u32)arg1;
     self->mFileNameLen = strlen(pPath);
     strcpy(self->mFileName, pPath);
 }

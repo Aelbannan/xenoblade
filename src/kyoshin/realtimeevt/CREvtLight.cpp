@@ -16,6 +16,13 @@
 // (v24 at slot 0x68 takes the retail int flag; cf. CfObjectMap.cpp).
 #include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 
+// Local view of getGameSubManager() past +0x2F3C (map-effect list item).
+struct GameSubMapFxView {
+    u8 pad_00[0x2F3C];
+    CScnEnvLgtCtrlListItem* mapFx; // 0x2F3C
+};
+
+
 // Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
 // declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
 // const char* (CREvtLight) and void* (CfObjectMap) call sites.
@@ -71,9 +78,10 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
 
             // Notify the object behind the game manager's +0x2F3C pointer.
             if (cf::CfGameManager::getGameSubManager() != nullptr) {
-                if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                    CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
-                        void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+                if (reinterpret_cast<GameSubMapFxView*>(
+                        cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
+                    CScnEnvLgtCtrlListItem* fx = reinterpret_cast<GameSubMapFxView*>(
+                        cf::CfGameManager::getGameSubManager())->mapFx;
                     fx->v24(1);
                 }
             }
@@ -105,12 +113,13 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
         self->field_20 = 0;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
-            if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
-                    void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
-                fx->v24(1);
+                if (reinterpret_cast<GameSubMapFxView*>(
+                        cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
+                    CScnEnvLgtCtrlListItem* fx = reinterpret_cast<GameSubMapFxView*>(
+                        cf::CfGameManager::getGameSubManager())->mapFx;
+                    fx->v24(1);
+                }
             }
-        }
     }
 
     // Load new resource
@@ -120,9 +129,10 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
         self->field_20 = (u32)handle;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
-            if (*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C) != nullptr) {
-                CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)*(
-                    void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C);
+            if (reinterpret_cast<GameSubMapFxView*>(
+                    cf::CfGameManager::getGameSubManager())->mapFx != nullptr) {
+                CScnEnvLgtCtrlListItem* fx = reinterpret_cast<GameSubMapFxView*>(
+                    cf::CfGameManager::getGameSubManager())->mapFx;
                 fx->v24(func_80180940());
             }
         }

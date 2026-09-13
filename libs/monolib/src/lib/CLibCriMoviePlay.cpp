@@ -67,6 +67,15 @@ extern "C" {
 }
 
 
+// Vptr layout view over the CLibCriMoviePlay MI object: primary
+// (CWorkThread) vptr at 0x000 plus the CDeviceVICb sub-vptr at 0x1C4.
+// Matches CLibCriVptrView shape used by CLibCri.cpp.
+struct CLibCriMoviePlayVptrView {
+    u32* vtPrimary;  //0x000 CWorkThread primary vptr
+    u32* pad[112];   //0x004 .. 0x1C3
+    u32* vtViCb;     //0x1C4 CDeviceVICb sub-vptr
+};
+
 // ============================================================================
 // Constructor (us-8045dcb0)
 // CLibCriMoviePlay::CLibCriMoviePlay(const char*, CWorkThread*)
@@ -79,15 +88,16 @@ CLibCriMoviePlay::CLibCriMoviePlay(const char* pName, CWorkThread* pParent)
     // these stores even though memset overwrites them).
     // Install the vtables into the CWorkThread slot (offset 0) and the
     // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
-    *(void**)this = (void*)&lbl_eu_8056CF48;
-    *(void**)((char*)this + 0x1C4) = (char*)&lbl_eu_8056CF48 + 0xA0;
+    CLibCriMoviePlayVptrView* vp = (CLibCriMoviePlayVptrView*)this;
+    vp->vtPrimary = &lbl_eu_8056CF48[0];
+    vp->vtViCb = (u32*)((char*)&lbl_eu_8056CF48 + 0xA0);
 
     // Clear the active flag / filename length of all four entries (retail
     // keeps these stores even though memset below overwrites them).
     // Install the vtables into the CWorkThread slot (offset 0) and the
     // CDeviceVICb sub-vtable (base + 0xA0, at object offset 0x1C4).
-    *(void**)this = (void*)&lbl_eu_8056CF48;
-    *(void**)((char*)this + 0x1C4) = (char*)&lbl_eu_8056CF48 + 0xA0;
+    vp->vtPrimary = &lbl_eu_8056CF48[0];
+    vp->vtViCb = (u32*)((char*)&lbl_eu_8056CF48 + 0xA0);
 
     // Entry 0 explicitly, then walk entries 1..3 (retail keeps these stores
     // even though memset below overwrites them).
@@ -1015,8 +1025,11 @@ stop:
     // onMovieViBegin is indistinguishable from a plain return.
 
     void forwardUpdateMovies__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        // Thunk for CDeviceVICb update
-        ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->updateMovieTextures();
+        // Thunk for CDeviceVICb update: self is the +0x1C4 VICb subobject.
+        // Recover the full object from the typed vptr view's vtViCb slot.
+        CLibCriMoviePlayVptrView* vp =
+            (CLibCriMoviePlayVptrView*)((char*)self - 0x1C4);
+        ((CLibCriMoviePlay*)vp)->updateMovieTextures();
     }
 
     // Defined below its callers so the inliner cannot fold the empty body

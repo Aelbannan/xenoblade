@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7499 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13303 |
-| `void*` (params + locals) | 7587 |
+| `void*` (params + locals) | 7586 |
 | raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3307 |
 | inline asm / `register` | 127 |
@@ -307,7 +307,6 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/ut/ut_list.cpp | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CArtsInfo.cpp | 58 | 14 | 307 | 11 | 21 | 7 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CBattery.cpp | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CBgTex.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6Invite.cpp | 1 | 1 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6System.cpp | 18 | 17 | 63 | 13 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
 | src/kyoshin/CCollepedia.cpp | 23 | 53 | 25 | 22 | 37 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -3272,8 +3271,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CBgTex.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 1
+  "schedule_pragma": 0
  },
  "src/kyoshin/CCol6Invite.cpp": {
   "asm_insn_shim": 0,

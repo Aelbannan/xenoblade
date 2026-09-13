@@ -51,7 +51,7 @@ bool CLoad::OnFileEvent(CEventFile* pEventFile) {
 
         // Take ownership of the loaded buffer (inlined CFileHandle::getData),
         // then flush the MEM2 allocator state before building resources.
-        void* data = mFileHandle->mData;
+        u8* data = mFileHandle->mData;
         mFileHandle->mData = nullptr;
         mtl::MemManager::setMemInitFlag(false);
 

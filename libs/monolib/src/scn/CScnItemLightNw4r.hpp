@@ -1,13 +1,18 @@
 #pragma once
 
 #include <types.h>
+#include <nw4r/g3d/g3d_scnroot.h>
 
-struct __declspec(novtable) CScnItemLightNw4r {
-    virtual ~CScnItemLightNw4r();
+// Object at host +0x8C; +0x10 is copied onto the new light's +0x1220.
+struct CScnLightRootView {
+    u8 _00[0x10];
+    nw4r::g3d::ScnRoot* mScnRoot;  // +0x10
+};
 
-    // +0x00: vtable pointer (auto/compiler-managed)
-    u8 _04[0x5C];     // padding up to 0x60
-    void* mField60;   // +0x60
-    u8 _64[0x28];     // padding up to 0x8C
-    void* mField8C;   // +0x8C
+// Host for __ct__CScnItemLightNw4r (scene object), not the allocated light.
+struct CScnLightItemHost {
+    u8 _00[0x60];
+    u8* mPool;                   // +0x60 scene-item pool
+    u8 _64[0x8C - 0x64];
+    CScnLightRootView* mRoot;    // +0x8C
 };

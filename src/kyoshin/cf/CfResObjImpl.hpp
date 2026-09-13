@@ -80,7 +80,7 @@ struct CfResObjModel98Data {
 // opaque padding).
 struct CfResObjGm98View {
     u8 field_00[0x98];
-    /* 0x98 */ void* field_98;
+    /* 0x98 */ ::CScnItemModel* field_98;  // same model ptr as CfResObjParent/+0x98
 };
 
 // Prefix pushing vptr to +0x10 (CHelp / CfResReloadImpl pattern):
@@ -94,8 +94,9 @@ struct CfResObjImplPrefix {
     /* 0x0E */ s16 field_0E; // state (-1 = invalid)
 };
 
+// Local overlay: ctor writes retail lbl_eu_80530F44 at +0x10 (novtable).
 struct CfResObjImplVtbl {
-    void* slots[27];
+    u32 slots[27];
 };
 
 // Real class tree for cf::CfResObjImpl (retail lbl_eu_80530F44, 0x6C:
@@ -190,7 +191,7 @@ struct ResInfoEntry;     // fwd; full def in kyoshin/cf/IResInfo.hpp (global sco
 // func_80063038: return the manager's +0x170 region (entry-table base) if
 // the CfRes manager exists (CfRes.cpp).
 extern "C" char* func_80063038();
-extern "C" u8* func_80066E7C(ResInfoEntry* self, u32 id);
+extern "C" u8* func_80066E7C(ResInfoEntry* entry, u32 id);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);

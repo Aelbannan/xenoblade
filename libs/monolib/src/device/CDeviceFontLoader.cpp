@@ -21,7 +21,7 @@
 // Size: 0x210
 struct CDeviceFontLoader {
     // 0x000-0x1C3: CWorkThread member layout (public in CWorkThread.hpp)
-    void* vtable;                    // 0x00
+    u32* vtable;                     // 0x00
     ml::FixStr<64> mName;            // 0x04
     CWorkThread::ThreadState mState; // 0x48
     WORK_ID mWorkID;                 // 0x4C
@@ -56,7 +56,7 @@ bool wkStandbyLogout__11CWorkThreadFv(void* self);
 void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(void* self, int evt);
 // CDeviceFont::func_80452D80 - Fv mangling, but retail caller passes a
 // second (ignored) argument in r4 (the just-claimed file data pointer)
-void func_80452D80__11CDeviceFontFv(void* self, void* arg2);
+void func_80452D80__11CDeviceFontFv(u32 self, void* arg2);
 
 
 
@@ -66,7 +66,7 @@ void func_80452D80__11CDeviceFontFv(void* self, void* arg2);
 
 void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name, CWorkThread* parent) {
     __ct__11CWorkThreadFPCcP11CWorkThreadi(self, name, parent, 0);
-    *(void**)self = (void*)lbl_eu_8056C8A8;
+    self->vtable = lbl_eu_8056C8A8;
     self->mFileName[0] = '\0';
     self->mFileNameLen = 0;
     self->mFileHandle = nullptr;
@@ -84,8 +84,8 @@ void* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
     return self;
 }
 
-void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
-    self->mSomeData = (u32)arg1;
+void setFontPath__17CDeviceFontLoaderFv(CDeviceFontLoader* self, u32 arg1, const char* pPath) {
+    self->mSomeData = arg1;
     self->mFileNameLen = strlen(pPath);
     strcpy(self->mFileName, pPath);
 }
@@ -135,7 +135,7 @@ bool OnFileEvent__17CDeviceFontLoaderFP10CEventFile(CDeviceFontLoader* self, CEv
     if (pEventFile->unk0 == 1) {
         void* pData = self->mFileHandle->mData;
         self->mFileHandle->mData = nullptr;
-        func_80452D80__11CDeviceFontFv((void*)self->mSomeData, pData);
+        func_80452D80__11CDeviceFontFv(self->mSomeData, pData);
         wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(self, CWorkThread::EVT_NONE);
     }
 

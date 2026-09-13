@@ -45,5 +45,5 @@ public:
     CScnItemLight* mLight;     // +0x08
 };
 
-// Retail-named constructor (see class comment); returns self.
-extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* self, CScnLightParam* param);
+// Retail-named constructor (see class comment); returns ths.
+extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* ths, CScnLightParam* param);

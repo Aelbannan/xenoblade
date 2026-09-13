@@ -13,8 +13,8 @@ extern IWorkEventVtbl lbl_eu_8056CDA0;
 
 // Forward decls: the vtable's typeinfo word points at the .sdata pair, which
 // points at the RTTI base-list array (both defined at the bottom of this TU).
-extern void* lbl_eu_80663788[2];
-extern void* lbl_eu_8056CE40[6];
+extern u32 lbl_eu_80663788[2];
+extern u32 lbl_eu_8056CE40[6];
 
 // Retail sbss singleton - DEFINED in core/CException.cpp (.sbss, 8B slot at
 // 0x806656D0); this TU only references it, so declare it extern (retail
@@ -26,7 +26,7 @@ extern CLib* lbl_eu_806656D0;
 CLib::CLib(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
     // novtable: assign the retail vtable label explicitly (CToken/CWorkThread
     // recipe) so the inlined/out-of-line ctor stores stay byte-identical.
-    *(void**)this = (void*)&lbl_eu_8056CDA0;
+    *(IWorkEventVtbl**)this = &lbl_eu_8056CDA0;
     spInstance = this;
     mType = THREAD_CLIB;
 }
@@ -47,7 +47,7 @@ CLib* CLib::getInstance(){
 // Layout from the queue base: vptr@0x0, mEntries[8]@0x4 (8 x 36B),
 // mArrayPtr@0x124, mFront@0x128, mSize@0x12C, mCapacity@0x130.
 struct ClibMsgQueueView {
-    void* vptr;                 // 0x00
+    IWorkEventVtbl* vptr;       // 0x00
     u8 entries[0x120];          // 0x04..0x123
     CMsgParamEntry* mArrayPtr;  // 0x124
     u32 mFront;                 // 0x128
@@ -148,7 +148,7 @@ CLib* CLib::create(){
 // The string literals MWCC pools into local .rodata ship from the shared
 // CException.cpp pool lbl_eu_80522F88: renamed + stripped by the UNIT_RULES
 // entry in tools/postprocess_reloc_names.py.
-extern "C" void __dt__4CLibFv(void*, int);
+extern "C" void __dt__4CLibFv(CLib* ths, int);
 extern "C" void wkStandbyLogin__4CLibFv();
 extern "C" void wkStandbyLogout__4CLibFv();
 
@@ -175,13 +175,13 @@ IWorkEventVtbl lbl_eu_8056CDA0 = {
     (u32)&wkStandbyLogout__4CLibFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
-void* lbl_eu_8056CE40[6] = {
-    (void*)&__RTTI__10IWorkEvent, nullptr,
-    (void*)&__RTTI__11CWorkThread, nullptr,
-    nullptr, nullptr,
+u32 lbl_eu_8056CE40[6] = {
+    (u32)&__RTTI__10IWorkEvent, 0,
+    (u32)&__RTTI__11CWorkThread, 0,
+    0, 0,
 };
 
-void* lbl_eu_80663788[2] = {
-    (void*)lbl_eu_8066A4C8,
-    (void*)lbl_eu_8056CE40,
+u32 lbl_eu_80663788[2] = {
+    (u32)lbl_eu_8066A4C8,
+    (u32)lbl_eu_8056CE40,
 };

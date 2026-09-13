@@ -11,13 +11,13 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16646 |
-| extern "C" declarations (non-lbl_*, imports) | 7495 |
-| extern "C" definitions (forced names) | 4151 |
+| extern "C" (total lines) | 16649 |
+| extern "C" declarations (non-lbl_*, imports) | 7496 |
+| extern "C" definitions (forced names) | 4150 |
 | `self`/register-style params | 13371 |
-| `void*` (params + locals) | 7679 |
-| raw pointer offset arithmetic | 7906 |
-| deref-through-cast arithmetic | 3309 |
+| `void*` (params + locals) | 7672 |
+| raw pointer offset arithmetic | 7904 |
+| deref-through-cast arithmetic | 3307 |
 | inline asm / `register` | 127 |
 | rN-named params | 459 |
 | goto | 3435 |
@@ -86,7 +86,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 3 | 12 | 14 | 3 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 52 | 1 | 20 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 8 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontLoader.cpp | 44 | 0 | 19 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceGX.cpp | 36 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -554,7 +554,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuPause.cpp | 5 | 3 | 6 | 12 | 1 | 0 | 0 | 0 | 9 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 2 | 1 | 70 | 11 | 20 | 3 | 1 | 0 | 9 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuQstCnt.cpp | 16 | 2 | 31 | 4 | 5 | 4 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuQuestLog.cpp | 3 | 14 | 19 | 2 | 18 | 2 | 0 | 0 | 7 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuQuestLog.cpp | 3 | 14 | 19 | 2 | 16 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSave.cpp | 1 | 8 | 10 | 2 | 87 | 81 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSelectShop.cpp | 3 | 6 | 9 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuShopBuy.cpp | 2 | 10 | 8 | 2 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1019,13 +1019,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceFontLoader.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 43,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 44,
   "goto_count": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 19,
-  "void_ptr": 8
+  "void_ptr": 1
  },
  "libs/monolib/src/device/CDeviceGX.cpp": {
   "asm_insn_shim": 0,
@@ -5897,12 +5896,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/menu/CMenuQuestLog.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 2,
   "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 14,
   "goto_count": 7,
   "init_side_effect": 0,
-  "ptr_arith": 18,
+  "ptr_arith": 16,
   "schedule_pragma": 0,
   "self_params": 19,
   "void_ptr": 2

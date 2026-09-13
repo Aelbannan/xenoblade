@@ -31,25 +31,17 @@ namespace cf {
     // (mirrors func_80153CAC), so MWCC keeps `this`(r3) as the accumulator and
     // reuses each source register for its own shift.
     void CArtsSet::setArtsSlotRC(unsigned short value, unsigned short row, unsigned short index) {
-        u8* p = (u8*)this;
-        p += row * 0x10;
-        p += index * 0x2;
-        *(u16*)(p + 0x4) = value;
+        // Same unk4 u16 grid as getArtsSlotAtCnt (row stride 8).
+        reinterpret_cast<unsigned short*>(unk4)[row * 8 + index] = value;
     }
 
     unsigned short CArtsSet::getArtsSlotRC(int index, int subindex) {
-        u8* p = (u8*)this;
-        p += index * 0x10;
-        p += subindex * 0x2;
-        return *(u16*)(p + 0x4);
+        return reinterpret_cast<unsigned short*>(unk4)[index * 8 + subindex];
     }
 
     // Decompose the flat index into row/col and store into the slot entry.
     void CArtsSet::setArtsSlotByIdx(unsigned short value, int index) {
-        u8* p = (u8*)this;
-        p += (index / 8) * 0x10;
-        p += (index % 8) * 0x2;
-        *(u16*)(p + 0x4) = value;
+        reinterpret_cast<unsigned short*>(unk4)[(index / 8) * 8 + (index % 8)] = value;
     }
 }
 

@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4152 |
 | `self`/register-style params | 13410 |
-| `void*` (params + locals) | 7702 |
+| `void*` (params + locals) | 7707 |
 | raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3312 |
 | inline asm / `register` | 127 |
@@ -86,7 +86,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 3 | 12 | 14 | 3 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 52 | 1 | 20 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 5 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 10 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceGX.cpp | 36 | 0 | 0 | 6 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -1025,7 +1025,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 19,
-  "void_ptr": 5
+  "void_ptr": 10
  },
  "libs/monolib/src/device/CDeviceGX.cpp": {
   "asm_insn_shim": 0,

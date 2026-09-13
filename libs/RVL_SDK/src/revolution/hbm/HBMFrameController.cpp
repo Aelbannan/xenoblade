@@ -79,4 +79,4 @@ void FrameController::calc() {
 // the class is __declspec(novtable); the RTTI is reproduced manually below
 // with the retail linker name (referenced by GroupAnmController's vtable).
 char lbl_80518668[0x20] = "homebutton::FrameController";
-void* __RTTI__Q210homebutton15FrameController[2] = { lbl_80518668, NULL };
+char* __RTTI__Q210homebutton15FrameController[2] = { lbl_80518668, NULL };

@@ -46,7 +46,8 @@ void AxfxImpl::RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook) {
 }
 
 void* AxfxImpl::Alloc(u32 size) {
-    void* pBlock = MEMAllocFromFrmHeap(lbl_eu_806654C8->mHeap, size);
+    u8* pBlock = static_cast<u8*>(
+        MEMAllocFromFrmHeap(lbl_eu_806654C8->mHeap, size));
 
     lbl_eu_806654C8->mAllocCount++;
     lbl_eu_806654CC += ut::RoundUp(size, 4);

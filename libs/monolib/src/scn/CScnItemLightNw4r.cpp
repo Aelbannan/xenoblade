@@ -24,7 +24,7 @@ extern "C" void* __ct__CScnItemLightNw4r(CScnItemLightNw4r* self, int param2, vo
     if (alloc != 0) {
         __ct__CScnItemLight(alloc, self, &str, (void*)param2, param3);
         *(void**)alloc = (void*)lbl_eu_8056DD38;
-        *(u32*)((char*)alloc + 0x1220) = *(u32*)((char*)*(void**)((char*)self + 0x8C) + 0x10);
+        *(u32*)((u8*)alloc + 0x1220) = *(u32*)((u8*)self->mField8C + 0x10);
     }
     func_8048C630(self->mField60, alloc, 0);
     return alloc;

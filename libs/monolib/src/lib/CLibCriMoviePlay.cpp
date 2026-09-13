@@ -285,7 +285,8 @@ extern "C" int startMovie__16CLibCriMoviePlayFv(const char* filename, u32 allocH
     u32 workSize = mwPlyCalcWorkCprmSfd(&entry->mCprmMode);
     entry->mWorkSize = workSize;
 
-    void* workBuf = MemManager::allocate_tail(allocHandle, workSize, 0x20);
+    u8* workBuf = static_cast<u8*>(
+        MemManager::allocate_tail(allocHandle, workSize, 0x20));
     entry->mWorkBuf = workBuf;
 
     if (workBuf == nullptr) {
@@ -496,15 +497,12 @@ void CLibCriMoviePlay::updateMovieTextures() {
                                 (u32)1, GX_FALSE, (u8)0);
 
                             if (entry->mAction == 0) {
-                                entry->mTexBufY = MemManager::allocate_tail(
-                                    (u32)entry->mAllocHandle, entry->mTexBufYSize, 0x20);
+                                entry->mTexBufY = static_cast<u8*>(MemManager::allocate_tail(                                    (u32)entry->mAllocHandle, entry->mTexBufYSize, 0x20));
                             } else if (entry->mAction == 3) {
                                 MemManager::setOptimalAlloc(true);
-                                entry->mTexBufY = MemManager::allocate_head(
-                                    entry->mAllocHandle2, entry->mTexBufYSize, 0x20);
+                                entry->mTexBufY = static_cast<u8*>(MemManager::allocate_head(                                    entry->mAllocHandle2, entry->mTexBufYSize, 0x20));
                                 if (entry->mTexBufY == nullptr) {
-                                    entry->mTexBufY = MemManager::allocate_head(
-                                        MemManager::getHandleMEM2(), entry->mTexBufYSize, 0x20);
+                                    entry->mTexBufY = static_cast<u8*>(MemManager::allocate_head(                                        MemManager::getHandleMEM2(), entry->mTexBufYSize, 0x20));
                                 }
                                 MemManager::setOptimalAlloc(false);
                             } else {
@@ -516,7 +514,7 @@ void CLibCriMoviePlay::updateMovieTextures() {
                                     if (rem != 0) {
                                         addr = addr + 0x20 - rem;
                                     }
-                                    entry->mTexBufY = (void*)addr;
+                                    entry->mTexBufY = reinterpret_cast<u8*>(addr);
                                 }
                             }
 
@@ -534,15 +532,12 @@ void CLibCriMoviePlay::updateMovieTextures() {
                                 cw, ch, (u32)3, GX_FALSE, (u8)0);
 
                             if (entry->mAction == 0) {
-                                entry->mTexBufCbCr = MemManager::allocate_tail(
-                                    (u32)entry->mAllocHandle, entry->mTexBufCbCrSize, 0x20);
+                                entry->mTexBufCbCr = static_cast<u8*>(MemManager::allocate_tail(                                    (u32)entry->mAllocHandle, entry->mTexBufCbCrSize, 0x20));
                             } else if (entry->mAction == 3) {
                                 MemManager::setOptimalAlloc(true);
-                                entry->mTexBufCbCr = MemManager::allocate_head(
-                                    entry->mAllocHandle2, entry->mTexBufCbCrSize, 0x20);
+                                entry->mTexBufCbCr = static_cast<u8*>(MemManager::allocate_head(                                    entry->mAllocHandle2, entry->mTexBufCbCrSize, 0x20));
                                 if (entry->mTexBufCbCr == nullptr) {
-                                    entry->mTexBufCbCr = MemManager::allocate_head(
-                                        MemManager::getHandleMEM2(), entry->mTexBufCbCrSize, 0x20);
+                                    entry->mTexBufCbCr = static_cast<u8*>(MemManager::allocate_head(                                        MemManager::getHandleMEM2(), entry->mTexBufCbCrSize, 0x20));
                                 }
                                 MemManager::setOptimalAlloc(false);
                             } else {
@@ -553,7 +548,7 @@ void CLibCriMoviePlay::updateMovieTextures() {
                                     if (rem != 0) {
                                         addr = addr + 0x20 - rem;
                                     }
-                                    entry->mTexBufCbCr = (void*)addr;
+                                    entry->mTexBufCbCr = reinterpret_cast<u8*>(addr);
                                 }
                             }
 

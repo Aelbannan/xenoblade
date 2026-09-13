@@ -48,7 +48,7 @@ struct MovieEntry {
     u32 mCprmHeight;         // 0x14 - cprm[3] = 0x1C8 (456)
     u32 mCprmType;           // 0x18 - cprm[4] = 2
     u32 mCprmFlags;          // 0x1C - cprm[5] = 1
-    void* mWorkBuf;          // 0x20 - CRI work buffer (allocated in startMovie)
+    u8* mWorkBuf;            // 0x20 - CRI work buffer (allocated in startMovie)
     u32 mWorkSize;           // 0x24 - calculated work buffer size (inside cprm)
     u32 field_0x28;          // 0x28 - zeroed before playback starts
     u8 field_0x2C[0x28];     // 0x2C - unused cprm tail
@@ -57,9 +57,9 @@ struct MovieEntry {
     char mFilename[0x40];    // 0x5C - filename buffer
     u32 mFilenameLen;        // 0x9C - strlen of mFilename
     bool mActive;            // 0xA0 - entry active flag
-    void* mTexBufY;          // 0xA4 - Y texture buffer pointer (written from void* allocate)
+    u8* mTexBufY;            // 0xA4 - Y texture buffer
     u32 mTexBufYSize;        // 0xA8 - Y texture buffer size
-    void* mTexBufCbCr;       // 0xAC - CbCr texture buffer pointer
+    u8* mTexBufCbCr;         // 0xAC - CbCr texture buffer
     u32 mTexBufCbCrSize;     // 0xB0 - CbCr texture buffer size
     GXTexObj mTexObjY;       // 0xB4 - GX texture object for Y plane
     GXTexObj mTexObjCbCr;    // 0xD4 - GX texture object for CbCr plane
@@ -72,8 +72,8 @@ struct MovieEntry {
     s32 mPlaybackState;      // 0x114 - playback state from mwPlyGetStat (signed: retail cmpi switch)
     bool mGlobalPause;       // 0x118 - global pause flag
     bool mPauseOverride;     // 0x119 - pause override flag
-    void* mSavedTexBufY;     // 0x11C - saved Y buffer ptr (for cleanup)
-    void* mSavedTexBufCbCr;  // 0x120 - saved CbCr buffer ptr (for cleanup)
+    u8* mSavedTexBufY;       // 0x11C - saved Y buffer ptr (for cleanup)
+    u8* mSavedTexBufCbCr;    // 0x120 - saved CbCr buffer ptr (for cleanup)
 };
 
 // Size check: 0x124 = 292 bytes

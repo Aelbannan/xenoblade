@@ -34,7 +34,8 @@ Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
             reinterpret_cast<const u8*>(pRes) + sizeof(res::Picture), num);
     }
 
-    void* pMaterialBuf = Layout::AllocMemory(sizeof(Material));
+    Material* pMaterialBuf =
+        static_cast<Material*>(Layout::AllocMemory(sizeof(Material)));
 
     if (pMaterialBuf != NULL) {
         const u32* const pMatOffsetTbl = detail::ConvertOffsToPtr<u32>(

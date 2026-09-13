@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7498 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13359 |
-| `void*` (params + locals) | 7627 |
+| `void*` (params + locals) | 7624 |
 | raw pointer offset arithmetic | 7904 |
 | deref-through-cast arithmetic | 3307 |
 | inline asm / `register` | 127 |
@@ -108,7 +108,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbm.cpp | 39 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbmControl.cpp | 38 | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibLayout.cpp | 38 | 1 | 2 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibLayout.cpp | 38 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibVM.cpp | 37 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1224,7 +1224,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 2,
-  "void_ptr": 5
+  "void_ptr": 2
  },
  "libs/monolib/src/lib/CLibStaticData.cpp": {
   "asm_insn_shim": 0,

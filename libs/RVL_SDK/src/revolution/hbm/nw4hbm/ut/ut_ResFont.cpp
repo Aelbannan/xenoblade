@@ -4,8 +4,8 @@ namespace nw4hbm {
 namespace ut {
 namespace {
 
-template <typename T> inline void ResolveOffset(T*& rpPtr, void* pBase) {
-    char* base = static_cast<char*>(static_cast<void*>(pBase));
+template <typename T> inline void ResolveOffset(T*& rpPtr, BinaryFileHeader* pBase) {
+    char* base = reinterpret_cast<char*>(pBase);
     s32 offset = reinterpret_cast<s32>(rpPtr);
     rpPtr = reinterpret_cast<T*>(base + offset);
 }

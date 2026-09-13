@@ -11,7 +11,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16675 |
+| extern "C" (total lines) | 16672 |
 | extern "C" declarations (non-lbl_*, imports) | 7514 |
 | extern "C" definitions (forced names) | 4154 |
 | `self`/register-style params | 13312 |

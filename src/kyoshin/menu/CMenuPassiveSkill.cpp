@@ -434,14 +434,18 @@ extern "C" __declspec(noinline) void func_80263A34(CMenuPassiveSkill* self) {
     }
 
     // Idle timer tick, clamped at lbl_eu_806688F8.
-    // Load field first (f2), then increment (f1), then cap (f0) — retail
-    // fadds f1,f2,f1 / fcmp f1,f0 / stfs cap into the same slot.
-    f32 cur = self->field_2B0;
-    f32 step = lbl_eu_806688F4;
-    f32 cap = lbl_eu_806688F8;
-    f32 next = cur + step;
-    self->field_2B0 = next;
-    if (next > cap) {
+    // Decl order cap,step,cur → f0,f1,f2 (Rule C). sum = cur+step keeps cap
+    // live in f0 so the add dest cannot take f0 and should reuse step (f1),
+    // giving retail fadds f1,f2,f1.
+    f32 cap;
+    f32 step;
+    f32 cur;
+    cur = self->field_2B0;
+    step = lbl_eu_806688F4;
+    cap = lbl_eu_806688F8;
+    f32 sum = cur + step;
+    self->field_2B0 = sum;
+    if (sum > cap) {
         self->field_2B0 = cap;
     }
 

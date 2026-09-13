@@ -998,7 +998,11 @@ void func_801BC474(CSuddenCommu* self) {
         }
         __dt__80043E88(&holder, -1);
     }
-    self->field_24 |= 0x2;
+    // Split RMW so the last store is a plain stw (ctor epilogue shape):
+    // retail restores r31/r30 then LR; `|=` hoists LR first.
+    u32 flags = self->field_24;
+    flags |= 0x2;
+    *(u32*)&self->field_24 = flags;
 }
 
 // Sudden-commu flag-clear sweep: when field_24 bit 0x2 is set, clear it and

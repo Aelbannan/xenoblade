@@ -39,7 +39,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     const char* func_804DAEE8(CNReqtaskSaveData* data);      // save path/handle builder (defined below)
     s32 func_804DA540(const char* path, u8 flag);            // NAND open wrapper (defined below)
     const char* func_804DA98C(u8 id);                        // temp-path builder (defined below)
-    void func_804DA97C(void* param);                         // NAND completion callback (defined below)
+    void func_804DA97C(s32 result, NANDCommandBlock* block); // NAND completion callback (defined below)
     CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data);  // check sub-task config
     CNReqtaskSaveVtbl**  func_804DACE8(CNReqtaskSaveData* data);   // save sub-task config (defined below)
     CException* logExceptionMessage__10CExceptionFv(const wchar_t* msg); // CException::logExceptionMessage (stripped name)
@@ -166,7 +166,7 @@ s32 func_804DA4E0(u32 neededBlocks, u32 neededFiles, u32* answer) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDCheckAsync(neededBlocks, neededFiles, answer,
-                             (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                             func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -188,7 +188,7 @@ __declspec(noinline) s32 func_804DA540(const char* path, u8 flag) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDOpenAsync(path, &lbl_eu_8065FEEC, flag,
-                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                            func_804DA97C, &lbl_eu_8065FE30);
     // Written with the error path as the if-body: MWCC lowers this to the
     // retail `cmpwi/beq` shape branching to the success store.
     if (ret != 0) {
@@ -210,7 +210,7 @@ __declspec(noinline) s32 func_804DA5B4(u32 addr, u32 size) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDReadAsync(&lbl_eu_8065FEEC, (u8*)addr, size,
-                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                            func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -231,7 +231,7 @@ __declspec(noinline) s32 func_804DA628(u32 addr, u32 size) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDWriteAsync(&lbl_eu_8065FEEC, (const void*)addr, size,
-                             (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                             func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -250,7 +250,7 @@ s32 __declspec(noinline) func_804DA69C(void) {
     // Retail argument order: file-info, completion callback, command block.
     s32 ret = NANDCloseAsync(
         reinterpret_cast<NANDFileInfo*>(&lbl_eu_8065FEEC),
-        (NANDAsyncCallback)func_804DA97C,
+        func_804DA97C,
         &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
@@ -277,7 +277,7 @@ s32 __declspec(noinline) func_804DA69C(void) {
 __declspec(noinline) s32 func_804DA70C(const char* path, u8 perm, u8 attr) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
-    s32 ret = NANDCreateAsync(path, perm, attr, (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    s32 ret = NANDCreateAsync(path, perm, attr, func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -294,7 +294,7 @@ __declspec(noinline) s32 func_804DA70C(const char* path, u8 perm, u8 attr) {
 s32 func_804DA76C(const char* path) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
-    s32 ret = NANDDeleteAsync(path, (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    s32 ret = NANDDeleteAsync(path, func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -313,7 +313,7 @@ s32 func_804DA76C(const char* path) {
 __declspec(noinline) s32 func_804DA7CC(const char* from, const char* to) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
-    s32 ret = NANDMoveAsync(from, to, (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    s32 ret = NANDMoveAsync(from, to, func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -335,7 +335,7 @@ __declspec(noinline) s32 func_804DA82C(u32* pos) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDTellAsync(&lbl_eu_8065FEEC, pos,
-                            (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                            func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -356,7 +356,7 @@ __declspec(noinline) s32 func_804DA898(char* nameList, u32* num, const char* pat
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
     s32 ret = NANDReadDirAsync(path, nameList, num,
-                               (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+                               func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -373,7 +373,7 @@ __declspec(noinline) s32 func_804DA898(char* nameList, u32* num, const char* pat
 s32 func_eu_804DEB4C(const char* path, u8 perm, u8 attr) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
-    s32 ret = NANDCreateDirAsync(path, perm, attr, (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    s32 ret = NANDCreateDirAsync(path, perm, attr, func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -390,7 +390,7 @@ s32 func_eu_804DEB4C(const char* path, u8 perm, u8 attr) {
 s32 func_804DA91C(const char* path) {
     lbl_eu_806659D0 = 1;
     lbl_eu_806659D4 = 0;
-    s32 ret = NANDChangeDirAsync(path, (NANDAsyncCallback)func_804DA97C, &lbl_eu_8065FE30);
+    s32 ret = NANDChangeDirAsync(path, func_804DA97C, &lbl_eu_8065FE30);
     if (ret != 0) {
         func_804DAA58(ret);
         lbl_eu_806659D0 = 0;
@@ -399,9 +399,10 @@ s32 func_804DA91C(const char* path) {
 }
 #pragma pop
 
-extern "C" void func_804DA97C(void* param) {
+extern "C" void func_804DA97C(s32 result, NANDCommandBlock* block) {
+    (void)block;
     lbl_eu_806659D0 = 0;
-    lbl_eu_806659D4 = (s32)param;
+    lbl_eu_806659D4 = result;
 }
 
 // Temp-path builder (stub; symbol kept for the func_804DAD38 move step).

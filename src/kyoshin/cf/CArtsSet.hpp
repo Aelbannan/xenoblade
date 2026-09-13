@@ -87,7 +87,7 @@ namespace cf {
     };
 
     //size: 0x334
-    class CAttackSet : _sAttackSet {
+    class CAttackSet : public _sAttackSet {
     public:
         CAttackSet(){}
         virtual void func_80153E88();
@@ -128,7 +128,7 @@ namespace cf {
     };
 
     //size: 0xD58
-    class CArtsSet : _sArtsSet {
+    class CArtsSet : public _sArtsSet {
     public:
         CArtsSet(){}
         virtual void CArtsSet_UnkVirtualFunc1();

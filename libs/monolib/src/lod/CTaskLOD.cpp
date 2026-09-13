@@ -101,7 +101,7 @@ public:
     void* getLODObject();
     void updateLODObject();
     float getLODLevel();
-    void* getLODOrSelf();
+    CTaskLOD* getLODOrSelf();
 
     LODParam1Obj* mParam1;              // 0x54
     void* mParam2;                      // 0x58
@@ -158,7 +158,7 @@ extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
 extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
 extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void func_804C2014(CScnEnvLgtCtrl* self, void* a, int b);
+extern "C" void func_804C2014(CScnEnvLgtCtrl* self, CTaskLOD* a, int b);
 extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
 extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
 extern "C" void* func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
@@ -458,7 +458,7 @@ void CTaskLOD::refreshLOD() {
 // Forward the task + arg pair to the active LODMemMan (func_8046E988), then
 // walk the singleton's scene-light control ring (func_804C2094) with the same
 // task/arg and the float value.  `b` is unused in retail.
-extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, void* b) {
+extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, int b) {
     if (lbl_eu_80665730[0]) {
         configureShrinkTargets__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
         func_804C2094(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, (void*)(u32)a);
@@ -467,7 +467,7 @@ extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, void*
 
 // Same delegate-shape as dispatchLODArgs: forwards `self` + first arg `a` to the
 // active LODMemMan (tail-call `b`).  `b` is unused in retail.
-void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
+void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         setElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
@@ -491,19 +491,19 @@ float CTaskLOD::getLODDistance() {
     }
     return 0.0f;
 }
-void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
+void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         updateElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
+void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         setElementFlag80__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
+void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, int b) {
     if (lbl_eu_80665730[0]) {
         func_8046EDD0__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
@@ -530,9 +530,10 @@ float CTaskLOD::getLODLevel() {
 
 // func_8046EF7C returns a pointer; when there is no active LOD the retail
 // body returns `this` unchanged (beqlr with r3 still holding `this`).
-void* CTaskLOD::getLODOrSelf() {
+CTaskLOD* CTaskLOD::getLODOrSelf() {
     if (lbl_eu_80665730[0]) {
-        return updateSingleElement__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this);
+        return static_cast<CTaskLOD*>(
+            updateSingleElement__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, this));
     }
     return this;
 }

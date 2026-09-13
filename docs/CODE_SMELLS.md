@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13334 |
 | `void*` (params + locals) | 7601 |
-| raw pointer offset arithmetic | 7918 |
-| deref-through-cast arithmetic | 3307 |
+| raw pointer offset arithmetic | 7916 |
+| deref-through-cast arithmetic | 3308 |
 | inline asm / `register` | 127 |
 | rN-named params | 462 |
 | goto | 3435 |
@@ -535,7 +535,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 0 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuGetItemMulti.cpp | 47 | 1 | 44 | 20 | 0 | 0 | 1 | 0 | 63 | 1 | 0 | 0 |
+| src/kyoshin/menu/CMenuGetItemMulti.cpp | 47 | 1 | 44 | 20 | 0 | 1 | 1 | 0 | 63 | 1 | 0 | 0 |
 | src/kyoshin/menu/CMenuItem.cpp | 2 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
@@ -549,7 +549,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuOption.cpp | 0 | 0 | 10 | 0 | 57 | 29 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 2 | 5 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTGauge.cpp | 5 | 4 | 12 | 4 | 0 | 0 | 2 | 0 | 19 | 2 | 0 | 0 |
-| src/kyoshin/menu/CMenuPTState.cpp | 8 | 4 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuPTState.cpp | 8 | 4 | 9 | 2 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPassiveSkill.cpp | 1 | 11 | 18 | 0 | 8 | 0 | 0 | 0 | 15 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPause.cpp | 5 | 3 | 6 | 12 | 1 | 0 | 0 | 0 | 9 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 2 | 1 | 70 | 11 | 20 | 3 | 1 | 0 | 9 | 0 | 0 | 0 |
@@ -5692,6 +5692,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuGetItemMulti.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 1,
+  "deref_arith": 1,
   "extern_c_nonlbl_decl": 47,
   "extern_c_nonlbl_def": 1,
   "goto_count": 63,
@@ -5838,7 +5839,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 4,
   "goto_count": 1,
   "init_side_effect": 0,
-  "ptr_arith": 2,
   "schedule_pragma": 0,
   "self_params": 9,
   "void_ptr": 2

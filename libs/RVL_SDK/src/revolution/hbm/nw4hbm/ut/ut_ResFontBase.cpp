@@ -4,7 +4,7 @@ namespace nw4hbm {
 namespace ut {
 namespace detail {
 
-ResFontBase::ResFontBase() : mResource(NULL), mFontInfo(NULL) {}
+ResFontBase::ResFontBase() : mResource(nullptr), mFontInfo(nullptr) {}
 
 ResFontBase::~ResFontBase() {}
 
@@ -21,7 +21,7 @@ int ResFontBase::GetHeight() const {
     return mFontInfo->height;
 }
 
-int nw4hbm::ut::detail::ResFontBase::GetAscent() const {
+int ResFontBase::GetAscent() const {
     return mFontInfo->ascent;
 }
 
@@ -33,7 +33,7 @@ int ResFontBase::GetBaselinePos() const {
     return mFontInfo->pGlyph->baselinePos;
 }
 
-int nw4hbm::ut::detail::ResFontBase::GetCellHeight() const {
+int ResFontBase::GetCellHeight() const {
     return mFontInfo->pGlyph->cellHeight;
 }
 
@@ -62,6 +62,7 @@ CharWidths ResFontBase::GetDefaultCharWidths() const {
 }
 
 void ResFontBase::SetDefaultCharWidths(const CharWidths& rWidths) {
+    // Match-pinned byte copy (struct assignment / field stores change codegen).
     u8* dst = reinterpret_cast<u8*>(&mFontInfo->defaultWidth);
     const u8* src = reinterpret_cast<const u8*>(&rWidths);
     dst[0] = src[0];
@@ -148,8 +149,6 @@ u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
 
     return index;
 }
-
-
 
 void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
     const FontTextureGlyph* pTexGlyph = mFontInfo->pGlyph;

@@ -6,7 +6,7 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"  // func_800BE12C (owner decl)
 #include "kyoshin/cf/CfResReloadImpl.hpp"
-#include "kyoshin/cf/CfResReloadViews.hpp"
+#include "libs/monolib/src/scn/CScnItemModel.hpp"  // real owner of parent+0x98 (vfunc64/vfunc88)
 // IResInfo's func_800AA33C uses FixStr; this TU needs the u8* form - hide the
 // FixStr decl so the two extern "C" overloads don't collide (10197).
 #define func_800AA33C IResInfo_func_800AA33C
@@ -293,9 +293,9 @@ int func_8016D390(cf::CfResReloadImpl* self, int arg2) {
 // at every call boundary); the post-instance-check parent copy stays live in
 // a register across the flag tests and the lookup-param selection.
 extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     func_800BBB50((cf::CfObjectModel*)self->field_00);
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     // Local introduced after the first clear: MWCC reuses this load for both
     // the field_94 store and the game-manager call (no reload before bl).
@@ -497,7 +497,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     int ok2 = (self->field_00->field_68 >> 20) & 1;
     if (ok2 != 0) {
         func_800BB618((cf::CfObjectModel*)self->field_00, 0);
-        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_8066769C);
+reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_8066769C);
     }
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
     // volatile on both stores + the parent read pins retail's order:
@@ -525,7 +525,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     // x & -3 lowers to the retail wrap-mask rlwinm(0,31,29)
     self->field_00->field_6C &= -3;
     if (self->field_00->field_98 != 0) {
-        reinterpret_cast<ResHandleLocal*>(self->field_00->field_98)->handle64(0);
+        reinterpret_cast<CScnItemModel*>(self->field_00->field_98)->vfunc64(0);
     }
     if (self->field_00->field_64 & 0x4) {
         cf::CfResReloadParent* p = self->field_00;
@@ -535,7 +535,7 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
         }
         if (ene->field_45CA & 0x6) {
             // retail performs no null check on field_98 here
-            reinterpret_cast<ResHandleLocal*>(p->field_98)->handle88(0);
+            reinterpret_cast<CScnItemModel*>(p->field_98)->vfunc88(0);
             // fresh parent load: retail does not keep the pointer live
             // across the virtual call above
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
@@ -562,7 +562,7 @@ extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
     }
     cf::CfResEneObj* obj = (cf::CfResEneObj*)func_800AD860(self->field_00);
     if (obj != 0 && (obj->field_45CA & 0x2)) {
-        if (reinterpret_cast<ParentInt98Local*>(self->field_00)->isActive98() != 0) {
+        if (reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_checkTargetState() != 0) {
             self->field_1C = 0;
             goto eee4;
         }
@@ -615,7 +615,7 @@ ef7c:
         }
     }
     func_800BC4A0((cf::CfObjectMove*)self->field_00);
-    reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_806676A4);
+reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_806676A4);
     return;
 efe8:
     self->field_1E = 0;
@@ -630,20 +630,20 @@ effc:
 }
 
 extern "C" void func_8016DCE4(u8* self) {
-    if (!((cf::CObjectParam*)*(void**)self)->CObjectParam_UnkVirtualFunc3()) {
-        void* r = ((cf::CfObjectModel*)*(void**)self)->CfObjectModel_UnkVirtualFunc3();
-        ((cf::CObjectParam*)*(void**)self)->CObjectParam_UnkVirtualFunc1((const char*)r);
+if (!((cf::CObjectParam*)*(void**)self)->CObjectParam_hasObjectName()) {
+        void* r = ((cf::CfObjectModel*)*(void**)self)->CfObjectModel_getModelName();
+        ((cf::CObjectParam*)*(void**)self)->CObjectParam_setObjectName((const char*)r);
     }
     if (*(void**)((u8*)*(void**)self + 0x38))
-        ((cf::CfObject*)*(void**)((u8*)*(void**)self + 0x38))->CfObject_UnkVirtualFunc24();
+((cf::CfObject*)*(void**)((u8*)*(void**)self + 0x38))->CfObject_getPosTriple();
     if (*(void**)((u8*)*(void**)self + 0x98)) {
         float v;
-        if (((cf::CfObjectMove*)*(void**)self)->CfObjectMove_UnkVirtualFunc15()) {
+        if (((cf::CfObjectMove*)*(void**)self)->CfObjectMove_hasActorScale()) {
             void* b = *(void**)self;
             if (b) b = (u8*)b - 0x3e9c;
-            v = ((cf::CfObject*)b)->CfObject_UnkVirtualFunc40();
+            v = ((cf::CfObject*)b)->CfObject_getActorScale();
         } else {
-            v = ((cf::CfObject*)*(void**)self)->CfObject_UnkVirtualFunc36();
+v = ((cf::CfObject*)*(void**)self)->CfObject_getObjScale();
         }
         void* obj = *(void**)((u8*)*(void**)self + 0x98);
         *(float*)((u8*)obj + 0x304) = v;

@@ -30,6 +30,10 @@ extern const float lbl_eu_8066745C;  // 0.2f
 namespace cf {
 
 CAIAction::CAIAction() {
+    // Retail installs __vt__Q22cf9CAIAction (lbl_eu_8052F598) at +0 before
+    // any field init. The class is novtable (no compiler __vt__), so the
+    // store is explicit, same as CHelp / CToken.
+    this->vtbl() = &lbl_eu_8052F598;
     // Retail homes: r31=p (then end2), r30=q, r29=end, r28=this.
     // Reuse p as the second-loop limit so it coalesces with end2, not q.
     u8* p;
@@ -593,7 +597,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     // Result power (out+0x14): virtual probe when either key is 14,
     // value/10 or raw value otherwise.
     if (e[5] == 0xE || e[7] == 0xE) {
-        out->unk14 = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc72();
+        out->unk14 = ((cf::CActorParam*)party)->CActorParam_getArtsPower();
     } else if (e[5] == 0xB || e[5] == 0xD) {
         out->unk14 = (f32)(u32)e[6] / lbl_eu_80667434;
     } else if (e[5] == 0xA || e[5] == 0xC) {
@@ -897,7 +901,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
             return 0;
         if (func_80148778((u8*)party + 8, 0x2F) == 0 && param->field80 - out->unk14 > 0.0f)
             return 0;
-        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc43() >= 0.0f))
+        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
         if (func_80148778((u8*)party + 8, 0x31) == 0
             && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
@@ -965,7 +969,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
                 && param->field80 - out->unk14 > 0.0f)
                 return 0;
         }
-        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc43() >= 0.0f))
+        if (func_80148778((u8*)party + 8, 0x30) == 0 && !(((cf::CActorParam*)party)->CActorParam_getHitCharge() >= 0.0f))
             return 0;
         if (func_80148778((u8*)party + 8, 0x31) == 0
             && !((f64)param->field34 <= (f64)((cf::CActorParam*)party)->CActorParam_getArtsGauge()))
@@ -1030,10 +1034,10 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
         if (func_80148778((u8*)party + 8, 0xCA) == 0)
             return 0;
         int idx = d - 0x56;
-        void* set = ((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc125();
+        void* set = ((cf::CActorParam*)party)->CActorParam_getArtsSlotIds();
         if (*(u16*)((u8*)set + idx * 2) == 0)
             return 0;
-        out->unk18 = (u32)(uintptr_t)getAtkParam(((cf::CActorParam*)party)->CActorParam_UnkVirtualFunc125(), idx);
+        out->unk18 = (u32)(uintptr_t)getAtkParam(((cf::CActorParam*)party)->CActorParam_getArtsSlotIds(), idx);
         out->unk12 = (s16)idx;
         return 1;
     }
@@ -1241,7 +1245,7 @@ static f32 mlAbs(f32 x) { return x < 0.0f ? -x : x; }
 
 // moveBase = unkB14 + 0x3E9C; retail pattern is lwzu on the base+0x3E9C,
 // so the vtable call always targets (base + 0x3E9C) even when base is 0.
-static inline void* aiMoveBaseVt4C(void* partyBase) {
+static inline void* aiMoveBaseSelfId(void* partyBase) {
     return (void*)(uintptr_t)((cf::CObjectParam*)((u8*)partyBase + 0x3E9C))->CObjectParam_getSelfObjectId();
 }
 
@@ -1268,7 +1272,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             else
                 self->unkB18 = 0;
         } else {
-            void* v = func_8016FE34(findObjectById((int)(uintptr_t)aiMoveBaseVt4C((u8*)self->unkB14)));
+            void* v = func_8016FE34(findObjectById((int)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14)));
             if (v) {
                 u8* moveBase = (u8*)self->unkB14 + 0x3E9C;
                 u32 mf = *(u32*)(moveBase + 0x64);
@@ -1290,7 +1294,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     case 36: {
         void* v = func_8016FE34(findObjectById(*(u32*)((const u8*)c + 0x00)));
         if (v)
-            func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C((u8*)v));
+            func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)v));
         break;
     }
 
@@ -1311,7 +1315,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 filter = 0x20;
             func_800F4A98(func_80043F18(&holder), filter, 0x800);
             if (aiListCount(func_80043F18(&holder)) == 0)
-                func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C((u8*)self->unkB14));
+                func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
         }
         break;
     }
@@ -1334,7 +1338,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             if (obj)
                 obj = (u8*)obj - 0x3E9C;
             // unconditional lwzu deref (retail null path quirk).
-            func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C(obj));
+            func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseSelfId(obj));
         }
         __dt__80043E88(&h2, -1);
         break;
@@ -1377,14 +1381,14 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 filter = 0x80000000;
             func_800F4A98(func_80043F18(&h2), filter, 0);
         }
-        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C((u8*)self->unkB14));
+        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseSelfId((u8*)self->unkB14));
         for (i = 0; i < aiListCount(func_80043F18(&h2)); i++) {
             void* sub = func_800F6EAC(func_80043F18(&h2), i);
             void* base = sub;
             if (sub)
                 base = (u8*)sub - 0x3E9C;
             if (base != (void*)self->unkB14)
-                func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseVt4C(base));
+                func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)aiMoveBaseSelfId(base));
         }
         __dt__80043E88(&h2, -1);
         break;
@@ -1501,9 +1505,9 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         void* obj;
         if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(func_80043F18(&holder));
-            obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_UnkVirtualFunc149();
+            obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMaxGaugeEntry();
             if (obj == 0) {
-                obj = aiMoveBaseVt4C((u8*)self->unkB14);
+                obj = aiMoveBaseSelfId((u8*)self->unkB14);
                 void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback1;
@@ -1525,9 +1529,9 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         void* obj;
         if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(func_80043F18(&holder));
-            obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_UnkVirtualFunc150();
+            obj = ((cf::CActorParam*)(u8*)self->unkB14)->CActorParam_findMinGaugeEntry();
             if (obj == 0) {
-                obj = aiMoveBaseVt4C((u8*)self->unkB14);
+                obj = aiMoveBaseSelfId((u8*)self->unkB14);
                 void* v = func_8016FE34(findObjectById((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback2;
@@ -1989,7 +1993,7 @@ struct CfObjBase {
     u8    pad2[0x3374 - 0x1534];
     u32   unk3374;         // 0x3374 (flag 0x1000 = in-battle?)
     u8    pad3[0x3E9C - 0x3378];
-    void* moveVtable;      // 0x3E9C embedded move object's vtable
+    void* moveVptr;      // 0x3E9C embedded move object's vtable
     u8    pad4[0x64];
     u32   moveFlags;       // 0x3E9C+0x64 == 0x3F00 (bits 1,2 = move object)
     u32   unk3F10;         // 0x3F10 battle handle
@@ -2221,7 +2225,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* list = func_80043F18(&it);
             ((CAIEnumList*)list)->count = 0;
             ((CAIEnumList*)list)->unk3030 = 0;
-            void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc149();
+            void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_findMaxGaugeEntry();
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();
@@ -2244,7 +2248,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
             void* list = func_80043F18(&it);
             ((CAIEnumList*)list)->count = 0;
             ((CAIEnumList*)list)->unk3030 = 0;
-            void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_UnkVirtualFunc150();
+            void* battleObj = ((cf::CActorParam*)((CfObjBase*)self->unkB14))->CActorParam_findMinGaugeEntry();
             u32 id = 0;
             if (battleObj != 0) {
                 id = (u32)(uintptr_t)((cf::CObjectParam*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->CObjectParam_getSelfObjectId();

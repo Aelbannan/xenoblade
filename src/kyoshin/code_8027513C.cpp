@@ -219,8 +219,8 @@ void func_80275454(UnkCode8027513C* self) {
                     bindPartnerO_(eff, self->field_0x14, 0);
 
                     cf::CfObjectMove* obj = self->field_0x14;
-                    // UVF36 returns +0x60 in f1; UVF35 stores that into eff+0x60.
-                    eff->CfObject_UnkVirtualFunc35(obj->CfObject_UnkVirtualFunc36());
+                    // +0xE0 getter returns +0x60 in f1; +0xDC setter stores it into eff+0x60.
+                    eff->CfObject_setObjScale(obj->CfObject_getObjScale());
 
                     if (self->field_0x74 != nullptr && self->field_0x78 != 2) {
                         setChildB59__(self->field_0x74, 2);
@@ -277,8 +277,8 @@ void func_802756F0(UnkCode8027513C* self) {
     bindPartnerO_(eff, self->field_0x14, 0);
     
     obj = self->field_0x14;
-    // UVF36 returns +0x60 in f1; UVF35 stores that into eff+0x60.
-    eff->CfObject_UnkVirtualFunc35(obj->CfObject_UnkVirtualFunc36());
+    // +0xE0 getter returns +0x60 in f1; +0xDC setter stores it into eff+0x60.
+    eff->CfObject_setObjScale(obj->CfObject_getObjScale());
     
     if (self->field_0x74 != nullptr && self->field_0x78 != 2) {
         setChildB59__(self->field_0x74, 2);

@@ -29,74 +29,50 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const float sdat
 // CfResPcImpl when spawning with full PC resources, 0x20 bytes of
 // CfResReloadImpl otherwise). Defined at global scope (outside namespace cf)
 // so MWCC emits the verbatim retail symbol.
-struct CfObjectNpcInitView {
-    void* vtable;                 // 0x00 - CfObjectNpc vtable
-    u8 pad_04[0x34 - 0x04];
-    u32 field_34;                 // 0x34 (cleared by the ctor)
-    u8 pad_38[0xB0 - 0x38];
-    void* subObjB0;               // 0xB0 - CfResPcImpl / CfResReloadImpl child
-    u8 pad_B4[0x71C - 0xB4];
-    u8 iconType;                  // 0x71C - NPC icon type
-    u8 pad_71D;                   // 0x71D - alignment padding
-    s16 rltMeet;                  // 0x71E - relationship meet value (-1 = unset)
-    f32 timer;                    // 0x720 - dialogue trigger timer
-};
-
 cf::CfObjectNpc* __ct__Q22cf11CfObjectNpcFv(cf::CfObjectNpc* self, int heapFlag) {
     __ct__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)self);
-    CfObjectNpcInitView* view = (CfObjectNpcInitView*)self;
-    view->vtable = lbl_eu_805298B8;
+    *(void**)self = lbl_eu_805298B8;
 
     if (heapFlag != 0) {
         void* mem = mtl::MemManager::allocate(0x44, func_80061FFC());
         if (mem != NULL) {
             mem = __ct__cf_CfResPcImpl((u8*)mem, (cf::CfObjectMove*)self);
         }
-        view->subObjB0 = mem;
+        self->mSubObjB0 = mem;
     } else {
         void* mem = mtl::MemManager::allocate(0x20, func_80061FFC());
         if (mem != NULL) {
             mem = __ct__cf_CfResReloadImpl(mem, self);
         }
-        view->subObjB0 = mem;
+        self->mSubObjB0 = mem;
     }
 
     // Shared locals (CfResReloadImpl ctor idiom): values are computed before
-    // the member stores.
+    // the member stores. The 0x34 word is an unnamed CObjectParam gap word
+    // (cf. CfObjectModel ctor Gap34); the header's unk34 lands at +0x24, so
+    // it cannot be used here.
+    struct Gap34 { u8 _p00[0x34]; u32 w34; };   // 0x34 (unnamed gap word)
     f32 timerInit = lbl_eu_80666AE0;
     int zero = 0;
     s16 invalid = -1;
-    view->field_34 = (u32)zero;
-    view->iconType = (u8)zero;
-    view->rltMeet = invalid;
+    reinterpret_cast<Gap34*>(self)->w34 = (u32)zero;
+    self->mIconType = (u8)zero;
+    self->mRltMeet = invalid;
     self->mTimer = timerInit;
     return self;
 }
 
 namespace cf {
 
-// Unknown model-system object stored at offset 0x98 of the NPC. It carries a
-// flags word at 0x7A4 that is OR-ed with a high bit to mark the model.
-struct CfObjectNpc_model98 {
-    u8 pad_0x00[0x7A4];   // 0x000 - 0x7A3
-    u32 field_0x7A4;      // 0x7A4 - flag bits
-};
-
-// vtable slot 0x8C returns a f32 in retail even though the base header declares
-// it void; the proxy's getScale8C() reads f1.
-float CfObjectNpc::readSlot8c() {
-    return static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate();
-}
-
 // 0x800BFE00
 CfObjectNpc::~CfObjectNpc() {
     // Run the model-side cleanup via virtual dispatch (retail vtable slot 0x68).
-    this->CfObject_UnkVirtualFunc6();
+    this->CfObject_releaseMoveTargets();
 }
 
 // 0x800BFE74
 bool CfObjectNpc::initNpcFlags() {
-    this->CfObjectModel::CfObject_UnkVirtualFunc2();
+    this->CfObjectModel::CfObjectModel_releaseModelList();
     mFlags68 |= 0x100000;
     func_800BE33C(this, 1);
     func_800BE824(this, 1);
@@ -116,46 +92,42 @@ void CfObjectNpc::updateNpcDialog() {
     // Nothing pending if the global mask is clear AND the NPC is not already
     // in its "meet" state: skip straight to the timer reset below.
     if ((lbl_eu_80663E24 & 0x9840000) == 0 &&
-        this->CObjectState_UnkVirtualFunc8(1) == 0) {
+        this->CObjectState_checkStateFlags8(1) == 0) {
         // fall through to timer reset (resetTimer stays true)
     } else {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet__Fi(0x40000) == 0 &&
-            this->CObjectState_UnkVirtualFunc8(1) == 0 &&
+            this->CObjectState_checkStateFlags8(1) == 0 &&
             this->CObjectState_checkStateFlags(1) == 0 &&
             this->CObjectState_checkStateFlags(0x10) == 0) {
             // Fast path: flag the model and reset the trigger timer.
-            CfObjectNpc_model98* model =
-                *reinterpret_cast<CfObjectNpc_model98**>(
-                    &this->field_0x90[0x08]);
+            CfObjectModelSub98* model = this->mSubObj98;
             if (model != nullptr) {
-                model->field_0x7A4 |= 0x80000000;
+                model->field_7A4 |= 0x80000000;
             }
-            this->CfObject_UnkVirtualFunc12();
-            this->CfObject_UnkVirtualFunc5();
+            this->CfObject_refreshSubB0();
+            this->CfObject_updateMoveRate();
             this->mTimer = lbl_eu_80666AE0;
             return;   // retail b .L_800C014C (skips the vfunc4 hook)
         }
 
         // Dialogue-decided path.
         if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666AE0 &&
-            this->CObjectState_UnkVirtualFunc8(1) != 0 &&
+            this->CObjectState_checkStateFlags8(1) != 0 &&
             this->CObjectState_checkStateFlags(1) == 0 &&
             this->CObjectState_checkStateFlags(0x10) == 0 &&
             func_8013EB90(1) == 0) {
             if (this->mTimer > lbl_eu_80666AEC) {
-                this->CObjectState_UnkVirtualFunc5(3);
-                // Slots 0x50 and 0x1AC take arguments though the base headers
-                // declare them argument-less; call through the vtable proxy.
+                this->CObjectState_applyStateFlags(3);
                 static_cast<cf::CObjectParam*>(this)->CObjectParam_signalActionEnd(0);
-                static_cast<cf::CfObjectModel*>(this)->CfObjectModel_UnkVirtualFunc14(nullptr, (const char*)lbl_eu_804FC580);
+                static_cast<cf::CfObjectModel*>(this)->CfObjectModel_bindModelTo(nullptr, (const char*)lbl_eu_804FC580);
                 this->mTimer = lbl_eu_80666AE0;
             } else {
                 // Local forces the scene-pointer load before the slot call,
                 // matching retail's r31 hoist.
                 CScn* scene = lbl_eu_80663E14;
                 this->mTimer += func_80496288(scene) *
-                                this->readSlot8c() / lbl_eu_80666AF0;            }
+                                static_cast<cf::CfObject*>(this)->CfObject_getMoveSpeedRate() / lbl_eu_80666AF0;            }
             resetTimer = false;
         }
     }
@@ -180,13 +152,13 @@ void CfObjectNpc::func_800BF764() {
     // the fixed string baked into the column-name table at +0xC.
     if (strlen((const char*)getBdatStringColumnValue(
             fp, (const char*)&lbl_eu_804FC580[7], unk8C_3)) > 0x1F) {
-        static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc1((const char*)&lbl_eu_804FC580[0xC]);
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)&lbl_eu_804FC580[0xC]);
     } else {
-        static_cast<cf::CObjectParam*>(this)->CObjectParam_UnkVirtualFunc1((const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
+        static_cast<cf::CObjectParam*>(this)->CObjectParam_setObjectName((const char*)getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[7], unk8C_3));
     }
 
-    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc57(lbl_eu_80666AF4);
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80666AF8);
+    static_cast<cf::CfObject*>(this)->CfObject_setMoveValue(lbl_eu_80666AF4);
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_recordMoveValue(lbl_eu_80666AF8);
 
     // Speed column (+0x11): byte payload scaled by the model's current scale.
     // The plain (f32)(u32)(u8) casts emit MWCC's builtin 0x43300000 stack-slot
@@ -196,19 +168,19 @@ void CfObjectNpc::func_800BF764() {
         fp, (const char*)&lbl_eu_804FC580[0x11], unk8C_3);
     f32 val1 = (f32)(u32)(u8)col11 /
         *(f32*)static_cast<cf::CfObject*>(this)->CfObject_getMoveRateScale();
-    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc59(val1);
+    static_cast<cf::CfObject*>(this)->CfObject_setMoveScale(val1);
 
     // Fade column (+0x1C): halfword payload divided by the fade-scale factor.
     u32 col1c = getBdatStringColumnValue(
         fp, (const char*)&lbl_eu_804FC580[0x1C], unk8C_3);
     f32 val2 = (f32)(u32)(u16)col1c / lbl_eu_80666AFC;
-    static_cast<cf::CfObject*>(this)->CfObject_UnkVirtualFunc35(val2);
+    static_cast<cf::CfObject*>(this)->CfObject_setObjScale(val2);
 
     // Retail leaves a stale word in r4 here (leftover column-key pointer);
     // the slot ignores it when mField6DC/mField6E0 are NULL. Pass 0: any
     // explicit arg costs one li vs retail, so this stays a known +1-insn
     // residual on this non-matching function (see hexdiff func_800BF764).
-    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_UnkVirtualFunc23(0);
+    static_cast<cf::CfObjectMove*>(this)->CfObjectMove_loadResourceById(0);
 }
 
 // 0x800C0314

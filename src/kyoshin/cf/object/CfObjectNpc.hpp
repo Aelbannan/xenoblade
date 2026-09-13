@@ -74,10 +74,6 @@ namespace cf {
         s16 getRltMeet();
         u8 getIconType();
 
-        // Reads the f32 returned by vtable slot 0x8C (declared void in the
-        // base header, but retail leaves a scaled float in f1).
-        float readSlot8c();
-
         // 0x0: vtable
         // 0x0-718: CfObjectMove
 

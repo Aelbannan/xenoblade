@@ -3386,7 +3386,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Build the crystal display model for this slot.
         sub->field_00 = func_80495E8C(objs->field_0c, crystalCount, -1, 1);
         sub->mCrystalVals[1] =
-            (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(1) >> 12) &
+            (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(1) >> 12) &
             0x3ff;
         s16 be = func_800BE954(&actor->move);
         CMCCryParamSlot* params =
@@ -3394,11 +3394,11 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
         // Crystal attachment points 2..5; do-while keeps the retail loop shape.
         u8 idx = 2;
         do {
-            if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) != 0) {
+            if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 0) {
                 void* obj = params[idx].field_2c->getResourceBase(&params[idx], actor->field_3f28);
                 func_804831C4(sub->field_00, obj);
                 sub->mCrystalVals[idx] =
-                    (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) >>
+                    (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) >>
                      12) &
                     0x3ff;
             }

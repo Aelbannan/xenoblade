@@ -41,29 +41,35 @@ __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668330[0
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668338[0x08] = "gimID";
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668340[0x08] = "MSGID";
 __declspec(section ".sdata2") __attribute__((used)) const char lbl_eu_80668348[0x08] = "name1";
-struct Sdata2Num_CfGimmick {
-    float f0;    // 80668350 0.0
-    float f1;    // 80668354 40.743664
-    float f2;    // 80668358 1.0
-    float f3;    // 8066835C 30.0
-    float f4;    // 80668360 30000.0
-    float f5;    // 80668364 0.01
-    double d0;   // 80668368 signed magic
-    double d1;   // 80668370 2^52
-    float f6[2]; // 80668378 1.5, 0.0
+// Individual SDA number labels (retail addressing): each constant is its own
+// .sdata2 symbol so MWCC emits SDA21 loads through the small-data base.
+// The previous single-struct pool forced absolute addressing (li + lfs via a
+// dedicated GPR), which grew every float user's frame by one saved register
+// (func_8020A124/A1DC: 0x30 -> 0x40) and drifted reloc names. Order and
+// addresses match retail: 68350..68364 floats, 68368/68370 doubles,
+// 68378 float pair. Total 0x30 bytes, same as the struct.
+extern "C" {
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668350 = 0.0f;
+__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668354 = 40.743664f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668358 = 1.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_8066835C = 30.0f;
+__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668360 = 30000.0f;
+__declspec(section ".sdata2") __attribute__((used)) const float lbl_eu_80668364 = 0.01f;
+// Tail doubles stay in a struct: as individual labels MWCC literal-dedups
+// the 2^52 against the code-gen int->float pool, drops the slot and pulls
+// the 68378 pair up to 0x50 (data regression). The aggregate forces the
+// retail offsets 0x48/0x50 with the retail values. Neither double is
+// referenced by name (code uses pool magics), so no frame impact.
+struct Sdata2Tail_CfGimmick {
+    double d0;   // 80668368 4503601774854144.0 (signed int->float magic)
+    double d1;   // 80668370 4503599627370496.0 (2^52, unsigned magic)
 };
 __declspec(section ".sdata2") __attribute__((used, aligned(8)))
-const Sdata2Num_CfGimmick sdata2num_CfGimmick = {
-    0.0f, 40.743664f, 1.0f, 30.0f, 30000.0f, 0.01f,
-    4503601774854144.0, 4503599627370496.0, {1.5f, 0.0f}
+const Sdata2Tail_CfGimmick sdata2tail_CfGimmick = {
+    4503601774854144.0, 4503599627370496.0
 };
-#define lbl_eu_80668350 sdata2num_CfGimmick.f0
-#define lbl_eu_80668354 sdata2num_CfGimmick.f1
-#define lbl_eu_80668358 sdata2num_CfGimmick.f2
-#define lbl_eu_8066835C sdata2num_CfGimmick.f3
-#define lbl_eu_80668360 sdata2num_CfGimmick.f4
-#define lbl_eu_80668364 sdata2num_CfGimmick.f5
-#define lbl_eu_80668378 sdata2num_CfGimmick.f6[0]
+__declspec(section ".sdata2") __attribute__((used)) const f32 lbl_eu_80668378[2] = {1.5f, 0.0f};
+}
 
 // typed .bss/.sbss zero-fill (replaces old nobits blobs): sizes must total
 // retail .bss 0xB8 / .sbss 0xC; nobits compare sizes only.
@@ -76,17 +82,8 @@ u32 lbl_eu_806646B4;
 u32 lbl_eu_806646B8;
 }
 
-struct CfGimmickMgr88 {
-    virtual void dummy_00(); virtual void dummy_04(); virtual void dummy_08(); virtual void dummy_0C();
-    virtual void dummy_10(); virtual void dummy_14(); virtual void dummy_18(); virtual void dummy_1C();
-    virtual void dummy_20(); virtual void dummy_24(); virtual void dummy_28(); virtual void dummy_2C();
-    virtual void dummy_30(); virtual void dummy_34(); virtual void dummy_38(); virtual void dummy_3C();
-    virtual void dummy_40(); virtual void dummy_44(); virtual void dummy_48(); virtual void dummy_4C();
-    virtual void dummy_50(); virtual void dummy_54(); virtual void dummy_58(); virtual void dummy_5C();
-    virtual void dummy_60(); virtual void dummy_64(); virtual void dummy_68(); virtual void dummy_6C();
-    virtual void dummy_70(); virtual void dummy_74(); virtual void dummy_78(); virtual void dummy_7C();
-    virtual void m88(); // 0x88
-};
+// (No TU-local vtable pad: the field_78 actor dispatch goes through the
+// CfObject view at the func_8020899C definition below.)
 
 
 struct CfGimmickVec3;
@@ -273,7 +270,7 @@ void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
         lbl_eu_806646B4 = (u32)partyId;
         if (flagA) lbl_eu_806646BC |= 0x20;
         if (flagB) lbl_eu_806646BC |= 0x40;
-        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && player->CfObject_UnkVirtualFunc68() &&
+        if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && player->CfObject_checkSubReady() &&
             (lbl_eu_80663E24 & 0x80) != 0) {
             lbl_eu_806646BC |= 0x2;
         }
@@ -730,12 +727,12 @@ void func_8020A124(float value) {
         CfObjectMove* player = CfGameManager::getPlayer(i);
         if (player != nullptr) {
             if (value != zero) {
-                // +0x168 = CfObject_UnkVirtualFunc70 (dispatched through the
-                // CfObject view since CfObjectMove redeclares it as a member).
-                ((cf::CfObject*)player)->CfObject_UnkVirtualFunc70(zero);
+                // +0x168 = CfObject_syncModelRate (CfObjectMove
+                // implicitly overrides the slot, so no view cast is needed).
+                player->CfObject_syncModelRate(zero);
                 func_800BC3D8(player, value);
             } else {
-                ((cf::CfObject*)player)->CfObject_UnkVirtualFunc70(lbl_eu_80668358);
+                player->CfObject_syncModelRate(lbl_eu_80668358);
             }
         }
     }
@@ -747,10 +744,11 @@ void func_8020A1DC(float value) {
         CfObjectMove* player = CfGameManager::getPlayer(i);
         if (player != nullptr) {
             if (value != zero) {
-                ((cf::CfObject*)player)->CfObject_UnkVirtualFunc70(lbl_eu_80668358);
+                // Same +0x168 slot as func_8020A124 (no view cast needed).
+                player->CfObject_syncModelRate(lbl_eu_80668358);
                 func_800BC3B0(player, value);
             } else {
-                ((cf::CfObject*)player)->CfObject_UnkVirtualFunc70(zero);
+                player->CfObject_syncModelRate(zero);
             }
         }
     }
@@ -804,7 +802,7 @@ CfGimmickObject* func_8020A35C(const char* name, int other, const CfGimmickVec3*
         // assignment keeps retail's load order, forward stores the struct.
         f32 x, y, z;
         z = point->z;
-        y = lbl_eu_80668378 + point->y;
+        y = lbl_eu_80668378[0] + point->y;
         x = point->x;
         pos.x = x;
         pos.y = y;
@@ -979,7 +977,7 @@ resolvedName:;
             CfGimmickVec3 pos;
             f32 x, y, z;
             z = point->z;
-            y = lbl_eu_80668378 + point->y;
+            y = lbl_eu_80668378[0] + point->y;
             x = point->x;
             pos.x = x;
             pos.y = y;
@@ -1079,13 +1077,20 @@ int func_8020AA8C(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVe
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8020AB7C() {}
 
-// Vfunc7 of the CfGimmick vtable: forward to the linked field_78
-// game-manager object's vtable slot +0x88 when it is present.  The dispatch
-// is the function's last statement, so MWCC emits it as a tail call (bctr).
-void func_8020899C(cf::CfGimmick* self) {
+// Retail free function taking (gimmick, float): the 801F3BE0 callers set f1
+// from lbl_eu_80668158/60 before bl func_8020899C, and the body tail-forwards
+// (field_78, f1) to vtable slot +0x88 with no f1 setup of its own. Slot and
+// arity coincide with the CfObject-layout +0x88 float slot
+// (CfObject_pushRefreshValue); the sibling +0x9C (vec) / +0xC4 (float)
+// dispatches on the same object in CfGimmickElv match the CfObject-layout
+// slots too. The object itself is the createBattleActor product (back-pointer
+// at +0xB0, cleared by func_8020896C/func_80208EE4), driven here through the
+// CfObject view. The dispatch is the function's last statement, so MWCC
+// emits it as a tail call (bctr).
+void func_8020899C(cf::CfGimmick* self, float value) {
     if (self->field_78 == 0)
         return;
-    ((CfGimmickMgr88*)self->field_78)->m88();
+    reinterpret_cast<cf::CfObject*>(self->field_78)->CfObject_pushRefreshValue(value);
 }
 
 

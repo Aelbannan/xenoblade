@@ -143,7 +143,7 @@ cf::CtrlNpc* __ct__CtrlNpc(cf::CtrlNpc* self, cf::CfObject* param) {
 // (4/5), report the current target/position offset to the character object
 // and (on success) bump the page counter / set the done flags.
 void func_8009377C(cf::CtrlNpc* self, u32 param) {
-    reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_UnkVirtualFunc2();
+    reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getParamPtr();
     u16 c0 = self->field_C0;
     self->field_DC = 0;
     if (param != c0) {
@@ -164,13 +164,13 @@ void func_8009377C(cf::CtrlNpc* self, u32 param) {
             ml::CVec3 diff = v;
             const nw4r::math::VEC3* pd =
                 reinterpret_cast<const nw4r::math::VEC3*>(&diff);
-            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc68(&v) != 0 &&
+            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_checkSubReady(&v) != 0 &&
                 (lbl_eu_80663E28 & 0x04000000) == 0) {
                 f32 len2 = nw4r::math::VEC3LenSq(pd);
                 if (len2 < lbl_eu_806666A0) {
                     self->field_DC += 1;
                     if (self->field_C0 == 4) {
-                        reinterpret_cast<cf::CfObjectMove*>(self->field_28)->CfObjectMove_UnkVirtualFunc6(0);
+reinterpret_cast<cf::CfObjectMove*>(self->field_28)->CfObjectMove_setTargetC4Arg(0);
                         self->field_2C |= 0x10;
                     } else if (self->field_C0 == 5) {
                         self->field_2C |= 0x8;
@@ -199,8 +199,8 @@ void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned lo
 // slots +0x58/+0x5C.
 void func_80093938(cf::CCtrlNpcChar* self) {
     self->field_04 = 0;
-    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc2();
-    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc3();
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_initEventState();
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_syncEnableState();
 }
 
 extern "C" void func_800966E8(cf::CtrlNpc* self);
@@ -217,9 +217,9 @@ void func_8009398C(cf::CtrlNpc* self) {
     getInstance__Q22cf13CfGameManagerFv();
     if (isGlobalCamFlagSet(0x1000000))
         goto gateFail;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0)
         goto gateFail;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x4000) == 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x4000) == 0)
         goto bodyStart;
 gateFail:
     self->field_14 = lbl_eu_80666698;
@@ -229,7 +229,7 @@ bodyStart:
             if ((NpcCharView(self->field_28)->field_68 & 0x00100000) == 0 &&
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
-            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_UnkVirtualFunc14(nullptr, lbl_eu_804FBB0C);
+            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(nullptr, lbl_eu_804FBB0C);
         }
 
         if ((self->field_2C & 0x08) != 0) {
@@ -274,7 +274,7 @@ bodyStart:
                 goto noMove;
             // Offset query takes the action kind (retail reuses r4 holding
             // the halfword unchanged).
-            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc68(reinterpret_cast<const ml::CVec3*>(act)) != 0 ||
+            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_checkSubReady(reinterpret_cast<const ml::CVec3*>(act)) != 0 ||
                 (NpcCharView(self->field_28)->field_68 & 0x2000) != 0) {
                 int be = self->field_BE;
                 if (be >= 0) {
@@ -302,14 +302,14 @@ bodyStart:
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh())
                     goto chk3;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73() < lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh() < lbl_eu_806666A4)
                     goto settle3;
             chk3:
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow())
                     goto tail;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle3:
                 func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
@@ -328,14 +328,14 @@ bodyStart:
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh())
                     goto chk4;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73() < lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh() < lbl_eu_806666A4)
                     goto settle4;
             chk4:
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow())
                     goto tail;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle4:
                 func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
@@ -350,14 +350,14 @@ bodyStart:
             }
             if (NpcCharView(self->field_28)->field_98 != 0) {
                 cf::CfObjectMove* o = self->field_28;
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh())
                     goto chk5;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc73() < lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressHigh() < lbl_eu_806666A4)
                     goto settle5;
             chk5:
-                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71())
+                if (lbl_eu_80666698 >= reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow())
                     goto tail;
-                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_UnkVirtualFunc71() >= lbl_eu_806666A4)
+                if (reinterpret_cast<cf::CfObject*>(o)->CfObject_getProgressLow() >= lbl_eu_806666A4)
                     goto tail;
             settle5:
                 func_804876DC(reinterpret_cast<cf::CfObjectModelSub98*>(NpcCharView(o)->field_98));
@@ -409,12 +409,12 @@ void func_80093F28(cf::CtrlNpc* self) {
         msg.len = 0;
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(8) != 0) {
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc5(0x2000);
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_applyStateFlags(0x2000);
         } else {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_clearStateFlags8(0x2000);
         }
 
-        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0) {
+        if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0) {
             reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
         } else if (self->field_172 != 0) {
             f32 d = self->field_178 - reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveHeadAngle();
@@ -423,7 +423,7 @@ void func_80093F28(cf::CtrlNpc* self) {
         }
 
         if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0 &&
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
             cf::CfObject* target =
                 (cf::CfObject*)findObjectById(reinterpret_cast<cf::CObjectParam*>(self->field_28)->CObjectParam_getSelfObjectId());
             if (target != 0 && NpcCharView(self->field_28)->field_C4 != 0) {
@@ -444,7 +444,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                             char* t = (char*)target;
                             if (t != 0) t -= 0x3E9C;
                             if (t != 0) t += 0x3E9C;
-                            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_UnkVirtualFunc14(reinterpret_cast<cf::CfObject*>(t), lbl_eu_804FBB0C);
+                            reinterpret_cast<cf::CfObjectModel*>(self->field_28)->CfObjectModel_bindModelTo(reinterpret_cast<cf::CfObject*>(t), lbl_eu_804FBB0C);
                         }
                     }
                 }
@@ -474,9 +474,9 @@ void func_80093F28(cf::CtrlNpc* self) {
                     self->field_174 = 0;
                 }
             }
-            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
+            if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
                 reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitFlag(1);
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc5(1);
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_applyStateFlags(1);
                 if (target != 0)
                     self->field_172 = 1;
             }
@@ -487,13 +487,13 @@ void func_80093F28(cf::CtrlNpc* self) {
             if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_setStateBitMask0(1, 0) != 0 && self->field_174 != 0) {
                 reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_setMoveHeadAngle(self->field_178);
                 func_800BE12C((u8*)self->field_28, 3, 0, -1, 1);
-                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
+                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
                     func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
                     self->field_174 = 0;
                 }
             }
-            if (self->field_174 != 0 && reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0 &&
-                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) == 0) {
+            if (self->field_174 != 0 && reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0 &&
+                reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) == 0) {
                 func_800BE12C((u8*)self->field_28, self->field_174, 0, -1, 1);
                 self->field_174 = 0;
             }
@@ -618,7 +618,7 @@ void func_80093F28(cf::CtrlNpc* self) {
                 self->field_17C = count;
                 break;
             }
-        } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x2000) != 0 &&
+        } else if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x2000) != 0 &&
                    self->field_17C != 0) {
             const char* col3 =
                 lbl_eu_80527A80[(u16)getControllerWordA33C__Q22cf13CfGameManagerFv() /
@@ -635,11 +635,11 @@ void func_80093F28(cf::CtrlNpc* self) {
     }
 }
 
-// 0x80095274: cf::CObjectState::CObjectState_UnkVirtualFunc5. The retail
+// 0x80095274: cf::CObjectState::CObjectState_applyStateFlags. The retail
 // symbol keeps the Fv suffix, but the virtual is invoked with an int (see
 // object/CObjectState.hpp and CfObjectNpc.cpp callers), so the body is emitted
 // under the literal retail name with the caller's real arg shape.
-extern "C" void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv(cf::CObjectState* self, int arg) {
+extern "C" void CObjectState_applyStateFlags__Q22cf12CObjectStateFv(cf::CObjectState* self, int arg) {
     if ((u32)arg < 0x3f)
         self->CObjectState_clearStateFlags8(0x3f);
     self->unk8 |= (u32)arg;
@@ -747,7 +747,7 @@ int func_80094D1C(const cf::CtrlNpc* self) {
                 result = 1;
         } else {
             if (self->field_BE == 2) {
-                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0)
+                if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(1) != 0 || reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags(1) != 0)
                     result = 0;
                 else
                     result = 1;
@@ -869,7 +869,7 @@ void func_8009505C(cf::CtrlNpc* self) {
 void func_800950E8(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
     cf::CCtrlNpcC4Object* flag = NpcCharView(obj)->field_C4;
-    if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc13() != 0 || func_8004C5EC(flag) == 1)) {
+    if (flag != 0 && (reinterpret_cast<cf::CfObject*>(obj)->CfObject_queryTargetState() != 0 || func_8004C5EC(flag) == 1)) {
         if (self->field_16E != 0) {
             int zero = (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc51() == 0);
             func_800BE12C((u8*)self->field_28, self->field_16E, zero, -1, 1);
@@ -902,7 +902,7 @@ void func_800951A0(cf::CtrlNpc* self) {
 // the previous turn while the wander timer field_BC is still running).
 void func_80095224(cf::CtrlNpc* self) {
     cf::CfObjectMove* obj = self->field_28;
-    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0)
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_checkStateFlags8(0x1000) != 0)
         return;
     const ml::CVec3* posf =
         reinterpret_cast<const ml::CVec3*>(reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getPosVector());
@@ -929,7 +929,7 @@ void func_80095224(cf::CtrlNpc* self) {
             // Retail evaluates the rand int-to-double conversion before the
             // _vD8() virtual call (the value lives in f31 across the call).
             double rnd = ml::math::mtRand(60);
-            f32 base = lbl_eu_806666BC + reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc34();
+            f32 base = lbl_eu_806666BC + reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getScaledAngle();
             f1 = (base + rnd) * lbl_eu_8066A210;
         } else {
             f1 = ml::math::mtRand(360) * lbl_eu_8066A210;
@@ -961,7 +961,7 @@ void func_80095450(cf::CtrlNpc* self) {
             self->field_B8 = 0;
     }
     if (NpcCharView(self->field_28)->field_C4 != 0 &&
-        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) != 0) {
+        reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         return;
     }
@@ -986,7 +986,7 @@ void func_80095450(cf::CtrlNpc* self) {
         self->field_B8 -= 1;
         self->field_BA -= 1;
     }
-    self->field_14 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60();
+    self->field_14 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
     if (self->field_B8 <= 0) {
         // Retail loads field_DE once and reuses it for both the store and
         // the zero test.
@@ -1051,7 +1051,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         (((u32)tick & 3) != ((u32)reinterpret_cast<u32>(NpcCharView(ch)->field_74) & 3)))
         return;
 
-    reinterpret_cast<cf::CObjectParam*>(ch)->CObjectParam_UnkVirtualFunc2();
+    reinterpret_cast<cf::CObjectParam*>(ch)->CObjectParam_getParamPtr();
 
     // Accumulate XZ lengths between consecutive waypoints.
     f32 total = lbl_eu_80666698;
@@ -1102,7 +1102,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
 
     // Minimum progress implied by the character's movement rate.
     f32 scale = *reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveRateScale());
-    f32 prog = reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc60();
+    f32 prog = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveFactor();
     f32 adj = lbl_eu_806666C8 *
               (f32)((f64)(int)self->field_16A * (prog * scale)) /
               lbl_eu_806666CC;
@@ -1163,23 +1163,23 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             if (evt == 1 && NpcCharView(ch)->field_8C == 0x91 && (u16)mgrA == 4) {
                 if (flag20) {
                     pt.y = lbl_eu_806666DC;
-                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc22(&pt);
+                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_syncMoveTarget(&pt);
                 } else {
                     pt.y = pt.y + lbl_eu_806666E0;
-                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc26(&pt, lbl_eu_806666C8);
+                    reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, lbl_eu_806666C8);
                 }
             } else if (evt == 0xa && NpcCharView(ch)->field_8C == 0x2fa) {
                 pt.y = pt.y + lbl_eu_806666E0;
                 ml::CVec3 out = pt;
                 func_800A72E0(&pt, &out, 0x4004A09, lbl_eu_806666E4,
                               lbl_eu_80666698);
-                reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc22(&out);
+                reinterpret_cast<cf::CfObject*>(ch)->CfObject_syncMoveTarget(&out);
             } else {
-                reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc26(&pt, lbl_eu_806666C8);
+                reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&pt, lbl_eu_806666C8);
             }
             self->field_C4 = nextWp;
             if (flag20) {
-                reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc30(heading);
+                reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveYaw(heading);
             } else {
                 self->field_0C = heading;
                 if (ch != 0) {
@@ -1191,7 +1191,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         } else {
             // Close enough: only apply the heading.
             if (flag20) {
-                reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc30(heading);
+                reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveYaw(heading);
             } else {
                 self->field_0C = heading;
                 if (ch != 0) {
@@ -1211,14 +1211,14 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
             reinterpret_cast<const ml::CVec3*>(&self->field_E0[nn - 2]);
         ml::CVec3 hd = last - *prev;
         nw4r::math::Atan2FIdx(hd.x, hd.z);
-        reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc26(&last, lbl_eu_806666D0);
+        reinterpret_cast<cf::CfObject*>(ch)->CfObject_applyMoveOffset(&last, lbl_eu_806666D0);
         func_804B0B54((u8*)ch + 0x60C,
                       reinterpret_cast<const float*>(reinterpret_cast<cf::CfObject*>(ch)->CfObject_getPosVector()));
 
         f32 f158 = self->field_158;
         if ((int)f158 != 0x168) {
             self->field_0C = f158 * lbl_eu_8066A210;
-            reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc30(self->field_0C);
+            reinterpret_cast<cf::CfObject*>(ch)->CfObject_setMoveYaw(self->field_0C);
         }
         self->field_BE += 1;
         func_80095F44(self);
@@ -1229,7 +1229,7 @@ void __declspec(noinline) func_8009565C(cf::CtrlNpc* self) {
         return;
     }
 
-    f32 p = reinterpret_cast<cf::CfObject*>(ch)->CfObject_UnkVirtualFunc60();
+    f32 p = reinterpret_cast<cf::CfObject*>(ch)->CfObject_getMoveFactor();
     self->field_D8 = p;
     if (p < lbl_eu_806666A8)
         self->field_D8 = lbl_eu_806666A8;
@@ -1252,7 +1252,7 @@ void func_80095F44(cf::CtrlNpc* self) {
     f32 distSq = diff.x * diff.x + diff.z * diff.z;
 
     cf::CfObjectMove* obj = self->field_28;
-    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_UnkVirtualFunc8(0x1000) != 0) {
+    if (NpcCharView(obj)->field_C4 != 0 && reinterpret_cast<cf::CObjectState*>(obj)->CObjectState_checkStateFlags8(0x1000) != 0) {
         self->field_14 = lbl_eu_80666698;
         self->field_C6 = (u16)((self->field_C6 & 0xFF00) | 1);
         return;
@@ -1298,14 +1298,14 @@ void func_80095F44(cf::CtrlNpc* self) {
     if (!(distSq <= threshold) &&
         !((f32)__fabs((f64)(threshold - distSq)) < lbl_eu_806666FC)) {
         // Not arrived yet.
-        f32 prog = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60();
+        f32 prog = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
         self->field_D8 = prog;
         if (self->field_15C - 1 != idx) {
-            f32 f30 = lbl_eu_806666FC * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60();
+            f32 f30 = lbl_eu_806666FC * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
             if (!(f30 >= lbl_eu_806666A8))
                 f30 = lbl_eu_806666A8;
-            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60() >= lbl_eu_806666A4) {
-                f30 = lbl_eu_80666704 * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60();
+            if (reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor() >= lbl_eu_806666A4) {
+                f30 = lbl_eu_80666704 * reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
                 if (!(f30 >= lbl_eu_806666A8))
                     f30 = lbl_eu_806666A8;
                 speed = lbl_eu_806666E0;
@@ -1314,7 +1314,7 @@ void func_80095F44(cf::CtrlNpc* self) {
                 f32 ratio =
                     (speed - (f32)func_800A3EF4(distSq)) / speed;
                 f32 newProg = lbl_eu_806666A4 - ratio;
-                f32 prog2 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_UnkVirtualFunc60();
+                f32 prog2 = reinterpret_cast<cf::CfObject*>(self->field_28)->CfObject_getMoveFactor();
                 self->field_D8 = (prog2 - f30) * newProg + f30;
             }
         }
@@ -1325,8 +1325,8 @@ void func_80095F44(cf::CtrlNpc* self) {
         if (next >= self->field_15C) {
             self->field_14 = lbl_eu_80666698;
             cf::CfObjectMove* obj2 = self->field_28;
-            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_UnkVirtualFunc25(curTgt, lbl_eu_806666D0);
-            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_UnkVirtualFunc34();
+            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_snapMoveTarget(curTgt, lbl_eu_806666D0);
+            reinterpret_cast<cf::CfObject*>(obj2)->CfObject_getScaledAngle();
             f32 f158 = self->field_158;
             if ((int)f158 != 0x168) {
                 self->field_0C = f158 * lbl_eu_8066A210;
@@ -1455,7 +1455,7 @@ void func_800966E8(cf::CtrlNpc* self) {
         }
     } else if (self->field_BE == 2) {
         if (NpcCharView(self->field_28)->field_C4 == 0 ||
-            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
+            reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0) {
             self->field_D4 = lbl_eu_80666700;
             self->field_BE = 3;
         }
@@ -1476,7 +1476,7 @@ void func_800966E8(cf::CtrlNpc* self) {
 int func_800967F8(cf::CtrlNpc* self) {
     if (self->field_174 != 0)
         goto ret1;
-    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_UnkVirtualFunc8(0x1000) == 0)
+    if (reinterpret_cast<cf::CObjectState*>(self->field_28)->CObjectState_checkStateFlags8(0x1000) == 0)
         goto ret0;
 ret1:
     return 1;

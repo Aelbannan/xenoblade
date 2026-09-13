@@ -36,6 +36,60 @@
 #undef func_800AA33C
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
+// CtrlPc player-sub type for func_80085FB8's +0x38 sub-object probe (real
+// slot-0x40 virtual CtrlPlayerSub3ED4::vf14, int(int), same 0x400-probe
+// idiom as CtrlPc.cpp's mask-3 resets). Include-only: owned elsewhere.
+// (Func renames: this TU's func_8006BBF4 takes s32 flag and func_800FE68C
+// returns void*; the header's int/CfObj90E4* copies are renamed away -
+// same MWCC-10505 pattern as above.)
+#define func_8006BBF4 ctrlPcFunc_8006BBF4
+#define func_800FE68C ctrlPcFunc_800FE68C
+#define func_800F6D50 ctrlPcFunc_800F6D50
+#define func_8017FD44 ctrlPcFunc_8017FD44
+#define func_8017FD4C ctrlPcFunc_8017FD4C
+#define getArtsParamRC2 ctrlPcGetArtsParamRC2
+#include "kyoshin/cf/CtrlPc.hpp"
+#undef func_800FE68C
+#undef func_8006BBF4
+#undef func_800F6D50
+#undef func_8017FD44
+#undef func_8017FD4C
+#undef getArtsParamRC2
+// Full battle-manager class for resetBattlePresentation's real slot-0x1C call
+// (setPartyMaskFlag) and +0x94/+0x194 member access. Include-only: the class
+// and its TU are owned elsewhere; nothing here is redeclared.
+// (CSuddenCommu.hpp's import block declares getUnk80664658 with a different
+// extern "C" return type than the TU-local decl; rename its copy away -
+// same MWCC-10505 pattern as the CfObjectMove/CfObjectMap renames above.)
+#define getUnk80664658 cbattleGetUnk80664658
+#define func_80158018 cbattleFunc_80158018
+#define isGlobalCamFlagSet__Fi cbattleIsGlobalCamFlagSet
+#define func_8009E344 cbattleFunc_8009E344
+#define func_8026178C cbattleFunc_8026178C
+#define lookupEffectForResource__Q22cf13CfGameManagerFv cbattleLookupEffectForResource
+#define __dt__Q22cf16CfObjectImplMoveFv cbattle_dt_CfObjectImplMove
+#define getPlayer__Q22cf13CfGameManagerFi cbattleGetPlayer
+#define func_8025FB10 cbattleFunc_8025FB10
+#define func_800B8920 cbattleFunc_800B8920
+#define syncBattleState__Q22cf13CfGameManagerFv cbattleSyncBattleState
+#define func_800B6C34 cbattleFunc_800B6C34
+#define addTableValueWithClamp__Q22cf13CfGameManagerFv cbattleAddTableValueWithClamp
+#define createBattleActor__Q22cf13CfGameManagerFv cbattleCreateBattleActor
+#include "kyoshin/cf/CBattleManager.hpp"
+#undef createBattleActor__Q22cf13CfGameManagerFv
+#undef func_8026178C
+#undef func_8009E344
+#undef lookupEffectForResource__Q22cf13CfGameManagerFv
+#undef __dt__Q22cf16CfObjectImplMoveFv
+#undef getPlayer__Q22cf13CfGameManagerFi
+#undef func_8025FB10
+#undef func_800B8920
+#undef syncBattleState__Q22cf13CfGameManagerFv
+#undef func_800B6C34
+#undef addTableValueWithClamp__Q22cf13CfGameManagerFv
+#undef isGlobalCamFlagSet__Fi
+#undef func_80158018
+#undef getUnk80664658
 
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
@@ -45,15 +99,10 @@
 #include <string.h>
 #include "monolib/math/FloatUtils.hpp"  // H3 label-owner decl (lbl_eu_8066A208)
 
-extern "C" void setContainerMode10(void* container, u32 mode);
-extern "C" void setContainerMode20(void* container, u32 mode);
-extern "C" void dispatchFieldC4(void* field);
 extern "C" u32 getEffectFlagFromMgr(void* mgr);
 extern "C" void setGimmickActive(void* obj, bool enable);
 extern "C" void refreshGimmickObject(void* obj);
 extern "C" void setVoiceActionActive(void* act, bool enable);
-extern "C" void setContainerMode158(void* obj, u32 mode);
-extern "C" void setBdatObjActive(void* obj, u32 mode);
 
 // Local complete type for func_8049603C's result (canonical name per
 // CfGameManager.hpp's fwd-decl; layout matches CTaskGame.hpp's view;
@@ -131,6 +180,22 @@ struct Func800B6BECList {
     Func800B6BECNode* head;  // 0x04 sentinel
 };
 extern "C" Func800B6BECList* func_800B6BEC();
+
+// Real cf::CfObjectColl tree for func_80085978's copyCollPosition (+0xB8 Fv)
+// call. CfObjectColl.hpp recovers lbl_eu_80528600 with Coll's no-arg +0xB8
+// override; the main cf::CfObject.hpp tree spells that slot as
+// applyMoveOffset(vec,float). Macro-rename the Coll TU's intermediate bases
+// so they do not ODR-clash with the already-included main object headers.
+// Include-only: CfObjectColl.cpp / .hpp owned elsewhere; nothing redefined.
+#define CObjectState GmColl_CObjectState
+#define CObjectParam GmColl_CObjectParam
+#define CfObject GmColl_CfObject
+#define CfObjectPoint GmColl_CfObjectPoint
+#include "kyoshin/cf/object/CfObjectColl.hpp"
+#undef CfObjectPoint
+#undef CfObject
+#undef CObjectParam
+#undef CObjectState
 
 // --- imports for func_80080F48 / func_80085FB8 / func_800838F4 ---
 class UnkClass_8009EC9C;
@@ -249,16 +314,6 @@ struct UnkF0ACData {
 struct Unk82FCCData {
     u8 field_0x0[0x68];
     u32 flags_0x68;
-};
-
-// Bdat-defined object returned by createBdatCollisionObj / func_800B9548 (func_80086778):
-// only the u32 field at 0x64 and the u16 flag at 0x158 are read/written, plus a
-// virtual dispatch through vtable slot 0x158.
-struct BdatObjView {
-    u8 pad_00[0x64];
-    u32 field_0x64;          // 0x64
-    u8 pad_68[0x158 - 0x68];
-    u16 field_0x158;         // 0x158
 };
 
 } // namespace
@@ -399,17 +454,8 @@ extern "C" void clampValueToRange__Q22cf13CfGameManagerFv(s32 minimum, s32* valu
 // (bl queueSceneEventA__Q22cf13CfGameManagerFv in resetBattlePresentation/
 // func_80085FB8), so rename the visible definition away and import the
 // retail symbol directly (declared in CfGameManager.hpp).
-// Minimal view of cf::CfCamPosSource required by func_8008064C in the
-// unity-helpers header (the full class lives in another TU; only the
-// vtable+0xCC call is made here).
-namespace cf {
-class CBattleManager; // cast target only (func_800D9354); defined in CBattleManager.hpp
-class CfCamPosSource {
-public:
-    virtual float fn0xCC();
-    virtual float* fn0xAC();
-};
-} // namespace cf
+// (func_8008064C's CfCamPosSource traffic goes through the unity-helpers
+// header's own forward decl + vtable-slot dispatch; no TU-local view needed.)
 
 // .sdata2 float constants used by func_8008064C in the unity-helpers header.
 extern const float lbl_eu_80666540;
@@ -791,14 +837,19 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
         Func800B6BECList* list = func_800B6BEC();
         for (Func800B6BECNode* node = list->head->next; node != list->head;
              node = node->next) {
-            UnkObj3E9C* obj =
-                static_cast<UnkObj3E9C*>(func_8016FE34(node->object));
-            if (obj == nullptr) {
+            void* rawObj = func_8016FE34(node->object);
+            if (rawObj == nullptr) {
                 continue;
             }
-            func_800BE12C(reinterpret_cast<u8*>(&obj->container), 1, 0, -1, 1);
-            setContainerMode10(&obj->container, 4);
-            setContainerMode20(&obj->container, 0x1000);
+            // +0x3E9C CfObjectMove subobject (CfObjectActor.cpp spells the
+            // same (u8*)self + 16028): refresh it directly, then dispatch
+            // its real slots 0x10 (CObjectState::setStateBitFlag) and 0x20
+            // (CObjectState::clearStateFlags8).
+            cf::CfObjectMove* container = reinterpret_cast<cf::CfObjectMove*>(
+                reinterpret_cast<u8*>(rawObj) + 0x3E9C);
+            func_800BE12C(reinterpret_cast<u8*>(container), 1, 0, -1, 1);
+            container->CObjectState_setStateBitFlag(4);
+            container->CObjectState_clearStateFlags8(0x1000);
         }
     }
     for (int i = 0; i < 5; ++i) {
@@ -809,13 +860,16 @@ extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2,
     Func800B6BECList* list = func_800B6BEC();
     for (Func800B6BECNode* node = list->head->next; node != list->head;
          node = node->next) {
-        UnkObj3E9C* obj = static_cast<UnkObj3E9C*>(func_8016FE34(node->object));
-        if (obj == nullptr) {
+        void* rawObj = func_8016FE34(node->object);
+        if (rawObj == nullptr) {
             continue;
         }
-        func_800BE12C(reinterpret_cast<u8*>(&obj->container), 1, 0, -1, 1);
-        setContainerMode10(&obj->container, 4);
-        setContainerMode20(&obj->container, 0x1000);
+        // Same +0x3E9C CfObjectMove subobject refresh as above.
+        cf::CfObjectMove* container = reinterpret_cast<cf::CfObjectMove*>(
+            reinterpret_cast<u8*>(rawObj) + 0x3E9C);
+        func_800BE12C(reinterpret_cast<u8*>(container), 1, 0, -1, 1);
+        container->CObjectState_setStateBitFlag(4);
+        container->CObjectState_clearStateFlags8(0x1000);
     }
     lbl_eu_80663E28 &= ~0x00800000;
     // 8 pump frames when arg1 divides evenly by 3, else 16.
@@ -951,24 +1005,34 @@ cf::CfObject** cf::CfGameManager::getField04Ptr() {
 }
 #pragma dont_inline reset
 
-void cf::CfGameManager::dispatchObjectFunc52b() {
-    field_0x4->CfObject_UnkVirtualFunc52(nullptr);
+// Retail Fv symbol: callers leave r4 = name for slot 0x120; forced-name form
+// keeps the Fv linker name while forwarding the live argument onto the real
+// CfObject slot (findNodeMatrix alias, same arity, returns void* for the
+// tail-call). CfObjectImplPc's vtable serves this entry at +0x68.
+extern "C" void* dispatchObjectFunc52b__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, const char* name) {
+    return self->field_0x4->CfObject_findNodeMatrix(name);
 }
 
 void cf::CfGameManager::dispatchObjectFunc53() {
-    field_0x4->CfObject_UnkVirtualFunc53();
+    field_0x4->CfObject_getIndexedNodeMatrix();
 }
 
 void cf::CfGameManager::dispatchObjectFunc48() {
     field_0x4->CfObject_getCurrentTarget();
 }
 
-void cf::CfGameManager::dispatchObjectFunc46() {
-    field_0x4->CfObject_UnkVirtualFunc46(nullptr);
+// Retail Fv symbol: callers leave r4 = arg for slot 0x108; forced-name form
+// keeps the Fv linker name while forwarding the live argument onto the real
+// CfObject::setMoveTargetPtr slot. CfObjectImplPc's vtable serves this entry
+// at +0x60.
+extern "C" void dispatchObjectFunc46__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, void* arg) {
+    self->field_0x4->CfObject_setMoveTargetPtr(arg);
 }
 
 void cf::CfGameManager::dispatchObjectFunc56() {
-    field_0x4->CfObject_UnkVirtualFunc56();
+    field_0x4->CfObject_getHeightDiff();
 }
 
 void cf::CfGameManager::dispatchObjectFunc58() {
@@ -979,8 +1043,13 @@ void cf::CfGameManager::dispatchObjectFunc31() {
     field_0x4->CfObject_getMoveHeadAngle();
 }
 
-void cf::CfGameManager::dispatchObjectFuncC4() {
-    dispatchFieldC4(field_0x4);
+// Retail Fv symbol: callers leave f1 = value for slot 0xC4; forced-name form
+// keeps the Fv linker name while forwarding the live argument onto the real
+// CfObject::setMoveHeadAngle slot. CfObjectImplPc's vtable serves this entry
+// at +0x4C.
+extern "C" void dispatchObjectFuncC4__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, float value) {
+    self->field_0x4->CfObject_setMoveHeadAngle(value);
 }
 
 void cf::CfGameManager::dispatchObjectFunc23() {
@@ -1027,8 +1096,8 @@ void* cf::CfGameManager::func_8007C8C8() {
         func_801889D0(lbl_eu_80663E60);
     }
     // func_800D9354 takes cf::CBattleManager* (decl on CBattleManagerApi.hpp);
-    // explicit cast (the class is incomplete here; MWCC rejects the implicit
-    // void* conversion) - no codegen change vs the old CBattleManagerView* cast.
+    // explicit cast - the singleton getter returns void* and MWCC rejects
+    // the implicit void* conversion.
     func_800D9354((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv());
     if (lbl_eu_80663E24 & 0x80) {
         func_80295A88(lbl_eu_80664A10);
@@ -1184,13 +1253,15 @@ void cf::CfGameManager::notifyObjectMapChange() {
     }
 }
 
-void cf::CfObject::CfObject_UnkVirtualFunc33(float amount) {
-    CfObject_UnkVirtualFunc32();
+void cf::CfObject::CfObject_applyMoveYaw(float amount) {
+    CfObject_syncMoveHead();
 }
 
+// Retail Fv linker name kept for hand-built vtables (CfCollSphereImpl /
+// CfObjectModel). Member emits CfObject_applyMoveYaw__...Ff.
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv(
     cf::CfObject* object) {
-    object->CfObject_UnkVirtualFunc32();
+    object->CfObject_syncMoveHead();
 }
 
 #pragma dont_inline on
@@ -1226,8 +1297,17 @@ void* cf::CfGameManager::getSelf() { return this; }
 #pragma dont_inline reset
 void cf::CfGameManager::stubEmptyA() {}
 void cf::CfGameManager::dispatchObjectFunc52() {}
-void cf::CfObject::CfObject_UnkVirtualFunc46(void*) {}
-void cf::CfObject::CfObject_UnkVirtualFunc47() {}
+void cf::CfObject::CfObject_setMoveTargetPtr(void*) {}
+
+// Retail Fv base impl (us/jp/eu 0x80087D64: bare blr) for vtable slot 0x108.
+// Same dual-symbol shape as CfObject_applyMoveYaw above: the C++
+// member def emits the FPv override-chain symbol (referenced by the
+// CfCollSphere/CfObjectEff hand vtables); this forced-name extern "C"
+// form emits the retail Fv linker name (referenced by the CfObjectModel
+// hand vtables). Empty body: retail is a single blr.
+extern "C" void CfObject_setMoveTargetPtr__Q22cf8CfObjectFv(
+    cf::CfObject*) {}
+void cf::CfObject::CfObject_createMoveTarget() {}
 
 void cf::CfGameManager::stubEmptyB() {}
 void cf::CfGameManager::stubEmptyC() {}
@@ -1236,7 +1316,10 @@ void cf::CfGameManager::stubEmptyE() {}
 extern "C" void* getNullPtrA__Q22cf13CfGameManagerFv() { return nullptr; }
 extern "C" void* getNullPtrB__Q22cf13CfGameManagerFv() { return nullptr; }
 extern "C" void* getNullPtrC__Q22cf13CfGameManagerFv() { return nullptr; }
-cf::CfObject* cf::CfObject::CfObject_UnkVirtualFunc53() {
+// Slot +0x124 base: retail Fv returns nullptr. Forced-name keeps the Unk
+// linker spelling for hand-built vtables; virtual is CfObject_getIndexedNodeMatrix.
+extern "C" cf::CfObject* CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv(
+    cf::CfObject*) {
     return nullptr;
 }
 extern u32 lbl_eu_80661BC0;
@@ -1511,7 +1594,10 @@ extern "C" void* getDataArray219C__Q22cf13CfGameManagerFv(u8* data) { return dat
 
 void cf::CfGameManager::resetCameraManager() { func_80496034(lbl_eu_80663E14); }
 
-float cf::CfObject::CfObject_UnkVirtualFunc56() {
+// Slot +0x130 base: retail Fv returns the shared float const. Forced-name
+// keeps the Unk linker spelling for hand-built vtables; virtual is
+// CfObject_getHeightDiff.
+extern "C" float CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv(cf::CfObject*) {
     return lbl_eu_80666498;
 }
 
@@ -1566,6 +1652,8 @@ extern "C" u32 isStateFlag20Set__Q22cf13CfGameManagerFv(const u8* data) {
 #pragma dont_inline reset
 
 extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
+    // Slot +0x48 base: clear +0x34. Real API alias is CObjectParam_clearExtraWord;
+    // forced-name Unk Fv spelling kept for hand-built vtables.
     *reinterpret_cast<u32*>(data + 0x34) = 0;
 }
 
@@ -1592,6 +1680,9 @@ void cf::CfGameManager::clearObjectFlagsAll() {
     mObjectFlags = 0;
 }
 
+// Slot +0x1F8/+0x200 base impls: store/load +0x1608. Virtuals are
+// CActorParam_setSecondCurrency / getSecondCurrency; forced-name Unk Fv
+// spellings kept for hand-built CREvtModel vtables.
 extern "C" void CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv(u8* data, u32 value) {
     *reinterpret_cast<u32*>(data + 0x1608) = value;
 }
@@ -2004,11 +2095,21 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
     const s16* list = static_cast<const s16*>(inList);
 
     // Camera-manager dispatch (getter invoked twice: null test + use).
+    // Slot 0x5C is CfObject::syncEnableState (slot owner: cf::CfObject;
+    // enable-state propagation hook; base impl + hand vtables spell the Fv
+    // name in CfObjectEff/CfObjectModel/CfCollSphereImpl, so the virtual
+    // keeps its Unk spelling and this calls the inline alias).
+    // Retail passes r4 (resetBattleGauge forwards its data arg, here 0) -
+    // the no-arg decl is a known cross-TU residual.
+    // NOTE (W58): the alias does NOT inline here - this function sits
+    // inside `#pragma dont_inline on`, which blocks ALL inlining INTO it
+    // (repo-proven: MWCC_CASES ResTev::GXSetTevOrder). Decomp emits a `bl`
+    // to the alias where retail has the virtual `bctrl`; recorded as a
+    // non-pad matching residual (function is 2%-matched for 340 unrelated
+    // structural reasons). A future virtual-rename wave (symbols
+    // rename-all incl. the hand vtables) collapses it to `bctrl`.
     if (cf::CfGameManager::getInstance()->getActiveCameraObject()) {
-        cf::CfObject* cam = cf::CfGameManager::getInstance()->getActiveCameraObject();
-        void** vt = *reinterpret_cast<void***>(cam);
-        typedef void (*V5CFn)(void*, s32);
-        reinterpret_cast<V5CFn>(vt[0x5C / 4])(cam, 0);
+        cf::CfGameManager::getInstance()->getActiveCameraObject()->CfObject_syncEnableState();
     }
 
     if (!lbl_eu_80663E70) {
@@ -2137,14 +2238,21 @@ extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* inList, s32 mode) {
                 func_8025EE7C(&obj->itemCounts_0x3534,
                               *reinterpret_cast<u32*>(
                                   reinterpret_cast<u8*>(obj3) + 0x3DD0));
-                u8* sub3 = reinterpret_cast<u8*>(obj3) + 0x17C;
-                void** vt3 = *reinterpret_cast<void***>(sub3);
-                typedef void* (*V200Fn)(u8*);
-                void* r = reinterpret_cast<V200Fn>(vt3[0x200 / 4])(sub3);
-                u8* sub2 = reinterpret_cast<u8*>(obj) + 0x17C;
-                void** vt2 = *reinterpret_cast<void***>(sub2);
-                typedef void (*V1F8Fn)(u8*, void*);
-                reinterpret_cast<V1F8Fn>(vt2[0x1F8 / 4])(sub2, r);
+                // Slot owner: CActorParam is embedded at +0x17C (vtable) -
+                // CtrlObjectParam.hpp; 0x200 is getSecondCurrency (() -> u32),
+                // 0x1F8 is setSecondCurrency (u32). Both called via the
+                // inline behavior aliases (same arity; MWCC inlines them
+                // into the identical virtual dispatch outside dont_inline
+                // regions - cf. resetBattleGauge's inlined syncEnableState).
+                // NOTE (W58): same dont_inline caveat as the 0x5C site
+                // above - `bl` to the aliases where retail has `bctrl`;
+                // recorded non-pad residual, collapses on virtual-rename.
+                cf::CActorParam* sub3 = reinterpret_cast<cf::CActorParam*>(
+                    reinterpret_cast<u8*>(obj3) + 0x17C);
+                u32 r = sub3->CActorParam_getSecondCurrency();
+                cf::CActorParam* sub2 = reinterpret_cast<cf::CActorParam*>(
+                    reinterpret_cast<u8*>(obj) + 0x17C);
+                sub2->CActorParam_setSecondCurrency(r);
             }
         }
     }
@@ -2182,10 +2290,10 @@ void cf::CfGameManager::resetBattlePresentation() {
     // Only the last getInstance result is kept in a saved register (live
     // across the memset); the first two are consumed in scratch.
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
-        func_8018C8F4(((CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv())->field_0x194, 0);
-        CBattleManagerView* battle = (CBattleManagerView*)getInstance__Q22cf14CBattleManagerFv();
-        memset(battle->cleared_0x94, 0, 0x100);
-        reinterpret_cast<CBattleManagerSlot1C*>(battle)->m1C(2, 0);
+        func_8018C8F4((u8*)&((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv())->unk194, 0);
+        cf::CBattleManager* battle = (cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv();
+        memset(&battle->unk94, 0, 0x100);
+        battle->setPartyMaskFlag(2, 0);
     }
     func_80135FDC();
     manager->func_8007D84C();
@@ -2456,16 +2564,17 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
             func_8009F6D4(func_8009EC9C(static_cast<u16>(i)));
         }
 
-        // Item-list sweep through func_800AD860's flag view, calling the
-        // vtable+0xB8 entry on every object that resolves.
+        // Item-list sweep through func_800AD860's flag view. Retail table
+        // lbl_eu_80528600 (cf::CfObjectColl) has copyCollPosition at +0xB8;
+        // call through the Coll tree (macro-included above) so MWCC emits a
+        // no-arg bctrl (main-tree applyMoveOffset(vec,float) would load r4/f1).
         Func800B6BECList* list = (Func800B6BECList*)func_800B6BC8();
         Func800B6BECNode* node = list->head->next;
         while (node != list->head) {
-            void* obj = func_800AD860(node->object);
+            cf::CfObjectColl* obj =
+                static_cast<cf::CfObjectColl*>(func_800AD860(node->object));
             if (obj != nullptr) {
-                void** vtable = *reinterpret_cast<void***>(obj);
-                typedef void (*VFnB8)(void*);
-                reinterpret_cast<VFnB8>(vtable[0xB8 / 4])(obj);
+                obj->copyCollPosition();
             }
             node = node->next;
         }
@@ -2539,16 +2648,14 @@ void cf::CfGameManager::func_80085FB8() {
     }
     lbl_eu_80663E24 &= 0xFFFB7FFF;
 
-    // Refresh each party slot object's embedded 0x3E9C container via its
-    // vtable+0x158 entry when the object's bit-1 flag is set.
+    // Retail dispatches vtable slot 0x158 (CfObjectMove::setPointEnabled,
+    // u32 arg) on each party slot object whose +0x64 word has bit 1 set.
     for (int i = 0; i < 3; ++i) {
-        BdatObjView* obj = reinterpret_cast<BdatObjView*>(mgr->unk94[i]);
-        if (obj == nullptr || (obj->field_0x64 & 2) == 0) {
+        cf::CfObjectMove* slotObj = mgr->unk94[i];
+        if (slotObj == nullptr || (slotObj->unk64 & 2) == 0) {
             continue;
         }
-        UnkObj3E9C* containerObj = reinterpret_cast<UnkObj3E9C*>(obj);
-        void** vt = *reinterpret_cast<void***>(&containerObj->container);
-        setContainerMode158(containerObj, 1);
+        slotObj->setPointEnabled(1);
     }
 
     getInstance__Fv();
@@ -2562,13 +2669,14 @@ void cf::CfGameManager::func_80085FB8() {
     }
     CfObject* cam = this->getActiveCameraObject();
     if (cam != nullptr && player != nullptr) {
-        // vtable+0x40 probe on the object at player+0x38; on failure reset the
+        // Slot-0x40 probe on the object at player+0x38 (mSubObj38): the
+        // field player's sub-object answers the 0x400 flag query through
+        // the same slot (CtrlPlayerSub3ED4::vf14, int(int)) that CtrlPc.cpp
+        // uses for its mask-3 camera resets; on failure reset the
         // camera-event manager mode.
-        void* sub =
-            *reinterpret_cast<void**>(reinterpret_cast<u8*>(player) + 0x38);
-        void** vt = *reinterpret_cast<void***>(sub);
-        typedef bool (*V40Fn)(void*, u32);
-        if (!reinterpret_cast<V40Fn>(vt[0x40 / 4])(sub, 0x400)) {
+        CtrlPlayerSub3ED4* sub =
+            reinterpret_cast<CtrlPlayerSub3ED4*>(*reinterpret_cast<void**>(reinterpret_cast<u8*>(player) + 0x38));
+        if (sub->vf14(0x400) == 0) {
             func_8006BBF4(cam, 3, 1);
         }
     }
@@ -2667,11 +2775,15 @@ void cf::CfGameManager::func_80086778() {
         // the previous getBdatStringColumnValue result when the bl issues -
         // the register inheritance retail relies on. The tail-call inside
         // createBdatCollisionObj leaks the bdat object back through r3.
-        Unk80EE4Data* obj = reinterpret_cast<Unk80EE4Data*>(cf::CfGameManager::createBdatCollisionObj());
+        // func_800B9548's object is a collision object (func_800AC110/AC1BC
+        // take cf::CfObjectColl*): dispatch the real slot-0x158 virtual
+        // (CfObject::setPointEnabled) through the CfObject base, clear bit 16
+        // of the +0x64 word (CfObject::unk64), and set the +0x158 flag
+        // halfword (CfObjectColl::field_0x158) per the row kind.
+        cf::CfObject* obj = reinterpret_cast<cf::CfObject*>(cf::CfGameManager::createBdatCollisionObj());
         if (obj == nullptr) {
             continue;
         }
-        BdatObjView* view = reinterpret_cast<BdatObjView*>(obj);
         if (fD > threshold) {
             ml::CVec3 v3c(v48.x, v48.y + fE, v48.z);
             func_800AC110(obj, &v48, &v3c, fD);
@@ -2689,13 +2801,13 @@ void cf::CfGameManager::func_80086778() {
             func_800AC1BC(obj, &v48, &v30, radius);
         }
         func_800AC450(obj, (u32)row, code);
-        // virtual dispatch through vtable slot 0x158 (arg 0)
-        setBdatObjActive(view, 0);
-        view->field_0x64 &= ~0x10000;
+        obj->setPointEnabled(0);
+        obj->unk64 &= ~0x10000;
+        u16& pointFlag = *reinterpret_cast<u16*>(reinterpret_cast<u8*>(obj) + 0x158);
         if (v == 0) {
-            view->field_0x158 |= 0x100;
+            pointFlag |= 0x100;
         } else if (v == 1) {
-            view->field_0x158 |= 0x200;
+            pointFlag |= 0x200;
         }
     }
 }
@@ -2787,11 +2899,12 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
         if (func_800EA444(nullptr) != nullptr) {
-            void* sub = getDataArray219C__Q22cf13CfGameManagerFv(
-                reinterpret_cast<u8*>(getInstance__Q22cf14CBattleManagerFv()));
-            void** vt = *reinterpret_cast<void***>(sub);
-            typedef void (*V20Fn)(void*, u32);
-            reinterpret_cast<V20Fn>(vt[0x20 / 4])(sub, 1);
+            // Slot owner: cf::CVision owns 0x20 (vt_20(u32)) - CVision.hpp;
+            // battle+0x219C is CBattleManager::mVision (CBattleManager.hpp).
+            cf::CVision* sub = reinterpret_cast<cf::CVision*>(
+                getDataArray219C__Q22cf13CfGameManagerFv(
+                    reinterpret_cast<u8*>(getInstance__Q22cf14CBattleManagerFv())));
+            sub->vt_20(1);
             CfRes_getE14();
             func_80496294(reinterpret_cast<CScn*>(CfRes_getE14()), lbl_eu_8066649C);
         }
@@ -2876,10 +2989,8 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     float out = value;
     if (hitSlot) {
         cf::CfObjectMove** slot = getPlayerSlotPtr__Q22cf13CfGameManagerFv(mgr->unk94, 0);
-        void* obj = *slot;
-        void** vt = *reinterpret_cast<void***>(obj);
-        typedef float (*Vd8Fn)(void*);
-        out = reinterpret_cast<Vd8Fn>(vt[0xd8 / 4])(obj);
+        // Slot owner: cf::CfObject owns 0xD8 (getScaledAngle, ()->float).
+        out = static_cast<cf::CfObject*>(*slot)->CfObject_getScaledAngle();
     }
     reinterpret_cast<Mgr24View*>(&mgr->field_0x1C)->value24 = out;
 

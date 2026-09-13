@@ -115,7 +115,7 @@ extern "C" void func_80174B3C(void* self, u8 a, u8 b, u8 c);               // Cf
 struct CPcKizunagramBig;  // defined in src/kyoshin/CPcKizunagram.hpp (only used through a pointer here)
 struct CEventDataTable;   // defined in src/kyoshin/cf/CTaskREvent.hpp (global scope; only used through a pointer here)
 
-extern "C" void func_8009E7C8(u8* self);                                  // (this unit) item-slot area init at work+0x1F98
+extern "C" int func_8009E7C8(u8* self);
 extern "C" CPcKizunagramBig* func_8025EDC8(CPcKizunagramBig* self);      // CPcKizunagram.cpp (affinity-slot clear)
 extern "C" void func_8016455C(CEventDataTable* self);                    // CTaskREvent.cpp (event data table fill)
 
@@ -194,27 +194,27 @@ namespace cf {
         u8   pad_0000[0x15F0];          // 0x0000..0x15EF
         u32  unk15F0;                   // 0x15F0  (func_8009EF9C field_176C)
         u8   pad_15F4[0x1604 - 0x15F4]; // 0x15F4..0x1603
-        u32  field_1604;                // 0x1604  (UnkVirtualFunc85)
+        u32  field_1604;                // 0x1604  (getSpentCurrency)
         u8   pad_1608[0x1629 - 0x1608]; // 0x1608..0x1628
         u8   unk1629;                   // 0x1629  (func_8009EF9C field_17A5)
         u8   unk162A;                   // 0x162A  (field_17A6)
         u8   unk162B;                   // 0x162B  (field_17A7)
         u8   unk162C;                   // 0x162C  (field_17A8)
         u8   pad_162D[0x164C - 0x162D]; // 0x162D..0x164B
-        u16  field_164C;                // 0x164C  (UnkVirtualFunc165)
+        u16  field_164C;                // 0x164C  (getBattleHitFlags)
         u8   pad_164E[2];               // 0x164E..0x1650
-        u8   field_1650[0x78];          // 0x1650..0x16C8 (UnkVirtualFunc94)
+        u8   field_1650[0x78];          // 0x1650..0x16C8 (getArtsDataBlock)
         u8   pad_16C8[0x17E4 - 0x16C8]; // 0x16C8..0x17E4
-        u8   field_17E4[0x4C];          // 0x17E4..0x1830 (UnkVirtualFunc100)
-        f32  field_1830;                // 0x1830  (UnkVirtualFunc76; unk17E4.unk4C)
+        u8   field_17E4[0x4C];          // 0x17E4..0x1830 (getBattleParams)
+        f32  field_1830;                // 0x1830  (getMoveRate; unk17E4.unk4C)
         u8   pad_1834[0x2740 - 0x1834]; // 0x1834..0x2740
-        u8   field_2740[0xC];           // 0x2740..0x274C (UnkVirtualFunc125)
+        u8   field_2740[0xC];           // 0x2740..0x274C (getArtsSlotIds)
         u8   pad_274C[0x3358 - 0x274C]; // 0x274C..0x3358
-        u16  field_3358;                // 0x3358  (UnkVirtualFunc152)
+        u16  field_3358;                // 0x3358  (getTensionStatus)
     };
 
     // -- Owner view for func_800A082C: CActorParam sub-object at +0x17C -----
-    // UnkVirtualFunc94 sits at retail vtable slot 0x20C; calling it through
+    // getArtsDataBlock sits at retail vtable slot 0x20C; calling it through
     // the embedded member reproduces the lwzu r12,0x17C / lwz r12,0x20C
     // dispatch sequence.
     struct CtrlObjectParamActorOwner {
@@ -222,7 +222,7 @@ namespace cf {
         CActorParam mParam;   // vtable at 0x17C
     };
 
-    // -- Word-at-offset-0 view of the object returned by UnkVirtualFunc94 ----
+    // -- Word-at-offset-0 view of the object returned by getArtsDataBlock ----
     // func_800A082C reads the low 16 bits of the first word.
     struct CtrlObjectParamWordView {
         u32 word0;
@@ -286,7 +286,7 @@ namespace cf {
         CActorParam mParam;     // +0x17C (vtable)
     };
 
-    // -- func_800A03F4 view: UnkVirtualFunc125 result -----------------------
+    // -- func_800A03F4 view: getArtsSlotIds result -----------------------
     // Six u16 slots at +0 (written with constant offsets in the type-0 path
     // and indexed stores in the loop paths) and a vtable pointer at +0xC
     // used once for the opening slot-0x8 dispatch.
@@ -442,14 +442,14 @@ namespace cf {
         u16 field_0C;
     };
 
-    // -- Retail-layout view of cf::CObjectParam (UnkVirtualFunc3) ------------
+    // -- Retail-layout view of cf::CObjectParam (hasObjectName / slot 0x44) --
     // The declared CObjectParam class (CObjectState + mPtr10/unk14) places the
     // "field_30" word at 0x20, but the retail object reads it at 0x30. This
-    // view places the field at its true retail offset so UnkVirtualFunc3
+    // view places the field at its true retail offset so hasObjectName
     // compiles to the exact retail lwz immediate.
     struct CObjectParamRetailView {
         u8   pad_0000[0x30];   // 0x00..0x2F
-        u32  field_30;         // 0x30  (UnkVirtualFunc3)
+        u32  field_30;         // 0x30  (hasObjectName)
         u8   pad_34[4];        // 0x34..0x37
     };
 
@@ -611,7 +611,7 @@ namespace cf {
 
     // -- func_800A11A4 view: s16/u16 fields + CActorParam at +0x17C --------
     // Reads shortArr[5] at +0x26, the s16 display fields at +0xD4/+0xD6 and
-    // the u16 flag at +0xE6, and dispatches UnkVirtualFunc94 through the
+    // the u16 flag at +0xE6, and dispatches getArtsDataBlock through the
     // embedded CActorParam (retail lwzu r12,0x17c / slot 0x20C sequence).
     struct CtrlObjectParamEntry11A4 {
         u8  pad_00[0x1C];
@@ -670,7 +670,7 @@ namespace cf {
         u8 field_16;   // +0x16: learn-arts flag
     };
 
-    // -- func_800A0E64 view: arts stat object (UnkVirtualFunc94 result) ----
+    // -- func_800A0E64 view: arts stat object (getArtsDataBlock result) ----
     // The 0x78-byte stat record copied to the slot-0x224 result: u32 head,
     // f32s at +4..+0x18, s16s at +0x1C/+0x1E/+0x20, more f32/s16/u8 fields
     // and a u32 tail.

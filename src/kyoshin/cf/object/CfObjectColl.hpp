@@ -48,9 +48,9 @@ public:
     virtual void CObjectState_setStateBitMask();    // +0x08
     virtual void CObjectState_checkStateFlags();    // +0x0C
     virtual void CObjectState_setStateBitFlag();    // +0x10
-    virtual void CObjectState_UnkVirtualFunc4();    // +0x14
-    virtual void CObjectState_UnkVirtualFunc5();    // +0x18
-    virtual void CObjectState_UnkVirtualFunc6();    // +0x1C
+    virtual void CObjectState_clearStateWord4();    // +0x14
+    virtual void CObjectState_applyStateFlags();    // +0x18
+    virtual void CObjectState_clearStateWord8();    // +0x1C
     virtual void CObjectState_clearStateFlags8();    // +0x20
     virtual void CObjectState_UnkVirtualFunc8();    // +0x24
     virtual void CObjectState_UnkVirtualFunc9();    // +0x28
@@ -64,7 +64,7 @@ class CObjectParam : public CObjectState {
 public:
     virtual void CObjectParam_UnkVirtualFunc1();    // +0x3C
     virtual void CObjectParam_UnkVirtualFunc2();    // +0x40
-    virtual void CObjectParam_UnkVirtualFunc3();    // +0x44
+    virtual void CObjectParam_hasObjectName();    // +0x44
     virtual void loadPointData();                   // +0x48 (overridden by CfObjectPoint)
     virtual void CObjectParam_getSelfObjectId();    // +0x4C
     virtual void CObjectParam_signalActionEnd();    // +0x50
@@ -82,14 +82,14 @@ public:
     virtual void refreshCollLink();                   // +0x6C (overridden by CfObjectColl)
     virtual void setChildPoint();                   // +0x70 (overridden by CfObjectPoint)
     virtual int CfObject_isMoveActiveNow();         // +0x74
-    virtual void CfObject_UnkVirtualFunc10();       // +0x78
+    virtual void CfObject_forwardSubObject();       // +0x78
     virtual int CfObject_UnkVirtualFunc11();        // +0x7C
     virtual void CfObject_UnkVirtualFunc12();       // +0x80
-    virtual void CfObject_UnkVirtualFunc13();       // +0x84
+    virtual void CfObject_queryTargetState();       // +0x84
     virtual void* CfObject_pushRefreshValue(float value); // +0x88
     virtual float CfObject_getMoveSpeedRate();      // +0x8C
-    virtual void* CfObject_UnkVirtualFunc16();      // +0x90
-    virtual float CfObject_UnkVirtualFunc17();      // +0x94
+    virtual void* CfObject_pushRefreshExtra();      // +0x90
+    virtual float CfObject_readRefreshValue();      // +0x94
     virtual int CfObject_checkTargetState();        // +0x98
     virtual void func_80047814(const void* pos);          // +0x9C (overridden by CfObjectPoint)
     virtual void setPointPosition();                   // +0xA0 (overridden by CfObjectPoint)
@@ -97,7 +97,7 @@ public:
     virtual void syncCollVectors(const void* pos);          // +0xA8 (see spell-out definition in the .cpp)
     virtual ml::CVec3* CfObject_getPosVector(); // +0xAC
     virtual void* CfObject_UnkVirtualFunc24();      // +0xB0
-    virtual void CfObject_UnkVirtualFunc25();       // +0xB4
+    virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); // +0xB4
     virtual void copyCollPosition();                   // +0xB8 (overridden by CfObjectColl)
     virtual void* CfObject_UnkVirtualFunc27(void* param); // +0xBC
     virtual void* CfObject_UnkVirtualFunc28();      // +0xC0
@@ -118,10 +118,10 @@ public:
     virtual int CfObject_UnkVirtualFunc43();        // +0xFC
     virtual int CfObject_UnkVirtualFunc44();        // +0x100
     virtual void CfObject_UnkVirtualFunc45();       // +0x104
-    virtual void CfObject_UnkVirtualFunc46(void*);       // +0x108
-    virtual void CfObject_UnkVirtualFunc47();       // +0x10C
+    virtual void CfObject_setMoveTargetPtr(void*);       // +0x108
+    virtual void CfObject_createMoveTarget();       // +0x10C
     virtual void* CfObject_getCurrentTarget();       // +0x110
-    virtual void CfObject_UnkVirtualFunc49();       // +0x114
+    virtual void CfObject_forwardNpcAction();       // +0x114
     virtual void CfObject_UnkVirtualFunc50();       // +0x118
     virtual int CfObject_UnkVirtualFunc51();        // +0x11C
     virtual void CfObject_UnkVirtualFunc52();       // +0x120
@@ -133,11 +133,11 @@ public:
     virtual void CfObject_getMoveRateScale();       // +0x138
     virtual void CfObject_UnkVirtualFunc59(float value); // +0x13C
     virtual float CfObject_UnkVirtualFunc60();      // +0x140
-    virtual void CfObject_UnkVirtualFunc61();       // +0x144
+    virtual void CfObject_setAnimSlotEntry();       // +0x144
     virtual int CfObject_UnkVirtualFunc62();        // +0x148
     virtual void CfObject_UnkVirtualFunc63();       // +0x14C
     virtual int CfObject_setMoveBusyState(int id);  // +0x150
-    virtual void CfObject_UnkVirtualFunc65(int flag); // +0x154
+    virtual void CfObject_setMoveReadyFlag(int flag); // +0x154
     virtual void setPointEnabled(u32 flag);           // +0x158 (overridden by CfObjectPoint)
     virtual void CfObject_UnkVirtualFunc67(int flag); // +0x15C
     virtual int isCollEnabled();                    // +0x160 (defined by CfObjectPoint)

@@ -4,6 +4,7 @@
 
 #include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
+#include "kyoshin/code_80296898.hpp"
 #include <nw4r/math.h>
 #include <math.h>
 #include <string.h>
@@ -1010,9 +1011,9 @@ void sinit_80074D7C() {
     lbl_eu_80527160.entries[2].unk10.z = one;
 }
 
-struct Class_80296898 {
-    static void* getInstance();
-};
+// Class_80296898 is owned by kyoshin/code_80296898.hpp (real singleton
+// class); this TU uses it only through getInstance() with explicit byte
+// casts, so no local struct is needed.
 
 // func_8006B8E4: refresh the shared camera tables from the Class_80296898
 // instance's selection bytes. inst[3] picks the 0x80527208 table entry (copied
@@ -3715,11 +3716,13 @@ __declspec(noinline) void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self,
 }
 // func_80074090: pick a follow aim vector. src == 0 copies pos verbatim.
 // Otherwise the source's aim body (slot 0xAC) seeds the working vector and
-// sel picks a replacement: >0 uses CfObject slot 0x12C (UVF55); <0 indexes the
-// lbl_eu_80527244 joint-name table into slot 0x120 (UVF52); sel == 0 probes pos
-// (func_8006BA80) and falls back to slot 0x128 (UVF54). The chosen vector feeds
-// the scaled camera basis
-// transform (func_80074010) using the slot-0xCC scale factor.
+// sel picks a replacement: >0 uses the indexed position sample
+// (CfObject_getPosSample, slot 0x12C); <0 indexes the lbl_eu_80527244
+// joint-name table into the named node matrix slot (CfObject_findNodeMatrix,
+// slot 0x120); sel == 0 probes pos (func_8006BA80) and falls back to the
+// sub-object position word (CfObject_getSubPosWord, slot 0x128). The chosen
+// vector feeds the scaled camera basis transform (func_80074010) using the
+// slot-0xCC scale factor.
 extern "C" void func_80074090(ml::CVec3* out, cf::CfObject* src, ml::CVec3* pos, int sel) {
     if (src == 0) {
         func_8004B79C(out, pos);
@@ -3731,17 +3734,17 @@ extern "C" void func_80074090(ml::CVec3* out, cf::CfObject* src, ml::CVec3* pos,
     func_8004B79C(&cur, src->CfObject_getPosVector());
     if (sel > 0) {
         ml::CVec3 v;
-        func_8007420C(&v.x, reinterpret_cast<const float*>(src->CfObject_UnkVirtualFunc55(sel)));
+        func_8007420C(&v.x, reinterpret_cast<const float*>(src->CfObject_getPosSample(sel)));
         func_8004B3F0(&cur, &v);
     } else if (sel < 0) {
         ml::CVec3 v;
         func_8007420C(&v.x, reinterpret_cast<const float*>(
-                                 src->CfObject_UnkVirtualFunc52(
+                                 src->CfObject_findNodeMatrix(
                                      reinterpret_cast<const char*>(lbl_eu_80527244[-sel]))));
         func_8004B3F0(&cur, &v);
     } else {
         if (func_8006BA80(reinterpret_cast<void*>(pos)) != 0) {
-            const void* p = reinterpret_cast<const void*>(src->CfObject_UnkVirtualFunc54());
+            const void* p = reinterpret_cast<const void*>(src->CfObject_getSubPosWord());
             if (p != 0) {
                 ml::CVec3 v;
                 func_8007420C(&v.x, static_cast<const float*>(p));
@@ -4308,7 +4311,9 @@ extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
 extern "C" u32 CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv(void* self) { return 0; }
 extern "C" u32 CfObject_isMoveActiveNow__Q22cf8CfObjectFv(void* self) { return 1; }
 // cf::CActorParam base virtual (retail: lwz r3,0x15e4(r3); blr)
-extern "C" int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
+// noinline keeps the retail `bl CActorParam_UnkVirtualFunc22...` in func_8006DD58
+// instead of inlining the field load at the call site.
+extern "C" __declspec(noinline) int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
 
 extern "C" bool func_8006B6C0() { return true; }
 extern "C" __declspec(noinline) void func_8006BF08(u16* p) { *p = 0; }

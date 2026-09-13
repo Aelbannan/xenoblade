@@ -20,11 +20,11 @@ struct CHelpPrefix {
 // label (lbl_eu_8053B3A0) at +8, same pattern as CToken / CHelpManager.
 class __declspec(novtable) CHelp : public CHelpPrefix {
 public:
-    virtual void CHelp_UnkVirtualFunc1(); // vtable 0x08
-    virtual void CHelp_UnkVirtualFunc2(); // vtable 0x0C
+    virtual void resetHelp(); // vtable 0x08 (base: no-op; leaves reset/set state)
+    virtual void dispatchHelp(); // vtable 0x0C (base: popup notify; TIPS leaves dispatch)
     virtual UNKWORD f10(); // vtable 0x10 (null in the base table)
-    virtual UNKWORD CHelp_UnkVirtualFunc4(); // vtable 0x14
-    virtual UNKWORD CHelp_UnkVirtualFunc5(); // vtable 0x18
+    virtual UNKWORD getHelpSceneId(); // vtable 0x14 (popup scene-id arg; base: 0)
+    virtual UNKWORD getSkipResetFlag(); // vtable 0x18 (popup skip-reset flag; base: 0)
     // No +0x1C on CHelp: that slot belongs to CHelpSwitch. Direct leaves
     // (Target, Sp, ArtsSet) stop at +0x18.
 

@@ -665,26 +665,31 @@ struct CtrlActAtkArg {
 // emitted.
 class CtrlActView {
 public:
-    virtual void vf00();  virtual void vf01();  virtual void vf02();
-    virtual void vf03();  virtual void vf04();  virtual void vf05();
+    virtual void vf00();  virtual void vf01();  virtual int func_80096854();  // 0x10 (def in CtrlNpc.cpp)
+    virtual unsigned long func_800D5860();  // 0x14
+    virtual void vf04();  virtual void vf05();
     virtual void vf06();  virtual void vf07();  virtual void vf08();
     virtual void vf09();  virtual void vf10();  virtual void vf11();
     virtual void vf12();  virtual void vf13();  virtual void vf14();
     virtual void vf15();  virtual void vf16();  virtual void vf17();
-    virtual void vf18();  virtual void vf19();  virtual void vf20();
-    virtual void vf21();  virtual void vf22();
-    virtual int vf23(ml::CVec3* a, f32* b, ml::CVec3* c, int d, int e); // 0x64
-    virtual int vf24(ml::CVec3* out, const CVoicePos* pos);                  // 0x68
-    virtual int vf25(ml::CVec3* out);                                        // 0x6C
-    virtual int vf26(ml::CVec3* out, int flag);                              // 0x70
-    virtual int vf27(ml::CVec3* out);                                        // 0x74
-    virtual void vf28(void* entry);  // 0x78 func_800D2A5C-family (arts entry)
-    virtual void vf29(void* entry);  // 0x7C func_800D2D64-family (arts entry)
-    virtual int vf30();  virtual int vf31();
-    virtual void vf32();  virtual void vf33();  virtual void vf34();
-    virtual void vf35();  virtual void vf36();  virtual void vf37();
-    virtual void vf38();  virtual void vf39();  virtual void vf40();
-    virtual CVoicePos* vf41();  // 0xAC get own position
+    virtual void vf18();  virtual void vf19();
+    // Retail vtable lbl_eu_8052B080 (36 words, see CBattleManager.cpp): the
+    // word at (N+2)*4 holds the named free function, so these virtuals carry
+    // the retail names with call-site-exact arity (name-only change).
+    virtual void func_800D1F0C();  // 0x58
+    virtual void func_800D1CFC();  // 0x5C
+    virtual void func_800D11B0();  // 0x60
+    virtual int func_800D49EC(ml::CVec3* a, f32* b, ml::CVec3* c, int d, int e); // 0x64
+    virtual int func_800D49E4(ml::CVec3* out, const CVoicePos* pos);             // 0x68
+    virtual int func_800D5814(ml::CVec3* out);                                   // 0x6C
+    virtual int func_800D64E0(ml::CVec3* out, int flag);                         // 0x70
+    virtual int func_800D64D8(ml::CVec3* out);                                   // 0x74
+    virtual int func_800D2A5C(void* entry);  // 0x78 (arts entry)
+    virtual int func_800D2D64(void* entry);  // 0x7C (arts entry)
+    virtual int vf30();  virtual int vf31();  // 0x80/0x84 shared ret stubs
+    virtual int func_800D34D4();  // 0x88
+    virtual void vf33();  // 0x8C pure (retail word is 0)
+    // NOTE: the retail table ends at +0x8C; there are no vf34+ slots.
 
     u32 mField4;               // 0x04 (flag word, bit 1 set by func_800D2A5C)
     f32 mField8;               // 0x08
@@ -808,17 +813,8 @@ struct CtrlActFxReq {
     u8 _24[0x34 - 0x24];
 };
 
-// Arts-param record whose vptr sits at +0x84; virtual 0x14 writes the float
-// stored back to +0x80 (func_800D1F0C case).
-struct ArtsParamTable {
-    void* p00[0x14 / 4];
-    f32 (*fn14)(void* self);
-};
-struct CtrlActArtsParam {
-    u8 _00[0x80];
-    f32 mField80;                        // 0x80
-    ArtsParamTable* table;          // 0x84
-};
+// (case 22 dispatches through the real cf::CAttackParam virtual
+// CAttackParam_getArtsGaugeMax, CArtsSet.hpp; no local pad.)
 
 // Battle-manager view for the virtual slot 0x2C dispatch (func_800D1F0C).
 struct Bm2Table {

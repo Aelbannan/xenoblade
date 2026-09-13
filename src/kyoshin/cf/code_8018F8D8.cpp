@@ -196,8 +196,8 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
                 pPos[0] = pSum[0];
                 pPos[1] = pSum[1];
                 pPos[2] = pSum[2];
-                static_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(pPos));
-                player->CfObject_UnkVirtualFunc33(src[3]);
+                static_cast<cf::CfObject*>(player)->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(pPos));
+                player->CfObject_applyMoveYaw(src[3]);
             }
         }
     }
@@ -212,7 +212,7 @@ int func_8018FA2C(CFuncHost* self, u32 p1, u32 p2, u32 p3, u32 p4) {
         func_800A30E4(data);
         cf::CActorParam* cdParam = reinterpret_cast<cf::CActorParam*>(reinterpret_cast<u8*>(data) + 0x17c);
         cdParam->CActorParam_resetArtsStatus(NULL);
-        cdParam->CActorParam_UnkVirtualFunc5(1);
+        cdParam->CActorParam_commitArtsStatus(1);
         func_800A1370(data);
     }
 
@@ -278,8 +278,8 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                     pPos[0] = pSum[0];
                     pPos[1] = pSum[1];
                     pPos[2] = pSum[2];
-                    static_cast<cf::CfObject*>(p)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(pPos));
-                    p->CfObject_UnkVirtualFunc33(src[3]);
+                    static_cast<cf::CfObject*>(p)->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(pPos));
+                    p->CfObject_applyMoveYaw(src[3]);
                 }
                 byteOfs += 0x10;
             }
@@ -292,9 +292,9 @@ int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
                 if (p != 0) {
                     func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
                     if (!(lbl_eu_80663E28 & 0x100)) {
-                        static_cast<cf::CfObject*>(p)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(stk));
+                        static_cast<cf::CfObject*>(p)->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(stk));
                         float ccRet90940 = self->manager->unk94[0]->CfObject_getMoveHeadAngle();
-                        p->CfObject_UnkVirtualFunc30(ccRet90940);
+                        p->CfObject_setMoveYaw(ccRet90940);
                     }
                 }
             }
@@ -508,7 +508,7 @@ int func_80190568(u32 self, u32 cmd, u32 a2, u32 a3, u32 a4) {
                 // Clear the tint-request bit (bit 3 from MSB) then run the
                 // +0x168 virtual tint setter and the gauge reset helper.
                 player->mFlags68 &= ~0x10000000;
-                player->CfObject_UnkVirtualFunc70(lbl_eu_80667A8C);
+                player->CfObject_syncModelRate(lbl_eu_80667A8C);
                 func_800BC3B0(player, lbl_eu_80667A88);
             }
         }

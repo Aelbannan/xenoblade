@@ -50,11 +50,10 @@ namespace cf {
         // same group to the battle-side initializer, then link the AI-action
         // subobject back to this actor and seed the tail fields.
         u8* grp = lbl_eu_8053109C;
-        CfActorVtSlots* slots = reinterpret_cast<CfActorVtSlots*>(this);
-        slots->vtPrimary = reinterpret_cast<u32>(grp);
-        slots->vtSecondary = reinterpret_cast<u32>(grp + 0xC);
-        slots->vtAIAction = reinterpret_cast<u32>(grp + 0x36C);
-        slots->vtMove = reinterpret_cast<u32>(grp + 0x37C);
+        *(void**)this = (void*)grp;
+        *(void**)((u8*)this + 0x8) = (void*)(grp + 0xC);
+        *(void**)((u8*)this + 0x3380) = (void*)(grp + 0x36C);
+        *(void**)((u8*)this + 0x3E9C) = (void*)(grp + 0x37C);
         func_80174B4C(this, 3, grp + 0x36C, grp + 0xC, grp);
         func_8014AA10(reinterpret_cast<u8*>(this) + 0x3380, reinterpret_cast<unsigned int>(this));
         CfActorField45B8* tail = reinterpret_cast<CfActorField45B8*>(this);
@@ -85,7 +84,7 @@ extern "C" void CfObjectActor_takeDamageValue__Q22cf13CfObjectActorFv(cf::CfObje
     }
 }
 
-float cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {
+float cf::CfObjectActor::CfObjectActor_readActionScale() {
     // Word at absolute offset 0x3E74 (CAIAction trailer area) is used as a
     // pointer to an object holding a float at +0x7C.
     cf::CfFloat7C* p = reinterpret_cast<cf::CfFloat7C*>(reinterpret_cast<cf::CfActorField3E74*>(this)->field_0x3E74);
@@ -104,8 +103,13 @@ struct CfObjectActorInner {
     void* mArgStorage;  // 0x37c
 };
 
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc11(void* arg) {
-    CfObjectActorData* data = reinterpret_cast<CfObjectActorData*>(this);
+// Retail symbol is Fv; the real ABI passes (self, arg). Forced-name extern
+// "C" wrapper (same pattern as CfObjectActor_pushRefreshValue): the class
+// keeps the virtual decl for the +0x5C8 slot, this definition provides the
+// retail symbol. Stores the arg at +0x45BC and, when the +0x3F60 target is
+// set, into its +0x37C word.
+extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
+    CfObjectActorData* data = reinterpret_cast<CfObjectActorData*>(self);
     void* p = data->mSomePtr;
     if (p != 0) {
         static_cast<CfObjectActorInner*>(p)->mArgStorage = arg;
@@ -113,9 +117,13 @@ void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc11(void* arg) {
     data->mOtherPtr = arg;
 }
 
-void func_8016FF14(){}
-void func_80170AB0(){}
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {
+// Retail defs owned by this TU's split range (0x80171310/0x80171EAC); the
+// bodies are CVision logic awaiting that wave's decomp. extern "C" + real
+// arity per CVision.hpp so this TU provides the retail symbols (C++
+// linkage would mangle them __Fv and leave CVision.o's refs dangling).
+extern "C" void func_8016FF14(void* obj, void* dst) { (void)obj; (void)dst; }
+extern "C" void func_80170AB0(void* self, void* dst) { (void)self; (void)dst; }
+void cf::CfObjectActor::CfObjectActor_clearStatusPair() {
     // Two virtual calls on the CBattleState subobject vtable (this+0x8),
     // slot +0x20 (CBattleState_clearStatusId; retail fake-Fv ABI passes
     // the status id in r4). Calling through `this` directly lets MWCC keep
@@ -124,15 +132,15 @@ void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {
     this->CBattleState_clearStatusId(0xf);
     this->CBattleState_clearStatusId(0x10);
 }
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {
+void cf::CfObjectActor::CfObjectActor_flushStatusPair() {
     // Two calls to the CBattleState subobject vtable slot +0x20 (retail
     // passes an int through the slot; fake-Fv ABI). Same shape as
-    // CfObjectActor_UnkVirtualFunc3: calling through `this` keeps this in
+    // CfObjectActor_clearStatusPair: calling through `this` keeps this in
     // r31 and recomputes the +8 adjusted-this per call.
     this->CBattleState_clearStatusId(0xf);
     this->CBattleState_clearStatusId(0x10);
 }
-float cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {
+float cf::CfObjectActor::CfObjectActor_getAdjustedFacing() {
     // Base height at 0x3EE8; if the move target (0x3F60) is set, add the
     // signed short value the CActParamData helper returns (s16 -> float via
     // MWCC's 2^52 double-trick, which emits the retail fsubs sequence).
@@ -161,7 +169,7 @@ extern "C" int CfObjectActor_sharesMoveFlags__Q22cf13CfObjectActorFv(cf::CfObjec
 // select it.
 extern "C" void CfObject_pushRefreshValue__Q22cf12CfObjectMoveFf(void* self, float value);
 
-extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
+extern "C" void CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
     // Forward the move to the CfObjectMove subobject (+0x3E9C), then
     // re-dispatch this same virtual (slot +0x5C4) on the actor behind the
     // action-source handle when its +0x64 flags select it. The move forward is
@@ -172,31 +180,36 @@ extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObj
     u8* p = reinterpret_cast<cf::CfActorField45B8*>(self)->field_0x45B8;
     if (p != 0) {
         cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(findObjectById(reinterpret_cast<int>(p)));
-        // Merged condition: both false paths share one zeroing block; the
-        // true arm is a static_cast downcast (emits MWCC's guarded subi).
+        // Merged condition: both false paths share one zeroing block. The
+        // true arm re-tests src (retail re-checks it before the guarded
+        // subi) and does an explicit -0x3E9C downcast (the C++ layout puts
+        // CfObjectMove later, so static_cast would emit subi 16080). The
+        // re-dispatch is VIRTUAL through slot +0x5C4 (retail bcctrl with
+        // f1 carried through); a direct call lets MWCC auto-inline and
+        // duplicate the body.
         cf::CfObjectActor* actor;
         if (src != 0 &&
             ((reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 2) != 0 ||
              (reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 4) != 0)) {
-            actor = static_cast<cf::CfObjectActor*>(src);
+            actor = src != 0 ? (cf::CfObjectActor*)((u8*)src - 0x3E9C) : 0;
         } else {
             actor = 0;
         }
         if (actor != 0) {
-            CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(actor, value);
+            actor->CfObjectActor_pushRefreshValue(value);
         }
     }
 }
 
 
-extern "C" float CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
-    return static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_UnkVirtualFunc36();
+extern "C" float CActorParam_getScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+    return static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_getObjScale();
 }
 
-// CActorParam_UnkVirtualFunc21: store float then adjust-tail-call vt+0xDC
-extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float v) {
+// CActorParam_setScale: store float then adjust-tail-call vt+0xDC
+extern "C" void CActorParam_setScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float v) {
     *(float*)((u8*)self + 0x15e8) = v;
-    static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_UnkVirtualFunc35(v);
+    static_cast<cf::CfObject*>((cf::CfObjectMove*)((u8*)self + 0x3e9c))->CfObject_setObjScale(v);
 }
 
 
@@ -230,7 +243,7 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(cf::CfObje
     int v = reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC;
     switch (v) {
     case 0xE5:
-        ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->CfObject_UnkVirtualFunc70(lbl_eu_80667738);
+        ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->CfObject_syncModelRate(lbl_eu_80667738);
         break;
     case 0x10: {
         cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
@@ -243,17 +256,17 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->m8C(arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->forwardActorEventEnd(arg);
 }
 // Retail symbol is Fv; the real ABI passes a float in f1. Rounds the input
 // to the nearest int (fctiwz roundtrip), then - unless the presentation or
 // mode flags are set - clamps the value up to lbl_eu_80667740 when the
 // battle manager's +0x1A8 sub-object reports the actor, stores it at 0x17E8
 // and releases a vision slot.
-extern "C" void CActorParam_UnkVirtualFunc33__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float val) {
+extern "C" void CActorParam_setHp__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float val) {
     // The direct cast makes MWCC synthesize the shared sdata2 magic double
     // (lbl_eu_80667748); the decomp pools an @N entry of the same value at
-    // the same reloc site (name-only drift - accepted, cf. UnkVirtualFunc7).
+    // the same reloc site (name-only drift - accepted, cf. getAdjustedFacing).
     float f = (float)(int)val;
     if ((lbl_eu_80663E24 & 0x10000000) == 0 && (lbl_eu_80663E28 & 0x800) == 0) {
         if (f < lbl_eu_80667740) {
@@ -270,7 +283,7 @@ extern "C" void CActorParam_UnkVirtualFunc33__Q22cf13CfObjectActorFv(cf::CfObjec
 // delta to the gauge at 0x160C, clamping to [0, 0x160E]. Then, when the
 // actor-id probe (func_80174C98, flag 0x802) succeeds and the gauge sits at
 // its max (vf174 == vf178), decrements it by one via the vf168 slot.
-extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
+extern "C" void CActorParam_addGauge__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
     cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
     s16 cur = f->field_0x160C;
     s16 max = f->field_0x160E;
@@ -291,7 +304,8 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     if (func_80174C98(self, (int*)&id, 0x802) != 0) {
         // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
         if (self->CActorParam_getGauge() == self->CActorParam_getGaugeMax()) {
-            self->CActorParam_UnkVirtualFunc53(self->CActorParam_getGaugeMax() - 1);
+            int mx = self->CActorParam_getGaugeMax();
+            self->CActorParam_setGauge(mx - 1);
         }
     }
 }
@@ -305,7 +319,7 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
     CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(self, arg);
     switch (reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC) {
     case 0xE5:
-        ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->CfObject_UnkVirtualFunc70(lbl_eu_8066773C);
+        ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->CfObject_syncModelRate(lbl_eu_8066773C);
         break;
     case 0x10: {
         cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
@@ -321,7 +335,7 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
             buf.field_0x18 = (u16)f->field_0x1644;
             buf.field_0x20 = lbl_eu_80667738;
             buf.field_0x30 = 0x10001;
-            static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_UnkVirtualFunc5((cf::CBattleStateEntry*)&buf);
+            static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_enterStatusEntry((cf::CBattleStateEntry*)&buf);
         }
         break;
     }
@@ -329,14 +343,14 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
         break;
     }
     u8* obj3ED4 = reinterpret_cast<cf::CfActorField3ED4*>(self)->field_0x3ED4;
-    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->m88(arg);
+    reinterpret_cast<cf::CfObjectSub38*>(obj3ED4)->forwardActorEvent(arg);
 }
 // Retail symbol is Fv; the real ABI passes (self, delta). Same gauge update
-// as CActorParam_UnkVirtualFunc54 but on 0x1614/[0, 0x1616]; after the
+// as CActorParam_addGauge but on 0x1614/[0, 0x1616]; after the
 // actor-id probe succeeds the update is applied a second time (the retail
 // re-reads the fields), then if the gauge is at max (vf190 == vf18C) it is
 // decremented via the vf180 slot.
-extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
+extern "C" void CActorParam_addSecondGauge__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
     cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
     s16 cur = f->field_0x1614;
     s16 max = f->field_0x1616;
@@ -366,7 +380,8 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
         }
         // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
         if (self->CActorParam_getSecondGauge() == self->CActorParam_getSecondGaugeMax()) {
-            self->CActorParam_UnkVirtualFunc59(self->CActorParam_getSecondGaugeMax() - 1);
+            int mx = self->CActorParam_getSecondGaugeMax();
+            self->CActorParam_setSecondGauge(mx - 1);
         }
     }
 }
@@ -384,7 +399,7 @@ extern "C" void CActorParam_addHp__Q22cf13CfObjectActorFv(cf::CfObjectActor* sel
 // +0x120 (CActorParam_applyDamage): applies the rounded float delta to
 // the 0x17E8 gauge and dispatches status-driven follow-ups (33/120/C3/92/
 // FC/100) on the +8 sub-object plus battle-manager effects.
-extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int a, int b, int c) {
+extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int a, int b, int c) {
     float f = (float)(int)value;   // f31: rounded gauge delta
     if ((lbl_eu_80663E24 & 0x10000000) != 0) return;
     if ((lbl_eu_80663E28 & 0x800) != 0) return;
@@ -568,17 +583,24 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjec
 
 // CfObjectActor's override of the CActorParam virtual (slot 0xA4): queries
 // the +0x04 sub-object's vtable slot +0x30 for the actor-id word, then pokes
-// the move subobject's status chain when the id matches the query.
-void cf::CfObjectActor::CActorParam_resetArtsStatus(void* arts) {
-    (void)arts;
-    ::CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(this, 0);
+// the move subobject's status chain when the id matches the query. Retail
+// symbol is Fv; the real ABI passes (self, arts). Forced-name extern "C"
+// wrapper (same pattern as the CActorParam base in CActorParam.cpp): the
+// class keeps the member decl, this definition provides the retail symbol.
+// All in-tree callers dispatch through CActorParam*, so no member-form
+// definition is needed.
+extern "C" void CActorParam_resetArtsStatus__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arts) {
+    // Forwards the incoming arts word (always null at every call site) as
+    // the base-slot int flag: retail has no `li r4,0`, r4 flows straight
+    // into the direct bl. A member call would virtual-dispatch slot 0xAC.
+    ::CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv(self, (int)arts);
     u32* idPtr = reinterpret_cast<u32*>(
         reinterpret_cast<cf::CObjectState*>(
-            reinterpret_cast<cf::CActorState*>(this)->unk4)
+            reinterpret_cast<cf::CActorState*>(self)->unk4)
             ->CObjectState_getStateData());
     u32 id = *idPtr;
-    if (func_80174C98(this, (int*)&id, 0x1c) != 0) {
-        func_800BE12C((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
+    if (func_80174C98(self, (int*)&id, 0x1c) != 0) {
+        func_800BE12C((u8*)self + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
     }
 }
 

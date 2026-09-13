@@ -23,9 +23,9 @@ namespace cf{
         virtual void Move();
         virtual void Draw();
 
-        virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
-        virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
-        virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+        virtual bool update(ml::CFrustum* r4);
+        virtual bool isOccluded(const ml::CVec3& r4, float r5);
+        virtual bool isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
         virtual void cbRenderBefore();
 
         static void func_801A2BD0(u32 r3);
@@ -56,7 +56,7 @@ namespace cf{
         static CTaskCulling* spInstance;
     };
 
-    // Thunk symbols present in object (@88@cbRenderBefore, @92@ICulling_UnkVirtualFunc*);
+    // Thunk symbols present in object (@88@cbRenderBefore, @92@update/isOccluded/isRayOccluded);
     // Declared manually - MWCC does not accept @ in identifiers.
 } //namespace  cf
 

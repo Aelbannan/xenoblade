@@ -236,10 +236,10 @@ struct CFunc8008EF04Sub98 {
 // dereference/divide call sites). Never instantiated, so no vtable emitted.
 class __declspec(novtable) CCtrlMoveEneSub : public CfObjectModel {
 public:
-    virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
-    virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
-    virtual void CfObjectMove_UnkVirtualFunc3(int arg);  //0x1D0
-    virtual void CfObjectMove_UnkVirtualFunc4(float value);  //0x1D4
+    virtual void CfObjectMove_dropMoveRequest();  //0x1C8
+    virtual void CfObjectMove_detachModelList();  //0x1CC
+    virtual void CfObjectMove_releaseSlotById(int arg);  //0x1D0
+    virtual void CfObjectMove_recordMoveValue(float value);  //0x1D4
     virtual float* CfObjectMove_getMovementRate();  //0x1D8 (movement-rate query)
 };
 

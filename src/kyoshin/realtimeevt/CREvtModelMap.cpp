@@ -6,6 +6,52 @@
 #include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 #include <decomp.h>
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
+// The +0x2F3C game-manager sub-object is a CScnEnvLgtCtrlListItem (real
+// owner in libs/monolib/src/scn/CScnEnvLgtCtrl.hpp, which cannot be
+// included here over this TU's conflicting decls). TU-local view under the
+// real owner name with retail arities (CTaskREvtSequence.cpp idiom); this
+// TU dispatches its v24 slot (0x68) with the retail int flag.
+class CScnEnvLgtCtrlListItem {
+public:
+    virtual void v0(int flag);
+    virtual void v1();
+    virtual void v2(void* arg);
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8(void* arg);
+    virtual void v9(void* arg);
+    virtual void v10(void* arg, void* data);
+    virtual void v11(void* arg, u8 byte);
+    virtual int v12(void* vec);
+    virtual int v13(void* vec);
+    virtual void v14(void* data);
+    virtual int v15(float f, void* data, void* arg, u32 count);
+    virtual void v16(void* arg);
+    virtual void v17(void* arg);
+    virtual void v18(void* arg, float f);
+    virtual int v19(void* bits, int flag);
+    virtual int v20(void* base, int flag);
+    virtual void v21();
+    virtual void v22(float f, s32 mode, s32 submode);
+    virtual int v23();
+    virtual void v24(int flag);  // slot 0x68 - retail passes r4
+    virtual void v25(int flag);
+    virtual void v26(void* a, void* b);
+    virtual void v27(void* a, void* b, float f);
+    virtual int v28(void* out, int flag);
+    virtual int v29();
+    virtual int v30();
+    virtual void v31(u32 a, u32 b);
+    virtual void v32(u32 a, u32 b, void* c, void* d);
+    virtual void v33(u32 a, u32 b, void* c);
+    virtual void v34();
+    virtual void v35(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g);
+    virtual void v36();
+    virtual void v37(int flag);
+};
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -131,12 +177,6 @@ __declspec(section ".sdata2") __attribute__((used, aligned(8))) const unsigned c
 __attribute__((used, aligned(8))) unsigned char __sbss_CREvtModelMap[8];
 DECOMP_FORCEACTIVE(CREvtModelMap_sbss, __sbss_CREvtModelMap);
 
-// Helper types for real dispatch
-struct CGameMgrCoreFlagsView {
-    u8 pad[0x100];
-    u32 field_100;
-};
-
 extern "C" {
 
 CREvtModelMap* __ct__CREvtModelMap(CREvtModelMap* self, void* parent)
@@ -200,7 +240,7 @@ CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
         if (self->mIsGuest) {
             reinterpret_cast<CREvtModel*>(self)->setVisible(0);
             if (cf::CfGameManager::getGameSubManager()) {
-                reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getGameSubManager())->CfObject_UnkVirtualFunc66(1);
+                reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getGameSubManager())->setPointEnabled(1);
             }
             enableLOD__8CTaskLODFv();
             if (self->mCreatureCount > 0) {
@@ -209,7 +249,7 @@ CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
                 CCreatureNode* it = head->next;
                 while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
                     u8 v = (u8)self->mModelName[i];
-                    reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_UnkVirtualFunc66(!v);
+                    reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(!v);
                     it = it->next;
                     i++;
                 }
@@ -250,8 +290,7 @@ bool func_80180CBC(CREvtModelMap* self)
         func_80495E60(self->mEmoteModel);
         self->mEmoteModel = nullptr;
     }
-    void* loaded = self->mLoadedModelData;
-    if (loaded) {
+    if (self->mLoadedModelData) {
         func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
         self->mLoadedModelData = nullptr;
     }
@@ -298,7 +337,7 @@ void func_80180DCC(CREvtModelMap* self)
     }
     if (cf::CfGameManager::getGameSubManager()) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-        reinterpret_cast<cf::CfObject*>(mgr)->CfObject_UnkVirtualFunc66(0);
+        reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(0);
         disableLOD__8CTaskLODFv();
     }
 }
@@ -309,7 +348,7 @@ void func_80180E1C(CREvtModelMap* self)
         return;
     }
     cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-    reinterpret_cast<cf::CfObject*>(mgr)->CfObject_UnkVirtualFunc66(1);
+    reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(1);
     enableLOD__8CTaskLODFv();
 }
 
@@ -496,9 +535,9 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
             if (func_80180978()) {
-                reinterpret_cast<CGameMgrCoreFlagsView*>(cf::CfGameManager::getGameSubManager())->field_100 &= ~4;
+                cf::CfGameManager::getGameSubManager()->field_0x100 &= ~4;
             } else if (visible) {
-                reinterpret_cast<CGameMgrCoreFlagsView*>(cf::CfGameManager::getGameSubManager())->field_100 |= 4;
+                cf::CfGameManager::getGameSubManager()->field_0x100 |= 4;
             }
         }
     }
@@ -508,7 +547,7 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
     if (self->mIsGuest) {
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
         if (mgr) {
-            reinterpret_cast<cf::CfObject*>(mgr)->CfObject_UnkVirtualFunc66(visible);
+            reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(visible);
         }
         if (visible) {
             restorePrimaryLOD__8CTaskLODFv();
@@ -528,13 +567,13 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
         CCreatureNode* it = head->next;
         while (it != (CCreatureNode*)((cf::CfGameManager*)spawnGimmickEntity__Q22cf13CfGameManagerFv())->field_0x4) {
             if (!visible) {
-                int v = reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_UnkVirtualFunc68();
+                int v = reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_checkSubReady();
                 self->mModelName[i] = (char)v;
                 self->mCreatureCount++;
-                reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_UnkVirtualFunc66(0);
+                reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(0);
             } else {
                 u8 v = (u8)self->mModelName[i];
-                reinterpret_cast<cf::CfObject*>(it->obj)->CfObject_UnkVirtualFunc66(!v);
+                reinterpret_cast<cf::CfObject*>(it->obj)->setPointEnabled(!v);
             }
             it = it->next;
             i++;
@@ -553,7 +592,8 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 self->mLoadedModelData = func_804C1BA0(*(void**)((u8*)lbl_eu_80663E14 + 0x7C), self->mFileData3, 7);
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
-                    reinterpret_cast<cf::CfObject*>(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C))->CfObject_UnkVirtualFunc6(0);
+                    CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
+                    fx->v24(0);
                 }
             }
             lbl_eu_806642B4 = self;
@@ -567,7 +607,8 @@ void func_801815AC(CREvtModelMap* self, unsigned int visible)
                 self->mLoadedModelData = 0;
                 cf::CfGameManager* m2 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
                 if (m2 && *(void**)((u8*)m2 + 0x2F3C)) {
-                    reinterpret_cast<cf::CfObject*>(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C))->CfObject_UnkVirtualFunc6(1);
+                    CScnEnvLgtCtrlListItem* fx = (CScnEnvLgtCtrlListItem*)(*(void**)((u8*)cf::CfGameManager::getGameSubManager() + 0x2F3C));
+                    fx->v24(1);
                 }
             }
         }
@@ -578,11 +619,11 @@ visible_store:
 set_guest_flags:
     if (self->mIsGuest) {
         s32 isZero = (func_80180990() == 0);
-        cf::CfGameManager* m3 = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
+        UnkClass_80083298* m3 = cf::CfGameManager::getGameSubManager();
         if (isZero) {
-            reinterpret_cast<CGameMgrCoreFlagsView*>(m3)->field_100 |= 0x10;
+            m3->field_0x100 |= 0x10;
         } else {
-            reinterpret_cast<CGameMgrCoreFlagsView*>(m3)->field_100 &= ~0x10;
+            m3->field_0x100 &= ~0x10;
         }
     }
 }
@@ -592,7 +633,7 @@ void func_801818BC(CREvtModelMap* self, int visible)
     if (self->mIsGuest) {
         if (cf::CfGameManager::getGameSubManager()) {
             cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::getGameSubManager();
-            reinterpret_cast<cf::CfObject*>(mgr)->CfObject_UnkVirtualFunc80(visible);
+            reinterpret_cast<cf::CfObject*>(mgr)->setPointEnabled(visible);
         }
         if (getGlobalSda()) {
             *(u8*)((u8*)getGlobalSda() + 0xA8) = visible;

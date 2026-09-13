@@ -133,7 +133,7 @@ public:
 };
 
 // findObjectById(id) result (retail CfObject-ish "talk source"): the
-// vtable+0x40 getter is the talk text (CObjectParam_UnkVirtualFunc2), and
+// vtable+0x40 getter is the talk text (CObjectParam_getParamPtr), and
 // +0x98 is a voice sub-object whose vtable+0x58 plays/stops the character
 // voice. Call sites cast to cf::CfObject for the text and to
 // CSimpleTalkFields for the voice pointer.

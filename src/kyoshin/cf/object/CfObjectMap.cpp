@@ -1,80 +1,17 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMap
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
 #include "monolib/scn/CScnTimeApi.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/math/CVec3.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
+#include "kyoshin/cf/IResInfo.hpp"  // real CResLookup owner (getResourceBase/isInUse/cmpField4Eq)
+#include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"  // real CScnEnvLgtCtrlListItem owner (v25/v31/v32/v33/v35)
 
-// Minimal CResLookup view for this TU (real owner in IResInfo.hpp). Offsets:
-// getResourceBase at +0x08 (idx0), isInUse at +0x40 (idx14), cmpField4Eq at
-// +0x44 (idx15). Dummy fillers occupy the intermediate slots.
-class CResLookup {
-public:
-    virtual void* getResourceBase(void* entry, u32 r5);
-    virtual void v0C();
-    virtual void v10();
-    virtual void v14();
-    virtual void v18();
-    virtual void v1C();
-    virtual void v20();
-    virtual void v24();
-    virtual void v28();
-    virtual void v2C();
-    virtual void v30();
-    virtual void v34();
-    virtual void v38();
-    virtual void v3C();
-    virtual int isInUse(void* entry);
-    virtual int cmpField4Eq(void* entry, u32 val);
-};
-
-// Minimal CScnEnvLgtCtrlListItem view for this TU (real owner in
-// libs/monolib/src/scn/CScnEnvLgtCtrl.hpp). Virtuals v31/v32/v33/v35 at
-// 0x84/0x88/0x8C/0x94 widened to retail arity; v25 at 0x6C already correct.
-class CScnEnvLgtCtrlListItem {
-public:
-    virtual void v0(int flag);
-    virtual void v1();
-    virtual void v2(void* arg);
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6();
-    virtual void v7();
-    virtual void v8(void* arg);
-    virtual void v9(void* arg);
-    virtual void v10(void* arg, void* data);
-    virtual void v11(void* arg, u8 byte);
-    virtual int v12(void* vec);
-    virtual int v13(void* vec);
-    virtual void v14(void* data);
-    virtual int v15(float f, void* data, void* arg, u32 count);
-    virtual void v16(void* arg);
-    virtual void v17(void* arg);
-    virtual void v18(void* arg, float f);
-    virtual int v19(void* bits, int flag);
-    virtual int v20(void* base, int flag);
-    virtual void v21();
-    virtual void v22(float f, s32 mode, s32 submode);
-    virtual int v23();
-    virtual void v24();
-    virtual void v25(int flag);
-    virtual void v26(void* a, void* b);
-    virtual void v27(void* a, void* b, float f);
-    virtual int v28(void* out, int flag);
-    virtual int v29();
-    virtual int v30();
-    virtual void v31(u32 a, u32 b);
-    virtual void v32(u32 a, u32 b, void* c, void* d);
-    virtual void v33(u32 a, u32 b, void* c);
-    virtual void v34();
-    virtual void v35(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g);
-    virtual void v36();
-    virtual void v37(int flag);
-};
+// (Local CResLookup deleted: uses real owner in kyoshin/cf/IResInfo.hpp.)
+// (Local CScnEnvLgtCtrlListItem deleted: uses real owner in
+// libs/monolib/src/scn/CScnEnvLgtCtrl.hpp.)
 
 extern const float lbl_eu_80666A84;
 
@@ -87,7 +24,7 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 // Fake table removed: retail slots at 0xC4/0xD0 are CfObject 29/32.
 // Wrappers below now call the real CfObject virtuals directly.
 
-// Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
+// Calls vtable slot 0x18C (CfObjectModel_checkTargetNode) when the pointer at
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
 // The slot takes a void* arg (CfObjectMove.hpp vtable decl): passing
 // this->mTarget70 keeps r4 live as the call argument, so MWCC keeps the ret
@@ -96,14 +33,14 @@ extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
 void* cf::CfObjectMap::checkTarget() {
     void* ret = (void*)1;
     if (this->mTarget70) {
-        ret = this->CfObjectModel_UnkVirtualFunc6(this->mTarget70);
+        ret = this->CfObjectModel_checkTargetNode(this->mTarget70);
     }
     return ret;
 }
 #pragma scheduling on
 
 void cf::CfObjectMap::cleanupMap() {
-    this->CfObjectModel_UnkVirtualFunc1();
+    this->CfObjectModel_releaseModelSub();
     if (this->field_0xEC != 0) {
         func_80495E60(this->field_0xEC);
         this->field_0xEC = 0;
@@ -174,7 +111,7 @@ void clearStatus__Q22cf11CfObjectMapFv(void* self) {
 void func_800B9C70() {}
 
 extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
-    self->CfObjectModel_UnkVirtualFunc1();
+    self->CfObjectModel_releaseModelSub();
     if (self->field_0xEC != 0) {
         func_80495E60(self->field_0xEC);
         self->field_0xEC = 0;
@@ -193,7 +130,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         buf[0] = 0;
         int field1 = (packed >> 20) & 0x7F;
         int field2 = (packed >> 10) & 0x3FF;
-        func_800AA33C(buf, packed, 1, 0);
+        func_800AA33C(reinterpret_cast<ml::FixStr<64>&>(buf), packed, 1, 0);
         len += strlen(lbl_eu_804FC538);
         strcat(buf, lbl_eu_804FC538);
         int size = getFileSize__11CDeviceFileFPCc(buf, 1);
@@ -306,7 +243,7 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
         u32 len = 0;
         self->field_0x8E += 1;
         buf[0] = 0;
-        func_800AA33C(buf, resB->field_0x4, 1, 0);
+        func_800AA33C(reinterpret_cast<ml::FixStr<64>&>(buf), resB->field_0x4, 1, 0);
         *reinterpret_cast<void**>(self->field_0x90) = func_80065D04(resB->field_0x2C, resB);
         self->field_0xDC = func_80065D00(resC->field_0x2C, resC);
         void* r3 = func_80489A60(lbl_eu_80663E14, *reinterpret_cast<void**>(self->field_0x90), 5, 1, 0, 0x30);
@@ -455,7 +392,7 @@ extern "C" void setMapScale__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f
 extern "C" void setMapEffectFlag__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, void* task) {
     cf::CfObject* model = *reinterpret_cast<cf::CfObject**>(&self->field_0x90[8]);
     if (model != 0) {
-        model->CfObject_UnkVirtualFunc25(
+        model->CfObject_snapMoveTarget(
             reinterpret_cast<ml::CVec3*>(&model->mPos3C), lbl_eu_80666A84);
     }
     UnkMapSubF0* sub = &self->field_0xF0;
@@ -498,7 +435,7 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
     if (this_ != 0) {
         u32 vt = (u32)lbl_eu_80529128;
         *(u32*)this_ = vt;
-        this_->CfObject_UnkVirtualFunc6();
+        this_->CfObject_releaseMoveTargets();
         void* sub = (char*)this_ + 0xF0;
         if (sub != 0) {
             __dt__8047BDA8(sub);
@@ -514,7 +451,7 @@ extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {
     // Retail forwarder at 0xD4 -> slot 0xD0 (CfObject_UnkVirtualFunc32). The float
     // in f1 is forwarded unchanged via bcctr; Model's 32 ignores it.
-    reinterpret_cast<cf::CfObject*>(self)->CfObject_UnkVirtualFunc32();
+    reinterpret_cast<cf::CfObject*>(self)->CfObject_syncMoveHead();
 }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float value) {

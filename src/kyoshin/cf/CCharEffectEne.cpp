@@ -26,7 +26,7 @@ struct CCharEffectEne {
     u8 pad_000[0x26C];
     u16 mFlags;
     u8 pad_26E[0x2E];
-    cf::CfObjectMove* mManager; // +0x29C: CfObjectMove sub-object (vtable lbl_eu_80529690); +0x220 = CfObjectMove_UnkVirtualFunc23
+    cf::CfObjectMove* mManager; // +0x29C: CfObjectMove sub-object (vtable lbl_eu_80529690); +0x220 = CfObjectMove_loadResourceById
 };
 
 extern "C" CCharEffectEne* __ct__cf_CCharEffectEne(CCharEffectEne* self) {
@@ -44,11 +44,11 @@ extern "C" void* func_8015CD04(CCharEffectEne* self, u32 index, s32 mode) {
             if (entry < 0x200) {
                 result = createNpcActor__Q22cf13CfGameManagerFv(entry);
             } else {
-                result = self->mManager->CfObjectMove_UnkVirtualFunc23(entry - 0x200);
+                result = self->mManager->CfObjectMove_loadResourceById(entry - 0x200);
             }
         }
     } else {
-        result = self->mManager->CfObjectMove_UnkVirtualFunc23((u32)mode);
+        result = self->mManager->CfObjectMove_loadResourceById((u32)mode);
     }
     return result;
 }
@@ -58,10 +58,10 @@ extern "C" void* func_8015CD9C(CCharEffectEne* self, u32 index, s32 mode) {
     if (mode < 0) {
         u16 entry = lbl_eu_80501EB8[index];
         if (entry != 0) {
-            obj = self->mManager->CfObjectMove_UnkVirtualFunc23(entry);
+            obj = self->mManager->CfObjectMove_loadResourceById(entry);
         }
     } else {
-        obj = self->mManager->CfObjectMove_UnkVirtualFunc23((u32)mode);
+        obj = self->mManager->CfObjectMove_loadResourceById((u32)mode);
     }
     if (obj != nullptr) {
         bindPartnerO_(obj, self->mManager, 0);
@@ -96,11 +96,11 @@ extern "C" void* func_8015CED0(CCharEffectEne* self, u32 index, s32 mode) {
                     bindPartnerO_(obj, self->mManager, 0);
                 }
             } else {
-                obj = self->mManager->CfObjectMove_UnkVirtualFunc23(entry - 0x200);
+                obj = self->mManager->CfObjectMove_loadResourceById(entry - 0x200);
             }
         }
     } else {
-        obj = self->mManager->CfObjectMove_UnkVirtualFunc23((u32)mode);
+        obj = self->mManager->CfObjectMove_loadResourceById((u32)mode);
     }
     return obj;
 }

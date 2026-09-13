@@ -94,19 +94,20 @@ void CTaskCulling::func_801A2BD0(unsigned long r3){
         return lbl_eu_80664328->unk94;
     }
 
-    bool CTaskCulling::ICulling_UnkVirtualFunc1(ml::CFrustum* r4){
+    bool CTaskCulling::update(ml::CFrustum* r4){
         if(lbl_eu_80664328 == nullptr) return false;
-        return 0; // patched for compile
+        return mOccCulling.update(r4);
     }
 
-bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
+bool CTaskCulling::isOccluded(const ml::CVec3& r4, float r5){
         if(lbl_eu_80664328 == nullptr) return false;
-        return (unk120 & 8) ? false : 0;
+        if(unk120 & 8) return false;
+        return mOccCulling.isOccluded(r4, r5);
     }
 
-bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
+bool CTaskCulling::isRayOccluded(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
         if(lbl_eu_80664328 == nullptr) return false;
-        return 0;
+        return mOccCulling.func_801A1550(r4, r5, r6);
     }
 
 void CTaskCulling::func_801A2C94(){

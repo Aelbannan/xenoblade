@@ -40,12 +40,12 @@ cf::CfObjectTbox::CfObjectTbox() : CfObjectObj() {
 
 cf::CfObjectTbox::~CfObjectTbox() {
     // Run the CfObject cleanup routine; MWCC then emits the base dtor + deletion.
-    CfObject_UnkVirtualFunc6();
+    CfObject_releaseMoveTargets();
 }
 
 void cf::CfObjectTbox::initTbox() {
     // Pull the eventFlags bit 22 (0x400000); pass its inverse as the arg.
-    this->CfObject_UnkVirtualFunc66(!(lbl_eu_80663E24 & 0x400000));
+    this->setPointEnabled(!(lbl_eu_80663E24 & 0x400000));
     this->func_800BFB90();
 }
 

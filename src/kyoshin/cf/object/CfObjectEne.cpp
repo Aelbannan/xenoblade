@@ -203,7 +203,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
             func_801F4DDC(getUnk80664658(), self);
         }
         // +0x3E9C CfObjectMove: slot +0x68 = CfObject_UnkVirtualFunc6.
-        ((cf::CfObjectAt3E9C*)self)->CfObject_UnkVirtualFunc6();
+        ((cf::CfObjectAt3E9C*)self)->CfObject_releaseMoveTargets();
         if (self != 0) {
             __dt__Q22cf12CfObjectMoveFv((cf::CfObjectMove*)((u8*)self + 0x3E9C), 0);
             cf::CfObjectCAISubView* ai = (cf::CfObjectCAISubView*)((u8*)self + 0x3380);
@@ -240,10 +240,12 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // single explicit expression (its other use is the folded virtual-dispatch
 // adjustment, which GVN does not model).
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
+    // Free-function bl to Model UVF2 (CfObject_initEventState slot +0x58).
+    // Member alias form inlines to bctrl and grows the frame (reverted).
     CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
         (cf::CfObjectModel*)&((cf::CfEneMoveBaseA*)self)->base);
-    // +0x3E9C CfObjectMove: slot +0x158 = CfObject_UnkVirtualFunc66.
-    ((cf::CfObjectAt3E9C*)self)->CfObject_UnkVirtualFunc66(1);
+    // +0x3E9C CfObjectMove: slot +0x158 = setPointEnabled.
+    ((cf::CfObjectAt3E9C*)self)->setPointEnabled(1);
     func_800BE33C(&((cf::CfEneMoveBaseB*)self)->base, 1);
     func_80174B4C(self, 0x100000);
     func_80174B4C(self, 0x08000000);
@@ -276,7 +278,7 @@ void cf::CfObjectEne::updateEnemyBattleState() {
          func_80174C98((void*)this, (int*)&wordB, 0xE)) == 0) {
         if (func_80148778(&((cf::CfEneB8View*)this)->field_0x8, 0x35) == 0) {
             // +0x8 CBattleState: slot +0x14 = UnkVirtualFunc4.
-            ((cf::CBattleStateAt8*)this)->CBattleState_UnkVirtualFunc4(0x35);
+            ((cf::CBattleStateAt8*)this)->CBattleState_setBattleParam(0x35);
         }
     } else {
         func_800AF870(this);
@@ -311,8 +313,8 @@ void cf::CfObjectEne::updateEnemyBattleState() {
             ((cf::CfEneField7A4*)p)->field_0x7A4 |= 0x80000000;
         // distinct expression families keep MWCC from CSE-ing +0x3E9C
         // (slots +0x80/+0x64 = UVF12/UVF5)
-        ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_UnkVirtualFunc12();
-        ((cf::CfObject*)(u32)&((cf::CfEneTablePtrs*)this)->vt3E9C)->CfObject_UnkVirtualFunc5();
+        ((cf::CfObject*)((u8*)this + 0x3E9C))->CfObject_refreshSubB0();
+        ((cf::CfObject*)(u32)&((cf::CfEneTablePtrs*)this)->vt3E9C)->CfObject_updateMoveRate();
     }
     goto done;
 defaultPath:
@@ -341,14 +343,14 @@ void cf::CfObjectEne::func_800ADDA8() {
     u8* bdatArts = lbl_eu_80664094;
     void* bdat = getFP(v->field_0x3F14);
     // +0x3E9C CfObjectMove: slot +0x3C = CObjectParam_UnkVirtualFunc1.
-    ((cf::CObjectParamAt3E9C*)this)->CObjectParam_UnkVirtualFunc1(
+    ((cf::CObjectParamAt3E9C*)this)->CObjectParam_setObjectName(
         (const char*)getBdatStringColumnValue(bdatArts, &lbl_eu_804FC168[0x0], v->field_0x3F28));
     c5.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x5], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc20(c5.b);
+    this->CActorParam_setEnemyType(c5.b);
     cA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc21((f32)(u32)cA.b / lbl_eu_8066697C);
+    this->CActorParam_propagateScale((f32)(u32)cA.b / lbl_eu_8066697C);
     c10.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x10], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc18(c10.b);
+    this->CActorParam_setActorType(c10.b);
     c17.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x17], v->field_0x3F28);
     p->field_0x15F0 = (u32)c17.b;
     u32 flags = p->field_0x3374 | (u32)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x1D], v->field_0x3F28);
@@ -360,24 +362,24 @@ void cf::CfObjectEne::func_800ADDA8() {
         // slots +0x1D4/+0x134/+0x13C = Move UVF4 / Object UVF57 / UVF59
         ((cf::CfObjectMoveAt3E9C*)this)->CfObjectMove_recordMoveValue((f32)(s32)(u32)k22);
         u8 k2d = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2D], v->field_0x3F28);
-        ((cf::CfObjectAt3E9C*)this)->CfObject_UnkVirtualFunc57((f32)(s32)(u32)k2d);
-        ((cf::CfObjectAt3E9C*)this)->CfObject_UnkVirtualFunc59(lbl_eu_80666980);
+        ((cf::CfObjectAt3E9C*)this)->CfObject_setMoveValue((f32)(s32)(u32)k2d);
+        ((cf::CfObjectAt3E9C*)this)->CfObject_setMoveScale(lbl_eu_80666980);
         if (k22 == 0 || k2d == 0)
             p->field_0x3374 |= 0x1000;
     }
     c37.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x37], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc112(c37.b);
+    this->CActorParam_setParam161C(c37.b);
     c3F.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x3F], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc114(c3F.b != 0);
+    this->CActorParam_setFlag1628(c3F.b != 0);
     c46.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x46], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc116((f32)(u32)c46.h);
+    this->CActorParam_setGaugeFloat((f32)(u32)c46.h);
     c53.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x53], v->field_0x3F28);
-    this->CActorParam_UnkVirtualFunc118((f32)(u32)c53.h * lbl_eu_8066A210);
-    this->CActorParam_UnkVirtualFunc55(1);
-    this->CActorParam_UnkVirtualFunc61(1);
-    this->CActorParam_UnkVirtualFunc65(lbl_eu_80666984);
-    this->CActorParam_UnkVirtualFunc68(lbl_eu_80666984);
-    this->CActorParam_UnkVirtualFunc74(lbl_eu_80666988 * (lbl_eu_8066A1F8 / lbl_eu_8066698C));
+    this->CActorParam_setGauge1624((f32)(u32)c53.h * lbl_eu_8066A210);
+    this->CActorParam_setGaugeFlagA(1);
+    this->CActorParam_setGaugeFlagB(1);
+    this->CActorParam_setGaugeRateA(lbl_eu_80666984);
+    this->CActorParam_setGaugeRateB(lbl_eu_80666984);
+    this->CActorParam_setMoveRate(lbl_eu_80666988 * (lbl_eu_8066A1F8 / lbl_eu_8066698C));
     c60.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x60], v->field_0x3F28);
     p->field_0x1648 |= c60.b;
     c6A.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x6A], v->field_0x3F28);
@@ -386,13 +388,13 @@ void cf::CfObjectEne::func_800ADDA8() {
     p->field_0x164C |= c80.h;
     c8B.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x8B], v->field_0x3F28);
     // +0x8 CBattleState: slots +0x7C/+0x84 = UnkVirtualFunc30/32.
-    ((cf::CBattleStateAt8*)this)->CBattleState_UnkVirtualFunc30(c8B.h);
+    ((cf::CBattleStateAt8*)this)->CBattleState_addStatusBits4(c8B.h);
     c96a.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
-    ((cf::CBattleStateAt8*)this)->CBattleState_UnkVirtualFunc32(c96a.h);
+    ((cf::CBattleStateAt8*)this)->CBattleState_addStatusBits6(c96a.h);
     c96t.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
     if (c96t.b != 0) {
         c96b.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x96], v->field_0x3F28);
-        this->CActorParam_UnkVirtualFunc168((lbl_eu_8066A1F8 / lbl_eu_80666990) * (f32)(u32)c96b.b);
+        this->CActorParam_setHitRange((lbl_eu_8066A1F8 / lbl_eu_80666990) * (f32)(u32)c96b.b);
     }
     cf::CfEneRatesView* g = (cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock();
     cA2.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA2], v->field_0x3F28);
@@ -452,9 +454,9 @@ void cf::CfObjectEne::func_800ADDA8() {
         s32 sum = (s32)u0A.b + (s32)s2;
         // rlwinm bit 26 -> mask 0x20 picks between raw and scaled HP scaling
         if (u129.b & 0x20) {
-            this->CActorParam_UnkVirtualFunc21((f32)(s32)sum);
+            this->CActorParam_propagateScale((f32)(s32)sum);
         } else {
-            this->CActorParam_UnkVirtualFunc21(lbl_eu_80666998 * (f32)(s32)sum);
+            this->CActorParam_propagateScale(lbl_eu_80666998 * (f32)(s32)sum);
         }
         g->field_0x0 = g->field_0x0 + (u32)sn;
         g->field_0x4 = (f32)sn * (f32)u102.h + g->field_0x4;
@@ -469,7 +471,7 @@ void cf::CfObjectEne::func_800ADDA8() {
         g->field_0x10 = g->field_0x4;
     } else {
         elseA.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0xA], v->field_0x3F28);
-        this->CActorParam_UnkVirtualFunc21(lbl_eu_80666998 * (f32)(s32)(u32)elseA.b);
+        this->CActorParam_propagateScale(lbl_eu_80666998 * (f32)(s32)(u32)elseA.b);
         p->field_0x3F00 |= 0x04000000;
     }
     u32 cap = g->field_0x0;
@@ -511,7 +513,7 @@ void cf::CfObjectEne::func_800ADDA8() {
             bufa.field_0x18 = (u16)p->field_0x1644;
             bufa.field_0x20 = lbl_eu_80666968;
             bufa.field_0x30 = 1;
-            ((cf::CBattleStateAt8*)this)->CBattleState_UnkVirtualFunc5(
+            ((cf::CBattleStateAt8*)this)->CBattleState_enterStatusEntry(
                 (cf::CBattleStateEntry*)&bufa);
         }
     }
@@ -524,14 +526,14 @@ void cf::CfObjectEne::func_800ADDA8() {
         bufb.field_0xC = 0xC3;
         bufb.field_0x10 = (u32)c18B.b;
         bufb.field_0x20 = lbl_eu_80666968;
-        ((cf::CBattleStateAt8*)this)->CBattleState_UnkVirtualFunc5(
+        ((cf::CBattleStateAt8*)this)->CBattleState_enterStatusEntry(
             (cf::CBattleStateEntry*)&bufb);
     }
     c191.w = getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x191], v->field_0x3F28);
     p->field_0x3370 = (u32)c191.h;
-    this->CActorParam_UnkVirtualFunc98((const void*)this->CActorParam_getArtsDataBlock());
-    this->CActorParam_UnkVirtualFunc167();
-    this->CActorParam_UnkVirtualFunc166();
+    this->CActorParam_copyArtsBlock17E4((const void*)this->CActorParam_getArtsDataBlock());
+    this->CActorParam_rearmAttackList();
+    this->CActorParam_rearmArtsList();
     this->initEnemyBdatParams();
     // rlwinm bit 12 -> mask 0x1000
     if (p->field_0x3374 & 0x1000) {
@@ -543,12 +545,17 @@ void cf::CfObjectEne::func_800ADDA8() {
     }
 }
 
+// Wave-62: CActorParam_setEnemyType (+0xE4) / setActorType (+0xDC) base
+// impls. Free-function Fv forms keep the Unk linker names that hand-built
+// tables / CREvtModel reference.
 void CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
 
 void CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
 
 void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, float val) { *(float*)((u8*)self + 0x6ec) = val; }
 
+// Wave-62: CActorParam_setParam161C / setFlag1628 / setGauge1624 / setHitRange
+// base impls. Free-function Fv forms keep the Unk linker names.
 void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
 
 void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
@@ -574,11 +581,11 @@ void cf::CfObjectEne::initEnemyBdatParams() {
     col.w = getBdatStringColumnValue(getFP(((cf::CfEneLookupView*)this)->field_0x3F14),
                                      &lbl_eu_804FC168[0x19A],
                                      ((cf::CfEneLookupView*)this)->field_0x3F28);
-    f32 base = this->CActorParam_UnkVirtualFunc23();
+    f32 base = this->CActorParam_getSubScale();
     f32 scaled = lbl_eu_806669B0 * (f32)col.h;
-    this->CActorParam_UnkVirtualFunc16(scaled * base);
+    this->CActorParam_setStatScale(scaled * base);
     for (int i = 0; i < 6; i++)
-        this->CActorParam_UnkVirtualFunc125();
+        this->CActorParam_getArtsSlotIds();
     // Different syntax families (pointer-add vs &subscript) stop MWCC from
     // CSE-ing the subobject address into a callee-saved register - retail
     // re-materializes addi r3, rX, 0x3380 at each call (cf. pluginBtl.cpp).
@@ -602,14 +609,14 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     // each column result is a u32 frame temp live across the slot +0x288
     // virtual call that publishes it (retail spills to 0x2c/0x28/0x24(sp))
     u32 s0 = getBdatStringColumnValue(bdat, &cols[0x2A7], ((cf::CfEneLookupView*)this)->field_0x3F28);
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[0] = (u16)s0;
+    ((u16*)this->CActorParam_getArtsSlotIds())[0] = (u16)s0;
     u32 s1 = getBdatStringColumnValue(bdat, &cols[0x2AC], ((cf::CfEneLookupView*)this)->field_0x3F28);
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[1] = (u16)s1;
+    ((u16*)this->CActorParam_getArtsSlotIds())[1] = (u16)s1;
     u32 s2 = getBdatStringColumnValue(bdat, &cols[0x2B1], ((cf::CfEneLookupView*)this)->field_0x3F28);
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[2] = (u16)s2;
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[3] = 0;
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[4] = 0;
-    ((u16*)this->CActorParam_UnkVirtualFunc125())[5] = 0;
+    ((u16*)this->CActorParam_getArtsSlotIds())[2] = (u16)s2;
+    ((u16*)this->CActorParam_getArtsSlotIds())[3] = 0;
+    ((u16*)this->CActorParam_getArtsSlotIds())[4] = 0;
+    ((u16*)this->CActorParam_getArtsSlotIds())[5] = 0;
 
     func_8003AA34();
     u8* bdat2 = (u8*)getFP(&cols[0x2B6]);
@@ -618,9 +625,9 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
     for (int i = 0; i < 6; i++) {
         // name column addresses the raw symbol; the rest go through the
         // offset copy (retail keeps both r29/r30 base forms)
-        u16 atkId = ((u16*)this->CActorParam_UnkVirtualFunc125())[(s16)i];
+        u16 atkId = ((u16*)this->CActorParam_getArtsSlotIds())[(s16)i];
         if (atkId == 0) continue;
-        cf::CfEneAtkParamView* atk = (cf::CfEneAtkParamView*)getAtkParam(((u16*)this->CActorParam_UnkVirtualFunc125()), i);
+        cf::CfEneAtkParamView* atk = (cf::CfEneAtkParamView*)getAtkParam(((u16*)this->CActorParam_getArtsSlotIds()), i);
         char* nm = (char*)getBdatStringColumnValue(bdat2, lbl_eu_804FC168, atkId);
         atk->field_0x20 = strlen(nm);
         strcpy(atk->name, nm);
@@ -653,7 +660,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc167() {
             gauge = ((cf::CfEneRatesView*)this->CActorParam_getArtsDataBlock())->field_0x48;
         }
         atk->field_0x60 = gauge;
-        f32 rate = ((cf::CfEneMoveRateView*)this->CActorParam_UnkVirtualFunc76())->field_0x0;
+        f32 rate = ((cf::CfEneMoveRateView*)this->CActorParam_getMoveRate())->field_0x0;
         atk->field_0x64 = (s16)(rate * scale);
         u32 v256 = getBdatStringColumnValue(bdat2, &cols[0x256], atkId);
         atk->field_0x76 = (u8)v256;
@@ -744,7 +751,7 @@ void cf::CfObjectEne::CActorParam_UnkVirtualFunc166() {
         // simple attack classes (field_0x3C in {0,1}) without the 0x44 flag are
         // initialized through the record vtable and skipped
         if ((u16)(arts->field_0x3C - 1) <= 1 && arts->field_0x44 == 0) {
-            ((cf::CfEneAtkRec*)arts)->initRec();
+            ((cf::CAttackParam*)arts)->CAttackParam_clearArtsRecord();
             continue;
         }
         arts->field_0x58 = (u16)(u8)getBdatStringColumnValue(bdat2, tbl + 0x229, slot);
@@ -868,7 +875,7 @@ bmCheck:
     }
 }
 
-int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
+int CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return 1; }
 
 void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
@@ -876,22 +883,22 @@ void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
 // CActorState UVF1: unk4 is the Move subobject (this+0x3E9C); slot +0x38 =
 // CObjectState::UVF13 (slot +0x38 handler).
-void CActorState_UnkVirtualFunc1__Q22cf11CActorStateFv(cf::CActorState* self) {
+void CActorState_setObjStateBit3__Q22cf11CActorStateFv(cf::CActorState* self) {
     reinterpret_cast<cf::CObjectState*>(self->unk4)->CObjectState_setStateBitMask3();
 }
 
-u8* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
+u8* CBattleState_getStagingRecord__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long index) {
     return ((cf::CBattleState*)self)->unk152C + (index << 4);
 }
 
-u8* CBattleState_UnkVirtualFunc27__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x152c; }
+u8* CBattleState_getStatusBlock__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x152c; }
 
-u8* CBattleState_UnkVirtualFunc25__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x8; }
+u8* CBattleState_getEntryArray__Q22cf12CBattleStateFv(cf::CBattleState* self) { return (u8*)self + 0x8; }
 
 // us-800b0404: retail copies 0x1520 bytes (0x2a4 * 8) from src to this->unk8
 // (offset 0x8) with a counted lwzu/stwu loop - full struct assignment of the
 // 0x1520-byte block at CBattleState+0x8.
-void CBattleState_UnkVirtualFunc24__Q22cf12CBattleStateFv(cf::CBattleState* self, const cf::CBattleState* src) {
+void CBattleState_copyStatusEntries__Q22cf12CBattleStateFv(cf::CBattleState* self, const cf::CBattleState* src) {
     *(cf::CBattleStateUnk1520Block*)self->unk8 = *(const cf::CBattleStateUnk1520Block*)src;
 }
 
@@ -930,8 +937,11 @@ void* CActorParam_UnkVirtualFunc151__Q22cf11CActorParamFv(cf::CActorParam* self)
 // Retail is fully unrolled (48 straight stores: the u32 slot then the five
 // floats, in the init() order unk14/unk4/unk0/unkC/unk8/unk10 per entry), so
 // the 8 explicit init() calls are kept instead of a counted loop.
-void cf::CActorParam::CActorParam_UnkVirtualFunc148() {
-    cf::CActorParamUnk1928View* v = (cf::CActorParamUnk1928View*)this;
+// Wave-62: override of CActorParam_resetGaugeEntries (+0x2E4). Free-function
+// Fv form keeps the Unk linker name that hand-built tables / CREvtModel
+// reference; the renamed member decl serves call-site codegen.
+extern "C" void CActorParam_UnkVirtualFunc148__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    cf::CActorParamUnk1928View* v = (cf::CActorParamUnk1928View*)self;
     v->entries[0].init();
     v->entries[1].init();
     v->entries[2].init();
@@ -960,8 +970,11 @@ void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorParam* self)
 
 u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x2A80); }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc134() {
-    *(u8*)((u8*)this + 0x3354) = 0;
+// Wave-62: override of CActorParam_resetStatsSlot (+0x2AC). Free-function
+// Fv form keeps the Unk linker name that hand-built tables / CREvtModel
+// reference; the renamed member decl serves call-site codegen.
+extern "C" void CActorParam_UnkVirtualFunc134__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    *(u8*)((u8*)self + 0x3354) = 0;
 }
 
 u8 CActorParam_getStatsSlot__Q22cf11CActorParamFv(cf::CActorParam* self) {
@@ -1174,8 +1187,11 @@ void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorParam* self, 
 void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x15fc); }
 
 // (lbl_eu_80666968 declared in CfObjectEne.hpp)
-void cf::CActorParam::CActorParam_UnkVirtualFunc103() {
-    *(f32*)((u8*)this + 0x15FC) = lbl_eu_80666968;
+// Wave-62: override of CActorParam_refreshBattleAction (+0x230). Free-function
+// Fv form keeps the Unk linker name that hand-built tables / CREvtModel
+// reference; the renamed member decl serves call-site codegen.
+extern "C" void CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    *(f32*)((u8*)self + 0x15FC) = lbl_eu_80666968;
 }
 
 void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
@@ -1188,7 +1204,7 @@ void* CActorParam_UnkVirtualFunc97__Q22cf11CActorParamFv(cf::CActorParam* self) 
 
 void* CActorParam_UnkVirtualFunc96__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1740); }
 
-void* CActorParam_UnkVirtualFunc95__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
+void* CActorParam_getStatusSyncBlock__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x16c8); }
 
 void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x1650); }
 
@@ -1197,8 +1213,8 @@ void* CActorParam_UnkVirtualFunc93__Q22cf11CActorParamFv(cf::CActorParam* self) 
 // Forwards to Unk82(val) / Unk90(argA), then the +0x15E0 sub-object to
 // func_802617B8 when present (flag = argB).
 void CActorParam_UnkVirtualFunc88__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val, u32 argA, u32 argB) {
-    self->CActorParam_UnkVirtualFunc82(val);
-    self->CActorParam_UnkVirtualFunc90(argA);
+    self->CActorParam_addSpentCurrency(val);
+    self->CActorParam_addSecondCurrency(argA);
     u8* obj = ((cf::CfActorParam15E0View*)self)->field_0x15E0;
     if (obj != NULL) {
         func_802617B8(obj, ((cf::CfActorObj89CView*)obj)->field_0x89C, argB);
@@ -1358,56 +1374,65 @@ u32 CfObjectModel_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self)
 
 u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(u32*)((u8*)self + 0x708); }
 
-void CfObjectActor_UnkVirtualFunc13__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+void CfObjectActor_clearActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
     *(long*)((char*)self + 0x45bc) = -1;
 }
 
-u32 CfObjectActor_UnkVirtualFunc12__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
+u32 CfObjectActor_getActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { return *(u32*)((u8*)self + 0x45BC); }
 
-void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_getLinkedActorId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv((char*)self - 0x8); }
 
-void CBattleState_UnkVirtualFunc17__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_notifyEntryUpdated__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv((char*)self - 0x8); }
 
-void CBattleState_UnkVirtualFunc3__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+void CBattleState_getParamPtrName__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x8); }
 
-void CBattleState_UnkVirtualFunc1__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
+// Secondary-vtable thunks below keep the (void(*)(void*)) form: the cast pins
+// the verbatim retail reloc name (a typed call emits a mangled ref and drifts)
+// and forwards hidden r4/f1 (void(void) callees, dtor flag) that no decl can name.
+// Actor-side extern "C" retail wrappers (defined in CfObjectActor.cpp) that
+// these thunks forward to -- must be declared here after W60 renamed them.
+extern "C" void CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg);
+extern "C" void CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value);
+void CBattleState_getOwner__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
 void CBattleState_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
-void CObjectParam_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADDA8__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CObjectParam_setupEnemyParams__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { func_800ADDA8__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 
-void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObject_getMoveHeadAngle__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
+    reinterpret_cast<cf::CfObjectActor*>((char*)self - 0x3e9c)->cf::CfObjectActor::CfObjectActor_readFacingAngle();
+}
 
-void CfObjectMove_UnkVirtualFunc15__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObjectMove_hasActorScale__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_hasActorScale__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
 
-void CObjectParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CObjectParam_getParamPtr__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv((char*)self - 0x3e9c); }
 
-void CfObjectMove_UnkVirtualFunc6__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObjectMove_storeActionSrcId__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) { ((void(*)(void*))CfObjectActor_storeActionSrcId__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
+void CfObject_pushRefreshValue__Q22cf13CfObjectActorFf(cf::CfObjectActor* self, float value) { ((void(*)(void*))CfObjectActor_pushRefreshValue__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
-void CfObject_UnkVirtualFunc2__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CfObject_initEnemyBattle__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))func_800ADB2C__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))updateEnemyBattleState__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+void CfObject_updateEnemyState__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { updateEnemyBattleState__Q22cf11CfObjectEneFv((char*)self - 0x3e9c); }
 
 void destroyEnemyObject__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
-void CBattleState_UnkVirtualFunc23__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_UnkVirtualFunc16();
+void CBattleState_getStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
+    self->CBattleState_readStatusSlot();
 }
 
 void CBattleState_getEventEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_UnkVirtualFunc15();
+    self->CBattleState_getEventSlot();
 }
 
 void CBattleState_fetchStatusEntry__Q22cf12CBattleStateFv(cf::CBattleState* self) {
-    self->CBattleState_UnkVirtualFunc14();
+    self->CBattleState_fetchStatusSlot();
 }
 
 // UVF13 is Fi; keep r4 live into the callee (0x10-byte bctr).
-void CBattleState_UnkVirtualFunc20__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
-    self->CBattleState_UnkVirtualFunc13(index);
+void CBattleState_getEntryByIndex__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
+    self->CBattleState_getStatusSlot(index);
 }
 
 void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(cf::CActorParam* self, const void* src) {

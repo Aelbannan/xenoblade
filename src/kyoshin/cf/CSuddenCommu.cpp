@@ -231,13 +231,13 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
             if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
                 if (self->field_C == 0) {
                     if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 0) {
-                        ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc160();
+                        ((cf::CActorParam*)player0)->CActorParam_initStatusCounter();
                     }
                 } else {
                     if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 3) {
                         ((cf::CActorParam*)player0)->CActorParam_resetTensionState(4);
                     } else if (((cf::CActorParam*)player0)->CActorParam_getStatusCount() == 0) {
-                        ((cf::CActorParam*)player0)->CActorParam_UnkVirtualFunc160();
+                        ((cf::CActorParam*)player0)->CActorParam_initStatusCounter();
                     }
                 }
             }
@@ -289,7 +289,7 @@ __declspec(noinline) void func_801BA978(CSuddenCommu* self) {
             // Probe the actor's current voice action; a hit kicks vf314.
             u32 v = *player->field_4->vf30();
             if (func_80174C98(player, (int*)&v, 0x803) != 0) {
-                ((cf::CActorParam*)player)->CActorParam_UnkVirtualFunc160();
+                ((cf::CActorParam*)player)->CActorParam_initStatusCounter();
             }
         } else if (state == 0) {
             self->field_14 = 0xB;

@@ -9,7 +9,7 @@
 // Retail float constants referenced by CfObjectActor functions (SDA2 access).
 extern const float lbl_eu_80667738;   // CActorParam_addHp / CfObjectActor_takeDamageValue threshold
 
-extern const float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
+extern const float lbl_eu_8066776C;   // CfObjectActor_readActionScale fallback value
 
 extern const float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
 
@@ -18,7 +18,7 @@ extern const float lbl_eu_80667740;   // CActorParam_setHp clamp threshold
 
 extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
 
-extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_UnkVirtualFunc7 s16 -> float)
+extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_getAdjustedFacing s16 -> float)
 
 extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_applyDamage gauge)
 
@@ -40,7 +40,7 @@ extern const float lbl_eu_80667778;         // code-orphaned tail float (touch-a
 // CBattleManager+0x28354 by CActorParam_applyDamage.
 extern const u32 lbl_eu_80531090[3];
 
-// Vtable-group symbol the CfObjectActor constructor copies its four vtable
+// vtable-group symbol the CfObjectActor constructor copies its four vtable
 // pointers from (retail label; the implicit __vt symbol sits -32 bytes away).
 extern u8 lbl_eu_8053109C[];
 
@@ -103,18 +103,24 @@ namespace cf {
         CfObjectActor();
         //vtable 4 (CfObjectActor)
         virtual ~CfObjectActor();                  //0x5A0
-        virtual void CfObjectActor_UnkVirtualFunc2();  //0x5A4
-        virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
-        virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
+        virtual int CfObjectActor_hasActorScale();  //0x5A4: constant 1 (Ene/Actor scale present)
+        // Legacy Unk spelling (non-virtual inline).
+        int CfObjectActor_UnkVirtualFunc2() { return CfObjectActor_hasActorScale(); }
+        virtual void CfObjectActor_clearStatusPair();  //0x5A8
+        virtual void CfObjectActor_flushStatusPair();  //0x5AC
         virtual void CfObjectActor_takeDamageValue(float a, u32 b);  //0x5B0
         virtual float CfObjectActor_readFacingAngle();  //0x5B4
-        virtual float CfObjectActor_UnkVirtualFunc7();  //0x5B8 (retail returns a float in f1)
-        virtual float CfObjectActor_UnkVirtualFunc8();  //0x5BC (retail returns a float in f1)
+        virtual float CfObjectActor_getAdjustedFacing();  //0x5B8 (retail returns a float in f1)
+        virtual float CfObjectActor_readActionScale();  //0x5BC (retail returns a float in f1)
         virtual void* CfObjectActor_sharesMoveFlags(void* arg);  //0x5C0
-        virtual void CfObjectActor_UnkVirtualFunc10(float value); //0x5C4
-        virtual void CfObjectActor_UnkVirtualFunc11(void* arg); //0x5C8
-        virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
-        virtual void CfObjectActor_UnkVirtualFunc13(); //0x5D0
+        virtual void CfObjectActor_pushRefreshValue(float value); //0x5C4
+        virtual void CfObjectActor_storeActionSrcId(void* arg); //0x5C8
+        virtual u32 CfObjectActor_getActionSrcId(); //0x5CC: read +0x45BC action-src id
+        virtual void CfObjectActor_clearActionSrcId(); //0x5D0: clear +0x45BC to -1
+        // Legacy Unk spellings (non-virtual inline): same-arity aliases so
+        // any leftover callers keep compiling (Wave-61).
+        u32 CfObjectActor_UnkVirtualFunc12() { return CfObjectActor_getActionSrcId(); }
+        void CfObjectActor_UnkVirtualFunc13() { CfObjectActor_clearActionSrcId(); }
 
         //0x0: vtable 1
         //0x0-3380: CActorParam
@@ -130,12 +136,16 @@ namespace cf {
     void CActorParam_setHp(float val);
     void CActorParam_applyDamage(float value, int a, int b, int c);
     void CActorParam_addHp(float val);
-    void CActorParam_UnkVirtualFunc54(int delta);
+    void CActorParam_addGauge(int delta);
     void CActorParam_addSecondGauge(int delta);
     void CActorParam_resetArtsStatus(void* arts);
-    virtual void CActorParam_UnkVirtualFunc21(float val);
-    virtual float CActorParam_UnkVirtualFunc23();
+    virtual void CActorParam_setScale(float val);
+    virtual float CActorParam_getScale();
     void destroyActorParam();
+    // Caller aliases kept for existing call sites; both forward to the real
+    // setScale/getScale overrides (former UnkVirtualFunc21/23).
+    void CActorParam_propagateScale(float val) { CActorParam_setScale(val); }
+    float CActorParam_getSubScale() { return CActorParam_getScale(); }
     };
 
     // Status-entry view for the func_80149154 results used by
@@ -160,14 +170,14 @@ namespace cf {
     };
 
     // Object holding a float at +0x7C (target of the CAIAction trailer word
-    // read by CfObjectActor_UnkVirtualFunc8).
+    // read by CfObjectActor_readActionScale).
     struct CfFloat7C {
         u8 _pad[0x7C];
         float field_0x7C;  // 0x7C
     };
 
     // View of CfObjectActor's word at absolute offset 0x3E74 (CAIAction
-    // trailer-area word, used as a pointer by CfObjectActor_UnkVirtualFunc8).
+    // trailer-area word, used as a pointer by CfObjectActor_readActionScale).
     struct CfActorField3E74 {
         u8 _pad[0x3E74];
         u32 field_0x3E74;  // 0x3E74
@@ -190,7 +200,7 @@ namespace cf {
     };
 
     // Same flag word viewed relative to the CfObjectMove subobject pointer
-    // (findObjectById returns one; CfObjectActor_UnkVirtualFunc10 reads it).
+    // (findObjectById returns one; CfObjectActor_pushRefreshValue reads it).
     struct CfMoveFlags64 {
         u8 _pad[0x64];
         u32 field_0x64;  // 0x64
@@ -214,22 +224,9 @@ namespace cf {
         s32 field_0x45BC;  // 0x45BC (ctor seeds -1)
     };
 
-    // Vtable-pointer slots written explicitly by the CfObjectActor
-    // constructor from the lbl_eu_8053109C group.
-    struct CfActorVtSlots {
-        u32 vtPrimary;                    // 0x00
-        u32 field_0x4;
-        u32 vtSecondary;                  // 0x08
-        u8 _pad0C[0x3380 - 0xC];
-        u32 vtAIAction;                   // 0x3380
-        u8 _pad3384[0x3E9C - 0x3384];
-        u32 vtMove;                       // 0x3E9C
-    };
-
-    // Downcast of a findObjectById result (a CfObjectMove-subobject pointer)
-    // back to the owning CfObjectActor. The retail's guarded `subi r3,r3,0x3e9c`
-    // is exactly the C++ ternary null-guard, so the helper is written inline
-    // as `m != 0 ? (CfObjectActor*)((u8*)m - 0x3E9C) : 0` at the call site.
+    // vtable-pointer slots written explicitly by the CfObjectActor
+    // constructor from the lbl_eu_8053109C group via direct *(void**)
+    // stores in the .cpp (offsets 0x0 / 0x8 / 0x3380 / 0x3E9C).
 
     // View of CfObjectActor's pointer at absolute offset 0x04 (the
     // CActorState sub-object pointer): its vtable slot +0x30 returns a u32*
@@ -247,15 +244,6 @@ namespace cf {
         u32 w[2];
         double d;
     };
-
-    // Function-pointer view of CfObjectActor's primary vtable (offset 0x00),
-    // slot +0x5C4 (CfObjectActor_UnkVirtualFunc10; retail passes a float
-    // through the slot). CfObjectActor_UnkVirtualFunc10 dispatches this slot
-    // on a downcast actor; the fake interface with real virtuals emits the
-    // retail r12 dispatch (lwz r12,0(r3); lwz r12,0x5C4(r12)) instead of the
-    // manual cast's scratch r4 (MWCC_CASES CModelDispEquip: N virtuals +
-    // 8 hidden slots = slot index, so 0x5C4/4 - 8 = 361 fillers).
-
 
     // Argument passed through the CActorParam_UnkVirtualFunc179/180 slots
     // (retail ABI r4): u16 dispatch id at +0xC.

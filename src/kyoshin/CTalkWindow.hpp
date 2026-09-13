@@ -151,7 +151,7 @@ struct CTalkPadView {
     u32 field_04;   // +0x4 CPad::mPressedButtonFlags
 };
 
-// Position components read from the talk-source CfObject_UnkVirtualFunc52(name)
+// Position components read from the talk-source CfObject_findNodeMatrix(name)
 // result
 // (0x10-byte stride: +0x0C / +0x1C / +0x2C).
 struct CTalkWinPosObj {
@@ -165,10 +165,10 @@ struct CTalkWinPosObj {
 
 // findObjectById(id) result (talk-source actor) for Init / func_8012CD38.
 // The actor is a cf::CfObject: its virtuals carry the dispatched slots -
-// 0x40 talk text (CObjectParam_UnkVirtualFunc2), 0xAC position fallback
+// 0x40 talk text (CObjectParam_getParamPtr), 0xAC position fallback
 // (CfObject_getPosVector), 0x120 named-position lookup
-// (CfObject_UnkVirtualFunc52) and 0x158 voice stop
-// (CfObject_UnkVirtualFunc66). Call sites cast to cf::CfObject and call
+// (CfObject_findNodeMatrix) and 0x158 voice stop
+// (setPointEnabled). Call sites cast to cf::CfObject and call
 // those directly; no TU-local view is emitted. Field +0x8C carries the
 // case-4 message id.
 struct CTalkActorId {

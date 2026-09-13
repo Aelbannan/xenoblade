@@ -394,7 +394,7 @@ extern "C" void func_8012CD38(CTalkWindow* self) {
     // yields strided components (+0xc/+0x1c/+0x2c), else the +0xAC fallback.
     const nw4r::math::VEC3* wsrc;
     CTalkWinPosObj* obj = reinterpret_cast<CTalkWinPosObj*>(
-        src->CfObject_UnkVirtualFunc52(&lbl_eu_804FFCA4[0x1e3]));
+        src->CfObject_findNodeMatrix(&lbl_eu_804FFCA4[0x1e3]));
     if (obj != 0) {
         // Load the strided components in retail's z,y,x order.
         f32 tz = obj->field_0x2C;
@@ -604,7 +604,7 @@ void CTalkWindow::Init() {
         cf::CfObject* s2 = reinterpret_cast<cf::CfObject*>(
             findObjectById(field_68));
         if (s2 != 0) {
-            s2->CfObject_UnkVirtualFunc66(0);
+            s2->setPointEnabled(0);
         }
         field_64 = 1;
         break;
@@ -661,7 +661,7 @@ void CTalkWindow::Init() {
 
         char* msg = func_80138DA4(reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(
-                findObjectById(field_68))->CObjectParam_UnkVirtualFunc2()));
+                findObjectById(field_68))->CObjectParam_getParamPtr()));
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb0], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xb9], msg, 0);
         func_80136B4C(mpLayout, &lbl_eu_804FFCA4[0xc7], msg, 0);

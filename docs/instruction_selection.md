@@ -4,9 +4,13 @@ How MWCC picks the concrete PowerPC instruction for a source operation, and the
 peephole transforms it applies on top. This is the layer behind the `mr` vs
 `addi rD,rS,0`, `lbzu`-merge, and `li`-float residuals.
 
-**Source of truth:** `mwcc-decomp` `src/backend/{Operands.c,PCodeUtilities.c}`
-(frontend lowering) plus the peephole flag vocabulary recovered from the Wii/1.1
-binary. Rules verified by compiling probes and diffing the PPC (`.scratch/isel_probe.c`).
+**Source of truth (Wii/1.1):** sibling repo
+[`mwcc-wii-1.1`](../../mwcc-wii-1.1) — `docs/WII_1_1_AGENT_GUIDE.md`,
+`docs/WII_1_1_PEEPHOLE.md`, `docs/WII_1_1_LOADSTORE.md`, and the static opcode
+catalog via `ninja pcode-opcodes` → `build/WII_1_1/pcode-opcodes.json`
+(local path `~/projects/mwcc-wii-1.1`). Rules below were also checked with
+probes (`.scratch/isel_probe.c`). Prefer those Wii findings over GC/1.2.5
+`mwcc-decomp` `Operands.c` / `PCodeUtilities.c` transfers when they conflict.
 
 ## When to read this
 
@@ -42,12 +46,16 @@ binary. Rules verified by compiling probes and diffing the PPC (`.scratch/isel_p
 
 Instruction selection happens in two places:
 
-1. **Frontend lowering** (`Operands.c`, `PCodeUtilities.c`) — the first pass
-   chooses the basic instruction from the operand's type. Decompiled in
-   `mwcc-decomp`.
+1. **Frontend lowering** (`Operands.c`, `PCodeUtilities.c` in GC-era sources) —
+   the first pass chooses the basic instruction from the operand's type.
+   Wii-side load/store and form selection notes live in
+   `mwcc-wii-1.1` `docs/WII_1_1_LOADSTORE.md` (operand-format builder still
+   undecompiled; many `operand_schema` exports are null).
 2. **Peephole optimization** — the forward/final peephole passes rewrite the
-   lowered PCode (`addi +0 → mr`, `lwz + addi → lwzu`). Not yet decompiled; gated
-   by the `peephole` / `globaloptimizer` flags.
+   lowered PCode (`addi +0 → mr`, `lwz + addi → lwzu`). Wii registration catalog
+   and game-matching effect map: `mwcc-wii-1.1` `docs/WII_1_1_PEEPHOLE.md`
+   (many handler bodies still follow-up). Gated by the `peephole` /
+   `globaloptimizer` flags.
 
 ## Frontend lowering (Operands.c)
 
@@ -141,8 +149,12 @@ specific `-ipa`/version combinations).
 
 ## Evidence basis
 
-- **Lowering**: `Operands_SelectGPRLoad` (size 1/2 + signedness → LBZ/LHZ/LHA/LWZ)
-  from `Operands.c`; `Operands_ForceGPR`/`ForceFPR`, `PCodeUtilities_BuildInstructionV`.
+- **Wii peephole / load-store**: `mwcc-wii-1.1` `docs/WII_1_1_PEEPHOLE.md` +
+  `docs/WII_1_1_LOADSTORE.md` (+ opcode table `build/WII_1_1/pcode-opcodes.json`).
+- **Lowering (historical GC/1.2.5 reference):** `Operands_SelectGPRLoad`
+  (size 1/2 + signedness → LBZ/LHZ/LHA/LWZ) from `Operands.c`;
+  `Operands_ForceGPR`/`ForceFPR`, `PCodeUtilities_BuildInstructionV` — keep as
+  vocabulary; re-check against Wii docs before citing as a Wii fact.
 - **Copy lowering**: `isel_copy` compiled at Wii/1.1 vs GC/1.2.5 (prologue save
   `mr` vs `addi +0`).
 - **Retail confirmation**: `WPADHIDParser.s` uses `mr` for copies, `addi` only

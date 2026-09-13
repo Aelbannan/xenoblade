@@ -59,10 +59,19 @@ extern "C" {
 // interaction. Returns 1 to block, 0 to allow.
 extern "C" int func_8003BC10(void* obj) {
     // Declaration order controls MWCC's r28/r29 naming (cur -> r28).
+    // All locals are declared up front: MWCC forbids jumping past a
+    // declaration/initializer (10211), so the late decls live here bare
+    // and are assigned at their original points below.
     s32 result = 1;
     int bit;
     int talkable;
-    void* cur = func_800BBC0C();
+    void* cur;
+    cf::CfObject* ca;
+    s32 v1;
+    s32 v2;
+    s32 ok;
+    s32 is12;
+    cur = func_800BBC0C();
     if (cur == NULL) {
         goto done;
     }
@@ -79,10 +88,10 @@ extern "C" int func_8003BC10(void* obj) {
     if (!(*(u32*)((u8*)cur + 0x64) & 8)) {
         goto done;
     }
-    cf::CfObject* ca = (cf::CfObject*)cur;
-    s32 v1 = ca->CfObject_UnkVirtualFunc50();
-    s32 v2 = ca->CfObject_UnkVirtualFunc51();
-    s32 ok = 0;
+    ca = (cf::CfObject*)cur;
+    v1 = ca->CfObject_getNpcActionState();
+    v2 = ca->CfObject_getNpcTargetAction();
+    ok = 0;
     if (lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1) {
         ok = 1;
     }
@@ -90,7 +99,7 @@ extern "C" int func_8003BC10(void* obj) {
         talkable = 0;
     }
     // Two separate compares in retail (not range-folded).
-    s32 is12 = (v2 == 1 || v2 == 2) ? 1 : 0;
+    is12 = (v2 == 1 || v2 == 2) ? 1 : 0;
     if (is12 != 0) {
         // Busy states 4/5 always block; state 3 blocks only when talkable.
         if (v1 == 4 || v1 == 5 || (talkable != 0 && v1 == 3)) {
@@ -105,9 +114,8 @@ done:
     return result;
 }
 
-int cf::CfObjectMove::CfObject_UnkVirtualFunc50() { return field_6CE; }
-
-int cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return field_6CF; }
+// (Wave-54: CfObjectMove no longer declares UVF50/51; the base CfObject
+// slot impl lives below and call sites use the getNpc* aliases.)
 
 // us-8003c2f8: spawns/looks up an object by bdat name and returns it as an
 // OC-reference retval. Third parameter is stored raw into the retval.
@@ -136,26 +144,26 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     u32 talkBit = (*(volatile u32*)&lbl_eu_80663E24 >> 13) & 1;
     u32 flags = *(volatile u32*)&lbl_eu_80663E24;
     lbl_eu_80663E24 = (extra != 0) ? (flags | 0x40000u) : (flags & ~0x2000u);
-    OcSpawnObjView* found = NULL;
+    cf::CfObject* found = NULL;
     if (strcmp(str, lbl_eu_804FA74C) == 0 || strcmp(str, lbl_eu_804FA74C + 0xC) == 0) {
-        found = (OcSpawnObjView*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
+        found = (cf::CfObject*)createItemObjectWrapper__Q22cf13CfGameManagerFv(lbl_eu_804FA74C, (u16)idx);
         if (found != NULL) {
             func_8003AA34();
             getFP__FPCc(lbl_eu_804FA74C); // init side effect only; result unused
             u32 col = getBdatStringColumnValue((void*)lbl_eu_804FA74C, lbl_eu_804FA74C + 0x10, idx);
             if (*(u8*)&col == 0) {
-                found->field_0x64 |= 0x1000;
+                found->unk64 |= 0x1000;
             }
         }
     } else if (strcmp(str, lbl_eu_804FA74C + 0x17) == 0 || strcmp(str, lbl_eu_804FA74C + 0x23) == 0) {
-        found = (OcSpawnObjView*)func_80081A40__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x17, (u16)idx, 0, 0);
+        found = (cf::CfObject*)func_80081A40__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x17, (u16)idx, 0, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x27) == 0 || strcmp(str, lbl_eu_804FA74C + 0x32) == 0) {
-        found = (OcSpawnObjView*)createMapObjectInstance__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
+        found = (cf::CfObject*)createMapObjectInstance__Q22cf13CfGameManagerFv(lbl_eu_804FA74C + 0x27, (u16)idx, 1, 0);
     } else if (strcmp(str, lbl_eu_804FA74C + 0x35) == 0) {
         if (idx > 0) {
             idx--;
         }
-        found = (OcSpawnObjView*)cf::CfGameManager::getPlayer(idx);
+        found = (cf::CfObject*)cf::CfGameManager::getPlayer(idx);
     }
 
     // Same bit lift as above, keyed on the saved talk bit this time.
@@ -171,7 +179,7 @@ extern "C" int func_8003BD7C(VMThread* pThread, int handle, u16 unk) {
     } else {
         oc = func_801863F4(func_801862C0(), found);
     }
-    found->field_0x68 |= 0x4000;
+    found->mFlags68 |= 0x4000;
     VMArg retVal;
     retVal.type = 9;
     retVal.unk2 = unk;
@@ -217,20 +225,18 @@ extern "C" int func_8003C1D8(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
-    retVal.value.intVal = (int)obj->CfObject_UnkVirtualFunc34();
+    retVal.value.intVal = (int)obj->CfObject_getScaledAngle();
     vmRetValSet(pThread, &retVal);
     return 1;
 }
-
-float cf::CfObject::CfObject_UnkVirtualFunc34() { return mField4C * 0.019592438f; }
 
 extern "C" int func_8003C260(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 5;
-    retVal.unk2 = (u16)strlen((const char*)((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc2());
-    retVal.value.pointerVal = ((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc2();
+    retVal.unk2 = (u16)strlen((const char*)((cf::CObjectParam*)obj)->CObjectParam_getParamPtr());
+    retVal.value.pointerVal = ((cf::CObjectParam*)obj)->CObjectParam_getParamPtr();
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -297,7 +303,7 @@ extern "C" int func_8003C480(VMThread* pThread, int handle) {
     // Signed OC property -> float via the 0x43300000 double-conversion trick
     // (fsubs, no frsp); magic subtrahend is the retail lbl_eu_80665C38.
     vec.x = (s32)prop->value.uintVal / lbl_eu_80665C30;
-    obj->CfObject_UnkVirtualFunc22((const ml::CVec3*)&vec);
+    obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
 
@@ -321,7 +327,7 @@ extern "C" int func_8003C560(VMThread* pThread, int handle) {
     vec.z = p->z;
     // Same conversion as func_8003C480, written to the vector's Y.
     vec.y = (s32)prop->value.uintVal / lbl_eu_80665C30;
-    obj->CfObject_UnkVirtualFunc22((const ml::CVec3*)&vec);
+    obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
 
@@ -339,7 +345,7 @@ extern "C" int func_8003C624(VMThread* pThread, int handle) {
     // Signed OC property -> float via the 0x43300000 double-conversion trick
     // (fsubs, no frsp); magic subtrahend is the retail lbl_eu_80665C38.
     vec.z = (s32)prop->value.uintVal / lbl_eu_80665C30;
-    obj->CfObject_UnkVirtualFunc22((const ml::CVec3*)&vec);
+    obj->CfObject_syncMoveTarget((const ml::CVec3*)&vec);
     return 0;
 }
 
@@ -351,14 +357,8 @@ int func_8003C6E8(VMThread* pThread, int handle) {
     // dispatched to vtable slot 0xC8.
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     float f = (float)(s32)prop->value.uintVal * lbl_eu_8066A210;
-    obj->CfObject_UnkVirtualFunc30(f);
+    obj->CfObject_setMoveYaw(f);
     return 0;
-}
-
-void cf::CfObject::CfObject_UnkVirtualFunc30(float value) {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0xC4 / 4];
-    func(this);
 }
 
 void cf::CfObject::CfObject_setMoveHeadAngle(float value) { mField4C = value; }
@@ -368,7 +368,7 @@ int func_8003C78C(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
     // OC property setter: dispatch vtable[0x3C] with the property getter value.
-    ((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc1((const char*)prop->value.pointerVal);
+    ((cf::CObjectParam*)obj)->CObjectParam_setObjectName((const char*)prop->value.pointerVal);
     return 0;
 }
 
@@ -391,7 +391,7 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     vec.x = p[0];
     vec.y = p[1];
     vec.z = p[2];
-    obj->CfObject_UnkVirtualFunc26(reinterpret_cast<const ml::CVec3*>(&vec),
+    obj->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&vec),
                                    lbl_eu_80665C40);
     if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
         func_800BDB4C(obj);
@@ -412,13 +412,14 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self,
     self->mFlags68 |= 0x100;
 }
 
-void CfObject_setMoveTargetVec__Q22cf8CfObjectFv(void* self, void* src) {
-    u32 a = *(u32*)((u8*)src + 0);
-    u32 b = *(u32*)((u8*)src + 4);
-    u32 c = *(u32*)((u8*)src + 8);
-    *(u32*)((u8*)self + 0x3C) = a;
-    *(u32*)((u8*)self + 0x40) = b;
-    *(u32*)((u8*)self + 0x44) = c;
+// Base +0x9C implementation (retail Fv symbol, body reads r4 as a 12-byte
+// vector): element-wise u32 copy; MWCC groups it into load-all/store-all
+// (lwz r6/r5/r0 + stw 0x3C/0x40/0x44), byte-identical to
+// CfObject_UnkVirtualFunc22 below.
+void CfObject_setMoveTargetVec__Q22cf8CfObjectFv(void* self, const void* src) {
+    ((u32*)((u8*)self + 0x3C))[0] = *(const u32*)((const u8*)src + 0);
+    ((u32*)((u8*)self + 0x3C))[1] = *(const u32*)((const u8*)src + 4);
+    ((u32*)((u8*)self + 0x3C))[2] = *(const u32*)((const u8*)src + 8);
 }
 
 int dispOn(VMThread* pThread, int handle) {
@@ -434,7 +435,7 @@ int dispOn(VMThread* pThread, int handle) {
     // flag == 0: show via vtable slot 0x158; otherwise route through the
     // external display helper.
     if (flag == 0) {
-        obj->CfObject_UnkVirtualFunc66(1);
+        obj->setPointEnabled(1);
     } else {
         func_800BC3F0(obj);
     }
@@ -457,7 +458,7 @@ int dispOff(VMThread* pThread, int handle) {
     // before hiding this object.
     cf::CfObject* disp = (cf::CfObject*)func_800BF324(obj);
     if (disp != 0 && !(disp->unk64 & 0x10000)) {
-        if (((cf::CObjectState*)disp)->CObjectState_UnkVirtualFunc8(1) != 0 ||
+        if (((cf::CObjectState*)disp)->CObjectState_checkStateFlags8(1) != 0 ||
             ((cf::CObjectState*)disp)->CObjectState_checkStateFlags(1) != 0) {
             return 0;
         }
@@ -465,7 +466,7 @@ int dispOff(VMThread* pThread, int handle) {
     // flag == 0: hide via vtable slot 0x158; otherwise route through the
     // external display helper.
     if (flag == 0) {
-        obj->CfObject_UnkVirtualFunc66(0);
+        obj->setPointEnabled(0);
     } else {
         func_800BC458(obj);
     }
@@ -489,7 +490,7 @@ extern "C" int func_8003CB70(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (arg == 0) {
-        obj->CfObject_UnkVirtualFunc66(0);
+        obj->setPointEnabled(0);
     } else {
         func_800BC458(obj);
     }
@@ -505,7 +506,7 @@ int func_8003CC0C(VMThread* pThread, int handle) {
     // flag to vtable slot 0x1C0.
     cf::CActorParam* actor = (cf::CActorParam*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
     if (actor) {
-        actor->CActorParam_UnkVirtualFunc75((int)((u32)(-b | b) >> 31));
+        actor->CActorParam_setStatusSelect((int)((u32)(-b | b) >> 31));
     }
     return 0;
 }
@@ -529,23 +530,31 @@ int func_8003CC9C(VMThread* pThread, int handle) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    obj->CfObject_UnkVirtualFunc49(args[index]);
+    obj->CfObject_forwardNpcAction(args[index]);
     return 0;
 }
 
-void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv(cf::CfObject* self, u32 value) { (void)self; (void)value; }
+void CfObject_forwardNpcAction__Q22cf8CfObjectFv(cf::CfObject* self, u32 value) { (void)self; (void)value; }
 
 extern "C" int func_8003CD6C(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     VMArg retVal;
     retVal.type = 3;
-    retVal.value.intVal = obj->CfObject_UnkVirtualFunc50();
+    retVal.value.intVal = obj->CfObject_getNpcActionState();
     vmRetValSet(pThread, &retVal);
     return 1;
 }
 
 int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
+
+// CfObjectMove UVF50/51 overrides (retail 0x8003C2E0/0x8003C2EC, 0xC each:
+// lbz r3,0x6CE/0x6CF(r3); extsb; blr). Decls were removed from
+// CfObjectMove.hpp by another wave, so the out-of-line cf::CfObjectMove::
+// defs no longer compile there; TU-local extern "C" wrappers emit the same
+// retail symbols without needing the class decls (field offsets from header).
+extern "C" int CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CE; }
+extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return self->field_6CF; }
 
 extern int func_8003BC10(void* obj);
 extern "C" int func_8003CDE0(VMThread* pThread, int handle) {
@@ -563,10 +572,10 @@ int walkR(VMThread* pThread, int handle) {
     int fixed = vmArgFixedGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    // Fixed-point walk rate -> float via MWCC's s32 double-trick, then
-    // dispatched to vtable slot 0x1EC.
+    // Fixed-point walk range -> float via MWCC's s32 double-trick, then
+    // dispatched to the 0x1EC NPC move-range slot.
     float f = (float)(s32)fixed / lbl_eu_80665C30;
-    ((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc10(f);
+    ((cf::CfObjectMove*)obj)->CfObjectMove_setNpcMoveRange(f);
     return 0;
 }
 
@@ -576,7 +585,7 @@ int func_8003CED0(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Convert the frame count to time units using the target framerate.
-    ((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc11(arg * CDeviceVI::getTargetFramerate());
+    ((cf::CfObjectMove*)obj)->CfObjectMove_writeTargetField(arg * CDeviceVI::getTargetFramerate());
     return 0;
 }
 
@@ -595,7 +604,7 @@ extern "C" int func_8003CF48(VMThread* pThread, int handle) {
     vec.x = (float)(s32)rotX / lbl_eu_80665C30;
     vec.y = (float)(s32)rotY / lbl_eu_80665C30;
     vec.z = (float)(s32)rotZ / lbl_eu_80665C30;
-    obj->CfObjectMove_UnkVirtualFunc12(&vec);
+    obj->CfObjectMove_advanceNpcTarget(&vec);
     return 0;
 }
 
@@ -637,14 +646,14 @@ extern "C" int func_8003D060(VMThread* pThread, int handle) {
         out->z = (s32)((VMArg*)vmArrayGet(pThread, arr, i + 2))->value.intVal / lbl_eu_80665C30;
         out++;
     }
-    ((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc7(modeA, modeB, count / 3 + 1, (ml::CVec3*)&start, (double)angle);
+    ((cf::CfObjectMove*)obj)->CfObjectMove_refreshNpcState(modeA, modeB, count / 3 + 1, (ml::CVec3*)&start, (float)angle);
     return 0;
 }
 
 int func_8003D2B8(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    int busy = ((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc9();
+    int busy = ((cf::CfObjectMove*)obj)->CfObjectMove_queryNpcAdvance();
     // VM bool retval: type 2 (false) when idle, 1 (true) when busy.
     VMArg retVal;
     retVal.type = (u8)((((-busy) | busy) >> 31) + 2);
@@ -656,21 +665,68 @@ int func_8003D32C(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // If the object's "busy" check (vtable[0x1E8]) is false, hold the script.
-    if (((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc9() == 0) {
+    if (((cf::CfObjectMove*)obj)->CfObjectMove_queryNpcAdvance() == 0) {
         vmWaitModeSet(pThread);
         return 0;
     }
     return 0;
 }
 
-void moveTo(){}
+// us-8003d914: moveTo
+// NPC move-to: an int frame count, three fixed-point coords, an optional
+// int angle (default 0x168) and an optional bool flag. The coords become a
+// position vector and frames*secPerFrame the time step; the vector, step
+// and booleanized flag ride hidden args into vtable slot 0x1E4
+// (CfObjectMove_updateNpcTarget, whose Fv impl ignores them).
+int moveTo(VMThread* pThread, int handle) {
+    // Declaration order controls MWCC's callee-saved register assignment
+    // (same scheme as func_8003D060: angle first, no reused VMArg* local).
+    int angle;
+    cf::CfObject* obj;
+    ml::CVec3 vec;
+    float step;
+    float spf;
+    int frames;
+    int posX;
+    int posY;
+    int posZ;
+    int flag;
+    int idx;
+
+    frames = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    posX = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
+    posY = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    posZ = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    if (vmArgOmitChk(pThread, 5)) {
+        angle = 0x168;
+        idx = 6;
+    } else {
+        angle = vmArgIntGet(6, vmArgPtrGet(pThread, 5));
+        idx = 6;
+    }
+    if (vmArgOmitChk(pThread, idx)) {
+        flag = 0;
+    } else {
+        VMArg* array = vmArgPtrGet(pThread, idx);
+        idx++;
+        flag = vmArgBoolGet(idx, array);
+    }
+    obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    spf = CDeviceVI::getSecPerFrame();
+    vec.x = (float)(s32)posX / lbl_eu_80665C30;
+    vec.y = (float)(s32)posY / lbl_eu_80665C30;
+    vec.z = (float)(s32)posZ / lbl_eu_80665C30;
+    step = (float)(s32)frames * spf;
+    ((cf::CfObjectMove*)obj)->CfObjectMove_updateNpcTarget(&vec, step, (int)((u32)(-flag | flag) >> 31), angle);
+    return 0;
+}
 
 extern "C" int func_8003D570(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
     int arg = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((cf::CfObjectMove*)obj)->CfObjectMove_UnkVirtualFunc13(arg);
+    ((cf::CfObjectMove*)obj)->CfObjectMove_commandNpcTarget(arg);
     return 0;
 }
 
@@ -684,7 +740,7 @@ extern "C" int func_8003D5DC(VMThread* pThread, int handle) {
     int c = vmArgIntGet(4, a3);
     void* ctx = func_801862C0();
     cf::CfObjectMove* obj = (cf::CfObjectMove*)func_801864DC(ctx, handle);
-    obj->CfObjectMove_UnkVirtualFunc14(a, b, c);
+    obj->CfObjectMove_restartNpcTarget(a, b, c);
     return 0;
 }
 
@@ -715,7 +771,7 @@ int isTalk(VMThread* pThread, int handle) {
         return 1;
     }
     if (flags & 0x8) {
-        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1) != 0) {
+        if (((cf::CObjectState*)obj)->CObjectState_checkStateFlags8(1) != 0) {
             retVal.type = 1;
         } else {
             retVal.type = 2;
@@ -766,19 +822,19 @@ extern "C" int CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(cf::CObjectS
     s32 result;
     if (flag != 0) {
         result = 0;
-        if (self->CObjectState_UnkVirtualFunc9() != 0) {
+        if (self->CObjectState_checkStateFlagsC() != 0) {
             goto done;
         }
-        if (self->CObjectState_UnkVirtualFunc8((int)realArg) == 0) {
+        if (self->CObjectState_checkStateFlags8((int)realArg) == 0) {
             goto done;
         }
         result = 1;
     } else {
         result = 0;
-        if (self->CObjectState_UnkVirtualFunc9() == 0) {
+        if (self->CObjectState_checkStateFlagsC() == 0) {
             goto done;
         }
-        if (self->CObjectState_UnkVirtualFunc8((int)realArg) != 0) {
+        if (self->CObjectState_checkStateFlags8((int)realArg) != 0) {
             goto done;
         }
         result = 1;
@@ -856,7 +912,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
             }
         }
     } else if ((flags & 0x4000) || (flags & 0x8000)) {
-        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1) == 0) {
+        if (((cf::CObjectState*)obj)->CObjectState_checkStateFlags8(1) == 0) {
             ((cf::CObjectState*)obj)->CObjectState_setStateBitMask(1);
         }
         u32 val = *(u32*)((cf::CObjectState*)*(cf::CfObject**)((u8*)player + 4))->CObjectState_getStateData();
@@ -927,7 +983,7 @@ extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
             ((cf::CObjectState*)obj)->CObjectState_setStateBitMask(1);
         }
     } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_checkStateFlags8(1)) {
             ((cf::CObjectState*)obj)->CObjectState_setStateBitMask(1);
         }
     }
@@ -950,7 +1006,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // func_800BE12C is header-declared as the 4-arg form; retail call sites
-    // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.
+    // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
     ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
         float f = (float)(s32)fixedParam / 2048.0f;
@@ -975,9 +1031,9 @@ extern "C" int func_8003DFE4(VMThread* pThread, int handle) {
 // named bone (retail inlines this helper at each call site).
 static void lookAtBone(cf::CfObject* self, cf::CfObject* actor, int snap, const char* name) {
     if (snap) {
-        ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc15(actor, name);
+        ((cf::CfObjectModel*)self)->CfObjectModel_snapToBone(actor, name);
     } else {
-        ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc14(actor, name);
+        ((cf::CfObjectModel*)self)->CfObjectModel_lookAtBone(actor, name);
     }
 }
 
@@ -1014,33 +1070,32 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     }
     cf::CfObject* self = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
     if (targetOC != 0) {
-        OcTargetView* oc = (OcTargetView*)targetOC;
-        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), (int)oc->field_0x04);
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(func_801862C0(), *(int*)((u8*)targetOC + 4));
         cf::CfObject* actor = (cf::CfObject*)__dynamic_cast(target, 0, lbl_eu_806618E8, lbl_eu_806618F0, 0);
         if (actor == NULL) {
             // Target is not an actor: aim straight at its position vector.
             ml::CVec3* pos = target->CfObject_getPosVector();
-            ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc13(pos);
+            ((cf::CfObjectModel*)self)->CfObjectModel_aimAtPosition(pos);
         } else if ((((cf::CfObject*)actor)->unk64 & 0x2) || (((cf::CfObject*)actor)->unk64 & 0x8)) {
             // Talkable/event actor: only look when the self object has a bone
             // target set and the actor owns one of the known attach bones.
-            if (((CfObjBoneView*)self)->field_0xC4 != NULL) {
-                if (((cf::CfObject*)actor)->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x3C])) {
+            if (*(void**)((u8*)self + 0xC4) != NULL) {
+                if (((cf::CfObject*)actor)->CfObject_findNodeMatrix(&lbl_eu_804FA74C[0x3C])) {
                     lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x3C]);
-                } else if (((cf::CfObject*)actor)->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x43])) {
+                } else if (((cf::CfObject*)actor)->CfObject_findNodeMatrix(&lbl_eu_804FA74C[0x43])) {
                     lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x43]);
-                } else if (((cf::CfObject*)actor)->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x4B])) {
+                } else if (((cf::CfObject*)actor)->CfObject_findNodeMatrix(&lbl_eu_804FA74C[0x4B])) {
                     lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x4B]);
                 }
             }
         } else {
             lookAtBone(self, (cf::CfObject*)actor, snap, &lbl_eu_804FA74C[0x4B]);
         }
-        ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc16(rotate != 0);
+        ((cf::CfObjectModel*)self)->CfObjectModel_setBoneRotate(rotate != 0);
     } else {
         // No target: face the default direction via slot 0x1B0 with NULL
         // (no rotate-flag call in this path).
-        ((cf::CfObjectModel*)self)->CfObjectModel_UnkVirtualFunc15(NULL, &lbl_eu_804FA74C[0x3C]);
+        ((cf::CfObjectModel*)self)->CfObjectModel_snapToBone(NULL, &lbl_eu_804FA74C[0x3C]);
     }
     return 0;
 }
@@ -1055,7 +1110,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
     float f = (float)(s32)angle * lbl_eu_8066A210;
     obj->CfObject_setMoveHeadAngle(f);
     // func_800BE12C is header-declared as the 4-arg form; retail call sites
-    // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.
+    // pass a 5th arg (r7=1) the callee ignores -- cast to keep the r3-r7 setup.
     ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, 3, 0, -1, 1);
     return 0;
 }
@@ -1264,8 +1319,8 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
     }
 
     void* ctx = func_801862C0();
-    CfObjectActorView* actor =
-        (CfObjectActorView*)__dynamic_cast(func_801864DC(ctx, handle), 0,
+    void* actor =
+        (void*)__dynamic_cast(func_801864DC(ctx, handle), 0,
                                                (void*)&__RTTI__Q22cf13CfObjectActor,
                                                (void*)&lbl_eu_806618F0, 0);
     if (actor) {
@@ -1273,7 +1328,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
         memset(&data, 0, sizeof(data));
         // Plain int->float converts: MWCC lowers these via its shared
         // sdata2 0x43300000-magic double (one lfd, two fsubs in retail).
-        data.field_00 = actor->field_0x3F10;
+        data.field_00 = *(u32*)((u8*)actor + 0x3F10);
         data.field_0C = (u16)eventId;
         data.field_10 = arg3;
         data.field_14 = (u16)arg4;
@@ -1460,7 +1515,7 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     vec.x = ((float)(s32)rotX / lbl_eu_80665C30) * lbl_eu_8066A210;
     vec.y = ((float)(s32)rotY / lbl_eu_80665C30) * lbl_eu_8066A210;
     vec.z = ((float)(s32)rotZ / lbl_eu_80665C30) * lbl_eu_8066A210;
-    obj->CfObject_UnkVirtualFunc27(&vec);
+    obj->CfObject_setRotVec((const ml::CVec3*)&vec);
     return 0;
 }
 
@@ -1532,7 +1587,7 @@ extern "C" int func_8003F398(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    obj->setPointEnabled(1);
     return 0;
 }
 
@@ -1545,7 +1600,7 @@ extern "C" int func_8003F418(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    obj->setPointEnabled(0);
     return 0;
 }
 
@@ -1606,7 +1661,7 @@ extern "C" int func_8003F64C(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    obj->setPointEnabled(1);
     return 0;
 }
 
@@ -1619,7 +1674,7 @@ extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    obj->setPointEnabled(0);
     return 0;
 }
 
@@ -1692,7 +1747,7 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
                 // Retail leaves r4 = followTarget into UVF22, then takes the
                 // post-call r3 (still self) as the bindPartner child.
                 cf::CfObject* ft = (cf::CfObject*)followTarget;
-                ft->CfObject_UnkVirtualFunc22(
+                ft->CfObject_syncMoveTarget(
                     reinterpret_cast<const ml::CVec3*>(ft));
                 child = ft;
             }
@@ -1735,7 +1790,7 @@ extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
     if (battleMgr) {
         *(u32*)((u8*)battleMgr + 0x94) = 5;
         func_800AC4A8(battleMgr, (u16)param);
-        ((cf::CfObject*)battleMgr)->CfObject_UnkVirtualFunc66(0);
+        ((cf::CfObject*)battleMgr)->setPointEnabled(0);
     }
     if (!battleMgr) {
         vmOCExceptionThrow(pThread);
@@ -1766,7 +1821,7 @@ extern "C" int func_8003FB18(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    obj->setPointEnabled(1);
     return 0;
 }
 
@@ -1779,7 +1834,7 @@ extern "C" int func_8003FB98(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    obj->setPointEnabled(0);
     return 0;
 }
 
@@ -1943,19 +1998,15 @@ void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) 
 u32 CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
 // us-8003f6d8: 12-byte word copy src -> this+0x48. Retail symbol is
-// Fv-mangled but the body consumes a pointer in r4 (decompiler-name guess,
-// same scheme as CfObjectModel's CfObject_UnkVirtualFunc27). A TYPED source
-// pointer is required for MWCC's grouped load-all/store-all 3-word copy
-// (lwz r6/r5/r0 + stw 0x48/0x4C/0x50); a void* param emits interleaved
-// load-store pairs. Defined as a global whose name IS the retail mangled
-// name so the vtable slot 0xBC and the virtual call sites resolve.
-struct CfObjCopy12 { u32 a; u32 b; u32 c; };
-struct CfObjVec48View {
-    u8 _pad[0x48];
-    CfObjCopy12 vec48;
-};
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv(CfObjVec48View* self, const CfObjCopy12* src) {
-    self->vec48 = *src;
+// Fv-mangled but the body consumes a pointer in r4. Element-wise u32 copy;
+// MWCC groups it into load-all/store-all (lwz r6/r5/r0 + stw
+// 0x48/0x4C/0x50), same scheme as CfObject_UnkVirtualFunc22. Defined as a
+// global whose name IS the retail mangled name so the vtable slot 0xBC and
+// the virtual call sites resolve.
+extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv(void* self, const void* src) {
+    ((u32*)((u8*)self + 0x48))[0] = *(const u32*)((const u8*)src + 0);
+    ((u32*)((u8*)self + 0x48))[1] = *(const u32*)((const u8*)src + 4);
+    ((u32*)((u8*)self + 0x48))[2] = *(const u32*)((const u8*)src + 8);
 }
 
 void cf::CfObject::CfObject_setMoveBusyState(int flag) {
@@ -1970,8 +2021,6 @@ void cf::CfObject::CfObject_setMoveBusyState(int flag) {
 extern const float lbl_eu_8066A20C;
 extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x4c) * lbl_eu_8066A20C; }
 
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) {
-    void** vtable = *(void***)self;
-    void (*func)(void*) = (void (*)(void*))vtable[0xC4 / 4];
-    func(self);
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(cf::CfObject* self, float value) {
+    self->CfObject_setMoveHeadAngle(value);
 }

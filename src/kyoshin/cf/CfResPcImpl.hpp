@@ -127,7 +127,7 @@ struct CfResPcPosTable {
 // import block.)
 struct CfResPcParent {
     u8 field_00[0x38];             // 0x00..0x37 (incl. the vptr)
-    /* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4) -> CfObject_UnkVirtualFunc24
+/* 0x38 */ void* field_38;  // object with vtable slot +0xB0 (dispatched by func_8018E7E4) -> CfObject_getPosTriple
     u8 field_3C[0x64 - 0x3C];
     /* 0x64 */ u32 field_64;       // flags (bit 1 = 0x2 tested by func_8018D0C4, bit 31 = 0x80000000 tested by func_eu_8018E19C)
     /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by func_8018CF08/CF90)
@@ -609,7 +609,7 @@ extern char lbl_eu_80503BC4[];
 // Free-function vtable-slot targets owned by other TUs (retail .data
 // lbl_eu_80532774 references these unmangled names; the same-named virtuals
 // above are scoped methods and do not collide).
-extern "C" void func_800BE9AC();
+extern "C" void func_800BE9AC(void* self);
 extern "C" void func_8016CD64();
 extern "C" int func_8016CD54();
 extern "C" int func_800BF30C();

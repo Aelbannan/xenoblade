@@ -4,11 +4,16 @@ How MWCC assigns PowerPC physical registers to source values, and how to steer
 it from high-level C/C++ to turn a HIGH/CODE_MATCH (pure `reg_swap`) residual
 into a `FULL_MATCH`.
 
-**Source of truth for the mechanism:** the decompiled MWCC register allocator in
-`/tmp/mwcc-decomp/src/backend/{Registers.c,Coloring.c}` (GC/1.2.5, the Melee
-compiler — same binary as `build/compilers/GC/1.2.5/mwcceppc.exe`). The
-*boundaries and directions below were re-verified against Wii/1.1 by compiling
-probes with both compilers and diffing the PPC (`.scratch/regmap_*.c`).
+**Source of truth for the mechanism (Wii/1.1):** sibling repo
+[`mwcc-wii-1.1`](../../mwcc-wii-1.1) — start at
+`docs/WII_1_1_AGENT_GUIDE.md`, then `docs/WII_1_1_REGINFO.md`,
+`docs/WII_1_1_COLORING.md`, `docs/WII_1_1_ALLOC_GRAPH.md`,
+`docs/WII_1_1_SPILL_CONSTRUCT.md`, and `docs/WII_1_1_STACKFRAME.md` /
+`docs/WII_1_1_FRAME_CURSOR.md` (local path `~/projects/mwcc-wii-1.1`).
+Direction rules and pool boundaries below were also checked with Wii/1.1 vs
+GC/1.2.5 probes (`.scratch/regmap_*.c`). Prefer Wii-confirmed findings over
+any GC/1.2.5 `mwcc-decomp` transfer when they conflict (notably: Wii frame
+slots are at object `+0x48`, not `+0x2A`).
 
 ## When to read this
 
@@ -455,21 +460,18 @@ Watch the `reg_swap` and `structural` counts:
 
 ## Evidence basis
 
-- **Mechanism (confirmed, GC/1.2.5 source):** `Registers_FindFree` (31→floor),
-  `Registers_BuildColorMask` (0→ceiling), `Coloring_SelectColors` (lowest bit
-  then high-to-low claim). Boundary constants verified in the binary via objdump
-  (`0x4c1a20`–`0x4c1ac0`).
+- **Mechanism (Wii/1.1, confirmed/inferred in `mwcc-wii-1.1`):** volatile pool
+  `0x772280` vs claim/saved pool `0x772528`; claim direction high→low from the
+  save cursor; select draws initial colors from the volatile pool; coloring
+  driver / simplify / select / spill path documented in
+  `docs/WII_1_1_REGINFO.md` + `docs/WII_1_1_COLORING.md` +
+  `docs/WII_1_1_ALLOC_GRAPH.md`. Frame-slot trap: Wii uses object `+0x48` (see
+  `docs/WII_1_1_FRAME_CURSOR.md`), not GC-era `+0x2A`.
 - **Direction rules (confirmed, Wii/1.1 probes):** `locals_orderA/B`,
   `locals_six`, `params_four`, `regmap_fpr`, `regmap_mixed` — saved locals
   first→r31/f31 (descending), params first→lowest (ascending), scratch low-first.
-- **Cross-version boundary:** `mwcc-decomp` is GC/1.2.5 only. The allocator
-  *mechanism* (`FindFree`/`ColorMask`/`SelectColors`/`SimplifyGraph`, incl. the
-  `color_mask |= 1<<color` reuse and the degree-threshold simplify) is **verified
-  in the GC/1.2.5 binary**, not in Wii/1.1. The Wii/1.1 allocator functions could
-  not be located by byte-pattern (different host compiler), so "the mechanism is
-  the same in Wii/1.1" is **inferred**, not read: it rests on the shared data
-  model (field offsets `+0xe`/`+0x2a`/`+0x2` present), the shared register-class
-  ceilings (`0xc`/`0xd`/`0x13`), the shared `shl cl` bit idioms, and the matching
-  empirical behavior (probes + the dead-register-reuse wall functions). Treat the
-  direction rules as Wii/1.1-verified; treat the mechanism as GC/1.2.5-verified,
-  Wii/1.1-inferred.
+- **Historical GC/1.2.5 notes:** older `mwcc-decomp` / GC addresses
+  (`Registers_FindFree`, `0x4c1a20`–`0x4c1ac0`, etc.) remain useful as
+  **reference** vocabulary for non-Wii TUs only. Do not treat them as Wii facts;
+  re-check against `mwcc-wii-1.1` before citing an address or field offset for
+  retail Wii/1.1 matching.

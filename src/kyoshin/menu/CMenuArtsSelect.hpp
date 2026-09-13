@@ -25,7 +25,7 @@ struct UnkArtsSelectEntry {
 // The arts-param object returned by getArtsParamAtCnt (retail cf::CAttackParam,
 // size 0x88). MWCC lays the vptr at +0x84 because the class derives from a
 // non-polymorphic 0x84-byte base; the vtable's slot +0x14 is the gauge getMax
-// (retail CAttackParam_UnkVirtualFunc4, returns f32). Declared virtual index 3
+// (retail CAttackParam_getArtsGaugeMax, returns f32). Declared virtual index 3
 // lands at vtable offset (3+2)*4 = 0x14 (2 hidden slots: RTTI + offset-to-top).
 struct ArtsParamLocalBase {
     u8 unk00[0x74];

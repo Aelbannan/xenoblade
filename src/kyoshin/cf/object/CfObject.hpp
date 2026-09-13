@@ -5,7 +5,6 @@
 #include "monolib/math/CVec3.hpp"
 
 namespace cf {
-    class UnkClass_80082D90;
     struct CfObjectSub54 {
         u8 field_0x0[0xC];
     };
@@ -18,14 +17,16 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
         virtual void CfObject_UnkVirtualFunc3(); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
-        virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void CfObject_UnkVirtualFunc6();      //0x68
+        // Wave-62: Unk primary flipped. Fv bodies in CfObjectMove keep Unk
+        // linker names (hand-built tables / CREvtModel); Unk aliases below.
+        virtual void CfObject_updateMoveRate();      //0x64 (was UnkVirtualFunc5)
+        virtual void CfObject_releaseMoveTargets();  //0x68 (was UnkVirtualFunc6)
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_notifyEventDone() = 0;  //0x70
         virtual bool CfObject_isMoveActiveNow();      //0x74
         virtual void CfObject_forwardSubObject();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
-        virtual void CfObject_UnkVirtualFunc12();     //0x80
+        virtual void CfObject_refreshSubB0();         //0x80 (was UnkVirtualFunc12)
         virtual int CfObject_queryTargetState();     //0x84
         virtual void* CfObject_pushRefreshValue(float value);     //0x88
         virtual float CfObject_getMoveSpeedRate();    //0x8C (Move/Coll return float; retail Fv)
@@ -35,25 +36,28 @@ namespace cf {
         // Retail bodies read r4 as a position vector (setEffPosVec_ /
         // Model/Move/ocUnit UVF19). Fv linker names are uneducated.
         virtual void CfObject_setMoveTargetVec(const ml::CVec3* vec); //0x9C
-        virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
+        virtual void CfObject_setPosXZ(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         // Same ABI as UVF19 (copy vec into +0x3C). Eff's override is a pure
         // forward to UVF19 (callVirt19); Model/Move override with extra work.
-        virtual void CfObject_UnkVirtualFunc22(const ml::CVec3* vec); //0xA8
+        virtual void CfObject_syncMoveTarget(const ml::CVec3* vec); //0xA8
         virtual ml::CVec3* CfObject_getPosVector();      //0xAC
-        virtual void CfObject_UnkVirtualFunc24();     //0xB0
+        // Retail returns the position-triplet pointer (+0x3C; Model override
+        // returns +0x98+0x310 when the sub-object is present). void* matches
+        // the retail bodies and the Coll TU view; Fv mangling unchanged.
+        virtual void* CfObject_UnkVirtualFunc24();     //0xB0
         // Retail ground-snap / moveEffOfs: (pos, scale) in r4/f1.
-        virtual void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale); //0xB4
+        virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); //0xB4
         // Forwards to UVF19 (base) or UVF25 (Eff callVirt25). First arg is a
         // position vector (u32 casts at call sites are pointers).
-        virtual void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount); //0xB8
-        virtual void CfObject_UnkVirtualFunc27(void* src);     //0xBC
+        virtual void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount); //0xB8
+        virtual void CfObject_setRotVec(void* src);     //0xBC (was UnkVirtualFunc27)
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_setMoveHeadAngle(float value);     //0xC4
-        virtual void CfObject_UnkVirtualFunc30(float value);     //0xC8
+        virtual void CfObject_setMoveYaw(float value);     //0xC8 (was UnkVirtualFunc30)
         virtual float CfObject_getMoveHeadAngle();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
+        virtual void CfObject_applyMoveYaw(float amount); //0xD4 (was UnkVirtualFunc33)
         virtual float CfObject_UnkVirtualFunc34();     //0xD8
         // Retail setEffScale_ / Coll UVF35: float in f1 -> +0x60.
         virtual void CfObject_UnkVirtualFunc35(float value); //0xDC
@@ -76,34 +80,161 @@ namespace cf {
         virtual int CfObject_UnkVirtualFunc50();     //0x118
         virtual int CfObject_UnkVirtualFunc51();     //0x11C
         virtual void* CfObject_UnkVirtualFunc52(const char* name);     //0x120
-        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
+        virtual CfObject* CfObject_getIndexedNodeMatrix(); //0x124 (was UnkVirtualFunc53)
         virtual u32 CfObject_UnkVirtualFunc54();     //0x128
         virtual void* CfObject_UnkVirtualFunc55(int arg);     //0x12C
-        virtual float CfObject_UnkVirtualFunc56();     //0x130
+        virtual float CfObject_getHeightDiff();     //0x130 (was UnkVirtualFunc56)
         virtual void CfObject_UnkVirtualFunc57(float value);     //0x134
         virtual u32* CfObject_getMoveRateScale();     //0x138
         virtual void CfObject_UnkVirtualFunc59(float value); //0x13C (Move stores f1; retail Fv)
         virtual float CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_setAnimSlotEntry(u32 a, u32 b);     //0x144
         virtual u32 CfObject_UnkVirtualFunc62(u32 arg);     //0x148 (retail takes an index, returns bits)
-        virtual u32 CfObject_UnkVirtualFunc63();     //0x14C
+        virtual u32 CfObject_readKindFlagWord();     //0x14C
         virtual void CfObject_setMoveBusyState(int flag);     //0x150
         virtual void CfObject_setMoveReadyFlag(int flag);     //0x154
 
-        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
+        // Slot 0x158: display/point enable flag (Model toggles mFlags68
+        // 0x100000 and forwards to the renderer sub-object; Point does the
+        // identical flag op). Prior recovery named it on the Point family
+        // (CfObjectColl.hpp CfObjectPoint::setPointEnabled, same slot);
+        // adopted here as the shared base name.
+        virtual void setPointEnabled(int flag) = 0; //0x158
+        // Legacy Unk spelling (non-virtual inline): same-arity alias so
+        // other TUs keep compiling unchanged (Wave-35 rule). MWCC inlines
+        // it into the identical virtual dispatch.
+        void CfObject_UnkVirtualFunc66(int flag) { setPointEnabled(flag); } //0x158
         void func_800BFB90();
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual int CfObject_UnkVirtualFunc68(const ml::CVec3* vec = nullptr); //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
         virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         // Retail: return float in f1 (Model reads +0xA0; Coll returns const).
-        // CfResPcImpl forwards that into CScnItemModel::vfunc48.
-        virtual float CfObject_UnkVirtualFunc71();     //0x16C
+        // CfResPcImpl forwards that into CScnItemModel::setModelFloatRate.
+        virtual float CfObject_getProgressLow();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
-        virtual float CfObject_UnkVirtualFunc73();     //0x174
+        virtual float CfObject_getProgressHigh();     //0x174
+
+        // Wave-37 caller aliases (non-virtual, inline): legacy UnkVirtual
+        // spellings for the 0x16C/0x174 float queries. Same arity; forward
+        // to the renamed virtuals so other TUs keep compiling unchanged.
+        float CfObject_UnkVirtualFunc71() { return CfObject_getProgressLow(); }
+        float CfObject_UnkVirtualFunc73() { return CfObject_getProgressHigh(); }
+        void CfObject_UnkVirtualFunc26(const ml::CVec3* vec, float amount) { CfObject_applyMoveOffset(vec, amount); }
+        void CfObject_UnkVirtualFunc22(const ml::CVec3* vec) { CfObject_syncMoveTarget(vec); }
+        void CfObject_UnkVirtualFunc25(ml::CVec3* pos, float scale) { CfObject_snapMoveTarget(pos, scale); }
+
+        // Wave-37 named forwarders (non-virtual, inline): real API spellings
+        // for slots whose virtuals keep their placeholder names because C++
+        // definitions live in other TUs (CtrlEnemy/ocUnit). Same arity;
+        // MWCC inlines them into the identical virtual dispatch.
+        float CfObject_getMoveFactor() { return CfObject_UnkVirtualFunc60(); }
+        int CfObject_checkSubReady(const ml::CVec3* vec = nullptr) { return CfObject_UnkVirtualFunc68(vec); }
+        float CfObject_getScaledAngle() { return CfObject_UnkVirtualFunc34(); }
+        // Wave-62 Unk aliases (non-virtual, inline): legacy Unk spellings for
+        // the flipped 0x64/0x68/0x80/0xBC/0xC8 slots. Same arity; MWCC inlines
+        // each into the identical virtual dispatch. Hand-built tables keep
+        // Unk Fv linker names (Move forced-name bodies).
+        void CfObject_UnkVirtualFunc5() { CfObject_updateMoveRate(); } //0x64
+        void CfObject_UnkVirtualFunc6() { CfObject_releaseMoveTargets(); } //0x68
+        void CfObject_UnkVirtualFunc12() { CfObject_refreshSubB0(); } //0x80
+        void CfObject_UnkVirtualFunc27(void* src) { CfObject_setRotVec(src); } //0xBC
+        void CfObject_UnkVirtualFunc30(float value) { CfObject_setMoveYaw(value); } //0xC8
+        // Wave-39 UnkVirtual mop-up aliases (non-virtual, inline): same-slot
+        // forwarders so call sites spell behavior, not slot placeholders.
+        // The virtuals keep their Unk names (hand-built vtables in
+        // CREvtModel.cpp spell the current mangled names); MWCC inlines each
+        // alias into the identical virtual dispatch.
+        void CfObject_setMoveValue(float value) { CfObject_UnkVirtualFunc57(value); } //0x134: store move value to mField6E4 + C4 target (Move impl)
+        void CfObject_setMoveScale(float value) { CfObject_UnkVirtualFunc59(value); } //0x13C: store move scale to mField6EC (Move impl)
+        // Wave-39 caller alias (non-virtual, inline): real API spelling
+        // for slot 0x12C (indexed position sample; Model forwards the index
+        // through the sub-object chain). Same arity; MWCC inlines it into
+        // the identical virtual dispatch.
+        void* CfObject_getPosSample(int index) { return CfObject_UnkVirtualFunc55(index); }
+        // Wave-39 caller aliases (non-virtual, inline): behavior-derived
+        // spellings for the holder-notification slots used by CBattleManager's
+        // list-removal paths. Same arity; MWCC inlines them into the
+        // identical virtual dispatch.
+        void CfObject_notifyMemberRemoved() { CfObject_UnkVirtualFunc11(); } //0x7C: post-list-removal holder notify (func_800D9CA0; base tests *(+0x6C) & 1)
+        void CfObject_notifyActiveMember() { CfObject_UnkVirtualFunc44(); } //0x100: 0x4-flagged holder notify (func_800D9978 / func_800E1B5C)
+        // Wave-40 UnkVirtual mop-up aliases (non-virtual, inline): same-slot
+        // forwarders for the ocUnit call sites; the virtuals keep their Unk
+        // names (hand-built vtables in CfObjectModel.cpp / CfCollSphereImpl.cpp
+        // / CREvtModel.cpp spell the current mangled names). MWCC inlines the
+        // identical virtual dispatch.
+        int CfObject_getNpcActionState() { return CfObject_UnkVirtualFunc50(); } //0x118: NPC action byte (Move: field_6CE)
+        int CfObject_getNpcTargetAction() { return CfObject_UnkVirtualFunc51(); } //0x11C: NPC target action id (Move: field_6CF)
+        void* CfObject_findNodeMatrix(const char* name) { return CfObject_UnkVirtualFunc52(name); } //0x120: named node matrix slot (Model impl)
+        // Wave-50 caller alias (non-virtual, inline): behavior-derived
+        // spelling for the gated sub-object word (+0x128) consumed as a
+        // fallback aim position by the follow camera (func_80074090 sel==0
+        // path; Model impl: field_14AC when the 0x40000000 flag is set).
+        // Same arity; MWCC inlines it into the identical virtual dispatch.
+        u32 CfObject_getSubPosWord() { return CfObject_UnkVirtualFunc54(); } //0x128: sub-object position word (Model impl)
+        // Convenience overload: typed vec call sites cast into the void* slot.
+        void CfObject_setRotVec(const ml::CVec3* vec) { CfObject_setRotVec((void*)vec); } //0xBC
+        // Wave-41 UnkVirtual mop-up alias (non-virtual, inline): behavior-derived
+        // spelling for the indexed slot-bits query (+0x148) used by the
+        // model-display family (CModelDisp / CModelDispEquip / MakeCrystal).
+        // Same arity; MWCC inlines it into the identical virtual dispatch.
+        u32 CfObject_getSlotBits(u32 idx) { return CfObject_UnkVirtualFunc62(idx); } //0x148
+        // Wave-42 UnkVirtual mop-up aliases (non-virtual, inline):
+        // behavior-derived spellings for the scale/head slots used by the
+        // effect family (CfObjectEff createEffect_/callVirt32). Same arity;
+        // MWCC inlines them into the identical virtual dispatch.
+        void CfObject_setObjScale(float value) { CfObject_UnkVirtualFunc35(value); } //0xDC: store object scale to +0x60 (Eff: setEffScale__ syncs child)
+        void CfObject_syncMoveHead() { CfObject_UnkVirtualFunc32(); } //0xD0: push pending head state to the mover (Eff: scaleVirt29__ scales then sets angle)
+        // Wave-62 Unk aliases (non-virtual, inline): legacy Unk spellings for
+        // the flipped 0xD4/0x124/0x130 slots. Same arity; MWCC inlines each
+        // into the identical virtual dispatch. Hand-built tables keep Unk
+        // Fv linker names (GameManager forced-name bodies).
+        void CfObject_UnkVirtualFunc33(float value) { CfObject_applyMoveYaw(value); } //0xD4
+        CfObject* CfObject_UnkVirtualFunc53() { return CfObject_getIndexedNodeMatrix(); } //0x124
+        float CfObject_UnkVirtualFunc56() { return CfObject_getHeightDiff(); } //0x130
+        void CfObject_syncModelRate(float value) { CfObject_UnkVirtualFunc70(value); } //0x168: store model rate to +0xA0, forward to sub-object effect slot
+        // Wave-44 UnkVirtual mop-up alias (non-virtual, inline): behavior-derived
+        // spelling for the object-scale getter (+0xE0, reads +0x60) feeding
+        // CfObject_setObjScale. Same arity; MWCC inlines it into the
+        // identical virtual dispatch.
+        float CfObject_getObjScale() { return CfObject_UnkVirtualFunc36(); } //0xE0
+        // Wave-53 caller alias (non-virtual, inline): behavior-derived
+        // spelling for the actor scale getter (+0xF0) feeding the model
+        // scale triple in func_8016DCE4 (CfResReloadImpl): when the move
+        // object reports an actor scale override, the scale is read from
+        // the ene-adjusted object (parent - 0x3E9C) instead of the base
+        // +0xE0 getter. Same arity; MWCC inlines it into the identical
+        // virtual dispatch.
+        float CfObject_getActorScale() { return CfObject_UnkVirtualFunc40(); } //0xF0
+        void* CfObject_getPosTriple() { return CfObject_UnkVirtualFunc24(); } //0xB0: position-triplet pointer (base: +0x3C)
+        // Wave-48 UnkVirtual mop-up aliases (non-virtual, inline): behavior-derived
+        // spellings for the reset-hook slots used by the NPC char reset helper
+        // (func_80093938). Same arity; MWCC inlines them into the identical
+        // virtual dispatch.
+        void CfObject_initEventState() { CfObject_UnkVirtualFunc2(); } //0x58: event-state init step (Model impl: notifyEventDone + raise 0x400000; Obj/Ene/Pc call it from initialize())
+        void CfObject_syncEnableState() { CfObject_UnkVirtualFunc3(); } //0x5C: enable-state propagation hook (base: no-op; Pc: enablePcFlag on the move sub-object)
+        // Wave-61 caller alias: per-frame move update (+0x60). Virtual keeps
+        // UnkVirtualFunc4 (Move/Obj/Npc Class_ direct bls; hand vtables).
+        void CfObject_runMoveUpdate() { CfObject_UnkVirtualFunc4(); } //0x60: per-frame move refresh (Move impl)
+        // Wave-62 UnkVirtual mop-up aliases (non-virtual, inline): behavior-
+        // derived spellings for the Move-family anim-slot managers (+0xE4..
+        // +0x104). Virtuals keep Unk names (hand-built vtables in
+        // CfObjectModel.cpp / CREvtModel.cpp / CfCollSphereImpl.cpp). Base
+        // stubs return 0; Move overrides do the real work. Same Fv arity as
+        // the header virtuals; MWCC inlines into the identical dispatch.
+        // UVF41 (+0xF4) stays Unk: base stub only, no Move override, no
+        // named call-site alias yet (ASK POLICY).
+        void CfObject_resetAnimSlots() { CfObject_UnkVirtualFunc37(); } //0xE4: release slots 0/1 + model list + checkTargetNode (Move)
+        void CfObject_clearAnimEntry() { CfObject_UnkVirtualFunc38(); } //0xE8: releaseModelList + clear +0x94 + B0 forward (Move)
+        void CfObject_armAnimSlot0() { CfObject_UnkVirtualFunc39(); } //0xEC: bdat arm/release anim slot 0 (Move)
+        void CfObject_armAnimSlot1() { CfObject_UnkVirtualFunc42(); } //0xF8: bdat arm/release anim slot 1 (Move)
+        void CfObject_armAnimSlot1N() { CfObject_UnkVirtualFunc43(); } //0xFC: named bdat arm/release anim slot 1 (Move)
+        void CfObject_rearmAnimSlot() { CfObject_UnkVirtualFunc45(); } //0x104: stop+rearm indexed anim model from bdat name (Move)
 
         //not sure if belongs here?
-        void requestVoice(int, u32, float, float);
+        // Retail requestVoice__Q22cf8CfObjectFiUlff returns the voice
+        // dispatch result (0 when no sub-object); callers ignore it.
+        bool requestVoice(int, u32, float, float);
 
 
         //0x0: vtable
@@ -124,38 +255,13 @@ namespace cf {
     };
 
     class CfObjectModel;
-    // Vtable view for the CfObject-family sub-object at CfObject+0x38.
-    // Recovered slot map (all proven byte-identical in CfObjectModel.cpp,
-    // UVF6 + notifyEventDone, both FULL): +0x08 = CObjectState_setStateBitMask
-    // (r4=1), +0x2C = CScnItemModel::vfunc2C(u32) (r4=ptr, r5 residue), +0xA0 =
-    // CScnItemModel::vfuncA0() (no FP setup), +0xAC = CfObject_getPosVector
-    // (no args, return discarded). A CObjectState_setStateBitMask0 1-arg
-    // spelling does not compile (MWCC 10248 vs the (int,int) decl) and the
-    // CfObject-family +0xA0 slot (UVF20(float,float)) needs f1/f2 setups, so
-    // the arity-exact scene slots are used at those two sites. Kept for
-    // CfObjectEff/CfObjectMove/CfObjectActor, which still dispatch through it.
-    class CfObjectSub38 {
-    public:
-        virtual void m08(int flag);
-        virtual void _f0C(); virtual void _f10(); virtual void _f14(); virtual void _f18();
-        virtual void _f1C(); virtual void _f20(); virtual void _f24(); virtual void _f28();
-        virtual void m2C(CfObjectModel* parent);
-        virtual void _f30(); virtual void _f34(); virtual void _f38(); virtual void _f3C();
-        virtual void _f40(); virtual void _f44(); virtual void _f48(); virtual void _f4C();
-        virtual void _f50(); virtual void _f54(); virtual void _f58(); virtual void _f5C();
-        virtual void _f60(); virtual void _f64(); virtual void _f68(); virtual void _f6C();
-        virtual void _f70(); virtual void _f74(); virtual void _f78(); virtual void _f7C();
-        virtual void _f80(); virtual void _f84(); virtual void m88(void* arg); virtual void m8C(void* arg);
-        virtual void _f90(); virtual void _f94(); virtual void _f98(); virtual void _f9C();
-        virtual void mA0();
-        virtual void _fA4(); virtual void _fA8();
-        virtual void mAC();
-        virtual void _fB0(); virtual void _fB4(); virtual void _fB8(); virtual void _fBC();
-        virtual void _fC0(); virtual void _fC4(); virtual void _fC8(); virtual void _fCC();
-        virtual void _fD0(); virtual void _fD4(); virtual void _fD8(); virtual void _fDC();
-        virtual void _fE0();
-        virtual int _fE4();
-    };
-    // Tiny view for the resource handle heap object stored at
-    // CfResReloadParent+0x98 (and similar). Slots 0x64/0x88 take int.
+    // mSubObj38 (+0x38) is a polymorphic sub-object. Recovered slot map
+    // (CfObjectModel UVF6 + notifyEventDone, both FULL):
+    //   +0x08 = CObjectState_setStateBitMask(r4=1)
+    //   +0x2C = CScnItemModel::attachModelParent(u32) (r4=parent, r5 residue)
+    //   +0xA0 = CScnItemModel::notifyModelAttached() (no FP setup; CfObject UVF20 needs f1/f2)
+    //   +0xAC = CfObject_getPosVector() (return discarded)
+    // Call through those owning classes; the former +0x38 merged pad view
+    // (spacer _fNN / mXX decls) is deleted. Move/Eff/Actor TUs must cast to
+    // the real owner per slot (their Wave-63 primary files).
 }

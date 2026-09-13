@@ -79,8 +79,8 @@ int func_8016C950(CfResObjImpl* self) {
 void func_8016C98C(cf::CfResObjImpl* self) {
     u8 buf64[0x44];    // sp+0x8 (FixStr<64> name buffer)
 
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelList();
+    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     cf::CfResObjParent* parent = self->field_00;
     parent->field_94 = 0;
@@ -94,7 +94,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
     if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
         u32 handle1 = self->func_8016CCBC(1);
         self->field_00->field_90 = func_80066E7C(entry, handle1);
-        f32 anim = ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc36();
+f32 anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         u8* obj = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(self->field_00, obj);
         if (self->field_00->field_98 != 0 &&
@@ -103,7 +103,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
             ((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98 != 0) {
             self->field_00->field_98->vfunc78(((cf::CfResObjGm98View*)cf::CfGameManager::getGameSubManager())->field_98);
         }
-        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc35(anim);
+((cf::CfObject*)self->field_00)->CfObject_setObjScale(anim);
     }
     if (self->field_00->field_6C & 0x10) {
         // Direct buffer derefs so the address is recomputed at each use
@@ -131,7 +131,7 @@ void func_8016C98C(cf::CfResObjImpl* self) {
         self->field_00->field_6B4 |= 0x800;
     }
     if (self->field_00->field_38 != 0) {
-        ((cf::CfObject*)self->field_00->field_38)->CfObject_UnkVirtualFunc24();
+((cf::CfObject*)self->field_00->field_38)->CfObject_getPosTriple();
     }
     if (self->field_00->field_98 != 0) {
         self->field_00->field_98->vfunc88((self->field_00->field_6C >> 28) & 1);

@@ -3,10 +3,15 @@
 How MWCC orders instructions and shapes loops, and how to steer it from
 high-level C/C++ or per-TU flags to close a `structural` scheduling residual.
 
-**Source of truth:** the backend pipeline in `mwcc-decomp` (`docs/PASS_PIPELINE.md`,
-`src/backend/Scheduler.c`) plus the flag vocabulary recovered from the Wii/1.1
-binary. Empirical rules verified by compiling probes at `-O4,p`/`-O4,s`/`-O3`/`-O2`
-and diffing the PPC (`.scratch/sched_probe.c`).
+**Source of truth (Wii/1.1):** sibling repo
+[`mwcc-wii-1.1`](../../mwcc-wii-1.1) — `docs/WII_1_1_AGENT_GUIDE.md`,
+`docs/WII_1_1_SCHEDULER.md`, `docs/WII_1_1_SCHED_CORE.md`, and the IRO/backend
+pass order in `docs/WII_1_1_INVENTORY.md` (local path
+`~/projects/mwcc-wii-1.1`). Flag vocabulary is from the Wii/1.1 binary; empirical
+`p`/`s` rules verified with probes at `-O4,p`/`-O4,s`/`-O3`/`-O2`
+(`.scratch/sched_probe.c`). Prefer those Wii docs over GC/1.2.5 `mwcc-decomp`
+pipeline notes when addresses or models disagree (there is no Broadway machine
+model; default width-2 scheduling unless proven otherwise).
 
 ## When to read this
 
@@ -172,10 +177,15 @@ vs pointer-walk distinction the reference already documents for
 
 ## Evidence basis
 
-- **Pipeline order + double scheduling**: `docs/PASS_PIPELINE.md` + trace strings
-  `BEFORE SCHEDULING` … `FINAL CODE AFTER INSTRUCTION SCHEDULING` in the binary.
-- **Mode dispatch**: `Scheduler_Schedule` disassembly (`0x004ccae0`, levels 1–9 →
-  tables `0x574d70`–`0x578e30`).
+- **Pipeline / scheduler (Wii/1.1):** `mwcc-wii-1.1`
+  `docs/WII_1_1_SCHEDULER.md` + `docs/WII_1_1_SCHED_CORE.md` + pass inventory in
+  `docs/WII_1_1_INVENTORY.md`. Wii dumps use
+  `Dumping function %s after %s` (`0x00609470`), not the GC-era
+  `BEFORE SCHEDULING` / `FINAL CODE…` banners.
+- **Mode dispatch (historical GC/1.2.5 reference):** `Scheduler_Schedule`
+  (`0x004ccae0`, levels 1–9 → tables `0x574d70`–`0x578e30`) — useful vocabulary
+  only; re-validate any cited address in the Wii binary before treating it as a
+  Wii fact.
 - **Flag vocabulary**: recovered from the Wii/1.1 flag table (`.data`).
 - **`p`/`s` split**: `sched_loads` (scheduling, level-gated) and `sched_loop`
   (unroll + strength-reduction, `p`-gated) compiled at four levels and diffed.

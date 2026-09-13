@@ -625,8 +625,8 @@ extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {
     }
     self->mFlags4C &= ~0x100u;
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
-    emb->CfObject_UnkVirtualFunc22(&out);                  // vtable 0xa8
-    emb->CfObject_UnkVirtualFunc70(lbl_eu_80667B68);        // vtable 0x168
+    emb->CfObject_syncMoveTarget(&out);                  // vtable 0xa8
+    emb->CfObject_syncModelRate(lbl_eu_80667B68);        // vtable 0x168
     func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
     cf::CfMoveSub* sub2 = ((cf::CfObjWrap*)self->mObject)->mSub;
     if (sub2 != 0) {
@@ -2268,9 +2268,9 @@ extern "C" int func_8019DD54(cf::CCtrlMovePC* self) {
     // Reset the embedded move object: query handle, apply facing angle and
     // state, then clear the move-sub velocity.
     cf::CfObject* emb = (cf::CfObject*)((char*)self->mObject + 0x3e9c);
-    emb->CfObject_UnkVirtualFunc22((const ml::CVec3*)&goal);
-    emb->CfObject_UnkVirtualFunc30(self->mFloat100);
-    emb->CfObject_UnkVirtualFunc70(lbl_eu_80667B68);
+    emb->CfObject_syncMoveTarget((const ml::CVec3*)&goal);
+    emb->CfObject_setMoveYaw(self->mFloat100);
+    emb->CfObject_syncModelRate(lbl_eu_80667B68);
     func_800BC3B0((char*)self->mObject + 0x3e9c, lbl_eu_80667B90);
 
     if (obj->mSub != 0) {

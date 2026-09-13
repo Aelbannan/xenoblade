@@ -64,10 +64,15 @@ namespace cf {
     // emits __vt__; the ctor installs the retail label through vtbl().
     class __declspec(novtable) CAttackParam : public CAttackParamPrefix {
     public:
-        virtual void CAttackParam_UnkVirtualFunc1();      // +0x08
-        virtual u8 CAttackParam_UnkVirtualFunc2();        // +0x0C
+        virtual void CAttackParam_clearArtsRecord();      // +0x08
+        // +0x0C returns full-word: both retail callers use the bctrl result
+        // with no rlwinm extend (CtrlAct.s getArtsGaugeMax subi/mullw direct;
+        // CActorParam.s xoris direct), so the decl is int, not u8.
+        // Same slot the CArtsParam override names getArtsFlagByte
+        // (retail lbz 0x2A base impl here).
+        virtual int CAttackParam_getArtsFlagByte();       // +0x0C
         virtual void CAttackParam_UnkVirtualFunc3(u8 r4); // +0x10
-        virtual float CAttackParam_UnkVirtualFunc4();     // +0x14
+        virtual float CAttackParam_getArtsGaugeMax();     // +0x14
 
         CAttackParam();
 
@@ -92,15 +97,19 @@ namespace cf {
     };
 
     //size: 0x8C
+    // Retail vtable lbl_eu_8052F5E8: overrides slots +0x08/+0x0C/+0x10,
+    // inherits +0x14. The overrides are declared non-virtual under the
+    // novtable convention (same as CHelpSwitch::func_802B7CB0): making them
+    // virtual emits a compiler __vt__ the retail TU never had, so the ctor
+    // installs the retail label through vtbl() instead.
     class CArtsParam : public CAttackParam {
     public:
         UNKTYPE* unk88;
 
         CArtsParam();
-        void CArtsParam_UnkVirtualFunc1();
-        u8 CArtsParam_UnkVirtualFunc2();
-        void CArtsParam_UnkVirtualFunc3(u8 r4);
-        void vtableFunc3(u8 val);
+        void CArtsParam_clearArtsRecord();   // +0x08 override (base clear + unk88 = 0)
+        u8 CArtsParam_getArtsFlagByte();     // +0x0C override (*unk88 byte, else unk2A)
+        void vtableFunc3(u8 val);            // +0x10 override (*unk88 byte = val)
     };
 
     //size: 0x38

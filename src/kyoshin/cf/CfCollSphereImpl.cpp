@@ -2,26 +2,18 @@
 #include "kyoshin/cf/CfCollSphereImpl.hpp"
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 
-extern "C" const double lbl_eu_80666920;
-static inline float cvt_u32_f32(u32 v) {
-    union { double d; unsigned int i[2]; } u;
-    u.i[0] = 0x43300000;
-    u.i[1] = v;
-    double d = u.d - lbl_eu_80666920;
-    return (float)d;
-}
 // func_800AAD28: debug draw for sphere collision shape (single call).
 extern "C" void func_800AAD28(void* context, cf::CfObjectColl* shape) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    renderSphere__Q22cf18CfDebugDrawManagerFv(reinterpret_cast<void*>(pos), cvt_u32_f32(uval));
+    renderSphere__Q22cf18CfDebugDrawManagerFv(reinterpret_cast<void*>(pos), static_cast<float>(uval));
 }
 
 // func_800AAD94: debug draw for sphere with extra transform params.
 extern "C" void func_800AAD94(void* context, cf::CfObjectColl* shape, void* a, void* b) {
     u32 uval = static_cast<u32>(shape->field_0xB8);
     ml::CVec3* pos = shape->CfObject_getPosVector();
-    func_800A5738(a, pos, cvt_u32_f32(uval), b);
+    func_800A5738(a, pos, static_cast<float>(uval), b);
 }
 
 // --- absorb: retail data sections (split1) ---
@@ -36,7 +28,7 @@ __declspec(section ".rodata") __attribute__((aligned(8), used)) const unsigned c
     0x63,0x66,0x3A,0x3A,0x43,0x66,0x43,0x6F,0x6C,0x6C,0x53,0x70,0x68,0x65,0x72,0x65,0x49,0x6D,0x70,0x6C,0x00,0x00,0x00,0x00,
 };
 
-// .data 0x220 — 113 pointer relocs, 23 immediates (all zero)
+// .data 0x220 -- 113 pointer relocs, 23 immediates (all zero)
 extern "C" {
 extern char lbl_eu_80661C78[];
 extern char lbl_eu_80661C80[];
@@ -51,9 +43,9 @@ extern char lbl_eu_80661900[];
 extern void CObjectState_setStateBitMask__Q22cf12CObjectStateFv();
 extern void CObjectState_checkStateFlags__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitFlag__Q22cf12CObjectStateFv();
-extern void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv();
-extern void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv();
-extern void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv();
+extern void CObjectState_clearStateWord4__Q22cf12CObjectStateFv();
+extern void CObjectState_applyStateFlags__Q22cf12CObjectStateFv();
+extern void CObjectState_clearStateWord8__Q22cf12CObjectStateFv();
 extern void CObjectState_clearStateFlags8__Q22cf12CObjectStateFv();
 extern void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv();
 extern void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv();
@@ -63,7 +55,7 @@ extern void CObjectState_setStateBitMask2__Q22cf12CObjectStateFv();
 extern void CObjectState_setStateBitMask3__Q22cf12CObjectStateFv();
 extern void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv();
 extern void CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv();
-extern void CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv();
+extern void CObjectParam_hasObjectName__Q22cf12CObjectParamFv();
 extern void loadPointData__Q22cf13CfObjectPointFv();
 extern void CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv();
 extern void CObjectParam_signalActionEnd__Q22cf12CObjectParamFv();
@@ -76,14 +68,14 @@ extern void releasePointLink__Q22cf13CfObjectPointFv();
 extern void refreshCollLink__Q22cf12CfObjectCollFv();
 extern void setChildPoint__Q22cf13CfObjectPointFv();
 extern void CfObject_isMoveActiveNow__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv();
+extern void CfObject_forwardSubObject__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv();
+extern void CfObject_queryTargetState__Q22cf8CfObjectFv();
 extern void CfObject_pushRefreshValue__Q22cf8CfObjectFf();
 extern void CfObject_getMoveSpeedRate__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv();
+extern void CfObject_pushRefreshExtra__Q22cf8CfObjectFv();
+extern void CfObject_readRefreshValue__Q22cf8CfObjectFv();
 extern void CfObject_checkTargetState__Q22cf8CfObjectFv();
 extern void func_80047814__Q22cf13CfObjectPointFv();
 extern void setPointPosition__Q22cf13CfObjectPointFv();
@@ -112,10 +104,10 @@ extern void CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc46__Q22cf8CfObjectFPv();
-extern void CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv();
+extern void CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv();
+extern void CfObject_createMoveTarget__Q22cf8CfObjectFv();
 extern void CfObject_getCurrentTarget__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv();
+extern void CfObject_forwardNpcAction__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv();
@@ -127,11 +119,11 @@ extern void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv();
 extern void CfObject_getMoveRateScale__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv();
-extern void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv();
+extern void CfObject_setAnimSlotEntry__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv();
 extern void CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv();
 extern void CfObject_setMoveBusyState__Q22cf8CfObjectFi();
-extern void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv();
+extern void CfObject_setMoveReadyFlag__Q22cf8CfObjectFv();
 extern void setPointEnabled__Q22cf13CfObjectPointFv();
 extern void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv();
 extern void isCollEnabled__Q22cf13CfObjectPointFv();
@@ -152,9 +144,9 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CObjectState_setStateBitMask__Q22cf12CObjectStateFv,
     &CObjectState_checkStateFlags__Q22cf12CObjectStateFv,
     &CObjectState_setStateBitFlag__Q22cf12CObjectStateFv,
-    &CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv,
-    &CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv,
-    &CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv,
+    &CObjectState_clearStateWord4__Q22cf12CObjectStateFv,
+    &CObjectState_applyStateFlags__Q22cf12CObjectStateFv,
+    &CObjectState_clearStateWord8__Q22cf12CObjectStateFv,
     &CObjectState_clearStateFlags8__Q22cf12CObjectStateFv,
     &CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv,
     &CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv,
@@ -164,7 +156,7 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CObjectState_setStateBitMask3__Q22cf12CObjectStateFv,
     &CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv,
     &CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv,
-    &CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv,
+    &CObjectParam_hasObjectName__Q22cf12CObjectParamFv,
     &loadPointData__Q22cf13CfObjectPointFv,
     &CObjectParam_getSelfObjectId__Q22cf12CObjectParamFv,
     &CObjectParam_signalActionEnd__Q22cf12CObjectParamFv,
@@ -177,14 +169,14 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &refreshCollLink__Q22cf12CfObjectCollFv,
     &setChildPoint__Q22cf13CfObjectPointFv,
     &CfObject_isMoveActiveNow__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv,
+    &CfObject_forwardSubObject__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv,
+    &CfObject_queryTargetState__Q22cf8CfObjectFv,
     &CfObject_pushRefreshValue__Q22cf8CfObjectFf,
     &CfObject_getMoveSpeedRate__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv,
+    &CfObject_pushRefreshExtra__Q22cf8CfObjectFv,
+    &CfObject_readRefreshValue__Q22cf8CfObjectFv,
     &CfObject_checkTargetState__Q22cf8CfObjectFv,
     &func_80047814__Q22cf13CfObjectPointFv,
     &setPointPosition__Q22cf13CfObjectPointFv,
@@ -213,10 +205,10 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc46__Q22cf8CfObjectFPv,
-    &CfObject_UnkVirtualFunc47__Q22cf8CfObjectFv,
+    &CfObject_setMoveTargetPtr__Q22cf8CfObjectFPv,
+    &CfObject_createMoveTarget__Q22cf8CfObjectFv,
     &CfObject_getCurrentTarget__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv,
+    &CfObject_forwardNpcAction__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv,
@@ -228,11 +220,11 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &CfObject_getMoveRateScale__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv,
-    &CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv,
+    &CfObject_setAnimSlotEntry__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv,
     &CfObject_UnkVirtualFunc63__Q22cf8CfObjectFv,
     &CfObject_setMoveBusyState__Q22cf8CfObjectFi,
-    &CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv,
+    &CfObject_setMoveReadyFlag__Q22cf8CfObjectFv,
     &setPointEnabled__Q22cf13CfObjectPointFv,
     &CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv,
     &isCollEnabled__Q22cf13CfObjectPointFv,
@@ -255,7 +247,7 @@ __declspec(section ".data") __attribute__((aligned(8), used)) const void* __data
     &lbl_eu_80661CA8, (void*)0, (void*)0, (void*)0,
 };
 
-// .sdata 0x28 — 10 pointer relocs
+// .sdata 0x28 -- 10 pointer relocs
 extern "C" {
 extern char lbl_eu_804FC088[];
 extern char lbl_eu_804FC09C[];

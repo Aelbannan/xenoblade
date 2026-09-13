@@ -2336,15 +2336,15 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
+setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
-    D8EStatA* stA = (D8EStatA*)stats->CActorParam_UnkVirtualFunc101();
+    D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
     D8EStatB* stB = (D8EStatB*)stats->CActorParam_getArtsDataBlock();
-    D8EStatC* stC = (D8EStatC*)stats->CActorParam_UnkVirtualFunc102();
+    D8EStatC* stC = (D8EStatC*)stats->CActorParam_getBonusStats();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
@@ -6459,15 +6459,15 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     // ---- name / pane text ----
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_UnkVirtualFunc84());
+setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
     func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
-    E43StatA* stA = (E43StatA*)stats->CActorParam_UnkVirtualFunc101();
+    E43StatA* stA = (E43StatA*)stats->CActorParam_getBaseStats();
     E43StatB* stB = (E43StatB*)stats->CActorParam_getArtsDataBlock();
-    E43StatC* stC = (E43StatC*)stats->CActorParam_UnkVirtualFunc102();
+    E43StatC* stC = (E43StatC*)stats->CActorParam_getBonusStats();
     func_8009D7E4((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----

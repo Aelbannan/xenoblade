@@ -22,6 +22,7 @@ public:
 } // namespace nw4r
 
 class CResLookup;
+class CScnItemModel; // fwd; real owner of parent+0x98 model (vfunc64/vfunc88)
 
 namespace cf {
 
@@ -55,7 +56,7 @@ struct CfResReloadParent {
     u8 field_78[0x18];        // 0x78..0x8F
     /* 0x90 */ u8* field_90;  // slot +0x18 result (cleared by func_8016D3F8)
     /* 0x94 */ u8* field_94;  // slot +0x1C result (cleared by func_8016D3F8)
-    /* 0x98 */ void* field_98;
+    /* 0x98 */ ::CScnItemModel* field_98;  // model object (vtable slots 0x64/0x88 -> CScnItemModel::vfunc64/vfunc88)
     /* 0x9C */ u8* field_9C;
     u8 field_A0[0x24];        // 0xA0..0xC3
     /* 0xC4 */ CfResReloadParentSub* field_C4;  // sub-object (flag words at +0x0C/+0x4EC)
@@ -70,9 +71,9 @@ struct CfResReloadParent {
 
 // CfResParent deleted: use cf::CfObject / CfObjectModel real virtuals
 // slot98 -> CfObject_checkTargetState (0x98, int)
-// slot168 -> CfObject_UnkVirtualFunc70 (0x168, float)
-// slot178 -> CfObjectModel_UnkVirtualFunc1 (0x178)
-// slot17C -> CfObjectModel_UnkVirtualFunc2 (0x17C)
+// slot168 -> CfObject_syncModelRate (0x168, float)
+// slot178 -> CfObjectModel_releaseModelSub (0x178)
+// slot17C -> CfObjectModel_releaseModelList (0x17C)
 
 // Prefix pushing vptr to +0x10 (CHelp pattern). Base CfResImpl defines the
 // 0x00-0x0E prefix; the vptr follows at +0x10, then the 0x14 tail.

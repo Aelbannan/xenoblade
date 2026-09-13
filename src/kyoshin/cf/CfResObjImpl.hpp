@@ -34,14 +34,14 @@ struct SoundSlotEntry {
     /* 0x00 */ nw4r::snd::detail::BasicSound* field_00;
 };
 
-class CfObject; // real owner of the +0x38 sub-object (vtable slot 0xB0 is CfObject_UnkVirtualFunc24)
+class CfObject; // real owner of the +0x38 sub-object (vtable slot 0xB0 is CfObject_getPosTriple)
 
 // Parent object referenced at +0x00 of CfResObjImpl (a CfObject-derived
 // instance whose vptr sits at +0x00). Only the fields this unit touches are
 // declared.
 struct CfResObjParent {
     u8 field_00[0x38];
-    /* 0x38 */ cf::CfObject* field_38;       // sub-object (vtable slot 0xB0 -> CfObject_UnkVirtualFunc24)
+    /* 0x38 */ cf::CfObject* field_38;       // sub-object (vtable slot 0xB0 -> CfObject_getPosTriple)
     u8 field_3C[0x6C - 0x3C];
     /* 0x6C */ u32 field_6C;                 // flags (bits 0x10 / 0x20 tested)
     u8 field_70[0x74 - 0x70];
@@ -63,7 +63,7 @@ struct CfResObjParent {
 // CfObject func35/36). Fake parent dispatch deleted.
 
 // Real owner of the +0x38 sub-object is cf::CfObject (slot 0xB0
-// is CfObject_UnkVirtualFunc24). The fake pad is deleted.
+// is CfObject_getPosTriple). The fake pad is deleted.
 
 // Fake model dispatch deleted: real CScnItemModel::vfunc78(void*)/vfunc88(int)
 // now owned by CScnItemModel header (hot header, widened to retail arity).
@@ -117,11 +117,13 @@ public:
     virtual void func_8016CD68(int idx, int value); // 0x30
     virtual u32 func_8016CCBC(int idx);     // 0x34
     virtual int func_800BEA38();            // 0x38
-    virtual void func_800BED64();           // 0x3C
+    // Widened: Move UVF39/40/42/43 leave r4/r5 live into this slot.
+    virtual void func_800BED64(u32 a, u32 b); // 0x3C
     virtual void func_800BEE30();           // 0x40
     virtual void func_800BC3AC();           // 0x44
     virtual void func_800BEC44();           // 0x48
-    virtual void func_800BED5C();           // 0x4C
+    // Widened: Move UVF38 leaves r4 live into this slot.
+    virtual void func_800BED5C(u32 arg);    // 0x4C
     virtual int func_8016CD5C();            // 0x50
     virtual void func_8016C888(int arg2, int arg3, int arg4, float f1, float f2); // 0x54
     virtual void func_800BF2C4();           // 0x58
@@ -192,7 +194,7 @@ extern "C" void func_800BBADC(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
-extern "C" void func_800BE824(cf::CfResObjParent* parent, int flag);
+extern "C" void func_800BE824(void* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
@@ -201,11 +203,12 @@ extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
 // lbl_eu_80530F44 references these unmangled names; the same-named virtuals
 // above are scoped methods and do not collide).
 extern "C" void func_800BEA34();
-extern "C" void func_800BE9AC();
+// Defined in CfObjectMove.cpp as void(void*) (CScnItemModel::vfunc14 hop).
+extern "C" void func_800BE9AC(void* self);
 extern "C" void func_800BC2DC();
 extern "C" void func_800BF2F4();
 extern "C" void func_eu_800BFC78();
-extern "C" void func_800BEA38();
+extern "C" bool func_800BEA38();
 extern "C" void func_800BED64();
 extern "C" void func_800BEE30();
 extern "C" void func_800BC3AC();
@@ -213,6 +216,6 @@ extern "C" void func_800BEC44();
 extern "C" void func_800BED5C();
 extern "C" void func_800BF2C4();
 extern "C" void func_800BF2C8();
-extern "C" void func_800BF30C();
+extern "C" int func_800BF30C();
 // Compiler-generated deleting destructor (defined in this TU's .text).
 extern "C" void __dt__Q22cf12CfResObjImplFv();

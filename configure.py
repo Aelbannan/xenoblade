@@ -782,6 +782,8 @@ config.libs = [
                          "trySetHelpFlag__Q22cf11CHelpSwitchFv"),
                         ("func_802B7CE4__Q22cf11CHelpSwitchFUc",
                          "updateHelpFlag__Q22cf11CHelpSwitchFv"),
+                        ("dispatchHelp__Q22cf5CHelpFv",
+                         "CHelp_UnkVirtualFunc2__Q22cf5CHelpFv"),
                     ],
                 },
             ),

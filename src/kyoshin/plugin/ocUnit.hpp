@@ -67,30 +67,12 @@ struct Vec3f {
 };
 
 // Flag words of the objects returned by the OC spawn/lookup plugin
-// func_8003BD7C (bdat-name dispatch).
-struct OcSpawnObjView {
-    u8 _0000[0x64];
-    u32 field_0x64;
-    u32 field_0x68;
-};
+// func_8003BD7C (bdat-name dispatch): CfObject::unk64 (0x64) and
+// CfObject::mFlags68 (0x68), spelled through the real class now.
 
-// View of the OC handle word lookAt reads from the target lookup result.
-struct OcTargetView {
-    u8 _0000[0x04];
-    u32 field_0x04; // OC object handle
-};
-
-// View of the CfObject bone-target word the lookAt plugin tests.
-struct CfObjBoneView {
-    u8 _0000[0xC4];
-    void* field_0xC4; // current bone target (NULL = none)
-};
-
-// View of the CfObjectActor fields func_8003E974 reads after dynamic_cast.
-struct CfObjectActorView {
-    u8 _0000[0x3F10];
-    u32 field_0x3F10; // actor/battle id
-};
+// OC handle words read straight off the lookup result (+0x04) and the
+// object bone-target word (+0xC4): raw offsets now, no view structs.
+// The actor word at +0x3F10 is likewise read raw at the use site.
 
 // Battle-event work buffer passed to func_800EC8FC (0x34 bytes, memset to 0
 // then partially filled by the plugin).

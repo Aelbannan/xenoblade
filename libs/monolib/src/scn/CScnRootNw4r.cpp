@@ -369,7 +369,7 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
 
     ICulling* culling = self->field_0x4->mCulling;
     if (culling != NULL) {
-        culling->ICulling_UnkVirtualFunc1(
+        culling->update(
             (ml::CFrustum*)func_80496264(self->field_0x4, -1));
     }
 

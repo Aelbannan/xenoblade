@@ -128,8 +128,8 @@ struct ArtsActionSource {
 // +0x30 -> cf::CObjectState::CObjectState_getStateData (party status)
 // +0x4C -> cf::CObjectParam::CObjectParam_getSelfObjectId (move id)
 // +0xAC -> cf::CfObject::CfObject_getPosVector (position)
-// +0x54 -> cf::CBattleState::CBattleState_UnkVirtualFunc20 (arts slot)
-// +0x128/+0x160/+0x278/+0x27C/+0x158 -> cf::CActorParam Unk37/51/121/122/49
+// +0x54 -> cf::CBattleState::CBattleState_getEntryByIndex (arts slot)
+// +0x128/+0x160/+0x278/+0x27C/+0x158 -> cf::CActorParam getHp/getArtsGaugeRatio/getArtsSetBlock/getArtsSet/getArtsGauge
 // +0x14 -> ArtsParamLocal::mFn14 (gauge getMax, vptr at +0x84)
 
 // func_80105D54 support types.
@@ -1051,7 +1051,7 @@ after_ce48:
                         }
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
-                            reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_UnkVirtualFunc121();
+                            reinterpret_cast<cf::CActorParam*>(skillSrc)->CActorParam_getArtsSetBlock();
                         ArtsParamInfo* infoRaw = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(skill, i));
                         if (ready == 0) {
                             ArtsParamInfo* info = infoRaw;
@@ -1529,7 +1529,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_UnkVirtualFunc20(i);
+                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1544,7 +1544,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_UnkVirtualFunc20(i);
+                void* el = reinterpret_cast<cf::CBattleState*>((char*)adj + 8)->CBattleState_getEntryByIndex(i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1830,7 +1830,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     }
     if (b31) {
         // prev-art scan
-        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         s8 idx = (s8)(self->unk324 - 1);
         while ((s8)idx != self->unk324) {
             if (idx < 0) idx = 8;
@@ -1884,7 +1884,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
             if (adj != NULL) {
-                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc121();
+                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getArtsSetBlock();
                 s32 q = self->unk324;
                 if (q > 4) q--;
                 ArtsParamInfo* p =
@@ -1905,7 +1905,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     }
     if (b0) {
         // next-art scan
-        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         s8 idx = (s8)(self->unk324 + 1);
         while ((s8)idx != self->unk324) {
             if (idx > 8) idx = 0;
@@ -1959,7 +1959,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
             if (adj != NULL) {
-                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_UnkVirtualFunc121();
+                void* arts2 = reinterpret_cast<cf::CActorParam*>(adj)->CActorParam_getArtsSetBlock();
                 s32 q = self->unk324;
                 if (q > 4) q--;
                 ArtsParamInfo* p =
@@ -2012,7 +2012,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         }
         if (func_801088CC(self) != 0) goto useFail;
 
-        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         s32 q3 = self->unk324;
         if (q3 > 4) q3--;
         ArtsParamInfo* p =
@@ -2146,7 +2146,7 @@ void CMenuArtsSelect::func_80105A34() {
                         }
                         if (a2 != NULL) {
                             u8* arts2 = static_cast<u8*>(
-                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121());
+                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_getArtsSetBlock());
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p2 = reinterpret_cast<ArtsParamInfo*>(
@@ -2375,7 +2375,7 @@ extern "C" void func_80105D54(CMenuArtsSelect* self) {
 
     bool hasGauge = false;
     if (listIdx < 8) {
-        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         ArtsParamInfo* p =
             reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, listIdx));
         if (func_8015419C(reinterpret_cast<u8*>(p)) != 0) hasGauge = true;
@@ -2495,7 +2495,7 @@ void CMenuArtsSelect::func_80106450() {
                         BattleActor* a2 = reinterpret_cast<BattleActor*>(pl);
                         if (pl != NULL) a2 = (BattleActor*)((char*)pl - 0x3e9c);
                         if (a2 != NULL) {
-                            void* arts = reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121();
+                            void* arts = reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_getArtsSetBlock();
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
@@ -2540,7 +2540,7 @@ void CMenuArtsSelect::func_801065E4() {
         // conversion literal against the named constant in this function's
         // schedule, so the @N pool entry here stays a known residual.
         f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
-        f32 v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc51();
+        f32 v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGaugeRatio();
         if (v != unk9C->GetFrame() || (unk308 & 0x4) != 0) {
             unk308 |= 0x1;
         } else {
@@ -2566,7 +2566,7 @@ void CMenuArtsSelect::func_801065E4() {
         s32 flag = 0;
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(
             static_cast<u8*>(
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121()),
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock()),
             2, 0));
         if (rc->mCheckFlag != 0) {
             if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
@@ -2631,7 +2631,7 @@ void CMenuArtsSelect::func_80106900() {
             conv.w[0] = 0x43300000;
             frameLimit = static_cast<f32>(conv.d - magic) - lbl_eu_80666F2C;
         }
-        v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc51();
+        v = frameLimit * reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsGaugeRatio();
         if (v < frameLimit) {
             unk98->SetAnimationEnable(unkA0, false);
             unk98->SetAnimationEnable(unk9C, true);
@@ -2648,7 +2648,7 @@ void CMenuArtsSelect::func_80106900() {
         } else {
             s32 flag = 0;
             u8* arts = static_cast<u8*>(
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag != 0) {
                 if (func_80154280(rc, actor, 0) & 0x80) flag = 1;
@@ -2700,12 +2700,12 @@ void CMenuArtsSelect::func_80106C30(s32 index) {
     BattleActor* actor = reinterpret_cast<BattleActor*>(move);
     if (move != NULL) actor = (BattleActor*)((char*)move - 0x3e9c);
     if (actor != NULL) {
-        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+        void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
         ArtsParamLocal* info =
             reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
         if (info->mCheckFlag != 0) {
             // getMax is a real virtual at the +0x84 vptr's slot 0x14 (retail
-            // CAttackParam_UnkVirtualFunc4) - a real virtual call reproduces
+            // CAttackParam_getArtsGaugeMax) - a real virtual call reproduces
             // the retail r12 ABI dispatch (lwz r12,0x84(r3); lwz r12,0x14(r12);
             // mtctr; bcctrl) that a manual fn-ptr fetch cannot.
             f32 max = info->mFn14();
@@ -2765,7 +2765,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
     }
     if (actor == NULL) return;
-    void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121();
+    void* arts = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock();
 
     s32 flag = 0;
     if (index < 8) {
@@ -2773,7 +2773,7 @@ void CMenuArtsSelect::func_80106EC8(s32 index) {
         cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
         if (pl != NULL) {
             void* other = func_8016FE34(pl);
-            void* arts2 = reinterpret_cast<cf::CActorParam*>(other)->CActorParam_UnkVirtualFunc121();
+            void* arts2 = reinterpret_cast<cf::CActorParam*>(other)->CActorParam_getArtsSetBlock();
             ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
                 getArtsParamAtCnt(arts2, index));
             if (p->mCheckFlag != 0) {
@@ -3114,7 +3114,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
             return func_80174C98(actor, &localVal, 0x803);
         }
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 0;
         if ((func_80154280(p, actor, 0) & 0x20) == 0) return 0;
@@ -3153,7 +3153,7 @@ int CMenuArtsSelect::func_80107970(s32 index) {
         void* mv = (void*)(uintptr_t)reinterpret_cast<cf::CObjectParam*>(&actor->mMoveStart)->CObjectParam_getSelfObjectId();
         if (mv == NULL) return 0;
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
         if (rc->mCheckFlag == 0) return 0;
         if ((func_80154280(rc, actor, 0) & 0x20) == 0) {
@@ -3179,7 +3179,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
         }
         if (actor == NULL) return 0;
         u8* arts = static_cast<u8*>(
-            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+            reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
         p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
         if (p->mCheckFlag == 0) return 1;
         if (func_80154280(p, actor, 0) & 0xd0) return 1;
@@ -3223,7 +3223,7 @@ int CMenuArtsSelect::func_80107C54(s32 index) {
     if (actor != NULL) {
         if (unk328 == 4) {
             u8* arts = static_cast<u8*>(
-                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+                reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
             ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
             if (rc->mCheckFlag == 0) return 1;
             if (func_80154280(rc, actor, 0) & 0xc0) return 1;
@@ -3299,7 +3299,7 @@ void CMenuArtsSelect::func_801080F8() {
 
     BattleActor* actor = reinterpret_cast<BattleActor*>(
         func_8016FE34(cf::CfGameManager::getPlayer(0)));
-    u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121());
+    u8* arts = static_cast<u8*>(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock());
 
     f32 zeroF = lbl_eu_80666F28;
     s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
@@ -3336,7 +3336,7 @@ void CMenuArtsSelect::func_801080F8() {
                         }
                         if (a2 != NULL) {
                             u8* arts2 = static_cast<u8*>(
-                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_UnkVirtualFunc121());
+                                reinterpret_cast<cf::CActorParam*>(a2)->CActorParam_getArtsSetBlock());
                             s32 q = unk324;
                             if (q > 4) q--;
                             ArtsParamInfo* p2 = reinterpret_cast<ArtsParamInfo*>(
@@ -3467,7 +3467,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
     // (.L_80109394), so the whole body is wrapped in `if (actor != NULL)`.
     if (actor != NULL) {
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
-            getArtsParamAtCnt(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_UnkVirtualFunc121(),
+            getArtsParamAtCnt(reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSetBlock(),
                               idx));
         if (func_80148778(&actor->mArtsList, 0xeb) != 0 && p->mField28 == 0x16) {
             return 0;

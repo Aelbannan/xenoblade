@@ -109,16 +109,7 @@ extern s16 lbl_eu_80663F38[4];
 extern s16 lbl_eu_80663F40[4];
 }
 
-typedef f32 (*GetF32Fn)(void*);
-typedef u32 (*GetU32Fn)(void*);
-typedef int (*GetIntFn)(void*);
-
-template <typename Fn>
-static inline Fn vslot(void* obj, u32 offset) {
-    return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
-}
-
-// Direct-store view of lyt::Pane::mTranslate (+0x2c) - retail inlines
+// Direct-store view
 // SetTranslate here; MWCC refuses to inline the header body inside Move.
 struct MenuBpsPaneXlate {
     u8 pad00[0x2c];
@@ -498,7 +489,7 @@ void CMenuBattlePlayerState::Init() {
                 // before the biased lfd); the shared header types the slot
                 // u32, so hop through int to keep the signed conversion.
                 slot.unk224 = static_cast<f32>(static_cast<int>(
-                    actor->CActorParam_UnkVirtualFunc85()));
+                    actor->CActorParam_getSpentCurrency()));
                 slot.unk228 = static_cast<f32>(
                     actor->CActorParam_getLevelExp());
                 if (oneF == slot.unk228) {
@@ -507,7 +498,7 @@ void CMenuBattlePlayerState::Init() {
                 if (slot.unk22C < zeroF2) {
                     slot.unk22C = slot.unk224;
                 }
-                slot.unk218 = slot.unk21C = actor->CActorParam_UnkVirtualFunc91();
+                slot.unk218 = slot.unk21C = actor->CActorParam_getSecondCurrency();
                 slot.unk210 = static_cast<u32>(
                     actor->CActorParam_getHp());
                 slot.unk214 = static_cast<u32>(
@@ -673,7 +664,7 @@ after_bit21:
         hp_clean:
             slot->unk210 = hp;
             slot->unk214 = maxHp;
-            slot->unk218 = actor->CActorParam_UnkVirtualFunc91();
+            slot->unk218 = actor->CActorParam_getSecondCurrency();
             slot->unk220 = hpRatio;
 
             {
@@ -694,7 +685,7 @@ after_bit21:
                 }
 
                 {
-                    f32 tA = static_cast<f32>(actor->CActorParam_UnkVirtualFunc85());
+                    f32 tA = static_cast<f32>(actor->CActorParam_getSpentCurrency());
                     if (slot->unk224 != tA) {
                         goto tension_flag;
                     }
@@ -708,7 +699,7 @@ after_bit21:
                 slot->unk25C |= 0x4;
             tension_store:
                 slot->unk224 =
-                    static_cast<f32>(actor->CActorParam_UnkVirtualFunc85());
+                    static_cast<f32>(actor->CActorParam_getSpentCurrency());
                 slot->unk228 = static_cast<f32>(static_cast<int>(
                     actor->CActorParam_getLevelExp()));
             }
@@ -720,7 +711,7 @@ after_bit21:
 
             {
                 s16* pair = reinterpret_cast<s16*>(
-                    actor->CActorParam_UnkVirtualFunc152());
+                    actor->CActorParam_getTensionStatus());
                 slot->unk230 = pair[1];
                 slot->unk238 = pair[0];
             }
@@ -1293,7 +1284,7 @@ extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
 // +0x0c, state at +0x30; 0x800 = empty slot); retail's caller keeps r3
 // pointing at the inner object across the call.
 // Battle-state head of the actor (cf::CBattleState base at +0x8): the
-// UnkVirtualFunc21 icon query fills the state object in place (id at
+// getEventEntry/fetchStatusEntry icon queries fill the state object in place
 // battle-state +0xC, state word at +0x30, 0x800 = empty slot); retail's
 // caller reads both straight off the sub-object after the call.
 struct MenuBpsActorBattleHead {

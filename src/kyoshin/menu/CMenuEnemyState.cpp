@@ -1090,13 +1090,13 @@ after_bit21:
                     b1 = (b1 & 0xFE) | 1;
                     b2 = b2 & 0xFE;
 
-                    u32* r = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113();
+                    u32* r = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr();
                     u32 v = *r;
                     if (v - 1 <= 3) {
                         b2 = (b2 & 0xFE) | 1;
                     }
 
-                    u32 byteVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115() & 0xFF;
+                    u32 byteVal = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_isMarkVisible() & 0xFF;
                     b3 = (b3 & 0xFE) | static_cast<u8>(byteVal);
                 }
             } else {
@@ -1117,7 +1117,7 @@ after_bit21:
             Vec3f posB;
             Vec3f* posTmpPtr = &posTmp;
 
-            void* rRaw = reinterpret_cast<cf::CfObject*>(handle)->CfObject_UnkVirtualFunc55(0x64);
+            void* rRaw = reinterpret_cast<cf::CfObject*>(handle)->CfObject_getPosSample(0x64);
             RLayout* r = static_cast<RLayout*>(rRaw);
             if (r != NULL) {
                 posTmpPtr->x = r->val0C;
@@ -1448,15 +1448,13 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     // Position fetch (0x12C object vec or the 0xAC position). Declaration
     // order mirrors the retail frame: quadB 0x10, quadA 0x18, layout temp
     // 0x20, posB 0x2C, posA 0x38.
-    typedef RLayout* (*GetVecFn)(void*, int);
-    typedef void* (*GetPosFn)(void*);
     ColQuad quadB;
     ColQuad quadA;
     Vec3f layoutPos;
     Vec3f posB;
     Vec3f posA;
     const Vec3f* posPtr;
-    RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
+    RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosSample(0x64));
     if (r != NULL) {
         layoutPos.x = r->val0C;
         layoutPos.y = r->val1C;
@@ -1517,18 +1515,15 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
     if (actor2 == NULL) return;
 
-    typedef int* (*SubGetFn)(void*);
     int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
     panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
-    typedef void* (*GetObjFn)(void*);
     panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
     func_80111C50(self, reinterpret_cast<u8*>(panel), (panel->unk1C != 0) ? 1 : 2);
 
     // Slot-type texture by the vt[0x258] value (1/2/3 select a name offset).
-    typedef u32* (*GetPtrFn)(void*);
-    u32* p258 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113();
+    u32* p258 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr();
     void* tex = NULL;
     switch (*p258) {
     case 1:
@@ -1551,8 +1546,7 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
         reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
     }
 
-    typedef u32 (*GetU8Fn)(void*);
-    u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
+    u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_isMarkVisible());
     ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
     f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
 }
@@ -1623,11 +1617,9 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         panel->panelType = 1;
 
         // Position fetch (0x12C object vec or the 0xAC position).
-        typedef RLayout* (*GetVecFn)(void*, int);
-        typedef void* (*GetPosFn)(void*);
         Vec3f posA;
         const Vec3f* posPtr;
-        RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
+        RLayout* r = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosSample(0x64));
         if (r != NULL) {
             Vec3f tmp;
             tmp.x = r->val0C;
@@ -1699,19 +1691,16 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
-                typedef int* (*SubGetFn)(void*);
                 int v = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
 
-                typedef void* (*GetObjFn)(void*);
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
-                typedef u32* (*GetPtrFn)(void*);
                 void* tex = NULL;
-                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113()) {
+                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
@@ -1730,8 +1719,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
                 }
 
-                typedef u32 (*GetU8Fn)(void*);
-                u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
+                u8 byteVal = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_isMarkVisible());
                 ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
                 f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
             }
@@ -1791,11 +1779,9 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         panel->panelType = 1;
 
         // Position fetch (0x12C object vec or the 0xAC position).
-        typedef RLayout* (*GetVecFn2)(void*, int);
-        typedef void* (*GetPosFn2)(void*);
         Vec3f posA2;
         const Vec3f* posPtr2;
-        RLayout* r2 = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_UnkVirtualFunc55(0x64));
+        RLayout* r2 = static_cast<RLayout*>(reinterpret_cast<cf::CfObject*>(obj)->CfObject_getPosSample(0x64));
         if (r2 != NULL) {
             Vec3f tmp2;
             tmp2.x = r2->val0C;
@@ -1867,19 +1853,16 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
         if (panel->unk1F == 0) {
             Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
             if (actor2 != NULL) {
-                typedef int* (*SubGetFn2)(void*);
                 int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
                 panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v2, 0x802));
 
-                typedef void* (*GetObjFn2)(void*);
                 panel->unk24 = reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getActorLevel();
 
                 func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
 
                 // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
-                typedef u32* (*GetPtrFn2)(void*);
                 void* tex2 = NULL;
-                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc113()) {
+                switch (*reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_getMarkKindPtr()) {
                 case 1:
                     tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
                                ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
@@ -1898,8 +1881,7 @@ extern "C" void func_801127B0(CMenuEnemyState* self) {
                     reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
                 }
 
-                typedef u32 (*GetU8Fn2)(void*);
-                u8 byteVal2 = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_UnkVirtualFunc115());
+                u8 byteVal2 = static_cast<u8>(reinterpret_cast<cf::CActorParam*>(actor2)->CActorParam_isMarkVisible());
                 ObjBBFlag* f34b = reinterpret_cast<ObjBBFlag*>(panel->obj3);
                 f34b->flagBB = (f34b->flagBB & 0xFE) | byteVal2;
             }
@@ -1981,7 +1963,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
         Vec3f tmp;
         Vec3f posTmp;
         const Vec3f* src;
-        void* rRaw = reinterpret_cast<cf::CfObject*>(target)->CfObject_UnkVirtualFunc55(0x64);
+        void* rRaw = reinterpret_cast<cf::CfObject*>(target)->CfObject_getPosSample(0x64);
         RLayout* r = static_cast<RLayout*>(rRaw);
         if (r != NULL) {
             // Declared z,y,x then stored x,y,z - reproduces retail's batched
@@ -2206,7 +2188,6 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
     reinterpret_cast<ObjBBFlag*>(self->field84)->flagBB &= 0xFE;
     reinterpret_cast<ObjBBFlag*>(self->field88)->flagBB &= 0xFE;
 
-    typedef char* (*GetStrFn)(void*);
     if (panel->unk1E != 0 || panel->unk1F != 0) {
         reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB =
             (reinterpret_cast<ObjBBFlag*>(self->field7C)->flagBB & 0xFE) | 1;
@@ -2218,12 +2199,12 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
         } else if (panel->unk1F != 0) {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
                           reinterpret_cast<char*>(
-                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_UnkVirtualFunc2()),
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr()),
                           0);
         } else {
             func_80136B4C(self->unk74, &lbl_eu_804FDBF8[0x266],
                           func_80138DA4(reinterpret_cast<char*>(
-                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_UnkVirtualFunc2())),
+                              reinterpret_cast<cf::CObjectParam*>(obj)->CObjectParam_getParamPtr())),
                           0);
         }
     } else if (panel->unk1D != 0) {
@@ -2238,7 +2219,6 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
                 special = 1;
             }
         }
-        typedef void* (*GetObjFn)(void*);
         // Retail compares the pane id with signed cmpw.
         // Real virtual calls - retail dispatches through r12.
         s32 a2id = static_cast<s32>(static_cast<u32>(
@@ -2285,7 +2265,6 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
             }
         }
 
-        typedef int* (*SubGetFn)(void*);
         int v1 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
         if (func_80174C98(actor2, &v1, 0xa) == 0) {
             int v2 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor2->subObj4)->CObjectState_getStateData());
@@ -3018,7 +2997,7 @@ void CMenuEnemyState::Init() {
     // Bind the font: root pane + font object slot 0x24, push back onto root.
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::getFontInfo(1, unk74);
-    func_8013676C(rootPane, reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_UnkVirtualFunc8(0));
+    func_8013676C(rootPane, reinterpret_cast<cf::CObjectState*>(fontObj)->CObjectState_checkStateFlags8(0));
 
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1b2], func_801355D8());
     setLayoutTextBoxFont(unk74, &lbl_eu_804FDBF8[0x1bb], func_801355D8());

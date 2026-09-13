@@ -13,8 +13,8 @@ struct BattleGauge {
     u32 flags;                                   // +0x3F00 flag word (bit 1 = battle enabled?)
 };
 
-// (Gauge slots fold onto cf::CActorParam -- getScale at +0x15C is
-// CActorParam_UnkVirtualFunc50, isActive at +0x2BC is
+// (Gauge slots fold onto cf::CActorParam -- getArtsScale at +0x15C is
+// CActorParam_getArtsScale (slot 0x15C), isActive at +0x2BC is
 // CActorParam_isBattleLocked.)
 
 
@@ -52,8 +52,8 @@ extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
     }
 
     // Normalise the rising gauge value to [0,1] against the object's scale.
-    f32 curNorm = curVal / battle->CActorParam_UnkVirtualFunc50();
-    f32 prevNorm = prevVal / battle->CActorParam_UnkVirtualFunc50();
+    f32 curNorm = curVal / battle->CActorParam_getArtsScale();
+    f32 prevNorm = prevVal / battle->CActorParam_getArtsScale();
 
     // Play the matching tier-crossing voice cue the moment a tier is reached.
     int voiceID;

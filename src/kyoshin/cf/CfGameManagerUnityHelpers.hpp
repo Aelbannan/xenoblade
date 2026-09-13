@@ -6,10 +6,6 @@
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 namespace cf {
 class UnkClass_80082D90;
-class CfObjectPc {
-public:
-    void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
-};
 }
 
 namespace ml {
@@ -682,7 +678,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
             func_800BC4A0(player);
-            player->CfObject_UnkVirtualFunc70(lbl_eu_8066649C);
+            player->CfObject_syncModelRate(lbl_eu_8066649C);
             func_800BC3B0(player, value);
         }
     }
@@ -706,7 +702,7 @@ extern "C" void resetPlayerEffectsB__Q22cf13CfGameManagerFv(u32 objectValue,
                 func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
-            player->CfObject_UnkVirtualFunc70(lbl_eu_80666498);
+            player->CfObject_syncModelRate(lbl_eu_80666498);
             func_800BC3D8(player, value);
         }
     }
@@ -717,7 +713,7 @@ extern "C" void resetPlayerEffectsA__Q22cf13CfGameManagerFv() {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
         if (player != nullptr) {
             clearObjectMask__Q22cf13CfGameManagerFv(player, 0x10000000);
-            player->CfObject_UnkVirtualFunc70(lbl_eu_8066649C);
+            player->CfObject_syncModelRate(lbl_eu_8066649C);
             func_800BC3B0(player, lbl_eu_80666538);
         }
     }
@@ -1055,8 +1051,9 @@ extern "C" cf::CfObjectMove* spawnPartyActor__Q22cf13CfGameManagerFv(
     cf::CfGameManager::getInstance();
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != nullptr) {
-        player->CfObject_UnkVirtualFunc26(value, lbl_eu_8066654C);
-        player->CfObject_UnkVirtualFunc33(amount);
+        static_cast<cf::CfObject*>(player)->CfObject_applyMoveOffset(
+            reinterpret_cast<const ml::CVec3*>(value), lbl_eu_8066654C);
+        player->CfObject_applyMoveYaw(amount);
         return player;
     }
     cf::CfObjectMove* object = func_8007FF6C__Q22cf13CfGameManagerFv(
@@ -1324,6 +1321,11 @@ extern "C" void func_8004B738(void* a, const void* b);
 
 namespace cf {
 class CfCamPosSource;   // full decl in CfCam.hpp (virtual slots 0xAC / 0xCC)
+// Slot-owner note: 0xAC/0xCC are owned by cf::CfObject (getPosVector /
+// getMoveHeadAngle - CfCam.hpp:10); the source object arrives as CfObjectMove
+// (code_8018F8D8 passes unk94[0]), same vtable prefix. Both dispatches below
+// go through reinterpret_cast<cf::CfObject*> with inline casts (no new local)
+// to preserve MWCC's register coloring in this function.
 }
 
 // cam offset-vector: mode 1/2 build a radius-2 circle offset at
@@ -1332,8 +1334,11 @@ class CfCamPosSource;   // full decl in CfCam.hpp (virtual slots 0xAC / 0xCC)
 extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
     cf::CfCamPosSource* self, s32 mode, void* out) {
     if (self != nullptr) {
-        void** vt = *reinterpret_cast<void***>(self);
-    f32 scale = reinterpret_cast<f32 (*)(cf::CfCamPosSource*)>(vt[51])(self);
+        // Slot owner: cf::CfObject owns 0xCC (getMoveHeadAngle) / 0xAC
+        // (getPosVector) - CfCam.hpp:10; the source object arrives as
+        // CfObjectMove (code_8018F8D8 passes unk94[0]), same vtable prefix.
+        // Inline casts (no new local) to preserve MWCC's register coloring.
+    f32 scale = reinterpret_cast<cf::CfObject*>(self)->CfObject_getMoveHeadAngle();
     if (mode == 0) {
         func_8006BEC4(out);
         *(f32*)((u8*)out + 4) = lbl_eu_8066649C;
@@ -1354,9 +1359,8 @@ extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
         func_8004B60C(&tmp, vx, lbl_eu_80666498, vz);
         func_8004B3F0(static_cast<ml::CVec3*>(out), &tmp);
     }
-        func_8004B738(
-            out,
-            reinterpret_cast<void* (*)(cf::CfCamPosSource*)>(vt[43])(self));
+        func_8004B738(out,
+                      reinterpret_cast<cf::CfObject*>(self)->CfObject_getPosVector());
     } else {
         func_8006BEC4(out);
     }
@@ -2409,7 +2413,7 @@ extern "C" void resetBattleGauge__Q22cf13CfGameManagerFv() {
         if (data != nullptr) {
             cf::CfObject* object = func_8006E5A4(cameraManager);
             if (object != nullptr) {
-                reinterpret_cast<cf::CfObjectPc*>(object)->CfObject_UnkVirtualFunc3(data);
+                object->CfObject_syncEnableState();
             }
         }
     }

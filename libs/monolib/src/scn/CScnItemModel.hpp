@@ -68,23 +68,26 @@ public:
     // see func_804858C8), vfuncD8 (0xD8, model-link notify, see
     // func_80485994), and the destructor (0xDC) - 54 methods in total,
     // matching the retail vtable size of 0xE0.
+    // Virtual names below are still vfuncXX placeholders (monolib wave owns
+    // the full retail rename from lbl_eu_8056DD70 / Nw4r lbl_eu_8056DE80).
+    // Non-virtual aliases cover the slots CfObjectModel.cpp dispatches.
     virtual void vfunc08();
     virtual void vfunc0C();
     virtual void vfunc10();
     virtual void vfunc14();
-    virtual const char* vfunc18();
+    virtual const char* vfunc18();  // +0x18 Nw4r: func_80487B18 (model name)
     virtual void vfunc1C();
     virtual void vfunc20();
     virtual void vfunc24();
     virtual void vfunc28(u32 a, u32 b);  // vtable 0x28 (2-arg notify)
-    virtual int vfunc2C(u32 param);  // vtable 0x2C (1-arg query, non-zero = handled)
+    virtual int vfunc2C(u32 param);  // +0x2C Nw4r: func_8048B30C (attach parent)
     virtual void vfunc30(u32 a, u32 b);  // vtable 0x30 (2-arg notify)
     virtual int vfunc34(u32 param);  // vtable 0x34 (1-arg query, non-zero = handled)
     virtual void vfunc38();
-    virtual void* vfunc3C(const char* name);
+    virtual void* vfunc3C(const char* name);  // +0x3C Nw4r: func_8048B68C (named node mtx)
     virtual void vfunc40();
     virtual void vfunc44();
-    virtual void vfunc48(float f);  // vtable 0x48 (1-arg float notify, see func_80484838)
+    virtual void vfunc48(float f);  // +0x48 base: func_80484838 / Nw4r: func_8048A588
     virtual float vfunc4C();
     virtual void vfunc50(u32 a);
     virtual int vfunc54();
@@ -93,7 +96,7 @@ public:
     virtual void vfunc60();
     virtual void vfunc64(u32 a);  // vtable 0x64 (1-arg notify, see func_804831C4)
     virtual void vfunc68();
-    virtual void vfunc6C(u32 param);
+    virtual void vfunc6C(u32 param);  // +0x6C Nw4r: func_80488FEC
     virtual void vfunc70();
     virtual void vfunc74();
     virtual void vfunc78(void* arg);  // 0x78 - CfRes model sync (was void)
@@ -102,13 +105,13 @@ public:
     virtual void vfunc84(u32 a);
     virtual void vfunc88(int arg);  // 0x88 - CfRes flag (was void)
     virtual void vfunc8C(u32 a);  // vtable 0x8C (1-arg notify, see func_804849E4)
-    virtual int vfunc90(const void* vec, u32 flags);
+    virtual int vfunc90(const void* vec, u32 flags);  // +0x90 Nw4r: func_80488C78
     virtual void vfunc94(u32 a);  // vtable 0x94 (1-arg notify, see func_80484BB4)
-    virtual void vfunc98();
+    virtual void vfunc98();  // +0x98 Nw4r: func_80488D14
     virtual void vfunc9C(u32 a, u32 b);  // vtable 0x9C (2-arg notify)
-    virtual void vfuncA0();
+    virtual void vfuncA0();  // +0xA0 Nw4r: func_80488EF4 (post-attach notify)
     virtual void vfuncA4(u32 a);  // vtable 0xA4 (1-arg notify, see func_804838DC)
-    virtual u32 vfuncA8();
+    virtual u32 vfuncA8();  // +0xA8 Nw4r: func_8048736C (effect-act owner word)
     virtual void vfuncAC(CScnItemModel* node);  // vtable 0xAC (1-arg notify, see func_804831C4)
     virtual void vfuncB0(CScnItemModel* node);  // vtable 0xB0 (1-arg notify, see func_80483448)
     virtual void vfuncB4(u32 a);  // vtable 0xB4 (1-arg notify, see func_80484914)
@@ -122,6 +125,19 @@ public:
     virtual void vfuncD4(CScnItemModel* parent);  // vtable 0xD4 (slot-list link notify, called on the node)
     virtual void vfuncD8(CScnItemModel* node);  // vtable 0xD8 (model-link notify)
     virtual ~CScnItemModel();  // vtable 0xDC
+
+    // Same-arity caller aliases (non-virtual inline): MWCC inlines into the
+    // identical virtual dispatch. Used by CfObjectModel.cpp so call sites
+    // spell behavior / retail func ids, not vfunc pads.
+    const char* getModelNameStr() { return vfunc18(); }           // +0x18
+    int attachModelParent(u32 param) { return vfunc2C(param); } // +0x2C
+    void* getNamedNodeMtx(const char* name) { return vfunc3C(name); } // +0x3C
+    void setModelFloatRate(float f) { vfunc48(f); }             // +0x48
+    void setModelFlag6C(u32 param) { vfunc6C(param); }          // +0x6C
+    int probeModelVec(const void* vec, u32 flags) { return vfunc90(vec, flags); } // +0x90
+    void notifyModelReady() { vfunc98(); }                      // +0x98
+    void notifyModelAttached() { vfuncA0(); }                   // +0xA0
+    u32 getEffectActOwner() { return vfuncA8(); }               // +0xA8
 
     CScnItemModelOwner* field_04;  // 0x04 owner pointer
     u16 value08;                   // 0x08 (u16 type marker, set to 1 by the ctor)

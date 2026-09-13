@@ -84,10 +84,10 @@ int func_8018CB34() { return 2; }
 // +0x90/+0x94/+0x704 words, runs func_800BE1A4, then invalidates the three
 // state halfwords (+0x38/+0x3A/+0x3C) and clears the +0x34 slot.
 void func_8018CB3C(cf::CfResPcImpl* self) {
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     func_800BBB50(self->field_00);
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     self->field_00->field_94 = 0;
     self->field_00->field_704 = 0;
@@ -397,7 +397,7 @@ int func_8018D3F0(cf::CfResPcImpl* self, u32 arg2, u32 arg3) {
     if (state < 0) {
         return 0;
     }
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(arg3);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(arg3);
     int ret = func_80062928(state, cf::CfBdat::func_801422A8(arg2), 3);
     int ok = (u32)(-ret | ret) >> 31;
     (self)->func_8018D510(6, arg2);
@@ -475,10 +475,10 @@ void func_8018D570(cf::CfResPcImpl* self) {
 // field_3E = 3.
 void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
     if (arg2 != 0) {
-        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
-        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
+        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
+        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
         func_800BBB50(self->field_00);
-        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
+        reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
         self->field_00->field_90 = 0;
         self->field_00->field_94 = 0;
         self->field_00->field_704 = 0;
@@ -513,12 +513,12 @@ void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
 // refresh the character-slot ids and finally dispatch the +0x50 slot (or
 // install the +0x34 slot result via func_800685C8 / findResEntry).
 void func_8018D79C(cf::CfResPcImpl* self) {
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc2();
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc2();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_detachModelList();
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelList();
     func_800BBB50(self->field_00);
-    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_UnkVirtualFunc1();
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
+    reinterpret_cast<cf::CfObjectModel*>(self->field_00)->CfObjectModel_releaseModelSub();
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(0);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(1);
     self->field_00->field_90 = 0;
     self->field_00->field_94 = 0;
     self->field_38 = -1;
@@ -764,7 +764,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
         func_804BD94C(&pos, &zero, 0x44A05, 0, 0, 0, lbl_eu_80667A4C,
                       lbl_eu_80667A50, lbl_eu_80667A54, lbl_eu_8066AF20,
                       lbl_eu_80667A58);
-        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc26(reinterpret_cast<const ml::CVec3*>(&pos), lbl_eu_80667A5C);
+        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_applyMoveOffset(reinterpret_cast<const ml::CVec3*>(&pos), lbl_eu_80667A5C);
         flag = 1;
     }
     for (int i = 1; i <= 5; i++) {
@@ -872,7 +872,7 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     int b20 = (f68 >> 11) & 1;
     if (f68 & 0x100000) {
         func_800BB618((cf::CfObjectModel*)self->field_00, 0);
-        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc70(lbl_eu_80667A60);
+reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_syncModelRate(lbl_eu_80667A60);
         if (!(self->field_00->field_68 & 0x10000000)) {
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_80667A64);
         }
@@ -884,8 +884,8 @@ void func_8018DE8C(cf::CfResPcImpl* self) {
     if (b20 != 0) {
         self->field_00->field_68 |= 0x100000;
     }
-    reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc57(lbl_eu_80666B08);
-    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc4(lbl_eu_80667A68 * lbl_eu_80666B08);
+    reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_setMoveValue(lbl_eu_80666B08);
+    reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_recordMoveValue(lbl_eu_80667A68 * lbl_eu_80666B08);
     if (self->field_00->field_64 & 0x2) {
         func_800BE12C((u8*)self->field_00, 1, 0, -1, 1);
         if (flag != 0) {
@@ -988,7 +988,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
     }
     if (ok != 0) {
         self->field_08++;
-        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc21();
+        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_flushEffectSlots();
         setMemInitFlag__Q23mtl10MemManagerFb(false);
         CScnItemModel* obj98 = reinterpret_cast<CScnItemModel*>(self->field_00->field_98);
         if ((self->field_00->field_6C & 0x1000) && self->field_00->field_6F8[0] == 0) {
@@ -1000,11 +1000,11 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
                 }
                 if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
                     if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
-                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc71();
+                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[0])->vfunc48(0.0f);
                     }
                     if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[0], (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]), 0) == 0) {
-                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(0);
+                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(0);
                     } else {
                         u32 bdat = (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]);
                         func_804873EC(obj98, bdat, 1);
@@ -1027,11 +1027,11 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
                     if ((self->field_00->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(lbl_eu_80667A60);
                     } else {
-                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_UnkVirtualFunc71();
+                        reinterpret_cast<cf::CfObject*>(self->field_00)->CfObject_getProgressLow();
                         reinterpret_cast<CScnItemModel*>(self->field_00->field_6F8[1])->vfunc48(0.0f);
                     }
                     if ((obj98)->vfuncC4((u8*)self->field_00->field_6F8[1], (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]), 0) == 0) {
-                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_UnkVirtualFunc3(1);
+                        reinterpret_cast<cf::CfObjectMove*>(self->field_00)->CfObjectMove_releaseSlotById(1);
                     } else {
                         u32 bdat2 = (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]);
                         func_804873EC(obj98, bdat2, 1);
@@ -1061,7 +1061,7 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
         }
         setMemInitFlag__Q23mtl10MemManagerFb(true);
         if (self->field_00->field_38 != 0) {
-            reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_UnkVirtualFunc24();
+reinterpret_cast<cf::CfObject*>(self->field_00->field_38)->CfObject_getPosTriple();
         }
     }
 }

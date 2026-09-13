@@ -5,7 +5,7 @@
 extern "C" void* memset(void* dest, int val, size_t count);
 extern "C" void* memcpy(void* dest, const void* src, size_t count);
 
-// sdata2 float constants used by CBattleState_UnkVirtualFunc5
+// sdata2 float constants used by CBattleState_enterStatusEntry
 extern const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
 extern const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
 extern const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
@@ -46,7 +46,7 @@ CBattleState::CBattleState() {
     memset(this, 0, 0x15D4);
 }
 
-// Batch 2026-07-14j: battlestate-vfunc29 owns CBattleState_UnkVirtualFunc29
+// Batch 2026-07-14j: battlestate-vfunc29 owns CBattleState_clearStagingEntries
 // exclusively. Do not touch the ctor / other vfuncs.
 //
 // True Fv (r3=this only). Clears the 8 CBattleStateEntry slots at +0x1388;
@@ -56,7 +56,7 @@ CBattleState::CBattleState() {
 //
 // findBattleEntry is a static search helper inlined via -ipa file: the
 // return-based form reproduces the retail's exact mtctr/bdnz loop with the
-// dead +(checks-1)=+7 shadow counter (MWCC_CASES §inlined search
+// dead +(checks-1)=+7 shadow counter (MWCC_CASES sect.inlined search
 // helpers), indexing entries[j] straight from `this` so the +0x8 array base
 // folds into the load displacements (0x14, 0x48, ...) and the scan base
 // stays `this` (retail mr r4, r26).
@@ -73,9 +73,9 @@ static int findBattleEntry(cf::CBattleState* self, u32 id) {
     return 0;
 }
 
-// Duplicate of findBattleEntry for CBattleState_UnkVirtualFunc11: a separate
+// Duplicate of findBattleEntry for CBattleState_clearEntriesByMask: a separate
 // static body lets -ipa inline it there independently without perturbing
-// UnkVirtualFunc29's codegen.
+// clearStagingEntries's codegen.
 static int isBattleIdLive(cf::CBattleState* self, u32 id, int groups) {
     cf::CBattleStateEntryArray* v;
     int j;
@@ -89,7 +89,7 @@ static int isBattleIdLive(cf::CBattleState* self, u32 id, int groups) {
     return 0;
 }
 
-void CBattleState::CBattleState_UnkVirtualFunc29() {
+void CBattleState::CBattleState_clearStagingEntries() {
     CBattleStateEntry* entry;
     int i;
 
@@ -118,7 +118,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 
 } // namespace cf
 
-// Batch 2026-07-14g: battlestate-vfunc6 owns CBattleState_UnkVirtualFunc6
+// Batch 2026-07-14g: battlestate-vfunc6 owns CBattleState_addStagingEntry
 // exclusively. Do not touch CBattleState::CBattleState() above.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
@@ -128,8 +128,8 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern const float lbl_eu_80667414;
 
-// vt+0x48 tail-call: this->CBattleState_UnkVirtualFunc17(entry).
-void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) {
+// vt+0x48 tail-call: this->CBattleState_notifyEntryUpdated(entry).
+void cf::CBattleState::CBattleState_addStagingEntry(cf::CBattleStateEntry* arg) {
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
     int n;
@@ -157,7 +157,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
                     p->unk10 = arg->unk18;
                 }
             }
-            this->CBattleState_UnkVirtualFunc17(p);
+            this->CBattleState_notifyEntryUpdated(p);
             return;
         }
     }
@@ -183,15 +183,16 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
             entries->unk30 = arg->unk30;
             entries->unk1C = entries->unk20;
             entries->unk28 = scaled;
-            this->CBattleState_UnkVirtualFunc17(entries);
+            this->CBattleState_notifyEntryUpdated(entries);
             return;
         }
     }
 }
 
 // symbols.txt mangles Fv, but retail leaves the id in r4. This lookup reads
-// the independent halfword state at +0x6.
-int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
+// the independent halfword state at +0x6 (twin of slot 0x80 getEventMask,
+// which reads +0x4).
+int cf::CBattleState::CBattleState_getStatusMask(u32 id) {
     u16 mask;
 
     if (id >= 0x12f) {
@@ -254,12 +255,13 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
     return (unk6 & mask) != 0;
 }
 
-// vt+0x4C tail-call: this->CBattleState_getLinkedActorId(entry).
+// vt+0x4C tail-call: this->CBattleState_getLinkedActorId() (retail Fv: no arg in r4).
 
+// Batch battlestate-vfunc11 owns CBattleState_clearEntriesByMask
 // exclusively. Do not touch the ctor / vfunc6 / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the caller's mask in r4 (same
-// ABI pattern as CBattleState_UnkVirtualFunc6). Walks the this+0x8 entry
+// ABI pattern as CBattleState_addStagingEntry). Walks the this+0x8 entry
 // array (stride 0x34, count 0x68 == sizeof(unk8)/0x34) and, for any slot
 // whose unk30 flags intersect the mask: fires the vt+0x4C callback
 // (UnkVirtualFunc18) with that slot, remembers its id, then clears the
@@ -267,7 +269,7 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
 // array, 13 groups of 8, matching MWCC's fixed-trip-count unroll), the
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
-void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
+void cf::CBattleState::CBattleState_clearEntriesByMask(u32 mask) {
     u32 one;
     int thirteen;
     int i;
@@ -282,7 +284,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
         int stillActive;
 
         if ((entry->unk30 & mask) != 0) {
-            this->CBattleState_getLinkedActorId(entry);
+            this->CBattleState_getLinkedActorId();
             id = entry->unk0C;
             memset(entry, 0, 0x34);
 
@@ -306,16 +308,16 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
     } while (i < 0x68);
 }
 
-// Batch 2026-07-14h: battlestate-vfunc31 owns CBattleState_UnkVirtualFunc31
-// exclusively. Do not touch ctor / UnkVirtualFunc6 / other vfuncs above.
+// Batch 2026-07-14h: battlestate-vfunc31 owns CBattleState_getEventMask
+// exclusively. Do not touch ctor / addStagingEntry / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the id in r4 (same fake-Fv ABI
-// as UnkVirtualFunc6 -- see docs/MWCC_CASES.md).
+// as addStagingEntry -- see docs/MWCC_CASES.md).
 //
 // Leaf / no stack frame: maps specific ids to single-bit masks (or 0 for
 // unmapped ids), then returns (this->unk4 & mask) != 0 via the standard
 // MWCC branchless neg/or/srwi boolify idiom (see MWCC_CASES section 8c9).
-int cf::CBattleState::CBattleState_UnkVirtualFunc31(u32 id) {
+int cf::CBattleState::CBattleState_getEventMask(u32 id) {
     u16 mask;
 
     if (id >= 0x12f) {
@@ -378,11 +380,11 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc31(u32 id) {
     return (unk4 & mask) != 0;
 }
 
-// Batch 2026-07-14h: battlestate-vfunc26 owns CBattleState_UnkVirtualFunc26
-// exclusively. Do not touch ctor / UnkVirtualFunc6 / other vfuncs above.
+// Batch 2026-07-14h: battlestate-vfunc26 owns CBattleState_applyArtsTable
+// exclusively. Do not touch ctor / addStagingEntry / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the source table pointer in r4
-// (same ABI pattern as UnkVirtualFunc6). 0x10-byte record read from the
+// (same ABI pattern as addStagingEntry). 0x10-byte record read from the
 // incoming table; 8 consecutive records precede the raw copy landed at
 // CBattleState::unk152C.
 namespace cf {
@@ -398,8 +400,8 @@ struct CBattleStateSrcEntry {
 };
 } // namespace cf
 
-// vt+0x1C dispatch: this->CBattleState_UnkVirtualFunc6(entry).
-void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEntry* src) {
+// vt+0x1C dispatch: this->CBattleState_addStagingEntry(entry).
+void cf::CBattleState::CBattleState_applyArtsTable(const cf::CBattleStateSrcEntry* src) {
     const cf::CBattleStateSrcEntry* rec;
     const cf::CBattleStateSrcEntry* recFlags;
     int n;
@@ -407,7 +409,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
     u32 flag4000;
     u32 flag2000;
 
-    this->CBattleState_UnkVirtualFunc29();
+    this->CBattleState_clearStagingEntries();
 
     // Retail: li r26,0x4000 then li r25,0x2000.
     flag4000 = 0x4000;
@@ -448,7 +450,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
             }
         }
 
-        this->CBattleState_UnkVirtualFunc6(&entry);
+        this->CBattleState_addStagingEntry(&entry);
     }
 
     // Retail: mtctr/bdnz + lwzu/stwu from this+0x1528 / src-4. do-while(--i)
@@ -471,8 +473,8 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
 // exclusively. Do not touch ctor / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
-// fake-Fv ABI as UnkVirtualFunc6). Nested cmpwi on entry->unk0C picks a
-// kind; kind==3 clears this+0x1528. Calls vt+0x2C (UnkVirtualFunc10) with
+// fake-Fv ABI as addStagingEntry). Nested cmpwi on entry->unk0C picks a
+// kind; kind==3 clears this+0x1528. Calls vt+0x2C (removeKeyedEntries) with
 // the arg, then walks this+0x8 entries (stride 0x34, count 0x68): matching
 // id (+ optional field eq unless unk30 bit 0x200) -> stack-copy/clear ->
 // vt+0x2C -> id-dup scan / clear unk15AC bit -> vt+0x4C; stop early if
@@ -494,7 +496,7 @@ static int isBattleIdUsed(cf::CBattleState* self, u32 id) {
 }
 
 // vt+0x2C/+0x48/+0x4C dispatches are direct member calls:
-// CBattleState_UnkVirtualFunc10 / 17 / 18.
+// CBattleState_removeKeyedEntries / 17 / 18.
 
 void cf::CBattleState::CBattleState_applyEventEntry(cf::CBattleStateEntry* entry) {
     // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
@@ -667,7 +669,7 @@ kind_done:
         *(u32*)this->unk1528 = 0;
     }
 
-    this->CBattleState_UnkVirtualFunc10(entry);
+    this->CBattleState_removeKeyedEntries(entry);
 
     // Retail init order after the first vt+0x2C call:
     //   slot=this+8, i=0, then one=1 / thirteen=13 into r26/r27.
@@ -740,7 +742,7 @@ kind_done:
         savedWords[12] = s[12];
         memset(slot, 0, 0x34);
 
-        this->CBattleState_UnkVirtualFunc10(
+        this->CBattleState_removeKeyedEntries(
             (cf::CBattleStateEntry*)savedWords);
 
         // Load halfword id into a wide local first (retail lhz -> r5).
@@ -758,8 +760,7 @@ kind_done:
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        this->CBattleState_getLinkedActorId(
-            (cf::CBattleStateEntry*)savedWords);
+        this->CBattleState_getLinkedActorId();
 
         if (entry->unk0C == 0) {
             break;
@@ -767,7 +768,7 @@ kind_done:
     }
 }
 
-// Batch 2026-07-14k: battlestate-vfunc10 owns CBattleState_UnkVirtualFunc10
+// Batch 2026-07-14k: battlestate-vfunc10 owns CBattleState_removeKeyedEntries
 // exclusively. Do not touch ctor / other vfuncs.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
@@ -778,7 +779,7 @@ kind_done:
 // clears this+0x1528. Stack-copy + memset slot, id-dup scan / clear
 // unk15AC bit, then vt+0x4C (UnkVirtualFunc18). No recursive vt+0x2C;
 // walks all slots (no early break).
-void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg) {
+void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* arg) {
     int one;
     int thirteen;
     cf::CBattleStateEntry* slot;
@@ -1064,19 +1065,18 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        this->CBattleState_getLinkedActorId(
-            (cf::CBattleStateEntry*)savedWords);
+        this->CBattleState_getLinkedActorId();
     }
 }
 
-// Batch 2026-07-16: battlestate-vfunc5 owns CBattleState_UnkVirtualFunc5
+// Batch 2026-07-16: battlestate-vfunc5 owns CBattleState_enterStatusEntry
 // exclusively. Do not touch ctor / other vfuncs.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
-// fake-Fv ABI as UnkVirtualFunc6). Core battle-state-machine: id-specific
+// fake-Fv ABI as addStagingEntry). Core battle-state-machine: id-specific
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
-void cf::CBattleState::CBattleState_UnkVirtualFunc5(cf::CBattleStateEntry* arg) {
+void cf::CBattleState::CBattleState_enterStatusEntry(cf::CBattleStateEntry* arg) {
     u32 id;
     int kind2;
 
@@ -1129,11 +1129,11 @@ P1_10:
     arg->unk00 = 0;
     {
         cf::CBattleState* obj;
-        obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+        obj = (cf::CBattleState*)this->CBattleState_getOwner();
         if (*(u32*)((u8*)obj + 0x3374) & 0x20) {
             arg->unk20 *= lbl_eu_80667404;
         } else {
-            obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+            obj = (cf::CBattleState*)this->CBattleState_getOwner();
             if (*(u32*)((u8*)obj + 0x3374) & 0x40) {
                 arg->unk20 = (float)((double)arg->unk20 * lbl_eu_80667408);
             }
@@ -1333,7 +1333,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+                    obj = (cf::CBattleState*)this->CBattleState_getOwner();
                     func_80109784((u8*)obj + 0x3F10, id, 1);
                     func_8013DB6C(6, id, 0, 0);
                     goto after_dispatch;
@@ -1397,7 +1397,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+                    obj = (cf::CBattleState*)this->CBattleState_getOwner();
                     if (arg->unk30 & 0x10000) {
                         func_80109784((u8*)obj + 0x3F10, id, 0x20);
                     } else {
@@ -1464,7 +1464,7 @@ BranchB:
         if (k == 3) {
             if (!(arg->unk30 & 0x200)) {
                 cf::CBattleState* obj;
-                obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+                obj = (cf::CBattleState*)this->CBattleState_getOwner();
                 func_80109784((u8*)obj + 0x3F10, id, 1);
                 func_8013DB6C(6, id, 0, 0);
             }
@@ -1527,7 +1527,7 @@ BranchA:
     A3_5f: if (id == 0x12d) { k = 0; goto A3_done; } if (id >= 0x12d) { k = 2; goto A3_done; } if (id == 0x11e) { k = 0; goto A3_done; } k = 2;
     A3_done:
         if (k == 0) {
-            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_getOwner();
             func_80109784((u8*)obj + 0x3F10, id, 5);
         }
     }
@@ -1585,7 +1585,7 @@ BranchA:
     A4_5f: if (id == 0x12d) { k = 0; goto A4_done; } if (id >= 0x12d) { k = 2; goto A4_done; } if (id == 0x11e) { k = 0; goto A4_done; } k = 2;
     A4_done:
         {
-            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_UnkVirtualFunc1();
+            cf::CBattleState* obj = (cf::CBattleState*)this->CBattleState_getOwner();
             if (k == 1) {
                 func_80109784((u8*)obj + 0x3F10, id, 6);
             } else {
@@ -1682,7 +1682,7 @@ after_dispatch:
                     slot->unk2C = arg->unk2C;
                     slot->unk2E = arg->unk2E;
                     slot->unk30 = arg->unk30 | 8;
-                    this->CBattleState_UnkVirtualFunc17(slot);
+                    this->CBattleState_notifyEntryUpdated(slot);
                     goto F_slot_done;
                 }
 
@@ -1710,7 +1710,7 @@ after_dispatch:
                         slot->unk10 = slot->unk18;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    this->CBattleState_UnkVirtualFunc17(slot);
+                    this->CBattleState_notifyEntryUpdated(slot);
                     goto F_slot_done;
                 }
 
@@ -1739,7 +1739,7 @@ after_dispatch:
                     slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    this->CBattleState_UnkVirtualFunc17(slot);
+                    this->CBattleState_notifyEntryUpdated(slot);
                     goto F_slot_done;
                 }
 
@@ -1786,7 +1786,7 @@ after_dispatch:
                     if (lbl_eu_80667410 == dst->unk28) {
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
-                    this->CBattleState_UnkVirtualFunc17(dst);
+                    this->CBattleState_notifyEntryUpdated(dst);
                     goto F_slot_done;
                 }
 
@@ -2138,11 +2138,13 @@ extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0;
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
 extern "C" void CBattleState_getLinkedActorId__Q22cf12CBattleStateFv() {}
 
-// Batch 2026-08: battlestate-vfunc12 owns CBattleState_UnkVirtualFunc12
-// exclusively. Retail symbol mangles Fv but the caller leaves the status id
-// in r4 (fake-Fv ABI, same as UnkVirtualFunc6/7/9). extern "C" + explicit
-// self/id params emits the exact Fv symbol (MWCC_CASES §3908). Walks the
-// 8-entry array at self+0x1388 (stride 0x34); on an id match, clears the
+// Batch 2026-08: battlestate-vfunc12 owns CBattleState_clearStagingEntry
+// exclusively. The decl above carries the behavior name; the def below keeps
+// the legacy Fv symbol (same decl-only pattern as vfunc4/9: the hand-built
+// vtable in CREvtModel.cpp + symbols.txt spell it). Retail callers leave the
+// status id in r4 (fake-Fv ABI, same as addStagingEntry/7/9). extern "C" +
+// explicit self/id params emits the exact Fv symbol (MWCC_CASES sect.3908).
+// Walks the 8-entry array at self+0x1388 (stride 0x34); on an id match,
 // whole slot via a tail-call to memset (retail `b memset`).
 extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {
     if (id >= 0x12f) {
@@ -2160,7 +2162,9 @@ extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattle
         }
     }
 }
-void* cf::CBattleState::CBattleState_UnkVirtualFunc13(int index) {
+// Slot 0x38: int-indexed reader for the base status array at +0x8.
+// Primitive behind slot 0x54 (getEntryByIndex), which tail-calls here.
+void* cf::CBattleState::CBattleState_getStatusSlot(int index) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)this + 0x8))[index];
 }
 extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
@@ -2179,7 +2183,7 @@ extern "C" void* CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(void* self
 // mtctr/bdnz loop with a dead +7 trip counter.
 // Inlined count helper: the -ipa file-inline of a static helper reproduces
 // the retail 13x8 mtctr/bdnz unroll with the dead +7 shadow counter (same
-// mechanism as findBattleEntry in UnkVirtualFunc29).
+// mechanism as findBattleEntry in clearStagingEntries).
 static int countBattleEntries(cf::CBattleState* self, u32 id) {
     cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
     int j;
@@ -2300,11 +2304,14 @@ extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(cf::CBattle
 int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return (int)&lbl_eu_80662248; }
 extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0; }
 
-// Batch 2026-08: battlestate-vfunc4 owns CBattleState_UnkVirtualFunc4
+// Batch 2026-08: battlestate-vfunc4 owns CBattleState_setBattleParam
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
-// in r4 (fake-Fv ABI). Builds a zeroed CBattleStateEntry on the stack with
+// in r4 (fake-Fv ABI). The decl above carries the behavior name; the def
+// below keeps the legacy Fv symbol (same decl-only pattern as vfunc9:
+// the hand-built vtable in CREvtModel.cpp + symbols.txt spell it).
+// Builds a zeroed CBattleStateEntry on the stack with
 // unk0C = id and unk30 bit 0 set, then dispatches through vt+0x18
-// (UnkVirtualFunc5) to enter the new status.
+// (enterStatusEntry) to enter the new status.
 extern "C" u8 func_80145BC4(int index) {
     // Low-byte of the bdat column value: retail truncates via stw/lbz (a
     // memory round-trip), which MWCC only emits for a union member read -
@@ -2328,7 +2335,7 @@ extern "C" void CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(cf::CBattleS
     memset(&entry, 0, sizeof(entry));
     entry.unk0C = (u16)id;
     entry.unk30 |= 1;
-    self->CBattleState_UnkVirtualFunc5(&entry);
+    self->CBattleState_enterStatusEntry(&entry);
 }
 // func_80146300: r3 = id, r4 = flag. When flag != 0 the three always-on ids
 // 0xd5/0x107/0xdd return true. When flag == 0, ids in [0xd5, 0x107] are

@@ -17,7 +17,7 @@ class CfObjectMove;
 struct CfResTboxImpl;
 struct CfResTboxParent;
 
-class CfObject; // real owner of +0x38 sub-object (CfObject_UnkVirtualFunc24)
+class CfObject; // real owner of +0x38 sub-object (CfObject_getPosTriple)
 
 // Prefix pushing vptr to +0x10 (same as CfResPcImpl / CfResReloadImpl)
 struct CfResTboxImplPrefix {
@@ -29,11 +29,7 @@ struct CfResTboxImplPrefix {
     /* 0x0E */ s16 field_0E;
 };
 
-struct CfResTboxImplVtbl {
-    void* slots[27];
-};
-
-// Real class tree for cf::CfResTboxImpl (retail lbl_eu_80535204, 0x6C: RTTI + 0 + 25 slots). novtable.
+// Real class tree for cf::CfResTboxImpl
 class __declspec(novtable) CfResTboxImpl : public CfResTboxImplPrefix {
 public:
     virtual ~CfResTboxImpl();                // 0x08
@@ -72,7 +68,7 @@ public:
 // declared.
 struct CfResTboxParent {
     u8 field_00[0x38];
-    /* 0x38 */ cf::CfObject* field_38;       // sub-object (vtable slot 0xB0 -> CfObject_UnkVirtualFunc24)
+    /* 0x38 */ cf::CfObject* field_38;       // sub-object (vtable slot 0xB0 -> CfObject_getPosTriple)
     u8 field_3C[0x6C - 0x3C];
     /* 0x6C */ u32 field_6C;
     u8 field_70[0x90 - 0x70];

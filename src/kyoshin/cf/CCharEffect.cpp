@@ -41,8 +41,8 @@ void* __ct__CCharEffect(CCharEffect* self) {
 void func_8015BB3C(){}
 
 // func_8015BD24: walk the 44 effect slots (mSlots[1..44]) and forward a
-// value to each non-NULL slot via CfObject vtable slot 0x158
-// (CfObject_UnkVirtualFunc66). Slots are CfObject-family effect objects
+// value to each non-NULL slot via cf::CfObject slot 0x158
+// (setPointEnabled). Slots are CfObject-family effect objects
 // (getObj/factory results: cf::CfObjectEff* at creation sites), so the
 // dispatch goes through the cf::CfObject base (heterogeneous dynamic
 // types share this slot; the former CCharEffectSlot::v158 pad is folded
@@ -51,7 +51,7 @@ void func_8015BD24(CCharEffect* self, u32 param) {
     for (u32 i = 0; i < 0x2c; i++) {
         cf::CfObject* obj = (cf::CfObject*)self->mSlots[i + 1];
         if (obj != NULL) {
-            obj->CfObject_UnkVirtualFunc66((int)param);
+            obj->setPointEnabled((int)param);
         }
     }
 }
@@ -292,10 +292,10 @@ bool func_8015C294(unsigned int* param1, int param2) {
 // func_8015C2B0: apply an effect to a target object. Resolves the effect
 // data source from the manager, ORs the (flags>>7)&1 bit with the result
 // of func_80053F40 (data holder + 0x10, type&0xFF) to get a boolean flag,
-// then attaches the target to the manager, drives its vtable-0x194 method
+// then attaches the target to the manager, drives its setEffLockFg_ method
 // with the flag, and dispatches a per-type handler (byte table
 // lbl_eu_80501DF8: 1 = copy the data string into the target, 2 = scale
-// the target's vtable-0xDC argument by lbl_eu_80667530 * data->field_2E8).
+// the target via CfObject_setObjScale by lbl_eu_80667530 * data->field_2E8).
 void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags) {
     CCharEffectData* data = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
     if (data == NULL) return;
@@ -318,7 +318,7 @@ void func_8015C2B0(CCharEffect* self, cf::CfObjectEff* eff, u32 type, u32 flags)
         setChild34Sc_(eff, &d->field_304);
     } else if (v == 2) {
         CCharEffectData* d = (CCharEffectData*)((CCharEffectMgr*)self->mManager)->field_98;
-        eff->CfObject_UnkVirtualFunc35(lbl_eu_80667530 * d->field_2E8);
+        eff->CfObject_setObjScale(lbl_eu_80667530 * d->field_2E8);
     }
 
     func_80484EB0((u8*)((CCharEffectMgr*)self->mManager)->field_98);

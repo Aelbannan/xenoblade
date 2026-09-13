@@ -1444,7 +1444,7 @@ code (0.0%).
 
 ## kyoshin CfObjectActor — two identical secondary-base virtual calls: call through `this` directly, not casts (Wii/1.1 `-O4,p`)
 
-`CfObjectActor_UnkVirtualFunc3` (us-80172b64) + `UnkVirtualFunc4` (us-80172bbc) went 68.2%/63.6% → both **100.0% FULL_MATCH**. The retail body is two virtual calls on the CBattleState secondary base at this+0x8 (vptr at 8(r3), slot +0x20, arg in r4), and the retail keeps `this` in r31, recomputing the +8 adjusted-this per call (`lwz r12,8(r3); lwz r12,32(r12); mtctr; addi r3,r3,8; bcctrl` ×2). Three candidate source shapes:
+`CfObjectActor_clearStatusPair` (us-80172b64) + `UnkVirtualFunc4` (us-80172bbc) went 68.2%/63.6% → both **100.0% FULL_MATCH**. The retail body is two virtual calls on the CBattleState secondary base at this+0x8 (vptr at 8(r3), slot +0x20, arg in r4), and the retail keeps `this` in r31, recomputing the +8 adjusted-this per call (`lwz r12,8(r3); lwz r12,32(r12); mtctr; addi r3,r3,8; bcctrl` ×2). Three candidate source shapes:
 
 | Shape | Result |
 |---|---|---|
@@ -10766,3 +10766,51 @@ intermediate forms do not break the coalescing.
 - Cause:     overlay/thunk bugs, not scheduling: Tail90 lacked u8 _pad00[0x90]; +0x30 word is an unnamed CfObject gap (shared CObjectParam.hpp declares field_30 at +0x20 but retail reads it at +0x30 - cf. CtrlObjectParam CObjectParamRetailView; header fix belongs to owning wave)
 - Fix:       Tail90 prefix + Gap30 overlay (stw 48, not field_30) + phase-2-only one2/zero2 locals (dedup 4 float loads -> 2, safe: defined post-call) + saveFlags hoist (r0 load) + inline vtable store
 - Result:    48.6% at EXACT size 0x118/0x118 with all offsets correct; remainder is phase-1 first-load f0-vs-f1 (regswap) + phase-2 vtable r3-vs-r4/store-order
+
+## CfGimmick .sdata2 struct-pool -> individual SDA labels (Wii/1.1, +6 FULL, split FAIL->PASS)
+- Symptom:   func_8020A124/A1DC at 8.2% with 0xb8->0xc4 frames (+1 saved GPR each);
+  decomp `li r31,0 + lfs f1,8(r31)` (absolute) vs retail `lfs f1,0(r0)` (SDA21);
+  relocs drifted `sdata2num_CfGimmick -> lbl_eu_80668350/358`. UVF70 call spelling
+  (`player->CfObject_UnkVirtualFunc70(float)`, slot +0x168) was already correct.
+- Cause:     all .sdata2 numbers lived in ONE 0x30-byte struct, which exceeds MWCC's
+  small-data threshold, so every member access materialized an absolute address in
+  a dedicated GPR (stolen loop-counter register -> extra save, +0x10 frame each).
+  Prior waves proved the syncModelRate inline forwarder also grows frames - the
+  frame cost was addressing, not call spelling.
+- Fix:       six floats as individual `extern "C"` `.sdata2` labels (SDA-eligible,
+  SDA21 via r0, no extra GPR); tail doubles KEPT in a 16-byte struct (individual
+  2^52 literal gets deduped into the codegen int->float pool, dropping its slot
+  and pulling the 68378 pair up to 0x50); 68378 as `f32[2]` (retail sz8) with the
+  header decl widened scalar->[2] and two `[0]` use sites (no other TU uses it).
+  MWCC `extern "C"` must wrap declspec lines in a block (trailing `extern "C"`
+  is a 10121 syntax error on 1.1).
+- Result:    28/51 -> 34/51 FULL (A124/A1DC 100% at exact 0xb8, plus 8C48/8C60/
+  915C/9754), split FAIL +0x24 -> PASS (0x24 spare), .sdata2 first 0x60 bytes
+  now byte-identical to retail obj. Remainder: TU-local `@N` pool-name drift on
+  the SDA21 relocs (MWCC folds const-label loads into its literal pool; code
+  bytes identical) - witness-certifiable per PATTERNS pool-cookie rule, not pads.
+- Applies to/a.k.a.: any TU pooling .sdata2 numbers in a struct (frame growth +
+  reloc drift); tail-struct guard for dedup-prone magic doubles; cf. PATTERNS
+  1b/1d/1k/7i pool rules.
+
+## CActorParam alias->virtual promotion: inline-alias dispatch-order flip (Wii/1.1, FULL kept)
+- Symptom:   promoting the `CActorParam_getSpentCurrency` inline alias to the
+  call site (`getLevelExp() - getSpentCurrency()` replacing
+  `getLevelExp() - UnkVirtualFunc85()`) dropped UnkVirtualFunc86 100% -> 87%
+  (3 reg_swap: vtable offsets 496/488 swapped, subf operands flipped).
+- Cause:     the alias adds one inline frame around the second virtual
+  dispatch; MWCC then schedules the two vtable calls in the opposite order
+  (alias's dispatch first). Same class of ordering hazard as expression-order
+  residuals: the call TEXT changed, so the scheduler chose differently.
+- Fix:       named locals pin the order (`u32 a = getLevelExp(); u32 b =
+  getSpentCurrency(); return a - b;`) -> 100% again. Lesson: when replacing
+  a direct virtual call with an alias (or vice versa) inside a multi-call
+  expression, expect dispatch-order flips and pin with locals. (External TUs
+  calling an alias need NO change: alias->virtual resolution with unchanged
+  call text is codegen-neutral - proven by CfObjectPc syncArtsEntry staying
+  FULL and CtrlObjectParam func_8009DFC8 showing only its pre-existing
+  mParam offset drift.)
+- Result:    UnkVirtualFunc86 FULL_MATCH under the alias spelling; pattern
+  reused for 18 CActorParam slot promotions (decl + def + CREvtModel
+  hand-vtable + symbols.txt us/jp/eu + targets.json id-preserving rename),
+  unit holds 44/60 FULL, split PASS.

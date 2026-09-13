@@ -295,8 +295,8 @@ void func_8027EF50() {
             cf::CfObject* obj = (cf::CfObject*)func_8016FE34(cf::CfGameManager::getPlayer(0));
             if (obj != 0) {
                 inRange = false;
-                if (lbl_eu_80668AE0 < obj->CfObject_UnkVirtualFunc56() &&
-                    obj->CfObject_UnkVirtualFunc56() < lbl_eu_80668AE4) {
+                if (lbl_eu_80668AE0 < obj->CfObject_getHeightDiff() &&
+                    obj->CfObject_getHeightDiff() < lbl_eu_80668AE4) {
                     inRange = true;
                 }
             } else {

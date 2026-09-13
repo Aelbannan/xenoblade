@@ -28,25 +28,11 @@
 #include "kyoshin/cf/CtrlAct.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
-// Polymorphic view of cf::CAttackParam (retail: 0x84 bytes of data, vptr at
-// +0x84, virtual slot +0x0C = the gauge-max getter used by UnkVirtualFunc4).
-// The shared CArtsSet.hpp declaration is non-virtual/void, which cannot
-// reproduce the retail r12 ABI dispatch, so this TU uses its own view.
-struct CAttackParamDataView {
-    u8 _00[0x30];
-    f32 unk30;                 // 0x30
-    u8 _34[0x70 - 0x34];
-    u8 unk70;                  // 0x70 count byte (unk6C[4])
-    u8 _71[0x84 - 0x71];
-};
-namespace cf {
-class CAttackParam : private CAttackParamDataView {
-public:
-    virtual void vf00();       // RTTI padding: lands at vtable +0x08
-    virtual int getMax();      // +0x0C
-    float CAttackParam_UnkVirtualFunc4();
-};
-} // namespace cf
+#include "kyoshin/cf/CArtsSet.hpp"  // real cf::CAttackParam (vptr at +0x84; slot +0x0C/+0x14)
+
+// Retail CAttackParam_getArtsGaugeMax__Q22cf12CAttackParamFv lives in this
+// TU's absorbed split (CtrlAct.s @ 800D34CC), so its out-of-line definition
+// stays here and dispatches through the real base virtuals.
 
 // Target us-800d1bc4. CtrlActView-family base constructor: clear the state
 // words, run the two vtable writes (base then derived, novtable convention),
@@ -585,7 +571,7 @@ void func_800D1F0C(CtrlActView* self) {
         // No fresh entry: re-validate the current action state.
         if (!(entry.mFlags10 & 0x20)) {
             // L_3460: compare the owner's id probe against the stale entry.
-            if (((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v17() != (int)entry.mField0) {
+            if ((int)(intptr_t)((CVoiceOwnerIntfPc*)&self->mPlayer->mSub3E9C)->v17() != (int)entry.mField0) {
                 if (entry.mFlags10 & 0x400) {
                     self->mPlayer->table->method70(
                         self->mPlayer->mField3ED4,
@@ -686,11 +672,11 @@ void func_800D1F0C(CtrlActView* self) {
     switch (entry.mKind) {
     case 0:
     case 1:
-        self->vf28(&entry);
+        self->func_800D2A5C(&entry);
         break;
     case 2:
     case 3:
-        self->vf29(&entry);
+        self->func_800D2D64(&entry);
         break;
     case 4:
         func_8016FE34(findObjectById((int)entry.mField0));
@@ -789,9 +775,9 @@ void func_800D1F0C(CtrlActView* self) {
     }
     case 22: {
         void* base = self->mPlayer->table->method27C(self->mPlayer);
-        CtrlActArtsParam* p =
-            (CtrlActArtsParam*)getArtsParamByIdx(base, entry.mArtsIdx);
-        p->mField80 = p->table->fn14(p);
+        cf::CAttackParam* p =
+            (cf::CAttackParam*)getArtsParamByIdx(base, entry.mArtsIdx);
+        p->unk80 = p->CAttackParam_getArtsGaugeMax();
         break;
     }
     case 23: {
@@ -820,12 +806,12 @@ void func_800D1F0C(CtrlActView* self) {
     }
 }
 
-// Attack-param virtual #4: scale a per-frame effect by the count-scaled
+// Attack-param gauge-max getter (slot +0x14): scale the base arts power by
 // rate. Calls the +0x0C virtual on itself (retail r12 ABI dispatch). The
 // (f32)(s32) product conversion emits MWCC's 2^52 trick
 // (lis 0x4330 / xoris / lfd / fsubs); lbl_eu_80666D50 is that magic constant.
-float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
-    int prod = unk70 * (getMax() - 1);
+float cf::CAttackParam::CAttackParam_getArtsGaugeMax() {
+    int prod = unk6C[4] * (CAttackParam_getArtsFlagByte() - 1);
     float fprod = (float)prod;
     return unk30 * (lbl_eu_80666CFC - (fprod / lbl_eu_80666D4C));
 }
@@ -1623,7 +1609,7 @@ extern "C" void func_800D3FFC(CtrlActView* self) {
     CVoicePos* pp4 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 target = *(ml::CVec3*)pp4 + scopy;
     bool doReset = true;
-    if (self->vf26(&target, 1) == 0) {
+    if (self->func_800D64E0(&target, 1) == 0) {
         ml::CVec3 off(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probePos = target + off;
         ml::CVec3 probeArg = probePos;
@@ -1683,9 +1669,9 @@ extern "C" void func_800D4834(CtrlActView* self) {
     if (self->mField54 > lbl_eu_80666CF8) {
         CVoicePos* p2 =
             ((CVoiceOwnerIntfPc*)&((CtrlActSweepView*)other)->mOwner3E9C)->getPosition();
-        if (self->vf24(&vec1c, p2) != 0) {
+        if (self->func_800D49E4(&vec1c, p2) != 0) {
             f32 x8;
-            self->vf23(&vec10, &x8, &vec1c, 1, 0);
+            self->func_800D49EC(&vec10, &x8, &vec1c, 1, 0);
             f32 az = vec10.z;
             f32 ax = vec10.x;
             f32 ang = nw4r::math::Atan2FIdx(ax, az);
@@ -2007,7 +1993,7 @@ void func_800D5308(CtrlActView* self) {
     ml::CVec3 sumA = *(ml::CVec3*)pos + v;
     ml::CVec3 point = sumA;
     int r0;
-    if (self->vf27(&sumA) != 0) {
+    if (self->func_800D64D8(&sumA) != 0) {
         blocked = 1;
         ml::CVec3 up;
         up.x = lbl_eu_80666CF8;
@@ -2023,7 +2009,7 @@ void func_800D5308(CtrlActView* self) {
         }
         if (blocked != 0) {
             r0 = 1;
-        } else if (self->vf26(&point, 1) != 0) {
+        } else if (self->func_800D64E0(&point, 1) != 0) {
             r0 = 0;
         } else {
             r0 = 1;
@@ -2059,7 +2045,7 @@ extern "C" void func_800D56F0(CtrlActView* self) {
         self->mField54 = next;
         if (next > lbl_eu_80666CF8) {
             ml::CVec3 vec;
-            if (self->vf25(&vec) != 0) {
+            if (self->func_800D5814(&vec) != 0) {
                 f32 az = vec.z;
                 f32 ax = vec.x;
                 f32 ang = nw4r::math::Atan2FIdx(ax, az);
@@ -2377,7 +2363,7 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     ml::CVec3 scaled = v * lbl_eu_80666CFC;
     CVoicePos* ppos3 = self->mPlayer->mSub3E9C.getPosition();
     ml::CVec3 sum = *(ml::CVec3*)ppos3 + scaled;
-    if (self->vf26(&sum, 1) == 0) {
+    if (self->func_800D64E0(&sum, 1) == 0) {
         ml::CVec3 offset(lbl_eu_80666CF8, lbl_eu_80666CFC, lbl_eu_80666CF8);
         ml::CVec3 probe = sum + offset;
         int r29 = 1;
@@ -2606,7 +2592,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 u8* rangeObj = (u8*)self->mPlayer + 0x44A8;
                 if (func_804B526C(lbl_eu_80665958, rangeObj, &pos2,
                                   &probe, 0, 0, 0) == 0) {
-                    if (self->vf26(&probe, 1) != 0) {
+                    if (self->func_800D64E0(&probe, 1) != 0) {
                         self->mField7B = 0;
                         r22 = 0;
                         self->mField74 = (self->mField74 & ~0x200) | 0x100;
@@ -2687,7 +2673,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
                 ml::CVec3 sum3 = *(ml::CVec3*)pp + scaled3;
                 ml::CVec3 newPos = sum3;
                 self->mPos60 = newPos;
-                if (self->vf26(&self->mPos60, 1) != 0) {
+                if (self->func_800D64E0(&self->mPos60, 1) != 0) {
                     target = &self->mPos60;
                     self->mField74 |= 0xC0;
                 }
@@ -2710,7 +2696,7 @@ extern "C" void func_800D69D8(CtrlActView* self, ml::CVec3* pos,
     } else {
         f32 x8;
         ml::CVec3 outE4;
-        if (self->vf23(&outE4, &x8, target, 1, 0) != 0) {
+        if (self->func_800D49EC(&outE4, &x8, target, 1, 0) != 0) {
             f32 f23 = lbl_eu_80666D40 *
                       nw4r::math::Atan2FIdx(outE4.x, outE4.z);
             self->mFieldC = f23;
@@ -2805,10 +2791,10 @@ probe_done:
     // counters (0x7B) and clear the facing when the target is close.
     if (self->mField74 & 1) {
         self->mField74 &= ~0x20;
-        self->vf23(&out, &x8, pos, 1, 1);
+        self->func_800D49EC(&out, &x8, pos, 1, 1);
         goto finish;
     }
-    if (self->vf23(&out, &x8, pos, 1, 0) != 0) {
+    if (self->func_800D49EC(&out, &x8, pos, 1, 0) != 0) {
         self->mField7B = 0;
         self->mField74 &= ~0x820;
         goto finish;

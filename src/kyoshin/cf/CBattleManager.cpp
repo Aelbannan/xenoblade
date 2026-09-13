@@ -3536,7 +3536,7 @@ extern "C" s32 func_800EC918(
                     if (func_8026178C(statObj, 0x79)) {
                         for (s32 n = 1; n <= 8; n++) {
                             void* obj = func_8009EC9C((u16)n);
-                            func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorParam_UnkVirtualFunc91() >> 1),
+func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)((cf::CActorParam*)acc)->CActorParam_getSecondCurrency() >> 1),
                                           ((cf::CActorParam*)acc)->CActorParam_getActorLevel(), 0, 1, 0);
                         }
                         r28 = 2; r27 = 4;
@@ -4369,7 +4369,7 @@ extern "C" void func_800D9978(void* selfV, void* actorV) {
         }
 
         if (acc->field_3F00 & 0x4) {
-            ((cf::CfObject*)acc->field_3ED4)->CfObject_UnkVirtualFunc44();
+((cf::CfObject*)acc->field_3ED4)->CfObject_notifyActiveMember();
             func_802A2210(actor);
         }
     }
@@ -4393,7 +4393,7 @@ void func_800D9CA0(void* mgrV, void* targetV){
         }
 
         // Call vfunc at +0x3ED4 object's vtable[0x7C]
-        ((cf::CfObject*)target->field_3ed4)->CfObject_UnkVirtualFunc11();
+((cf::CfObject*)target->field_3ed4)->CfObject_notifyMemberRemoved();
 
         // Call target's vtable[0x2E4]
         ((cf::CActorParam*)target)->CActorParam_resetGaugeEntries();
@@ -4622,7 +4622,7 @@ void func_800DA0A4(void* self_, void* actor_) {
     // component halfway toward the sub-record's y, then measure the drop.
     ml::CVec3 hitPos;
     {
-        void* sample = ((cf::CfObject*)&(*(u8*)((u8*)actor + 0x3E9C)))->CfObject_UnkVirtualFunc55(0x64);
+void* sample = ((cf::CfObject*)&(*(u8*)((u8*)actor + 0x3E9C)))->CfObject_getPosSample(0x64);
         if (sample != nullptr) {
             hitPos.x = *(f32*)((u8*)sample + 0x0C);
             hitPos.y = *(f32*)((u8*)sample + 0x1C);
@@ -4648,7 +4648,7 @@ void func_800DA0A4(void* self_, void* actor_) {
     }
 
     // Chapter-gated chain gauge overrides the hit position with the facing vec.
-    f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_UnkVirtualFunc7();
+f32 gauge = ((cf::CfObjectActor*)actor)->CfObjectActor_getAdjustedFacing();
     {
         u8 chapter = *(u8*)((u8*)lbl_eu_80663F00 + 0x1AA);
         if (chapter >= 1 && chapter <= 0x18) {
@@ -4879,7 +4879,7 @@ extern "C" void func_800DB0FC(void* self, void* obj, void* enemy, void* arg4){
     f32 f31;
     if(((BattleRemoveObjAccessor*)enemy)->field_3f00 & 0x02){
         f32 f30 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
-        f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_UnkVirtualFunc7();
+f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_getAdjustedFacing();
     }else{
         void* subRet = ((cf::CfObject*)(u8*)enemy + 0x3E9C)->CfObject_getCurrentTarget();
         f32 f30 = *(f32*)((u8*)subRet + 0xC);
@@ -4972,7 +4972,7 @@ extern "C" void func_800DB4FC(void* self, void* obj, void* enemyArg, void* arg4)
 
     if ((move->field_74 & 1) && !(move->field_74 & 2) &&
         !(enemy->field_3374 & 0x1000) &&
-        ((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_UnkVirtualFunc60() != lbl_eu_80666DDC &&
+((cf::CfObject*)((u8*)enemy + 0x3E9C))->CfObject_getMoveFactor() != lbl_eu_80666DDC &&
         func_80148778(&enemy->statusBase, 0x32) == 0) {
         s32 flag = 0;
 
@@ -5034,7 +5034,7 @@ void func_800DB7F8(void* r3, void* r4, void* arg3, void* arg4) {
     if (*(u32*)((u8*)arg3 + 0x3374) & 0x1000) goto tailcall;
 
     // Virtual call on arg3's embedded sub-object at +0x3E9C, slot 0x140
-    if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_UnkVirtualFunc60() == lbl_eu_80666DDC) goto tailcall;
+if (((cf::CfObject*)((u8*)arg3 + 0x3E9C))->CfObject_getMoveFactor() == lbl_eu_80666DDC) goto tailcall;
 
     // Check flag 0x32 on arg3+8
     if (func_80148778((u8*)arg3 + 8, 0x32)) goto tailcall;
@@ -8000,7 +8000,7 @@ scan2:
             func_800E2594(mgr, actor, src, action);
             if (((E1B5C_ObjView*)action)->field_3F00 & 0x4) {
             void* h = ((E1B5C_ObjView*)action)->field_3ED4;
-                ((cf::CfObject*)(h))->CfObject_UnkVirtualFunc44();
+((cf::CfObject*)(h))->CfObject_notifyActiveMember();
             }
         }
     }
@@ -10491,7 +10491,7 @@ extern "C" void func_800E9B54(void* self, void* target, void* attacker, void* mo
         if (func_80174C98(target, (int*)&sid, 0x02000000)) return;
     }
 
-    ((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc13();                            // slot 0xC8 (0x800EA6C0)
+((cf::CActorParam*)target)->CActorParam_resetGaugesAndRefresh();                            // slot 0xC8 (0x800EA6C0)
 
     if (attacker != nullptr && (((BattleObjAccessor*)target)->field_3f00 & 0x4)) {
         // 0x800EA6E8: find target in the self+8 list, then the 0x800EA71C call
@@ -10519,8 +10519,8 @@ extern "C" void func_800E9B54(void* self, void* target, void* attacker, void* mo
                     ? (s32)((((E2A9C_BattleMoveData*)move)->field_74 >> 14) & 1)
                     : 0;
                 void* arts = func_8009EC9C((u16)i);
-                func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc85(),
-                              (void*)(uintptr_t)((cf::CActorParam*)target)->CActorParam_UnkVirtualFunc91(),
+func_800A26A4(arts, (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getSpentCurrency(),
+(void*)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getSecondCurrency(),
                               (s32)(uintptr_t)((cf::CActorParam*)target)->CActorParam_getActorLevel(), flag, 0, 0);
             }
         }
@@ -10947,8 +10947,8 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
             E484_VisionPair* vp = (E484_VisionPair*)vision;
             void* r26 = func_8016FE34(findObjectById((s32)vp->field_00));
             void* r27 = func_8016FE34(findObjectById((s32)vp->field_04));
-            ((cf::CfObjectActor*)r26)->CfObjectActor_UnkVirtualFunc10((float)value);
-            ((cf::CfObjectActor*)r27)->CfObjectActor_UnkVirtualFunc10((float)value);
+((cf::CfObjectActor*)r26)->CfObjectActor_pushRefreshValue((float)value);
+((cf::CfObjectActor*)r27)->CfObjectActor_pushRefreshValue((float)value);
             func_800F4A98(func_80043F18(&h2), 0x80000, 0);
             for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; i++) {
                 void* r29 = __dynamic_cast(func_800F6EAC(func_80043F18(&h2), i), 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
@@ -11132,7 +11132,7 @@ extern "C" s32 func_800EAA2C(void* mgr /*r24*/, void* actorA /*r25*/, void* acto
     // ---- Sub8 art-state gates (pre-switch). ----
     if (((cf::CBattleState*)((u8*)(actorB) + 8))->CBattleState_getEventMask((u32)(evt->cmd))) goto fail_1000;
 
-    if (((cf::CBattleState*)((u8*)(actorB) + 8))->CBattleState_UnkVirtualFunc33((u32)(evt->cmd))) {
+    if (((cf::CBattleState*)((u8*)(actorB) + 8))->CBattleState_getStatusMask((u32)(evt->cmd))) {
         // ---- "Hit chance" threshold block. ----
         s32 threshold = 50;                                // r31
         if (evt->cmd <= 18) {

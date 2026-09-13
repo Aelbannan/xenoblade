@@ -61,9 +61,9 @@ namespace cf {
 
     // Out-of-line (retail keeps this a standalone 0xE8 function that callers
     // reach with a direct bl; the in-class inline body made MWCC auto-inline
-    // it into CArtsParam::CArtsParam_UnkVirtualFunc1 instead).
+    // it into CArtsParam::CArtsParam_clearArtsRecord instead).
     #pragma auto_inline off
-    void CAttackParam::CAttackParam_UnkVirtualFunc1(){
+void CAttackParam::CAttackParam_clearArtsRecord(){
         unk0 = 0;
         unk20 = 0;
         unk24 = 0;
@@ -114,26 +114,20 @@ namespace cf {
         unk0 = 0;
         unk20 = 0;
         unk78 = 0;
-        CAttackParam_UnkVirtualFunc1();
+        CAttackParam_clearArtsRecord();
     }
 
     CArtsParam::CArtsParam(){
         vtbl() = lbl_eu_8052F5E8;
-        CAttackParam_UnkVirtualFunc1();
+        CAttackParam_clearArtsRecord();
     }
 
-    void CArtsParam::CArtsParam_UnkVirtualFunc1(){
-        CAttackParam::CAttackParam_UnkVirtualFunc1();
+    void CArtsParam::CArtsParam_clearArtsRecord(){
+        CAttackParam::CAttackParam_clearArtsRecord();
         unk88 = 0;
     }
 
-    void CArtsParam::CArtsParam_UnkVirtualFunc3(u8 r4){
-        if(unk88 != nullptr){
-            unk0 = r4;
-        }
-    }
-
-u8 cf::CArtsParam::CArtsParam_UnkVirtualFunc2(){
+u8 cf::CArtsParam::CArtsParam_getArtsFlagByte(){
     // Retail returns *(u8*)unk88 when the slot is installed, else unk2A.
     if (unk88 != nullptr) {
         return *(u8*)unk88;

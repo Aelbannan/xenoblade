@@ -9,7 +9,7 @@
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
 // CfObjectPc.hpp (read-only) currently fails to compile due to an internal
-// virtual-override mismatch (CActorParam_UnkVirtualFunc86 return type); only
+// virtual-override mismatch (CActorParam_getCurrencyBalance return type); only
 // the incomplete type is needed here (getCfObjectPc pointer arithmetic).
 namespace cf {
 class CfObjectPc;
@@ -49,7 +49,7 @@ cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* self) {
 void* __dt__800BFA14(cf::CfObjectObj* self, int deleteFlag) {
     if (self != 0) {
         *(void**)self = (void*)lbl_eu_80529B4C;
-        self->CfObject_UnkVirtualFunc6();
+        self->CfObject_releaseMoveTargets();
         __dt__Q22cf12CfObjectMoveFv(self, 0);
         if (deleteFlag > 0) {
             __dl__FPv(self);
@@ -73,18 +73,16 @@ void cf::CfObjectObj::reset() {}
 // flags on arg4/arg5. Returns 1.
 int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
     // 0x17c then 0x178 virtual init calls on the model.
-    this->CfObjectModel_UnkVirtualFunc2();
-    this->CfObjectModel_UnkVirtualFunc1();
+    this->CfObjectModel_releaseModelList();
+    this->CfObjectModel_releaseModelSub();
     // Clear helper-id / dispatch flags (0x90, 0x94 live in locked base padding).
     *(u32*)((u8*)this + 0x90) = 0;
     *(u32*)((u8*)this + 0x94) = 0;
-    // vtable+0x144 helper dispatch; retail re-reads the vtable on every call
-    // via genuine virtual dispatch (r12 double-load, args-then-dispatch). A
-    // plain vtable deref makes MWCC use a temp base reg, so cast through a
-    // virtual-dispatch view struct instead (see CfFn144View in the header).
-    cf::CfFn144View* v144 = reinterpret_cast<cf::CfFn144View*>(this);
-    v144->fn144(1, arg4);
-    v144->fn144(0, arg5);
+    // vtable+0x144 helper dispatch (CfObject_setAnimSlotEntry, retail
+    // 2-arg slot); genuine virtual dispatch reproduces the r12
+    // double-load with args-then-dispatch ordering.
+    this->CfObject_setAnimSlotEntry(1, arg4);
+    this->CfObject_setAnimSlotEntry(0, arg5);
     // Mark the sub-object active (b0 is base-class void*; +8 is a u16 field).
     *(u16*)((u8*)this->mSubObjB0 + 8) = 1;
     if (arg4 != 0)

@@ -87,9 +87,16 @@ struct CfGimmickObject : public cf::CfObject {
     void CfObject_UnkVirtualFunc7() override {}
     void CfObject_notifyEventDone() override {}
     void CfObject_setMoveTargetVec(const ml::CVec3* vec) override { (void)vec; }
-    void CfObject_UnkVirtualFunc66(int flag) override { field_90 = (u8)flag; }
+    // Slot 0x158 (base setPointEnabled): records the spawned/active flag.
+    void setPointEnabled(int flag) override { field_90 = (u8)flag; }
     void setPos(const CfGimmickVec3* pos) { CfObject_setMoveTargetVec((const ml::CVec3*)pos); }
-    void activate(int flag) { CfObject_UnkVirtualFunc66(flag); }
+    // Retail func_8020A35C/8020A6B0 reach slot 0x158 through a virtual
+    // dispatch (lwz 0x158 + bctrl); spelling that here as setPointEnabled()
+    // grows this TU by +0x14 per spawner and blows the +0x24 split budget,
+    // so activate keeps the baseline direct store (same bytes as before)
+    // while the real override above fills the vtable slot. The missing
+    // virtual dispatch in the two spawners is a recorded non-pad residual.
+    void activate(int flag) { field_90 = (u8)flag; }
 };
 
 // Player object helpers are provided by cf::CfObject / cf::CfObjectMove
@@ -132,8 +139,9 @@ struct CfPlayerIdView {
     u16 id456C;   // 0x456C
 };
 
-// CfGimmick::field_78 dispatch at +0x88 is recovered on cf::CfGameManager
-// (see CfGimmick.cpp local CfGameManager definition).
+// CfGimmick::field_78 dispatch at +0x88 is driven through the CfObject view
+// (CfObject_pushRefreshValue slot, float arity) at the func_8020899C
+// definition in CfGimmick.cpp.
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -179,7 +187,7 @@ extern "C" void* func_8003AA34();
 extern "C" u32 func_8003B41C(void* bdat);
 extern "C" u32 func_8003B1EC(void* bdat);
 
-// Player per-heal helpers paired with CfObject_UnkVirtualFunc70.
+// Player per-heal helpers paired with CfObject_syncModelRate (+0x168).
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
 extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
 
@@ -217,9 +225,9 @@ extern "C" CfGimmickList* func_800B6BEC();
 // Fixed rotation angle used by func_802098EC's mask-0x4 occlusion test.
 extern "C" f32 lbl_eu_806646B0;
 
-// Height offset added to a spawned object's Y position.  Const so MWCC
-// hoists the SDA load to retail's position (CfObjectMove.hpp pattern).
-extern "C" const f32 lbl_eu_80668378;
+// Height-offset pair (1.5, 0.0) for spawned objects; [0] is the live offset.
+// Array shape preserves retail's trailing pad float at 8066837C.
+extern "C" const f32 lbl_eu_80668378[2];
 extern "C" void func_800C13FC(void* obj, const char* name, int arg);
 // Create/attach a gimmick object (C-ABI, unmangled): manager first, then flags.
 extern "C" CfGimmickObject* func_800B20B4(void* mgr, int a, int b, int c);

@@ -20,6 +20,7 @@ attempts + contributions).
 | `docs/instruction_selection.md` | `mr`/`addi`/`lbzu`/load selection (routed from those residuals) |
 | `docs/KNOWN_WALLS.md` | fixed-codegen walls (FULL_MATCH-only vs dead-end) |
 | `docs/mwcc/contributions.jsonl` + `build/mwcc_knowledge.sqlite` | machine layer the index reads |
+| sibling [`mwcc-wii-1.1`](../../mwcc-wii-1.1) (`~/projects/mwcc-wii-1.1`) | Wii/1.1 compiler mechanism findings — start at `docs/WII_1_1_AGENT_GUIDE.md`; prefer over GC/1.2.5 `mwcc-decomp` transfers when they conflict |
 
 ## Record templates (apply to both files)
 
@@ -4322,3 +4323,32 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Result:    CfObjectModel ctor: phantom-free, exact size 0x118
 - Confidence: repo_proven (bisect in-TU + CScnItemModel corroboration)
 - Applies to/a.k.a.: any TU with hand-written .data vtables + explicit vtable stores in ctor/dtor; -ipa file devirtualization analysis
+
+## u8 base-local alias reproduces View-pointer codegen (Wii/1.1, absolute-field TUs)
+- Symptom:   replacing `View* v = (View*)self; ... v->field` with raw `(T*)((u8*)self + OFF)` at two
+  use sites (call arg + later store) CSEs the address tree into a saved reg (extra `addi` + save/
+  restore, +12 bytes) instead of folding base+displacement per use like the View version did
+- Cause:     `(u8*)self + OFF` is a materializable computation MWCC hoists across calls/loops;
+  `v + OFF` (register + const) folds at each use. Deleting the local changes allocation coloring too
+- Fix:       keep one plain `u8* sb = (u8*)self;` local and spell uses `*(T*)(sb + OFF)` /
+  `(T*)(sb + OFF)`; same register+const trees as the View version, zero extra regs. Proven on a
+  FULL function (accumulateTension 0x1e0: +105 struct regressed to raw-direct, back to FULL with sb)
+- Result:    FULL_MATCH preserved while deleting the View struct and all its uses
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU replacing absolute-offset Views with raw casts where an address is used
+  twice across a call/loop; tail-region fields past a layout shift (members address wrong bytes)
+
+## Same-TU direct call inlines tiny callee, breaking subi+b tail thunks (Wii/1.1)
+- Symptom:   rewriting a thunk's `((CAST)target)(adjusted)` as a direct `target(adjusted)` call
+  absorbs the callee body (0x8 thunk ballooned to 0xa0 / 0x14) instead of `subi r3,-8; b target`
+- Cause:     MWCC auto-inlines same-TU direct calls when decl/def agree (fires at least up to 0x94
+  body size; 0x144 body was left alone); the indirect-call spelling is opaque to the inliner, so the
+  tail branch survives and r4 passes through untouched (retail shape)
+- Fix:       keep a precise-prototype indirect call `((RET(*)(ARGS))target)(adjusted, fwd)` with the
+  exact retail arity (document why: inline-block + r4-forward); direct spelling only when the callee
+  is too big to inline or decl/def disagree. Verified subi+b FULL on all five CActorParam
+  CBattleState thunks (0x8/0x8)
+- Result:    FULL_MATCH on adjust-this tail thunks with honest arity, no generic pad typedef
+- Confidence: repo_proven
+- Applies to/a.k.a.: any adjust-this/forwarding thunk TU (CBattleState/CActorParam/CfObjectActor
+  families); alternative is `#pragma auto_inline` games (unverified, TU-wide blast radius)

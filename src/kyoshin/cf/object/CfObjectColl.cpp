@@ -159,12 +159,16 @@ extern "C" int func_800AB580(cf::CfObjectColl* self, cf::CfObject* obj, ml::CVec
 }
 
 
-// Copy the position block at this+0x3C through the CfObjectPoint slot at
-// vtable +0x9C (func_80047814), after refreshing state through the slot at
-// +0xB4 (CfObject_UnkVirtualFunc25).
-void cf::CfObjectColl::copyCollPosition() {
-    this->CfObject_UnkVirtualFunc25();
-    this->func_80047814((u8*)this + 0x3c);
+// Forward the +0xB8 caller's (pos, scale) - still live in r4/f1 - straight
+// into the +0xB4 slot (CfObject_snapMoveTarget, hidden args), then copy the
+// position block at self+0x3C through the CfObjectPoint slot at vtable
+// +0x9C (func_80047814). Same argument-forwarding shape as CfObject
+// UVF26->UVF19. Forced-name free-function form keeps the Fv linker name
+// byte-exact (the hand-built vtable in CfCollSphereImpl.cpp spells it);
+// the widened header decl serves call-site codegen only.
+extern "C" void copyCollPosition__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, ml::CVec3* pos, float scale) {
+    self->CfObject_snapMoveTarget(pos, scale);
+    self->func_80047814((u8*)self + 0x3c);
 }
 
 // Pointers stay non-const: retail interleaves loads with stores (aliasing).
@@ -604,7 +608,7 @@ void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
 }
 
 // Set/clear bit 25 of the shared flag word at +0x68.
-void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
+void CfObject_setMoveReadyFlag__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
     if (flag != 0) {
         self->field_0x68 |= 0x02000000;
     } else {
@@ -614,7 +618,7 @@ void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv(cf::CfObject* self, int flag) {
 
 extern "C" int CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_setAnimSlotEntry__Q22cf8CfObjectFv() {}
 
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
@@ -660,16 +664,16 @@ extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(cf::CfObject* self, 
 extern "C" int CfObject_checkTargetState__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 
 extern const float lbl_eu_80666910;
-extern "C" float CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
+extern "C" float CfObject_readRefreshValue__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void* CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv(cf::CfObject* self) { return self; }
+extern "C" void* CfObject_pushRefreshExtra__Q22cf8CfObjectFv(cf::CfObject* self) { return self; }
 
 extern const float lbl_eu_80666910;
 extern "C" float CfObject_getMoveSpeedRate__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
 void* cf::CfObject::CfObject_pushRefreshValue(float value) { return this; }
 
-extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
+extern "C" int CfObject_queryTargetState__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
@@ -677,7 +681,7 @@ int cf::CfObject::CfObject_UnkVirtualFunc11() {
     return *(u32*)((u8*)this + 0x6C) & 1;
 }
 
-void cf::CfObject::CfObject_UnkVirtualFunc10() {
+void cf::CfObject::CfObject_forwardSubObject() {
     this->CfObject_isMoveActiveNow();
 }
 
@@ -701,4 +705,4 @@ extern "C" void syncCollVectors__Q22cf12CfObjectCollFv(cf::CfObjectColl* self, v
     self->func_80047814(param);
 }
 
-extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(cf::CfObject* self) { self->CfObject_isMoveActiveNow(); }
+extern "C" void CfObject_forwardSubObject__Q22cf8CfObjectFv(cf::CfObject* self) { self->CfObject_isMoveActiveNow(); }

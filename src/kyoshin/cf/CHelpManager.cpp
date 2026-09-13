@@ -114,17 +114,17 @@ void func_80295BF4(cf::CHelpManager* self) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
         bool isActive = func_8009CF8C((u32)tbl->mHelp1.mOwner) != 0;
         if (!isActive) {
-            tbl->mHelp1.CHelp_UnkVirtualFunc2();
+            tbl->mHelp1.dispatchHelp();
         }
     }
     if (self->mField10 == 5) {
         bool isActive = func_8009CF8C((u32)tbl->mHelp2.mOwner) != 0;
         if (!isActive) {
-            tbl->mHelp2.CHelp_UnkVirtualFunc2();
+            tbl->mHelp2.dispatchHelp();
         }
         bool isActive2 = func_8009CF8C((u32)tbl->mHelp3.mOwner) != 0;
         if (!isActive2) {
-            tbl->mHelp3.CHelp_UnkVirtualFunc2();
+            tbl->mHelp3.dispatchHelp();
         }
     }
 }
@@ -150,6 +150,8 @@ int func_80295D30(cf::CHelpManager* self) {
 
 int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 
+// Base slot-0x08 impl (CHelp::resetHelp): no-op. Kept as a free function
+// under its retail symbol name so this TU still emits the vtable target.
 void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 
 extern "C" void func_802B7C68(cf::CHelp* self);
@@ -181,10 +183,10 @@ extern "C" DECOMP_DONT_INLINE void func_802968B8(cf::CHelpListHolder* self, void
     self->mItems = items;
     self->mFlag = flag;
     if (items != NULL) {
-        // Run each registered object's vtable slot 0x08 (CHelp_UnkVirtualFunc1).
+        // Run each registered object's vtable slot 0x08 (resetHelp).
         for (int i = 0; self->mItems[i] != NULL; i++) {
             cf::CHelp* item = (cf::CHelp*)self->mItems[i];
-            item->CHelp_UnkVirtualFunc1();
+            item->resetHelp();
         }
     }
 }
@@ -202,7 +204,7 @@ extern "C" DECOMP_DONT_INLINE void func_80296924(cf::CHelpListHolder* self) {
         bool isActive = func_8009CF8C((u32)item->mOwner) != 0;
         if (!isActive) {
             if (item->f10() != 0) {
-                item->CHelp_UnkVirtualFunc2();
+                item->dispatchHelp();
             }
             if (self->mFlag == 0) {
                 return;
@@ -232,7 +234,7 @@ void sinit_80295DB0() {
     // obj1 @ 0x10: ctor then dispatch through vtable slot 2.
     __ct__Q22cf5CHelpFv(&t->mObj10, (void*)0x3342, 0x3);
     t->mObj10.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj10.CHelp_UnkVirtualFunc1();
+    t->mObj10.resetHelp();
 
     // obj2 @ 0x20: extra float at +0xC.
     __ct__Q22cf5CHelpFv(&t->mObj20, (void*)0x3343, 0x4);
@@ -242,7 +244,7 @@ void sinit_80295DB0() {
     // obj3 @ 0x30: dispatch type (same vtable as obj1).
     __ct__Q22cf5CHelpFv(&t->mObj30, (void*)0x3344, 0x5);
     t->mObj30.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj30.CHelp_UnkVirtualFunc1();
+    t->mObj30.resetHelp();
 
     __ct__Q22cf5CHelpFv(&t->mObj40, (void*)0x3345, 0x6);
     t->mObj40.vtbl() = (cf::CHelpVtbl*)lbl_eu_805390E8;
@@ -263,7 +265,7 @@ void sinit_80295DB0() {
 
     __ct__Q22cf5CHelpFv(&t->mObj90, (void*)0x334A, 0xB);
     t->mObj90.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    t->mObj90.CHelp_UnkVirtualFunc1();
+    t->mObj90.resetHelp();
 
     __ct__Q22cf5CHelpFv(&t->mObjA0, (void*)0x334B, 0xC);
     t->mObjA0.vtbl() = (cf::CHelpVtbl*)lbl_eu_8053B4C8;

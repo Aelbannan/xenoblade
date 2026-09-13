@@ -52,23 +52,15 @@ typedef cf::CfGimmickWarp WarpData;
 
 // Removed fake iface - now using cf::CObjectState directly.
 
-// Forward-declare player layout helpers (retail player is cf::CfObjectPc / CfObjectMove).
-struct WarpPlayerHead {
-    void* vtable;
-    void* subObject;
-    u8 pad08[0x3E94];
-};
-struct WarpPlayerTail {
-    void* vtable;
-};
-struct WarpPlayer : WarpPlayerHead, WarpPlayerTail {
-};
+// Player base is the retail battle-actor object at getPlayer(i)-0x3E9C; its
+// vtable prefix matches cf::CfObject so call sites use that real type
+// directly (no local layout pad).
 
 // Tiny owner-named views for foreign sub-objects.
 // cf::CObjectState is the owner for *(player+4) slot 0x30 (see CfObjectPc.hpp / CHelp_ArtsAttack).
-// CfObject head slots (+0xA8/+0xC8/+0x168) are now folded onto the hot header
-// cf::CfObject (syncCollVectors / CfObject_UnkVirtualFunc30 / CfObject_UnkVirtualFunc70)
-// after fixing the arity in CfObject.hpp, so no local helper is needed.
+// CfObject head slots (+0xA8/+0xC8/+0x168) are spelled with the real header
+// names (CfObject_syncMoveTarget / CfObject_setMoveYaw /
+// CfObject_syncModelRate), so no local helper is needed.
 
 // Removed fake iface - now using real classes.
 
@@ -130,12 +122,9 @@ void __dt__Q22cf9CfGimmickFv(WarpData*, int);
 void __dl__FPv(void*);
 }
 
-static inline WarpPlayer* playerFromRaw(void* raw) {
+static inline cf::CfObject* playerFromRaw(void* raw) {
     if (raw == 0) return 0;
-    return reinterpret_cast<WarpPlayer*>(reinterpret_cast<u8*>(raw) - 0x3E9C);
-}
-static inline WarpPlayerTail* playerTail(WarpPlayer* player) {
-    return reinterpret_cast<WarpPlayerTail*>(reinterpret_cast<u8*>(player) + 0x3E9C);
+    return reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(raw) - 0x3E9C);
 }
 
 static void clearObject(WarpObject*& object) {
@@ -329,7 +318,7 @@ extern "C" void func_8020D998(WarpData* self) {
         if ((self->configFlags & 1) != 0) {
             func_80209F5C();
             func_80209FB8();
-            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
+            cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
                 u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
@@ -409,7 +398,7 @@ extern "C" void func_8020D998(WarpData* self) {
         if ((self->flagE6 & 1) != 0) {
             func_80209F5C();
             func_80209FB8();
-            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
+            cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
             if (player != 0) {
                 cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
                 u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
@@ -522,7 +511,7 @@ extern "C" void func_8020DF04(WarpData* self) {
 
     func_80209F5C();
     func_80209FB8();
-    WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
+    cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(0));
     if (player != 0) {
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(player) + 4);
         u32 value = *static_cast<u32*>(sub->CObjectState_getStateData());
@@ -629,14 +618,10 @@ extern "C" void func_8020E3F0(WarpData* self) {
     bool allReady = true;
     for (int i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
-        WarpPlayerTail* tailView = reinterpret_cast<WarpPlayerTail*>(player);
-        WarpPlayerHead* ctl = reinterpret_cast<WarpPlayerHead*>(tailView);
-        if (ctl != 0) {
-            ctl = reinterpret_cast<WarpPlayerHead*>(reinterpret_cast<char*>(player) - 0x3E9C);
-        }
-        if (ctl == 0) {
+        if (player == 0) {
             continue;
         }
+        cf::CfObject* ctl = reinterpret_cast<cf::CfObject*>(reinterpret_cast<char*>(player) - 0x3E9C);
         cf::CObjectState* sub = *reinterpret_cast<cf::CObjectState**>(reinterpret_cast<u8*>(ctl) + 4);
         u32 stateA = *static_cast<u32*>(sub->CObjectState_getStateData());
         if (func_80174C98(ctl, &stateA, 8) == 0) {
@@ -730,7 +715,7 @@ extern "C" void func_8020E704(WarpData* self) {
         self->flags &= ~2u;
         func_8006CC4C();
 
-        WarpPlayer* first = playerFromRaw(cf::CfGameManager::getPlayer(0));
+        cf::CfObject* first = playerFromRaw(cf::CfGameManager::getPlayer(0));
         WarpVec3 centre;
         f32 distance;
         if (first != 0) {
@@ -755,12 +740,12 @@ extern "C" void func_8020E704(WarpData* self) {
         }
 
         if (first != 0) {
-            reinterpret_cast<cf::CfObject*>(first)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&centre));
-            reinterpret_cast<cf::CfObject*>(first)->CfObject_UnkVirtualFunc30(distance);
+            first->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(&centre));
+            first->CfObject_setMoveYaw(distance);
         }
 
         for (int i = 1; i < 3; ++i) {
-            WarpPlayer* player = playerFromRaw(cf::CfGameManager::getPlayer(i));
+            cf::CfObject* player = playerFromRaw(cf::CfGameManager::getPlayer(i));
             if (player == 0) {
                 continue;
             }
@@ -770,8 +755,8 @@ extern "C" void func_8020E704(WarpData* self) {
                           lbl_eu_806683DC, lbl_eu_806683C8);
             WarpVec3 out4c;
             if (func_8019876C(&out68, &out4c) != 0) {
-                reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc22(reinterpret_cast<const ml::CVec3*>(&out4c));
-                reinterpret_cast<cf::CfObject*>(player)->CfObject_UnkVirtualFunc30(distance);
+                player->CfObject_syncMoveTarget(reinterpret_cast<const ml::CVec3*>(&out4c));
+                player->CfObject_setMoveYaw(distance);
                 WarpObject* object = reinterpret_cast<WarpObject*>(reinterpret_cast<cf::CfObject*>(reinterpret_cast<u8*>(player) + 0x3E9C)->CfObject_getCurrentTarget());
                 if (object != 0) {
                     func_80199810(object->field_8c, &centre);
@@ -871,7 +856,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
         for (int i = 0; i < 3; ++i) {
             cf::CfObject* player = reinterpret_cast<cf::CfObject*>(cf::CfGameManager::getPlayer(i));
             if (player != 0) {
-                player->CfObject_UnkVirtualFunc70(lbl_eu_806683E8);
+                player->CfObject_syncModelRate(lbl_eu_806683E8);
             }
         }
     }

@@ -265,7 +265,7 @@ void CSimpleEveTalkWin::Init() {
         // Real message: fill the five name fields from the talk source.
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(field_68))
-                ->CObjectParam_UnkVirtualFunc2());
+                ->CObjectParam_getParamPtr());
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
         func_80136B4C(mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);
@@ -532,7 +532,7 @@ extern "C" __declspec(noinline) void func_801A2190(CSimpleEveTalkWin* owner,
         // start the voice line.
         char* msgText = reinterpret_cast<char*>(
             reinterpret_cast<cf::CfObject*>(findObjectById(owner->field_68))
-                ->CObjectParam_UnkVirtualFunc2());
+                ->CObjectParam_getParamPtr());
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xd3], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xdc], msgText, 0);
         func_80136B4C(owner->mpLayout, &lbl_eu_80503E14[0xe7], msgText, 0);

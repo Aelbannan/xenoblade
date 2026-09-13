@@ -109,7 +109,7 @@ public:
 // this TU - only dispatched/cast). Slots are CfObject-family effect objects
 // (getObj/factory results - cf::CfObjectEff* at creation sites); the former
 // 84-dummy vtable pad is deleted and dispatch goes through the real owner
-// slots (cf::CfObject::CfObject_UnkVirtualFunc66 at vtable offset 0x158).
+// slots (cf::CfObject::setPointEnabled at vtable offset 0x158).
 // Plain layout view of the effect-relevant words (all inside CfObjectModel
 // range: +0x68 CfObject::mFlags68, +0x94 sub-object pointer, +0xB0 owner
 // back-pointer (cf::CfObjectModel::mSubObjB0), +0xB4 removal guard).

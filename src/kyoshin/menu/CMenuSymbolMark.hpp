@@ -189,9 +189,9 @@ public:
     u8 mUnk55; // 0x55
     u8 _pad56[2]; // 0x56
     // 0x58: IWorkEvent vtable ptr (manual, not via inheritance) - kept void*
-    void* mIWorkEventVt; // 0x58
+    void* mWorkEventSubobj; // 0x58
     // 0x5C: IScnRender vtable ptr (manual) - kept void*
-    void* mIScnRenderVt; // 0x5C
+    void* mScnRenderSubobj; // 0x5C
     CScn* mScn; // 0x60
     UnkClass_8045F564 mUnkClass; // 0x64 (size 0x10)
 
@@ -302,7 +302,7 @@ public:
 
     // 0x00-0x54: CTTask<CArrow3D>
     // 0x54: IScnRender vtable ptr (manual) - kept void*
-    void* mIScnRenderVt; // 0x54
+    void* mScnRenderSubobj; // 0x54
     u8* mDataHandle; // 0x58
     u8* mDataPtr; // 0x5C
     f32 mPosX; // 0x60

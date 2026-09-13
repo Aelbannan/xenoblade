@@ -291,7 +291,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             s16 idx = func_800BE954((cf::CfObjectMove*)&actor->move[0]);
             CModelDispParamSlot* table = func_80062C28(idx, 0);
             for (u8 j = 2; j <= 5; j++) {
-                if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_UnkVirtualFunc62(j) == 0)
+                if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j) == 0)
                     continue;
                 CModelDispParamSlot* ps = &table[j];
                 if (reinterpret_cast<CModelDispNameParam*>(ps->field_2C->getResourceBase(ps, actor->field_3F28)) == NULL) {
@@ -300,14 +300,14 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 }
             }
             if (actor->field_3F30 == 0 ||
-                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc4()) == 0)
+                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()) == 0)
                 ok = false;
             CModelDispParamSlot* e = func_80062DA4(idx);
             if (e->field_2C->getResourceBase(e, 0) == NULL)
                 ok = false;
-            if (((CDispVt40*)e->field_2C)->m40(e) == 0)
+            if (e->field_2C->isInUse(e) == 0)
                 ok = false;
-            if (reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc5() == 0)
+            if (reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags() == 0)
                 ok = false;
         }
         // Retail gate: rebuild when the slot is empty and the actor validated
@@ -318,16 +318,16 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
             // Build: create the display model and rebind both anim slots.
             h->field_0x00 = func_80495E8C((u32)self->mInitParam, charId, -1, 1);
             ((CScnItemModel*)h->field_0x00)->vfunc64(0);
-            u32 stateBits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_UnkVirtualFunc62(1);
+            u32 stateBits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(1);
             ((CModelDispSub*)h)->mFlagFD4 = (stateBits >> 12) & 0x3FF;
             s16 idx2 = func_800BE954((cf::CfObjectMove*)&actor->move[0]);
             CModelDispParamSlot* table2 = func_80062C28(idx2, 0);
             for (u8 j = 2; j <= 5; j++) {
-                if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_UnkVirtualFunc62(j) != 0) {
+                if (reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j) != 0) {
                     CModelDispParamSlot* ps = &table2[j];
                     CModelDispNameParam* p = reinterpret_cast<CModelDispNameParam*>(ps->field_2C->getResourceBase(ps, actor->field_3F28));
                     func_804831C4((CScnItemModel*)h->field_0x00, p);
-                    u32 bits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_UnkVirtualFunc62(j);
+                    u32 bits = reinterpret_cast<cf::CfObject*>(&actor->move[0])->CfObject_getSlotBits(j);
                     // Slot words are addressed word-wise off the holder base.
                     ((CModelDispSub*)((u32*)h + j))->mFlagFD0 = (bits >> 12) & 0x3FF;
                 }
@@ -336,11 +336,11 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                                           (char*)lbl_eu_80507CF4);
             h->field_0x08 = func_800584B8(
                 (u32)self->mInitParam,
-                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc4()), nameBase + 4);
+                reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()), nameBase + 4);
             reinterpret_cast<CActParamAnim*>(&h->actParam)->func_8004B114();
             func_8004B624(&h->actParam, (CScnItemModel*)h->field_0x00,
                           h->field_0x08,
-                          reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc4()));
+                          reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimState()));
             func_8004B6A4(&h->actParam, h->field_0x04, actor->field_3F30);
             // Clear act-param busy bit 23, then restart its chain buffer.
             ((CDispHolderWordView*)h)->flags18 &= ~0x800000;
@@ -405,10 +405,10 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                 }
             }
             if (actor->field_3F08 & 0x20000 &&
-                reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc5() != 0) {
+                reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags() != 0) {
                 CModelDispMca mca;
                 __ct__CMcaFile(
-                    &mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc5());
+                    &mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
                 h->unk_55C = func_80495EAC((u32)self->mInitParam, mca.mDataAdj,
                                            nameBase + 8);
                 for (u8 j = 0; j < 2; j++) {
@@ -419,7 +419,7 @@ extern "C" __declspec(noinline) void func_801FC3B0(CModelDisp* self) {
                         func_8005A594(ap);
                         func_8004B624(
                             ap, mp, h->unk_55C,
-                            reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_UnkVirtualFunc5());
+                            reinterpret_cast<cf::CfObjectModel*>(&actor->move[0])->CfObjectModel_getAnimFlags());
                         func_8004B9D4(ap, (void*)1, 0, -1, 0);
                     }
                 }

@@ -96,10 +96,6 @@ struct CfActorObj89CView {
     u32 field_0x89C; // 0x89C
 };
 
-// Call proxy for the CfObjectActor/CActorParam primary table (offset
-// 0x00), slots +0x1DC (no-arg) and +0x1FC (r4 arg), dispatched by
-// CActorParam_UnkVirtualFunc88. Dummy slots pin the offsets (the first
-// declared virtual lands at vtable+0x08).
 // Absolute-offset views of CActorParam byte fields used by the CfObjectEne
 // CActorParam getter/setter stubs. The CActorParam member block is +8 shifted
 // by the base-class layout (see CActorParamGaugeView in CActorParam.hpp), so
@@ -176,7 +172,9 @@ struct CActorParam17ECView {
     };
 
 
-    struct CfEneMovePad {
+    // Offset base for the thin-MI real-owner views below (no virtuals,
+    // no slots - just the byte offset so this+0x3E9C dispatch folds).
+    struct CfEneMoveOff {
         u8 _pad[0x3E9C];
     };
 
@@ -246,18 +244,20 @@ struct CActorParam17ECView {
     };
 
 
-    struct CfEneB8Pad {
+    struct CfEneB8Off {
         u8 _pad[0x8];
     };
 
     // Real-owner views of the +0x3E9C CfObjectMove subobject (retail offsets).
-    // Thin MI (pad + real base) keeps the folded lwz r12,0x3E9C(rX) shape;
+    // Thin MI (offset + real base) keeps the folded lwz r12,0x3E9C(rX) shape;
     // dispatched methods are the owning-class virtuals (no dummy slots).
-    struct CfObjectAt3E9C : CfEneMovePad, cf::CfObject {};
-    struct CObjectParamAt3E9C : CfEneMovePad, cf::CObjectParam {};
-    struct CfObjectMoveAt3E9C : CfEneMovePad, cf::CfObjectMove {};
-    // Real-owner view of the +0x8 CBattleState subobject.
-    struct CBattleStateAt8 : CfEneB8Pad, cf::CBattleState {};
+    struct CfObjectAt3E9C : CfEneMoveOff, cf::CfObject {};
+    struct CObjectParamAt3E9C : CfEneMoveOff, cf::CObjectParam {};
+    struct CfObjectMoveAt3E9C : CfEneMoveOff, cf::CfObjectMove {};
+    // Real-owner view of the +0x8 CBattleState subobject. Callers use the
+    // shared CBattleState aliases (setBattleParam/enterStatusEntry/...),
+    // which forward to the same slots (see CBattleState.hpp).
+    struct CBattleStateAt8 : CfEneB8Off, cf::CBattleState {};
     // Flags/pointer fields touched by updateEnemyBattleState: the +0x3F34 target
     // pointer and the +0x7A4 flag word behind it.
     struct CfEneField3F34 {
@@ -305,15 +305,10 @@ struct CActorParam17ECView {
         u8 b;
     };
 
-    // Primary-vtable call proxy for initEnemyBdatParams: slots +0xD4 (float arg,
-    // CActorParam_UnkVirtualFunc16), +0xF0 (returns float) and +0x288
-    // (no-arg, x6 loop) on the CfObjectEne primary vtable. Dummy slots pin
-    // the offsets (RTTI 8-byte vtable header; Nth declared virtual at
-    // (N+1)*4).
+    // func_800ADDA8 / initEnemyBdatParams dispatch through the owning-class
+    // CActorParam aliases (setEnemyType / setStatScale / getArtsSlotIds / ...);
+    // no TU-local proxy remains.
 
-    // Primary-vtable +0x2BC dispatch (func_800AF870 guard; returns int).
-
-    // --- CActorParam_UnkVirtualFunc123/120 record structs ---
     // --- CActorParam_UnkVirtualFunc123/120 record structs ---
     // The 0x84 field block copied verbatim per record by both loaders
     // (strcpy 'name' + strlen stored at +0x20, then the typed fields; the
@@ -562,19 +557,10 @@ struct CActorParam17ECView {
         u32 field_0x78;           // 0x78 (flag word)
     };
 
-    // Record init dispatch (proven CArtsSet.cpp attack-record
-    // pattern): the 0x84-byte data base places the record's vptr at +0x84,
-    // the first virtual at vtable slot 2 (offset +0x8). The per-record init
-    // routine is dispatched by UnkVirtualFunc166 through this shape.
-    struct CfEneAtkData84 {
-        u8 field_0[0x84];
-    };
-    // Real-owner spelling of the record init dispatch above (same 0x84 data
-    // + vptr shape, slot 2). New code uses this record init type.
-    // once its last call site migrates.
-    struct CfEneAtkRec : CfEneAtkData84 {
-        virtual void initRec() = 0;  // vtable slot 2 (offset 8)
-    };
+    // Record init dispatches through the owning-class virtual
+    // cf::CAttackParam::CAttackParam_clearArtsRecord (vtable slot +0x08,
+    // vptr at +0x84; proven CArtsSet.cpp attack-record pattern). No TU-local
+    // record iface remains.
 
     // --- func_800ADDA8 views ---
 
@@ -664,27 +650,12 @@ struct CActorParam17ECView {
         u32 field_0x30;  // 0x30 (= 1)
     };
 
-    // --- func_800ADDA8 vtable proxies ---
-
-    // Primary-vtable call proxy for the CfObjectEne vtable slots +0xDC/+0xE4
-    // (u8 arg) and +0xE8 (float arg), used by the func_800ADDA8 bdat setup.
-    // Dummy slots pin the offsets (RTTI 8-byte header; Nth declared virtual
-    // at (N+1)*4 + 4 = slot 8 + 4N).
-
-    // Primary-vtable slots +0x170/+0x188 (int arg), +0x198/+0x1A4/+0x1BC
-    // (float arg) used by func_800ADDA8's actor-state setup.
-
-    // Primary-vtable slots +0x21C (ptr arg), +0x254 (u8 arg), +0x25C (int
-    // arg), +0x264/+0x26C (float arg) used by func_800ADDA8's tail setup.
-
-    // Primary-vtable call proxy for the arts/attack loader slots (166/167)
-    // and func_800ADDA8's rates read: +0x1C4 (rates float view), +0x20C
-    // (rates view), +0x27C (arts-set base), +0x288 (arts-slot u16 array).
-
-    // Primary-vtable slots +0x32C/+0x330 (no-arg) and +0x334 (float arg)
-    // used by func_800ADDA8's tail dispatch.
-
-    // Primary-vtable slot +0x5E0 (no-arg) used by func_800ADDA8.
+    // func_800ADDA8 slot map (all dispatched through the owning-class
+    // CActorParam aliases; no TU-local proxy remains): +0xDC/+0xE4 (u8 arg),
+    // +0xE8/+0x198/+0x1A4/+0x1BC/+0x334 (float arg), +0x170/+0x188/+0x25C
+    // (int arg), +0x21C (ptr arg), +0x254 (u32 arg), +0x1C4/+0x20C (rates),
+    // +0x27C (arts-set base), +0x288 (arts-slot u16 array), +0x2BC (guard),
+    // +0x32C/+0x330 (loaders 166/167), +0x5E0 (no-arg).
 
 };
 

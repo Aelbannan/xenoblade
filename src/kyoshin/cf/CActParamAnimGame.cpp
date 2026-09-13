@@ -11,6 +11,14 @@
 #include "kyoshin/cf/object/CfObject.hpp"  // real owner of the +0x4C/+0xAC/+0xC4 link slots
 #include "kyoshin/cf/object/CBattleState.hpp"  // CBattleState_UnkVirtualFunc3 (+0x10 owner gate)
 
+// One-arg view of CActParam7ECTarget::func08 (+0x08). Retail fall-notify
+// leaves f1 live from the f4F8 compare; the shared owner decl is (u32, float)
+// for CfObjectMove::func_800BCFA0.
+class __declspec(novtable) CActParam7ECTargetU32 {
+public:
+    virtual void func08(u32 a);
+};
+
 // Retail constructor(C) at 0x8005AA64 (unmangled symbol): base-constructs
 // the ::CActParamAnim subobject, stores the retail vtable manually
 // (novtable class), zeroes the flag fields, invokes the +0xE0 virtual
@@ -1163,7 +1171,9 @@ void cf::CActParamAnimGame::func_8005D2C4() {
             } else {
                 arg = 0;
             }
-            ((CActParam7ECTarget*)sub)->func08(arg);
+            // One-arg view of CActParam7ECTarget::func08: retail leaves f1
+            // live from the f4F8 compare (no second lfs before +0x08).
+            ((CActParam7ECTargetU32*)sub)->func08(arg);
         }
     }
 
@@ -2278,7 +2288,7 @@ l60418:
 
 // Actor-facing position/heading update: reads the +0x4E8 link's current
 // position (CObjectParam_getSelfObjectId id gate, then findObjectById),
-// diffs the action source's CObject_UnkVirtualFunc23 position vector against
+// diffs the action source's CfObject_getPosVector position vector against
 // this object's position, and when the delta is non-trivial, orients the
 // link toward the actor (CfObject_setMoveHeadAngle) with the heading from
 // Atan2FIdx.

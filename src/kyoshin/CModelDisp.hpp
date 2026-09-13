@@ -88,16 +88,9 @@ struct CDispHolderWordView {
     void* owner40; // +0x40 back-pointer to the owning CModelDisp
 };
 
-// Vtable dispatch at +0x40 on the equipment param objects (param->field_2C):
-// takes the owning slot, returns a flag. 14 fillers land m40 at +0x40.
-struct CModelDispParamSlot;
-struct CDispVt40 {
-    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
-    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
-    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
-    virtual void m0C(); virtual void m0D();
-    virtual u32 m40(CModelDispParamSlot* owner); // #14 => +0x40
-};
+// (was CDispVt40 here: fake +0x40 dispatch pad on the equipment param
+// objects. Retail slot +0x40 is CResLookup::isInUse (idx14); call sites
+// now use the owning class directly.)
 
 // --- C-linkage runtime helper and sub-object ctor/dtor (retail names) ---
 // The sub-object ctor/dtor are retail-named symbols (func_801FBEB8 /

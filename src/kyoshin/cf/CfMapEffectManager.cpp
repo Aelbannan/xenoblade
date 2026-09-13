@@ -212,7 +212,7 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
         if ((u8)v32 != 0) {
             CfObject* obj = self->field_0x0C[index];
             if (obj != 0) {
-                obj->CfObject_UnkVirtualFunc66(0);
+                obj->setPointEnabled(0);
             }
         }
         return;
@@ -343,15 +343,16 @@ void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
                                                              index) ^ 0x80000000;
             vals[2] = lbl_eu_80667718 * (float)(convHi.d - lbl_eu_80667720);
             args[2] = vals[2] * lbl_eu_8066A210;
-            (*(CfObjectEff_VTable39**)newObj)->fn(newObj, pos);
-            (*(CfObjectEff_VTable47**)newObj)->fn(newObj, args);
+            newObj->CfObject_setMoveTargetVec((const ml::CVec3*)pos);
+            newObj->CfObject_setRotVec((const ml::CVec3*)args);
             if (extra != 0) {
                 bindPartnerO_(newObj, extra, 0);
             }
-            void* cam = cf::CfGameManager::getGameSubManager();
-            int camFlag = (*(CfGameManager_VTable101**)cam)->fn(cam);
+            GameSubManagerCamState* cam =
+                (GameSubManagerCamState*)cf::CfGameManager::getGameSubManager();
+            int camFlag = cam->getEffectEnableFlag();
             setChild5CFl_((char*)newObj, camFlag);
-            newObj->CfObject_UnkVirtualFunc66(self->field_0x138);
+            newObj->setPointEnabled(self->field_0x138);
 
             if (flashCol != 0) {
                 u32 wa2 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0xa2, index);
@@ -437,7 +438,7 @@ void func_8016FC0C(u8 arg) {
     for (int i = 0; i < 0x24; i++) {
         CfObject* obj = lbl_eu_80664290->field_0x0C[i];
         if (obj != 0) {
-            obj->CfObject_UnkVirtualFunc66(arg);
+            obj->setPointEnabled(arg);
         }
     }
     lbl_eu_80664290->field_0x138 = arg;

@@ -8,9 +8,9 @@ cf::CHelp::CHelp(void* owner, u32 param) {
 
 namespace cf {
 
-void CHelp::CHelp_UnkVirtualFunc2() {
-    UNKWORD a = this->CHelp_UnkVirtualFunc5();
-    UNKWORD b = this->CHelp_UnkVirtualFunc4();
+void CHelp::dispatchHelp() {
+    UNKWORD a = this->getSkipResetFlag();
+    UNKWORD b = this->getHelpSceneId();
     func_80134D18(static_cast<u8>(mParam), b, a);
     func_8009D018((u32)mOwner, 1);
 }

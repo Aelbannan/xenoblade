@@ -54,7 +54,6 @@ extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp
 extern "C" void func_8015396C(u8* obj, u32 a, u32 b);    // CAIAction.cpp
 
 extern "C" void func_8009EF9C(void* self, u32 arg2);     // CtrlObjectParam.cpp
-extern "C" int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self);
 extern "C" void func_800BE33C(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void func_800BE824(void* obj, int flag);      // CfObjectMove.cpp
 extern "C" void func_804B0AD4(void* region, int param, float a, float b);
@@ -89,7 +88,6 @@ extern "C" void func_800A282C(u8* obj, int flag);
 extern "C" int func_800A2AF0(u8* obj);
 extern "C" void func_802761E0(u8* obj);
 extern "C" void func_80276148(u8* obj, u32 value);
-extern "C" void CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
 // .rodata literal copied onto the stack by UnkVirtualFunc4 (struct defined
 // below); bdat file ptr.
 extern void* lbl_eu_80664090;
@@ -216,8 +214,9 @@ struct CfObjectPcSubFields {
     float field_0x45C0; // 0x45C0: float field (set by enablePcFlag)
 };
 
-// Dtor vtable restores use CfActorVtSlots (same layout as former CfPcVt).
-// Deleted CfPcVt pad; use cf::CfActorVtSlots from CfObjectActor.hpp.
+// Dtor vtable restores use direct *(void**) stores (same layout as former CfPcVt).
+// Deleted CfPcVt pad; the shared struct is gone - both ctor and dtor write
+// the four retail pointers directly.
 namespace cf {
 // +0x3380 CAIAction subobject base / block views (same shapes as the
 // CfObjectEne dtor's inlined cleanup).
@@ -290,19 +289,20 @@ namespace cf {
     void CActorParam_UnkVirtualFunc166();
     void CActorParam_UnkVirtualFunc167();
     void CActorParam_resetArtsStatus();
-    void CActorParam_decayArtsMatrix();
-    int CActorParam_UnkVirtualFunc86();
+    void CActorParam_decayArtsMatrix(float f1);
+    int CActorParam_getCurrencyBalance();
     void CActorParam_UnkVirtualFunc88(u32 a, u32 b, u32 c);
     virtual void CActorParam_UnkVirtualFunc173();
-    virtual UnkClass_CActorParam15E0* CActorParam_getStatusTable();
+    virtual CActorParamStatusTable* CActorParam_getStatusTable();
     virtual int CActorParam_UnkVirtualFunc178();
     virtual int CActorParam_getStatusCount();
-    void CObjectParam_UnkVirtualFunc4();
-    void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data);
-    void CfObject_UnkVirtualFunc2();
+    // Move-subobject this-adjuster thunks (hand vtable at +0x3E9C). Named
+    // apart from CfObject base virtuals so MWCC does not append shadow slots.
+    void CObjectParam_callPcFunc800C0();
+    void CfObject_pcInitEventStat();
     void CfObjectMove_attachEffectSlot(u32 a, u32 b, u32 c, u32 d, u32 e);
-    void CfObject_UnkVirtualFunc6();
-    void CfObject_UnkVirtualFunc4();
+    void CfObject_pcSyncArtsEntry();
+    void CfObject_pcRunMoveUpdate();
     void finalizePcCleanup();
     };
 }

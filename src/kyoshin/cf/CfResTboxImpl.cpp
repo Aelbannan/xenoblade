@@ -39,8 +39,8 @@ void func_801F8EB0(CfResTboxImpl* self) {
     u32 out8;
     u8 buf64[0x44];
 
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc2();
-    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_UnkVirtualFunc1();
+    ((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelList();
+((cf::CfObjectModel*)self->field_00)->CfObjectModel_releaseModelSub();
     self->field_00->field_90 = 0;
     CfResTboxParent* parent = self->field_00;
     parent->field_94 = 0;
@@ -58,10 +58,10 @@ void func_801F8EB0(CfResTboxImpl* self) {
         self->field_00->field_90 = func_80066E7C(entry, handle1);
         self->field_00->field_90 =
             (u8*)func_80062114((char*)self->field_00->field_90, 0, (void**)&outC);
-        float anim = ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc36();
+float anim = ((cf::CfObject*)self->field_00)->CfObject_getObjScale();
         u8* obj = func_80489A60((u8*)lbl_eu_80663E14, self->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(self->field_00, obj);
-        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc35(anim);
+((cf::CfObject*)self->field_00)->CfObject_setObjScale(anim);
     }
     if (self->field_00->field_6C & 0x10) {
         ((ml::FixStr<64>*)buf64)->mString[0] = 0;
@@ -82,12 +82,12 @@ void func_801F8EB0(CfResTboxImpl* self) {
         f32 anim = lbl_eu_806681D0;
         self->field_00->field_6C =
             *(volatile u32*)&self->field_00->field_6C & ~0x20000000;
-        ((cf::CfObject*)self->field_00)->CfObject_UnkVirtualFunc70(anim);
+((cf::CfObject*)self->field_00)->CfObject_syncModelRate(anim);
         func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806681D4);
     }
     func_800BCFA0((cf::CfObjectMove*)self->field_00);
     if (self->field_00->field_38 != 0) {
-        ((cf::CfObject*)self->field_00->field_38)->CfObject_UnkVirtualFunc24();
+((cf::CfObject*)self->field_00->field_38)->CfObject_getPosTriple();
     }
     if (self->field_00->field_98 != 0) {
         self->field_00->field_98->vfunc88(1);

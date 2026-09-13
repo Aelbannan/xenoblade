@@ -9,7 +9,7 @@
 #include <nw4r/lyt.h>
 
 // Layout for actor fields accessed via byte-offset arithmetic
-// (actor is cf::CfObjectPc*, accessed through MenuBpsActorIf cast-only iface)
+// (actor is cf::CfObjectPc*, accessed via MenuBpsActorFields offsets)
 struct MenuBpsActorFields {
     u8 pad_00[0x3f28];
     u16 unk3f28;  // +0x3f28: low byte snapshotted into CMenuBattlePlayerStateSlot::unk204

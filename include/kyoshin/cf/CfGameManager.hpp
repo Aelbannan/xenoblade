@@ -40,6 +40,11 @@ public:
 
     u8 field_0x4[0xEC];
     UnkClass_80083298SubF0 field_0xF0;
+    // Guest visibility/event flag word at +0x100 (bit 0x4 = guest visible,
+    // bit 0x10 = event-idle; set/cleared by CREvtModelMap's setVisible path).
+    // The object extends past +0x2F3C (pool at +0x2F2C, light ctrl at +0x2F3C).
+    u8 _padF1[0x100 - 0xF1];
+    u32 field_0x100;
 };
 
 // Heap-id slot block on the shared list-head object behind lbl_eu_80665958:
@@ -49,16 +54,10 @@ struct Unk65958Object {
     u32 field_0x7C;
 };
 
-// Virtual container embedded at object+0x3E9C (func_80086B5C): the vptr sits
-// at object+0x3E9C and slots 0x10 / 0x20 are dispatched with a u32 argument.
-class UnkContainerIntf3E9C {
-public:
-};
-
-struct UnkObj3E9C {
-    u8 field_0x0[0x3E9C];
-    UnkContainerIntf3E9C container;   // 0x3E9C: embedded vptr'd subobject
-};
+// (The old UnkContainerIntf3E9C / UnkObj3E9C container view was deleted:
+// func_80086B5C now addresses the +0x3E9C CfObjectMove subobject directly
+// ((u8*)rawObj + 0x3E9C, same idiom as CfObjectActor.cpp) and dispatches its
+// real slots 0x10/0x20 (CObjectState::setStateBitFlag/clearStateFlags8).)
 
 // Data-area blocks at 0x80570CE0 (offsets +0x978 and +0xA18) cleared by
 // func_800853C8 (byte/word stores at 0x00, 0x20, 0x24, 0x44, 0x50, 0x70,
@@ -541,27 +540,10 @@ extern void* lbl_eu_80663E74;
 // C-linkage names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 
-// CBattleManager vtable+0x1C dispatch view (the battle manager's slot is
-// called with (mode 2, 0) after wiping the +0x94 payload). Cast-only: first
-// declared virtual lands at vtable+0x08 (2 RTTI header entries), so the
-// 6th declared virtual is slot +0x1C.
-struct CBattleManagerSlot1C {
-    virtual void m08();
-    virtual void m0C();
-    virtual void m10();
-    virtual void m14();
-    virtual void m18();
-    virtual void m1C(u32 first, u32 second);  // vtable +0x1C
-};
-
-// Minimal CBattleManager data view for resetBattlePresentation: the +0x94 payload
-// wiped with memset and the +0x194 party-gauge block handed to
-// func_8018C8F4 before the vtable+0x1C dispatch.
-struct CBattleManagerView {
-    u8 field_0x0[0x94];
-    u8 cleared_0x94[0x100];
-    u8 field_0x194[8];
-};
+// (The old CBattleManagerSlot1C m08..m1C vtable view and CBattleManagerView
+// data view were deleted: resetBattlePresentation now calls the real
+// cf::CBattleManager::setPartyMaskFlag slot 0x1C and the real unk94/unk194
+// members via kyoshin/cf/CBattleManager.hpp, byte-identical.)
 
 // Result of func_8009D5FC (file-event table query): the two u16 ids read by
 // resetBattlePresentation (lhz +2 as first arg, lhz +0 as second arg).

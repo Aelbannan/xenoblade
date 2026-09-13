@@ -39,17 +39,9 @@ extern "C" void capdatatouch_CfObjectPc(void) {
     (void)sinkd;
 }
 
-// PCIf: leaf-slot view (CfObjectPc 0x5EC..0x608). CActorParam slots use
-// real methods; leaf slots stay on PCIf until the CfObjectActor primary
-// +8 shift vs retail is fixed. Move subobject at +0x3E9C view.
-// PCIf deleted - real virtuals on CfObjectPc/CfObjectMove
-
-// +0x3E9C subobject (lbl_eu_80529DA0+0x37C) - real CfObjectMove via pcMove()
-// fake MI structs deleted - real virtuals on CfObjectMove
-
 namespace cf {
 // CfObjectPoint: leaf over CfObject so slot 0x70 is CfObject_notifyEventDone
-// (deleted local _vNNN pad list). novtable - never constructed in this TU.
+// (deleted local dummy pad list). novtable - never constructed in this TU.
 class __declspec(novtable) CfObjectPoint : public CfObject {
 public:
     int validatePointState();
@@ -91,10 +83,10 @@ cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
 cf::CfObjectPc* __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, s32 deleteFlag) {
     if (self != 0) {
         u8* v = (u8*)lbl_eu_80529DA0;
-        ((cf::CfActorVtSlots*)self)->vtPrimary = (u32)v;
-        ((cf::CfActorVtSlots*)self)->vtSecondary = (u32)(v + 0xC);
-        ((cf::CfActorVtSlots*)self)->vtAIAction = (u32)(v + 0x36C);
-        ((cf::CfActorVtSlots*)self)->vtMove = (u32)(v + 0x37C);
+        *(void**)self = (void*)v;
+        *(void**)((u8*)self + 0x8) = (void*)(v + 0xC);
+        *(void**)((u8*)self + 0x3380) = (void*)(v + 0x36C);
+        *(void**)((u8*)self + 0x3E9C) = (void*)(v + 0x37C);
         self->syncArtsEntry();
         // Retail re-checks self here (cmpwi/beq) before destroying the
         // CfObjectMove subobject and running the CAIAction block cleanup.
@@ -126,7 +118,7 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)obj;
     func_8018CBE8(f->mPtr3F4C);
     obj->resetArtsState();
-    obj->CActorParam_UnkVirtualFunc167();
+    obj->CActorParam_rearmAttackList();
     obj->dispatchPlayerBranch();
     u8* moveSub = (u8*)obj;
     if (obj != NULL) {
@@ -173,18 +165,20 @@ void func_800BFDE0(cf::CfObjectPc* obj) {
 // sibling shape). All accesses go through the local `self` so MWCC keeps it
 // in the saved this-copy register and reassigns it to the +0x44A8 region
 // (retail reuses the same callee-saved register for both).
+// First call is a Class_-qualified direct bl to CfObjectModel's slot +0x58
+// impl (alias: CfObject_initEventState). Keep Class_ form: retail uses bl,
+// not virtual dispatch.
 int cf::CfObjectPc::initialize() {
-    CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
-        (cf::CfObjectModel*)((u8*)this + 0x3E9C));
+    ((cf::CfObjectModel*)((u8*)this + 0x3E9C))->cf::CfObjectModel::CfObject_UnkVirtualFunc2();
     u8* self = (u8*)this;
     // Retail tests this with a record-form mask keeping only bit 0 (msb):
     // source shape (x & 0x80000000).
     if (!(((CfObjectPcSubFields*)self)->field_0x3F00 & 0x80000000)) {
         ((CfObjectPcSubFields*)self)->field_0x3F08 |= 1;
     }
-    this->pcMove()->CfObject_UnkVirtualFunc66(1);
+    this->pcMove()->setPointEnabled(1);
     func_800BE33C((char*)self + 0x3E9C, 1);
-    this->pcMove()->CfObjectModel_UnkVirtualFunc19(1);
+    this->pcMove()->CfObjectModel_setModelVisible(1);
     func_80174B4C(self, 0x8000000);
     func_80174B4C(self, 0x10000000);
     func_800BE824((u8*)((u32)self + 0x3E9C), 1);
@@ -194,21 +188,21 @@ int cf::CfObjectPc::initialize() {
     return 1;
 }
 
-// Adjuster thunk: retarget to the +0x3E9C subobject and tail-call into
-// syncArtsEntry (qualified call suppresses virtual dispatch; defined before
-// syncArtsEntry so MWCC emits a tail-branch rather than inlining it).
-void cf::CfObjectPc::CfObject_UnkVirtualFunc6() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::syncArtsEntry(); }
+// Adjuster thunk (slot +0x68 on move sub-vtable): retarget -0x3E9C and
+// tail-call syncArtsEntry (qualified call suppresses virtual dispatch;
+// defined before syncArtsEntry so MWCC emits a tail-branch).
+void cf::CfObjectPc::CfObject_pcSyncArtsEntry() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::syncArtsEntry(); }
 
 void cf::CfObjectPc::syncArtsEntry() {
-    CActorParam_UnkVirtualFunc7();
+    CActorParam_setupActorState();
     CActorParam_refreshBattleStatus();
-    CActorParam_UnkVirtualFunc160();
+    CActorParam_initStatusCounter();
     // Look up the arts data object for this PC's index, then write the
     // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
     CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
         ((CfObjectPcSubFields*)this)->field_0x3F28);
     func_80175A50(reinterpret_cast<cf::CActorParam*>(&artsData->field_0x17C),
-        reinterpret_cast<cf::CActorParam*>(CActorParam_UnkVirtualFunc126()));
+reinterpret_cast<cf::CActorParam*>(CActorParam_getCopyParam()));
 }
 
 // NOTE: enablePcFlag is defined as the extern "C" wrapper below (not as a
@@ -239,8 +233,8 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     // three calls below, but MWCC value-numbers the identical receiver
     // conversions into one callee-saved temp regardless of spelling (see
     // MWCC_PATTERNS.md 7j negative result). Known unmatchable residual.
-    reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc57(lbl_eu_80666B18);
-    reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc59(lbl_eu_80666B1C);
+    ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_setMoveValue(lbl_eu_80666B18);
+    ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_setMoveScale(lbl_eu_80666B1C);
     reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectMove_recordMoveValue(lbl_eu_80666B20);
 }
 
@@ -285,11 +279,11 @@ void func_800C01D4(cf::CfObjectPc* self, void* dest, s32 itemId) {
         __ct__8009ED08(dest, itemId);
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(itemId & 0xFFFF);
-        self->CActorParam_UnkVirtualFunc98(
+        self->CActorParam_copyArtsBlock17E4(
             reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
         // Copies the arts entry INTO this object's CActorParam (opposite
         // direction of syncArtsEntry).
-        func_80175A50(reinterpret_cast<cf::CActorParam*>(self->CActorParam_UnkVirtualFunc126()),
+        func_80175A50(reinterpret_cast<cf::CActorParam*>(self->CActorParam_getCopyParam()),
             reinterpret_cast<cf::CActorParam*>(&data->field_0x17C));
     }
 }
@@ -366,7 +360,8 @@ void cf::CfObjectPc::setupActionTable() {
 // between the cancel path (slot 0x20 of the +0x8 sub-object) and the full
 // update: battle-manager list probe, action-table probes 0x65..0x6D/0x35,
 // gauge scale refresh (+0x8C slot x global scale), flag OR-ing, and the
-// player-only event branches; finally the move-subobject UnkVirtualFunc4.
+// player-only event branches; finally the move-subobject runMoveUpdate
+// (Class_-qualified CfObjectMove::UnkVirtualFunc4 for a direct bl).
 
 // Retail helper defined below (stub): gate check feeding the cancel path.
 extern "C" int func_800C0DD4(cf::CfObjectPc* self, int flag);
@@ -418,7 +413,7 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
             }
         } else {
             if (!func_80148778((u8*)self + 8, 0x35)) {
-                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_UnkVirtualFunc4(0x35);
+                reinterpret_cast<cf::CBattleState*>((u8*)self + 8)->CBattleState_setBattleParam(0x35);
             }
         }
     }
@@ -448,21 +443,22 @@ extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
                 if (f->field_0x3F34 != NULL) {
                     f->field_0x3F34->field_0x7A4 |= 0x8000;
                 }
-                reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc12();
-                reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObject_UnkVirtualFunc5();
+                ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_refreshSubB0();
+                ((cf::CfObject*)((u8*)self + 0x3E9C))->CfObject_updateMoveRate();
                 return;
             }
         } else {
             if (chkFlag != 0 && func_8013EB90(1) == 0) {
                 func_80174B4C(self, 3);
                 self->pcMove()->CObjectParam_signalActionEnd(0);
-                reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectModel_UnkVirtualFunc14(0,
+                reinterpret_cast<cf::CfObjectMove*>((u8*)self + 0x3E9C)->CfObjectModel_bindModelTo(0,
                     (const char*)lbl_eu_804FC5EC + 0x2D);
             }
         }
     }
-    CfObject_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(
-        (cf::CfObjectMove*)((u8*)self + 0x3E9C));
+    // Retail: direct bl to CfObjectMove::UnkVirtualFunc4 (alias runMoveUpdate).
+    // Class_ keeps the non-virtual bl; alias virtual-dispatch would grow size.
+    ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->cf::CfObjectMove::CfObject_UnkVirtualFunc4();
 }
 
 // Gauge-scale refresh: runs the CActorParam base handler, then reads a text
@@ -503,19 +499,19 @@ void CActorParam_UnkVirtualFunc176__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, fl
     CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(self, value);
 }
 
-// Retail symbol CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv (vtable slot
+// Retail symbol CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv (vtable slot
 // 0x1EC override). Written as a global with the mangled name: the base
 // CActorParam override returns u32 in retail but the base header declares it
 // void, so a real member override would fail to compile.
-u32 CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+u32 CActorParam_getCurrencyBalance__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     // Arts count from the param object (vtable 0xFC); the arts table index is
     // count+1, capped at 99 entries. Returns 1 when over the cap.
     void* bdat = lbl_eu_806640DC;
-    u32 idx = self->CActorParam_UnkVirtualFunc26() + 1;
+    u32 idx = self->CActorParam_getArtsLevel() + 1;
     if (idx > 0x63) return 1;
     u32 sval = getBdatStringColumnValue(bdat,
         (const char*)lbl_eu_804FC5EC + 0x34, idx);
-    return sval - self->CActorParam_UnkVirtualFunc85();
+    return sval - self->CActorParam_getSpentCurrency();
 }
 
 // Vtable caller supplies three args despite the arg-less Fv retail name.
@@ -542,7 +538,7 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
     func_802617B8((u8*)obj, obj->field_0x89C, arg3);
     int acted = 0;
     // Drain the action queue through slot 0x35C.
-    while (self->CActorParam_UnkVirtualFunc178() != 0) {
+    while (self->CActorParam_consumeCurrencyStep() != 0) {
         acted = 1;
         func_800A282C((u8*)arts, 1);
     }
@@ -580,14 +576,14 @@ void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv(
 // would not compile.
 int CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     CfObjectPcSubFields* f = (CfObjectPcSubFields*)self;
-    int spent = self->CActorParam_UnkVirtualFunc86();
+    int spent = self->CActorParam_getCurrencyBalance();
     if (spent <= 0) {
         CfObjectPcArtsData* data =
             (CfObjectPcArtsData*)func_8009EC9C(f->field_0x3F28);
         func_800A11A4((u8*)data, 1);
-        self->CActorParam_UnkVirtualFunc92(
+        self->CActorParam_copyArtsBlock1650(
             (const void*)reinterpret_cast<cf::CActorParam*>(&data->field_0x17C)->CActorParam_getArtsDataBlock());
-        u32 gained = self->CActorParam_UnkVirtualFunc85();
+        u32 gained = self->CActorParam_getSpentCurrency();
         u32 cur = f->field_0x1600;
         u32 total = (u32)spent + gained;
         // Best-of-N (19 formulations tried: inline chains x4 orders,
@@ -704,12 +700,12 @@ resetGauge:
 
 // this-adjust thunk: retarget to the +0x3E9C subobject and tail-branch into
 // func_800C00C0.
-void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CObjectParam_callPcFunc800C0__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))enablePcFlag__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_syncEnableState__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))enablePcFlag__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-// Tail-calls into initialize on the -0x3E9C adjusted this.
-void cf::CfObjectPc::CfObject_UnkVirtualFunc2() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::initialize(); }
+// Adjuster thunk (slot +0x58 on move sub-vtable): -0x3E9C then initialize.
+void cf::CfObjectPc::CfObject_pcInitEventStat() { ((cf::CfObjectPc*)((char*)this - 0x3e9c))->cf::CfObjectPc::initialize(); }
 
 extern "C" void CfObjectMove_attachEffectSlot__Q22cf10CfObjectPcFv(void* self) {
     // Tail into handleMoveState with this adjusted; r4-r8 stay live for the
@@ -718,7 +714,7 @@ extern "C" void CfObjectMove_attachEffectSlot__Q22cf10CfObjectPcFv(void* self) {
 }
 
 
-void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_pcRunMoveUpdate__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void finalizePcCleanup__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 

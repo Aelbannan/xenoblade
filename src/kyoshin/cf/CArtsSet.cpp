@@ -93,7 +93,7 @@ namespace cf {
         for (row = 0; row < 3; row++) {
             p = rowBase;
             for (int col = 0; col < 8; col++) {
-                p->CAttackParam_UnkVirtualFunc1();
+                p->CAttackParam_clearArtsRecord();
                 p++;
             }
             rowBase += 8;  // 8 * 0x8c = 0x460 bytes per row
@@ -169,7 +169,7 @@ void func_80153E88(void* self) {
     std::memset(self, 0, 0xc);
     cf::CAttackParam* arr = reinterpret_cast<cf::CAttackParam*>(reinterpret_cast<unsigned char*>(self) + 0x10);
     for (int i = 0; i < 6; i++) {
-        arr[i].CAttackParam_UnkVirtualFunc1();
+        arr[i].CAttackParam_clearArtsRecord();
     }
 }
 

@@ -139,8 +139,8 @@ extern "C" void __dl__FPv(void* p);
 CMenuSymbolMark::CMenuSymbolMark(CScn* scn, u32 idx)
     : mUnk54(0),
       mUnk55(0),
-      mIWorkEventVt((void*)&lbl_eu_8052CDF8[0x24]),
-      mIScnRenderVt((void*)&lbl_eu_8052CDF8[0xac]),
+      mWorkEventSubobj((void*)&lbl_eu_8052CDF8[0x24]),
+      mScnRenderSubobj((void*)&lbl_eu_8052CDF8[0xac]),
       mScn(scn) {
     ((ProcPrefixView*)this)->vt10 = (void*)&lbl_eu_8052BF70[0];
     ptmfMove = __ptmf_null;
@@ -257,7 +257,7 @@ void CMenuSymbolMark::Init() {
     // (this+0x5C) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
+        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
     mScn->addRenderCB(render, 7, 0);
     mUnkClass.func_8045F810();
@@ -310,7 +310,7 @@ void CMenuSymbolMark::Term() {
     // (this+0x5C) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
+        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
     mScn->removeRenderCB(render);
     for (u8 i = 0; i < 16; i++) {
@@ -380,6 +380,25 @@ extern "C" void func_801209BC(CMenuSymbolMark* self);
 extern "C" void func_8011FB68(CMenuSymbolMark* self);
 extern "C" void func_8011F8F8(CMenuSymbolMark* self);
 
+// Retail vtable-4 slot 0x228 (no args, int result; retail cmpwi 3): the
+// occupant is cf::CfObjectActor's CfObjectActor_UnkVirtualFunc2 (Ene table
+// lbl_eu_80528A18: loadResourceById@0x220, __dt__@0x224, UVF2@0x228; the
+// Ene impl returns int). A decl on CfObjectMove would append/shift the
+// Actor/Ene tables, and an Actor* spelling needs a -0x3E9C this-adjustment
+// retail does not have, so the slot is carried here on a
+// single-inheritance CfObjectMove child: zero this-adjustment from
+// CfObject* and the exact retail slot. Never constructed as most-derived,
+// so no vtable is emitted; only the call-site dispatch matters.
+class CMenuMarkModeProbe : public cf::CfObjectMove {
+public:
+    // 0x224 placeholder: retail holds the deleting-dtor here (Ene table:
+    // loadResourceById@0x220, __dt__@0x224, UVF2@0x228). MWCC assigns a
+    // Move child's first new virtual to 0x224, so this reserve slot keeps
+    // the real query below on the retail 0x228 word. Never called.
+    virtual void reserved224();
+    virtual int getMarkMode();
+};
+
 // One marker-scan loop body (expanded three times with distinct predicates,
 // id lists and mark ids - retail keeps separate stack scratch per copy).
 // Claim an entry slot for a live marker and add the mark when the player
@@ -390,7 +409,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self);
         for (u32 mi = 0; mi < self->countField; mi++) {                         \
             cf::CfObject* actorV =                                              \
                 (cf::CfObject*)findObjectById(self->listArr[mi]);                 \
-            if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {                         \
+            if (actorV == 0 || actorV->CfObject_checkSubReady() == 0) {                         \
                 continue;                                                      \
             }                                                                  \
             CfActorFields* actor = (CfActorFields*)actorV;                     \
@@ -410,7 +429,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self);
                 continue;                                                      \
             }                                                                  \
             self->mEntries[count].unk04 = name;                                \
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);                                  \
+            void* speed = actorV->CfObject_getPosSample(100);                                  \
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();                                  \
             void* player = cf::CfGameManager::getPlayer(0);                    \
             if (player == 0) {                                                 \
@@ -482,7 +501,7 @@ void CMenuSymbolMark::Move() {
             func_8011FB68(this);
             func_8011F8F8(this);
             // Measured markers from the first list (state gate v228 == 3).
-            SCAN_MARKERS(((cf::CfObjectMove*)actorV)->CfObjectMove_UnkVirtualFunc25() == 3, 0xC, mArray4A0, mField_6A0, 1);
+            SCAN_MARKERS(((CMenuMarkModeProbe*)actorV)->getMarkMode() == 3, 0xC, mArray4A0, mField_6A0, 1);
             // Kind-0xC markers from the second id list.
             SCAN_MARKERS(actor->kind91 == 0xC, 0x10, mArray6A8, mField_8A8, 0);
             func_801209BC(this);
@@ -721,11 +740,11 @@ extern "C" void func_8011EA98(CMenuSymbolMark* self) {
                 continue;
             }
             // unk00 == 9 or 10: gate on the actor's live flag (vtable 0x160).
-            if ((entry->unk00 - 9) <= 1 && actor->CfObject_UnkVirtualFunc68() == 0) {
+            if ((entry->unk00 - 9) <= 1 && actor->CfObject_checkSubReady() == 0) {
                 entry->flag0 = zero;
                 continue;
             }
-            value12c = actor->CfObject_UnkVirtualFunc55(100);
+            value12c = actor->CfObject_getPosSample(100);
             Vec* valueAC = (Vec*)actor->CfObject_getPosVector();
             func_8011E778(self, entry, (nw4r::math::VEC3*)valueAC,
                           (EntryInputPos*)value12c, zero);
@@ -947,7 +966,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
             func_8011E540(self, 7, pos, speed, 0, 0);
             SYMBOL_ITEM_TAIL(self, actorV->CfObject_getPosVector());
@@ -1021,7 +1040,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
             func_8011E540(self, 7, pos, speed, 0, 0);
             SYMBOL_ITEM_TAIL(self, actorV->CfObject_getPosVector());
@@ -1054,7 +1073,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
             func_8011E540(self, 7, pos, speed, 1, 0);
             SYMBOL_ITEM_TAIL(self, actorV->CfObject_getPosVector());
@@ -1087,7 +1106,7 @@ extern "C" void func_8011EFB0(CMenuSymbolMark* self) {
                 return;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* pos = (Vec*)actorV->CfObject_getPosVector();
             func_8011E540(self, 7, pos, speed, 1, 0);
             SYMBOL_ITEM_TAIL(self, actorV->CfObject_getPosVector());
@@ -1114,7 +1133,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
     Vec extent;
     for (u32 i = 0; i < self->mField_6A0; i++) {
         cf::CfObject* actorV = (cf::CfObject*)findObjectById(self->mArray4A0[i]);
-        if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {
+        if (actorV == 0 || actorV->CfObject_checkSubReady() == 0) {
             continue;
         }
         CfActorFields* actor = (CfActorFields*)actorV;
@@ -1155,7 +1174,7 @@ extern "C" void func_8011F8F8(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* pos2 = (Vec*)actorV->CfObject_getPosVector();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
@@ -1302,7 +1321,7 @@ void func_8011FB68(CMenuSymbolMark* self) {
                 if (actorV == 0) {
                     continue;
                 }
-                if (!kindNonzero && actorV->CfObject_UnkVirtualFunc68() == 0) {
+                if (!kindNonzero && actorV->CfObject_checkSubReady() == 0) {
                     continue;
                 }
                 CfActorFields* actor = (CfActorFields*)actorV;
@@ -1319,11 +1338,11 @@ void func_8011FB68(CMenuSymbolMark* self) {
                 }
                 self->mEntries[self->mEntryCount].unk04 = name;
                 if (kindNonzero) {
-                    void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+                    void* speed = actorV->CfObject_getPosSample(100);
                     func_8011E540(self, 5, pos, speed, argD, 0);
                 } else {
                     u32 markId = kindOk ? 0xa : 9;
-                    void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+                    void* speed = actorV->CfObject_getPosSample(100);
                     Vec* pos2 = (Vec*)actorV->CfObject_getPosVector();
                     void* player = cf::CfGameManager::getPlayer(0);
                     if (player == 0) {
@@ -1518,7 +1537,7 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
     const f32 distLimit = lbl_eu_806670EC;
     for (u32 i = 0; i < self->mField_8A8; i++) {
         cf::CfObject* actorV = (cf::CfObject*)findObjectById(self->mArray6A8[i]);
-        if (actorV == 0 || actorV->CfObject_UnkVirtualFunc68() == 0) {
+        if (actorV == 0 || actorV->CfObject_checkSubReady() == 0) {
             continue;
         }
         CfActorFields* actor = (CfActorFields*)actorV;
@@ -1538,7 +1557,7 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* apos = (Vec*)actorV->CfObject_getPosVector();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
@@ -1572,7 +1591,7 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* apos = (Vec*)actorV->CfObject_getPosVector();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
@@ -1606,7 +1625,7 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* apos = (Vec*)actorV->CfObject_getPosVector();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
@@ -1640,7 +1659,7 @@ extern "C" void func_801209BC(CMenuSymbolMark* self) {
                 continue;
             }
             self->mEntries[count].unk04 = name;
-            void* speed = actorV->CfObject_UnkVirtualFunc55(100);
+            void* speed = actorV->CfObject_getPosSample(100);
             Vec* apos = (Vec*)actorV->CfObject_getPosVector();
             void* player = cf::CfGameManager::getPlayer(0);
             if (player == 0) {
@@ -2181,7 +2200,7 @@ void CArrow3D::Term() {
     // (CCol6System::Term pattern).
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
+        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
     removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, render);
 }
@@ -2196,7 +2215,7 @@ void CArrow3D::Init() {
     // (this+0x54) into its own addi; the call itself is unconditional.
     IScnRender* render = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        render = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
+        render = reinterpret_cast<IScnRender*>(&mScnRenderSubobj);
     }
     reinterpret_cast<CScn*>(lbl_eu_80663E14)->addRenderCB(render, 9, 0);
     u8* handle = 0;

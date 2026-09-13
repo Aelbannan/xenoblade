@@ -425,25 +425,25 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                 holder->field_0x00 = func_80495E8C(self->somePtr, m, -1, 1);
                 reinterpret_cast<CScnItemModel*>(holder->field_0x00)->vfunc64(0);
                 ((CActParamHolderTail*)holder)->equipPtrs[1] =
-                    ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(1) >> 10) & 0x3FF;
+((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(1) >> 10) & 0x3FF;
                 s16 be = func_800BE954(reinterpret_cast<cf::CfObjectMove*>(&actor->move));
                 CModelDispParamSlot* param = func_80062C28(be, 0);
                 // u8 index: retail emits clrlwi/mulli address math + cmplwi/ble
                 for (u8 idx = 2; idx <= 5; idx++) {
-                    if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) != 0) {
+if (reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) != 0) {
                         CResLookup* obj = param[idx].field_2C;
                         func_804831C4(reinterpret_cast<CScnItemModel*>(holder->field_0x00),
                                       reinterpret_cast<CModelDispNameParam*>(obj->getResourceBase(&param[idx], actor->field_3F28)));
                         holder->equipPtrs[idx] =
-                            ((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_UnkVirtualFunc62(idx) >> 10) & 0x3FF;
+((u32)reinterpret_cast<cf::CfObject*>(&actor->move)->CfObject_getSlotBits(idx) >> 10) & 0x3FF;
                     }
                 }
                 holder->field_0x04 = func_800584B8(self->somePtr, actor->field_3F30, &lbl_eu_80507FF8[0]);
                 holder->field_0x08 = func_800584B8(self->somePtr,
-                    reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc4()), &lbl_eu_80507FF8[4]);
+                    reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimState()), &lbl_eu_80507FF8[4]);
                 reinterpret_cast<CActParamAnim*>(&holder->actParam)->func_8004B114();
                 func_8004B624(&holder->actParam, reinterpret_cast<CScnItemModel*>(holder->field_0x00),
-                              holder->field_0x08, reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc4()));
+                              holder->field_0x08, reinterpret_cast<u32>(reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimState()));
                 func_8004B6A4(&holder->actParam, holder->field_0x04, actor->field_3F30);
                 // Pinned via the §17.6 rotate intrinsic: plain '&= ~0x800000'
                 // lets the optimizer pick a different mask encoding here.
@@ -486,8 +486,8 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                     }
                 }
                 if ((actor->field_3F08 & 0x20000) != 0) {
-                    if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5() != 0) {
-                        __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5());
+                    if (reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags() != 0) {
+                        __ct__CMcaFile(&mca, reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                         holder->unk_55C = func_80495EAC(self->somePtr, mca.mDataAdj, &lbl_eu_80507FF8[8]);
                     }
                 }
@@ -499,7 +499,7 @@ extern "C" void func_801FFDC4(CModelDispEquip* self) {
                     holder->actParams[i].field_0x378 = i;
                     func_8005A594(&holder->actParams[i]);
                     func_8004B624(&holder->actParams[i], am, holder->unk_55C,
-                                  reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_UnkVirtualFunc5());
+                                  reinterpret_cast<cf::CfObjectModel*>(&actor->move)->CfObjectModel_getAnimFlags());
                     func_8004B9D4(&holder->actParams[i],
                                   func_8004C5EC(&holder->actParam), 0, -1, 0);
                 }

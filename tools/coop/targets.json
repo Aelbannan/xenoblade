@@ -59526,7 +59526,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-8009223c",
-        "claimed_at": "2026-09-13T14:42:02.829496+00:00",
+        "claimed_at": "2026-09-13T14:50:22.141776+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CtrlMoveEne.cpp"
         ],
@@ -126878,7 +126878,7 @@
       "size": "0x13DC",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -126892,16 +126892,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 98.174,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "paseo-grok46-us-80146dac",
-        "claimed_at": "2026-09-13T14:45:29.875114+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CBattleState.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 98.867,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80148188",
@@ -145996,7 +145988,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-80179e38",
-        "claimed_at": "2026-09-13T14:27:52.789804+00:00",
+        "claimed_at": "2026-09-13T15:29:02.144919+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/object/CActorParam.cpp"
         ],
@@ -166743,8 +166735,8 @@
       "size": "0x158C",
       "unit": "kyoshin/menu/CMenuGetItemMulti",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -166805,8 +166797,8 @@
       ],
       "source": "src/kyoshin/menu/CMenuGetItemMulti.cpp",
       "source_present": true,
-      "instruction_match": 91.399,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801b583c",
@@ -177386,7 +177378,7 @@
       "size": "0x10A4",
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -177481,15 +177473,7 @@
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "paseo-grok46-us-801ce544",
-        "claimed_at": "2026-09-13T14:27:56.260952+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CItemBoxGrid.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cf5e8",
@@ -182512,7 +182496,7 @@
       "size": "0x6680",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -182564,7 +182548,7 @@
       ],
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
-      "instruction_match": 79.609,
+      "instruction_match": 79.68,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-801da9a0",
@@ -239934,7 +239918,7 @@
       "size": "0x1780",
       "unit": "kyoshin/code_8025FB10",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -239962,11 +239946,11 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_8025FB10.cpp",
       "source_present": true,
-      "instruction_match": 96.674,
+      "instruction_match": 98.89,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-80263e48",
-        "claimed_at": "2026-09-13T14:34:19.893901+00:00",
+        "claimed_at": "2026-09-13T15:14:13.224290+00:00",
         "allowed_paths": [
           "src/kyoshin/code_8025FB10.cpp"
         ],
@@ -250679,7 +250663,7 @@
       "size": "0x12C8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
@@ -250730,16 +250714,8 @@
         "_savegpr_27"
       ],
       "source_present": true,
-      "instruction_match": 97.458,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "paseo-grok46-us-80279fbc",
-        "claimed_at": "2026-09-13T14:44:14.268455+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/chain/CChain.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 97.449,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8027b284",

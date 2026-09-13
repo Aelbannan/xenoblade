@@ -25,6 +25,7 @@
 #include <nw4r/lyt.h>
 #include <stdio.h>
 #include "revolution/gx/GXPixel.h"
+#include "decomp.h"
 
 // CfGameManagerUnityHelpers.hpp (via the include chain) declares the unified
 // pointer-arg extern "C" CItem_initItemImplInstances(void*); this TU needs a
@@ -182,17 +183,13 @@ void func_801B82E8(CMenuGetItemMulti*);
 void func_801B8E2C(CMenuGetItemMulti*);
 void func_801B9864(CMenuGetItemMulti*);
 void func_801B9C1C(CMenuGetItemMulti*);
+void func_801B5630(CMenuGetItemMulti*);
 void __dt__8CProcessFv(CProcess*, int);
 u8* __ct__801B2794(u8*, u32, u32);
 }
 
 extern "C" int isClassicController__Q22cf13CfGameManagerFv(int);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(int);
-
-// Pane layout adjustment for the visible-item count (defined below; called by Init).
-void func_801B5630(CMenuGetItemMulti* self);
-
-
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 
@@ -480,12 +477,16 @@ void CMenuGetItemMulti::Init() {
     func_80136B4C(mLayout, &lbl_eu_80504A3C[0x16b],
                    func_80136190(&lbl_eu_80504A3C[0x133], &lbl_eu_80504A3C[0x141], 79), 0);
 
-    for (u8 i = 0; i < 4; ++i) {
-        u32 paneIndex = (u8)i + 1;
-        sprintf(setupPaneName, &lbl_eu_80504A3C[0x192], paneIndex);
-        func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
-        sprintf(setupPaneName, &lbl_eu_80504A3C[0x1a0], paneIndex);
-        func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
+    {
+        u32 paneIndex;
+        u8 i;
+        for (i = 0; i < 4; ++i) {
+            paneIndex = (u8)i + 1;
+            sprintf(setupPaneName, &lbl_eu_80504A3C[0x192], paneIndex);
+            func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
+            sprintf(setupPaneName, &lbl_eu_80504A3C[0x1a0], paneIndex);
+            func_80136B4C(mLayout, setupPaneName, &lbl_eu_80504A3C[0x19f], 0);
+        }
     }
 
     func_80136B4C(mLayout, &lbl_eu_80504A3C[0x1b8],
@@ -688,9 +689,10 @@ void CMenuGetItemMulti::Init() {
                         mHasSpecialItem = 1;
                     }
                 }
-                // Retail: rlwinm. r4=tmp; extrwi itemKey; beq e4; b join;
-                // e4 falls into join (shared r4→cat2). Wii/1.1 merges that to
-                // bne mid-function (MWCC_CASES 10378); keep best near-miss shape.
+                // Retail: rlwinm. r4=tmp; extrwi itemKey; beq e4; b join.
+                // Wii/1.1 merges the goto-pair to bne when e4 falls into join
+                // (MWCC_CASES 10378). CMenuPTGauge: keep beq via fallthrough
+                // single-insn `b` (PLAN.md §17.6 / DECOMP_ASM_INSN).
                 {
                     u32 packed = entry->packed;
                     u32 tmp = (packed >> 16) & 0xf;
@@ -698,7 +700,11 @@ void CMenuGetItemMulti::Init() {
                     if (tmp == 0) {
                         goto do_cat2_e4;
                     }
-                    goto cat2_join;
+                    DECOMP_ASM_INSN_BEGIN
+                    asm {
+                        b cat2_join
+                    }
+                    DECOMP_ASM_INSN_END
                 do_cat2_e4:
                     tmp = (u16)func_801392E4(itemKey);
                 cat2_join:
@@ -745,8 +751,8 @@ void CMenuGetItemMulti::Init() {
                         }
                     }
                 }
-                mVisibleEntries[mVisibleItemCount] = entry;
-                ++mVisibleItemCount;
+                // Postfix count++ (MWCC_CASES array-push): n→r3, idx→r0, n1→r4.
+                mVisibleEntries[mVisibleItemCount++] = entry;
             }
             ++entry;
         }
@@ -759,50 +765,79 @@ void CMenuGetItemMulti::Init() {
             u16 itemId = (u16)initialItems[sourceIndex];
             char* itemTable = func_801393CC(itemId);
             u8 category = (u8)func_801392E4(itemId);
-            u16 tableId = func_80139358(itemId);
+            u32 tableId = func_80139358(itemId);
             if (itemId != 0) {
                 sprintf(initialTextPaneName, &lbl_eu_80504A3C[0x192],
                         mVisibleItemCount + 1);
                 func_80136B4C(mLayout, initialTextPaneName, func_801394D4(itemId), 0);
-                bool special = false;
+                u32 special = 0;
                 if (category != 3 && category != 9) {
-                    special = func_801361E8(lbl_eu_806640EC,
-                                            &lbl_eu_80504A3C[0x394],
-                                            itemId) != 0;
+                    u32 hit = (u8)func_801361E8(lbl_eu_806640EC,
+                                                &lbl_eu_80504A3C[0x394],
+                                                itemId);
+                    special = (u32)(-(s32)hit | hit) >> 31;
                 }
-                if (category == 12 || special) {
+                if (category == 12 || special != 0) {
                     mHasSpecialItem = 1;
                 }
-                u16 cat2 = func_801392E4(itemId);
-                func_80139358(itemId);
-                int special2 = 0;
-                if (cat2 >= 2 && cat2 <= 9) {
-                    if (func_80157CD0(cat2) != 0) {
-                        special2 = 1;
+                // Same special2 goto-chain as the entry-loop path (u32 cat2 +
+                // range subi/cmpli + bottom li0 merge).
+                {
+                    u32 cat2 = (u16)func_801392E4(itemId);
+                    u32 special2;
+                    func_80139358(itemId);
+                    if ((u32)(cat2 - 2) <= 7) {
+                        goto init_special2_lo;
                     }
-                } else if (cat2 >= 10 && cat2 <= 13) {
-                    int y = func_80158068(itemId);
-                    if (y < 1) {
-                        if (func_80157CD0(cat2) != 0) {
-                            special2 = 1;
+                    if ((u32)(cat2 - 10) <= 3) {
+                        goto init_special2_hi;
+                    }
+                    goto init_special2_zero;
+                init_special2_lo:
+                    if (func_80157CD0(cat2) == 0) {
+                        goto init_special2_zero;
+                    }
+                    special2 = 1;
+                    goto init_special2_test;
+                init_special2_hi:
+                    {
+                        int y = func_80158068(itemId);
+                        if (y < 1) {
+                            goto init_special2_y_lt1;
                         }
-                    } else if (y < 0x63) {
+                        if (y >= 0x63) {
+                            goto init_special2_zero;
+                        }
                         special2 = 1;
+                        goto init_special2_test;
+                    init_special2_y_lt1:
+                        if (func_80157CD0(cat2) == 0) {
+                            goto init_special2_zero;
+                        }
+                        special2 = 1;
+                        goto init_special2_test;
+                    }
+                init_special2_zero:
+                    special2 = 0;
+                init_special2_test:
+                    if (special2 == 0) {
+                        mPaneVisible[mVisibleItemCount] = 1;
                     }
                 }
-                if (special2 == 0) {
-                    mPaneVisible[mVisibleItemCount] = 1;
-                }
-                mVisibleItemIds[mVisibleItemCount] = itemId;
-                ++mVisibleItemCount;
+                mVisibleItemIds[mVisibleItemCount++] = itemId;
             }
 
             sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x25e], sourceIndex + 1);
             CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
                 mLayout->GetRootPane()->FindPaneByName(initialItemPaneName, true));
             if (pane != NULL) {
-                u8 visible = itemId != 0;
-                pane->flags = (pane->flags & 0xfe) | visible;
+                // Retail: neg r0 / lbz r5 / or r4 / rlwinm / rlwimi r0,r4,1,31,31.
+                // Bool-first | gets the rlwimi SH=1 but wrong neg/lbz colors;
+                // explicit neg|id + __rlwimi(..., 1, 31, 31) matches both.
+                u32 flags = pane->flags;
+                u32 neg = -(s32)itemId;
+                u32 t = neg | itemId;
+                pane->flags = __rlwimi(flags & 0xfe, t, 1, 31, 31);
             }
 
             char* textureName = &lbl_eu_80504A3C[0x26b];
@@ -818,8 +853,9 @@ void CMenuGetItemMulti::Init() {
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
             case 11: {
                 u32 fontCheck = lbl_eu_80664108;
+                char* fontKey = &lbl_eu_80504A3C[0x33b];
                 u32 fontHit = (u8)func_801361E8(
-                    fontCheck, &lbl_eu_80504A3C[0x33b], tableId);
+                    fontCheck, fontKey, (u16)tableId);
                 textureName = &lbl_eu_80504A3C[0x355];
                 if ((u32)(-(s32)fontHit | fontHit) >> 31) {
                     textureName = &lbl_eu_80504A3C[0x340];
@@ -847,37 +883,55 @@ void CMenuGetItemMulti::Init() {
             func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
-            if (category >= 4) {
-                if (category <= 8) {
+            {
+                s32 cat = (s32)category;
+                if ((u32)(cat - 4) <= 4) {
                     goto do_initial_slots;
                 }
-            }
-            if (category == 2) {
+                if (cat == 2) {
+                    goto do_initial_slots;
+                }
+                if (cat == 3) {
+                    goto do_initial_rank;
+                }
+                if (cat == 9) {
+                    goto do_initial_rank;
+                }
+                goto after_initial_cat;
             do_initial_slots:
-                u8 slotCount = func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e], tableId);
-                if (slotCount != 0) {
-                    func_80136B4C(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
-                    func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643F0,
-                                 &lbl_eu_806643F8);
-                    for (u8 slot = 0; slot < slotCount; ++slot) {
-                        sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
-                        if (func_80136254(itemTable, slotPaneName, tableId) != 0) {
-                            func_80136B4C(mLayout, initialItemPaneName, func_eu_802B1474(), 0);
-                            func_80139A18(mLayout, initialItemPaneName, &lbl_eu_80664400,
-                                         &lbl_eu_80664408);
-                            break;
+                {
+                    u32 slotCount = func_801361E8(
+                        (u32)itemTable, &lbl_eu_80504A3C[0x39e], (u16)tableId);
+                    if ((u8)slotCount != 0) {
+                        func_80136B4C(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
+                        func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643F0,
+                                     &lbl_eu_806643F8);
+                        for (u8 slot = 0; slot < (u8)slotCount; ++slot) {
+                            sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
+                            if (func_80136254(itemTable, slotPaneName,
+                                              (u16)tableId) != 0) {
+                                func_80136B4C(mLayout, initialItemPaneName,
+                                               func_eu_802B1474(), 0);
+                                func_80139A18(mLayout, initialItemPaneName,
+                                             &lbl_eu_80664400, &lbl_eu_80664408);
+                                break;
+                            }
                         }
                     }
                 }
-            } else if (category == 3 || category == 9) {
-                u8 rankCount = func_801361E8(lbl_eu_806640EC,
-                                             &lbl_eu_80504A3C[0x3b3], itemId);
-                func_80136B4C(mLayout, initialItemPaneName,
-                               func_80136190(&lbl_eu_80504A3C[0x1c1],
-                                            &lbl_eu_80504A3C[0x182],
-                                            30 - (rankCount - 1)), 0);
-                func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
-                             &lbl_eu_806643E8);
+                goto after_initial_cat;
+            do_initial_rank:
+                {
+                    u32 rankCount = func_801361E8(lbl_eu_806640EC,
+                                                  &lbl_eu_80504A3C[0x3b3], itemId);
+                    func_80136B4C(mLayout, initialItemPaneName,
+                                   func_80136190(&lbl_eu_80504A3C[0x1c1],
+                                                &lbl_eu_80504A3C[0x182],
+                                                30 - ((u8)rankCount - 1)), 0);
+                    func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
+                                 &lbl_eu_806643E8);
+                }
+            after_initial_cat:;
             }
         }
     }
@@ -886,12 +940,16 @@ void CMenuGetItemMulti::Init() {
     if (mHasSpecialItem != 0) {
         func_80137B44(mLayout, &lbl_eu_80504A3C[0x16b], 0x777777ff);
     }
-    for (u8 i = 0; i < 4; ++i) {
-        sprintf(fullPaneName, &lbl_eu_80504A3C[0x3bc], i + 1);
-        u8 visible = mPaneVisible[i];
-        CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
-            mLayout->GetRootPane()->FindPaneByName(fullPaneName, true));
-        pane->flags = (pane->flags & 0xfe) | visible;
+    {
+        u8 visible;
+        u8 i;
+        for (i = 0; i < 4; ++i) {
+            sprintf(fullPaneName, &lbl_eu_80504A3C[0x3bc], i + 1);
+            visible = mPaneVisible[i];
+            CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
+                mLayout->GetRootPane()->FindPaneByName(fullPaneName, true));
+            pane->flags = (pane->flags & 0xfe) | visible;
+        }
     }
 
     func_801B5860(this, 0, 0);
@@ -908,29 +966,45 @@ void CMenuGetItemMulti::Init() {
     mCursor.initLayout();
 
     u8 systemWindowStorage[sizeof(CSysWin)];
-    CSysWin* systemWindowTemp = reinterpret_cast<CSysWin*>(&systemWindowStorage[0]);
-    __ct__CSysWin(systemWindowTemp, 2);
-    CSysWin* systemWindow = reinterpret_cast<CSysWin*>(&mSystemWindow[0]);
-    systemWindow->mMemRegion.unk0 = systemWindowTemp->mMemRegion.unk0;
-    systemWindow->mMemRegion.unk4 = systemWindowTemp->mMemRegion.unk4;
-    systemWindow->mMemRegion.unk8 = systemWindowTemp->mMemRegion.unk8;
-    systemWindow->mMemRegion.unkC = systemWindowTemp->mMemRegion.unkC;
-    systemWindow->mFileHandle = systemWindowTemp->mFileHandle;
-    systemWindow->mTagProcessor = systemWindowTemp->mTagProcessor;
-    systemWindow->mArcAccessor = systemWindowTemp->mArcAccessor;
-    systemWindow->mLayout = systemWindowTemp->mLayout;
-    systemWindow->mAnimTrans = systemWindowTemp->mAnimTrans;
-    systemWindow->field_28 = systemWindowTemp->field_28;
-    systemWindow->field_2C = systemWindowTemp->field_2C;
-    systemWindow->field_30 = systemWindowTemp->field_30;
-    systemWindow->field_34 = systemWindowTemp->field_34;
-    systemWindow->field_35 = systemWindowTemp->field_35;
-    systemWindow->field_36 = systemWindowTemp->field_36;
-    systemWindow->field_37 = systemWindowTemp->field_37;
-    systemWindow->field_38 = systemWindowTemp->field_38;
-    systemWindow->field_39 = systemWindowTemp->field_39;
-    __dt__7CSysWinFv(systemWindowTemp, -1);
-    systemWindow->loadSystemArc();
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), 2);
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk0 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk0;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk4 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk4;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unk8 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unk8;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mMemRegion.unkC =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mMemRegion.unkC;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mFileHandle =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mFileHandle;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mTagProcessor =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mTagProcessor;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mArcAccessor =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mArcAccessor;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mLayout =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mLayout;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->mAnimTrans =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->mAnimTrans;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_28 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_28;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_2C =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_2C;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_30 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_30;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_34 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_34;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_35 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_35;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_36 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_36;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_37 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_37;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_38 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_38;
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->field_39 =
+        reinterpret_cast<CSysWin*>(&systemWindowStorage[0])->field_39;
+    __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), -1);
+    reinterpret_cast<CSysWin*>(&mSystemWindow[0])->loadSystemArc();
 
     if ((*reinterpret_cast<u32*>(cf::CfGameManager::getCurrentPad()) & 0x0001e000) != 0) {
         field_200 = 1;
@@ -941,7 +1015,7 @@ void CMenuGetItemMulti::Init() {
         render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
     }
     mScn->addRenderCB(render, 13, 0);
-    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->func_8045F810();
+    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->validateHeap();
     __dt__14Class_8045F858Fv(
         reinterpret_cast<Class_8045F858*>(&regionHostStorage[0]), -1);
 }
@@ -1140,7 +1214,7 @@ body:
 // symbol without rescheduling the whole block (union forms verified +16B /
 // frame-slot flips), so this needs the standard CMenuGetItemMulti.o
 // pool_patterns rule ((>II 43300000,80000000) -> lbl_eu_80667E18).
-void func_801B5630(CMenuGetItemMulti* self) {
+extern "C" void func_801B5630(CMenuGetItemMulti* self) {
     s32 count = 4 - (s32)self->mVisibleItemCount;
     if (count < 0) {
         count = 0;
@@ -1307,10 +1381,10 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 self->mPaneVisible[i] = 0;
                 continue;
             }
-            char itemPaneName[32];
+            char paneName[32];
             char texPaneName[32]; // retail keeps a second buffer for the
                                   // texture-pane sprintf (sp+0xD0 vs sp+0xF0)
-            sprintf(itemPaneName, &lbl_eu_80504A3C[0x192], i + 1);
+            sprintf(paneName, &lbl_eu_80504A3C[0x192], i + 1);
             char* itemName;
             if (((entry->packed >> 12) & 0xF) == 3) {
                 ml::FixStr<32> rankText(false);
@@ -1322,10 +1396,10 @@ void func_801B4830(CMenuGetItemMulti* self) {
                                                &lbl_eu_80504A3C[0x182],
                                                30 - (rankCount - 1));
                 rankText.format(&lbl_eu_80504A3C[0x259], itemName, rankName);
-                func_80136B4C(self->mLayout, itemPaneName, rankText.mString, 0);
+                func_80136B4C(self->mLayout, paneName, rankText.mString, 0);
             } else {
                 itemName = CItem_initItemImplInstances(entry)->getName(entry);
-                func_80136B4C(self->mLayout, itemPaneName, itemName, 0);
+                func_80136B4C(self->mLayout, paneName, itemName, 0);
             }
 
             u32 id = entry->packed >> 20;
@@ -1410,25 +1484,25 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 func_80137E7C(self->mLayout, texPaneName, itemTexture);
             }
 
-            sprintf(itemPaneName, &lbl_eu_80504A3C[0x1a0], i + 1);
-            func_80136B4C(self->mLayout, itemPaneName, &lbl_eu_80504A3C[0x19f], 0);
-            func_80139A18(self->mLayout, itemPaneName, &lbl_eu_806643E0,
+            sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
+            func_80136B4C(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
+            func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
             u32 cat3 = (entry->packed >> 12) & 0xF;
             if ((cat3 >= 4 && cat3 <= 8) || cat3 == 2) {
                 u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
                 if (slotCount != 0) {
-                    func_80136B4C(self->mLayout, itemPaneName, func_eu_802B148C(), 0);
-                    func_80139A18(self->mLayout, itemPaneName, &lbl_eu_806643F0,
+                    func_80136B4C(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    func_80139A18(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
                         if (CItem_initItemImplInstances(entry)->getSlotId(entry, slot) == -1) {
                             u16* slotData = reinterpret_cast<u16*>(
                                 CItem_initItemImplInstances(entry)->getSlot(entry, slot));
                             if (slotData != NULL && (slotData[2] & 1) != 0) {
-                                func_80136B4C(self->mLayout, itemPaneName, func_eu_802B1474(), 0);
-                                func_80139A18(self->mLayout, itemPaneName, &lbl_eu_80664400,
+                                func_80136B4C(self->mLayout, paneName, func_eu_802B1474(), 0);
+                                func_80139A18(self->mLayout, paneName, &lbl_eu_80664400,
                                              &lbl_eu_80664408);
                                 break;
                             }
@@ -1437,11 +1511,11 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 }
             } else if (cat3 == 3 || cat3 == 9) {
                 u16 rankCount = CItem_initItemImplInstances(entry)->getRankCount(entry);
-                func_80136B4C(self->mLayout, itemPaneName,
+                func_80136B4C(self->mLayout, paneName,
                                func_80136190(&lbl_eu_80504A3C[0x1c1],
                                             &lbl_eu_80504A3C[0x182],
                                             30 - ((u8)rankCount - 1)), 0);
-                func_80139A18(self->mLayout, itemPaneName, &lbl_eu_806643E0,
+                func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
                              &lbl_eu_806643E8);
             }
         }
@@ -1468,9 +1542,9 @@ void func_801B4830(CMenuGetItemMulti* self) {
             if (itemId == 0) {
                 continue;
             }
-            char initialTextPaneName[32];
-            sprintf(initialTextPaneName, &lbl_eu_80504A3C[0x192], i + 1);
-            func_80136B4C(self->mLayout, initialTextPaneName, func_801394D4(itemId), 0);
+            char paneName[32];
+            sprintf(paneName, &lbl_eu_80504A3C[0x192], i + 1);
+            func_80136B4C(self->mLayout, paneName, func_801394D4(itemId), 0);
 
             u16 cat = (u16)func_801392E4(itemId);
             func_80139358(itemId);
@@ -1501,10 +1575,9 @@ void func_801B4830(CMenuGetItemMulti* self) {
                 self->mHasSpecialItem = 1;
             }
 
-            char initialItemPaneName[32];
-            sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x25e], i + 1);
+            sprintf(paneName, &lbl_eu_80504A3C[0x25e], i + 1);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
-                initialItemPaneName, true);
+                paneName, true);
             if (pane != 0) {
                 u8 visible = itemId != 0;
                 reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
@@ -1541,27 +1614,27 @@ void func_801B4830(CMenuGetItemMulti* self) {
                     &lbl_eu_80504A3C[0x26b], NULL);
             }
             if (itemTexture != NULL) {
-                func_80137E7C(self->mLayout, initialItemPaneName, itemTexture);
+                func_80137E7C(self->mLayout, paneName, itemTexture);
             }
 
-            sprintf(initialItemPaneName, &lbl_eu_80504A3C[0x1a0], i + 1);
-            func_80136B4C(self->mLayout, initialItemPaneName, &lbl_eu_80504A3C[0x19f], 0);
-            func_80139A18(self->mLayout, initialItemPaneName, &lbl_eu_806643E0,
+            sprintf(paneName, &lbl_eu_80504A3C[0x1a0], i + 1);
+            func_80136B4C(self->mLayout, paneName, &lbl_eu_80504A3C[0x19f], 0);
+            func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
             if ((category >= 4 && category <= 8) || category == 2) {
                 u8 slotCount = func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e],
                                              tableId);
                 if (slotCount != 0) {
-                    func_80136B4C(self->mLayout, initialItemPaneName, func_eu_802B148C(), 0);
-                    func_80139A18(self->mLayout, initialItemPaneName, &lbl_eu_806643F0,
+                    func_80136B4C(self->mLayout, paneName, func_eu_802B148C(), 0);
+                    func_80139A18(self->mLayout, paneName, &lbl_eu_806643F0,
                                  &lbl_eu_806643F8);
                     for (u8 slot = 0; slot < slotCount; ++slot) {
                         char slotPaneName[32];
                         sprintf(slotPaneName, &lbl_eu_80504A3C[0x3a7], slot + 1);
                         if (func_80136254(itemTable, slotPaneName, tableId) != 0) {
-                            func_80136B4C(self->mLayout, initialItemPaneName, func_eu_802B1474(), 0);
-                            func_80139A18(self->mLayout, initialItemPaneName, &lbl_eu_80664400,
+                            func_80136B4C(self->mLayout, paneName, func_eu_802B1474(), 0);
+                            func_80139A18(self->mLayout, paneName, &lbl_eu_80664400,
                                          &lbl_eu_80664408);
                             break;
                         }
@@ -1570,11 +1643,11 @@ void func_801B4830(CMenuGetItemMulti* self) {
             } else if (category == 3 || category == 9) {
                 u8 rankCount = func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x3b3],
                                              itemId);
-                func_80136B4C(self->mLayout, initialItemPaneName,
+                func_80136B4C(self->mLayout, paneName,
                                func_80136190(&lbl_eu_80504A3C[0x1c1],
                                             &lbl_eu_80504A3C[0x182],
                                             30 - (rankCount - 1)), 0);
-                func_80139A18(self->mLayout, initialItemPaneName, &lbl_eu_806643E0,
+                func_80139A18(self->mLayout, paneName, &lbl_eu_806643E0,
                              &lbl_eu_806643E8);
             }
         }

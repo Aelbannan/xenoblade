@@ -201,19 +201,20 @@ void* __ct__7CLibCriFPCcP11CWorkThread(CLibCri* object, const char* pName, CWork
 // ============================================================================
 #pragma auto_inline off
 extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
-    char* base = (char*)self;
     if (self != nullptr) {
-        IErrorWii* errCb = reinterpret_cast<IErrorWii*>(base);
+        CLibCriVptrView* vp = (CLibCriVptrView*)self;
+        IErrorWii* errCb = reinterpret_cast<IErrorWii*>(self);
         // full-object destruction: restore the primary + both MI sub-vptrs
-        *(void**)base = &lbl_eu_8056CE58;
-        *(void**)(base + 0x1C4) = (char*)&lbl_eu_8056CE58 + 0xA0;
-        *(void**)(base + 0x1C8) = (char*)&lbl_eu_8056CE58 + 0xB8;
+        // through the same typed view the ctor uses (RHS shapes kept retail-pinned).
+        vp->vtPrimary = &lbl_eu_8056CE58;
+        vp->vtViCb = (char*)&lbl_eu_8056CE58 + 0xA0;
+        vp->vtErrorWii = (char*)&lbl_eu_8056CE58 + 0xB8;
         if (errCb != nullptr) {
-            errCb = reinterpret_cast<IErrorWii*>(base + 0x1C8);
+            errCb = reinterpret_cast<IErrorWii*>((char*)self + 0x1C8);
         }
         CErrorWii::removeCallback(errCb);
         lbl_eu_806656D8 = nullptr;
-        __dt__11CDeviceVICbFv(base + 0x1C4, 0);
+        __dt__11CDeviceVICbFv(&vp->vtViCb, 0);
         __dt__11CWorkThreadFv(self, 0);
         if (flag > 0) {
             __dl__FPv(self);
@@ -320,20 +321,20 @@ extern "C" bool wkStandbyLogin__7CLibCriFv(CLibCri* self) {
         // Create CLibCriMoviePlay (0x668 bytes)
         const char* movieName = &lbl_eu_80522FD8[5];
         u32 workMem = CWorkThreadSystem::getWorkMem();
-        void* movieMem = mtl::MemManager::allocate(0x668, workMem);
-        if (movieMem != nullptr) {
-            movieMem = __ct__CLibCriMoviePlay(movieMem, movieName, self);
+        CLibCriMoviePlay* movie = (CLibCriMoviePlay*)mtl::MemManager::allocate(0x668, workMem);
+        if (movie != nullptr) {
+            movie = (CLibCriMoviePlay*)__ct__CLibCriMoviePlay(movie, movieName, self);
         }
-        CWorkUtil::entryWork((CWorkThread*)movieMem, self, false);
+        CWorkUtil::entryWork(movie, self, false);
 
         // Create CLibCriStreamingPlay (0x4B8 bytes)
         const char* streamName = &lbl_eu_80522FD8[0x16];
         workMem = CWorkThreadSystem::getWorkMem();
-        void* streamMem = mtl::MemManager::allocate(0x4B8, workMem);
-        if (streamMem != nullptr) {
-            streamMem = __ct__CLibCriStreamingPlay(streamMem, streamName, self);
+        CLibCriStreamingPlay* stream = (CLibCriStreamingPlay*)mtl::MemManager::allocate(0x4B8, workMem);
+        if (stream != nullptr) {
+            stream = (CLibCriStreamingPlay*)__ct__CLibCriStreamingPlay(stream, streamName, self);
         }
-        CWorkUtil::entryWork((CWorkThread*)streamMem, self, false);
+        CWorkUtil::entryWork(stream, self, false);
 
         result = wkStandbyLogin__11CWorkThreadFv(self);
     } else {

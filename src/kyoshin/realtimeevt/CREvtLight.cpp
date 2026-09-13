@@ -9,6 +9,7 @@
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "include/kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfGameManagerData.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -22,11 +23,19 @@ struct GameSubMapFxView {
     CScnEnvLgtCtrlListItem* mapFx; // 0x2F3C
 };
 
+// Local view of lbl_eu_80663E14 past +0x7C (resource mgr); same slot as
+// UnkSceneView::field_0x7C in CfObjectMap.hpp.
+struct SceneResMgrView {
+    u8 pad_00[0x7C];
+    void* resMgr; // 0x7C
+};
+
 
 // Resource globals / imports (C ABI from external TUs). func_804C1BA0 is
 // declared in CfObjectMap.hpp as (void*, const void*, int) to cover both
 // const char* (CREvtLight) and void* (CfObjectMap) call sites.
 extern "C" void func_804C1D7C(void* mgr, void* handle);
+extern "C" void* func_804C1BA0(void* mgr, const void* name, int flag);
 extern "C" u32   func_80180940(void);
 
 // Own vtable and math constants / helpers.
@@ -49,10 +58,10 @@ extern "C" const f32 lbl_eu_8066A210;  // pi/2
 // ============================================================================
 CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
     __ct__cf_CREvtObj((cf::CREvtObj*)self, 2);
-    self->vtable = (void*)lbl_eu_80533D90;
+    self->vtable = (u32*)lbl_eu_80533D90;
     self->field_14 = 0;
     self->field_18 = arg;
-    self->field_20 = 0;
+    self->field_20 = nullptr;
     return self;
 }
 
@@ -65,16 +74,16 @@ CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
 CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
     if (self != nullptr) {
         cf::CREvtObj* base = (cf::CREvtObj*)self;
-        u32 oldResource = self->field_20;
+        void* oldResource = self->field_20;
 
         // Update vtable before cleanup
-        self->vtable = (void*)lbl_eu_80533D90;
+        self->vtable = (u32*)lbl_eu_80533D90;
 
-        if (oldResource != 0) {
+        if (oldResource != nullptr) {
             // Release old resource through CScn manager
-            void* mgr = ((void**)lbl_eu_80663E14)[0x7C / 4];
-            func_804C1D7C(mgr, (void*)oldResource);
-            self->field_20 = 0;
+            void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+            func_804C1D7C(mgr, oldResource);
+            self->field_20 = nullptr;
 
             // Notify the object behind the game manager's +0x2F3C pointer.
             if (cf::CfGameManager::getGameSubManager() != nullptr) {
@@ -107,10 +116,10 @@ CREvtLight* __ct__801C3604(CREvtLight* self, int dealloc_flag) {
 // ============================================================================
 void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
     // Release old resource
-    if (self->field_20 != 0) {
-        void* mgr = ((void**)lbl_eu_80663E14)[0x7C / 4];
-        func_804C1D7C(mgr, (void*)self->field_20);
-        self->field_20 = 0;
+    if (self->field_20 != nullptr) {
+        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
+        func_804C1D7C(mgr, self->field_20);
+        self->field_20 = nullptr;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
                 if (reinterpret_cast<GameSubMapFxView*>(
@@ -124,9 +133,9 @@ void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fieldValue) {
 
     // Load new resource
     if (resourceName != nullptr) {
-        void* mgr = ((void**)lbl_eu_80663E14)[0x7C / 4];
+        void* mgr = reinterpret_cast<SceneResMgrView*>(lbl_eu_80663E14)->resMgr;
         void* handle = func_804C1BA0(mgr, resourceName, 7);
-        self->field_20 = (u32)handle;
+        self->field_20 = handle;
 
         if (cf::CfGameManager::getGameSubManager() != nullptr) {
             if (reinterpret_cast<GameSubMapFxView*>(

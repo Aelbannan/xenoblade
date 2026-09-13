@@ -10,7 +10,7 @@
 // Total size: 0x50
 struct CREvtLight {
     // Inherited from cf::CREvtObj (size 0x14)
-    /* 0x00 */ void* vtable;
+    /* 0x00 */ u32* vtable;
     /* 0x04 */ u32 field_04;
     /* 0x08 */ u32 ptmf[3];
 
@@ -18,7 +18,7 @@ struct CREvtLight {
     /* 0x14 */ u32 field_14;  // initialized to 0
     /* 0x18 */ u32 field_18;  // constructor arg
     /* 0x1C */ u32 field_1C;  // set by func_801C36C4
-    /* 0x20 */ u32 field_20;  // resource handle (0 initially)
+    /* 0x20 */ void* field_20; // resource handle (nullptr initially)
 
     // Position/orientation of the light (used by func_801C37CC / func_801C3850)
     /* 0x24 */ u8 pad_24[0x3C - 0x24];

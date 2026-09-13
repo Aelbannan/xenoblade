@@ -105184,9 +105184,9 @@
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; create TU with cbRenderBefore only; PTGauge-like gates + sort/draw; size 0x274",
-      "status": "CODE_MATCH",
-      "instruction_match": 99.777,
-      "workflow_status": "ACTIVE",
+      "status": "FULL_MATCH",
+      "instruction_match": 100.0,
+      "workflow_status": "ACCEPTED",
       "called_functions": [
         "us-80040a64",
         "us-80042c68",
@@ -105202,7 +105202,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuEnemyState.s",
       "abi_helper_calls": [],
-      "equivalence_status": "inconclusive_smt_disabled",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -125914,15 +125914,7 @@
       "source": "src/kyoshin/menu/CMenuUpdate.cpp",
       "source_present": true,
       "instruction_match": 99.879,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-agent",
-        "claimed_at": "2026-09-13T13:16:58.798951+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuUpdate.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80144de8",
@@ -184977,8 +184969,8 @@
       "size": "0x50",
       "unit": "kyoshin/CNumSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137ea4"
@@ -184990,7 +184982,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CNumSelect.cpp",
       "source_present": true,
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801ed17c",
@@ -223428,8 +223421,8 @@
       "size": "0x15C",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -223451,8 +223444,8 @@
       ],
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
-      "instruction_match": 99.77,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80239400",
@@ -279657,8 +279650,8 @@
       "size": "0x3C",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801379b4"
@@ -279670,8 +279663,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b0d64",

@@ -817,9 +817,11 @@ after_bit21:
         // NV decl order entry, order, i -> r30/r29/r28 (MWCC_CASES 8c6).
         // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
         // terminal clrlwi) so .text is retail 0x274.
+        // Declare order before i so saved-reg claim gives order=r29, i=r28
+        // (docs/register_mapping.md Rule A / mwcc-wii-1.1 claim descending).
         {
-            u32 i;
             u32* order;
+            u32 i;
             order = indices;
             i = 0;
             do {

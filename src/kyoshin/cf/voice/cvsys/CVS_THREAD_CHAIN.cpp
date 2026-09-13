@@ -6,11 +6,18 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
+// Raw layout exposing the implicit vtable pointer at 0x1C so the factory
+// can override it with the derived vtable (same idiom as CVS_THREAD_BATTLE_END).
+struct CVS_THREAD_CHAIN_VtblView {
+    u32 pad[7];   // 0x00..0x1B CVS_THREAD base words
+    u32* vtable;  // 0x1C
+};
+
 // us-802a802c (func_802A58F8)
 // If the thread reports no active voice, clear the voice handle slot.
 void func_802A58F8(cf::CVS_THREAD_CHAIN* self) {
     if (func_802A3E88(self) == 0) {
-        self->field_0x20 = NULL;
+        self->field_0x20 = nullptr;
     }
 }
 
@@ -23,11 +30,11 @@ void func_802A5934(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
 
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* embedded = (CCharVoice*)handle;
-    if (handle != NULL) {
+    if (handle != nullptr) {
         embedded = &handle->voice;
     }
     if (embedded == voicePtr) {
-        self->field_0x20 = NULL;
+        self->field_0x20 = nullptr;
     }
 }
 
@@ -42,14 +49,14 @@ int func_802A598C(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId)
 
     // Convert CCharVoice* to the containing CVoiceHandle*.
     CVoiceHandle* handle = (CVoiceHandle*)voicePtr;
-    if (voicePtr != NULL) {
+    if (voicePtr != nullptr) {
         handle = (CVoiceHandle*)((char*)voicePtr - 0x3E9C);
     }
     self->field_0x20 = handle;
 
     // Convert back to the embedded CCharVoice for the play call.
     CCharVoice* embedded = (CCharVoice*)handle;
-    if (handle != NULL) {
+    if (handle != nullptr) {
         embedded = &handle->voice;
     }
     return func_802A3C44(self, embedded, voiceId);
@@ -64,11 +71,11 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
-    if (func_802A330C(0xA, 1) == NULL) {
+    if (func_802A330C(0xA, 1) == nullptr) {
         return 0;
     }
     CCharVoice* embedded = (CCharVoice*)self;
-    if (self != NULL) {
+    if (self != nullptr) {
         embedded = &self->voice;
     }
     func_802A3D54(embedded, ml::math::mtRand(2) + 0x321, 0xA);
@@ -81,26 +88,26 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
 cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     CVoiceHandle* handleBuf = func_802A330C(1, 0);
-    if (handleBuf == NULL) {
-        return NULL;
+    if (handleBuf == nullptr) {
+        return nullptr;
     }
     cf::CVS_THREAD_CHAIN* self = (cf::CVS_THREAD_CHAIN*)func_802A34E4(0x24);
-    if (self == NULL) {
-        return NULL;
+    if (self == nullptr) {
+        return nullptr;
     }
 
     // Construct the base (can throw -> EH guard), then set vtable + link slot.
-    // The redundant `self != NULL` re-check reproduces retail's `beq` guard on
+    // The redundant `self != nullptr` re-check reproduces retail's `beq` guard on
     // the EH region (CR0 from the earlier cmpwi is reused). The catch rethrows
     // via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0; li r5,0; bl
     // __throw`).
-    if (self != NULL) {
+    if (self != nullptr) {
         try {
             __ct__cf_CVS_THREAD();
 
             // Set the vtable at offset 0x1C (right after the 7 CVS_THREAD base words).
-            ((void**)self)[7] = (void**)lbl_eu_80539A3C;
-            self->field_0x20 = NULL;
+            ((CVS_THREAD_CHAIN_VtblView*)self)->vtable = lbl_eu_80539A3C;
+            self->field_0x20 = nullptr;
         } catch (...) {
             __throw(0, 0, 0);
         }
@@ -136,18 +143,18 @@ int func_802A5A14(CVoiceHandle* self, int flag) {
     if (func_800BE8F4(&self->voice) == 0x12C) {
         return 0;
     }
-    if (func_802A330C(0x12C, 1) == NULL) {
+    if (func_802A330C(0x12C, 1) == nullptr) {
         return 0;
     }
     if (flag == 0) {
         CCharVoice* embedded = (CCharVoice*)self;
-        if (self != NULL) {
+        if (self != nullptr) {
             embedded = &self->voice;
         }
         func_802A3D54(embedded, ml::math::mtRand(2) + 0x2BD, 0x12C);
     } else {
         CCharVoice* embedded = (CCharVoice*)self;
-        if (self != NULL) {
+        if (self != nullptr) {
             embedded = &self->voice;
         }
         func_802A3D54(embedded, 0x2BF, 0x12C);

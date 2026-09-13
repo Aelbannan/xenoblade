@@ -115,8 +115,8 @@ public:
     u8 mRenderCB[4];                  // 0x58
     CScn* mScene;                     // 0x5C
     CFileHandle* mFileHandle;         // 0x60 async file handle
-    void* field_64;                   // 0x64 palette / loaded data
-    void* field_68;                   // 0x68 palette / loaded data (alias of 0x64)
+    u8* field_64;                     // 0x64 palette / loaded data
+    u8* field_68;                     // 0x68 palette / loaded data (alias of 0x64)
     GXTexObj mTexObj;                 // 0x6C loaded GX texture object (0x20: 0x6C..0x8B)
     u8 field_8C;                      // 0x8C texture-ready flag (ctor zeroes it; cbRenderBefore gates on it)
     u8 field_8D[3];                   // 0x8D..0x8F gap after GXTexObj

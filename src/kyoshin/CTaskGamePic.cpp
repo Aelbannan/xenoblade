@@ -162,23 +162,23 @@ CTaskGamePic::~CTaskGamePic() {}
 // (0x90..0xC4). If the 3rd source word is non-zero the source block also
 // overwrites the "current" block at 0x90.
 // ---------------------------------------------------------------------------
-extern "C" void func_80294E58(CTaskGamePic* self, u32 index, const u32* src) {
+extern "C" void func_80294E58(CTaskGamePic* ths, u32 index, const u32* src) {
     u32 sh = index << 8;
-    self->param_A0 = self->param_90;
-    self->param_A4 = self->param_94;
-    self->param_A8 = self->param_98;
-    self->param_AC = self->param_9C;
-    self->param_B0 = src[0];
-    self->param_B4 = src[1];
-    self->param_B8 = src[2];
-    self->param_BC = src[3];
-    self->param_C0 = sh;
-    self->param_C4 = sh;
+    ths->param_A0 = ths->param_90;
+    ths->param_A4 = ths->param_94;
+    ths->param_A8 = ths->param_98;
+    ths->param_AC = ths->param_9C;
+    ths->param_B0 = src[0];
+    ths->param_B4 = src[1];
+    ths->param_B8 = src[2];
+    ths->param_BC = src[3];
+    ths->param_C0 = sh;
+    ths->param_C4 = sh;
     if (index == 0) {
-        self->param_90 = src[0];
-        self->param_94 = src[1];
-        self->param_98 = src[2];
-        self->param_9C = src[3];
+        ths->param_90 = src[0];
+        ths->param_94 = src[1];
+        ths->param_98 = src[2];
+        ths->param_9C = src[3];
     }
 }
 
@@ -188,12 +188,12 @@ extern "C" void func_80294E58(CTaskGamePic* self, u32 index, const u32* src) {
 // Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-extern "C" void func_80294EC0(CTaskGamePic* self, const char* path) {
-    IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(self); // null-this -> null
-    if (self) ev = reinterpret_cast<IWorkEvent*>(&self->field_54);
-    u32 handle = (u32)func_80495FF0(self->mScene);
+extern "C" void func_80294EC0(CTaskGamePic* ths, const char* path) {
+    IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(ths); // null-this -> null
+    if (ths) ev = reinterpret_cast<IWorkEvent*>(&ths->field_54);
+    u32 handle = (u32)func_80495FF0(ths->mScene);
     CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
-    self->mFileHandle = fh;
+    ths->mFileHandle = fh;
     CDeviceFile::func_8044F154(fh, 0);
 }
 #pragma optimize_for_size off
@@ -221,21 +221,21 @@ void CTaskGamePic::Term() {
 // func_8029539C - the file-event handler for the loaded texture.
 // Binds the palette, builds a GX texture object from it, then clears the load.
 // ---------------------------------------------------------------------------
-extern "C" bool func_8029539C(CTaskGamePic* self, CEventFile* pEvent) {
+extern "C" bool func_8029539C(CTaskGamePic* ths, CEventFile* pEvent) {
     // Retail loads pEvent->mFileHandle first and compares it against
-    // self->mFileHandle (cmplw r0, r5), so the event side is the left operand.
-    if (pEvent->mFileHandle == self->mFileHandle) {
+    // ths->mFileHandle (cmplw r0, r5), so the event side is the left operand.
+    if (pEvent->mFileHandle == ths->mFileHandle) {
         if (pEvent->unk0 == 1) {
-            u8* data = static_cast<u8*>(self->mFileHandle->getData());
-            self->field_64 = data;
-            self->field_68 = data;
+            u8* data = static_cast<u8*>(ths->mFileHandle->getData());
+            ths->field_64 = data;
+            ths->field_68 = data;
             TPLBind((TPLPalette*)data);
-            TPLGetGXTexObjFromPalette((TPLPalette*)self->field_68, &self->mTexObj, 0);
+            TPLGetGXTexObjFromPalette((TPLPalette*)ths->field_68, &ths->mTexObj, 0);
             f32 bias = lbl_eu_80668BB0;
-            GXInitTexObjLOD(&self->mTexObj, GX_LINEAR, GX_LINEAR,
+            GXInitTexObjLOD(&ths->mTexObj, GX_LINEAR, GX_LINEAR,
                             bias, bias, bias, GX_FALSE, GX_FALSE, GX_ANISO_1);
         }
-        self->mFileHandle = nullptr;
+        ths->mFileHandle = nullptr;
         return true;
     }
     return false;
@@ -250,15 +250,21 @@ void cbRenderBefore__12CTaskGamePicFv(CTaskGamePic*);
 // These are secondary-vtable entries for the +0x54 file-event / +0x58 render
 // subobjects: adjust `this` back to the CTaskGamePic primary, tail-call the
 // real member.
-void OnFileEvent__12CTaskGamePicFP10CEventFile(void* self) {
-    ((void (*)(void*))func_8029539C)((char*)self - 0x54);
+void OnFileEvent__12CTaskGamePicFP10CEventFile(IWorkEvent* self) {
+    ((void (*)(void*))func_8029539C)(reinterpret_cast<char*>(self) - 0x54);
 }
 
-void func_8029554C(void* self) { ((void (*)(void*))__dt__12CTaskGamePicFv)((char*)self - 0x54); }
+void func_8029554C(IWorkEvent* self) {
+    ((void (*)(void*))__dt__12CTaskGamePicFv)(reinterpret_cast<char*>(self) - 0x54);
+}
 
-void func_80295554(void* self) { ((void (*)(void*))cbRenderBefore__12CTaskGamePicFv)((char*)self - 0x58); }
+void func_80295554(IScnRender* self) {
+    reinterpret_cast<CTaskGamePic*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
+}
 
-void func_8029555C(void* self) { ((void (*)(void*))__dt__12CTaskGamePicFv)((char*)self - 0x58); }
+void func_8029555C(IScnRender* self) {
+    ((void (*)(void*))__dt__12CTaskGamePicFv)(reinterpret_cast<char*>(self) - 0x58);
+}
 
 // Returns int (not s16) so callers re-sign-extend the result like retail.
 extern "C" s16 func_80295388(u8* self) {
@@ -272,12 +278,12 @@ extern "C" s16 func_80295388(u8* self) {
 #pragma optimize_for_size on
 extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
     u32 handle = CWorkThreadSystem::getWorkMem();
-    CTaskGamePic* self = (CTaskGamePic*)mtl::MemManager::allocate(0xc8, handle);
-    if (self) {
-        self = __ct__CTaskGamePic(self, arg);
+    CTaskGamePic* ths = (CTaskGamePic*)mtl::MemManager::allocate(0xc8, handle);
+    if (ths) {
+        ths = __ct__CTaskGamePic(ths, arg);
     }
-    self->Regist(pParent, false);
-    return self;
+    ths->Regist(pParent, false);
+    return ths;
 }
 #pragma optimize_for_size off
 
@@ -299,7 +305,7 @@ void CTaskGamePic::cbRenderBefore() {
     CView* view = CView::getCurrentView();
     if (field_68 == 0) return;
     CDeviceGX::getCacheInstance()->resetGXStateA();
-    tex = static_cast<const CTaskGamePicTexData*>(field_68);
+    tex = reinterpret_cast<const CTaskGamePicTexData*>(field_68);
 
     // View-sized rect: narrow it to 3/4 width (centred) on 16:9.
     // (s16) casts on the u16 render-mode fields fold the sign extension

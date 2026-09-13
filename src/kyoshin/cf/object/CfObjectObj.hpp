@@ -67,9 +67,9 @@ void* __dynamic_cast(void* obj, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 
 // C-ABI imports (retail unmangled names): func_800CA580 dispatches a helper
-// id on the +0x38 sub-object; __ct__cf_CfResObjImpl constructs the 0x1C-byte
-// resource object in place and returns it (CfResObjImpl.hpp's member ctor
-// would mangle to __ct__Q22cf10CfResObjImplFv - same scheme as CfObjectPc.hpp's
-// __ct__cf_CfResPcImpl).
+// id on the +0x38 sub-object (ABI void* - shared with CfObjectImplObj stub);
+// __ct__cf_CfResObjImpl constructs the 0x1C-byte resource object in place.
+namespace cf { struct CfResObjImpl; }
 extern "C" void func_800CA580(void* self, u16 id);
-extern "C" void* __ct__cf_CfResObjImpl(void* self, void* parent);
+extern "C" cf::CfResObjImpl* __ct__cf_CfResObjImpl(cf::CfResObjImpl* self,
+                                                   void* parent);

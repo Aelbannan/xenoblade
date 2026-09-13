@@ -40,7 +40,7 @@ cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
         cf::CfResObjImpl* res =
             (cf::CfResObjImpl*)mtl::MemManager::allocate(0x1c, func_80061FFC());
         if (res != 0) {
-            res = (cf::CfResObjImpl*)__ct__cf_CfResObjImpl(res, ths);
+            res = __ct__cf_CfResObjImpl(res, ths);
         }
         ((ObjB0View*)ths)->mSubObjB0 = res;
     }
@@ -55,7 +55,7 @@ cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* ths) {
 // __dt__8012596C pattern): MWCC emits the name verbatim as a real .text
 // FUNC symbol, which the acceptance certifier requires (an ABS alias on a
 // member dtor is invisible to its symbol scan).
-void* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag) {
+cf::CfObjectObj* __dt__800BFA14(cf::CfObjectObj* ths, int deleteFlag) {
     if (ths != 0) {
         *reinterpret_cast<u32**>(ths) = reinterpret_cast<u32*>(lbl_eu_80529B4C);
         ths->CfObject_releaseMoveTargets();

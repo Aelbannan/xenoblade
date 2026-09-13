@@ -652,11 +652,11 @@ void func_800FF920(CMainMenu* self) {
     }
 
     // Join colors: r8=aPressed, r6=down, r7=up, r4=bPressed, r0=confirm.
-    // Seed bPressed so it colors apart from p (retail: p=r5, bPressed=r4).
-    u32 bPressed = 0, aPressed, down, up, confirm;
+    // Join-scope t,p with decl order bPressed,t,p,down,up,aPressed,confirm.
+    u32 bPressed, t, p, down, up, aPressed, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
-        u32 p = pad->mPressedButtonFlags;
-        u32 t = pad->mTurboPressButtonFlags;
+        p = pad->mPressedButtonFlags;
+        t = pad->mTurboPressButtonFlags;
         u32 cHi = p & 0x400000;
         aPressed = (p >> 21) & 1;
         u32 cLo = p & 0x400;
@@ -665,15 +665,14 @@ void func_800FF920(CMainMenu* self) {
         up = (t >> 1) & 1;
         bPressed = (p >> 26) & 1;
     } else {
-        // Load turbo first so t tends to land in r0 like retail.
-        u32 t = pad->mTurboPressButtonFlags;
-        u32 p = pad->mPressedButtonFlags;
-        u32 c = p & 0x420;
-        aPressed = (p >> 4) & 1;
-        down = t & 1;
+        u32 t2 = pad->mTurboPressButtonFlags;
+        u32 p2 = pad->mPressedButtonFlags;
+        u32 c = p2 & 0x420;
+        aPressed = (p2 >> 4) & 1;
+        down = t2 & 1;
         confirm = c != 0;
-        up = (t >> 1) & 1;
-        bPressed = (p >> 12) & 1;
+        up = (t2 >> 1) & 1;
+        bPressed = (p2 >> 12) & 1;
     }
 
     if (down != 0) {

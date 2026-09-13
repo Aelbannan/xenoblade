@@ -10822,6 +10822,13 @@ intermediate forms do not break the coalescing.
 - Result:    case 5 scratch + case 6 body instruction-match; function still ~36.5% (639 structural) / 0x12bc vs 0x12c8. Residual: case 5 `lbz field_2` vs `lfs` schedule, switch `cmpli 26` vs `25`, member-wrap colors, later cascade
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
+## func_80277B38 / kyoshin/cf/chain/CChain — empty case 0x1a folds jumptable bound (Wii/1.1 -O4, 38.4% near-miss)
+- Symptom:   `cmpli r5, 25` vs retail `cmpli r5, 26`; 12 then 8 bytes short; case 5 tail `lfs` before `lbz field_2`
+- Cause:     MWCC drops a trailing empty `case 0x1a: break` (same target as default/epilogue), shrinking the jumptable. Case 5 O4 scheduler hoists `lfs` ahead of the independent `field_2` load. Wrap lookup `extsb` coalesces away when `newIdx` is already s8
+- Fix:       `case 0x1a: return;` keeps the slot (`cmpli 26`) with no extra body bytes. Load `field_2` into a local before timer stores (schedule still hoists `lfs`). `#pragma schedule off` on the whole function regresses ~10pp
+- Result:    38.4% (623 structural / 117 reg_swap) / 0x12c0 vs 0x12c8. Next: serialize case 5 `lbz`/`lfs` without TU-wide schedule off; keep wrap `extsb` + count `lwz`/`extsh` live
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
 ## func_8023D3D8 / kyoshin/cf/CfNandManager — first real apply-save body, still stub-class match (Wii/1.1 -O4,p, ~0.9%)
 - Symptom:   hexdiff 0.9% (1056 structural / 137 reg_swap); decomp 0x12d0 vs retail 0x1070; frame
   0x30 vs retail 0x60 + `_savegpr_24` + `mr r31,r1`
@@ -10835,3 +10842,31 @@ intermediate forms do not break the coalescing.
   `src+0x17c` lives in r3 across the scalar copies; array copies are 0x18/0x12 `lwzu`/`stwu`
   pairs); match name-table insert; shrink ~0x260 oversize; then recolor
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
+
+## CSuddenCommu func_801BA1DC — volatile last store hoists LR restore (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
+- Symptom:   4 epilogue-only mismatches: decomp `lwz r0,LR; lwz r31; lwz r30; lwz r29` vs retail restores-first then LR
+- Cause:     `field_24` is `volatile u32`; a volatile last store makes MWCC hoist the LR restore above callee-saved loads
+- Fix:       `*(u32*)&self->field_24 = 0;` (same last-store as the ctor / `func_801BBC38`)
+- Result:    FULL_MATCH 100%
+- Evidence:  us-801bbad4 / src/kyoshin/cf/CSuddenCommu.cpp
+
+## CItem func_80157CD0 — named stride copy after off (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
+- Symptom:   4 reg_swap: retail `li r4,0; lwz r5,stride; lwzx r0,r3,r4; add r4,r4,r5` vs decomp r5/r4 swapped
+- Cause:     address-taken `stride` out-param is born first and takes scratch r4
+- Fix:       `s32 off = 0; s32 step = stride;` then `off += step` so off is born first (r4) and the copy takes r5
+- Result:    FULL_MATCH 100%
+- Evidence:  us-8015879c / src/kyoshin/cf/CItem.cpp
+
+## CREvtEffect func_80184D90 — per-group result locals (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
+- Symptom:   10 reg_swap: reused `result` claimed r31; retail keeps `model` in r31 and each ChrAnmResult in r30
+- Cause:     one `result` live across all three anim groups outlives `model` in simplify
+- Fix:       `resultEff` / `resultAtr` / `resultTgt` each die after their Get* trio so `model` claims r31
+- Result:    FULL_MATCH 100% (SDA @N vs `lbl_eu_80667950` is value-equal conversion magic)
+- Evidence:  us-801861d0 / src/kyoshin/realtimeevt/CREvtEffect.cpp
+
+## func_800FF920 / kyoshin/CMainMenu — pad extract join-scope decl order (Wii/1.1 -O4, FULL_MATCH)
+- Symptom:   99.3–99.5% pure reg_swap: classic `p`/`t`/`aPressed` colors wrong (`p` coalesced with `bPressed` into r4; `aPressed` in r5 vs retail r8); witness rejected `r5↔r8` / `r4↔r7` ABI renames
+- Cause:     Scratch coloring of shared join vars + block-local `p`/`t` birth order. Retail classic wants `p=r5,t=r4,aPressed=r8,down=r6,up=r7,bPressed=r4`; nonclassic wants `p=r4,t=r0` with the same `aPressed=r8`
+- Fix:       Declare join-scope `u32 bPressed, t, p, down, up, aPressed, confirm;` — `t`/`p` before `down`/`up`/`aPressed` so classic loads color correctly. Classic assigns `p` then `t`. Nonclassic keeps block-local `t2`/`p2` (turbo then pressed) so it can still land `p=r4,t=r0` without fighting join-scope `p`/`t`
+- Result:    FULL_MATCH (0x14F4)
+- Evidence:  us-80100408 / src/kyoshin/CMainMenu.cpp

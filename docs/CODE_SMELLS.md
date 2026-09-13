@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4160 |
 | `self`/register-style params | 13474 |
 | `void*` (params + locals) | 7796 |
-| raw pointer offset arithmetic | 7527 |
-| deref-through-cast arithmetic | 2925 |
+| raw pointer offset arithmetic | 7522 |
+| deref-through-cast arithmetic | 2921 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -153,7 +153,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CScnFadeMan.cpp | 2 | 3 | 6 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 2 | 1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilterMan.cpp | 70 | 57 | 80 | 23 | 4 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFogMan.cpp | 4 | 5 | 13 | 3 | 5 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFogMan.cpp | 4 | 5 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 3 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnIdMan.cpp | 11 | 2 | 10 | 12 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemAnim.cpp | 6 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1764,11 +1764,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnFogMan.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 4,
   "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
-  "ptr_arith": 5,
   "schedule_pragma": 0,
   "self_params": 13,
   "void_ptr": 3

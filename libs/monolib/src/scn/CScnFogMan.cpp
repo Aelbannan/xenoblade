@@ -126,7 +126,11 @@ bool func_8049DE70(CScnFogMan* self) {
     return func_8049DEC4(self);
 }
 
-void func_8049E374(u8* self, float a, float b) { *(float*)(self + 0x20) = a; *(float*)(self + 0x1C) = b; }
+void func_8049E374(u8* self, float a, float b) {
+    CScnFogMan* fog = (CScnFogMan*)self;
+    fog->field_0x20 = a;
+    fog->field_0x1c = b;
+}
 
 // Retail dtor (free-function form so MWCC emits no local vtable; the retail
 // vtable lives in the blob data above and the ctor stores it explicitly).
@@ -140,10 +144,12 @@ extern "C" void* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
 }
 
 extern "C" void func_8049E350(u8* self, const void* src) {
-    *(u32*)((u8*)self + 0xC) = *(u32*)((u8*)src + 0);
-    *(u32*)((u8*)self + 0x10) = *(u32*)((u8*)src + 4);
-    *(u32*)((u8*)self + 0x14) = *(u32*)((u8*)src + 8);
-    *(u32*)((u8*)self + 0x18) = *(u32*)((u8*)src + 0xC);
+    CScnFogMan* fog = (CScnFogMan*)self;
+    const u32* words = (const u32*)src;
+    *(u32*)&fog->field_0xC = words[0];
+    *(u32*)&fog->field_0x10 = words[1];
+    *(u32*)&fog->field_0x14 = words[2];
+    *(u32*)&fog->field_0x18 = words[3];
 }
 
 // Copy a fog parameter block into the near/far fog fields. mValue lands in

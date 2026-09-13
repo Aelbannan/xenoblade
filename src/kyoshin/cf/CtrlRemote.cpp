@@ -140,9 +140,7 @@ void func_80098EF8(CtrlPcVf38* self)
         if (sub3f60 != NULL) {
             if (probe1a != 0) {
                 if ((sub3f60->mField4EC & 0x10) == 0) {
-                    // Reload 3F60/4EC so |= cannot CSE the bit-test load
-                    // (retail: lwz r0 / destructive rlwinm / reload / ori).
-                    self->mField5C->mField3F60->mField4EC |= 0x10;
+                    sub3f60->mField4EC |= 0x10;
                     CVoicePos* pos = self->mField5C->mSub3E9C.getPosition();
                     self->mField5C->mField3F60->mField510 = pos->f[1];
                 }
@@ -249,16 +247,31 @@ void func_80098EF8(CtrlPcVf38* self)
 
     // Stick-byte sanity: when any of the four signed bytes exceeds +/-10, or
     // the menu mask is active, flag the aim-override bit.
-    CtrlPcSub37Ext* sub = (CtrlPcSub37Ext*)self->vf37();
-    if (abs((s8)sub->mField58) > 0xa || abs((s8)sub->mField59) > 0xa ||
-        abs((s8)sub->mField5A) > 0xa || abs((s8)sub->mField5B) > 0xa) {
+    s8 b58 = (s8)((CtrlPcSub37Ext*)self->vf37())->mField58;
+    if ((s8)abs(b58) > 0xa) {
         self->mField4 |= 0x200;
     } else {
-        u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
-                        ? lbl_eu_80527F10[2]
-                        : lbl_eu_80527E98[2];
-        if ((self->vf37()->mField4 & mask2) != 0) {
+        s8 b59 = (s8)((CtrlPcSub37Ext*)self->vf37())->mField59;
+        if ((s8)abs(b59) > 0xa) {
             self->mField4 |= 0x200;
+        } else {
+            s8 b5a = (s8)((CtrlPcSub37Ext*)self->vf37())->mField5A;
+            if ((s8)abs(b5a) > 0xa) {
+                self->mField4 |= 0x200;
+            } else {
+                s8 b5b = (s8)((CtrlPcSub37Ext*)self->vf37())->mField5B;
+                if ((s8)abs(b5b) > 0xa) {
+                    self->mField4 |= 0x200;
+                } else {
+                    u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
+                                    ? lbl_eu_80527F10[2]
+                                    : lbl_eu_80527E98[2];
+                    u32 hit = self->vf37()->mField4 & mask2;
+                    if (hit != 0) {
+                        self->mField4 |= 0x200;
+                    }
+                }
+            }
         }
     }
 

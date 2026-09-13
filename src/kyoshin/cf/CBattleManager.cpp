@@ -5484,7 +5484,13 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     // ----------------------------------------------------------
     // 0x5150 prologue / early guards
     // ----------------------------------------------------------
-    if (target == 0) return;                        // 0x5154 cmpwi r5,0
+    // Base locals first (MWCC_CASES bea7af5d31): claim saved regs for the
+    // object bases so field_3f00 stays lwz 0x3F00(base), not CSE addi into
+    // an extra callee-saved (was r15 → _savegpr_15 vs retail _savegpr_18).
+    BattleObjAccessor* atkObj = (BattleObjAccessor*)attacker;
+    BattleObjAccessor* tgtObj = (BattleObjAccessor*)target;
+
+    if (tgtObj == 0) return;                        // 0x5154 cmpwi r5,0
 
     // 0x51C0: load tag, init ratios (58/54/5C/60/64), then bit0 gate
     {
@@ -5551,7 +5557,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             r26 = 0;
             f28 = 0.0f;
         }
-        if ((((BattleObjAccessor*)attacker)->field_3f00 & 0x4) &&
+        if ((atkObj->field_3f00 & 0x4) &&
             (move->field_78 & 0x800)) {
             r26 = 0;
             f28 = 0.0f;
@@ -5568,7 +5574,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         if (move->field_78 & 0x200) {
             s32 vf = artsSubGetMax(sub);
             s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
-            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+            if (atkObj->field_3f00 & 0x2) {
                 f32 f2 = atkParam->field_24;
                 f32 f1 = atkParam->field_28 - f2;
                 s32 d = (s32)(lbl_eu_80666DD4 + f1);
@@ -5594,7 +5600,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
         // --- non-guard: move->field_78 bits 20-21 (0x600) ---
         if (move->field_78 & 0x600) {
             // 0x800DDAB0: same r25 variance as above
-            if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+            if (atkObj->field_3f00 & 0x2) {
                 f32 f2 = atkParam->field_24;
                 f32 f1 = atkParam->field_28 - f2;
                 s32 d = (s32)(1.0f + f1);
@@ -5858,7 +5864,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 r26 = 0;
                 f28 = 0.0f;
             }
-            if ((((BattleObjAccessor*)attacker)->field_3f00 & 0x4) &&
+            if ((atkObj->field_3f00 & 0x4) &&
                 (move->field_78 & 0x800)) {             // 0x800DEA24
                 r26 = 0;
                 f28 = 0.0f;
@@ -5876,7 +5882,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 // 0x800DEAC0: variance computation
                 s32 vf = artsSubGetMax(sub);
                 s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
-                if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+                if (atkObj->field_3f00 & 0x2) {
                     f32 f2 = atkParam->field_24;
                     f32 f1 = atkParam->field_28 - f2;
                     s32 d = (s32)(1.0f + f1);
@@ -5900,7 +5906,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             // --- non-guard: move->field_78 bits 20-21 (0x600) ---
             if (move->field_78 & 0x600) {
                 // 0x800DEC58: same r25 variance as above
-                if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+                if (atkObj->field_3f00 & 0x2) {
                     f32 f2 = atkParam->field_24;
                     f32 f1 = atkParam->field_28 - f2;
                     s32 d = (s32)(1.0f + f1);
@@ -5922,7 +5928,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
                 // --- 0x800DED98: vf0xE0-based half-damage selection ---
                 f32 f26b = 1.0f;
-                if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+                if (atkObj->field_3f00 & 0x2) {
                     s32 etype = (s32)((cf::CActorParam*)(target))->CActorParam_getActorType();
                     u16 f28t = ((BattleObjAccessor*)attacker)->field_3f28;
                     if (etype == 1) {
@@ -6202,7 +6208,7 @@ post_dispatch:;
         // CRIT BLOCK (0x800DE698..0x800DE8DC) -- r20 accumulation
         // ================================================================
         s32 r20 = atkParam->field_38;
-        if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
+        if (atkObj->field_3f00 & 0x2) {
             s32 idx = ((cf::CActorParam*)(attacker))->CActorParam_getStatusCount();
             if (idx >= 0 && idx < 8) r20 += sTable_208[idx];
         }
@@ -6320,7 +6326,7 @@ post_dispatch:;
                     move->field_58 += (f32)(s32)sv / 100.0f;
                 }
             }
-            if ((((BattleObjAccessor*)attacker)->field_3f00 & 0x2) &&
+            if ((atkObj->field_3f00 & 0x2) &&
                 ((BattleObjAccessor*)attacker)->field_3f28 == 5 &&
                 (move->field_78 & 0x400)) {
                 f32 f1 = ((cf::CActorParam*)(attacker))->CActorParam_getArtsGauge();

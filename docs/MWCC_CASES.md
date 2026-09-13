@@ -10836,17 +10836,43 @@ intermediate forms do not break the coalescing.
 - Result:    size PASS; witness runs; fails first at case 5 schedule. Ruled out: volatile field_2, `(&lbl)[state>>8]`, comma f32, inlined schedule-off helper
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
+## func_80277B38 / kyoshin/cf/chain/CChain — O4 will not un-hoist case 5 lfs via local pragmas (40.1%, size exact)
+- Symptom:   after `bl func_8014B120`, decomp `lfs` then `li 1` then `lbz field_2`; retail `lbz` then `li 1` then `lfs`
+- Cause:     Wii/1.1 `-schedule`/`-peephole` are positive-only at O4 (`scheduling.md`). Mid-function `scheduling off` / `peephole off` / `optimization_level 3` are ignored. Whole-function `peephole off` regresses to 1.2% / +0x3C
+- Fix:       none this session — keep mixed wrap + `case 0x1a: return` + simple field_2 local then timer stores
+- Result:    still 40.1% / 0x12c8 exact / witness slot 358 `lbz` vs `lfs`
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
+## func_80277B38 / kyoshin/cf/chain/CChain — case 5 SDA21 lfs is independent; extra next-store un-hoists (Wii/1.1 -O4)
+- Symptom:   retail tail after `bl func_8014B120` is `lbz; li 1; lfs; li 60; addi; stfs; …` (SDA21 `lfs` of `lbl_eu_80668A44`). Checkpoint 40.1% emits `lfs` first
+- Cause:     retail `lfs` is `R_PPC_EMB_SDA21` — no GPR data edge from `field_2`. Folding indexes / `lfsx` change the encoding. Same-value rewrite of `field_2` is DCE'd. Mid-fn `optimize_for_size` is ignored. A second `addi` successor (store `next` to scratch `field_6`) raises `lbz` enough that the scheduler emits the retail prefix through `addi`
+- Fix:       case 0xc decrement `idx -= 1` (buy 4B); after the call `u8 next = state+1; scratchB.mFields.field_6 = next` then timer stores; `case 0x1a: return`
+- Result:    size `0x12c8` exact; hexdiff structural ~756 (wrap buy). Tail: `lbz; li 1; lfs; li 60; addi; stb field_6; stfs; …`. Witness should die at slot 363 `stb` vs `stfs`. Next: issue `stfs` immediately after `addi` without losing the 5-insn prefix (or sink the extra `stb` with no net insn)
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
+## func_80277B38 / kyoshin/cf/chain/CChain — case 5 lbz/lfs is a scheduler height vs mem-dep tradeoff (Wii/1.1 -O4, 40.0%)
+- Symptom:   same 11-insn tail set as retail; decomp `lfs; li 1; lbz; li 60; stfs; addi` vs retail `lbz; li 1; lfs; li 60; addi; stfs`. Witness slot 358 `lbz` vs `lfs`. Size `0x12c8` exact. objdiff ~97.4% / hexdiff 40.0% (634 structural / 87 reg_swap)
+- Cause:     list-scheduler PickCandidate prefers the SDA21 `lfs` chain (higher latency) unless the `lbz`→`addi`→store chain is taller. An escaped `scratchB.field_6 = next` before the timer stores adds a mem-dep `stb → stfs`, so `lbz` wins and the prefix matches — but the extra `stb` sits in the `lfs` delay slot (and shifts the rest of the function unless a later wrap buy pays the 4B). Sinking that store makes `stfs → stb` and `lfs` wins again. `field_2 = next` first aliases `self`, so `stb field_2` precedes `lfs`. `paused = next - state` emits extra `rlwinm`+`subf`. Address-taken `field_2` and `paused`/`hold` locals do not flip the first pick
+- Fix:       none this session — keep mixed wrap (`case 0xc` `idx += 1` / `(u8)(idx-1)`; `case 0xd` `idx +=`/`-=`) + `case 0x1a: return` + simple `next = state+1` then timer then `field_2 = next`
+- Result:    40.0% / 0x12c8 / witness still `lbz` vs `lfs`. Next: register-only `addi` successor (no mem-dep into `stfs`), or a live-in/color change that makes the first pick `lbz`
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
 ## func_8023D3D8 / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
 - Symptom:   hexdiff 9.5% (684 structural / 269 reg_swap); 0x1074 vs retail 0x1070; 0x60
   savegpr frame matches but no `mr r31,r1`; img in r25 not r30; pair trips hoisted to
-  r31/r30; second pair `addi …,0xE0` vs retail `0xE4`
-- Cause:     inlined struct-assign copy hoists 24/18; taking `&nameScratch` at the caller
-  collapses the frame to 0x30; an explicit do-while second pair drops match to 1.9%
-- Fix:       declare `live`/`src`/`dst`/`ok` at function scope (C2E4 birth order); keep
-  `Arr48` from `&f024` + `Arr36` from `+0xE4`; name restore uses a local `cur` with
-  `pCur = &cur` (not a caller-passed scratch)
-- Result:    9.5% near-miss. Next: `mr r31,r1` without `&nameScratch`; img r30 / ok r26;
-  second pair base 0xE4; close 4 bytes; `li r0,24/18` in the entry body
+  r31/r30. Second pair addi is now `0xE4` (retail). Retail epilogue is the FP/backchain
+  form (`mr r10,r31; lwz r10,0(sp); mr sp,r10`) plus mid-copy `stw sp,0x34/0x1C(r31)`
+- Cause:     inlined struct-assign copy hoists 24/18 while r31 is free; taking `&nameScratch`
+  at the caller collapses the frame to 0x30; an explicit do-while second pair drops to 1.9%.
+  `mr r31,r1` is exception/FP codegen (`-Cpp_exceptions on`): `try`/`catch(...) { throw; }`
+  emits the retail prologue `mr` and backchain epilogue but grows the frame by 0x10–0x30
+  (0x70 for one try, 0x90 for inlined-per-restore/per-store try) and drops match to 2.8–4.6%
+- Fix:       declare `live`/`src`/`dst`/`ok` at function scope (C2E4 birth order);
+  `Arr48` from `&f024`; `Arr36` from `&arr028[47]` (named word at 0xE4, same as `&f024` →
+  addi 0x24 — raw `+0xE4` was arr-1 to 0xE0, member `arr0E8` was addi 0xE8);
+  name restore uses a local `cur` with `pCur = &cur` (not a caller-passed scratch)
+- Result:    9.5% near-miss; second pair base matches. Next: 0x60-sized exception/FP frame
+  (no extra try slot); then img r30 / ok r26 and `li r0,24/18` in the entry body
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
 ## CSuddenCommu func_801BA1DC — volatile last store hoists LR restore (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
@@ -10876,3 +10902,59 @@ intermediate forms do not break the coalescing.
 - Fix:       Declare join-scope `u32 bPressed, t, p, down, up, aPressed, confirm;` — `t`/`p` before `down`/`up`/`aPressed` so classic loads color correctly. Classic assigns `p` then `t`. Nonclassic keeps block-local `t2`/`p2` (turbo then pressed) so it can still land `p=r4,t=r0` without fighting join-scope `p`/`t`
 - Result:    FULL_MATCH (0x14F4)
 - Evidence:  us-80100408 / src/kyoshin/CMainMenu.cpp
+
+## kyoshin/CItemBoxGrid func_801CCAF0 — unsigned `-(a<b)` vs `52c=1` hole steal (Wii/1.1 -O4,p + optimize_for_size, 80.1% near-miss)
+- Symptom:   Exchange confirm +0xd94: retail `subfc; mr item; li r0,-1; count-1; subfe r3,r0,r0; stb 52d; li r0,1; stb 52c; mr this; bl 11B8`. Signed `s32` compare is size-exact 0x10a4 with `rlwinm` sign-bits and `11B8` before `52c`.
+- Cause:     Independent `p[0x52c]=1` (`li r0,1; stb`) wins the post-`subfc` hole over the unsigned `li r0,-1; subfe r3,r0,r0` materialization. Result: `subfe r3,r3,r3` or `subfe r0,r0,r0`, `52c` hoists before `52d`, size 0x109c, ~69%. Named `leftover`, inlined `test`, and comma-in-call-arg do not reserve `r0` for -1. `11B8` before `52c` is a call barrier so `52c` cannot schedule before the call (4-byte phase through the switch tail).
+- Fix:       Not closed. Need a source shape where unsigned `-(u32)(v2-v1)<test` keeps `li r0,-1` and `52c` stays after `52d` but before `11B8` without folding the `52c` dependency. `u16 nVal` after 36254 and switch on `(s32)*(u16*)(p+0x52e)` stay.
+- Result:    80.1% (96 structural, 0x10a4) with signed filler; unsigned+52c-first is a size/schedule regression
+- Evidence:  us-801ce544 / src/kyoshin/CItemBoxGrid.cpp
+
+## CBattleState_enterStatusEntry — WordPrefix copy reloads unk00 (Wii/1.1, CODE_MATCH 98.9%)
+- Symptom:   Function 2 insns short (0x13D4 vs 0x13DC). 0xf/accumulate copies did `stw r5,0(slot)` from a hoisted `arg->unk00`; retail `lwz r0,0(arg); stw r0,0(slot)` twice. `entryId` sat in r6 because r5 held the hoist.
+- Cause:     `dstw[0] = srcw[0]` / `slot->unk00 = arg->unk00` CSEs with `if (slot->unk00 != arg->unk00)`. The compare load stays live through the copy.
+- Fix:       Copy the first three words as a unit: `struct WordPrefix { u32 a, b, c; }; *(WordPrefix*)slot = *(WordPrefix*)arg;` after saving the old gauges. MWCC emits a fresh load/store sequence (no CSE). `entryId` returns to r5. Do **not** use `*slot = *arg` then add on the 0xf path (wrong add/store shape). Hoist `f32 sum1C, sum20, sum28` before the old-gauge locals so old20 colors f2.
+- Result:    Size-exact 0x13DC, 0 structural, 282 pure reg_swap, cycle 98.9% CODE_MATCH. Residual: tree 2+ classify id r4 vs r3 after `li r3,1`; 1.5 `fmul f0,f0,f1` vs `f0,f1,f0` (dest-reuse commute; named-left / double local did not flip); first `fadds` dest f1 vs f0; empty-slot 0.0 in f2 vs f0. Witness fails at insn 71 (the fmul). Unit .text +8 because this symbol is now retail-length.
+- Evidence:  us-80146dac / src/kyoshin/cf/object/CBattleState.cpp
+
+## CKizunagram func_8025CC88 — registry leftover at 100% (US, Wii/1.1 -O4,s, FULL_MATCH)
+- Symptom:   Registry NOT_STARTED / BACKLOG with instruction_match 100.0; live hexdiff 100% 0 structural 0 reg_swap size 0x20/0x20
+- Cause:     Stale August claim never cycled a already-matching noinline dispatch (`field_62` gate then `field_39=2` + tail `func_80259228(self+0x68)`). Yellow `b` is unlinked-object addend only
+- Fix:       No source change. `cycle` accepted FULL_MATCH (needed `extern "C" void func_801390E0(CFileHandle**);` so the TU compiled)
+- Result:    FULL_MATCH 100%
+- Evidence:  us-8025edd4 / src/kyoshin/CKizunagram.cpp
+
+## CMenuCollepedia __dt__15CMenuCollepediaFv — stale 99.83% was live 100% (US, Wii/1.1, FULL_MATCH)
+- Symptom:   Registry CODE_MATCH 99.83%; live hexdiff 100% 0 structural 0 reg_swap size 0x78/0x78; relocs already `__dt__11CCollepediaFv` / `__dt__11CTitleAHelpFv` / `__dt__6CBgTexFv` / `__dt__800FED0C` / `__dl__FPv`
+- Cause:     Registry percent lagged the D2 free-function dtor already in source
+- Fix:       No source change; `cycle` accepted FULL_MATCH
+- Result:    FULL_MATCH 100%
+- Evidence:  us-8025494c / src/kyoshin/menu/CMenuCollepedia.cpp
+
+## ocUnit func_8003EB64 — stale 99.85% was live 100% (US, Wii/1.1, FULL_MATCH)
+- Symptom:   Registry CODE_MATCH 99.85%; live hexdiff 100% 0 structural 0 reg_swap size 0x88/0x88
+- Cause:     Registry lagged; yellow `bl` addends are unlinked-object display only
+- Fix:       No source change; `cycle` accepted FULL_MATCH
+- Result:    FULL_MATCH 100%
+- Evidence:  us-8003f0e0 / src/kyoshin/plugin/ocUnit.cpp
+
+## CfGimmickEne func_8026E7F8 — marker-quad v2.z sign (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Hexdiff 100% insn / 0 structural / 0 reg_swap / 0x228/0x228, but cycle 99.565% with `witness-gate: reloc | slot 125: lbl_eu_80668974@0 vs lbl_eu_80668978@0`
+- Cause:     Third `GXPosition3f32` used `+1.0f` for Z; retail is `-1.0f`. Hexdiff treats both as `lfs` so it looked like `@N` vs `lbl_eu_80668974/78` name drift only. Named/volatile `.sdata2` refs CSE the per-FIFO reloads
+- Fix:       `GXPosition3f32(1.0f, -1.0f, -1.0f)` for vertex 2. Leave literals as anonymous pool `@2434/@2435` (values match retail `-1/+1`)
+- Result:    FULL_MATCH (cycle `equivalence: full_match`)
+- Evidence:  us-80270c7c / src/kyoshin/cf/CfGimmickEne.cpp
+
+## CCol6Invite::Init — FixStr 10 vs 11 reloc name (US, Wii/1.1, 99.92% CODE_MATCH)
+- Symptom:   Hexdiff 100% insn / 0 structural / 0 reg_swap / 0x100/0x100; cycle witness-gate `reloc | slot 54: format__Q22ml10FixStr<128>FPCce` vs `format__Q22ml11FixStr<128>FPCce`
+- Cause:     `template <> void ml::FixStr<128>::format(...)` at TU top is not forcing the retail `10FixStr` mangling at this call site
+- Fix:       Not closed here (TU claimed). Next: `extern "C"` retail name at the Init `format` call, matching CfScript.cpp
+- Result:    CODE_MATCH 99.92%; split PASS
+- Evidence:  us-80164e38 / src/kyoshin/CCol6System.cpp
+
+## CArtsInfo sprintf-family (A148/A210/A398/39EFC/AD5C/A60C/A97C/A2D8/A8CC/AA2C/AADC + 37A0C) — entry mr order + 37A0C i2f slot reuse (US, Wii/1.1 -O4,p, OPEN)
+- Symptom:   Registry CODE_MATCH 99.55–99.6% is stale. Live hexdiff: 11 handlers at 95.5–96.0% with **0 structural / 2 reg_swap**; `func_80237A0C` at 92.1% with 0 structural / 8 reg_swap. The 2-swap is not a color error — dests already match (`self→r27/r25`, `arg2→r29/r26`) — only the two independent post-`stmw` `or` copies are swapped (retail `r4` then `r3`; MWCC ABI order `r3` then `r4`). `func_80237A0C` adds 6 stack-displacement diffs: retail reuses the unsigned i2f home at `sp+72/76` for the first xoris conversion then `80/84` for the second; decomp allocates fresh `80/84` and `88/92`.
+- Cause:     Post-`stmw` param-save copies are inserted in incoming ABI order and the width-2 ready-list emits that order. Source first-use / shadows / `const` / comma-operator / `#pragma scheduling off` / `#pragma optimization_level 3` / `optimize_for_size` do not flip it (scheduling off keeps r3-first and adds 9 structural). Witness closed (`bl` + abi-boundary `rho r3→r4`). 37A0C slot extra: implicit `(float)s32` temps do not overlay the dead unsigned home.
+- Fix:       None from C++ this pass. Reverted all probes. Next angle is the Wii/1.1 scheduler ready-list tie-break for independent param mrs, not more decl-order experiments.
+- Result:    95.5–96.0% near-miss (11 ids); 92.1% near-miss (`us-8023991c`). No cycle (live << registry; witness-blocked).
+- Evidence:  us-8023c100 / us-8023c1c8 / us-8023c350 / us-8023beb4 / us-8023cd8c / us-8023c5dc / us-8023c964 / us-8023c290 / us-8023c8b4 / us-8023ca2c / us-8023cadc / us-8023991c / src/kyoshin/CArtsInfo.cpp

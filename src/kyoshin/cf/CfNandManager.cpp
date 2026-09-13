@@ -577,7 +577,7 @@ inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* 
     struct Arr48 { u32 w[48]; };
     struct Arr36 { u32 w[36]; };
     *(Arr48*)&src->head.f024 = *(Arr48*)&dst->head.f024;
-    *(Arr36*)((u8*)src + 0xE4) = *(Arr36*)((u8*)dst + 0xE4);
+    *(Arr36*)&src->arr028[47] = *(Arr36*)&dst->arr028[47];
     u16 t178 = dst->f178;
     cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>((u8*)src + 0x17C);
     src->f178 = t178;

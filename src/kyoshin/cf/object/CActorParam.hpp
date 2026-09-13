@@ -624,7 +624,8 @@ virtual void* CActorParam_getBonusStats(); //0x22C (retail impl returns the +0x1
         virtual float CActorParam_UnkVirtualFunc171(); //0x340
         virtual void CActorParam_UnkVirtualFunc172(); //0x344
         virtual void CActorParam_UnkVirtualFunc173(); //0x348
-        virtual void CActorParam_applyArtsStats(); //0x34C
+        // Retail symbol is Fv; real ABI passes arts/char-data in r4 (CActorParam174Arg*).
+        virtual void CActorParam_applyArtsStats(void* arts); //0x34C
         virtual void CActorParam_updateHateEntries(float dt); //0x350
         virtual void CActorParam_decayArtsMatrix(float f1); //0x354
         virtual void CActorParam_updateStatusEntries(float dt); //0x358

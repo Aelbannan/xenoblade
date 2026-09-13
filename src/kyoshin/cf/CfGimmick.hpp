@@ -16,7 +16,7 @@ class CfGimmick {
 public:
     ~CfGimmick();
 
-    /* 0x00 */ void* vtable;   // set to lbl_eu_80535844 by __ct__cf_CfGimmick
+    /* 0x00 */ u32* vtable;    // set to lbl_eu_80535844 by __ct__cf_CfGimmick
     /* 0x04 */ u8 gap04[0x30 - 0x04];
     /* 0x30 */ f32 field_30;   // 0x30 - horizontal radius / half-extent
     /* 0x34 */ f32 field_34;   // 0x34 - vertical extent (low)
@@ -71,8 +71,9 @@ struct CfGimmickVec3u {
 
 // Container whose first member (0x00) is a registered-object pointer used by
 // func_8020A434 to unregister from the global resource manager.
+struct CfGimmickObject;  // defined below
 struct CfGimmickReg {
-    void* field_00;
+    CfGimmickObject* field_00;
 };
 
 // Object spawned by func_8020A6B0 via func_800B20B4.  The vtable is used to
@@ -108,10 +109,10 @@ struct CfGimmickObject : public cf::CfObject {
 struct CfGimmickListNode {
     CfGimmickListNode* next;    // 0x00
     u8 gap04[0x08 - 0x04];      // 0x04..0x07
-    void* object;               // 0x08
+    cf::CfObject* object;       // 0x08
 };
 struct CfGimmickList {
-    void* field_00;             // 0x00
+    u32* field_00;              // 0x00
     CfGimmickListNode* head;    // 0x04
 };
 

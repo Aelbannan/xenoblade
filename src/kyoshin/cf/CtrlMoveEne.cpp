@@ -2897,6 +2897,11 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 pred.x += dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
                 pred.z += dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
 
+                const f32 kFidx = lbl_eu_806665CC;
+                const f32 kDistScale = lbl_eu_80666658;
+                const f32 kAng = lbl_eu_8066A210;
+                const f64 kBias = lbl_eu_80666620;
+                const f32 kProx = lbl_eu_8066667C;
                 int found = 0;
                 for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
                     cf::CFunc80091864Actor* cand =
@@ -2910,12 +2915,10 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                     s32 iv = (s32)tgt->field_E0;
                     s32 irem360 = iv - iv / 360 * 360;
                     s32 irem100 = iv - iv / 100 * 100;
-                    f32 iang = (f32)((f64)irem360 - lbl_eu_80666620) *
-                               lbl_eu_8066A210;
-                    f32 idist =
-                        lbl_eu_80666658 *
-                            (f32)((f64)irem100 - lbl_eu_80666620) * radius +
-                        cand->field_44D8 + player->field_44D8;
+                    f32 iang = (f32)((f64)irem360 - kBias) * kAng;
+                    f32 idist = kDistScale *
+                                    (f32)((f64)irem100 - kBias) * radius +
+                                cand->field_44D8 + player->field_44D8;
                     f32 ihead =
                         (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player +
                                                              0x5B4))(player) +
@@ -2923,14 +2926,11 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                     ml::CVec3 ip =
                         *reinterpret_cast<cf::CfObject*>(&cand->mSub)
                              ->CfObject_getPosVector();
-                    ip.x += idist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                                            ihead);
-                    ip.z += idist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                                            ihead);
+                    ip.x += idist * SinFIdx__Q24nw4r4mathFf(kFidx * ihead);
+                    ip.z += idist * CosFIdx__Q24nw4r4mathFf(kFidx * ihead);
                     f32 dx = pred.x - ip.x;
                     f32 dz = pred.z - ip.z;
-                    f32 th = lbl_eu_8066667C *
-                             (ene->field_44D8 + cand->field_44D8);
+                    f32 th = kProx * (ene->field_44D8 + cand->field_44D8);
                     if (dx * dx + dz * dz <= th * th) {
                         found = 1;
                         break;
@@ -3200,6 +3200,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                         len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
                     }
                 }
+                speed = self->field_0x60;
                 speed = speed + lbl_eu_806665F0 * (len - nearR);
                 if (speed < lbl_eu_806665C0) speed = lbl_eu_806665C0;
                 self->field_0x58 = (u16)(self->field_0x58 | 0x400);
@@ -3214,6 +3215,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                         len = distSq * FrSqrt__Q24nw4r4mathFf(distSq);
                     }
                 }
+                speed = self->field_0x60;
                 speed = speed + lbl_eu_806665F0 * (len - farR);
                 if (speed < lbl_eu_806665C0) speed = lbl_eu_806665C0;
                 self->field_0x58 = (u16)(self->field_0x58 | 0x400);
@@ -3222,9 +3224,11 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
             }
         } else {
             if (nearR * nearR > distSq) {
+                speed = self->field_0x60;
                 speed = speed * lbl_eu_80666688;
                 self->field_0x58 = (u16)(self->field_0x58 | 0x400);
             } else if (farR * farR > distSq) {
+                speed = self->field_0x60;
                 speed = speed * lbl_eu_80666688;
                 self->field_0x58 = (u16)(self->field_0x58 | 0x400);
             } else {
@@ -3291,10 +3295,10 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     ml::CVec3 savedVel = self->mVelocity;
     ml::CVec3 dir;
     if ((self->field_0x180 & 0x8) != 0) {
-        func_80089398((cf::CCtrlMoveEne*)self, &dir, &goal, 0);
+        func_80089398(selfRaw, &dir, &goal, 0);
     } else {
         ((void (*)(cf::CCtrlMoveEne*, ml::CVec3*, const ml::CVec3*, f32))
-             func_8008CDE8)((cf::CCtrlMoveEne*)self, &dir, &goal,
+             func_8008CDE8)(selfRaw, &dir, &goal,
                             lbl_eu_80666690 * ene->field_44D8);
     }
     self->mVelocity = savedVel;
@@ -3351,8 +3355,8 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    func_800898D4((cf::CCtrlMoveEne*)self, &dir);
-    func_80089694((cf::CCtrlMoveEne*)self, &dir, speed);
+    func_800898D4(selfRaw, &dir);
+    func_80089694(selfRaw, &dir, speed);
 
     ml::CVec3* ep2 = reinterpret_cast<cf::CfObject*>(&ene->mSub)
                          ->CfObject_getPosVector();

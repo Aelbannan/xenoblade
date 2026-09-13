@@ -5,7 +5,11 @@
 
 #include "monolib/device/CDeviceVI.hpp"
 
+#define private public
+#define protected public
 #include <nw4r/ut/ut_TextWriterBase.h>
+#undef private
+#undef protected
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
 
@@ -30,8 +34,7 @@ struct GXCacheTextProjection {
 // `hi` is the caller's 0xFF000000 mask (retail r30), shared with compact checks.
 #define VALIDATE_NW4R_POINTER_HI(pointer, hi, file, line, message)             \
     {                                                                         \
-        /* Forward decl: in this TU's live pressure MWCC colors high→low, so  \
-         * validMem1 (first) lands in r9 like retail. */                      \
+        /* Forward decl restored — reverse still emitted li r9..r4. */       \
         bool validMem1 = true;                                                 \
         bool validMem2 = true;                                                 \
         bool validIo = true;                                                   \
@@ -1673,7 +1676,12 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
     {
+        // Non-volatile Color from valid=false shares one li rN,0 (volatile
+        // rematerializes a second zero). Address-take keeps ctor stbs in the
+        // compact-check window (else construction sinks past Panic).
         bool valid = false;
+        nw4r::ut::Color color(valid, valid, valid, 255);
+        nw4r::ut::Color* colorKeep = &color;
         if (writerRegion == 0x80000000 ||
             ((u32)&writer & 0xFF800000) == 0x81000000 ||
             ((u32)&writer & 0xF8000000) == 0x90000000 ||
@@ -1687,13 +1695,19 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);
         }
-        writer.SetTextColor(nw4r::ut::Color(0, 0, 0, 255));
+        writer.mTextColor.start.r = colorKeep->r;
+        writer.mTextColor.start.g = colorKeep->g;
+        writer.mTextColor.start.b = colorKeep->b;
+        writer.mTextColor.start.a = colorKeep->a;
+        writer.UpdateVertexColor();
     }
 
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
+    // textRegion is only needed for later FLAG checks; computing it before
+    // printCheckedInitial lets the FF000000 rlwinm hoist into setCursor.
+    printCheckedInitial(&writer, writerRegion, text, 0);
     u32 textRegion = (u32)text & 0xFF000000;
-    printCheckedInitial(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
@@ -1706,6 +1720,8 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
 
     {
         bool valid = false;
+        nw4r::ut::Color color(255, 255, 255, 255);
+        nw4r::ut::Color* colorKeep = &color;
         if (writerRegion == 0x80000000 ||
             ((u32)&writer & 0xFF800000) == 0x81000000 ||
             ((u32)&writer & 0xF8000000) == 0x90000000 ||
@@ -1719,7 +1735,11 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);
         }
-        writer.SetTextColor(nw4r::ut::Color(255, 255, 255, 255));
+        writer.mTextColor.start.r = colorKeep->r;
+        writer.mTextColor.start.g = colorKeep->g;
+        writer.mTextColor.start.b = colorKeep->b;
+        writer.mTextColor.start.a = colorKeep->a;
+        writer.UpdateVertexColor();
     }
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
     printChecked(&writer, writerRegion, text, textRegion);

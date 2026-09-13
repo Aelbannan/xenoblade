@@ -672,11 +672,12 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         func_8014B120(&((cf::CChainBattleObj*)actor->unk0)->mField3380, &scratchB);
         {
             u8 state = ((cf::CChainHeadView*)self)->field_2;
-            self->mChainTime.mTimer = *(volatile f32*)&lbl_eu_80668A44;
+            u8 next = (u8)(state + 1);
+            self->mChainTime.mTimer = lbl_eu_80668A44;
             self->mChainTime.mEnabled = 0;
             self->mChainTime.mPaused = 1;
             self->mChainTimer1.unk0 = 0x3c;
-            ((cf::CChainHeadView*)self)->field_2 = (u8)(state + 1);
+            ((cf::CChainHeadView*)self)->field_2 = next;
         }
         break;
     }

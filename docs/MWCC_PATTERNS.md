@@ -3111,6 +3111,14 @@ be the intended fix rather than externing the data.
 - Confidence: repo_proven (CEquipItemBox func_80286454 + func_802861A8 slot-34 confirmation)
 - Applies to/a.k.a.: any virtual call through a view class; grep for `lwz r12,` followed by `mtctr/bctrl` in unmatched functions
 
+## Unsigned `-(a<b)` `li r0,-1; subfe` loses the schedule hole to an independent `field=1` store (CItemBoxGrid func_801CCAF0, Wii/1.1 -O4,p + optimize_for_size)
+- Symptom:   Retail `subfc; …; li r0,-1; subfe r3,r0,r0; stb flag; li r0,1; stb other`. Decomp either signed-`rlwinm` (size-exact) or unsigned with `li r0,1; stb other` in the hole and short `subfe rD,rD,rD` (8 bytes short).
+- Cause:     Both the compare’s `-1` and the later `= 1` store want `r0`. The independent store is ready at `subfc` and steals the hole. A following call is a barrier, so writing the `=1` store after the call cannot match retail’s pre-call store. Comma/`leftover` locals do not create a real dep; `(under&0)+1` folds.
+- Fix:       Keep the `=1` store data-dependent on the compare result without folding, or otherwise occupy the hole with `item`/`count-1` so `li r0,-1` wins. Not yet a closed source recipe — see CASES `func_801CCAF0`.
+- Result:    80.1% near-miss when signed casts pad size; unsigned+store-before-call regresses to ~69%
+- Confidence: hypothesis
+- Applies to/a.k.a.: `-(unsigned)(a<b)` vs later `p[off]=1`; subfe vs rlwinm sign-bit
+
 ## Diff-1 return pairs: `if (c) return K; return K+1;` lowers to branchless addic/subfe — route through a named local (func_8028876C fix, Wii/1.1 -O4,p)
 - Symptom:   state-code dispatchers returning adjacent constants (`if (vis) return 0x1d; return 0x1c;`) emitted branchless `addic r0,c,-1 / subfe / addi r3,r3,K` selects where retail has explicit `cmpi / li FALSE / beq / li TRUE / b`
 - Cause:     MWCC's integer-select formation fires only when the two result constants differ by exactly 1 (carry trick yields 0/1 offset); diff>=2 pairs keep branches

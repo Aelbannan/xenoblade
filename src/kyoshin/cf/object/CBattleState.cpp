@@ -1298,8 +1298,7 @@ P1_10:
         } else {
             obj = (u8*)this->CBattleState_getOwner();
             if (*(u32*)(obj + 0x3374) & 0x40) {
-                f32 cur20 = arg->unk20;
-                arg->unk20 = (f32)(cur20 * lbl_eu_80667408);
+                arg->unk20 = (f32)(arg->unk20 * lbl_eu_80667408);
             }
         }
     }
@@ -1322,69 +1321,73 @@ P1_done:
 
     // -- Phase 4: set bitfield at this+0x15AC ------------------------
     {
-        u32 one = 1;
         u32 bitId = arg->unk0C;
-        *(u32*)(unk15AC + ((bitId >> 3) & ~3u)) |= one << (bitId & 0x1F);
+        *(u32*)(unk15AC + ((bitId >> 3) & ~3u)) |= 1u << (bitId & 0x1F);
     }
 
     // -- Phase 5: kind kept in r31 for the empty-slot scan -----------
-    kind2 = getEnterStatusKind(arg->unk0C);
+    // Address-taken id so tree 2+ does not CSE onto the bitfield's r3=1.
+    {
+        int classify = arg->unk0C;
 
-    // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
-    if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
-        if (!(arg->unk30 & 0x800)) {
-            if (getEnterStatusKind(arg->unk0C) == 0) {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
-            } else if (getEnterStatusKind(arg->unk0C) == 1) {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
-            } else {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
-            }
-            func_8013DB6C(6, arg->unk0C, 0, 0);
-            goto after_dispatch;
-        }
-    }
+        kind2 = getEnterStatusKind(classify);
 
-    // -- Branch B ----------------------------------------------------
-    if (getEnterStatusKind(arg->unk0C) == 0) {
-        if (!(arg->unk30 & 0x800)) {
-            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
-                goto after_dispatch;
-            }
-            {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+        // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
+        if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
+            if (!(arg->unk30 & 0x800)) {
+                if (getEnterStatusKind(classify) == 0) {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
+                } else if (getEnterStatusKind(classify) == 1) {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
+                } else {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
+                }
                 func_8013DB6C(6, arg->unk0C, 0, 0);
                 goto after_dispatch;
             }
         }
-    }
 
-    if (getEnterStatusKind(arg->unk0C) == 1) {
-        if (!(arg->unk30 & 0x800)) {
-            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+        // -- Branch B ----------------------------------------------------
+        if (getEnterStatusKind(classify) == 0) {
+            if (!(arg->unk30 & 0x800)) {
+                if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+                    goto after_dispatch;
+                }
+                {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+                    func_8013DB6C(6, arg->unk0C, 0, 0);
+                    goto after_dispatch;
+                }
+            }
+        }
+
+        if (getEnterStatusKind(classify) == 1) {
+            if (!(arg->unk30 & 0x800)) {
+                if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+                    goto after_dispatch;
+                }
+                if (arg->unk30 & 0x20000) {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
+                } else {
+                    u8* obj = (u8*)this->CBattleState_getOwner();
+                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
+                }
+                func_8013DB6C(6, arg->unk0C, 0, 0);
                 goto after_dispatch;
             }
-            if (arg->unk30 & 0x20000) {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
-            } else {
-                u8* obj = (u8*)this->CBattleState_getOwner();
-                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
-            }
-            func_8013DB6C(6, arg->unk0C, 0, 0);
-            goto after_dispatch;
         }
-    }
 
-    if (getEnterStatusKind(arg->unk0C) == 3) {
-        if (!(arg->unk30 & 0x800)) {
-            u8* obj = (u8*)this->CBattleState_getOwner();
-            func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
-            func_8013DB6C(6, arg->unk0C, 0, 0);
+        if (getEnterStatusKind(classify) == 3) {
+            if (!(arg->unk30 & 0x800)) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+                func_8013DB6C(6, arg->unk0C, 0, 0);
+            }
         }
     }
 
@@ -1445,23 +1448,22 @@ after_dispatch:
             for (count = 0x68; count != 0; count--, slot++) {
                 if (slot->unk0C != entryId)
                     continue;
-                {
-                    u32 slotKey = slot->unk00;
-                    if (slotKey != arg->unk00)
-                        continue;
-                }
+                if (slot->unk00 != arg->unk00)
+                    continue;
                 if (slot->unk04 != arg->unk04)
                     continue;
                 if (slot->unk08 != arg->unk08)
                     continue;
 
                 if (entryId - 0xf <= 1u) {
+                    f32 sum1C, sum20, sum28;
                     f32 old28 = slot->unk28;
                     f32 old20 = slot->unk20;
                     f32 old1C = slot->unk1C;
-                    slot->unk00 = arg->unk00;
-                    slot->unk04 = arg->unk04;
-                    slot->unk08 = arg->unk08;
+                    {
+                        struct WordPrefix { u32 a, b, c; };
+                        *(struct WordPrefix*)slot = *(struct WordPrefix*)arg;
+                    }
                     slot->unk0C = arg->unk0C;
                     slot->unk10 = arg->unk10;
                     slot->unk14 = arg->unk14;
@@ -1469,14 +1471,14 @@ after_dispatch:
                     slot->unk18 = arg->unk18;
                     slot->unk1A = arg->unk1A;
                     {
-                        f32 sum1C = arg->unk1C;
+                        sum1C = arg->unk1C;
                         slot->unk1C = sum1C;
                         sum1C = sum1C + old1C;
-                        f32 sum20 = arg->unk20;
+                        sum20 = arg->unk20;
                         slot->unk20 = sum20;
                         sum20 = sum20 + old20;
                         slot->unk24 = arg->unk24;
-                        f32 sum28 = arg->unk28;
+                        sum28 = arg->unk28;
                         slot->unk28 = sum28;
                         sum28 = sum28 + old28;
                         slot->unk2C = arg->unk2C;
@@ -1493,26 +1495,32 @@ after_dispatch:
                 }
 
                 if ((slot->unk30 & 4) && (arg->unk30 & 4)) {
-                    s32 old10 = slot->unk10;
                     f32 old28 = slot->unk28;
-                    slot->unk00 = arg->unk00;
-                    slot->unk04 = arg->unk04;
-                    slot->unk08 = arg->unk08;
+                    s32 old10 = slot->unk10;
+                    {
+                        struct WordPrefix { u32 a, b, c; };
+                        *(struct WordPrefix*)slot = *(struct WordPrefix*)arg;
+                    }
                     slot->unk0C = arg->unk0C;
-                    slot->unk10 = arg->unk10 + old10;
-                    slot->unk14 = arg->unk14;
-                    slot->unk16 = arg->unk16;
-                    slot->unk18 = arg->unk18;
-                    slot->unk1A = arg->unk1A;
-                    slot->unk1C = arg->unk1C;
-                    slot->unk20 = arg->unk20;
-                    slot->unk24 = arg->unk24;
-                    slot->unk28 = arg->unk28;
-                    slot->unk2C = arg->unk2C;
-                    slot->unk2E = arg->unk2E;
-                    slot->unk30 = arg->unk30;
-                    if (slot->unk18 < slot->unk10)
-                        slot->unk10 = slot->unk18;
+                    {
+                        s32 sum10 = arg->unk10;
+                        slot->unk10 = sum10;
+                        sum10 = sum10 + old10;
+                        slot->unk14 = arg->unk14;
+                        slot->unk16 = arg->unk16;
+                        slot->unk18 = arg->unk18;
+                        slot->unk1A = arg->unk1A;
+                        slot->unk1C = arg->unk1C;
+                        slot->unk20 = arg->unk20;
+                        slot->unk24 = arg->unk24;
+                        slot->unk28 = arg->unk28;
+                        slot->unk2C = arg->unk2C;
+                        slot->unk2E = arg->unk2E;
+                        slot->unk30 = arg->unk30;
+                        slot->unk10 = sum10;
+                        if (slot->unk18 < sum10)
+                            slot->unk10 = slot->unk18;
+                    }
                     slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
@@ -1526,22 +1534,7 @@ after_dispatch:
                 }
                 {
                     f32 old28 = slot->unk28;
-                    slot->unk00 = arg->unk00;
-                    slot->unk04 = arg->unk04;
-                    slot->unk08 = arg->unk08;
-                    slot->unk0C = arg->unk0C;
-                    slot->unk10 = arg->unk10;
-                    slot->unk14 = arg->unk14;
-                    slot->unk16 = arg->unk16;
-                    slot->unk18 = arg->unk18;
-                    slot->unk1A = arg->unk1A;
-                    slot->unk1C = arg->unk1C;
-                    slot->unk20 = arg->unk20;
-                    slot->unk24 = arg->unk24;
-                    slot->unk28 = arg->unk28;
-                    slot->unk2C = arg->unk2C;
-                    slot->unk2E = arg->unk2E;
-                    slot->unk30 = arg->unk30;
+                    *slot = *arg;
                     slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
@@ -1568,6 +1561,7 @@ after_dispatch:
                     dst = (cf::CBattleStateEntry*)base3;
 
                 if (dst->unk0C == 0) {
+                    f32 zero = lbl_eu_80667410;
                     dst->unk00 = arg->unk00;
                     dst->unk04 = arg->unk04;
                     dst->unk08 = arg->unk08;
@@ -1585,7 +1579,7 @@ after_dispatch:
                     dst->unk2E = arg->unk2E;
                     dst->unk30 = arg->unk30;
                     dst->unk1C = dst->unk20;
-                    if (lbl_eu_80667410 == dst->unk28) {
+                    if (zero == dst->unk28) {
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
                     this->CBattleState_notifyEntryUpdated(dst);

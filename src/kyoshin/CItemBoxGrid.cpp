@@ -3991,9 +3991,10 @@ void func_801CCAF0(void* self) {
                 u32 v1 = func_801C618C(sub, *(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
                 u32 v2 = func_801C618C(sub, (u16)kind, item, *(u16*)(p + 0x52a));
                 if (v1 > v2) return;
-                u32 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
-                u32 test = func_801C618C(sub, nVal & 0xFFFF, 0, 0);
-                p[0x52d] = (u8)((s8)-((v2 - v1) < test));
+                u16 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
+                u32 test = func_801C618C(sub, nVal, 0, 0);
+                s32 neg = -((s32)(v2 - v1) < (s32)test);
+                p[0x52d] = (u8)neg;
                 func_801D11B8(p, item, (s8)count - 1);
                 p[0x52c] = 1;
                 func_801393CC(*(u16*)(p + 0x52e));
@@ -4004,12 +4005,13 @@ void func_801CCAF0(void* self) {
                 incrementEventCounter__FUl(0xbb);
                 incrementEventCounter__FUl(0xbc);
                 incrementEventCounter__FUl(0xbd);
-                s32 eqId = *(u16*)(p + 0x52e);
-                if (eqId == 0x7ee) incrementEventCounter__FUl(0xbe);
-                else if (eqId == 0x835) incrementEventCounter__FUl(0xbf);
-                else if (eqId == 0x7ef) incrementEventCounter__FUl(0xc0);
-                else if (eqId == 0x837) incrementEventCounter__FUl(0xc1);
-                else if (eqId == 0x836) incrementEventCounter__FUl(0xc2);
+                switch ((s32)*(u16*)(p + 0x52e)) {
+                case 0x7ee: incrementEventCounter__FUl(0xbe); break;
+                case 0x835: incrementEventCounter__FUl(0xbf); break;
+                case 0x7ef: incrementEventCounter__FUl(0xc0); break;
+                case 0x837: incrementEventCounter__FUl(0xc1); break;
+                case 0x836: incrementEventCounter__FUl(0xc2); break;
+                }
             }
             func_8022D0D0(p + 0x440);
             *(u32*)(p + 0x58) = 0xe;

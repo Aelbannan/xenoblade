@@ -1307,11 +1307,11 @@ unk28_done:
 
 
 extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, void* arts) {
-    bool flag = false;
+    int flag = 0;
     if (arts != NULL) {
-        if (func_800B8B94(*(u16*)arts)) flag = true;
+        if (func_800B8B94(*(u16*)arts)) flag = 1;
     }
-    if (self->CActorParam_getActor()) flag = true;
+    if (self->CActorParam_getActor()) flag = 1;
     if (self->CActorParam_getStatusTable() != NULL) {
         EnumListHolder holder;
         func_80043D90(&holder);
@@ -1349,11 +1349,14 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     }
 
     // Snapshot pass: copy the base-stat block (0x1650..0x16C8) into the
-    // working block (0x17E4..0x1858) field-by-field. Every source value sits
-    // in a local until its store, and the previous gauge floats stay live
-    // across vf34C(), which is what forces MWCC's large register frame.
+    // working block (0x17E4..0x1858). Retail loads t1650 into a high GPR
+    // immediately after preparing applyArtsStats args (or r4 / or r3).
     float v17E8 = *(float*)((u8*)self + 0x17E8);
     u32 t1650 = *(u32*)((u8*)self + 0x1650);
+    float v17F4 = *(float*)((u8*)self + 0x17F4);
+    float v17EC = *(float*)((u8*)self + 0x17EC);
+    float v17F0 = *(float*)((u8*)self + 0x17F0);
+    float f27 = lbl_eu_806677E4;
     float t1654 = *(float*)((u8*)self + 0x1654);
     float t1664 = *(float*)((u8*)self + 0x1664);
     float t1668 = *(float*)((u8*)self + 0x1668);
@@ -1388,11 +1391,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     u32 t16BC = *(u32*)((u8*)self + 0x16BC);
     u32 t16C0 = *(u32*)((u8*)self + 0x16C0);
     u32 t16C4 = *(u32*)((u8*)self + 0x16C4);
-    float v17F4 = *(float*)((u8*)self + 0x17F4);
     float t1660 = *(float*)((u8*)self + 0x1660);
-    float v17EC = *(float*)((u8*)self + 0x17EC);
     float t1658 = *(float*)((u8*)self + 0x1658);
-    float v17F0 = *(float*)((u8*)self + 0x17F0);
     float t165C = *(float*)((u8*)self + 0x165C);
     *(u32*)((u8*)self + 0x17E4) = t1650;
     *(float*)((u8*)self + 0x17E8) = t1654;
@@ -1432,32 +1432,48 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     *(u32*)((u8*)self + 0x1850) = t16BC;
     *(u32*)((u8*)self + 0x1854) = t16C0;
     *(u32*)((u8*)self + 0x1858) = t16C4;
-    self->CActorParam_applyArtsStats();
+    self->CActorParam_applyArtsStats(arts);
     if (self->CActorParam_getStatusTable() != NULL) {
         float ratio = v17E8 / v17F4;
+        // f26 starts as 0.0 before getCurrentSlotIndex (retail lfs f26 right after fdivs).
+        float f26 = lbl_eu_806677E4;
+        // Declare bLT before gm so it claims r15 (retail); gm lands in r14.
+        // That keeps r15 occupied and stops MWCC hoisting self+8 into a saved reg.
+        int bLT = ratio <= lbl_eu_8066782C;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
-        bool bLT = ratio < 0.5f;
         (void)bLT;
         u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
-        bool c = ((t & 0x3F) == 6) || ((t & 0x3F) == 7);
-        if (!c) c = (t & 0x7C0) == 448;
-        if (!c) c = func_80174C98(self, &t, 9) || func_80174C98(self, &t, 10) || func_80174C98(self, &t, 11);
-        if (!c) c = ((t & 0x3F) == 19);
-        if (!c) c = ((t & 0x3F) == 18);
-        if (!c) c = ((t & 0x3F) == 20);
-        if (!c) c = func_80174C98(self, &t, 22) || func_80174C98(self, &t, 23) || func_80174C98(self, &t, 15);
-        if (!c) c = ((t & 0x3F) == 21);
-        if (!c) c = ((t & 0x3F) == 24);
-        if (!c) c = ((t & 0x3F) == 25);
-        if (!c) c = ((t & 0x3F) == 26);
-        if (!c) c = ((t & 0x3F) == 27);
-        if (!c) c = ((t & 0x3F) == 16);
-        if (!c) c = ((t & 0x3F) == 13);
-        if (!c) c = ((t & 0x3F) == 15);
-        if (!c) c = ((t & 0x3F) == 31);
-        float f26 = 0.0f;
-        if (c) f26 = 1.0f;
-        float f27 = 0.0f; // retail keeps a zero FPR live into 0x3368/0x1724 clears
+        // int + separate assigns → MWCC cntlzw equality idiom (not cmpli on bool||).
+        int c = ((t & 0x3F) == 6);
+        if (c == 0) c = ((t & 0x3F) == 7);
+        if (c == 0) c = ((t & 0x7C0) == 448);
+        if (c == 0) {
+            c = 0;
+            if (func_80174C98(self, &t, 9) || func_80174C98(self, &t, 10) ||
+                func_80174C98(self, &t, 11)) {
+                c = 1;
+            }
+        }
+        if (c == 0) c = ((t & 0x3F) == 19);
+        if (c == 0) c = ((t & 0x3F) == 18);
+        if (c == 0) c = ((t & 0x3F) == 20);
+        if (c == 0) {
+            c = 0;
+            if (func_80174C98(self, &t, 22) || func_80174C98(self, &t, 23) ||
+                func_80174C98(self, &t, 15)) {
+                c = 1;
+            }
+        }
+        if (c == 0) c = ((t & 0x3F) == 21);
+        if (c == 0) c = ((t & 0x3F) == 24);
+        if (c == 0) c = ((t & 0x3F) == 25);
+        if (c == 0) c = ((t & 0x3F) == 26);
+        if (c == 0) c = ((t & 0x3F) == 27);
+        if (c == 0) c = ((t & 0x3F) == 16);
+        if (c == 0) c = ((t & 0x3F) == 13);
+        if (c == 0) c = ((t & 0x3F) == 15);
+        if (c == 0) c = ((t & 0x3F) == 31);
+        if (c != 0) f26 = lbl_eu_806677E8;
         (void)v17F4; // keep pre-snapshot max live across the mid-section calls
         if (func_8026178C(self->CActorParam_getStatusTable(), 37) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 37);
@@ -1477,7 +1493,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 152) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 152);
-            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x174E) += (s16)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x174E) += (s16)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 34) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 34);
@@ -1501,7 +1517,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 4) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 4);
-            if (r != 0 && ratio >= 1.0f && f26 != 0.0f) *(s16*)((u8*)self + 0x174C) += (s16)r;
+            if (r != 0 && ratio >= lbl_eu_806677E8 && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x174C) += (s16)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 9) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 9);
@@ -1509,7 +1525,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 10) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 10);
-            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x1758) += (s16)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x1758) += (s16)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 149) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 149);
@@ -1520,7 +1536,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 17) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 17);
-            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x1750) += (s16)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x1750) += (s16)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 21) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 21);
@@ -1528,7 +1544,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 22) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 22);
-            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x16FE) += (s16)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(s16*)((u8*)self + 0x16FE) += (s16)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 27) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 27);
@@ -1547,7 +1563,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 40) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 40);
-            if (r != 0 && bLT && f26 != 0.0f) *(u8*)((u8*)self + 0x171D) += (u8)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)self + 0x171D) += (u8)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 41) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 41);
@@ -1559,7 +1575,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 43) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 43);
-            if (r != 0 && bLT && f26 != 0.0f) *(u8*)((u8*)self + 0x171F) += (u8)r;
+            if (r != 0 && bLT && f26 != lbl_eu_806677E4) *(u8*)((u8*)self + 0x171F) += (u8)r;
         }
         if (func_8026178C(self->CActorParam_getStatusTable(), 114) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 114);
@@ -1569,8 +1585,10 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (func_8026178C(self->CActorParam_getStatusTable(), 45) != 0) {
             r45 = func_8025FB10(self->CActorParam_getStatusTable(), 45);
             if (r45 != 0) {
-                float f2 = *(float*)((u8*)self + 0x1808) * (1.0f + (float)r45 / 100.0f);
-                float f0 = *(float*)((u8*)self + 0x180C) * (1.0f + (float)r45 / 100.0f);
+                float f2 = *(float*)((u8*)self + 0x1808) *
+                           (lbl_eu_806677E8 + (float)r45 / lbl_eu_80667818);
+                float f0 = *(float*)((u8*)self + 0x180C) *
+                           (lbl_eu_806677E8 + (float)r45 / lbl_eu_80667818);
                 *(float*)((u8*)self + 0x1808) = f2;
                 *(float*)((u8*)self + 0x180C) = f0;
                 if (f2 > f0) *(float*)((u8*)self + 0x1808) = f0;
@@ -1625,30 +1643,74 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         *(s16*)((u8*)self + 0x18DA) = *(s16*)((u8*)self + 0x1746);
 
         s16 t45 = (s16)r45;
-        if ((float)t45 < 0.7f * (float)*(s16*)((u8*)self + 0x166C)) {
-            *(s16*)((u8*)self + 0x1878) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x166C));
+        float floorMul = lbl_eu_80667858; // 0.7f
+        if ((float)t45 < floorMul * (float)*(s16*)((u8*)self + 0x166C)) {
+            *(s16*)((u8*)self + 0x1878) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166C));
         }
-        if ((float)*(s16*)((u8*)self + 0x187C) < 0.7f * (float)*(s16*)((u8*)self + 0x1670)) {
-            *(s16*)((u8*)self + 0x187C) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x1670));
+        if ((float)*(s16*)((u8*)self + 0x187C) <
+            floorMul * (float)*(s16*)((u8*)self + 0x1670)) {
+            *(s16*)((u8*)self + 0x187C) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x1670));
         }
-        if ((float)*(s16*)((u8*)self + 0x187A) < 0.7f * (float)*(s16*)((u8*)self + 0x166E)) {
-            *(s16*)((u8*)self + 0x187A) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x166E));
+        if ((float)*(s16*)((u8*)self + 0x187A) <
+            floorMul * (float)*(s16*)((u8*)self + 0x166E)) {
+            *(s16*)((u8*)self + 0x187A) =
+                (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166E));
         }
         *(s16*)((u8*)self + 0x1894) += *(u8*)((u8*)self + 0x1898);
 
         if (func_8026178C(self->CActorParam_getStatusTable(), 48) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 48);
             if (r != 0) {
-                void* o = static_cast<cf::CBattleState*>(self)->CBattleState_getStatusBlock();
-                bool ok = (*(u16*)((u8*)o + 4) == 0) && (*(u16*)((u8*)o + 0x14) == 0) &&
-                          (*(u16*)((u8*)o + 0x24) == 0) && (*(u16*)((u8*)o + 0x34) == 0) &&
-                          (*(u16*)((u8*)o + 0x44) == 0) && (*(u16*)((u8*)o + 0x54) == 0) &&
-                          (*(u16*)((u8*)o + 0x64) == 0) && (*(u16*)((u8*)o + 0x74) == 0);
-                if (ok) {
-                    *(s16*)((u8*)self + 0x174C) += (s16)r;
-                    *(s16*)((u8*)self + 0x1750) += (s16)r;
-                    *(s16*)((u8*)self + 0x174E) += (s16)r;
-                    *(s16*)((u8*)self + 0x1746) += (s16)r;
+                u8* o = (u8*)reinterpret_cast<cf::CBattleState*>((u8*)self + 8)
+                            ->CBattleState_getStatusBlock();
+                int ok;
+                if (*(u16*)(o + 4) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x14) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                o += 0x20;
+                if (*(u16*)(o + 4) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x14) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x24) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x34) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x44) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                if (*(u16*)(o + 0x54) != 0) {
+                    ok = 0;
+                    goto status48_done;
+                }
+                ok = 1;
+            status48_done:
+                if (ok != 0) {
+                    s16 delta = (s16)r;
+                    *(s16*)((u8*)self + 0x174C) =
+                        (s16)(*(s16*)((u8*)self + 0x174C) + delta);
+                    *(s16*)((u8*)self + 0x1750) =
+                        (s16)(*(s16*)((u8*)self + 0x1750) + delta);
+                    *(s16*)((u8*)self + 0x174E) =
+                        (s16)(*(s16*)((u8*)self + 0x174E) + delta);
+                    *(s16*)((u8*)self + 0x1746) =
+                        (s16)(*(s16*)((u8*)self + 0x1746) + delta);
                 }
             }
         }
@@ -1802,10 +1864,12 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         // Post-walk: apply percentage rates (field+100)/100 onto working stats,
         // merge bonus fields, clamp floors, then scale gauges from 0x177C/0x1768.
         {
-            float hundred = lbl_eu_80667818;
-            float rateAtk = (float)(*(s16*)((u8*)self + 0x174C) + 100) / hundred;
-            float rateEth = (float)(*(s16*)((u8*)self + 0x174E) + 100) / hundred;
-            float rateAgi = (float)(*(s16*)((u8*)self + 0x1750) + 100) / hundred;
+            float rateAtk =
+                (float)(*(s16*)((u8*)self + 0x174C) + 100) / lbl_eu_80667818;
+            float rateEth =
+                (float)(*(s16*)((u8*)self + 0x174E) + 100) / lbl_eu_80667818;
+            float rateAgi =
+                (float)(*(s16*)((u8*)self + 0x1750) + 100) / lbl_eu_80667818;
             s16 sumAtk = (s16)(*(s16*)((u8*)self + 0x1800) + *(s16*)((u8*)self + 0x16E4));
             s16 sumEth = (s16)(*(s16*)((u8*)self + 0x1802) + *(s16*)((u8*)self + 0x16E6));
             s16 sumAgi = (s16)(*(s16*)((u8*)self + 0x1804) + *(s16*)((u8*)self + 0x16E8));
@@ -1825,35 +1889,42 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 (s16)(*(s16*)((u8*)self + 0x1844) + *(s16*)((u8*)self + 0x1728));
             *(s16*)((u8*)self + 0x1846) =
                 (s16)(*(s16*)((u8*)self + 0x1846) + *(s16*)((u8*)self + 0x172A));
-            *(s16*)((u8*)self + 0x1800) = (s16)(int)((float)sumAtk * rateAtk);
-            *(s16*)((u8*)self + 0x1802) = (s16)(int)((float)sumEth * rateEth);
-            *(s16*)((u8*)self + 0x1804) = (s16)(int)((float)sumAgi * rateAgi);
+            *(s16*)((u8*)self + 0x1800) =
+                (s16)(int)((float)sumAtk * rateAtk + lbl_eu_806677E4);
+            *(s16*)((u8*)self + 0x1802) =
+                (s16)(int)((float)sumEth * rateEth + lbl_eu_806677E4);
+            *(s16*)((u8*)self + 0x1804) =
+                (s16)(int)((float)sumAgi * rateAgi + lbl_eu_806677E4);
 
-            float rateHit = (float)(*(s16*)((u8*)self + 0x1758) + 100) / hundred;
-            float rateEva = (float)(*(s16*)((u8*)self + 0x175C) + 100) / hundred;
-            float rateBlk = (float)(*(s16*)((u8*)self + 0x1746) + 100) / hundred;
+            float rateHit =
+                (float)(*(s16*)((u8*)self + 0x1758) + 100) / lbl_eu_80667818;
+            float rateEva =
+                (float)(*(s16*)((u8*)self + 0x175C) + 100) / lbl_eu_80667818;
+            float rateBlk =
+                (float)(*(s16*)((u8*)self + 0x1746) + 100) / lbl_eu_80667818;
             s16 hit = (s16)(*(s16*)((u8*)self + 0x1812) + *(s16*)((u8*)self + 0x16F6));
             s16 eva = (s16)(*(s16*)((u8*)self + 0x1816) + *(s16*)((u8*)self + 0x16FA));
-            *(s16*)((u8*)self + 0x1812) = (s16)(int)((float)hit * rateHit);
+            *(s16*)((u8*)self + 0x1812) =
+                (s16)(int)((float)hit * rateHit + lbl_eu_806677E4);
             *(float*)((u8*)self + 0x17F4) =
                 *(float*)((u8*)self + 0x17F4) * rateBlk + lbl_eu_806677E4;
-            *(s16*)((u8*)self + 0x1816) = (s16)(int)((float)eva * rateEva);
+            *(s16*)((u8*)self + 0x1816) =
+                (s16)(int)((float)eva * rateEva + lbl_eu_806677E4);
 
-            float floorMul = lbl_eu_80667858; // 0.7f
             if ((float)*(s16*)((u8*)self + 0x1800) <
-                floorMul * (float)*(s16*)((u8*)self + 0x166C)) {
+                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166C)) {
                 *(s16*)((u8*)self + 0x1800) =
-                    (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166C));
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166C));
             }
             if ((float)*(s16*)((u8*)self + 0x1804) <
-                floorMul * (float)*(s16*)((u8*)self + 0x1670)) {
+                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x1670)) {
                 *(s16*)((u8*)self + 0x1804) =
-                    (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x1670));
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x1670));
             }
             if ((float)*(s16*)((u8*)self + 0x1802) <
-                floorMul * (float)*(s16*)((u8*)self + 0x166E)) {
+                lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166E)) {
                 *(s16*)((u8*)self + 0x1802) =
-                    (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166E));
+                    (s16)(int)(lbl_eu_80667858 * (float)*(s16*)((u8*)self + 0x166E));
             }
 
             s16 phys = *(s16*)((u8*)self + 0x177C);
@@ -1868,7 +1939,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(s16*)((u8*)self + 0x177C) =
                 (s16)(int)((float)phys + *(float*)((u8*)self + 0x337C));
             *(float*)((u8*)self + 0x1840) =
-                *(float*)((u8*)self + 0x1840) * ((float)(phys + 100) / hundred);
+                *(float*)((u8*)self + 0x1840) *
+                ((float)(phys + 100) / lbl_eu_80667818);
             if (eth < -50) {
                 eth = -50;
                 *(s16*)((u8*)self + 0x1768) = -50;
@@ -1879,15 +1951,17 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             eth = *(s16*)((u8*)self + 0x1768);
             if (eth >= 0) {
                 *(float*)((u8*)self + 0x1824) =
-                    *(float*)((u8*)self + 0x1824) / ((float)(eth + 100) / hundred);
+                    *(float*)((u8*)self + 0x1824) /
+                    ((float)(eth + 100) / lbl_eu_80667818);
             } else {
                 *(float*)((u8*)self + 0x1824) =
-                    *(float*)((u8*)self + 0x1824) * ((float)(100 - eth) / hundred);
+                    *(float*)((u8*)self + 0x1824) *
+                    ((float)(100 - eth) / lbl_eu_80667818);
             }
 
             if (self->CActorParam_getActor() != NULL) {
-                void* actor = self->CActorParam_getActor();
-                if ((*(u32*)((u8*)actor + 0x3F00) & 2) != 0) {
+                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
+                    void* actor = self->CActorParam_getActor();
                     float* scale = reinterpret_cast<float*>(
                         reinterpret_cast<cf::CfObject*>((u8*)actor + 0x3E9C)
                             ->CfObject_getMoveRateScale());
@@ -1908,8 +1982,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 (s16)(*(s16*)((u8*)self + 0x181C) + (s16)*((u8*)self + 0x1820));
 
             if (self->CActorParam_getActor() != NULL) {
-                void* actor = self->CActorParam_getActor();
-                if ((*(u32*)((u8*)actor + 0x3F00) & 2) != 0) {
+                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
                     float hp = *(float*)((u8*)self + 0x17F4);
                     if (hp < lbl_eu_806677E4) {
                         *(float*)((u8*)self + 0x17F4) = lbl_eu_806677E4;
@@ -1934,18 +2007,17 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(float*)((u8*)self + 0x17EC) = v17EC;
             *(float*)((u8*)self + 0x17F0) = v17F0;
 
-            cf::CBattleState* bs =
-                reinterpret_cast<cf::CBattleState*>((u8*)self + 8);
-            if (func_80148778(bs, 100)) {
+            // Do not hoist self+8 — retail re-emits addi r3,r31,8 at every call.
+            if (func_80148778((u8*)self + 8, 100)) {
                 cf::CBattleStateEntry* e =
-                    (cf::CBattleStateEntry*)func_80149154(bs, 100);
+                    (cf::CBattleStateEntry*)func_80149154((u8*)self + 8, 100);
                 float add = (float)e->unk10 / lbl_eu_80667818;
                 *(float*)((u8*)self + 0x180C) =
                     *(float*)((u8*)self + 0x180C) * (lbl_eu_806677E8 + add);
             }
-            if (func_80148778(bs, 99)) {
+            if (func_80148778((u8*)self + 8, 99)) {
                 cf::CBattleStateEntry* e =
-                    (cf::CBattleStateEntry*)func_80149154(bs, 99);
+                    (cf::CBattleStateEntry*)func_80149154((u8*)self + 8, 99);
                 float add = (float)e->unk10 / lbl_eu_80667818;
                 float f1 = *(float*)((u8*)self + 0x1808) * (lbl_eu_806677E8 + add);
                 *(float*)((u8*)self + 0x1808) = f1;
@@ -1953,9 +2025,9 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                     *(float*)((u8*)self + 0x1808) = *(float*)((u8*)self + 0x180C);
                 }
             }
-            if (func_80148778(bs, 188)) {
+            if (func_80148778((u8*)self + 8, 188)) {
                 cf::CBattleStateEntry* e =
-                    (cf::CBattleStateEntry*)func_80149154(bs, 188);
+                    (cf::CBattleStateEntry*)func_80149154((u8*)self + 8, 188);
                 float factor = (float)(100 - (s32)e->unk10) / lbl_eu_80667818;
                 float cur = *(float*)((u8*)self + 0x3368);
                 if (cur != factor) {
@@ -1971,6 +2043,8 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
 
             std::memset((u8*)self + 0x16C8, 0, 120);
 
+            // Load both shuffle sources before any stores so MWCC keeps the
+            // full GPR save set live across the second memset (retail -304 frame).
             s16 s1770 = *(s16*)((u8*)self + 0x1770);
             s16 s1772 = *(s16*)((u8*)self + 0x1772);
             s16 s176C = *(s16*)((u8*)self + 0x176C);
@@ -1984,20 +2058,6 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             u32 w1786 = *(u32*)((u8*)self + 0x1786);
             u32 w178A = *(u32*)((u8*)self + 0x178A);
             u32 w178E = *(u32*)((u8*)self + 0x178E);
-            *(s16*)((u8*)self + 0x17BE) = s176C;
-            *(s16*)((u8*)self + 0x17C2) = s1770;
-            *(s16*)((u8*)self + 0x17C4) = s1772;
-            *(s16*)((u8*)self + 0x17C6) = s1774;
-            *(s16*)((u8*)self + 0x17C8) = s1776;
-            *(s16*)((u8*)self + 0x17CA) = s1778;
-            *(s16*)((u8*)self + 0x17CC) = s177A;
-            *(s16*)((u8*)self + 0x17CE) = s177C;
-            *(u32*)((u8*)self + 0x17D0) = w177E;
-            *(u32*)((u8*)self + 0x17D4) = w1782;
-            *(u32*)((u8*)self + 0x17D8) = w1786;
-            *(u32*)((u8*)self + 0x17DC) = w178A;
-            *(u32*)((u8*)self + 0x17E0) = w178E;
-
             s16 c1740 = *(s16*)((u8*)self + 0x1740);
             s16 c1742 = *(s16*)((u8*)self + 0x1742);
             s16 c1744 = *(s16*)((u8*)self + 0x1744);
@@ -2022,7 +2082,20 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             s16 c176A = *(s16*)((u8*)self + 0x176A);
             s16 c176E = *(s16*)((u8*)self + 0x176E);
 
-            std::memset((u8*)self + 0x1740, 0, 82);
+            *(s16*)((u8*)self + 0x17BE) = s176C;
+            *(s16*)((u8*)self + 0x17C2) = s1770;
+            *(s16*)((u8*)self + 0x17C4) = s1772;
+            *(s16*)((u8*)self + 0x17C6) = s1774;
+            *(s16*)((u8*)self + 0x17C8) = s1776;
+            *(s16*)((u8*)self + 0x17CA) = s1778;
+            *(s16*)((u8*)self + 0x17CC) = s177A;
+            *(s16*)((u8*)self + 0x17CE) = s177C;
+            *(u32*)((u8*)self + 0x17D0) = w177E;
+            *(u32*)((u8*)self + 0x17D4) = w1782;
+            *(u32*)((u8*)self + 0x17D8) = w1786;
+            *(u32*)((u8*)self + 0x17DC) = w178A;
+            *(u32*)((u8*)self + 0x17E0) = w178E;
+
             *(float*)((u8*)self + 0x1724) = lbl_eu_806677E8;
             *(s16*)((u8*)self + 0x1792) = c1740;
             *(s16*)((u8*)self + 0x1794) = c1742;
@@ -2047,10 +2120,11 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(s16*)((u8*)self + 0x17BA) = c1768;
             *(s16*)((u8*)self + 0x17BC) = c176A;
             *(s16*)((u8*)self + 0x17C0) = c176E;
+            std::memset((u8*)self + 0x1740, 0, 82);
 
             if (self->CActorParam_getActor() != NULL) {
-                void* actor = self->CActorParam_getActor();
-                if ((*(u32*)((u8*)actor + 0x3F00) & 2) != 0) {
+                if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {
+                    void* actor = self->CActorParam_getActor();
                     void* cd = func_8009EC9C(*(u16*)((u8*)actor + 0x3F28));
                     if (cd != NULL) {
                         u8* dst = (u8*)reinterpret_cast<cf::CActorParam*>(

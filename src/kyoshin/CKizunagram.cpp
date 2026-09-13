@@ -43,6 +43,7 @@ extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
 void playUISound(u32 number);
+extern "C" void func_801390E0(CFileHandle**);
 
 // Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84
 // (declaration moved to CKizunagram.hpp C-linkage imports).

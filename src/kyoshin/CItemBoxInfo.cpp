@@ -204,7 +204,7 @@ __attribute__((used)) u32 lbl_eu_806645D4;
 static inline void* func_80157C4C_1(u32 id) { return func_80157C4C(0, (s16)id); }
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
-void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, u8);
+void setLayoutTextBoxNumber(nw4r::lyt::Layout*, char*, unsigned int);
 u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float);
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
@@ -2303,11 +2303,14 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // comparisonStorage stays in the type-switch scope so it can overlay other
-    // large locals (function-scope forces +208 and shifts party off sp+2348).
+    // 208B record storage declared first and kept live across the party ping
+    // so it occupies the low frame slots under party (retail party @ sp+2348).
+    D8EComparisonStorage comparisonStorage;
     struct PartyData { u32 w[12]; };
     void* party = func_8009ECB0();
     PartyData partyData = *(PartyData*)((u8*)party + 4);
+    // Keep comparisonStorage live across the ping (prevents overlay with party).
+    volatile u32* cmpKeepAlive = comparisonStorage.weapon[0].words;
     for (u32 row = 0; row < 2; row++) {
         // u8 col: clrlwi truncation blocks pointer strength-reduction while
         // keeping rlwinm MB/ME at retail 22,29 (u16 widened the mask).
@@ -2319,6 +2322,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                     ((cf::CActorParam*)actor)->CActorParam_resetArtsStatus(NULL);
                 }
             }
+            (void)cmpKeepAlive[0];
         }
     }
 
@@ -2334,10 +2338,14 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // POD stand-in for ml::FixStr<32>: cast at format() sites so no FixStr
     // reference web occupies a callee-saved across the prologue/party ping.
-    struct {
+    // Two buffers: retail keeps distinct FixStr temps that don't fully overlay
+    // (single buffer left the frame 32B short / party 240B low).
+    struct FixStrPod {
         char mString[0x20];
         u32 mLength;
-    } textBuffer;
+    };
+    FixStrPod textBuffer;
+    FixStrPod textBufferB;
 
     // ---- HP values (clamped to 9999) ----
     // Both virtuals before either clamp — retail interleaves the two
@@ -2348,12 +2356,18 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
-    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], (u8)stats->CActorParam_getActorLevel());
-setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], (u8)stats->CActorParam_getTotalCurrency());
+    // Materialize the string-pool base once so MWCC folds the blob's +0x54
+    // parent offset into the HA/LO pair (retail relocates against
+    // lbl_eu_805063BC and then uses plain +0x139-style immediates).
+    char* base = lbl_eu_805063BC;
+    // Retail: func_8013639C(lbl_eu_80664090, base+0x139, member) — 3-arg.
+    func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4D7],
+        ((char*(*)(void*, char*, u32))&func_8013639C)(lbl_eu_80664090, &base[0x139], member), 0);
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4E3], stats->CActorParam_getActorLevel());
+    setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4F0], stats->CActorParam_getTotalCurrency());
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
     func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
-    func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
+    func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&base[0x130], &base[0x139], 0x82), 0);
 
     // ---- stat sub-objects ----
     D8EStatA* stA = (D8EStatA*)stats->CActorParam_getBaseStats();
@@ -2429,10 +2443,12 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hpStat);
             char* percentSuffix = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+            // Format both before either pane push so the two PODs stay live
+            // together and cannot share a frame slot (retail frame +32).
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
+            ((ml::FixStr<32>*)&textBufferB)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
-            ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
-            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.mString, 0);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBufferB.mString, 0);
 
             // ---- 20x color application ----
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2599,7 +2615,6 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
         else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
-        // Overlay-friendly: live only across the weapon/armor compare blocks.
         D8EComparisonStorage comparisonStorage;
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----

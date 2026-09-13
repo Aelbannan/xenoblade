@@ -176,8 +176,12 @@ void func_804E77C4(CMdlAnmEye* self) {
 // the retail symbols are literally `__ct__CMdlAnmEye` (unmangled) and
 // `__dt__10CMdlAnmEyeFv`; defining them as real CMdlAnmEye members would
 // change the emitted mangled names.
+struct CMdlAnmEyeVptrView {
+    u32* vtPrimary; // 0x00
+};
+
 extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
-    *(void**)self = (void*)&lbl_eu_805701D0;
+    ((CMdlAnmEyeVptrView*)self)->vtPrimary = lbl_eu_805701D0;
     self->field_04 = 0;
     self->field_1C = 0;
     self->field_20 = 0;

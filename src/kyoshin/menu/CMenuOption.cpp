@@ -424,7 +424,9 @@ void func_8029BECC(IScnRender* self) {
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuOptionFv
  */
 void func_8029BED4(IScnRender* self) {
-    ((void(*)(void*))__dt__11CMenuOptionFv)(reinterpret_cast<char*>(self) - 0x58);
+    // Single-arg cast: retail thunk only adjusts this; delete flag stays in r4.
+    ((void (*)(CMenuOption*))__dt__11CMenuOptionFv)(
+        reinterpret_cast<CMenuOption*>(reinterpret_cast<char*>(self) - 0x58));
 }
 
 unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }

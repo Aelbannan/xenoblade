@@ -57,18 +57,17 @@ u16 CharStrmReader::ReadNextCharSJIS() {
 } // namespace ut
 } // namespace nw4r
 
+// Retail .data pools: encoding ReadFunc table (0x8056AE30) + RomFont default
+// reader copy (0x8056AE60). Typed as CharStrmReader::ReadFunc to match Font.h.
 extern "C" {
-void ReadNextCharUTF8__Q34nw4r2ut14CharStrmReaderFv();
-void ReadNextCharUTF16__Q34nw4r2ut14CharStrmReaderFv();
-void ReadNextCharSJIS__Q34nw4r2ut14CharStrmReaderFv();
-void ReadNextCharCP1252__Q34nw4r2ut14CharStrmReaderFv();
-__declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_8056AE30[12] = {
-    (const void*)0, (const void*)0xFFFFFFFF, (const void*)&ReadNextCharUTF8__Q34nw4r2ut14CharStrmReaderFv,
-    (const void*)0, (const void*)0xFFFFFFFF, (const void*)&ReadNextCharUTF16__Q34nw4r2ut14CharStrmReaderFv,
-    (const void*)0, (const void*)0xFFFFFFFF, (const void*)&ReadNextCharSJIS__Q34nw4r2ut14CharStrmReaderFv,
-    (const void*)0, (const void*)0xFFFFFFFF, (const void*)&ReadNextCharCP1252__Q34nw4r2ut14CharStrmReaderFv,
+__declspec(section ".data") __attribute__((aligned(8)))
+nw4r::ut::CharStrmReader::ReadFunc lbl_eu_8056AE30[4] = {
+    &nw4r::ut::CharStrmReader::ReadNextCharUTF8,
+    &nw4r::ut::CharStrmReader::ReadNextCharUTF16,
+    &nw4r::ut::CharStrmReader::ReadNextCharSJIS,
+    &nw4r::ut::CharStrmReader::ReadNextCharCP1252,
 };
-__declspec(section ".data") __attribute__((aligned(8))) const void* lbl_eu_8056AE60[3] = {
-    (const void*)0, (const void*)0xFFFFFFFF, (const void*)&ReadNextCharCP1252__Q34nw4r2ut14CharStrmReaderFv,
-};
+__declspec(section ".data") __attribute__((aligned(8)))
+nw4r::ut::CharStrmReader::ReadFunc lbl_eu_8056AE60 =
+    &nw4r::ut::CharStrmReader::ReadNextCharCP1252;
 }

@@ -115,6 +115,11 @@ void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
 void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 void playUISound(u32 op);
 
+// Singleton factory (typed to __ct__CSystemWindow args).
+CSystemWindow* func_80124AEC(CProcess* parent, CScn* scene, u32 opt,
+                             const char* str1, const char* str2);
+CSystemWindow* func_80124B78();
+
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)
 extern u32 lbl_eu_80663E28;              // cbRenderBefore flag (.sbss)

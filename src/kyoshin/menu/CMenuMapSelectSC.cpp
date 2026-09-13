@@ -245,13 +245,10 @@ void CMenuMapSelectSC::Init() {
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(renderCB, 0xd, 1);
 }
 
-extern "C" void func_80251294(S* r3, const S* r4) {
-    // Volatile guard blocks -ipa inlining: retail keeps this as a standalone
-    // callee with four direct bl call sites from Init().
-    static volatile u8 sGuard = 0;
-    sGuard = 1;
-    S* dst = r3;
-    const S* src = r4;
+extern "C" void func_80251294(S* dst, const S* src) {
+    // Retail copies only +4..+15 (four words) and +20/+21 (two bytes).
+    // The leading dummy word is padding so field offsets match; it is
+    // never stored. No extra guard: that emitted a 2-insn sdata preamble.
     dst->a = src->a;
     dst->b = src->b;
     dst->c = src->c;

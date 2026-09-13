@@ -2344,29 +2344,36 @@ s32 func_8011C2E8() {
     return ((-v) | v) >> 31;
 }
 
-extern "C" s32 func_8011C2FC(void) {
-    void* g = (void*)lbl_eu_80663FB0;
-    if (!g) return;
-    ((u8*)g)[0x8d4] = 3;
-    ((u8*)g)[0x7c] = 3;
-    ((u8*)g)[0x7d] = 0;
-    if (*(void**)((u8*)g + 0x70)) {
-        nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)*(void**)((u8*)g + 0x70);
-        lay->SetAnimationEnable(
-            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0x78), false);
-        lay->SetAnimationEnable(
-            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0x74), true);
-        lay->Animate(0);
-    }
-    ((u8*)g)[0xa8] = 3;
-    ((u8*)g)[0xa9] = 0;
-    if (*(void**)((u8*)g + 0x9c)) {
-        nw4r::lyt::Layout* lay2 = (nw4r::lyt::Layout*)*(void**)((u8*)g + 0x9c);
-        lay2->SetAnimationEnable(
-            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0xa4), false);
-        lay2->SetAnimationEnable(
-            (nw4r::lyt::AnimTransform*)*(void**)((u8*)g + 0xa0), true);
-        lay2->Animate(0);
+extern "C" void func_8011C2FC(void) {
+    // Fall-through `if (g != 0)` — an early `return` on this s32 signature
+    // keeps r3 live as the pending return and forces `li r4,3`.
+    // First virtual call uses a block-local Layout*; later calls reload
+    // from g so the pointer is not saved across bctrl (retail: r31 only).
+    u8* g = (u8*)lbl_eu_80663FB0;
+    if (g != 0) {
+        g[0x8d4] = 3;
+        g[0x7c] = 3;
+        g[0x7d] = 0;
+        nw4r::lyt::Layout* lay = (nw4r::lyt::Layout*)*(void**)(g + 0x70);
+        if (lay != 0) {
+            lay->SetAnimationEnable(
+                (nw4r::lyt::AnimTransform*)*(void**)(g + 0x78), false);
+            ((nw4r::lyt::Layout*)*(void**)(g + 0x70))
+                ->SetAnimationEnable(
+                    (nw4r::lyt::AnimTransform*)*(void**)(g + 0x74), true);
+            ((nw4r::lyt::Layout*)*(void**)(g + 0x70))->Animate(0);
+        }
+        g[0xa8] = 3;
+        g[0xa9] = 0;
+        nw4r::lyt::Layout* lay2 = (nw4r::lyt::Layout*)*(void**)(g + 0x9c);
+        if (lay2 != 0) {
+            lay2->SetAnimationEnable(
+                (nw4r::lyt::AnimTransform*)*(void**)(g + 0xa4), false);
+            ((nw4r::lyt::Layout*)*(void**)(g + 0x9c))
+                ->SetAnimationEnable(
+                    (nw4r::lyt::AnimTransform*)*(void**)(g + 0xa0), true);
+            ((nw4r::lyt::Layout*)*(void**)(g + 0x9c))->Animate(0);
+        }
     }
 }
 

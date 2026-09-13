@@ -722,7 +722,7 @@ extern "C" void func_8013F244();
 extern "C" void func_8015B11C();
 extern "C" void* func_802A2424();
 extern "C" s32 func_8011C2E8();
-extern "C" s32 func_8011C2FC();
+extern "C" void func_8011C2FC();
 extern "C" void func_800B1C78(s32 value);
 extern "C" void CfRes_callFunc_67F10(s32 value);
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);

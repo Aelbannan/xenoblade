@@ -1254,5 +1254,9 @@ extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(
 void cf::CfDebugDrawManager::renderCapsule() {
     const ml::CVec3* vec;   // forwarded dangling r4 (retail: li r6,1; b Fb)
     const ml::CCol4* arg3;  // forwarded dangling r5
-    renderCylinder__Q22cf18CfDebugDrawManagerFb(this, vec, arg3, 1);
+    // 4-arg cast: the 5-arg declaration's default radius materializes
+    // `lfs f1, 1.0f` (retail leaves f1 dangling and tails in 0x8 bytes).
+    typedef void (*Fb4)(cf::CfDebugDrawManager*, const ml::CVec3*,
+                        const ml::CCol4*, bool);
+    ((Fb4)renderCylinder__Q22cf18CfDebugDrawManagerFb)(this, vec, arg3, 1);
 }

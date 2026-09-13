@@ -55,7 +55,7 @@ extern "C" void func_80213B1C(MakeCrystalTable* d);
 
 // 4-byte {s16, u8} crystal-entry copy helper (defined below the callers so
 // MWCC treats it out-of-line, matching retail's bl).
-static __declspec(noinline) void copyCrystalEntry(MakeCrystalEntry* dst,
+extern "C" __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
                                                   const MakeCrystalEntry* src);
 
 // Returns the table pointer (retail mr r3,r28 on the way out).
@@ -78,7 +78,7 @@ MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        copyCrystalEntry(&d->entries[i], &tmp);
+        func_8021351C(&d->entries[i], &tmp);
     }
     return d;
 }
@@ -86,10 +86,10 @@ MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
 // Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
 // out-of-line (bl) from the second reset loop; noinline keeps MWCC from
 // folding the body into the callers.
-static __declspec(noinline) void copyCrystalEntry(MakeCrystalEntry* dst,
+extern "C" __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
                                                   const MakeCrystalEntry* src) {
-    // Retail copies only the two meaningful bytes (lha/sth id + lbz/stb flag);
-    // a struct assignment would also copy pad3 and change the emitted code.
+    // Retail 0x80215374: 0x14-byte {s16,u8} copy (lha/sth + lbz/stb).
+    // A struct assignment would also copy pad3 and change the emitted code.
     dst->id = src->id;
     dst->flag = src->flag;
 }
@@ -111,7 +111,7 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        copyCrystalEntry(&d->entries[i], &tmp);
+        func_8021351C(&d->entries[i], &tmp);
     }
     int total = (int)func_80157C20(d->byte_1002);
     u16 i = 0;

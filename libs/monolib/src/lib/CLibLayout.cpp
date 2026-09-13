@@ -85,8 +85,10 @@ CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pN
 
 extern "C" void* __dt__8045F000(void* self, int flags) {
     if (self != 0) {
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x48) = 0;
-        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x44) = 0;
+        CLibLayout* layout = (CLibLayout*)self;
+        // Retail clears mState (+0x48) then mName.mLength (+0x44).
+        layout->mState = (CWorkThread::ThreadState)0;
+        layout->mName.mLength = 0;
         if (flags > 0)
             operator delete(self);
     }

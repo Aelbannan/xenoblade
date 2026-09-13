@@ -28,13 +28,16 @@ extern const char lbl_eu_806638E8[7]; // Panic arg (.sdata)
 extern "C" const char* func_804E6C78();   // second-eye material-name prefix (CMdlAnmUV.cpp)
 extern "C" f32 func_80484EB0(void* model); // owner-model scale query (CScnItemModel.cpp)
 
+// Minimal owner-model view (defined in CMdlAnmEye.cpp).
+struct CMdlAnmEyeModel;
+
 // Eye-blink animation state machine for a material pair (two eyes).
 class CMdlAnmEye {
 public:
     CMdlAnmEye();
     virtual ~CMdlAnmEye();
 
-    /* 0x04 */ void* field_04;              // Owner model object (CScnItemModelNw4r)
+    /* 0x04 */ CMdlAnmEyeModel* field_04;   // Owner model object (CScnItemModelNw4r view)
     /* 0x08 */ u32 field_08[2];             // Material ids (field_08[0]=left, [1]=right)
     /* 0x10 */ u32 field_10;
     /* 0x14 */ u32 field_14;

@@ -15,15 +15,19 @@
 
 // Minimal view of the owner model (CScnItemModelNw4r) fields used here.
 // 0x146C is the model resource data, 0x147C the g3d scene object (ScnMdl).
+// Forward owner view used at +0x04 (same role as CMdlMouth's
+// CScnItemModelNw4rOwner*); only passed to func_80496288 here.
+struct CScnItemModelNw4rOwner;
+
 struct CMdlAnmEyeModel {
     u8 pad_00[0x04];                 // 0x00..0x04 (vtable)
-    void* field_04;                  // 0x04 owner (func_80496288 arg)
+    CScnItemModelNw4rOwner* field_04; // 0x04 owner (func_80496288 arg)
     u8 pad_08[0x7A8 - 0x08];
     u32 field_0x7A8;                 // 0x7A8 flag word (bit 2 = force scale 1.0)
     u8 pad_7AC[0x146C - 0x7AC];
     nw4r::g3d::ResMdlData* field_0x146C; // 0x146C model resource data
     u8 pad_1470[0x147C - 0x1470];
-    void* field_0x147C;              // 0x147C g3d scene object (the ScnMdl)
+    nw4r::g3d::ScnMdl* field_0x147C;  // 0x147C g3d scene object (the ScnMdl)
 };
 
 // Retail fragments (see the data block at the bottom): the class ctor/dtor
@@ -34,8 +38,7 @@ extern "C" u32 lbl_eu_805701D0[];
 
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
-void func_804E75B8(CMdlAnmEye* self, void* modelArg) {
-    CMdlAnmEyeModel* model = (CMdlAnmEyeModel*)modelArg;
+void func_804E75B8(CMdlAnmEye* self, CMdlAnmEyeModel* model) {
     self->field_04 = model;
     u32 num = nw4r::g3d::ResMdl(model->field_0x146C)
                   .GetResMatNumEntries();
@@ -100,10 +103,10 @@ void func_804E77C4(CMdlAnmEye* self) {
     if (self->value2C == 4) return;
     if (self->field_1C == 0) return;
     f32 scale = func_80484EB0(self->field_04);
-    if (((CMdlAnmEyeModel*)self->field_04)->field_0x7A8 & 4) {
+    if (self->field_04->field_0x7A8 & 4) {
         scale = lbl_eu_8066B364;
     }
-    f32 dt = func_80496288(((CMdlAnmEyeModel*)self->field_04)->field_04);
+    f32 dt = func_80496288(self->field_04->field_04);
     f32 v = self->field_28 + scale * dt;
     self->field_28 = v;
     switch (self->field_20) {
@@ -135,7 +138,7 @@ void func_804E77C4(CMdlAnmEye* self) {
     }
     for (s32 i = 0; i < self->field_1C; i++) {
         nw4r::g3d::ScnMdl::CopiedMatAccess cma(
-            (nw4r::g3d::ScnMdl*)((CMdlAnmEyeModel*)self->field_04)->field_0x147C,
+            self->field_04->field_0x147C,
             self->field_08[i]);
         nw4r::g3d::ResTexSrt texSrt = cma.GetResTexSrt(false);
         if (!texSrt.IsValid()) continue;

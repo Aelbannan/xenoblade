@@ -70,7 +70,7 @@ extern "C" void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread*
 // RTTI name string (.rodata).
 extern const char lbl_eu_80522508[];
 // RTTI locator (.sdata, 8 bytes): { name, base-list }.
-extern void* lbl_eu_80663548[2];
+extern u32 lbl_eu_80663548[2];
 
 const char lbl_eu_80522508[] = "CProcRoot";
 const char lbl_eu_80522514[] = "CDesktop\0CProcRoot\0";
@@ -106,7 +106,7 @@ u32 lbl_eu_8056B348[6] = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-void* lbl_eu_80663548[2] = { (void*)lbl_eu_80522508, (void*)lbl_eu_8056B348 };
+u32 lbl_eu_80663548[2] = { (u32)lbl_eu_80522508, (u32)lbl_eu_8056B348 };
 
 // spInstance (sbss lbl_eu_806655A4) - defined here so this TU owns its data
 // (blob monolibdata1d dissolve). Retail code accesses the singleton via the
@@ -158,7 +158,8 @@ CProcRoot* CProcRoot::create(CWorkThread* pParent) {
     name = lbl_eu_80522514 + 9;
     parent = pParent;
     handle = getWorkMem__17CWorkThreadSystemFv();
-    procRoot = (CProcRoot*)allocate__Q23mtl10MemManagerFUlUl(0x1C8, handle);
+    procRoot = static_cast<CProcRoot*>(
+        allocate__Q23mtl10MemManagerFUlUl(0x1C8, handle));
 
     if (procRoot == nullptr) {
         goto create_entry_work;
@@ -168,7 +169,10 @@ CProcRoot* CProcRoot::create(CWorkThread* pParent) {
 
     rootVt = lbl_eu_8056B2A8;
     type = THREAD_CPROCROOT;
-    *(u32**)procRoot = rootVt;
+    struct CProcRootVptrView {
+        u32* vt;
+    };
+    reinterpret_cast<CProcRootVptrView*>(procRoot)->vt = rootVt;
     lbl_eu_806655A0 = procRoot;
     procRoot->mType = (CWorkThread::ThreadType)type;
 

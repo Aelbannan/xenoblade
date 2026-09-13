@@ -3,6 +3,10 @@
 namespace nw4hbm {
 namespace ut {
 
+// Opaque intrusive-list element: retail API is void*, but a named alias
+// documents the object slot without changing ABI (ListObject* == void*).
+typedef void ListObject;
+
 void List_Init(List* pList, u16 offset) {
     pList->headObject = NULL;
     pList->tailObject = NULL;
@@ -10,7 +14,7 @@ void List_Init(List* pList, u16 offset) {
     pList->offset = offset;
 }
 
-static void SetFirstObject(List* pList, void* pObject) {
+static void SetFirstObject(List* pList, ListObject* pObject) {
     Link* pLink = NW4R_UT_LIST_GET_LINK(*pList, pObject);
     pLink->nextObject = NULL;
     pLink->prevObject = NULL;
@@ -20,7 +24,7 @@ static void SetFirstObject(List* pList, void* pObject) {
     pList->numObjects++;
 }
 
-void List_Append(List* pList, void* pObject) {
+void List_Append(List* pList, ListObject* pObject) {
     if (pList->headObject == NULL) {
         SetFirstObject(pList, pObject);
         return;
@@ -40,7 +44,7 @@ void List_Append(List* pList, void* pObject) {
 
 // unused in Xenoblade retail: List_Prepend, List_Insert, List_GetPrev
 
-void List_Remove(List* pList, void* pObject) {
+void List_Remove(List* pList, ListObject* pObject) {
     Link* pLink = NW4R_UT_LIST_GET_LINK(*pList, pObject);
 
     // Fix previous node relationship
@@ -65,16 +69,16 @@ void List_Remove(List* pList, void* pObject) {
     pList->numObjects--;
 }
 
-void* List_GetNext(const List* pList, const void* pObject) {
+ListObject* List_GetNext(const List* pList, const ListObject* pObject) {
     if (pObject == NULL) {
         return pList->headObject;
     }
     return NW4R_UT_LIST_GET_LINK(*pList, pObject)->nextObject;
 }
 
-void* List_GetNth(const List* pList, u16 n) {
+ListObject* List_GetNth(const List* pList, u16 n) {
     int i;
-    void* pIt = NULL;
+    ListObject* pIt = NULL;
 
     for (i = 0, pIt = NULL; (pIt = List_GetNext(pList, pIt)) != NULL; i++) {
         if (n == i) {
@@ -86,4 +90,4 @@ void* List_GetNth(const List* pList, u16 n) {
 }
 
 } // namespace ut
-} // namespace nwhbm
+} // namespace nw4hbm

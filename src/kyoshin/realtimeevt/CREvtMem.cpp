@@ -97,7 +97,7 @@ u32 func_80167D40(u32 size, u32 offset) {
     } else {
         // Too big for the arena - allocate from MEM2 instead.
         mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        lbl_eu_80664260->ptr1 = mtl::MemManager::allocate_head(handle, chunk, 0x20);
+        lbl_eu_80664260->ptr1 = (u8*)mtl::MemManager::allocate_head(handle, chunk, 0x20);
         lbl_eu_80664260->flags |= 0x2;
     }
 
@@ -118,7 +118,7 @@ u32 func_80167D40(u32 size, u32 offset) {
         lbl_eu_80664260->ptr2 = res;
     } else {
         mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        lbl_eu_80664260->ptr2 = mtl::MemManager::allocate_head(handle, chunk, 0x20);
+        lbl_eu_80664260->ptr2 = (u8*)mtl::MemManager::allocate_head(handle, chunk, 0x20);
         lbl_eu_80664260->flags |= 0x4;
     }
 

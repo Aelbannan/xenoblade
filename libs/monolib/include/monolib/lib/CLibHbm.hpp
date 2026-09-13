@@ -41,13 +41,13 @@ public:
     virtual bool OnFileEvent(CEventFile* pFile);
 
     static void setCurrentWpadChannel(int channel);
-    static void setHbmStopFlag(bool r3);
+    static void setHbmStopFlag(bool flag);
     static bool isHbmStopPending();
     static void loadTplImage(void* pTplData);
     static void removeTplImage();
-    static void addCallback(IHBMCallback* r3);
-    static void removeCallback(IHBMCallback* r3);
-    static void setHbmActiveFlag(bool r3);
+    static void addCallback(IHBMCallback* callback);
+    static void removeCallback(IHBMCallback* callback);
+    static void setHbmActiveFlag(bool flag);
     void destroy();
     static bool isHbmMemPointerValid();
     static bool checkFlag6();

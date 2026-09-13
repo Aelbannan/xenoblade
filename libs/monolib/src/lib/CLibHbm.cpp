@@ -94,8 +94,8 @@ void CLibHbm::setCurrentWpadChannel(int channel){
     if(channel >= WPAD_CHAN_INVALID && channel < WPAD_MAX_CONTROLLERS) sCurWpadChannel = channel;
 }
 
-void CLibHbm::setHbmStopFlag(bool r3){
-    lbl_80667FDD = r3;
+void CLibHbm::setHbmStopFlag(bool flag){
+    lbl_80667FDD = flag;
 }
 
 bool CLibHbm::isHbmStopPending(){
@@ -121,21 +121,21 @@ void CLibHbm::removeTplImage(){
     spHbmstopTplData = nullptr;
 }
 
-void CLibHbm::addCallback(IHBMCallback* r3){
+void CLibHbm::addCallback(IHBMCallback* callback){
     CLibHbm* instance = spInstance;
     if(instance == nullptr) return;
 
     if(instance->unk238.mCount < 8){
-        instance->unk238.push_back(r3);
+        instance->unk238.push_back(callback);
     }
 }
 
 //TODO: same as the erase function in CErrorWii
-void CLibHbm::removeCallback(IHBMCallback* r3){
+void CLibHbm::removeCallback(IHBMCallback* callback){
     if(spInstance == nullptr) return;
 
     for(int i = 0; i < spInstance->unk238.size(); i++){
-        if(spInstance->unk238.mArray[i] == r3){
+        if(spInstance->unk238.mArray[i] == callback){
             while(i < spInstance->unk238.mCount - 1){
                 spInstance->unk238.mArray[i] = spInstance->unk238.mArray[i + 1];
                 i++;
@@ -148,8 +148,8 @@ void CLibHbm::removeCallback(IHBMCallback* r3){
 
 }
 
-void CLibHbm::setHbmActiveFlag(bool r3){
-    lbl_80667FD4 = r3;
+void CLibHbm::setHbmActiveFlag(bool flag){
+    lbl_80667FD4 = flag;
 }
 
 void CLibHbm::destroy(){
@@ -232,7 +232,7 @@ void CLibHbm::loadHbmArcFile(){
 // strong out-of-line definition.
 struct CLibHbmMsgQueueData {
     u8 pad[0x1A4];               // CWorkThread prefix + vtable + mEntries[8]
-    void* mArrayPtr;             // 0x1A4 (mMsgQueue.mArray)
+    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArray)
     u32 mFront;                  // 0x1A8
     u32 mCount;                  // 0x1AC
     u32 mCapacity;               // 0x1B0
@@ -252,7 +252,7 @@ inline bool CWorkThread::isRunning() const {
         int i;
         int foundIndex;
         for (i = 0; i < q->mCount; i++) {
-            if (((const CLibHbmMsgQueueEntry*)q->mArrayPtr)[(q->mFront + i) % q->mCapacity].command
+            if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
                 == EVT_EXCEPTION) {
                 foundIndex = i;
                 goto done;
@@ -464,8 +464,7 @@ bool CLibHbm::OnFileEvent(CEventFile* pFile){
 
     if(mpHbmArcFileHandle == pFile->mFileHandle){
         if(pFile->unk0 == true){
-            void* data = pFile->getFileDataPtr();
-            unk1E8 = data;
+            unk1E8 = static_cast<UNKTYPE*>(pFile->getFileDataPtr());
             ARCHandle arcHandle;
             ARCFileInfo fileInfo;
 

@@ -238,10 +238,6 @@ struct CLibHbmMsgQueueData {
     u32 mCapacity;               // 0x1B0
 };
 
-struct CLibHbmMsgQueueEntry {
-    u32 command;                 // EVT_* command word
-    u8 pad[0x20];                // sizeof == 0x24 (retail scales index by 36)
-};
 
 inline bool CWorkThread::isRunning() const {
     bool busy;
@@ -293,7 +289,7 @@ void CLibHbm::wkUpdate(){
                 int i;
                 int foundIndex;
                 for(i = 0; i < q->mCount; i++){
-                    if(((const CLibHbmMsgQueueEntry*)q->mArrayPtr)[(q->mFront + i) % q->mCapacity].command
+                    if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
                         == EVT_EXCEPTION){
                         foundIndex = i;
                         goto doneA;
@@ -354,7 +350,7 @@ void CLibHbm::wkUpdate(){
                         int i;
                         int foundIndex;
                         for(i = 0; i < q->mCount; i++){
-                            if(((const CLibHbmMsgQueueEntry*)q->mArrayPtr)[(q->mFront + i) % q->mCapacity].command
+                            if(q->mArrayPtr[(q->mFront + i) % q->mCapacity].command
                                 == EVT_EXCEPTION){
                                 foundIndex = i;
                                 goto doneB;

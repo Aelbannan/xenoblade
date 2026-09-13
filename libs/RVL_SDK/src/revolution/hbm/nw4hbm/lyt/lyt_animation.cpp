@@ -258,7 +258,7 @@ void AnimateTextureSRT(Material* pMaterial, const res::AnimationInfo* pAnimInfo,
 void AnimateTexturePattern(Material* pMaterial,
                            const res::AnimationInfo* pAnimInfo,
                            const u32* pTargetOffsetTbl, f32 frame,
-                           void** ppTexPalettes) {
+                           TPLPalette** ppTexPalettes) {
 
     for (int i = 0; i < pAnimInfo->num; i++) {
         const res::AnimationTarget* pTarget =
@@ -273,8 +273,7 @@ void AnimateTexturePattern(Material* pMaterial,
 
             u16 idx = GetStepCurveValue(frame, pKeys, pTarget->keyNum);
 
-            pMaterial->SetTextureNoWrap(
-                pTarget->id, static_cast<TPLPalette*>(ppTexPalettes[idx]));
+            pMaterial->SetTextureNoWrap(pTarget->id, ppTexPalettes[idx]);
         }
     }
 }
@@ -344,8 +343,8 @@ void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock,
     mpFileResAry = NULL;
 
     if (mpRes->fileNum > 0) {
-        mpFileResAry = static_cast<void**>(
-            Layout::AllocMemory(mpRes->fileNum * sizeof(void*)));
+        mpFileResAry = static_cast<TPLPalette**>(
+            Layout::AllocMemory(mpRes->fileNum * sizeof(TPLPalette*)));
 
         if (mpFileResAry != NULL) {
             const u32* pStrTable = detail::ConvertOffsToPtr<u32>(
@@ -354,8 +353,8 @@ void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock,
             for (int i = 0; i < mpRes->fileNum; i++) {
                 const char* pName = detail::GetStrTableStr(pStrTable, i);
 
-                mpFileResAry[i] = pAccessor->GetResource(
-                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
+                mpFileResAry[i] = static_cast<TPLPalette*>(pAccessor->GetResource(
+                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL));
             }
         }
     }

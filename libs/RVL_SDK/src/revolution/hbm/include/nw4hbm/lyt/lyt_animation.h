@@ -186,7 +186,7 @@ public:
     virtual void Animate(u32 idx, Material* pMaterial); // at 0x1C
 
 protected:
-    void** mpFileResAry;         // at 0x14
+    TPLPalette** mpFileResAry;  // at 0x14
     AnimationLink* mAnimLinkAry; // at 0x18
     u16 mAnimLinkNum;            // at 0x1C
 };

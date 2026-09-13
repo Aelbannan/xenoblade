@@ -2880,7 +2880,7 @@
       "size": "0x48",
       "unit": "kyoshin/plugin/ocMsg",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -2894,7 +2894,15 @@
       "source": "src/kyoshin/plugin/ocMsg.cpp",
       "instruction_match": 99.444,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:36:04.452088+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/ocMsg.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8003aab4",
@@ -6325,8 +6333,8 @@
       "size": "0x88",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -6343,8 +6351,8 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "instruction_match": 99.853,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": true,
       "claim": {
         "owner": "cursor-close-mwcc",
@@ -67038,8 +67046,8 @@
       "size": "0x8",
       "unit": "kyoshin/code_800A3B24",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a70a4"
@@ -67059,7 +67067,8 @@
         "note": ""
       },
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800a7ebc",
@@ -124862,7 +124871,7 @@
       "size": "0xB4",
       "unit": "kyoshin/cf/CfBdat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfBdat.cpp",
@@ -124879,7 +124888,15 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 99.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:53.124254+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfBdat.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80142d60",
@@ -137718,7 +137735,7 @@
       "size": "0x1DC",
       "unit": "kyoshin/cf/CTaskREvent",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -137743,7 +137760,15 @@
       "source": "src/kyoshin/cf/CTaskREvent.cpp",
       "source_present": true,
       "instruction_match": 99.118,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:35.857079+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CTaskREvent.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80165dc4",
@@ -171229,7 +171254,7 @@
       "size": "0xF8",
       "unit": "kyoshin/cf/CfSoundMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -171247,7 +171272,15 @@
       "source": "src/kyoshin/cf/CfSoundMan.cpp",
       "source_present": true,
       "instruction_match": 99.355,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:36:14.033780+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfSoundMan.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801c2554",
@@ -193172,7 +193205,7 @@
       "size": "0x8C",
       "unit": "kyoshin/CPartyState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -193191,7 +193224,15 @@
       "source": "src/kyoshin/CPartyState.cpp",
       "source_present": true,
       "instruction_match": 99.429,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:59.732060+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CPartyState.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801ffe14",
@@ -223636,7 +223677,7 @@
       "size": "0x194",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -223661,7 +223702,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.594,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:22.016695+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80239ab0",
@@ -223713,7 +223762,7 @@
       "size": "0xCC",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -223732,7 +223781,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.608,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335764+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80239d7c",
@@ -223824,7 +223881,7 @@
       "size": "0x25C",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -223852,7 +223909,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.04,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:44.988711+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023a47c",
@@ -223865,7 +223930,7 @@
       "size": "0x410",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -223896,7 +223961,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.692,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335459+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023a88c",
@@ -224107,7 +224180,7 @@
       "size": "0x170",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224128,7 +224201,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.511,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:26.636462+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023b8ec",
@@ -224282,7 +224363,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224300,7 +224381,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:12.858111+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023bf7c",
@@ -224313,7 +224402,7 @@
       "size": "0x184",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224336,7 +224425,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.639,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335758+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c100",
@@ -224349,7 +224446,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224367,7 +224464,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:06.173582+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c1c8",
@@ -224380,7 +224485,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224398,7 +224503,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:34:53.735019+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c290",
@@ -224411,7 +224524,7 @@
       "size": "0xC0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224429,7 +224542,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.583,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:31.282914+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c350",
@@ -224442,7 +224563,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224460,7 +224581,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:34:48.727140+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c418",
@@ -224473,7 +224602,7 @@
       "size": "0x114",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224496,7 +224625,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.638,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335760+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c52c",
@@ -224509,7 +224646,7 @@
       "size": "0xB0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224526,7 +224663,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.545,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:17.458954+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c5dc",
@@ -224539,7 +224684,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224558,7 +224703,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:34:43.765535+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c6a4",
@@ -224631,7 +224784,7 @@
       "size": "0xB0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224648,7 +224801,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.545,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:09.501444+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c8b4",
@@ -224661,7 +224822,7 @@
       "size": "0xB0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224678,7 +224839,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.545,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:56.485616+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023c964",
@@ -224691,7 +224860,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224710,7 +224879,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:34:38.864083+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023ca2c",
@@ -224723,7 +224900,7 @@
       "size": "0xB0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224740,7 +224917,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.545,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:48.553657+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023cadc",
@@ -224753,7 +224938,7 @@
       "size": "0xB0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224770,7 +224955,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.545,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:35:40.408073+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023cb8c",
@@ -224783,7 +224976,7 @@
       "size": "0x200",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224807,7 +225000,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.688,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335755+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023cd8c",
@@ -224820,7 +225021,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224838,7 +225039,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b11",
+        "claimed_at": "2026-09-13T15:34:33.593265+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023ce54",
@@ -224923,7 +225132,7 @@
       "size": "0xD0",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -224945,7 +225154,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.615,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335762+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023d174",
@@ -224999,7 +225216,7 @@
       "size": "0x100",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -225022,7 +225239,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.609,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335763+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023d3c8",
@@ -225035,7 +225260,7 @@
       "size": "0xC8",
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -225053,7 +225278,15 @@
       "source": "src/kyoshin/CArtsInfo.cpp",
       "source_present": true,
       "instruction_match": 99.6,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b10",
+        "claimed_at": "2026-09-13T15:34:58.335766+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CArtsInfo.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8023d490",
@@ -231996,8 +232229,8 @@
       "size": "0x78",
       "unit": "kyoshin/menu/CMenuCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800ff7f4",
@@ -232013,8 +232246,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuCollepedia.cpp",
       "source_present": true,
-      "instruction_match": 99.833,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "midband-02",
         "claimed_at": "2026-08-26T12:07:04.430653+00:00",
@@ -244642,7 +244875,7 @@
       "size": "0x228",
       "unit": "kyoshin/cf/CfGimmickEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -244676,7 +244909,15 @@
       "source": "src/kyoshin/cf/CfGimmickEne.cpp",
       "source_present": true,
       "instruction_match": 99.565,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:35:01.596235+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfGimmickEne.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80270ea4",
@@ -248351,7 +248592,7 @@
       "size": "0x134",
       "unit": "kyoshin/CSysWinBuff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -248371,7 +248612,15 @@
       "source": "src/kyoshin/CSysWinBuff.cpp",
       "source_present": true,
       "instruction_match": 99.13,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b12",
+        "claimed_at": "2026-09-13T15:36:09.189301+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CSysWinBuff.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80276f00",

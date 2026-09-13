@@ -1362,7 +1362,9 @@ extern "C" int func_8003EB64(VMThread* pThread, int handle) {
     int index = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+    // Retail SDA reloc is __RTTI__Q22cf13CfObjectActor (not lbl_eu_806618D8).
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor,
+                                        (void*)&lbl_eu_806618F0, 0);
     if (actor) {
         void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
         func_800F3958(battleMgr, actor, index);

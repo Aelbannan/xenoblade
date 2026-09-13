@@ -8,9 +8,6 @@
 
 extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
 
-// member dtor defined below; declare its mangled name for thunk references
-extern "C" void __dt__15CMenuCollepediaFv(void*, int);
-
 // This-unit phase handlers (retail-unmangled func_ names), referenced by
 // func_80252DD8 before their definitions below. extern "C" keeps the call
 // relocs bare (retail keeps the unmangled names at these call sites).
@@ -23,6 +20,13 @@ extern "C" void func_8025306C(CMenuCollepedia* self);
 extern "C" void func_80254A20(CCollepedia* self);
 extern "C" void func_801C3D54(CBgTex* self);
 extern "C" void func_801C3FF0(CTitleAHelp* self);
+
+// Complete-object dtor (us-8025494c). Free-function D2 form so the base
+// call reloc is retail __dt__800FED0C (game D2), not library __dt__8CProcessFv.
+extern "C" void __dt__800FED0C(CProcess* self, int flags);
+extern "C" void __dl__FPv(void* p);
+extern "C" CMenuCollepedia* __dt__15CMenuCollepediaFv(CMenuCollepedia* self,
+                                                     int flags);
 
 // Retail constructor symbol (unmangled global in US). Written as a free
 // function so the factory emits a real bl to the bare retail symbol; returns
@@ -58,7 +62,21 @@ extern "C" __declspec(noinline) CMenuCollepedia* __ct__CMenuCollepedia(
     return self;
 }
 
-CMenuCollepedia::~CMenuCollepedia() {}
+// Complete-object dtor (us-8025494c). Free-function D2 form so the base
+// call reloc is retail __dt__800FED0C (game D2), not library __dt__8CProcessFv.
+extern "C" CMenuCollepedia* __dt__15CMenuCollepediaFv(CMenuCollepedia* self,
+                                                     int flags) {
+    if (self != 0) {
+        __dt__11CCollepediaFv(&self->mCollepedia, -1);
+        __dt__11CTitleAHelpFv(&self->mTitleAHelp, -1);
+        __dt__6CBgTexFv(&self->mBgTex, -1);
+        __dt__800FED0C(self, 0);
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
 
 // Re-initialise the collepedia menu screen: rebuild each embedded widget
 // (CBgTex / CTitleAHelp / CCollepedia) by constructing a stack temporary and
@@ -428,7 +446,8 @@ extern "C" void func_80253188(void* self) {
  * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
  */
 extern "C" void func_80253190(void* self) {
-    ((void(*)(void*))__dt__15CMenuCollepediaFv)((char*)self - 0x58);
+    ((void (*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
+        (CMenuCollepedia*)((char*)self - 0x58));
 }
 
 extern "C" int func_80252CD4(void) { return lbl_eu_806647D0 != 0; }

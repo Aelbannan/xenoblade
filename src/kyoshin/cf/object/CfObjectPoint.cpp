@@ -231,9 +231,9 @@ public:
 // (no __Q2 class qualifier), so it must be defined with C linkage. Other TUs
 // (CfGimmick, CfMapMineManager) call it through their own C-linkage
 // declarations; the first parameter is the object pointer.
-extern "C" void func_800C13FC(cf::CfObjectPoint* self, u32 a, u8 val) {
-    self->setObjectName(reinterpret_cast<const char*>(a));
-    self->mFlag91 = val;
+extern "C" void func_800C13FC(cf::CfObjectPoint* ths, u32 a, u8 val) {
+    ths->setObjectName(reinterpret_cast<const char*>(a));
+    ths->mFlag91 = val;
 }
 
 namespace cf {
@@ -333,10 +333,10 @@ done:
 
 // Retail Fv: callers leave r4 = vec for syncMoveTarget on mSubObj38 (bctr thunk).
 extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* self, const ml::CVec3* vec) {
-    if (self->mSubObj38 == nullptr)
+    cf::CfObjectPoint* ths, const ml::CVec3* vec) {
+    if (ths->mSubObj38 == nullptr)
         return;
-    self->mSubObj38->syncMoveTarget(vec);
+    ths->mSubObj38->syncMoveTarget(vec);
 }
 
 // Forced-name form: the retail symbols setChildPoint/16F4/171C end in a
@@ -346,33 +346,33 @@ extern "C" void notifyChildUpdate__Q22cf13CfObjectPointFv(
 // name, so these stay C-linkage functions with the mangled retail symbol as
 // the identifier to emit the exact symbol.
 extern "C" void setChildPoint__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* self, cf::CfObjectPoint* child) {
-    cf::CfObjectPoint* old = self->mSubObj38;
+    cf::CfObjectPoint* ths, cf::CfObjectPoint* child) {
+    cf::CfObjectPoint* old = ths->mSubObj38;
     if (old != nullptr) {
         if (old != nullptr) {
             old->setStateBitMask(1);
         }
-        self->mSubObj38 = nullptr;
+        ths->mSubObj38 = nullptr;
     }
 
-    self->mSubObj38 = child;
+    ths->mSubObj38 = child;
     if (child != nullptr) {
-        child->setStateBitMask0(self);
-        self->mSubObj38->setPointPosition();
+        child->setStateBitMask0(ths);
+        ths->mSubObj38->setPointPosition();
     }
 }
 
 extern "C" void setPointEnabled__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* self, int enable) {
+    cf::CfObjectPoint* ths, int enable) {
     if (enable != 0) {
-        self->mFlags68 |= 0x00100000;
+        ths->mFlags68 |= 0x00100000;
     } else {
-        self->mFlags68 = DECOMP_PPC_RLWINM(self->mFlags68, 0, 12, 10);
+        ths->mFlags68 = DECOMP_PPC_RLWINM(ths->mFlags68, 0, 12, 10);
     }
 }
 
 extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
-    cf::CfObjectPoint* self, float x, float z) {
+    cf::CfObjectPoint* ths, float x, float z) {
     // The const-qualified SDA float (see CfObjectPoint.hpp) lets MWCC hoist
     // the lfs above the prologue LR store (retail schedule); a non-const
     // declaration pins it after the global-pointer load.
@@ -401,7 +401,7 @@ extern "C" void setPointPosition__Q22cf13CfObjectPointFv(
     // Word-copy pos into the object's position fields; retail stores 0x40
     // before 0x3c (assignment order), holding pos[0] in a register across.
     u32 p0 = *(u32*)&pos[0];
-    *(u32*)&self->mPos40 = *(u32*)&pos[1];
-    *(u32*)&self->mPos3C = p0;
-    *(u32*)&self->mPos44 = *(u32*)&pos[2];
+    *(u32*)&ths->mPos40 = *(u32*)&pos[1];
+    *(u32*)&ths->mPos3C = p0;
+    *(u32*)&ths->mPos44 = *(u32*)&pos[2];
 }

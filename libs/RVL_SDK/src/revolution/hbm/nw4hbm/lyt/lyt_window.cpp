@@ -261,7 +261,8 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
         }
     }
 
-    void* pMaterialBuf = Layout::AllocMemory(sizeof(Material));
+    Material* pMaterialBuf =
+        static_cast<Material*>(Layout::AllocMemory(sizeof(Material)));
 
     if (pMaterialBuf != NULL) {
         const res::Material* const pResMaterial =
@@ -293,7 +294,8 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
                 mFrames[i].textureFlip = pResFrame->textureFlip;
                 mFrames[i].pMaterial = NULL;
 
-                void* pFrameMatBuf = Layout::AllocMemory(sizeof(Material));
+                Material* pFrameMatBuf = static_cast<Material*>(
+                    Layout::AllocMemory(sizeof(Material)));
 
                 if (pFrameMatBuf != NULL) {
                     const res::Material* const pResMaterial =

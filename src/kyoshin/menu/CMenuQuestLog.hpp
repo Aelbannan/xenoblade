@@ -64,11 +64,11 @@ public:
 // Move() state-machine handlers (states 0-9). US retail strips the member
 // mangling, so declare them with C linkage so calls bind the literal retail
 // symbols; definitions live in CMenuQuestLog.cpp.
-extern "C" void func_8011CDF4(unsigned char* self);
+extern "C" void func_8011CDF4(CMenuQuestLog* self);
 extern "C" void func_8011CD6C(CMenuQuestLog* self);
 extern "C" void func_8011CE44(CMenuQuestLog* self);
-extern "C" void func_8011D03C(unsigned char* self);
-extern "C" void func_8011D08C(unsigned char* self);
+extern "C" void func_8011D03C(CMenuQuestLog* self);
+extern "C" void func_8011D08C(CMenuQuestLog* self);
 extern "C" void func_8011D0FC(CMenuQuestLog* self);
 extern "C" void func_8011D158(CMenuQuestLog* self);
 extern "C" void func_8011D1A8(CMenuQuestLog* self);

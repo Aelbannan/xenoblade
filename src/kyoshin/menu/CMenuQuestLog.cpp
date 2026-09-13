@@ -327,16 +327,16 @@ body:
         func_8011CD6C(this);
         break;
     case 1:
-        func_8011CDF4(reinterpret_cast<unsigned char*>(this));
+        func_8011CDF4(this);
         break;
     case 2:
         func_8011CE44(this);
         break;
     case 3:
-        func_8011D03C(reinterpret_cast<unsigned char*>(this));
+        func_8011D03C(this);
         break;
     case 4:
-        func_8011D08C(reinterpret_cast<unsigned char*>(this));
+        func_8011D08C(this);
         break;
     case 5:
         func_8011D0FC(this);
@@ -435,9 +435,9 @@ extern "C" void func_8011CD6C(CMenuQuestLog* self) {
 
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.
-extern "C" void func_8011CDF4(unsigned char* self) {
-    if (isIdle__11CTitleAHelpFv(self + 0x80) && func_80227CCC(self + 0xB8))
-        self[0x2284] = 2;
+extern "C" void func_8011CDF4(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList))
+        self->mState = 2;
 }
 
 // Retail func_8011CE44 is a large real handler (us-8011d920); keep this
@@ -505,19 +505,19 @@ extern "C" __declspec(noinline) void func_8011CE44(CMenuQuestLog* self) {
 }
 
 // Same gate as func_8011CDF4 but toggles the +0x54 byte to 1.
-extern "C" void func_8011D03C(unsigned char* self) {
-    if (isIdle__11CTitleAHelpFv(self + 0x80) && func_80227CCC(self + 0xB8))
-        self[0x54] = 1;
+extern "C" void func_8011D03C(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList))
+        self->mField54 = 1;
 }
 
-void func_8011D08C(unsigned char* self)
+void func_8011D08C(CMenuQuestLog* self)
 {
-    unsigned char* base = self;
-    if (isIdle__11CTitleAHelpFv(base + 0x80) && func_80227CCC(base + 0xB8)) {
-        unsigned int value = func_80228394(base + 0xB8);
-        func_80229768(base + 0x2240, static_cast<unsigned short>(value));
-        func_80229510(base + 0x2240);
-        base[0x2284] = 5;
+    CMenuQuestLog* base = self;
+    if (isIdle__11CTitleAHelpFv(&base->mTitleAHelp) && func_80227CCC(&base->mQstLogList)) {
+        unsigned int value = func_80228394(&base->mQstLogList);
+        func_80229768(&base->mQstLogInfo, static_cast<unsigned short>(value));
+        func_80229510(&base->mQstLogInfo);
+        base->mState = 5;
     }
 }
 

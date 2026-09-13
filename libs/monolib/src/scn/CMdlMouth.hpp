@@ -2,6 +2,12 @@
 
 #include <types.h>
 
+namespace nw4r {
+namespace g3d {
+struct ChrAnmResult;
+}
+}
+
 // Owner model object referenced by CMdlMouth::field_0x04. It is a
 // CScnItemModelNw4r instance, viewed through the minimal typed layout defined
 // in CMdlMouth.cpp. Forward declarations keep this header dependency-free.
@@ -11,7 +17,7 @@ class CScnItemModelNw4r;
 // Frame-table add + ascending bubble-sort for the owner model's frame table
 // (defined in CScnItemModelNw4r.cpp). C++ linkage matches the definition's
 // mangled symbol; the retail symbol is the unmangled func_* fragment.
-void func_80488F44(CScnItemModelNw4r* self, u32 value);
+void func_80488F44(CScnItemModelNw4r* ths, u32 value);
 
 // Shared .sdata2 constants referenced by CMdlMouth (retail linker names).
 extern const f32 lbl_eu_8066B310; // reset mouth-open angle (1.0f)
@@ -50,7 +56,7 @@ public:
     virtual ~CMdlMouth();
 
     void func_804E679C(int, int);
-    int  func_804E68A0(int, void*);
+    int  func_804E68A0(u32, nw4r::g3d::ChrAnmResult*);
     void func_804E6A28();
 
     /* 0x04 */ CMdlOwnerCtx* field_0x04;  // owner model (view in CMdlMouth.cpp)

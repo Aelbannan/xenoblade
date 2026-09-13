@@ -16,7 +16,7 @@
 // Retail fragments (see the data block at the bottom): the class ctor/dtor
 // are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
 extern "C" void __dl__FPv(void*);
-extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* self, int flag);
+extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag);
 extern "C" u32 lbl_eu_805701B0[];
 
 // Minimal typed view of the owner model (a CScnItemModelNw4r) fields used
@@ -31,90 +31,90 @@ struct CMdlOwnerCtx {
     nw4r::g3d::ScnMdl* field_0x147C;     // 0x147C g3d scene object (ScnMdl)
 };
 
-extern "C" void func_804E6898(CMdlMouth* self, float val) {
-    self->value2C = val;
+extern "C" void func_804E6898(CMdlMouth* ths, float val) {
+    ths->value2C = val;
 }
 
-extern "C" int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
+extern "C" int func_804E68A0(CMdlMouth* ths, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
     // Mismatched own-node id: callers may only animate the bound node.
-    if ((u32)self->field_0x0C != arg2) {
+    if ((u32)ths->field_0x0C != arg2) {
         return 0;
     }
     // Closing-timer decrement: while it counts down the rest is skipped.
-    if (self->field_0x08 != 0 && self->field_0x28 > 0) {
-        self->field_0x28 -= 1;
-        if (self->field_0x28 > 0) {
+    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
+        ths->field_0x28 -= 1;
+        if (ths->field_0x28 > 0) {
             return 0;
         }
     }
-    if (self->field_0x08 == 0) {
+    if (ths->field_0x08 == 0) {
         return 1;
     }
     // Integrate mouth-open angle from the owner view's delta.
-    f32 dt = func_80496288(self->field_0x04->field_04);
-    self->field_0x10 = self->field_0x14 * dt + self->field_0x10;
-    if (self->field_0x10 > lbl_eu_8066A1F8) {
+    f32 dt = func_80496288(ths->field_0x04->field_04);
+    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
+    if (ths->field_0x10 > lbl_eu_8066A1F8) {
         // Reset to fully closed, then re-randomize open/close speeds.
-        self->field_0x10 = lbl_eu_8066B310;
-        self->field_0x14 = lbl_eu_8066B310;
-        if (self->field_0x08 != 0) {
-            self->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            self->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+        ths->field_0x10 = lbl_eu_8066B310;
+        ths->field_0x14 = lbl_eu_8066B310;
+        if (ths->field_0x08 != 0) {
+            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
         }
     }
     nw4r::math::VEC3 v;
-    f32 o = self->field_0x10;
+    f32 o = ths->field_0x10;
     f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
-    self->field_0x1C = self->field_0x18 * s * self->value2C;
+    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
     res->GetRotateDeg(&v);
-    v.z = lbl_eu_8066B334 * self->field_0x1C + v.z;
+    v.z = lbl_eu_8066B334 * ths->field_0x1C + v.z;
     res->SetRotateDeg(&v);
     return 1;
 }
 
 // Retail dtor fragment (deleting-dtor form: flag > 0 frees the object).
-extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* self, int flag) {
-    if (self != 0 && flag > 0) {
-        __dl__FPv(self);
+extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* ths, int flag) {
+    if (ths != 0 && flag > 0) {
+        __dl__FPv(ths);
     }
-    return self;
+    return ths;
 }
 
-extern "C" void func_804E6A28(CMdlMouth* self) {
+extern "C" void func_804E6A28(CMdlMouth* ths) {
     // Per-frame mouth update: bail when no material is bound (id < 0) or the
     // closing timer still counts down; otherwise integrate the open angle and
     // push the SRT offset-table row into the copied material's texture SRT.
-    if (self->field_0x24 < 0) {
+    if (ths->field_0x24 < 0) {
         return;
     }
-    if (self->field_0x08 != 0 && self->field_0x28 > 0) {
-        self->field_0x28 -= 1;
-        if (self->field_0x28 > 0) {
+    if (ths->field_0x08 != 0 && ths->field_0x28 > 0) {
+        ths->field_0x28 -= 1;
+        if (ths->field_0x28 > 0) {
             return;
         }
     }
-    f32 dt = func_80496288(self->field_0x04->field_04);
-    self->field_0x10 = self->field_0x14 * dt + self->field_0x10;
-    if (self->field_0x10 > lbl_eu_8066A1F8) {
+    f32 dt = func_80496288(ths->field_0x04->field_04);
+    ths->field_0x10 = ths->field_0x14 * dt + ths->field_0x10;
+    if (ths->field_0x10 > lbl_eu_8066A1F8) {
         // Reset to fully closed, then re-randomize open/close speeds.
-        self->field_0x10 = lbl_eu_8066B310;
-        self->field_0x14 = lbl_eu_8066B310;
-        if (self->field_0x08 != 0) {
-            self->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            self->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+        ths->field_0x10 = lbl_eu_8066B310;
+        ths->field_0x14 = lbl_eu_8066B310;
+        if (ths->field_0x08 != 0) {
+            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
         }
     }
-    f32 o = self->field_0x10;
+    f32 o = ths->field_0x10;
     f32 s = nw4r::math::SinFIdx(lbl_eu_8066B330 * o);
-    self->field_0x1C = self->field_0x18 * s * self->value2C;
+    ths->field_0x1C = ths->field_0x18 * s * ths->value2C;
     // Pick the SRT offset-table row from the open amount, clamped to [0,2].
-    s32 idx = (s32)(lbl_eu_8066B338 * self->field_0x1C);
+    s32 idx = (s32)(lbl_eu_8066B338 * ths->field_0x1C);
     if ((u32)idx >= 3) {
         idx = 2;
     }
     nw4r::g3d::ScnMdl* scnMdl =
-        self->field_0x04->field_0x147C;
-    nw4r::g3d::ScnMdl::CopiedMatAccess cma(scnMdl, (u32)self->field_0x24);
+        ths->field_0x04->field_0x147C;
+    nw4r::g3d::ScnMdl::CopiedMatAccess cma(scnMdl, (u32)ths->field_0x24);
     nw4r::g3d::ResTexSrt srt = cma.GetResTexSrt(false);
     if (srt.IsValid()) {
         // Reflection-scale SRT matrix; column 3 carries the per-index offset.
@@ -142,19 +142,19 @@ extern "C" void func_804E6A28(CMdlMouth* self) {
     }
 }
 
-extern "C" void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
+extern "C" void func_804E65CC(CMdlMouth* ths, CMdlOwnerCtx* model) {
     // Member field init (mirrors the retail ctor stores).
-    self->field_0x04 = model;
-    self->field_0x08 = 0;
-    self->field_0x0C = -1;
+    ths->field_0x04 = model;
+    ths->field_0x08 = 0;
+    ths->field_0x0C = -1;
     f32 z = lbl_eu_8066B310;
-    self->field_0x1C = z;
-    self->field_0x10 = z;
-    self->field_0x14 = z;
-    self->field_0x18 = z;
-    self->field_0x24 = -1;
-    self->field_0x28 = 0;
-    self->value2C = lbl_eu_8066B314;
+    ths->field_0x1C = z;
+    ths->field_0x10 = z;
+    ths->field_0x14 = z;
+    ths->field_0x18 = z;
+    ths->field_0x24 = -1;
+    ths->field_0x28 = 0;
+    ths->value2C = lbl_eu_8066B314;
 
     // Bind the named node if present; the inner panics are DB_ASSERTs on the
     // same validity check, so MWCC reuses the outer compare (dead code).
@@ -164,15 +164,15 @@ extern "C" void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
         if (!node.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
         }
-        self->field_0x0C = node.GetID();
+        ths->field_0x0C = node.GetID();
         if (!node.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
                             lbl_eu_80663910, lbl_eu_80663C6C);
         }
-        self->field_0x20 = node.ref().rot.z;
+        ths->field_0x20 = node.ref().rot.z;
         // The model object is really a CScnItemModelNw4r; the view struct
         // above only exposes the fields this TU reads.
-        func_80488F44((CScnItemModelNw4r*)model, self->field_0x0C);
+        func_80488F44((CScnItemModelNw4r*)model, ths->field_0x0C);
     }
 
     // Scan materials for the eye-material name and stash its id. Each call
@@ -192,31 +192,31 @@ extern "C" void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
                 nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
                                 lbl_eu_806638E8, lbl_eu_80663C68);
             }
-            self->field_0x24 = resMat.ref().id;
+            ths->field_0x24 = resMat.ref().id;
             break;
         }
     }
 }
 
-extern "C" void func_804E679C(CMdlMouth* self, int arg2, int arg3) {
+extern "C" void func_804E679C(CMdlMouth* ths, int arg2, int arg3) {
     // All follow-up blocks are guarded by the mode-change condition: retail skips
     // the whole body with a single branch when field_0x08 already equals arg2.
-    if (self->field_0x08 != arg2) {
-        self->field_0x08 = arg2;
+    if (ths->field_0x08 != arg2) {
+        ths->field_0x08 = arg2;
         if (arg2 != 0) {
-            self->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
-            self->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x14 = lbl_eu_8066B31C * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
+            ths->field_0x18 = lbl_eu_8066B320 * (f32)ml::math::mtRand(100) + lbl_eu_8066B318;
         }
         if (arg2 != 0) {
-            self->field_0x28 = 2;
+            ths->field_0x28 = 2;
         }
         if (arg3 != 0) {
-            if (self->field_0x08 == 0) {
+            if (ths->field_0x08 == 0) {
                 f32 z = lbl_eu_8066B310;
-                self->field_0x1C = z;
-                self->field_0x10 = z;
-                self->field_0x14 = z;
-                self->field_0x18 = z;
+                ths->field_0x1C = z;
+                ths->field_0x10 = z;
+                ths->field_0x14 = z;
+                ths->field_0x18 = z;
             }
         }
     }
@@ -224,19 +224,20 @@ extern "C" void func_804E679C(CMdlMouth* self, int arg2, int arg3) {
 
 // Retail ctor fragment: stores the vtable pointer, then mirrors the retail
 // field-init order (field_0x20 is left uninitialized, as in retail).
-extern "C" void __ct__CMdlMouth(CMdlMouth* self) {
-    *(void**)self = (void*)&lbl_eu_805701B0;
-    self->field_0x04 = 0;
-    self->field_0x08 = 0;
-    self->field_0x0C = -1;
+extern "C" void __ct__CMdlMouth(CMdlMouth* ths) {
+    // Manual vptr store; typed as u32* to match lbl array.
+    *reinterpret_cast<u32**>(ths) = lbl_eu_805701B0;
+    ths->field_0x04 = 0;
+    ths->field_0x08 = 0;
+    ths->field_0x0C = -1;
     f32 z = lbl_eu_8066B310;
-    self->field_0x10 = z;
-    self->field_0x14 = z;
-    self->field_0x18 = z;
-    self->field_0x1C = z;
-    self->field_0x24 = -1;
-    self->field_0x28 = 0;
-    self->value2C = lbl_eu_8066B314;
+    ths->field_0x10 = z;
+    ths->field_0x14 = z;
+    ths->field_0x18 = z;
+    ths->field_0x1C = z;
+    ths->field_0x24 = -1;
+    ths->field_0x28 = 0;
+    ths->value2C = lbl_eu_8066B314;
 }
 
 // ===== Dissolved data owned by this TU =====

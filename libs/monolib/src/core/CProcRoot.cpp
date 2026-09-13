@@ -152,7 +152,7 @@ CProcRoot* CProcRoot::create(CWorkThread* pParent) {
     CWorkThread* parent;
     mtl::ALLOC_HANDLE handle;
     CProcRoot* procRoot;
-    u32* rootVt;
+    void* rootVt;
     u32 type;
 
     name = lbl_eu_80522514 + 9;
@@ -166,9 +166,9 @@ CProcRoot* CProcRoot::create(CWorkThread* pParent) {
 
     __ct__11CWorkThreadFPCcP11CWorkThreadi(procRoot, name, parent, MAX_CHILD);
 
-    rootVt = lbl_eu_8056B2A8;
+    rootVt = &lbl_eu_8056B2A8;
     type = THREAD_CPROCROOT;
-    *(u32**)procRoot = rootVt;
+    *(void**)procRoot = rootVt;
     lbl_eu_806655A0 = procRoot;
     procRoot->mType = (CWorkThread::ThreadType)type;
 

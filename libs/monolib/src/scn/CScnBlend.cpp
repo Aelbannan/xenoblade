@@ -9,8 +9,8 @@
 #include <monolib/math/CMat34.hpp>
 
 // --- Cross-TU imports (declared here; .cpp-only TU, CScnFilter.hpp is read-only) ---
-extern "C" void __ct__CScnFilter(CScnFilter* self);
-extern "C" void __dt__10CScnFilterFv(CScnFilter* self, int flag);
+extern "C" void __ct__CScnFilter(CScnFilter* ths);
+extern "C" void __dt__10CScnFilterFv(CScnFilter* ths, int flag);
 // Global operator delete — MWCC mangles this to __dl__FPv (defined in MemManager.cpp).
 void operator delete(void* p) throw();
 extern const f32 lbl_eu_8066AAE0;
@@ -71,9 +71,15 @@ struct CScnBlend : public CScnFilter {
     u32 field_0x6C;
 };
 
-extern "C" void func_80498DE8(CScnBlend* self, void* param);  // defined below
+// Owning scene view as seen here: only field 0x6C (texture work manager) read.
+struct CScnBlendView {
+    u8 field_0x00[0x6C];
+    CTexWorkObj* mTexWork;
+};
 
-extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* self, int flag); // defined below
+extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param);  // defined below
+
+extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag); // defined below
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056E9E8-0x8056EA08 (32B): CScnBlend vtable (20B) + RTTI chain (12B).
@@ -97,27 +103,27 @@ extern "C" const u32 lbl_eu_805240A0[3] = {
 // auto-emitting __vt__/__RTTI__ for CScnBlend in this TU (the retail vtable
 // is the dissolved .data blob above).
 // MWCC destructors return the object pointer (see trailing mr r3, r30 in retail).
-extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* self, int flag) {
-    if (self != 0) {
-        __dt__10CScnFilterFv((CScnFilter*)self, 0);
+extern "C" CScnBlend* __dt__9CScnBlendFv(CScnBlend* ths, int flag) {
+    if (ths != 0) {
+        __dt__10CScnFilterFv((CScnFilter*)ths, 0);
         if (flag > 0) {
-            operator delete(self);
+            operator delete(ths);
         }
     }
-    return self;
+    return ths;
 }
 
 // Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
 // CScnBlend vtable, fills the default blend rect/tint region and the
 // blend-mode fields. Returns the object.
-extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* self) {
-    __ct__CScnFilter(self);
+extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* ths) {
+    __ct__CScnFilter(ths);
 
-    *(void**)self = (void*)lbl_eu_8056E9E8;
+    *(u32**)ths = lbl_eu_8056E9E8;
 
     // First 0-store is consumed by the flags OR (store-to-load forward); the
     // second (redundant) store keeps the physical stw at the end of the block.
-    self->field_0x68 = 0;
+    ths->field_0x68 = 0;
 
     RectRegion tmp;
     tmp.x = lbl_eu_8066AAE0;
@@ -127,45 +133,33 @@ extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* self) {
     tmp.tR = lbl_eu_8066AAE8;
     tmp.tG = lbl_eu_8066AAE8;
     tmp.tB = lbl_eu_8066AAE8;
-    self->mRect = tmp;
+    ths->mRect = tmp;
 
-    self->mFlags = (u8)((u32)self->field_0x68 | 3);
-    self->field_0x58 = 4;
-    self->field_0x5C = 1;
-    self->field_0x60 = 4;
-    self->field_0x64 = 1;
-    self->field_0x68 = 0;
-    return self;
+    ths->mFlags = (u8)((u32)ths->field_0x68 | 3);
+    ths->field_0x58 = 4;
+    ths->field_0x5C = 1;
+    ths->field_0x60 = 4;
+    ths->field_0x64 = 1;
+    ths->field_0x68 = 0;
+    return ths;
 }
 
-struct CScnBlendState {
-    u8 _00[0x54];
-    u8 flags;
-};
-
-void func_80498D98(void* obj, int enable) {
-    CScnBlendState* state = (CScnBlendState*)obj;
+void func_80498D98(CScnBlend* blend, int enable) {
     if (enable != 0) {
-        state->flags |= 1;
+        blend->mFlags |= 1;
     } else {
-        state->flags &= 0xFE;
+        blend->mFlags &= 0xFE;
     }
 }
 
-extern "C" void func_80498DC0(u8* self, u32 enable) {
-    CScnBlend* blend = (CScnBlend*)self;
+extern "C" void func_80498DC0(CScnBlend* ths, u32 enable) {
     if (enable != 0) {
-        blend->mFlags |= 2;
+        ths->mFlags |= 2;
     } else {
-        blend->mFlags &= ~2;
+        ths->mFlags &= ~2;
     }
 }
 
-// Owning scene view as seen here: only field 0x6C (texture work manager) read.
-struct CScnBlendView {
-    u8 field_0x00[0x6C];
-    CTexWorkObj* mTexWork;
-};
 
 // ============================================================================
 // func_80498DE8 - full-screen blend filter draw (CScnBlend vtable slot).
@@ -174,11 +168,11 @@ struct CScnBlendView {
 // set the current view is first rendered into a texture (halved when bit1 is
 // set) and drawn back with a TEV stage modulated by the negated tint color.
 // ============================================================================
-extern "C" void func_80498DE8(CScnBlend* self, void* param) {
+extern "C" void func_80498DE8(CScnBlend* ths, CScnBlendView* param) {
     ml::CRect rect;
     func_8043E928__5CViewFRQ22ml5CRectP5CView(&rect, CView::getCurrentView());
 
-    if (self->mRect.h != lbl_eu_8066AAE8) {
+    if (ths->mRect.h != lbl_eu_8066AAE8) {
         GXLoadPosMtxImm(ml::CMat34::identity.m, 0);
         GXSetCurrentMtx(0);
         updateOrthoGX__8CGXCacheFv(CDeviceGX::getCacheInstance());
@@ -186,31 +180,31 @@ extern "C" void func_80498DE8(CScnBlend* self, void* param) {
         CDeviceGX::getCacheInstance()->setZWriteMode(0, 0);
         setAlphaBlend__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0);
 
-        if (!(self->mFlags & 1)) {
+        if (!(ths->mFlags & 1)) {
             // Direct path: no texture, no texture matrix.
             func_804948F4(0, 0);
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
-                                       self->field_0x5C,
-                                       self->field_0x60, self->field_0x64,
-                                       self->field_0x68, 0);
+                                       ths->field_0x5C,
+                                       ths->field_0x60, ths->field_0x64,
+                                       ths->field_0x68, 0);
             GXSetNumTexGens(0);
             GXSetNumTevStages(1);
             GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL,
                           GX_COLOR0A0);
-            if (self->field_0x5C != 3) {
+            if (ths->field_0x5C != 3) {
                 func_80494A64(0, 0, 0);
                 func_80494C30(0, 0, 0);
             } else {
                 func_80494A64(0, 3, 0);
                 func_80494C30(0, 0, 0);
             }
-            func_80494D84(&rect, &self->mRect);
+            func_80494D84(&rect, &ths->mRect);
         } else {
             // Texture path: render the view into a work texture first.
-            CTexWorkObj* texWork = ((CScnBlendView*)param)->mTexWork;
+            CTexWorkObj* texWork = param->mTexWork;
             u16 tw;
             u16 th;
-            if (self->mFlags & 2) {
+            if (ths->mFlags & 2) {
                 // Halve the rect size (signed divide by two).
                 s16 w = rect.mSize.x;
                 s16 h = rect.mSize.y;
@@ -220,28 +214,28 @@ extern "C" void func_80498DE8(CScnBlend* self, void* param) {
                 tw = (u16)rect.mSize.x;
                 th = (u16)rect.mSize.y;
             }
-            GXTexObj* tex = func_80490208(texWork, tw, th, self->field_0x58);
+            GXTexObj* tex = func_80490208(texWork, tw, th, ths->field_0x58);
             if (tex == NULL) {
                 // Allocation failure: retail exits without the cache restore.
                 return;
             }
-            func_804943E0(tex, (self->mFlags >> 1) & 1, 0);
+            func_804943E0(tex, (ths->mFlags >> 1) & 1, 0);
             func_804948F4(0, 1);
             func_8044A7F8__8CGXCacheFv(CDeviceGX::getCacheInstance(),
-                                       self->field_0x5C,
-                                       self->field_0x60,
-                                       self->field_0x64,
-                                       self->field_0x68, 0);
+                                       ths->field_0x5C,
+                                       ths->field_0x60,
+                                       ths->field_0x64,
+                                       ths->field_0x68, 0);
             GXSetNumTexGens(1);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0,
                               GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
-            if (self->field_0x5C != 3) {
+            if (ths->field_0x5C != 3) {
                 // Single TEV stage: raster color * texture * (-tint*255)
                 // held in TEV register 3.
                 GXColorS10 tevColor = {0, 0, 0, 0};
-                tevColor.r = (s16)(lbl_eu_8066AAEC * -self->mRect.tR);
-                tevColor.g = (s16)(lbl_eu_8066AAEC * -self->mRect.tG);
-                tevColor.b = (s16)(lbl_eu_8066AAEC * -self->mRect.tB);
+                tevColor.r = (s16)(lbl_eu_8066AAEC * -ths->mRect.tR);
+                tevColor.g = (s16)(lbl_eu_8066AAEC * -ths->mRect.tG);
+                tevColor.b = (s16)(lbl_eu_8066AAEC * -ths->mRect.tB);
                 GXSetTevColorS10((GXTevRegID)3, tevColor);
                 GXSetNumTevStages(1);
                 GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0,
@@ -266,7 +260,7 @@ extern "C" void func_80498DE8(CScnBlend* self, void* param) {
             GXLoadTexObj(tex, GX_TEXMAP0);
             ml::CCol4 blendColor(lbl_eu_8066AAE8, lbl_eu_8066AAE8,
                                  lbl_eu_8066AAE0, lbl_eu_8066AAE0);
-            func_80494F10(&rect, &self->mRect, &blendColor);
+            func_80494F10(&rect, &ths->mRect, &blendColor);
             func_804902D8(texWork, tex);
         }
 

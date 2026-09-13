@@ -37,7 +37,7 @@ public:
                 ofs_to_ptr<void>(ref().data[idx + 1].ofsData));
         }
 
-        return NULL;
+        return nullptr;
     }
 
     s32 GetIndex(const char* s) const;

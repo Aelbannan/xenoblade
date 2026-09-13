@@ -30,7 +30,7 @@ ResDicNodeData* ResDic::Get(const ResName name) const {
         return const_cast<ResDicNodeData*>(x);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 ResDicNodeData* ResDic::Get(const char* pName, u32 len) const {
@@ -57,39 +57,39 @@ ResDicNodeData* ResDic::Get(const char* pName, u32 len) const {
         return const_cast<ResDicNodeData*>(x);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void* ResDic::operator[](const char* pName) const {
-    if (IsValid() && pName != NULL) {
+    if (IsValid() && pName != nullptr) {
         ResDicNodeData* pNode = Get(pName, std::strlen(pName));
 
-        if (pNode != NULL) {
+        if (pNode != nullptr) {
             return const_cast<void*>(ofs_to_ptr_raw<void>(pNode->ofsData));
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void* ResDic::operator[](const ResName name) const {
     if (IsValid() && name.IsValid()) {
         ResDicNodeData* pNode = Get(name);
 
-        if (pNode != NULL) {
+        if (pNode != nullptr) {
             return const_cast<void*>(ofs_to_ptr_raw<void>(pNode->ofsData));
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 s32 ResDic::GetIndex(const char* s) const {
-    if (IsValid() && s != NULL) {
+    if (IsValid() && s != nullptr) {
         u32 len = std::strlen(s);
         ResDicNodeData* pNode = Get(s, len);
 
-        if (pNode != NULL) {
+        if (pNode != nullptr) {
             return pNode - (ref().data + 1);
         }
     }
@@ -101,7 +101,7 @@ s32 ResDic::GetIndex(const ResName name) const {
     if (IsValid() && name.IsValid()) {
         ResDicNodeData* pNode = Get(name);
 
-        if (pNode != NULL) {
+        if (pNode != nullptr) {
             return pNode - (ref().data + 1);
         }
     }

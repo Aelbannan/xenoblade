@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7499 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13334 |
-| `void*` (params + locals) | 7601 |
+| `void*` (params + locals) | 7599 |
 | raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3308 |
 | inline asm / `register` | 127 |
@@ -134,7 +134,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskSave.cpp | 39 | 6 | 7 | 2 | 1 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNReqtaskSave.cpp | 39 | 6 | 7 | 0 | 1 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1558,8 +1558,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 7,
-  "void_ptr": 2
+  "self_params": 7
  },
  "libs/monolib/src/nand/CNReqtaskSaveBanner.cpp": {
   "asm_insn_shim": 0,

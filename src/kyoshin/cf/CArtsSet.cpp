@@ -31,17 +31,26 @@ namespace cf {
     // (mirrors func_80153CAC), so MWCC keeps `this`(r3) as the accumulator and
     // reuses each source register for its own shift.
     void CArtsSet::setArtsSlotRC(unsigned short value, unsigned short row, unsigned short index) {
-        // Same unk4 u16 grid as getArtsSlotAtCnt (row stride 8).
-        reinterpret_cast<unsigned short*>(unk4)[row * 8 + index] = value;
+        // Match-pinned (u8*)this strides (row*0x10 + col*2 + 4).
+        u8* p = (u8*)this;
+        p += row * 0x10;
+        p += index * 0x2;
+        *(u16*)(p + 0x4) = value;
     }
 
     unsigned short CArtsSet::getArtsSlotRC(int index, int subindex) {
-        return reinterpret_cast<unsigned short*>(unk4)[index * 8 + subindex];
+        u8* p = (u8*)this;
+        p += index * 0x10;
+        p += subindex * 0x2;
+        return *(u16*)(p + 0x4);
     }
 
     // Decompose the flat index into row/col and store into the slot entry.
     void CArtsSet::setArtsSlotByIdx(unsigned short value, int index) {
-        reinterpret_cast<unsigned short*>(unk4)[(index / 8) * 8 + (index % 8)] = value;
+        u8* p = (u8*)this;
+        p += (index / 8) * 0x10;
+        p += (index % 8) * 0x2;
+        *(u16*)(p + 0x4) = value;
     }
 }
 
@@ -62,8 +71,11 @@ namespace cf {
     // which is intentional (retail performs the same raw memory access).
     unsigned short CArtsSet::getArtsSlotAtCnt(unsigned int index) {
         unsigned short count = mArtsSlotData[0];
-        // unk4 starts at +4: u16 grid with row stride 8 (0x10 bytes).
-        return reinterpret_cast<unsigned short*>(unk4)[count * 8 + index];
+        // Match-pinned: count*0x10 + index*2 at +4 (same grid as getArtsSlotRC).
+        u8* p = (u8*)this;
+        p += count * 0x10;
+        p += index * 0x2;
+        return *(u16*)(p + 0x4);
     }
 
     // The CArtsSet init virtual's body, defined under the retail mangled name

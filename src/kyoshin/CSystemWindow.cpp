@@ -225,15 +225,16 @@ void CSystemWindow::cbRenderBefore() {
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a
 // CProcess under `parent`. Returns 0 if the singleton already exists.
-CSystemWindow* func_80124AEC(CProcess* parent, CScn* scene, u32 opt,
-                             const char* str1, const char* str2) {
+CSystemWindow* func_80124AEC(CProcess* parent, void* arg1, void* arg2,
+                             void* arg3, void* arg4) {
     if (lbl_eu_80663FD8 != 0) return 0;
 
     u32 workMem = CWorkThreadSystem::getWorkMem();
     CSystemWindow* obj =
         (CSystemWindow*)mtl::MemManager::allocate(0x2b8, workMem);
     if (obj != 0) {
-        obj = __ct__CSystemWindow(obj, scene, opt, str1, str2);
+        obj = __ct__CSystemWindow(obj, (CScn*)arg1, (u32)arg2,
+                                  (const char*)arg3, (const char*)arg4);
     }
     lbl_eu_80663FD8 = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);

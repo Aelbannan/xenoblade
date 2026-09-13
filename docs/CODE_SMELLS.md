@@ -15,9 +15,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4152 |
 | `self`/register-style params | 13409 |
-| `void*` (params + locals) | 7705 |
-| raw pointer offset arithmetic | 7916 |
-| deref-through-cast arithmetic | 3312 |
+| `void*` (params + locals) | 7703 |
+| raw pointer offset arithmetic | 7915 |
+| deref-through-cast arithmetic | 3311 |
 | inline asm / `register` | 127 |
 | rN-named params | 464 |
 | goto | 3420 |
@@ -161,7 +161,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CScnItemCameraNw4r.cpp | 3 | 3 | 11 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemId.cpp | 6 | 4 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLight.cpp | 10 | 4 | 8 | 5 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 5 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 31 | 43 | 76 | 7 | 18 | 15 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 25 | 58 | 190 | 29 | 41 | 7 | 0 | 0 | 7 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 17 | 29 | 45 | 11 | 22 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
@@ -1825,15 +1825,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnItemLightNw4r.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 1,
   "extern_c_nonlbl_decl": 5,
   "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "rn_params": 5,
   "schedule_pragma": 0,
   "self_params": 8,
-  "void_ptr": 7
+  "void_ptr": 5
  },
  "libs/monolib/src/scn/CScnItemModel.cpp": {
   "asm_insn_shim": 0,

@@ -82,11 +82,11 @@ Manager::~Manager() {
     IDToComponent* pIt = static_cast<IDToComponent*>(
         nw4hbm::ut::List_GetFirst(&mIDToComponent));
 
-    for (; pIt != NULL; pIt = static_cast<IDToComponent*>(
+    for (; pIt != nullptr; pIt = static_cast<IDToComponent*>(
              nw4hbm::ut::List_GetFirst(&mIDToComponent))) {
         nw4hbm::ut::List_Remove(&mIDToComponent, pIt);
 
-        if (mpAllocator != NULL) {
+        if (mpAllocator != nullptr) {
             MEMFreeToAllocator(mpAllocator, pIt);
         } else {
             delete pIt;
@@ -107,7 +107,7 @@ void Manager::addComponent(Component* pComponent) {
     u32 id = pComponent->getID();
     pComponent->setManager(this);
 
-    if (mpAllocator != NULL) {
+    if (mpAllocator != nullptr) {
         IDToComponent* p = static_cast<IDToComponent*>(
             MEMAllocFromAllocator(mpAllocator, sizeof(IDToComponent)));
         nw4hbm::ut::List_Append(&mIDToComponent,
@@ -122,7 +122,7 @@ void Manager::delComponent(Component* pComponent) {
     IDToComponent* pIt = static_cast<IDToComponent*>(
         nw4hbm::ut::List_GetFirst(&mIDToComponent));
 
-    for (; pIt != NULL; pIt = static_cast<IDToComponent*>(
+    for (; pIt != nullptr; pIt = static_cast<IDToComponent*>(
              nw4hbm::ut::List_GetNext(&mIDToComponent, pIt))) {
         if (pIt->mpComponent == pComponent) {
             break;
@@ -131,7 +131,7 @@ void Manager::delComponent(Component* pComponent) {
 
     nw4hbm::ut::List_Remove(&mIDToComponent, pIt);
 
-    if (mpAllocator != NULL) {
+    if (mpAllocator != nullptr) {
         MEMFreeToAllocator(mpAllocator, pIt);
     } else {
         delete pIt;
@@ -148,7 +148,7 @@ Component* Manager::getComponent(u32 id) {
 bool Manager::update(int i, f32 x, f32 y, u32 trig, u32 hold, u32 release,
                      void* pData) {
     bool touch = false;
-    Component* pLastContained = NULL;
+    Component* pLastContained = nullptr;
 
     for (u32 n = 0; n < nw4hbm::ut::List_GetSize(&mIDToComponent); n++) {
         const IDToComponent* pIt = static_cast<const IDToComponent*>(
@@ -163,7 +163,7 @@ bool Manager::update(int i, f32 x, f32 y, u32 trig, u32 hold, u32 release,
         }
     }
 
-    if (pLastContained != NULL) {
+    if (pLastContained != nullptr) {
         if (trig) {
             Vec pos;
             pLastContained->onTrig(trig, pos);
@@ -213,12 +213,12 @@ PaneManager::~PaneManager() {
     PaneToComponent* pIt = static_cast<PaneToComponent*>(
         nw4hbm::ut::List_GetFirst(&mPaneToComponent));
 
-    for (; pIt != NULL; pIt = static_cast<PaneToComponent*>(
+    for (; pIt != nullptr; pIt = static_cast<PaneToComponent*>(
                             nw4hbm::ut::List_GetFirst(&mPaneToComponent))) {
 
         nw4hbm::ut::List_Remove(&mPaneToComponent, pIt);
 
-        if (mpAllocator != NULL) {
+        if (mpAllocator != nullptr) {
             MEMFreeToAllocator(mpAllocator, pIt->mpComponent);
             MEMFreeToAllocator(mpAllocator, pIt);
         } else {
@@ -243,10 +243,10 @@ void PaneManager::delLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
 
 void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
     NW4R_UT_LINKLIST_FOREACH(it, rPaneList, {
-        PaneComponent* pComponent = NULL;
-        PaneToComponent* pLink = NULL;
+        PaneComponent* pComponent = nullptr;
+        PaneToComponent* pLink = nullptr;
 
-        if (mpAllocator != NULL) {
+        if (mpAllocator != nullptr) {
             PaneComponent* pBufComponent = static_cast<PaneComponent*>(
                 MEMAllocFromAllocator(mpAllocator, sizeof(PaneComponent)));
             PaneToComponent* pBufLink = static_cast<PaneToComponent*>(
@@ -264,11 +264,11 @@ void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
 
         pComponent->setPane(&*it);
 
-        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Picture*>(&*it) != NULL) {
+        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Picture*>(&*it) != nullptr) {
             pComponent->setTriggerTarget(true);
         }
 
-        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Window*>(&*it) != NULL) {
+        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Window*>(&*it) != nullptr) {
             pComponent->setTriggerTarget(true);
         }
 
@@ -282,7 +282,7 @@ void PaneManager::walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList) {
         PaneToComponent* pLink = static_cast<PaneToComponent*>(
             nw4hbm::ut::List_GetFirst(&mPaneToComponent));
 
-        for (; pLink != NULL; pLink = static_cast<PaneToComponent*>(
+        for (; pLink != nullptr; pLink = static_cast<PaneToComponent*>(
                  nw4hbm::ut::List_GetNext(&mPaneToComponent, pLink))) {
             if (pLink->mpPane == &*it) {
                 break;
@@ -293,7 +293,7 @@ void PaneManager::walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList) {
         nw4hbm::ut::List_Remove(&mPaneToComponent, pLink);
         suIDCounter--;
 
-        if (mpAllocator != NULL) {
+        if (mpAllocator != nullptr) {
             MEMFreeToAllocator(mpAllocator, pLink->mpComponent);
             MEMFreeToAllocator(mpAllocator, pLink);
         } else {
@@ -315,7 +315,7 @@ PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 #pragma opt_propagation off // matches retail codegen for this function only
@@ -324,7 +324,7 @@ void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
         PaneToComponent* pIt = static_cast<PaneToComponent*>(
             nw4hbm::ut::List_GetNth(&mPaneToComponent, i));
 
-        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Bounding*>(pIt->mpPane) != NULL) {
+        if (nw4hbm::ut::DynamicCast<nw4hbm::lyt::Bounding*>(pIt->mpPane) != nullptr) {
             pIt->mpComponent->setTriggerTarget(target);
         }
     }
@@ -333,14 +333,14 @@ void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
 
 
 bool PaneComponent::contain(f32 x, f32 y) {
-    if (mpManager == NULL) {
+    if (mpManager == nullptr) {
         return false;
     }
 
     const nw4hbm::lyt::DrawInfo* pDrawInfo =
         static_cast<PaneManager*>(mpManager)->getDrawInfo();
 
-    if (pDrawInfo == NULL) {
+    if (pDrawInfo == nullptr) {
         return false;
     }
 
@@ -364,7 +364,7 @@ void PaneComponent::draw() {
     const nw4hbm::lyt::DrawInfo* pDrawInfo =
         static_cast<PaneManager*>(mpManager)->getDrawInfo();
 
-    if (pDrawInfo == NULL) {
+    if (pDrawInfo == nullptr) {
         return;
     }
 
@@ -399,7 +399,7 @@ static bool is_visible(nw4hbm::lyt::Pane* pPane) {
         return false;
     }
 
-    if (pPane->GetParent() == NULL) {
+    if (pPane->GetParent() == nullptr) {
         return true;
     }
 

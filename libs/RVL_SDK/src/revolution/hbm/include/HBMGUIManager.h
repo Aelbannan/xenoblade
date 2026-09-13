@@ -161,7 +161,7 @@ public:
     Manager(EventHandler* pEventHandler, MEMAllocator* pAllocator)
         : mpEventHandler(pEventHandler), mpAllocator(pAllocator) {
 
-        if (mpEventHandler != NULL) {
+        if (mpEventHandler != nullptr) {
             mpEventHandler->setManager(this);
         }
 
@@ -182,7 +182,7 @@ public:
     virtual bool update(int i, f32 x, f32 y, u32 trig, u32 hold, u32 release,
                         void* pData);                      // at 0x30
     virtual void onEvent(u32 id, u32 event, void* pData) { // at 0x34
-        if (mpEventHandler != NULL) {
+        if (mpEventHandler != nullptr) {
             mpEventHandler->onEvent(id, event, pData);
         }
     }
@@ -191,7 +191,7 @@ public:
     virtual void setEventHandler(EventHandler* pEventHandler) { // at 0x3C
         mpEventHandler = pEventHandler;
 
-        if (mpEventHandler != NULL) {
+        if (mpEventHandler != nullptr) {
             mpEventHandler->setManager(this);
         }
     }

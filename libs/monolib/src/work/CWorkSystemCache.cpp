@@ -315,15 +315,15 @@ extern "C" u32 lbl_eu_8056FD24[];
 extern "C" u32 lbl_eu_8056FD3C[];
 
 // [.sdata] 0x80663B40-0x80663B78 (56B): RTTI locators + shared "ref"-style
-// string pointers.
-extern "C" void* lbl_eu_80663B40[2] = { (void*)lbl_eu_80524568, (void*)lbl_eu_8056FD10 };
-extern "C" void* lbl_eu_80663B48[2] = { (void*)lbl_eu_8052457C, (void*)lbl_eu_8056FD30 };
-extern "C" void* lbl_eu_80663B50[2] = { (void*)lbl_eu_80524594, 0 };
-extern "C" void* lbl_eu_80663B58[2] = { (void*)lbl_eu_8066B218, 0 };
-extern "C" void* lbl_eu_80663B60 = (void*)lbl_eu_8066B220;
-extern "C" void* lbl_eu_80663B64 = (void*)lbl_eu_8066B220;
-extern "C" void* lbl_eu_80663B68[2] = { (void*)lbl_eu_8066B220, 0 };
-extern "C" void* lbl_eu_80663B70[2] = { (void*)lbl_eu_805245C8, 0 };
+// string pointers (u32* slots; same bytes as void* pointer tables).
+extern "C" u32 lbl_eu_80663B40[2] = { (u32)lbl_eu_80524568, (u32)lbl_eu_8056FD10 };
+extern "C" u32 lbl_eu_80663B48[2] = { (u32)lbl_eu_8052457C, (u32)lbl_eu_8056FD30 };
+extern "C" u32 lbl_eu_80663B50[2] = { (u32)lbl_eu_80524594, 0 };
+extern "C" u32 lbl_eu_80663B58[2] = { (u32)lbl_eu_8066B218, 0 };
+extern "C" u32 lbl_eu_80663B60 = (u32)lbl_eu_8066B220;
+extern "C" u32 lbl_eu_80663B64 = (u32)lbl_eu_8066B220;
+extern "C" u32 lbl_eu_80663B68[2] = { (u32)lbl_eu_8066B220, 0 };
+extern "C" u32 lbl_eu_80663B70[2] = { (u32)lbl_eu_805245C8, 0 };
 
 // [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
 // RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.

@@ -57,7 +57,7 @@ void func_801F8EB0(CfResTboxImpl* ths) {
         u32 handle1 = ths->func_8016CCBC(1);
         ths->field_00->field_90 = func_80066E7C(entry, handle1);
         ths->field_00->field_90 =
-            (u8*)func_80062114((char*)ths->field_00->field_90, 0, (void**)&outC);
+            func_80062114((char*)ths->field_00->field_90, 0, (u32**)&outC);
 float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
         u8* obj = func_80489A60((u8*)lbl_eu_80663E14, ths->field_00->field_90, 6, 1, 0, 0x70);
         func_800BBADC(ths->field_00, obj);
@@ -72,7 +72,7 @@ float anim = ((cf::CfObject*)ths->field_00)->CfObject_getObjScale();
             u32 handle1 = ths->func_8016CCBC(1);
             ths->field_00->field_94 = func_80066E7C(entry, handle1);
             ths->field_00->field_94 =
-                (u8*)func_80062114((char*)ths->field_00->field_94, 1, (void**)&out8);
+                func_80062114((char*)ths->field_00->field_94, 1, (u32**)&out8);
             ths->field_00->field_9C = (u8*)func_800584B8(
                 (u32)CfRes_getD80Flag(), (u32)ths->field_00->field_94, (const char*)buf64);
         }

@@ -17,6 +17,11 @@ class CfObjectMove;
 struct CfResTboxImpl;
 struct CfResTboxParent;
 
+// Local overlay: ctor writes retail lbl_eu_80535204 at +0x10 (novtable).
+struct CfResTboxImplVtbl {
+    u32 slots[27];
+};
+
 class CfObject; // real owner of +0x38 sub-object (CfObject_getPosTriple)
 
 // Prefix pushing vptr to +0x10 (same as CfResPcImpl / CfResReloadImpl)
@@ -58,7 +63,9 @@ public:
     virtual int func_8016CD54();             // 0x64
     virtual int func_800BF30C();             // 0x68
 
-    void*& vtbl() { return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10); }
+    CfResTboxImplVtbl*& vtbl() {
+        return *reinterpret_cast<CfResTboxImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
+    }
 
     /* 0x14 */ u32 field_14[2];
 };
@@ -93,14 +100,14 @@ typedef void (cf::CfResTboxImpl::*CfResTboxImplPMF)();
 extern CfResTboxImplPMF lbl_eu_805351E0[3];
 extern char lbl_eu_80664660;
 extern u32 __ptmf_null[3];
-extern u8 lbl_eu_80535204[];
+extern cf::CfResTboxImplVtbl lbl_eu_80535204;
 extern float lbl_eu_806681D0;
 extern float lbl_eu_806681D4;
 void func_801F92B0(u8* base, int idx1, int idx2, int idx3);
 extern "C" bool isSceneActive__Q22cf13CfGameManagerFv();
 extern "C" char* func_80063080();
-extern "C" u8* func_80066E7C(ResInfoEntry* self, u32 id);
-extern "C" void* func_80062114(char* self, int index, void** out);
+extern "C" u8* func_80066E7C(ResInfoEntry* entry, u32 id);
+extern "C" u8* func_80062114(char* key, int index, u32** out);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResTboxParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);

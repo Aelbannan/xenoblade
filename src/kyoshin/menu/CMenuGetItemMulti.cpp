@@ -148,11 +148,11 @@ CMenuGetItemFourShorts func_801397AC(void*, u32);
 u32 func_80139358(u32);
 char* func_801393CC(u32);
 char* func_801394D4(u16);
-u8 func_80157CD0(u16);
-// Retail call sites consume the +6 slot-sum as a raw byte (mr r5, r3, no
-// clrlwi), so the call-site type is u8 despite the CItem.cpp def using u32;
-// the arg is passed raw (mr r3, rN) so the visible param is u32.
-u8 func_80158068(u32);
+// Match CItem.cpp defs: bare cmpi on r3 in Init special2 (u8 view inserts clrlwi).
+s32 func_80157CD0(u32);
+// Slot-sum call sites want a raw mr of r3; u32 return matches the def and
+// still allows mr without an extra clrlwi when passed through.
+u32 func_80158068(u32);
 // setLayoutTextBoxNumber is declared by the included code_80135FDC.hpp / unit header.
 // Retail passes the raw id to func_801392E4 without a halfword mask (mr r3,
 // r4 directly), so the visible param is u32 here.
@@ -688,39 +688,61 @@ void CMenuGetItemMulti::Init() {
                         mHasSpecialItem = 1;
                     }
                 }
-                // Extract catScratch then itemKey from one packed load
-                // (retail clrlwi. cat / extrwi id). Residual: beq+b vs bne
-                // on catScratch==0 (next angle: force forward beq body).
+                // Retail: rlwinm. r4=tmp; extrwi itemKey; beq e4; b join;
+                // e4 falls into join (shared r4→cat2). Wii/1.1 merges that to
+                // bne mid-function (MWCC_CASES 10378); keep best near-miss shape.
                 {
                     u32 packed = entry->packed;
-                    u32 catScratch = (packed >> 16) & 0xf;
+                    u32 tmp = (packed >> 16) & 0xf;
                     u16 itemKey = (u16)(packed >> 20);
-                    u16 cat2 = (u16)catScratch;
-                    if (catScratch == 0) {
+                    if (tmp == 0) {
                         goto do_cat2_e4;
                     }
-                    goto after_cat2_e4;
+                    goto cat2_join;
                 do_cat2_e4:
-                    cat2 = func_801392E4(itemKey);
-                after_cat2_e4:
-                    func_80139358(itemKey);
-                    int special2 = 0;
-                    if (cat2 >= 2 && cat2 <= 9) {
-                        if (func_80157CD0(cat2) != 0) {
-                            special2 = 1;
+                    tmp = (u16)func_801392E4(itemKey);
+                cat2_join:
+                    {
+                        u32 cat2 = (u16)tmp;
+                        u32 special2;
+                        func_80139358(itemKey);
+                        if ((u32)(cat2 - 2) <= 7) {
+                            goto special2_lo;
                         }
-                    } else if (cat2 >= 10 && cat2 <= 13) {
-                        int y = func_80158068(itemKey);
-                        if (y < 1) {
-                            if (func_80157CD0(cat2) != 0) {
-                                special2 = 1;
+                        if ((u32)(cat2 - 10) <= 3) {
+                            goto special2_hi;
+                        }
+                        goto special2_zero;
+                    special2_lo:
+                        if (func_80157CD0(cat2) == 0) {
+                            goto special2_zero;
+                        }
+                        special2 = 1;
+                        goto special2_test;
+                    special2_hi:
+                        {
+                            int y = func_80158068(itemKey);
+                            if (y < 1) {
+                                goto special2_y_lt1;
                             }
-                        } else if (y < 0x63) {
+                            if (y >= 0x63) {
+                                goto special2_zero;
+                            }
                             special2 = 1;
+                            goto special2_test;
+                        special2_y_lt1:
+                            if (func_80157CD0(cat2) == 0) {
+                                goto special2_zero;
+                            }
+                            special2 = 1;
+                            goto special2_test;
                         }
-                    }
-                    if (special2 == 0) {
-                        mPaneVisible[mVisibleItemCount] = 1;
+                    special2_zero:
+                        special2 = 0;
+                    special2_test:
+                        if (special2 == 0) {
+                            mPaneVisible[mVisibleItemCount] = 1;
+                        }
                     }
                 }
                 mVisibleEntries[mVisibleItemCount] = entry;

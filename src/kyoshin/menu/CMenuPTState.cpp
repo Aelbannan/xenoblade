@@ -65,10 +65,10 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             u32 ptmfWord2 = ptmf->w[2];
 
             shim->callbacks[2] = ptmfWord2;
-            u32 ptmfWord1b = ptmf->w[1];
-            u32 ptmfWord0b = ptmf->w[0];
-            shim->callbacks[3] = ptmfWord0b;
-            shim->callbacks[4] = ptmfWord1b;
+            ptmfWord1 = ptmf->w[1];
+            ptmfWord0 = ptmf->w[0];
+            shim->callbacks[3] = ptmfWord0;
+            shim->callbacks[4] = ptmfWord1;
             ptmfWord2 = ptmf->w[2];
             shim->callbacks[5] = ptmfWord2;
             shim->field54 = zero;

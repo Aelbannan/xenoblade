@@ -223,3 +223,38 @@ void* lbl_eu_80664118;
 void* lbl_eu_8066411C;
 void* lbl_eu_80664120;
 void* lbl_eu_80664124;
+
+extern "C" u32 func_8003B1EC(void* bdat);
+extern "C" u32 func_8003B41C(void* bdat);
+extern "C" u32 func_800AA714(const char* path);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+
+namespace cf {
+class CfBdat {
+public:
+    static u32 func_801422A8(u32 param1);
+};
+}
+
+// Weapon-id translator: ids with top-5-bit tag 5 pass through; other
+// nonzero ids index the ITM_wpnlist table via its name column.
+u32 cf::CfBdat::func_801422A8(u32 param1) {
+    if (param1 != 0) {
+        u32 result;
+        void* data;
+        if ((param1 >> 27) == 5) {
+            return param1;
+        }
+        result = 0;
+        if (param1 & 0xFFFF) {
+            data = lbl_eu_806640F4;
+            int total = (int)(func_8003B1EC(data) + func_8003B41C(data));
+            if ((u16)param1 < total) {
+                result = func_800AA714((const char*)getBdatStringColumnValue(
+                    data, &lbl_eu_80500FA4[0x34f], (u16)param1));
+            }
+        }
+        return result;
+    }
+    return 0;
+}

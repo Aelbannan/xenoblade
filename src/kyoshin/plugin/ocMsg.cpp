@@ -90,8 +90,6 @@ int func_8003A68C(VMThread* pThread, void* target) {
     // it reproduces retail's xori/andi/srawi stream; only the subf destination
     // and final shift source remain swapped (r5 vs retail r0).
     int t = x >> 1;
-    // Compound subtract reproduces retail's xori/andi./srawi stream; only
-    // subf/rlwinm dest differs (r5 vs retail r0) — allocator degree wall.
     t -= x & 0x0a;
     *(u8*)&args.type = 1 + ((u32)t >> 31);
     vmRetValSet(pThread, &args);

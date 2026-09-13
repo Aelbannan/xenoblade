@@ -178,8 +178,7 @@ unsigned int lbl_eu_80664788_b;
 // be included here: it redeclares this TU's .sbss/.bss labels with different
 // types). Offsets match src/kyoshin/cf/CfNandManager.hpp.
 
-#pragma pack(1)
-struct CfNandEntryHead {
+struct __attribute__((packed)) CfNandEntryHead {
     u16 f000;
     u32 f002;
     u32 f006;
@@ -192,7 +191,6 @@ struct CfNandEntryHead {
     u32 f020;
     u32 f024;
 };
-#pragma pack()
 
 struct CfNandWorkEntryDst {
     CfNandEntryHead head;
@@ -510,26 +508,31 @@ struct CfNandSaveImageV1 {
     u8 optdBlob[0x40];
 };
 
-struct CfNandNameLiveNode {
-    CfNandNameLiveNode* p00;
-    CfNandNameLiveNode* p04;
-    u32 w00;
-    f32 f04;
-    f32 f08;
-    f32 f0C;
-    f32 f10;
-    u32 w14;
-    u16 s18;
-    u8 b1A;
-    u8 b1B;
+struct CfNandNameNode {
+    CfNandNameNode* mNext;
+    CfNandNameNode* mPrev;
+    u32 f08;
+    float f0C;
+    float f10;
+    float f14;
+    float f18;
+    u32 f1C;
+    u16 f20;
+    u8 f22;
+    u8 f23;
 };
 
-struct CfNandNameLiveRoot {
-    u8 _00[4];
-    CfNandNameLiveNode* head;
+struct CfNandNameRoot {
+    u8 _pad0[4];
+    CfNandNameNode* mNext;
     u8 _08[0x24];
-    CfNandNameLiveNode* slots;
+    CfNandNameNode* slots;
     s32 slotCount;
+};
+
+struct CfNandWorkBuf {
+    u8 head[0x41F0];
+    CfNandWorkEntryDst entry[14];
 };
 
 extern "C" int func_8023CD9C(void* block);
@@ -546,7 +549,7 @@ extern "C" void func_8016E100(void* p);
 extern "C" void fadeOutGameEffects__Q22cf13CfGameManagerFv();
 extern "C" void func_80207D2C(u8* rec);
 extern "C" void func_800B72DC();
-extern "C" CfNandNameLiveRoot* func_800B6CA0();
+extern "C" CfNandNameRoot* func_800B6CA0();
 extern "C" void updateConfig__FPUc(u8* src, int mode);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void setEventCounterA__Q22cf13CfGameManagerFv(u32 value);
@@ -561,10 +564,7 @@ extern u8 lbl_eu_80663E5D;
 
 #pragma inline_max_size(0x4000)
 #pragma inline_max_total_size(0x8000)
-inline static void applyWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* dst) {
-    u32 n1 = 48;
-    u32 n2 = 36;
-
+inline static void expandWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* dst) {
     src->head.f000 = dst->head.f000;
     src->head.f002 = dst->head.f002;
     src->head.f006 = dst->head.f006;
@@ -574,15 +574,13 @@ inline static void applyWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* d
     src->head.f016 = dst->head.f016;
     src->head.f01C = dst->head.f01C;
     src->head.f020 = dst->head.f020;
-    src->head.f024 = dst->head.f024;
-    for (u32 k = 0; k < n1; k++) {
-        src->arr028[k] = dst->arr028[k];
-    }
-    for (u32 k = 0; k < n2; k++) {
-        src->arr0E8[k] = dst->arr0E8[k];
-    }
-    src->f178 = dst->f178;
-    cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>(&src->subSlot);
+    struct Arr48 { u32 w[48]; };
+    struct Arr36 { u32 w[36]; };
+    *(Arr48*)&src->head.f024 = *(Arr48*)&dst->head.f024;
+    *(Arr36*)((u8*)src + 0xE4) = *(Arr36*)((u8*)dst + 0xE4);
+    u16 t178 = dst->f178;
+    cf::CActorParam* actor = reinterpret_cast<cf::CActorParam*>((u8*)src + 0x17C);
+    src->f178 = t178;
     src->f17CC = dst->f17C;
     src->f17D0 = dst->f180;
     src->f17D4 = dst->f184;
@@ -679,39 +677,55 @@ inline static void applyWorkEntry(CfNandWorkEntrySrc* src, CfNandWorkEntryDst* d
 }
 
 inline static void restoreNameTable(CfNandSaveNameTable* names) {
+    CfNandSaveNameEntry cur;
     func_800B72DC();
-    CfNandNameLiveRoot* root = func_800B6CA0();
-    CfNandSaveNameEntry* e = names->entries;
+    CfNandNameRoot* root = func_800B6CA0();
+    u8* rec = (u8*)names;
+    u8* recF = (u8*)names + 4;
     for (s32 i = 0; i < names->count; i++) {
+        CfNandNameNode* slots = root->slots;
         s32 n = 0;
-        while (n < root->slotCount && root->slots[n].p00 != 0) {
+        u32 off = 0;
+        while (n < root->slotCount) {
+            if (*(u32*)((u8*)slots + off) == 0) {
+                break;
+            }
+            off += 0x24;
             n++;
         }
-        CfNandNameLiveNode* slot = &root->slots[n];
+        CfNandNameNode* slot = (CfNandNameNode*)((u8*)slots + n * 0x24);
         u8* body = (u8*)slot + 8;
+        CfNandSaveNameEntry* pCur = &cur;
         if (body != 0) {
-            slot->w00 = e->f08;
-            slot->f04 = *(float*)((u8*)e + 8);
-            slot->f08 = *(float*)((u8*)e + 12);
-            slot->f0C = *(float*)((u8*)e + 16);
-            slot->f10 = e->f14;
-            slot->w14 = e->f18;
-            slot->s18 = e->f1C;
-            slot->b1A = e->f1E;
-            slot->b1B = e->f1F;
+            *(u32*)(body + 0) = *(u32*)(rec + 4);
+            *(float*)(body + 4) = *(float*)(recF + 4);
+            *(float*)(body + 8) = *(float*)(recF + 8);
+            *(float*)(body + 12) = *(float*)(recF + 12);
+            *(float*)(body + 16) = *(float*)(rec + 20);
+            *(u32*)(body + 20) = *(u32*)(rec + 24);
+            *(u16*)(body + 24) = *(u16*)(rec + 28);
+            body[26] = rec[30];
+            pCur->f04 = 0;
+            body[27] = rec[31];
         }
-        CfNandNameLiveNode* head = root->head;
-        slot->p00 = head;
-        slot->p04 = head->p04;
-        head->p04->p00 = slot;
-        head->p04 = slot;
-        e++;
+        CfNandNameNode* head = root->mNext;
+        slot->mNext = head;
+        slot->mPrev = head->mPrev;
+        head->mPrev->mNext = slot;
+        head->mPrev = slot;
+        rec += 0x1C;
+        recF += 0x1C;
     }
 }
 
 // Apply a NAND save image back into live game state (load/teardown path).
 extern "C" int func_8023D3D8(CfNandSaveImage* img) {
     int ok = 1;
+    u8* live;
+    CfNandWorkEntrySrc* src;
+    CfNandWorkEntryDst* dst;
+    CfNandSaveNameEntry nameScratch;
+    nameScratch.f04 = 0;
     u32 ver = img->version - 0x70001;
     if (ver <= 1) {
         int valid = func_8023CD9C(img);
@@ -721,12 +735,12 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         u32 flagLen = func_8009CF84();
         memcpy(func_8009CF0C(), img->flagData, flagLen);
         lbl_eu_80664774 = img->slot[0x66];
-        u8* live = func_8009D5FC();
+        live = func_8009D5FC();
         memcpy(live, img->workHead, 0x41F0);
-        CfNandWorkEntrySrc* src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
-        CfNandWorkEntryDst* dst = &img->workEntry[1];
+        src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+        dst = &img->workEntry[1];
         for (u32 i = 1; i < 14; i++) {
-            applyWorkEntry(src, dst);
+            expandWorkEntry(src, dst);
             func_8009EF9C(src, 0);
             src++;
             dst++;
@@ -737,12 +751,12 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         }
         u16* ev = (u16*)q;
         int n = 0;
-        u16 cur = ev[0];
-        while (n < cur && n < 16) {
-            queueEventId__Q22cf13CfGameManagerFv(cur);
+        u16 evCur = ev[0];
+        while (n < evCur && n < 16) {
+            queueEventId__Q22cf13CfGameManagerFv(evCur);
             ev++;
             n++;
-            cur = ev[0];
+            evCur = ev[0];
         }
         func_8006A814(&img->progress.field00);
         func_8006A028(img->progress.f04);
@@ -826,12 +840,12 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
 
     u32 flagLen = func_8009CF84();
     memcpy(func_8009CF0C(), v1->flagData, flagLen);
-    u8* live = func_8009D5FC();
+    live = func_8009D5FC();
     memcpy(live, v1->workHead, 0x41F0);
-    CfNandWorkEntrySrc* src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
-    CfNandWorkEntryDst* dst = &v1->workEntry[1];
+    src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
+    dst = &v1->workEntry[1];
     for (u32 i = 1; i < 14; i++) {
-        applyWorkEntry(src, dst);
+        expandWorkEntry(src, dst);
         src++;
         dst++;
     }

@@ -3672,7 +3672,8 @@ exit:;
 #pragma optimize_for_size on
 void func_801CCAF0(void* self) {
     void* item;
-    u8 nslots;
+    CItemBoxGridFull* sub;
+    u8 entry;
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
         if (CSysWin_isActive(p + 0x4ac)) {
@@ -3693,12 +3694,12 @@ void func_801CCAF0(void* self) {
     if (func_80208358(p + 0x418)) {
         if (!func_80208360(p + 0x418)) return;
         if ((func_802087B8(p + 0x418) & 0xFF) == 1) {
-            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-            u8 entry = (u8)(p[0x524] + p[0x525] * 10);
+            sub = (CItemBoxGridFull*)(p + 0x54c);
+            entry = (u8)(p[0x524] + p[0x525] * 10);
             item = func_801C631C(sub, entry);
             u32 type = (*(u32*)item >> 16) & 0xF;
             if (type == 2 || (u8)(type + 0xfc) <= 4) {
-                nslots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
+                u8 nslots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
                 for (u8 j = 0; j < nslots; j++) {
                     if ((s16)CItem_initItemImplInstances((CItemData*)item)->vf40((CItemData*)item, j) != -1) {
                         p[0x541] = 1;
@@ -3709,9 +3710,9 @@ void func_801CCAF0(void* self) {
             if (item) {
                 CItem_initItemImplInstances((CItemData*)item)->vf10((CItemData*)item);
             }
-            func_801CFF28(self);
+            func_801CFF28(p);
             playUISound__FUl(0x7a);
-            func_801D0950(self);
+            func_801D0950(p);
         } else {
             u8* listRow = p + (s8)p[0x6f];
             if (listRow[0x62] == 0xa) {
@@ -3748,13 +3749,13 @@ void func_801CCAF0(void* self) {
             if (func_8022E490(p + 0x468)) {
                 func_8022DD68(p + 0x468);
                 *(u32*)(p + 0x58) = 0x11;
-                func_801D0950(self);
+                func_801D0950(p);
                 func_801D216C(p + 0x70, 1);
                 func_801D216C(p + 0xd0, 0);
             } else {
-                CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-                u8 entry = (u8)(p[0x524] + p[0x525] * 10);
-                void* item = func_801C631C(sub, entry);
+                sub = (CItemBoxGridFull*)(p + 0x54c);
+                entry = (u8)(p[0x524] + p[0x525] * 10);
+                item = func_801C631C(sub, entry);
                 u32 kind = func_801C62AC(sub, entry);
                 s32 count = func_801C6388(sub, entry);
                 func_8022DD90(p + 0x468);
@@ -3763,8 +3764,8 @@ void func_801CCAF0(void* self) {
                 u32 teachState = func_8022E504(p + 0x468);
                 if ((u8)teachState == 1) {
                     u32 table = lbl_eu_80664104;
-                    u32 k2 = func_80139358(kind & 0xFFFF);
-                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k2 & 0xFFFF) & 0xFF) == 7) {
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212],
+                                       func_80139358(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 7) {
                         incrementEventCounter__FUl(0x87);
                     }
                 } else if ((u8)teachState == 2) {
@@ -3773,8 +3774,8 @@ void func_801CCAF0(void* self) {
                     if ((*(u32*)item >> 20) == 0x775) incrementEventCounter__FUl(0x8a);
                 } else if ((u8)teachState == 5) {
                     u32 table = lbl_eu_80664104;
-                    u32 k3 = func_80139358(kind & 0xFFFF);
-                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k3 & 0xFFFF) & 0xFF) == 2) {
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212],
+                                       func_80139358(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 2) {
                         incrementEventCounter__FUl(0x8b);
                     }
                 }
@@ -3782,16 +3783,16 @@ void func_801CCAF0(void* self) {
                     if ((u8)teachState == 1) incrementEventCounter__FUl(0x89);
                 } else if ((u8)teachType == 6) {
                     u32 table = lbl_eu_80664104;
-                    u32 k4 = func_80139358(kind & 0xFFFF);
-                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212], k4 & 0xFFFF) & 0xFF) == 5) {
+                    if ((func_801361E8(table, (const char*)&lbl_eu_8050566C[0x212],
+                                       func_80139358(kind & 0xFFFF) & 0xFFFF) & 0xFF) == 5) {
                         incrementEventCounter__FUl(0x8d);
                     }
                 } else if ((u8)teachType == 7) {
                     incrementEventCounter__FUl(0x8c);
                 }
                 if ((*(u32*)item >> 20) == 0x867) incrementEventCounter__FUl(0x8e);
-                func_801D11B8(self, item, (s8)count - 1);
-                func_801CFF28(self);
+                func_801D11B8(p, item, (s8)count - 1);
+                func_801CFF28(p);
             }
         } else {
             func_8022E3AC(p + 0x468);
@@ -3808,34 +3809,36 @@ void func_801CCAF0(void* self) {
             func_80157824((p + (s8)p[0x6f])[0x62], val & 0xFF);
             p[0x547] = (u8)func_801D3808(p + 0xe8);
             p[0x548] = (u8)func_801D3810(p + 0xe8);
-            func_801CC7B0(self, 1);
+            func_801CC7B0(p, 1);
             p[0x524] = 0;
             if ((s8)p[0x525] > 0) p[0x525] = 0;
-            func_801D0950(self);
+            func_801D0950(p);
             p[0x2d50] = 0;
-            func_801CFF28(self);
+            func_801CFF28(p);
             playUISound__FUl(3);
         }
         return;
     }
     if (p[0x544]) return;
-    if ((s8)p[0x525] == -1) return;
-    if (p[0x527] == 4) {
-        if ((s8)p[0x525] == -2) {
+    s8 cursor = (s8)p[0x525];
+    if (cursor == -1) return;
+    u8 mode = p[0x527];
+    if (mode == 4) {
+        if (cursor == -2) {
             p[0x549] = 1;
             func_801C68A0((CItemBoxGridFull*)(p + 0x54c));
             playUISound__FUl(4);
             return;
         }
-        CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-        u8 entry = (u8)(p[0x524] + (s8)p[0x525] * 10);
-        u8 cap = func_801C6840(sub);
-        if ((u8)func_801C67F8(sub) >= cap) {
-            if (func_801C673C(sub, entry)) {
+        sub = (CItemBoxGridFull*)(p + 0x54c);
+        entry = (u8)(p[0x524] + cursor * 10);
+        u32 cap = func_801C6840(sub) & 0xFF;
+        if ((func_801C67F8(sub) & 0xFF) >= cap) {
+            if (((int (*)(CItemBoxGridFull*, u16))func_801C673C)(sub, entry)) {
                 func_801C6770(sub, entry);
-                func_801CFFEC(self);
-                func_801D0328(self);
-                func_801D0BD8(self);
+                func_801CFFEC(p);
+                func_801D0328(p);
+                func_801D0BD8(p);
                 playUISound__FUl(6);
                 return;
             }
@@ -3853,29 +3856,29 @@ void func_801CCAF0(void* self) {
         if ((u8)func_801C6528(sub, entry)) return;
         if (!(func_801C62AC(sub, entry) & 0xFFFF)) return;
         func_801C6770(sub, entry);
-        func_801CFFEC(self);
-        func_801D0328(self);
-        func_801D0BD8(self);
-        if (func_801C673C(sub, entry)) {
+        func_801CFFEC(p);
+        func_801D0328(p);
+        func_801D0BD8(p);
+        if (((int (*)(CItemBoxGridFull*, u16))func_801C673C)(sub, entry)) {
             playUISound__FUl(3);
         } else {
             playUISound__FUl(6);
         }
         return;
     }
-    if (p[0x527] == 1) {
+    if (mode == 1) {
         if (p[0x528]) {
             if (!func_801EB028(p + 0x3e4)) return;
-            if (*(u32*)(p + 0x58) != 0x19) return;
-            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-            u8 entry = (u8)(p[0x524] + p[0x525] * 10);
-            void* item = func_801C631C(sub, entry);
+            if (*(s32*)(p + 0x58) != 0x19) return;
+            sub = (CItemBoxGridFull*)(p + 0x54c);
+            entry = (u8)(p[0x524] + p[0x525] * 10);
+            item = func_801C631C(sub, entry);
             func_801C62AC(sub, entry);
             s32 count = func_801C6388(sub, entry);
             u32 type = (*(u32*)item >> 16) & 0xF;
             if ((u8)func_801C6528(sub, entry)) {
                 s16 sid = func_801C5F48(sub, entry);
-                func_801D0E88(self, (int)type, (int)sid);
+                func_801D0E88(p, (int)type, (int)sid);
             }
             if (type == 2 || (u8)(type + 0xfc) <= 4) {
                 u8 numSlots = (u8)CItem_initItemImplInstances((CItemData*)item)->vf30((CItemData*)item);
@@ -3886,26 +3889,27 @@ void func_801CCAF0(void* self) {
                     }
                 }
             }
-            u32 cost = func_801C5FC0(sub, entry);
-            func_80157184((u32)func_801571FC() + (s8)p[0x529] * cost);
-            func_801D11B8(self, item, (s8)count - (s8)p[0x529]);
-            func_801CFF28(self);
+            s32 add = (s8)p[0x529] * (s32)func_801C5FC0(sub, entry);
+            func_80157184((s32)((u32)func_801571FC() + add));
+            func_801D11B8(p, item, (s8)count - (s8)p[0x529]);
+            func_801CFF28(p);
             func_801EB178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
             playUISound__FUl(0x2f);
             return;
         }
         if (!func_801EB028(p + 0x3e4)) return;
-        if (*(u32*)(p + 0x58) != 3) return;
+        if (*(s32*)(p + 0x58) != 3) return;
         {
-            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-            u8 entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
-            if (!(func_801C62AC(sub, entry) & 0xFFFF)) return;
+            sub = (CItemBoxGridFull*)(p + 0x54c);
+            entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
+            u32 kindSell = func_801C62AC(sub, entry);
+            if (!(kindSell & 0xFFFF)) return;
             p[0x529] = 1;
             func_801EB030(p + 0x3e4, (void*)func_801C6938(sub, entry));
             func_801EB04C(p + 0x3e4, p[0x529]);
             func_801EB064(p + 0x3e4, (s8)p[0x529] * func_801C5FC0(sub, entry));
-            if ((u8)func_801C6690(sub, entry)) {
+            if (((int (*)(CItemBoxGridFull*, u16))func_801C6690)(sub, entry)) {
                 *(u32*)(p + 0x58) = 0x12;
                 u32 msg2 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x17);
                 func_8022B90C(p + 0x4e8, 0);
@@ -3938,7 +3942,8 @@ void func_801CCAF0(void* self) {
             } else {
                 u8 listVal2 = p[0x62 + (s8)p[0x6f]];
                 if (listVal2 == 0xd) {
-                    if (func_801D12D4(self, func_801C62AC(sub, entry) & 0xFFFF)) {
+                    u32 k12 = func_801C62AC(sub, entry);
+                    if (func_801D12D4(p, k12 & 0xFFFF)) {
                         *(u32*)(p + 0x58) = 0x15;
                         u32 msg7 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x19);
                         u32 msg8 = (u32)func_80136190((void*)&lbl_eu_8050566C[0x310], &lbl_eu_8050566C[0x158], 0x14);
@@ -3949,44 +3954,48 @@ void func_801CCAF0(void* self) {
                         func_8022B8B8(p + 0x4ac);
                         func_801D216C(p + 0x70, 0);
                         p[0x540] = 1;
+                    } else {
+                        goto sell_qty;
                     }
-                }
-                u8 lv = p[0x62 + (s8)p[0x6f]];
-                if ((u8)(lv - 2) <= 7) {
-                    func_801EB410(p + 0x3e4, 0);
                 } else {
-                    func_801EB410(p + 0x3e4, 1);
+                sell_qty:
+                    u32 lv = (p + (s8)p[0x6f])[0x62];
+                    if (lv - 2 <= 7) {
+                        func_801EB410(p + 0x3e4, 0);
+                    } else {
+                        func_801EB410(p + 0x3e4, 1);
+                    }
+                    func_801EB0D4(p + 0x3e4);
+                    *(u32*)(p + 0x58) = 0x18;
+                    p[0x528] = 1;
+                    func_801D216C(p + 0x70, 0);
+                    playUISound__FUl(3);
+                    return;
                 }
-                func_801EB0D4(p + 0x3e4);
-                *(u32*)(p + 0x58) = 0x18;
-                p[0x528] = 1;
-                func_801D216C(p + 0x70, 0);
             }
-            playUISound__FUl(3);
-            return;
         }
     }
-    if (p[0x527] == 2) {
+    if (mode == 2) {
         if (p[0x542]) return;
         if (p[0x52c]) return;
         if (p[0x528]) {
             if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
-            if (*(u32*)(p + 0x58) != 0xd) return;
+            if (*(s32*)(p + 0x58) != 0xd) return;
             if ((s8)p[0x529] == 0) {
-                CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-                u8 entry = (u8)(p[0x524] + p[0x525] * 10);
-                void* item = func_801C631C(sub, entry);
+                sub = (CItemBoxGridFull*)(p + 0x54c);
+                entry = (u8)(p[0x524] + p[0x525] * 10);
+                item = func_801C631C(sub, entry);
                 u32 kind = func_801C62AC(sub, entry);
                 s32 count = func_801C6388(sub, entry);
                 if (!(kind & 0xFFFF)) return;
                 u32 v1 = func_801C618C(sub, *(u16*)(p + 0x52e), 0, *(u16*)(p + 0x52a));
-                u32 v2 = func_801C618C(sub, kind & 0xFFFF, item, *(u16*)(p + 0x52a));
+                u32 v2 = func_801C618C(sub, (u16)kind, item, *(u16*)(p + 0x52a));
                 if (v1 > v2) return;
                 u32 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
                 u32 test = func_801C618C(sub, nVal & 0xFFFF, 0, 0);
                 p[0x52d] = (u8)((s8)-((v2 - v1) < test));
+                func_801D11B8(p, item, (s8)count - 1);
                 p[0x52c] = 1;
-                func_801D11B8(self, item, (s8)count - 1);
                 func_801393CC(*(u16*)(p + 0x52e));
                 func_801392E4(*(u16*)(p + 0x52e));
                 func_80139358(*(u16*)(p + 0x52e));
@@ -3995,7 +4004,7 @@ void func_801CCAF0(void* self) {
                 incrementEventCounter__FUl(0xbb);
                 incrementEventCounter__FUl(0xbc);
                 incrementEventCounter__FUl(0xbd);
-                u16 eqId = *(u16*)(p + 0x52e);
+                s32 eqId = *(u16*)(p + 0x52e);
                 if (eqId == 0x7ee) incrementEventCounter__FUl(0xbe);
                 else if (eqId == 0x835) incrementEventCounter__FUl(0xbf);
                 else if (eqId == 0x7ef) incrementEventCounter__FUl(0xc0);
@@ -4006,15 +4015,15 @@ void func_801CCAF0(void* self) {
             *(u32*)(p + 0x58) = 0xe;
             func_801D216C(p + 0x70, 1);
             func_801D216C(p + 0xa0, 0);
-            func_801D0950(self);
+            func_801D0950(p);
             if ((s8)p[0x529] == 0) playUISound__FUl(0x31);
             else playUISound__FUl(3);
             return;
         }
         if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
-        if (*(u32*)(p + 0x58) != 3) return;
+        if (*(s32*)(p + 0x58) != 3) return;
         {
-            CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+            sub = (CItemBoxGridFull*)(p + 0x54c);
             u32 kind = func_801C62AC(sub, (u8)(p[0x524] + p[0x525] * 10));
             if (!(kind & 0xFFFF)) return;
             char fmtBuf[0x28];
@@ -4033,8 +4042,8 @@ void func_801CCAF0(void* self) {
     if (!func_80208360(p + 0x418)) return;
     if (!func_8022DB74(p + 0x468)) return;
     {
-        CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-        u8 entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
+        sub = (CItemBoxGridFull*)(p + 0x54c);
+        entry = (u8)((s8)p[0x524] + (s8)p[0x525] * 10);
         if ((u8)func_801C6690(sub, entry)) {
             playUISound__FUl(5);
             return;

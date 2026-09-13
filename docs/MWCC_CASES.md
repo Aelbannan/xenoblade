@@ -10829,18 +10829,24 @@ intermediate forms do not break the coalescing.
 - Result:    38.4% (623 structural / 117 reg_swap) / 0x12c0 vs 0x12c8. Next: serialize case 5 `lbz`/`lfs` without TU-wide schedule off; keep wrap `extsb` + count `lwz`/`extsh` live
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
-## func_8023D3D8 / kyoshin/cf/CfNandManager — first real apply-save body, still stub-class match (Wii/1.1 -O4,p, ~0.9%)
-- Symptom:   hexdiff 0.9% (1056 structural / 137 reg_swap); decomp 0x12d0 vs retail 0x1070; frame
-  0x30 vs retail 0x60 + `_savegpr_24` + `mr r31,r1`
-- Cause:     TU had only a data stub. Retail is an unrolled two-path save apply: versions
-  0x70001/0x70002 go through `func_8023CD9C` then expand work entries 1..13 (0x304 → 0x3DD4),
-  queue events, restore progress/party/items/cam/wthr/mine/names/optd; other versions CRC the
-  0x70001 tail and remap the larger ITEM blob in 0x211C chunks
-- Fix:       drafted that control flow in `CfNandManager.cpp` (do not include the unit hpp — it
-  redeclares this TU's .sbss types). Image offsets now match (`flagData` 0xA030, `work` 0xB260)
-- Result:    0.9% near-miss. Next: inline the work-entry copy in retail schedule (actor `this` =
-  `src+0x17c` lives in r3 across the scalar copies; array copies are 0x18/0x12 `lwzu`/`stwu`
-  pairs); match name-table insert; shrink ~0x260 oversize; then recolor
+## func_80277B38 / kyoshin/cf/chain/CChain — size-parity wrap; witness dies on case 5 lfs hoist (Wii/1.1 -O4, 40.1% / objdiff 97.5%)
+- Symptom:   cycle `witness-gate: mnemonic | slot 358: lbz vs lfs`; hexdiff 40.1% at exact 0x12c8; u8 wrap with both `(u8)(idx±1)` is 56.3% but 1205 vs 1202 insns
+- Cause:     O4 hoists `lfs` of `lbl_eu_80668A44` ahead of `lbz field_2` even when the load is first in source. Size-exact wrap mixes `idx += 1` (no `rlwinm`) with one `(u8)` decrement mask
+- Fix:       keep `case 0x1a: return` (cmpli 26). case 0xc: `idx += 1` / `idx = (u8)(idx-1)`; case 0xd: `idx +=`/`-=`. Do not TU-wide `schedule off`
+- Result:    size PASS; witness runs; fails first at case 5 schedule. Ruled out: volatile field_2, `(&lbl)[state>>8]`, comma f32, inlined schedule-off helper
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
+## func_8023D3D8 / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
+- Symptom:   hexdiff 9.5% (684 structural / 269 reg_swap); 0x1074 vs retail 0x1070; 0x60
+  savegpr frame matches but no `mr r31,r1`; img in r25 not r30; pair trips hoisted to
+  r31/r30; second pair `addi …,0xE0` vs retail `0xE4`
+- Cause:     inlined struct-assign copy hoists 24/18; taking `&nameScratch` at the caller
+  collapses the frame to 0x30; an explicit do-while second pair drops match to 1.9%
+- Fix:       declare `live`/`src`/`dst`/`ok` at function scope (C2E4 birth order); keep
+  `Arr48` from `&f024` + `Arr36` from `+0xE4`; name restore uses a local `cur` with
+  `pCur = &cur` (not a caller-passed scratch)
+- Result:    9.5% near-miss. Next: `mr r31,r1` without `&nameScratch`; img r30 / ok r26;
+  second pair base 0xE4; close 4 bytes; `li r0,24/18` in the entry body
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
 ## CSuddenCommu func_801BA1DC — volatile last store hoists LR restore (US, Wii/1.1 -O4,p, FULL_MATCH 100%)

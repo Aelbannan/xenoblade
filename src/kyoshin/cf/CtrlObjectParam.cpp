@@ -2894,8 +2894,8 @@ extern "C" int func_800A39E8(cf::CtrlObjectParamArtsList* list, u8* target,
     int found = 0;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
-        u8* dataArea = (u8*)&e->data[4];
         u16 type = e->field_00;
+        u8* dataArea = (u8*)&e->data[4];
         switch (type) {
         case 0x1111:
             goto advance;

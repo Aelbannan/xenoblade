@@ -2750,44 +2750,52 @@ void func_8009156C(cf::CCtrlMoveEne* self) {
 // +0x20 bit or pursues: arts-speed latch, distance bands, heading commit
 // (func_80089398 / func_8008CDE8 / func_80089694) or a close-range face.
 void func_80091864(cf::CCtrlMoveEne* selfRaw) {
-    cf::CFunc80091864View* self = (cf::CFunc80091864View*)selfRaw;
-    cf::CNpcBaseDataView* data = self->field_0x34;
-    cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
-    cf::CfObject* moveObj = data->field_0x28;
-    cf::CFunc80091864Actor* ene = (cf::CFunc80091864Actor*)moveObj;
-    if (ene != 0) {
-        ene = (cf::CFunc80091864Actor*)((u8*)ene - 0x3E9C);
-    }
-
-    if (ene->field_3F60 == 0) {
-        data14->field_0x14 = lbl_eu_806665C0;
-        return;
-    }
-
-    cf::CFunc8008E760B89* b89 =
-        (cf::CFunc8008E760B89*)func_800B89CC(ene->field_45C0);
-    if (b89 == 0) {
-        data14->field_0x14 = lbl_eu_806665C0;
-        return;
-    }
-
-    cf::CFunc80091864Actor* player =
-        (cf::CFunc80091864Actor*)func_80198310();
-    if (player == 0) {
-        if ((self->field_0x180 & 0x8) != 0) {
-            self->field_0x160 = self->field_0x4;
+    cf::CFunc80091864Actor* ene;
+    cf::CFunc8008E760B89* b89;
+    cf::CFunc80091864Actor* player;
+    {
+        cf::CNpcBaseDataView* data =
+            ((cf::CFunc80091864View*)selfRaw)->field_0x34;
+        cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
+        cf::CfObject* moveObj = data->field_0x28;
+        ene = (cf::CFunc80091864Actor*)moveObj;
+        if (ene != 0) {
+            ene = (cf::CFunc80091864Actor*)((u8*)ene - 0x3E9C);
         }
-        data14->field_0x14 = lbl_eu_806665C0;
+        if (ene->field_3F60 == 0) {
+            data14->field_0x14 = lbl_eu_806665C0;
+            return;
+        }
+    }
+
+    b89 = (cf::CFunc8008E760B89*)func_800B89CC(ene->field_45C0);
+    if (b89 == 0) {
+        ((cf::CFunc8009DataView*)((cf::CFunc80091864View*)selfRaw)
+             ->field_0x34)
+            ->field_0x14 = lbl_eu_806665C0;
         return;
     }
 
+    player = (cf::CFunc80091864Actor*)func_80198310();
+    if (player == 0) {
+        cf::CFunc80091864View* early = (cf::CFunc80091864View*)selfRaw;
+        if ((early->field_0x180 & 0x8) != 0) {
+            early->field_0x160 = early->field_0x4;
+        }
+        ((cf::CFunc8009DataView*)early->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
+        return;
+    }
+
+    cf::CFunc80091864View* self = (cf::CFunc80091864View*)selfRaw;
     if ((self->field_0x58 & 0x200) != 0) {
         self->mVec144W = self->mPos0W;
     }
 
     int blocked = 0;
     if ((self->field_0x17C & 1) != 0) {
-        cf::CFunc8008EF04Sub* movesub = (cf::CFunc8008EF04Sub*)moveObj;
+        cf::CFunc8008EF04Sub* movesub =
+            (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
         cf::CFunc8008EF04Sub98* s98 =
             (cf::CFunc8008EF04Sub98*)movesub->field_98;
         if (s98 != 0 && (s98->field_7A4 & 0x10000) != 0) {
@@ -2797,7 +2805,8 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         } else if (movesub->field_C4 != 0 &&
                    ((cf::CfObject*)movesub)->CObjectState_checkStateFlags(4) !=
                        0) {
-            data14->field_0x14 = lbl_eu_806665C0;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
             blocked = 1;
         }
         if (blocked == 0) {
@@ -2807,17 +2816,18 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     if (blocked != 0) return;
 
     if (player->field_3F60 == 0) {
-        data14->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
         return;
     }
 
     int tgtActive = 0;
     {
-        cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
+        cf::CFunc80091864Target* tgt = (cf::CFunc80091864Target*)(
             reinterpret_cast<cf::CfObject*>(&player->mSub)
                 ->CfObject_getCurrentTarget());
-        if (t != 0) {
-            tgtActive = (t->field_200 & 0x10000000u) != 0;
+        if (tgt != 0) {
+            tgtActive = (tgt->field_200 & 0x10000000u) != 0;
         }
     }
 
@@ -2828,7 +2838,6 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     u16 esc = 1;
     f32 radius = b89->field_8C;
     u32 seedOrCount = ene->field_45C6;
-    f32 speed = lbl_eu_806665C0;
 
     if ((hw58 & 1) != 0) {
         u16 gate = (u16)(self->field_0x5A + 1);
@@ -2866,7 +2875,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 self->field_0x6C = t;
                 if (t < 0) {
                     self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
-                    self->field_0x58 = (u16)(hw58 & ~2u);
+                    self->field_0x58 = (u16)(self->field_0x58 & ~2u);
                 }
             } else {
                 s32 sv = (s32)self->field_0x5C;
@@ -2874,14 +2883,14 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                 s32 rem100 = sv - sv / 100 * 100;
                 f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) *
                           lbl_eu_8066A210;
-                f32 head =
-                    CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                        reinterpret_cast<cf::CfObjectActor*>(player)) +
-                    ang;
                 f32 dist =
                     lbl_eu_80666658 *
                         (f32)((f64)rem100 - lbl_eu_80666620) * radius +
                     ene->field_44D8 + player->field_44D8;
+                f32 head =
+                    (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player +
+                                                         0x5B4))(player) +
+                    ang;
                 ml::CVec3 pred =
                     *reinterpret_cast<cf::CfObject*>(&player->mSub)
                          ->CfObject_getPosVector();
@@ -2893,23 +2902,24 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                     cf::CFunc80091864Actor* cand =
                         (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
                     if (cand == 0) continue;
-                    cf::CFunc80091864Target* t =
+                    cf::CFunc80091864Target* tgt =
                         (cf::CFunc80091864Target*)(
                             reinterpret_cast<cf::CfObject*>(&cand->mSub)
                                 ->CfObject_getCurrentTarget());
-                    if (t == 0) continue;
-                    s32 iv = (s32)t->field_E0;
+                    if (tgt == 0) continue;
+                    s32 iv = (s32)tgt->field_E0;
                     s32 irem360 = iv - iv / 360 * 360;
                     s32 irem100 = iv - iv / 100 * 100;
-                    f32 ihead =
-                        CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                            reinterpret_cast<cf::CfObjectActor*>(player)) +
-                        (f32)((f64)irem360 - lbl_eu_80666620) *
-                            lbl_eu_8066A210;
+                    f32 iang = (f32)((f64)irem360 - lbl_eu_80666620) *
+                               lbl_eu_8066A210;
                     f32 idist =
                         lbl_eu_80666658 *
                             (f32)((f64)irem100 - lbl_eu_80666620) * radius +
                         cand->field_44D8 + player->field_44D8;
+                    f32 ihead =
+                        (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player +
+                                                             0x5B4))(player) +
+                        iang;
                     ml::CVec3 ip =
                         *reinterpret_cast<cf::CfObject*>(&cand->mSub)
                              ->CfObject_getPosVector();
@@ -2930,17 +2940,19 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                     self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
                 } else {
                     self->field_0x6C = 0x258;
-                    self->field_0x58 = (u16)(hw58 | 2);
+                    self->field_0x58 = (u16)(self->field_0x58 | 2);
                 }
             }
+        } else {
+            radius += ene->field_44D8;
         }
-        radius += ene->field_44D8;
 
         ml::CVec3 pos =
             *reinterpret_cast<cf::CfObject*>(&player->mSub)
                  ->CfObject_getPosVector();
-        f32 head2 = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-            reinterpret_cast<cf::CfObjectActor*>(player));
+        f32 head2 =
+            (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player + 0x5B4))(
+                player);
         cf::CFunc8008E760PartyInfo pi;
         func_80198710(&pi, &pos, head2, (int)esc, (int)seedOrCount, radius,
                       ene->field_44D8 + player->field_44D8);
@@ -3013,11 +3025,12 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         self->field_0x58 = (u16)(self->field_0x58 & ~4u);
     }
 
+    f32 speed = lbl_eu_806665C0;
     {
-        cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
+        cf::CFunc80091864Target* tgt = (cf::CFunc80091864Target*)(
             reinterpret_cast<cf::CfObject*>(&player->mSub)
                 ->CfObject_getCurrentTarget());
-        if (t != 0) {
+        if (tgt != 0) {
             f32* eneScale = (f32*)reinterpret_cast<cf::CfObject*>(&ene->mSub)
                                 ->CfObject_getMoveRateScale();
             if (*eneScale != lbl_eu_806665C0) {
@@ -3025,10 +3038,10 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                     (f32*)reinterpret_cast<cf::CfObject*>(&player->mSub)
                         ->CfObject_getMoveRateScale();
                 if (*pcScale != lbl_eu_806665C0) {
-                    t = (cf::CFunc80091864Target*)(
+                    tgt = (cf::CFunc80091864Target*)(
                         reinterpret_cast<cf::CfObject*>(&player->mSub)
                             ->CfObject_getCurrentTarget());
-                    if (t != 0 && t->field_14 != lbl_eu_806665C0) {
+                    if (tgt != 0 && tgt->field_14 != lbl_eu_806665C0) {
                         u32 w = ((cf::CFunc8008B580Word*)player->field_04
                                      ->CObjectState_getStateData())
                                     ->field_0;
@@ -3038,11 +3051,11 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
                                      ->CObjectState_getStateData())
                                     ->field_0;
                             if (func_80174C98(player, &w2, 3) != 0) {
-                                t = (cf::CFunc80091864Target*)(
+                                tgt = (cf::CFunc80091864Target*)(
                                     reinterpret_cast<cf::CfObject*>(
                                         &player->mSub)
                                         ->CfObject_getCurrentTarget());
-                                f32 arts = t->field_14;
+                                f32 arts = tgt->field_14;
                                 f32 er =
                                     *(f32*)reinterpret_cast<cf::CfObject*>(
                                          &ene->mSub)
@@ -3098,12 +3111,14 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
             give = 1;
         }
         if (give == 0) {
-            data14->field_0x14 = lbl_eu_806665C0;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
             return;
         }
         self->field_0x70 = 0;
         self->field_0x58 = (u16)(self->field_0x58 & ~0x460u);
-        data14->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
         return;
     }
 
@@ -3123,19 +3138,22 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         if ((self->field_0x58 & 8) != 0) {
             self->field_0x58 = (u16)(self->field_0x58 | 0x18);
         }
-        f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-            reinterpret_cast<cf::CfObjectActor*>(ene));
-        f32 ph = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-            reinterpret_cast<cf::CfObjectActor*>(player));
+        f32 eh =
+            (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)ene + 0x5B4))(ene);
+        f32 ph =
+            (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)player + 0x5B4))(
+                player);
         f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
                         CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
                     SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
                         SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
         if (align > lbl_eu_80666694) {
-            data14->field_0x14 = lbl_eu_806665C0;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
             return;
         }
-        cf::CFunc8008EF04Sub* sub = (cf::CFunc8008EF04Sub*)moveObj;
+        cf::CFunc8008EF04Sub* sub =
+            (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 & 0x10000) ==
                 0) {
@@ -3148,7 +3166,8 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         self->mVelocity.x = pc;
         self->mVelocity.y = lbl_eu_806665C0;
         self->mVelocity.z = ps;
-        data14->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
         return;
     }
 
@@ -3264,33 +3283,37 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         self->field_50 = pw[1];
         self->field_54 = pw[2];
         self->field_0x70 = 0;
-        data14->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
         return;
     }
 
     ml::CVec3 savedVel = self->mVelocity;
     ml::CVec3 dir;
     if ((self->field_0x180 & 0x8) != 0) {
-        func_80089398(selfRaw, &dir, &goal, 0);
+        func_80089398((cf::CCtrlMoveEne*)self, &dir, &goal, 0);
     } else {
-        func_8008CDE8(selfRaw, &dir, lbl_eu_80666690 * ene->field_44D8);
+        ((void (*)(cf::CCtrlMoveEne*, ml::CVec3*, const ml::CVec3*, f32))
+             func_8008CDE8)((cf::CCtrlMoveEne*)self, &dir, &goal,
+                            lbl_eu_80666690 * ene->field_44D8);
     }
     self->mVelocity = savedVel;
 
-    cf::CFunc80090DB4Sub* sub63 = (cf::CFunc80090DB4Sub*)moveObj;
+    cf::CFunc80090DB4Sub* sub63 =
+        (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
     if (sub63->field_63C >= lbl_eu_806665E4) {
-        f32 eh = CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-            reinterpret_cast<cf::CfObjectActor*>(ene));
+        f32 eh =
+            (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)ene + 0x5B4))(ene);
         f32 c = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh);
         f32 s = SinFIdx__Q24nw4r4mathFf(
             lbl_eu_806665CC *
-            CfObjectActor_readFacingAngle__Q22cf13CfObjectActorFv(
-                reinterpret_cast<cf::CfObjectActor*>(ene)));
+            (*(f32(**)(cf::CFunc80091864Actor*))(*(u32*)ene + 0x5B4))(ene));
         f32 dot = dir.x * s + dir.z * c;
         if (dot <= lbl_eu_806665DC) {
             if (dot <= lbl_eu_806665C0) {
                 self->mVelocity = dir;
-                cf::CFunc8008EF04Sub* sub = (cf::CFunc8008EF04Sub*)moveObj;
+                cf::CFunc8008EF04Sub* sub =
+                    (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
                 f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
                 ((cf::CfObject*)sub)
                     ->CfObject_setMoveHeadAngle(lbl_eu_80666638 * ang);
@@ -3323,12 +3346,13 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         self->field_50 = pw[1];
         self->field_54 = pw[2];
         self->field_0x70 = 0;
-        data14->field_0x14 = lbl_eu_806665C0;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
         return;
     }
 
-    func_800898D4(selfRaw, &dir);
-    func_80089694(selfRaw, &dir, speed);
+    func_800898D4((cf::CCtrlMoveEne*)self, &dir);
+    func_80089694((cf::CCtrlMoveEne*)self, &dir, speed);
 
     ml::CVec3* ep2 = reinterpret_cast<cf::CfObject*>(&ene->mSub)
                          ->CfObject_getPosVector();

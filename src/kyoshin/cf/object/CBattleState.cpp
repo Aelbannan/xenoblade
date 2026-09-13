@@ -6,23 +6,18 @@ extern "C" void* memset(void* dest, int val, size_t count);
 extern "C" void* memcpy(void* dest, const void* src, size_t count);
 
 // sdata2 float constants used by CBattleState_enterStatusEntry
-extern const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
-extern const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
-extern const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
-extern const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
-extern const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
 #pragma push
 #pragma section sdata_type ".sdata" ".sdata"
-u8 lbl_eu_80662248[8] = {0};
+extern "C" u8 lbl_eu_80662248[8] = {0};
 #pragma pop      // .sdata object; CBattleState_UnkVirtualFunc3 returns its address
-const float lbl_eu_80667400 = 1.0f;
-const float lbl_eu_80667404 = 0.5f;
-const double lbl_eu_80667408 = 1.5;
-const float lbl_eu_80667410 = 0.0f;
-const float lbl_eu_80667414 = 0.9f;
+extern "C" const float lbl_eu_80667400 = 1.0f;
+extern "C" const float lbl_eu_80667404 = 0.5f;
+extern "C" const double lbl_eu_80667408 = 1.5;
+extern "C" const float lbl_eu_80667410 = 0.0f;
+extern "C" const float lbl_eu_80667414 = 0.9f;
 
-void func_80109784(void* ptr, u32 id, int arg);
-void func_8013DB6C(int a, u32 id, int b, int c);
+extern "C" void func_80109784(void* ptr, u32 id, int arg);
+extern "C" void func_8013DB6C(int a, u32 id, int b, int c);
 int func_80148778(cf::CBattleState* self, u32 id);
 
 namespace cf {
@@ -1077,6 +1072,169 @@ void cf::CBattleState::CBattleState_removeKeyedEntries(cf::CBattleStateEntry* ar
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
 //
+// getEnterStatusKind is the same cmpwi/beq/bge tree as func_80145C00, returning
+// the raw kind (0/1/2/3). Force-inlined so r3 stays the id at each site
+// (auto-inline refuses the tree as too large).
+#pragma inline_max_size(10000)
+#pragma inline_max_total_size(100000)
+static __inline int getEnterStatusKind(int value) {
+    int kind;
+
+    if (value >= 0xd4)
+        goto L_E8;
+    if (value >= 0x3e)
+        goto L_80;
+    if (value >= 0x2c)
+        goto L_54;
+    if (value == 0x27)
+        goto kind0;
+    if (value >= 0x27)
+        goto L_48;
+    if (value >= 4)
+        goto L_3C;
+    if (value >= 2)
+        goto kind0;
+    goto kind2;
+
+L_3C:
+    if (value >= 0x14)
+        goto kind2;
+    goto kind1;
+
+L_48:
+    if (value >= 0x2a)
+        goto kind1;
+    goto kind2;
+
+L_54:
+    if (value == 0x36)
+        goto kind0;
+    if (value >= 0x36)
+        goto L_74;
+    if (value >= 0x35)
+        goto kind2;
+    if (value >= 0x33)
+        goto kind0;
+    goto kind2;
+
+L_74:
+    if (value >= 0x3c)
+        goto kind1;
+    goto kind2;
+
+L_80:
+    if (value == 0x5f)
+        goto kind0;
+    if (value >= 0x5f)
+        goto L_BC;
+    if (value >= 0x52)
+        goto L_A8;
+    if (value >= 0x46)
+        goto kind2;
+    if (value >= 0x44)
+        goto kind0;
+    goto kind2;
+
+L_A8:
+    if (value >= 0x5d)
+        goto kind2;
+    if (value >= 0x58)
+        goto kind0;
+    goto kind1;
+
+L_BC:
+    if (value == 0x93)
+        goto kind0;
+    if (value >= 0x93)
+        goto L_DC;
+    if (value >= 0x6a)
+        goto kind2;
+    if (value >= 0x65)
+        goto kind1;
+    goto kind2;
+
+L_DC:
+    if (value >= 0xce)
+        goto kind0;
+    goto kind2;
+
+L_E8:
+    if (value >= 0x103)
+        goto L_48b;
+    if (value == 0xeb)
+        goto kind2;
+    if (value >= 0xeb)
+        goto L_24;
+    if (value >= 0xdf)
+        goto L_10;
+    if (value == 0xdc)
+        goto kind1;
+    goto kind2;
+
+L_10:
+    if (value >= 0xea)
+        goto kind3;
+    if (value >= 0xe3)
+        goto kind2;
+    goto kind1;
+
+L_24:
+    if (value == 0xf7)
+        goto kind0;
+    if (value >= 0xf7)
+        goto L_3Cb;
+    if (value >= 0xed)
+        goto kind3;
+    goto kind0;
+
+L_3Cb:
+    if (value == 0xff)
+        goto kind2;
+    goto kind3;
+
+L_48b:
+    if (value == 0x117)
+        goto kind1;
+    if (value >= 0x117)
+        goto L_7C;
+    if (value >= 0x109)
+        goto L_68;
+    if (value == 0x106)
+        goto kind3;
+    goto kind2;
+
+L_68:
+    if (value >= 0x111)
+        goto kind3;
+    if (value >= 0x10d)
+        goto kind2;
+    goto kind3;
+
+L_7C:
+    if (value == 0x12d)
+        goto kind0;
+    if (value >= 0x12d)
+        goto kind2;
+    if (value == 0x11e)
+        goto kind0;
+    goto kind2;
+
+kind0:
+    kind = 0;
+    goto kind_done;
+kind1:
+    kind = 1;
+    goto kind_done;
+kind3:
+    kind = 3;
+    goto kind_done;
+kind2:
+    kind = 2;
+kind_done:
+    return kind;
+}
+#pragma inline
+
 void cf::CBattleState::CBattleState_enterStatusEntry(cf::CBattleStateEntry* arg) {
     int kind2;
 
@@ -1140,8 +1298,8 @@ P1_10:
         } else {
             obj = (u8*)this->CBattleState_getOwner();
             if (*(u32*)(obj + 0x3374) & 0x40) {
-                f32 cur = arg->unk20;
-                arg->unk20 = (f32)((f64)cur * lbl_eu_80667408);
+                f32 cur20 = arg->unk20;
+                arg->unk20 = (f32)(cur20 * lbl_eu_80667408);
             }
         }
     }
@@ -1158,149 +1316,8 @@ P1_done:
     }
 
     // -- Phase 3: kind == 3 writes the id into this+0x1528 -----------
-    {
-        int k;
-        int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto P3_E8;
-    if (value >= 0x3e)
-        goto P3_80;
-    if (value >= 0x2c)
-        goto P3_54;
-    if (value == 0x27)
-        goto P3_kind0;
-    if (value >= 0x27)
-        goto P3_48;
-    if (value >= 4)
-        goto P3_3C;
-    if (value >= 2)
-        goto P3_kind0;
-    goto P3_kind2;
-P3_3C:
-    if (value >= 0x14)
-        goto P3_kind2;
-    goto P3_kind1;
-P3_48:
-    if (value >= 0x2a)
-        goto P3_kind1;
-    goto P3_kind2;
-P3_54:
-    if (value == 0x36)
-        goto P3_kind0;
-    if (value >= 0x36)
-        goto P3_74;
-    if (value >= 0x35)
-        goto P3_kind2;
-    if (value >= 0x33)
-        goto P3_kind0;
-    goto P3_kind2;
-P3_74:
-    if (value >= 0x3c)
-        goto P3_kind1;
-    goto P3_kind2;
-P3_80:
-    if (value == 0x5f)
-        goto P3_kind0;
-    if (value >= 0x5f)
-        goto P3_BC;
-    if (value >= 0x52)
-        goto P3_A8;
-    if (value >= 0x46)
-        goto P3_kind2;
-    if (value >= 0x44)
-        goto P3_kind0;
-    goto P3_kind2;
-P3_A8:
-    if (value >= 0x5d)
-        goto P3_kind2;
-    if (value >= 0x58)
-        goto P3_kind0;
-    goto P3_kind1;
-P3_BC:
-    if (value == 0x93)
-        goto P3_kind0;
-    if (value >= 0x93)
-        goto P3_DC;
-    if (value >= 0x6a)
-        goto P3_kind2;
-    if (value >= 0x65)
-        goto P3_kind1;
-    goto P3_kind2;
-P3_DC:
-    if (value >= 0xce)
-        goto P3_kind0;
-    goto P3_kind2;
-P3_E8:
-    if (value >= 0x103)
-        goto P3_48b;
-    if (value == 0xeb)
-        goto P3_kind2;
-    if (value >= 0xeb)
-        goto P3_24;
-    if (value >= 0xdf)
-        goto P3_10;
-    if (value == 0xdc)
-        goto P3_kind1;
-    goto P3_kind2;
-P3_10:
-    if (value >= 0xea)
-        goto P3_kind3;
-    if (value >= 0xe3)
-        goto P3_kind2;
-    goto P3_kind1;
-P3_24:
-    if (value == 0xf7)
-        goto P3_kind0;
-    if (value >= 0xf7)
-        goto P3_3Cb;
-    if (value >= 0xed)
-        goto P3_kind3;
-    goto P3_kind0;
-P3_3Cb:
-    if (value == 0xff)
-        goto P3_kind2;
-    goto P3_kind3;
-P3_48b:
-    if (value == 0x117)
-        goto P3_kind1;
-    if (value >= 0x117)
-        goto P3_7C;
-    if (value >= 0x109)
-        goto P3_68;
-    if (value == 0x106)
-        goto P3_kind3;
-    goto P3_kind2;
-P3_68:
-    if (value >= 0x111)
-        goto P3_kind3;
-    if (value >= 0x10d)
-        goto P3_kind2;
-    goto P3_kind3;
-P3_7C:
-    if (value == 0x12d)
-        goto P3_kind0;
-    if (value >= 0x12d)
-        goto P3_kind2;
-    if (value == 0x11e)
-        goto P3_kind0;
-    goto P3_kind2;
-P3_kind0:
-    k = 0;
-    goto P3_done;
-P3_kind1:
-    k = 1;
-    goto P3_done;
-P3_kind3:
-    k = 3;
-    goto P3_done;
-P3_kind2:
-    k = 2;
-P3_done:
-
-        if (k == 3) {
-            *(u32*)this->unk1528 = value;
-        }
+    if (getEnterStatusKind(arg->unk0C) == 3) {
+        *(u32*)this->unk1528 = arg->unk0C;
     }
 
     // -- Phase 4: set bitfield at this+0x15AC ------------------------
@@ -1311,440 +1328,20 @@ P3_done:
     }
 
     // -- Phase 5: kind kept in r31 for the empty-slot scan -----------
-    {
-        int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto P5_E8;
-    if (value >= 0x3e)
-        goto P5_80;
-    if (value >= 0x2c)
-        goto P5_54;
-    if (value == 0x27)
-        goto P5_kind0;
-    if (value >= 0x27)
-        goto P5_48;
-    if (value >= 4)
-        goto P5_3C;
-    if (value >= 2)
-        goto P5_kind0;
-    goto P5_kind2;
-P5_3C:
-    if (value >= 0x14)
-        goto P5_kind2;
-    goto P5_kind1;
-P5_48:
-    if (value >= 0x2a)
-        goto P5_kind1;
-    goto P5_kind2;
-P5_54:
-    if (value == 0x36)
-        goto P5_kind0;
-    if (value >= 0x36)
-        goto P5_74;
-    if (value >= 0x35)
-        goto P5_kind2;
-    if (value >= 0x33)
-        goto P5_kind0;
-    goto P5_kind2;
-P5_74:
-    if (value >= 0x3c)
-        goto P5_kind1;
-    goto P5_kind2;
-P5_80:
-    if (value == 0x5f)
-        goto P5_kind0;
-    if (value >= 0x5f)
-        goto P5_BC;
-    if (value >= 0x52)
-        goto P5_A8;
-    if (value >= 0x46)
-        goto P5_kind2;
-    if (value >= 0x44)
-        goto P5_kind0;
-    goto P5_kind2;
-P5_A8:
-    if (value >= 0x5d)
-        goto P5_kind2;
-    if (value >= 0x58)
-        goto P5_kind0;
-    goto P5_kind1;
-P5_BC:
-    if (value == 0x93)
-        goto P5_kind0;
-    if (value >= 0x93)
-        goto P5_DC;
-    if (value >= 0x6a)
-        goto P5_kind2;
-    if (value >= 0x65)
-        goto P5_kind1;
-    goto P5_kind2;
-P5_DC:
-    if (value >= 0xce)
-        goto P5_kind0;
-    goto P5_kind2;
-P5_E8:
-    if (value >= 0x103)
-        goto P5_48b;
-    if (value == 0xeb)
-        goto P5_kind2;
-    if (value >= 0xeb)
-        goto P5_24;
-    if (value >= 0xdf)
-        goto P5_10;
-    if (value == 0xdc)
-        goto P5_kind1;
-    goto P5_kind2;
-P5_10:
-    if (value >= 0xea)
-        goto P5_kind3;
-    if (value >= 0xe3)
-        goto P5_kind2;
-    goto P5_kind1;
-P5_24:
-    if (value == 0xf7)
-        goto P5_kind0;
-    if (value >= 0xf7)
-        goto P5_3Cb;
-    if (value >= 0xed)
-        goto P5_kind3;
-    goto P5_kind0;
-P5_3Cb:
-    if (value == 0xff)
-        goto P5_kind2;
-    goto P5_kind3;
-P5_48b:
-    if (value == 0x117)
-        goto P5_kind1;
-    if (value >= 0x117)
-        goto P5_7C;
-    if (value >= 0x109)
-        goto P5_68;
-    if (value == 0x106)
-        goto P5_kind3;
-    goto P5_kind2;
-P5_68:
-    if (value >= 0x111)
-        goto P5_kind3;
-    if (value >= 0x10d)
-        goto P5_kind2;
-    goto P5_kind3;
-P5_7C:
-    if (value == 0x12d)
-        goto P5_kind0;
-    if (value >= 0x12d)
-        goto P5_kind2;
-    if (value == 0x11e)
-        goto P5_kind0;
-    goto P5_kind2;
-P5_kind0:
-    kind2 = 0;
-    goto P5_done;
-P5_kind1:
-    kind2 = 1;
-    goto P5_done;
-P5_kind3:
-    kind2 = 3;
-    goto P5_done;
-P5_kind2:
-    kind2 = 2;
-P5_done:
-        ;
-    }
+    kind2 = getEnterStatusKind(arg->unk0C);
 
     // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
     if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
         if (!(arg->unk30 & 0x800)) {
-            {
-                int k;
-                int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto A0_E8;
-    if (value >= 0x3e)
-        goto A0_80;
-    if (value >= 0x2c)
-        goto A0_54;
-    if (value == 0x27)
-        goto A0_kind0;
-    if (value >= 0x27)
-        goto A0_48;
-    if (value >= 4)
-        goto A0_3C;
-    if (value >= 2)
-        goto A0_kind0;
-    goto A0_kind2;
-A0_3C:
-    if (value >= 0x14)
-        goto A0_kind2;
-    goto A0_kind1;
-A0_48:
-    if (value >= 0x2a)
-        goto A0_kind1;
-    goto A0_kind2;
-A0_54:
-    if (value == 0x36)
-        goto A0_kind0;
-    if (value >= 0x36)
-        goto A0_74;
-    if (value >= 0x35)
-        goto A0_kind2;
-    if (value >= 0x33)
-        goto A0_kind0;
-    goto A0_kind2;
-A0_74:
-    if (value >= 0x3c)
-        goto A0_kind1;
-    goto A0_kind2;
-A0_80:
-    if (value == 0x5f)
-        goto A0_kind0;
-    if (value >= 0x5f)
-        goto A0_BC;
-    if (value >= 0x52)
-        goto A0_A8;
-    if (value >= 0x46)
-        goto A0_kind2;
-    if (value >= 0x44)
-        goto A0_kind0;
-    goto A0_kind2;
-A0_A8:
-    if (value >= 0x5d)
-        goto A0_kind2;
-    if (value >= 0x58)
-        goto A0_kind0;
-    goto A0_kind1;
-A0_BC:
-    if (value == 0x93)
-        goto A0_kind0;
-    if (value >= 0x93)
-        goto A0_DC;
-    if (value >= 0x6a)
-        goto A0_kind2;
-    if (value >= 0x65)
-        goto A0_kind1;
-    goto A0_kind2;
-A0_DC:
-    if (value >= 0xce)
-        goto A0_kind0;
-    goto A0_kind2;
-A0_E8:
-    if (value >= 0x103)
-        goto A0_48b;
-    if (value == 0xeb)
-        goto A0_kind2;
-    if (value >= 0xeb)
-        goto A0_24;
-    if (value >= 0xdf)
-        goto A0_10;
-    if (value == 0xdc)
-        goto A0_kind1;
-    goto A0_kind2;
-A0_10:
-    if (value >= 0xea)
-        goto A0_kind3;
-    if (value >= 0xe3)
-        goto A0_kind2;
-    goto A0_kind1;
-A0_24:
-    if (value == 0xf7)
-        goto A0_kind0;
-    if (value >= 0xf7)
-        goto A0_3Cb;
-    if (value >= 0xed)
-        goto A0_kind3;
-    goto A0_kind0;
-A0_3Cb:
-    if (value == 0xff)
-        goto A0_kind2;
-    goto A0_kind3;
-A0_48b:
-    if (value == 0x117)
-        goto A0_kind1;
-    if (value >= 0x117)
-        goto A0_7C;
-    if (value >= 0x109)
-        goto A0_68;
-    if (value == 0x106)
-        goto A0_kind3;
-    goto A0_kind2;
-A0_68:
-    if (value >= 0x111)
-        goto A0_kind3;
-    if (value >= 0x10d)
-        goto A0_kind2;
-    goto A0_kind3;
-A0_7C:
-    if (value == 0x12d)
-        goto A0_kind0;
-    if (value >= 0x12d)
-        goto A0_kind2;
-    if (value == 0x11e)
-        goto A0_kind0;
-    goto A0_kind2;
-A0_kind0:
-    k = 0;
-    goto A0_done;
-A0_kind1:
-    k = 1;
-    goto A0_done;
-A0_kind3:
-    k = 3;
-    goto A0_done;
-A0_kind2:
-    k = 2;
-A0_done:
-
-                if (k == 0) {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
-                } else {
-                    int k2;
-
-    if (value >= 0xd4)
-        goto A1_E8;
-    if (value >= 0x3e)
-        goto A1_80;
-    if (value >= 0x2c)
-        goto A1_54;
-    if (value == 0x27)
-        goto A1_kind0;
-    if (value >= 0x27)
-        goto A1_48;
-    if (value >= 4)
-        goto A1_3C;
-    if (value >= 2)
-        goto A1_kind0;
-    goto A1_kind2;
-A1_3C:
-    if (value >= 0x14)
-        goto A1_kind2;
-    goto A1_kind1;
-A1_48:
-    if (value >= 0x2a)
-        goto A1_kind1;
-    goto A1_kind2;
-A1_54:
-    if (value == 0x36)
-        goto A1_kind0;
-    if (value >= 0x36)
-        goto A1_74;
-    if (value >= 0x35)
-        goto A1_kind2;
-    if (value >= 0x33)
-        goto A1_kind0;
-    goto A1_kind2;
-A1_74:
-    if (value >= 0x3c)
-        goto A1_kind1;
-    goto A1_kind2;
-A1_80:
-    if (value == 0x5f)
-        goto A1_kind0;
-    if (value >= 0x5f)
-        goto A1_BC;
-    if (value >= 0x52)
-        goto A1_A8;
-    if (value >= 0x46)
-        goto A1_kind2;
-    if (value >= 0x44)
-        goto A1_kind0;
-    goto A1_kind2;
-A1_A8:
-    if (value >= 0x5d)
-        goto A1_kind2;
-    if (value >= 0x58)
-        goto A1_kind0;
-    goto A1_kind1;
-A1_BC:
-    if (value == 0x93)
-        goto A1_kind0;
-    if (value >= 0x93)
-        goto A1_DC;
-    if (value >= 0x6a)
-        goto A1_kind2;
-    if (value >= 0x65)
-        goto A1_kind1;
-    goto A1_kind2;
-A1_DC:
-    if (value >= 0xce)
-        goto A1_kind0;
-    goto A1_kind2;
-A1_E8:
-    if (value >= 0x103)
-        goto A1_48b;
-    if (value == 0xeb)
-        goto A1_kind2;
-    if (value >= 0xeb)
-        goto A1_24;
-    if (value >= 0xdf)
-        goto A1_10;
-    if (value == 0xdc)
-        goto A1_kind1;
-    goto A1_kind2;
-A1_10:
-    if (value >= 0xea)
-        goto A1_kind3;
-    if (value >= 0xe3)
-        goto A1_kind2;
-    goto A1_kind1;
-A1_24:
-    if (value == 0xf7)
-        goto A1_kind0;
-    if (value >= 0xf7)
-        goto A1_3Cb;
-    if (value >= 0xed)
-        goto A1_kind3;
-    goto A1_kind0;
-A1_3Cb:
-    if (value == 0xff)
-        goto A1_kind2;
-    goto A1_kind3;
-A1_48b:
-    if (value == 0x117)
-        goto A1_kind1;
-    if (value >= 0x117)
-        goto A1_7C;
-    if (value >= 0x109)
-        goto A1_68;
-    if (value == 0x106)
-        goto A1_kind3;
-    goto A1_kind2;
-A1_68:
-    if (value >= 0x111)
-        goto A1_kind3;
-    if (value >= 0x10d)
-        goto A1_kind2;
-    goto A1_kind3;
-A1_7C:
-    if (value == 0x12d)
-        goto A1_kind0;
-    if (value >= 0x12d)
-        goto A1_kind2;
-    if (value == 0x11e)
-        goto A1_kind0;
-    goto A1_kind2;
-A1_kind0:
-    k2 = 0;
-    goto A1_done;
-A1_kind1:
-    k2 = 1;
-    goto A1_done;
-A1_kind3:
-    k2 = 3;
-    goto A1_done;
-A1_kind2:
-    k2 = 2;
-A1_done:
-
-                    if (k2 == 1) {
-                        u8* obj = (u8*)this->CBattleState_getOwner();
-                        func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
-                    } else {
-                        u8* obj = (u8*)this->CBattleState_getOwner();
-                        func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
-                    }
-                }
+            if (getEnterStatusKind(arg->unk0C) == 0) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
+            } else if (getEnterStatusKind(arg->unk0C) == 1) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
+            } else {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
             }
             func_8013DB6C(6, arg->unk0C, 0, 0);
             goto after_dispatch;
@@ -1752,147 +1349,7 @@ A1_done:
     }
 
     // -- Branch B ----------------------------------------------------
-    {
-        int k;
-        int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto B0_E8;
-    if (value >= 0x3e)
-        goto B0_80;
-    if (value >= 0x2c)
-        goto B0_54;
-    if (value == 0x27)
-        goto B0_kind0;
-    if (value >= 0x27)
-        goto B0_48;
-    if (value >= 4)
-        goto B0_3C;
-    if (value >= 2)
-        goto B0_kind0;
-    goto B0_kind2;
-B0_3C:
-    if (value >= 0x14)
-        goto B0_kind2;
-    goto B0_kind1;
-B0_48:
-    if (value >= 0x2a)
-        goto B0_kind1;
-    goto B0_kind2;
-B0_54:
-    if (value == 0x36)
-        goto B0_kind0;
-    if (value >= 0x36)
-        goto B0_74;
-    if (value >= 0x35)
-        goto B0_kind2;
-    if (value >= 0x33)
-        goto B0_kind0;
-    goto B0_kind2;
-B0_74:
-    if (value >= 0x3c)
-        goto B0_kind1;
-    goto B0_kind2;
-B0_80:
-    if (value == 0x5f)
-        goto B0_kind0;
-    if (value >= 0x5f)
-        goto B0_BC;
-    if (value >= 0x52)
-        goto B0_A8;
-    if (value >= 0x46)
-        goto B0_kind2;
-    if (value >= 0x44)
-        goto B0_kind0;
-    goto B0_kind2;
-B0_A8:
-    if (value >= 0x5d)
-        goto B0_kind2;
-    if (value >= 0x58)
-        goto B0_kind0;
-    goto B0_kind1;
-B0_BC:
-    if (value == 0x93)
-        goto B0_kind0;
-    if (value >= 0x93)
-        goto B0_DC;
-    if (value >= 0x6a)
-        goto B0_kind2;
-    if (value >= 0x65)
-        goto B0_kind1;
-    goto B0_kind2;
-B0_DC:
-    if (value >= 0xce)
-        goto B0_kind0;
-    goto B0_kind2;
-B0_E8:
-    if (value >= 0x103)
-        goto B0_48b;
-    if (value == 0xeb)
-        goto B0_kind2;
-    if (value >= 0xeb)
-        goto B0_24;
-    if (value >= 0xdf)
-        goto B0_10;
-    if (value == 0xdc)
-        goto B0_kind1;
-    goto B0_kind2;
-B0_10:
-    if (value >= 0xea)
-        goto B0_kind3;
-    if (value >= 0xe3)
-        goto B0_kind2;
-    goto B0_kind1;
-B0_24:
-    if (value == 0xf7)
-        goto B0_kind0;
-    if (value >= 0xf7)
-        goto B0_3Cb;
-    if (value >= 0xed)
-        goto B0_kind3;
-    goto B0_kind0;
-B0_3Cb:
-    if (value == 0xff)
-        goto B0_kind2;
-    goto B0_kind3;
-B0_48b:
-    if (value == 0x117)
-        goto B0_kind1;
-    if (value >= 0x117)
-        goto B0_7C;
-    if (value >= 0x109)
-        goto B0_68;
-    if (value == 0x106)
-        goto B0_kind3;
-    goto B0_kind2;
-B0_68:
-    if (value >= 0x111)
-        goto B0_kind3;
-    if (value >= 0x10d)
-        goto B0_kind2;
-    goto B0_kind3;
-B0_7C:
-    if (value == 0x12d)
-        goto B0_kind0;
-    if (value >= 0x12d)
-        goto B0_kind2;
-    if (value == 0x11e)
-        goto B0_kind0;
-    goto B0_kind2;
-B0_kind0:
-    k = 0;
-    goto B0_done;
-B0_kind1:
-    k = 1;
-    goto B0_done;
-B0_kind3:
-    k = 3;
-    goto B0_done;
-B0_kind2:
-    k = 2;
-B0_done:
-
-    if (k == 0) {
+    if (getEnterStatusKind(arg->unk0C) == 0) {
         if (!(arg->unk30 & 0x800)) {
             if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
                 goto after_dispatch;
@@ -1905,149 +1362,8 @@ B0_done:
             }
         }
     }
-    }
 
-    {
-        int k;
-        int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto B1_E8;
-    if (value >= 0x3e)
-        goto B1_80;
-    if (value >= 0x2c)
-        goto B1_54;
-    if (value == 0x27)
-        goto B1_kind0;
-    if (value >= 0x27)
-        goto B1_48;
-    if (value >= 4)
-        goto B1_3C;
-    if (value >= 2)
-        goto B1_kind0;
-    goto B1_kind2;
-B1_3C:
-    if (value >= 0x14)
-        goto B1_kind2;
-    goto B1_kind1;
-B1_48:
-    if (value >= 0x2a)
-        goto B1_kind1;
-    goto B1_kind2;
-B1_54:
-    if (value == 0x36)
-        goto B1_kind0;
-    if (value >= 0x36)
-        goto B1_74;
-    if (value >= 0x35)
-        goto B1_kind2;
-    if (value >= 0x33)
-        goto B1_kind0;
-    goto B1_kind2;
-B1_74:
-    if (value >= 0x3c)
-        goto B1_kind1;
-    goto B1_kind2;
-B1_80:
-    if (value == 0x5f)
-        goto B1_kind0;
-    if (value >= 0x5f)
-        goto B1_BC;
-    if (value >= 0x52)
-        goto B1_A8;
-    if (value >= 0x46)
-        goto B1_kind2;
-    if (value >= 0x44)
-        goto B1_kind0;
-    goto B1_kind2;
-B1_A8:
-    if (value >= 0x5d)
-        goto B1_kind2;
-    if (value >= 0x58)
-        goto B1_kind0;
-    goto B1_kind1;
-B1_BC:
-    if (value == 0x93)
-        goto B1_kind0;
-    if (value >= 0x93)
-        goto B1_DC;
-    if (value >= 0x6a)
-        goto B1_kind2;
-    if (value >= 0x65)
-        goto B1_kind1;
-    goto B1_kind2;
-B1_DC:
-    if (value >= 0xce)
-        goto B1_kind0;
-    goto B1_kind2;
-B1_E8:
-    if (value >= 0x103)
-        goto B1_48b;
-    if (value == 0xeb)
-        goto B1_kind2;
-    if (value >= 0xeb)
-        goto B1_24;
-    if (value >= 0xdf)
-        goto B1_10;
-    if (value == 0xdc)
-        goto B1_kind1;
-    goto B1_kind2;
-B1_10:
-    if (value >= 0xea)
-        goto B1_kind3;
-    if (value >= 0xe3)
-        goto B1_kind2;
-    goto B1_kind1;
-B1_24:
-    if (value == 0xf7)
-        goto B1_kind0;
-    if (value >= 0xf7)
-        goto B1_3Cb;
-    if (value >= 0xed)
-        goto B1_kind3;
-    goto B1_kind0;
-B1_3Cb:
-    if (value == 0xff)
-        goto B1_kind2;
-    goto B1_kind3;
-B1_48b:
-    if (value == 0x117)
-        goto B1_kind1;
-    if (value >= 0x117)
-        goto B1_7C;
-    if (value >= 0x109)
-        goto B1_68;
-    if (value == 0x106)
-        goto B1_kind3;
-    goto B1_kind2;
-B1_68:
-    if (value >= 0x111)
-        goto B1_kind3;
-    if (value >= 0x10d)
-        goto B1_kind2;
-    goto B1_kind3;
-B1_7C:
-    if (value == 0x12d)
-        goto B1_kind0;
-    if (value >= 0x12d)
-        goto B1_kind2;
-    if (value == 0x11e)
-        goto B1_kind0;
-    goto B1_kind2;
-B1_kind0:
-    k = 0;
-    goto B1_done;
-B1_kind1:
-    k = 1;
-    goto B1_done;
-B1_kind3:
-    k = 3;
-    goto B1_done;
-B1_kind2:
-    k = 2;
-B1_done:
-
-    if (k == 1) {
+    if (getEnterStatusKind(arg->unk0C) == 1) {
         if (!(arg->unk30 & 0x800)) {
             if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
                 goto after_dispatch;
@@ -2063,155 +1379,13 @@ B1_done:
             goto after_dispatch;
         }
     }
-    }
 
-    {
-        int k;
-        int value = arg->unk0C;
-
-    if (value >= 0xd4)
-        goto B3_E8;
-    if (value >= 0x3e)
-        goto B3_80;
-    if (value >= 0x2c)
-        goto B3_54;
-    if (value == 0x27)
-        goto B3_kind0;
-    if (value >= 0x27)
-        goto B3_48;
-    if (value >= 4)
-        goto B3_3C;
-    if (value >= 2)
-        goto B3_kind0;
-    goto B3_kind2;
-B3_3C:
-    if (value >= 0x14)
-        goto B3_kind2;
-    goto B3_kind1;
-B3_48:
-    if (value >= 0x2a)
-        goto B3_kind1;
-    goto B3_kind2;
-B3_54:
-    if (value == 0x36)
-        goto B3_kind0;
-    if (value >= 0x36)
-        goto B3_74;
-    if (value >= 0x35)
-        goto B3_kind2;
-    if (value >= 0x33)
-        goto B3_kind0;
-    goto B3_kind2;
-B3_74:
-    if (value >= 0x3c)
-        goto B3_kind1;
-    goto B3_kind2;
-B3_80:
-    if (value == 0x5f)
-        goto B3_kind0;
-    if (value >= 0x5f)
-        goto B3_BC;
-    if (value >= 0x52)
-        goto B3_A8;
-    if (value >= 0x46)
-        goto B3_kind2;
-    if (value >= 0x44)
-        goto B3_kind0;
-    goto B3_kind2;
-B3_A8:
-    if (value >= 0x5d)
-        goto B3_kind2;
-    if (value >= 0x58)
-        goto B3_kind0;
-    goto B3_kind1;
-B3_BC:
-    if (value == 0x93)
-        goto B3_kind0;
-    if (value >= 0x93)
-        goto B3_DC;
-    if (value >= 0x6a)
-        goto B3_kind2;
-    if (value >= 0x65)
-        goto B3_kind1;
-    goto B3_kind2;
-B3_DC:
-    if (value >= 0xce)
-        goto B3_kind0;
-    goto B3_kind2;
-B3_E8:
-    if (value >= 0x103)
-        goto B3_48b;
-    if (value == 0xeb)
-        goto B3_kind2;
-    if (value >= 0xeb)
-        goto B3_24;
-    if (value >= 0xdf)
-        goto B3_10;
-    if (value == 0xdc)
-        goto B3_kind1;
-    goto B3_kind2;
-B3_10:
-    if (value >= 0xea)
-        goto B3_kind3;
-    if (value >= 0xe3)
-        goto B3_kind2;
-    goto B3_kind1;
-B3_24:
-    if (value == 0xf7)
-        goto B3_kind0;
-    if (value >= 0xf7)
-        goto B3_3Cb;
-    if (value >= 0xed)
-        goto B3_kind3;
-    goto B3_kind0;
-B3_3Cb:
-    if (value == 0xff)
-        goto B3_kind2;
-    goto B3_kind3;
-B3_48b:
-    if (value == 0x117)
-        goto B3_kind1;
-    if (value >= 0x117)
-        goto B3_7C;
-    if (value >= 0x109)
-        goto B3_68;
-    if (value == 0x106)
-        goto B3_kind3;
-    goto B3_kind2;
-B3_68:
-    if (value >= 0x111)
-        goto B3_kind3;
-    if (value >= 0x10d)
-        goto B3_kind2;
-    goto B3_kind3;
-B3_7C:
-    if (value == 0x12d)
-        goto B3_kind0;
-    if (value >= 0x12d)
-        goto B3_kind2;
-    if (value == 0x11e)
-        goto B3_kind0;
-    goto B3_kind2;
-B3_kind0:
-    k = 0;
-    goto B3_done;
-B3_kind1:
-    k = 1;
-    goto B3_done;
-B3_kind3:
-    k = 3;
-    goto B3_done;
-B3_kind2:
-    k = 2;
-B3_done:
-
-    if (k == 3) {
+    if (getEnterStatusKind(arg->unk0C) == 3) {
         if (!(arg->unk30 & 0x800)) {
             u8* obj = (u8*)this->CBattleState_getOwner();
             func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
             func_8013DB6C(6, arg->unk0C, 0, 0);
         }
-    }
     }
 
 after_dispatch:
@@ -2271,17 +1445,20 @@ after_dispatch:
             for (count = 0x68; count != 0; count--, slot++) {
                 if (slot->unk0C != entryId)
                     continue;
-                if (slot->unk00 != arg->unk00)
-                    continue;
+                {
+                    u32 slotKey = slot->unk00;
+                    if (slotKey != arg->unk00)
+                        continue;
+                }
                 if (slot->unk04 != arg->unk04)
                     continue;
                 if (slot->unk08 != arg->unk08)
                     continue;
 
                 if (entryId - 0xf <= 1u) {
-                    f32 old1C = slot->unk1C;
-                    f32 old20 = slot->unk20;
                     f32 old28 = slot->unk28;
+                    f32 old20 = slot->unk20;
+                    f32 old1C = slot->unk1C;
                     slot->unk00 = arg->unk00;
                     slot->unk04 = arg->unk04;
                     slot->unk08 = arg->unk08;
@@ -2291,16 +1468,26 @@ after_dispatch:
                     slot->unk16 = arg->unk16;
                     slot->unk18 = arg->unk18;
                     slot->unk1A = arg->unk1A;
-                    slot->unk1C = arg->unk1C;
-                    slot->unk20 = arg->unk20;
-                    slot->unk24 = arg->unk24;
-                    slot->unk28 = arg->unk28;
-                    slot->unk2C = arg->unk2C;
-                    slot->unk2E = arg->unk2E;
-                    slot->unk1C = arg->unk1C + old1C;
-                    slot->unk20 = arg->unk20 + old20;
-                    slot->unk28 = arg->unk28 + old28;
-                    slot->unk30 = arg->unk30 | 8;
+                    {
+                        f32 sum1C = arg->unk1C;
+                        slot->unk1C = sum1C;
+                        sum1C = sum1C + old1C;
+                        f32 sum20 = arg->unk20;
+                        slot->unk20 = sum20;
+                        sum20 = sum20 + old20;
+                        slot->unk24 = arg->unk24;
+                        f32 sum28 = arg->unk28;
+                        slot->unk28 = sum28;
+                        sum28 = sum28 + old28;
+                        slot->unk2C = arg->unk2C;
+                        slot->unk2E = arg->unk2E;
+                        u32 flags = arg->unk30;
+                        slot->unk28 = sum28;
+                        flags |= 8;
+                        slot->unk20 = sum20;
+                        slot->unk1C = sum1C;
+                        slot->unk30 = flags;
+                    }
                     this->CBattleState_notifyEntryUpdated(slot);
                     return;
                 }
@@ -2334,7 +1521,7 @@ after_dispatch:
                 }
 
                 if (slot->unk10 > (s32)arg->unk10) {
-                    if (slot->unk20 <= arg->unk20)
+                    if (!(slot->unk20 <= arg->unk20))
                         return;
                 }
                 {
@@ -2415,6 +1602,8 @@ after_dispatch:
 F_skip_scan:
     ;
 }
+#pragma inline_max_size(256)
+#pragma inline_max_total_size(800)
 
 // func_80145C00: r3 = status id. Classifies the id through the same
 // cmpwi/beq/bge decision tree as CBattleState_applyEventEntry (kind 0/1/2/3)

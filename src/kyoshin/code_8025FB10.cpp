@@ -181,13 +181,6 @@ static inline void setFontChecked(WideTextWriter* writer, u32 writerHi,
     writer->SetFont(*font);
 }
 
-static inline void setTextColorChecked(WideTextWriter* writer, u32 writerHi,
-                                       u8 r, u8 g, u8 b, u8 a) {
-    VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DCFC, 135,
-                          lbl_eu_8052DCC8);
-    writer->SetTextColor(nw4r::ut::Color(r, g, b, a));
-}
-
 static inline void setCursorChecked(WideTextWriter* writer, u32 writerRegion,
                                     f32 x, f32 y, f32 z) {
     VALIDATE_NW4R_POINTER_FLAG(writer, writerRegion, lbl_eu_805378A0, 258,
@@ -1619,13 +1612,15 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
                    lbl_eu_806688D0, width, lbl_eu_806688D0,
                    lbl_eu_806688D4);
     } else {
-        // Prefer bottom then left born early so NV FPRs color left=f26, bottom=f27.
+        // renderWidth first so unsigned→float divisor keeps f28; then bottom,
+        // left so NV result colors match retail (left=f26, bottom=f27).
+        f32 renderWidth;
         f32 bottom;
         f32 left;
         GXCacheTextProjection* cache =
             static_cast<GXCacheTextProjection*>(cacheInstance__9CDeviceGX);
         s16 cacheWidth = cache->width;
-        f32 renderWidth =
+        renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         s16* rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatio = static_cast<f32>(rect[2]) / renderWidth;
@@ -1645,19 +1640,19 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         cache = static_cast<GXCacheTextProjection*>(
             cacheInstance__9CDeviceGX);
         s16 cacheHeight = cache->height;
-        f32 renderHeight =
+        renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         rect = getSubRectPtr__8CGXCacheFv(cache);
-        f32 rectRatioBottom = static_cast<f32>(rect[3]) / renderHeight;
+        f32 rectRatioBottom = static_cast<f32>(rect[3]) / renderWidth;
         bottom = static_cast<f32>(cacheHeight) * rectRatioBottom;
 
         cache = static_cast<GXCacheTextProjection*>(
             cacheInstance__9CDeviceGX);
         cacheHeight = cache->height;
-        renderHeight =
+        renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         rect = getSubRectPtr__8CGXCacheFv(cache);
-        f32 rectRatioTop = static_cast<f32>(rect[1]) / renderHeight;
+        f32 rectRatioTop = static_cast<f32>(rect[1]) / renderWidth;
         f32 top = static_cast<f32>(cacheHeight) * rectRatioTop;
 
         C_MTXOrtho(projection, top, bottom, left, right,
@@ -1677,7 +1672,23 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
-    setTextColorChecked(&writer, writerRegion, 0, 0, 0, 255);
+    {
+        bool valid = false;
+        if (writerRegion == 0x80000000 ||
+            ((u32)&writer & 0xFF800000) == 0x81000000 ||
+            ((u32)&writer & 0xF8000000) == 0x90000000 ||
+            writerRegion == 0xC0000000 ||
+            ((u32)&writer & 0xFF800000) == 0xC1000000 ||
+            ((u32)&writer & 0xF8000000) == 0xD0000000 ||
+            ((u32)&writer & 0xFFFFC000) == 0xE0000000) {
+            valid = true;
+        }
+        if (!valid) {
+            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
+                                      &writer);
+        }
+        writer.SetTextColor(nw4r::ut::Color(0, 0, 0, 255));
+    }
 
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
@@ -1693,7 +1704,23 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
                      y + lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
 
-    setTextColorChecked(&writer, writerRegion, 255, 255, 255, 255);
+    {
+        bool valid = false;
+        if (writerRegion == 0x80000000 ||
+            ((u32)&writer & 0xFF800000) == 0x81000000 ||
+            ((u32)&writer & 0xF8000000) == 0x90000000 ||
+            writerRegion == 0xC0000000 ||
+            ((u32)&writer & 0xFF800000) == 0xC1000000 ||
+            ((u32)&writer & 0xF8000000) == 0xD0000000 ||
+            ((u32)&writer & 0xFFFFC000) == 0xE0000000) {
+            valid = true;
+        }
+        if (!valid) {
+            Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
+                                      &writer);
+        }
+        writer.SetTextColor(nw4r::ut::Color(255, 255, 255, 255));
+    }
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
     printChecked(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);

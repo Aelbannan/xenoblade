@@ -670,11 +670,14 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         scratchB.mFields.field_10 = 0;
         scratchB.mFields.field_6 = 6;
         func_8014B120(&((cf::CChainBattleObj*)actor->unk0)->mField3380, &scratchB);
-        self->mChainTime.mTimer = lbl_eu_80668A44;
-        self->mChainTime.mEnabled = 0;
-        self->mChainTime.mPaused = 1;
-        self->mChainTimer1.unk0 = 0x3c;
-        ((cf::CChainHeadView*)self)->field_2++;
+        {
+            u8 state = ((cf::CChainHeadView*)self)->field_2;
+            self->mChainTime.mTimer = *(volatile f32*)&lbl_eu_80668A44;
+            self->mChainTime.mEnabled = 0;
+            self->mChainTime.mPaused = 1;
+            self->mChainTimer1.unk0 = 0x3c;
+            ((cf::CChainHeadView*)self)->field_2 = (u8)(state + 1);
+        }
         break;
     }
     case 6: {
@@ -771,24 +774,23 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
             ((cf::CChainHeadView*)self)->field_2 = 0xe;
             break;
         }
-        s8 newIdx;
         if (((cf::CChainHeadView*)self)->field_5 == 0) {
-            newIdx = (s8)(idx + 1);
+            idx += 1;
             if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
-                  (int)newIdx))
-                newIdx = 0;
+                  (s8)idx))
+                idx = 0;
         } else {
-            newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0)
-                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
-                                      ->mChainMember.mCount -
-                              1);
+            idx = (u8)(idx - 1);
+            if ((s8)idx < 0)
+                idx = (u8)((s16)((cf::CChainMemberListMirror*)self)
+                                   ->mChainMember.mCount -
+                           1);
         }
         cf::CChainActor* newActor;
-        if ((int)(s8)newIdx <
+        if ((s8)idx <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
             newActor = ((cf::CChainMemberListMirror*)self)
-                           ->mChainMember.mActors[(s8)newIdx];
+                           ->mChainMember.mActors[(s8)idx];
         } else {
             newActor = 0;
         }
@@ -808,33 +810,32 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         // Member advance + chain re-link: re-register the current member,
         // arm the chain time, then fan the advance out through the actor's
         // manual vtable (1/3 flag pair, second actor as the move target).
-        s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        u8 idx = (u8)((cf::CChainHeadView*)self)->field_0;
+        int count =
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
         cf::CChainActor* actor;
-        if ((int)idx <
-            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+        if ((s8)idx < count) {
             actor = ((cf::CChainMemberListMirror*)self)
-                        ->mChainMember.mActors[idx];
+                        ->mChainMember.mActors[(s8)idx];
         } else {
             actor = 0;
         }
-        s8 newIdx;
         if (((cf::CChainHeadView*)self)->field_5 == 0) {
-            newIdx = (s8)(idx + 1);
+            idx += 1;
             if (!((s16)((cf::CChainMemberListMirror*)self)->mChainMember.mCount >
-                  (int)newIdx))
-                newIdx = 0;
+                  (s8)idx))
+                idx = 0;
         } else {
-            newIdx = (s8)(idx - 1);
-            if ((int)newIdx < 0)
-                newIdx = (s8)((s16)((cf::CChainMemberListMirror*)self)
-                                      ->mChainMember.mCount -
-                              1);
+            idx -= 1;
+            if ((s8)idx < 0)
+                idx = (u8)((s16)((cf::CChainMemberListMirror*)self)
+                                   ->mChainMember.mCount -
+                           1);
         }
         cf::CChainActor* nextActor;
-        if ((int)(s8)newIdx <
-            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+        if ((s8)idx < count) {
             nextActor = ((cf::CChainMemberListMirror*)self)
-                            ->mChainMember.mActors[(s8)newIdx];
+                            ->mChainMember.mActors[(s8)idx];
         } else {
             nextActor = 0;
         }
@@ -902,17 +903,18 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         }
         cf::CChainActor* actor;
         cf::CChainActor* nextActor;
-        if ((int)idx <
-            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+        int count =
+            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+        if ((int)idx < count) {
             actor = ((cf::CChainMemberListMirror*)self)
                         ->mChainMember.mActors[idx];
         } else {
             actor = 0;
         }
-        if ((int)(s8)newIdx <
-            (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
+        s8 lookIdx = (s8)newIdx;
+        if ((int)lookIdx < count) {
             nextActor = ((cf::CChainMemberListMirror*)self)
-                            ->mChainMember.mActors[(s8)newIdx];
+                            ->mChainMember.mActors[lookIdx];
         } else {
             nextActor = 0;
         }
@@ -1234,7 +1236,7 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         break;
     }
     case 0x1a:
-        break;
+        return;
     }
 }
 // Chain-start driver: resolve the current member actor, clear the per-chain

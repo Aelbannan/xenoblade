@@ -2290,13 +2290,11 @@ extern "C" u32 func_801DF988(void*, void*, u32, void*, s32);
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
-    // Packed selection (retail rlwinm order): slot, then member, then type.
-    // Declaration order drives the r26/r18/r27 colouring in the prologue.
-    // textBuffer POD is declared after the party ping so it does not steal
-    // a callee-saved from memberRaw during that loop.
-    u8 slot = (u8)(arg2 & 0xF);
+    // Packed selection: retail emits slot early (rlwinm. → CR0), then
+    // member/type. Colours: slot=r26, member=r18, type=r27.
     u8 memberRaw = (u8)((arg2 >> 8) & 0xFF);
     u8 type = (u8)((arg2 >> 4) & 0xF);
+    u8 slot = (u8)(arg2 & 0xF);
     if (slot == 0) {
         void* selectedItem = arg3 != NULL ? arg3 : NULL;
         if (selectedItem != NULL) {
@@ -2305,19 +2303,16 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // comparisonStorage is 208B and must sit above party in the frame (retail
-    // party at sp+2348); declaring it here before PartyData recovers that gap.
-    D8EComparisonStorage comparisonStorage;
+    // comparisonStorage stays in the type-switch scope so it can overlay other
+    // large locals (function-scope forces +208 and shifts party off sp+2348).
     struct PartyData { u32 w[12]; };
     void* party = func_8009ECB0();
     PartyData partyData = *(PartyData*)((u8*)party + 4);
     for (u32 row = 0; row < 2; row++) {
-        for (u32 col = 0; col < 3; col++) {
-            // Rematerialize base each iteration: keeps memberRaw in r18 and
-            // row/col in r19/r20 (retail colours). Open item: MWCC still
-            // strength-reduces col*4 to addi r14,4 instead of rlwinm+lwzx.
-            u32* base = partyData.w;
-            u8 id = (u8)base[col];
+        // u8 col: clrlwi truncation blocks pointer strength-reduction while
+        // keeping rlwinm MB/ME at retail 22,29 (u16 widened the mask).
+        for (u8 col = 0; col < 3; col++) {
+            u8 id = (u8)partyData.w[col];
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
@@ -2328,8 +2323,10 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- character setup ----
-    u8 member = (u8)func_801392B4(memberRaw);
-    void* charObj = func_8009EC9C(member);
+    // Two (u8) casts from the raw return → retail's paired rlwinm (save + arg).
+    u32 memberTmp = func_801392B4(memberRaw);
+    u8 member = (u8)memberTmp;
+    void* charObj = func_8009EC9C((u8)memberTmp);
     if (func_800B8B94(member) == NULL) {
         func_800A13C4(charObj, 1);
     }
@@ -2602,6 +2599,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
         else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
+        // Overlay-friendly: live only across the weapon/armor compare blocks.
+        D8EComparisonStorage comparisonStorage;
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;

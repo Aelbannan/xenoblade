@@ -1654,113 +1654,139 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         }
 
         // 104 status-entry walk at CBattleState+0x8 (== self+0x10), stride 0x34.
+        // Load entry->unk10 inside each case (not hoisted) so MWCC emits the
+        // per-case lwz+extsh retail uses for the binary-search switch bodies.
         cf::CBattleStateEntry* entry =
             reinterpret_cast<cf::CBattleStateEntry*>((u8*)self + 0x10);
         for (int i = 0; i < 104; i++, entry++) {
-            s32 v = entry->unk10;
-            s16 v16 = (s16)v;
             switch (entry->unk0C) {
             case 2:
-                *(s16*)((u8*)self + 0x1768) = (s16)(*(s16*)((u8*)self + 0x1768) + v16);
+                *(s16*)((u8*)self + 0x1768) =
+                    (s16)(*(s16*)((u8*)self + 0x1768) + (s16)entry->unk10);
                 break;
             case 3:
-                *(s16*)((u8*)self + 0x177C) = (s16)(*(s16*)((u8*)self + 0x177C) + v16);
+                *(s16*)((u8*)self + 0x177C) =
+                    (s16)(*(s16*)((u8*)self + 0x177C) + (s16)entry->unk10);
                 break;
             case 4:
-                *(s16*)((u8*)self + 0x1768) = (s16)(*(s16*)((u8*)self + 0x1768) - v16);
+                *(s16*)((u8*)self + 0x1768) =
+                    (s16)(*(s16*)((u8*)self + 0x1768) - (s16)entry->unk10);
                 break;
             case 5:
-                *(s16*)((u8*)self + 0x177C) = (s16)(*(s16*)((u8*)self + 0x177C) - v16);
+                *(s16*)((u8*)self + 0x177C) =
+                    (s16)(*(s16*)((u8*)self + 0x177C) - (s16)entry->unk10);
                 break;
             case 7:
-                *((u8*)self + 0x183C) = (u8)v;
+                *((u8*)self + 0x183C) = (u8)entry->unk10;
                 break;
             case 60:
-                *(s16*)((u8*)self + 0x1844) = (s16)(*(s16*)((u8*)self + 0x1844) - v16);
+                *(s16*)((u8*)self + 0x1844) =
+                    (s16)(*(s16*)((u8*)self + 0x1844) - (s16)entry->unk10);
                 break;
             case 61:
-                *(s16*)((u8*)self + 0x1846) = (s16)(*(s16*)((u8*)self + 0x1846) - v16);
+                *(s16*)((u8*)self + 0x1846) =
+                    (s16)(*(s16*)((u8*)self + 0x1846) - (s16)entry->unk10);
                 break;
             case 68:
-                *(s16*)((u8*)self + 0x1844) = (s16)(*(s16*)((u8*)self + 0x1844) + v16);
+                *(s16*)((u8*)self + 0x1844) =
+                    (s16)(*(s16*)((u8*)self + 0x1844) + (s16)entry->unk10);
                 break;
             case 69:
-                *(s16*)((u8*)self + 0x1846) = (s16)(*(s16*)((u8*)self + 0x1846) + v16);
+                *(s16*)((u8*)self + 0x1846) =
+                    (s16)(*(s16*)((u8*)self + 0x1846) + (s16)entry->unk10);
                 break;
             case 82:
-                *(s16*)((u8*)self + 0x174C) = (s16)(*(s16*)((u8*)self + 0x174C) - v16);
+                *(s16*)((u8*)self + 0x174C) =
+                    (s16)(*(s16*)((u8*)self + 0x174C) - (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E4) =
                     (s16)(*(s16*)((u8*)self + 0x16E4) - entry->unk14);
                 break;
             case 83:
-                *(s16*)((u8*)self + 0x174E) = (s16)(*(s16*)((u8*)self + 0x174E) - v16);
+                *(s16*)((u8*)self + 0x174E) =
+                    (s16)(*(s16*)((u8*)self + 0x174E) - (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E6) =
                     (s16)(*(s16*)((u8*)self + 0x16E6) - entry->unk14);
                 break;
             case 84:
-                *(s16*)((u8*)self + 0x1750) = (s16)(*(s16*)((u8*)self + 0x1750) - v16);
+                *(s16*)((u8*)self + 0x1750) =
+                    (s16)(*(s16*)((u8*)self + 0x1750) - (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E8) =
                     (s16)(*(s16*)((u8*)self + 0x16E8) - entry->unk14);
                 break;
             case 85:
-                *(s16*)((u8*)self + 0x1758) = (s16)(*(s16*)((u8*)self + 0x1758) - v16);
+                *(s16*)((u8*)self + 0x1758) =
+                    (s16)(*(s16*)((u8*)self + 0x1758) - (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16F6) =
                     (s16)(*(s16*)((u8*)self + 0x16F6) - entry->unk14);
                 break;
             case 86:
-                *(s16*)((u8*)self + 0x175C) = (s16)(*(s16*)((u8*)self + 0x175C) - v16);
+                *(s16*)((u8*)self + 0x175C) =
+                    (s16)(*(s16*)((u8*)self + 0x175C) - (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16FA) =
                     (s16)(*(s16*)((u8*)self + 0x16FA) - entry->unk14);
                 break;
             case 87:
-                *(s16*)((u8*)self + 0x1746) = (s16)(*(s16*)((u8*)self + 0x1746) - v16);
+                *(s16*)((u8*)self + 0x1746) =
+                    (s16)(*(s16*)((u8*)self + 0x1746) - (s16)entry->unk10);
                 break;
             case 88:
-                *(s16*)((u8*)self + 0x174C) = (s16)(*(s16*)((u8*)self + 0x174C) + v16);
+                *(s16*)((u8*)self + 0x174C) =
+                    (s16)(*(s16*)((u8*)self + 0x174C) + (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E4) =
                     (s16)(*(s16*)((u8*)self + 0x16E4) + entry->unk14);
                 break;
             case 89:
-                *(s16*)((u8*)self + 0x174E) = (s16)(*(s16*)((u8*)self + 0x174E) + v16);
+                *(s16*)((u8*)self + 0x174E) =
+                    (s16)(*(s16*)((u8*)self + 0x174E) + (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E6) =
                     (s16)(*(s16*)((u8*)self + 0x16E6) + entry->unk14);
                 break;
             case 90:
-                *(s16*)((u8*)self + 0x1750) = (s16)(*(s16*)((u8*)self + 0x1750) + v16);
+                *(s16*)((u8*)self + 0x1750) =
+                    (s16)(*(s16*)((u8*)self + 0x1750) + (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16E8) =
                     (s16)(*(s16*)((u8*)self + 0x16E8) + entry->unk14);
                 break;
             case 91:
-                *(s16*)((u8*)self + 0x1758) = (s16)(*(s16*)((u8*)self + 0x1758) + v16);
+                *(s16*)((u8*)self + 0x1758) =
+                    (s16)(*(s16*)((u8*)self + 0x1758) + (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16F6) =
                     (s16)(*(s16*)((u8*)self + 0x16F6) + entry->unk14);
                 break;
             case 92:
-                *(s16*)((u8*)self + 0x175C) = (s16)(*(s16*)((u8*)self + 0x175C) + v16);
+                *(s16*)((u8*)self + 0x175C) =
+                    (s16)(*(s16*)((u8*)self + 0x175C) + (s16)entry->unk10);
                 *(s16*)((u8*)self + 0x16FA) =
                     (s16)(*(s16*)((u8*)self + 0x16FA) + entry->unk14);
                 break;
             case 93:
-                *(s16*)((u8*)self + 0x16FE) = (s16)(*(s16*)((u8*)self + 0x16FE) + v16);
+                *(s16*)((u8*)self + 0x16FE) =
+                    (s16)(*(s16*)((u8*)self + 0x16FE) + (s16)entry->unk10);
                 break;
             case 94:
-                *(s16*)((u8*)self + 0x16FC) = (s16)(*(s16*)((u8*)self + 0x16FC) + v16);
+                *(s16*)((u8*)self + 0x16FC) =
+                    (s16)(*(s16*)((u8*)self + 0x16FC) + (s16)entry->unk10);
                 break;
             case 95:
-                *(s16*)((u8*)self + 0x1746) = (s16)(*(s16*)((u8*)self + 0x1746) + v16);
+                *(s16*)((u8*)self + 0x1746) =
+                    (s16)(*(s16*)((u8*)self + 0x1746) + (s16)entry->unk10);
                 break;
             case 96:
-                *((u8*)self + 0x183A) = (u8)(*((u8*)self + 0x183A) + (u8)v);
+                *((u8*)self + 0x183A) =
+                    (u8)(*((u8*)self + 0x183A) + (u8)entry->unk10);
                 break;
             case 97:
-                *((u8*)self + 0x183B) = (u8)(*((u8*)self + 0x183B) + (u8)v);
+                *((u8*)self + 0x183B) =
+                    (u8)(*((u8*)self + 0x183B) + (u8)entry->unk10);
                 break;
             case 98:
-                *(s16*)((u8*)self + 0x181C) = (s16)(*(s16*)((u8*)self + 0x181C) + v16);
-                *(s16*)((u8*)self + 0x181E) = (s16)(*(s16*)((u8*)self + 0x181E) + v16);
+                *(s16*)((u8*)self + 0x181C) =
+                    (s16)(*(s16*)((u8*)self + 0x181C) + (s16)entry->unk10);
+                *(s16*)((u8*)self + 0x181E) =
+                    (s16)(*(s16*)((u8*)self + 0x181E) + (s16)entry->unk10);
                 break;
             case 273:
-                *(u32*)((u8*)self + 0x16C8) += (u32)v;
+                *(u32*)((u8*)self + 0x16C8) += (u32)entry->unk10;
                 *(s16*)((u8*)self + 0x16E4) =
                     (s16)(*(s16*)((u8*)self + 0x16E4) + entry->unk14);
                 *(s16*)((u8*)self + 0x16E6) =
@@ -1893,12 +1919,23 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
             }
 
-            // Restore the pre-snapshot gauge floats kept live across vf174.
+            // Truncate HP to int, then clamp the live pre-snapshot gauges
+            // against the post-arts working values (retail f31/f29/f28).
+            {
+                float hp = (float)(int)*(float*)((u8*)self + 0x17F4);
+                *(float*)((u8*)self + 0x17F4) = hp;
+                if (v17E8 > hp) v17E8 = hp;
+                float curB = *(float*)((u8*)self + 0x17F8);
+                if (v17EC > curB) v17EC = curB;
+                float curC = *(float*)((u8*)self + 0x17FC);
+                if (v17F0 > curC) v17F0 = curC;
+            }
             *(float*)((u8*)self + 0x17E8) = v17E8;
             *(float*)((u8*)self + 0x17EC) = v17EC;
             *(float*)((u8*)self + 0x17F0) = v17F0;
 
-            cf::CBattleState* bs = static_cast<cf::CBattleState*>(self);
+            cf::CBattleState* bs =
+                reinterpret_cast<cf::CBattleState*>((u8*)self + 8);
             if (func_80148778(bs, 100)) {
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)func_80149154(bs, 100);
@@ -1920,13 +1957,15 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)func_80149154(bs, 188);
                 float factor = (float)(100 - (s32)e->unk10) / lbl_eu_80667818;
-                if (*(float*)((u8*)self + 0x3368) != f27) {
+                float cur = *(float*)((u8*)self + 0x3368);
+                if (cur != factor) {
                     *(float*)((u8*)self + 0x3368) = factor;
                     *(s16*)((u8*)self + 0x3358) = (s16)(int)(
-                        factor * ((float)*(s16*)((u8*)self + 0x3358) /
-                                  *(float*)((u8*)self + 0x3368)));
-                } else {
+                        factor * ((float)*(s16*)((u8*)self + 0x3358) / cur));
+                } else if (cur != f27) {
                     *(float*)((u8*)self + 0x3368) = f27;
+                    *(s16*)((u8*)self + 0x3358) = (s16)(int)(
+                        f27 * ((float)*(s16*)((u8*)self + 0x3358) / cur));
                 }
             }
 
@@ -2057,11 +2096,19 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                             *(u32*)(dst + 0x6C) = *(u32*)((u8*)self + 0x1850);
                             *(u32*)(dst + 0x70) = *(u32*)((u8*)self + 0x1854);
                             *(u32*)(dst + 0x74) = *(u32*)((u8*)self + 0x1858);
-                            // Aggregated 0x185C.. + shuffled bonus block onto char-data.
+                            // Aggregated 0x185C.. mirror onto char-data (+0x19D8).
                             *(u32*)((u8*)cd + 0x19D8) = *(u32*)((u8*)self + 0x185C);
+                            *(float*)((u8*)cd + 0x19DC) = *(float*)((u8*)self + 0x1860);
+                            *(float*)((u8*)cd + 0x19E0) = *(float*)((u8*)self + 0x1864);
+                            *(float*)((u8*)cd + 0x19E4) = *(float*)((u8*)self + 0x1868);
+                            *(float*)((u8*)cd + 0x19E8) = *(float*)((u8*)self + 0x186C);
+                            *(float*)((u8*)cd + 0x19EC) = *(float*)((u8*)self + 0x1870);
+                            *(float*)((u8*)cd + 0x19F0) = *(float*)((u8*)self + 0x1874);
                             *(s16*)((u8*)cd + 0x19F4) = *(s16*)((u8*)self + 0x1878);
                             *(s16*)((u8*)cd + 0x19F6) = *(s16*)((u8*)self + 0x187A);
                             *(s16*)((u8*)cd + 0x19F8) = *(s16*)((u8*)self + 0x187C);
+                            *(float*)((u8*)cd + 0x19FC) = *(float*)((u8*)self + 0x1880);
+                            *(float*)((u8*)cd + 0x1A00) = *(float*)((u8*)self + 0x1884);
                             *(s16*)((u8*)cd + 0x1A04) = *(s16*)((u8*)self + 0x1888);
                             *(s16*)((u8*)cd + 0x1A06) = *(s16*)((u8*)self + 0x188A);
                             *(s16*)((u8*)cd + 0x1A08) = *(s16*)((u8*)self + 0x188C);
@@ -2071,11 +2118,17 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                             *(s16*)((u8*)cd + 0x1A10) = *(s16*)((u8*)self + 0x1894);
                             *(s16*)((u8*)cd + 0x1A12) = *(s16*)((u8*)self + 0x1896);
                             ((u8*)cd)[0x1A14] = *((u8*)self + 0x1898);
+                            *(float*)((u8*)cd + 0x1A18) = *(float*)((u8*)self + 0x189C);
+                            *(float*)((u8*)cd + 0x1A1C) = *(float*)((u8*)self + 0x18A0);
+                            *(float*)((u8*)cd + 0x1A20) = *(float*)((u8*)self + 0x18A4);
+                            *(float*)((u8*)cd + 0x1A24) = *(float*)((u8*)self + 0x18A8);
+                            *(float*)((u8*)cd + 0x1A28) = *(float*)((u8*)self + 0x18AC);
                             ((u8*)cd)[0x1A2C] = *((u8*)self + 0x18B0);
                             ((u8*)cd)[0x1A2D] = *((u8*)self + 0x18B1);
                             ((u8*)cd)[0x1A2E] = *((u8*)self + 0x18B2);
                             ((u8*)cd)[0x1A2F] = *((u8*)self + 0x18B3);
                             ((u8*)cd)[0x1A30] = *((u8*)self + 0x18B4);
+                            *(float*)((u8*)cd + 0x1A34) = *(float*)((u8*)self + 0x18B8);
                             *(u32*)((u8*)cd + 0x1A38) = *(u32*)((u8*)self + 0x18C0);
                             *(u32*)((u8*)cd + 0x1A3C) = *(u32*)((u8*)self + 0x18BC);
                             *(u32*)((u8*)cd + 0x1A40) = *(u32*)((u8*)self + 0x18C8);

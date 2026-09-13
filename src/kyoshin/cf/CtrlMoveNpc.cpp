@@ -30,16 +30,8 @@ struct PTMF {
 
 namespace cf {
 
-// Layout of CCtrlMoveNpc::mBaseData (0x34). Only fields used here are named.
-// The object at +0x28 is a CfObject (position at vtable +0xAC,
-// float slot at +0x138). Retail vtable is CfObject's; we call the real
-// virtuals directly instead of a TU-local pad with _vNNN dummies.
-struct CNpcBaseData {
-    u8 _00[0x14];
-    f32 field_0x14;      // 0x14
-    u8 _18[0x28 - 0x18];
-    CfObject* field_0x28;  // 0x28
-};
+// mBaseData @0x34 is CCtrlMoveData (from CtrlMoveBase.hpp): field_0x14 and
+// mPosObj @0x28 (CfObject*). Typed here so callers skip void* casts.
 
 class CCtrlMoveNpc {
 public:
@@ -50,7 +42,7 @@ public:
     ml::CVec3 mVec18;       // 0x18 mVelocity (CCtrlMoveBase::mVelocity)
     char mBase24[0x0C];     // 0x24..0x2F field_0x24
     void* mBase30;          // 0x30 mpSomePtr
-    void* mBaseData;        // 0x34 mpDataPtr (CNpcBaseData*)
+    CCtrlMoveData* mBaseData; // 0x34 mpDataPtr
     f32 mBase38;            // 0x38 mFloatParam1
     f32 mBase3C;            // 0x3C mFloatParam2
     u16 mBase40;            // 0x40 mFlagsU16_1
@@ -74,7 +66,6 @@ public:
 } // namespace cf
 
 using cf::CCtrlMoveNpc;
-using cf::CNpcBaseData;
 
 // ---------------------------------------------------------------------------
 // Imports
@@ -113,7 +104,7 @@ void func_80088974(CCtrlMoveNpc* self, const ml::CVec3* a, const ml::CVec3* b,
                    int c, int d);
 void func_80089694(CCtrlMoveNpc* self, const ml::CVec3* a, f32 f);
 void func_8008962C(CCtrlMoveNpc* self);
-void func_80093618(CNpcBaseData* data, f32 f);
+void func_80093618(cf::CCtrlMoveData* data, f32 f);
 int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
@@ -191,13 +182,13 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 
     // The base data pointer is re-loaded for each access in the retail.
     self->mField74 =
-        *reinterpret_cast<float*>(((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getMoveRateScale());
+        *reinterpret_cast<float*>(self->mBaseData->mPosObj->CfObject_getMoveRateScale());
     self->mField78 = lbl_eu_80663D90;
     self->mField70 = lbl_eu_80667C58;
-    ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
+    self->mBaseData->field_0x14 = lbl_eu_80667C5C;
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getPosVector();
+    ml::CVec3* pos = self->mBaseData->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
@@ -334,7 +325,7 @@ void func_8019FD2C() {
 namespace cf {
 void func_8019F93C(CCtrlMoveNpc* self) {
     const ml::CVec3* pos =
-        ((CNpcBaseData*)self->mBaseData)->field_0x28->CfObject_getPosVector();
+        self->mBaseData->mPosObj->CfObject_getPosVector();
 
     // PS vector subtraction: delta = target - current position.
     ml::CVec3 diff = self->mField58 - *pos;
@@ -371,9 +362,9 @@ void func_8019F93C(CCtrlMoveNpc* self) {
 
     // Idle tail: clear the approach rate; when paramB allows it, also run the
     // turn-rate helper before dropping back to the idle state function.
-    ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
+    self->mBaseData->field_0x14 = lbl_eu_80667C5C;
     if (self->mField6C < lbl_eu_80667C78) {
-        func_80093618((CNpcBaseData*)self->mBaseData,
+        func_80093618(self->mBaseData,
                       self->mField6C * lbl_eu_8066A210);
         self->mStateFunc = __ptmf_null;
         func_8008962C(self);

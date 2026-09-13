@@ -28,11 +28,11 @@ struct CMdlOwnerCtx {
     u8    field_0x08[0x1464];  // reserved
     nw4r::g3d::ResMdlData* field_0x146C; // 0x146C model resource data
     u8    field_0x1470[0xC];   // reserved
-    nw4r::g3d::ScnObj* field_0x147C;     // 0x147C g3d scene object (ScnMdl)
+    nw4r::g3d::ScnMdl* field_0x147C;     // 0x147C g3d scene object (ScnMdl)
 };
 
-extern "C" void func_804E6898(u8* self, float val) {
-    ((CMdlMouth*)self)->value2C = val;
+extern "C" void func_804E6898(CMdlMouth* self, float val) {
+    self->value2C = val;
 }
 
 extern "C" int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
@@ -113,7 +113,7 @@ extern "C" void func_804E6A28(CMdlMouth* self) {
         idx = 2;
     }
     nw4r::g3d::ScnMdl* scnMdl =
-        (nw4r::g3d::ScnMdl*)self->field_0x04->field_0x147C;
+        self->field_0x04->field_0x147C;
     nw4r::g3d::ScnMdl::CopiedMatAccess cma(scnMdl, (u32)self->field_0x24);
     nw4r::g3d::ResTexSrt srt = cma.GetResTexSrt(false);
     if (srt.IsValid()) {

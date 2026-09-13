@@ -4,6 +4,7 @@
 #include "kyoshin/cf/chain/CChainActor.hpp"
 #include "monolib/util.hpp"
 
+
 namespace cf {
     // Standalone mirror of the chain-actor layout (0x80 bytes, manual vtable at
     // +0x70, non-standard ABI). Deliberately NOT derived from CChainActor:
@@ -12,14 +13,14 @@ namespace cf {
     // dtor-ful members.
     class CChainActorPc {
     public:
-        u32 unk0;          //0x0
+        u32 unk0;          //0x0 battle-object key/pointer
         u8 field_4[0x60];  //0x4 CChainTemp-ish buffer
         u8 field_64;       //0x64
         u8 _pad65[3];
-        u32 field_68;      //0x68 sub-object vtable
+        void* field_68;    //0x68 sub-object vtable
         u16 unk6C;         //0x6C
         u8 _pad6E[2];
-        u32 mVTable;       //0x70 manual vtable
+        void* mVTable;     //0x70 manual vtable
         u8 field_74[0xC];  //0x74 CChainEffect region (no dtor)
 
         CChainActorPc();
@@ -28,14 +29,14 @@ namespace cf {
 
     class CChainActorEne {
     public:
-        u32 unk0;          //0x0
+        u32 unk0;          //0x0 battle-object key/pointer
         u8 field_4[0x60];  //0x4 CChainTemp-ish buffer
         u8 field_64;       //0x64
         u8 _pad65[3];
-        u32 field_68;      //0x68 sub-object vtable
+        void* field_68;    //0x68 sub-object vtable
         u16 unk6C;         //0x6C
         u8 _pad6E[2];
-        u32 mVTable;       //0x70 manual vtable
+        void* mVTable;     //0x70 manual vtable
         u8 field_74[0xC];  //0x74 CChainEffect region (no dtor)
 
         CChainActorEne();

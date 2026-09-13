@@ -40,7 +40,7 @@ public:
     /* 0x7C */ u32 field_7C;
     /* 0x80 */ u16 field_80;
 
-    void func_8020896C(void* other);
+    void func_8020896C(CfGameManager* other);
     void func_80208988();
     int func_8020A8AC();
 };
@@ -218,7 +218,7 @@ extern "C" unsigned int func_80124B78();
 extern "C" const f32 lbl_eu_80668354;
 
 // Checker functions dispatched by gimmick->field_44 (jumptable_eu_80535830).
-typedef int (*CfGimmickChecker)(cf::CfGimmick*, void*, const CfGimmickVec3*);
+typedef int (*CfGimmickChecker)(cf::CfGimmick*, const CfGimmickVec3*, const CfGimmickVec3*);
 extern "C" CfGimmickChecker jumptable_eu_80535830[];
 extern "C" CfGimmickList* func_800B6BC8();
 extern "C" CfGimmickList* func_800B6BEC();

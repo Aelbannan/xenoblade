@@ -111,7 +111,7 @@ void func_802089BC(cf::CfGimmick* self, const f32* basis, const CfGimmickVec3* p
 using namespace cf;
 
 namespace cf {
-    void CfGimmick::func_8020896C(void* other) {
+    void CfGimmick::func_8020896C(CfGameManager* other) {
         CfGameManager* cur = field_78;
         if (cur != other) return;
         cur->unkB0 = 0;
@@ -223,13 +223,15 @@ void func_802089BC(CfGimmick* self, const f32* basis, const CfGimmickVec3* point
     PSMTXInverse((const f32 (*)[4])self, (f32 (*)[4])self);
 }
 
-void func_80208C48(void* self, void* arg) {
-    func_801BFDE8(1, (unsigned int)self, (unsigned int)arg,
+// Sound-id helpers: first arg is a u16/u32 effect id (Elv val1B6 / Item field_8E),
+// second is a position pointer passed through as an integer to func_801BFDE8.
+void func_80208C48(u32 id, void* pos) {
+    func_801BFDE8(1, id, (u32)pos,
                   lbl_eu_80668358, lbl_eu_8066835C);
 }
 
-void func_80208C60(void* self, void* arg, float second) {
-    func_801BFDE8(1, (unsigned int)self, (unsigned int)arg,
+void func_80208C60(u32 id, void* pos, float second) {
+    func_801BFDE8(1, id, (u32)pos,
                   lbl_eu_80668358, second);
 }
 
@@ -409,13 +411,13 @@ void func_802095D8(CfGimmick* self, f32* out, void* unused, void** holder, int v
     out[2] = (f32)*(const s16*)&rawC * lbl_eu_8066A210;
 }
 
-int func_802096EC(void* obj) {
-    int v = func_8009CF8C((u32)obj + 0x1d44);
+int func_802096EC(u8* obj) {
+    int v = func_8009CF8C((u32)(obj + 0x1d44));
     return (v == 1) ? 1 : 0;
 }
 
-int func_8020971C(void* obj) {
-    int v = func_8009CF8C((u32)obj + 0x2cc8);
+int func_8020971C(u8* obj) {
+    int v = func_8009CF8C((u32)(obj + 0x2cc8));
     return (v == 1) ? 1 : 0;
 }
 
@@ -986,7 +988,8 @@ resolvedName:;
 // func_8020A87C(dirID-cached check) - takes (this, arg); retail keeps the loaded
 // party-id table value in r3 and the caller arg in r4, and shares one return-0
 // epilogue for both guard failures (beq to a common block).
-int func_8020A87C(void* self, u32 arg) {
+int func_8020A87C(CfGimmick* self, u32 arg) {
+    (void)self;
     u32 a = lbl_eu_806646B4;
     if (a != 0 && (lbl_eu_806646BC & 1u) != 0) {
         return arg == a;
@@ -1091,7 +1094,7 @@ void func_8020899C(cf::CfGimmick* self, float value) {
 // CfGimmick::func_8020A8AC method above is its C++-linkage twin kept for
 // header compat; this C-linkage twin owns the retail jumptable slot
 // (retail .data jumptable_eu_80535830[0] = func_8020A8AC).
-extern "C" int func_8020A8AC(cf::CfGimmick* self, void* point, const CfGimmickVec3* center) {
+extern "C" int func_8020A8AC(cf::CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
     (void)self; (void)point; (void)center;
     return 1;
 }

@@ -32,7 +32,7 @@ extern "C" void wkStandbyLogin__7CLibG3dFv();
 extern "C" void wkStandbyLogout__7CLibG3dFv();
 
 CLibG3d::CLibG3d(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 4) {
-    *(void**)this = (void*)__vt__7CLibG3d;
+    *reinterpret_cast<u32**>(this) = __vt__7CLibG3d;
     lbl_eu_806656F0[0] = this;
     mType = THREAD_CLIBG3D;
 }

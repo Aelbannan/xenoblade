@@ -1348,9 +1348,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         __dt__80043E88(&holder, -1);
     }
 
-    // Snapshot: retail order is v17E8, then 0x1650..0x16C4 bulk, then the
-    // remaining gauges/base floats, first store, THEN f27=0.0, then rest of
-    // stores — that live set + pending applyArtsStats args forces -304 frame.
+    // Snapshot: retail address order with t1650 early; f27 born after first store.
     float v17E8 = *(float*)((u8*)self + 0x17E8);
     u32 t1650 = *(u32*)((u8*)self + 0x1650);
     float t1654 = *(float*)((u8*)self + 0x1654);
@@ -1668,39 +1666,50 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             if (func_8026178C(self->CActorParam_getStatusTable(), 48) != 0) {
                 int r = func_8025FB10(self->CActorParam_getStatusTable(), 48);
                 if (r != 0) {
-                    u8* o = (u8*)reinterpret_cast<cf::CBattleState*>((u8*)self + 8)
-                                ->CBattleState_getStatusBlock();
+                    // 0x20-byte status slots; fields at +4/+0x14; b++ → addi r3,r3,32.
+                    struct Status48Slot {
+                        u16 unk00;
+                        u16 unk02;
+                        u16 at4;
+                        u16 padA[7];
+                        u16 at14;
+                        u16 padB[5];
+                    };
+                    Status48Slot* b =
+                        (Status48Slot*)reinterpret_cast<cf::CBattleState*>(
+                                            (u8*)self + 8)
+                            ->CBattleState_getStatusBlock();
                     int ok;
-                    if (*(u16*)(o + 4) != 0) {
+                    if (b->at4 != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x14) != 0) {
+                    if (b->at14 != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    o += 0x20;
-                    if (*(u16*)(o + 4) != 0) {
+                    b++;
+                    if (b->at4 != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x14) != 0) {
+                    if (b->at14 != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x24) != 0) {
+                    if ((*(u16*)((u8*)b + 0x24)) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x34) != 0) {
+                    if ((*(u16*)((u8*)b + 0x34)) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x44) != 0) {
+                    if ((*(u16*)((u8*)b + 0x44)) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (*(u16*)(o + 0x54) != 0) {
+                    if ((*(u16*)((u8*)b + 0x54)) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
@@ -1998,10 +2007,11 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
             }
 
-            // Truncate HP to int, then clamp the live pre-snapshot gauges
-            // against the post-arts working values (retail f31/f29/f28).
+            // Truncate HP via signed (float)(s32) so MWCC emits the dual
+            // 2^52 / 2^52+2^31 path retail uses (not the unsigned short form).
             {
-                float hp = (float)(int)*(float*)((u8*)self + 0x17F4);
+                s32 hpi = (s32)*(float*)((u8*)self + 0x17F4);
+                float hp = (float)hpi;
                 *(float*)((u8*)self + 0x17F4) = hp;
                 if (v17E8 > hp) v17E8 = hp;
                 float curB = *(float*)((u8*)self + 0x17F8);
@@ -2013,7 +2023,9 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(float*)((u8*)self + 0x17EC) = v17EC;
             *(float*)((u8*)self + 0x17F0) = v17F0;
 
-            // Do not hoist self+8 — retail re-emits addi r3,r31,8 at every call.
+            // Keep bLT live so r15 isn't free for CSE of self+8 (retail
+            // re-emits addi r3,r31,8 at every 48778/49154 call).
+            (void)(bLT + gm);
             if (func_80148778((u8*)self + 8, 100)) {
                 cf::CBattleStateEntry* e =
                     (cf::CBattleStateEntry*)func_80149154((u8*)self + 8, 100);
@@ -2047,90 +2059,90 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
             }
 
+            // Retail: addi r3,self+0x16C8 (not a CSE'd pointer) then memset 120.
             std::memset((u8*)self + 0x16C8, 0, 120);
 
-            // Retail: set up memset(0x1740,0,82) destination early, shuffle
-            // 0x176C.. into 0x17BE.., load the 0x1740 block into GPRs, copy to
-            // 0x1792.., THEN memset — early r3/r4/r5 forces the -304 frame.
-            u8* p1740 = (u8*)self + 0x1740;
-
-            s16 s1770 = *(s16*)((u8*)self + 0x1770);
-            s16 s1772 = *(s16*)((u8*)self + 0x1772);
-            s16 s176C = *(s16*)((u8*)self + 0x176C);
-            s16 s1774 = *(s16*)((u8*)self + 0x1774);
-            s16 s1776 = *(s16*)((u8*)self + 0x1776);
-            s16 s1778 = *(s16*)((u8*)self + 0x1778);
-            s16 s177A = *(s16*)((u8*)self + 0x177A);
-            s16 s177C = *(s16*)((u8*)self + 0x177C);
+            // int temps → stw spills (retail 124(sp)); s16 would sth lower.
+            // Memset(82) dest is formed as (u8*)self+0x1740 at the call so
+            // MWCC can schedule addi r3 / li r4 / li r5 early while the
+            // 0x1770 shuffle spills and the 0x1740 block occupies r16–r30.
+            int s1770 = *(s16*)((u8*)self + 0x1770);
+            int s1772 = *(s16*)((u8*)self + 0x1772);
+            int s176C = *(s16*)((u8*)self + 0x176C);
+            int s1774 = *(s16*)((u8*)self + 0x1774);
+            int s1776 = *(s16*)((u8*)self + 0x1776);
+            int s1778 = *(s16*)((u8*)self + 0x1778);
+            int s177A = *(s16*)((u8*)self + 0x177A);
+            int s177C = *(s16*)((u8*)self + 0x177C);
             u32 w177E = *(u32*)((u8*)self + 0x177E);
             u32 w1782 = *(u32*)((u8*)self + 0x1782);
             u32 w1786 = *(u32*)((u8*)self + 0x1786);
             u32 w178A = *(u32*)((u8*)self + 0x178A);
             u32 w178E = *(u32*)((u8*)self + 0x178E);
 
-            *(s16*)((u8*)self + 0x17BE) = s176C;
-            *(s16*)((u8*)self + 0x17C2) = s1770;
-            *(s16*)((u8*)self + 0x17C4) = s1772;
-            *(s16*)((u8*)self + 0x17C6) = s1774;
-            *(s16*)((u8*)self + 0x17C8) = s1776;
-            *(s16*)((u8*)self + 0x17CA) = s1778;
-            *(s16*)((u8*)self + 0x17CC) = s177A;
-            *(s16*)((u8*)self + 0x17CE) = s177C;
+            int c1740 = *(s16*)((u8*)self + 0x1740);
+            int c1742 = *(s16*)((u8*)self + 0x1742);
+            int c1744 = *(s16*)((u8*)self + 0x1744);
+            int c1746 = *(s16*)((u8*)self + 0x1746);
+            int c1748 = *(s16*)((u8*)self + 0x1748);
+            int c174A = *(s16*)((u8*)self + 0x174A);
+            int c174C = *(s16*)((u8*)self + 0x174C);
+            int c174E = *(s16*)((u8*)self + 0x174E);
+            int c1750 = *(s16*)((u8*)self + 0x1750);
+            int c1752 = *(s16*)((u8*)self + 0x1752);
+            int c1754 = *(s16*)((u8*)self + 0x1754);
+            int c1756 = *(s16*)((u8*)self + 0x1756);
+            int c1758 = *(s16*)((u8*)self + 0x1758);
+            int c175A = *(s16*)((u8*)self + 0x175A);
+            int c175C = *(s16*)((u8*)self + 0x175C);
+            int c175E = *(s16*)((u8*)self + 0x175E);
+            int c1760 = *(s16*)((u8*)self + 0x1760);
+            int c1762 = *(s16*)((u8*)self + 0x1762);
+            int c1764 = *(s16*)((u8*)self + 0x1764);
+            int c1766 = *(s16*)((u8*)self + 0x1766);
+            int c1768 = *(s16*)((u8*)self + 0x1768);
+            int c176A = *(s16*)((u8*)self + 0x176A);
+            int c176E = *(s16*)((u8*)self + 0x176E);
+
+            *(s16*)((u8*)self + 0x17BE) = (s16)s176C;
+            *(s16*)((u8*)self + 0x17C2) = (s16)s1770;
+            *(s16*)((u8*)self + 0x17C4) = (s16)s1772;
+            *(s16*)((u8*)self + 0x17C6) = (s16)s1774;
+            *(s16*)((u8*)self + 0x17C8) = (s16)s1776;
+            *(s16*)((u8*)self + 0x17CA) = (s16)s1778;
+            *(s16*)((u8*)self + 0x17CC) = (s16)s177A;
+            *(s16*)((u8*)self + 0x17CE) = (s16)s177C;
             *(u32*)((u8*)self + 0x17D0) = w177E;
             *(u32*)((u8*)self + 0x17D4) = w1782;
             *(u32*)((u8*)self + 0x17D8) = w1786;
             *(u32*)((u8*)self + 0x17DC) = w178A;
             *(u32*)((u8*)self + 0x17E0) = w178E;
 
-            s16 c1740 = *(s16*)(p1740 + 0x00);
-            s16 c1742 = *(s16*)(p1740 + 0x02);
-            s16 c1744 = *(s16*)(p1740 + 0x04);
-            s16 c1746 = *(s16*)(p1740 + 0x06);
-            s16 c1748 = *(s16*)(p1740 + 0x08);
-            s16 c174A = *(s16*)(p1740 + 0x0A);
-            s16 c174C = *(s16*)(p1740 + 0x0C);
-            s16 c174E = *(s16*)(p1740 + 0x0E);
-            s16 c1750 = *(s16*)(p1740 + 0x10);
-            s16 c1752 = *(s16*)(p1740 + 0x12);
-            s16 c1754 = *(s16*)(p1740 + 0x14);
-            s16 c1756 = *(s16*)(p1740 + 0x16);
-            s16 c1758 = *(s16*)(p1740 + 0x18);
-            s16 c175A = *(s16*)(p1740 + 0x1A);
-            s16 c175C = *(s16*)(p1740 + 0x1C);
-            s16 c175E = *(s16*)(p1740 + 0x1E);
-            s16 c1760 = *(s16*)(p1740 + 0x20);
-            s16 c1762 = *(s16*)(p1740 + 0x22);
-            s16 c1764 = *(s16*)(p1740 + 0x24);
-            s16 c1766 = *(s16*)(p1740 + 0x26);
-            s16 c1768 = *(s16*)(p1740 + 0x28);
-            s16 c176A = *(s16*)(p1740 + 0x2A);
-            s16 c176E = *(s16*)(p1740 + 0x2E);
-
             *(float*)((u8*)self + 0x1724) = lbl_eu_806677E8;
-            *(s16*)((u8*)self + 0x1792) = c1740;
-            *(s16*)((u8*)self + 0x1794) = c1742;
-            *(s16*)((u8*)self + 0x1796) = c1744;
-            *(s16*)((u8*)self + 0x1798) = c1746;
-            *(s16*)((u8*)self + 0x179A) = c1748;
-            *(s16*)((u8*)self + 0x179C) = c174A;
-            *(s16*)((u8*)self + 0x179E) = c174C;
-            *(s16*)((u8*)self + 0x17A0) = c174E;
-            *(s16*)((u8*)self + 0x17A2) = c1750;
-            *(s16*)((u8*)self + 0x17A4) = c1752;
-            *(s16*)((u8*)self + 0x17A6) = c1754;
-            *(s16*)((u8*)self + 0x17A8) = c1756;
-            *(s16*)((u8*)self + 0x17AA) = c1758;
-            *(s16*)((u8*)self + 0x17AC) = c175A;
-            *(s16*)((u8*)self + 0x17AE) = c175C;
-            *(s16*)((u8*)self + 0x17B0) = c175E;
-            *(s16*)((u8*)self + 0x17B2) = c1760;
-            *(s16*)((u8*)self + 0x17B4) = c1762;
-            *(s16*)((u8*)self + 0x17B6) = c1764;
-            *(s16*)((u8*)self + 0x17B8) = c1766;
-            *(s16*)((u8*)self + 0x17BA) = c1768;
-            *(s16*)((u8*)self + 0x17BC) = c176A;
-            *(s16*)((u8*)self + 0x17C0) = c176E;
-            std::memset(p1740, 0, 82);
+            *(s16*)((u8*)self + 0x1792) = (s16)c1740;
+            *(s16*)((u8*)self + 0x1794) = (s16)c1742;
+            *(s16*)((u8*)self + 0x1796) = (s16)c1744;
+            *(s16*)((u8*)self + 0x1798) = (s16)c1746;
+            *(s16*)((u8*)self + 0x179A) = (s16)c1748;
+            *(s16*)((u8*)self + 0x179C) = (s16)c174A;
+            *(s16*)((u8*)self + 0x179E) = (s16)c174C;
+            *(s16*)((u8*)self + 0x17A0) = (s16)c174E;
+            *(s16*)((u8*)self + 0x17A2) = (s16)c1750;
+            *(s16*)((u8*)self + 0x17A4) = (s16)c1752;
+            *(s16*)((u8*)self + 0x17A6) = (s16)c1754;
+            *(s16*)((u8*)self + 0x17A8) = (s16)c1756;
+            *(s16*)((u8*)self + 0x17AA) = (s16)c1758;
+            *(s16*)((u8*)self + 0x17AC) = (s16)c175A;
+            *(s16*)((u8*)self + 0x17AE) = (s16)c175C;
+            *(s16*)((u8*)self + 0x17B0) = (s16)c175E;
+            *(s16*)((u8*)self + 0x17B2) = (s16)c1760;
+            *(s16*)((u8*)self + 0x17B4) = (s16)c1762;
+            *(s16*)((u8*)self + 0x17B6) = (s16)c1764;
+            *(s16*)((u8*)self + 0x17B8) = (s16)c1766;
+            *(s16*)((u8*)self + 0x17BA) = (s16)c1768;
+            *(s16*)((u8*)self + 0x17BC) = (s16)c176A;
+            *(s16*)((u8*)self + 0x17C0) = (s16)c176E;
+            std::memset((u8*)self + 0x1740, 0, 82);
 
             if (self->CActorParam_getActor() != NULL) {
                 if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {

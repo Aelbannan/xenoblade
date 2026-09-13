@@ -8187,6 +8187,14 @@ never use the inline-empty form (weak-copy budget spread).
   branchless select (`neg/or/srawi/addi 2`) + dead-store elision are
   unreproducible from any tested shape (soft-cap family).
 
+
+## func_801D8E34 — string-pool UNDEF + FrameBlock party layout (US, Wii/1.1 -O4,p + optimize_for_size)
+- Symptom:   pane string immediates off by +0x54; party copy at sp+2140 vs retail sp+2348; ~8% exact / ~79% fuzzy
+- Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54 in packed tail, so `&blob[imm]` emits parent+0x54+imm. (2) Retail party sits at +208 into a 256B frame object; `block.party = *src` inlines `li r0,6` in small scratch TUs but under this function's `#pragma optimize_for_size` MWCC emits out-of-line `__as__12D8EPartyData`.
+- Fix:       (1) `extern "C" char lbl_eu_805063BC[];` (UNDEF) while keeping blob bytes in the packed struct. (2) Open: recover inlined member copy into `D8EFrameBlock{u32 records[52]; D8EPartyData party;}` at sp+2140 (always_inline helper still outlines into this size-optimized body).
+- Result:    ~8.1% exact / HIGH_MATCH ~79.4% fuzzy near-miss; string immediates match (reg colour only)
+- Confidence: repo_proven (string UNDEF); hypothesis (FrameBlock+inline under optimize_for_size)
+
 ## kyoshin CItemBoxInfo — func_801E43BC / func_801D8E34 sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
 
 The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x801DA9A0 size 0x6680 — among the largest functions in the game). Recovered structure (verified against retail disassembly, 2026-08):

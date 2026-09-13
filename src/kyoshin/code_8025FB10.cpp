@@ -34,13 +34,21 @@ struct GXCacheTextProjection {
 // `hi` is the caller's 0xFF000000 mask (retail r30), shared with compact checks.
 #define VALIDATE_NW4R_POINTER_HI(pointer, hi, file, line, message)             \
     {                                                                         \
-        /* Forward decl restored — reverse still emitted li r9..r4. */       \
-        bool validMem1 = true;                                                 \
-        bool validMem2 = true;                                                 \
-        bool validIo = true;                                                   \
-        bool validIo2 = true;                                                  \
-        bool validRegs = true;                                                 \
-        bool validRegs2 = true;                                                \
+        /* Forward decl → LIFO select colors validMem1=r9 .. validRegs2=r4   \
+         * (matches retail). Assign in reverse so the scheduler emits        \
+         * li r4..r9 (retail init order); combined = FULL_MATCH colors+order. */ \
+        bool validMem1;                                                        \
+        bool validMem2;                                                        \
+        bool validIo;                                                          \
+        bool validIo2;                                                         \
+        bool validRegs;                                                        \
+        bool validRegs2;                                                       \
+        validRegs2 = true;                                                     \
+        validRegs = true;                                                      \
+        validIo2 = true;                                                       \
+        validIo = true;                                                        \
+        validMem2 = true;                                                      \
+        validMem1 = true;                                                      \
         if ((hi) != 0x80000000 &&                                              \
             ((u32)(pointer) & 0xFF800000) != 0x81000000) {                     \
             validMem1 = false;                                                 \
@@ -121,18 +129,30 @@ extern f32 lbl_eu_806688C0;
 static const f64 lbl_eu_806688C8 = 4503601774854144.0;
 }
 
+#define _NW4R_CONCAT(a, b) a##b
+#define NW4R_CONCAT(a, b) _NW4R_CONCAT(a, b)
+
 #define VALIDATE_NW4R_POINTER_COMPACT(pointer, hi, file, line, message)        \
     {                                                                         \
+        /* beq past masks when hi matches; nest m90 after m80 check so the   \
+         * rlwinm cannot hoist above retail's cmpli/bc (PLAN §17.6 goto). */  \
         bool valid = false;                                                    \
-        if ((hi) == 0x80000000 ||                                              \
-            ((u32)(pointer) & 0xFF800000) == 0x81000000 ||                     \
-            ((u32)(pointer) & 0xF8000000) == 0x90000000 ||                     \
-            (hi) == 0xC0000000 ||                                              \
-            ((u32)(pointer) & 0xFF800000) == 0xC1000000 ||                     \
-            ((u32)(pointer) & 0xF8000000) == 0xD0000000 ||                     \
-            ((u32)(pointer) & 0xFFFFC000) == 0xE0000000) {                     \
-            valid = true;                                                      \
+        if ((hi) != 0x80000000) {                                              \
+            u32 addr = (u32)(pointer);                                         \
+            u32 m80 = addr & 0xFF800000;                                       \
+            if (m80 != 0x81000000) {                                           \
+                u32 m90 = addr & 0xF8000000;                                   \
+                if (!(m90 == 0x90000000 ||                                     \
+                      (hi) == 0xC0000000 ||                                    \
+                      m80 == 0xC1000000 ||                                     \
+                      m90 == 0xD0000000 ||                                     \
+                      (addr & 0xFFFFC000) == 0xE0000000)) {                    \
+                    goto NW4R_CONCAT(nw4r_compact_check_, __LINE__);           \
+                }                                                              \
+            }                                                                  \
         }                                                                      \
+        valid = true;                                                          \
+        NW4R_CONCAT(nw4r_compact_check_, __LINE__):                            \
         if (!valid) {                                                          \
             Panic__Q24nw4r2dbFPCciPCce(file, line, message, pointer);          \
         }                                                                      \
@@ -1676,21 +1696,26 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
     {
-        // Non-volatile Color from valid=false shares one li rN,0 (volatile
-        // rematerializes a second zero). Address-take keeps ctor stbs in the
-        // compact-check window (else construction sinks past Panic).
+        // Nest m80 like COMPACT to rotate valid/addr from (r5,r6) → (r6,r5).
         bool valid = false;
         nw4r::ut::Color color(valid, valid, valid, 255);
         nw4r::ut::Color* colorKeep = &color;
-        if (writerRegion == 0x80000000 ||
-            ((u32)&writer & 0xFF800000) == 0x81000000 ||
-            ((u32)&writer & 0xF8000000) == 0x90000000 ||
-            writerRegion == 0xC0000000 ||
-            ((u32)&writer & 0xFF800000) == 0xC1000000 ||
-            ((u32)&writer & 0xF8000000) == 0xD0000000 ||
-            ((u32)&writer & 0xFFFFC000) == 0xE0000000) {
-            valid = true;
+        if (writerRegion != 0x80000000) {
+            u32 addr = (u32)&writer;
+            u32 m80 = addr & 0xFF800000;
+            if (m80 != 0x81000000) {
+                u32 m90 = addr & 0xF8000000;
+                if (!(m90 == 0x90000000 ||
+                      writerRegion == 0xC0000000 ||
+                      m80 == 0xC1000000 ||
+                      m90 == 0xD0000000 ||
+                      (addr & 0xFFFFC000) == 0xE0000000)) {
+                    goto color_black_check;
+                }
+            }
         }
+        valid = true;
+    color_black_check:
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);
@@ -1708,29 +1733,36 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     // printCheckedInitial lets the FF000000 rlwinm hoist into setCursor.
     printCheckedInitial(&writer, writerRegion, text, 0);
     u32 textRegion = (u32)text & 0xFF000000;
-    setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
+    setCursorChecked(&writer, writerRegion, lbl_eu_806688D8 + x,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
-                     y + lbl_eu_806688D8, lbl_eu_806688E0);
+                     lbl_eu_806688D8 + y, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
-    setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
-                     y + lbl_eu_806688D8, lbl_eu_806688E0);
+    setCursorChecked(&writer, writerRegion, lbl_eu_806688D8 + x,
+                     lbl_eu_806688D8 + y, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
 
     {
         bool valid = false;
         nw4r::ut::Color color(255, 255, 255, 255);
         nw4r::ut::Color* colorKeep = &color;
-        if (writerRegion == 0x80000000 ||
-            ((u32)&writer & 0xFF800000) == 0x81000000 ||
-            ((u32)&writer & 0xF8000000) == 0x90000000 ||
-            writerRegion == 0xC0000000 ||
-            ((u32)&writer & 0xFF800000) == 0xC1000000 ||
-            ((u32)&writer & 0xF8000000) == 0xD0000000 ||
-            ((u32)&writer & 0xFFFFC000) == 0xE0000000) {
-            valid = true;
+        if (writerRegion != 0x80000000) {
+            u32 addr = (u32)&writer;
+            u32 m80 = addr & 0xFF800000;
+            if (m80 != 0x81000000) {
+                u32 m90 = addr & 0xF8000000;
+                if (!(m90 == 0x90000000 ||
+                      writerRegion == 0xC0000000 ||
+                      m80 == 0xC1000000 ||
+                      m90 == 0xD0000000 ||
+                      (addr & 0xFFFFC000) == 0xE0000000)) {
+                    goto color_white_check;
+                }
+            }
         }
+        valid = true;
+    color_white_check:
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);

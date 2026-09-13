@@ -6040,7 +6040,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@17813": {
+    "main/kyoshin/CItemBoxInfo@16432": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6384,7 +6384,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35342": {
+    "main/kyoshin/cf/CBattleManager@35733": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6398,7 +6398,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35350": {
+    "main/kyoshin/cf/CBattleManager@35741": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6412,7 +6412,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35367": {
+    "main/kyoshin/cf/CBattleManager@35758": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6426,7 +6426,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35490": {
+    "main/kyoshin/cf/CBattleManager@35881": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7294,7 +7294,7 @@
         ]
       }
     },
-    "main/kyoshin/code_8025FB10@11355": {
+    "main/kyoshin/code_8025FB10@11629": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7308,7 +7308,7 @@
         ]
       }
     },
-    "main/kyoshin/code_8025FB10@11619": {
+    "main/kyoshin/code_8025FB10@11845": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -9518,7 +9518,7 @@
     }
   },
   "function_pairs": 5714,
-  "generated": "2026-09-14T00:17:45.830233",
+  "generated": "2026-09-14T00:31:09.679985",
   "region": "us",
   "units_scanned": 323,
   "version": 1

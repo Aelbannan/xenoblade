@@ -2153,14 +2153,6 @@ struct D8EFrameBlock {
     D8EPartyData party;
 };
 
-// MWCC: #pragma always_inline — __attribute__((always_inline)) alone is not
-// enough under optimize_for_size; direct member assign outlines __as__.
-#pragma always_inline on
-static void d8e_copy_party(D8EPartyData* dst, void* partyBase) {
-    *dst = *(D8EPartyData*)((u8*)partyBase + 4);
-}
-#pragma always_inline reset
-
 static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
     f32 scale = 0.01f * (100.0f + (f32)effect);
     entry.physicalDefense = (s16)(s32)((f32)entry.physicalDefense * scale);
@@ -2318,10 +2310,15 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // D8EFrameBlock @ sp+2140 → party @ sp+2348. always_inline copy helper
-    // keeps the li r0,6 loop inlined (direct member assign outlines __as__).
+    // FrameBlock: records[52] then party @+208. Copy-init temp inlines li r0,6;
+    // member-assign may outline __as__ under -O4,s (best exact ~8.1%).
     D8EFrameBlock frameBlock;
-    d8e_copy_party(&frameBlock.party, func_8009ECB0());
+    frameBlock.records[0] = 0;
+    {
+        D8EPartyData partyTmp =
+            *(D8EPartyData*)((u8*)func_8009ECB0() + 4);
+        frameBlock.party = partyTmp;
+    }
     for (u32 row = 0; row < 2; row++) {
         // u8 col: clrlwi truncation blocks pointer strength-reduction while
         // keeping rlwinm MB/ME at retail 22,29 (u16 widened the mask).
@@ -2335,6 +2332,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             }
         }
     }
+    u32* records = frameBlock.records;
 
     // ---- character setup ----
     // Two (u8) casts from the raw return → retail's paired rlwinm (save + arg).
@@ -2623,7 +2621,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
         D8EComparisonStorage& comparisonStorage =
-            *reinterpret_cast<D8EComparisonStorage*>(frameBlock.records);
+            *reinterpret_cast<D8EComparisonStorage*>(records);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;

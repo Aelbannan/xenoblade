@@ -17,9 +17,9 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
     void* holder = lbl_eu_80664140;
     self->mParam = (u16)param;
 
-    func_80208F34(self, (u8*)self + 4, mgr, &holder);
-    func_80209020(self, (u8*)self + 0x1C, mgr, &holder);
-    func_80209288(self, (u8*)self + 0x10, mgr, &holder);
+    func_80208F34(self, &self->mVec04, mgr, &holder);
+    func_80209020(self, self->mBlock1C, mgr, &holder);
+    func_80209288(self, self->mBlock10, mgr, &holder);
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
@@ -128,7 +128,7 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
     // State dispatch via jumptable_eu_80535830 (5 case handlers); a zero
     // handler result returns early (retail checks the dispatched call's r3).
     int dispatchResult =
-        jumptable_eu_80535830[self->mState]((cf::CfGimmick*)((u8*)self + 0x1C), &lbl_eu_805765A0, (const CfGimmickVec3*)((u8*)self + 0x04));
+        jumptable_eu_80535830[self->mState]((cf::CfGimmick*)self->mBlock1C, &lbl_eu_805765A0, &self->mVec04);
     if (dispatchResult == 0) {
         return;
     }
@@ -137,16 +137,16 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
         // Walk an intrusive linked list; the terminator is re-read from
         // list+4 every iteration (sentinel node). Each node's vtable slot
         // 0x44 (0x110/4) returns an object whose +0x84 gets poked.
-        void* list = func_800B6BC8();
-        void* tail = *(void**)((u8*)list + 4);
-        void* entry = *(void**)tail;
-        while (entry != *(void**)((u8*)list + 4)) {
-            IUnkVt110* obj = *(IUnkVt110**)((u8*)entry + 8);
+        CfGimmickList* list = (CfGimmickList*)func_800B6BC8();
+        CfGimmickListNode* tail = list->head;
+        CfGimmickListNode* entry = tail->next;
+        while (entry != list->head) {
+            IUnkVt110* obj = (IUnkVt110*)entry->object;
             void* result = obj->getObjAt84();
             if (result != NULL) {
                 func_8008B95C((u8*)result + 0x84);
             }
-            entry = *(void**)entry;
+            entry = entry->next;
         }
     } else if ((s32)self->mType == 1) {
         func_8020A03C();

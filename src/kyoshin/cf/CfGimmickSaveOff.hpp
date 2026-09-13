@@ -37,8 +37,7 @@ extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
 // plain names without `extern "C"`).
 // ---------------------------------------------------------------------------
 
-// Bdat table descriptor whose +0x34 / +0x38 words are min/max column names.
-extern u8 lbl_eu_805357E8[];
+// lbl_eu_805357E8 is declared in CfGimmick.hpp (const void*[]).
 // Bdat table descriptor whose base is the type column name.
 extern u8 lbl_eu_80510B28[];
 // CfGimmickSaveOff vtable (stored at +0x00 by the constructor).
@@ -62,7 +61,9 @@ public:
     virtual void vinit();          // declared slot 6, dispatched at offset 0x20
 
     // vptr at 0x00 (implicit; written directly by the ctor/dtor).
-    /* 0x04 */ u8 gap04[0x30 - 0x04];
+    /* 0x04 */ CfGimmickVec3 mVec04;     // ctor work block / jumptable point
+    /* 0x10 */ u8 mBlock10[0xC];         // ctor work block
+    /* 0x1C */ u8 mBlock1C[0x30 - 0x1C]; // ctor work + jumptable CfGimmick view
     /* 0x30 */ f32 field_30;   // CfGimmick base extent fields
     /* 0x34 */ f32 field_34;
     /* 0x38 */ f32 field_38;

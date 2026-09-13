@@ -15,8 +15,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7448 |
 | extern "C" definitions (forced names) | 4158 |
 | `self`/register-style params | 13471 |
-| `void*` (params + locals) | 7801 |
-| raw pointer offset arithmetic | 7539 |
+| `void*` (params + locals) | 7798 |
+| raw pointer offset arithmetic | 7532 |
 | deref-through-cast arithmetic | 2929 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
@@ -408,7 +408,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 65 | 5 | 4 | 0 | 4 | 0 | 7 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 2 | 6 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 33 | 15 | 31 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfHikariItemManager.cpp | 3 | 12 | 21 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapEffectManager.cpp | 1 | 5 | 7 | 2 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -4372,10 +4372,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
-  "ptr_arith": 8,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 6,
-  "void_ptr": 8
+  "void_ptr": 5
  },
  "src/kyoshin/cf/CfGimmickWarp.cpp": {
   "asm_insn_shim": 0,

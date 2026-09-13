@@ -48,7 +48,7 @@ struct GlobalStruct_80572B94 {
     int field_0x50;   // 0
     int field_0x54;   // 0x54
     int field_0x58;   // 0x58-0x5C
-    u8 field_0x5C[0x34];      // memset 0 (0x5C-0x90)
+    u32 field_0x5C[0xD];      // 0x5C-0x90 base table (13 words)
     u32 field_0x90;   // 0x90
     int field_0x94;
     int field_0x98;
@@ -171,13 +171,13 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
 
     // base addresses derived from field_0x2C
     u32 base = g->field_0x2C;
-    ((u32*)g->field_0x5C)[0] = base;
-    ((u32*)g->field_0x5C)[1] = base + 0xA6000;
-    ((u32*)g->field_0x5C)[2] = base + 0x14C000;
-    ((u32*)g->field_0x5C)[3] = base + 0x1F2000;
-    ((u32*)g->field_0x5C)[4] = base + 0x298000;
-    ((u32*)g->field_0x5C)[5] = base + 0x33E000;
-    ((u32*)g->field_0x5C)[6] = base + 0x3E4000;
+    g->field_0x5C[0] = base;
+    g->field_0x5C[1] = base + 0xA6000;
+    g->field_0x5C[2] = base + 0x14C000;
+    g->field_0x5C[3] = base + 0x1F2000;
+    g->field_0x5C[4] = base + 0x298000;
+    g->field_0x5C[5] = base + 0x33E000;
+    g->field_0x5C[6] = base + 0x3E4000;
     g->field_0x90 = base + 0x48A000;
     g->field_0x94 = base + 0x79D800;
     g->field_0x98 = base + 0x8C5000;
@@ -560,7 +560,7 @@ u32 func_800A84FC(int index) {
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((u32*)lbl_eu_80572B94.field_0x5C)[index] + 0x96000;
+    return lbl_eu_80572B94.field_0x5C[index] + 0x96000;
 }
 
 u32 func_800A85D8(int index) {
@@ -585,7 +585,7 @@ u32 func_800A85D8(int index) {
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((u32*)lbl_eu_80572B94.field_0x5C)[index];
+    return lbl_eu_80572B94.field_0x5C[index];
 }
 
 void* func_800A86AC(unsigned int param1, unsigned int param2) {

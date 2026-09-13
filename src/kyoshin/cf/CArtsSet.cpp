@@ -53,10 +53,9 @@ namespace cf {
     }
 }
 
-unsigned short func_80153CAC(const void* self, int index) {
+unsigned short func_80153CAC(const cf::CArtsSet* set, int index) {
     int row = index / 8;
     int col = index % 8;
-    const cf::CArtsSet* set = static_cast<const cf::CArtsSet*>(self);
     const char* p = reinterpret_cast<const char*>(set);
     p += row * 0x10;
     p += col * 2;
@@ -113,10 +112,10 @@ namespace cf {
 // C-ABI accessor (retail symbol is unmangled): returns the arts-param record
 // at the row stamped in the first word (count*0x460) plus the given index
 // stride (index*0x8c), 0x38 bytes past the CArtsSet base.
-extern "C" void* getArtsParamAtCnt(void* self, unsigned int index) {
-    cf::CArtsSet* set = static_cast<cf::CArtsSet*>(self);
+extern "C" cf::CArtsParam* getArtsParamAtCnt(cf::CArtsSet* set, unsigned int index) {
     unsigned short count = set->mArtsSlotData[0];
-    return reinterpret_cast<unsigned char*>(set) + 0x38 + count * 0x460 + index * 0x8c;
+    return reinterpret_cast<cf::CArtsParam*>(
+        reinterpret_cast<unsigned char*>(set) + 0x38 + count * 0x460 + index * 0x8c);
 }
 
 extern cf::CArtsParam lbl_eu_80573D88;
@@ -168,8 +167,7 @@ namespace cf {
     }
 }
 
-void func_80153E88(void* self) {
-    cf::CAttackSet* set = static_cast<cf::CAttackSet*>(self);
+void func_80153E88(cf::CAttackSet* set) {
     std::memset(set, 0, 0xc);
     cf::CAttackParam* arr = reinterpret_cast<cf::CAttackParam*>(reinterpret_cast<unsigned char*>(set) + 0x10);
     for (int i = 0; i < 6; i++) {
@@ -179,7 +177,7 @@ void func_80153E88(void* self) {
 
 // C-ABI accessor (retail symbol is unmangled): returns the attack-param
 // record at base + index*0x88 + 0x10.
-extern "C" void* getAtkParam(void* base, int index) {
-    cf::CAttackSet* set = static_cast<cf::CAttackSet*>(base);
-    return reinterpret_cast<char*>(set) + index * 0x88 + 0x10;
+extern "C" cf::CAttackParam* getAtkParam(cf::CAttackSet* set, int index) {
+    return reinterpret_cast<cf::CAttackParam*>(
+        reinterpret_cast<char*>(set) + index * 0x88 + 0x10);
 }

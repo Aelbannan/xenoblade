@@ -28,7 +28,7 @@ public:
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-extern "C" void __dt__13CMenuQuestLogFv(void*, int);
+extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
 
 // Retail constructor symbol (unmangled global). Out-of-line stub so the
 // factory (func_8011CCE0) emits a real `bl` to it; returns `this` in r3 like
@@ -238,8 +238,9 @@ void CMenuQuestLog::Init() {
 }
 
 // retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
-extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src) {
-    u32* dst = static_cast<u32*>(self);
+// dest stays void* to match shared header decls; type immediately as u32*.
+extern "C" void __ct__UnkClass_8011C974(void* dest, const u32* src) {
+    u32* dst = static_cast<u32*>(dest);
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -399,7 +400,7 @@ body:
 // already exists). Regist is called even when the allocation failed, matching
 // retail.
 // ---------------------------------------------------------------------------
-extern "C" void Regist__8CProcessFP8CProcessb(void* self, CProcess* parent, bool b);
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool b);
 
 CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80663FC0 != 0) {
@@ -605,7 +606,9 @@ extern "C" void func_8011D2E8(IScnRender* self) {
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls the destructor.
 extern "C" void func_8011D2F0(IScnRender* self) {
-    ((void(*)(void*))__dt__13CMenuQuestLogFv)(reinterpret_cast<char*>(self) - 0x58);
+    // Single-arg cast: retail thunk only adjusts this; mode stays in r4.
+    ((void (*)(CMenuQuestLog*))__dt__13CMenuQuestLogFv)(
+        reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58));
 }
 
 // __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.

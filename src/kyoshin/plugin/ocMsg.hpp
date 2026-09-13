@@ -28,6 +28,32 @@ struct OcMsgRingHdr {
     u32 count;
 };
 
+/* Owner object for the two-value ring: header + 8-byte slots + values at 0x64/0x68. */
+struct OcMsgTwoValueObj {
+    u32 wrap;       /* 0x00 */
+    u32 capacity;   /* 0x04 */
+    u32 readIdx;    /* 0x08 */
+    u32 writeIdx;   /* 0x0C */
+    u32 count;      /* 0x10 */
+    u8 slots[0x50]; /* 0x14..0x63 (9*8 slots + pad to 0x64) */
+    u32 value0;     /* 0x64 */
+    u32 value1;     /* 0x68 */
+};
+
+/* Owner object for the three-value ring: values at 0x8C/0x90/0x94. */
+struct OcMsgThreeValueObj {
+    u32 wrap;       /* 0x00 */
+    u32 capacity;   /* 0x04 */
+    u32 readIdx;    /* 0x08 */
+    u32 writeIdx;   /* 0x0C */
+    u32 count;      /* 0x10 */
+    u8 slots[0x78]; /* 0x14..0x8B (9*12 slots + pad to 0x8C) */
+    u32 value0;     /* 0x8C */
+    u32 value1;     /* 0x90 */
+    u32 value2;     /* 0x94 */
+};
+
+
 /* Getters/setters for the two-value ring (offsets 0x64/0x68). */
 int func_8003A53C(VMThread* pThread, void* r4, s16 r5);
 int func_8003A588(VMThread* pThread, void* target);

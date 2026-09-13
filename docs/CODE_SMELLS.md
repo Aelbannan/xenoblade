@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4160 |
 | `self`/register-style params | 13474 |
 | `void*` (params + locals) | 7796 |
-| raw pointer offset arithmetic | 7522 |
-| deref-through-cast arithmetic | 2921 |
+| raw pointer offset arithmetic | 7515 |
+| deref-through-cast arithmetic | 2914 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -574,7 +574,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 23 | 0 | 38 | 1 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocBuiltin.cpp | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 20 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/ocMsg.cpp | 0 | 0 | 0 | 17 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/plugin/ocMsg.cpp | 0 | 0 | 0 | 17 | 5 | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocThread.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocUnit.cpp | 28 | 80 | 38 | 140 | 74 | 36 | 0 | 4 | 9 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 25 | 1 | 5 | 38 | 14 | 6 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -6141,9 +6141,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/plugin/ocMsg.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 12,
+  "deref_arith": 5,
   "init_side_effect": 0,
-  "ptr_arith": 12,
+  "ptr_arith": 5,
   "schedule_pragma": 0,
   "void_ptr": 17
  },

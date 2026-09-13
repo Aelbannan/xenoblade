@@ -63,7 +63,7 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
     _this->mField55 = 0;
 
     *(u32*)((u8*)_this + 0x10) = (u32)lbl_eu_8052CC38;
-    *(u32*)((u8*)_this + 0x58) = renderVt;
+    *(u32*)&_this->mIScnRender = renderVt;
     _this->mScene = parent;
 
     // Embedded widgets in construction order.
@@ -170,7 +170,9 @@ void CMenuQuestLog::Init() {
     // record loop + halfword/byte tail).
     {
         struct QstArrBlock { u32 words[32]; };
-        *(QstArrBlock*)((u8*)this + 0x1a4) = *(QstArrBlock*)(tmp.list + 0xec);
+        // mSortMenuData.mArray @ list+0xEC = this+0x1A4
+        *(QstArrBlock*)mQstLogList.mSortMenuData.mArray =
+            *(QstArrBlock*)(tmp.list + 0xec);
     }
     // Sort/list state scalars.
     mQstLogList.mSortMenuData.mCount = tmp.list[0x16c];
@@ -237,10 +239,11 @@ void CMenuQuestLog::Init() {
 
 // retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
 extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src) {
-    ((u32*)self)[0] = src[0];
-    ((u32*)self)[1] = src[1];
-    ((u32*)self)[2] = src[2];
-    ((u32*)self)[3] = src[3];
+    u32* dst = static_cast<u32*>(self);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
 }
 
 // CScrollBar copy helper (inlined copy constructor): constructs the
@@ -595,18 +598,18 @@ extern "C" void func_8011D298(CMenuQuestLog* self) {
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls cbRenderBefore.
-extern "C" void func_8011D2E8(void* self) {
-    reinterpret_cast<CMenuQuestLog*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
+extern "C" void func_8011D2E8(IScnRender* self) {
+    reinterpret_cast<CMenuQuestLog*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls the destructor.
-extern "C" void func_8011D2F0(void* self) {
-    ((void(*)(void*))__dt__13CMenuQuestLogFv)((char*)self - 0x58);
+extern "C" void func_8011D2F0(IScnRender* self) {
+    ((void(*)(void*))__dt__13CMenuQuestLogFv)(reinterpret_cast<char*>(self) - 0x58);
 }
 
 // __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.
-extern "C" void* __dt__8011D2F8(void* self, int mode) {
+extern "C" void* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
     if (self != 0 && mode > 0) {
         __dl__FPv(self);
     }

@@ -36,8 +36,7 @@ extern "C" void* lbl_eu_805349A0[];
 // __declspec(novtable): the tables live in the data blob and the ctors store
 // the labels manually (same shape as cf::CHelp), so no TU emits a vtable.
 // The retail method symbols keep their Fv names (setRootPaneTranslate reads
-// its VEC3 from r4 despite the Fv suffix); the matching extern "C"
-// definitions stay in CCur.cpp and only the dispatch goes through these
+// its VEC3 from r4 despite the Fv suffix); the matching member definitions live in CCur.cpp and only the dispatch goes through these
 // virtuals. initLayout is declared without a body: the base slot is 0 and
 // novtable emits no reference to the missing symbol; virtual calls land on
 // the leaf tables in the blob.
@@ -58,4 +57,49 @@ public:
     // Overlay on the implicit vptr at +0x00 so the free-function ctors can
     // store the retail table labels (same idiom as cf::CHelp::vtbl()).
     void*& vtbl() { return *reinterpret_cast<void**>(this); }
+};
+
+class __declspec(novtable) CCur07 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur09 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur11 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur14 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur15 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur16 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur18 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CCur22 : public CBaseCur {
+public:
+    virtual void initLayout();
+};
+
+class __declspec(novtable) CSubCur : public CBaseCur {
+public:
+    virtual void initLayout();
 };

@@ -3,6 +3,8 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 
+class CBaseCur;
+
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
@@ -31,3 +33,4 @@ extern "C" void* lbl_eu_8053485C[];  // CCur22
 extern "C" void* lbl_eu_80534838[];  // CSubCur
 extern "C" const char* lbl_eu_80534828[];
 extern "C" void __dl__FPv(void*);
+extern "C" void func_801D216C(CBaseCur* cur, u8 val);

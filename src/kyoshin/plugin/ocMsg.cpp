@@ -13,9 +13,8 @@
 int func_8003A53C(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
-    // VMArg's u16 at offset 0x2 carries the caller's package index.
-    u16& pkgIdx = *reinterpret_cast<u16*>(reinterpret_cast<char*>(&args) + 2);
-    pkgIdx = static_cast<u16>(argType);
+    // VMArg::unk2 carries the caller's package index.
+    args.unk2 = static_cast<u16>(argType);
     args.value.pointerVal = func_8003A4E0();
     vmRetValSet(pThread, &args);
     return 1;
@@ -162,9 +161,8 @@ s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
 int func_8003A7B4(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
-    // VMArg's u16 at offset 0x2 carries the caller's package index.
-    u16& pkgIdx = *reinterpret_cast<u16*>(reinterpret_cast<char*>(&args) + 2);
-    pkgIdx = static_cast<u16>(argType);
+    // VMArg::unk2 carries the caller's package index.
+    args.unk2 = static_cast<u16>(argType);
     args.value.pointerVal = func_8003A4EC();
     vmRetValSet(pThread, &args);
     return 1;

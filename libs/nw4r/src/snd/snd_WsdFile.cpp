@@ -43,11 +43,7 @@ private:
 // the constructor, so the body is defined inline here to avoid emitting an
 // extra out-of-line copy (same approach as snd_BankFile.cpp).
 inline bool WsdFileReader::IsValidFileHeader(
-    const void*
-    pWsdBin) {
-    const ut::BinaryFileHeader* pFileHeader =
-        static_cast<const ut::BinaryFileHeader*>(pWsdBin);
-
+    const ut::BinaryFileHeader* pFileHeader) {
     if (pFileHeader->signature != SIGNATURE) {
         return false;
     }
@@ -65,7 +61,8 @@ inline bool WsdFileReader::IsValidFileHeader(
 
 WsdFileReader::WsdFileReader(const void* pWsdBin)
     : mHeader(NULL), mDataBlock(NULL), mWaveBlock(NULL) {
-    if (!IsValidFileHeader(pWsdBin)) {
+    if (!IsValidFileHeader(
+            static_cast<const ut::BinaryFileHeader*>(pWsdBin))) {
         return;
     }
 
@@ -88,13 +85,14 @@ bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
 
     if (mWaveBlock == NULL) {
         WaveArchiveReader archive(pWaveAddr);
-        const void* waveFile = archive.GetWaveFile(id);
+        const WaveFile::FileHeader* waveFile =
+            static_cast<const WaveFile::FileHeader*>(archive.GetWaveFile(id));
 
         if (waveFile == NULL) {
             return false;
         }
 
-        WaveFileReader reader(static_cast<const WaveFile::FileHeader*>(waveFile));
+        WaveFileReader reader(waveFile);
         return reader.ReadWaveInfo(pWaveInfo, NULL);
     }
 

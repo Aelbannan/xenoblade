@@ -23,18 +23,17 @@ struct BattleGauge {
 // offset is re-declared here with a field_0xNN name).
 struct BattleManagerLayout {
     u8 pad_00[0x20C8];
-    u16 field_20C8;                                  // +0x20C8 chain/timer state (read as s16)
+    s16 field_20C8;                                  // +0x20C8 chain/timer state
 };
 
 // Retail symbol is the unmangled func_802B9064 (C linkage) - CCharVoiceMan
 // and other TUs reference it via extern "C"; without this the mangled
 // __FP11BattleGaugeff breaks the main.dol link.
 extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
-    BattleGauge* voiceObj = reinterpret_cast<BattleGauge*>(obj);
     cf::CActorParam* battle = reinterpret_cast<cf::CActorParam*>(obj);
 
     // Gauge must be enabled (flag bit 1) and the value currently rising.
-    if (!(voiceObj->flags & 2)) {
+    if (!(obj->flags & 2)) {
         return false;
     }
     if (curVal <= prevVal) {
@@ -47,7 +46,7 @@ extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     BattleManagerLayout* bmv = reinterpret_cast<BattleManagerLayout*>(bm);
-    if (*reinterpret_cast<s16*>(&bmv->field_20C8) != 0) {
+    if (bmv->field_20C8 != 0) {
         return false;
     }
 
@@ -75,7 +74,7 @@ extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
 
     // Play the cue through the battle object's own voice-position sub-object.
     if (obj != NULL) {
-        obj = reinterpret_cast<BattleGauge*>(&voiceObj->voiceEntry);
+        obj = reinterpret_cast<BattleGauge*>(&obj->voiceEntry);
     }
     func_802A3D54(reinterpret_cast<CCharVoice*>(obj), voiceID, 0x7D);
     return false;

@@ -12,21 +12,22 @@ extern CLibCriMoviePlay* lbl_eu_806656E0;
 
 // Forward declarations for CRI movie player API
 struct MovieEntry;
+struct MwPly; // opaque CRI Sofdec player handle
 extern "C" {
     u32 mwPlyCalcWorkCprmSfd(void* cprm);
-    void mwPlyStartFname(void* ply, const char* filename);
-    int mwPlyGetStat(void* ply);
-    void mwPlyStop(void* ply);
-    void mwPlyPause(void* ply, int pause);
-    int mwPlyGetOutVol(void* ply);
-    void mwPlySetOutVol(void* ply, int vol);
+    void mwPlyStartFname(MwPly* ply, const char* filename);
+    int mwPlyGetStat(MwPly* ply);
+    void mwPlyStop(MwPly* ply);
+    void mwPlyPause(MwPly* ply, int pause);
+    int mwPlyGetOutVol(MwPly* ply);
+    void mwPlySetOutVol(MwPly* ply, int vol);
     void mwPlyInitSfdFx(void* fxprm);
-    void mwPlyGetCurFrm(void* ply, void* frm);
-    void mwPlyRelCurFrm(void* ply);
-    void mwPlyFxSetOutBufPitchHeight(void* ply, u16 pitch, u16 height);
-    void mwPlyFxCnvFrmY84C44(void* ply, void* frm, void* yBuf, void* cbcrBuf);
-    void* criware_8039FF34(void* cprm);
-    void criware_803A09B4(void* ply);
+    void mwPlyGetCurFrm(MwPly* ply, void* frm);
+    void mwPlyRelCurFrm(MwPly* ply);
+    void mwPlyFxSetOutBufPitchHeight(MwPly* ply, u16 pitch, u16 height);
+    void mwPlyFxCnvFrmY84C44(MwPly* ply, void* frm, void* yBuf, void* cbcrBuf);
+    MwPly* criware_8039FF34(void* cprm);
+    void criware_803A09B4(MwPly* ply);
     void ADXM_ExecMain(void);
     void VIWaitForRetrace(void);
 
@@ -39,7 +40,7 @@ extern "C" {
 // Movie playback entry (0x124 bytes)
 struct MovieEntry {
     u32 mFlags;              // 0x00
-    void* mPlyHandle;        // 0x04 - CRI movie player handle (opaque)
+    MwPly* mPlyHandle;       // 0x04 - CRI movie player handle (opaque)
     // CRI cprm block (passed to mwPlyCalcWorkCprmSfd at 0x08); the work
     // buffer pointer/size slots at 0x20/0x24 overlap the cprm tail.
     u32 mCprmMode;           // 0x08 - cprm[0] = 1

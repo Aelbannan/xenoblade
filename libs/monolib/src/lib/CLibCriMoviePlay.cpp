@@ -947,7 +947,7 @@ stop:
                     other->mPauseOverride = overrideState;
                     // Reloaded ahead of the pause tests so the call argument
                     // sits in r3 before the flag branches.
-                    void* ply = other->mPlyHandle;
+                    MwPly* ply = other->mPlyHandle;
                     int pa = 0;
                     if (!overrideState && !other->mGlobalPause &&
                         sInstance->mPauseCounter == 0) {

@@ -48,12 +48,13 @@ extern "C" u32 lbl_eu_8056C948[6];  // .data RTTI chain (defined below)
 extern "C" {
 
 // CWorkThread / runtime helpers referenced by the retail symbol names
-void __ct__11CWorkThreadFPCcP11CWorkThreadi(void* self, const char* name, void* parent, int capacity);
-void __dt__11CWorkThreadFv(void* self, int dealloc);
+void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* self, const char* name,
+                                           CWorkThread* parent, int capacity);
+void __dt__11CWorkThreadFv(CWorkThread* self, int dealloc);
 void __dl__FPv(void* p);
-bool wkStandbyLogin__11CWorkThreadFv(void* self);
-bool wkStandbyLogout__11CWorkThreadFv(void* self);
-void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(void* self, int evt);
+bool wkStandbyLogin__11CWorkThreadFv(CWorkThread* self);
+bool wkStandbyLogout__11CWorkThreadFv(CWorkThread* self);
+void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(CWorkThread* self, int evt);
 // CDeviceFont::func_80452D80 - Fv mangling, but retail caller passes a
 // second (ignored) argument in r4 (the just-claimed file data pointer)
 void func_80452D80__11CDeviceFontFv(u32 self, u8* arg2);
@@ -64,8 +65,10 @@ void func_80452D80__11CDeviceFontFv(u32 self, u8* arg2);
 
 
 
-void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name, CWorkThread* parent) {
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, name, parent, 0);
+CDeviceFontLoader* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name,
+                                           CWorkThread* parent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(reinterpret_cast<CWorkThread*>(self), name,
+                                          parent, 0);
     self->vtable = lbl_eu_8056C8A8;
     self->mFileName[0] = '\0';
     self->mFileNameLen = 0;
@@ -74,9 +77,9 @@ void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name, CWorkTh
     return self;
 }
 
-void* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
+CDeviceFontLoader* __dt__17CDeviceFontLoaderFv(CDeviceFontLoader* self, int dealloc) {
     if (self != nullptr) {
-        __dt__11CWorkThreadFv(self, 0);
+        __dt__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self), 0);
         if (dealloc > 0) {
             __dl__FPv(self);
         }
@@ -108,7 +111,7 @@ bool wkStandbyLogin__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
         self->mFileName, (IWorkEvent*)self, 0, 0);
     CDeviceFile::func_8044F154(self->mFileHandle, 0);
     CDeviceFile::setHandleFlag1(self->mFileHandle);
-    return wkStandbyLogin__11CWorkThreadFv(self);
+    return wkStandbyLogin__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self));
 
 fail:
     return false;
@@ -121,7 +124,7 @@ bool wkStandbyLogout__17CDeviceFontLoaderFv(CDeviceFontLoader* self) {
     }
 
     if (self->mChildren.empty()) {
-        return wkStandbyLogout__11CWorkThreadFv(self);
+        return wkStandbyLogout__11CWorkThreadFv(reinterpret_cast<CWorkThread*>(self));
     }
 
     return false;
@@ -136,7 +139,8 @@ bool OnFileEvent__17CDeviceFontLoaderFP10CEventFile(CDeviceFontLoader* self, CEv
         u8* pData = self->mFileHandle->mData;
         self->mFileHandle->mData = nullptr;
         func_80452D80__11CDeviceFontFv(self->mSomeData, pData);
-        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(self, CWorkThread::EVT_NONE);
+        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(
+            reinterpret_cast<CWorkThread*>(self), CWorkThread::EVT_NONE);
     }
 
     self->mFileHandle = nullptr;

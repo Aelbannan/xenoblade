@@ -181,10 +181,11 @@ static inline void setFontChecked(WideTextWriter* writer, u32 writerHi,
     writer->SetFont(*font);
 }
 
-static inline void validateTextColorPointer(WideTextWriter* writer,
-                                            u32 writerHi) {
+static inline void setTextColorChecked(WideTextWriter* writer, u32 writerHi,
+                                       u8 r, u8 g, u8 b, u8 a) {
     VALIDATE_NW4R_POINTER_COMPACT(writer, writerHi, lbl_eu_8052DCFC, 135,
                           lbl_eu_8052DCC8);
+    writer->SetTextColor(nw4r::ut::Color(r, g, b, a));
 }
 
 static inline void setCursorChecked(WideTextWriter* writer, u32 writerRegion,
@@ -1618,6 +1619,9 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
                    lbl_eu_806688D0, width, lbl_eu_806688D0,
                    lbl_eu_806688D4);
     } else {
+        // Prefer bottom then left born early so NV FPRs color left=f26, bottom=f27.
+        f32 bottom;
+        f32 left;
         GXCacheTextProjection* cache =
             static_cast<GXCacheTextProjection*>(cacheInstance__9CDeviceGX);
         s16 cacheWidth = cache->width;
@@ -1634,7 +1638,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatioLeft = static_cast<f32>(rect[0]) / renderWidth;
-        f32 left = static_cast<f32>(cacheWidth) * rectRatioLeft;
+        left = static_cast<f32>(cacheWidth) * rectRatioLeft;
 
         // Reload cacheInstance like the right→left transition so MWCC emits
         // the interleaved lwz r30 + lha height into the left float convert.
@@ -1645,7 +1649,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         rect = getSubRectPtr__8CGXCacheFv(cache);
         f32 rectRatioBottom = static_cast<f32>(rect[3]) / renderHeight;
-        f32 bottom = static_cast<f32>(cacheHeight) * rectRatioBottom;
+        bottom = static_cast<f32>(cacheHeight) * rectRatioBottom;
 
         cache = static_cast<GXCacheTextProjection*>(
             cacheInstance__9CDeviceGX);
@@ -1673,11 +1677,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     const nw4r::ut::Font* font = setupDraw__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
-    // Construct color before the validate so MWCC interleaves the RGBA
-    // stack stores into the compact pointer-check (retail schedule).
-    nw4r::ut::Color black(0, 0, 0, 255);
-    validateTextColorPointer(&writer, writerRegion);
-    writer.SetTextColor(black);
+    setTextColorChecked(&writer, writerRegion, 0, 0, 0, 255);
 
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
@@ -1693,9 +1693,7 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
                      y + lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);
 
-    nw4r::ut::Color white(255, 255, 255, 255);
-    validateTextColorPointer(&writer, writerRegion);
-    writer.SetTextColor(white);
+    setTextColorChecked(&writer, writerRegion, 255, 255, 255, 255);
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
     printChecked(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);

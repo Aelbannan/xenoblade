@@ -652,9 +652,8 @@ void func_800FF920(CMainMenu* self) {
     }
 
     // Join colors: r8=aPressed, r6=down, r7=up, r4=bPressed, r0=confirm.
-    // Decl order bPressed,aPressed,down,up,confirm lands down/up/bPressed;
-    // residual: aPressed in r5 vs retail r8 (p/t load colors).
-    u32 bPressed, aPressed, down, up, confirm;
+    // Seed bPressed so it colors apart from p (retail: p=r5, bPressed=r4).
+    u32 bPressed = 0, aPressed, down, up, confirm;
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         u32 p = pad->mPressedButtonFlags;
         u32 t = pad->mTurboPressButtonFlags;

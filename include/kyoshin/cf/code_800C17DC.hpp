@@ -76,5 +76,5 @@ int func_800C17DC(const char* str, int* type, int* len);
 int func_800C1900(char* str, char** out, int maxLen);
 int func_800C1A18(CmTextProc* self, char* out, int maxLen);
 void func_800C1B30(CmTextProc* self, int key, const char* name, const char* value);
-void func_800C1CC4(CmTextProc* self, const char* text, void* buf);
+void func_800C1CC4(CmTextProc* self, const char* text, CmTextTable* buf);
 }

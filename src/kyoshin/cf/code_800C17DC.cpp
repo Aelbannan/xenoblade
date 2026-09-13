@@ -202,9 +202,9 @@ void func_800C1B30(CmTextProc* self, int key, const char* name, const char* valu
 /// a keyword token followed by up to two parameters (`KEYWORD name value`); the
 /// keyword must appear in the lbl_eu_8052A528 dispatch table.  `buf` receives
 /// the 0x628-byte table that gets filled.
-void func_800C1CC4(CmTextProc* self, const char* text, void* buf) {
+void func_800C1CC4(CmTextProc* self, const char* text, CmTextTable* buf) {
     if (buf == 0) return;
-    self->buf = (CmTextTable*)buf;
+    self->buf = buf;
     memset(self->buf, 0, 0x628);
     self->base = text;
     self->cursor = text;
@@ -236,7 +236,7 @@ void func_800C1CC4(CmTextProc* self, const char* text, void* buf) {
 // Routes to func_800C1CC4 with the global flag record as the leading
 // argument and passes its two arguments through unchanged.
 void func_800C1CAC(u32 arg0, u32 arg1) {
-    func_800C1CC4((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (void*)arg1);
+    func_800C1CC4((CmTextProc*)&lbl_eu_805739E8, (const char*)arg0, (CmTextTable*)arg1);
 }
 
 // Register a callback into the table slot selected by field20 and set the

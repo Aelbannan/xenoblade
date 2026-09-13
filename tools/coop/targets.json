@@ -97348,7 +97348,7 @@
         "_restgpr_18",
         "_savegpr_18"
       ],
-      "instruction_match": 73.164,
+      "instruction_match": 72.067,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true,
       "claim": {
@@ -150122,7 +150122,7 @@
       "size": "0xDC",
       "unit": "kyoshin/realtimeevt/CREvtEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -150140,7 +150140,15 @@
       "source": "src/kyoshin/realtimeevt/CREvtEffect.cpp",
       "source_present": true,
       "instruction_match": 99.455,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "close-mwcc-b22",
+        "claimed_at": "2026-09-13T17:17:14.922895+00:00",
+        "allowed_paths": [
+          "src/kyoshin/realtimeevt/CREvtEffect.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80186158",
@@ -220602,8 +220610,8 @@
       "size": "0xC0",
       "unit": "kyoshin/menu/CMenuArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801f550c",
@@ -220617,8 +220625,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuArtsSet.cpp",
       "source_present": true,
-      "instruction_match": 99.583,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80233fb8",

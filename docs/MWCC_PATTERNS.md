@@ -4416,6 +4416,14 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Confidence: repo_proven
 - Example:   us-8023f51c (`func_8023D3D8` battle-param overlay)
 
+## Signed byte call-arg wants `optimize_for_size` + named `s8` (Wii/1.1)
+- Symptom:   Retail `lbz r4,off; extsb r4,r4; clrlwi r4,r4,16` into arg2; decomp `lbz r0` / `extsb r0` / `rlwinm r4,r0`. Inlining `(u16)(s8)field` or `int val=(s8)field` at `-O4,p` does not move the load into r4.
+- Cause:     `-O4,p` births the sign-extend temp in r0. `-O4,s` (`#pragma optimize_for_size`) plus a named `s8` local performs the extend in-place in the ABI arg register.
+- Fix:       `#pragma optimize_for_size on` around the function; `s8 page = obj->byte; fn(ptr, (u16)page);`
+- Applies to/a.k.a.: register_mapping.md Rule B (call-arg liveness); sibling CMenuArtsSet `func_80231DD0` / `func_80231F60` already use `-O4,s`
+- Confidence: repo_proven
+- Example:   us-80233ef8 (`func_80232000`)
+
 ## `(u8)func(...)` vs `func(...) & 0xFF` changes VR birth (Wii/1.1 -O4,p)
 - Symptom:   Pure saved-reg swap of a call result and a truncated helper return (`rlwinm …,0,24,31` already matches). Decl-order swaps and `int` vs `u8` are no-ops. Inlining the truncated value flips call order.
 - Cause:     `& 0xFF` after the call creates an extra VR that colors before the earlier named local. A `(u8)` result cast is the same mask instruction but a different birth, so Rule A/C colors the first call result r31.

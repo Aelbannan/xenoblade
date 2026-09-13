@@ -11098,6 +11098,13 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(80).
 - Evidence:  us-801ffd88 / src/kyoshin/CPartyState.cpp
 
+## func_80232000 / CMenuArtsSet — signed page byte in r4 via optimize_for_size (US, Wii/1.1 -O4,s, FULL_MATCH)
+- Symptom:   Live 93.8% (registry 99.58% stale). 0 structural / 3 reg_swap / 0xc0/0xc0. Retail `lbz r4,0x21(r31); extsb r4,r4; clrlwi r4,r4,16` into `func_801F3850`; decomp `lbz r0` then `extsb r0` / `rlwinm r4,r0`.
+- Cause:     At `-O4,p` the `(u16)(s8)field` temp is born in r0. `#pragma optimize_for_size` plus a named `s8 page` makes the sign-extend happen in the call-arg register.
+- Fix:       Wrap the function in `#pragma optimize_for_size on` and pass `(u16)page` after `s8 page = self->field_0x21`. Inlining the cast or `int val=(s8)field` at `-O4,p` does not move the load into r4.
+- Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(604).
+- Evidence:  us-80233ef8 / src/kyoshin/menu/CMenuArtsSet.cpp
+
 ## CBattleState_clearEntriesByMask — vt+0x4C takes the slot in r4 (US, Wii/1.1 -O4,p, 84.9%)
 - Symptom:   Live 6.5% / 74 structural after a no-arg `getLinkedActorId()`: missing `or r4, entry` before `bctrl`, memset reloc shifted 4 bytes, size 0x174/0x170.
 - Cause:     symbols.txt mangles the 0x4C slot Fv, but this call site leaves the current 0x34-byte entry in r4. A declared Fv virtual drops that mr.

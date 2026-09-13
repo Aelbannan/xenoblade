@@ -1654,6 +1654,8 @@ extern "C" __declspec(noinline) void func_80231F60(SArts322BC* self) {
 // at least 5, step the 0x21 page offset forward by 5 and wrap any overshoot
 // back into the 0x20 row cursor (clamped at 4); otherwise the cursor is
 // simply cleared. Then refresh the scrollbar and both cursor drivers.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80232000(SArts322BC* self) {
     u8 c = self->field_0x12C;
     if (c >= 5) {
@@ -1670,12 +1672,14 @@ extern "C" __declspec(noinline) void func_80232000(SArts322BC* self) {
         self->field_0x21 = 0;
         if ((s8)(u8)(c - 1) < 0) self->field_0x20 = 0;
     }
-    u16 val = (u16)(s8)self->field_0x21;
+    // Sibling 80231F60: cursor byte first so the (s8) load births in r4.
+    s8 page = self->field_0x21;
     u8* sb = self->field_0x28;
-    func_801F3850(sb, val);
+    func_801F3850(sb, (u16)page);
     func_80232B88((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
+#pragma pop
 
 #pragma push
 #pragma optimize_for_size on

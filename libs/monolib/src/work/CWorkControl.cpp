@@ -67,7 +67,7 @@ CWorkControl* lbl_eu_806655D8[2];
 
 #pragma dont_inline on
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
-    *(void**)this = &lbl_eu_8056B7C8;
+    *(IWorkEventVtbl**)this = &lbl_eu_8056B7C8;
     lbl_eu_806655D8[0] = this;
     mType = THREAD_CWORKCONTROL;
 }

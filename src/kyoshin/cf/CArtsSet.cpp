@@ -71,8 +71,8 @@ namespace cf {
     // which is intentional (retail performs the same raw memory access).
     unsigned short CArtsSet::getArtsSlotAtCnt(unsigned int index) {
         unsigned short count = mArtsSlotData[0];
-        return *reinterpret_cast<unsigned short*>(
-            reinterpret_cast<unsigned char*>(this) + 4 + count * 0x10 + index * 0x2);
+        // unk4 starts at +4: u16 grid with row stride 8 (0x10 bytes).
+        return reinterpret_cast<unsigned short*>(unk4)[count * 8 + index];
     }
 
     // The CArtsSet init virtual's body, defined under the retail mangled name
@@ -99,14 +99,14 @@ namespace cf {
         }
     }
 
-    void* CArtsSet::getArtsParamRC(int index460, int index8c) {
+    CArtsParam* CArtsSet::getArtsParamRC(int index460, int index8c) {
         // Explicit strides: `&mArtsParams[index460 * 8 + index8c]` folds the
         // x8 into the 0x8c mulli (rlwinm + mulli); the explicit 0x460/0x8c
         // strides emit the retail pair of mullis.
         u8* p = (u8*)this;
         p += index460 * 0x460;
         p += index8c * 0x8c;
-        return p + 0x38;
+        return reinterpret_cast<CArtsParam*>(p + 0x38);
     }
 }
 
@@ -152,19 +152,19 @@ namespace cf {
     // strides separate and reuses the source registers like the retail build.
     // Accumulate the index1*0x460 and index2*0x8c strides into this(r3), so the
     // two mullis land in the source registers (r4/r0) like the retail build.
-    void* CArtsSet::getArtsParamRC2(int index1, int index2) {
+    CArtsParam* CArtsSet::getArtsParamRC2(int index1, int index2) {
         u8* p = (u8*)this;
         p += index1 * 0x460;
         p += index2 * 0x8c;
-        return p + 0x38;
+        return reinterpret_cast<CArtsParam*>(p + 0x38);
     }
 
     // Decompose the flat index into row/col and return the CArtsParam entry.
-    void* CArtsSet::getArtsParamByIdx(int index) {
+    CArtsParam* CArtsSet::getArtsParamByIdx(int index) {
         u8* p = (u8*)this;
         p += (index / 8) * 0x460;
         p += (index % 8) * 0x8c;
-        return p + 0x38;
+        return reinterpret_cast<CArtsParam*>(p + 0x38);
     }
 }
 

@@ -137,9 +137,9 @@ namespace cf {
         unsigned short getArtsSlotRC(int index, int subindex);
         unsigned short getArtsSlotAtCnt(unsigned int index);
         void setArtsSlotByIdx(unsigned short value, int index);
-        void* getArtsParamRC(int index460, int index8c);
-        void* getArtsParamRC2(int index1, int index2);
-        void* getArtsParamByIdx(int index);
+        CArtsParam* getArtsParamRC(int index460, int index8c);
+        CArtsParam* getArtsParamRC2(int index1, int index2);
+        CArtsParam* getArtsParamByIdx(int index);
 
         //0x0: vtable
         //0x0-38: _sArtsSet

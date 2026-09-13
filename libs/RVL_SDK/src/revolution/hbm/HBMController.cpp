@@ -121,7 +121,7 @@ Controller::~Controller() {
 void Controller::initCallback() {
     s32 type;
 
-    void (*prev)(void) = reinterpret_cast<void (*)(void)>(WPADIsUsedCallbackByKPAD());
+    void (*prev)(void) = WPADIsUsedCallbackByKPAD();
     WPADSetCallbackByKPAD(NULL);
 
     mOldConnectCallback =

@@ -101,9 +101,10 @@ extern "C" void __dl__FPv(void* p);
  * not match; see KB sibling attempts).
  */
 extern "C" void* __dt__16CMenuBattleChainFv(void* self, int flags) {
-    if (self == 0)
+    CMenuBattleChain* obj = static_cast<CMenuBattleChain*>(self);
+    if (obj == 0)
         goto end;
-    __dt__17UnkClass_8045F564Fv((u8*)self + 0x78, -1);
+    __dt__17UnkClass_8045F564Fv(&obj->mRegion, -1);
     if (self != 0) {
         if (self != 0) {
             __dt__8CProcessFv(self, 0);
@@ -571,14 +572,14 @@ bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
     return true;
 }
 
-extern "C" void func_802AB590(void* self) { *(u8*)((u8*)self + 4) = 1; }
+extern "C" void func_802AB590(CBattleChainMenuState* self) { self->mFlag4 = 1; }
 
 // Whether the chain menu is busy (pending flag or arts-select not ready).
 bool func_802AB59C(CBattleChainMenuState* self) {
     return self->mFlag4 != 0 || CMenuArtsSelect_isNotReady();
 }
 
-extern "C" void func_802AB5E4(void* self) { *(u8*)((u8*)self + 5) = 1; }
+extern "C" void func_802AB5E4(CBattleChainMenuState* self) { self->mFlag5 = 1; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Battle-chain pane colour records (zero-init .sbss; values filled at startup

@@ -11,13 +11,13 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16588 |
+| extern "C" (total lines) | 16590 |
 | extern "C" declarations (non-lbl_*, imports) | 7448 |
-| extern "C" definitions (forced names) | 4158 |
-| `self`/register-style params | 13471 |
-| `void*` (params + locals) | 7798 |
-| raw pointer offset arithmetic | 7532 |
-| deref-through-cast arithmetic | 2929 |
+| extern "C" definitions (forced names) | 4160 |
+| `self`/register-style params | 13474 |
+| `void*` (params + locals) | 7796 |
+| raw pointer offset arithmetic | 7529 |
+| deref-through-cast arithmetic | 2927 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -523,7 +523,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/code_80213488.cpp | 2 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 78 | 18 | 40 | 88 | 22 | 8 | 3 | 0 | 35 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 16 | 64 | 231 | 24 | 47 | 1 | 0 | 0 | 27 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuBattleChain.cpp | 6 | 7 | 22 | 11 | 4 | 2 | 3 | 1 | 3 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuBattleChain.cpp | 6 | 7 | 23 | 9 | 1 | 0 | 3 | 1 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 3 | 7 | 12 | 4 | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleEnd.cpp | 3 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -576,7 +576,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 20 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocMsg.cpp | 0 | 0 | 0 | 17 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocThread.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/ocUnit.cpp | 28 | 78 | 36 | 140 | 74 | 36 | 0 | 4 | 9 | 0 | 0 | 0 |
+| src/kyoshin/plugin/ocUnit.cpp | 28 | 80 | 38 | 140 | 74 | 36 | 0 | 4 | 9 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 25 | 1 | 5 | 38 | 14 | 6 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCfs.cpp | 79 | 1 | 2 | 26 | 25 | 14 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -5605,16 +5605,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuBattleChain.cpp": {
   "asm_code": 3,
   "asm_insn_shim": 0,
-  "deref_arith": 2,
   "extern_c_nonlbl_decl": 6,
   "extern_c_nonlbl_def": 7,
   "goto_count": 3,
   "init_side_effect": 0,
-  "ptr_arith": 4,
+  "ptr_arith": 1,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 22,
-  "void_ptr": 11
+  "self_params": 23,
+  "void_ptr": 9
  },
  "src/kyoshin/menu/CMenuBattleCommu.cpp": {
   "asm_insn_shim": 0,
@@ -6163,13 +6162,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 36,
   "extern_c_nonlbl_decl": 28,
-  "extern_c_nonlbl_def": 78,
+  "extern_c_nonlbl_def": 80,
   "goto_count": 9,
   "init_side_effect": 0,
   "ptr_arith": 74,
   "rn_params": 4,
   "schedule_pragma": 0,
-  "self_params": 36,
+  "self_params": 38,
   "void_ptr": 140
  },
  "src/kyoshin/plugin/pluginBtl.cpp": {

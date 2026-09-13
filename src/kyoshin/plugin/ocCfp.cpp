@@ -45,14 +45,14 @@ extern "C" int func_80045634(VMThread* self){
 
 extern "C" int func_80045694(VMThread* self){
     void* prop = vmOCPropertyGet(self);
-    u32 val = *(u32*)((char*)prop + 4);
+    u32 val = ((VMArg*)prop)->value.uintVal;
     loadControllerConfigA__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
 extern "C" int func_800456C4(VMThread* self){
     void* prop = vmOCPropertyGet(self);
-    u32 val = *(u32*)((char*)prop + 4);
+    u32 val = ((VMArg*)prop)->value.uintVal;
     loadControllerConfigB__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }

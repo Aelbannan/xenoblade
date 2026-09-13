@@ -6,7 +6,6 @@
 class CVirtualLightObj;  // base ctor lives in CVirtualLightObj.cpp
 
 extern "C" {
-    extern void __dl__FPv(void* ptr);
     extern void __ct__CVirtualLightObj(CVirtualLightObj* self);
     extern u32 lbl_eu_8056E878[];  // CVirtualLightAmb vtable
 }
@@ -14,7 +13,7 @@ extern "C" {
 extern "C" CVirtualLightAmb* __ct__CVirtualLightAmb(CVirtualLightAmb* self) {
     __ct__CVirtualLightObj(reinterpret_cast<CVirtualLightObj*>(self));
     // Manual vptr store (novtable); typed as u32* to match lbl_eu_8056E878[].
-    *reinterpret_cast<u32**>(self) = lbl_eu_8056E878;
+    *(u32**)self = lbl_eu_8056E878;
     self->mField2C = 1;
     return self;
 }

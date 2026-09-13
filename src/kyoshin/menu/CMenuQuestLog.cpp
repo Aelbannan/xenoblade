@@ -6,8 +6,12 @@
 // declaration aside for this TU only so the real definition below can use the
 // retail signature; other TUs are unaffected (they ignore the return value).
 #define func_8011C998 questlog_scaffold_void_func_8011C998
+// CQstLogList.hpp declares __ct__UnkClass_8011C974(void*, const u32*); rename
+// that aside so this TU can define the typed u32* dest form without overload clash.
+#define __ct__UnkClass_8011C974 questlog_void_ct_UnkClass_8011C974
 #include "kyoshin/menu/CMenuQuestLog.hpp"
 #undef func_8011C998
+#undef __ct__UnkClass_8011C974
 
 // Minimal CTaskGame view: the full kyoshin/CTaskGame.hpp pulls in
 // monolib/scn.hpp (and with it the inline-dtor IScnRender.hpp that makes
@@ -29,6 +33,7 @@ public:
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
+extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src);
 
 // CProcess primary vptr @ +0x10 (novtable base; same slot as other menus).
 struct CProcessPrimaryVptr {
@@ -113,7 +118,7 @@ void CMenuQuestLog::Init() {
 
     // --- CBgTex ---
     __ct__CBgTex((CBgTex*)tmp.bg, 0);
-    __ct__UnkClass_8011C974((void*)&mBgTex.mMemRegion, (const u32*)(tmp.bg + 0x4));
+    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mBgTex.mMemRegion), (const u32*)(tmp.bg + 0x4));
     mBgTex.mFileHandle = *(CFileHandle**)(tmp.bg + 0x14);
     mBgTex.mLayout = *(nw4r::lyt::Layout**)(tmp.bg + 0x18);
     mBgTex.mLayoutReady = *(bool*)(tmp.bg + 0x1c);
@@ -125,7 +130,7 @@ void CMenuQuestLog::Init() {
     // --- CTitleAHelp ---
     char* name = func_80136190(lbl_eu_804FE518, lbl_eu_804FE518 + 0xa, 1);
     __ct__CTitleAHelp((CTitleAHelp*)tmp.title, name, 0x3c);
-    __ct__UnkClass_8011C974((void*)&mTitleAHelp.unk4, (const u32*)(tmp.title + 0x4));
+    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mTitleAHelp.unk4), (const u32*)(tmp.title + 0x4));
     mTitleAHelp.mFileHandle = *(CFileHandle**)(tmp.title + 0x14);
     mTitleAHelp.mArcResourceAccessor =
         *(nw4r::lyt::ArcResourceAccessor**)(tmp.title + 0x18);
@@ -144,7 +149,7 @@ void CMenuQuestLog::Init() {
 
     // --- CQstLogList ---
     __ct__CQstLogList((CQstLogList*)tmp.list, (u16)field_2280);
-    __ct__UnkClass_8011C974((void*)&mQstLogList.mUnk04[0], (const u32*)(tmp.list + 0x4));
+    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mUnk04[0]), (const u32*)(tmp.list + 0x4));
     mQstLogList.mFileHandle = *(CFileHandle**)(tmp.list + 0x14);
     mQstLogList.mArcResAcc = *(nw4r::lyt::ArcResourceAccessor**)(tmp.list + 0x18);
     mQstLogList.mpLayout = *(nw4r::lyt::Layout**)(tmp.list + 0x1c);
@@ -162,7 +167,7 @@ void CMenuQuestLog::Init() {
         dstCur->field_15 = srcCur->field_15;
     }
     func_8011C998(&mQstLogList.mScrollBar, (CScrollBarData*)(tmp.list + 0x40));
-    __ct__UnkClass_8011C974((void*)&mQstLogList.mSortMenuData.mUnk04[0], (const u32*)(tmp.list + 0x84));
+    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogList.mSortMenuData.mUnk04[0]), (const u32*)(tmp.list + 0x84));
     mQstLogList.mSortMenuData.mFileHandle = *(u32*)(tmp.list + 0x94);
     mQstLogList.mSortMenuData.mArcResAcc = *(u32*)(tmp.list + 0x98);
     mQstLogList.mSortMenuData.mpLayout = *(u32*)(tmp.list + 0x9c);
@@ -223,7 +228,7 @@ void CMenuQuestLog::Init() {
 
     // --- CQstLogInfo ---
     __ct__CQstLogInfo((CQstLogInfo*)tmp.info);
-    __ct__UnkClass_8011C974((void*)&mQstLogInfo.mMemRegion, (const u32*)(tmp.info + 0x4));
+    __ct__UnkClass_8011C974(reinterpret_cast<u32*>(&mQstLogInfo.mMemRegion), (const u32*)(tmp.info + 0x4));
     mQstLogInfo.mFileHandle = *(CFileHandle**)(tmp.info + 0x14);
     mQstLogInfo.field_0x18 = *(CFileHandle**)(tmp.info + 0x18);
     mQstLogInfo.field_0x1C = *(u32*)(tmp.info + 0x1c);
@@ -247,13 +252,11 @@ void CMenuQuestLog::Init() {
 }
 
 // retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
-// dest stays void* to match shared header decls; type immediately as u32*.
-extern "C" void __ct__UnkClass_8011C974(void* dest, const u32* src) {
-    u32* dst = static_cast<u32*>(dest);
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+extern "C" void __ct__UnkClass_8011C974(u32* dest, const u32* src) {
+    dest[0] = src[0];
+    dest[1] = src[1];
+    dest[2] = src[2];
+    dest[3] = src[3];
 }
 
 // CScrollBar copy helper (inlined copy constructor): constructs the
@@ -621,7 +624,7 @@ extern "C" void func_8011D2F0(IScnRender* self) {
 }
 
 // __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.
-extern "C" void* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
+extern "C" CMenuQuestLog* __dt__8011D2F8(CMenuQuestLog* self, int mode) {
     if (self != 0 && mode > 0) {
         __dl__FPv(self);
     }

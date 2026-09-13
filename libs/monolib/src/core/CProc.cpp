@@ -39,8 +39,8 @@ extern const char lbl_eu_805224E0[];
 // reslist<Ul> base-subobject RTTI list (.data, 0xC): [RTTI(_reslist_base<Ul>), 0, 0].
 extern u32 lbl_eu_8056B28C[3];
 // RTTI locators (.sdata, 8 bytes): { name, base-list }.
-extern void* lbl_eu_80663538[2];
-extern void* lbl_eu_80663540[2];
+extern const void* lbl_eu_80663538[2];
+extern const void* lbl_eu_80663540[2];
 
 // CProc vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate/wkRender/
 // wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout (CProc), wkStandbyExceptionRetry].
@@ -69,8 +69,8 @@ u32 lbl_eu_8056B1E0[0xA0 / 4] = {
 
 u32 lbl_eu_8056B28C[3] = { (u32)&lbl_eu_80663540, 0, 0 };
 
-void* lbl_eu_80663538[2] = { (void*)lbl_eu_805224C8, (void*)lbl_eu_8056B28C };
-void* lbl_eu_80663540[2] = { (void*)lbl_eu_805224E0, 0 };
+const void* lbl_eu_80663538[2] = { lbl_eu_805224C8, lbl_eu_8056B28C };
+const void* lbl_eu_80663540[2] = { lbl_eu_805224E0, 0 };
 
 const char lbl_eu_805224C8[24] = {0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00};
 const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00,0x00,0x00};
@@ -80,9 +80,14 @@ const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0
 // a named const definition would land in .sdata2 (7 bytes <= small-data limit)
 // instead of .rodata, so the pool entry is left as the definition.
 
+// Typed primary-vptr slot (CWorkThread at +0x0).
+struct CProcVptrView {
+    u32* vtPrimary; //0x0
+};
+
 // Installs the manual (novtable) CProc vtable pointer.
 static inline void CProcInitVptr(CProc* obj){
-    *(void**)obj = (void*)&lbl_eu_8056B1E0;
+    ((CProcVptrView*)obj)->vtPrimary = lbl_eu_8056B1E0;
 }
 
 CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
@@ -99,7 +104,7 @@ unk1E4((CProcInitVptr(this), (u32)mtl::INVALID_HANDLE)){
 CProc::~CProc(){
     // Retail re-tags the object with the CProc vtable before destroying the
     // member list (destructor path), then keeps a stubbed-out bare traversal.
-    *(void**)this = (void*)&lbl_eu_8056B1E0;
+    ((CProcVptrView*)this)->vtPrimary = lbl_eu_8056B1E0;
     //Empty loop. Maybe had stubbed code?
     for(reslist<WORK_ID>::iterator it = mViewIDList.begin(); it != mViewIDList.end(); it++){
     }

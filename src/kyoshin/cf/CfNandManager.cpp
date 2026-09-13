@@ -720,34 +720,35 @@ inline static void restoreNameTable(CfNandSaveNameTable* names) {
 
 // Apply a NAND save image back into live game state (load/teardown path).
 extern "C" int func_8023D3D8(CfNandSaveImage* img) {
+    CfNandSaveImage* image = img;
     int ok = 1;
     u8* live;
     CfNandWorkEntrySrc* src;
     CfNandWorkEntryDst* dst;
     CfNandSaveNameEntry nameScratch;
     nameScratch.f04 = 0;
-    u32 ver = img->version - 0x70001;
+    u32 ver = image->version - 0x70001;
     if (ver <= 1) {
-        int valid = func_8023CD9C(img);
+        int valid = func_8023CD9C(image);
         if (valid == 0) {
             return 0;
         }
         u32 flagLen = func_8009CF84();
-        memcpy(func_8009CF0C(), img->flagData, flagLen);
-        lbl_eu_80664774 = img->slot[0x66];
+        memcpy(func_8009CF0C(), image->flagData, flagLen);
+        lbl_eu_80664774 = image->slot[0x66];
         live = func_8009D5FC();
-        memcpy(live, img->workHead, 0x41F0);
+        memcpy(live, image->workHead, 0x41F0);
         src = (CfNandWorkEntrySrc*)(live + 0x7FC4);
-        dst = &img->workEntry[1];
+        dst = &image->workEntry[1];
         for (u32 i = 1; i < 14; i++) {
             expandWorkEntry(src, dst);
             func_8009EF9C(src, 0);
             src++;
             dst++;
         }
-        u8* q = img->workHead + 0x44B1;
+        u8* q = image->workHead + 0x44B1;
         if (((u32)q & 1) != 0) {
-            q = img->workHead + 0x44B2;
+            q = image->workHead + 0x44B2;
         }
         u16* ev = (u16*)q;
         int n = 0;
@@ -758,24 +759,24 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
             n++;
             evCur = ev[0];
         }
-        func_8006A814(&img->progress.field00);
-        func_8006A028(img->progress.f04);
-        lbl_eu_80661AF4 = img->progress.f08;
-        lbl_eu_80661AF6 = img->progress.f0A;
+        func_8006A814(&image->progress.field00);
+        func_8006A028(image->progress.f04);
+        lbl_eu_80661AF4 = image->progress.f08;
+        lbl_eu_80661AF6 = image->progress.f0A;
         CfNandPartySnapshot* snapDst = (CfNandPartySnapshot*)lbl_eu_80576CC0;
-        *snapDst = img->snapshot;
-        memcpy(lbl_eu_806641B8, img->itemBlob, 0x12120);
-        func_8006CBEC(&img->camBlock, img->camBlock.f0C);
-        func_8016E100(&img->wthrBlock);
+        *snapDst = image->snapshot;
+        memcpy(lbl_eu_806641B8, image->itemBlob, 0x12120);
+        func_8006CBEC(&image->camBlock, image->camBlock.f0C);
+        func_8016E100(&image->wthrBlock);
         fadeOutGameEffects__Q22cf13CfGameManagerFv();
-        func_80207D2C(img->mineRegion);
-        restoreNameTable(&img->names);
+        func_80207D2C(image->mineRegion);
+        restoreNameTable(&image->names);
         if (valid != 0) {
-            updateConfig__FPUc(img->optdBlob, 1);
+            updateConfig__FPUc(image->optdBlob, 1);
         }
         u32 cnt = func_8009CF8C(0x3F);
         if ((cnt & 0xFFFF) == 0) {
-            cnt = img->wthrBlock.f0E;
+            cnt = image->wthrBlock.f0E;
         }
         if ((cnt & 0xFFFF) != 0) {
             setEventCounterA__Q22cf13CfGameManagerFv(cnt);
@@ -783,7 +784,7 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         return ok;
     }
 
-    CfNandSaveImageV1* v1 = (CfNandSaveImageV1*)img;
+    CfNandSaveImageV1* v1 = (CfNandSaveImageV1*)image;
     if ((mtl::MemManager::calculateCrc(v1->flagData, func_8009CF84()) & 0xFFFF) != v1->flagTag.crc) {
         ok = 0;
     }

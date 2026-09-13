@@ -238,8 +238,8 @@ ret_end:
 }
 
 extern "C" bool func_8004B4A4(CActParamAnim* self, f32 value) {
-    CActParamAnimOwnerIf* owner =
-        *reinterpret_cast<CActParamAnimOwnerIf**>(reinterpret_cast<u8*>(self) + 8);
+    CActParamAnimOwner* owner =
+        *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
     if (owner != NULL && owner->v3() == 0) {
         return true;
     }
@@ -258,7 +258,7 @@ bool CActParamAnim_isEnabled() { return true; }
 
 bool func_8004B52C(CActParamAnim* self, f32 value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     if (owner == 0 || owner->v3() != 0) {
         if ((view->field0C & 0x20) == 0) {
             view->field440 = value;
@@ -843,7 +843,7 @@ void func_8004C608(CActParamAnim* self) {
     view->field3CC = ml::CVec3::zero.x;
     nw4r::math::VEC3 res;
     res.x = ml::CVec3::zero.x;
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     bool noOwner = owner == NULL;
     view->field3D0 = ml::CVec3::zero.y;
     res.y = ml::CVec3::zero.y;
@@ -1026,7 +1026,7 @@ void func_8004CC8C(CActParamAnim* self) {
             view->field454 = lbl_eu_80665EA0;
         }
     }
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     int t;
     if (owner == 0) {
         t = 1;
@@ -1199,7 +1199,7 @@ int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
 // (+0x430 * owner +0x14) is still below lbl_eu_80665ECC.
 int func_8004D2F8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
 
@@ -1275,7 +1275,7 @@ int func_8004D2F8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 //   MWCC float-compare canonicalization + scheduler tie-break walls.
 int func_8004D4AC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
 
@@ -1332,7 +1332,7 @@ int func_8004D4AC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
     int ok;
@@ -1392,7 +1392,7 @@ int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
     if (owner == 0) return 0;
@@ -1461,7 +1461,7 @@ int func_8004D950__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
     u32 localBig;
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     if (owner == 0) return 0;
     if ((owner->field04 & 2) != 0) {
         view->field4C8 = owner->field24;
@@ -1589,7 +1589,7 @@ void CActParamAnim::func_8004DAE0() {}
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
         ok = 0;
@@ -1653,7 +1653,7 @@ int func_8004DDD0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // func_8004DDD0 with the owner flag mask 0x800.
 int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
         ok = 0;
@@ -1718,7 +1718,7 @@ int func_8004DF9C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // func_8004DDD0 with the owner flag mask 0x400.
 int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
         ok = 0;
@@ -1783,7 +1783,7 @@ int func_8004E168__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // func_8004DDD0 with the owner flag mask 0x1000.
 int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     int ok;
     if (owner == 0) {
         ok = 0;
@@ -1858,7 +1858,7 @@ int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // the field4BD load / flags clear (identical 35/28).
 int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
     int ok;
@@ -1918,7 +1918,7 @@ int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // free function, same scheme as initAnimBlendVectors__13CActParamAnimFv.
 int func_8004E694__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
     int ok;
@@ -1976,7 +1976,7 @@ int func_8004E694__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // remaining time above +0x434.
 int func_8004E828__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner = view->owner08;
+    CActParamAnimOwner* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
 
@@ -2598,7 +2598,7 @@ void func_8004FFBC__13CActParamAnimFv(CActParamAnim* self) {
     if ((sview->field0C & 0x400000) != 0) {
         if (func_80053490(self,
                           reinterpret_cast<ml::CVec3*>(&view->field3D8)) != 0) {
-            CActParamAnimOwnerIf* owner = sview->owner08;
+            CActParamAnimOwner* owner = sview->owner08;
             int r0;
             if (owner == 0) {
                 r0 = 0;
@@ -2651,7 +2651,7 @@ void func_8004FFBC__13CActParamAnimFv(CActParamAnim* self) {
 
     if (view->field45C < lbl_eu_80665EF0) {
         if ((sview->field0C & 0x2) != 0) {
-            CActParamAnimOwnerIf* owner = sview->owner08;
+            CActParamAnimOwner* owner = sview->owner08;
             int r0;
             if (owner == 0) {
                 r0 = 0;
@@ -3411,8 +3411,8 @@ void CActParamAnim::setActiveFlag(s32 param) {
 
 extern "C" int func_80051AD0(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    CActParamAnimOwnerIf* owner =
-        *reinterpret_cast<CActParamAnimOwnerIf**>(reinterpret_cast<u8*>(self) + 8);
+    CActParamAnimOwner* owner =
+        *reinterpret_cast<CActParamAnimOwner**>(reinterpret_cast<u8*>(self) + 8);
     if (owner == NULL) return 0;
     f32 animSpeed = view->field394;
     if (lbl_eu_80665EA0 == animSpeed) return 0;

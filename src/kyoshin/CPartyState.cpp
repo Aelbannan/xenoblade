@@ -317,9 +317,8 @@ extern "C" void func_801FD220(CPartyState* self) {
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
 extern "C" __declspec(noinline) void func_801FE0C8(CPartyState* self) {
     int* party = func_8009ECB0();
-    // Force the u8 truncation at assignment time (retail masks right after
-    // the call instead of deferring it to the argument setup).
-    u8 slotA = func_801392B4((u8)self->field_0x4D) & 0xFF;
+    // (u8) result cast instead of `& 0xFF` — same mask, different VR birth.
+    u8 slotA = (u8)func_801392B4((u8)self->field_0x4D);
     func_8009E168(party, slotA, func_801392B4(self->field_0x4C));
     func_80139198(0);
     func_80080888__Q22cf13CfGameManagerFv(func_801392B4(0), 0);

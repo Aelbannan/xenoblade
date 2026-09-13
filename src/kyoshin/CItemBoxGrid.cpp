@@ -3993,9 +3993,10 @@ void func_801CCAF0(void* self) {
                 if (v1 > v2) return;
                 u16 nVal = func_80136254((void*)lbl_eu_80664098, (const char*)&lbl_eu_8050566C[0x319], *(u16*)(p + 0x52a));
                 u32 test = func_801C618C(sub, nVal, 0, 0);
+                s8 leftover = (s8)count;
                 s32 neg = -((s32)(v2 - v1) < (s32)test);
                 p[0x52d] = (u8)neg;
-                func_801D11B8(p, item, (s8)count - 1);
+                func_801D11B8(p, item, leftover - 1);
                 p[0x52c] = 1;
                 func_801393CC(*(u16*)(p + 0x52e));
                 func_801392E4(*(u16*)(p + 0x52e));

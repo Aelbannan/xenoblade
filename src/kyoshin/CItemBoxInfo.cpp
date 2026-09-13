@@ -143,6 +143,7 @@ __declspec(section ".sdata2") __attribute__((aligned(8))) __attribute__((used)) 
 #define lbl_eu_80668040 sdata2_ItemBox.f8040
 #define lbl_eu_80668044 sdata2_ItemBox.f8044
 #define lbl_eu_80668048 sdata2_ItemBox.f8048
+#define lbl_eu_80668048 sdata2_ItemBox.f8048
 
 // .sbss 0xC0: palette globals in retail order (NOBITS: size+align gated).
 // 4-byte entries are u32, 8-byte entries E43Quad; first carries aligned(8)
@@ -1749,11 +1750,13 @@ void func_801D8058(CItemBoxInfo* info, u32 arg2) {
     // A struct `vals = out` lowers to `__as__` (0x84). Retail reloads all
     // four words then stores them (0x94); first label call uses live w1,
     // second reloads staged vals[3].
-    CItemBoxLabelArgs vals;
+    // volatile: size-opt DSE was dropping unused vals[0]/[2] (0x94→0x7c).
+    volatile CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
     func_801D59C0(out.v, info, (void*)arg2);
-    u32 w0 = out.v[0];
+    // Load w1 first so the copy interleaves like retail (lwz r5,12(sp) then w0).
     u32 w1 = out.v[1];
+    u32 w0 = out.v[0];
     u32 w2 = out.v[2];
     u32 w3 = out.v[3];
     vals.v[0] = w0;
@@ -2297,8 +2300,9 @@ extern "C" u32 func_801DF988(void*, void*, u32, void*, s32);
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
-    // Packed selection: retail emits slot early (rlwinm. → CR0), then
-    // member/type. Colours: slot=r26, member=r18, type=r27.
+    // Packed selection: retail emits slot (rlwinm.→r26/CR0), then member
+    // (r18), then type (r27). Declaring member before type matches that
+    // emission order; type stays longest-lived for r27.
     u8 memberRaw = (u8)((arg2 >> 8) & 0xFF);
     u8 type = (u8)((arg2 >> 4) & 0xF);
     u8 slot = (u8)(arg2 & 0xF);
@@ -2310,18 +2314,23 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // FrameBlock: records[52] then party @+208. Copy-init temp inlines li r0,6;
-    // member-assign may outline __as__ under -O4,s (best exact ~8.1%).
+    // FrameBlock: records[52] then party @+208. Explicit dual-word loop inlines
+    // li r0,6. Open: party @sp+2544 vs retail sp+2352; highTail[192] grew frame.
     D8EFrameBlock frameBlock;
     frameBlock.records[0] = 0;
+    // Explicit dual-word loop inlines li r0,6 (member assign outlines __as__).
     {
-        D8EPartyData partyTmp =
-            *(D8EPartyData*)((u8*)func_8009ECB0() + 4);
-        frameBlock.party = partyTmp;
+        u32* src = (u32*)((u8*)func_8009ECB0() + 4);
+        u32* dst = frameBlock.party.w;
+        u32 n = 6;
+        do {
+            u32 a = *src++;
+            u32 b = *src++;
+            *dst++ = a;
+            *dst++ = b;
+        } while (--n);
     }
     for (u32 row = 0; row < 2; row++) {
-        // u8 col: clrlwi truncation blocks pointer strength-reduction while
-        // keeping rlwinm MB/ME at retail 22,29 (u16 widened the mask).
         for (u8 col = 0; col < 3; col++) {
             u8 id = (u8)frameBlock.party.w[col];
             if (id != 0) {
@@ -2332,7 +2341,6 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             }
         }
     }
-    u32* records = frameBlock.records;
 
     // ---- character setup ----
     // Two (u8) casts from the raw return → retail's paired rlwinm (save + arg).
@@ -2346,7 +2354,6 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // POD stand-in for ml::FixStr<32>: cast at format() sites so no FixStr
     // reference web occupies a callee-saved across the prologue/party ping.
-    // Two buffers: retail keeps distinct FixStr temps that don't fully overlay.
     struct FixStrPod {
         char mString[0x20];
         u32 mLength;
@@ -2392,8 +2399,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // ---- stat bars (display formula) ----
     s32 effect = func_801DF610(info, (void*)(u32)member, 0x21, NULL);
-    // Expanded inline: optimize_for_size out-lines the helper, but retail
-    // has no separate calls here (formula folded into each bar's sequence).
+    // volatile keeps early bars in distinct slots (non-volatile CSE'd ~0x10C
+    // of body away under optimize_for_size).
     volatile s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
     effect = func_801DF610(info, (void*)(u32)member, 0x1, NULL);
     volatile s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
@@ -2621,9 +2628,11 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
         D8EComparisonStorage& comparisonStorage =
-            *reinterpret_cast<D8EComparisonStorage*>(records);
+            *reinterpret_cast<D8EComparisonStorage*>(frameBlock.records);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
+            // records[] overlays armor; member assign → li r0,6 + trailing word.
+            // Open: retail e_cur@1916 / c_cur@2296 (380B apart), not adjacent.
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EEntry& e_cur = comparisonStorage.weapon[0];
             func_801D4E2C(&e_cur, (void*)(u32)member, (void*)(u32)w0);
@@ -6013,11 +6022,11 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
 void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
     func_801E4090(info);
     func_801E3B9C(info);
-    CItemBoxLabelArgs vals;
+    volatile CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
     func_801E2558(out.v, info, (void*)arg2);
-    u32 w0 = out.v[0];
     u32 w1 = out.v[1];
+    u32 w0 = out.v[0];
     u32 w2 = out.v[2];
     u32 w3 = out.v[3];
     vals.v[0] = w0;

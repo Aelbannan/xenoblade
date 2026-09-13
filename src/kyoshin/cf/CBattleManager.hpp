@@ -38,13 +38,6 @@ namespace cf{
 
     // 8 bytes: 4-byte key + 1-byte count + 3 padding
     struct CBattleManager_Struct1 {
-        CBattleManager_Struct1() {
-            // 8-byte zero fill: retail emits the rule-array member
-            // construction (inside CBattleManager's ctor) as a per-element
-            // memset(this, 0, 8) loop.
-            std::memset(this, 0, sizeof(*this));
-        }
-
         s32 key;    // +0x00
         u8 count;   // +0x04
         u8 pad[3];  // +0x05..0x07
@@ -52,6 +45,15 @@ namespace cf{
 
     struct CBattleManager_Struct2 {
         CBattleManager_Struct2(){
+            // POD walk: declare end first (Rule A → r31) but assign start
+            // first so the addi order matches the implicit array ctor.
+            CBattleManager_Struct1* end;
+            CBattleManager_Struct1* start = unk0;
+            end = unk0 + 32;
+            do {
+                std::memset(start, 0, sizeof(*start));
+                start++;
+            } while (start < end);
             clear();
         }
 

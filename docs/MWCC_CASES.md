@@ -19,6 +19,13 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 
 > Note: records below predate the template — they're being migrated to it over time.
 
+## CBattleState_enterStatusEntry — fmul 1.5 commute → `unk20 *= lbl_eu_80667408` (Wii/1.1 -O4,p, CODE_MATCH 98.9%)
+- Symptom:   size-exact 0x13DC, 0 structural; `FC000072` (`fmul f0,f0,f1`) vs retail `FC010032` (`fmul f0,f1,f0`); loads already `lfs f1` + `lfd f0` + `frsp`
+- Cause:     `arg->unk20 = (f32)(gauge * lbl_eu_80667408)` commutes so dest==FRA (the 1.5)
+- Fix:       `arg->unk20 *= lbl_eu_80667408` (mirrors the already-matching `*= 0.5f` `fmuls`)
+- Result:    fmul bytes match; witness then fails `abi-boundary` (`r3→r4` on tree-2 `lhz` after `li r3,1`)
+- Evidence:  us-80146dac / src/kyoshin/cf/object/CBattleState.cpp
+
 ---
 
 ## OnFileEvent__14CMCCrystalListFP10CEventFile / CMCCrystalList — file-2 r28 vs r29 → hoist fileData (Wii/1.1 -O4,s)
@@ -8189,11 +8196,11 @@ never use the inline-empty form (weak-copy budget spread).
 
 
 ## func_801D8E34 — string-pool UNDEF + FrameBlock party layout (US, Wii/1.1 -O4,p + optimize_for_size)
-- Symptom:   pane string immediates off by +0x54; party copy at sp+2140 vs retail sp+2348; ~8% exact / ~79% fuzzy
-- Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54 in packed tail, so `&blob[imm]` emits parent+0x54+imm. (2) Retail party sits at +208 into a 256B frame object; `block.party = *src` inlines `li r0,6` in small scratch TUs but under this function's `#pragma optimize_for_size` MWCC emits out-of-line `__as__12D8EPartyData`.
-- Fix:       (1) `extern "C" char lbl_eu_805063BC[];` (UNDEF) while keeping blob bytes in the packed struct. (2) Open: recover inlined member copy into `D8EFrameBlock{u32 records[52]; D8EPartyData party;}` at sp+2140 (always_inline helper still outlines into this size-optimized body).
-- Result:    ~8.1% exact / HIGH_MATCH ~79.4% fuzzy near-miss; string immediates match (reg colour only)
-- Confidence: repo_proven (string UNDEF); hypothesis (FrameBlock+inline under optimize_for_size)
+- Symptom:   pane string immediates off by +0x54; party copy at sp+2544 vs retail sp+2348/2352; ~8.5% exact / ~79.6% fuzzy; frame 2800 matches
+- Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54 in packed tail, so `&blob[imm]` emits parent+0x54+imm. (2) Largest-first stack alloc places 256B `D8EFrameBlock` against the 0x4330 temps → party@+208 = sp+2544 (retail wants sp+2352, i.e. 192B of live locals between party and 4330). (3) `block.party = *src` outlines `__as__` under `#pragma optimize_for_size`; explicit dual-word loop inlines `li r0,6` but not retail's mtctr/lwzu/stwu dest-4 shape. (4) Early bar `volatile` is load-bearing: non-volatile CSE drops ~0x10C of body. (5) `0.01f`/`100.0f` literals omit retail `lbl_eu_80668040/44` SDA loads; member macros emit `@offset` relocs and regress exact to ~3.5%; UNDEF SDA symbols get the names but shift schedule (~8.3%).
+- Fix:       (1) `extern "C" char lbl_eu_805063BC[];` (UNDEF) — repo_proven. (2) Prologue decl `memberRaw → type → slot` → retail colours r18/r27/r26 and emission order. (3) `D8EFrameBlock` + `records[0]=0` + explicit 6× dual-word party loop. (4) Keep volatile on early bars. Open: 192B above party inside frame 2800; retail lwzu party into +208; UNDEF SDA 68040/44 with matching fsub/lfs schedule; weapon `e_cur`@1916 / `c_cur`@2296 (380B apart — array slots are adjacent).
+- Result:    ~8.5% exact / HIGH_MATCH ~79.6% fuzzy near-miss; frame 2800; prologue bitfield match
+- Confidence: repo_proven (string UNDEF, prologue colours, volatile bars); hypothesis (FrameBlock+192B band)
 
 ## kyoshin CItemBoxInfo — func_801E43BC / func_801D8E34 sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
 
@@ -10905,6 +10912,13 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    40.0% / 0x12c8 / witness still `lbz` vs `lfs`. Next: register-only `addi` successor (no mem-dep into `stfs`), or a live-in/color change that makes the first pick `lbz`
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
+## func_80277B38 / kyoshin/cf/chain/CChain — s8 second vreg flips PickCandidate to lbz; leftover extsb (Wii/1.1 -O4)
+- Symptom:   `u8 raw; s8 state = (s8)raw; next = state+1` emits retail prefix `lbz; li 1; lfs; li 60` then `extsb` where retail has `addi r0,r3,1`. Witness would die at addi vs extsb, not lbz vs lfs
+- Cause:     extra `extsb` raises the `lbz` chain height so PickCandidate prefers it over SDA21 `lfs`. The extra node occupies the `lfs` delay slot (`+0x05a8`). `int state = raw` coalesces (back to `lfs` first). Identity `DECOMP_PPC_RLWINM` on `next` coalesces. `(state, next)` comma and late `raw-raw` fold. `idx -= 1` wrap buy + s8 is size-exact 0x12c8 but 29.0% / 756 structural
+- Fix:       none kept — restored mixed wrap + simple `u8 next = state+1` then timer (40.0%)
+- Result:    checkpoint 40.0% / 0x12c8 / slot 358 still `lbz` vs `lfs`. Next: a second vreg that does not emit `extsb`/`mr` in the delay slot (non-destructive `addi r0,r3,1` only), or sink the extra node after `stfs` while keeping height
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
 ## func_8023D3D8 / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
 - Symptom:   hexdiff 9.5% (684 structural / 269 reg_swap); 0x1074 vs retail 0x1070; 0x60
   savegpr frame matches but no `mr r31,r1`; img in r25 not r30; pair trips hoisted to
@@ -10921,6 +10935,20 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   name restore uses a local `cur` with `pCur = &cur` (not a caller-passed scratch)
 - Result:    9.5% near-miss; second pair base matches. Next: 0x60-sized exception/FP frame
   (no extra try slot); then img r30 / ok r26 and `li r0,24/18` in the entry body
+- Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
+
+## func_8023D3D8 / kyoshin/cf/CfNandManager — FP without extra slot still open (Wii/1.1 -O4,p, 9.5%)
+- Symptom:   still 9.5% / 0x1074; retail `or r31,sp` then img r30 / ok r26; decomp has no FP
+  so 24/18 hoist to r31/r30. Game TU already has `-Cpp_exceptions on` (cflags_game)
+- Cause:     any extra unwind object or escaped scratch pointer adds a 0x10–0x20 slot
+  (try 0x70–0x90; NameEntry dtor 0x80; wrapper dtor 0x1084/2.0%; live `&nameScratch`
+  across restore 0x80/2.0%). `__alloca` of a non-const size collapses to a 0x30
+  frame and 0x112c (2.8%). `if (pair48)` around Arr48 kills pair-copy (1.2%/0x30)
+- Fix:       none kept — restore 9.5% shape (`image=img` alias is color-neutral).
+  `stw r1,0x34(r31)` in the name copy is a pointer-to-frame store, not `li 0; stw`
+- Result:    9.5% / 0x1074 checkpoint. Next: one stack object whose address IS r1
+  (local at offset 0, or a 0x60-neutral FP) without alloca/try/dtor growth; then
+  recolor img/ok and in-body `li r0,24/18`
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
 ## CSuddenCommu func_801BA1DC — volatile last store hoists LR restore (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
@@ -11000,11 +11028,11 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    CODE_MATCH 99.92%; split PASS
 - Evidence:  us-80164e38 / src/kyoshin/CCol6System.cpp
 
-## func_80263A34 — timer fadds dest coalesce vs operand order (US, Wii/1.1 -O4,p, OPEN 99.5%)
-- Symptom:   Was 96.9% 6 FPR swaps. `f32 cap,step,cur` + assign field/step/cap + `step += cur` is 99.5% 1 swap: retail `fadds f1,f2,f1` vs decomp `fadds f1,f1,f2`. Colors now match.
-- Cause:     `step = cur + step` restores operand order but reverts to 96.9% (step/cap recolor). Named addend copy also 96.9%. `cap = lbl` first is 96.4%.
-- Fix:       Keep `step += cur` (best live). Next: commute addends without breaking f1 dest / f2 field / f0 cap.
-- Result:    99.5% near-miss (1 fadds operand-order swap). Size OVER(156).
+## func_80263A34 — timer fadds dest coalesce vs operand order → named sum + live cap (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   `step += cur` was 99.5% 1 swap: retail `fadds f1,f2,f1` vs decomp `fadds f1,f1,f2`. `cur + step` as `next` with `cur,step,cap` decl was 96.9% (recolor).
+- Cause:     FPR scratch is low→high. Decl `cap,step,cur` pins f0/f1/f2. `step += cur` keeps dest==FRA (f1) so MWCC will not emit FRA=f2. A new `sum` with cap still live occupies f0, so dest reuses step (f1) while source order `cur+step` is FRA=f2 FRB=f1.
+- Fix:       `f32 cap,step,cur;` assign field/step/cap; `f32 sum = cur + step; self->field_2B0 = sum; if (sum > cap)`.
+- Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(156).
 - Evidence:  us-80265ea4 / src/kyoshin/menu/CMenuPassiveSkill.cpp
 
 ## func_801C03C8 — named z/y/x temps pin lfs order vs x/y/z stores (US, Wii/1.1 -O4,p, FULL_MATCH)
@@ -11027,3 +11055,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       `extern "C" f32 func_80496288(void);` then `f32 step = func_80496288();`
 - Result:    FULL_MATCH (0x138/0x138)
 - Evidence:  us-80196868 / src/kyoshin/cf/CPartsChange.cpp
+
+## func_801BC474 / CSuddenCommu — compound |= hoists LR restore → split load/or/stw (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Live 95.8% 0 structural 3 reg_swap: epilogue `lwz r0,LR; lwz r31; lwz r30` vs retail `r31, r30, r0`. Same save slots. Size 0x11c/0x11c PASS.
+- Cause:     `self->field_24 |= 0x2` is a RMW; MWCC schedules the LR restore first. The TU ctor already documented the inverse: a volatile last store hoists LR above CSRs; a plain `*(u32*)` store keeps LR last.
+- Fix:       `u32 flags = self->field_24; flags |= 0x2; *(u32*)&self->field_24 = flags;`
+- Result:    FULL_MATCH (cycle `equivalence: full_match`)
+- Evidence:  us-801bdd6c / src/kyoshin/cf/CSuddenCommu.cpp

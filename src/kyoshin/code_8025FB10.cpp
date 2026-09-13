@@ -1696,26 +1696,21 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
     {
-        // Nest m80 like COMPACT to rotate valid/addr from (r5,r6) → (r6,r5).
+        // Flat OR + Color(valid,…) → valid=r6. Named addr only (masks remat)
+        // to seek addr=r5 without early m80/m90 hoist breaking the Color share.
         bool valid = false;
         nw4r::ut::Color color(valid, valid, valid, 255);
         nw4r::ut::Color* colorKeep = &color;
-        if (writerRegion != 0x80000000) {
-            u32 addr = (u32)&writer;
-            u32 m80 = addr & 0xFF800000;
-            if (m80 != 0x81000000) {
-                u32 m90 = addr & 0xF8000000;
-                if (!(m90 == 0x90000000 ||
-                      writerRegion == 0xC0000000 ||
-                      m80 == 0xC1000000 ||
-                      m90 == 0xD0000000 ||
-                      (addr & 0xFFFFC000) == 0xE0000000)) {
-                    goto color_black_check;
-                }
-            }
+        u32 addr = (u32)&writer;
+        if (writerRegion == 0x80000000 ||
+            (addr & 0xFF800000) == 0x81000000 ||
+            (addr & 0xF8000000) == 0x90000000 ||
+            writerRegion == 0xC0000000 ||
+            (addr & 0xFF800000) == 0xC1000000 ||
+            (addr & 0xF8000000) == 0xD0000000 ||
+            (addr & 0xFFFFC000) == 0xE0000000) {
+            valid = true;
         }
-        valid = true;
-    color_black_check:
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);
@@ -1747,22 +1742,16 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         bool valid = false;
         nw4r::ut::Color color(255, 255, 255, 255);
         nw4r::ut::Color* colorKeep = &color;
-        if (writerRegion != 0x80000000) {
-            u32 addr = (u32)&writer;
-            u32 m80 = addr & 0xFF800000;
-            if (m80 != 0x81000000) {
-                u32 m90 = addr & 0xF8000000;
-                if (!(m90 == 0x90000000 ||
-                      writerRegion == 0xC0000000 ||
-                      m80 == 0xC1000000 ||
-                      m90 == 0xD0000000 ||
-                      (addr & 0xFFFFC000) == 0xE0000000)) {
-                    goto color_white_check;
-                }
-            }
+        u32 addr = (u32)&writer;
+        if (writerRegion == 0x80000000 ||
+            (addr & 0xFF800000) == 0x81000000 ||
+            (addr & 0xF8000000) == 0x90000000 ||
+            writerRegion == 0xC0000000 ||
+            (addr & 0xFF800000) == 0xC1000000 ||
+            (addr & 0xF8000000) == 0xD0000000 ||
+            (addr & 0xFFFFC000) == 0xE0000000) {
+            valid = true;
         }
-        valid = true;
-    color_white_check:
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);

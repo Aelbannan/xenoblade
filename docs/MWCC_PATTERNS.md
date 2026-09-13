@@ -4023,6 +4023,14 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Confidence: repo_proven
 - Applies to/a.k.a.: commutative fadds/fmuls last-1% operand-order swaps; MWCC_CASES func_80263A34; pairs with monolib const-first fadds notes
 
+## Compound `|=` on a tail store can hoist LR restore above CSRs (func_801BC474, Wii/1.1 -O4,p)
+- Symptom:   Pure epilogue `lwz` order swap: decomp `lwz r0,LR` then r31/r30; retail restores CSRs first, LR last. Body is otherwise identical.
+- Cause:     `field |= bit` is a read-modify-write. MWCC treats the RMW as extending the last-use of LR setup so `lwz r0,xx(sp)` is scheduled first.
+- Fix:       Split to `u32 t = field; t |= bit; *(u32*)&field = t;` (plain stw). Same TU already used this for ctor/reset epilogues (volatile last store does the opposite — hoists LR earlier).
+- Result:    FULL_MATCH on us-801bdd6c
+- Confidence: repo_proven
+- Applies to/a.k.a.: last-instruction `|=` / `+=` on a member before blr; CSuddenCommu ctor comments; epilogue-only 3-swap residuals
+
 ## rlwinm rotate-mask decode recipe for bitmap-index mismatches (UnkClass_8047E110::func_8047EFBC fix, Wii/1.1 -O4,p)
 - Symptom:   `bitmap[i >> N]` structural mismatch where decomp emits one rlwinm encoding and retail another (e.g. sh28/mb20/me29 vs sh29/mb19/me29).
 - Cause:     mask endpoints encode the effective word index: convert via lsb math — kept_lsb_range = [32-1-ME .. 32-1-MB], orig_bit(pos) = (pos - SH) mod 32; result = byte offset of `(x >> s)*4` etc.
@@ -4379,6 +4387,14 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Confidence: repo_proven
 - Applies to/a.k.a.: any adjust-this/forwarding thunk TU (CBattleState/CActorParam/CfObjectActor
   families); alternative is `#pragma auto_inline` games (unverified, TU-wide blast radius)
+
+## Implicit array-member ctor walk: declare end first, assign start first (Wii/1.1 -O4,p)
+- Symptom:   inlined `T[N]` member construction walks with start/end colors swapped (`addi r31,this+start` / `addi r30,this+end` vs retail r30/r31); 0 structural
+- Cause:     implicit per-element ctor creates start before end, so Rule A colors start=r31. A source `while` that declares `end` first gets the colors but emits end's `addi` first and a forward `b` to the test (size +4, structural collapse)
+- Fix:       make the element POD; write a `do`-`while` in the enclosing ctor; declare `end` first (Rule A → r31) but assign `start` first so the `addi` order matches retail; keep the later bulk `clear()`/`memset` if retail has both
+- Applies to/a.k.a.: Rule A start/end array walks; CBattleManager unk94[32] 8-byte memset loop
+- Confidence: repo_proven
+- Example:   us-800d8fe4 (`__ct__Q22cf14CBattleManagerFv`)
 
 ## MWCC treats `f32`/`fN` as FPR names in some struct members (Wii/1.1)
 - Symptom:   `undefined identifier 'f32'` on a later member such as `f32 f40`, even though earlier

@@ -1236,7 +1236,6 @@ kind_done:
 #pragma inline
 
 void cf::CBattleState::CBattleState_enterStatusEntry(cf::CBattleStateEntry* arg) {
-    int kind2;
 
     // -- Phase 1: id-specific init (flat if/goto to match retail's
     //   cmpwi/beq/bge chain). `id` is block-scoped so it dies at P1_done
@@ -1298,7 +1297,7 @@ P1_10:
         } else {
             obj = (u8*)this->CBattleState_getOwner();
             if (*(u32*)(obj + 0x3374) & 0x40) {
-                arg->unk20 = (f32)(arg->unk20 * lbl_eu_80667408);
+                arg->unk20 *= lbl_eu_80667408;
             }
         }
     }
@@ -1321,73 +1320,72 @@ P1_done:
 
     // -- Phase 4: set bitfield at this+0x15AC ------------------------
     {
+        u32 one = 1;
         u32 bitId = arg->unk0C;
-        *(u32*)(unk15AC + ((bitId >> 3) & ~3u)) |= 1u << (bitId & 0x1F);
+        *(u32*)(unk15AC + ((bitId >> 3) & ~3u)) |= one << (bitId & 0x1F);
     }
 
     // -- Phase 5: kind kept in r31 for the empty-slot scan -----------
-    // Address-taken id so tree 2+ does not CSE onto the bitfield's r3=1.
-    {
-        int classify = arg->unk0C;
+    // Identity wrapper so the id is the first (r3) argument of a call
+    // after the bitfield's li r3,1. Pointer wrappers (enterStatusId)
+    // put the entry in r3 and the id in r4.
+    int kind2 = getEnterStatusKind(arg->unk0C);
 
-        kind2 = getEnterStatusKind(classify);
+    // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
+    if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
+        if (!(arg->unk30 & 0x800)) {
+            if (getEnterStatusKind(arg->unk0C) == 0) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
+            } else if (getEnterStatusKind(arg->unk0C) == 1) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
+            } else {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
+            }
+            func_8013DB6C(6, arg->unk0C, 0, 0);
+            goto after_dispatch;
+        }
+    }
 
-        // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
-        if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
-            if (!(arg->unk30 & 0x800)) {
-                if (getEnterStatusKind(classify) == 0) {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 5);
-                } else if (getEnterStatusKind(classify) == 1) {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 6);
-                } else {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 4);
-                }
-                func_8013DB6C(6, arg->unk0C, 0, 0);
+    // -- Branch B ----------------------------------------------------
+    if (getEnterStatusKind(arg->unk0C) == 0) {
+        if (!(arg->unk30 & 0x800)) {
+            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
                 goto after_dispatch;
             }
-        }
-
-        // -- Branch B ----------------------------------------------------
-        if (getEnterStatusKind(classify) == 0) {
-            if (!(arg->unk30 & 0x800)) {
-                if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
-                    goto after_dispatch;
-                }
-                {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
-                    func_8013DB6C(6, arg->unk0C, 0, 0);
-                    goto after_dispatch;
-                }
-            }
-        }
-
-        if (getEnterStatusKind(classify) == 1) {
-            if (!(arg->unk30 & 0x800)) {
-                if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
-                    goto after_dispatch;
-                }
-                if (arg->unk30 & 0x20000) {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
-                } else {
-                    u8* obj = (u8*)this->CBattleState_getOwner();
-                    func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
-                }
-                func_8013DB6C(6, arg->unk0C, 0, 0);
-                goto after_dispatch;
-            }
-        }
-
-        if (getEnterStatusKind(classify) == 3) {
-            if (!(arg->unk30 & 0x800)) {
+            {
                 u8* obj = (u8*)this->CBattleState_getOwner();
                 func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
                 func_8013DB6C(6, arg->unk0C, 0, 0);
+                goto after_dispatch;
             }
+        }
+    }
+
+    if (getEnterStatusKind(arg->unk0C) == 1) {
+        if (!(arg->unk30 & 0x800)) {
+            if (arg->unk2E != 0 && !(arg->unk30 & 2) && !(arg->unk30 & 0x400)) {
+                goto after_dispatch;
+            }
+            if (arg->unk30 & 0x20000) {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 0x20);
+            } else {
+                u8* obj = (u8*)this->CBattleState_getOwner();
+                func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 2);
+            }
+            func_8013DB6C(6, arg->unk0C, 0, 0);
+            goto after_dispatch;
+        }
+    }
+
+    if (getEnterStatusKind(arg->unk0C) == 3) {
+        if (!(arg->unk30 & 0x800)) {
+            u8* obj = (u8*)this->CBattleState_getOwner();
+            func_80109784(*(void**)(obj + 0x3F10), arg->unk0C, 1);
+            func_8013DB6C(6, arg->unk0C, 0, 0);
         }
     }
 
@@ -1561,7 +1559,6 @@ after_dispatch:
                     dst = (cf::CBattleStateEntry*)base3;
 
                 if (dst->unk0C == 0) {
-                    f32 zero = lbl_eu_80667410;
                     dst->unk00 = arg->unk00;
                     dst->unk04 = arg->unk04;
                     dst->unk08 = arg->unk08;
@@ -1579,7 +1576,7 @@ after_dispatch:
                     dst->unk2E = arg->unk2E;
                     dst->unk30 = arg->unk30;
                     dst->unk1C = dst->unk20;
-                    if (zero == dst->unk28) {
+                    if (lbl_eu_80667410 == dst->unk28) {
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
                     this->CBattleState_notifyEntryUpdated(dst);
@@ -1598,6 +1595,7 @@ F_skip_scan:
 }
 #pragma inline_max_size(256)
 #pragma inline_max_total_size(800)
+#pragma auto_inline on
 
 // func_80145C00: r3 = status id. Classifies the id through the same
 // cmpwi/beq/bge decision tree as CBattleState_applyEventEntry (kind 0/1/2/3)

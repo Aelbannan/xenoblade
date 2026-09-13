@@ -14,9 +14,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 16672 |
 | extern "C" declarations (non-lbl_*, imports) | 7514 |
 | extern "C" definitions (forced names) | 4154 |
-| `self`/register-style params | 13312 |
-| `void*` (params + locals) | 7591 |
-| raw pointer offset arithmetic | 7868 |
+| `self`/register-style params | 13318 |
+| `void*` (params + locals) | 7592 |
+| raw pointer offset arithmetic | 7861 |
 | deref-through-cast arithmetic | 3301 |
 | inline asm / `register` | 127 |
 | rN-named params | 462 |
@@ -30,8 +30,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 3441 |
-| src/kyoshin/cf/object/CActorParam.cpp | 2333 |
+| src/kyoshin/cf/CBattleManager.cpp | 3442 |
+| src/kyoshin/cf/object/CActorParam.cpp | 2339 |
 | src/kyoshin/CItemBoxGrid.cpp | 2149 |
 | src/kyoshin/cf/CfCam.cpp | 1737 |
 | src/kyoshin/CItemBoxInfo.cpp | 1710 |
@@ -370,7 +370,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CActParamAnimGame.cpp | 64 | 6 | 49 | 19 | 30 | 24 | 0 | 1 | 21 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 8 | 4 | 25 | 44 | 29 | 13 | 0 | 17 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 5 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 328 | 466 | 1091 | 578 | 1 | 89 | 140 | 0 | 5 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 328 | 467 | 1091 | 578 | 1 | 89 | 140 | 0 | 5 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 5 | 6 | 8 | 17 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -449,7 +449,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/code_8018F8D8.cpp | 48 | 1 | 27 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/code_801C2C14.cpp | 2 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 9 | 33 | 110 | 150 | 45 | 0 | 0 | 20 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 127 | 91 | 855 | 690 | 0 | 10 | 17 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 133 | 91 | 848 | 690 | 0 | 10 | 17 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 6 | 22 | 23 | 9 | 29 | 11 | 0 | 0 | 637 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectActor.cpp | 8 | 20 | 67 | 22 | 36 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 36 | 50 | 11 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -3972,7 +3972,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 89,
   "schedule_pragma": 5,
   "self_params": 328,
-  "void_ptr": 466
+  "void_ptr": 467
  },
  "src/kyoshin/cf/CCharEffect.cpp": {
   "asm_insn_shim": 0,
@@ -4778,10 +4778,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 17,
   "goto_count": 17,
   "init_side_effect": 0,
-  "ptr_arith": 855,
+  "ptr_arith": 848,
   "rn_params": 10,
   "schedule_pragma": 0,
-  "self_params": 127,
+  "self_params": 133,
   "void_ptr": 91
  },
  "src/kyoshin/cf/object/CBattleState.cpp": {

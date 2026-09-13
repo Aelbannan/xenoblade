@@ -266,8 +266,9 @@ void func_80098EF8(CtrlPcVf38* self)
                     u32 mask2 = isClassicController__Q22cf13CfGameManagerFv(-1)
                                     ? lbl_eu_80527F10[2]
                                     : lbl_eu_80527E98[2];
-                    u32 hit = self->vf37()->mField4 & mask2;
-                    if (hit != 0) {
+                    u32 hit = self->vf37()->mField4;
+                    hit = hit & mask2;
+                    if (((u32)__cntlzw((u32)__cntlzw(hit) >> 5) >> 5) != 0) {
                         self->mField4 |= 0x200;
                     }
                 }

@@ -162,10 +162,10 @@ void CLibCri::handleAxCallback() {
 // 0x1C8 (IErrorWii). Lets the ctor/dtor re-point the three slots at the
 // dissolved retail vtable blob through typed fields.
 struct CLibCriVptrView {
-    void* vtPrimary;   //0x000 CWorkThread primary vptr
-    void* pad[112];    //0x004
-    void* vtViCb;      //0x1C4 CDeviceVICb sub-vptr
-    void* vtErrorWii;  //0x1C8 IErrorWii sub-vptr
+    u32* vtPrimary;   //0x000 CWorkThread primary vptr
+    u32* pad[112];    //0x004
+    u32* vtViCb;      //0x1C4 CDeviceVICb sub-vptr
+    u32* vtErrorWii;  //0x1C8 IErrorWii sub-vptr
 };
 
 // ============================================================================
@@ -206,9 +206,9 @@ extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
         IErrorWii* errCb = reinterpret_cast<IErrorWii*>(self);
         // full-object destruction: restore the primary + both MI sub-vptrs
         // through the same typed view the ctor uses (RHS shapes kept retail-pinned).
-        vp->vtPrimary = &lbl_eu_8056CE58;
-        vp->vtViCb = (char*)&lbl_eu_8056CE58 + 0xA0;
-        vp->vtErrorWii = (char*)&lbl_eu_8056CE58 + 0xB8;
+        vp->vtPrimary = lbl_eu_8056CE58;
+        vp->vtViCb = (u32*)((char*)&lbl_eu_8056CE58 + 0xA0);
+        vp->vtErrorWii = (u32*)((char*)&lbl_eu_8056CE58 + 0xB8);
         if (errCb != nullptr) {
             errCb = reinterpret_cast<IErrorWii*>((char*)self + 0x1C8);
         }

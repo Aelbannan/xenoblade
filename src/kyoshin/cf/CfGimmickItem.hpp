@@ -24,7 +24,7 @@ class CfGimmickItem {
 public:
     ~CfGimmickItem();
 
-    /* 0x00 */ void* vtable;             // manual vptr (lbl_eu_80535A98)
+    /* 0x00 */ u32* vtable;              // manual vptr (lbl_eu_80535A98)
     /* 0x04 */ CfGimmickVec3 vvec04;     // base placement/sub-object 3-vector
     /* 0x10 */ u8 pad10[0x0C];
     /* 0x1C */ void* vobj;               // base sub-object slot
@@ -73,7 +73,7 @@ public:
 // Area manager object (createBattleActor result); +0xB0 back-pointer to the
 // owning gimmick (same shape as CfGimmickObjectMgr in CfGimmickObject.hpp).
 struct CfGimmickItemMgr {
-    void** vtable;              // +0x00
+    u32* vtable;                // +0x00
     u8 gap_B0[0xB0 - 0x04];
     CfGimmickItem* field_B0;    // +0xB0: owning gimmick
 };
@@ -89,30 +89,30 @@ typedef void (CfGimmickItem::*CfGimmickItemState)();
 // have C linkage in retail so extern "C" is required to emit the raw name.
 // ---------------------------------------------------------------------------
 extern "C" {
-void __ct__cf_CfGimmick(void* self);
-void __dt__Q22cf9CfGimmickFv(void* self, int mode);
-void func_80208EE4(void* self);
-void func_8020A434(void* self);                     // unregister field_7C object
+void __ct__cf_CfGimmick(cf::CfGimmick* self);
+void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int mode);  // ABI deleting-dtor twin
+void func_80208EE4(cf::CfGimmick* self);
+void func_8020A434(CfGimmickReg* self);                     // unregister field_7C object
 void func_8020A484(unsigned short id);
 unsigned int func_8020A5DC(void);
 void func_80209F2C(void);
-void func_8020A6B0(void* reg, const CfGimmickVec3* point,
+void func_8020A6B0(CfGimmickReg* reg, const CfGimmickVec3* point,
                    unsigned short c, float d, int e, int g);
 void func_80159C04(unsigned int a, int b);
 void func_801586D4(unsigned int a, unsigned int b);
 void func_8020974C(unsigned int a, int b);
-int func_80209754(unsigned short flag, void* a, void* b, void* c,
-                  unsigned int d);
-void func_80208C48(void* self, void* arg);
+int func_80209754(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
+                  const f32* ang, u32 partyId);
+void func_80208C48(u32 id, const CfGimmickVec3* pos);
 u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv(void);
 u32 getResourceFromTable__Q22cf13CfGameManagerFv(u32 a);
 unsigned int func_801587E8(unsigned short id);
 void* func_8003AA34(void);
-void func_80208F34(void* self, void* subobj, void* bdat, void* stack);
-void func_80209020(void* self, void* subobj, void* bdat, void* stack);
-void func_80209288(void* self, void* subobj, void* bdat, void* stack);
+void func_80208F34(cf::CfGimmick* self, float* out, void* unused, void* holder);
+void func_80209020(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
+void func_80209288(cf::CfGimmick* self, f32* out, void* bdat, void* table);
 void func_8007B0C8(int idx);
-int func_8020971C(unsigned int a);
+int func_8020971C(u8* obj);
 void attachLODObject__8CTaskLODFv(u8 lod, int mode);
 void removeLODEntry__8CTaskLODFv(u8 lod, float f);
 void clearLODEntry__8CTaskLODFv(u8 lod);

@@ -24,10 +24,10 @@ union BdatCol {
 // ---------------------------------------------------------------------------
 
 cf::CfGimmickItem::~CfGimmickItem() {
-    this->vtable = lbl_eu_80535A98;
-    func_80208EE4(this);
+    this->vtable = (u32*)lbl_eu_80535A98;
+    func_80208EE4((cf::CfGimmick*)this);
     func_8020A434(&this->field_7C);
-    __dt__Q22cf9CfGimmickFv(this, 0);
+    __dt__Q22cf9CfGimmickFv((cf::CfGimmick*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
     // (delete-flag ? operator delete(this) : skip) automatically.
 }
@@ -40,8 +40,8 @@ cf::CfGimmickItem::~CfGimmickItem() {
 
 extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
                                                      u16 rowId) {
-    __ct__cf_CfGimmick((void*)self);
-    self->vtable = (void*)lbl_eu_80535A98;
+    __ct__cf_CfGimmick((cf::CfGimmick*)self);
+    self->vtable = (u32*)lbl_eu_80535A98;
     self->field_82 = 6;
 
     void* mgr = func_8003AA34();
@@ -51,9 +51,9 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
     self->field_64 = rowId;
 
     // Init the three sub-objects (placement vec, pad10, vobj).
-    func_80208F34(self, &self->vvec04, mgr, (void*)&bdat);
-    func_80209020(self, &self->vobj, mgr, (void*)&bdat);
-    func_80209288(self, &self->pad10, mgr, (void*)&bdat);
+    func_80208F34((cf::CfGimmick*)self, &self->vvec04.x, mgr, &bdat);
+    func_80209020((cf::CfGimmick*)self, (cf::CfGimmick*)&self->vobj, mgr, &bdat);
+    func_80209288((cf::CfGimmick*)self, (f32*)self->pad10, mgr, &bdat);
 
     // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
     // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
@@ -136,7 +136,7 @@ extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
         removeLODEntry__8CTaskLODFv(self->field_70, lbl_eu_80668448);
     }
 
-    if (func_8020971C(self->field_64) != 0 && self->field_9C == 3) {
+    if (func_8020971C((u8*)(u32)self->field_64) != 0 && self->field_9C == 3) {
         self->field_9E = 5;
     }
     return self;
@@ -268,8 +268,8 @@ void func_802106F8(cf::CfGimmickItem* self) {
     }
 
     self->field_74 |= 0x10;
-    if (func_80209754(self->field_66, &self->vobj, &self->vvec04,
-                      &self->pad10, (u32)self->field_7C.field_00) == 0)
+    if (func_80209754((u32)self->field_66, (cf::CfGimmick*)&self->vobj, &self->vvec04,
+                      (const f32*)self->pad10, (u32)self->field_7C.field_00) == 0)
         return;
 
     // Every non-empty item slot must be collectible, otherwise abort.
@@ -287,7 +287,7 @@ void func_802106F8(cf::CfGimmickItem* self) {
     // While toggled-on, fire the per-frame effect at the placement point.
     if (self->field_66 & 1) {
         if (self->field_8E != 0) {
-            func_80208C48((void*)(u32)self->field_8E, &self->vvec04);
+            func_80208C48((u32)self->field_8E, &self->vvec04);
         }
     }
 
@@ -337,7 +337,7 @@ void func_802108D8(cf::CfGimmickItem* self) {
 
         self->field_74 |= 8;
         if (self->field_90 != 0) {
-            func_80208C48((void*)(u32)self->field_90, &self->vvec04);
+            func_80208C48((u32)self->field_90, &self->vvec04);
         }
 
         if (self->field_9B != 0) {
@@ -429,8 +429,8 @@ static char gimmickitem_rodata_87AC_pad[0x64] =
 // zero at reloc sites, matching retail; all-zero char blobs would be exiled
 // to .bss by MWCC). 80535A18 is referenced by CfGimmickJump's code; 80535A3C
 // feeds this TU's .sdata pair B0. Forward-declared with exact types.
-extern const void* lbl_eu_806627B0[2];   // defined below (.sdata)
-extern const void* lbl_eu_80535A3C[5];   // defined below (.data)
+extern u32 lbl_eu_806627B0[2];   // defined below (.sdata)
+extern u32 lbl_eu_80535A3C[5];   // defined below (.data)
 extern char lbl_eu_80661BE0[];
 extern char lbl_eu_80662708[];
 extern "C" {
@@ -440,19 +440,19 @@ void func_801F4B64(void);
 void func_801F4BF8(void);
 void func_801F4C8C(void);
 void func_8020F38C(void);
-void __dt__Q22cf13CfGimmickJumpFv(void*, int);
+void __dt__Q22cf13CfGimmickJumpFv(void*, int);  // ABI deleting dtor
 }
 __declspec(section ".data") __attribute__((used, aligned(8)))
-const void* lbl_eu_80535A18[9] = {
-    lbl_eu_806627B0, 0,
-    (const void*)__dt__Q22cf13CfGimmickJumpFv,
-    (const void*)func_8020896C, (const void*)func_8020F484,
-    (const void*)func_801F4B64, (const void*)func_801F4BF8,
-    (const void*)func_801F4C8C, (const void*)func_8020F38C,
+u32 lbl_eu_80535A18[9] = {
+    (u32)lbl_eu_806627B0, 0,
+    (u32)__dt__Q22cf13CfGimmickJumpFv,
+    (u32)func_8020896C, (u32)func_8020F484,
+    (u32)func_801F4B64, (u32)func_801F4BF8,
+    (u32)func_801F4C8C, (u32)func_8020F38C,
 };
 __declspec(section ".data") __attribute__((used, aligned(8)))
-const void* lbl_eu_80535A3C[5] = {
-    lbl_eu_80661BE0, 0, lbl_eu_80662708, 0, 0,
+u32 lbl_eu_80535A3C[5] = {
+    (u32)lbl_eu_80661BE0, 0, (u32)lbl_eu_80662708, 0, 0,
 };
 // .data PTMF state table: 6 x (this-delta 0, -1 marker, func addr).
 // Func slots are zero in-file (linker fills them); -1 words are immediates.
@@ -480,11 +480,11 @@ extern char lbl_eu_805086F8[];
 extern char lbl_eu_805359D4[];
 extern char lbl_eu_80508728[];
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* lbl_eu_806627A0[2] = { lbl_eu_805086D8, lbl_eu_80535924 };
+u32 lbl_eu_806627A0[2] = { (u32)lbl_eu_805086D8, (u32)lbl_eu_80535924 };
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* lbl_eu_806627A8[2] = { lbl_eu_805086F8, lbl_eu_805359D4 };
+u32 lbl_eu_806627A8[2] = { (u32)lbl_eu_805086F8, (u32)lbl_eu_805359D4 };
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
-const void* lbl_eu_806627B0[2] = { lbl_eu_80508728, lbl_eu_80535A3C };
+u32 lbl_eu_806627B0[2] = { (u32)lbl_eu_80508728, (u32)lbl_eu_80535A3C };
 __declspec(section ".sdata") __attribute__((used, aligned(8)))
 char* lbl_eu_806627B8[2] = { lbl_eu_80668438, lbl_eu_80668440 };
 // .sdata2 float pool as a struct (Eve/Elv recipe): individual scalars would

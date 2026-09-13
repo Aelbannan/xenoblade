@@ -3,7 +3,7 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
 extern cf::CfObjectPc* getCfObjectPc(cf::CfObjectMove* objMove);
-extern int isGlobalCamFlagSet(int r3);
+extern int isGlobalCamFlagSet(int mask);
 
 // Retail layout shim: CObjectParam lives at offset 0x3E9C in CfObjectPc.
 // This matches the retail binary where the vtable for the CfObjectMove
@@ -44,8 +44,6 @@ namespace cf{
         RetailCfObjectPc* retailObj = reinterpret_cast<RetailCfObjectPc*>(objPc);
         if(retailObj->objectParam.CObjectParam_getSelfObjectId() == false) return false;
 
-        void* resultObj;
-        
         switch(unkC){
             case 1:
                 // Simple existence check
@@ -54,9 +52,9 @@ namespace cf{
             case 2:
             {
                 // Check enemy type field at offset 0x15F0
-                resultObj = func_800AD860(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId()));
-                if(resultObj == nullptr) return false;
-                CActorParam15F0View* actorView = static_cast<CActorParam15F0View*>(resultObj);
+                CActorParam15F0View* actorView = static_cast<CActorParam15F0View*>(
+                    func_800AD860(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())));
+                if(actorView == nullptr) return false;
                 if(actorView->unk15F0 == 2) break;
                 else return false;
             }
@@ -64,9 +62,9 @@ namespace cf{
             case 3:
             {
                 // Check object state flag at offset 0x91
-                resultObj = getValidObject(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId()));
-                if(resultObj == nullptr) return false;
-                Object91View* objectView = static_cast<Object91View*>(resultObj);
+                Object91View* objectView = static_cast<Object91View*>(
+                    getValidObject(findObjectById(retailObj->objectParam.CObjectParam_getSelfObjectId())));
+                if(objectView == nullptr) return false;
                 if(objectView->unk91 == 0xC) break;
                 else return false;
             }

@@ -15,7 +15,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7493 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13404 |
-| `void*` (params + locals) | 7692 |
+| `void*` (params + locals) | 7691 |
 | raw pointer offset arithmetic | 7912 |
 | deref-through-cast arithmetic | 3309 |
 | inline asm / `register` | 127 |
@@ -103,7 +103,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/effect/code_804DB938.cpp | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLib.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCri.cpp | 80 | 12 | 26 | 15 | 3 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibCriMoviePlay.cpp | 50 | 4 | 4 | 3 | 2 | 0 | 2 | 1 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibCriMoviePlay.cpp | 50 | 4 | 4 | 2 | 2 | 0 | 2 | 1 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 65 | 12 | 6 | 19 | 22 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbm.cpp | 39 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
@@ -1183,7 +1183,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 1,
   "schedule_pragma": 0,
   "self_params": 4,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/monolib/src/lib/CLibCriStreamingPlay.cpp": {
   "asm_insn_shim": 0,

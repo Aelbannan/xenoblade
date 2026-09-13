@@ -264,7 +264,7 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
     Material* pMaterialBuf =
         static_cast<Material*>(Layout::AllocMemory(sizeof(Material)));
 
-    if (pMaterialBuf != NULL) {
+    if (pMaterialBuf != nullptr) {
         const res::Material* const pResMaterial =
             detail::ConvertOffsToPtr<res::Material>(
                 rBlockSet.pMaterialList,
@@ -274,13 +274,13 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
     }
 
     mFrameNum = 0;
-    mFrames = NULL;
+    mFrames = nullptr;
 
     if (pRes->frameNum > 0) {
         mFrames =
             static_cast<Frame*>(Layout::AllocMemory(pRes->frameNum * sizeof(Frame)));
 
-        if (mFrames != NULL) {
+        if (mFrames != nullptr) {
             mFrameNum = pRes->frameNum;
 
             const u32* const pFrmOffsetTbl = detail::ConvertOffsToPtr<u32>(
@@ -292,12 +292,12 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
                         pRes, pFrmOffsetTbl[i]);
 
                 mFrames[i].textureFlip = pResFrame->textureFlip;
-                mFrames[i].pMaterial = NULL;
+                mFrames[i].pMaterial = nullptr;
 
                 Material* pFrameMatBuf = static_cast<Material*>(
                     Layout::AllocMemory(sizeof(Material)));
 
-                if (pFrameMatBuf != NULL) {
+                if (pFrameMatBuf != nullptr) {
                     const res::Material* const pResMaterial =
                         detail::ConvertOffsToPtr<res::Material>(
                             rBlockSet.pMaterialList,
@@ -312,7 +312,7 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
 }
 
 Window::~Window() {
-    if (mFrames != NULL) {
+    if (mFrames != nullptr) {
         for (int i = 0; i < mFrameNum; i++) {
             mFrames[i].pMaterial->~Material();
             Layout::FreeMemory(mFrames[i].pMaterial);
@@ -321,17 +321,17 @@ Window::~Window() {
         Layout::FreeMemory(mFrames);
     }
 
-    if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
+    if (mpMaterial != nullptr && !mpMaterial->IsUserAllocated()) {
         mpMaterial->~Material();
         Layout::FreeMemory(mpMaterial);
-        mpMaterial = NULL;
+        mpMaterial = nullptr;
     }
 
     mContent.texCoordAry.Free();
 }
 
 Material* Window::FindMaterialByName(const char* pName, bool recursive) {
-    if (mpMaterial != NULL &&
+    if (mpMaterial != nullptr &&
         detail::EqualsMaterialName(mpMaterial->GetName(), pName)) {
 
         return mpMaterial;
@@ -349,19 +349,19 @@ Material* Window::FindMaterialByName(const char* pName, bool recursive) {
         NW4R_UT_LINKLIST_FOREACH (it, mChildList, {
             Material* pMaterial = it->FindMaterialByName(pName, true);
             
-            if (pMaterial != NULL) {
+            if (pMaterial != nullptr) {
                 return pMaterial;
             }
         })
     }
 
-    return NULL;
+    return nullptr;
 }
 
 AnimationLink* Window::FindAnimationLink(AnimTransform* pAnimTrans) {
     AnimationLink* pAnimLink = Pane::FindAnimationLink(pAnimTrans);
 
-    if (pAnimLink != NULL) {
+    if (pAnimLink != nullptr) {
         return pAnimLink;
     }
 
@@ -369,12 +369,12 @@ AnimationLink* Window::FindAnimationLink(AnimTransform* pAnimTrans) {
         AnimationLink* pAnimLink =
             mFrames[i].pMaterial->FindAnimationLink(pAnimTrans);
 
-        if (pAnimLink != NULL) {
+        if (pAnimLink != nullptr) {
             return pAnimLink;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void Window::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
@@ -465,7 +465,7 @@ void Window::DrawContent(const math::VEC2& rBase,
         mContent.texCoordAry.GetSize(),
         mContent.texCoordAry.GetArray(),
         
-        useVtxColor ? mContent.vtxColors : NULL,
+        useVtxColor ? mContent.vtxColors : nullptr,
         alpha);
     // clang-format on
 }
@@ -476,7 +476,7 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
                        const WindowFrameSize& rFrameSize, u8 alpha) {
 
     bool useVtxColor = rFrame.pMaterial->SetupGX(
-        detail::IsModulateVertexColor(NULL, alpha), alpha);
+        detail::IsModulateVertexColor(nullptr, alpha), alpha);
 
     detail::SetVertexFormat(useVtxColor, 1);
 
@@ -499,7 +499,7 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
     Get##FRAME##TexCoord(texCoords[0], size, texSize, FLIP);                   \
                                                                                \
     detail::DrawQuad(point, size, 1, texCoords,                                \
-                     useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha);
+                     useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : nullptr, alpha);
 
     DRAW_FRAME(LT, TEXTUREFLIP_NONE);
     DRAW_FRAME(RT, TEXTUREFLIP_H);
@@ -525,7 +525,7 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
     math::VEC2 point;
     Size size;
 
-    bool modVtxColor = detail::IsModulateVertexColor(NULL, alpha);
+    bool modVtxColor = detail::IsModulateVertexColor(nullptr, alpha);
 
 #define DRAW_FRAME(FRAME)                                                      \
     {                                                                          \
@@ -541,7 +541,7 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
                                                                                \
         detail::SetVertexFormat(useVtxColor, 1);                               \
         detail::DrawQuad(point, size, 1, texCoords,                            \
-                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha); \
+                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : nullptr, alpha); \
     }
 
     DRAW_FRAME(LT);
@@ -567,7 +567,7 @@ void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
 
     Size size;
 
-    bool modVtxColor = detail::IsModulateVertexColor(NULL, alpha);
+    bool modVtxColor = detail::IsModulateVertexColor(nullptr, alpha);
 
 #define DRAW_FRAME_EX(FRAME, TEXCOORD, SIZE, POINT)                            \
     {                                                                          \
@@ -583,7 +583,7 @@ void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
                                                                                \
         detail::SetVertexFormat(useVtxColor, 1);                               \
         detail::DrawQuad(POINT, size, 1, texCoords,                            \
-                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha); \
+                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : nullptr, alpha); \
     }
 
 #define DRAW_FRAME(FRAME, SIZE, POINT) DRAW_FRAME_EX(FRAME, FRAME, SIZE, POINT)
@@ -647,7 +647,7 @@ Material* Window::GetContentMaterial() const {
 
 Material* Window::GetFrameMaterial(u32 idx) const {
     if (idx >= mFrameNum)
-        return NULL;
+        return nullptr;
     return mFrames[idx].pMaterial;
 }
 

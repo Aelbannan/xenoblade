@@ -44,7 +44,7 @@ extern "C" u32 lbl_eu_80663B70;     // CNRequest RTTI locator (foreign sdata)
 extern "C" void func_804DA4CC();    // CNRequest base vtable func (foreign TU)
 extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
 extern "C" u32 lbl_eu_80663B90[2];  // this unit's .sdata RTTI locator pair
-extern "C" void* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
+extern "C" u32* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
 
 extern "C" u32 lbl_eu_8056FD88[4] = {
     (u32)&lbl_eu_80663B90, 0x00000000, (u32)&func_804DAFB8, (u32)&func_804DA4CC,
@@ -83,11 +83,9 @@ struct CNReqtaskLoadData {
 // Configures the CNReqtaskLoad sub-task: records the path/buffer/size/flag and
 // resets the async state to step 0, then returns the task vtable pointer.
 //
-// Note: the first parameter is an opaque byte handle (`u8*`), matching how the
-// NAND open primitive hands the caller back an unwrapped task buffer. The typed
-// local `d` gives the rest of the body clean struct access.
-extern "C" CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
-    CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
+// First arg is the CNReqtaskLoad sub-task block embedded in CNRequest (+4).
+extern "C" CNReqtaskLoadVtbl** func_804DAF70(CNReqtaskLoadData* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
+    CNReqtaskLoadData* d = data;
     strcpy(d->path, path);
     d->mBuffer = arg2;
     d->mSize = arg3;
@@ -169,8 +167,8 @@ ret0:
 // the two bodies into one 0x18 symbol). The helper stores the vtable
 // address through r3. `char[]` type for the vtable keeps the address
 // constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804DB0E0(void* dest) {
-    *(void**)dest = (void*)lbl_eu_8056FD88;
+extern "C" __declspec(noinline) void func_804DB0E0(u32** dest) {
+    *dest = lbl_eu_8056FD88;
 }
 extern "C" __declspec(noinline) void sinit_804DB0D8() {
     func_804DB0E0(lbl_eu_806659E8);

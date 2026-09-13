@@ -128,7 +128,7 @@ public:
 public:
     explicit WsdFileReader(const void* pWsdBin);
 
-    bool IsValidFileHeader(const void* pWsdBin);
+    bool IsValidFileHeader(const ut::BinaryFileHeader* pFileHeader);
 
     bool ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const;
     bool ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo, int id,

@@ -1416,7 +1416,7 @@ extern "C" __declspec(noinline) void copyVEC3(float* dst, const float* src) {
 // (`!(x >= lbl)` / flipped-operand forms). Fix that one cror shape and the
 // whole tail should realign byte-for-byte.
 #pragma optimize_for_size on
-void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
+__declspec(noinline) void func_80127764(CTagProcMsg* msg, TalkPaneView* a, TalkPaneView* b,
                    TalkPaneView* c, const wchar_t* text) {
     wchar_t buf[0x400];   // page scratch (+0x190)
     u32 counts[0x10];     // ruby per-entry char counts (+0x50)

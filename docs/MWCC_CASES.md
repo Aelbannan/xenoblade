@@ -47,6 +47,13 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 - Result:    FULL_MATCH 100% insn (vtable reloc names `__vt__*` vs `lbl_eu_8052BC*` remain)
 - Evidence:  us-800d8fe4 / src/kyoshin/cf/CBattleManager.hpp
 
+## CBattleState_enterStatusEntry — tree-2 id r4 vs r3 after bitfield `li r3,1` (Wii/1.1 -O4,p, CODE_MATCH 98.9%)
+- Symptom:   size-exact 0x13DC, 0 structural, 270 reg_swap; first tree-2 insn `lhz r4,0xC(r30)` vs retail `lhz r3`; witness `abi-boundary | rho maps r3 → r4`. First 0xf `fadds f1,f0,f1` vs retail `fadds f0,f0,f1`.
+- Cause:     Bitfield `u32 one=1` is `li r3,1; slw r0,r3,r0`. Phase 3 (before that) loads the helper arg into r3 and keeps it for `stw r3,unk1528`. After `one` occupies r3, the next inlined `getEnterStatusKind(arg->unk0C)` argument is colored r4. Retail overwrites r3 with a fresh id and CSEs that r3 through later pre-call trees (`cmpi r3` at 0xd98 / 0x118c); kind2 leaves are `li r31`.
+- Fix:       Not closed. Reused `one` as the id, named `id`/`classify` (call-crossing / SSA split still r4), `k` then `kind2=k` (coalesced, no change), compare-then-assign kind2 (842 structural / +0x1BC), hoisted `kind2`, `bitId`/`one` swap.
+- Result:    Best remains 78.8% hexdiff / cycle 98.9% CODE_MATCH / size 0x13DC. Next: a source shape where the post-bitfield id is the same color as `one` (r3) without a second tree or a live-across-call local; then pin first `fadds` dest to the raw (f0).
+- Evidence:  us-80146dac / src/kyoshin/cf/object/CBattleState.cpp
+
 ## CBattleState_enterStatusEntry — fmul 1.5 commute → `unk20 *= lbl_eu_80667408` (Wii/1.1 -O4,p, CODE_MATCH 98.9%)
 - Symptom:   size-exact 0x13DC, 0 structural; `FC000072` (`fmul f0,f0,f1`) vs retail `FC010032` (`fmul f0,f1,f0`); loads already `lfs f1` + `lfd f0` + `frsp`
 - Cause:     `arg->unk20 = (f32)(gauge * lbl_eu_80667408)` commutes so dest==FRA (the 1.5)
@@ -10979,6 +10986,22 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
   recolor img/ok and in-body `li r0,24/18`
 - Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
 
+## func_8023D3D8 / kyoshin/cf/CfNandManager — const alloca(0) gives FP (Wii/1.1 -O4,p, 12.5%)
+- Symptom:   12.5% (660 structural / 266 reg_swap); 0x1088 vs retail 0x1070; 0x60
+  savegpr frame + `or r31,sp` + img in r30; extra `lwz r0,0(sp); stwu r0,0(sp)`
+  after the FP copy. ok is r25 not r26; 24/18 still hoist to saved regs
+- Cause:     retail epilogue is the alloca/EH backchain form (`mr r10,r31`;
+  `lwz r10,0(sp)`; `mr sp,r10`). Const `__alloca(0)` is the first source that
+  emits that FP without a try slot, but MWCC still emits a 0-byte stack bump.
+  Storing through the alloca pointer grows the frame to 0x70. Function-scope
+  `valid`/`work` plus alloca drops to 2.4%. try/catch without nameScratch is
+  4.5% / 0x70 + `stw sp,0x54(r31)`
+- Fix:       keep `(void)__alloca(0)` plus image/ok/live/src/dst (9.5% live set)
+- Result:    12.5% near-miss. Next: FP without the 0-byte `lwz`/`stwu` (so 0x1070);
+  then ok r26 and in-body `li r0,24/18`. Retail name-loop `stw r1,0x34(r31)` sits
+  between the last two byte copies (pointer spill, not `li 0; stw`)
+- Evidence:  us-8023f51c / src/kyoshin/cf/CfNandManager.cpp
+
 ## CSuddenCommu func_801BA1DC — volatile last store hoists LR restore (US, Wii/1.1 -O4,p, FULL_MATCH 100%)
 - Symptom:   4 epilogue-only mismatches: decomp `lwz r0,LR; lwz r31; lwz r30; lwz r29` vs retail restores-first then LR
 - Cause:     `field_24` is `volatile u32`; a volatile last store makes MWCC hoist the LR restore above callee-saved loads
@@ -11125,3 +11148,30 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       After Color+`colorKeep`, assign `valid = (writerRegion == 0x80000000 || …masks…);` then `if (!valid) Panic`. Memberwise `mTextColor.start` + `UpdateVertexColor` (private public include). Nested COMPACT / named addr / volatile pins ruled out (rotate valid off r6 or structural).
 - Result:    FULL_MATCH (cycle `equivalence: full_match`)
 - Evidence:  us-80263e48 / src/kyoshin/code_8025FB10.cpp
+
+## func_801E9224 / CItemBoxInfo — packed sdata2_ItemBox #define → extra `li r3,0` / `lfs 56(r3)` (US)
+- Symptom:   Live 47.4% / 16 structural / 0x98 vs 0x94. Scale `lbl_eu_80668040` and 2^52 magic `lbl_eu_80668028` were `#define` aliases into `sdata2_ItemBox` members, so MWCC used a struct base (`li r3,0; lfs 56(r3)`) instead of SDA21 `lfs/lfd 0(r0)`.
+- Cause:     Member access through a packed `.sdata2` blob is not an SDA21 symbol; the extra `li` also steals r3 from the `(s32)prod+0x64` / `mullw` dest (addi r4 / mullw r4 vs retail addi r3 / mullw r0).
+- Fix:       `#undef` the two macros around `func_801E9224` and reference `extern "C"` `lbl_eu_80668028` (header) + `lbl_eu_80668040`. Keep `9310+92B8` expression order so 92B8 is called first (full r27–r30 save set). Restore the `#define`s after the function.
+- Result:    94.6% / 0 structural / 0x94/0x94. Residual: `or r28,r4` then `or r27,r3` vs reverse (witness FAIL abi-boundary r3→r4). `@N` vs `lbl_eu_80668028` on the builtin `(f32)prod` magic lfd.
+- Evidence:  us-801eae20 / src/kyoshin/CItemBoxInfo.cpp
+
+## func_80118854 / CMiniMap — MiniMapObj extra SI stub put GetPos at +0xB0 (US, Wii/1.1, HIGH_MATCH residual)
+- Symptom:   Aligned hexdiff ~2.3% with 42× `lwz r12, 176(r12)` vs retail `172`; v160 `356` vs `352`; v228 `556` vs `552`.
+- Cause:     Fake SI view declared `v000..v0A4` then `GetPos`. MWCC's hidden two-slot dtor plus 42 stubs lands GetPos at +0xB0; later virtuals stay +4.
+- Fix:       Drop the extra `v0A4` so the view is 41 stubs (`v000..v0A0`) then `GetPos` (same contract as `MiniMapPlayer` / `MiniMapSubObj`). Delay `f32 zero = lbl_eu_80667090` until after the `m0C`/`getPlayer` early-outs so prologue does not `lfs` before those checks.
+- Result:    Prologue matches through the second `getPlayer`/`getCfObjectPc` (frame offsets only). Still ~3.8% aligned / 0x26d0 vs 0x2808; xoris counts now match (54). Residual: frame 928 vs 1088, 45 extra retail `stfs`, 22 extra `fsubs` on pane `(f32)s32` / clamp paths, `neg` vs `rlwinm+subf` negate.
+- Evidence:  us-80119330 / src/kyoshin/CMiniMap.cpp
+
+## kyoshin/menu/CMenuVision func_801AD504 — lwzu image-table + silent slot-5 begin (HIGH_MATCH 71.3%, +8)
+- Symptom:   First ~0x1CC8 is opcode-aligned (reg_swap only). Then retail `lis; lwzu; stw [0]; addi &images; lwz 4/8/12 interleaved with &ids and i=0; lis r21,0x7469; stw [1..3]`. Decomp rematerializes `lis+addi 0x74696D67` inside the GetResource loop. Extra `playUISound` on flags&0x10 slot 5.
+- Cause:     Aggregate `images[4]={tbl[i]}` emits `lis/addi/lwz` not `lwzu`. `0x74696D67` is rematerializable so MWCC will not keep HA in a saved reg across `func_801355F4`. Slot 5 in flags&0x10 starts anims but does not play 0x1C3 (retail has 5 sounds, not 6).
+- Fix:       `const char** src = tbl; w0=*src++; images[0]=w0; imageList=images; images[1]=src[0]; idList=ids; images[2]=src[1]; i=0; images[3]=src[2];` and `GetResource(tagHi+0x6d67, …)` in the loop. `menuVisionBeginSilent` for flags&0x10 slot 5; keep sound on slot 4.
+- Result:    71.3% / 219 structural / 447 reg_swap / 0x2438 vs 0x2430. playUISound count and first three sites match. Residual: hoisted `lis r21` in the copy delay slot (both panic tables).
+- Evidence:  us-801aec38 / src/kyoshin/menu/CMenuVision.cpp
+
+## func_80127E74 / CTagProcessor — IPA inlined callee into 0x8c wrapper → noinline (Wii/1.1 -ipa file, FULL_MATCH)
+- Symptom:   live 0.7% size 0x8c/0x490; decomp emitted memset + 2480-byte frame; retail is a small stmw wrapper that `bl func_80127764`
+- Cause:     `-ipa file` inlined `func_80127764` into the caller. Registry 100% was stale from a prior out-of-line build
+- Fix:       `__declspec(noinline)` on `func_80127764` so the wrapper keeps the retail `bl`
+- Result:    FULL_MATCH us-80128944 0x8c/0x8c

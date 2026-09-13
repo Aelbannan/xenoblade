@@ -11,7 +11,7 @@ extern "C" {
 }
 
 extern "C" void __ct__CScnFilter(CScnFilter* self) {
-    *(void**)self = (void*)lbl_eu_8056EB60;
+    *(u32**)self = lbl_eu_8056EB60;
     self->mEnabled = 0;
     self->mUnk0C = 0;
     self->mIntensity = lbl_eu_8066ABA0;
@@ -56,7 +56,7 @@ void func_8049C868(CScnFilter* self, CScnFilterHost* host) {
     self->mIntensity += delta;
     if (check_over(self)) {
         if (self->mUnk14 != 0) {
-            ((CScnFilterCallback*)self->mUnk14)->unk_08(host, self);
+            self->mUnk14->unk_08(host, self);
         }
     }}
 

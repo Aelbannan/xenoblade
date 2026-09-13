@@ -14,7 +14,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 16653 |
 | extern "C" declarations (non-lbl_*, imports) | 7499 |
 | extern "C" definitions (forced names) | 4151 |
-| `self`/register-style params | 13334 |
+| `self`/register-style params | 13327 |
 | `void*` (params + locals) | 7599 |
 | raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3308 |
@@ -165,7 +165,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CScnItemModel.cpp | 31 | 43 | 76 | 7 | 18 | 15 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 25 | 58 | 190 | 29 | 41 | 7 | 0 | 0 | 7 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 17 | 29 | 45 | 11 | 22 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnLightMan.cpp | 6 | 4 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnLightMan.cpp | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 11 | 7 | 17 | 24 | 36 | 27 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 50 | 3 | 20 | 19 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRoot.cpp | 4 | 2 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1860,8 +1860,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 6,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "self_params": 7
+  "schedule_pragma": 0
  },
  "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp": {
   "asm_insn_shim": 0,

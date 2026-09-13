@@ -5,6 +5,8 @@
 // Scene filter base class (size: 0x18)
 // Manages a visual filter effect with configurable parameters.
 // NOTE: constructor is extern "C" (short symbol), destructor is C++ virtual (full symbol)
+struct CScnFilterCallback; // fwd; overflow callback at +0x14
+
 struct __declspec(novtable) CScnFilter {
     virtual ~CScnFilter();
 
@@ -14,5 +16,5 @@ struct __declspec(novtable) CScnFilter {
     u32 mFlags;       // 0x08
     u32 mUnk0C;       // 0x0C (unsigned; retail uses unsigned int-to-float trick)
     f32 mIntensity;   // 0x10
-    u32 mUnk14;       // 0x14
+    CScnFilterCallback* mUnk14; // 0x14
 }; // size = 0x18

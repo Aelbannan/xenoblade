@@ -307,6 +307,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/ut/ut_list.cpp | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CArtsInfo.cpp | 58 | 14 | 307 | 11 | 21 | 7 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CBattery.cpp | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CBgTex.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6Invite.cpp | 1 | 1 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6System.cpp | 18 | 17 | 63 | 13 | 0 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
 | src/kyoshin/CCollepedia.cpp | 23 | 53 | 25 | 22 | 37 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -323,7 +324,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CItemBoxLine.cpp | 6 | 10 | 140 | 21 | 16 | 3 | 0 | 2 | 16 | 0 | 0 | 0 |
 | src/kyoshin/CKizunaTalkList.cpp | 6 | 13 | 55 | 16 | 23 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CKizunagram.cpp | 13 | 49 | 112 | 25 | 25 | 15 | 4 | 10 | 3 | 0 | 0 | 0 |
-| src/kyoshin/CLoad.cpp | 0 | 0 | 15 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CLoad.cpp | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 3 | 16 | 98 | 12 | 21 | 0 | 0 | 0 | 16 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 14 | 20 | 50 | 9 | 13 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMiniMap.cpp | 51 | 13 | 35 | 103 | 118 | 83 | 0 | 0 | 6 | 0 | 0 | 0 |
@@ -3271,7 +3272,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CBgTex.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 1
  },
  "src/kyoshin/CCol6Invite.cpp": {
   "asm_insn_shim": 0,
@@ -3457,8 +3459,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 15,
-  "void_ptr": 1
+  "self_params": 15
  },
  "src/kyoshin/CMainMenu.cpp": {
   "asm_insn_shim": 0,

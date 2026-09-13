@@ -144,7 +144,7 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
             __ct__cf_CVS_THREAD(self);
 
             // Override the vtable at 0x1C with the DOWN vtable, then the slots.
-            ((CVS_THREAD_DOWN_raw*)self)->vtable = (void*)lbl_eu_80539A8C;
+            ((CVS_THREAD_DOWN_raw*)self)->vtable = lbl_eu_80539A8C;
             self->field_0x20 = owner1;
             self->field_0x24 = owner2;
         } catch (...) {

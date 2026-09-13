@@ -65,7 +65,7 @@ struct CVS_THREAD_DOWN_raw {
     u32 unk10;                  // 0x10
     u32 unk14;                  // 0x14
     u32 unk18;                  // 0x18
-    void* vtable;               // 0x1C
+    u32* vtable;                // 0x1C
     CVoiceHandle* field_0x20;   // 0x20
     CVoiceHandle* field_0x24;   // 0x24
 };

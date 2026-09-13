@@ -14,9 +14,9 @@
  * Layout (constructor/destructor + Init):
  *   0x00: CProcess          -- task-system base (0x3C) + vtable PMF data
  *   0x54: u8                -- phase/state flag (written by func_8029BE7C)
- *   0x58: u8[4]             -- IScnRender subobject (raw vptr storage)
+ *   0x58: IScnRender        -- render-callback subobject (vptr)
  *   0x5C: CProcess*         -- parent process reference
- *   0x60: CBgTex            -- background layout widget (raw storage)
+ *   0x60: CBgTex            -- background layout widget
  *   0x80: CTitleAHelp       -- title/help bar
  *   0xB8: COption           -- core option menu logic (0x104 bytes)
  *  0x1BC: u8 mState         -- phase/state indicator (0..4)
@@ -54,13 +54,13 @@ public:
     u8 mField54;                  // 0x54: phase flag
     u8 mField55;                  // 0x55
     u8 _pad56[2];                 // 0x56-0x57
-    u8 mIScnRender[4];            // 0x58: IScnRender subobject (raw vptr storage)
+    IScnRender mIScnRender;       // 0x58: render-callback subobject (vptr)
     CProcess* mParentRef;         // 0x5C: parent process reference
-    // Embedded widgets kept as raw storage: their ctors/dtors are invoked via
-    // the retail pre-mangled free functions (no member forms exist to call).
-    u8 mBgTex[0x20];              // 0x60: CBgTex
-    u8 mTitleAHelp[0x38];         // 0x80: CTitleAHelp
-    u8 mOption[0x104];            // 0xB8: COption
+    // Real embedded widgets (CMenuCollepedia idiom). Ctors/dtors still invoked
+    // via retail free-function symbols; members give typed field access.
+    CBgTex mBgTex;                // 0x60
+    CTitleAHelp mTitleAHelp;      // 0x80
+    COption mOption;              // 0xB8 (0x104 bytes)
     u8 mState;                    // 0x1BC
     u8 mArg;                      // 0x1BD
 };

@@ -53,10 +53,9 @@ CScnLightMan::~CScnLightMan() {}
 
 // Arms the selected light item: runs the helper on arg2, then sets the arm
 // flag (+0x121c) of the item pointer held at +0x8 of arg1.
-extern "C" void func_8048D124(u8* arg1, u8* arg2) {
+extern "C" void func_8048D124(CScnLightMan* self, u8* arg2) {
     func_804BF944(arg2);
-    char* ptr = *(char**)(arg1 + 8);
-    ptr[0x121c] = 1;
+    self->mLight->flag121C = 1;
 }
 
 // Virtual dispatch thunk: invokes slot 3 of the object at +0x8 (flat retail
@@ -76,8 +75,8 @@ struct VTarget {
     virtual void v10() = 0;
 };
 
-extern "C" void func_8048D1B0(u8* self) {
-    VTarget* obj = (VTarget*)*(void**)(self + 8);
+extern "C" void func_8048D1B0(CScnLightMan* self) {
+    VTarget* obj = (VTarget*)self->mLight;
     obj->v3();
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

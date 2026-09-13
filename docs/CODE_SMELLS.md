@@ -15,12 +15,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4152 |
 | `self`/register-style params | 13417 |
-| `void*` (params + locals) | 7714 |
+| `void*` (params + locals) | 7712 |
 | raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3312 |
 | inline asm / `register` | 126 |
 | rN-named params | 464 |
-| goto | 3421 |
+| goto | 3420 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 10 |
 | #pragma schedule once/twice (fakematch candidate) | 6 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
@@ -234,7 +234,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/lyt/lyt_layout.cpp | 5 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_material.cpp | 0 | 0 | 17 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_pane.cpp | 81 | 0 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/lyt/lyt_resourceAccessor.cpp | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/lyt/lyt_resourceAccessor.cpp | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_texMap.cpp | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_textBox.cpp | 6 | 0 | 5 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_window.cpp | 54 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -535,7 +535,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 0 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuGetItemMulti.cpp | 46 | 0 | 45 | 20 | 0 | 0 | 0 | 0 | 49 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuGetItemMulti.cpp | 46 | 0 | 45 | 20 | 0 | 0 | 0 | 0 | 48 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItem.cpp | 2 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
@@ -2645,8 +2645,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 4,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 2
+  "schedule_pragma": 0
  },
  "libs/nw4r/src/lyt/lyt_texMap.cpp": {
   "asm_insn_shim": 0,
@@ -5714,7 +5713,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuGetItemMulti.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 46,
-  "goto_count": 49,
+  "goto_count": 48,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 45,

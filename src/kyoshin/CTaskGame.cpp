@@ -2214,27 +2214,29 @@ void func_8004302C(int a, int b) {
         return;
     }
     if (a != 0) {
-        // Create path. Fresh loader with b != 0 comes from plain MEM2;
-        // an existing loader (or b == 0) is (re)allocated tail-aligned
-        // from MEM1.
+        // Create path. Retail skips entirely when a loader already exists
+        // (bne to epilogue). Fresh + b == 0 is plain MEM2; fresh + b != 0
+        // is MEM1 tail-aligned.
         CLoad* load;
-        if (lbl_eu_80663D1C == nullptr && b != 0) {
-            mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-            load = static_cast<CLoad*>(mtl::MemManager::allocate(0x30, handle));
-            if (load != nullptr) {
-                load = __ct__CLoad(load, 0);
+        if (lbl_eu_80663D1C == nullptr) {
+            if (b == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                load = static_cast<CLoad*>(mtl::MemManager::allocate(0x30, handle));
+                if (load != nullptr) {
+                    load = __ct__CLoad(load, 0);
+                }
+                lbl_eu_80663D1C = load;
+            } else {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
+                load = static_cast<CLoad*>(mtl::MemManager::allocate_ex(0x30, handle, -0x20));
+                if (load != nullptr) {
+                    load = __ct__CLoad(load, 0);
+                }
+                lbl_eu_80663D1C = load;
             }
-            lbl_eu_80663D1C = load;
-        } else {
-            mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
-            load = static_cast<CLoad*>(mtl::MemManager::allocate_ex(0x30, handle, -0x20));
-            if (load != nullptr) {
-                load = __ct__CLoad(load, 0);
-            }
-            lbl_eu_80663D1C = load;
+            func_802AE508(load);
+            lbl_eu_80663D24 = 0;
         }
-        func_802AE508(load);
-        lbl_eu_80663D24 = 0;
     } else {
         // Teardown path.
         if (lbl_eu_80663D1C != nullptr) {

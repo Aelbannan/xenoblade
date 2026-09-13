@@ -50,7 +50,7 @@ public:
     u8  mBase44;            // 0x44 mByte1
     u8  mBase45;            // 0x45 mByte2
     char mBase46[2];        // 0x46..0x47
-    void* mBaseVtable2;     // 0x48 secondary vptr (CCtrlMoveBase::unk08's vtable, overwritten here)
+    const char* mBaseVtable2; // 0x48 secondary vptr (CCtrlMoveBase::unk08's vtable, overwritten here)
 
     // --- CCtrlMoveNpc own fields ---
     int (CCtrlMoveNpc::*mStateFunc)();  // 0x4C state dispatch ptmf (12 bytes)
@@ -76,7 +76,7 @@ using cf::CCtrlMoveNpc;
 extern "C" {
 
 // Base class ctor + ptmf runtime (CCtrlMoveBase's ctor, takes CCtrlMoveBase*).
-void __ct__80088904(cf::CCtrlMoveBase* self);
+void __ct__80088904(cf::CCtrlMoveBase* ths);
 long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
@@ -94,16 +94,16 @@ void deactivateLOD__8CTaskLODFv(u8 v);
 void* getScnHandle__Fv(void);
 void func_804BCC30(void*, s8 v);
 void func_804BCC3C(void*, u8 v);
-void func_80089990(cf::CCtrlMoveBase* self);
+void func_80089990(cf::CCtrlMoveBase* ths);
 f32 FrSqrt__Q24nw4r4mathFf(f32 x);
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7);
 
 // Movement base helpers / npc move helpers (unmangled global symbols).
-void func_80088974(CCtrlMoveNpc* self, const ml::CVec3* a, const ml::CVec3* b,
+void func_80088974(CCtrlMoveNpc* ths, const ml::CVec3* a, const ml::CVec3* b,
                    int c, int d);
-void func_80089694(CCtrlMoveNpc* self, const ml::CVec3* a, f32 f);
-void func_8008962C(CCtrlMoveNpc* self);
+void func_80089694(CCtrlMoveNpc* ths, const ml::CVec3* a, f32 f);
+void func_8008962C(CCtrlMoveNpc* ths);
 void func_80093618(cf::CCtrlMoveData* data, f32 f);
 int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
 void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
@@ -152,7 +152,7 @@ extern u32 lbl_eu_80663D90;     // global value copied into mField78
 namespace cf {
 CCtrlMoveNpc::CCtrlMoveNpc() {
     __ct__80088904((cf::CCtrlMoveBase*)this);
-    this->mBaseVtable2 = (void*)lbl_eu_80532DB4;
+    this->mBaseVtable2 = lbl_eu_80532DB4;
     this->mStateFunc = __ptmf_null;
 }
 }
@@ -161,11 +161,11 @@ CCtrlMoveNpc::CCtrlMoveNpc() {
 // func_8019F8E0 - dispatch the state ptmf if set; return "was set".
 // ---------------------------------------------------------------------------
 namespace cf {
-int func_8019F8E0(CCtrlMoveNpc* self) {
-    if (self->mStateFunc) {
-        (self->*self->mStateFunc)();
+int func_8019F8E0(CCtrlMoveNpc* ths) {
+    if (ths->mStateFunc) {
+        (ths->*ths->mStateFunc)();
     }
-    return self->mStateFunc != 0 ? 1 : 0;
+    return ths->mStateFunc != 0 ? 1 : 0;
 }
 }
 
@@ -174,21 +174,21 @@ int func_8019F8E0(CCtrlMoveNpc* self) {
 // set the state fn. Approached-fraction is clamped into [0, max].
 // ---------------------------------------------------------------------------
 namespace cf {
-void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB) {
-    self->mField64 = 4;
-    self->mField58 = *vec;
-    self->mField68 = scale;
-    self->mField6C = paramB;
+void func_8019F6E8(CCtrlMoveNpc* ths, const ml::CVec3* vec, f32 scale, f32 paramB) {
+    ths->mField64 = 4;
+    ths->mField58 = *vec;
+    ths->mField68 = scale;
+    ths->mField6C = paramB;
 
     // The base data pointer is re-loaded for each access in the retail.
-    self->mField74 =
-        *reinterpret_cast<float*>(self->mBaseData->mPosObj->CfObject_getMoveRateScale());
-    self->mField78 = lbl_eu_80663D90;
-    self->mField70 = lbl_eu_80667C58;
-    self->mBaseData->field_0x14 = lbl_eu_80667C5C;
+    ths->mField74 =
+        *reinterpret_cast<float*>(ths->mBaseData->mPosObj->CfObject_getMoveRateScale());
+    ths->mField78 = lbl_eu_80663D90;
+    ths->mField70 = lbl_eu_80667C58;
+    ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3* pos = self->mBaseData->mPosObj->CfObject_getPosVector();
+    ml::CVec3* pos = ths->mBaseData->mPosObj->CfObject_getPosVector();
     ml::CVec3 diff = *vec - *pos;
     float len2 = diff.x * diff.x + diff.z * diff.z;
 
@@ -205,19 +205,19 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 
     float t = lbl_eu_80667C64 * sq / scale + lbl_eu_80667C60;
     if (t > lbl_eu_8066A208) {
-        float v = t / self->mField74;
-        self->mField70 = v;
+        float v = t / ths->mField74;
+        ths->mField70 = v;
         if (v < lbl_eu_80667C58) {
             v = lbl_eu_80667C58;
         } else if (v > lbl_eu_80667C68) {
             v = lbl_eu_80667C68;
         }
-        self->mField70 = v;
+        ths->mField70 = v;
     }
 
-    func_80089990((cf::CCtrlMoveBase*)self);
-    self->mVec18 = ml::CVec3::zero;
-    self->mStateFunc = lbl_eu_80532DA8;
+    func_80089990((cf::CCtrlMoveBase*)ths);
+    ths->mVec18 = ml::CVec3::zero;
+    ths->mStateFunc = lbl_eu_80532DA8;
 }
 }
 
@@ -228,7 +228,7 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 // ---------------------------------------------------------------------------
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
-    void* bdat = (void*)lbl_eu_806640B4;
+    void* bdat = lbl_eu_806640B4;
     // Column values live in address-taken slots (full-word stores after each
     // call); the u8/u16 casts at each use site lower to lbz/lhz (retail
     // shape, cf. CfGimmickSaveOff ctor).
@@ -274,7 +274,7 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 // ---------------------------------------------------------------------------
 void func_8019FD2C() {
     func_8003AA34();
-    void* bdat = (void*)lbl_eu_806640B4;
+    void* bdat = lbl_eu_806640B4;
     cf::CfGameManager::getGameSubManager();
 
     u32* bitmap;
@@ -323,12 +323,12 @@ void func_8019FD2C() {
 // fn) once the target is nearly reached or approach no longer applies.
 // ---------------------------------------------------------------------------
 namespace cf {
-void func_8019F93C(CCtrlMoveNpc* self) {
+void func_8019F93C(CCtrlMoveNpc* ths) {
     const ml::CVec3* pos =
-        self->mBaseData->mPosObj->CfObject_getPosVector();
+        ths->mBaseData->mPosObj->CfObject_getPosVector();
 
     // PS vector subtraction: delta = target - current position.
-    ml::CVec3 diff = self->mField58 - *pos;
+    ml::CVec3 diff = ths->mField58 - *pos;
     ml::CVec3 v = diff;
 
     // Horizontal (XZ) distance squared to the target.
@@ -336,7 +336,7 @@ void func_8019F93C(CCtrlMoveNpc* self) {
 
     if (len2 > lbl_eu_80667C6C) {
         ml::CVec3 v2;
-        f32 speed = self->mField70;
+        f32 speed = ths->mField70;
         if (len2 < lbl_eu_80667C70) {
             if (len2 < lbl_eu_80667C5C) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
@@ -348,29 +348,29 @@ void func_8019F93C(CCtrlMoveNpc* self) {
             } else {
                 len = lbl_eu_80667C5C;
             }
-            speed = (self->mField70 - lbl_eu_80667C58) * (len - lbl_eu_80667C60)
+            speed = (ths->mField70 - lbl_eu_80667C58) * (len - lbl_eu_80667C60)
                     * lbl_eu_80667C74 + lbl_eu_80667C58;
         }
 
         v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
-        func_80088974(self, &v2, &self->mField58, 1, 0);
-        func_80089694(self, &v2, speed);
-        if (func_800A5038(pos, &self->mField58, speed, lbl_eu_80667C60) == 0) {
+        func_80088974(ths, &v2, &ths->mField58, 1, 0);
+        func_80089694(ths, &v2, speed);
+        if (func_800A5038(pos, &ths->mField58, speed, lbl_eu_80667C60) == 0) {
             return;
         }
     }
 
     // Idle tail: clear the approach rate; when paramB allows it, also run the
     // turn-rate helper before dropping back to the idle state function.
-    self->mBaseData->field_0x14 = lbl_eu_80667C5C;
-    if (self->mField6C < lbl_eu_80667C78) {
-        func_80093618(self->mBaseData,
-                      self->mField6C * lbl_eu_8066A210);
-        self->mStateFunc = __ptmf_null;
-        func_8008962C(self);
+    ths->mBaseData->field_0x14 = lbl_eu_80667C5C;
+    if (ths->mField6C < lbl_eu_80667C78) {
+        func_80093618(ths->mBaseData,
+                      ths->mField6C * lbl_eu_8066A210);
+        ths->mStateFunc = __ptmf_null;
+        func_8008962C(ths);
     } else {
-        self->mStateFunc = __ptmf_null;
-        func_8008962C(self);
+        ths->mStateFunc = __ptmf_null;
+        func_8008962C(ths);
     }
 }
 }

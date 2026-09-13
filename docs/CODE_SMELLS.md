@@ -15,8 +15,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7448 |
 | extern "C" definitions (forced names) | 4154 |
 | `self`/register-style params | 13463 |
-| `void*` (params + locals) | 7810 |
-| raw pointer offset arithmetic | 7550 |
+| `void*` (params + locals) | 7801 |
+| raw pointer offset arithmetic | 7540 |
 | deref-through-cast arithmetic | 2929 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
@@ -401,7 +401,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 98 | 2 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGameManager.cpp | 110 | 64 | 17 | 60 | 6 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmick.cpp | 8 | 3 | 31 | 28 | 22 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmick.cpp | 8 | 3 | 31 | 19 | 12 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 16 | 42 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickEne.cpp | 10 | 1 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 8 | 1 | 12 | 8 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
@@ -4302,10 +4302,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 3,
   "goto_count": 5,
   "init_side_effect": 0,
-  "ptr_arith": 22,
+  "ptr_arith": 12,
   "schedule_pragma": 0,
   "self_params": 31,
-  "void_ptr": 28
+  "void_ptr": 19
  },
  "src/kyoshin/cf/CfGimmickElv.cpp": {
   "asm_insn_shim": 0,

@@ -112,10 +112,10 @@ using namespace cf;
 
 namespace cf {
     void CfGimmick::func_8020896C(void* other) {
-        void* cur = *(void**)((char*)this + 0x78);
+        CfGameManager* cur = field_78;
         if (cur != other) return;
-        *(void**)((char*)cur + 0xB0) = 0;
-        *(void**)((char*)this + 0x78) = 0;
+        cur->unkB0 = 0;
+        field_78 = 0;
     }
 
     void CfGimmick::func_80208988() {
@@ -670,33 +670,28 @@ void func_80209F2C() {
 }
 
 void func_80209F5C() {
-    void* p = getUnk80664658();
-    *(volatile unsigned int*)((unsigned char*)p + 0x214) |= 0x000C0002;
+    CfGimmickGlobal* p = getUnk80664658();
+    *(volatile u32*)&p->field_214 |= 0x000C0002;
 }
 
 void func_80209F8C() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x8008;
+    getUnk80664658()->field_214 |= 0x8008;
 }
 
 void func_80209FB8() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0xD0000;
+    getUnk80664658()->field_214 |= 0xD0000;
 }
 
 void func_80209FE4() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x40000;
+    getUnk80664658()->field_214 |= 0x40000;
 }
 
 void func_8020A010() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x80000;
+    getUnk80664658()->field_214 |= 0x80000;
 }
 
 void func_8020A03C() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x200000;
+    getUnk80664658()->field_214 |= 0x200000;
 }
 
 void func_8020A068(int arg0, int flag, u32 value) {
@@ -710,13 +705,11 @@ void func_8020A068(int arg0, int flag, u32 value) {
 }
 
 void func_8020A0CC() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x8;
+    getUnk80664658()->field_214 |= 0x8;
 }
 
 void func_8020A0F8() {
-    void* p = getUnk80664658();
-    *(unsigned int*)((char*)p + 0x214) |= 0x400000;
+    getUnk80664658()->field_214 |= 0x400000;
 }
 
 void func_8020A124(float value) {

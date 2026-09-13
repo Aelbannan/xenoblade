@@ -13,7 +13,7 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
     *(void**)self = (void*)lbl_eu_8053A1E0;
     self->mFlag = 8;
 
-    void* mgr = func_8003AA34();
+    UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)func_8003AA34();
     void* holder = lbl_eu_80664140;
     self->mParam = (u16)param;
 
@@ -45,6 +45,12 @@ cf::CfGimmickSaveOff::~CfGimmickSaveOff() {
 // retail loop calls on each list node's object. Declared-only (pure virtual),
 // so nothing is emitted; it exists to make MWCC use its canonical virtual-call
 // sequence (lwz r12,0(r3); lwz r12,0x110(r12)).
+// View of getObjAt84() result: poke target lives at +0x84.
+struct SaveOffPoke84 {
+    u8 pad[0x84];
+    u8 at84;
+};
+
 struct IUnkVt110 {
     virtual void u00() = 0;
     virtual void u01() = 0;
@@ -144,7 +150,7 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
             IUnkVt110* obj = (IUnkVt110*)entry->object;
             void* result = obj->getObjAt84();
             if (result != NULL) {
-                func_8008B95C((u8*)result + 0x84);
+                func_8008B95C(&((SaveOffPoke84*)result)->at84);
             }
             entry = entry->next;
         }

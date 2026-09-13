@@ -49,12 +49,12 @@ extern "C" {
 
 // External function declarations
 extern "C" {
-    // GX cache
-    void updateOrthoGX__8CGXCacheFv(void* cache);
-    void setBlendState__8CGXCacheFii(void* cache, int a, int b);
-    void resetGXStateA__8CGXCacheFv(void* cache);
+    // GX cache (typed like CScnBloom / CView — void* erased at codegen)
+    void updateOrthoGX__8CGXCacheFv(CGXCache* cache);
+    void setBlendState__8CGXCacheFii(CGXCache* cache, int a, int b);
+    void resetGXStateA__8CGXCacheFv(CGXCache* cache);
     void updateViewRoot__9CViewRootFv();
-    void* cacheInstance__9CDeviceGX;
+    CGXCache* cacheInstance__9CDeviceGX;
 
     // Memory manager
     void setMemInitFlag__Q23mtl10MemManagerFb(bool flag);

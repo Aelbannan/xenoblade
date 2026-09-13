@@ -108,8 +108,7 @@ void Manager::addComponent(Component* pComponent) {
     pComponent->setManager(this);
 
     if (mpAllocator != NULL) {
-        IDToComponent* p = static_cast<IDToComponent*>(
-            MEMAllocFromAllocator(mpAllocator, sizeof(IDToComponent)));
+        void* p = MEMAllocFromAllocator(mpAllocator, sizeof(IDToComponent));
         nw4hbm::ut::List_Append(&mIDToComponent,
                               new (p) IDToComponent(id, pComponent));
     } else {
@@ -247,10 +246,8 @@ void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
         PaneToComponent* pLink = NULL;
 
         if (mpAllocator != NULL) {
-            PaneComponent* pBufComponent = static_cast<PaneComponent*>(
-                MEMAllocFromAllocator(mpAllocator, sizeof(PaneComponent)));
-            PaneToComponent* pBufLink = static_cast<PaneToComponent*>(
-                MEMAllocFromAllocator(mpAllocator, sizeof(PaneToComponent)));
+            void* pBufComponent = MEMAllocFromAllocator(mpAllocator, sizeof(PaneComponent));
+            void* pBufLink = MEMAllocFromAllocator(mpAllocator, sizeof(PaneToComponent));
 
             pComponent = new (pBufComponent) PaneComponent(suIDCounter);
             pLink = new (pBufLink) PaneToComponent(&*it, pComponent);

@@ -9,6 +9,15 @@
 // Forward declarations for external functions in other TUs.
 struct GlobalStruct_80572B94;
 
+// View of retail blocks that store a size word at +0xC.
+struct SizeWordAtC {
+    u32 start; // 0x0
+    u8 pad04[0x8];
+    u32 size;  // 0xC
+};
+
+
+
 // Retail linker labels referenced from this TU are declared in
 // include/kyoshin/code_800A75FC.hpp.
 
@@ -744,8 +753,8 @@ int func_800A8B98(int param) {
 
 int func_800A8BD8(u32 param) {
     if (param == 0) return 0;
-    u32 start = *(u32*)(lbl_eu_80572B38);
-    u32 size = *(u32*)(lbl_eu_80572B38 + 0xC);
+    u32 start = ((SizeWordAtC*)lbl_eu_80572B38)->start;
+    u32 size = ((SizeWordAtC*)lbl_eu_80572B38)->size;
     u32 end = start + size;
     int result = 0;
     if (start <= param && param < end) {
@@ -884,8 +893,8 @@ int func_800A8E6C(int size, int arg2) {
 
 int func_800A9024(u32 param) {
     if (param == 0) return 0;
-    u32 start = *(u32*)(lbl_eu_80572B78);
-    u32 size = *(u32*)(lbl_eu_80572B78 + 0xC);
+    u32 start = ((SizeWordAtC*)lbl_eu_80572B78)->start;
+    u32 size = ((SizeWordAtC*)lbl_eu_80572B78)->size;
     u32 end = start + size;
     int result = 0;
     if (start <= param && param < end) {

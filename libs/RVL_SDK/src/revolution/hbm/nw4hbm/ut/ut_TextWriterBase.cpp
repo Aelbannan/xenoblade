@@ -368,7 +368,7 @@ f32 TextWriterBase<T>::AdjustCursor(f32* pX, f32* pY, const T* pStr, int len) {
 
 template <typename T>
 int TextWriterBase<T>::GetTabWidth() const {
-    return *(int*)((u8*)this + 84);
+    return mTabWidth;
 }
 
 template <typename T>

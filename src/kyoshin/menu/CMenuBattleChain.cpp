@@ -88,8 +88,8 @@ extern "C" CMenuBattleChain* __ct__CMenuBattleChain(CMenuBattleChain* obj,
 
 // Member/base dtors and operator delete (retail names). The redundant
 // `if (self != 0)` re-check reproduces the retail's dead double-beq.
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
-extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
+extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
 extern "C" void __dl__FPv(void* p);
 
 /*
@@ -106,7 +106,7 @@ extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags) {
     __dt__17UnkClass_8045F564Fv(&self->mRegion, -1);
     if (self != 0) {
         if (self != 0) {
-            __dt__8CProcessFv(self, 0);
+            __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
         }
     }
     if (flags > 0)

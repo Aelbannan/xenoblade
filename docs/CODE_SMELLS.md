@@ -14,8 +14,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" (total lines) | 16646 |
 | extern "C" declarations (non-lbl_*, imports) | 7495 |
 | extern "C" definitions (forced names) | 4151 |
-| `self`/register-style params | 13399 |
-| `void*` (params + locals) | 7689 |
+| `self`/register-style params | 13393 |
+| `void*` (params + locals) | 7686 |
 | raw pointer offset arithmetic | 7912 |
 | deref-through-cast arithmetic | 3309 |
 | inline asm / `register` | 127 |
@@ -103,7 +103,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/effect/code_804DB938.cpp | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLib.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCri.cpp | 80 | 12 | 26 | 15 | 3 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibCriMoviePlay.cpp | 50 | 4 | 4 | 2 | 2 | 0 | 2 | 1 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibCriMoviePlay.cpp | 50 | 4 | 4 | 1 | 2 | 0 | 2 | 1 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 65 | 12 | 6 | 19 | 22 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbm.cpp | 39 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
@@ -463,7 +463,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 5 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 8 | 62 | 13 | 47 | 2 | 0 | 2 | 5 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectPoint.cpp | 4 | 1 | 6 | 15 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectPoint.cpp | 4 | 1 | 0 | 15 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 0 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 8 | 3 | 26 | 24 | 5 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
@@ -522,7 +522,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/code_80213488.cpp | 4 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 78 | 18 | 40 | 88 | 22 | 8 | 3 | 0 | 35 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 16 | 64 | 231 | 24 | 47 | 1 | 0 | 0 | 27 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuBattleChain.cpp | 7 | 7 | 22 | 9 | 0 | 0 | 3 | 0 | 3 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuBattleChain.cpp | 7 | 7 | 22 | 7 | 0 | 0 | 3 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 3 | 7 | 12 | 4 | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleEnd.cpp | 3 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1183,7 +1183,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 1,
   "schedule_pragma": 0,
   "self_params": 4,
-  "void_ptr": 2
+  "void_ptr": 1
  },
  "libs/monolib/src/lib/CLibCriStreamingPlay.cpp": {
   "asm_insn_shim": 0,
@@ -4932,7 +4932,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 6,
   "void_ptr": 15
  },
  "src/kyoshin/cf/object/CfObjectTbox.cpp": {
@@ -5573,7 +5572,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 22,
-  "void_ptr": 9
+  "void_ptr": 7
  },
  "src/kyoshin/menu/CMenuBattleCommu.cpp": {
   "asm_insn_shim": 0,

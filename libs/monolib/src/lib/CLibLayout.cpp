@@ -67,10 +67,15 @@ extern "C" u32 lbl_eu_8056D350[40];
 extern const char lbl_eu_805231BC[0x14];
 #include <decomp.h>
 
+// Typed primary-vptr slot (CWorkThread at +0x0).
+struct CLibLayoutVptrView {
+    u32* vtPrimary; //0x0
+};
+
 CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
     // novtable class: install the retail vtable by hand (retail stores it
     // right after the base ctor call).
-    *(void**)this = (void*)lbl_eu_8056D350;
+    ((CLibLayoutVptrView*)this)->vtPrimary = lbl_eu_8056D350;
     mAllocHandle = -1;
     hashDivisor = 0x10;
     hashTable = reinterpret_cast<CLibLayoutHashElem**>(mHashData);

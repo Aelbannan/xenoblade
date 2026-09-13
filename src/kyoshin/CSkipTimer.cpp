@@ -829,7 +829,7 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) {
         func_8029F168(reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0]));
         func_802A03AC(this);
         mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        mMemRegion.validateHeap();
         return true;
     }
     return false;
@@ -874,7 +874,7 @@ __declspec(noinline) void func_8029F168(CSkipTimer2* self) {
                                 ->FindPaneByName(&lbl_eu_80510568[0x41], true);
     func_80124270(pane, 0);
     func_8029F788(reinterpret_cast<u8*>(self));
-    self->mMemRegion.func_8045F810();
+    self->mMemRegion.validateHeap();
 }
 #pragma pop
 #pragma optimize_for_size off

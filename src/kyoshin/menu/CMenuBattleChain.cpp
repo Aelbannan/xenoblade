@@ -99,11 +99,10 @@ extern "C" void __dl__FPv(void* p);
  * member ~CMenuBattleChain() reorders the base/region destruction and does
  * not match; see KB sibling attempts).
  */
-extern "C" void* __dt__16CMenuBattleChainFv(void* self, int flags) {
-    CMenuBattleChain* obj = static_cast<CMenuBattleChain*>(self);
-    if (obj == 0)
+extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags) {
+    if (self == 0)
         goto end;
-    __dt__17UnkClass_8045F564Fv(&obj->mRegion, -1);
+    __dt__17UnkClass_8045F564Fv(&self->mRegion, -1);
     if (self != 0) {
         if (self != 0) {
             __dt__8CProcessFv(self, 0);
@@ -164,11 +163,12 @@ void CMenuBattleChain::Init() {
 
 void CMenuBattleChain::Term() {
     CDeviceVI::waitForDrawDone();
-    void* r4 = this;
+    // Same MI adjust as Init: IScnRender subobject at +0x70 (null-this safe).
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != 0) {
-        r4 = (char*)this + 0x70;
+        cb = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
     }
-    mScn->removeRenderCB((IScnRender*)r4);
+    mScn->removeRenderCB(cb);
     if (mLayout != 0) {
         delete mLayout;
         mLayout = 0;

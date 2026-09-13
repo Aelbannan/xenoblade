@@ -78,7 +78,7 @@ public:
     u32 mFlags;            // 0x4C
 
     // 0x50: VM context/thread
-    void* mVmContext;      // 0x50
+    u8* mVmContext;        // 0x50 VM context/thread buffer
 
     // 0x54: wait counter (s16)
     s16 mWaitCount;        // 0x54

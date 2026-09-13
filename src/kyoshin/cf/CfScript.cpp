@@ -154,7 +154,7 @@ __declspec(noinline) void CfScriptManager::func_80068C5C() {
     CfScript& script = mScripts[2];
     if (script.mFlags & 0x20) {
         if (script.mVmContext != nullptr) {
-            vmThreadSleepAll((u8*)script.mVmContext);
+            vmThreadSleepAll(script.mVmContext);
         }
     }
 }
@@ -388,8 +388,8 @@ void CfScript::waitLoad() {
     if ((mFlags & 0x2) && (mFlags & 0x4)) {
         // If the VM thread is not yet running, link + start it.
         if (!(mFlags & 0x8)) {
-            if (vmLink((u8*)mVmContext) != 0) {
-                vmStart((u8*)mVmContext);
+            if (vmLink(mVmContext) != 0) {
+                vmStart(mVmContext);
                 mFlags |= 0x8;
             }
         }
@@ -483,13 +483,13 @@ void CfScriptManager::init() {
         CfScript& script = mScripts[i];
 
         // Per-slot VM constructor (retail: if/else-if chain, cmpwi/cmplwi).
-        void* vmCtx = nullptr;
+        u8* vmCtx = nullptr;
         if (i == 0) {
-            vmCtx = func_800A82BC();
+            vmCtx = (u8*)func_800A82BC();
         } else if (i == 1) {
-            vmCtx = func_800A837C();
+            vmCtx = (u8*)func_800A837C();
         } else if (i == 2) {
-            vmCtx = func_800A843C();
+            vmCtx = (u8*)func_800A843C();
         }
 
         script.mVmContext = vmCtx;

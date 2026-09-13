@@ -133,10 +133,10 @@ extern "C" u32 lbl_eu_8056D678[9];
 // declared with C linkage: MWCC emits the identifier verbatim, making both
 // the wrapper symbols and the tail-call relocs carry the exact retail names
 // (no reloc drift).  Same pattern as the accepted LODMemMan.cpp TU.
-extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
-extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
-extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
-extern "C" void func_8046EDD0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* value);
+extern "C" void setElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
+extern "C" void updateElementVisibility__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
+extern "C" void setElementFlag80__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
+extern "C" void func_8046EDD0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int value);
 extern "C" void setTimeParams__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a, void* b);
 extern "C" void clearElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void setElementFlag__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
@@ -155,12 +155,12 @@ extern "C" void setElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, 
 extern "C" float getElementCachedValue__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void* updateSingleElement__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
 extern "C" void freePersistentBuffer__Q23LOD9LODMemManFv();
-extern "C" void __dt__8046D144(void* self, int flag);
-extern "C" void __ct__Q23LOD9LODMemManFv(void* self);
+extern "C" void __dt__8046D144(LOD::LODMemMan* self, int flag);
+extern "C" void __ct__Q23LOD9LODMemManFv(LOD::LODMemMan* self);
 extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void func_804C2014(CScnEnvLgtCtrl* self, void* a, int b);
 extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
-extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a);
+extern "C" void configureShrinkTargets__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int a);
 extern "C" void* func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
 extern "C" void allocPersistentBuffer__Q23LOD9LODMemManFv(u32 handle, u32 size);
 extern "C" void getLodVisState__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
@@ -171,7 +171,7 @@ extern "C" void func_804C2094(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, voi
 // through this typed view instead of raw pointer arithmetic.
 struct CTaskLODVptrSlot {
     u8 _00[0x10];
-    void* vtable;  // +0x10
+    u32* vtable;  // +0x10
 };
 
 // --- FULL_MATCH functions ---
@@ -272,9 +272,9 @@ extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
         // sequence).  The vtable labels are referenced directly so the vptr
         // stores carry the retail reloc names.
         __ct__8CProcessFv(t);
-        ((CTaskLODVptrSlot*)t)->vtable = (void*)&lbl_eu_8056D6C0;
+        ((CTaskLODVptrSlot*)t)->vtable = lbl_eu_8056D6C0;
         t->initMemberPointers();
-        ((CTaskLODVptrSlot*)t)->vtable = (void*)&lbl_eu_8056D678;
+        ((CTaskLODVptrSlot*)t)->vtable = lbl_eu_8056D678;
         t->mParam1 = p1;
         t->mParam2 = p2;
         // Direct ctor-symbol call (same recipe as the __dt__8046D144 dtor
@@ -458,16 +458,16 @@ void CTaskLOD::refreshLOD() {
 // Forward the task + arg pair to the active LODMemMan (func_8046E988), then
 // walk the singleton's scene-light control ring (func_804C2094) with the same
 // task/arg and the float value.  `b` is unused in retail.
-extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, void* a, void* b) {
+extern "C" void setLODParam__8CTaskLODFv(CTaskLOD* self, float val, int a, void* b) {
     if (lbl_eu_80665730[0]) {
         configureShrinkTargets__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
-        func_804C2094(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, a);
+        func_804C2094(lbl_eu_80665730[0]->mParam1->field_0x7C, val, self, (void*)(u32)a);
     }
 }
 
 // Same delegate-shape as dispatchLODArgs: forwards `self` + first arg `a` to the
 // active LODMemMan (tail-call `b`).  `b` is unused in retail.
-void addLODEntry__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
+void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
     if (lbl_eu_80665730[0]) {
         setElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
@@ -491,19 +491,19 @@ float CTaskLOD::getLODDistance() {
     }
     return 0.0f;
 }
-void attachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
+void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
     if (lbl_eu_80665730[0]) {
         updateElementVisibility__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void detachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
+void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
     if (lbl_eu_80665730[0]) {
         setElementFlag80__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }
 }
 
-void setLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
+void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b) {
     if (lbl_eu_80665730[0]) {
         func_8046EDD0__Q23LOD9LODMemManFv(lbl_eu_80665730[0]->mpActiveLOD, self, a);
     }

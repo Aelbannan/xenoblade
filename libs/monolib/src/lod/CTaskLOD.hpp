@@ -89,10 +89,10 @@ public:
 // tail-call relocs carry the exact retail names.
 extern "C" void dispatchLODArgs__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c);
 extern "C" void setLODEnable__8CTaskLODFv(CTaskLOD* self, int flag);
-extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
-extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, void* a, void* b);
+extern "C" void addLODEntry__8CTaskLODFv(CTaskLOD* self, int a, void* b);
+extern "C" void attachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b);
+extern "C" void detachLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b);
+extern "C" void setLODObject__8CTaskLODFv(CTaskLOD* self, int a, void* b);
 
 // The one CTaskLOD instance reference used by the delegates below.
 extern CTaskLOD* lbl_eu_80665730;

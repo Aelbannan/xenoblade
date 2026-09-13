@@ -16,10 +16,8 @@ int thread(VMThread* pThread, int unused, u32 subType) {
     }
     VMArg result;
     result.type = VM_TYPE_OC;
-    // VMArg's u16 at offset 0x2 carries the OC subtype; the field is unnamed
-    // in monolib's shared VMArg layout, so store it by offset (same pattern
-    // as copyArg in yvm_util.h).
-    *(u16*)((u8*)&result + 2) = (u16)subType;
+    // VMArg::unk2 carries the OC subtype.
+    result.unk2 = (u16)subType;
     result.value.uintVal = outId;
     vmRetValSet(pThread, &result);
     return 1;

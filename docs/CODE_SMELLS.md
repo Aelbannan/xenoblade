@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16653 |
+| extern "C" (total lines) | 16654 |
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4163 |
 | `self`/register-style params | 13412 |
-| `void*` (params + locals) | 7725 |
+| `void*` (params + locals) | 7719 |
 | raw pointer offset arithmetic | 7917 |
 | deref-through-cast arithmetic | 3312 |
 | inline asm / `register` | 126 |
@@ -135,7 +135,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 39 | 6 | 7 | 2 | 1 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 7 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -351,7 +351,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CSysWinSave.cpp | 4 | 7 | 9 | 11 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinScenarioLog.cpp | 2 | 7 | 38 | 18 | 8 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 1 | 26 | 87 | 88 | 19 | 1 | 0 | 5 | 8 | 0 | 0 | 0 |
 | src/kyoshin/CTalkWindow.cpp | 5 | 8 | 10 | 9 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGame.cpp | 7 | 26 | 139 | 16 | 4 | 4 | 0 | 5 | 14 | 0 | 0 | 0 |
@@ -1573,8 +1573,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 13,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 4
+  "schedule_pragma": 0
  },
  "libs/monolib/src/nand/CNand.cpp": {
   "asm_insn_shim": 0,
@@ -3768,8 +3767,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 2,
-  "void_ptr": 2
+  "self_params": 2
  },
  "src/kyoshin/CTagProcessor.cpp": {
   "asm_insn_shim": 0,

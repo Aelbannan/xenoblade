@@ -17,7 +17,7 @@
 #include <revolution/tpl/TPL.h>
 
 // Helper import from another TU (retail C-linkage symbol, no mangling).
-extern "C" void* func_80495FF0(const void* scene);
+extern "C" u32 func_80495FF0(CScn* scene);
 
 // CTTask<CTaskGamePic> out-of-line Move/Draw/dtors (retail emits these as
 // standalone functions; the inline CTTask header copy would mark them inline).
@@ -191,7 +191,7 @@ extern "C" void func_80294E58(CTaskGamePic* ths, u32 index, const u32* src) {
 extern "C" void func_80294EC0(CTaskGamePic* ths, const char* path) {
     IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(ths); // null-this -> null
     if (ths) ev = reinterpret_cast<IWorkEvent*>(&ths->field_54);
-    u32 handle = (u32)func_80495FF0(ths->mScene);
+    u32 handle = func_80495FF0(ths->mScene);
     CFileHandle* fh = CDeviceFile::readFile(handle, path, ev, 0, 0);
     ths->mFileHandle = fh;
     CDeviceFile::func_8044F154(fh, 0);
@@ -270,8 +270,9 @@ void func_8029555C(IScnRender* ths) {
 }
 
 // Returns int (not s16) so callers re-sign-extend the result like retail.
-extern "C" s16 func_80295388(u8* p) {
-    return (s16)(*(s16*)(p + 2) + *(s16*)(p + 6));
+// Bottom edge of an ml::CRect (mPos.y + mSize.y).
+extern "C" s16 func_80295388(const ml::CRect* r) {
+    return (s16)(r->mPos.y + r->mSize.y);
 }
 // ---------------------------------------------------------------------------
 // create - factory. Retail symbol keeps the C-linkage Fv name although
@@ -351,10 +352,10 @@ void CTaskGamePic::cbRenderBefore() {
         // x computed into a local first so MWCC stages it in a callee-saved
         // register across the nested helper call (retail shape).
         s16 vx3 = rectA.mPos.x;
-        dgx0.add(vx3, func_80295388(reinterpret_cast<u8*>(&rectA)), 0,
+        dgx0.add(vx3, func_80295388(&rectA), 0,
                  tex->mHeight);
         s16 vx4 = rectA.mPos.x + rectA.mSize.x;
-        dgx0.add(vx4, func_80295388(reinterpret_cast<u8*>(&rectA)),
+        dgx0.add(vx4, func_80295388(&rectA),
                  tex->mWidth, tex->mHeight);
         dgx0.end();
     }

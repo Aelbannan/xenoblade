@@ -21,8 +21,8 @@ extern "C" {
     // Retail exports these ctors under aliased short names (the defining
     // units emit the full mangled symbols); declared here per the approved
     // reloc-name fix so the bl targets carry the retail reloc names.
-    void* __ct__CLibCriMoviePlay(void* mem, const char* name, CWorkThread* parent);
-    void* __ct__CLibCriStreamingPlay(void* mem, const char* name, CWorkThread* parent);
+    CLibCriMoviePlay* __ct__CLibCriMoviePlay(CLibCriMoviePlay* mem, const char* name, CWorkThread* parent);
+    CLibCriStreamingPlay* __ct__CLibCriStreamingPlay(CLibCriStreamingPlay* mem, const char* name, CWorkThread* parent);
     void MIXUpdateSettings(void);
     void MIXInit(void);
     void MIXQuit(void);
@@ -324,7 +324,7 @@ extern "C" bool wkStandbyLogin__7CLibCriFv(CLibCri* self) {
         u32 workMem = CWorkThreadSystem::getWorkMem();
         CLibCriMoviePlay* movie = (CLibCriMoviePlay*)mtl::MemManager::allocate(0x668, workMem);
         if (movie != nullptr) {
-            movie = (CLibCriMoviePlay*)__ct__CLibCriMoviePlay(movie, movieName, self);
+            movie = __ct__CLibCriMoviePlay(movie, movieName, self);
         }
         CWorkUtil::entryWork(movie, self, false);
 
@@ -333,7 +333,7 @@ extern "C" bool wkStandbyLogin__7CLibCriFv(CLibCri* self) {
         workMem = CWorkThreadSystem::getWorkMem();
         CLibCriStreamingPlay* stream = (CLibCriStreamingPlay*)mtl::MemManager::allocate(0x4B8, workMem);
         if (stream != nullptr) {
-            stream = (CLibCriStreamingPlay*)__ct__CLibCriStreamingPlay(stream, streamName, self);
+            stream = __ct__CLibCriStreamingPlay(stream, streamName, self);
         }
         CWorkUtil::entryWork(stream, self, false);
 

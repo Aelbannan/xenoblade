@@ -216,7 +216,7 @@ inline bool BankFileReader::IsValidFileHeader(
 
 BankFileReader::BankFileReader(const void*
                                pBankBin)
-    : mHeader(NULL), mDataBlock(NULL), mWaveBlock(NULL) {
+    : mHeader(nullptr), mDataBlock(nullptr), mWaveBlock(nullptr) {
     if (!IsValidFileHeader(
             static_cast<const ut::BinaryFileHeader*>(pBankBin))) {
         return;
@@ -236,42 +236,42 @@ BankFileReader::BankFileReader(const void*
 }
 
 // GetInstParam(int, int, int): walk the program/key/velocity DataRegion chain
-// down to the inst-param record, or NULL.
+// down to the inst-param record, or nullptr.
 const BankFile::InstParam* BankFileReader::GetInstParam(int prgNo, int key,
                                                         int velocity) const {
-    if (mHeader == NULL) {
-        return NULL;
+    if (mHeader == nullptr) {
+        return nullptr;
     }
 
     if (prgNo < 0 || prgNo >= static_cast<int>(mDataBlock->instTable.count)) {
-        return NULL;
+        return nullptr;
     }
 
     const BankFile::DataRegion* pRef = &mDataBlock->instTable.items[prgNo];
     if (pRef->dataType == Util::DATATYPE_INVALID) {
-        return NULL;
+        return nullptr;
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
         pRef = GetReferenceToSubRegion(pRef, key);
-        if (pRef == NULL) {
-            return NULL;
+        if (pRef == nullptr) {
+            return nullptr;
         }
     }
 
     if (pRef->dataType == Util::DATATYPE_INVALID) {
-        return NULL;
+        return nullptr;
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
         pRef = GetReferenceToSubRegion(pRef, velocity);
-        if (pRef == NULL) {
-            return NULL;
+        if (pRef == nullptr) {
+            return nullptr;
         }
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
-        return NULL;
+        return nullptr;
     }
 
     return Util::GetDataRefAddress1(*pRef, &mDataBlock->instTable);
@@ -281,7 +281,7 @@ bool BankFileReader::ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
                                   int velocity) const {
     const InstParamData* pData =
         reinterpret_cast<const InstParamData*>(GetInstParam(prgNo, key, velocity));
-    if (pData == NULL) {
+    if (pData == nullptr) {
         return false;
     }
 
@@ -347,7 +347,7 @@ bool BankFileReader::ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
 const BankFile::DataRegion*
 BankFileReader::GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
                                         int splitKey) const {
-    const BankFile::DataRegion* pSub = NULL;
+    const BankFile::DataRegion* pSub = nullptr;
 
     switch (pRef->dataType) {
     case DATATYPE_NONE: {
@@ -363,14 +363,14 @@ BankFileReader::GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
         const BankFile::RangeTable* pRangeTable =
             Util::GetDataRefAddress2(*pRef, &mDataBlock->instTable);
 
-        if (pRangeTable == NULL) {
-            return NULL;
+        if (pRangeTable == nullptr) {
+            return nullptr;
         }
 
         int i = 0;
         while (splitKey > ReadByte(pRangeTable->key + i)) {
             if (++i >= pRangeTable->tableSize) {
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -387,12 +387,12 @@ BankFileReader::GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
         const BankFile::IndexTable* pIndexTable =
             Util::GetDataRefAddress3(*pRef, &mDataBlock->instTable);
 
-        if (pIndexTable == NULL) {
-            return NULL;
+        if (pIndexTable == nullptr) {
+            return nullptr;
         }
 
         if (splitKey < pIndexTable->min || splitKey > pIndexTable->max) {
-            return NULL;
+            return nullptr;
         }
 
         pSub = reinterpret_cast<const BankFile::DataRegion*>(
@@ -414,11 +414,11 @@ bool BankFileReader::ReadWaveInfo(
     const void*
         pWaveData,
     const WaveInfo** ppWaveInfo) const {
-    if (ppWaveInfo != NULL) {
-        *ppWaveInfo = NULL;
+    if (ppWaveInfo != nullptr) {
+        *ppWaveInfo = nullptr;
     }
 
-    if (mHeader == NULL) {
+    if (mHeader == nullptr) {
         return false;
     }
 
@@ -429,17 +429,17 @@ bool BankFileReader::ReadWaveInfo(
     if (location.location == 0) {
         u32 waveIndex = location.waveIndex;
 
-        if (mWaveBlock == NULL) {
+        if (mWaveBlock == nullptr) {
             WaveArchiveReader archiveReader(pWaveData);
             const WaveFile::FileHeader* pFile =
                 static_cast<const WaveFile::FileHeader*>(
                     archiveReader.GetWaveFile(waveIndex));
-            if (pFile == NULL) {
+            if (pFile == nullptr) {
                 return false;
             }
 
             WaveFileReader wfReader(pFile);
-            return wfReader.ReadWaveInfo(pWaveInfo, NULL);
+            return wfReader.ReadWaveInfo(pWaveInfo, nullptr);
         }
 
         if (waveIndex >= mWaveBlock->waveInfoTable.count) {
@@ -449,7 +449,7 @@ bool BankFileReader::ReadWaveInfo(
         const WaveInfo* pInfo = Util::GetDataRefAddress0(
             mWaveBlock->waveInfoTable.items[waveIndex],
             &mWaveBlock->waveInfoTable);
-        if (pInfo == NULL) {
+        if (pInfo == nullptr) {
             return false;
         }
 
@@ -462,7 +462,7 @@ bool BankFileReader::ReadWaveInfo(
             return false;
         }
 
-        if (ppWaveInfo != NULL) {
+        if (ppWaveInfo != nullptr) {
             *ppWaveInfo = reinterpret_cast<const WaveInfo*>(location.waveIndex);
         }
 
@@ -477,11 +477,11 @@ bool BankFileReader::ReadWaveInfo(
         const WaveInfo* pInfo =
             reinterpret_cast<const WaveDataProvider*>(location.waveIndex)
                 ->GetWaveInfo();
-        if (pInfo == NULL) {
+        if (pInfo == nullptr) {
             return false;
         }
 
-        if (ppWaveInfo != NULL) {
+        if (ppWaveInfo != nullptr) {
             *ppWaveInfo = pInfo;
         }
 

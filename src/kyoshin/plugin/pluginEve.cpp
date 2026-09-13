@@ -208,8 +208,8 @@ int onTalk(VMThread* pThread) {
     // object is currently talking. Query via setStateBitMask0(mask, flag)
     // (same (1|2, 1) shape as ocUnit::onEvent); packed void* 0x1000x was wrong.
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
-        (void*)cf::CfGameManager::getPlayer(0), 0,
-        (const void*)&__RTTI__Q22cf13CfObjectActor, (const void*)&lbl_eu_806618D8,
+        cf::CfGameManager::getPlayer(0), 0,
+        &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618D8,
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
@@ -227,8 +227,8 @@ int onTalkEnd(VMThread* pThread) {
     // Same talk-mode query as onTalk but without forcing the talk state on
     // (arg2 = 0 in both dispatch calls).
     cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
-        (void*)cf::CfGameManager::getPlayer(0), 0,
-        (const void*)&__RTTI__Q22cf13CfObjectActor, (const void*)&lbl_eu_806618D8,
+        cf::CfGameManager::getPlayer(0), 0,
+        &__RTTI__Q22cf13CfObjectActor, &lbl_eu_806618D8,
         0);
     CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;

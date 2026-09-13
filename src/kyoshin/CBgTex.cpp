@@ -9,6 +9,9 @@
 
 #include <nw4r/lyt.h>
 
+// Local import (retail unmangled); same decl as CExchangeWin.cpp.
+void func_801390E0(CFileHandle**);
+
 // US retail keeps most callee names unmangled in CBgTex.o relocs; the C++
 // member manglings are only kept for __dt__ and OnFileEvent (see CBgTex.hpp).
 
@@ -157,7 +160,8 @@ void CBgTex::func_801C3E3C() {
 
 bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
-        void* pArchive = mFileHandle->getData();
+        // getData() is void* ABI; attach buffer typed as u8* (CUICfManager idiom).
+        u8* pArchive = static_cast<u8*>(mFileHandle->getData());
         nw4r::lyt::ArcResourceAccessor* accessor =
             CLibLayout::createArcResourceAccessor();
         lbl_eu_80664464 = accessor;

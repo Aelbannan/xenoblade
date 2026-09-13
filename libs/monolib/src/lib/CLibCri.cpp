@@ -206,11 +206,12 @@ extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
         IErrorWii* errCb = reinterpret_cast<IErrorWii*>(self);
         // full-object destruction: restore the primary + both MI sub-vptrs
         // through the same typed view the ctor uses (RHS shapes kept retail-pinned).
-        vp->vtPrimary = lbl_eu_8056CE58;
-        vp->vtViCb = (u32*)((char*)&lbl_eu_8056CE58 + 0xA0);
-        vp->vtErrorWii = (u32*)((char*)&lbl_eu_8056CE58 + 0xB8);
+        vp->vtPrimary = &lbl_eu_8056CE58[0];
+        vp->vtViCb = &lbl_eu_8056CE58[0xA0 / sizeof(u32)];
+        vp->vtErrorWii = &lbl_eu_8056CE58[0xB8 / sizeof(u32)];
         if (errCb != nullptr) {
-            errCb = reinterpret_cast<IErrorWii*>((char*)self + 0x1C8);
+            // IErrorWii subobject lives at the vtErrorWii slot (0x1C8).
+            errCb = reinterpret_cast<IErrorWii*>(&vp->vtErrorWii);
         }
         CErrorWii::removeCallback(errCb);
         lbl_eu_806656D8 = nullptr;
@@ -390,16 +391,22 @@ extern "C" void onErrorCallback__7CLibCriFv(CLibCri* self) {
 // renamed onto the retail names by UNIT_RULES exact_renames (§17.6).
 // ============================================================================
 extern "C" void thunk452_viBeginFrame(CLibCri* self) {
-    execCriMain__7CLibCriFv((CLibCri*)((char*)self - 0x1C4));
+    // self is the +0x1C4 CDeviceVICb subobject; recover the full object.
+    CLibCriVptrView* vp = (CLibCriVptrView*)((char*)self - 0x1C4);
+    execCriMain__7CLibCriFv((CLibCri*)vp);
 }
 extern "C" void thunk452_dt(CLibCri* self, int flag) {
-    __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C4), flag);
+    CLibCriVptrView* vp = (CLibCriVptrView*)((char*)self - 0x1C4);
+    __dt__7CLibCriFv((CLibCri*)vp, flag);
 }
 extern "C" void thunk456_errorWiiCB(CLibCri* self) {
-    onErrorCallback__7CLibCriFv((CLibCri*)((char*)self - 0x1C8));
+    // self is the +0x1C8 IErrorWii subobject.
+    CLibCriVptrView* vp = (CLibCriVptrView*)((char*)self - 0x1C8);
+    onErrorCallback__7CLibCriFv((CLibCri*)vp);
 }
 extern "C" void thunk456_dt(CLibCri* self, int flag) {
-    __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C8), flag);
+    CLibCriVptrView* vp = (CLibCriVptrView*)((char*)self - 0x1C8);
+    __dt__7CLibCriFv((CLibCri*)vp, flag);
 }
 
 // ============================================================================

@@ -9,17 +9,17 @@
 // rather than a C++ member constructor (same convention as __ct__cf_CfGimmick).
 // The class carries a manual vptr at +0x00 (set to lbl_eu_8053A1E0).
 extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param) {
-    __ct__cf_CfGimmick(self);
-    *(void**)self = (void*)lbl_eu_8053A1E0;
+    __ct__cf_CfGimmick((cf::CfGimmick*)self);
+    *(u32**)self = (u32*)lbl_eu_8053A1E0;
     self->mFlag = 8;
 
     UnkClass_8003AA34* mgr = (UnkClass_8003AA34*)func_8003AA34();
-    void* holder = lbl_eu_80664140;
+    void* holder = (void*)lbl_eu_80664140;
     self->mParam = (u16)param;
 
-    func_80208F34(self, &self->mVec04, mgr, &holder);
-    func_80209020(self, self->mBlock1C, mgr, &holder);
-    func_80209288(self, self->mBlock10, mgr, &holder);
+    func_80208F34((cf::CfGimmick*)self, &self->mVec04.x, mgr, &holder);
+    func_80209020((cf::CfGimmick*)self, (cf::CfGimmick*)self->mBlock1C, mgr, &holder);
+    func_80209288((cf::CfGimmick*)self, (f32*)self->mBlock10, mgr, &holder);
 
     // Read three bdat string cells (the cells are string pointers); lower
     // 16 bits go into the u16 bounds, the low byte into the type.
@@ -38,7 +38,7 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
 // Complete-object destructor: MWCC auto-generates the this!=0 guard and the
 // delete-flag wrapper around this body (same convention as CfGimmickItem).
 cf::CfGimmickSaveOff::~CfGimmickSaveOff() {
-    __dt__Q22cf9CfGimmickFv((void*)this, 0);
+    __dt__Q22cf9CfGimmickFv((cf::CfGimmick*)this, 0);
 }
 
 // Opaque interface whose vtable slot 0x44 (offset 0x110) is the getter the
@@ -118,7 +118,7 @@ struct IUnkVt110 {
     virtual void u63() = 0;
     virtual void u64() = 0;
     virtual void u65() = 0;
-    virtual void* getObjAt84() = 0; // vtable offset 0x110
+    virtual SaveOffPoke84* getObjAt84() = 0; // vtable offset 0x110
 };
 
 // State machine tick: optional range gate on the game-manager counter,
@@ -148,9 +148,9 @@ extern "C" void func_802ABCB4(cf::CfGimmickSaveOff* self) {
         CfGimmickListNode* entry = tail->next;
         while (entry != list->head) {
             IUnkVt110* obj = (IUnkVt110*)entry->object;
-            void* result = obj->getObjAt84();
+            SaveOffPoke84* result = obj->getObjAt84();
             if (result != NULL) {
-                func_8008B95C(&((SaveOffPoke84*)result)->at84);
+                func_8008B95C(&result->at84);
             }
             entry = entry->next;
         }

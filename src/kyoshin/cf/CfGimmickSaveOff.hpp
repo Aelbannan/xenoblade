@@ -13,21 +13,21 @@ namespace cf { class CfGameManager; }
 
 // CfGimmick base-class constructor/destructor (retail emits them with
 // unmangled C-linkage names; see __ct__cf_CfGimmick in CfGimmick.cpp).
-extern "C" void __ct__cf_CfGimmick(void* self);
-extern "C" void __dt__Q22cf9CfGimmickFv(void* self, int flag);
+extern "C" void __ct__cf_CfGimmick(cf::CfGimmick* self);
+extern "C" void __dt__Q22cf9CfGimmickFv(cf::CfGimmick* self, int flag);
 
 // Gimmick work-area registration helpers (register three column blocks with
 // the bdat manager returned by func_8003AA34).
-extern "C" void func_80208F34(void* self, void* block, void* mgr, void* holder);
-extern "C" void func_80209020(void* self, void* block, void* mgr, void* holder);
-extern "C" void func_80209288(void* self, void* block, void* mgr, void* holder);
+extern "C" void func_80208F34(cf::CfGimmick* self, float* out, void* unused, void* holder);
+extern "C" void func_80209020(cf::CfGimmick* self, cf::CfGimmick* out, void* unused, void* holder);
+extern "C" void func_80209288(cf::CfGimmick* self, f32* out, void* bdat, void* table);
 
 // State-machine side effects shared with CfGimmickObject.
 extern "C" void func_8020A03C();
 extern "C" void func_8020A0CC();
 
 // Poke the object registered at result+0x84 (save-point activation).
-extern "C" void func_8008B95C(void* target);
+extern "C" void func_8008B95C(u8* target);
 
 // Scenario/sequence counter from the game manager.
 extern "C" u32 getQueuedFileEventCount__Q22cf13CfGameManagerFv();
@@ -43,7 +43,7 @@ extern u8 lbl_eu_80510B28[];
 // CfGimmickSaveOff vtable (stored at +0x00 by the constructor).
 extern u8 lbl_eu_8053A1E0[];
 // Bdat file holder seed handed to the registration helpers (.sdata pointer).
-extern void* lbl_eu_80664140;
+extern u32* lbl_eu_80664140;  // bdat file holder seed (.sdata)
 
 namespace cf {
 

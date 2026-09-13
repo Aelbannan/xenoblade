@@ -80,7 +80,7 @@ public:
 
     //0x0: vtable
     //0x0-10: CObjectState
-    void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+    u8* mPtr10;            // 0x10-0x13 (pointer stored at offset 0x10)
     u8 _pad14[0x28 - 0x14]; // 0x14-0x27
 };
 
@@ -117,7 +117,7 @@ public:
     virtual void CfObject_readRefreshValue();     //0x94
     virtual int CfObject_checkTargetState();     //0x98
     // Copies the pointed-to position block to this+0x3C (impl in pluginCfs).
-    virtual void func_80047814(const void* pos); //0x9C (overridden by CfObjectPoint)
+    virtual void func_80047814(const ml::CVec3* pos); //0x9C (overridden by CfObjectPoint)
     // True body takes hidden (x, z) floats (see setPointPosition below).
     virtual void setPointPosition(); //0xA0 (overridden by CfObjectPoint)
     // True body stores (x, y, z) floats to +0x3C/0x40/0x44; the Point
@@ -126,12 +126,12 @@ public:
     virtual void CfObject_setPosXYZ();     //0xA4 (was UnkVirtualFunc21)
     virtual void syncMoveTarget(const ml::CVec3* vec); //0xA8
     virtual ml::CVec3* CfObject_getPosVector();      //0xAC
-    virtual void* CfObject_getPosTriple();     //0xB0 (was UnkVirtualFunc24)
+    virtual ml::CVec3* CfObject_getPosTriple(); //0xB0 (was UnkVirtualFunc24)
     virtual void CfObject_snapMoveTarget(ml::CVec3* pos, float scale); //0xB4
     virtual void CfObject_applyMoveOffset(const ml::CVec3* vec, float amount); //0xB8
-    virtual void CfObject_setRotVec(void* src);     //0xBC (was UnkVirtualFunc27)
+    virtual void CfObject_setRotVec(const ml::CVec3* src); //0xBC (was UnkVirtualFunc27)
     // Base returns self+0x48; Model returns xform block / sub+0xC4.
-    virtual void* CfObject_getField48();     //0xC0 (was UnkVirtualFunc28)
+    virtual u8* CfObject_getField48();       //0xC0 (was UnkVirtualFunc28)
     virtual void CfObject_setMoveHeadAngle(float value);     //0xC4
     virtual void CfObject_setMoveYaw(float value);     //0xC8 (was UnkVirtualFunc30)
     virtual float CfObject_getMoveHeadAngle();     //0xCC
@@ -211,7 +211,7 @@ public:
     virtual void releasePointLink(); //0x68
     virtual void notifyChildUpdate(); //0x6C
     virtual void setChildPoint(); //0x70
-    virtual void func_80047814(const void* pos); //0x9C
+    virtual void func_80047814(const ml::CVec3* pos); //0x9C
     virtual void setPointPosition(); //0xA0
     virtual void setPointEnabled(int flag); //0x158
     virtual int isCollEnabled(); //0x160
@@ -243,7 +243,7 @@ CfObjectPoint::~CfObjectPoint() {
     // store); the null guard and delete-flag guard are auto-generated. The
     // flags word is read before the vtable store, matching retail's schedule.
     u32 flags = mFlags68;
-    *(void**)this = reinterpret_cast<void*>(lbl_eu_8052A3B0);
+    *reinterpret_cast<u32**>(this) = lbl_eu_8052A3B0;
     if (flags & 0x40000000) {
         ((void* (*)(void*, void*))func_80186474)(func_801862C0(), this);
     }
@@ -253,7 +253,7 @@ CfObjectPoint::~CfObjectPoint() {
     // vtable store + slot-0x68 destroy are written out, reproducing retail's
     // inlined D2 block exactly.
     if (this != 0) {
-        *(void**)this = reinterpret_cast<void*>(lbl_eu_805294E0);
+        *reinterpret_cast<u32**>(this) = lbl_eu_805294E0;
         releasePointLink();
     }
 }

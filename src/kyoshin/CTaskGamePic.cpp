@@ -82,7 +82,7 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
     p[0x19] = 0;                   // 0x64
     p[0x1A] = 0;                   // 0x68
 
-    reinterpret_cast<u8*>(pThis)[0x8c] = 0;  // trailing texture byte
+    pThis->field_8C = 0;  // texture-ready flag
 
     // Three colour (RGBA) vectors - single shared float, four components.
     func_800407C8(reinterpret_cast<func_800407C8_tmp*>(p + 0x24),

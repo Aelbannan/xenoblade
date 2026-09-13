@@ -210,12 +210,12 @@ void CDeviceGX::updateVerticalFilter(EVerticalFilter filter){
 
 void CDeviceGX::viAfterDrawDone(){
     GXFifoObj fifoTemp;
-    void* readPtr;
-    void* writePtr;
+    u8* readPtr;
+    u8* writePtr;
 
     GXFlush();
     GXGetCPUFifo(&fifoTemp);
-    GXGetFifoPtrs(&fifoTemp, &readPtr, &writePtr);
+    GXGetFifoPtrs(&fifoTemp, (void**)&readPtr, (void**)&writePtr);
     
     u32 temp1 = unk26C;
     u32 temp = (u32)writePtr;
@@ -242,11 +242,11 @@ void CDeviceGX::drawFrame(){
         GXFlush();
 
         GXFifoObj fifoTemp;
-        void* readPtr;
-        void* writePtr;
+        u8* readPtr;
+        u8* writePtr;
 
         GXGetCPUFifo(&fifoTemp);
-        GXGetFifoPtrs(&fifoTemp, &readPtr, &writePtr);
+        GXGetFifoPtrs(&fifoTemp, (void**)&readPtr, (void**)&writePtr);
         lbl_eu_806656A0->unk26C = (u32)writePtr;
         lbl_eu_806656A0->unk270 = (u32)readPtr;
         GXEnableBreakPt(writePtr);

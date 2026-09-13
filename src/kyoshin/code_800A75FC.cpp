@@ -63,38 +63,38 @@ struct GlobalStruct_80572B94 {
 // Global singleton object at lbl_eu_80572B94
 extern GlobalStruct_80572B94 lbl_eu_80572B94;
 
-extern "C" GlobalStruct_80572B94* __dt__800A75FC(GlobalStruct_80572B94* self, int flag) {
-    if (self != 0) {
+extern "C" GlobalStruct_80572B94* __dt__800A75FC(GlobalStruct_80572B94* ths, int flag) {
+    if (ths != 0) {
         // Release the three allocations handles, then reset the object.
-        if ((u32)self->field_0x00 != 0xFFFFFFFF) {
-            mtl::MemManager::erase((u32)self->field_0x00);
-            self->field_0x00 = -1;
+        if ((u32)ths->field_0x00 != 0xFFFFFFFF) {
+            mtl::MemManager::erase((u32)ths->field_0x00);
+            ths->field_0x00 = -1;
         }
-        if ((u32)self->field_0x04 != 0xFFFFFFFF) {
-            mtl::MemManager::erase((u32)self->field_0x04);
-            self->field_0x04 = -1;
+        if ((u32)ths->field_0x04 != 0xFFFFFFFF) {
+            mtl::MemManager::erase((u32)ths->field_0x04);
+            ths->field_0x04 = -1;
         }
-        if ((u32)self->field_0x08 != 0xFFFFFFFF) {
-            mtl::MemManager::erase((u32)self->field_0x08);
-            self->field_0x08 = -1;
+        if ((u32)ths->field_0x08 != 0xFFFFFFFF) {
+            mtl::MemManager::erase((u32)ths->field_0x08);
+            ths->field_0x08 = -1;
         }
-        self->field_0x10 = 0;
-        self->field_0x20 = 0;
-        self->field_0x14 = 0;
-        self->field_0x18 = 0;
-        self->field_0x1C = 0;
-        self->field_0x34 = 0;
-        self->field_0xB0 = 0;
-        self->field_0x38 = 0;
-        self->field_0x3C = 0;
-        self->field_0x50 = 0;
-        memset(&self->field_0xA0, 0, 0xC);
-        memset(self->field_0x5C, 0, 0x34);
+        ths->field_0x10 = 0;
+        ths->field_0x20 = 0;
+        ths->field_0x14 = 0;
+        ths->field_0x18 = 0;
+        ths->field_0x1C = 0;
+        ths->field_0x34 = 0;
+        ths->field_0xB0 = 0;
+        ths->field_0x38 = 0;
+        ths->field_0x3C = 0;
+        ths->field_0x50 = 0;
+        memset(&ths->field_0xA0, 0, 0xC);
+        memset(ths->field_0x5C, 0, 0x34);
         if (flag > 0) {
-            delete self;
+            delete ths;
         }
     }
-    return self;
+    return ths;
 }
 
 extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
@@ -120,7 +120,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
             mtl::MemManager::getHandleMEM1(), 0x003B1E00, &lbl_eu_804FBF60[0]);
         g->field_0x00 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
-        void* dst = blk + 0x10;
+        u8* dst = blk + 0x10;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
         func_800A3520(dst, objectAligned, 0x003B1C00, 0);
@@ -131,7 +131,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
             mtl::MemManager::getHandleMEM2(), 0x2872200, &lbl_eu_804FBF60[8]);
         g->field_0x04 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
-        void* dst = blk + 0x30;
+        u8* dst = blk + 0x30;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
         func_800A3520(dst, objectAligned, 0x2872000, 1);
@@ -142,7 +142,7 @@ extern "C" void func_800A76EC(GlobalStruct_80572B94* g) {
             mtl::MemManager::getHandleMEM2(), 0x48B00, &lbl_eu_804FBF60[0x10]);
         g->field_0x08 = (int)h;
         u32 object = (u32)mtl::MemManager::getMaxAllocData(h);
-        void* dst = blk + 0x50;
+        u8* dst = blk + 0x50;
         u32 objectAligned = object + 0x100;
         if (objectAligned & 0x1F) objectAligned = (objectAligned + 0x20) - (objectAligned & 0x1F);
         func_800A3520(dst, objectAligned, 0x48900, 1);

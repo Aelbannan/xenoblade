@@ -21,15 +21,15 @@ namespace cf { class CfObjectMove; }
 // (0x00-0x3B) exactly.
 struct CMenuPTStateCtorShim {
     u8 _00[0x10];
-    void* vtable;          // 0x10 -- CProcess vtable, overwritten by this ctor
+    char* vtable;          // 0x10 -- CProcess vtable, overwritten by this ctor
     u8 _14[0x28];          // 0x14-0x3B -- rest of CProcess
     u32 callbacks[6];      // 0x3C-0x53 -- PTMF callback slots (__ptmf_null copies)
     u8 field54;            // 0x54
     u8 field55;            // 0x55
     char* iscnVtbl;        // 0x58 -- IScnRender secondary-base vtable
     CProcess* storedParent; // 0x5C
-    u8 bgTex[0x20];        // 0x60-0x7F -- CBgTex subobject (built in place)
-    u8 _80[0x6bec];        // 0x80-0x6C6B -- CPartyStateWin subobject (built in place)
+    CBgTex bgTex;          // 0x60-0x7F -- CBgTex subobject (built in place)
+    CPartyStateWin partyWin; // 0x80-0x6C6B -- CPartyStateWin subobject (built in place)
     u8 field6C6C;          // 0x6C6C
 };
 

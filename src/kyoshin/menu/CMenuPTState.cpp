@@ -26,7 +26,7 @@ extern "C" void __dt__12CMenuPTStateFv(CMenuPTState* self);
 
 // SDA globals (retail names; defined in common/sdata splits). Global-scope
 // variables are never mangled by MWCC.
-extern u32 lbl_eu_80664300;              // singleton pointer
+extern CMenuPTState* lbl_eu_80664300;    // singleton pointer
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];           // CProcess primary vtable
 extern char lbl_eu_80532A38[];           // CMenuPTState final vtable
@@ -65,10 +65,10 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             u32 ptmfWord2 = ptmf->w[2];
 
             shim->callbacks[2] = ptmfWord2;
-            ptmfWord1 = ptmf->w[1];
-            ptmfWord0 = ptmf->w[0];
-            shim->callbacks[3] = ptmfWord0;
-            shim->callbacks[4] = ptmfWord1;
+            u32 ptmfWord1b = ptmf->w[1];
+            u32 ptmfWord0b = ptmf->w[0];
+            shim->callbacks[3] = ptmfWord0b;
+            shim->callbacks[4] = ptmfWord1b;
             ptmfWord2 = ptmf->w[2];
             shim->callbacks[5] = ptmfWord2;
             shim->field54 = zero;
@@ -82,17 +82,17 @@ extern "C" CMenuPTState* __ct__CMenuPTState(CProcess* _this, CProcess* storedPar
             shim->iscnVtbl = iscnVtbl;
             shim->storedParent = storedParent;
 
-            __ct__CBgTex((CBgTex*)shim->bgTex, 0);
-            __ct__CPartyStateWin((CPartyStateWin*)shim->_80, 0, 0);
+            __ct__CBgTex(&shim->bgTex, 0);
+            __ct__CPartyStateWin(&shim->partyWin, 0, 0);
             shim->field6C6C = 0;
         }
 
         // Store singleton
-        lbl_eu_80664300 = (u32)shim;
+        lbl_eu_80664300 = (CMenuPTState*)shim;
 
         // Register with this (parent) -- insertTop = false
         Regist__8CProcessFP8CProcessb((CProcess*)shim, _this, false);
-        result = (CMenuPTState*)lbl_eu_80664300;
+        result = lbl_eu_80664300;
     }
 
     return result;
@@ -142,14 +142,14 @@ extern const double lbl_eu_80667AA0;       // double pool: 0x4330000080000000 ma
 // the value and the timer fields.
 // Retail-unmangled symbol: MWCC would mangle a plain free function here, so
 // C linkage keeps the exact linker name.
-extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
+extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, cf::CMenuPtStateActor* obj) {
     if (self->field_0x04 > lbl_eu_80667A98) {
         self->field_0x00++;
     }
 
     // Virtual call through slot 0x308 (getCount) -- MWCC stages the vtable
     // through r12 for real member virtual calls.
-    int count = ((cf::CMenuPtStateActor*)obj)->getCount();
+    int count = obj->getCount();
 
     // Signed int->float conversion (MWCC 0x4330000080000000 magic; the
     // builtin conversion is the only frsp-free byte-exact shape).
@@ -164,15 +164,14 @@ extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
 
 // Opaque list holder/list views (CPartyStateWin.hpp declares the shared
 // retail-unmangled helper family with void* parameters).
-struct CEnumListHolder {
-    void* list; // 0x0
-    u32 handle; // 0x4
-};
-
-// The list returned by func_80043F18; element count is at offset 0x620.
 struct CEnumList {
     u8 _00[0x620];
     u32 count; // 0x620
+};
+
+struct CEnumListHolder {
+    CEnumList* list; // 0x0
+    u32 handle; // 0x4
 };
 
 // us-801943cc - func_80192CB0.

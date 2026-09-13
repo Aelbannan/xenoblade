@@ -7,11 +7,11 @@
 // C-linkage imports: both carry unmangled verbatim retail symbol names, so
 // they must keep C linkage.
 // - func_800A5B18: cylinder push-out helper (retail symbol is unmangled).
-extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
+extern "C" void func_800A5B18(void* query, const ml::CVec3* start, void* out, float f1, float f2);
 // - renderCylinder__...Fv: real renderer is the Fb overload; this call site
 //   branches into the Fv-labelled entry point, whose parameter list cannot be
 //   expressed as a C++ declaration.
-extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* start, void* end, ml::CCol4* color, float radius);
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(const ml::CVec3* start, const ml::CVec3* end, ml::CCol4* color, float radius);
 
 // Debug color constants for the collision-cylinder render (loaded from .sdata2).
 // Global-scope variables are not mangled by MWCC, so plain extern declarations

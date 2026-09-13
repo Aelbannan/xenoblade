@@ -156,7 +156,7 @@ extern "C" void func_8020C640(cf::CfGimmickLock* self) {
         func_8020CC9C(self);
         if ((self->configFlags & 1) != 0) {
             int hit = jumptable_eu_80535830[self->stateIndex](
-                (cf::CfGimmick*)&self->scale, (void*)&lbl_eu_805765A0, &self->position);
+                (cf::CfGimmick*)&self->scale, &lbl_eu_805765A0, &self->position);
             if (hit != 0) {
                 func_8020CFD0(self);
                 if ((self->flags & 0xF00) != 0) {
@@ -358,7 +358,7 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
     // region if it was registered.
     void* scene = func_8049626C(lbl_eu_80663E14, lbl_eu_80663E10);
     int hit = jumptable_eu_80535830[self->stateIndex](
-        (cf::CfGimmick*)&self->scale, (void*)((u8*)scene + 0x10c), &self->position);
+        (cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)((u8*)scene + 0x10c), &self->position);
     if (hit != 0) {
         self->flags |= 0x800;
         if ((self->flags & 0x1000) != 0) {
@@ -522,7 +522,7 @@ extern "C" void func_8020D204(cf::CfGimmickLock* self, int flag) {
 // passing the scale matrix, the caller's target and the position vector.
 int func_8020D368(cf::CfGimmickLock* self, void* target) {
     if (self->flags & 2) {
-        return jumptable_eu_80535830[self->stateIndex]((cf::CfGimmick*)&self->scale, target, &self->position);
+        return jumptable_eu_80535830[self->stateIndex]((cf::CfGimmick*)&self->scale, (const CfGimmickVec3*)target, &self->position);
     }
     return 0;
 }

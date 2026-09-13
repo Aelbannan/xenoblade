@@ -273,14 +273,51 @@ extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
     }
     func_80279F6C(self, arg);
 }
+// Data pad so the C++ vptr lands at +0x70 (retail lwz r12, 0x70(r3)).
+struct CChainActorPcV70Data {
+    u8 pad[0x70];
+};
+
+// Pure-virtual view of slot 0x74. MWCC prefix + v27 = retail +0x74.
+// Never constructed (CHelpManager / CQuestWindow scheme).
+struct CChainActorPcV29View : CChainActorPcV70Data {
+    virtual int v00() = 0;
+    virtual int v01() = 0;
+    virtual int v02() = 0;
+    virtual int v03() = 0;
+    virtual int v04() = 0;
+    virtual int v05() = 0;
+    virtual int v06() = 0;
+    virtual int v07() = 0;
+    virtual int v08() = 0;
+    virtual int v09() = 0;
+    virtual int v10() = 0;
+    virtual int v11() = 0;
+    virtual int v12() = 0;
+    virtual int v13() = 0;
+    virtual int v14() = 0;
+    virtual int v15() = 0;
+    virtual int v16() = 0;
+    virtual int v17() = 0;
+    virtual int v18() = 0;
+    virtual int v19() = 0;
+    virtual int v20() = 0;
+    virtual int v21() = 0;
+    virtual int v22() = 0;
+    virtual int v23() = 0;
+    virtual int v24() = 0;
+    virtual int v25() = 0;
+    virtual int v26() = 0;
+    virtual int v27() = 0;  // MWCC prefix+27*4 = retail +0x74
+};
+
 // Checks preconditions before calling func_8027A024 to execute chain logic.
 // Returns 0 if the actor is inactive (vtable check) or if a battle-manager
 // flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
 extern "C" int func_80281FA0(cf::CChainActorPc* self, void* arg) {
-    // Call vtable entry 29: check some active/in-battle condition
-    // Residual: vtable double-load stages in r5 vs retail r12 chain.
-    int (*vfunc)(void*) = ((int(**)(void*))self->mVTable())[29];
-    if (vfunc(self) != 0) return 0;
+    if (static_cast<CChainActorPcV29View*>(static_cast<void*>(self))->v27() != 0) {
+        return 0;
+    }
     // Check battle-manager flag 0xf8 on this->unk0 + 8
     if (func_80148778((void*)(self->unk0 + 8), 0xf8) != 0) return 0;
     return func_8027A024(self, arg);

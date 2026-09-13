@@ -12,6 +12,25 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/util/MemManager.hpp"
 
+// Pure-virtual view of slot 0x3C so MWCC emits the retail r12 vtable
+// dispatch (CQuestWindow / CArtsInfo scheme). Never constructed.
+struct CREvtModelObjResetView {
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;  // MWCC prefix+13*4 = retail +0x3C
+};
+
 // External function declarations
 extern "C" {
     extern void __ct__CREvtModel(void* self, void* pData, int flag);
@@ -44,7 +63,7 @@ extern "C" {
     extern void func_804E3CDC(void*, float, float);
     extern "C" void* func_804CC1F4(void*, u32, u32, int, int, int);
     extern void func_804CC1BC(void*);
-    extern void func_804CC1D8(void*);
+    extern void func_804CC1D8(void* mgr, void* key);
     extern void* func_80495FF0(u32);
     extern void* func_80495E8C(u32, void*, int, int);
     extern void func_80484E5C(void*, float);
@@ -177,16 +196,15 @@ extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
             lbl_eu_806642BC = 0;
         }
 
-        // Virtual call through primary vtable entry 15 (offset 0x3C)
-        CREvtModelObjVtbl* vtbl = (CREvtModelObjVtbl*)self->vtable;
-        vtbl->func3C(self);
+        // Real virtual call: lwz r12, 0(r30) / lwz r12, 0x3C(r12) / bctrl
+        static_cast<CREvtModelObjResetView*>(static_cast<void*>(self))->v13();
 
         if (self->mCount80 != 0) {
             if (lbl_eu_806642C0 > 0) {
                 // Decrement the shared-buffer refcount; release on reaching zero
                 if (--lbl_eu_806642C0 == 0) {
                     if (lbl_eu_806642B8 != 0) {
-                        func_804CC1D8(&lbl_eu_8065FC18);
+                        func_804CC1D8(&lbl_eu_8065FC18, lbl_eu_806642B8);
                         if (lbl_eu_806642B8 != 0) {
                             mtl::MemManager::deallocate(lbl_eu_806642B8);
                             lbl_eu_806642B8 = 0;

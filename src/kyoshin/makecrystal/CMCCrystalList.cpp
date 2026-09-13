@@ -617,12 +617,14 @@ extern "C" void __declspec(noinline) func_80223988(CMCCrystalList* self) {
 #pragma optimize_for_size on
 bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
 {
+    // One function-scope fileData so both archive branches share the r29 color
+    // (per-branch locals were r29 in file 1 and r28 in file 2).
+    void* fileData;
     if (mFileHandle1 == pEventFile->mFileHandle) {
         // === crystal list file 1 loaded ===
         mMemRegion1.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x10000,
             &lbl_eu_805092C0[0x18f], 0);
-        void* fileData;
         Class_8045F858 regionGuard1(&mMemRegion1);
 
         fileData = mFileHandle1->mData;
@@ -686,7 +688,6 @@ bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile)
         mMemRegion2.createRegion(
             mtl::MemManager::getHandleMEM2(), 0x100,
             &lbl_eu_805092C0[0x277], 0);
-        void* fileData;
         Class_8045F858 regionGuard2(&mMemRegion2);
 
         fileData = mFileHandle2->mData;

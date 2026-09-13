@@ -55,6 +55,7 @@ public:
 
     CNandTask* field_0x0; // +0x00: active sub-task object (vtable slot address)
     u8 field_0x4[0x1C];   // +0x04: sub-task parameter block
+    u32* vtable;          // +0x20: class vtable (lbl_eu_8056FD58)
 };
 
 // ---- Shared NAND async-request state --------------------------------------

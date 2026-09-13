@@ -147,8 +147,8 @@ bool func_804DABBC(CNRequest* self) {
 // the two bodies into one 0x18 symbol).  The helper stores the vtable
 // address through r3.  `char[]` type for the vtable keeps the address
 // constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804DAF60(void* dest) {
-    *(void**)dest = (void*)lbl_eu_8056FD68;
+extern "C" __declspec(noinline) void func_804DAF60(CNReqtaskSaveVtbl** dest) {
+    *dest = (CNReqtaskSaveVtbl*)lbl_eu_8056FD68;
 }
 extern "C" __declspec(noinline) void sinit_804DAF58() {
     func_804DAF60(&lbl_eu_806659E0);
@@ -451,11 +451,13 @@ extern "C" void setExtraNandErrorMessage__FPCw(const wchar_t* msg){
 
 // CNRequest ctor: install the vtable label at +0x20, clear +0 and memset
 // the +4..+0x20 sub-object region (28 bytes).
-extern "C" void* __ct__CNRequest(void* self) {
+extern "C" CNRequest* __ct__CNRequest(CNRequest* self) {
     extern u32 lbl_eu_8056FD58[];
-    *(u32*)((u8*)self + 0x20) = (u32)lbl_eu_8056FD58;
-    *(u32*)((u8*)self + 0x00) = 0;
-    memset((u8*)self + 4, 0, 28);
+    // Retail stores the class vtable at +0x20, clears the task slot, then
+    // zeroes the 0x1C-byte sub-task parameter block at +0x04.
+    self->vtable = lbl_eu_8056FD58;
+    self->field_0x0 = 0;
+    memset(self->field_0x4, 0, sizeof(self->field_0x4));
     return self;
 }
 
@@ -560,14 +562,13 @@ int func_804DACAC(CNRequest* req, u32 a1, u8 a2) {
 // (r4-r8 are caller leftovers in retail too). noinline keeps the caller's
 // `bl func_804DACE8` from being inlined.
 __declspec(noinline) CNReqtaskSaveVtbl** func_804DACE8(
-    CNReqtaskSaveData* data, void* path, u32 a, u32 b, u32 c, u32 d) {
-    char* dst = (char*)data;
-    strcpy(dst, (const char*)path);
-    *(u32*)(dst + 0x10) = a;
-    *(u32*)(dst + 0x14) = b;
-    *(u8*)(dst + 0x18) = (u8)c;
-    *(u8*)(dst + 0x19) = (u8)d;
-    *(u8*)(dst + 0x1A) = 0;
+    CNReqtaskSaveData* data, const char* path, u32 a, u32 b, u32 c, u32 d) {
+    strcpy(data->path, path);
+    data->field_0x10 = a;
+    data->field_0x14 = b;
+    data->field_0x18 = (u8)c;
+    data->field_0x19 = (u8)d;
+    data->state = 0;
     return &lbl_eu_806659E0;
 }
 

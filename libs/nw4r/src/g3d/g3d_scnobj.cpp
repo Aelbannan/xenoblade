@@ -26,12 +26,12 @@ namespace g3d {
  *
  ******************************************************************************/
 void ScnObj::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
-    if (pParam != NULL && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
+    if (pParam != nullptr && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
         *pParam &= ~SCNOBJFLAG_DISABLE_CALC_WORLD;
         return;
     }
 
-    if (pParent != NULL) {
+    if (pParent != nullptr) {
         if (TestScnObjFlag(SCNOBJFLAG_MTX_LOCAL_IDENTITY)) {
             math::MTX34Copy(&mMtxArray[MTX_WORLD], pParent);
         } else {
@@ -53,13 +53,13 @@ void ScnObj::CalcViewMtx(const math::MTX34* pCamera) {
 }
 
 ScnObj::ScnObj(MEMAllocator* pAllocator)
-    : G3dObj(pAllocator, NULL),
+    : G3dObj(pAllocator, nullptr),
       mScnObjFlags(0),
       mPriorityDrawOpa(128),
       mPriorityDrawXlu(128),
       PADDING_0xD2(0),
       PADDING_0xD3(0),
-      mpFuncObjExec(NULL),
+      mpFuncObjExec(nullptr),
       mCallbackTiming(0),
       mCallbackDeleteOption(FALSE),
       mCallbackExecOpMask(0) {
@@ -77,7 +77,7 @@ ScnObj::ScnObj(MEMAllocator* pAllocator)
 }
 
 ScnObj::~ScnObj() {
-    if (mpFuncObjExec == NULL) {
+    if (mpFuncObjExec == nullptr) {
         return;
     }
 
@@ -145,7 +145,7 @@ bool ScnObj::SetScnObjOption(u32 option, u32 value) {
 }
 
 bool ScnObj::GetScnObjOption(u32 option, u32* pValue) const {
-    if (pValue == NULL) {
+    if (pValue == nullptr) {
         return false;
     }
 
@@ -249,7 +249,7 @@ void ScnObj::EnableScnObjCallbackExecOp(ExecOp op) {
 
 bool ScnObj::SetBoundingVolume(ScnObjBoundingVolumeType type,
                                const math::AABB* pAABB) {
-    if (pAABB != NULL) {
+    if (pAABB != nullptr) {
         if (type < BOUNDINGVOLUME_MAX) {
             mAABB[type] = *pAABB;
             return SetScnObjOption(OPTID_ENABLE_CULLING, TRUE);
@@ -263,7 +263,7 @@ bool ScnObj::SetBoundingVolume(ScnObjBoundingVolumeType type,
 
 bool ScnObj::GetBoundingVolume(ScnObjBoundingVolumeType type,
                                math::AABB* pAABB) const {
-    if (pAABB != NULL) {
+    if (pAABB != nullptr) {
         if (type < BOUNDINGVOLUME_MAX) {
             *pAABB = mAABB[type];
             return true;
@@ -305,7 +305,7 @@ bool ScnLeaf::SetScnObjOption(u32 option, u32 value) {
 }
 
 bool ScnLeaf::GetScnObjOption(u32 option, u32* pValue) const {
-    if (pValue == NULL) {
+    if (pValue == nullptr) {
         return false;
     }
 
@@ -324,7 +324,7 @@ bool ScnLeaf::GetScnObjOption(u32 option, u32* pValue) const {
 }
 
 void ScnLeaf::CalcWorldMtx(const math::MTX34* pParent, u32* pParam) {
-    if (pParam != NULL && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
+    if (pParam != nullptr && (*pParam & SCNOBJFLAG_DISABLE_CALC_WORLD)) {
         *pParam &= ~SCNOBJFLAG_DISABLE_CALC_WORLD;
         return;
     }
@@ -377,7 +377,7 @@ void ScnLeaf::DefG3dProcScnLeaf(u32 task, u32 param, void* pInfo) {
     }
 
     case G3DPROC_DETACH_PARENT: {
-        SetParent(NULL);
+        SetParent(nullptr);
         break;
     }
 
@@ -404,7 +404,7 @@ void ScnLeaf::DefG3dProcScnLeaf(u32 task, u32 param, void* pInfo) {
  ******************************************************************************/
 
 ScnGroup* ScnGroup::Construct(MEMAllocator* pHeap, u32* pSize, u32 maxNumChildren) {
-    ScnGroup* pObj = NULL;
+    ScnGroup* pObj = nullptr;
     u32 sizeScnGroup = sizeof(ScnGroup);
     u32 sizeCldArray = maxNumChildren * sizeof(ScnObj*);
 
@@ -412,15 +412,15 @@ ScnGroup* ScnGroup::Construct(MEMAllocator* pHeap, u32* pSize, u32 maxNumChildre
     // block is rounded up to 4 bytes.
     u32 size = align4(sizeScnGroup + sizeCldArray);
 
-    if (pSize != NULL) {
+    if (pSize != nullptr) {
         *pSize = size;
     }
 
-    if (pHeap != NULL) {
-        u8* buf = reinterpret_cast<u8*>(Alloc(pHeap, size));
+    if (pHeap != nullptr) {
+        u8* buf = static_cast<u8*>(Alloc(pHeap, size));
 
-        if (buf == NULL) {
-            return NULL;
+        if (buf == nullptr) {
+            return nullptr;
         }
 
         pObj = new (buf) ScnGroup(pHeap,
@@ -480,7 +480,7 @@ void ScnGroup::ScnGroup_G3DPROC_GATHER_SCNOBJ(u32 param,
         }
     } else if (status == IScnObjGather::CULLINGSTATUS_INSIDE) {
         const math::FRUSTUM* pTemp = lbl_eu_80665468;
-        lbl_eu_80665468 = NULL;
+        lbl_eu_80665468 = nullptr;
         {
             for (u32 i = 0; i < mNumScnObj; i++) {
                 mpScnObjArray[i]->G3dProc(G3DPROC_GATHER_SCNOBJ, param,
@@ -585,7 +585,7 @@ void ScnGroup::DefG3dProcScnGroup(u32 task, u32 param, void* pInfo) {
     }
 
     case G3DPROC_DETACH_PARENT: {
-        SetParent(NULL);
+        SetParent(nullptr);
         break;
     }
 
@@ -606,8 +606,8 @@ void ScnGroup::DefG3dProcScnGroup(u32 task, u32 param, void* pInfo) {
 }
 
 bool ScnGroup::Insert(u32 idx, ScnObj* pObj) {
-    if (idx <= mNumScnObj && mNumScnObj < mSizeScnObj && pObj != NULL &&
-        pObj->GetParent() == NULL) {
+    if (idx <= mNumScnObj && mNumScnObj < mSizeScnObj && pObj != nullptr &&
+        pObj->GetParent() == nullptr) {
         for (u32 i = mNumScnObj; i > idx; i--) {
             mpScnObjArray[i] = mpScnObjArray[i - 1];
         }
@@ -635,14 +635,14 @@ ScnObj* ScnGroup::Remove(u32 idx) {
         return pObj;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 bool ScnGroup::Remove(ScnObj* pObj) {
     ScnObj** ppObj = std::find(mpScnObjArray, mpScnObjArray + mNumScnObj, pObj);
 
     if (ppObj != mpScnObjArray + mNumScnObj) {
-        return Remove(std::distance(mpScnObjArray, ppObj)) != NULL;
+        return Remove(std::distance(mpScnObjArray, ppObj)) != nullptr;
     }
 
     return false;

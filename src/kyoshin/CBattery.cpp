@@ -5,6 +5,8 @@
 
 #include <cstdio>
 
+extern "C" void func_801390E0(CFileHandle**);
+
 // Shared string pool in split1 .rodata (US/EU):
 // +0x00 "/menu/jp/Battery.arc"
 // +0x14 "pic_%02d"
@@ -104,7 +106,7 @@ bool CBattery::OnFileEvent(CEventFile* pEventFile) {
         // Create a region for layout related stuff
         mMemRegion.createRegion(CWorkThreadSystem::getWorkMem(), 0xC00, lbl_eu_8051399C + 0x1D, 0);
         Class_8045F858 sp8 = Class_8045F858(&mMemRegion);
-        void* data = mFileHandle->getData();
+        u8* data = static_cast<u8*>(mFileHandle->getData());
         mtl::MemManager::setMemInitFlag(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
         mAccessor->Attach(data, lbl_eu_8051399C + 0x26);

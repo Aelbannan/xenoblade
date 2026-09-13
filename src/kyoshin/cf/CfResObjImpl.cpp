@@ -43,7 +43,7 @@ int func_8016C860(CfResObjImpl* self) {
     return (u32)self->field_08 >= 2;
 }
 
-int func_8016C880(void* self) { return 128; }
+int func_8016C880(CfResObjImpl* /*self*/) { return 128; }
 
 // us-8016dbe4 - resource sound-notify: when the +0x14 in-use test passes,
 // fetch the sound id from the +0x60 slot and, when the resolved sound slot

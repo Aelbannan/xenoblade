@@ -2561,9 +2561,11 @@ extern "C" void func_800A3304() {
     int j;
     cf::CtrlObjectParamEquipRow* vp;
     for (u32 row = 1; row <= 13; ++row) {
-        u32 base32 = lbl_eu_80663E88 + (u16)row * 0x3DD4;
-        vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(
-            reinterpret_cast<u8*>(base32) + 0x41F0);
+        // Mutate the loaded global so the add stays on r3 (lwz dest)
+        // instead of coalescing into the cursor (add r29 / addi r29).
+        u8* p = reinterpret_cast<u8*>(lbl_eu_80663E88);
+        p += (u16)row * 0x3DD4;
+        vp = reinterpret_cast<cf::CtrlObjectParamEquipRow*>(p + 0x41F0);
         for (j = 0; j <= 5; ++j) {
             inst = 0;
             if (*(volatile s16*)(reinterpret_cast<char*>(vp) + 0x1C) > -1) {

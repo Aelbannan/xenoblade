@@ -21,6 +21,34 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 
 ---
 
+## OnFileEvent__14CMCCrystalListFP10CEventFile / CMCCrystalList — file-2 r28 vs r29 → hoist fileData (Wii/1.1 -O4,s)
+- Symptom:   98.9% / 0 structural / 2 reg_swap; file-1 `fileData` already r29, file-2 `lwz/or` used r28
+- Cause:     per-branch `void* fileData` locals were distinct vregs; file-2 colored last (r28)
+- Fix:       one function-scope `void* fileData` shared by both archive branches
+- Result:    FULL_MATCH (unit still OVER(16))
+- Evidence:  us-80225890 / src/kyoshin/makecrystal/CMCCrystalList.cpp
+
+## func_801FFDC4 / CModelDispEquip — beq skip past loop → nest loop in 0x20000+getAnimFlags (Wii/1.1 -O4,p)
+- Symptom:   99.5% / 0 structural / 2 "reg_swap": `beq +0xF0/+0xD4` (retail) vs `beq +0x5C/+0x40` (decomp) to the same join; size still 0x5C4
+- Cause:     The actParam walk (`for i < 2`) sat *after* the `field_3F08 & 0x20000` / `getAnimFlags()` guards, so both beqs only skipped the MCA construct. Retail nests the walk inside both tests, so the beqs skip the loop as well (0x94 extra).
+- Fix:       Move the `for (u8 i = 0; i < 2; i++)` actParam bind inside both `if`s
+- Result:    FULL_MATCH
+- Evidence:  us-80201ab4 / src/kyoshin/menu/parts/CModelDispEquip.cpp
+
+## func_80281FA0 / CChainActorPc — r5 vs r12 vtable at +0x70 → FULL_MATCH (Wii/1.1 -O4,p)
+- Symptom:   93.8% / 2 reg_swap: `lwz r12,0x70(r3)` vs `lwz r5,0x70(r3)` then slot +0x74
+- Cause:     Manual `((int(**)(void*))self->mVTable())[29]` kept the vtable pointer in r5
+- Fix:       Data-base pad[0x70] + pure-virtual view; call v27 so MWCC prefix+27*4 = retail +0x74
+- Result:    FULL_MATCH
+- Evidence:  us-80284424 / src/kyoshin/cf/chain/CChainActorPc.cpp
+
+## __ct__80181B74 / CREvtModelObj — r12 virtual + missing 2nd arg → FULL_MATCH (Wii/1.1 -O4,p)
+- Symptom:   94.4% / 4 reg_swap: `lwz r12,0(r30)` vs `lwz r4,0(r30)` then slot load; later `lwz r4,lbl_eu_806642B8` vs `lwz r0`
+- Cause:     Named `CREvtModelObjVtbl*` kept the vtable in r4; `func_804CC1D8` was declared 1-arg so the buffer never became ABI r4
+- Fix:       Pure-virtual view (CQuestWindow scheme); call v13 so MWCC prefix+13*4 = retail +0x3C. Pass `lbl_eu_806642B8` as `func_804CC1D8` key
+- Result:    FULL_MATCH
+- Evidence:  us-80182f7c / src/kyoshin/realtimeevt/CREvtModelObj.cpp
+
 ## Ground rules (unchanged, apply throughout)
 
 Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVALENT_MATCH`** on Xenoblade Chronicles Wii using **high-level C/C++**, with the isolated Gekko paired-single backend exception defined in `PLAN.md` §17.6. Retail assembly, Ghidra, and `build/us/asm/` are **reference only** except for a documented PS backend use — do not ship arbitrary asm, `register rN`, fake stack buffers, or register-named parameters in `src/**` or `libs/**`.
@@ -10519,6 +10547,11 @@ retail's r3 scratch; witness `rho | no consistent bijection in region [12,13)`
 because r3 doubles as call-arg register. Named-intermediate and u32-typed
 intermediate forms do not break the coalescing.
 
+UPDATE — closed to FULL_MATCH: mutate the loaded global so the add coalesces
+with the `lwz r3` dest instead of the cursor:
+`u8* p = (u8*)lbl; p += (u16)row * 0x3DD4; vp = (EquipRow*)(p + 0x41F0);`
+emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
+
 ## kyoshin/cf/CtrlAct (us-800d3544 family) — store-sinking + stfs/fmr + int2flt residuals → mw_version GC/3.0a5.2 → Wii/1.1
 - Symptom:   three recurring residuals under a5.2: (1) address-taken gate-local `stw` sunk below `addi r4,sp/N; li r5` call-arg setup; (2) `fmr f0,f1` emitted before the preceding `stfs`; (3) 2^52 int→float conversion setup (`lis r0,0x4330/stw`) sunk below `subi/mullw`.
 - Cause:     all three are Wii/1.1-vs-GC/3.0a5.2 final-schedule differences, not source shape. Probes (.scratch/ctrlact_stwsink_probe.c, 6 shapes × c/c++) show a5.2 always sinks; Wii/1.1 hoists — byte-identical to retail.
@@ -10951,6 +10984,20 @@ intermediate forms do not break the coalescing.
 - Fix:       Not closed here (TU claimed). Next: `extern "C"` retail name at the Init `format` call, matching CfScript.cpp
 - Result:    CODE_MATCH 99.92%; split PASS
 - Evidence:  us-80164e38 / src/kyoshin/CCol6System.cpp
+
+## func_80263A34 — timer fadds dest coalesce vs operand order (US, Wii/1.1 -O4,p, OPEN 99.5%)
+- Symptom:   Was 96.9% 6 FPR swaps. `f32 cap,step,cur` + assign field/step/cap + `step += cur` is 99.5% 1 swap: retail `fadds f1,f2,f1` vs decomp `fadds f1,f1,f2`. Colors now match.
+- Cause:     `step = cur + step` restores operand order but reverts to 96.9% (step/cap recolor). Named addend copy also 96.9%. `cap = lbl` first is 96.4%.
+- Fix:       Keep `step += cur` (best live). Next: commute addends without breaking f1 dest / f2 field / f0 cap.
+- Result:    99.5% near-miss (1 fadds operand-order swap). Size OVER(156).
+- Evidence:  us-80265ea4 / src/kyoshin/menu/CMenuPassiveSkill.cpp
+
+## func_801C03C8 — named z/y/x temps pin lfs order vs x/y/z stores (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Live 98.0% 0 structural 2 reg_swap: retail `lfs f0,44; lfs f1,28; lfs f2,12` then `stfs` x/y/z at sp+20/24/28; decomp loaded x then z (`lfs f2,12` / `lfs f0,44`). Size 0x194/0x194.
+- Cause:     Member-assign `t.x/t.y/t.z` births loads in struct order. `t.z` first flipped load order but also store slots (94.1%). Volatile FPRs color low→high, so first-created short-lived temp is f0.
+- Fix:       `f32 z = res->z; f32 y = res->y; f32 x = res->x;` then `t.x=x; t.y=y; t.z=z`. Named temps birth f0/f1/f2 as z/y/x; struct stores keep frame slots. Incomplete z/x-only locals (prior) dropped to 95%.
+- Result:    FULL_MATCH (cycle `equivalence: full_match`)
+- Evidence:  us-801c1cfc / src/kyoshin/cf/CfSoundMan.cpp
 
 ## CArtsInfo sprintf-family (A148/A210/A398/39EFC/AD5C/A60C/A97C/A2D8/A8CC/AA2C/AADC + 37A0C) — entry mr order + 37A0C i2f slot reuse (US, Wii/1.1 -O4,p, OPEN)
 - Symptom:   Registry CODE_MATCH 99.55–99.6% is stale. Live hexdiff: 11 handlers at 95.5–96.0% with **0 structural / 2 reg_swap**; `func_80237A0C` at 92.1% with 0 structural / 8 reg_swap. The 2-swap is not a color error — dests already match (`self→r27/r25`, `arg2→r29/r26`) — only the two independent post-`stmw` `or` copies are swapped (retail `r4` then `r3`; MWCC ABI order `r3` then `r4`). `func_80237A0C` adds 6 stack-displacement diffs: retail reuses the unsigned i2f home at `sp+72/76` for the first xoris conversion then `80/84` for the second; decomp allocates fresh `80/84` and `88/92`.

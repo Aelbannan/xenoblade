@@ -561,12 +561,16 @@ extern "C" s32 func_801C03C8(CfSoundSlot* slot, CfSoundActorPos* out) {
             CfSoundActorPos3* res =
                 (CfSoundActorPos3*)obj->vf73(slot->field_0x2C);
             if (res != 0) {
-                // x then z matches frame-slot order (98.0%, 2 FPR swaps).
-                // Named z/x locals dropped to 95% and shuffled y/z stores.
+                // Load z/y/x into named temps (f0/f1/f2 birth order) then
+                // store x/y/z so frame slots stay 20/24/28. Direct t.x-first
+                // was 98.0% (load order); t.z-first was 94.1% (store swap).
                 CfSoundPos3f t;
-                t.x = res->field_0x0C;
-                t.y = res->field_0x1C;
-                t.z = res->field_0x2C;
+                f32 z = res->field_0x2C;
+                f32 y = res->field_0x1C;
+                f32 x = res->field_0x0C;
+                t.x = x;
+                t.y = y;
+                t.z = z;
                 out->field_0x00 = *(u32*)&t.x;
                 out->field_0x04 = *(u32*)&t.y;
                 out->field_0x08 = *(u32*)&t.z;

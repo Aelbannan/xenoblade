@@ -112,7 +112,7 @@ void* lbl_eu_80663550[2] = { (void*)lbl_eu_80522528, (void*)lbl_eu_8056B400 };
 extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* pName,
                                           CWorkThread* pParent) {
     __ct__11CWorkThreadFPCcP11CWorkThreadi(ths, pName, pParent, 0);
-    *(void**)ths = lbl_eu_8056B360;
+    *(u32**)ths = lbl_eu_8056B360;
     ths->mName[0] = 0;
     ths->mNameLength = 0;
     ths->mAltPath[0] = 0;
@@ -134,7 +134,7 @@ extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* pName,
 CRsrcData::~CRsrcData() {
     // MWCC virtual dtors already null-check `this`; an extra guard adds a dead beq.
     void* cache = mCacheData;
-    *(void**)this = lbl_eu_8056B360;
+    *(u32**)this = lbl_eu_8056B360;
 
     if (cache != nullptr) {
         mtl::MemManager::deallocate(cache);
@@ -198,8 +198,8 @@ void CRsrcData::setRsrcFile(const char* name, void* path, void* data, u32 length
 }
 
 // Retail symbol is void-returning build__9CRsrcDataFPvPCcPvPvUlb (no C++ static twin).
-extern "C" void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, void* arg2, void* data,
-                                                 u32 length, bool flag) {
+extern "C" void build__9CRsrcDataFPvPCcPvPvUlb(CWorkThread* parent, const char* name, void* arg2,
+                                                 void* data, u32 length, bool flag) {
     const char* threadName;
     mtl::ALLOC_HANDLE handle;
     CRsrcData* rsrc;
@@ -210,11 +210,10 @@ extern "C" void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, v
 
     if (rsrc != nullptr) {
         // Explicit retail-named constructor entry point.
-        rsrc = __ct__CRsrcData(rsrc, threadName, static_cast<CWorkThread*>(parent));
+        rsrc = __ct__CRsrcData(rsrc, threadName, parent);
     }
 
-    entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(rsrc, static_cast<CWorkThread*>(parent),
-                                                        false);
+    entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(rsrc, parent, false);
     setRsrcFile__9CRsrcDataFPCcPvPvUlb(rsrc, name, arg2, data, length, flag);
 }
 

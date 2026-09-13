@@ -11,7 +11,7 @@ bool hasChild__FP11CWorkThread(CWorkThread* pThread);
 // Work-thread display name pool: "CRsrcData" (not empty string).
 // Vtable/RTTI targets referenced by the CRsrcData data definitions below.
 extern const char lbl_eu_80522534[];
-extern void __dt__9CRsrcDataFv(void* self, int flags);
+extern void __dt__9CRsrcDataFv(CRsrcData* ths, int flags);
 extern void wkUpdate__9CRsrcDataFv();
 extern bool wkStandbyLogin__9CRsrcDataFv();
 extern bool wkStandbyLogout__9CRsrcDataFv();
@@ -109,25 +109,25 @@ u32 lbl_eu_8056B400[6] = {
 
 void* lbl_eu_80663550[2] = { (void*)lbl_eu_80522528, (void*)lbl_eu_8056B400 };
 
-extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* self, const char* pName,
+extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* pName,
                                           CWorkThread* pParent) {
-    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, pName, pParent, 0);
-    *(void**)self = lbl_eu_8056B360;
-    self->mName[0] = 0;
-    self->mNameLength = 0;
-    self->mAltPath[0] = 0;
-    self->mAltPathLength = 0;
-    self->mPath[0] = 0;
-    self->mPathLength = 0;
-    self->mCacheData = nullptr;
-    self->mCacheLength = 0;
-    self->mRefCount = 0;
-    self->mFlags4DC = 0;
-    self->unk4E0 = 0;
-    self->unk4E2 = 0;
-    self->unk4E4 = 0;
-    self->mType = CWorkThread::THREAD_CRSRCDATA;
-    return self;
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(ths, pName, pParent, 0);
+    *(void**)ths = lbl_eu_8056B360;
+    ths->mName[0] = 0;
+    ths->mNameLength = 0;
+    ths->mAltPath[0] = 0;
+    ths->mAltPathLength = 0;
+    ths->mPath[0] = 0;
+    ths->mPathLength = 0;
+    ths->mCacheData = nullptr;
+    ths->mCacheLength = 0;
+    ths->mRefCount = 0;
+    ths->mFlags4DC = 0;
+    ths->unk4E0 = 0;
+    ths->unk4E2 = 0;
+    ths->unk4E4 = 0;
+    ths->mType = CWorkThread::THREAD_CRSRCDATA;
+    return ths;
 }
 
 #pragma optimize_for_size on

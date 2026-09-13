@@ -25,7 +25,7 @@ public:
 
 // CProcess base constructor imported from another TU (retail C-linkage symbol
 // name - do not let C++ mangle its parameter list).
-extern "C" void __ct__8CProcessFv(CProcess* self);
+extern "C" void __ct__8CProcessFv(CProcess* ths);
 
 // null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];

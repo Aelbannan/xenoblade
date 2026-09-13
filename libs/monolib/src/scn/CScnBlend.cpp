@@ -153,10 +153,11 @@ void func_80498D98(void* obj, int enable) {
 }
 
 extern "C" void func_80498DC0(u8* self, u32 enable) {
+    CScnBlend* blend = (CScnBlend*)self;
     if (enable != 0) {
-        *(u8*)((u8*)self + 0x54) |= 2;
+        blend->mFlags |= 2;
     } else {
-        *(u8*)((u8*)self + 0x54) &= ~2;
+        blend->mFlags &= ~2;
     }
 }
 

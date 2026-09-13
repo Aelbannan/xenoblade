@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4160 |
 | `self`/register-style params | 13474 |
 | `void*` (params + locals) | 7796 |
-| raw pointer offset arithmetic | 7515 |
-| deref-through-cast arithmetic | 2914 |
+| raw pointer offset arithmetic | 7513 |
+| deref-through-cast arithmetic | 2912 |
 | inline asm / `register` | 128 |
 | rN-named params | 472 |
 | goto | 3676 |
@@ -145,7 +145,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CMdlMaterial.cpp | 6 | 0 | 1 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 2 | 7 | 10 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScn.cpp | 9 | 37 | 34 | 23 | 32 | 6 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnBlend.cpp | 17 | 4 | 11 | 4 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnBlend.cpp | 17 | 4 | 11 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnBloom.cpp | 15 | 23 | 41 | 8 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnCameraMan.cpp | 34 | 0 | 3 | 3 | 3 | 0 | 0 | 2 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnEffectActNw4r.cpp | 2 | 15 | 29 | 1 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
@@ -1677,11 +1677,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnBlend.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 2,
   "extern_c_nonlbl_decl": 17,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
-  "ptr_arith": 2,
   "schedule_pragma": 0,
   "self_params": 11,
   "void_ptr": 4

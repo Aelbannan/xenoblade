@@ -27,9 +27,9 @@
 // and the IScnRender subobject vptr at +0x58 (composite vtable + 0x24).
 struct CMenuOptionVtblView {
     u8 _head[0x10];      // 0x00 CProcess storage head (CDoubleListNode)
-    void* mProcVtable;   // 0x10 CProcess vtable slot
+    u8* mProcVtable;     // 0x10 CProcess vtable slot
     u8 _mid[0x58 - 0x14];
-    void* mScnRenderVt;  // 0x58 IScnRender subobject vptr
+    u8* mScnRenderVt;    // 0x58 IScnRender subobject vptr
 };
 
 class CMenuOption : public CProcess {
@@ -75,8 +75,8 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg);
 
 
 // IScnRender vtable this-adjusting thunks (retail: subi r3, r3, 0x58; b ...).
-void func_8029BECC(void* self);
-void func_8029BED4(void* self);
+void func_8029BECC(IScnRender* self);
+void func_8029BED4(IScnRender* self);
 
 // Option-menu helper entry points (retail-unmangled callee names).
 extern "C" void func_8029BC28(CMenuOption* self);

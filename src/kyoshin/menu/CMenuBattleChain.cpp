@@ -13,9 +13,10 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
 
-// forward declarations for scaffold thunk references
-void __dt__16CMenuBattleChainFv(void*);
-void cbRenderBefore__16CMenuBattleChainFv(void*);
+// Thunk targets (retail mangled names). extern "C" keeps the exact symbol
+// (no extra __FPv); GetItemMulti idiom.
+extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags);
+extern "C" void cbRenderBefore__16CMenuBattleChainFv(void* self);
 
 // Term helpers (retail names; CDeviceVI static + UnkClass member).
 namespace CDeviceVI {
@@ -503,6 +504,7 @@ extern "C" void func_802AAC78(CMenuBattleChain* self) {
     }
 }
 
+// IWorkEvent (+0x6C) / IScnRender (+0x70) this-adjusting thunks (retail subi;b).
 void func_802AB3B8(void* self) { ((void(*)(void*))__dt__16CMenuBattleChainFv)((char*)self - 0x6c); }
 
 void func_802AB3C0(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleChainFv)((char*)self - 0x70); }

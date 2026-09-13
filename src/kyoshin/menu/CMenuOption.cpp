@@ -48,7 +48,7 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
 
     CMenuOptionVtblView* vtSlots = reinterpret_cast<CMenuOptionVtblView*>(_this);
     vtSlots->mProcVtable = lbl_eu_805392C8;
-    vtSlots->mScnRenderVt = (void*)((u32)lbl_eu_805392C8 + 0x24);
+    vtSlots->mScnRenderVt = lbl_eu_805392C8 + 0x24;
     _this->mParentRef = parent;
 
     __ct__CBgTex(&_this->mBgTex, 0);
@@ -411,8 +411,8 @@ void func_8029BE7C(CMenuOption* self) {
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuOptionFv
  */
-void func_8029BECC(void* self) {
-    reinterpret_cast<CMenuOption*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
+void func_8029BECC(IScnRender* self) {
+    reinterpret_cast<CMenuOption*>(reinterpret_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 /**
@@ -423,8 +423,8 @@ void func_8029BECC(void* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuOptionFv
  */
-void func_8029BED4(void* self) {
-    ((void(*)(void*))__dt__11CMenuOptionFv)((char*)self - 0x58);
+void func_8029BED4(IScnRender* self) {
+    ((void(*)(void*))__dt__11CMenuOptionFv)(reinterpret_cast<char*>(self) - 0x58);
 }
 
 unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }

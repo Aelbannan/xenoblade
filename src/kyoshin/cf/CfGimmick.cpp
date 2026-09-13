@@ -131,7 +131,7 @@ namespace cf {
 // rather than a C++ member constructor.  Subclass constructors (CfGimmickElv,
 // CfGimmickWarp, ...) call this to init the shared CfGimmick base fields.
 extern "C" void __ct__cf_CfGimmick(CfGimmick* self) {
-    self->vtable = (u32*)lbl_eu_80535844;
+    self->vtable = (void*)lbl_eu_80535844;
     self->field_64 = 0;
     self->field_80 = 0;
     self->field_66 = 0;
@@ -225,12 +225,12 @@ void func_802089BC(CfGimmick* self, const f32* basis, const CfGimmickVec3* point
 
 // Sound-id helpers: first arg is a u16/u32 effect id (Elv val1B6 / Item field_8E),
 // second is a position pointer passed through as an integer to func_801BFDE8.
-void func_80208C48(u32 id, const CfGimmickVec3* pos) {
+void func_80208C48(u32 id, void* pos) {
     func_801BFDE8(1, id, (u32)pos,
                   lbl_eu_80668358, lbl_eu_8066835C);
 }
 
-void func_80208C60(u32 id, const CfGimmickVec3* pos, float second) {
+void func_80208C60(u32 id, void* pos, float second) {
     func_801BFDE8(1, id, (u32)pos,
                   lbl_eu_80668358, second);
 }
@@ -245,7 +245,7 @@ void func_80208C78(cf::CfGimmick* self) {
 // Party-feature state update: re-anchor the gimmick reference point to the
 // player's target-map position (or clear it when no player is loaded), and
 // set the party/kicking flag bits.  Called on party joins/leaves.
-void func_80208CC0(u32 partyId, s32 flagA, s32 flagB) {
+void func_80208CC0(void* partyId, s32 flagA, s32 flagB) {
     lbl_eu_806646BC = 0;
 
     // Ground-height gate: while the stage base height is above zero, record
@@ -269,7 +269,7 @@ void func_80208CC0(u32 partyId, s32 flagA, s32 flagB) {
         dst.x = tx;
         dst.z = target->z;
         lbl_eu_806646B0 = player->CfObject_getMoveHeadAngle();
-        lbl_eu_806646B4 = partyId;
+        lbl_eu_806646B4 = (u32)partyId;
         if (flagA) lbl_eu_806646BC |= 0x20;
         if (flagB) lbl_eu_806646BC |= 0x40;
         if (((cf::CfObjectMove*)player)->mTargetC4 != 0 && player->CfObject_isMoveActiveNow() && player->CfObject_checkSubReady() &&
@@ -434,14 +434,14 @@ void func_8020974C(u32 id) { func_8009D018(id + 0x2CC8); }
 // guarded section).  The scaled angle is recomputed per Sin/Cos call (no
 // local) to match retail's caller-saved FPR budget (f29-f31 only).
 int func_80209754(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
-                  const f32* ang, u32 partyId) {
+                  const f32* ang, void* partyId) {
     // Party-scoped guard.  Retail keeps the (bc&1)==0 return-0 inline (block
     // A) but shares ONE return-0 block for the b4==0 / id-mismatch fails;
     // the pass path jumps to the rotation check (beq .L_8020B5A8).
     if (mask & 0x21) {
         if ((lbl_eu_806646BC & 1) == 0)
             return 0;
-        if (lbl_eu_806646B4 != 0 && partyId == lbl_eu_806646B4)
+        if (lbl_eu_806646B4 != 0 && partyId == (void*)(u32)lbl_eu_806646B4)
             goto rotation;
         return 0;
     }

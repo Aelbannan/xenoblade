@@ -57,15 +57,6 @@ struct CacheListHeader {
     bool unk1C;                    // 0x1e0
 };
 
-// Tiny struct used by the login-wait helper func_804D91D8 (fields 0x3c/0x44/0x4c).
-struct CacheLoginState {
-    u8 field_0x0[0x3c];
-    u32 field_0x3c;   // 0x3c
-    u8 field_0x40[0x4];
-    s32 field_0x44;   // 0x44
-    u8 field_0x48[0x4];
-    u32 field_0x4c;   // 0x4c
-};
 
 class __declspec(novtable) CWorkSystemCache : public CWorkThread {
 public:
@@ -151,7 +142,7 @@ void func_804D903C(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
 }
 
 // Login-wait helper.
-__attribute__((never_inline)) bool func_804D91D8(CacheLoginState* self) {
+__attribute__((never_inline)) bool func_804D91D8(CCacheItem* self) {
     if (self->field_0x3c == 0 && self->field_0x4c == 0) {
         return true;
     }
@@ -220,7 +211,7 @@ void CWorkSystemCache::wkUpdate() {
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
         func_804D91BC(node->mItem);
-        if (func_804D91D8((CacheLoginState*)node->mItem)) {
+        if (func_804D91D8(node->mItem)) {
             CCacheItem* p = node->mItem;
             if (p != NULL) {
                 if (p != NULL) {
@@ -284,8 +275,8 @@ CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
 }
 
 extern "C" void func_804D91BC(CCacheItem* self) {
-    if (*(u8*)((u8*)self + 0x48) == 0) {
-        *(u32*)((u8*)self + 0x44) -= 1;
+    if (self->field_0x48 == 0) {
+        self->field_0x44 -= 1;
     }
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

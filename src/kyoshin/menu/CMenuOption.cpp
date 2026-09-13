@@ -19,7 +19,7 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
 
     // vtable fixups: temp (CProcess) vtable first, then the composite vtable
     // and the IScnRender sub-vtable at +0x58.
-    reinterpret_cast<CMenuOptionVtblView*>(_this)->mProcVtable = lbl_eu_8052BF70;
+    reinterpret_cast<CMenuOptionVtblView*>(_this)->mProcVtable = (u32*)lbl_eu_8052BF70;
     // Post-increment walk forces MWCC's lwzu fold for the base (btm_sco_init
     // pattern). The second group restarts from the array base so its loads
     // stay at disp 0/4/8.
@@ -47,8 +47,8 @@ CMenuOption* __ct__CMenuOption(CMenuOption* _this, CProcess* parent, u32 arg) {
     _this->mField55 = 0;
 
     CMenuOptionVtblView* vtSlots = reinterpret_cast<CMenuOptionVtblView*>(_this);
-    vtSlots->mProcVtable = lbl_eu_805392C8;
-    vtSlots->mScnRenderVt = lbl_eu_805392C8 + 0x24;
+    vtSlots->mProcVtable = (u32*)lbl_eu_805392C8;
+    vtSlots->mScnRenderVt = (u32*)(lbl_eu_805392C8 + 0x24);
     _this->mParentRef = parent;
 
     __ct__CBgTex(&_this->mBgTex, 0);

@@ -27,9 +27,9 @@
 // and the IScnRender subobject vptr at +0x58 (composite vtable + 0x24).
 struct CMenuOptionVtblView {
     u8 _head[0x10];      // 0x00 CProcess storage head (CDoubleListNode)
-    u8* mProcVtable;     // 0x10 CProcess vtable slot
+    u32* mProcVtable;    // 0x10 CProcess vtable slot
     u8 _mid[0x58 - 0x14];
-    u8* mScnRenderVt;    // 0x58 IScnRender subobject vptr
+    u32* mScnRenderVt;   // 0x58 IScnRender subobject vptr
 };
 
 class CMenuOption : public CProcess {

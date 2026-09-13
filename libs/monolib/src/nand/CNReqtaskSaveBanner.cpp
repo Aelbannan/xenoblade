@@ -23,8 +23,6 @@ struct CNReqtaskSaveBannerData;          // sub-task parameter block (defined be
 struct CNReqtaskSaveBannerTarget;        // banner-storage data object (defined below)
 struct CNReqtaskSaveBannerVtbl;          // task vtable (installed into lbl_eu_80665A90)
 struct CNandBlock;                       // dynamic banner data block
-struct CNandStreamBuf;                   // NAND streaming buffer context
-struct CNandPath;                        // banner path string (ml::FixStr<32>)
 struct CNandTask {                       // NAND task/alloc block
     CNandBlock* field_0;                 // +0x00: pointer to the data block being released
 };
@@ -43,13 +41,14 @@ extern "C" {
     // so the code bodies above can reference them.
     extern CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
     extern u32 lbl_eu_80570358[4];
-    extern u8 lbl_eu_80665A94;
+    extern s8 lbl_eu_80665A94;         // path-buffer initialized flag (retail 1B @sda21)
     extern s32 lbl_eu_80663CD0;
     extern s32 lbl_eu_80663CD4;
     extern u32 lbl_eu_80663CD8[2];
     extern u32 lbl_eu_80570368[4];
-    extern ml::FixStr<32> lbl_eu_80661850;
+    extern u8 lbl_eu_80661850[40];     // static FixStr<32> banner path buffer (.bss)
     extern const char lbl_eu_80524894[0x1C];
+    extern const char lbl_eu_805248A8[];  // "%s%s" format string (.rodata, +0x14 in blob)
 
     // Foreign data labels referenced by the banner vtable / RTTI locators
     // (owned by other units; referenced only here).
@@ -57,17 +56,17 @@ extern "C" {
     extern u32 lbl_eu_80524888;
     extern u32 lbl_eu_80663B70;
 
-    u32* func_804DA98C(u8 arg);         // NAND banner-id primitive
-    s32 func_804DA91C(u32* ptr);        // NAND open-banner primitive
-    s32 func_804DA540(CNandStreamBuf* ptr, u32 arg);  // NAND set-buffer primitive
-    s32 func_804DA82C(CNandStreamBuf* data);          // NAND read primitive
+    const char* func_804DA98C(u8 arg);  // NAND banner-id / temp-path primitive
+    s32 func_804DA91C(const char* path); // NAND change-dir / open-banner primitive
+    s32 func_804DA540(const char* path, u8 flag);  // NAND set-buffer / open wrapper
+    s32 func_804DA82C(u32* pos);                   // NAND tell / read primitive
     s32 func_804DA69C(void);            // NAND close primitive
-    CNandPath* func_804F50D0(CNReqtaskSaveBannerData* data);  // build the banner path string (in this file)
-    s32 func_804DA70C(CNandPath* data, u32 arg1, u32 arg2);   // NAND write primitive
+    const char* func_804F50D0(CNReqtaskSaveBannerData* data);  // build the banner path string (in this file)
+    s32 func_804DA70C(const char* path, u8 perm, u8 attr);   // NAND create (async)
     s32 func_804F53DC(CNReqtaskSaveBannerTarget* ptr);        // NAND prim-task finish helper
     void func_804DA4CC(CNandTask* data, CNandTask* dealloc);  // NAND dealloc helper
     s32 func_804DA628(u32 addr, u32 size);  // NAND buffer commit primitive
-    s32 func_804DA7CC(CNandPath* data, u32* bannerPath);      // NAND banner move primitive
+    s32 func_804DA7CC(const char* from, const char* to);      // NAND move (async)
     void __dt__804F5738(CNandBlock* ptr);   // task-block destructor
     void func_804F5080(CNandTask* data, CNandTask* dealloc);  // releases the banner data block
 }
@@ -97,15 +96,21 @@ extern "C" CNReqtaskSaveBannerVtbl** func_804F4D7C(CNReqtaskSaveBannerData* data
 }
 
 // us-804f9638: func_804F50D0
-// Lazily initialises the banner-path string cache (once), then formats the
-// current NAND banner meta (offset/length) into it and returns the path.
-CNandPath* func_804F50D0(CNReqtaskSaveBannerData* data) {
-    if ((s8)lbl_eu_80665A94 == 0) {
-        lbl_eu_80661850.clear();  // zero mString[0] and mLength (offset 0x20)
+// Banner path builder: formats "%s%s" (prefix/meta from the shared .sdata
+// pointers) into the unit's static FixStr<32> buffer (lbl_eu_80661850) and
+// returns it. On the first call the buffer is cleared and the init flag
+// latched to 1; later calls skip straight to the format.
+// Mirrors CNReqtaskSave::func_804DAEE8 (u8 buffer + reinterpret_cast FixStr).
+// noinline: retail func_804F4D90 emits `bl func_804F50D0`; without it MWCC
+// inlines this helper and blows the split budget.
+__declspec(noinline) const char* func_804F50D0(CNReqtaskSaveBannerData* data) {
+    if (lbl_eu_80665A94 == 0) {
+        reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850).clear();
         lbl_eu_80665A94 = 1;
     }
-    lbl_eu_80661850.format(&lbl_eu_80524894[0x14], lbl_eu_80663CD0, lbl_eu_80663CD4);
-    return (CNandPath*)&lbl_eu_80661850;
+    reinterpret_cast<ml::FixStr<32>&>(lbl_eu_80661850)
+        .format(lbl_eu_805248A8, lbl_eu_80663CD0, lbl_eu_80663CD4);
+    return reinterpret_cast<const ml::FixStr<32>&>(lbl_eu_80661850).c_str();
 }
 
 // us-804f95e8: func_804F5080
@@ -148,9 +153,9 @@ struct CNReqtaskSaveBannerTarget {
 //   0xA -> destroy the in-progress block, move the banner into place
 //          (func_804DA7CC)
 //   0xB -> done (return 1)
-extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
-    CNReqtaskSaveBannerData* d = (CNReqtaskSaveBannerData*)data;
-    CNReqtaskSaveBannerTarget* t = (CNReqtaskSaveBannerTarget*)d->f0;
+extern "C" s32 func_804F4D90(CNReqtaskSaveBannerVtbl* vtable_ptr, CNReqtaskSaveBannerData* data) {
+    CNReqtaskSaveBannerData* d = data;
+    CNReqtaskSaveBannerTarget* t = d->f0;
     if (t->unk324 != 0) {
         return 0;
     }
@@ -178,11 +183,11 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
 
     switch ((s8)d->state) {
         s32 r;
-        void* ctx;
-        void* p;
+        u32* ctx;
+        CNReqtaskSaveBannerTarget* p;
         u32 addr;
         u32 size;
-        u32* bannerPath;
+        const char* bannerPath;
 
         case 0:
             bannerPath = func_804DA98C(d->fC);
@@ -193,14 +198,14 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
             break;
 
         case 1:
-            r = func_804DA540((CNandStreamBuf*)lbl_eu_80663CD4, 1);
+            r = func_804DA540((const char*)lbl_eu_80663CD4, 1);
             if (r != 0) return 2;
             d->state = 2;
             break;
 
         case 2:
             ctx = &d->f8;
-            r = func_804DA82C((CNandStreamBuf*)ctx);
+            r = func_804DA82C(ctx);
             if (r != 0) return 2;
             d->state = 3;
             break;
@@ -219,7 +224,7 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
             return 1;
 
         case 5: {
-            CNandPath* pathStr = func_804F50D0((CNReqtaskSaveBannerData*)data);
+            const char* pathStr = func_804F50D0(data);
             r = func_804DA70C(pathStr, 0x34, 0);
             if (r != 0 && r != -6) return 2;
             d->state = 6;
@@ -233,8 +238,8 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
             break;
 
         case 7: {
-            CNandPath* pathStr = func_804F50D0((CNReqtaskSaveBannerData*)data);
-            r = func_804DA540((CNandStreamBuf*)pathStr, 2);
+            const char* pathStr = func_804F50D0(data);
+            r = func_804DA540(pathStr, 2);
             if (r != 0) return 2;
             d->state = 8;
             break;
@@ -260,7 +265,7 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
             p = d->f0;
             __dt__804F5738((CNandBlock*)p);
             bannerPath = func_804DA98C(d->fC);
-            CNandPath* pathStr = func_804F50D0((CNReqtaskSaveBannerData*)data);
+            const char* pathStr = func_804F50D0(data);
             r = func_804DA7CC(pathStr, bannerPath);
             if (r != 0) return 2;
             d->state = 0xB;
@@ -286,8 +291,8 @@ extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
 // the two bodies into one 0x18 symbol). The helper stores the vtable
 // address through r3. `char[]` type for the vtable keeps the address
 // constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804F96B0(void* dest) {
-    *(void**)dest = (void*)lbl_eu_80570358;
+extern "C" __declspec(noinline) void func_804F96B0(CNReqtaskSaveBannerVtbl** dest) {
+    *dest = (CNReqtaskSaveBannerVtbl*)lbl_eu_80570358;
 }
 extern "C" __declspec(noinline) void sinit_804F5140() {
     func_804F96B0(&lbl_eu_80665A90);
@@ -302,6 +307,7 @@ extern "C" __declspec(noinline) void sinit_804F5140() {
 
 // === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
 // short format string stays in .rodata instead of being pooled to .sdata2).
+// lbl_eu_805248A8 is the "%s%s" label at +0x14 (extern-only; reloc name).
 extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x1C] = {
     0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,0x65,0x42,0x61,0x6E,
     0x6E,0x65,0x72,0x00,
@@ -322,13 +328,13 @@ extern "C" u32 lbl_eu_80570368[4] = {
     (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
 };
 
-// === .bss 0x24: banner path string cache ===
-ml::FixStr<32> lbl_eu_80661850;
+// === .bss 0x28: banner path string cache (FixStr<32> storage, no ctor) ===
+u8 lbl_eu_80661850[40];
 
-// === .sbss 8: task vtable pointer (4B) + banner-path cache init flag (4B,
-// low byte used) so the section totals retail's 8 bytes ===
+// === .sbss 8: task vtable pointer (4B) + banner-path cache init flag (1B
+// signed + 3B pad) so the section totals retail's 8 bytes ===
 CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
-u8 lbl_eu_80665A94;
+s8 lbl_eu_80665A94;
 u8 gap_10_80665A95_sbss;
 u8 gap_10_80665A96_sbss;
 u8 gap_10_80665A97_sbss;

@@ -28,14 +28,15 @@ struct SeqLabelBlock {
 // SeqFileReader's prefix (mHeader/mDataBlock), so callers may pass a real
 // SeqFileReader by pointer.
 struct SeqFileReaderView {
-    const SeqFile::Header* mHeader; // at 0x0
-    const void* mDataBlock;         // at 0x4
+    const SeqFile::Header* mHeader;       // at 0x0
+    const SeqFile::DataBlock* mDataBlock; // at 0x4 (same as SeqFileReader)
 };
 
 // Pointer add that keeps the source operand order (base first) when lowered.
-template <typename T>
-inline const void* AddPtrBaseFirst(const void* pBase, T offset) {
-    return reinterpret_cast<const void*>(reinterpret_cast<const u8*>(pBase) + offset);
+template <typename T, typename Base, typename Off>
+inline const T* AddPtrBaseFirst(const Base* pBase, Off offset) {
+    return reinterpret_cast<const T*>(
+        reinterpret_cast<const u8*>(pBase) + offset);
 }
 
 } // namespace
@@ -99,7 +100,7 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     u32 i = 0;
     for (; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry =
-            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, pLabelBlock->offset[i]));
+            AddPtrBaseFirst<SeqLabelEntry>(pLabelBlock, pLabelBlock->offset[i]);
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {

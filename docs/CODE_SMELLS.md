@@ -11,10 +11,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16649 |
-| extern "C" declarations (non-lbl_*, imports) | 7496 |
-| extern "C" definitions (forced names) | 4150 |
-| `self`/register-style params | 13367 |
+| extern "C" (total lines) | 16648 |
+| extern "C" declarations (non-lbl_*, imports) | 7494 |
+| extern "C" definitions (forced names) | 4151 |
+| `self`/register-style params | 13366 |
 | `void*` (params + locals) | 7669 |
 | raw pointer offset arithmetic | 7904 |
 | deref-through-cast arithmetic | 3307 |
@@ -535,7 +535,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuGCItem.cpp | 3 | 5 | 6 | 2 | 3 | 3 | 1 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGameClear.cpp | 0 | 5 | 4 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuGetItem.cpp | 8 | 3 | 9 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuGetItemMulti.cpp | 46 | 0 | 45 | 20 | 0 | 0 | 1 | 0 | 63 | 1 | 0 | 0 |
+| src/kyoshin/menu/CMenuGetItemMulti.cpp | 44 | 1 | 44 | 20 | 0 | 0 | 1 | 0 | 63 | 1 | 0 | 0 |
 | src/kyoshin/menu/CMenuItem.cpp | 2 | 0 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuItemExchange.cpp | 9 | 7 | 24 | 2 | 4 | 0 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 12 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
@@ -5697,11 +5697,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuGetItemMulti.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 1,
-  "extern_c_nonlbl_decl": 46,
+  "extern_c_nonlbl_decl": 44,
+  "extern_c_nonlbl_def": 1,
   "goto_count": 63,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 45,
+  "self_params": 44,
   "void_ptr": 20
  },
  "src/kyoshin/menu/CMenuItem.cpp": {

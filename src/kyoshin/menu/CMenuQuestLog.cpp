@@ -30,6 +30,13 @@ public:
 
 extern "C" void __dt__13CMenuQuestLogFv(CMenuQuestLog* ths, int);
 
+// CProcess primary vptr @ +0x10 (novtable base; same slot as other menus).
+struct CProcessPrimaryVptr {
+    u8 _00[0x10];
+    u32* mVtbl;
+};
+
+
 // Retail constructor symbol (unmangled global). Out-of-line stub so the
 // factory (func_8011CCE0) emits a real `bl` to it; returns `this` in r3 like
 // a real constructor (retail relies on it). C linkage inherited from the
@@ -38,7 +45,8 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
     __ct__8CProcessFv(_this);
 
     // Temp (CProcess) primary vtable.
-    *(u32*)((u8*)_this + 0x10) = (u32)lbl_eu_8052BF70;
+    reinterpret_cast<CProcessPrimaryVptr*>(_this)->mVtbl =
+        reinterpret_cast<u32*>(lbl_eu_8052BF70);
 
     // Null PMF callback slot groups: materialize the __ptmf_null base once
     // via an update-form first load (*n++), index remaining words relative to
@@ -62,7 +70,8 @@ __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CP
     _this->mField54 = 0;
     _this->mField55 = 0;
 
-    *(u32*)((u8*)_this + 0x10) = (u32)lbl_eu_8052CC38;
+    reinterpret_cast<CProcessPrimaryVptr*>(_this)->mVtbl =
+        reinterpret_cast<u32*>(lbl_eu_8052CC38);
     *(u32*)&_this->mIScnRender = renderVt;
     _this->mScene = parent;
 

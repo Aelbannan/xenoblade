@@ -14,7 +14,7 @@ void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect
 // (extern is required inside extern "C": a bare declaration is a tentative
 // DEFINITION and would emit a duplicate sbss symbol.)
 extern void* __RTTI__5CProc;          // defined by kyoshin/CGame.cpp (.sdata 0x80661898)
-extern void __dt__5CProcFv(void* self, int flags);
+extern void __dt__5CProcFv(CProc* self, int flags);
 extern void wkStandbyLogin__5CProcFv();
 extern void wkStandbyLogout__5CProcFv();
 }
@@ -81,7 +81,7 @@ const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0
 // instead of .rodata, so the pool entry is left as the definition.
 
 // Installs the manual (novtable) CProc vtable pointer.
-static inline void CProcInitVptr(void* obj){
+static inline void CProcInitVptr(CProc* obj){
     *(void**)obj = (void*)&lbl_eu_8056B1E0;
 }
 
@@ -99,9 +99,9 @@ unk1E4((CProcInitVptr(this), (u32)mtl::INVALID_HANDLE)){
 CProc::~CProc(){
     // Retail re-tags the object with the CProc vtable before destroying the
     // member list (destructor path), then keeps a stubbed-out bare traversal.
-    *(char**)this = (char*)&lbl_eu_8056B1E0;
+    *(void**)this = (void*)&lbl_eu_8056B1E0;
     //Empty loop. Maybe had stubbed code?
-    for(reslist<u32>::iterator it = mViewIDList.begin(); it != mViewIDList.end(); it++){
+    for(reslist<WORK_ID>::iterator it = mViewIDList.begin(); it != mViewIDList.end(); it++){
     }
 }
 
@@ -286,18 +286,18 @@ bool CProc::wkStandbyLogin(){
 
 bool CProc::wkStandbyLogout(){
     // Retail inlines detach-all (no separate pssDetachView() symbol in this split).
-    for (reslist<u32>::iterator it = mViewIDList.begin(); it != mViewIDList.end();
+    for (reslist<WORK_ID>::iterator it = mViewIDList.begin(); it != mViewIDList.end();
          it++) {
-        u32 value = *it;
+        WORK_ID value = *it;
         CView* view = CViewRoot::getView(value);
         view->detachRenderWork(this);
     }
     {
-        _reslist_node<u32>* endNode = mViewIDList.mStartNodePtr;
-        _reslist_node<u32>* curNode = endNode->mNext;
+        _reslist_node<WORK_ID>* endNode = mViewIDList.mStartNodePtr;
+        _reslist_node<WORK_ID>* curNode = endNode->mNext;
 
         while (curNode != mViewIDList.mStartNodePtr) {
-            _reslist_node<u32>* oldNode = curNode;
+            _reslist_node<WORK_ID>* oldNode = curNode;
             curNode = curNode->mNext;
             oldNode->mNext = nullptr;
         }

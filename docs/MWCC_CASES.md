@@ -35,6 +35,13 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 - Result:    FULL_MATCH
 - Evidence:  us-80201ab4 / src/kyoshin/menu/parts/CModelDispEquip.cpp
 
+## func_8004302C / CTaskGame — create-path polarity → 96.9% (Wii/1.1 -O4,p)
+- Symptom:   live 93.8% (registry 99.69% stale): `bne` to epilogue vs `bne`/`beq` into MEM1; 4 reg_swap
+- Cause:     Source realloc'd an existing loader and swapped MEM2/MEM1 on `b`. Retail: existing loader skips create (`bne` epilogue); fresh `b==0` is MEM2, `b!=0` is MEM1 `allocate_ex(..., -0x20)`
+- Fix:       Nest create under `loader == nullptr`; `b==0` → MEM2, else MEM1
+- Result:    96.9% / 0 structural / 2 reg_swap (`li r3,0` vs `li r0,0` on teardown null store). Named `CLoad* p` reload did not flip r3
+- Evidence:  us-800435a4 / src/kyoshin/CTaskGame.cpp
+
 ## func_80281FA0 / CChainActorPc — r5 vs r12 vtable at +0x70 → FULL_MATCH (Wii/1.1 -O4,p)
 - Symptom:   93.8% / 2 reg_swap: `lwz r12,0x70(r3)` vs `lwz r5,0x70(r3)` then slot +0x74
 - Cause:     Manual `((int(**)(void*))self->mVTable())[29]` kept the vtable pointer in r5
@@ -11005,3 +11012,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       None from C++ this pass. Reverted all probes. Next angle is the Wii/1.1 scheduler ready-list tie-break for independent param mrs, not more decl-order experiments.
 - Result:    95.5–96.0% near-miss (11 ids); 92.1% near-miss (`us-8023991c`). No cycle (live << registry; witness-blocked).
 - Evidence:  us-8023c100 / us-8023c1c8 / us-8023c350 / us-8023beb4 / us-8023cd8c / us-8023c5dc / us-8023c964 / us-8023c290 / us-8023c8b4 / us-8023ca2c / us-8023cadc / us-8023991c / src/kyoshin/CArtsInfo.cpp
+
+## func_8019514C / CPartsChange — no-arg frame clock (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Empty stub vs 0x138 retail (0%). Porting the ctx body with `func_80496288(lbl_eu_80663E14)` was 17.7%: extra SDA load before the `bl` and a 4-byte size overrun.
+- Cause:     Retail calls the scene frame-clock as a **no-arg** C ABI (`bl func_80496288` immediately after `CfRes_getD80Flag`). Passing the scene pointer is a different overload/shape.
+- Fix:       `extern "C" f32 func_80496288(void);` then `f32 step = func_80496288();`
+- Result:    FULL_MATCH (0x138/0x138)
+- Evidence:  us-80196868 / src/kyoshin/cf/CPartsChange.cpp

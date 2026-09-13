@@ -54,7 +54,7 @@ void func_802959AC(cf::CHelpManager* self) {
     self->mField18 = 0;
     func_802968B8(&self->mListA, NULL, 0);
     func_802968B8(&self->mListB, NULL, 0);
-    self->mField10 = func_800822F4__Q22cf13CfGameManagerFv();
+    self->mField10 = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
     func_802968B8(&self->mListB, lbl_eu_80538E30, 1);
     // Pick the item array whose key matches the current scenario sequence.
     for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
@@ -69,8 +69,8 @@ void func_802959AC(cf::CHelpManager* self) {
 void func_80295A88(cf::CHelpManager* self) {
     if (lbl_eu_80663E28 & 0x1000000) return;
     // Re-sync the list when the scenario sequence moved on.
-    if (self->mField10 != func_800822F4__Q22cf13CfGameManagerFv()) {
-        self->mField10 = func_800822F4__Q22cf13CfGameManagerFv();
+    if (self->mField10 != (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv()) {
+        self->mField10 = (s32)getQueuedFileEventCount__Q22cf13CfGameManagerFv();
         func_802968B8(&self->mListB, lbl_eu_80538E30, 1);
         for (int i = 0; lbl_eu_80538E90[i].mKey != 0; i++) {
             if (self->mField10 == lbl_eu_80538E90[i].mKey) {
@@ -89,7 +89,7 @@ done:
     int cond;
     if (self->mField17 == 0) {
         cond = 0;
-    } else if (func_80085840__Q22cf13CfGameManagerFv() == 0) {
+    } else if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0) {
         cond = 0;
     } else {
         cond = (int)(((*(volatile u32*)&lbl_eu_80663E24 >> 22) & 1) ^ 1);
@@ -143,7 +143,7 @@ int func_80295D30(cf::CHelpManager* self) {
     // shape (volatile read keeps MWCC from if-converting the guards).
     if (self->mField17 == 0)
         return 0;
-    if (func_80085840__Q22cf13CfGameManagerFv() == 0)
+    if (isSceneReadyForInput__Q22cf13CfGameManagerFv() == 0)
         return 0;
     return (int)((((*(volatile u32*)&lbl_eu_80663E24) >> 22) & 1) ^ 1);
 }

@@ -166,8 +166,8 @@ unsigned short lbl_eu_80664772;
 unsigned short lbl_eu_80664774;
 unsigned short lbl_eu_80664776_gap;
 unsigned int lbl_eu_80664778;
-unsigned int lbl_eu_8066477C;
-unsigned int lbl_eu_80664780_a;
+void* lbl_eu_8066477C;
+void* lbl_eu_80664780;
 unsigned int lbl_eu_80664780_b;
 unsigned int lbl_eu_80664788_a;
 unsigned int lbl_eu_80664788_b;
@@ -893,4 +893,47 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         updateConfig__FPUc(v1->optdBlob, 1);
     }
     return ok;
+}
+
+// Local GX/VI surface so this data-first TU does not include CDeviceVI.hpp
+// (IWorkEvent / 10322). Offsets match GXRenderModeObj (fbWidth@+4, efbHeight@+6).
+struct NandGXRenderMode {
+    u32 viTVmode;
+    u16 fbWidth;
+    u16 efbHeight;
+};
+class CDeviceVI {
+public:
+    static NandGXRenderMode* getRenderModeObj();
+};
+extern "C" {
+void GXSetTexCopySrc(u16 x, u16 y, u16 w, u16 h);
+void GXSetTexCopyDst(u16 w, u16 h, u32 fmt, u8 mipmap);
+void GXCopyTex(void* dest, u8 clear);
+void GXPixModeSync(void);
+void GXInvalidateTexAll(void);
+u32 GXGetTexBufferSize(u16 w, u16 h, u32 fmt, u8 mipmap, u8 max_lod);
+void DCFlushRange(void* addr, u32 nBytes);
+}
+
+// While the counter is armed (1), copy the EFB into the shared texture
+// buffer and flush it, then disarm. Body recovered from CfNandManager.ctx.c.
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {
+    if (lbl_eu_80664770 == 1) {
+        u16 h1;
+        u16 h2;
+        u32 size1;
+        h1 = CDeviceVI::getRenderModeObj()->efbHeight;
+        GXSetTexCopySrc(0, 0, CDeviceVI::getRenderModeObj()->fbWidth, h1);
+        h2 = CDeviceVI::getRenderModeObj()->efbHeight;
+        GXSetTexCopyDst(CDeviceVI::getRenderModeObj()->fbWidth, h2, 6, 0);
+        GXCopyTex(lbl_eu_80664780, 0);
+        GXPixModeSync();
+        GXInvalidateTexAll();
+        size1 = GXGetTexBufferSize(0xa4, 0x74, 4, 0, 0);
+        h1 = CDeviceVI::getRenderModeObj()->efbHeight;
+        u32 size2 = GXGetTexBufferSize(CDeviceVI::getRenderModeObj()->fbWidth, h1, 6, 0, 0);
+        DCFlushRange(lbl_eu_8066477C, size1 + size2);
+        lbl_eu_80664770 = 2;
+    }
 }

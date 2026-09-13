@@ -72,7 +72,57 @@ void func_80194AFC(){}
 
 void func_80194D5C(){}
 
-void func_8019514C(){}
+// 0x4C-stride party-change element + manager view for func_8019514C
+// (layout from CPartsChange.ctx.c).
+struct CfPartsElem4C {
+    u8 pad_00[0x10];
+    f32 field_10;
+    f32 field_14;
+    f32 field_18;
+    u16 field_1C;
+    u16 field_1E;
+    u8 pad_20[0x10];
+    u8 field_30[9];
+    u8 pad_39[0x13];
+};
+struct CfPartsElemArray {
+    CfPartsElem4C mElems[0x200];
+    u32 mCount;
+};
+struct CfPartsManager {
+    CfPartsElemArray mElems;
+};
+extern "C" int CfRes_getD80Flag();
+extern "C" f32 func_80496288(void);
+extern const f32 lbl_eu_80667AC0;
+extern const f32 lbl_eu_80667AD4;
+
+// Per-frame speed decay across the party-change element array.
+extern "C" void func_8019514C(CfPartsManager* self) {
+    CfRes_getD80Flag();
+    f32 step = func_80496288();
+    CfPartsElemArray* arr = &self->mElems;
+    for (CfPartsElem4C* e = arr->mElems; e != arr->mElems + arr->mCount; e++) {
+        if (e->field_1E & 0x400) {
+            e->field_14 = lbl_eu_80667AC0;
+        } else if (e->field_14 > lbl_eu_80667AD4) {
+            e->field_14 -= step;
+            if (e->field_14 < lbl_eu_80667AD4) e->field_14 = lbl_eu_80667AD4;
+        }
+        if ((e->field_1E & 0x4) != 0) continue;
+        if (!(e->field_10 > lbl_eu_80667AD4)) continue;
+        volatile u16& curFlags = e->field_1E;
+        if ((curFlags & 0x800) != 0) continue;
+        e->field_10 -= step;
+        if (!(e->field_10 > lbl_eu_80667AD4)) {
+            e->field_10 = lbl_eu_80667AD4;
+            if ((e->field_1E & 0x200) != 0 && (e->field_1E & 0x80) != 0) {
+                e->field_1E |= 0x20;
+            }
+            memset(&e->field_30[0], 0, 9);
+        }
+    }
+}
 
 u32 CfActorAccessors::func_80195284() { return (mFlags1E >> 10) & 0x1u; }
 

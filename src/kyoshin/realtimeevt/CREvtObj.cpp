@@ -33,7 +33,7 @@
 // ============================================================================
 extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
     self->mType = arg;
-    self->vtable = (void*)lbl_eu_80532320;
+    self->vtable = lbl_eu_80532320;
     self->mCallback = __ptmf_null;
 }
 
@@ -68,8 +68,9 @@ extern "C" void func_80185700(cf::CREvtObj* self) {
 // aligned, MEM1 heap). Called by the CREvtModel factory with the derived
 // class sizes (0x1F0 / 0xB4 / 0x88) before running the derived ctor.
 // ============================================================================
-extern "C" void* func_80185748(void* ptr) {
-    return func_80167F6C(ptr, 4, 1);
+extern "C" void* func_80185748(u32 size) {
+    // First arg is a byte count (callers pass 0x1F0/0xB4/0x88), not a pointer.
+    return func_80167F6C((void*)size, 4, 1);
 }
 
 // ============================================================================
@@ -77,8 +78,8 @@ extern "C" void* func_80185748(void* ptr) {
 // Deleting-dtor alias: a 4-byte tail-call to func_80167FFC. Derived-class
 // deleting-dtor epilogues call this to release the base through CREvtMem.
 // ============================================================================
-extern "C" void __dt__80185754(void* ptr) {
-    func_80167FFC(ptr);
+extern "C" void __dt__80185754(u8* block) {
+    func_80167FFC(block);
 }
 
 // ============================================================================

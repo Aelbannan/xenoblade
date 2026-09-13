@@ -6,7 +6,7 @@
 extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
 extern "C" void func_80167FFC(void* ptr);
 extern "C" long __ptmf_test(void* ptmf);
-extern "C" void* lbl_eu_80532320[]; // vtable for cf::CREvtObj
+extern "C" u32 lbl_eu_80532320[]; // vtable for cf::CREvtObj
 
 namespace cf {
 
@@ -29,7 +29,7 @@ public:
     virtual void vfunc_14();
     virtual bool isBusy();
     virtual void vfunc_1C();
-    /* 0x00 */ void* vtable;
+    /* 0x00 */ u32* vtable;
     /* 0x04 */ u32 mType;
     /* 0x08 */ void (CREvtObj::*mCallback)();  // __ptmf (12 bytes: 3 x u32)
 };

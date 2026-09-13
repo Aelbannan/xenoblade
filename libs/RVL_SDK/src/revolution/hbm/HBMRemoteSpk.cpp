@@ -193,7 +193,7 @@ void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
     info[chan].in_pcm = pPcm;
 }
 
-bool homebutton::RemoteSpk::isPlaying(s32 chan) const {
+bool RemoteSpk::isPlaying(s32 chan) const {
     return info[chan].in_pcm != NULL;
 }
 
@@ -204,8 +204,6 @@ bool RemoteSpk::isPlayingId(s32 chan, int seId) const {
 
     return false;
 }
-
-namespace homebutton {
 
 bool RemoteSpk::isPlayReady(s32 chan) const {
     return info[chan].playReady != false;
@@ -264,7 +262,5 @@ void RemoteSpk::Disconnect(s32 chan) {
     info[chan].first = true;
     info[chan].playReady = false;
 }
-
-} // namespace homebutton
 
 } // namespace homebutton

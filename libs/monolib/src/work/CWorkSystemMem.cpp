@@ -36,10 +36,14 @@ RttiBaseList2 lbl_eu_8056BB48 = {
 u32 lbl_eu_806635D0[2] = { (u32)&lbl_eu_80522818, (u32)&lbl_eu_8056BB48 };
 CWorkSystemMem* lbl_eu_80665620[2];
 
+struct CWorkSystemMemVptrView {
+    IWorkEventVtbl* vtPrimary; // 0x00
+};
+
 CWorkSystemMem::CWorkSystemMem(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 1) {
     // novtable: write the retail vptr (0x8056BAA8) + mHandle = -1 by hand so
     // the stores land in retail order (vptr first, then mHandle).
-    *(void**)this = &lbl_eu_8056BAA8;
+    ((CWorkSystemMemVptrView*)this)->vtPrimary = &lbl_eu_8056BAA8;
     mHandle = mtl::INVALID_HANDLE;
     lbl_eu_80665620[0] = this;
     mHandle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), REGION_SIZE, mName.c_str());

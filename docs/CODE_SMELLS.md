@@ -15,8 +15,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" declarations (non-lbl_*, imports) | 7492 |
 | extern "C" definitions (forced names) | 4163 |
 | `self`/register-style params | 13412 |
-| `void*` (params + locals) | 7719 |
-| raw pointer offset arithmetic | 7917 |
+| `void*` (params + locals) | 7718 |
+| raw pointer offset arithmetic | 7916 |
 | deref-through-cast arithmetic | 3312 |
 | inline asm / `register` | 126 |
 | rN-named params | 464 |
@@ -59,7 +59,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProc.cpp | 4 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProcRoot.cpp | 42 | 0 | 1 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 1 | 0 | 0 | 0 | 10 | 0 | 0 | 0 |
+| libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrcData.cpp | 47 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSchedule.cpp | 1 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -132,7 +132,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNBanner.cpp | 4 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 2 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 39 | 6 | 7 | 2 | 1 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -404,7 +404,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfGimmick.cpp | 8 | 3 | 27 | 14 | 12 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 16 | 42 | 9 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickEne.cpp | 10 | 2 | 1 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickItem.cpp | 8 | 1 | 12 | 8 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickItem.cpp | 8 | 1 | 12 | 9 | 0 | 0 | 1 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 29 | 7 | 25 | 33 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickLock.cpp | 0 | 5 | 21 | 10 | 4 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 1 | 2 | 65 | 5 | 4 | 0 | 4 | 0 | 7 | 0 | 0 | 0 |
@@ -440,7 +440,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/IResInfo.cpp | 39 | 66 | 75 | 36 | 17 | 5 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChain.cpp | 4 | 22 | 239 | 12 | 12 | 1 | 1 | 0 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorEne.cpp | 7 | 12 | 17 | 15 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| src/kyoshin/cf/chain/CChainActorList.cpp | 1 | 4 | 45 | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| src/kyoshin/cf/chain/CChainActorList.cpp | 1 | 4 | 45 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorPc.cpp | 1 | 11 | 30 | 12 | 22 | 2 | 0 | 0 | 10 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainCombo.cpp | 0 | 0 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainEffect.cpp | 0 | 1 | 8 | 3 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
@@ -760,7 +760,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 4,
   "goto_count": 10,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "schedule_pragma": 0,
   "void_ptr": 9
  },
@@ -1546,8 +1545,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 4,
   "goto_count": 3,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 1
+  "schedule_pragma": 0
  },
  "libs/monolib/src/nand/CNReqtaskRemove.cpp": {
   "asm_insn_shim": 0,
@@ -4313,7 +4311,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 12,
-  "void_ptr": 8
+  "void_ptr": 9
  },
  "src/kyoshin/cf/CfGimmickJump.cpp": {
   "asm_insn_shim": 0,
@@ -4709,8 +4707,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "goto_count": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 45,
-  "void_ptr": 1
+  "self_params": 45
  },
  "src/kyoshin/cf/chain/CChainActorPc.cpp": {
   "asm_insn_shim": 0,

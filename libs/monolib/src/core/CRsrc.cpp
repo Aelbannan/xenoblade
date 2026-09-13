@@ -146,7 +146,7 @@ CRsrcData* CRsrc::getRsrc(u32 id) {
     goto check;
 loop:
     off = (u32)index;
-    entry = *(CRsrcData**)((u8*)sRsrcPointerList__5CRsrc + (off << 2));
+    entry = sRsrcPointerList__5CRsrc[off];
     if (id == ((RsrcNameOverlay*)entry)->id) {
         return entry;
     }
@@ -212,7 +212,7 @@ extern "C" bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* da
 
     node = reinterpret_cast<_reslist_node<CWorkThread*>*>(
         getData__9CWorkUtilFP18UnkStruct_80438AF0(
-            reinterpret_cast<UnkStruct_80438AF0*>((u8*)parent + 0x5C)));
+            reinterpret_cast<UnkStruct_80438AF0*>(&parent->mChildren)));
     goto check;
 loop:
     rsrcData = convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem);

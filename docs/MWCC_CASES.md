@@ -11105,9 +11105,23 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(604).
 - Evidence:  us-80233ef8 / src/kyoshin/menu/CMenuArtsSet.cpp
 
+## CBattleState_applyEventEntry — vt+0x4C takes savedWords; u16 bitset mask (US, Wii/1.1 -O4,p, 94.0% near-miss)
+- Symptom:   Live 93.2% / 1 structural / 17 reg_swap / OVER(20). `li r4,0` vs retail `addi r4,sp,8` on vt+0x4C; `rlwinm r3,r5,29,3,29` vs retail `…,19,29`.
+- Cause:     `getLinkedActorId()` used the default NULL; retail passes the stack copy. The bitset index `(savedId >> 3) & ~3u` on a u32 emits MB=3; retail's 16-bit id uses MB=19 (11-bit field).
+- Fix:       `this->CBattleState_getLinkedActorId((CBattleStateEntry*)savedWords);` and `u16 bitOff = (u16)savedId; wordPtr = unk15AC + ((bitOff >> 3) & (u16)~3)`.
+- Result:    94.0% 0 structural 16 reg_swap 0x428/0x428. Residual: word-copy pair colors r6/r0 vs r0/r5 (witness abi-boundary r0→r5). Named memset args and field-wise first pair did not help (latter added structural).
+- Evidence:  us-801485ec / src/kyoshin/cf/object/CBattleState.cpp
+
 ## CBattleState_clearEntriesByMask — vt+0x4C takes the slot in r4 (US, Wii/1.1 -O4,p, 84.9%)
 - Symptom:   Live 6.5% / 74 structural after a no-arg `getLinkedActorId()`: missing `or r4, entry` before `bctrl`, memset reloc shifted 4 bytes, size 0x174/0x170.
 - Cause:     symbols.txt mangles the 0x4C slot Fv, but this call site leaves the current 0x34-byte entry in r4. A declared Fv virtual drops that mr.
 - Fix:       `virtual void* CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0);` then `this->CBattleState_getLinkedActorId(entry);` (real r12 dispatch). Manual `(*(void***)this)[0x4C/4]` colors the vtable base r5.
 - Result:    84.9% 0 structural 14 reg_swap 0x174/0x174. Residual: i in r27 vs retail r31 (this/mask shifted to r30/r31).
 - Evidence:  us-80148fc8 / src/kyoshin/cf/object/CBattleState.cpp
+
+## func_80261B98 / code_8025FB10 — Color+compact `valid=(OR)` frees addr→r5 (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Near-miss 99.2% 0 structural 12 pure reg_swap 0x1780/0x1780. Cascades+COMPACT matched; Color-block `&writer` remat `addi r3,sp,144` vs retail `addi r5`; m90 dest swapped. Witness abi-boundary r3→r5.
+- Cause:     `if (OR) valid = true` keeps the `valid=false` web live across mask remats (interferes with addr). Retail-equivalent schedule needs that false web to die after `Color(valid,valid,valid,255)` so addr/m80/m90 color r5/r4/r3.
+- Fix:       After Color+`colorKeep`, assign `valid = (writerRegion == 0x80000000 || …masks…);` then `if (!valid) Panic`. Memberwise `mTextColor.start` + `UpdateVertexColor` (private public include). Nested COMPACT / named addr / volatile pins ruled out (rotate valid off r6 or structural).
+- Result:    FULL_MATCH (cycle `equivalence: full_match`)
+- Evidence:  us-80263e48 / src/kyoshin/code_8025FB10.cpp

@@ -1696,21 +1696,19 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, writerRegion, font);
     {
-        // Flat OR + Color(valid,…) → valid=r6. Named addr only (masks remat)
-        // to seek addr=r5 without early m80/m90 hoist breaking the Color share.
+        // Color(valid,…) shares li r6,0; assign valid=(OR) so the false web
+        // dies after Color and mask remats color addr=r5 (if(OR) valid=true
+        // kept false live → addr=r3 vs retail r5).
         bool valid = false;
         nw4r::ut::Color color(valid, valid, valid, 255);
         nw4r::ut::Color* colorKeep = &color;
-        u32 addr = (u32)&writer;
-        if (writerRegion == 0x80000000 ||
-            (addr & 0xFF800000) == 0x81000000 ||
-            (addr & 0xF8000000) == 0x90000000 ||
-            writerRegion == 0xC0000000 ||
-            (addr & 0xFF800000) == 0xC1000000 ||
-            (addr & 0xF8000000) == 0xD0000000 ||
-            (addr & 0xFFFFC000) == 0xE0000000) {
-            valid = true;
-        }
+        valid = (writerRegion == 0x80000000 ||
+                 ((u32)&writer & 0xFF800000) == 0x81000000 ||
+                 ((u32)&writer & 0xF8000000) == 0x90000000 ||
+                 writerRegion == 0xC0000000 ||
+                 ((u32)&writer & 0xFF800000) == 0xC1000000 ||
+                 ((u32)&writer & 0xF8000000) == 0xD0000000 ||
+                 ((u32)&writer & 0xFFFFC000) == 0xE0000000);
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);
@@ -1742,16 +1740,13 @@ extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         bool valid = false;
         nw4r::ut::Color color(255, 255, 255, 255);
         nw4r::ut::Color* colorKeep = &color;
-        u32 addr = (u32)&writer;
-        if (writerRegion == 0x80000000 ||
-            (addr & 0xFF800000) == 0x81000000 ||
-            (addr & 0xF8000000) == 0x90000000 ||
-            writerRegion == 0xC0000000 ||
-            (addr & 0xFF800000) == 0xC1000000 ||
-            (addr & 0xF8000000) == 0xD0000000 ||
-            (addr & 0xFFFFC000) == 0xE0000000) {
-            valid = true;
-        }
+        valid = (writerRegion == 0x80000000 ||
+                 ((u32)&writer & 0xFF800000) == 0x81000000 ||
+                 ((u32)&writer & 0xF8000000) == 0x90000000 ||
+                 writerRegion == 0xC0000000 ||
+                 ((u32)&writer & 0xFF800000) == 0xC1000000 ||
+                 ((u32)&writer & 0xF8000000) == 0xD0000000 ||
+                 ((u32)&writer & 0xFFFFC000) == 0xE0000000);
         if (!valid) {
             Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8,
                                       &writer);

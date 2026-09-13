@@ -66303,7 +66303,7 @@
       "size": "0x84",
       "unit": "kyoshin/cf/CtrlObjectParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -66315,15 +66315,7 @@
       "source": "src/kyoshin/cf/CtrlObjectParam.cpp",
       "source_present": true,
       "instruction_match": 99.242,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:17:03.936471+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CtrlObjectParam.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-800a4334",
@@ -127131,7 +127123,7 @@
       "has_indirect_calls": true,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "instruction_match": 99.68,
+      "instruction_match": 99.699,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -184327,7 +184319,7 @@
       "size": "0x94",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -184344,7 +184336,7 @@
       ],
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
-      "instruction_match": 99.324,
+      "instruction_match": 99.459,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
@@ -240074,8 +240066,8 @@
       "size": "0x1780",
       "unit": "kyoshin/code_8025FB10",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c9918",
@@ -240102,16 +240094,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_8025FB10.cpp",
       "source_present": true,
-      "instruction_match": 99.953,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "paseo-grok46-us-80263e48",
-        "claimed_at": "2026-09-13T16:43:44.659954+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_8025FB10.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802655c8",

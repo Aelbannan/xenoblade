@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16679 |
-| extern "C" declarations (non-lbl_*, imports) | 7517 |
-| extern "C" definitions (forced names) | 4156 |
+| extern "C" (total lines) | 16682 |
+| extern "C" declarations (non-lbl_*, imports) | 7518 |
+| extern "C" definitions (forced names) | 4157 |
 | `self`/register-style params | 13322 |
 | `void*` (params + locals) | 7601 |
-| raw pointer offset arithmetic | 7870 |
+| raw pointer offset arithmetic | 7871 |
 | deref-through-cast arithmetic | 3303 |
 | inline asm / `register` | 127 |
 | rN-named params | 461 |
@@ -412,7 +412,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfMapEffectManager.cpp | 1 | 5 | 7 | 2 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapItemManager.cpp | 42 | 7 | 29 | 37 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapMineManager.cpp | 3 | 15 | 24 | 15 | 20 | 16 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfNandManager.cpp | 70 | 3 | 1 | 21 | 19 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfNandManager.cpp | 71 | 4 | 1 | 21 | 20 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectEnumList.cpp | 41 | 7 | 38 | 49 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfObjectSelectorObj.cpp | 16 | 1 | 11 | 19 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfPadTask.cpp | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -4382,10 +4382,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CfNandManager.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 70,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_decl": 71,
+  "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
-  "ptr_arith": 19,
+  "ptr_arith": 20,
   "schedule_pragma": 0,
   "self_params": 1,
   "void_ptr": 21

@@ -241,7 +241,11 @@ extern "C" int func_8003C260(VMThread* pThread, int handle) {
     return 1;
 }
 
-void* cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { return &mPtr10; }
+// Retail linker name for slot 0x40 (hand-built tables in CfObjectModel /
+// CfCollSphereImpl). Virtual decl is CObjectParam_getParamPtr.
+extern "C" void* CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv(cf::CObjectParam* self) {
+    return &self->mPtr10;
+}
 
 extern "C" int func_8003C2F4(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
@@ -307,7 +311,8 @@ extern "C" int func_8003C480(VMThread* pThread, int handle) {
     return 0;
 }
 
-// copy 3 u32
+// copy 3 u32 into +0x3C. Retail Fv linker name for slot 0xA8; virtual decl is
+// CfObject_syncMoveTarget (alias UnkVirtualFunc22).
 extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, const void* src) {
     ((u32*)((u8*)self + 0x3C))[0] = *(const u32*)((const u8*)src + 0);
     ((u32*)((u8*)self + 0x3C))[1] = *(const u32*)((const u8*)src + 4);
@@ -372,6 +377,8 @@ int func_8003C78C(VMThread* pThread, int handle) {
     return 0;
 }
 
+// Retail linker name for slot 0x3C (hand-built tables). Virtual decl is
+// CObjectParam_setObjectName.
 extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, const char* str) {
     *(u32*)((u8*)self + 0x30) = strlen(str);
     strcpy((char*)((u8*)self + 0x10), str);
@@ -442,7 +449,7 @@ int dispOn(VMThread* pThread, int handle) {
     return 0;
 }
 
-extern void func_800BC458(void* obj);
+extern "C" void func_800BC458(void* obj);
 
 int dispOff(VMThread* pThread, int handle) {
     int flag;
@@ -473,7 +480,7 @@ int dispOff(VMThread* pThread, int handle) {
     return 0;
 }
 
-// CObjectState_UnkVirtualFunc8 defined below as extern "C" free function
+// CObjectState_checkStateFlags8 body is the forced Unk Fv below (slot 0x24).
 
 int CObjectState_checkStateFlags__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
@@ -546,7 +553,12 @@ extern "C" int func_8003CD6C(VMThread* pThread, int handle) {
     return 1;
 }
 
-int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
+// Retail linker name for base slot 0x118 (hand-built tables). Virtual decl is
+// CfObject_getNpcActionState.
+extern "C" int CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv(cf::CfObject* self) {
+    (void)self;
+    return -1;
+}
 
 // CfObjectMove UVF50/51 overrides (retail 0x8003C2E0/0x8003C2EC, 0xC each:
 // lbz r3,0x6CE/0x6CF(r3); extsb; blr). Decls were removed from
@@ -817,8 +829,8 @@ int onEvent(VMThread* pThread, int handle) {
 
 extern "C" int CObjectState_setStateBitMask0__Q22cf12CObjectStateFv(cf::CObjectState* self, int mask, int flag) {
     int realArg = mask;
-    // State query: slot 0x28 is a gate check; slot 0x24 (UnkVirtualFunc8)
-    // tests the requested state bit. flag selects the required polarity.
+    // State query: slot 0x28 (checkStateFlagsC) is a gate check; slot 0x24
+    // (checkStateFlags8) tests the requested state bit. flag selects polarity.
     s32 result;
     if (flag != 0) {
         result = 0;
@@ -843,6 +855,8 @@ done:
     return result;
 }
 
+// Retail linker name for slot 0x28 (hand-built tables). Virtual decl is
+// CObjectState_checkStateFlagsC.
 extern "C" int CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(void* self, int mask) {
     if ((u32)mask < 0x3F) {
         u32 f = *(u32*)((u8*)self + 0xC) & 0x3F;
@@ -851,6 +865,8 @@ extern "C" int CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(void* self, i
     return (*(u32*)((u8*)self + 0xC) & (u32)mask) != 0;
 }
 
+// Retail linker name for slot 0x24 (hand-built tables). Virtual decl is
+// CObjectState_checkStateFlags8.
 extern "C" int CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv(void* self, int mask) {
     if ((u32)mask < 0x3F) {
         u32 f = *(u32*)((u8*)self + 0x8) & 0x3F;

@@ -13,9 +13,10 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
-extern void func_80137924(void*, void*, void*, void*);
+extern "C" void func_80137924(void*, void*, void*, void*);
 extern void playUISound(u32);
 extern const float lbl_eu_80668610;
+void func_801390E0(CFileHandle**);
 
 
 

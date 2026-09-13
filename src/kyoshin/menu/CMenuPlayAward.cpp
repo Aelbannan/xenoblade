@@ -21,6 +21,9 @@ inline void playUISound(u32 cue) { playUISound__FUl(cue); }
 // CScn (with removeRenderCB) comes from the minimal declaration in
 // CTaskGameEff.hpp via harness_catalog.hpp -- CScn.hpp redefines it.
 
+void func_801390E0(CFileHandle**);
+extern "C" void __ct__17UnkClass_8045F564Fv(void*);
+
 // Retail constructor symbol (unmangled global in US). Kept out-of-line so the
 // factory (func_80270308) emits a real bl to it, and returns `this` in r3
 // like a real constructor.
@@ -572,7 +575,7 @@ u8* func_80270AEC(CPlayAwardEntryArray* self, int param) {
 // member (the +0x00 vtable was already set by the first ctor call).
 CPlayAwardList* __ct__CPlayAwardList(CPlayAwardList* self, int arg) {
     *(u32*)self = (u32)lbl_eu_80537C20;   // vtable (free-function ctor, manual store)
-    new (&self->mMemRegion) UnkClass_8045F564();
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = 0;
     self->mFileHandle2 = 0;
     self->mArcAccessor1C = 0;

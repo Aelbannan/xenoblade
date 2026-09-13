@@ -21,7 +21,6 @@ void cbRenderBefore__16CMenuBattleChainFv(void*);
 namespace CDeviceVI {
 void waitForDrawDone();
 }
-extern "C" void func_8045F778(void* self);
 
 /*
  * Battle-chain menu constructor (retail unmangled name __ct__CMenuBattleChain,
@@ -174,7 +173,7 @@ void CMenuBattleChain::Term() {
         delete mLayout;
         mLayout = 0;
     }
-    func_8045F778(reinterpret_cast<char*>(this) + 0x78);
+    mRegion.deleteRegion();
     lbl_eu_80664A60 = 0;
 }
 

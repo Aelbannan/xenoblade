@@ -16,8 +16,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 4162 |
 | `self`/register-style params | 13470 |
 | `void*` (params + locals) | 7800 |
-| raw pointer offset arithmetic | 7874 |
-| deref-through-cast arithmetic | 3269 |
+| raw pointer offset arithmetic | 7875 |
+| deref-through-cast arithmetic | 3270 |
 | inline asm / `register` | 126 |
 | rN-named params | 471 |
 | goto | 3798 |
@@ -31,7 +31,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | TU | severity |
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 3487 |
-| src/kyoshin/cf/object/CActorParam.cpp | 2218 |
+| src/kyoshin/cf/object/CActorParam.cpp | 2220 |
 | src/kyoshin/CItemBoxGrid.cpp | 2192 |
 | src/kyoshin/cf/CfCam.cpp | 1737 |
 | src/kyoshin/CItemBoxInfo.cpp | 1712 |
@@ -452,7 +452,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/code_8018F8D8.cpp | 48 | 1 | 27 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/code_801C2C14.cpp | 2 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 9 | 33 | 110 | 150 | 45 | 0 | 0 | 20 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 127 | 93 | 791 | 640 | 0 | 10 | 9 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 127 | 93 | 792 | 641 | 0 | 10 | 9 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 4 | 22 | 23 | 9 | 29 | 11 | 0 | 0 | 1027 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectActor.cpp | 8 | 20 | 67 | 22 | 36 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 36 | 50 | 11 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4819,12 +4819,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/object/CActorParam.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 640,
+  "deref_arith": 641,
   "extern_c_nonlbl_decl": 35,
   "extern_c_nonlbl_def": 17,
   "goto_count": 9,
   "init_side_effect": 0,
-  "ptr_arith": 791,
+  "ptr_arith": 792,
   "rn_params": 10,
   "schedule_pragma": 0,
   "self_params": 127,

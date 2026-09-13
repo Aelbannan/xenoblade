@@ -54,7 +54,7 @@ extern "C" u32 lbl_eu_8056EBD0[4];
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 extern "C" u32 lbl_eu_80663A68[2];  // RTTI locator (owned by CScnItemCamera.cpp)
-extern "C" void* __dt__10CScnFogManFv(CScnFogMan* self, int flag);
+extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag);
 extern "C" void __dl__FPv(void*);
 
 // [.rodata] 0x80524218-0x80524228 (0x10 = 16B): RTTI name "CScnFogMan".
@@ -81,10 +81,15 @@ extern "C" __declspec(align(8)) char lbl_eu_8056EBE0[0x90] = {
 // (retired DECOMP_FORCEACTIVE keep-alives: assert-blob and RTTI name are
 // section-defined globals that survive linking without text refs.)
 
+// Typed primary-vptr slot at +0x0 (retail blob vtable).
+struct CScnFogManVptrView {
+    u32* vtPrimary;
+};
+
 // Constructor is a C-ABI free function named __ct__CScnFogMan (retail has no
 // mangled arg suffix), so it must be given extern "C" linkage to keep the name.
 extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
-    *(void**)self = lbl_eu_8056EBD0;
+    reinterpret_cast<CScnFogManVptrView*>(self)->vtPrimary = lbl_eu_8056EBD0;
     self->field_0x04 = param;
     self->value08 = 0;
     self->field_0xC = lbl_eu_8066ABB0;
@@ -116,7 +121,7 @@ extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
 }
 
 extern "C" void func_8049DE68(u8* self, u32 val) {
-    ((CScnFogMan*)self)->value08 = val;
+    reinterpret_cast<CScnFogMan*>(self)->value08 = val;
 }
 // Tail-call trampoline over func_8049DEC4 (retail is a single `b`).
 // Retail symbol is unmangled (C linkage); other TUs' relocs target
@@ -127,14 +132,14 @@ bool func_8049DE70(CScnFogMan* self) {
 }
 
 void func_8049E374(u8* self, float a, float b) {
-    CScnFogMan* fog = (CScnFogMan*)self;
+    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
     fog->field_0x20 = a;
     fog->field_0x1c = b;
 }
 
 // Retail dtor (free-function form so MWCC emits no local vtable; the retail
 // vtable lives in the blob data above and the ctor stores it explicitly).
-extern "C" void* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
+extern "C" CScnFogMan* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
     if (self != nullptr) {
         if (flag > 0) {
             __dl__FPv(self);
@@ -144,8 +149,8 @@ extern "C" void* __dt__10CScnFogManFv(CScnFogMan* self, int flag) {
 }
 
 extern "C" void func_8049E350(u8* self, const void* src) {
-    CScnFogMan* fog = (CScnFogMan*)self;
-    const u32* words = (const u32*)src;
+    CScnFogMan* fog = reinterpret_cast<CScnFogMan*>(self);
+    const u32* words = static_cast<const u32*>(src);
     *(u32*)&fog->field_0xC = words[0];
     *(u32*)&fog->field_0x10 = words[1];
     *(u32*)&fog->field_0x14 = words[2];

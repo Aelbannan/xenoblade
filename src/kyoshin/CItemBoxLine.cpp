@@ -2518,6 +2518,7 @@ int func_801F2880(u32 unused, u32 key) {
 // transforms, font bind, pane text/colour seeding, the four embedded cursors);
 // the common-arc branch re-attaches its accessor and refreshes the tab list;
 // the bdat/scratch branches register their buffers with the CBdat system.
+extern "C" void setBdatEntry__5CBdatFUlPv(u32, void*);
 #pragma push
 #pragma optimize_for_size on
 bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
@@ -2690,7 +2691,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         func_801D2E4C(&this->mCurB8, 0);
         func_801EF518(this);
         this->field24 = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&this->field04)->func_8045F810();
+        reinterpret_cast<UnkClass_8045F564*>(&this->field04)->validateHeap();
         return true;
     }
     if (this->field28 == (u32)evt->mFileHandle) {
@@ -2706,7 +2707,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         acc2->Attach(data28, &lbl_eu_805071B0[0x70d]);
         func_801EF518(this);
         this->field28 = 0;
-        reinterpret_cast<UnkClass_8045F564*>(&this->pad_14[0])->func_8045F810();
+        reinterpret_cast<UnkClass_8045F564*>(&this->pad_14[0])->validateHeap();
         return true;
     }
     if (this->field2C == (u32)evt->mFileHandle) {
@@ -2715,7 +2716,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         func_8003AA34();
         void* fpA = getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
         if (fpA == 0) {
-            CBdat::func_8003AA78(2, data2C);
+            setBdatEntry__5CBdatFUlPv(2, data2C);
         }
         func_8003AA34();
         lbl_eu_80664648 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x7ca]);
@@ -2732,7 +2733,7 @@ bool CItemBoxLine::OnFileEvent(CEventFile* evt) {
         func_8003AA34();
         void* fpB = getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
         if (fpB == 0) {
-            CBdat::func_8003AA78(5, this->field34);
+            setBdatEntry__5CBdatFUlPv(5, this->field34);
         }
         lbl_eu_80664650 = (u32)getFP__FPCc(&lbl_eu_805071B0[0x1f0]);
         func_801EF518(this);

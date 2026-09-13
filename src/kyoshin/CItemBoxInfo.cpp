@@ -63,7 +63,9 @@ __declspec(section ".rodata") __attribute__((aligned(8))) __attribute__((used)) 
     "%d\000rvs_type\000rvs_caption\000%s\000<col=red>%s<col=def>\000<col=red>%s %%<col=def>\000<col=red>%s%%<col=def>\000<col=red>%d %%<col=def>\000<col=red>%d%%<col=def>\000menu/jp/ItemBoxInfo.arc\000menu/jp/tpl/CrystalIcon.arc\000nul_para_01\000nul_para_30\000nul_para_50\000nul_para_60\000nul_para_80\000nul_para_700\000nul_eth\000nul_infbcln01\000nul_infbcln700\000MNU_item\000name\000%d%s\000txt_gold01_00\000txt_excange%02d\000pic_pcbs%02d\000nul_proportion\000txt_scnd01\000txt_scnd03\000nul_scnd\000dmg_low\000dmg_hi\000arm_phy\000arm_eth\000att_lev\000speed\000grd_rate\000flag\000equip_pc%d\000eva_rate\000arm_type\000pc%d\000rankType\000MNU_shop\000atr_type\000type\000MNU_collect\000mapID\000memory_type\000pc_type\000get_arts\000pc_arts\000idx\000%d%s%d\000txt_value02\000txt_value08\000txt_value09\000%s%d%s\000txt_value04\000txt_value07\000txt_value22\000\000txt_para25\000txt_para01\000txt_para10\000txt_para11\000txt_para04\000txt_para08\000txt_para22\000txt_para23\000pic_pc%02d\000pic_eq%02d\000mf00_reg00_eq01.tpl\000mf00_reg00_eq00.tpl\000mf00_com00_dmy.tpl\000txt_para24\000pic_ethcol%02d\000mf00_reg30_crys00.tpl\000mf00_reg30_crys01.tpl\000mf00_reg30_crys02.tpl\000mf00_reg30_crys03.tpl\000mf00_reg30_crys04.tpl\000mf00_reg30_crys05.tpl\000mf00_reg30_crys06.tpl\000txt_ethvalue%02d\000%s%s\000%s \000%d \000txt_eth%02d\000jwl_slot\000jwl_skill%d\000percent\000txt_para80\000txt_value50\000txt_value51\000txt_para51\000attach\000txt_para52\000txt_value60\000txt_value61\000txt_value30\000txt_para%02d\000txt_value%02d\000tag_icon\000txt_para736\000txt_value700\000txt_value702\000accum\000max\000txt_para7%02d\000txt_value7%02d\000CItemBoxInfo\000arc\000mf02_box02_inf.brlyt\000mf02_box02_inf_in.brlan\000mf02_box02_inf_info_in.brlan\000txt_value31\000txt_value32\000txt_value33\000txt_value34\000txt_ethvalue01\000txt_ethvalue02\000txt_ethvalue03\000txt_value703\000txt_value704\000txt_value705\000txt_value708\000txt_value710\000txt_value706\000txt_value709\000txt_value712\000txt_value714\000txt_value715\000txt_value716\000txt_value717\000txt_value718\000txt_value719\000txt_value720\000txt_value721\000txt_value722\000txt_value723\000txt_para704\000txt_scnd02\000nul_shop\000nul_excange\000txt_para30\000txt_para50\000txt_para60\000txt_para61\000txt_para700\000txt_para702\000txt_para703\000txt_para705\000txt_para706\000txt_para708\000txt_para709\000txt_para710\000txt_para713\000txt_para716\000txt_para717\000MNU_relate\000txt_npctype\000txt_npcname\000txt_npcframe\000txt_excange00\000txt_excange01\000pic_pcbs01\000txt_scnd00\000CItemBoxInfoTex\000itemID\000jwl_skill1\000CItemBoxInfo2\000CItemBoxInfo2Tex\000"
 };
 #define lbl_eu_80506380 (rodata_ItemBoxTail.t)
-#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)
+// Interior blob is at +0x54 (non-8-aligned): member decay emits parent+0x54+imm.
+// Code must relocate against the retail symbol name with plain immediates.
+extern "C" char lbl_eu_805063BC[];
 
 // .sdata: two RTTI-ish pairs (class-name string + .data RTTI pad). Both
 // halves stay UNDEF reads: the strings are struct members below and the
@@ -2145,6 +2147,19 @@ union D8EComparisonStorage {
     D8EEntry weapon[4];
     D8EArmorEntry armor[4];
 };
+struct D8EPartyData { u32 w[12]; };
+struct D8EFrameBlock {
+    u32 records[52];
+    D8EPartyData party;
+};
+
+// MWCC: #pragma always_inline — __attribute__((always_inline)) alone is not
+// enough under optimize_for_size; direct member assign outlines __as__.
+#pragma always_inline on
+static void d8e_copy_party(D8EPartyData* dst, void* partyBase) {
+    *dst = *(D8EPartyData*)((u8*)partyBase + 4);
+}
+#pragma always_inline reset
 
 static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
     f32 scale = 0.01f * (100.0f + (f32)effect);
@@ -2303,26 +2318,21 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // 208B record storage declared first and kept live across the party ping
-    // so it occupies the low frame slots under party (retail party @ sp+2348).
-    D8EComparisonStorage comparisonStorage;
-    struct PartyData { u32 w[12]; };
-    void* party = func_8009ECB0();
-    PartyData partyData = *(PartyData*)((u8*)party + 4);
-    // Keep comparisonStorage live across the ping (prevents overlay with party).
-    volatile u32* cmpKeepAlive = comparisonStorage.weapon[0].words;
+    // D8EFrameBlock @ sp+2140 → party @ sp+2348. always_inline copy helper
+    // keeps the li r0,6 loop inlined (direct member assign outlines __as__).
+    D8EFrameBlock frameBlock;
+    d8e_copy_party(&frameBlock.party, func_8009ECB0());
     for (u32 row = 0; row < 2; row++) {
         // u8 col: clrlwi truncation blocks pointer strength-reduction while
         // keeping rlwinm MB/ME at retail 22,29 (u16 widened the mask).
         for (u8 col = 0; col < 3; col++) {
-            u8 id = (u8)partyData.w[col];
+            u8 id = (u8)frameBlock.party.w[col];
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
                     ((cf::CActorParam*)actor)->CActorParam_resetArtsStatus(NULL);
                 }
             }
-            (void)cmpKeepAlive[0];
         }
     }
 
@@ -2338,8 +2348,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // POD stand-in for ml::FixStr<32>: cast at format() sites so no FixStr
     // reference web occupies a callee-saved across the prologue/party ping.
-    // Two buffers: retail keeps distinct FixStr temps that don't fully overlay
-    // (single buffer left the frame 32B short / party 240B low).
+    // Two buffers: retail keeps distinct FixStr temps that don't fully overlay.
     struct FixStrPod {
         char mString[0x20];
         u32 mLength;
@@ -2348,6 +2357,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     FixStrPod textBufferB;
 
     // ---- HP values (clamped to 9999) ----
+    // String-pool base before HP so it takes r14 (retail) and HP lands in r18/r19.
+    char* base = lbl_eu_805063BC;
     // Both virtuals before either clamp — retail interleaves the two
     // fctiwz conversions around the second vcall, not the first clamp.
     s32 hp1 = (s32)stats->CActorParam_getHp();
@@ -2356,11 +2367,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     if (hp2 > 9999) hp2 = 9999;
 
     // ---- name / pane text ----
-    // Materialize the string-pool base once so MWCC folds the blob's +0x54
-    // parent offset into the HA/LO pair (retail relocates against
-    // lbl_eu_805063BC and then uses plain +0x139-style immediates).
-    char* base = lbl_eu_805063BC;
     // Retail: func_8013639C(lbl_eu_80664090, base+0x139, member) — 3-arg.
+    // lbl_eu_805063BC is an UNDEF extern (blob is +0x54 inside packed rodata)
+    // so immediates stay plain +0x139, not parent+0x54+imm.
     func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4D7],
         ((char*(*)(void*, char*, u32))&func_8013639C)(lbl_eu_80664090, &base[0x139], member), 0);
     setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &base[0x4E3], stats->CActorParam_getActorLevel());
@@ -2443,8 +2452,6 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hpStat);
             char* percentSuffix = func_80136190(
                 &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
-            // Format both before either pane push so the two PODs stay live
-            // together and cannot share a frame slot (retail frame +32).
             ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
             ((ml::FixStr<32>*)&textBufferB)->format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.mString, 0);
@@ -2615,22 +2622,19 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
-        D8EComparisonStorage comparisonStorage;
+        D8EComparisonStorage& comparisonStorage =
+            *reinterpret_cast<D8EComparisonStorage*>(frameBlock.records);
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EEntry& e_cur = comparisonStorage.weapon[0];
             func_801D4E2C(&e_cur, (void*)(u32)member, (void*)(u32)w0);
+            comparisonStorage.weapon[1] = e_cur;
             D8EEntry& c_cur = comparisonStorage.weapon[1];
-for (u32 w_ = 0; w_ < 13; w_++) {
-                c_cur.words[w_] = e_cur.words[w_];
-            }
             D8EEntry& e_new = comparisonStorage.weapon[2];
             func_801D4E2C(&e_new, (void*)(u32)member, arg3);
+            comparisonStorage.weapon[3] = e_new;
             D8EEntry& c_new = comparisonStorage.weapon[3];
-for (u32 w_ = 0; w_ < 13; w_++) {
-                c_new.words[w_] = e_new.words[w_];
-            }
             s32 eq1 = 0;
             if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
@@ -2787,16 +2791,12 @@ for (u32 w_ = 0; w_ < 13; w_++) {
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry& e_cur = comparisonStorage.armor[0];
             func_801D5274(&e_cur, (void*)(u32)member, (void*)(u32)w0);
+            comparisonStorage.armor[1] = e_cur;
             D8EArmorEntry& c_cur = comparisonStorage.armor[1];
-            for (u32 w_ = 0; w_ < 7; w_++) {
-                c_cur.words[w_] = e_cur.words[w_];
-            }
             D8EArmorEntry& e_new = comparisonStorage.armor[2];
             func_801D5274(&e_new, (void*)(u32)member, arg3);
+            comparisonStorage.armor[3] = e_new;
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
-            for (u32 w_ = 0; w_ < 7; w_++) {
-                c_new.words[w_] = e_new.words[w_];
-            }
             volatile s16 v484 = (s16)func_801DFE48(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
@@ -3377,16 +3377,10 @@ for (u32 w_ = 0; w_ < 13; w_++) {
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EArmorEntry e_cur;
             func_801D5274(&e_cur, (void*)(u32)member, (void*)(u32)w0);
-            D8EArmorEntry c_cur;
-for (u32 w_ = 0; w_ < 7; w_++) {
-                c_cur.words[w_] = e_cur.words[w_];
-            }
+            D8EArmorEntry c_cur = e_cur;
             D8EArmorEntry e_new;
             func_801D5274(&e_new, (void*)(u32)member, arg3);
-            D8EArmorEntry c_new;
-for (u32 w_ = 0; w_ < 7; w_++) {
-                c_new.words[w_] = e_new.words[w_];
-            }
+            D8EArmorEntry c_new = e_new;
             volatile s16 v44C = (s16)func_801DFE48(
                 info, member,
                 (item != NULL && *(u32*)item != 0)

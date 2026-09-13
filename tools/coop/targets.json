@@ -97291,7 +97291,7 @@
       "size": "0x3D94",
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
@@ -97316,7 +97316,7 @@
         "_restgpr_18",
         "_savegpr_18"
       ],
-      "instruction_match": 69.433,
+      "instruction_match": 66.312,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true,
       "claim": {
@@ -182498,7 +182498,7 @@
       "size": "0x6680",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -182550,7 +182550,7 @@
       ],
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "source_present": true,
-      "instruction_match": 79.68,
+      "instruction_match": 79.421,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-801da9a0",

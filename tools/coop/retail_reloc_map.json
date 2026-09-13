@@ -1,5 +1,5 @@
 {
-  "count": 731,
+  "count": 729,
   "entries": {
     "OSReset_hotResetPool": {
       "R_PPC_ADDR16_HA": {
@@ -5826,11 +5826,11 @@
         ]
       }
     },
-    "main/kyoshin/CArtsInfo@8880": {
+    "main/kyoshin/CArtsInfo@8881": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 39,
+        "count": 41,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_80668698",
@@ -5840,7 +5840,7 @@
         ]
       }
     },
-    "main/kyoshin/CArtsInfo@8951": {
+    "main/kyoshin/CArtsInfo@8952": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -5866,11 +5866,11 @@
         ]
       }
     },
-    "main/kyoshin/CArtsInfo@8961": {
+    "main/kyoshin/CArtsInfo@8960": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 9,
+        "count": 10,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_806686A8",
@@ -5880,7 +5880,7 @@
         ]
       }
     },
-    "main/kyoshin/CCollepedia@9734": {
+    "main/kyoshin/CCollepedia@9733": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6040,7 +6040,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@16457": {
+    "main/kyoshin/CItemBoxInfo@17813": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6300,7 +6300,7 @@
         ]
       }
     },
-    "main/kyoshin/CTaskGame@14372": {
+    "main/kyoshin/CTaskGame@14373": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6314,7 +6314,7 @@
         ]
       }
     },
-    "main/kyoshin/CTaskGame@15269": {
+    "main/kyoshin/CTaskGame@15271": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6384,7 +6384,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35710": {
+    "main/kyoshin/cf/CBattleManager@35342": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6398,7 +6398,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35718": {
+    "main/kyoshin/cf/CBattleManager@35350": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6412,7 +6412,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35735": {
+    "main/kyoshin/cf/CBattleManager@35367": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6426,7 +6426,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@35858": {
+    "main/kyoshin/cf/CBattleManager@35490": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6870,7 +6870,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CfSoundMan@11437": {
+    "main/kyoshin/cf/CfSoundMan@11440": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6912,7 +6912,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CtrlObjectParam@4856": {
+    "main/kyoshin/cf/CtrlObjectParam@4857": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -6926,7 +6926,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CtrlObjectParam@4889": {
+    "main/kyoshin/cf/CtrlObjectParam@4890": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7226,7 +7226,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@12063": {
+    "main/kyoshin/code_80135FDC@12313": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7240,7 +7240,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@12066": {
+    "main/kyoshin/code_80135FDC@12316": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7254,7 +7254,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@13072": {
+    "main/kyoshin/code_80135FDC@13322": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7544,7 +7544,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuArtsSet@13391": {
+    "main/kyoshin/menu/CMenuArtsSet@13399": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7570,7 +7570,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuArtsSet@13392": {
+    "main/kyoshin/menu/CMenuArtsSet@13400": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7648,7 +7648,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuBattlePlayerState@17798": {
+    "main/kyoshin/menu/CMenuBattlePlayerState@17801": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7662,7 +7662,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuBattlePlayerState@17799": {
+    "main/kyoshin/menu/CMenuBattlePlayerState@17802": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7676,7 +7676,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@13347": {
+    "main/kyoshin/menu/CMenuGetItemMulti@13345": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7690,7 +7690,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@13349": {
+    "main/kyoshin/menu/CMenuGetItemMulti@13347": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7716,7 +7716,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@13350": {
+    "main/kyoshin/menu/CMenuGetItemMulti@13348": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7742,7 +7742,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@13425": {
+    "main/kyoshin/menu/CMenuGetItemMulti@13423": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7768,7 +7768,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@13485": {
+    "main/kyoshin/menu/CMenuGetItemMulti@13483": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -7782,7 +7782,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuGetItemMulti@14343": {
+    "main/kyoshin/menu/CMenuGetItemMulti@14341": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -8000,7 +8000,7 @@
         ]
       }
     },
-    "main/kyoshin/realtimeevt/CREvtModelObj@4301": {
+    "main/kyoshin/realtimeevt/CREvtModelObj@4306": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -9194,30 +9194,6 @@
         ]
       }
     },
-    "rodata_ItemBoxTail": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 21,
-        "kind": "data",
-        "retail_addend": 31870,
-        "retail_symbol": "lbl_eu_805063BC",
-        "units": [
-          "main/kyoshin/CItemBoxInfo"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 23,
-        "kind": "data",
-        "retail_addend": 32675,
-        "retail_symbol": "lbl_eu_805063BC",
-        "units": [
-          "main/kyoshin/CItemBoxInfo"
-        ]
-      }
-    },
     "sUnkFlags__Q22cf13CfGameManager": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -9541,8 +9517,8 @@
       }
     }
   },
-  "function_pairs": 5710,
-  "generated": "2026-09-13T23:40:33.675223",
+  "function_pairs": 5714,
+  "generated": "2026-09-14T00:17:45.830233",
   "region": "us",
   "units_scanned": 323,
   "version": 1

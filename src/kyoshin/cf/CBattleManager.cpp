@@ -5484,13 +5484,10 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
     // ----------------------------------------------------------
     // 0x5150 prologue / early guards
     // ----------------------------------------------------------
-    // Base locals first (MWCC_CASES bea7af5d31): claim saved regs for the
-    // object bases so field_3f00 stays lwz 0x3F00(base), not CSE addi into
-    // an extra callee-saved (was r15 → _savegpr_15 vs retail _savegpr_18).
+    // Base local first so field_3f00 stays lwz 0x3F00(base), not CSE addi.
     BattleObjAccessor* atkObj = (BattleObjAccessor*)attacker;
-    BattleObjAccessor* tgtObj = (BattleObjAccessor*)target;
 
-    if (tgtObj == 0) return;                        // 0x5154 cmpwi r5,0
+    if (target == 0) return;                        // 0x5154 cmpwi r5,0
 
     // 0x51C0: load tag, init ratios (58/54/5C/60/64), then bit0 gate
     {
@@ -5690,31 +5687,32 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             s32 r0 = 0;
 
             // ---- dispatch A (0x800DDE90): byte 0x72, negate, thr 200 ----
-            // Retail: (artType-1)<=2 → stat/thr then bit JT; else direct bit JT.
             r0 = 0;
-            if ((u32)(artType - 1) <= 2) {
-                s16 val = 0;
-                switch (artType) {
-                    case 4: val = tgtParam->field_64; break;
-                    case 5: val = tgtParam->field_66; break;
-                    case 6: val = tgtParam->field_68; break;
-                    case 7: val = tgtParam->field_6A; break;
-                    case 8: val = tgtParam->field_6C; break;
-                    case 9: val = tgtParam->field_6E; break;
-                }
-                if (val >= 200) {
-                    r0 = 1;
-                } else {
+            if ((u32)(artType - 1) > 2) {
+                if (artType != 0) {
+                    s16 val = 0;
                     switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
-                        default: r0 = 0; break;
+                        case 4: val = tgtParam->field_64; break;
+                        case 5: val = tgtParam->field_66; break;
+                        case 6: val = tgtParam->field_68; break;
+                        case 7: val = tgtParam->field_6A; break;
+                        case 8: val = tgtParam->field_6C; break;
+                        case 9: val = tgtParam->field_6E; break;
+                    }
+                    if (val >= 200) {
+                        r0 = 1;
+                    } else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
+                            case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
+                            case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
+                            case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
+                            case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
+                            case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
+                            case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
+                            default: r0 = 0; break;
+                        }
                     }
                 }
             } else {
@@ -5738,29 +5736,31 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
             // ---- dispatch B (0x800DE0F4): byte 0x70, halve, thr 100 ----
             r0 = 0;
-            if ((u32)(artType - 1) <= 2) {
-                s16 val = 0;
-                switch (artType) {
-                    case 4: val = tgtParam->field_64; break;
-                    case 5: val = tgtParam->field_66; break;
-                    case 6: val = tgtParam->field_68; break;
-                    case 7: val = tgtParam->field_6A; break;
-                    case 8: val = tgtParam->field_6C; break;
-                    case 9: val = tgtParam->field_6E; break;
-                }
-                if (val >= 100) {
-                    r0 = 1;
-                } else {
+            if ((u32)(artType - 1) > 2) {
+                if (artType != 0) {
+                    s16 val = 0;
                     switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_70, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_70, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_70, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_70, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_70, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_70, 0x20); break;
-                        default: r0 = 0; break;
+                        case 4: val = tgtParam->field_64; break;
+                        case 5: val = tgtParam->field_66; break;
+                        case 6: val = tgtParam->field_68; break;
+                        case 7: val = tgtParam->field_6A; break;
+                        case 8: val = tgtParam->field_6C; break;
+                        case 9: val = tgtParam->field_6E; break;
+                    }
+                    if (val >= 100) {
+                        r0 = 1;
+                    } else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
+                            case 4: r0 = bmByteBit01(tgtParam->field_70, 0x01); break;
+                            case 5: r0 = bmByteBit01(tgtParam->field_70, 0x02); break;
+                            case 6: r0 = bmByteBit01(tgtParam->field_70, 0x04); break;
+                            case 7: r0 = bmByteBit01(tgtParam->field_70, 0x08); break;
+                            case 8: r0 = bmByteBit01(tgtParam->field_70, 0x10); break;
+                            case 9: r0 = bmByteBit01(tgtParam->field_70, 0x20); break;
+                            default: r0 = 0; break;
+                        }
                     }
                 }
             } else {
@@ -5781,31 +5781,33 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 goto post_dispatch;
             }
 
-            // ---- dispatch C (0x800DE344): 0x72 then 0x73, +0.25 ----
+            // ---- dispatch C (0x800DE344): early 0x72, thr path 0x73, +0.25 ----
             r0 = 0;
-            if ((u32)(artType - 1) <= 2) {
-                s16 val = 0;
-                switch (artType) {
-                    case 4: val = tgtParam->field_64; break;
-                    case 5: val = tgtParam->field_66; break;
-                    case 6: val = tgtParam->field_68; break;
-                    case 7: val = tgtParam->field_6A; break;
-                    case 8: val = tgtParam->field_6C; break;
-                    case 9: val = tgtParam->field_6E; break;
-                }
-                if (val < 0) {
-                    r0 = 1;
-                } else {
+            if ((u32)(artType - 1) > 2) {
+                if (artType != 0) {
+                    s16 val = 0;
                     switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_73, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_73, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_73, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_73, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_73, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_73, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_73, 0x20); break;
-                        default: r0 = 0; break;
+                        case 4: val = tgtParam->field_64; break;
+                        case 5: val = tgtParam->field_66; break;
+                        case 6: val = tgtParam->field_68; break;
+                        case 7: val = tgtParam->field_6A; break;
+                        case 8: val = tgtParam->field_6C; break;
+                        case 9: val = tgtParam->field_6E; break;
+                    }
+                    if (val < 0) {
+                        r0 = 1;
+                    } else {
+                        switch (artType) {
+                            case 1: case 2: case 3:
+                                r0 = bmByteBit01(tgtParam->field_73, 0x80); break;
+                            case 4: r0 = bmByteBit01(tgtParam->field_73, 0x01); break;
+                            case 5: r0 = bmByteBit01(tgtParam->field_73, 0x02); break;
+                            case 6: r0 = bmByteBit01(tgtParam->field_73, 0x04); break;
+                            case 7: r0 = bmByteBit01(tgtParam->field_73, 0x08); break;
+                            case 8: r0 = bmByteBit01(tgtParam->field_73, 0x10); break;
+                            case 9: r0 = bmByteBit01(tgtParam->field_73, 0x20); break;
+                            default: r0 = 0; break;
+                        }
                     }
                 }
             } else {
@@ -5824,6 +5826,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             if (r0 != 0) {
                 move->field_58 += 0.25f;
             }
+
         }
         } else {
             // ============================================================
@@ -5930,7 +5933,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 f32 f26b = 1.0f;
                 if (atkObj->field_3f00 & 0x2) {
                     s32 etype = (s32)((cf::CActorParam*)(target))->CActorParam_getActorType();
-                    u16 f28t = ((BattleObjAccessor*)attacker)->field_3f28;
+                    u16 f28t = atkObj->field_3f28;
                     if (etype == 1) {
                         if (f28t != 1 && f28t != 8 &&
                             !func_80148778((u8*)attacker + 8, 0xCF) &&
@@ -6036,44 +6039,31 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 s32 r0 = 0;
 
                 // ---- dispatch A' (0x800DF23C): byte 0x72, negate, thr 200 ----
-                r0 = 0;
-                if ((u32)(artType - 1) <= 2) {
-                    s16 val = 0;
-                    switch (artType) {
-                        case 4: val = tgtParam->field_64; break;
-                        case 5: val = tgtParam->field_66; break;
-                        case 6: val = tgtParam->field_68; break;
-                        case 7: val = tgtParam->field_6A; break;
-                        case 8: val = tgtParam->field_6C; break;
-                        case 9: val = tgtParam->field_6E; break;
-                    }
-                    if (val >= 200) {
-                        r0 = 1;
-                    } else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
-                            case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
-                            case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
-                            case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
-                            case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
-                            case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
-                            case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
-                            default: r0 = 0; break;
+                switch (artType) {
+                    case 1: case 2: case 3:
+                        r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
+                    case 4: case 5: case 6: case 7: case 8: case 9: {
+                        s16 val = artType == 4 ? tgtParam->field_64 :
+                                  artType == 5 ? tgtParam->field_66 :
+                                  artType == 6 ? tgtParam->field_68 :
+                                  artType == 7 ? tgtParam->field_6A :
+                                  artType == 8 ? tgtParam->field_6C : tgtParam->field_6E;
+                        if (val >= 200) r0 = 1;
+                        else {
+                            switch (artType) {
+                                case 1: case 2: case 3:
+                                    r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
+                                case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
+                                case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
+                                case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
+                                case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
+                                case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
+                                case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
+                            }
                         }
+                        break;
                     }
-                } else {
-                    switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
-                        default: r0 = 0; break;
-                    }
+                    default: r0 = 0; break;
                 }
                 if (r0 != 0) {
                     move->field_54 *= -1.0f;
@@ -6082,89 +6072,63 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 }
 
                 // ---- dispatch B' (0x800DF4A0): byte 0x70, halve, thr 100 ----
-                r0 = 0;
-                if ((u32)(artType - 1) <= 2) {
-                    s16 val = 0;
-                    switch (artType) {
-                        case 4: val = tgtParam->field_64; break;
-                        case 5: val = tgtParam->field_66; break;
-                        case 6: val = tgtParam->field_68; break;
-                        case 7: val = tgtParam->field_6A; break;
-                        case 8: val = tgtParam->field_6C; break;
-                        case 9: val = tgtParam->field_6E; break;
-                    }
-                    if (val >= 100) {
-                        r0 = 1;
-                    } else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
-                            case 4: r0 = bmByteBit01(tgtParam->field_70, 0x01); break;
-                            case 5: r0 = bmByteBit01(tgtParam->field_70, 0x02); break;
-                            case 6: r0 = bmByteBit01(tgtParam->field_70, 0x04); break;
-                            case 7: r0 = bmByteBit01(tgtParam->field_70, 0x08); break;
-                            case 8: r0 = bmByteBit01(tgtParam->field_70, 0x10); break;
-                            case 9: r0 = bmByteBit01(tgtParam->field_70, 0x20); break;
-                            default: r0 = 0; break;
+                switch (artType) {
+                    case 1: case 2: case 3:
+                        r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
+                    case 4: case 5: case 6: case 7: case 8: case 9: {
+                        s16 val = artType == 4 ? tgtParam->field_64 :
+                                  artType == 5 ? tgtParam->field_66 :
+                                  artType == 6 ? tgtParam->field_68 :
+                                  artType == 7 ? tgtParam->field_6A :
+                                  artType == 8 ? tgtParam->field_6C : tgtParam->field_6E;
+                        if (val >= 100) r0 = 1;
+                        else {
+                            switch (artType) {
+                                case 1: case 2: case 3:
+                                    r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
+                                case 4: r0 = bmByteBit01(tgtParam->field_70, 0x01); break;
+                                case 5: r0 = bmByteBit01(tgtParam->field_70, 0x02); break;
+                                case 6: r0 = bmByteBit01(tgtParam->field_70, 0x04); break;
+                                case 7: r0 = bmByteBit01(tgtParam->field_70, 0x08); break;
+                                case 8: r0 = bmByteBit01(tgtParam->field_70, 0x10); break;
+                                case 9: r0 = bmByteBit01(tgtParam->field_70, 0x20); break;
+                            }
                         }
+                        break;
                     }
-                } else {
-                    switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_70, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_70, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_70, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_70, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_70, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_70, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_70, 0x20); break;
-                        default: r0 = 0; break;
-                    }
+                    default: r0 = 0; break;
                 }
                 if (r0 != 0) {
                     move->field_54 *= 0.5f;
                     goto dispatch_alt_done;
                 }
 
-                // ---- dispatch C' (0x800DF6F0): 0x72 then 0x73, +0.25 ----
-                r0 = 0;
-                if ((u32)(artType - 1) <= 2) {
-                    s16 val = 0;
-                    switch (artType) {
-                        case 4: val = tgtParam->field_64; break;
-                        case 5: val = tgtParam->field_66; break;
-                        case 6: val = tgtParam->field_68; break;
-                        case 7: val = tgtParam->field_6A; break;
-                        case 8: val = tgtParam->field_6C; break;
-                        case 9: val = tgtParam->field_6E; break;
-                    }
-                    if (val < 0) {
-                        r0 = 1;
-                    } else {
-                        switch (artType) {
-                            case 1: case 2: case 3:
-                                r0 = bmByteBit01(tgtParam->field_73, 0x80); break;
-                            case 4: r0 = bmByteBit01(tgtParam->field_73, 0x01); break;
-                            case 5: r0 = bmByteBit01(tgtParam->field_73, 0x02); break;
-                            case 6: r0 = bmByteBit01(tgtParam->field_73, 0x04); break;
-                            case 7: r0 = bmByteBit01(tgtParam->field_73, 0x08); break;
-                            case 8: r0 = bmByteBit01(tgtParam->field_73, 0x10); break;
-                            case 9: r0 = bmByteBit01(tgtParam->field_73, 0x20); break;
-                            default: r0 = 0; break;
+                // ---- dispatch C' (0x800DF6F0): early 0x72, thr path 0x73, +0.25 ----
+                switch (artType) {
+                    case 1: case 2: case 3:
+                        r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
+                    case 4: case 5: case 6: case 7: case 8: case 9: {
+                        s16 val = artType == 4 ? tgtParam->field_64 :
+                                  artType == 5 ? tgtParam->field_66 :
+                                  artType == 6 ? tgtParam->field_68 :
+                                  artType == 7 ? tgtParam->field_6A :
+                                  artType == 8 ? tgtParam->field_6C : tgtParam->field_6E;
+                        if (val < 0) r0 = 1;
+                        else {
+                            switch (artType) {
+                                case 1: case 2: case 3:
+                                    r0 = bmByteBit01(tgtParam->field_73, 0x80); break;
+                                case 4: r0 = bmByteBit01(tgtParam->field_73, 0x01); break;
+                                case 5: r0 = bmByteBit01(tgtParam->field_73, 0x02); break;
+                                case 6: r0 = bmByteBit01(tgtParam->field_73, 0x04); break;
+                                case 7: r0 = bmByteBit01(tgtParam->field_73, 0x08); break;
+                                case 8: r0 = bmByteBit01(tgtParam->field_73, 0x10); break;
+                                case 9: r0 = bmByteBit01(tgtParam->field_73, 0x20); break;
+                            }
                         }
+                        break;
                     }
-                } else {
-                    switch (artType) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(tgtParam->field_72, 0x80); break;
-                        case 4: r0 = bmByteBit01(tgtParam->field_72, 0x01); break;
-                        case 5: r0 = bmByteBit01(tgtParam->field_72, 0x02); break;
-                        case 6: r0 = bmByteBit01(tgtParam->field_72, 0x04); break;
-                        case 7: r0 = bmByteBit01(tgtParam->field_72, 0x08); break;
-                        case 8: r0 = bmByteBit01(tgtParam->field_72, 0x10); break;
-                        case 9: r0 = bmByteBit01(tgtParam->field_72, 0x20); break;
-                        default: r0 = 0; break;
-                    }
+                    default: r0 = 0; break;
                 }
                 if (r0 != 0) {
                     move->field_58 += 0.25f;
@@ -6327,7 +6291,7 @@ post_dispatch:;
                 }
             }
             if ((atkObj->field_3f00 & 0x2) &&
-                ((BattleObjAccessor*)attacker)->field_3f28 == 5 &&
+                atkObj->field_3f28 == 5 &&
                 (move->field_78 & 0x400)) {
                 f32 f1 = ((cf::CActorParam*)(attacker))->CActorParam_getArtsGauge();
                 move->field_58 += f1 / 150.0f;
@@ -6614,7 +6578,7 @@ post_dispatch:;
     // 0x800E0D4C: art loop -- slots 0x40..0x67 (64 entries)
     // ================================================================
     for (u32 idx = 0x40; idx < 0x68; idx++) {
-        void* entry = ((cf::CBattleState*)((u8*)((u8*)target + 8) + 8))->CBattleState_getEntryByIndex((int)(idx));
+        void* entry = ((cf::CBattleState*)((u8*)target + 8))->CBattleState_getEntryByIndex((int)(idx));
         u16 type = *(u16*)((u8*)entry + 0xC);
         s32 skillId = 0;
         switch (type) {                                 // jt 0x8052B1BC
@@ -6627,12 +6591,13 @@ post_dispatch:;
         if (skillId == 0) continue;                     // 0x800E0DCC
         if (*(s16*)((u8*)entry + 0x14) == 0) continue;  // 0x800E0DD4
 
-        // distance check via PSVECMag (0x800E0DE0..0x800E0E68)
+        // distance check via VEC3Sub + PSVECMag (0x800E0DE0..0x800E0E68)
         {
-            BattleVec* vT = (BattleVec*)((cf::CfObject*)((u8*)(target) + 0x3E9C))->CfObject_getPosVector();
-            BattleVec* vA = (BattleVec*)((cf::CfObject*)((u8*)(attacker) + 0x3E9C))->CfObject_getPosVector();
-            f32 delta[3] = { vA->x - vT->x, vA->y - vT->y, vA->z - vT->z };
-            if (PSVECMag((const struct Vec*)delta) > (f32)(s32)*(s16*)((u8*)entry + 0x14)) {
+            nw4r::math::VEC3* vT = (nw4r::math::VEC3*)((cf::CfObject*)((u8*)target + 0x3E9C))->CfObject_getPosVector();
+            nw4r::math::VEC3* vA = (nw4r::math::VEC3*)((cf::CfObject*)((u8*)attacker + 0x3E9C))->CfObject_getPosVector();
+            nw4r::math::VEC3 delta;
+            nw4r::math::VEC3Sub(&delta, vA, vT);
+            if (PSVECMag((const struct Vec*)&delta) > (f32)(s32)*(s16*)((u8*)entry + 0x14)) {
                 skillId = 0;
             }
         }
@@ -6668,88 +6633,63 @@ post_dispatch:;
         if (val < 1) val = 0;
         if (func_80148778((u8*)attacker + 8, 0x1)) val = 0;
 
-        // skill dispatch (0x800E1014..0x800E1358) — same (id-1)<=2 / bit-JT shape
+        // skill dispatch (0x800E1014..0x800E1358)
         s32 r0 = 0;
-        if ((u32)(skillId - 1) <= 2) {
-            s16 stat = 0;
-            switch (skillId) {
-                case 4: stat = atkP->field_64; break;
-                case 5: stat = atkP->field_66; break;
-                case 6: stat = atkP->field_68; break;
-                case 7: stat = atkP->field_6A; break;
-                case 8: stat = atkP->field_6C; break;
-                case 9: stat = atkP->field_6E; break;
-            }
-            if (stat >= 200) {
-                r0 = 1;
-            } else {
-                switch (skillId) {
-                    case 1: case 2: case 3:
-                        r0 = bmByteBit01(atkP->field_72, 0x80); break;
-                    case 4: r0 = bmByteBit01(atkP->field_72, 0x01); break;
-                    case 5: r0 = bmByteBit01(atkP->field_72, 0x02); break;
-                    case 6: r0 = bmByteBit01(atkP->field_72, 0x04); break;
-                    case 7: r0 = bmByteBit01(atkP->field_72, 0x08); break;
-                    case 8: r0 = bmByteBit01(atkP->field_72, 0x10); break;
-                    case 9: r0 = bmByteBit01(atkP->field_72, 0x20); break;
-                    default: r0 = 0; break;
+        switch (skillId) {
+            case 1: case 2: case 3:
+                r0 = bmByteBit01(atkP->field_72, 0x80); break;
+            case 4: case 5: case 6: case 7: case 8: case 9: {
+                s16 stat = skillId == 4 ? atkP->field_64 :
+                           skillId == 5 ? atkP->field_66 :
+                           skillId == 6 ? atkP->field_68 :
+                           skillId == 7 ? atkP->field_6A :
+                           skillId == 8 ? atkP->field_6C : atkP->field_6E;
+                if (stat >= 200) r0 = 1;
+                else {
+                    switch (skillId) {
+                        case 1: case 2: case 3:
+                            r0 = bmByteBit01(atkP->field_72, 0x80); break;
+                        case 4: r0 = bmByteBit01(atkP->field_72, 0x01); break;
+                        case 5: r0 = bmByteBit01(atkP->field_72, 0x02); break;
+                        case 6: r0 = bmByteBit01(atkP->field_72, 0x04); break;
+                        case 7: r0 = bmByteBit01(atkP->field_72, 0x08); break;
+                        case 8: r0 = bmByteBit01(atkP->field_72, 0x10); break;
+                        case 9: r0 = bmByteBit01(atkP->field_72, 0x20); break;
+                    }
                 }
+                break;
             }
-        } else {
-            switch (skillId) {
-                case 1: case 2: case 3:
-                    r0 = bmByteBit01(atkP->field_72, 0x80); break;
-                case 4: r0 = bmByteBit01(atkP->field_72, 0x01); break;
-                case 5: r0 = bmByteBit01(atkP->field_72, 0x02); break;
-                case 6: r0 = bmByteBit01(atkP->field_72, 0x04); break;
-                case 7: r0 = bmByteBit01(atkP->field_72, 0x08); break;
-                case 8: r0 = bmByteBit01(atkP->field_72, 0x10); break;
-                case 9: r0 = bmByteBit01(atkP->field_72, 0x20); break;
-                default: r0 = 0; break;
-            }
+            default: r0 = 0; break;
         }
         if (r0 != 0) {
             val = -val;                                 // 0x800E11A0 negate
         } else {
-            // 0x70-byte stage (jt 0x8052B144 / 0x8052B11C)
             r0 = 0;
-            if ((u32)(skillId - 1) <= 2) {
-                s16 stat = 0;
-                switch (skillId) {
-                    case 4: stat = atkP->field_64; break;
-                    case 5: stat = atkP->field_66; break;
-                    case 6: stat = atkP->field_68; break;
-                    case 7: stat = atkP->field_6A; break;
-                    case 8: stat = atkP->field_6C; break;
-                    case 9: stat = atkP->field_6E; break;
-                }
-                if (stat >= 100) {
-                    r0 = 1;
-                } else {
-                    switch (skillId) {
-                        case 1: case 2: case 3:
-                            r0 = bmByteBit01(atkP->field_70, 0x80); break;
-                        case 4: r0 = bmByteBit01(atkP->field_70, 0x01); break;
-                        case 5: r0 = bmByteBit01(atkP->field_70, 0x02); break;
-                        case 6: r0 = bmByteBit01(atkP->field_70, 0x04); break;
-                        case 7: r0 = bmByteBit01(atkP->field_70, 0x08); break;
-                        case 8: r0 = bmByteBit01(atkP->field_70, 0x10); break;
-                        case 9: r0 = bmByteBit01(atkP->field_70, 0x20); break;
-                        default: r0 = 0; break;
+            switch (skillId) {
+                case 1: case 2: case 3:
+                    r0 = bmByteBit01(atkP->field_70, 0x80); break;
+                case 4: case 5: case 6: case 7: case 8: case 9: {
+                    s16 stat = skillId == 4 ? atkP->field_64 :
+                               skillId == 5 ? atkP->field_66 :
+                               skillId == 6 ? atkP->field_68 :
+                               skillId == 7 ? atkP->field_6A :
+                               skillId == 8 ? atkP->field_6C : atkP->field_6E;
+                    if (stat >= 100) r0 = 1;
+                    else {
+                        switch (skillId) {
+                            case 1: case 2: case 3:
+                                r0 = bmByteBit01(atkP->field_70, 0x80); break;
+                            case 4: r0 = bmByteBit01(atkP->field_70, 0x01); break;
+                            case 5: r0 = bmByteBit01(atkP->field_70, 0x02); break;
+                            case 6: r0 = bmByteBit01(atkP->field_70, 0x04); break;
+                            case 7: r0 = bmByteBit01(atkP->field_70, 0x08); break;
+                            case 8: r0 = bmByteBit01(atkP->field_70, 0x10); break;
+                            case 9: r0 = bmByteBit01(atkP->field_70, 0x20); break;
+                        }
                     }
+                    break;
                 }
-            } else {
-                switch (skillId) {
-                    case 1: case 2: case 3:
-                        r0 = bmByteBit01(atkP->field_70, 0x80); break;
-                    case 4: r0 = bmByteBit01(atkP->field_70, 0x01); break;
-                    case 5: r0 = bmByteBit01(atkP->field_70, 0x02); break;
-                    case 6: r0 = bmByteBit01(atkP->field_70, 0x04); break;
-                    case 7: r0 = bmByteBit01(atkP->field_70, 0x08); break;
-                    case 8: r0 = bmByteBit01(atkP->field_70, 0x10); break;
-                    case 9: r0 = bmByteBit01(atkP->field_70, 0x20); break;
-                    default: r0 = 0; break;
-                }
+                default: r0 = 0; break;
             }
             if (r0 != 0) {
                 val = (s32)((f32)(s32)val * 0.5f);      // 0x800E1344 halve

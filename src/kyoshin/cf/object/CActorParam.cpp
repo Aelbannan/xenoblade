@@ -1348,15 +1348,11 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         __dt__80043E88(&holder, -1);
     }
 
-    // Snapshot pass: copy the base-stat block (0x1650..0x16C8) into the
-    // working block (0x17E4..0x1858). Retail loads t1650 into a high GPR
-    // immediately after preparing applyArtsStats args (or r4 / or r3).
+    // Snapshot: retail order is v17E8, then 0x1650..0x16C4 bulk, then the
+    // remaining gauges/base floats, first store, THEN f27=0.0, then rest of
+    // stores — that live set + pending applyArtsStats args forces -304 frame.
     float v17E8 = *(float*)((u8*)self + 0x17E8);
     u32 t1650 = *(u32*)((u8*)self + 0x1650);
-    float v17F4 = *(float*)((u8*)self + 0x17F4);
-    float v17EC = *(float*)((u8*)self + 0x17EC);
-    float v17F0 = *(float*)((u8*)self + 0x17F0);
-    float f27 = lbl_eu_806677E4;
     float t1654 = *(float*)((u8*)self + 0x1654);
     float t1664 = *(float*)((u8*)self + 0x1664);
     float t1668 = *(float*)((u8*)self + 0x1668);
@@ -1391,10 +1387,14 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
     u32 t16BC = *(u32*)((u8*)self + 0x16BC);
     u32 t16C0 = *(u32*)((u8*)self + 0x16C0);
     u32 t16C4 = *(u32*)((u8*)self + 0x16C4);
+    float v17F4 = *(float*)((u8*)self + 0x17F4);
     float t1660 = *(float*)((u8*)self + 0x1660);
+    float v17EC = *(float*)((u8*)self + 0x17EC);
     float t1658 = *(float*)((u8*)self + 0x1658);
+    float v17F0 = *(float*)((u8*)self + 0x17F0);
     float t165C = *(float*)((u8*)self + 0x165C);
     *(u32*)((u8*)self + 0x17E4) = t1650;
+    float f27 = lbl_eu_806677E4; // born between first store and the rest
     *(float*)((u8*)self + 0x17E8) = t1654;
     *(float*)((u8*)self + 0x17EC) = t1658;
     *(float*)((u8*)self + 0x17F0) = t165C;
@@ -1437,10 +1437,9 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         float ratio = v17E8 / v17F4;
         // f26 starts as 0.0 before getCurrentSlotIndex (retail lfs f26 right after fdivs).
         float f26 = lbl_eu_806677E4;
-        // Declare bLT before gm so it claims r15 (retail); gm lands in r14.
-        // That keeps r15 occupied and stops MWCC hoisting self+8 into a saved reg.
-        int bLT = ratio <= lbl_eu_8066782C;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
+        // Retail: fcmp+cror (≤) after getCurrentSlotIndex; gm in r14, bLT in r15.
+        int bLT = ratio <= lbl_eu_8066782C;
         (void)bLT;
         u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
         // int + separate assigns → MWCC cntlzw equality idiom (not cmpli on bool||).
@@ -1658,59 +1657,66 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(s16*)((u8*)self + 0x187A) =
                 (s16)(int)(floorMul * (float)*(s16*)((u8*)self + 0x166E));
         }
-        *(s16*)((u8*)self + 0x1894) += *(u8*)((u8*)self + 0x1898);
+        {
+            u8 b1898 = *((u8*)self + 0x1898);
+            s16 s1894 = *(s16*)((u8*)self + 0x1894);
+            *(s16*)((u8*)self + 0x1894) = (s16)(s1894 + (s16)b1898);
+        }
 
-        if (func_8026178C(self->CActorParam_getStatusTable(), 48) != 0) {
-            int r = func_8025FB10(self->CActorParam_getStatusTable(), 48);
-            if (r != 0) {
-                u8* o = (u8*)reinterpret_cast<cf::CBattleState*>((u8*)self + 8)
-                            ->CBattleState_getStatusBlock();
-                int ok;
-                if (*(u16*)(o + 4) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x14) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                o += 0x20;
-                if (*(u16*)(o + 4) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x14) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x24) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x34) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x44) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                if (*(u16*)(o + 0x54) != 0) {
-                    ok = 0;
-                    goto status48_done;
-                }
-                ok = 1;
-            status48_done:
-                if (ok != 0) {
-                    s16 delta = (s16)r;
-                    *(s16*)((u8*)self + 0x174C) =
-                        (s16)(*(s16*)((u8*)self + 0x174C) + delta);
-                    *(s16*)((u8*)self + 0x1750) =
-                        (s16)(*(s16*)((u8*)self + 0x1750) + delta);
-                    *(s16*)((u8*)self + 0x174E) =
-                        (s16)(*(s16*)((u8*)self + 0x174E) + delta);
-                    *(s16*)((u8*)self + 0x1746) =
-                        (s16)(*(s16*)((u8*)self + 0x1746) + delta);
+        // Retail re-checks getStatusTable before id-48 (null → skip to loop).
+        if (self->CActorParam_getStatusTable() != NULL) {
+            if (func_8026178C(self->CActorParam_getStatusTable(), 48) != 0) {
+                int r = func_8025FB10(self->CActorParam_getStatusTable(), 48);
+                if (r != 0) {
+                    u8* o = (u8*)reinterpret_cast<cf::CBattleState*>((u8*)self + 8)
+                                ->CBattleState_getStatusBlock();
+                    int ok;
+                    if (*(u16*)(o + 4) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x14) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    o += 0x20;
+                    if (*(u16*)(o + 4) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x14) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x24) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x34) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x44) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    if (*(u16*)(o + 0x54) != 0) {
+                        ok = 0;
+                        goto status48_done;
+                    }
+                    ok = 1;
+                status48_done:
+                    if (ok != 0) {
+                        s16 delta = (s16)r;
+                        *(s16*)((u8*)self + 0x174C) =
+                            (s16)(*(s16*)((u8*)self + 0x174C) + delta);
+                        *(s16*)((u8*)self + 0x1750) =
+                            (s16)(*(s16*)((u8*)self + 0x1750) + delta);
+                        *(s16*)((u8*)self + 0x174E) =
+                            (s16)(*(s16*)((u8*)self + 0x174E) + delta);
+                        *(s16*)((u8*)self + 0x1746) =
+                            (s16)(*(s16*)((u8*)self + 0x1746) + delta);
+                    }
                 }
             }
         }
@@ -2043,8 +2049,11 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
 
             std::memset((u8*)self + 0x16C8, 0, 120);
 
-            // Load both shuffle sources before any stores so MWCC keeps the
-            // full GPR save set live across the second memset (retail -304 frame).
+            // Retail: set up memset(0x1740,0,82) destination early, shuffle
+            // 0x176C.. into 0x17BE.., load the 0x1740 block into GPRs, copy to
+            // 0x1792.., THEN memset — early r3/r4/r5 forces the -304 frame.
+            u8* p1740 = (u8*)self + 0x1740;
+
             s16 s1770 = *(s16*)((u8*)self + 0x1770);
             s16 s1772 = *(s16*)((u8*)self + 0x1772);
             s16 s176C = *(s16*)((u8*)self + 0x176C);
@@ -2058,29 +2067,6 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             u32 w1786 = *(u32*)((u8*)self + 0x1786);
             u32 w178A = *(u32*)((u8*)self + 0x178A);
             u32 w178E = *(u32*)((u8*)self + 0x178E);
-            s16 c1740 = *(s16*)((u8*)self + 0x1740);
-            s16 c1742 = *(s16*)((u8*)self + 0x1742);
-            s16 c1744 = *(s16*)((u8*)self + 0x1744);
-            s16 c1746 = *(s16*)((u8*)self + 0x1746);
-            s16 c1748 = *(s16*)((u8*)self + 0x1748);
-            s16 c174A = *(s16*)((u8*)self + 0x174A);
-            s16 c174C = *(s16*)((u8*)self + 0x174C);
-            s16 c174E = *(s16*)((u8*)self + 0x174E);
-            s16 c1750 = *(s16*)((u8*)self + 0x1750);
-            s16 c1752 = *(s16*)((u8*)self + 0x1752);
-            s16 c1754 = *(s16*)((u8*)self + 0x1754);
-            s16 c1756 = *(s16*)((u8*)self + 0x1756);
-            s16 c1758 = *(s16*)((u8*)self + 0x1758);
-            s16 c175A = *(s16*)((u8*)self + 0x175A);
-            s16 c175C = *(s16*)((u8*)self + 0x175C);
-            s16 c175E = *(s16*)((u8*)self + 0x175E);
-            s16 c1760 = *(s16*)((u8*)self + 0x1760);
-            s16 c1762 = *(s16*)((u8*)self + 0x1762);
-            s16 c1764 = *(s16*)((u8*)self + 0x1764);
-            s16 c1766 = *(s16*)((u8*)self + 0x1766);
-            s16 c1768 = *(s16*)((u8*)self + 0x1768);
-            s16 c176A = *(s16*)((u8*)self + 0x176A);
-            s16 c176E = *(s16*)((u8*)self + 0x176E);
 
             *(s16*)((u8*)self + 0x17BE) = s176C;
             *(s16*)((u8*)self + 0x17C2) = s1770;
@@ -2095,6 +2081,30 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(u32*)((u8*)self + 0x17D8) = w1786;
             *(u32*)((u8*)self + 0x17DC) = w178A;
             *(u32*)((u8*)self + 0x17E0) = w178E;
+
+            s16 c1740 = *(s16*)(p1740 + 0x00);
+            s16 c1742 = *(s16*)(p1740 + 0x02);
+            s16 c1744 = *(s16*)(p1740 + 0x04);
+            s16 c1746 = *(s16*)(p1740 + 0x06);
+            s16 c1748 = *(s16*)(p1740 + 0x08);
+            s16 c174A = *(s16*)(p1740 + 0x0A);
+            s16 c174C = *(s16*)(p1740 + 0x0C);
+            s16 c174E = *(s16*)(p1740 + 0x0E);
+            s16 c1750 = *(s16*)(p1740 + 0x10);
+            s16 c1752 = *(s16*)(p1740 + 0x12);
+            s16 c1754 = *(s16*)(p1740 + 0x14);
+            s16 c1756 = *(s16*)(p1740 + 0x16);
+            s16 c1758 = *(s16*)(p1740 + 0x18);
+            s16 c175A = *(s16*)(p1740 + 0x1A);
+            s16 c175C = *(s16*)(p1740 + 0x1C);
+            s16 c175E = *(s16*)(p1740 + 0x1E);
+            s16 c1760 = *(s16*)(p1740 + 0x20);
+            s16 c1762 = *(s16*)(p1740 + 0x22);
+            s16 c1764 = *(s16*)(p1740 + 0x24);
+            s16 c1766 = *(s16*)(p1740 + 0x26);
+            s16 c1768 = *(s16*)(p1740 + 0x28);
+            s16 c176A = *(s16*)(p1740 + 0x2A);
+            s16 c176E = *(s16*)(p1740 + 0x2E);
 
             *(float*)((u8*)self + 0x1724) = lbl_eu_806677E8;
             *(s16*)((u8*)self + 0x1792) = c1740;
@@ -2120,7 +2130,7 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
             *(s16*)((u8*)self + 0x17BA) = c1768;
             *(s16*)((u8*)self + 0x17BC) = c176A;
             *(s16*)((u8*)self + 0x17C0) = c176E;
-            std::memset((u8*)self + 0x1740, 0, 82);
+            std::memset(p1740, 0, 82);
 
             if (self->CActorParam_getActor() != NULL) {
                 if ((*(u32*)((u8*)self->CActorParam_getActor() + 0x3F00) & 2) != 0) {

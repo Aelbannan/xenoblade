@@ -1384,10 +1384,13 @@ s32 func_80157CD0(u32 arg) {
     s32 result = 0;
     void* list = func_801579C4(arg, &count, &stride);
     if (list != 0) {
-        char* p = (char*)list;
+        // Named stride copy after off: birth order colors off=r4, step=r5
+        // (retail lwzx r0,r3,r4 / add r4,r4,r5). Using stride directly
+        // colors the address-taken out-param first (r4) and swaps the pair.
         s32 off = 0;
-        for (s32 i = count; i > 0; i--, off += stride) {
-            // Offset-indexed walk (retail lwzx r0,r3,r4 / add r4,r4,r5).
+        s32 step = stride;
+        char* p = (char*)list;
+        for (s32 i = count; i > 0; i--, off += step) {
             if (*(u32*)(p + off) == 0) result++;
         }
         if (arg - 2 <= 6) {

@@ -70,7 +70,9 @@ void func_801BA1DC(CSuddenCommu* self) {
     // timer store, flag clear (MWCC otherwise reorders the FP store).
     self->field_10 = (u32)-1;
     self->field_18 = v30;
-    self->field_24 = 0;
+    // Plain (non-volatile) final store: a volatile last store makes MWCC hoist
+    // the LR restore above the callee-saved loads; retail shows restores-first.
+    *(u32*)&self->field_24 = 0;
 }
 
 extern "C" void func_801BA250(void* self) { *(u32*)((u8*)self + 0x20) = 0; }

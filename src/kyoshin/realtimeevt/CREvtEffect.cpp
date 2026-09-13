@@ -14,6 +14,15 @@
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/cf/CfGameManagerData.hpp"  // H3 label-owner decl (lbl_eu_80663E14; lbl_eu_80663E24)
 
+// Named .sdata2 signed int->float conversion magic (0x4330000080000000).
+// Defining it here lets MWCC reuse the retail SDA symbol instead of a TU-local @N.
+extern "C" {
+// Named .sdata2 signed int->float conversion magic. Hex init matches
+// CFloorMap so MWCC can coalesce the builtin (f32)(s32) pool onto this
+// retail symbol instead of a TU-local @N.
+__declspec(section ".sdata2") const double lbl_eu_80667950 = 0x4330000080000000ll;
+}
+
 // C-linkage imports relocated to CREvtEffect.hpp (see the "C-linkage imports"
 // section there). This TU still defines the CREvt* functions below.
 
@@ -158,18 +167,19 @@ extern "C" void func_80184D90(CREvtEffect* self) {
 
     void* model = self->mModel;
 
-    // "eff" animation -> mAnm2* groups
-    nw4r::g3d::ChrAnmResult* result =
+    // Distinct result locals per anim group: each dies after its Get*
+    // trio so model (live across all three) can claim r31 (retail).
+    nw4r::g3d::ChrAnmResult* resultEff =
         func_8048BAD4(model, lbl_eu_80662478, (f32)func_8016A35C());
-    result->GetTranslate((nw4r::math::VEC3*)self->mAnm2Translate);
-    result->GetRotateDeg((nw4r::math::VEC3*)self->mAnm2Rotate);
-    result->GetScale((nw4r::math::VEC3*)self->mAnm2Scale);
+    resultEff->GetTranslate((nw4r::math::VEC3*)self->mAnm2Translate);
+    resultEff->GetRotateDeg((nw4r::math::VEC3*)self->mAnm2Rotate);
+    resultEff->GetScale((nw4r::math::VEC3*)self->mAnm2Scale);
 
-    // "effAtr" animation -> mAnm1* groups
-    result = func_8048BAD4(model, lbl_eu_80662474, (f32)func_8016A35C());
-    result->GetTranslate((nw4r::math::VEC3*)self->mAnm1Translate);
-    result->GetRotateDeg((nw4r::math::VEC3*)self->mAnm1Rotate);
-    result->GetScale((nw4r::math::VEC3*)self->mAnm1Scale);
+    nw4r::g3d::ChrAnmResult* resultAtr =
+        func_8048BAD4(model, lbl_eu_80662474, (f32)func_8016A35C());
+    resultAtr->GetTranslate((nw4r::math::VEC3*)self->mAnm1Translate);
+    resultAtr->GetRotateDeg((nw4r::math::VEC3*)self->mAnm1Rotate);
+    resultAtr->GetScale((nw4r::math::VEC3*)self->mAnm1Scale);
 
     // Normalize the alpha in mAnm1Scale.z: keep the integer part and drop the
     // fractional part once it falls below the epsilon threshold.
@@ -190,8 +200,9 @@ extern "C" void func_80184D90(CREvtEffect* self) {
     self->mFloat12C = self->mAnm1Translate[2];
 
     // "effTgt" animation -> mAnm3Translate
-    result = func_8048BAD4(model, lbl_eu_80662470, (f32)func_8016A35C());
-    result->GetTranslate((nw4r::math::VEC3*)self->mAnm3Translate);
+    nw4r::g3d::ChrAnmResult* resultTgt =
+        func_8048BAD4(model, lbl_eu_80662470, (f32)func_8016A35C());
+    resultTgt->GetTranslate((nw4r::math::VEC3*)self->mAnm3Translate);
 
     // Refresh the spawned effects when the translate.y threshold is crossed
     if (self->mAnm1Translate[1] > lbl_eu_80667948) {

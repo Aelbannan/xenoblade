@@ -1,6 +1,14 @@
 #include "monolib/work.hpp"
 #include "monolib/data_vtables.hpp"
 
+// Local overlay: CProcess inherits CChildListNode; primary vptr lives at +0x10
+// (novtable installs the retail label by hand). Typed slot replaces void** /
+// byte-offset vptr stores in ctor/dtor.
+struct CProcessVptrSlot {
+    u8 _00[0x10];
+    u32* vtable;  // +0x10
+};
+
 // ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
 // rodata 0x80522828 (0x1B): RTTI class-name string for TChildListHeader<CProcess>.
 const char lbl_eu_80522828[] = "TChildListHeader<CProcess>";
@@ -30,7 +38,7 @@ TChildListHeader<CProcess> CProcessMan::sRootProcessList;
 CProcess::CProcess() {
     // novtable: write the retail vptr (0x8056BB60, +0x10) first so the stores
     // land in retail order (vptr, then the member flags, then InsertEnd).
-    *(void**)((char*)this + 0x10) = (void*)&lbl_eu_8056BB60;
+    ((CProcessVptrSlot*)this)->vtable = lbl_eu_8056BB60;
     mIsRegist = false;
     mIsRemove = false;
     mIsDisableMove = false;
@@ -41,7 +49,7 @@ CProcess::CProcess() {
 
 CProcess::~CProcess() {
     // novtable: re-store the retail vptr (0x8056BB60, +0x10) like the ctor.
-    *(void**)((char*)this + 0x10) = (void*)&lbl_eu_8056BB60;
+    ((CProcessVptrSlot*)this)->vtable = lbl_eu_8056BB60;
 
     //Delete child processes (next fetched before the destructive delete)
     CProcess* iter;

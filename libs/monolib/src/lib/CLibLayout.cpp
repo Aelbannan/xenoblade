@@ -88,7 +88,7 @@ CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pN
     mType = THREAD_CLIBLAYOUT;
 }
 
-extern "C" void* __dt__8045F000(CLibLayout* self, int flags) {
+extern "C" CLibLayout* __dt__8045F000(CLibLayout* self, int flags) {
     if (self != 0) {
         // Retail clears mState (+0x48) then mName.mLength (+0x44).
         self->mState = (CWorkThread::ThreadState)0;
@@ -279,7 +279,7 @@ void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // Retail keeps ONE register live across three different values -- the
     // preloaded mAllocHandle, the hash index, and the element's fallback
     // handle -- so all three share a single local.
-    void* buf;
+    u8* buf;
     CLibLayout* inst = lbl_eu_80665710;
     u32 val = inst->mAllocHandle;
     if (static_cast<const volatile CLibLayout*>(inst)->hashCount != 0) {
@@ -291,7 +291,8 @@ void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
         // Registering with a frame heap takes priority: allocate there and
         // query the frame heap's free size, returning the allocated buffer.
         if (elem->field_4 != NULL) {
-            void* pBuf = MEMAllocFromFrmHeapEx(elem->field_4, size, 4);
+            u8* pBuf = static_cast<u8*>(
+                MEMAllocFromFrmHeapEx(elem->field_4, size, 4));
             MEMGetAllocatableSizeForFrmHeapEx(elem->field_4, 4);
             return pBuf;
         }

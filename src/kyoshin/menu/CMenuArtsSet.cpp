@@ -1829,8 +1829,9 @@ extern "C" __declspec(noinline) void func_802324C4(SArts322BC* self, int key) {
         func_80232C78((SArts327B0*)self);
         func_80232B88((SArts327B0*)self);
     } else {
+        SArtsManagerRoot* root;
         SArtsSubDElem* base;
-        SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
+        root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
         root->mObj17C.v157();
         base = &root->mElemsE8[0];
         // Call first, truncate after reading count: retail emits the count

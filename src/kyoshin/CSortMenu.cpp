@@ -10,6 +10,7 @@
 // External symbols
 extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
 extern const float lbl_eu_80668000;  // 1.0f literal pool (SDA21): animation completion threshold
+void func_801390E0(CFileHandle**);
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
 // declarations - required for the TU to compile under -lang=c++)

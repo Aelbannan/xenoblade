@@ -32,7 +32,7 @@ extern "C" CScnItemLightNw4rAlloc* __ct__CScnItemLightNw4r(CScnLightItemHost* th
         allocate__Q23mtl10MemManagerFUlUl(0x1224, func_80496018(ths)));
     if (light != 0) {
         __ct__CScnItemLight(light, ths, &str, (void*)param2, param3);
-        *(void**)light = (void*)lbl_eu_8056DD38;
+        *(u32**)light = (u32*)lbl_eu_8056DD38;
         light->mpScnRoot = ths->mRoot->mScnRoot;
     }
     func_8048C630(ths->mPool, light, 0);

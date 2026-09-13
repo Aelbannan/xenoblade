@@ -38,18 +38,20 @@ void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle;
+    CCharVoice* vp;
     CVS_THREAD_BATTLE_END_SP* p = self;
     int i;
     for (i = 0; self->count > i; i++) {
         handle = p->slots[0];
-        // Bias the handle to its embedded CCharVoice in place.
+        // Bias the handle to its embedded CCharVoice (BATTLE_END idiom).
+        vp = (CCharVoice*)handle;
         if (handle != NULL) {
-            handle = (CVoiceHandle*)&handle->voice;
+            vp = &handle->voice;
         }
-        if ((CCharVoice*)handle == voicePtr) {
+        if (vp == voicePtr) {
             p->slots[0] = NULL;
         }
-        // Walk the slot array one word per iteration.
+        // Walk the slot array one word per iteration (match-pinned cursor).
         p = (CVS_THREAD_BATTLE_END_SP*)((u8*)p + 4);
     }
 }
@@ -106,10 +108,11 @@ matched:
             // Voice inactive -- bias the handle to its embedded CCharVoice
             // and play the command's voice ID (|param| + 0xCE4).
             int voiceId = labs(self->cmdString[1]);
+            CCharVoice* vp = (CCharVoice*)found;
             if (found != NULL) {
-                found = (CVoiceHandle*)&found->voice;
+                vp = &found->voice;
             }
-            if (func_802A3C44(self, (CCharVoice*)found,
+            if (func_802A3C44(self, vp,
                               voiceId + CVS_THREAD_BATTLE_END_SP::VOICE_ID_BIAS) == 0) {
                 self->func_802A3B50();
                 return;

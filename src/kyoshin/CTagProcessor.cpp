@@ -1950,7 +1950,7 @@ void func_801286E0(){}
 // run the message start step, and clear the done flag. No explicit return: the
 // retail leaves r3 as whatever func_801287BC left there.
 #pragma optimize_for_size on
-int func_80128740(void* tagProc, nw4r::lyt::Pane* pane) {
+extern "C" __declspec(noinline) int func_80128740(void* tagProc, nw4r::lyt::Pane* pane) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)pane;
     tb->v78();          // FreeStringBuffer()
     tb->v74(0x400);     // AllocStringBuffer(0x400)
@@ -1968,7 +1968,7 @@ int func_80128740(void* tagProc, nw4r::lyt::Pane* pane) {
 // flag, measure the line position, and update the pane's position VEC3.
 // -O4,s save shape (_savegpr_28).
 #pragma optimize_for_size on
-void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
+extern "C" __declspec(noinline) void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
                    const wchar_t* str) {
     wchar_t buf2[0x400];
     f32 out[2];

@@ -234,7 +234,9 @@ void func_8024577C(void* self, u16 val) {
 
     while (i < count) {
         roff = i * 0x18;
-        if (*(const u16*)(base + i * 0x18 + 0x18) == val) {
+        CFloorMapMarkerEntry* rec =
+            (CFloorMapMarkerEntry*)((u32)roff + (u32)base);
+        if (val == (rec + 1)->id) {
             if (i >= 5) {
                 cur->field_0A = 4;
                 cur->field_0B = i - 4;

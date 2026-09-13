@@ -217,6 +217,17 @@ The most valuable future feature is not a generic chatbot over the file. It is a
 
 > In-progress migration of reusable/cross-target knowledge out of the per-target log. If a pattern is not listed here, search both files via `mwcc_kb.py` — the index covers PATTERNS + CASES.
 
+## `*=` double keeps fmul dest=FRC (`fmul f0,f1,f0`) — `x * lbl` commutes (Wii/1.1 -O4)
+
+- Symptom:   `lfs f1, x; lfd f0, 1.5; fmul f0,f0,f1; frsp` vs retail `fmul f0,f1,f0` (same loads)
+- Cause:     `x = (f32)(x * lbl_double)` / named left/`f64` locals commute FRA/FRC so dest==FRA
+- Fix:       write `x *= lbl_double` (same shape as a matching `x *= lbl_float` `fmuls`)
+- Result:    operand order matches; lfd+frsp stay
+- Confidence: repo_proven
+- Applies to/a.k.a.: sdata2 doubles, dest-as-FRC fmul, commute peephole
+
+
+
 ### Never declare `__RTTI__*` symbols in a TU with novtable-predeclared anonymous-namespace classes (CDesktop, -ipa file ICE)
 
 Declaring `extern u32 __RTTI__10IWorkEvent[];` (any type, inside or outside `extern "C"`) in a
@@ -4003,6 +4014,14 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Result:    51.9% -> 55.6% static, cycle fuzzy 88.0% -> 89.1%.
 - Confidence: repo_proven
 - Applies to/a.k.a.: extends docs/register_mapping.md Rule A to volatile-FPR constants; pairs with the existing fcmpu symmetric-operand entry.
+
+## Named `sum = lhs + rhs` with an earlier FPR still live in f0 pins fadds dest and operand order (func_80263A34, Wii/1.1 -O4,p)
+- Symptom:   `acc += addend` matches dest/colors (`fadds f1,f1,f2`) but retail wants `fadds f1,f2,f1`. Writing `acc = addend + acc` or a same-scope `next = lhs + rhs` after `lhs,rhs,occ` decl recolors all three FPRs (~96.9%).
+- Cause:     FPR scratch is low→high by declaration order. `f32 occ, acc, addend` pins f0/f1/f2. `acc += addend` already has dest==FRA so MWCC will not emit FRA=addend. A *new* named sum with `occ` still live occupies f0, so dest reuses `acc` (f1) while source order `addend + acc` is preserved as FRA/FRB.
+- Fix:       Declare the occupier first (`cap,step,cur` → f0,f1,f2), assign in retail load order, then `f32 sum = cur + step` (use `sum` for the store and the compare so `cap` stays live across the add).
+- Result:    FULL_MATCH on us-80265ea4
+- Confidence: repo_proven
+- Applies to/a.k.a.: commutative fadds/fmuls last-1% operand-order swaps; MWCC_CASES func_80263A34; pairs with monolib const-first fadds notes
 
 ## rlwinm rotate-mask decode recipe for bitmap-index mismatches (UnkClass_8047E110::func_8047EFBC fix, Wii/1.1 -O4,p)
 - Symptom:   `bitmap[i >> N]` structural mismatch where decomp emits one rlwinm encoding and retail another (e.g. sh28/mb20/me29 vs sh29/mb19/me29).

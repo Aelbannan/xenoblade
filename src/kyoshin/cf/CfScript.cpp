@@ -434,13 +434,20 @@ extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEv
     return ret;
 }
 
+// Placement-new[] would emit __construct_new_array + __ct__Q22cf8CfScriptFv;
+// retail uses the C-runtime helper with the unmangled ctor label.
+extern "C" void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
+extern "C" void __ct__cf_CfScript(CfScript* self);
+extern "C" void __dt__Q22cf8CfScriptFv(CfScript* self, s16 flags);
+
 // CfScriptManager::getInstance - singleton accessor
 __declspec(noinline) CfScriptManager* CfScriptManager::getInstance() {
     if (!lbl_eu_80663D88) {
         CfScriptManager* mgr = (CfScriptManager*)lbl_eu_80570918;
         // Construct the 3-script array in place at the static manager address
         // (retail emits __construct_array with CfScript ctor/dtor, size 0x58, count 3).
-        new (mgr->mScripts) CfScript[3];
+        __construct_array(mgr->mScripts, (void*)__ct__cf_CfScript,
+                          (void*)__dt__Q22cf8CfScriptFv, 0x58, 3);
         mgr->init();
         lbl_eu_80663D88 = 1;
     }

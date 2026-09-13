@@ -275,7 +275,8 @@ void CMenuItem::Init() {
 // +0x6C is copied by a counted lwzu/stwu loop (element base registers walk
 // from 0x68 = 0x6C-4).
 extern "C" void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
-    dst->body = src->body;
+    dst->head = src->head;
+    dst->tail = src->tail;
 }
 
 extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {

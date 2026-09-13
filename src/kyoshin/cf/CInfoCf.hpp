@@ -247,16 +247,19 @@ struct CInfoCfObjSysWin {
 // 8-byte table entry. The original layout is packed (u64 elements at a
 // 4-mod-8 offset), so the wrapper forces 4-byte alignment; MWCC still copies
 // the u64 member with the base-4 lwzu/stwu loop convention.
+// Two u32s (not u64): a u64 member 8-aligns the copy view and pads +4
+// after the vtable. A 4-aligned pair keeps the object body at +0x04.
 __declspec(align(4)) struct CInfoCfE48Entry {
-    u64 q;
+    u32 lo;
+    u32 hi;
 };
 
 /*
- * Body-copy view for func_80166E48 (0x04..0xEF). Field-by-field head/tail
- * with a 16-entry 8-byte table at +0x6C that retail copies with an
- * lwzu/stwu counted loop (element base registers start at 0x68 = 0x6C-4).
+ * Body-copy view for func_80166E48 (0x04..0xEF). Split around the 0x2C..0x2F
+ * hole retail does not copy. Head is +0x04..+0x2B; tail is +0x30..+0xEE
+ * with a 16-entry 8-byte table at +0x6C (lwzu/stwu base at 0x68 = 0x6C-4).
  */
-struct CInfoCfCopyE48 {
+struct CInfoCfCopyE48Head {
     u32 field_04;
     u32 field_08;
     u32 field_0C;
@@ -270,6 +273,9 @@ struct CInfoCfCopyE48 {
     u8 field_29;
     u8 field_2A;
     u8 field_2B;
+};
+
+struct CInfoCfCopyE48Tail {
     u32 field_30;
     u32 field_34;
     u32 field_38;
@@ -288,15 +294,17 @@ struct CInfoCfCopyE48 {
     f32 field_60;
     f32 field_64;
     u8 field_68;
-    CInfoCfE48Entry field_6C[16]; // align(4) entries -> table at +0x6C like retail
+    CInfoCfE48Entry field_6C[16];
     u8 field_EC;
     u8 field_ED;
     u8 field_EE;
 };
 
 struct CInfoCfObjE48 {
-    void* vtable;       // 0x00 (never copied)
-    CInfoCfCopyE48 body; // 0x04
+    void* vtable;              // 0x00 (never copied)
+    CInfoCfCopyE48Head head;   // 0x04 .. 0x2B
+    u32 gap_2C;                // 0x2C .. 0x2F (not assigned)
+    CInfoCfCopyE48Tail tail;   // 0x30 .. 0xEE
 };
 
 /*

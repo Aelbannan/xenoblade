@@ -58,8 +58,9 @@ extern "C" void func_801D202C(CMCItemBoxSubObj*);
 extern "C" void func_801D20B0(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void func_8022B7C8(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void func_8022B748(CMCGetItemBoxSysWin*);   // retail reloc is unmangled
-void __dt__12CItemBoxInfoFv(CItemBoxInfo*, int);
-void __dt__7CSysWinFv(CMCGetItemBoxSysWin*, int);
+// Use the header's extern "C" __dt__12CItemBoxInfoFv / __dt__7CSysWinFv
+// so call-site relocs stay the retail unmangled names (C++ redecls here
+// were emitting __dt__...Fv__FP... extra-signature names).
 // Retail reloc names for the cursor dtors are unmanged C symbols.
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur16Fv(void*, int);

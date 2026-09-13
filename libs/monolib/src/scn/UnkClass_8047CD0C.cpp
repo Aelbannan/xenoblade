@@ -101,7 +101,7 @@ extern "C" u8* allocateNodeStorage__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* sel
 // ------------------------------------------------------------------
 
 extern UnkClass_8047CD0C lbl_eu_80658540; // node pool (bss)
-extern void* lbl_eu_806658C8;             // owned allocation slot (sbss)
+extern u8* lbl_eu_806658C8;              // owned allocation slot (sbss)
 
 // ------------------------------------------------------------------
 // Pool "clear/reset" helpers
@@ -162,8 +162,8 @@ void __declspec(noinline) UnkClass_8047CD0C::createGlobalHeap() {
             lbl_eu_806658C8 = 0;
         }
     }
-    lbl_eu_806658C8 =
-        mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20);
+    lbl_eu_806658C8 = static_cast<u8*>(
+        mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM1(), 0xAF000, 0x20));
 }
 
 // freeGlobalHeap -- release the pool storage slot. noinline so releasePoolMemory
@@ -313,7 +313,7 @@ extern "C" __declspec(noinline) u8* allocateNodeStorage__17UnkClass_8047CD0CFv(U
         self->mData =
             (u8*)mtl::MemManager::allocate_head(handle, size, 0x20);
     } else {
-        self->mData = (u8*)lbl_eu_806658C8;
+        self->mData = lbl_eu_806658C8;
     }
     self->mNodeCount = nodeCount;
     self->mField04 = size - nodeCount * 0x28;
@@ -399,6 +399,6 @@ u8 lbl_eu_80658638[0x10];
 // [.sbss] 0x806658C8-0x806658D8 (0x10 = 16B): owned-allocation slot (used
 // as a 4-byte pointer) + pad to the retail 8-byte symbol + the 8-byte
 // partner slot.
-void* lbl_eu_806658C8;   // owned allocation slot
+u8* lbl_eu_806658C8;    // owned allocation slot
 u32 lbl_eu_806658C8x;     // retail symbol tail (unused)
 u8 lbl_eu_806658D0[8];

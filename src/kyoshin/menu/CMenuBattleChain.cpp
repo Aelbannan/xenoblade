@@ -13,10 +13,13 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
 
+class IWorkEvent;
+class IScnRender;
+
 // Thunk targets (retail mangled names). extern "C" keeps the exact symbol
 // (no extra __FPv); GetItemMulti idiom.
 extern "C" void* __dt__16CMenuBattleChainFv(CMenuBattleChain* self, int flags);
-extern "C" void cbRenderBefore__16CMenuBattleChainFv(void* self);
+extern "C" void cbRenderBefore__16CMenuBattleChainFv(CMenuBattleChain* self);
 
 // Term helpers (retail names; CDeviceVI static + UnkClass member).
 namespace CDeviceVI {
@@ -504,12 +507,34 @@ extern "C" void func_802AAC78(CMenuBattleChain* self) {
     }
 }
 
-// IWorkEvent (+0x6C) / IScnRender (+0x70) this-adjusting thunks (retail subi;b).
-void func_802AB3B8(void* self) { ((void(*)(void*))__dt__16CMenuBattleChainFv)((char*)self - 0x6c); }
+/**
+ * IWorkEvent (+0x6C) vtable this-adjusting thunk for ~CMenuBattleChain.
+ * Retail: subi r3, r3, 0x6c; b __dt__16CMenuBattleChainFv
+ * Single-arg cast: delete flag stays in r4 as caller leftover.
+ */
+void func_802AB3B8(IWorkEvent* self) {
+    ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
+        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x6c));
+}
 
-void func_802AB3C0(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleChainFv)((char*)self - 0x70); }
+/**
+ * IScnRender (+0x70) vtable this-adjusting thunk for cbRenderBefore.
+ * Retail: subi r3, r3, 0x70; b cbRenderBefore__16CMenuBattleChainFv
+ * Flat-symbol cast keeps the 2-insn thunk (member call would inline/expand).
+ */
+void func_802AB3C0(IScnRender* self) {
+    ((void (*)(CMenuBattleChain*))cbRenderBefore__16CMenuBattleChainFv)(
+        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
+}
 
-void func_802AB3C8(void* self) { ((void(*)(void*))__dt__16CMenuBattleChainFv)((char*)self - 0x70); }
+/**
+ * IScnRender (+0x70) vtable this-adjusting thunk for ~CMenuBattleChain.
+ * Retail: subi r3, r3, 0x70; b __dt__16CMenuBattleChainFv
+ */
+void func_802AB3C8(IScnRender* self) {
+    ((void (*)(CMenuBattleChain*))__dt__16CMenuBattleChainFv)(
+        reinterpret_cast<CMenuBattleChain*>(reinterpret_cast<char*>(self) - 0x70));
+}
 
 // Track the current player and clear both pending toggle flags.
 void func_802AB3D0(CBattleChainMenuState* self) {

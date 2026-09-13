@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16651 |
-| extern "C" declarations (non-lbl_*, imports) | 7497 |
+| extern "C" (total lines) | 16652 |
+| extern "C" declarations (non-lbl_*, imports) | 7498 |
 | extern "C" definitions (forced names) | 4151 |
 | `self`/register-style params | 13359 |
-| `void*` (params + locals) | 7641 |
+| `void*` (params + locals) | 7627 |
 | raw pointer offset arithmetic | 7904 |
 | deref-through-cast arithmetic | 3307 |
 | inline asm / `register` | 127 |
@@ -573,7 +573,6 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 23 | 0 | 38 | 1 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocBuiltin.cpp | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 20 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/ocMsg.cpp | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocUnit.cpp | 29 | 80 | 38 | 140 | 74 | 36 | 0 | 4 | 9 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 25 | 1 | 5 | 38 | 14 | 6 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -585,7 +584,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/pluginUnit.cpp | 16 | 6 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtCamera.cpp | 32 | 13 | 16 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 20 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtLight.cpp | 5 | 0 | 9 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 197 | 2 | 77 | 82 | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelMap.cpp | 52 | 2 | 51 | 43 | 21 | 3 | 0 | 3 | 2 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 51 | 19 | 56 | 68 | 11 | 1 | 0 | 10 | 0 | 0 | 0 | 0 |
@@ -6098,8 +6097,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/plugin/ocMsg.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
-  "schedule_pragma": 0,
-  "void_ptr": 17
+  "schedule_pragma": 0
  },
  "src/kyoshin/plugin/ocThread.cpp": {
   "asm_insn_shim": 0,
@@ -6253,11 +6251,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/realtimeevt/CREvtLight.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 5,
+  "extern_c_nonlbl_decl": 6,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 9,
-  "void_ptr": 7
+  "void_ptr": 10
  },
  "src/kyoshin/realtimeevt/CREvtMem.cpp": {
   "asm_insn_shim": 0,

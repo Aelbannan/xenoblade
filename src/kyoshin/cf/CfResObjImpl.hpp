@@ -132,7 +132,9 @@ public:
     virtual int func_8016CD54();            // 0x64
     virtual int func_800BF30C();            // 0x68
 
-    void*& vtbl() { return *reinterpret_cast<void**>(reinterpret_cast<u8*>(this) + 0x10); }
+    CfResObjImplVtbl*& vtbl() {
+        return *reinterpret_cast<CfResObjImplVtbl**>(reinterpret_cast<u8*>(this) + 0x10);
+    }
 
     /* 0x14 */ u32 field_14[2];
 };
@@ -194,7 +196,7 @@ extern "C" void func_800BBADC(cf::CfResObjParent* parent, u8* handle);
 extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
-extern "C" void func_800BE824(void* parent, int flag);
+extern "C" void func_800BE824(cf::CfResObjParent* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
 extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);

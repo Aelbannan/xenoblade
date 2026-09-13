@@ -11,13 +11,13 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 16672 |
-| extern "C" declarations (non-lbl_*, imports) | 7514 |
-| extern "C" definitions (forced names) | 4154 |
-| `self`/register-style params | 13318 |
-| `void*` (params + locals) | 7592 |
-| raw pointer offset arithmetic | 7861 |
-| deref-through-cast arithmetic | 3301 |
+| extern "C" (total lines) | 16679 |
+| extern "C" declarations (non-lbl_*, imports) | 7517 |
+| extern "C" definitions (forced names) | 4156 |
+| `self`/register-style params | 13323 |
+| `void*` (params + locals) | 7601 |
+| raw pointer offset arithmetic | 7870 |
+| deref-through-cast arithmetic | 3303 |
 | inline asm / `register` | 127 |
 | rN-named params | 462 |
 | goto | 3445 |
@@ -31,7 +31,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | TU | severity |
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 3442 |
-| src/kyoshin/cf/object/CActorParam.cpp | 2339 |
+| src/kyoshin/cf/object/CActorParam.cpp | 2340 |
 | src/kyoshin/CItemBoxGrid.cpp | 2149 |
 | src/kyoshin/cf/CfCam.cpp | 1737 |
 | src/kyoshin/CItemBoxInfo.cpp | 1710 |
@@ -365,19 +365,19 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CUICfManager.cpp | 67 | 21 | 12 | 48 | 28 | 38 | 0 | 0 | 203 | 0 | 0 | 0 |
 | src/kyoshin/CUIErrMesWin.cpp | 6 | 5 | 27 | 11 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIWindowManager.cpp | 20 | 40 | 28 | 27 | 0 | 28 | 0 | 0 | 103 | 0 | 0 | 0 |
-| src/kyoshin/action/CActParamAnim.cpp | 3 | 69 | 295 | 45 | 131 | 66 | 0 | 0 | 17 | 0 | 0 | 0 |
+| src/kyoshin/action/CActParamAnim.cpp | 4 | 70 | 298 | 46 | 131 | 66 | 0 | 0 | 17 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamData.cpp | 98 | 105 | 260 | 235 | 14 | 8 | 0 | 0 | 61 | 0 | 0 | 0 |
 | src/kyoshin/cf/CActParamAnimGame.cpp | 64 | 6 | 49 | 19 | 30 | 24 | 0 | 1 | 21 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 8 | 4 | 25 | 44 | 29 | 13 | 0 | 17 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 5 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 328 | 467 | 1091 | 578 | 1 | 89 | 140 | 0 | 5 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 177 | 17 | 328 | 468 | 1092 | 579 | 1 | 89 | 140 | 0 | 5 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 5 | 6 | 8 | 17 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CInfoCf.cpp | 7 | 8 | 2 | 3 | 19 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CItem.cpp | 4 | 46 | 87 | 59 | 49 | 28 | 0 | 0 | 29 | 0 | 0 | 0 |
 | src/kyoshin/cf/CMcaFile.cpp | 0 | 2 | 4 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CPartsChange.cpp | 2 | 1 | 3 | 4 | 4 | 3 | 0 | 1 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CPartsChange.cpp | 4 | 2 | 4 | 11 | 12 | 4 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CPcEffect07.cpp | 2 | 8 | 11 | 5 | 9 | 8 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CSuddenCommu.cpp | 0 | 2 | 50 | 26 | 4 | 1 | 0 | 0 | 10 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskCulling.cpp | 2 | 0 | 7 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 |
@@ -449,7 +449,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/code_8018F8D8.cpp | 48 | 1 | 27 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/code_801C2C14.cpp | 2 | 2 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CAIAction.cpp | 0 | 9 | 33 | 110 | 150 | 45 | 0 | 0 | 20 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 133 | 91 | 848 | 690 | 0 | 10 | 17 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CActorParam.cpp | 35 | 17 | 134 | 91 | 848 | 690 | 0 | 10 | 17 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CBattleState.cpp | 6 | 22 | 23 | 9 | 29 | 11 | 0 | 0 | 637 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectActor.cpp | 8 | 20 | 67 | 22 | 36 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectColl.cpp | 3 | 36 | 50 | 11 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -3906,14 +3906,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/action/CActParamAnim.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 66,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 69,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 70,
   "goto_count": 17,
   "init_side_effect": 0,
   "ptr_arith": 131,
   "schedule_pragma": 0,
-  "self_params": 295,
-  "void_ptr": 45
+  "self_params": 298,
+  "void_ptr": 46
  },
  "src/kyoshin/action/CActParamData.cpp": {
   "asm_insn_shim": 0,
@@ -3963,16 +3963,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/CBattleManager.cpp": {
   "asm_code": 1,
   "asm_insn_shim": 0,
-  "deref_arith": 578,
+  "deref_arith": 579,
   "extern_c_nonlbl_decl": 177,
   "extern_c_nonlbl_def": 17,
   "goto_count": 140,
   "init_side_effect": 0,
-  "ptr_arith": 1091,
+  "ptr_arith": 1092,
   "rn_params": 89,
   "schedule_pragma": 5,
   "self_params": 328,
-  "void_ptr": 467
+  "void_ptr": 468
  },
  "src/kyoshin/cf/CCharEffect.cpp": {
   "asm_insn_shim": 0,
@@ -4034,15 +4034,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/cf/CPartsChange.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 3,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 1,
+  "deref_arith": 4,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
-  "ptr_arith": 4,
+  "ptr_arith": 12,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 3,
-  "void_ptr": 4
+  "self_params": 4,
+  "void_ptr": 11
  },
  "src/kyoshin/cf/CPcEffect07.cpp": {
   "asm_insn_shim": 0,
@@ -4781,7 +4781,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 848,
   "rn_params": 10,
   "schedule_pragma": 0,
-  "self_params": 133,
+  "self_params": 134,
   "void_ptr": 91
  },
  "src/kyoshin/cf/object/CBattleState.cpp": {

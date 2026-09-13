@@ -699,6 +699,8 @@ Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol 
 
 **COccCulling vtable label (us-801a1bc0):** retail `__ct__11COccCullingFv` stores `lbl_eu_80532ED0` (0x10-byte vtable in split1 `.data`); the decomp's compiler-generated `__vt__11COccCulling` reloc name drifts (HA/LO pair at the `lis`/`addi`). Fix: `__declspec(novtable)` in the header + `extern "C" void* lbl_eu_80532ED0[];` + explicit `*(void**)this = (void*)lbl_eu_80532ED0;` as the first ctor/dtor statement. Result: the **dtor becomes byte-identical** (store lands where the compiler's implicit one did), but the **ctor's store is scheduled at the end** (13 reg-swaps + 2 structural, ~88% fuzzy) because the member-init-list runs before the body — the implicit store is interleaved after the first member store in retail. The ctor's SMT proof needs the linked `main.elf` (its vtable HA/LO reloc is unresolved in the unlinked `.o` pair); the residual is pure constant stores, so it certifies EQUIVALENT_MATCH once `ninja build/us/main.elf` exists.
 
+**novtable + member subobject: emit the ctor as extern "C" `__ct__…` (us-8004b700):** when retail stores the vptr *before* an embedded member ctor (`CActParamAnim`: `lbl_eu_805261C8`, zero +0x0C, then `__ct__13CActParamDataFv` at +0x10), a C++ member ctor cannot match — `novtable` drops the implicit vptr and C++ still constructs members before the body. Define `extern "C" T* __ct__…(T* self)` with the same mangling and write the stores/calls in retail order (offset-based if fields are private). Verified FULL_MATCH `0x48` on `__ct__13CActParamAnimFv`.
+
 **Inline-empty base dtor elides the call in derived dtors (CTaskCulling dtor, us-801a4278):** MWCC only elides a base-class dtor call in a derived dtor when the base dtor's empty body is visible in the same TU. Retail's `IWorkEvent` header was `virtual ~IWorkEvent(){}` (inline-empty) — `~CTaskCulling` then calls only `~CProcess` (+ member `~COccCulling`), no `~IWorkEvent`, and the dtor is 0x78. When the dtor was moved out-of-line (IWorkEvent.cpp), the call reappeared (+0xC, dtor 0x84, unit 8 bytes over split budget). Fix: keep `virtual ~IWorkEvent(){}` inline-empty in the header, and keep a **strong copy** in the key-function TU (`src/kyoshin/CTaskGame.cpp` had `IWorkEvent::~IWorkEvent() {}` matching retail's strong symbol placement — remove it only if the header body replaces it; an out-of-line redefinition of an inline member errors with `(10333) object redefined`). Verified: derived `~Der` with a secondary inline-empty base emits only the offset-0 base call + delete; the decomp `~CTaskCulling` returned to byte-identity and the unit to 0x708 ≤ 0x70C.
 
 **Pool-cookie reloc drift certified by the register-renaming witness (no SMT/linked DOL):** for byte-identical functions whose only diff is a TU-local pool reloc (`@N` vs `lbl_eu_*`), the mined reloc map (`reloc_map.py mine` → `retail_reloc_map.json`) canonicalizes both names via the decoder's `canonical_symbols` hook, so the **pre-SMT witness certifies directly** (`register-renaming-witness: N terminal pair(s) structurally equal under rho`) — no Z3, no `main.elf`. Verified: `getLevel__16CMCCylinderGaugeFv` (us-80224098, `@6134`→`lbl_eu_80668520`) and `__ct__16CMCCylinderGaugeF…` (us-80223cac, `@6092`→`lbl_eu_80668518`) both accepted EQUIVALENT_MATCH with 99.7% static and exact 0x8D4 size. **Re-mine after any edit that shifts pool numbering** (removing a `.data` vtable via novtable renumbers every `@N` in the TU — the stale map entry then silently un-canonicalizes). `__vt__`-named drift (global symbols, not `unit@` keys) is NOT canonicalized; fix those in source with `__declspec(novtable)` + explicit retail-label assignment (`__vt__6CToken`→`lbl_eu_8056B52C` via `*(void**)this = (void*)lbl_eu_8056B52C;` as the first ctor statement — works byte-identically when the member-init list is empty; with a non-empty init list the manual store is scheduled at the end, see COccCulling above).
@@ -4388,6 +4390,14 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Applies to/a.k.a.: any adjust-this/forwarding thunk TU (CBattleState/CActorParam/CfObjectActor
   families); alternative is `#pragma auto_inline` games (unverified, TU-wide blast radius)
 
+## Dual-branch pointer locals can need opposite declaration order (Wii/1.1)
+- Symptom:   one `if`/`else` copy of the same root/base walk matches; the other has those two saved colors swapped
+- Cause:     the branches are separate vregs. Rule A is per-block; the order that colors the first block correctly can invert the second
+- Fix:       keep the matching branch's declaration order; flip only the mismatched branch (`root;` then `base;` vs `base;` then `root=...`)
+- Applies to/a.k.a.: Rule A on duplicated if/else pointer walks
+- Confidence: repo_proven
+- Example:   us-802343bc (`func_802324C4`)
+
 ## Implicit array-member ctor walk: declare end first, assign start first (Wii/1.1 -O4,p)
 - Symptom:   inlined `T[N]` member construction walks with start/end colors swapped (`addi r31,this+start` / `addi r30,this+end` vs retail r30/r31); 0 structural
 - Cause:     implicit per-element ctor creates start before end, so Rule A colors start=r31. A source `while` that declares `end` first gets the colors but emits end's `addi` first and a forward `b` to the test (size +4, structural collapse)
@@ -4405,3 +4415,11 @@ cf::/nw4r:: classes with named slots; conversion-flavor preservation when foldin
 - Applies to/a.k.a.: any large overlay struct with `f32 f00`… style field names
 - Confidence: repo_proven
 - Example:   us-8023f51c (`func_8023D3D8` battle-param overlay)
+
+## `(u8)func(...)` vs `func(...) & 0xFF` changes VR birth (Wii/1.1 -O4,p)
+- Symptom:   Pure saved-reg swap of a call result and a truncated helper return (`rlwinm …,0,24,31` already matches). Decl-order swaps and `int` vs `u8` are no-ops. Inlining the truncated value flips call order.
+- Cause:     `& 0xFF` after the call creates an extra VR that colors before the earlier named local. A `(u8)` result cast is the same mask instruction but a different birth, so Rule A/C colors the first call result r31.
+- Fix:       Prefer `T x = (u8)func(...)` when the mask is already at assignment time and a later-named local is stealing r31.
+- Applies to/a.k.a.: register_mapping.md Rule A/C; any `bl` + immediate `rlwinm` truncate into a saved reg
+- Confidence: repo_proven
+- Example:   us-801ffd88 (`func_801FE0C8`)

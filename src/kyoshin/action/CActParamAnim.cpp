@@ -32,7 +32,19 @@ extern "C" bool func_80055B88(void* data);
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/vec.h>
 
-CActParamAnim::CActParamAnim() : mField0C(0) {}
+extern "C" void* lbl_eu_805261C8[];
+extern "C" void __ct__13CActParamDataFv(CActParamData* self);
+
+// Forced-name ctor (same mangling as CActParamAnim::CActParamAnim). Written
+// as extern "C" so the embedded CActParamData is constructed AFTER the retail
+// vptr store — a C++ ctor would run the member ctor first (novtable).
+extern "C" CActParamAnim* __ct__13CActParamAnimFv(CActParamAnim* self) {
+    u8* raw = reinterpret_cast<u8*>(self);
+    *(void**)self = lbl_eu_805261C8;
+    *reinterpret_cast<u32*>(raw + 0x0C) = 0;
+    __ct__13CActParamDataFv(reinterpret_cast<CActParamData*>(raw + 0x10));
+    return self;
+}
 
 extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
@@ -3941,7 +3953,7 @@ void CActParamAnim::mulVec3Y(float param_2) {
 // - Next experiments: identify the r30 value from a full decomp disasm;
 //   try splitting the advance-block VEC3 locals into component floats to
 //   push them to stack slots.
-void CActParamAnim::func_80052934() {
+void CActParamAnim::func_80052934(const ml::CVec3* /*v*/) {
     CActParamAnimStateView* s = reinterpret_cast<CActParamAnimStateView*>(this);
 
     // Shift the position history: 3A8/3AC/3B0 -> 3B4/3B8/3BC.

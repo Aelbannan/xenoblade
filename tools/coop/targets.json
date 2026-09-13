@@ -2897,7 +2897,7 @@
       "source_present": true,
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:07:29.755601+00:00",
+        "claimed_at": "2026-09-13T17:16:28.287427+00:00",
         "allowed_paths": [
           "src/kyoshin/plugin/ocMsg.cpp"
         ],
@@ -6626,7 +6626,7 @@
       "size": "0x128",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -6643,15 +6643,7 @@
       "source": "src/kyoshin/plugin/ocUnit.cpp",
       "instruction_match": 99.392,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:33.094215+00:00",
-        "allowed_paths": [
-          "src/kyoshin/plugin/ocUnit.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8003f6d8",
@@ -16560,8 +16552,8 @@
       "size": "0x48",
       "unit": "kyoshin/action/CActParamAnim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80054044"
@@ -16573,11 +16565,11 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamAnim.cpp",
       "source_present": true,
-      "instruction_match": 99.444,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:07:19.781213+00:00",
+        "claimed_at": "2026-09-13T17:16:14.483803+00:00",
         "allowed_paths": [
           "src/kyoshin/action/CActParamAnim.cpp"
         ],
@@ -26328,7 +26320,7 @@
       "size": "0xB8",
       "unit": "kyoshin/CTimeLightGrp",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -26343,15 +26335,7 @@
       "source": "src/kyoshin/CTimeLightGrp.cpp",
       "instruction_match": 99.022,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:06:59.784692+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CTimeLightGrp.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8005a850",
@@ -27684,7 +27668,7 @@
       "size": "0xD8",
       "unit": "kyoshin/plugin/pluginCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -27701,15 +27685,7 @@
       "source": "src/kyoshin/plugin/pluginCam.cpp",
       "source_present": true,
       "instruction_match": 99.537,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:16.307612+00:00",
-        "allowed_paths": [
-          "src/kyoshin/plugin/pluginCam.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80060dac",
@@ -60830,7 +60806,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:53.120044+00:00",
+        "claimed_at": "2026-09-13T17:15:47.360173+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CtrlNpc.cpp"
         ],
@@ -66342,7 +66318,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:09:00.737697+00:00",
+        "claimed_at": "2026-09-13T17:17:03.936471+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CtrlObjectParam.cpp"
         ],
@@ -97372,7 +97348,7 @@
         "_restgpr_18",
         "_savegpr_18"
       ],
-      "instruction_match": 74.882,
+      "instruction_match": 73.164,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true,
       "claim": {
@@ -102180,7 +102156,7 @@
       "source_present": true,
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:08.628902+00:00",
+        "claimed_at": "2026-09-13T17:14:57.463928+00:00",
         "allowed_paths": [
           "src/kyoshin/menu/CMenuArtsSelect.cpp"
         ],
@@ -104351,7 +104327,7 @@
       "notes": "Batch 14h; large HUD Move; leave Term/cbRenderBefore; size 0x8E8",
       "status": "CODE_MATCH",
       "instruction_match": 99.614,
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "called_functions": [
         "padmgr-func-80082D54",
         "us-80040a64",
@@ -104379,15 +104355,7 @@
         "_savegpr_20"
       ],
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:06:42.933892+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuBattlePlayerState.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "menu-bps-cbrender",
@@ -107595,7 +107563,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:51.213593+00:00",
+        "claimed_at": "2026-09-13T17:16:49.711489+00:00",
         "allowed_paths": [
           "src/kyoshin/CMiniMap.cpp"
         ],
@@ -121009,7 +120977,7 @@
       "size": "0xC8",
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -121023,15 +120991,7 @@
       "source": "src/kyoshin/code_80135FDC.cpp",
       "source_present": true,
       "instruction_match": 99.66,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:06:06.480958+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_80135FDC.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8013a330",
@@ -121044,7 +121004,7 @@
       "size": "0xAC",
       "unit": "kyoshin/code_80135FDC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -121058,15 +121018,7 @@
       "source": "src/kyoshin/code_80135FDC.cpp",
       "source_present": true,
       "instruction_match": 99.605,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:26.355687+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_80135FDC.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8013a3dc",
@@ -124960,7 +124912,7 @@
       "size": "0xB4",
       "unit": "kyoshin/cf/CfBdat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfBdat.cpp",
@@ -124977,15 +124929,7 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 99.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:09.822691+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfBdat.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80142d60",
@@ -127174,7 +127118,7 @@
       "size": "0x428",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -127188,15 +127132,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
       "instruction_match": 99.68,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:05:59.529081+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CBattleState.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80148a14",
@@ -127342,7 +127278,7 @@
       "size": "0x174",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -127356,15 +127292,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
       "instruction_match": 99.194,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:16.482662+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CBattleState.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8014913c",
@@ -129589,7 +129517,15 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "claim": {
+        "owner": "close-mwcc-b22",
+        "claimed_at": "2026-09-13T17:15:07.785822+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CArtsParam.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80154998",
@@ -131529,7 +131465,7 @@
       "size": "0x144",
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -131543,15 +131479,7 @@
       "source": "src/kyoshin/cf/CItem.cpp",
       "source_present": true,
       "instruction_match": 99.136,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:06:13.011253+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CItem.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801582d8",
@@ -137773,7 +137701,7 @@
       "size": "0xD8",
       "unit": "kyoshin/cf/CTaskREvent",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -137791,15 +137719,7 @@
       "source": "src/kyoshin/cf/CTaskREvent.cpp",
       "source_present": true,
       "instruction_match": 99.537,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:09.723340+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CTaskREvent.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80165aa8",
@@ -140557,7 +140477,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:18.083310+00:00",
+        "claimed_at": "2026-09-13T17:15:11.347004+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CTaskREvtSequence.cpp"
         ],
@@ -149641,7 +149561,7 @@
       "size": "0x7C",
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -149656,15 +149576,7 @@
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
       "source_present": true,
       "instruction_match": 99.032,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:06:29.576661+00:00",
-        "allowed_paths": [
-          "src/kyoshin/realtimeevt/CREvtModelPc.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80184cf4",
@@ -150210,7 +150122,7 @@
       "size": "0xDC",
       "unit": "kyoshin/realtimeevt/CREvtEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -150228,15 +150140,7 @@
       "source": "src/kyoshin/realtimeevt/CREvtEffect.cpp",
       "source_present": true,
       "instruction_match": 99.455,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:07:13.164144+00:00",
-        "allowed_paths": [
-          "src/kyoshin/realtimeevt/CREvtEffect.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80186158",
@@ -157986,7 +157890,7 @@
       "size": "0x16C",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -158003,15 +157907,7 @@
       "source": "src/kyoshin/cf/CPartsChange.cpp",
       "source_present": true,
       "instruction_match": 99.121,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:06:19.622739+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CPartsChange.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80195098",
@@ -161509,7 +161405,7 @@
       "source_present": true,
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:46.309451+00:00",
+        "claimed_at": "2026-09-13T17:15:40.504709+00:00",
         "allowed_paths": [
           "src/kyoshin/COccCulling.cpp"
         ],
@@ -171437,7 +171333,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:13.391282+00:00",
+        "claimed_at": "2026-09-13T17:15:04.365258+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CfSoundMan.cpp"
         ],
@@ -174700,7 +174596,7 @@
       "size": "0xF0",
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -174717,15 +174613,7 @@
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "source_present": true,
       "instruction_match": 99.567,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:07:03.132243+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CItemBoxGrid.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801c6fc8",
@@ -181154,7 +181042,7 @@
       "size": "0xB4",
       "unit": "kyoshin/CSortMenu",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -181169,15 +181057,7 @@
       "source": "src/kyoshin/CSortMenu.cpp",
       "source_present": true,
       "instruction_match": 99.556,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:07:23.101686+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CSortMenu.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801d553c",
@@ -184460,7 +184340,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:22.936474+00:00",
+        "claimed_at": "2026-09-13T17:15:50.776571+00:00",
         "allowed_paths": [
           "src/kyoshin/CItemBoxInfo.cpp"
         ],
@@ -189581,7 +189461,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:41.714230+00:00",
+        "claimed_at": "2026-09-13T17:16:00.915030+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CfGimmickObject.cpp"
         ],
@@ -192382,7 +192262,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:46.522943+00:00",
+        "claimed_at": "2026-09-13T17:16:21.294638+00:00",
         "allowed_paths": [
           "src/kyoshin/CModelDisp.cpp"
         ],
@@ -205674,7 +205554,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:03.134870+00:00",
+        "claimed_at": "2026-09-13T17:14:42.768812+00:00",
         "allowed_paths": [
           "src/kyoshin/makecrystal/CMCCrystalBox.cpp"
         ],
@@ -216305,7 +216185,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:08:55.956594+00:00",
+        "claimed_at": "2026-09-13T17:16:56.979117+00:00",
         "allowed_paths": [
           "src/kyoshin/CQstLogInfo.cpp"
         ],
@@ -220722,7 +220602,7 @@
       "size": "0xC0",
       "unit": "kyoshin/menu/CMenuArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -220738,15 +220618,7 @@
       "source": "src/kyoshin/menu/CMenuArtsSet.cpp",
       "source_present": true,
       "instruction_match": 99.583,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:39.760323+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuArtsSet.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80233fb8",
@@ -220873,8 +220745,8 @@
       "size": "0x174",
       "unit": "kyoshin/menu/CMenuArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -220891,16 +220763,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuArtsSet.cpp",
       "source_present": true,
-      "instruction_match": 99.624,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:06:22.905451+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuArtsSet.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80234530",
@@ -226016,7 +225880,7 @@
       "size": "0x8C",
       "unit": "kyoshin/cf/CfNandManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -226031,15 +225895,7 @@
       "source": "src/kyoshin/cf/CfNandManager.cpp",
       "source_present": true,
       "instruction_match": 99.429,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:07:36.428089+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfNandManager.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80240618",
@@ -233756,7 +233612,7 @@
       "size": "0x80",
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -233770,15 +233626,7 @@
       "source": "src/kyoshin/CCollepedia.cpp",
       "instruction_match": 99.375,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:49.666553+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CCollepedia.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8025658c",
@@ -233791,7 +233639,7 @@
       "size": "0xBC",
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -233806,15 +233654,7 @@
       "source": "src/kyoshin/CCollepedia.cpp",
       "instruction_match": 99.574,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:06:56.461692+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CCollepedia.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80256648",
@@ -245228,7 +245068,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:07:06.495887+00:00",
+        "claimed_at": "2026-09-13T17:17:00.518673+00:00",
         "allowed_paths": [
           "src/kyoshin/menu/CMenuBattleEnd.cpp"
         ],
@@ -245929,7 +245769,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b23",
-        "claimed_at": "2026-09-13T17:09:05.577252+00:00",
+        "claimed_at": "2026-09-13T17:17:11.002745+00:00",
         "allowed_paths": [
           "src/kyoshin/menu/CMenuPlayAward.cpp"
         ],
@@ -252164,7 +252004,7 @@
       "size": "0x1B0",
       "unit": "kyoshin/cf/chain/CChainActorList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorList.cpp",
@@ -252182,15 +252022,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 99.583,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b21",
-        "claimed_at": "2026-09-13T17:06:49.695963+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/chain/CChainActorList.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8027d084",
@@ -252397,7 +252229,7 @@
       "size": "0x208",
       "unit": "kyoshin/cf/chain/CChainActorList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorList.cpp",
@@ -252415,15 +252247,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "source_present": true,
       "instruction_match": 99.308,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:07:44.604788+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/chain/CChainActorList.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8027d5e8",
@@ -273885,7 +273709,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "close-mwcc-b22",
-        "claimed_at": "2026-09-13T17:06:39.596309+00:00",
+        "claimed_at": "2026-09-13T17:15:29.182861+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/voice/CCharVoiceMan.cpp"
         ],
@@ -287710,7 +287534,7 @@
       "size": "0x148",
       "unit": "kyoshin/help/CHelp_LearnArts",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -287730,15 +287554,7 @@
       "source": "src/kyoshin/help/CHelp_LearnArts.cpp",
       "instruction_match": 99.024,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "close-mwcc-b24",
-        "claimed_at": "2026-09-13T17:06:36.254560+00:00",
-        "allowed_paths": [
-          "src/kyoshin/help/CHelp_LearnArts.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802baf50",

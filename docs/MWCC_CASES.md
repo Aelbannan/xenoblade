@@ -19,6 +19,34 @@ knowledge lives in [`MWCC_PATTERNS.md`](MWCC_PATTERNS.md)**; `mwcc_kb.py` search
 
 > Note: records below predate the template — they're being migrated to it over time.
 
+## __ct__13CActParamAnimFv / CActParamAnim — novtable C++ ctor missed vptr → extern-C ordered stores (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   live 11.1% (registry 99.44% stale); TU did not compile (OwnerIf/Vt* types); matching one-liner ctor omitted `lbl_eu_805261C8` and ran `CActParamData` first
+- Cause:     `__declspec(novtable)` suppresses the implicit vptr store; a C++ ctor constructs `mChildData` before the body, so the retail order (vptr, +0x0C=0, then `__ct__13CActParamDataFv` at +0x10) cannot be expressed as a member ctor
+- Fix:       restore compile types in `CActParamAnimForeign.hpp`; emit `__ct__13CActParamAnimFv` as extern "C" that stores `lbl_eu_805261C8`, zeros +0x0C, then calls the data ctor at +0x10
+- Result:    FULL_MATCH 100% (0x48/0x48)
+- Evidence:  us-8004b700 / src/kyoshin/action/CActParamAnim.cpp
+
+## __ct__Q22cf12CAttackParamFv / CArtsParam — already byte-identical (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   registry 99.52% CODE_MATCH; live hexdiff 100% (21/21, 0 structural, 0 reg_swap)
+- Cause:     stale registry percent; ctor already stores `lbl_eu_8052F610` then `CAttackParam_clearArtsRecord`
+- Fix:       cycle only (no source change)
+- Result:    FULL_MATCH 100% (0x54/0x54)
+- Evidence:  us-80154944 / src/kyoshin/cf/CArtsParam.cpp
+
+## func_802324C4 / CMenuArtsSet — else-branch root/base colors → declare root first (Wii/1.1 -O4,s, FULL_MATCH)
+- Symptom:   93.5% / 0 structural / 6 reg_swap; if-branch already root=r29/base=r30; else-branch reversed
+- Cause:     the two branches are separate vregs; else-branch needed the opposite declaration order
+- Fix:       keep if-branch `base` then `root=...`; else-branch `root;` `base;` then assign root first
+- Result:    FULL_MATCH 100% insn (unit still OVER(604))
+- Evidence:  us-802343bc / src/kyoshin/menu/CMenuArtsSet.cpp
+
+## __ct__Q22cf14CBattleManagerFv / CBattleManager — r30/r31 start/end walk → POD do-while (Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   97.8% / 0 structural / 5 reg_swap; retail `addi r30,this+0x94` then `addi r31,this+0x194`; decomp reversed. Then per-element `memset(8)` + bulk `memset(256)`
+- Cause:     implicit `CBattleManager_Struct1[32]` ctor created start before end (start=r31)
+- Fix:       POD element; Struct2 ctor declares `end` first, assigns `start` first, `do { memset(start,0,8); start++; } while (start < end);` then `clear()`
+- Result:    FULL_MATCH 100% insn (vtable reloc names `__vt__*` vs `lbl_eu_8052BC*` remain)
+- Evidence:  us-800d8fe4 / src/kyoshin/cf/CBattleManager.hpp
+
 ## CBattleState_enterStatusEntry — fmul 1.5 commute → `unk20 *= lbl_eu_80667408` (Wii/1.1 -O4,p, CODE_MATCH 98.9%)
 - Symptom:   size-exact 0x13DC, 0 structural; `FC000072` (`fmul f0,f0,f1`) vs retail `FC010032` (`fmul f0,f1,f0`); loads already `lfs f1` + `lfd f0` + `frsp`
 - Cause:     `arg->unk20 = (f32)(gauge * lbl_eu_80667408)` commutes so dest==FRA (the 1.5)
@@ -11062,3 +11090,17 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Fix:       `u32 flags = self->field_24; flags |= 0x2; *(u32*)&self->field_24 = flags;`
 - Result:    FULL_MATCH (cycle `equivalence: full_match`)
 - Evidence:  us-801bdd6c / src/kyoshin/cf/CSuddenCommu.cpp
+
+## func_801FE0C8 / CPartyState — `(u8)` result cast vs `& 0xFF` flips party/slotA colors (US, Wii/1.1 -O4,p, FULL_MATCH)
+- Symptom:   Live 88.6% (registry 99.43% stale). 0 structural / 4 reg_swap. Retail `party=r31` `slotA=r30`; decomp reversed. Size 0x8c/0x8c. `self` already r29 (Rule B).
+- Cause:     `u8 slotA = func(...) & 0xFF` births the mask as a separate VR and colors slotA first (r31). The `(u8)` result cast is the same `rlwinm …,0,24,31` but a different VR birth, so party (first call result) claims r31.
+- Fix:       `u8 slotA = (u8)func_801392B4((u8)self->field_0x4D);` — keep named slotA (inlining it flips the 0x4C/0x4D call order).
+- Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(80).
+- Evidence:  us-801ffd88 / src/kyoshin/CPartyState.cpp
+
+## CBattleState_clearEntriesByMask — vt+0x4C takes the slot in r4 (US, Wii/1.1 -O4,p, 84.9%)
+- Symptom:   Live 6.5% / 74 structural after a no-arg `getLinkedActorId()`: missing `or r4, entry` before `bctrl`, memset reloc shifted 4 bytes, size 0x174/0x170.
+- Cause:     symbols.txt mangles the 0x4C slot Fv, but this call site leaves the current 0x34-byte entry in r4. A declared Fv virtual drops that mr.
+- Fix:       `virtual void* CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0);` then `this->CBattleState_getLinkedActorId(entry);` (real r12 dispatch). Manual `(*(void***)this)[0x4C/4]` colors the vtable base r5.
+- Result:    84.9% 0 structural 14 reg_swap 0x174/0x174. Residual: i in r27 vs retail r31 (this/mask shifted to r30/r31).
+- Evidence:  us-80148fc8 / src/kyoshin/cf/object/CBattleState.cpp

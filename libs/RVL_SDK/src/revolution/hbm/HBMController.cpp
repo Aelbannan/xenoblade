@@ -121,7 +121,7 @@ Controller::~Controller() {
 void Controller::initCallback() {
     s32 type;
 
-    void* prev = WPADIsUsedCallbackByKPAD();
+    void (*prev)(void) = reinterpret_cast<void (*)(void)>(WPADIsUsedCallbackByKPAD());
     WPADSetCallbackByKPAD(NULL);
 
     mOldConnectCallback =
@@ -148,7 +148,7 @@ void Controller::clearCallback() {
     WPADControlSpeaker(mHBController.chan, WPAD_SPEAKER_ON, NULL);
     WPADSetCallbackByKPAD(NULL);
     WPADSetConnectCallback(mHBController.chan, mOldConnectCallback);
-    WPADSetCallbackByKPAD((void*)1);
+    WPADSetCallbackByKPAD(reinterpret_cast<void (*)(void)>(1));
     WPADSetExtensionCallback(mHBController.chan, mOldExtensionCallback);
 }
 

@@ -46,8 +46,8 @@ s32 FindNameResource(ARCHandle* pHandle, const char* pName) {
 // Resolves a resource inside the archive. When type is RES_TYPE_NAME (0),
 // the whole tree is searched by file name; otherwise pRootDir/<type>/pName
 // is opened directly. Stores the resource length in *pSize when non-NULL.
-void* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
-                     const char* pName, unsigned long* pSize) {
+u8* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
+                   const char* pName, unsigned long* pSize) {
 
     s32 entrynum = -1;
 
@@ -79,7 +79,7 @@ void* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
         ARCFileInfo info;
         ARCFastOpen(pHandle, entrynum, &info);
 
-        void* pResource = ARCGetStartAddrInMem(&info);
+        u8* pResource = static_cast<u8*>(ARCGetStartAddrInMem(&info));
 
         if (pSize != NULL) {
             *pSize = ARCGetLength(&info);

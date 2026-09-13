@@ -117,8 +117,8 @@ ret0:
 // the two bodies into one 0x18 symbol). The helper stores the vtable
 // address through r3. `char[]` type for the vtable keeps the address
 // constant in a lis/addi pair (no sda21 dereference).
-extern "C" __declspec(noinline) void func_804DB350(void* dest) {
-    *(void**)dest = (void*)lbl_eu_8056FDC8;
+extern "C" __declspec(noinline) void func_804DB350(CNReqtaskRemoveVtbl** dest) {
+    *dest = (CNReqtaskRemoveVtbl*)lbl_eu_8056FDC8;
 }
 extern "C" __declspec(noinline) void sinit_804DB330() {
     func_804DB350(&lbl_eu_806659F8);

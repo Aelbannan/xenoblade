@@ -97316,12 +97316,12 @@
         "_restgpr_18",
         "_savegpr_18"
       ],
-      "instruction_match": 77.341,
+      "instruction_match": 92.451,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true,
       "claim": {
         "owner": "paseo-grok46-us-800dd63c",
-        "claimed_at": "2026-09-13T23:11:37.663675+00:00",
+        "claimed_at": "2026-09-14T00:42:17.256297+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CBattleManager.cpp"
         ],
@@ -145991,7 +145991,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "paseo-grok46-us-80179e38",
-        "claimed_at": "2026-09-13T23:25:03.370859+00:00",
+        "claimed_at": "2026-09-14T00:02:03.351400+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/object/CActorParam.cpp"
         ],

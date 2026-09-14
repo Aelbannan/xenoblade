@@ -265,21 +265,18 @@ int cf::CBattleState::CBattleState_getStatusMask(u32 id) {
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
 void cf::CBattleState::CBattleState_clearEntriesByMask(u32 mask) {
-    u32 one;
-    int thirteen;
+    // Birth i before entry so the induction var claims r31 (retail li r31,0).
     int i;
-    cf::CBattleStateEntry* entry;
-
-    one = 1;
-    thirteen = 0xd;
-    entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     i = 0;
+    u32 one = 1;
+    int thirteen = 0xd;
+    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     do {
         u32 id;
         int stillActive;
 
         if ((entry->unk30 & mask) != 0) {
-            this->CBattleState_getLinkedActorId();
+            this->CBattleState_getLinkedActorId(entry);
             id = entry->unk0C;
             memset(entry, 0, 0x34);
 
@@ -708,7 +705,6 @@ kind_done:
 
         // Retail schedules memset args into the first pair of the
         // word-copy (lwz r6/r0, mr dest, li val/len, stw pair hi/lo).
-        // Retail schedules memset args before the word-copy pairs.
         s = (u32*)slot;
         a = s[0];
         b = s[1];
@@ -751,11 +747,13 @@ kind_done:
         }
 
         if (stillActive == 0) {
-            u8* wordPtr = this->unk15AC + ((savedId >> 3) & ~3u);
+            // u16 shift: retail rlwinm MB=19 (11-bit field) not MB=3.
+            u16 bitOff = (u16)savedId;
+            u8* wordPtr = this->unk15AC + ((bitOff >> 3) & (u16)~3);
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        this->CBattleState_getLinkedActorId();
+        this->CBattleState_getLinkedActorId((cf::CBattleStateEntry*)savedWords);
 
         if (entry->unk0C == 0) {
             break;
@@ -1326,9 +1324,6 @@ P1_done:
     }
 
     // -- Phase 5: kind kept in r31 for the empty-slot scan -----------
-    // Identity wrapper so the id is the first (r3) argument of a call
-    // after the bitfield's li r3,1. Pointer wrappers (enterStatusId)
-    // put the entry in r3 and the id in r4.
     int kind2 = getEnterStatusKind(arg->unk0C);
 
     // -- Phase 6: choose Branch A or B based on arg->unk08 -----------

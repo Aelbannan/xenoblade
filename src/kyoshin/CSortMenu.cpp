@@ -512,6 +512,8 @@ extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
     }
     // Single vreg for the converted value keeps the lbz/extsb/clrlwi chain
     // in one register (retail does not split it across r0/r4).
+    // OPEN: still lbz/extsb in r0 then rlwinm→r4 (93.3%); CMenuArtsSet sibling
+    // has the same split. Convert-in-arg + u32 prototype were neutral.
     u32 subPage = (u16)(s8)_this->mSubPage;
     CScrollBarData* scrollBar = &_this->mScrollBar;
     func_801F3850(scrollBar, subPage);

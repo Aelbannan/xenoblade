@@ -61,7 +61,7 @@ namespace cf {
         virtual void CBattleState_getEventSlot(); //0x40: event-window slot (entries[32..]) by ulong index in r4 (retail Fv; primitive behind 0x5C)
         virtual void CBattleState_readStatusSlot(); //0x44: upper status-window slot (entries[64..]) by int index in r4 (retail Fv; primitive behind 0x60)
         virtual void CBattleState_UnkVirtualFunc17(cf::CBattleStateEntry* entry); //0x48
-virtual void* CBattleState_getLinkedActorId(); //0x4C (retail Fv: CBattleManager call sites pass no arg; this TU's entry stays live only via the alias below)
+virtual void* CBattleState_getLinkedActorId(CBattleStateEntry* entry = 0); //0x4C (retail Fv at CBattleManager sites; this TU passes the slot in r4)
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void* CBattleState_getEntryByIndex(int index); //0x54: indexed entry via slot 0x38, r3 passthrough
         virtual cf::CBattleStateEntry* CBattleState_fetchStatusEntry(int index); //0x58

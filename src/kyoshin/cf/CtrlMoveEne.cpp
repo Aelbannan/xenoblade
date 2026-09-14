@@ -2754,6 +2754,8 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     cf::CFunc80091864Actor* ene;
     cf::CFunc8008E760B89* b89;
     cf::CFunc80091864Actor* player;
+    u16 esc = 1;
+    u32 seedOrCount = 0;
     {
         cf::CNpcBaseDataView* data = self->field_0x34;
         cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
@@ -2833,8 +2835,7 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     ml::CVec3 goal;
     int adopted = 0;
     int planned = 0;
-    u16 esc = 1;
-    u32 seedOrCount = ene->field_45C6;
+    seedOrCount = ene->field_45C6;
 
     if ((hw58 & 1) != 0) {
         u16 gate = (u16)(self->field_0x5A + 1);
@@ -3122,12 +3123,14 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
     ml::CVec3* ep = reinterpret_cast<cf::CfObject*>(&ene->mSub)
                         ->CfObject_getPosVector();
     ml::CVec3 delta = *ep - goal;
+    ml::CVec3 deltaXZ = delta;
     f32 rad = ene->field_44D8;
     if (rad <= lbl_eu_806665C0) rad = -rad;
-    f32 distSq = delta.x * delta.x + delta.z * delta.z;
+    f32 distSq = deltaXZ.x * deltaXZ.x + deltaXZ.z * deltaXZ.z;
     if (distSq <= rad * rad) {
         self->field_0x64 = lbl_eu_806665C0;
-        const u32* pw = (const u32*)ep;
+        ml::CVec3 epCopy = *ep;
+        const u32* pw = (const u32*)&epCopy;
         self->field_4C = pw[0];
         self->field_50 = pw[1];
         self->field_54 = pw[2];
@@ -3289,20 +3292,17 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    u32 savedVx = *(u32*)&self->mVelocity.x;
-    u32 savedVy = *(u32*)&self->mVelocity.y;
-    u32 savedVz = *(u32*)&self->mVelocity.z;
+    ml::CVec3 savedVel = self->mVelocity;
     ml::CVec3 dir;
+    ml::CVec3 goal2 = goal;
     if ((self->field_0x180 & 0x8) != 0) {
-        func_80089398(selfRaw, &dir, &goal, 0);
+        func_80089398(selfRaw, &dir, &goal2, 0);
     } else {
         ((void (*)(cf::CCtrlMoveEne*, ml::CVec3*, const ml::CVec3*, f32))
-             func_8008CDE8)(selfRaw, &dir, &goal,
+             func_8008CDE8)(selfRaw, &dir, &goal2,
                             lbl_eu_80666690 * ene->field_44D8);
     }
-    *(u32*)&self->mVelocity.x = savedVx;
-    *(u32*)&self->mVelocity.y = savedVy;
-    *(u32*)&self->mVelocity.z = savedVz;
+    self->mVelocity = savedVel;
 
     cf::CFunc80090DB4Sub* sub63 =
         (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
@@ -3356,8 +3356,9 @@ void func_80091864(cf::CCtrlMoveEne* selfRaw) {
         return;
     }
 
-    func_800898D4(selfRaw, &dir);
-    func_80089694(selfRaw, &dir, speed);
+    ml::CVec3 commitDir = dir;
+    func_800898D4(selfRaw, &commitDir);
+    func_80089694(selfRaw, &commitDir, speed);
 
     ml::CVec3* ep2 = reinterpret_cast<cf::CfObject*>(&ene->mSub)
                          ->CfObject_getPosVector();

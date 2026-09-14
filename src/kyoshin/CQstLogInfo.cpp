@@ -9,8 +9,11 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
 
 #include <stdio.h>
+
+void func_801390E0(CFileHandle**);
 
 u8 CQstLogInfo::func_802296D0() { return mField38; }
 

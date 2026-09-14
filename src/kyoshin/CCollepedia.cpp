@@ -658,7 +658,7 @@ extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
     if (arg3 >= 5) return NULL;
 
     s8 idx = (s8)self[1];
-    u8* entry = self + idx * 0x140 + arg2 * 0x34 + arg3 * 0xA;
+    u8* entry = (self + idx * 0x140 + arg2 * 0x34) + arg3 * 0xA;
 
     u16 val = *(u16*)(entry + 0x14);
     if (val == 0) return NULL;

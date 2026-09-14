@@ -642,8 +642,8 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
     case 5: {
         // Chain-extend: clear the per-chain state bytes, re-run the actor's
         // run key, arm the chain-voice scratch records and the chain timer.
-        cf::CChainActor* actor;
         s8 idx = (s8)((cf::CChainHeadView*)self)->field_0;
+        cf::CChainActor* actor;
         if ((int)idx <
             (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount) {
             actor = ((cf::CChainMemberListMirror*)self)
@@ -654,8 +654,9 @@ __declspec(noinline) void func_80277B38(cf::CChain* self) {
         ((cf::CChainHeadView*)self)->field_3 = 0;
         ((cf::CChainHeadView*)self)->field_4 = 0;
         ((cf::CChainHeadView*)self)->field_6 = 1;
+        int i;
         int runKey = actor->func_80278F70();
-        for (int i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
+        for (i = 0; i < (int)((cf::CChainMemberListMirror*)self)->mChainMember.mCount;
              i++) {
             ((cf::CChainMemberListMirror*)self)->mChainMember.mActors[i]->func_80278F5C(runKey);
         }

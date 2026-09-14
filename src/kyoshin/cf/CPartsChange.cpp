@@ -40,7 +40,75 @@ bool func_80193804() { return false; }
 
 void func_8019380C(void){}
 
-void func_80193810(){}
+extern void* findObjectById(int);
+extern "C" int func_800B8920(void* addr);
+extern "C" void func_800B9404(void* addr);
+extern "C" s16 lbl_eu_80664314;
+
+// Walk the party-change list at this+0xA80C: for each node whose slot
+// table has bit0 set, resolve up to 16 object ids through findObjectById,
+// keep those that pass func_800B8920, then notify each via func_800B9404
+// and reset the list / 0xA40-byte work buffer.
+extern "C" void func_80193810(u8* self) {
+    struct Slot {
+        int id;
+        u32 pad;
+    };
+    struct Node {
+        Node* next;
+        u32 pad04;
+        Slot* slots;
+    };
+
+    Node* sentinel = *(Node**)(self + 0xA80C);
+    Node* node = sentinel->next;
+    void* found[96];
+    u32 count = 0;
+
+    while (node != sentinel) {
+        Slot* slots = node->slots;
+        if ((*(u16*)((u8*)slots + 0xA0) & 1) != 0) {
+            int i;
+            for (i = 0; i < 16; i++, slots++) {
+                void* p = findObjectById(slots->id);
+                void* q = p != 0 ? (u8*)p - 0x3E9C : p;
+                if (q != 0) {
+                    void* r = q != 0 ? (u8*)q + 0x3E9C : q;
+                    if (func_800B8920(r) != 0) {
+                        if (q != 0) q = (u8*)q + 0x3E9C;
+                        found[count++] = q;
+                    }
+                }
+            }
+        }
+        node = node->next;
+    }
+
+    {
+        u32 i;
+        for (i = 0; i < count; i++) {
+            func_800B9404(found[i]);
+        }
+    }
+
+    *(u32*)(self + 0x9800) = 0;
+    *(u32*)(self + 0xA804) = 0;
+    {
+        Node* n = sentinel->next;
+        while (n != sentinel) {
+            Node* cur = n;
+            n = n->next;
+            cur->next = 0;
+        }
+        sentinel->next = sentinel;
+        ((u32*)sentinel)[1] = (u32)sentinel;
+    }
+    memset(self + 0xA828, 0, 0xA40);
+    *(s16*)(self + 0xB272) = 5;
+    *(s16*)(self + 0xB270) = 1;
+    *(s16*)(self + 0xB274) = 0;
+    lbl_eu_80664314 = 0;
+}
 
 void func_8019397C(){}
 

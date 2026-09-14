@@ -200,6 +200,20 @@ static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
     playUISound__FUl(0x1C3);
 }
 
+static inline void menuVisionBeginSilent(CMenuVisionEntry& entry) {
+    entry.mLayout->SetAnimationEnable(entry.mAnim2, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim3, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim4, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim5, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim6, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim7, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim8, false);
+    entry.mLayout->SetAnimationEnable(entry.mAnim1, true);
+    entry.mAnim1->SetFrame(lbl_eu_80667DC0);
+    entry.field_0x28 = 0;
+    entry.mState = 1;
+}
+
 
 static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image) {
     if (image != 0) {
@@ -961,14 +975,22 @@ extern "C" void func_801AD504(int flags) {
             } else if (previous == ids[3]) {
                 known = true;
             }
+            u32 tagHi = 0x74690000;
             if (known) {
                 if (previous != 0) {
-                    const char* images[4] = {lbl_eu_80504238[0], lbl_eu_80504238[1],
-                                             lbl_eu_80504238[2], lbl_eu_80504238[3]};
+                    const char** src = lbl_eu_80504238;
+                    const char* images[4];
+                    const char* w0 = *src++;
+                    images[0] = w0;
+                    const char** imageList = images;
+                    images[1] = src[0];
+                    u8* idList = ids;
+                    images[2] = src[1];
                     unsigned int i = 0;
+                    images[3] = src[2];
                     do {
-                        if (previous == ids[(u8)i]) {
-                            void* image = menuVisionResource(images[(u8)i]);
+                        if (previous == idList[(u8)i]) {
+                            void* image = func_801355F4()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
                                 func_80137F88(panic, image);
                                 panic->SetVisible(true);
@@ -992,12 +1014,19 @@ extern "C" void func_801AD504(int flags) {
                 }
             } else {
                 if (current != 0) {
-                    const char* images[4] = {lbl_eu_80504248[0], lbl_eu_80504248[1],
-                                             lbl_eu_80504248[2], lbl_eu_80504248[3]};
+                    const char** src = lbl_eu_80504248;
+                    const char* images[4];
+                    const char* w0 = *src++;
+                    images[0] = w0;
+                    const char** imageList = images;
+                    images[1] = src[0];
+                    u8* idList = ids;
+                    images[2] = src[1];
                     unsigned int i = 0;
+                    images[3] = src[2];
                     do {
-                        if (current == ids[(u8)i]) {
-                            void* image = menuVisionResource(images[(u8)i]);
+                        if (current == idList[(u8)i]) {
+                            void* image = func_801355F4()->GetResource(tagHi + 0x6d67, imageList[(u8)i], 0);
                             if (image != 0) {
                                 func_80137F88(panic, image);
                                 panic->SetVisible(true);
@@ -1045,7 +1074,7 @@ extern "C" void func_801AD504(int flags) {
         }
         ((MenuVisionSetDamageText)setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc)(
             entry.mLayout, (char*)(lbl_eu_80504268 + 0x208), value);
-        menuVisionBegin(entry);
+        menuVisionBeginSilent(entry);
 
         CMenuVisionEntry& barEntry = menu->mEntries[4];
         nw4r::lyt::Pane* bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);

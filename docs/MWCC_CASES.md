@@ -8230,12 +8230,12 @@ never use the inline-empty form (weak-copy budget spread).
   unreproducible from any tested shape (soft-cap family).
 
 
-## func_801D8E34 — string-pool UNDEF + FrameBlock party layout (US, Wii/1.1 -O4,p + optimize_for_size)
-- Symptom:   pane string immediates off by +0x54; party copy at sp+2544 vs retail sp+2348/2352; ~8.5% exact / ~79.6% fuzzy; frame 2800 matches
-- Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54 in packed tail, so `&blob[imm]` emits parent+0x54+imm. (2) Largest-first stack alloc places 256B `D8EFrameBlock` against the 0x4330 temps → party@+208 = sp+2544 (retail wants sp+2352, i.e. 192B of live locals between party and 4330). (3) `block.party = *src` outlines `__as__` under `#pragma optimize_for_size`; explicit dual-word loop inlines `li r0,6` but not retail's mtctr/lwzu/stwu dest-4 shape. (4) Early bar `volatile` is load-bearing: non-volatile CSE drops ~0x10C of body. (5) `0.01f`/`100.0f` literals omit retail `lbl_eu_80668040/44` SDA loads; member macros emit `@offset` relocs and regress exact to ~3.5%; UNDEF SDA symbols get the names but shift schedule (~8.3%).
-- Fix:       (1) `extern "C" char lbl_eu_805063BC[];` (UNDEF) — repo_proven. (2) Prologue decl `memberRaw → type → slot` → retail colours r18/r27/r26 and emission order. (3) `D8EFrameBlock` + `records[0]=0` + explicit 6× dual-word party loop. (4) Keep volatile on early bars. Open: 192B above party inside frame 2800; retail lwzu party into +208; UNDEF SDA 68040/44 with matching fsub/lfs schedule; weapon `e_cur`@1916 / `c_cur`@2296 (380B apart — array slots are adjacent).
-- Result:    ~8.5% exact / HIGH_MATCH ~79.6% fuzzy near-miss; frame 2800; prologue bitfield match
-- Confidence: repo_proven (string UNDEF, prologue colours, volatile bars); hypothesis (FrameBlock+192B band)
+## func_801D8E34 — string-pool UNDEF + HighFrame party@2352 (US, Wii/1.1 -O4,s + optimize_for_size)
+- Symptom:   party copy opcode shape (mtctr/lwzu/stwu) vs dual-word addic loop; pane string +0x54 when blob is a packed member; ~7% exact / ~79% fuzzy; frame 2800
+- Cause:     (1) `#define lbl_eu_805063BC (rodata_ItemBoxTail.blob)` — blob at +0x54. (2) Late `listA/B[8]` landed *below* party; retail places them *above* (2400/2496) with party@2352. Standalone `PartyData` copy-init gives retail `li/mtctr/lwzu` but overlays at sp+2144. (3) Soft-cap: `HighFrame.party = *src` / `always_inline` / `inline_max_size(10000)` all outline `__as__12D8EPartySlot` into this ~26KB body; scratch small TUs (even with call pressure) inline the retail loop. CBattleState `*(s+1)/*(s+=2)` gets dest-4+stwu but MWCC reorders loads (lwz 8 before 4) → exact ~3%. (4) Mass SDA `68040/44` in early bars drops exact ~3%; float literals recover ~7%.
+- Fix:       (1) `extern "C" char lbl_eu_805063BC[];`. (2) `struct D8EHighFrame { D8EPartySlot party; CItemBoxInfoEntry listB[8]; listA[8]; }` + explicit 6× dual-word copy; defer list pointers to common tail. (3) Early bars: `volatile s16` + `0.01f`/`100.0f`. Open: force inlined `__as__`/lwzu into `.party` under 26KB `-O4,s`; bar SDA schedule; weapon e_cur@1916 / c_cur@2296.
+- Result:    ~7.0% exact / HIGH_MATCH ~79% fuzzy near-miss; frame 2800; high-band stack slots match retail
+- Confidence: repo_proven (string UNDEF, HighFrame layout, volatile bars, __as__ soft-cap); hypothesis (lwzu into member)
 
 ## kyoshin CItemBoxInfo — func_801E43BC / func_801D8E34 sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
 
@@ -10954,6 +10954,13 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    checkpoint 40.0% / 0x12c8 / slot 358 still `lbz` vs `lfs`. Next: a second vreg that does not emit `extsb`/`mr` in the delay slot (non-destructive `addi r0,r3,1` only), or sink the extra node after `stfs` while keeping height
 - Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
 
+## func_80277B38 / kyoshin/cf/chain/CChain — late/live-across-call state cannot sink the extra node (Wii/1.1 -O4, 40.4%)
+- Symptom:   same tail: decomp `lfs; li r3,1; lbz r4; li r0,60; stfs; addi r4,r4,1` vs retail `lbz r3; li r5,1; lfs; li r4,60; addi r0,r3,1; stfs`. Cycle still `witness-gate: slot 358 lbz vs lfs`. Fuzzy 49.6%
+- Cause:     PickCandidate L3 prefers the SDA21 `lfs` height. A predcount-1 extra on `lbz` (s8/`extsb`, pre-stfs `field_6=next`) wins first pick but occupies the `lfs` delay (dead). A sunk extra that aliases `stfs` lengthens the `lfs` chain (`lfs` still wins). Integer stores before `stfs` made first pick `li 1` (39.9%). `state` live across `func_8014B120` is 29.6% / 0x12c4. Capturing the call return for `mPaused` is 30.4% / 0x12c4 (`mr` to a saved reg). Tail local birth order (`t1`/`paused`/`state`) is a no-op. `unsigned int state/next` is a no-op
+- Fix:       keep mixed wrap + `case 0x1a: return` + `next=state+1` then timer. Declare `int i` before `int runKey` (and `idx` before `actor`) — 87→82 `reg_swap`, hexdiff 40.4%
+- Result:    40.4% / 0x12c8 exact / 634 structural / 82 reg_swap / objdiff 97.47%. Next: extra `lbz` successor with predcount>1 that does **not** alias `stfs` (so it is late and only on the `lbz` chain), or equalize heights so L4 desc-byte picks `lbz`
+- Evidence:  us-80279fbc / src/kyoshin/cf/chain/CChain.cpp
+
 ## func_8023D3D8 / kyoshin/cf/CfNandManager — pair-copy + early live/src/dst, 9.5% (Wii/1.1 -O4,p)
 - Symptom:   hexdiff 9.5% (684 structural / 269 reg_swap); 0x1074 vs retail 0x1070; 0x60
   savegpr frame matches but no `mr r31,r1`; img in r25 not r30; pair trips hoisted to
@@ -11031,10 +11038,10 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Evidence:  us-80100408 / src/kyoshin/CMainMenu.cpp
 
 ## kyoshin/CItemBoxGrid func_801CCAF0 — unsigned `-(a<b)` vs `52c=1` hole steal (Wii/1.1 -O4,p + optimize_for_size, 80.1% near-miss)
-- Symptom:   Exchange confirm +0xd94: retail `subfc; mr item; li r0,-1; count-1; subfe r3,r0,r0; stb 52d; li r0,1; stb 52c; mr this; bl 11B8`. Signed `s32` compare is size-exact 0x10a4 with `rlwinm` sign-bits and `11B8` before `52c`.
-- Cause:     Independent `p[0x52c]=1` (`li r0,1; stb`) wins the post-`subfc` hole over the unsigned `li r0,-1; subfe r3,r0,r0` materialization. Result: `subfe r3,r3,r3` or `subfe r0,r0,r0`, `52c` hoists before `52d`, size 0x109c, ~69%. Named `leftover`, inlined `test`, and comma-in-call-arg do not reserve `r0` for -1. `11B8` before `52c` is a call barrier so `52c` cannot schedule before the call (4-byte phase through the switch tail).
-- Fix:       Not closed. Need a source shape where unsigned `-(u32)(v2-v1)<test` keeps `li r0,-1` and `52c` stays after `52d` but before `11B8` without folding the `52c` dependency. `u16 nVal` after 36254 and switch on `(s32)*(u16*)(p+0x52e)` stay.
-- Result:    80.1% (96 structural, 0x10a4) with signed filler; unsigned+52c-first is a size/schedule regression
+- Symptom:   Exchange confirm +0xd94: retail `subf diff; extsb leftover; subfc r0,r3,r0; mr item; li r0,-1; subi leftover-1; subfe r3,r0,r0; stb 52d; li r0,1; stb 52c; mr this; bl 11B8`. All 96 structural diffs are this one phase through the switch tail.
+- Cause:     Two coupled isels. (1) `p[0x52c]=1` is independent so `li r0,1` wins the post-`subfc` hole and peepholes `li r0,-1; subfe r3,r0,r0` into `subfe rD,rD,rD` (8 bytes short, ~69%). (2) Passing `p` as `11B8`'s first arg schedules `mr this` into that same hole (`subfc dest r0` but `subfe r0,r0,r0`). `subi leftover-1` must sit between `li r0,-1` and `subfe` to keep both insns.
+- Fix:       Not closed. `u32 diff` then `s8 leftover` reproduces retail `subf`/`extsb`/`subfc r0`. `void* slf=(p[0x52c]=1,p)` delays `mr this` and puts `mr item` in the hole, but `52c` still steals. `(neg,1)` / `(p[0x52d],p)` DCE. `#pragma scheduling off` / `peephole off` mid-block no-ops. Need dest-r0 + flag-in-r3 + `52c` after `52d` before `11B8`.
+- Result:    80.1% (96 structural, 0x10a4) with signed filler + `11B8` before `52c`
 - Evidence:  us-801ce544 / src/kyoshin/CItemBoxGrid.cpp
 
 ## CBattleState_enterStatusEntry — WordPrefix copy reloads unk00 (Wii/1.1, CODE_MATCH 98.9%)

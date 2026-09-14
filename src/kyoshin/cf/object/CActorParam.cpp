@@ -1307,7 +1307,11 @@ unk28_done:
 
 
 extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorParam* self, void* arts) {
+    // Early flag→r16, delta→r15 across the holder loops. Both must be dead
+    // before the snapshot flood so those GPRs can be reused for temps.
+    // Mid-section combat state is a separate local (reclaims r16 after vf34C).
     int flag = 0;
+    int delta = 0;
     if (arts != NULL) {
         if (func_800B8B94(*(u16*)arts)) flag = 1;
     }
@@ -1321,13 +1325,13 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (func_8026178C(self->CActorParam_getStatusTable(), 31) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 31);
             if (r != 0) {
-                s16 delta = (s16)r;
+                delta = r;
                 for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
                     void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
                     void* obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getStatusSyncBlock();
-                    *(s16*)((u8*)obj + 0x60) += delta;
+                    *(s16*)((u8*)obj + 0x60) += (s16)delta;
                     obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getStatusSyncBlock();
-                    *(s16*)((u8*)obj + 0x62) += delta;
+                    *(s16*)((u8*)obj + 0x62) += (s16)delta;
                 }
             }
         }
@@ -1335,143 +1339,151 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         if (func_8026178C(self->CActorParam_getStatusTable(), 150) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 150);
             if (r != 0 && flag) {
-                s16 delta = (s16)r;
+                delta = r;
                 for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
                     void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
                     void* obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSyncBlock();
-                    *(s16*)((u8*)obj + 0x18) += delta;
+                    *(s16*)((u8*)obj + 0x18) += (s16)delta;
                     obj = reinterpret_cast<cf::CActorParam*>(actor)->CActorParam_getArtsSyncBlock();
-                    *(s16*)((u8*)obj + 0x1C) += delta;
+                    *(s16*)((u8*)obj + 0x1C) += (s16)delta;
                 }
             }
         }
         __dt__80043E88(&holder, -1);
     }
 
-    // Snapshot: v17E8/F4/EC/F0 born first (f31/f30/f29/f28); volatile t1650
-    // pins the early r28-bound load after arts→r4; f27 (0.0) after first store.
+    // Snapshot: uninit gauge/f27 decls birth saved FPRs (f31..f27). Uninit
+    // t1660/t1658/t165C reserve scratch holes (retail f10/f12/f11). artsArg is
+    // formed with a t1650-dependent no-op so the 0x1650 load stays early and
+    // t1650's web stays in the flood clique (avoids volatile→r0 coalesce).
     float v17E8 = *(float*)((u8*)self + 0x17E8);
-    float v17F4 = *(float*)((u8*)self + 0x17F4);
-    float v17EC = *(float*)((u8*)self + 0x17EC);
-    float v17F0 = *(float*)((u8*)self + 0x17F0);
-    u32 t1650 = *(volatile u32*)((u8*)self + 0x1650);
-    s16 t166C = *(s16*)((u8*)self + 0x166C);
-    s16 t166E = *(s16*)((u8*)self + 0x166E);
-    s16 t1670 = *(s16*)((u8*)self + 0x1670);
-    s16 t167C = *(s16*)((u8*)self + 0x167C);
-    s16 t167E = *(s16*)((u8*)self + 0x167E);
-    s16 t1680 = *(s16*)((u8*)self + 0x1680);
-    s16 t1682 = *(s16*)((u8*)self + 0x1682);
-    s16 t1684 = *(s16*)((u8*)self + 0x1684);
-    s16 t1686 = *(s16*)((u8*)self + 0x1686);
-    s16 t1688 = *(s16*)((u8*)self + 0x1688);
-    s16 t168A = *(s16*)((u8*)self + 0x168A);
-    u8 t168C = *((u8*)self + 0x168C);
-    u8 t16A4 = *((u8*)self + 0x16A4);
-    u8 t16A5 = *((u8*)self + 0x16A5);
-    u8 t16A6 = *((u8*)self + 0x16A6);
-    u8 t16A7 = *((u8*)self + 0x16A7);
-    u8 t16A8 = *((u8*)self + 0x16A8);
-    u32 t16B0 = *(u32*)((u8*)self + 0x16B0);
-    u32 t16B4 = *(u32*)((u8*)self + 0x16B4);
-    u32 t16B8 = *(u32*)((u8*)self + 0x16B8);
-    u32 t16BC = *(u32*)((u8*)self + 0x16BC);
-    u32 t16C0 = *(u32*)((u8*)self + 0x16C0);
-    u32 t16C4 = *(u32*)((u8*)self + 0x16C4);
-    float t1654 = *(float*)((u8*)self + 0x1654);
-    float t1664 = *(float*)((u8*)self + 0x1664);
-    float t1668 = *(float*)((u8*)self + 0x1668);
-    float t1674 = *(float*)((u8*)self + 0x1674);
-    float t1678 = *(float*)((u8*)self + 0x1678);
-    float t1690 = *(float*)((u8*)self + 0x1690);
-    float t1694 = *(float*)((u8*)self + 0x1694);
-    float t1698 = *(float*)((u8*)self + 0x1698);
-    float t169C = *(float*)((u8*)self + 0x169C);
-    float t16A0 = *(float*)((u8*)self + 0x16A0);
-    float t16AC = *(float*)((u8*)self + 0x16AC);
-    float t1660 = *(float*)((u8*)self + 0x1660);
-    float t1658 = *(float*)((u8*)self + 0x1658);
-    float t165C = *(float*)((u8*)self + 0x165C);
-    *(u32*)((u8*)self + 0x17E4) = t1650;
-    float f27 = lbl_eu_806677E4;
-    *(float*)((u8*)self + 0x17E8) = t1654;
-    *(float*)((u8*)self + 0x17EC) = t1658;
-    *(float*)((u8*)self + 0x17F0) = t165C;
-    *(float*)((u8*)self + 0x17F4) = t1660;
-    *(float*)((u8*)self + 0x17F8) = t1664;
-    *(float*)((u8*)self + 0x17FC) = t1668;
-    *(s16*)((u8*)self + 0x1800) = t166C;
-    *(s16*)((u8*)self + 0x1802) = t166E;
-    *(s16*)((u8*)self + 0x1804) = t1670;
-    *(float*)((u8*)self + 0x1808) = t1674;
-    *(float*)((u8*)self + 0x180C) = t1678;
-    *(s16*)((u8*)self + 0x1810) = t167C;
-    *(s16*)((u8*)self + 0x1812) = t167E;
-    *(s16*)((u8*)self + 0x1814) = t1680;
-    *(s16*)((u8*)self + 0x1816) = t1682;
-    *(s16*)((u8*)self + 0x1818) = t1684;
-    *(s16*)((u8*)self + 0x181A) = t1686;
-    *(s16*)((u8*)self + 0x181C) = t1688;
-    *(s16*)((u8*)self + 0x181E) = t168A;
-    *((u8*)self + 0x1820) = t168C;
-    *(float*)((u8*)self + 0x1824) = t1690;
-    *(float*)((u8*)self + 0x1828) = t1694;
-    *(float*)((u8*)self + 0x182C) = t1698;
-    *(float*)((u8*)self + 0x1830) = t169C;
-    *(float*)((u8*)self + 0x1834) = t16A0;
-    *((u8*)self + 0x1838) = t16A4;
-    *((u8*)self + 0x1839) = t16A5;
-    *((u8*)self + 0x183A) = t16A6;
-    *((u8*)self + 0x183B) = t16A7;
-    *((u8*)self + 0x183C) = t16A8;
-    *(float*)((u8*)self + 0x1840) = t16AC;
-    *(u32*)((u8*)self + 0x1844) = t16B0;
-    *(u32*)((u8*)self + 0x1848) = t16B4;
-    *(u32*)((u8*)self + 0x184C) = t16B8;
-    *(u32*)((u8*)self + 0x1850) = t16BC;
-    *(u32*)((u8*)self + 0x1854) = t16C0;
-    *(u32*)((u8*)self + 0x1858) = t16C4;
-    self->CActorParam_applyArtsStats(arts);
+    float v17F4;
+    float v17EC;
+    float v17F0;
+    float f27;
+    float t1660;
+    float t1658;
+    float t165C;
+    cf::CActorParam* selfArg = self;
+    u32 t1650 = *(u32*)((u8*)selfArg + 0x1650);
+    void* artsArg = (void*)((u32)arts | (t1650 & 0));
+    float t1654 = *(float*)((u8*)selfArg + 0x1654);
+    float t1664 = *(float*)((u8*)selfArg + 0x1664);
+    float t1668 = *(float*)((u8*)selfArg + 0x1668);
+    s16 t166C = *(s16*)((u8*)selfArg + 0x166C);
+    s16 t166E = *(s16*)((u8*)selfArg + 0x166E);
+    s16 t1670 = *(s16*)((u8*)selfArg + 0x1670);
+    float t1674 = *(float*)((u8*)selfArg + 0x1674);
+    float t1678 = *(float*)((u8*)selfArg + 0x1678);
+    s16 t167C = *(s16*)((u8*)selfArg + 0x167C);
+    s16 t167E = *(s16*)((u8*)selfArg + 0x167E);
+    s16 t1680 = *(s16*)((u8*)selfArg + 0x1680);
+    s16 t1682 = *(s16*)((u8*)selfArg + 0x1682);
+    s16 t1684 = *(s16*)((u8*)selfArg + 0x1684);
+    s16 t1686 = *(s16*)((u8*)selfArg + 0x1686);
+    s16 t1688 = *(s16*)((u8*)selfArg + 0x1688);
+    s16 t168A = *(s16*)((u8*)selfArg + 0x168A);
+    u8 t168C = *((u8*)selfArg + 0x168C);
+    float t1690 = *(float*)((u8*)selfArg + 0x1690);
+    float t1694 = *(float*)((u8*)selfArg + 0x1694);
+    float t1698 = *(float*)((u8*)selfArg + 0x1698);
+    float t169C = *(float*)((u8*)selfArg + 0x169C);
+    float t16A0 = *(float*)((u8*)selfArg + 0x16A0);
+    u8 t16A4 = *((u8*)selfArg + 0x16A4);
+    u8 t16A5 = *((u8*)selfArg + 0x16A5);
+    u8 t16A6 = *((u8*)selfArg + 0x16A6);
+    u8 t16A7 = *((u8*)selfArg + 0x16A7);
+    u8 t16A8 = *((u8*)selfArg + 0x16A8);
+    float t16AC = *(float*)((u8*)selfArg + 0x16AC);
+    u32 t16B0 = *(u32*)((u8*)selfArg + 0x16B0);
+    u32 t16B4 = *(u32*)((u8*)selfArg + 0x16B4);
+    u32 t16B8 = *(u32*)((u8*)selfArg + 0x16B8);
+    u32 t16BC = *(u32*)((u8*)selfArg + 0x16BC);
+    u32 t16C0 = *(u32*)((u8*)selfArg + 0x16C0);
+    u32 t16C4 = *(u32*)((u8*)selfArg + 0x16C4);
+    v17F4 = *(float*)((u8*)selfArg + 0x17F4);
+    t1660 = *(float*)((u8*)selfArg + 0x1660);
+    v17EC = *(float*)((u8*)selfArg + 0x17EC);
+    t1658 = *(float*)((u8*)selfArg + 0x1658);
+    v17F0 = *(float*)((u8*)selfArg + 0x17F0);
+    t165C = *(float*)((u8*)selfArg + 0x165C);
+    *(u32*)((u8*)selfArg + 0x17E4) = t1650;
+    f27 = lbl_eu_806677E4;
+    *(float*)((u8*)selfArg + 0x17E8) = t1654;
+    *(float*)((u8*)selfArg + 0x17EC) = t1658;
+    *(float*)((u8*)selfArg + 0x17F0) = t165C;
+    *(float*)((u8*)selfArg + 0x17F4) = t1660;
+    *(float*)((u8*)selfArg + 0x17F8) = t1664;
+    *(float*)((u8*)selfArg + 0x17FC) = t1668;
+    *(s16*)((u8*)selfArg + 0x1800) = t166C;
+    *(s16*)((u8*)selfArg + 0x1802) = t166E;
+    *(s16*)((u8*)selfArg + 0x1804) = t1670;
+    *(float*)((u8*)selfArg + 0x1808) = t1674;
+    *(float*)((u8*)selfArg + 0x180C) = t1678;
+    *(s16*)((u8*)selfArg + 0x1810) = t167C;
+    *(s16*)((u8*)selfArg + 0x1812) = t167E;
+    *(s16*)((u8*)selfArg + 0x1814) = t1680;
+    *(s16*)((u8*)selfArg + 0x1816) = t1682;
+    *(s16*)((u8*)selfArg + 0x1818) = t1684;
+    *(s16*)((u8*)selfArg + 0x181A) = t1686;
+    *(s16*)((u8*)selfArg + 0x181C) = t1688;
+    *(s16*)((u8*)selfArg + 0x181E) = t168A;
+    *((u8*)selfArg + 0x1820) = t168C;
+    *(float*)((u8*)selfArg + 0x1824) = t1690;
+    *(float*)((u8*)selfArg + 0x1828) = t1694;
+    *(float*)((u8*)selfArg + 0x182C) = t1698;
+    *(float*)((u8*)selfArg + 0x1830) = t169C;
+    *(float*)((u8*)selfArg + 0x1834) = t16A0;
+    *((u8*)selfArg + 0x1838) = t16A4;
+    *((u8*)selfArg + 0x1839) = t16A5;
+    *((u8*)selfArg + 0x183A) = t16A6;
+    *((u8*)selfArg + 0x183B) = t16A7;
+    *((u8*)selfArg + 0x183C) = t16A8;
+    *(float*)((u8*)selfArg + 0x1840) = t16AC;
+    *(u32*)((u8*)selfArg + 0x1844) = t16B0;
+    *(u32*)((u8*)selfArg + 0x1848) = t16B4;
+    *(u32*)((u8*)selfArg + 0x184C) = t16B8;
+    *(u32*)((u8*)selfArg + 0x1850) = t16BC;
+    *(u32*)((u8*)selfArg + 0x1854) = t16C0;
+    *(u32*)((u8*)selfArg + 0x1858) = t16C4;
+    selfArg->CActorParam_applyArtsStats(artsArg);
     if (self->CActorParam_getStatusTable() != NULL) {
-        // Destructive fdivs into f30: ratio replaces v17F4 in the same FPR.
+        // Retail post-fdivs: f26=0, gm→r14, bLT from cror→r15, combat→r16.
         float ratio = v17E8 / v17F4;
         float f26 = lbl_eu_806677E4;
-        // bLT before gm so bLT→r15, gm→r14 (retail).
-        int bLT;
         int gm = cf::CfGameManager::getCurrentSlotIndex();
-        bLT = ratio <= lbl_eu_8066782C;
+        int bLT = ratio <= lbl_eu_8066782C;
         u32 t = *(u32*)(reinterpret_cast<cf::CObjectState*>(self->CActorState::unk4)->CObjectState_getStateData());
-        // int + separate assigns → MWCC cntlzw equality idiom (not cmpli on bool||).
-        int c = ((t & 0x3F) == 6);
-        if (c == 0) c = ((t & 0x3F) == 7);
-        if (c == 0) c = ((t & 0x7C0) == 448);
-        if (c == 0) {
-            c = 0;
+        int combat = ((t & 0x3F) == 6);
+        if (combat == 0) combat = ((t & 0x3F) == 7);
+        if (combat == 0) combat = ((t & 0x7C0) == 448);
+        if (combat == 0) {
+            combat = 0;
             if (func_80174C98(self, &t, 9) || func_80174C98(self, &t, 10) ||
                 func_80174C98(self, &t, 11)) {
-                c = 1;
+                combat = 1;
             }
         }
-        if (c == 0) c = ((t & 0x3F) == 19);
-        if (c == 0) c = ((t & 0x3F) == 18);
-        if (c == 0) c = ((t & 0x3F) == 20);
-        if (c == 0) {
-            c = 0;
+        if (combat == 0) combat = ((t & 0x3F) == 19);
+        if (combat == 0) combat = ((t & 0x3F) == 18);
+        if (combat == 0) combat = ((t & 0x3F) == 20);
+        if (combat == 0) {
+            combat = 0;
             if (func_80174C98(self, &t, 22) || func_80174C98(self, &t, 23) ||
                 func_80174C98(self, &t, 15)) {
-                c = 1;
+                combat = 1;
             }
         }
-        if (c == 0) c = ((t & 0x3F) == 21);
-        if (c == 0) c = ((t & 0x3F) == 24);
-        if (c == 0) c = ((t & 0x3F) == 25);
-        if (c == 0) c = ((t & 0x3F) == 26);
-        if (c == 0) c = ((t & 0x3F) == 27);
-        if (c == 0) c = ((t & 0x3F) == 16);
-        if (c == 0) c = ((t & 0x3F) == 13);
-        if (c == 0) c = ((t & 0x3F) == 15);
-        if (c == 0) c = ((t & 0x3F) == 31);
-        if (c != 0) f26 = lbl_eu_806677E8;
+        if (combat == 0) combat = ((t & 0x3F) == 21);
+        if (combat == 0) combat = ((t & 0x3F) == 24);
+        if (combat == 0) combat = ((t & 0x3F) == 25);
+        if (combat == 0) combat = ((t & 0x3F) == 26);
+        if (combat == 0) combat = ((t & 0x3F) == 27);
+        if (combat == 0) combat = ((t & 0x3F) == 16);
+        if (combat == 0) combat = ((t & 0x3F) == 13);
+        if (combat == 0) combat = ((t & 0x3F) == 15);
+        if (combat == 0) combat = ((t & 0x3F) == 31);
+        if (combat != 0) f26 = lbl_eu_806677E8;
         if (func_8026178C(self->CActorParam_getStatusTable(), 37) != 0) {
             int r = func_8025FB10(self->CActorParam_getStatusTable(), 37);
             if (r != 0) *(s16*)((u8*)self + 0x1746) += (s16)r;
@@ -1664,67 +1676,61 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
         // Retail re-checks getStatusTable before id-48 (null → skip to loop).
         if (self->CActorParam_getStatusTable() != NULL) {
             if (func_8026178C(self->CActorParam_getStatusTable(), 48) != 0) {
-                int r = func_8025FB10(self->CActorParam_getStatusTable(), 48);
-                if (r != 0) {
-                    // 0x20-byte status slots; fields at +4/+0x14; b++ → addi r3,r3,32.
-                    struct Status48Slot {
-                        u16 unk00;
-                        u16 unk02;
-                        u16 at4;
-                        u16 padA[7];
-                        u16 at14;
-                        u16 padB[5];
-                    };
-                    Status48Slot* b =
-                        (Status48Slot*)reinterpret_cast<cf::CBattleState*>(
-                                            (void*)((u32)self + 8))
-                            ->CBattleState_getStatusBlock();
+                // Reuse gm's r14 for the status-48 value (retail overwrites gm).
+                gm = func_8025FB10(self->CActorParam_getStatusTable(), 48);
+                if (gm != 0) {
+                    u8* o = (u8*)static_cast<cf::CBattleState&>(*self)
+                                .CBattleState_getStatusBlock();
                     int ok;
-                    if (b->at4 != 0) {
+                    if (*(u16*)(o + 4) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    if (b->at14 != 0) {
+                    if (*(u16*)(o + 0x14) != 0) {
                         ok = 0;
                         goto status48_done;
                     }
-                    b++;
-                    if (b->at4 != 0) {
-                        ok = 0;
-                        goto status48_done;
-                    }
-                    if (b->at14 != 0) {
-                        ok = 0;
-                        goto status48_done;
-                    }
-                    if ((*(u16*)((u8*)b + 0x24)) != 0) {
-                        ok = 0;
-                        goto status48_done;
-                    }
-                    if ((*(u16*)((u8*)b + 0x34)) != 0) {
-                        ok = 0;
-                        goto status48_done;
-                    }
-                    if ((*(u16*)((u8*)b + 0x44)) != 0) {
-                        ok = 0;
-                        goto status48_done;
-                    }
-                    if ((*(u16*)((u8*)b + 0x54)) != 0) {
-                        ok = 0;
-                        goto status48_done;
+                    // Fresh local after the bump — retail addi r3,r3,32 then
+                    // relative +4/+0x14/+0x24.. (not absolute from the original).
+                    {
+                        u8* o2 = o + 0x20;
+                        if (*(u16*)(o2 + 4) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
+                        if (*(u16*)(o2 + 0x14) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
+                        if (*(u16*)(o2 + 0x24) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
+                        if (*(u16*)(o2 + 0x34) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
+                        if (*(u16*)(o2 + 0x44) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
+                        if (*(u16*)(o2 + 0x54) != 0) {
+                            ok = 0;
+                            goto status48_done;
+                        }
                     }
                     ok = 1;
                 status48_done:
                     if (ok != 0) {
-                        s16 delta = (s16)r;
+                        s16 d = (s16)gm;
                         *(s16*)((u8*)self + 0x174C) =
-                            (s16)(*(s16*)((u8*)self + 0x174C) + delta);
+                            (s16)(*(s16*)((u8*)self + 0x174C) + d);
                         *(s16*)((u8*)self + 0x1750) =
-                            (s16)(*(s16*)((u8*)self + 0x1750) + delta);
+                            (s16)(*(s16*)((u8*)self + 0x1750) + d);
                         *(s16*)((u8*)self + 0x174E) =
-                            (s16)(*(s16*)((u8*)self + 0x174E) + delta);
+                            (s16)(*(s16*)((u8*)self + 0x174E) + d);
                         *(s16*)((u8*)self + 0x1746) =
-                            (s16)(*(s16*)((u8*)self + 0x1746) + delta);
+                            (s16)(*(s16*)((u8*)self + 0x1746) + d);
                     }
                 }
             }
@@ -2007,16 +2013,34 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                 }
             }
 
-            // Truncate HP via (float)(int); dual-magic needs the value unproven.
+            // HP truncate: retail fcmp vs 0, pick 2^52 / 2^52+2^31, fadd, fctiwz.
+            // Plain (float)(int)hp after the [0,max] clamp uses bare fctiwz; the
+            // explicit double+magic form restores the dual-magic path
+            // (.scratch/hp_cast4.c explicit_dual2).
             {
                 float hp = *(float*)((u8*)self + 0x17F4);
-                hp = (float)(int)hp;
+                double mag;
+                double d;
+                // Select magic first, then hp + mag → retail fadd f0,f1,f0.
+                if (hp > lbl_eu_806677E4) {
+                    mag = lbl_eu_806677F0;
+                } else {
+                    mag = lbl_eu_806677F8;
+                }
+                d = (double)hp + mag;
+                hp = (float)(int)d;
                 *(float*)((u8*)self + 0x17F4) = hp;
-                if (v17E8 > hp) v17E8 = hp;
+                if (v17E8 > hp) {
+                    v17E8 = hp;
+                }
                 float curB = *(float*)((u8*)self + 0x17F8);
-                if (v17EC > curB) v17EC = curB;
+                if (v17EC > curB) {
+                    v17EC = curB;
+                }
                 float curC = *(float*)((u8*)self + 0x17FC);
-                if (v17F0 > curC) v17F0 = curC;
+                if (v17F0 > curC) {
+                    v17F0 = curC;
+                }
             }
             *(float*)((u8*)self + 0x17E8) = v17E8;
             *(float*)((u8*)self + 0x17EC) = v17EC;
@@ -2052,14 +2076,19 @@ extern "C" void CActorParam_resetArtsStatus__Q22cf11CActorParamFv(cf::CActorPara
                     *(float*)((u8*)self + 0x3368) = factor;
                     *(s16*)((u8*)self + 0x3358) = (s16)(int)(
                         factor * ((float)*(s16*)((u8*)self + 0x3358) / cur));
-                } else if (cur != f27) {
-                    *(float*)((u8*)self + 0x3368) = f27;
-                    *(s16*)((u8*)self + 0x3358) = (s16)(int)(
-                        f27 * ((float)*(s16*)((u8*)self + 0x3358) / cur));
+                } else {
+                    // Retail reloads 0x3368 before comparing to zero (extra lfs).
+                    float cur2 = *(volatile float*)((u8*)self + 0x3368);
+                    if (cur2 != f27) {
+                        s16 s3358 = *(s16*)((u8*)self + 0x3358);
+                        *(float*)((u8*)self + 0x3368) = f27;
+                        *(s16*)((u8*)self + 0x3358) =
+                            (s16)(int)(f27 * ((float)s3358 / cur2));
+                    }
                 }
             }
 
-            // Retail: addi r3,self+0x16C8 (not a CSE'd pointer) then memset 120.
+            // Rematerialize dest each time (retail addi r3,r31,imm — not CSE).
             std::memset((u8*)self + 0x16C8, 0, 120);
 
             // int temps → stw spills (retail 124(sp)); s16 would sth lower.
@@ -3018,8 +3047,7 @@ extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv(cf::CActorPara
         cf::CBattleStateEntry* e = self->CBattleState_fetchStatusEntry(i);
         if (e->unk0C != 0) {
             cf::CBattleStateEntry* e2 = self->CBattleState_fetchStatusEntry(i);
-            float gauge = self->CBattleState_fetchStatusEntry(i)->unk20;
-            if (!(e2->unk08 & 0x7000) || gauge != lbl_eu_806677E4) {
+            if (!(e2->unk08 & 0x7000) || self->CBattleState_fetchStatusEntry(i)->unk20 != lbl_eu_806677E4) {
                 self->CBattleState_applyEventEntry(self->CBattleState_fetchStatusEntry(i));
             }
         }

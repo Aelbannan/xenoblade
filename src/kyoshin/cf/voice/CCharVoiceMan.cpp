@@ -356,11 +356,11 @@ interactStore:
         // MWCC's unsigned range-fusion (MWCC_PATTERNS "swapped-operand
         // range guards").
         int phase = getQueuedFileEventCount__Q22cf13CfGameManagerFv();
+        u32 gaugeBit = 1 << (lbl_eu_80663E42 - 1);
         if (0x108 >= phase)
             goto noFieldFlag;
         if (0x116 <= phase)
             goto noFieldFlag;
-        u32 gaugeBit = 1 << (lbl_eu_80663E42 - 1);
         if (!(gaugeBit & 0xFE00))
             goto noFieldFlag;
         m->fieldFlag = 1;

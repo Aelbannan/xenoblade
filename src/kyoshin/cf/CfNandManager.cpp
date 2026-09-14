@@ -720,13 +720,12 @@ inline static void restoreNameTable(CfNandSaveNameTable* names) {
 
 // Apply a NAND save image back into live game state (load/teardown path).
 extern "C" int func_8023D3D8(CfNandSaveImage* img) {
+    (void)__alloca(0);
     CfNandSaveImage* image = img;
     int ok = 1;
     u8* live;
     CfNandWorkEntrySrc* src;
     CfNandWorkEntryDst* dst;
-    CfNandSaveNameEntry nameScratch;
-    nameScratch.f04 = 0;
     u32 ver = image->version - 0x70001;
     if (ver <= 1) {
         int valid = func_8023CD9C(image);
@@ -894,6 +893,32 @@ extern "C" int func_8023D3D8(CfNandSaveImage* img) {
         updateConfig__FPUc(v1->optdBlob, 1);
     }
     return ok;
+}
+
+extern "C" void __dl__FPv(void*);
+
+// Retail US 0x8024058C: apply the +0x5C save image (func_8023D3D8), then
+// operator-delete it. The in-progress flag at lbl_eu_80664772 is armed
+// around the apply so CSysWinScenarioLog can poll the teardown.
+extern "C" int __dt__8023E448() {
+    u8* none = 0;
+    u8* img = *(u8**)(lbl_eu_80664768 + 0x5C);
+    if (img == none) {
+        img = none;
+    }
+    if (img == none) {
+        return 0;
+    }
+    u16 clear = 0;
+    lbl_eu_80664772 = 1;
+    int result = func_8023D3D8((CfNandSaveImage*)img);
+    lbl_eu_80664772 = clear;
+    u8* still = *(u8**)(lbl_eu_80664768 + 0x5C);
+    if (still != 0) {
+        __dl__FPv(still);
+        *(u8**)(lbl_eu_80664768 + 0x5C) = (u8*)(u32)clear;
+    }
+    return result;
 }
 
 // Local GX/VI surface so this data-first TU does not include CDeviceVI.hpp

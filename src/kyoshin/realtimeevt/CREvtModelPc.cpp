@@ -154,11 +154,12 @@ extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
     if (self != 0) {
         char* s = (char*)self;
 
-        // Install vtables in retail emission order (base first), then invoke
-        // slot-15 entry straight out of the vtable data symbol.
-        FLD(void*, s, 0x00) = lbl_eu_805321F0;
-        FLD(void*, s, 0x38) = (char*)lbl_eu_805321F0 + 0x44;
-        ((void (*)(void*))lbl_eu_805321F0[0x3C / 4])(s);
+        // Named vtable pointer so the slot-15 call keeps the base in r12
+        // (retail virtual-call color), matching __ct__CREvtModelPc.
+        u32* vtable = lbl_eu_805321F0;
+        FLD(void*, s, 0x00) = vtable;
+        FLD(void*, s, 0x38) = (char*)vtable + 0x44;
+        ((void (*)(void*))vtable[0x3C / 4])(s);
 
         __ct__80172668(self, 0);
 
@@ -253,6 +254,10 @@ void func_80183A3C(void* self) {
 
     // Parent scene counter check: retail tests (u32)(mField30 + 0x10000)
     // against 0xFFFF (the addis/cmplwi lowering of == -1).
+    struct CREvtModelParentIf {
+        u8 pad[0x30];
+        s32 mField30;
+    };
     if ((u32)(((CREvtModelParentIf*)pc.mParent)->mField30 + 0x10000) == 0xFFFF) {
         pc.mFlags |= 0x50;
 

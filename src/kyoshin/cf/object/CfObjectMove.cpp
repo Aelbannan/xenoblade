@@ -3,7 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
+#define func_800BE824 func_800BE824_hidden
 #include "kyoshin/cf/CfResObjImpl.hpp"
+#undef func_800BE824
 // Owning-class virtuals for the +0xC4 target (CActParamAnim family: this TU's
 // mTargetC4 is the +0xD0 CActParamAnimGame). Five of this header's canonical
 // decls clash with TU-visible forms (same clash family as

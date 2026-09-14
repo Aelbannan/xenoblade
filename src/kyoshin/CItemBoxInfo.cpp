@@ -2151,13 +2151,18 @@ union D8EComparisonStorage {
     D8EArmorEntry armor[4];
 };
 struct D8EPartyData { u32 w[12]; };
-struct D8EFrameBlock {
-    u32 records[52];
-    D8EPartyData party;
+// Distinct type for the high-frame party band.
+struct D8EPartySlot { u32 w[12]; };
+// Retail high-frame band (butting 0x4330 temps at sp+2592):
+//   party@2352 (48B) | listB@2400 (96B) | listA@2496 (96B) = 240B → base@2352.
+struct D8EHighFrame {
+    D8EPartySlot party;
+    CItemBoxInfoEntry listB[8];
+    CItemBoxInfoEntry listA[8];
 };
 
 static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
-    f32 scale = 0.01f * (100.0f + (f32)effect);
+    f32 scale = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect);
     entry.physicalDefense = (s16)(s32)((f32)entry.physicalDefense * scale);
     entry.etherDefense = (s16)(s32)((f32)entry.etherDefense * scale);
 }
@@ -2299,6 +2304,12 @@ extern "C" u32 func_801DF988(void*, void*, u32, void*, s32);
 
 #pragma push
 #pragma optimize_for_size on
+// Prefer labeled SDA symbols over float literals / parent+offset member decays
+// so bar formulas emit retail lfs relocs (lbl_eu_80668040/44).
+#undef lbl_eu_80668040
+#undef lbl_eu_80668044
+extern "C" const f32 lbl_eu_80668040;
+extern "C" const f32 lbl_eu_80668044;
 extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
     // Packed selection: retail emits slot (rlwinm.→r26/CR0), then member
     // (r18), then type (r27). Declaring member before type matches that
@@ -2313,15 +2324,15 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         }
     }
 
-    // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
-    // FrameBlock: records[52] then party @+208. Explicit dual-word loop inlines
-    // li r0,6. Open: party @sp+2544 vs retail sp+2352; highTail[192] grew frame.
-    D8EFrameBlock frameBlock;
-    frameBlock.records[0] = 0;
-    // Explicit dual-word loop inlines li r0,6 (member assign outlines __as__).
+    // ---- high-frame band: party + lists (retail sp+2352/2400/2496) ----
+    // D8EHighFrame places party@2352. Member assign outlines __as__ in this
+    // 26KB body (scratch small TUs inline mtctr/lwzu; inline_max does not help).
+    // Explicit dual-word loop ≈7% exact; CBattleState dest-4/stwu reorders
+    // loads (lwz8 before lwz4) and drops exact to ~3%.
+    D8EHighFrame highFrame;
     {
         u32* src = (u32*)((u8*)func_8009ECB0() + 4);
-        u32* dst = frameBlock.party.w;
+        u32* dst = highFrame.party.w;
         u32 n = 6;
         do {
             u32 a = *src++;
@@ -2332,7 +2343,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
     for (u32 row = 0; row < 2; row++) {
         for (u8 col = 0; col < 3; col++) {
-            u8 id = (u8)frameBlock.party.w[col];
+            u8 id = (u8)highFrame.party.w[col];
             if (id != 0) {
                 void* actor = func_800B8B94(id);
                 if (actor != NULL) {
@@ -2400,7 +2411,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     // ---- stat bars (display formula) ----
     s32 effect = func_801DF610(info, (void*)(u32)member, 0x21, NULL);
     // volatile keeps early bars in distinct slots (non-volatile CSE'd ~0x10C
-    // of body away under optimize_for_size).
+    // of body away under optimize_for_size). Float literals here match the
+    // ~7% HighFrame baseline; SDA 68040/44 names elsewhere still open.
     volatile s16 bar1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10) * (f32)(stA->s20 + effect)));
     effect = func_801DF610(info, (void*)(u32)member, 0x1, NULL);
     volatile s16 bar2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) * (f32)(stA->s1C + effect)));
@@ -2421,11 +2433,11 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     if (func_801DFFB8(info, member, NULL, NULL)) {
         s32 eq = func_801DFD60(info, (void*)(u32)member, 0x30);
         if (eq != 0) {
-            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
-            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
-            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + func_801DF610(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
+            s16 barA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
+            s16 barB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 barC = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + func_801DF610(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
             hpStat = (s16)(s32)(stA->f10 + (f32)func_801C6158(
-                0.01f * stB->f10 *
+                lbl_eu_80668040 * stB->f10 *
                 (f32)(stC->s06 + eq + func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
 
             // ---- current weapon block ----
@@ -2500,8 +2512,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
+            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
+            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2525,8 +2537,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
         // row B: 0x1 -> panes 0x50/0x54
         {
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], nb);
             D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
@@ -2559,10 +2571,10 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         {
             s16 oldAgilityBase = (s16)(stA->s1E - (s16)comparisonArtsSum);
             if (oldAgilityBase <= 0) oldAgilityBase = 1;
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) *
+            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)e1) *
                 (f32)(oldAgilityBase + func_801DF610(
                     info, (void*)(u32)member, 0x41, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) *
+            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0E + (f32)e2) *
                 (f32)(oldAgilityBase + func_801DF610(
                     info, (void*)(u32)member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
@@ -2588,8 +2600,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
         // row D: 0x11 + func_801C6158 -> panes 0x40/0x48
         {
-            s16 pb = (s16)(s32)(stA->f10 + (f32)func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + e1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
-            s16 nb = (s16)(s32)(stA->f10 + (f32)func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + e2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3))));
+            s16 pb = (s16)(s32)(stA->f10 + (f32)func_801C6158(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + e1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)func_801C6158(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + e2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3))));
             if (pb > 9999) pb = 9999;
             if (nb > 9999) nb = 9999;
             s16 dD = (s16)(nb - pb);
@@ -2627,12 +2639,11 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         else if (type == 7) slotId = *(s16*)((u8*)charObj + 0x22);
         else if (type == 8) slotId = *(s16*)((u8*)charObj + 0x24);
         void* item = func_80157C4C(type, slotId);
-        D8EComparisonStorage& comparisonStorage =
-            *reinterpret_cast<D8EComparisonStorage*>(frameBlock.records);
+        D8EComparisonStorage comparisonStorage;
         if (type == 2) {
             // ---- weapon block (0x801E7300) ----
-            // records[] overlays armor; member assign → li r0,6 + trailing word.
-            // Open: retail e_cur@1916 / c_cur@2296 (380B apart), not adjacent.
+            // Member assign → li r0,6 + trailing word. Open: retail e_cur@1916 /
+            // c_cur@2296 (380B apart), not adjacent array slots.
             u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
             D8EEntry& e_cur = comparisonStorage.weapon[0];
             func_801D4E2C(&e_cur, (void*)(u32)member, (void*)(u32)w0);
@@ -2646,8 +2657,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
             if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
-            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
-            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
             s32 atkA = (s32)pb + func_801DF4E0(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
             s32 atkC = (s32)pb + func_801DF578(info, (void*)(u32)member, (u16)(c_cur.w04 >> 16), NULL);
             s32 atkB = (s32)nb + func_801DF4E0(info, (void*)(u32)member, (u16)c_new.w04, arg3);
@@ -2658,21 +2669,21 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
             s16 v612 = (s16)c_new._0C;
             s16 v646 = (s16)c_cur._0C;
-            v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
+            v612 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
-            v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
+            v646 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
             s16 v610 = (s16)c_new._10;
             s16 v644 = (s16)c_cur._10;
-            v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
+            v610 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
-            v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            v644 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             c1 = func_801DF610(info, (void*)(u32)member, 0x54, arg3);
             s16 v614 = c_new.w14;
             s16 v648 = c_cur.w14;
-            v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
+            v614 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x54, NULL);
-            v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
+            v648 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) * (f32)(stA->s38 + c1)));
             s16 snap644 = v644;
             s16 snap646 = v646;
             s16 d1 = (s16)(v610 - snap644);
@@ -2825,7 +2836,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 3: {
                             s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
+                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
@@ -2838,7 +2849,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 2: {
                             s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
+                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_2);
                             }
@@ -2847,7 +2858,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 1: {
                             s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
+                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_1);
                             }
@@ -2861,7 +2872,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 3: {
                             s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
+                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
@@ -2874,7 +2885,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 2: {
                             s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
+                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_2);
                             }
@@ -2883,7 +2894,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 1: {
                             s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
+                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_1);
                             }
@@ -2908,17 +2919,17 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             // each result adjacent to its query mirrors the original UI pipeline
             // and makes the current-value subtraction explicit.
             s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
-            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+            c_new.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
-            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+            c_cur.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
-            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+            c_new.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
-            c_cur.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+            c_cur.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
                 (f32)(stA->s2E + c1)));
             s16 d1;
             s16 d2;
@@ -2932,10 +2943,10 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 D8EEntry previewWeapon;
                 func_801D4E2C(&previewWeapon, (void*)(u32)member,
                     (void*)(u32)(u16)(*(u32*)item2 >> 20));
-                s16 newPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
+                s16 newPercent = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) *
                     (f32)(stA->s38 + func_801DF610(
                         info, (void*)(u32)member, 0x54, arg3))));
-                s16 oldPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
+                s16 oldPercent = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s22) *
                     (f32)(stA->s38 + func_801DF610(
                         info, (void*)(u32)member, 0x54, NULL))));
                 percentDelta = (s16)(newPercent - oldPercent);
@@ -2949,12 +2960,12 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 d1 = (s16)(c_new.etherDefense - c_cur.etherDefense);
                 d2 = (s16)(c_new.physicalDefense - c_cur.physicalDefense);
 
-                s16 oldAgility = (s16)(s32)(0.01f *
-                    ((100.0f + (f32)stC->s0E + (f32)eq1) *
+                s16 oldAgility = (s16)(s32)(lbl_eu_80668040 *
+                    ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq1) *
                      (f32)((stA->s1E - (s16)v484) + func_801DF610(
                          info, (void*)(u32)member, 0x41, NULL))));
-                s16 newAgility = (s16)(s32)(0.01f *
-                    ((100.0f + (f32)stC->s0E + (f32)eq2) *
+                s16 newAgility = (s16)(s32)(lbl_eu_80668040 *
+                    ((lbl_eu_80668044 + (f32)stC->s0E + (f32)eq2) *
                      (f32)((stA->s1E - (s16)v468) + func_801DF610(
                          info, (void*)(u32)member, 0x41, arg3))));
                 if (oldAgility <= 0) oldAgility = 1;
@@ -2966,9 +2977,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 func_801D4E2C(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
                 s32 c3 = func_801DF610(info, (void*)(u32)member, 0x1, NULL);
-                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
+                s16 wpb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
                 c3 = func_801DF610(info, (void*)(u32)member, 0x1, arg3);
-                s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
+                s16 wnb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
                 s32 wa = (s32)wpb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, NULL);
                 s32 wb = (s32)wnb + func_801DF578(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
                 s32 wc = (s32)wnb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, arg3);
@@ -3092,8 +3103,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         if (func_801DFFB8(info, member, NULL, NULL)) {
             currentEquipBonus = func_801DFD60(info, (void*)(u32)member, 0x30);
         }
-        s16 oldStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF610(info, (void*)(u32)member, 0x21, NULL)))));
-        s16 newStrength = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF988(info, (void*)(u32)member, 0x21, arg3, slot)))));
+        s16 oldStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF610(info, (void*)(u32)member, 0x21, NULL)))));
+        s16 newStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF988(info, (void*)(u32)member, 0x21, arg3, slot)))));
         s16 strengthDelta = (s16)(newStrength - oldStrength);
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], newStrength);
         {
@@ -3117,8 +3128,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         func_80139AC8(panes[(9)], &labelTop, &labelBottom);
 }
 
-        s16 oldPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF610(info, (void*)(u32)member, 0x01, NULL)))));
-        s16 newPhysical = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF988(info, (void*)(u32)member, 0x01, arg3, slot)))));
+        s16 oldPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF610(info, (void*)(u32)member, 0x01, NULL)))));
+        s16 newPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF988(info, (void*)(u32)member, 0x01, arg3, slot)))));
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], newPhysical);
         {
@@ -3143,10 +3154,10 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 }
 
         s16 oldHp = (s16)(s32)(stA->f10 + (f32)func_801C6158(
-            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+            lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
                 func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
         s16 newHp = (s16)(s32)(stA->f10 + (f32)func_801C6158(
-            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+            lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
                 func_801DF988(info, (void*)(u32)member, 0x11, arg3, slot))));
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
@@ -3181,8 +3192,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                           &labelTop, &labelBottom);
         }
 
-        s16 oldEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF610(info, (void*)(u32)member, 0x31, NULL)))));
-        s16 newEther = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF988(info, (void*)(u32)member, 0x31, arg3, slot)))));
+        s16 oldEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF610(info, (void*)(u32)member, 0x31, NULL)))));
+        s16 newEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF988(info, (void*)(u32)member, 0x31, arg3, slot)))));
         s16 etherDelta = (s16)(newEther - oldEther);
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], newEther);
         {
@@ -3216,11 +3227,11 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         if (oldAgilityBase <= 0) oldAgilityBase = 1;
         s16 oldAgilityEffect = (s16)func_801DF610(
             info, (void*)(u32)member, 0x41, NULL);
-        s16 oldAgility = (s16)(s32)(0.01f *
-            ((100.0f + (f32)stC->s0E + (f32)currentEquipBonus) *
+        s16 oldAgility = (s16)(s32)(lbl_eu_80668040 *
+            ((lbl_eu_80668044 + (f32)stC->s0E + (f32)currentEquipBonus) *
              (f32)(oldAgilityBase + oldAgilityEffect)));
 
-        s16 newAgility = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (func_801DF988(info, (void*)(u32)member, 0x41, arg3, slot)))));
+        s16 newAgility = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (func_801DF988(info, (void*)(u32)member, 0x41, arg3, slot)))));
         s16 agilityDelta = (s16)(newAgility - oldAgility);
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], newAgility);
         {
@@ -3244,8 +3255,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         func_80139AC8(panes[(7)], &labelTop, &labelBottom);
 }
 
-        s16 oldDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF610(info, (void*)(u32)member, 0x51, NULL)))));
-        s16 newDefense = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF988(info, (void*)(u32)member, 0x51, arg3, slot)))));
+        s16 oldDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF610(info, (void*)(u32)member, 0x51, NULL)))));
+        s16 newDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF988(info, (void*)(u32)member, 0x51, arg3, slot)))));
         s16 defenseDelta = (s16)(newDefense - oldDefense);
         func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], newDefense);
         {
@@ -3269,8 +3280,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         func_80139AC8(panes[(15)], &labelTop, &labelBottom);
 }
 
-        s16 oldResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF610(info, (void*)(u32)member, 0x54, NULL)))));
-        s16 newResistance = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF988(info, (void*)(u32)member, 0x54, arg3, slot)))));
+        s16 oldResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF610(info, (void*)(u32)member, 0x54, NULL)))));
+        s16 newResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF988(info, (void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = func_80136190(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
         ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
@@ -3307,10 +3318,10 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             D8EEntry weaponStats = currentWeapon;
             s32 oldBaseEffect = func_801DF610(
                 info, (void*)(u32)member, 0x01, NULL);
-            s16 oldAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
+            s16 oldAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
             s32 newBaseEffect = func_801DF988(
                 info, (void*)(u32)member, 0x01, arg3, slot);
-            s16 newAttackBase = (s16)(s32)(0.01f * ((100.0f + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
+            s16 newAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
 
             // The low-bound lookup is retained for its item-effect traversal;
             // the comparison display uses the high bound as its old endpoint.
@@ -3324,14 +3335,14 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 info, (void*)(u32)member, 0x2D);
             lowScale += (s32)func_801DF988(
                 info, (void*)(u32)member, 0x52, arg3, slot);
-            s32 newAttackLow = newAttackBase + (s32)(0.01f *
+            s32 newAttackLow = newAttackBase + (s32)(lbl_eu_80668040 *
                 (f32)((u16)weaponStats.w04 * (100 + lowScale)));
 
             s32 highScale = (s32)func_801DFD60(
                 info, (void*)(u32)member, 0x2D);
             highScale += (s32)func_801DF988(
                 info, (void*)(u32)member, 0x53, arg3, slot);
-            s32 newAttackHigh = newAttackBase + (s32)(0.01f *
+            s32 newAttackHigh = newAttackBase + (s32)(lbl_eu_80668040 *
                 (f32)((u16)(weaponStats.w04 >> 16) * (100 + highScale)));
             s32 displayLow = newAttackLow < newAttackHigh
                 ? newAttackLow : newAttackHigh;
@@ -3399,13 +3410,13 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             s32 eq2 = 0;
             if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
             func_801DF610(info, (void*)(u32)member, 0x21, NULL);
-            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
+            s16 bA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
             func_801DF610(info, (void*)(u32)member, 0x1, NULL);
-            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            s16 bB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)bB);
-            func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL)));
-            s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3)));
+            func_801C6158(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL)));
+            s32 r6158 = func_801C6158(lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + eq2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3)));
             s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
             if (nb > 9999) nb = 9999;
             if (stats->CActorParam_getHp() > (f32)nb) {
@@ -3423,7 +3434,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 3: {
                             s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
+                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
@@ -3436,7 +3447,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 2: {
                             s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
+                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_2);
                             }
@@ -3445,7 +3456,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 1: {
                             s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
+                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_1);
                             }
@@ -3459,7 +3470,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 3: {
                             s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
-                                f32 scale_3 = 0.01f * (100.0f + (f32)effect_3);
+                                f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
@@ -3472,7 +3483,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 2: {
                             s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
-                                f32 scale_2 = 0.01f * (100.0f + (f32)effect_2);
+                                f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_2);
                             }
@@ -3481,7 +3492,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                         case 1: {
                             s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
-                                f32 scale_1 = 0.01f * (100.0f + (f32)effect_1);
+                                f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_1);
                             }
@@ -3504,21 +3515,21 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             }
             // Recalculate candidate and current armor values in matched pairs.
             s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
-            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+            c_new.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
                 (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
-            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+            c_cur.etherDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s1C) *
                 (f32)(stA->s32 + c1)));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
-            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+            c_new.physicalDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s18) *
                 (f32)((stA->s2E - c_cur.physicalDefense) +
                       (c1 + c_new.physicalDefense))));
             c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
-            volatile s16 currentPhysicalDefense = (s16)(s32)(0.01f *
-                ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            volatile s16 currentPhysicalDefense = (s16)(s32)(lbl_eu_80668040 *
+                ((lbl_eu_80668044 + (f32)stC->s18) * (f32)(stA->s2E + c1)));
             func_801DF610(info, (void*)(u32)member, 0x41, NULL);
             s32 c2 = func_801DF610(info, (void*)(u32)member, 0x41, arg3);
-            s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)eq2) *
+            s16 b14 = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)eq2) *
                 (f32)((stA->s1E - (s16)v430) + c2)));
             if (b14 <= 0) b14 = 1;
             // embedded weapon block
@@ -3528,7 +3539,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 func_801D4E2C(&ew, (void*)(u32)member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
                 D8EEntry cw = ew;
                 func_801DF610(info, (void*)(u32)member, 0x1, NULL);
-                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) *
+                s16 wpb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C) *
                     (f32)(stA->s1C + func_801DF610(
                         info, (void*)(u32)member, 0x1, arg3))));
                 s32 wa = (s32)wpb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, NULL);
@@ -3607,9 +3618,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
     }
 
-    // ---- common tail: two 8-entry item lists ----
-    CItemBoxInfoEntry listA[8];
-    CItemBoxInfoEntry listB[8];
+    // ---- common tail: two 8-entry item lists (live in highFrame) ----
+    CItemBoxInfoEntry* listA = highFrame.listA;
+    CItemBoxInfoEntry* listB = highFrame.listB;
     listA[0].itemId = 0;
     listA[0].value = 0;
     listA[0].state = 0;
@@ -4113,6 +4124,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     }
 }
 #pragma pop
+
+#define lbl_eu_80668040 sdata2_ItemBox.f8040
+#define lbl_eu_80668044 sdata2_ItemBox.f8044
 
 #undef w04
 #undef _0C
@@ -6053,15 +6067,15 @@ union CItemBoxSlotRecAny {
     u32 w[9];
 };
 void func_801E37C4(CItemBoxInfo2* info, void* arg1, void* arg2) {
-    // Frame-slot order matters: cur > text > out > paneName (descending).
+    // Retail runs the two layout preps before the FixStr ctor bl.
     CItemBoxSlotRecAny cur;
-    ml::FixStr<32> text(false);
     CItemBoxSlotRecAny out;
     char paneName[0x20];
     func_801E40E8(info);
     func_801E3B9C(info);
     func_801E27D0((u8*)&out.rec, info, arg1, arg2);
     cur = out;
+    ml::FixStr<32> text(false);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.rec.str, 0);
     u8 count = cur.rec.tail[1];
     for (u8 i = 0; i < count; i++) {
@@ -7657,12 +7671,17 @@ s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
 
 #pragma push
 #pragma auto_inline off
+#undef lbl_eu_80668028
+#undef lbl_eu_80668040
+extern "C" const f32 lbl_eu_80668040;
 s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
-    // Single-expression sum; builtin
-    // 0x4330/xoris double-trick.
+    // Standalone SDA (not sdata2_ItemBox members) so lfd/lfs use r0@sda21
+    // instead of li r3,0 / lfs 56(r3). Residual: or r28,r4 / or r27,r3 order.
     s32 prod = (s32)(func_801E9310(a, b, 0x53, d) + func_801E92B8(a, b) + 0x64) * arg2;
     return (s32)(lbl_eu_80668040 * (f32)prod);
 }
+#define lbl_eu_80668028 sdata2_ItemBox.d8028
+#define lbl_eu_80668040 sdata2_ItemBox.f8040
 #pragma pop
 #pragma push
 #pragma auto_inline off

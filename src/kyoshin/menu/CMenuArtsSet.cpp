@@ -1781,7 +1781,7 @@ extern "C" __declspec(noinline) u16 func_80232370(SArts322BC* self, int key) {
             u16 v = func_8013606C(lbl_eu_8050AC70 + 0x21E, lbl_eu_8050AC70 + 0x22D, row[2] + 1);
             sprintf(buf, lbl_eu_8050AC70 + 0x233, row[1]);
             u32 raw = func_8013600C(lbl_eu_8050AC70 + 0x23C, buf, self->field_0x26);
-            s32 prod = (int)(u8)raw * (int)(u16)v;
+            s32 prod = (int)(u16)v * (int)(u8)raw;
             if (prod > 0) prod /= 100;
             result = (u16)prod;
         } else {
@@ -1792,7 +1792,7 @@ extern "C" __declspec(noinline) u16 func_80232370(SArts322BC* self, int key) {
                     u16 v = func_8013606C(lbl_eu_8050AC70 + 0x21E, lbl_eu_8050AC70 + 0x22D, row[2] + 1);
                     sprintf(buf, lbl_eu_8050AC70 + 0x233, row[1]);
                     u32 raw = func_8013600C(lbl_eu_8050AC70 + 0x23C, buf, self->field_0x26);
-                    s32 prod = (int)(u8)raw * (int)(u16)v;
+                    s32 prod = (int)(u16)v * (int)(u8)raw;
                     if (prod > 0) prod /= 100;
                     result = (u16)prod;
                     break;

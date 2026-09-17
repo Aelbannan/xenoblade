@@ -300,8 +300,8 @@ class CItemBoxLine {public:
     CIBLTab unk3A4;             // +0x3A4: tab entries (0x94 bytes, ends +0x437)
     ml::FixStr<32> str438;      // +0x438: tab name buffer (mLength at +0x458)
     ml::FixStr<128> str45C;     // +0x45C: second tab name buffer (mLength at +0x4DC)
-    u16 pageWords4E0[12];       // +0x4E0: per-page words (zeroed by func_801F0A58)
-    CIBLVec3 pageVecs4F8[12];   // +0x4F8: per-page vectors (set by func_801F0A58)
+    u16 pageWords4E0[12];       // +0x4E0: per-page words (zeroed by ItemBoxLine_ResetPageTables)
+    CIBLVec3 pageVecs4F8[12];   // +0x4F8: per-page vectors (set by ItemBoxLine_ResetPageTables)
     u8 pageBytes588[12];        // +0x588
     u8 pageBytes594[12];        // +0x594
     s16 pageShorts5A0[12];      // +0x5A0
@@ -380,7 +380,7 @@ extern "C" void func_8022C1B4(void*, void*, u8);
 extern "C" void func_801F369C(void*);
 extern "C" void playUISound__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" void func_801E174C(void*, void*, unsigned int);
+extern "C" void calcItemBox2PaneVec(void*, void*, unsigned int);
 extern "C" u32 advanceAnimTransform__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_801393CC(u32);
@@ -397,24 +397,24 @@ extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" int KyoshinHeap_GetField44(void);
-extern "C" void func_801E12E0(void*);
+extern "C" void loadItemBox2Files(void*);
 extern "C" void func_801EAE8C(void*);
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3850(void*, u32);
 // per-frame update helpers (external retail symbols, same merged unit)
 extern "C" void func_801D202C(void*);            // cursor per-frame update (CCur)
-extern "C" void func_801E1348(void*);            // item-box info2 per-frame update
+extern "C" void updateItemBox2Anims(void*);            // item-box info2 per-frame update
 extern "C" void func_801EAED4(void*);            // num-select per-frame update
 extern "C" void func_801F3540(void*);            // scrollbar per-frame update
 extern "C" void func_8022B748(void*);            // syswin per-frame update
-extern "C" void func_801F061C(void*, unsigned int); // tab-pane refresh (2-arg caller overload)
+extern "C" void ItemBoxLine_RefreshTabLabels(void*, unsigned int); // tab-pane refresh (2-arg caller overload)
 extern "C" void func_801F36BC(void*, int, int);      // scrollbar range setup
 extern "C" void func_801F3670(void*, const float*);  // scrollbar init (3-float vec)
 extern "C" void func_801F367C(void*);                // scrollbar show
-extern "C" void func_801E1498(void*);                // info2 state open
+extern "C" void startItemBox2Open(void*);                // info2 state open
 extern "C" void func_801E14DC(void*, unsigned short, void*, unsigned short, unsigned int); // info2 tab-data push
-extern "C" void func_801E16F0(void*, char*, char*);  // info2 tab-name set
-extern "C" void func_801F08B4(void*, unsigned int);  // active-tab dispatch
+extern "C" void setItemBox2NamedText(void*, char*, char*);  // info2 tab-name set
+extern "C" void ItemBoxLine_SetInfo2Item(void*, unsigned int);  // active-tab dispatch
 extern "C" u8 ItemBoxLine_GetTabEntryLock(void*, unsigned int);   // tab entry byte accessor (external overload)
 extern "C" u8 ItemBoxLine_GetTabEntryReady(void*, unsigned int);    // tab entry byte accessor (external overload)
 extern "C" int func_801EC8D8(void*, unsigned int);   // name-dispatch lookup (external overload)
@@ -444,7 +444,7 @@ extern "C" int func_801D2ED8(CBaseCur*);
 extern "C" void func_801EFFC4(void*);
 extern "C" void func_801F0030(void*);
 extern "C" void func_801F0488(void*);
-extern "C" void func_801F071C(void*);
+extern "C" void ItemBoxLine_RefreshLineRows(void*);
 
 // Layout/anim builders (code_80135FDC unit) used by func_801ECC10. The
 // unmangled C++ forms mangle to the retail symbols
@@ -501,7 +501,7 @@ extern "C" u16 ItemBoxLine_GetTabEntryItem(CIBLTab*, unsigned int);
 extern "C" u8 func_801EC284(void*, unsigned int);
 
 // Sibling tab-dispatch helpers in this merged unit (external relocs in retail).
-extern "C" void func_801F0A58(void*, unsigned int);
+extern "C" void ItemBoxLine_ResetPageTables(void*, unsigned int);
 extern "C" void func_801F107C(void*, unsigned int);
 extern "C" void func_801F183C(void*, unsigned int);
 extern "C" void func_801F1E64(void*, unsigned int);

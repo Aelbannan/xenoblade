@@ -210,7 +210,7 @@ struct Fe68CView {
     u32 lastId90E4;       // +0x90E4
 };
 
-// func_800EA444() result: current battle-target id at +0x04.
+// CBattleMan_FetchVisionObj() result: current battle-target id at +0x04.
 struct BattleTargetView {
     u8 gap00[4];
     void* field04;        // +0x04
@@ -743,17 +743,9 @@ void CMenuEnemyState::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }
@@ -861,17 +853,9 @@ void CMenuEnemyState::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }
@@ -1951,7 +1935,7 @@ extern "C" void func_8010EE40(CPcSelectCursorLayout* self) {
     if (target != NULL) {
         // Retail re-calls getInstance here (second reloc) instead of reusing bm.
         BattleTargetView* bt = static_cast<BattleTargetView*>(
-            func_800EA444(cf::CBattleManager::getInstance()));
+            CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
         if (bt != NULL && bt->field04 != NULL &&
             target->field74 == reinterpret_cast<u32>(bt->field04)) {
             arrow = reinterpret_cast<ObjBBFlag*>(self->field34);
@@ -2591,7 +2575,7 @@ extern "C" void func_80111C50(CMenuEnemyState* self, u8* panelData, int which) {
     }
 }
 
-// func_800EA444 result view: the current battle-target actor id at +0x04 and
+// CBattleMan_FetchVisionObj result view: the current battle-target actor id at +0x04 and
 // the status flag word at +0x824 (bit 17 / bit 10 drive the indicator).
 struct BattleMgrResult {
     u8 gap00[0x04];
@@ -2622,7 +2606,7 @@ void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
     }
     reinterpret_cast<ObjBBFlag*>(panel->unk48)->flagBB &= 0xFE;
 
-    void* bmRes = func_800EA444(cf::CBattleManager::getInstance());
+    void* bmRes = CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance());
     if (bmRes == NULL) {
         return;
     }

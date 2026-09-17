@@ -1451,7 +1451,7 @@ int func_8027936C(cf::CChain* self, u32 param) {
     cf::CfGameManager::getInstance();
     if (isGlobalCamFlagSet__Fi(0x4000000)) return 0;
     if (param != 0 && (((cf::CChainFlag*)param)->field_0x3F00 & 4) != 0) {
-        if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) != 0) return 0;
+        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) != 0) return 0;
     }
     if (param == 0) {
         void* player = cf::CfGameManager::getPlayer(0);

@@ -287,7 +287,7 @@ void EquipChange_LoadBindFiles(CEquipChange* self) {
     self->field_28 = (u32)CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                                 path + 0x18, reinterpret_cast<IWorkEvent*>(self), 0, 0);
     CDeviceFile::setHandleFlag1((CFileHandle*)self->field_28);
-    func_801D4054((CItemBoxInfo*)((u8*)self + 0xA4));
+    loadItemBoxFiles((CItemBoxInfo*)((u8*)self + 0xA4));
     loadEIBFiles(&self->mEquipItemBox);
 }
 #pragma optimize_for_size off
@@ -343,7 +343,7 @@ void func_802024CC(CEquipChange* self) {
     if (self->field_48 == 0) {
         self->field_48 = 1;
         self->field_4D = 0;
-        func_801D421C((CItemBoxInfo*)((u8*)self + 0xA4));
+        startItemBoxOpen((CItemBoxInfo*)((u8*)self + 0xA4));
         func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)EquipChange_MapCursorToCat(self));
         u8 f99 = self->field_99;
         u32 cur38 = (u32)EquipChange_MapCursorToCat(self);
@@ -471,7 +471,7 @@ void EquipChange_CursorNext(CEquipChange* self) {
 // refresh the equip info window with the compressed selection word. Retail
 // emits one li/stb block per case (14 separate blocks in the jump table).
 #pragma optimize_for_size on
-void EquipChange_CursorUpRemap(CEquipChange* self) {
+void func_802028E4(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             eibNavUp(&self->mEquipItemBox);
@@ -510,10 +510,10 @@ void EquipChange_CursorUpRemap(CEquipChange* self) {
 }
 #pragma optimize_for_size off
 
-// Target us-80204768: sibling of EquipChange_CursorUpRemap - same guard/refresh shape
+// Target us-80204768: sibling of func_802028E4 - same guard/refresh shape
 // but a different remap table for field_98 (also one li/stb block per case).
 #pragma optimize_for_size on
-void EquipChange_CursorDownRemap(CEquipChange* self) {
+void func_80202A70(CEquipChange* self) {
     if (getEIBOpenFlag(&self->mEquipItemBox) != 0) {
         if (getEIBActiveMark(&self->mEquipItemBox) != 0)
             eibNavRight(&self->mEquipItemBox);
@@ -857,13 +857,13 @@ int EquipChange_GetBoxCount(CEquipChange* self) {
 #pragma optimize_for_size off
 
 void func_801D2E4C(void* self);
-void CEquipChange::EquipChange_HideSubCursor() { func_801D2E4C(field_80); }
+void CEquipChange::func_8020397C() { func_801D2E4C(field_80); }
 
 void func_80287FE0(void* self);
-void CEquipChange::EquipChange_CloseEquipRow() { func_80287FE0(&mEquipItemBox); }
+void CEquipChange::func_80203984() { func_80287FE0(&mEquipItemBox); }
 
 void eibTryCloseRow(void* self);
-void CEquipChange::EquipChange_TryCloseRow() { eibTryCloseRow(&mEquipItemBox); }
+void CEquipChange::func_8020398C() { eibTryCloseRow(&mEquipItemBox); }
 
 // Target us-8020568c: cursor 3 is selected AND the per-slot byte at
 // self[idx+0x99] (index from EquipChange_MapCursorToSlot) equals 2.
@@ -966,7 +966,7 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim38ToSt2(CEquipChange* sel
 }
 
 // Target us-80205a70: when the 0x3C anim finishes, refresh the item info
-// window (func_801D4B3C pack), drive the sub-cursor vtable[0x10] hook with the
+// window (calcItemBoxPaneVec pack), drive the sub-cursor vtable[0x10] hook with the
 // packed buffer, close the sub-cursor, and reset state via EquipChange_RefreshCursorPos.
 extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt3(CEquipChange* self) {
     if (advanceAnimTransform(self->field_3C, lbl_eu_806682A8) == 0)
@@ -974,7 +974,7 @@ extern "C" void __declspec(noinline) EquipChange_OnAnim3CToSt3(CEquipChange* sel
     self->field_48 = 3;
     self->field_4D = 1;
     char buf[0x10];
-    func_801D4B3C(buf, (CItemBoxInfo*)((u8*)self + 0xA4), self->field_99);
+    calcItemBoxPaneVec(buf, (CItemBoxInfo*)((u8*)self + 0xA4), self->field_99);
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
     func_801D216C((void*)((u8*)self + 0x80), 1);
     EquipChange_RefreshCursorPos(self);
@@ -1624,7 +1624,7 @@ void sinit_802059E8() {
 // --- function definitions kept at end of TU so earlier callers emit `bl` ----
 
 // Target us-80204bac: apply the equip change for the given category. Packs
-// the item-box info (func_801D4B3C), drives the sub-cursor vtable[0x10] hook
+// the item-box info (calcItemBoxPaneVec), drives the sub-cursor vtable[0x10] hook
 // with the packed buffer and activates the sub-cursor, refreshes the item
 // info window, then resolves the item under the cursor: category 3 re-equips
 // the weapon row (obj+0x26) unless the equipped count is below the selection,
@@ -1640,7 +1640,7 @@ void __declspec(noinline) func_80202EB4(CEquipChange* self, u8 cat) {
     u8 catByte;
     char buf[0x10];
     s16 ids[5];
-    func_801D4B3C(buf, (CItemBoxInfo*)((u8*)self + 0xA4), cat);
+    calcItemBoxPaneVec(buf, (CItemBoxInfo*)((u8*)self + 0xA4), cat);
     ((CBaseCur*)self->field_80)->setRootPaneTranslate((const nw4r::math::VEC3*)buf);
     func_801D2174((CBaseCur*)self->field_80);
     func_802042C0(self);
@@ -1856,7 +1856,7 @@ extern "C" __declspec(noinline) int EquipChange_MapCursorToSlot(CEquipChange* se
 // The state handlers are matched targets defined above; their extern "C" +
 // noinline definitions keep -ipa file from folding their bodies into the
 // switch and make the call relocs use the unmangled retail names.
-void EquipChange_UpdateDispatch(CEquipChange* self) {
+void func_80202110(CEquipChange* self) {
     if (self->field_44 == 0)
         return;
     // Retail jumptable_eu_805355B0 routing: states 0/3/8 (and >10) are
@@ -1879,7 +1879,7 @@ tail:
     func_801D202C((void*)((u8*)self + 0x50));
     func_801D202C((void*)((u8*)self + 0x68));
     func_801D202C((void*)self->field_80);
-    func_801D40C4((CItemBoxInfo*)((u8*)self + 0xA4));
+    updateItemBoxAnims((CItemBoxInfo*)((u8*)self + 0xA4));
     updateEIBBox(&self->mEquipItemBox);
 }
 // Target us-80203edc: draw the equip-change screen. Draws the main layout
@@ -1898,7 +1898,7 @@ extern "C" void EquipChange_DrawLayouts(CEquipChange* self, nw4r::lyt::DrawInfo*
     } else {
         self->mEquipItemBox.unk_37b = 0;
     }
-    func_801D4154((CItemBoxInfo*)self->_padA4, drawInfo);
+    renderItemBox((CItemBoxInfo*)self->_padA4, drawInfo);
     func_801D20B0((CBaseCur*)self->field_80, drawInfo);
     drawEIBBox(&self->mEquipItemBox, drawInfo);
 }

@@ -228,16 +228,7 @@ int main(){
     mtl::MemManager::MemRegion::setRegionMaxSize(0x686000, 0);
     CDeviceVI::setUseStaticHandle(true);
     CDeviceGX::setValues(GX_PF_RGB8_Z24, 0x180000);
-    // PLAN.md §17.6: MWCC peeps C `dataBase+0` / even asm `addi r3,r30,0` to
-    // `mr r3,r30`. Emit addi encoding as opword + the retail li/bl call site.
-    // A live `int clear` local next to this asm reshuffles r30/r31; use 0 lit.
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        opword 0x387E0000
-        li r4, 1
-        bl entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb
-    }
-    DECOMP_ASM_INSN_END
+    entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(reinterpret_cast<void*>(dataBase), 1);
     CLibStaticData::saveStaticFileArray(reinterpret_cast<StaticArcFileData*>(dataBase + 0x50));
     CLibVM::setCallbacks(&vmInitPluginRegistCallback, &vmInitCallback);
     CWorkSystemPack::SaveStaticArcFilenameStringPtr(scStaticArcStr);

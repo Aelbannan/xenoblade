@@ -198,7 +198,7 @@ extern "C" void func_801C414C(CTitleAHelp* self);
 // CPcKizunagram helpers. Return types are int (not u8) so callers compare
 // with cmpwi directly (no byte mask), matching retail.
 extern "C" int KizunagramIsHidden(UnkKizunaMenuPcSub* self);
-extern "C" void KizunagramTeardown(UnkKizunaMenuPcSub* self);
+extern "C" void func_8025D9C4(UnkKizunaMenuPcSub* self);
 extern "C" void KizunagramDraw(UnkKizunaMenuPcSub* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void KizunagramOpen(UnkKizunaMenuPcSub* self);
 extern "C" void KizunagramClose(UnkKizunaMenuPcSub* self);

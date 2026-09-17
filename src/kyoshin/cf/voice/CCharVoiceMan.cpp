@@ -74,9 +74,9 @@ void registerFactoryEvent(void* self, cf::IFactoryEvent* event);
 // These were previously provided by the CAIAction.hpp include chain (dropped
 // to avoid a duplicate getInstance__Q22cf14CBattleManagerFv declaration);
 // plain C++ linkage mangles them to the retail names getInstance__Fv /
-// func_800EA444__FPv (symbol-map mapped).
+// CBattleMan_FetchVisionObj__FPv (symbol-map mapped).
 extern void* getInstance();
-void* func_800EA444(void* bm);
+void* CBattleMan_FetchVisionObj(void* bm);
 // Voice-cue / user-owned-sound helpers (previously via the CBattleManager.hpp
 // include chain; C++ linkage mangles to the retail names).
 u32 func_8009CF8C(u32 resourceId);
@@ -496,7 +496,7 @@ void func_802A1C68(cf::CVoiceActorState* self) {
 // matches b's voice id, copy a's pending id into unk22C.
 void CCharVoiceMan_HookBattleSlotVoice(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+    cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
     if (bs != 0) {
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet(0x04000000) == 0) {

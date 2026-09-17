@@ -149,7 +149,7 @@ L2EA0:
     // Track the battle manager's current target record; when the flag probe
     // is set and the record is live, a matching id disarms and exits early.
     {
-        cf::CfWalkEA444* rec = (cf::CfWalkEA444*)func_800EA444(
+        cf::CfWalkEA444* rec = (cf::CfWalkEA444*)CBattleMan_FetchVisionObj(
             getInstance__Q22cf14CBattleManagerFv());
         getInstance__Q22cf13CfGameManagerFv();
         if (isGlobalCamFlagSet(0x4000000) == 0) goto L2EE8;
@@ -852,7 +852,7 @@ L3C68:
                             if (UIWin_GetTimer() == 0) {
                                 UIWin_FlagBufCommit(art);
                             } else {
-                                UIWin_FlagBufResetAlias(art);
+                                UIWin_ThunkFlagBufReset(art);
                             }
                         }
                     } else {
@@ -1344,7 +1344,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(CTaskGame_enumListGet(&holder), (int)j));
-                func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x20, 0);
             }
         }
@@ -1359,7 +1359,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(CTaskGame_enumListGet(&holder), (int)j));
-                func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x21, 0);
             }
         }
@@ -1372,7 +1372,7 @@ void func_800C551C(cf::CfObjectImplWalker* self, u32 flag) {
             for (u32 j = 0; j < (u32)((cf::CfWalkEnumList*)CTaskGame_enumListGet(&holder))->field_620; j++) {
                 void* item = func_8016FE34(
                     func_800F6EAC(CTaskGame_enumListGet(&holder), (int)j));
-                func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), item,
+                CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), item,
                               &spawn, 0x33, 0);
             }
         }

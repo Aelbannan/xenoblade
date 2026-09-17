@@ -231,7 +231,7 @@ This is a narrow hardware-ABI exception, not a general assembly allowance:
 - **Assembly discipline:** `asm void` + `nofralloc` only for the named boot vectors; transcribe only the retail body. No unrelated control-flow, fake frames, or prologue/epilogue hacks beyond the transcribed body.
 - **Evidence:** record why C++ failed (MWCC unconditional prologue vs non-standard entry ABI), the exact targets and opcode set, the compile guard, the fallback, static/size results, and log each use with `"policy_exception": true`.
 
-**Not approved outside the isolated PS-backend exception:** `register rN`, fake `sp[]` buffers, arbitrary inline `asm { }`, arbitrary **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++** except for the narrowly defined PS kernel above. **Object-file post-processing** to patch instruction bytes, reorder data pools, rename symbols, or manipulate section sizes (`postprocess_reloc_names.py` or equivalent) is not approved — EQUIVALENT_MATCH with SMT proof is the acceptance bar; do not chase byte-identity through binary patching.
+**Object-file post-processing** to patch instruction bytes, reorder data pools, rename symbols, or manipulate section sizes (`postprocess_reloc_names.py` or equivalent) is not approved — `EQUIVALENT_MATCH` via the **register-renaming witness** (or `FULL_MATCH`) is the acceptance bar; do not chase byte-identity through binary patching.
 
 **Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, and decomp.me — not asm of any kind outside the isolated PS-backend exception.
 

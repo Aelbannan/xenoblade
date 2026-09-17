@@ -51,9 +51,9 @@ u32 advanceAnimTransform(nw4r::lyt::AnimTransform*, float); // advanceAnimTransf
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);  // retail reloc is unmangled
 void drawLayout(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" int  KyoshinHeap_GetField44();   // retail reloc is unmangled
-extern "C" void func_801D4054(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void func_801D4154(CItemBoxInfo*);   // retail reloc is unmangled
-extern "C" void func_801D40C4(CItemBoxInfo*);   // retail reloc is unmangled
+extern "C" void loadItemBoxFiles(CItemBoxInfo*);   // retail reloc is unmangled
+extern "C" void renderItemBox(CItemBoxInfo*);   // retail reloc is unmangled
+extern "C" void updateItemBoxAnims(CItemBoxInfo*);   // retail reloc is unmangled
 extern "C" void func_801D202C(CMCItemBoxSubObj*);
 extern "C" void func_801D20B0(CMCItemBoxSubObj*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
 extern "C" void func_8022B7C8(CMCGetItemBoxSysWin*, nw4r::lyt::DrawInfo*);   // retail reloc is unmangled
@@ -72,18 +72,18 @@ void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
 // see kyoshin/CSysWin.hpp.)
 
 // Same-unit helper functions (retail relocs are unmangled -> C linkage).
-// func_80296BF0's extra params carry defaults so func_80299530's 1-arg call
+// refillMCItemSubTable's extra params carry defaults so initMCGetItemBoxList's 1-arg call
 // (retail passes garbage r4/r5/r6 there) still compiles.
-extern "C" void func_80296BF0(CMCItemBoxSub*, u8 = 0, CMCItemBoxEntry* = 0, u8 = 0);
+extern "C" void refillMCItemSubTable(CMCItemBoxSub*, u8 = 0, CMCItemBoxEntry* = 0, u8 = 0);
 extern "C" void func_8029967C(CMCGetItemBox*);
-extern "C" void func_802998C8(CMCGetItemBox*);
+extern "C" void refreshMCGetItemBoxTexts(CMCGetItemBox*);
 // Same-unit helper functions (retail relocs are unmangled -> C linkage).
-extern "C" void func_802988BC(CMCGetItemBox*);
-extern "C" void func_80298938(CMCGetItemBox*);
-extern "C" void func_802989A4(CMCGetItemBox*);
-extern "C" void func_80298A20(CMCGetItemBox*);
-extern "C" void func_80298378(CMCGetItemBox*);
-extern "C" void func_802983E4(CMCGetItemBox*);
+extern "C" void openMCGetItemBoxPhase1(CMCGetItemBox*);
+extern "C" void openMCGetItemBoxPhase2(CMCGetItemBox*);
+extern "C" void closeMCGetItemBoxPhase1(CMCGetItemBox*);
+extern "C" void closeMCGetItemBoxPhase2(CMCGetItemBox*);
+extern "C" void nextMCGetItemBoxPage(CMCGetItemBox*);
+extern "C" void prevMCGetItemBoxPage(CMCGetItemBox*);
 
 // Initialise a CMCItemBoxSub: clear the offset table to 0xFFFF, zero the
 // counters and index fields, then reset the whole table again.
@@ -131,7 +131,7 @@ extern "C" __declspec(noinline) void func_80296B44(CMCItemBoxSub* x) {
 // -O4,s keeps the retail stmw r28 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_80296BF0(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase, u8 field1D4) {
+void refillMCItemSubTable(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase, u8 field1D4) {
     x->listBase = listBase;
     x->field_1D4 = field1D4;
     x->count = 0;
@@ -162,7 +162,7 @@ void func_80296BF0(CMCItemBoxSub* x, u8 pad102, CMCItemBoxEntry* listBase, u8 fi
 #pragma pop
 
 // Advance the counter; wrap to 0 when past the signed byte limit.
-extern "C" __declspec(noinline) void func_80296D00(CMCItemBoxSub* x) {
+extern "C" __declspec(noinline) void nextMCItemSubPage(CMCItemBoxSub* x) {
     u8 v = (u8)(x->counter + 1);
     x->counter = v;
     if ((s8)v < x->limit) return;
@@ -170,7 +170,7 @@ extern "C" __declspec(noinline) void func_80296D00(CMCItemBoxSub* x) {
 }
 
 // Count the counter down; wrap to (limit-1) when it goes negative.
-extern "C" __declspec(noinline) void func_80296D2C(CMCItemBoxSub* x) {
+extern "C" __declspec(noinline) void prevMCItemSubPage(CMCItemBoxSub* x) {
     u8 v = (u8)(x->counter - 1);
     x->counter = v;
     if ((s8)v >= 0) return;
@@ -179,7 +179,7 @@ extern "C" __declspec(noinline) void func_80296D2C(CMCItemBoxSub* x) {
 
 // Look up the entry at `index` in the offset table and return the derived
 // index-table word >> 20, or 0 when out of range.
-__declspec(noinline) u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
+__declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -196,7 +196,7 @@ __declspec(noinline) u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
 // auto_inline off: retail keeps the single-call-site bl from func_8029967C
 // (MWCC otherwise folds this small helper in despite noinline).
 #pragma auto_inline off
-__declspec(noinline) s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
+__declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u16 idx = (u16)(index + (s8)x->counter * 30);
@@ -491,7 +491,7 @@ extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_80297928(CMCGetItemBox* self) {
+void loadMCGetItemBoxFiles(CMCGetItemBox* self) {
     self->fileHandle1 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xae], (IWorkEvent*)self, 0, 0);
     self->fileHandle2 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
@@ -500,28 +500,28 @@ void func_80297928(CMCGetItemBox* self) {
                                                           &lbl_eu_8050FF8C[0xe0], (IWorkEvent*)self, 0, 0);
     self->fileHandle4 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
                                               &lbl_eu_8050FF8C[0xfd], (IWorkEvent*)self, 0, 0);
-    func_801D4054((CItemBoxInfo*)self->itemBox);
+    loadItemBoxFiles((CItemBoxInfo*)self->itemBox);
     ((CSysWin*)&self->sysWin_B8)->loadSystemArc();
 }
 #pragma pop
 
 // Per-frame update: dispatch the layout-animation state machine (states 1/2/4/5),
 // then refresh the cursor widgets, the item-box info and the sys-win window.
-void func_802979E4(CMCGetItemBox* self) {
+void updateMCGetItemBox(CMCGetItemBox* self) {
     if (self->field_4C == 0) return;
     if (self->field_4D == 0) return;
     switch (self->field_4D) {
-        case 1: func_802988BC(self); break;
-        case 2: func_80298938(self); break;
-        case 4: func_802989A4(self); break;
-        case 5: func_80298A20(self);
+        case 1: openMCGetItemBoxPhase1(self); break;
+        case 2: openMCGetItemBoxPhase2(self); break;
+        case 4: closeMCGetItemBoxPhase1(self); break;
+        case 5: closeMCGetItemBoxPhase2(self);
     }
     self->layout40->Animate(0);
     func_801D202C(&self->subObj_58);
     func_801D202C(&self->subObj_70);
     func_801D202C(&self->subObj_88);
     func_801D202C(&self->subObj_A0);
-    func_801D40C4((CItemBoxInfo*)self->itemBox);
+    updateItemBoxAnims((CItemBoxInfo*)self->itemBox);
     func_8022B748(&self->sysWin_B8);
 }
 
@@ -530,10 +530,10 @@ void func_802979E4(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_80297AAC(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
+void drawMCGetItemBox(CMCGetItemBox* self, nw4r::lyt::DrawInfo* di) {
     if (self->field_4C == 0) return;
     if (self->field_4D == 0) return;
-    func_801D4154((CItemBoxInfo*)self->itemBox);
+    renderItemBox((CItemBoxInfo*)self->itemBox);
     drawLayout(self->layout40, di, 0, 1);
     u8 active = self->sub_314.limit ? self->sub_314.limit : 1;
     if (active > 1) func_801D20B0(&self->subObj_70, di);
@@ -590,30 +590,30 @@ void func_80297B68(CMCGetItemBox* self) {
 // Return 0 unless the item box is active and the sys-win is ready.
 // Retail layout: first return-0 inline after the state check (bne over it),
 // then the ready!=0 path returns field_54 inline with the final return-0 at the tail.
-u8 func_80297CC0(CMCGetItemBox* self) {
+u8 isMCGetItemBoxActive(CMCGetItemBox* self) {
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) == 0) return 0;
     if (CSysWin_isReady(&self->sysWin_B8) != 0) return self->field_54;
     return 0;
 }
 
-u8 CMCGetItemBox::func_80297D1C() { return mField55; }
+u8 CMCGetItemBox::isMCGetItemBoxReady() { return mField55; }
 
-u8 CMCGetItemBox::func_80297D24() { return mField303; }
+u8 CMCGetItemBox::isMCGetItemBoxGridMode() { return mField303; }
 
 // Open the item box from an external caller: guard on the current state, reset
 // the item-box info and refresh both the layout text and the cursor widgets.
 // -O4,s keeps the retail stmw r28 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80297D2C(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
+extern "C" void openMCGetItemBox(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     if (self->field_4D != 0) return;
     self->field_4D = 1;
     self->mField55 = 0;
     self->field_300 = 0;
     // Signed lvalue keeps the constant negative (li r0,-1, not li r0,255).
     (s8&)self->field_301 = -1;
-    func_801D421C((CItemBoxInfo*)self->itemBox);
-    func_80299530(self, arg, unk, byte);
+    startItemBoxOpen((CItemBoxInfo*)self->itemBox);
+    initMCGetItemBoxList(self, arg, unk, byte);
     func_801D4260((CItemBoxInfo*)self->itemBox, arg);
     // Declared in this order so MWCC colors the callee-saved regs like retail
     // (entry->r31, idx->r30, sub->r29).
@@ -622,16 +622,16 @@ extern "C" void func_80297D2C(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) 
     CMCItemBoxSub* sub;
     idx = (u8)(self->field_301 * 10 + self->field_300);
     sub = &self->sub_314;
-    entry = func_80296DB0(sub, idx);
-    u32 iconId = func_80296D54(sub, idx);   // held in a reg temp in retail
+    entry = getMCItemSubEntry(sub, idx);
+    u32 iconId = getMCItemSubItemId(sub, idx);   // held in a reg temp in retail
     func_801D47D4((CItemBoxInfo*)self->itemBox, (u16)iconId, (u32)entry, 1);
-    func_801D4AE0((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, idx));
+    setItemBoxNamedText((CItemBoxInfo*)self->itemBox, 1, func_80296E98(sub, idx));
 }
 #pragma pop
 
 // When the item-box widget is done (state 3), advance to state 4, detach the
 // helper widgets and advance the item-box state machine.
-void func_80297E18(CMCGetItemBox* self) {
+void confirmMCGetItemBox(CMCGetItemBox* self) {
     if (self->field_4D != 3) return;
     self->field_4D = 4;
     self->mField55 = 0;
@@ -648,7 +648,7 @@ void func_80297E18(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r29 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80297E90(CMCGetItemBox* self) {
+extern "C" void moveMCGetItemBoxLeft(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
         u16* arr = self->arr_1A4.table;
@@ -670,8 +670,8 @@ extern "C" void func_80297E90(CMCGetItemBox* self) {
         u8 v = (u8)(self->field_301 - 1);
         self->field_301 = v;
         if ((s8)v < -1) self->field_301 = 2;
-        func_802999B0(self);
-        func_802998C8(self);
+        moveMCGetItemBoxCursor(self);
+        refreshMCGetItemBoxTexts(self);
     }
     playUISound(0x1);
 }
@@ -682,7 +682,7 @@ extern "C" void func_80297E90(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r29 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_80297FB4(CMCGetItemBox* self) {
+void moveMCGetItemBoxRight(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
         u16* arr = self->arr_1A4.table;
@@ -706,8 +706,8 @@ void func_80297FB4(CMCGetItemBox* self) {
         // Signed lvalue keeps the constant negative: MWCC emits li r0,-1
         // (a plain u8 store folds it to li r0,255).
         if ((s8)v >= 3) (s8&)self->field_301 = -1;
-        func_802999B0(self);
-        func_802998C8(self);
+        moveMCGetItemBoxCursor(self);
+        refreshMCGetItemBoxTexts(self);
     }
     playUISound(0x1);
 }
@@ -716,7 +716,7 @@ void func_80297FB4(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r29 frame.
 #pragma push
 #pragma optimize_for_size on
-void func_802980DC(CMCGetItemBox* self) {
+void moveMCGetItemBoxUp(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
         u16* arr = self->arr_1A4.table;
@@ -740,14 +740,14 @@ void func_802980DC(CMCGetItemBox* self) {
         if ((s8)s == 0) {
             self->field_300 = 9;
             self->field_301 = 0;
-            func_802983E4(self);
-            func_802999B0(self);
+            prevMCGetItemBoxPage(self);
+            moveMCGetItemBoxCursor(self);
         } else {
             u8 n = (u8)(s - 1);
             self->field_300 = n;
             if ((s8)n < 0) self->field_300 = 9;
-            func_802999B0(self);
-            func_802998C8(self);
+            moveMCGetItemBoxCursor(self);
+            refreshMCGetItemBoxTexts(self);
         }
     }
     playUISound(0x1);
@@ -756,7 +756,7 @@ void func_802980DC(CMCGetItemBox* self) {
 
 #pragma push
 #pragma optimize_for_size on
-void func_80298228(CMCGetItemBox* self) {
+void moveMCGetItemBoxDown(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return;
     if (self->mField303 != 0) {
         u16* arr = self->arr_1A4.table;
@@ -781,14 +781,14 @@ void func_80298228(CMCGetItemBox* self) {
         if ((s8)s == 9) {
             self->field_300 = 0;
             self->field_301 = 0;
-            func_80298378(self);
-            func_802999B0(self);
+            nextMCGetItemBoxPage(self);
+            moveMCGetItemBoxCursor(self);
         } else {
             u8 n = s + 1;
             self->field_300 = n;
             if ((s8)n >= 10) self->field_300 = 0;
-            func_802999B0(self);
-            func_802998C8(self);
+            moveMCGetItemBoxCursor(self);
+            refreshMCGetItemBoxTexts(self);
         }
     }
     playUISound(0x1);
@@ -799,11 +799,11 @@ void func_80298228(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r30 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_80298378(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void nextMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
-    func_80296D00(x);
+    nextMCItemSubPage(x);
     func_8029967C(self);
-    func_802998C8(self);
+    refreshMCGetItemBoxTexts(self);
     // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
     // select); splitting the select across blocks makes MWCC forget the byte
     // load was zero-extended, keeping the redundant clrlwi/cmpli pair.
@@ -818,11 +818,11 @@ extern "C" __declspec(noinline) void func_80298378(CMCGetItemBox* self) {
 // item-box limit is anything other than 1.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802983E4(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void prevMCGetItemBoxPage(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
-    func_80296D2C(x);
+    prevMCItemSubPage(x);
     func_8029967C(self);
-    func_802998C8(self);
+    refreshMCGetItemBoxTexts(self);
     // Retail: li r0,1 default, conditionally overwritten with the limit (branchy
     // select); the u8-local select makes MWCC forget the byte load was
     // zero-extended, keeping the redundant clrlwi/cmpli pair at the join.
@@ -833,7 +833,7 @@ extern "C" __declspec(noinline) void func_802983E4(CMCGetItemBox* self) {
 
 // Toggle the item-box help window: close it when active, otherwise detach the
 // helper widgets when the layout flag is set.
-void func_80298450(CMCGetItemBox* self) {
+void toggleMCGetItemBoxSysWin(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
         if (CSysWin_isActive(&self->sysWin_B8) != 0) {
             func_8022B8E4(&self->sysWin_B8);
@@ -850,7 +850,7 @@ void func_80298450(CMCGetItemBox* self) {
 }
 
 // When the sys-win is both present and active, close it and reset the A0 widget.
-void func_802984E4(CMCGetItemBox* self) {
+void openMCGetItemBoxSysWin(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) == 0) return;
     if (CSysWin_isActive(&self->sysWin_B8) == 0) return;
     func_8022B8E4(&self->sysWin_B8);
@@ -863,7 +863,7 @@ void func_802984E4(CMCGetItemBox* self) {
 // optimize_for_size: -O4,s lowers the >= into the retail subfc carry chain.
 #pragma push
 #pragma optimize_for_size on
-u32 func_80298540(CMCGetItemBox* self) {
+u32 getMCGetItemBoxPageState(CMCGetItemBox* self) {
     if (self->field_4D == 0) return 0;
     if ((s8)self->field_301 == -1) {
         // Retail lowers the place calc to a subfc/carry/subf chain.
@@ -878,17 +878,17 @@ u32 func_80298540(CMCGetItemBox* self) {
 
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw frame + head-jump loop
-void func_802985B4(CMCGetItemBox* self) {
+void cacheMCGetItemBoxEntries(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     for (u32 i = 0; (u32)(u16)i < x->count; i++) {
-        CItemData_lookupOrAlloc(func_80296DB0(x, (u16)i), 0);
+        CItemData_lookupOrAlloc(getMCItemSubEntry(x, (u16)i), 0);
     }
 }
 #pragma optimize_for_size off
 
 // Look up the entry at `index` in the offset table and return its pointer.
 // noinline: retail keeps the loop's bl to this symbol.
-extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
+extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u32 idx = (u16)(index + (s8)x->counter * 30);
@@ -900,7 +900,7 @@ extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x,
     return 0;
 }
 
-extern "C" void func_8029860C(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
+extern "C" void forwardMCSubObj88(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
 
 // Advance the cursor / tab selection in the item box.
 // -O4,s keeps the retail _savegpr_29/_restgpr_29 call-form prologue (three
@@ -974,7 +974,7 @@ void func_80298614(CMCGetItemBox* self) {
 
 // Return a UI part index: 0 when the window exists, 0x36 when the layout flag
 // is set, otherwise 0x39/0x3A based on the sign of the sort field.
-u32 func_80298850(CMCGetItemBox* self) {
+u32 getMCGetItemBoxKeyCode(CMCGetItemBox* self) {
     if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return 0;
     if (self->mField303 != 0) return 0x36;
     return 0x39 + ((s8)self->field_301 == -1);
@@ -982,19 +982,19 @@ u32 func_80298850(CMCGetItemBox* self) {
 
 // Open the item box: advance the second layout animation and, once it has
 // finished, initialise the state/widgets and refresh the cursor.
-extern "C" __declspec(noinline) void func_80298938(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void openMCGetItemBoxPhase2(CMCGetItemBox* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->field_4D = 3;
         self->mField55 = 1;
         func_801D216C(&self->subObj_58, 1);
         func_801D216C(&self->subObj_70, 1);
-        func_802999B0(self);
+        moveMCGetItemBoxCursor(self);
     }
 }
 
 // Advance the first layout animation; when it has finished, enable the two
 // anim transforms on the layout and move to state 2.
-extern "C" __declspec(noinline) void func_802988BC(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void openMCGetItemBoxPhase1(CMCGetItemBox* self) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, true);
@@ -1004,7 +1004,7 @@ extern "C" __declspec(noinline) void func_802988BC(CMCGetItemBox* self) {
 
 // Rewind the second layout animation via AnimRewindFrame; when finished, enable
 // the two anim transforms on the layout and move to state 5.
-extern "C" __declspec(noinline) void func_802989A4(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void closeMCGetItemBoxPhase1(CMCGetItemBox* self) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, false);
         self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, true);
@@ -1014,7 +1014,7 @@ extern "C" __declspec(noinline) void func_802989A4(CMCGetItemBox* self) {
 
 // Rewind the first layout animation; when it has finished, rearm the
 // state bytes and reattach the cursor sub-object.
-extern "C" __declspec(noinline) void func_80298A20(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void closeMCGetItemBoxPhase2(CMCGetItemBox* self) {
     if (AnimRewindFrame(self->animTrans1, lbl_eu_80668BF0) != 0) {
         self->mField55 = 1;
         self->field_4D = 0;
@@ -1025,7 +1025,7 @@ extern "C" __declspec(noinline) void func_80298A20(CMCGetItemBox* self) {
 // Guard: the item box only accepts input once the layout, the second arc
 // accessor and its three state words are all present. One OR-chain; MWCC
 // emits four beqlr shortcuts plus an inverted final test around the stores.
-void func_80298A78(CMCGetItemBox* self) {
+void activateMCGetItemBox(CMCGetItemBox* self) {
     if (self->layout40 == 0 || self->arcAcc2 == 0 || lbl_eu_80664A18 == 0 ||
         lbl_eu_80664A1C == 0 || lbl_eu_80664A20 == 0) {
         return;
@@ -1041,12 +1041,12 @@ void func_80298A78(CMCGetItemBox* self) {
 // dispatch; see monolib/device/CDeviceFont.hpp.)
 
 // Retail 0x80298AC8: resolve the icon resource for a selected item-box entry
-// and stamp it into a numbered layout pane. Mirrors func_80298FB4 but uses the
+// and stamp it into a numbered layout pane. Mirrors setMCSlotNameTex but uses the
 // icon database (BdatGetU8Direct) and the 0x144-0x149 icon-name chain for both
 // the gem (type 3) and item (type 9) paths, plus a %d pane-name format at
 // &lbl[0x14e].
 // noinline: retail keeps the bl to this symbol from func_8029967C.
-extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+extern "C" __declspec(noinline) void setMCSlotIconTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
     if (e != 0) {
@@ -1131,7 +1131,7 @@ extern "C" __declspec(noinline) void func_80298AC8(CMCGetItemBox* self, u32 idx,
 #pragma optimize_for_size on
 // noinline: retail keeps the bl to this symbol from func_8029967C (its body
 // otherwise folds in, surfacing as a stray CItem_initItemImplInstances call).
-__declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
+__declspec(noinline) void setMCSlotNameTex(CMCGetItemBox* self, u32 idx, CMCItemBoxEntry* entry, u8 n) {
     CMCItemBoxEntry* e = entry != 0 ? entry : 0;
     void* h = 0;
     if (e != 0) {
@@ -1216,7 +1216,7 @@ __declspec(noinline) void func_80298FB4(CMCGetItemBox* self, u32 idx, CMCItemBox
 #pragma optimize_for_size on
 // noinline + C linkage: called out-of-line from func_8029967C in retail
 // (unmangled reloc).
-__declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
+__declspec(noinline) void setMCGetItemBoxLabelText(CMCGetItemBox* self, int r4, u32 r5) {
     char buf1[0x20];   // sp+0x28
     char buf2[0x20];   // sp+0x08
     sprintf(buf1, &lbl_eu_8050FF8C[0x16e], r5 + 1);
@@ -1232,17 +1232,17 @@ __declspec(noinline) void func_80299490(CMCGetItemBox* self, int r4, u32 r5) {
 #pragma pop
 
 // Refresh layout text after index/sort change. Extra params are passed through
-// by func_80297D2C but ignored here (retail never reads r5/r6).
+// by openMCGetItemBox but ignored here (retail never reads r5/r6).
 // -O4,s keeps the retail stmw r29 frame (self/arg/sub live across calls).
 #pragma push
 #pragma optimize_for_size on
 // noinline: retail keeps this out-of-line; without it MWCC inlines the whole
-// body into func_80297D2C (late-definition inlining defeats auto_inline off).
-extern "C" __declspec(noinline) void func_80299530(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
+// body into openMCGetItemBox (late-definition inlining defeats auto_inline off).
+extern "C" __declspec(noinline) void initMCGetItemBoxList(CMCGetItemBox* self, u16 arg, void* unk, u8 byte) {
     CMCItemBoxSub* sub = &self->sub_314;
-    // Retail calls func_80296BF0 with only r3 set (r4/r5/r6 carry garbage),
+    // Retail calls refillMCItemSubTable with only r3 set (r4/r5/r6 carry garbage),
     // so invoke it through a 1-arg prototype to avoid li r4/r5/r6 setup.
-    ((void (*)(CMCItemBoxSub*))func_80296BF0)(sub);
+    ((void (*)(CMCItemBoxSub*))refillMCItemSubTable)(sub);
     // Scoped string-table base: the first use dies at the call (retail computes
     // it straight into the arg reg), while each branch's base lives across the
     // two FindPaneByName calls (retail parks it in a callee-saved reg).
@@ -1265,7 +1265,7 @@ extern "C" __declspec(noinline) void func_80299530(CMCGetItemBox* self, u16 arg,
         func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&tbl[0x18f], true), 0);
     }
     func_8029967C(self);
-    func_802998C8(self);
+    refreshMCGetItemBoxTexts(self);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
         func_801D4260((void*)self->itemBox, arg);
     }
@@ -1330,11 +1330,11 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
         func_80124270((*(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10))->FindPaneByName(&lbl_eu_8050FF8C[0x19a], true), 0);
     }
     for (u8 i = 0; i < 0x1e; i++) {
-        u16 icon = (u16)func_80296D54(sub, i);
-        CMCItemBoxEntry* entry = func_80296DB0(sub, i);
-        func_80298AC8(self, icon, entry, i);
-        func_80298FB4(self, icon, entry, i);
-        func_80299490(self, (int)(s8)func_80296E00(sub, i), i);
+        u16 icon = (u16)getMCItemSubItemId(sub, i);
+        CMCItemBoxEntry* entry = getMCItemSubEntry(sub, i);
+        setMCSlotIconTex(self, icon, entry, i);
+        setMCSlotNameTex(self, icon, entry, i);
+        setMCGetItemBoxLabelText(self, (int)(s8)getMCItemSubKind(sub, i), i);
     }
 }
 #pragma pop
@@ -1344,17 +1344,17 @@ extern "C" __declspec(noinline) void func_8029967C(CMCGetItemBox* self) {
 // -O4,s keeps the retail stmw r28 frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void func_802998C8(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void refreshMCGetItemBoxTexts(CMCGetItemBox* self) {
     CMCGetItemBox* self_ = self;
     s8 idx = (s8)(self->field_301 * 10 + self->field_300);
     CMCItemBoxSub* sub = &self_->sub_314;
     LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1c7], func_80296E98(sub, (u16)idx), 0);
     LayoutSetTextBoxFmtValue(self->layout40, &lbl_eu_8050FF8C[0x1d0], func_80296FC0(sub, (u16)idx), (u32)self->objAt50);
     if (getItemBoxState((CItemBoxInfo*)self->itemBox) != 0) {
-        CMCItemBoxEntry* entry = func_80296DB0(sub, (u16)idx);
-        u32 iconId = func_80296D54(sub, (u16)idx);   // held in a reg temp in retail
+        CMCItemBoxEntry* entry = getMCItemSubEntry(sub, (u16)idx);
+        u32 iconId = getMCItemSubItemId(sub, (u16)idx);   // held in a reg temp in retail
         func_801D47D4((CItemBoxInfo*)self_->itemBox, (u16)iconId, (u32)entry, 1);
-        func_801D4AE0((CItemBoxInfo*)self_->itemBox, 1, func_80296E98(sub, (u16)idx));
+        setItemBoxNamedText((CItemBoxInfo*)self_->itemBox, 1, func_80296E98(sub, (u16)idx));
     }
 }
 #pragma pop
@@ -1366,7 +1366,7 @@ extern "C" __declspec(noinline) void func_802998C8(CMCGetItemBox* self) {
 #pragma optimize_for_size on
 // noinline: retail keeps this out-of-line; without it MWCC inlines the whole
 // body into its earlier callers (late-definition inlining defeats auto_inline off).
-extern "C" __declspec(noinline) void func_802999B0(CMCGetItemBox* self) {
+extern "C" __declspec(noinline) void moveMCGetItemBoxCursor(CMCGetItemBox* self) {
     char nameBuf[0x20];
     nw4r::math::VEC3 posIf;
     nw4r::math::VEC3 posElse;
@@ -1506,7 +1506,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         __dt__6CCur18Fv(cur18Buf, -1);
         ((CBaseCur*)&this->subObj_A0)->initLayout();
 
-        func_80298A78(this);
+        activateMCGetItemBox(this);
         this->fileHandle1 = 0;
         this->memRegion1.func_8045F810();
         return true;
@@ -1523,7 +1523,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
 
         this->arcAcc2 = CLibLayout::createArcResourceAccessor();
         this->arcAcc2->Attach(fileData, &lbl_eu_8050FF8C[0x206]);
-        func_80298A78(this);
+        activateMCGetItemBox(this);
         this->fileHandle2 = 0;
         this->memRegion2.func_8045F810();
         return true;
@@ -1542,7 +1542,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         lbl_eu_80664A18 = getFP__FPCc(&lbl_eu_8050FF8C[0x29f]);
         func_8003AA34();
         lbl_eu_80664A1C = getFP__FPCc(&lbl_eu_8050FF8C[0x2ae]);
-        func_80298A78(this);
+        activateMCGetItemBox(this);
         this->fileHandle3 = 0;
         return true;
     } else if (this->fileHandle4 == pEventFile->mFileHandle) {
@@ -1557,7 +1557,7 @@ bool CMCGetItemBox::OnFileEvent(CEventFile* pEventFile) {
         }
         func_8003AA34();
         lbl_eu_80664A20 = getFP__FPCc(&lbl_eu_8050FF8C[0x119]);
-        func_80298A78(this);
+        activateMCGetItemBox(this);
         this->fileHandle4 = 0;
         return true;
     }

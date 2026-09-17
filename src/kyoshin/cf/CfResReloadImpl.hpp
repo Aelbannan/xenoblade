@@ -52,7 +52,7 @@ struct CfResReloadParent {
     /* 0x68 */ u32 field_68;  // flags (bit 26 = 0x04000000 tested by func_8016D390)
     /* 0x6C */ u32 field_6C;  // flags (bit 2 tested by func_8016DE68)
     /* 0x70 */ u8* field_70;  // resource pointer passed to CfRes_tryReregisterSlot
-    /* 0x74 */ u8* field_74;  // sound-related pointer passed to func_801BFE20
+    /* 0x74 */ u8* field_74;  // sound-related pointer passed to CfSoundMan_PlayActorParam
     u8 field_78[0x18];        // 0x78..0x8F
     /* 0x90 */ u8* field_90;  // slot +0x18 result (cleared by func_8016D3F8)
     /* 0x94 */ u8* field_94;  // slot +0x1C result (cleared by func_8016D3F8)
@@ -162,7 +162,7 @@ struct DeviceSearchEntry {
     /* 0x3A */ s16 field_3A;
 };
 
-// Slot entry returned by func_801BFAE4 (CfSoundMan slot lookup); +0x00 holds
+// Slot entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); +0x00 holds
 // the active sound object, +0x2A a u16 flag word (cf. pluginSnd.cpp).
 struct SoundSlotEntry {
     /* 0x00 */ nw4r::snd::detail::BasicSound* field_00;
@@ -262,14 +262,14 @@ extern "C" void CfRes_tryReregisterSlot(int, u8*);
 extern "C" void func_800BAB64(cf::CfResReloadParent*);
 // More C-ABI imports (defined in CfSoundMan.cpp / CfRes.cpp /
 // code_801A929C.cpp); same extern "C" convention as above.
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
-extern "C" void func_801BFF04(int a, int b, int c, int d);
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
+extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_getResFileSize(int a);
 extern "C" int func_801AAAA0(int a);
 // More C-ABI imports used by this unit's functions.
 extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
-extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
-extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
+extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
+extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" u16 func_8006A6D0();
 extern "C" void* CfRes_getInstanceField();
 // More C-ABI imports used by func_8016DF4C / func_8016DAF8 / func_8016EA68.

@@ -508,10 +508,10 @@ extern "C" void* CItem_resolveFamilyBdat(u32 v, void* outA, void* outB);
 // Character-data / equip-table helpers (defined in CtrlObjectParam.cpp):
 // resolve the item instance for an equip slot, set an equip-slot entry, and
 // the u16 row-table readers/writers used by the party item-slot refresh.
-extern "C" u8* func_8009D790(s16* arr, u32 idx);
+extern "C" u8* CtrlObjectParam_ResolveEquipItem(s16* arr, u32 idx);
 extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
-extern "C" u16 func_8009E0B4(void* data, u32 index, void* ptr);
-extern "C" void func_8009E0C4(void* table, u16 index, u16 value);
+extern "C" u16 CtrlObjectParam_ReadItemDataU16(void* data, u32 index, void* ptr);
+extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 value);
 
 // CfGameManager party-inventory queries (defined in the CfGameManager unity
 // TU, src/kyoshin/cf/CfGameManagerUnityHelpers.hpp): count/sum the items of

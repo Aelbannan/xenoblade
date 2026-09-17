@@ -54,7 +54,7 @@ void CMenuKizunagram::Term() {
 
     func_801C40A0(&mTitleAHelp);
     teardownKizuna(&mSub98);
-    KizunagramTeardown(&mPcKizunagram);
+    func_8025D9C4(&mPcKizunagram);
     func_802AE62C(&mLoad);
     func_8024448C(&mFade);
 

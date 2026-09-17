@@ -29,7 +29,7 @@ namespace cf {
 class CBattleManager {
 public:
     static CBattleManager* getInstance();
-    void* func_800EA444();
+    void* CBattleMan_FetchVisionObj();
 };
 }
 
@@ -46,7 +46,7 @@ struct AnimFrameAccess {
 
 extern "C" {
 void* findObjectById__Fi(int);
-void* func_800EA444(cf::CBattleManager*);
+void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
 u32 func_800F4784(void*);
 void* func_800F477C(void*);
 int func_800F4648(void*);
@@ -612,7 +612,7 @@ extern "C" void func_801AD504(int flags) {
         return;
     }
 
-    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(func_800EA444(cf::CBattleManager::getInstance()));
+    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
     if (battle == 0) {
         return;
     }
@@ -1102,7 +1102,7 @@ void func_801AF934(int sel) {
     if (lbl_eu_80664388 == 0) {
         return;
     }
-    if (func_800EA444(cf::CBattleManager::getInstance()) == 0) {
+    if (CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()) == 0) {
         return;
     }
 
@@ -1228,7 +1228,7 @@ L_continue:
             break;
 
         case 2: {
-            bmObj = func_800EA444(cf::CBattleManager::getInstance());
+            bmObj = CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance());
             if (bmObj != NULL) {
                 // While the HP-bar pane is visible, track the target position.
                 nw4r::lyt::Pane* pane1 = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);

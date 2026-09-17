@@ -206,12 +206,12 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
 
     // If a live vision target matches, run the removal sequence.
     cf::CfImplEneTarget* tgt =
-        (cf::CfImplEneTarget*)cf::CBattleManager::getInstance()->func_800EA444();
+        (cf::CfImplEneTarget*)cf::CBattleManager::getInstance()->CBattleMan_FetchVisionObj();
     if (!(isGlobalCamFlagSet(0x04000000) != 0 && tgt != 0 &&
           (tgt->field_04 == battleObj->field_3F10 || tgt->field_00 == battleObj->field_3F10))) {
         CfObjectMove_setRegionAttached(&battleObj->mSub, 0);
         self->vf100();
-        func_800F3C6C(cf::CBattleManager::getInstance(), battleObj->field_3F28);
+        CBattleMan_BumpUnk94Key(cf::CBattleManager::getInstance(), battleObj->field_3F28);
         func_800E9B54(cf::CBattleManager::getInstance(), battleObj, 0, 0);
         func_800D9CA0(cf::CBattleManager::getInstance(), battleObj);
         CPartsChange_ResetBattleEntry(battleObj, r31, ((battleObj->field_3374 >> 5) & 1) ^ 1);
@@ -246,7 +246,7 @@ void func_800D0A60(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p
     case 5:
     case 0x31:
     case 2:
-        func_801BFE8C(0, 0x1bb, 0);
+        CfSoundMan_StopSlotByMode(0, 0x1bb, 0);
         break;
     case 0x11:
         cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666CEC);
@@ -277,7 +277,7 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
                 (cf::CfImplEneBattleObj*)func_800AD860((void*)findObjectById((int)CPartsChange_GetSlotEntryAt(actor, i)));
             if (p == 0) continue;
             if (p == (cf::CfImplEneBattleObj*)self->field_18) continue;
-            if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)p) != 0) continue;
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)p) != 0) continue;
             if (p->field_3F34 == 0) continue;
             if (p->field_3F60 == 0) continue;
             func_800D9978(cf::CBattleManager::getInstance(), p);
@@ -298,7 +298,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     cf::CfImplEneBattleObj* battleObj = (cf::CfImplEneBattleObj*)self->field_18;
     if (battleObj->bhBC() != 0) goto fail;
     if (battleObj->field_3374 & 0x800) goto fail;
-    if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)battleObj) == 0) goto fail;
+    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), (unsigned int)battleObj) == 0) goto fail;
 
     cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)func_8016FE34(
         findObjectById((int)battleObj->mSub.sf4C()));

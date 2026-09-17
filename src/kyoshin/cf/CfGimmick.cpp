@@ -224,20 +224,20 @@ void func_802089BC(CfGimmick* self, const f32* basis, const CfGimmickVec3* point
 }
 
 // Sound-id helpers: first arg is a u16/u32 effect id (Elv val1B6 / Item field_8E),
-// second is a position pointer passed through as an integer to func_801BFDE8.
+// second is a position pointer passed through as an integer to CfSoundMan_PlayLinkedParam.
 void CfGimmick_PlaySoundAtPos(u32 id, const CfGimmickVec3* pos) {
-    func_801BFDE8(1, id, (u32)pos,
+    CfSoundMan_PlayLinkedParam(1, id, (u32)pos,
                   lbl_eu_80668358, lbl_eu_8066835C);
 }
 
 void CfGimmick_PlaySoundAtPosScaled(u32 id, const CfGimmickVec3* pos, float second) {
-    func_801BFDE8(1, id, (u32)pos,
+    CfSoundMan_PlayLinkedParam(1, id, (u32)pos,
                   lbl_eu_80668358, second);
 }
 
 void CfGimmick_StopManagedSound(cf::CfGimmick* self) {
     if (self->field_80 != 0) {
-        func_801BFED0(1, self->field_80, 0xa);
+        CfSoundMan_ApplySlotStop(1, self->field_80, 0xa);
         self->field_80 = 0;
     }
 }

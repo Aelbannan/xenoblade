@@ -761,7 +761,7 @@ void func_800D1F0C(CtrlActView* self) {
         req.mField20 = lbl_eu_80666D48;
         req.mIdC = 0x111;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        func_800EC8FC(bm, self->mPlayer, &req, 0);
+        CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
         break;
     }
     case 21: {
@@ -770,7 +770,7 @@ void func_800D1F0C(CtrlActView* self) {
         req.mField20 = lbl_eu_80666D48;
         req.mIdC = 0x112;
         void* bm = getInstance__Q22cf14CBattleManagerFv();
-        func_800EC8FC(bm, self->mPlayer, &req, 0);
+        CBattleMan_RunBattleEvent(bm, self->mPlayer, &req, 0);
         break;
     }
     case 22: {
@@ -959,8 +959,8 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
         }
     }
     void* bm = getInstance__Q22cf14CBattleManagerFv();
-    if (func_800EA444(bm) != 0) {
-        CtrlActBattleSubView* bs = (CtrlActBattleSubView*)func_800EA444(bm);
+    if (CBattleMan_FetchVisionObj(bm) != 0) {
+        CtrlActBattleSubView* bs = (CtrlActBattleSubView*)CBattleMan_FetchVisionObj(bm);
         if ((bs->mField824 & 0x100000) == 0
             && func_801A6A7C(&bs->mField219C, self->mPlayer) != 0) {
             return 0;
@@ -968,8 +968,8 @@ extern "C" int func_800D2D64(CtrlActView* self, CtrlActAtkArg* arg) {
     }
     CtrlActSub2A4* sub = self->mPlayer->table->method2A4(self->mPlayer);
     bm = getInstance__Q22cf14CBattleManagerFv();
-    if (func_800EA444(bm) != 0
-        && ((CtrlActBattleSubView*)func_800EA444(bm))->mField0
+    if (CBattleMan_FetchVisionObj(bm) != 0
+        && ((CtrlActBattleSubView*)CBattleMan_FetchVisionObj(bm))->mField0
                == self->mPlayer->mField3F10) {
         // battle target matches: keep the existing block
     } else if ((sub->mField78 & 0x10000000) == 0) {

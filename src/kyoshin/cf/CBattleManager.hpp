@@ -71,16 +71,16 @@ namespace cf{
         virtual ~CBattleManager(); //0x8
         virtual void FactoryEvent2(); //0x10
         virtual void setPartyMaskFlag(u32 r4, u32 r5); //0x1C
-        virtual void func_800E2584(u32 mask); //0x20
-        virtual void func_800F42A0(); //0x24
+        virtual void CBattleMan_ClearStateMask(u32 mask); //0x20
+        virtual void CBattleMan_ZeroStateMask(); //0x24
         virtual s32 CheckUnk84Flag(u32 mask); //0x28
-        virtual void func_800EA410(); //0x2C
-        virtual void* func_800EA420(); //0x30
-        virtual void func_800EA460(float a, float b, unsigned long c); //0x34
-        virtual void func_800EA470(); //0x38
-        virtual void func_800EA998(void* arg); //0x3C
+        virtual void CBattleMan_TickVision(); //0x2C
+        virtual void* CBattleMan_QueryVision(); //0x30
+        virtual void CBattleMan_SetTimers(float a, float b, unsigned long c); //0x34
+        virtual void CBattleMan_ResetTimer(); //0x38
+        virtual void CBattleMan_EmitVisionEvent(void* arg); //0x3C
 
-        void* func_800EA444();
+        void* CBattleMan_FetchVisionObj();
 
         static CBattleManager* getInstance();
         // TUs that cannot include this class reach the same retail symbol
@@ -130,19 +130,19 @@ struct UnkStruct_8009EC9C_Ret {
     u8 unk1C;
 };
 
-// Layout for func_800EA384 self: list sentinel ptr at +0x08
+// Layout for CBattleMan_NextListItem self: list sentinel ptr at +0x08
 struct Func800EA384_Self {
     u8 pad_00[0x08];
     SimpleListNode* listHead;
 };
 
-// Layout for func_800F4004 this_: list sentinel ptr at +0x48
+// Layout for CBattleMan_MarkList48Flag40 this_: list sentinel ptr at +0x48
 struct Func800F4004_Self {
     u8 pad_00[0x48];
     SimpleListNode* listHead;
 };
 
-// Object layout used by func_800EA9A8 / func_800DBA2C
+// Object layout used by CBattleMan_FireActorEvent918 / CBattleMan_HandleMoveType45
 // Has a field at +0x3f00 (flags), +0x3f10 (ptr), +0x3f28 (u16)
 struct BattleObjAccessor {
     u8 pad_00[0x3f00];
@@ -153,7 +153,7 @@ struct BattleObjAccessor {
     u16 field_3f28;     // u16 at +0x3f28
 };
 
-// Object layout used by func_800DBA2C for arg2 access at +0x78
+// Object layout used by CBattleMan_HandleMoveType45 for arg2 access at +0x78
 // Has a field at +0x50 (ptr), +0x78 (flags)
 struct BattleMoveObjAccessor {
     u8 pad_00[0x50];
@@ -179,7 +179,7 @@ struct DB4FC_MoveBlock {
     s32 field_B4;              // +0xB4 (signed: retail emits signed cmpw)
 };
 
-// Object layout used by func_800DBA2C for r31 (*(arg2+0x50))
+// Object layout used by CBattleMan_HandleMoveType45 for r31 (*(arg2+0x50))
 // Has fields at +0x3c (u16 type), +0x40 (u16)
 struct BattleSubObjAccessor {
     u8 pad_00[0x3c];
@@ -259,9 +259,9 @@ struct DB4FC_ArtsObj {
 };
 
 // Move sub-object interface (embedded at battle actors +0x3E9C): the status
-// probe used by func_800F3E8C lives at compiled vtable slot 0x4C (declared
+// probe used by CBattleMan_FindActorByKind lives at compiled vtable slot 0x4C (declared
 // index 17 under -RTTI). Never instantiated here, so no vtable is emitted.
-// Actor object scanned by func_800F3E8C: type id at +0x15F0 and the embedded
+// Actor object scanned by CBattleMan_FindActorByKind: type id at +0x15F0 and the embedded
 // move sub-object at +0x3E9C.
 struct BattleScanActorView {
     u8 pad_00[0x15F0];
@@ -271,13 +271,13 @@ struct BattleScanActorView {
 };
 
 // Sentinel-pointer view (offset-typed alias of CBattleManager used to keep
-// func_800F3E8C pass 2's sentinel load independent of pass 1's).
+// CBattleMan_FindActorByKind pass 2's sentinel load independent of pass 1's).
 struct BMSentinelView {
     u8 pad00[0x48];
     _reslist_node<cf::CfObjectActor*>* sentinel;  // +0x48
 };
 
-// func_8016FE34 result view for func_800F3E8C: flags at +0x3F00 (bit 2 =
+// func_8016FE34 result view for CBattleMan_FindActorByKind: flags at +0x3F00 (bit 2 =
 // targetable) and type id at +0x15F0.
 struct BattleScanStateView {
     u8 pad_00[0x15F0];
@@ -412,12 +412,12 @@ extern "C" u8 lbl_eu_8052BD74[];  // CChainTime vtable (restored by ~CChainTime)
 // Same-TU / shared battle helpers with retail-unmangled names (declared in
 // CBattleManager.hpp so call sites in this unit emit the retail reloc names
 // instead of a namespace-mangled C++ form).
-extern "C" void func_800F41A0(cf::CBattleManager* mgr);
+extern "C" void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr);
 extern "C" void func_80279694(cf::CChain* chain, cf::CfObjectActor* actor);
 extern "C" void func_80277B34(cf::CChain* chain);
 extern "C" void func_800DB4FC(void* self, void* obj, void* enemy, void* move);
 extern "C" void func_800DB7F8(void* self, void* obj, void* enemy, void* move);
-extern "C" void func_800DBA2C(void* self, void* obj, void* enemy, void* move);
+extern "C" void CBattleMan_HandleMoveType45(void* self, void* obj, void* enemy, void* move);
 extern "C" int func_802799F0(void* chain, void* obj);
 
 // C++-mangled retail import (findObjectById__Fi): actor id -> action source.

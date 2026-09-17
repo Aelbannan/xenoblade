@@ -234,6 +234,6 @@ extern "C" bool testResInfoFlag(u32 flags);
 // Packed-token formatter (kyoshin/code_800AA008.cpp) and sound-manager
 // slot helpers (kyoshin/cf/CfSoundMan.cpp) - retail C symbol names.
 extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-extern "C" int func_801BFA64(int);
-extern "C" void func_801BFA08(int, void*, int, int);
-extern "C" void func_801BFA88(int, int, int, int);
+extern "C" int CfSoundMan_CloseRecord(int);
+extern "C" void CfSoundMan_BindRecordBuffer(int, void*, int, int);
+extern "C" void CfSoundMan_OpenRecordPlayer(int, int, int, int);

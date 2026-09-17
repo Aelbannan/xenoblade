@@ -239,7 +239,7 @@ void func_800C5AA0(cf::CfObjectImplPc* self)
 // Second-call-site hack removed: __declspec(noinline) on func_800C891C
 // keeps the retail out-of-line `bl`.
 
-// Result of func_800EA444: two id words compared against the battle
+// Result of CBattleMan_FetchVisionObj: two id words compared against the battle
 // object's own id (+0x3F10).
 struct CfObjectImplPcEA444 {
     u32 field_00;
@@ -383,13 +383,13 @@ void func_800C5B00(cf::CfObjectImplPc* self)
                         reinterpret_cast<CfObjectImplPcArtsData*>(&obj->mArts)
                             ->field_1528);
                 }
-                func_800F38E0(cf::CBattleManager::getInstance(), obj, 0x10a);
+                CBattleMan_ClearEventNotify(cf::CBattleManager::getInstance(), obj, 0x10a);
                 goto L_table;
             }
         }
         if (obj->v160() < lbl_eu_80666BC8) {
             if (func_80148778(&obj->mArts, 0x10a)) {
-                func_800F3958(cf::CBattleManager::getInstance(), obj, 0x10a);
+                CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), obj, 0x10a);
             }
         }
         goto L_table;
@@ -422,7 +422,7 @@ L_table:
     for (u32 j = 0; j < 6; j++) {
         if (counts[j] == 0) {
             if (func_80148778(&self->field_18->mArts, (int)ids[j])) {
-                func_800F3958(cf::CBattleManager::getInstance(), self->field_18,
+                CBattleMan_ClearActorStatus(cf::CBattleManager::getInstance(), self->field_18,
                               (s32)ids[j]);
             }
         }
@@ -587,7 +587,7 @@ L_tail:
             }
             CfObjectMove_setAnimModeArgs(&self->field_18->mSub, 5, 0, -1, 1);
             CfObjectImplPcEA444* res = reinterpret_cast<CfObjectImplPcEA444*>(
-                func_800EA444(cf::CBattleManager::getInstance()));
+                CBattleMan_FetchVisionObj(cf::CBattleManager::getInstance()));
             cf::CfGameManager::getInstance();
             bool runRest = false;
             if (isGlobalCamFlagSet(0x04000000) == 0 && res != 0) {
@@ -649,7 +649,7 @@ L_tail:
                         eff.field_0C = 0x58;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        func_800EA9A8(cf::CBattleManager::getInstance(), o2,
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 5, 0);
                     }
                     if (func_80260518(o2->vf290(), 8, &w38, &fv34)) {
@@ -657,10 +657,10 @@ L_tail:
                         eff.field_0C = 0x58;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        func_800EA9A8(cf::CBattleManager::getInstance(), o2,
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 8, 0);
                         eff.field_0C = 0x5b;
-                        func_800EA9A8(cf::CBattleManager::getInstance(), o2,
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 8, 0);
                     }
                     if (func_80260518(o2->vf290(), 0x18, &w38, &fv34)) {
@@ -668,7 +668,7 @@ L_tail:
                         eff.field_0C = 0x5d;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        func_800EA9A8(cf::CBattleManager::getInstance(), o2,
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 0x18, 0);
                     }
                     if (func_80260518(o2->vf290(), 0x9a, &w38, &fv34)) {
@@ -676,7 +676,7 @@ L_tail:
                         eff.field_0C = 0x59;
                         eff.field_10 = w38;
                         eff.field_20 = fv34;
-                        func_800EA9A8(cf::CBattleManager::getInstance(), o2,
+                        CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), o2,
                                       &eff, 0x9a, 0);
                     }
                     if (func_80260264(o2->vf290(), 0x62, (s32*)&w38)) {
@@ -1220,7 +1220,7 @@ void func_800C819C(cf::CfObjectImplPc* self, u32 id, u32 a3, u32 a4, u32 a5,
     case 7:
     case 11:
     case 49:
-        func_801BFE8C(0, 0x1bb, 0);
+        CfSoundMan_StopSlotByMode(0, 0x1bb, 0);
         break;
     case 17:
         cf::CfSoundMan::playActorSound(0, 0x1bb, 0, 0, lbl_eu_80666BC8);
@@ -1416,7 +1416,7 @@ void func_800C891C(cf::CfObjectImplPc* self)
                             eff.field_0C = eff_;                            \
                             cf::CBattleManager* mgr =                       \
                                 cf::CBattleManager::getInstance();          \
-                            func_800EA9A8(mgr, self->field_18, &eff, id_,   \
+                            CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, id_,   \
                                           0);                               \
                         }                                                   \
                     }                                                       \
@@ -1440,7 +1440,7 @@ void func_800C891C(cf::CfObjectImplPc* self)
                     eff.field_0C = eff_;                                    \
                     cf::CBattleManager* mgr =                               \
                         cf::CBattleManager::getInstance();                  \
-                    func_800EA9A8(mgr, self->field_18, &eff, id_, 0);       \
+                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, id_, 0);       \
                 }                                                           \
             }                                                               \
         }                                                                   \
@@ -1471,7 +1471,7 @@ void func_800C891C(cf::CfObjectImplPc* self)
                             eff.field_0C = 2;
                             cf::CBattleManager* mgr =
                                 cf::CBattleManager::getInstance();
-                            func_800EA9A8(mgr, self->field_18, &eff, 0x31, 0);
+                            CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0x31, 0);
                         }
                     }
                 }
@@ -1512,16 +1512,16 @@ void func_800C891C(cf::CfObjectImplPc* self)
                     eff.field_2E = 0x2e;
                     cf::CBattleManager* mgr =
                         cf::CBattleManager::getInstance();
-                    func_800EA9A8(mgr, self->field_18, &eff, 0x2e, 0);
+                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0x2e, 0);
                     eff.field_0C = 0x58;
                     mgr = cf::CBattleManager::getInstance();
-                    func_800EA9A8(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
                     eff.field_0C = 0x59;
                     mgr = cf::CBattleManager::getInstance();
-                    func_800EA9A8(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
                     eff.field_0C = 0x5a;
                     mgr = cf::CBattleManager::getInstance();
-                    func_800EA9A8(mgr, self->field_18, &eff, 0, 0);
+                    CBattleMan_FireActorEvent918(mgr, self->field_18, &eff, 0, 0);
                 }
             }
         }
@@ -1753,7 +1753,7 @@ L_f8:
             copy.field_0C = 0x93;
             copy.field_20 = lbl_eu_80666BFC;
             cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
-            func_800EC8FC(mgr, obj, &copy, 0);
+            CBattleMan_RunBattleEvent(mgr, obj, &copy, 0);
             mgr = cf::CBattleManager::getInstance();
             // Count nodes in the intrusive list rooted at +0x48; skip when
             // any actor holds a chain entry.
@@ -2044,16 +2044,16 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                     eff.field_10 = effW;
                     eff.field_20 = effF;
                     eff.field_2E = 0x2e;
-                    func_800EA9A8(cf::CBattleManager::getInstance(), res, &eff,
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
                                   0x2e, 0);
                     eff.field_0C = 0x58;
-                    func_800EA9A8(cf::CBattleManager::getInstance(), res, &eff,
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
                                   0, 0);
                     eff.field_0C = 0x59;
-                    func_800EA9A8(cf::CBattleManager::getInstance(), res, &eff,
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
                                   0, 0);
                     eff.field_0C = 0x5a;
-                    func_800EA9A8(cf::CBattleManager::getInstance(), res, &eff,
+                    CBattleMan_FireActorEvent918(cf::CBattleManager::getInstance(), res, &eff,
                                   0, 0);
                 }
             }
@@ -2227,7 +2227,7 @@ void func_800C75D4(cf::CfObjectImplPc* self, u32 token,
                 obj->vf2C4((u8*)self->field_18, lbl_eu_80666BF4,
                            lbl_eu_80666BCC, lbl_eu_80666BCC);
             }
-            if (func_800DA06C(cf::CBattleManager::getInstance(), obj) == 0) {
+            if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), obj) == 0) {
                 obj->mSub.v08(0x100);
             }
             // Retail materializes this local table by copying the hidden

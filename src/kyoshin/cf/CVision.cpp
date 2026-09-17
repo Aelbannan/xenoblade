@@ -96,7 +96,7 @@ extern "C" void* CTaskGame_enumListGet(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 
 using namespace cf;
 
@@ -920,8 +920,8 @@ void func_801A4194(CVision* self) {
             getGlobalSda()[0xa8] = 1;
         }
         self->vt_2C(1);
-        func_801C01A8(0, 0x2, lbl_eu_80667CE4);
-        func_801C01A8(1, 0x0, lbl_eu_80667CE4);
+        CfSoundMan_ApplyFxSendAll(0, 0x2, lbl_eu_80667CE4);
+        CfSoundMan_ApplyFxSendAll(1, 0x0, lbl_eu_80667CE4);
         func_802A1DF0(1);
         CVisionPtmf cb;
         cb.mPfn = lbl_eu_80533134[0];
@@ -1111,8 +1111,8 @@ void func_801A47D0(CVision* self) {
             sda[0xa8] = 1;
         }
         self->vt_2C(1);
-        func_801C01A8(0, 0x2, lbl_eu_80667CE4);
-        func_801C01A8(1, 0x0, lbl_eu_80667CE4);
+        CfSoundMan_ApplyFxSendAll(0, 0x2, lbl_eu_80667CE4);
+        CfSoundMan_ApplyFxSendAll(1, 0x0, lbl_eu_80667CE4);
         func_802A1DF0(1);
         CVisionPtmf cb;
         // Retail walks the triplet with an updating load (lwzu).
@@ -1763,7 +1763,7 @@ void func_801A60B0(CVision* self) {
     }
     if (w1) {
         self->vt_2C(2);
-        func_801BFE8C(0, 0x1bf, 0);
+        CfSoundMan_StopSlotByMode(0, 0x1bf, 0);
         playActorSound__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
     }
     f32 t2 = lbl_eu_80667D04;
@@ -1874,7 +1874,7 @@ void func_801A897C(CVision* self, void* slot, void* r28) {
         if (isGlobalCamFlagSet__Fi(0x4000000) != 0) {
             return;
         }
-        CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444(CBattleManager::getInstance());
+        CVisionBtlSlot* bs = (CVisionBtlSlot*)CBattleMan_FetchVisionObj(CBattleManager::getInstance());
         if (bs == 0) {
             return;
         }
@@ -2707,8 +2707,8 @@ void func_801A7704(CVision* self) {
         p1->vf2C4(p2, lbl_eu_80667CD4, lbl_eu_80667D50, lbl_eu_80667CD4);
     }
     sub->field_0C->field_7C = lbl_eu_80667CFC;
-    func_801C028C(0, 0);
-    func_801C028C(1, 0);
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
     func_802A1DF0(0);
 
     // Enumerate the 0x8000000-tagged list; raise a state flag on every
@@ -2787,8 +2787,8 @@ void func_801A7D6C(CVision* self, void* r4) {
         actor->field_04->v20(0x4000);
     }
     self->field_26194 = lbl_eu_80667CD4;
-    func_801C028C(0, 0);
-    func_801C028C(1, 0);
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
     func_802A1DF0(0);
     CVisionPtmf cb;
     cb.mPfn = __ptmf_null[0];

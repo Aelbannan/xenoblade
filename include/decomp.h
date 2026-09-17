@@ -63,8 +63,13 @@
 #define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
 
 /**
- * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
- * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ * LEGACY no-op markers for a single-instruction asm carve-out. PLAN.md §17.6
+ * does NOT sanction this pattern: the only allowed escapes are the
+ * DECOMP_PPC_* intrinsics, the isolated Gekko paired-single backend, goto
+ * gate chains, the Wii boot-entry vectors, and reloc naming. These macros
+ * exist only so tools/pi_harness/lint.py and the code-smell report can find
+ * pre-existing violations; do not use them in new code. (The last in-tree
+ * uses were removed 2026-09-17.)
  */
 #define DECOMP_ASM_INSN_BEGIN
 #define DECOMP_ASM_INSN_END

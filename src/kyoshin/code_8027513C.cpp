@@ -25,7 +25,7 @@ int isTimerActive__Q22cf13CfGameManagerFv();
 
 class CScn;
 
-// createNpcActor/setChildV40__/bindPartnerO_/func_801BFDE8: declared in
+// createNpcActor/setChildV40__/bindPartnerO_/CfSoundMan_PlayLinkedParam: declared in
 // code_8027513C.hpp with retail-accurate linkage. Scn_QueryUnk80State: single owner
 // decl in libs/monolib/src/scn/CScn_8049603C.hpp.
 
@@ -189,7 +189,7 @@ void func_80275454(UnkCode8027513C* self) {
 
                 // Play sound effect at the fetched position
                 UnkCamObj* camObj = (UnkCamObj*)Scn_QueryUnk80State(lbl_eu_80663E14);
-                func_801BFDE8(0, mode, (u32)(uintptr_t)pos, lbl_eu_806689E8 - camObj->field_0xC,
+                CfSoundMan_PlayLinkedParam(0, mode, (u32)(uintptr_t)pos, lbl_eu_806689E8 - camObj->field_0xC,
                               lbl_eu_806689EC);
             }
         }

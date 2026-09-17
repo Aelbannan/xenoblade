@@ -199,7 +199,7 @@ void func_80097134(cf::CtrlPc* self) {
     if (func_80174C98(obj, &v5, 0x800000) != 0) {
         goto probe100;
     }
-    if (func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), obj) == 0) {
+    if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), obj) == 0) {
         goto probe100;
     }
     self->mField5C->mSub3E9C.v00(0x100);
@@ -268,11 +268,11 @@ tail:
     }
 }
 
-// Retail func_80097598 (0x80097F70): pad action dispatch for the player.
+// Retail dispatchCtrlPcActions (0x80097F70): pad action dispatch for the player.
 // Validates the pad-state, installs AI actions, and syncs the voice owner.
 // Each actor-id probe result gets its own stack word (retail offsets
 // 0x30 down to 0x08), so the temporaries are declared at function scope.
-void func_80097598(cf::CtrlPc* self) {
+void dispatchCtrlPcActions(cf::CtrlPc* self) {
     u32 v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11;
     CtrlPlayerObj* p;
     CtrlPlayerObj* obj;
@@ -499,8 +499,8 @@ void func_80097C74(cf::CtrlPc* self) {
     self->mField5C->mSub3E9C.v02(4);
 }
 
-// Retail func_80097DFC (0x800987D4): 4-byte trivial function.
-void func_80097DFC() {}
+// Retail emptyCtrlPcHook (0x800987D4): 4-byte trivial function.
+void emptyCtrlPcHook() {}
 
 // Retail func_80097E00 (0x800987D8): idle/busy probe for the player pad
 // handler. Returns 1 when the player is in a usable (non-busy) state, else 0.

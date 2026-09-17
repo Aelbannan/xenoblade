@@ -246,7 +246,7 @@ extern const void* lbl_eu_805005A8[34];
 struct FloatTable13 { f32 w[13]; };
 extern FloatTable13 lbl_eu_80500630;
 extern char lbl_eu_80573C30[];
-extern nw4r::math::VEC3 zero__Q22ml5CVec3;
+extern ml::CVec3 zero__Q22ml5CVec3;
 
 // helpers
 // (func_8003B1EC / CtrlObjectParam_GetSlotTableBase / func_8009D018 stay inline in

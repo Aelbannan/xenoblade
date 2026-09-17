@@ -392,7 +392,7 @@ extern "C" void EvtSeqBeginFileRead(cf::CTaskREvtSequence* self) {
     self->field_0x44 = w2;
 }
 
-extern "C" void EvtSeqLoadSequenceFile(cf::CTaskREvtSequence* self) {
+extern "C" void func_8016872C(cf::CTaskREvtSequence* self) {
     // Load the sequence file: read size/flags from the header object, size the
     // arena chunk, free the old header buffer, then async-read into the new
     // buffer and install the +0x3C move-callback table.
@@ -822,7 +822,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
     // Walk the realtime-event list once calling vf_0x24 on every entry, then
     // (unless a 60-frame cadence expired) a second walk that aborts the whole
     // function on a vf_0x18()==0 entry; finally reset the voice manager, run
-    // the EvtSeqAdvanceWalkIndex advance and install the +0x3C ptmf table. `scaled` is
+    // the func_80169DD0 advance and install the +0x3C ptmf table. `scaled` is
     // an explicit induction variable so the back-edge increments sit in
     // source order (n++, scaled+=4) like retail.
     u32 scaled = 0;
@@ -858,7 +858,7 @@ void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self) {
         }
     }
     func_802A1500();
-    EvtSeqAdvanceWalkIndex(self, self->field_0xF8);
+    func_80169DD0(self, self->field_0xF8);
     // Install the move callback (3-word ptmf at +0x3C) from the .data table.
     // Pointer-walk (*src++) so MWCC folds the base addi into the first load
     // (retail emits lwzu + lwz / stw,stw / lwz,stw). Value locals are declared
@@ -1322,7 +1322,7 @@ void func_801696CC(cf::CTaskREvtSequence* self) {
             EvtSeqWalkBuf* cc =
                 reinterpret_cast<EvtSeqWalkBuf*>(self->field_0xCC);
             if (self->field_0xF8 + 1 < cc->field_0x8) {
-                EvtSeqAdvanceWalkIndex(self, self->field_0xF8 + 1);
+                func_80169DD0(self, self->field_0xF8 + 1);
             }
             self->field_0x5C |= 0x200000;
         }
@@ -1520,7 +1520,7 @@ void EvtSeqFinishSequence(cf::CTaskREvtSequence* self) {
     }
 }
 
-void EvtSeqAdvanceWalkIndex(cf::CTaskREvtSequence* self, u32 idx) {
+void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx) {
     // Event-sequence advance: if the sequence file handle is idle, clear the
     // 0x4 flag, select the entry at `idx` in the field_0xD0 table, and either
     // advance the field_0x120 walk cursor or (re)load the sequence file into

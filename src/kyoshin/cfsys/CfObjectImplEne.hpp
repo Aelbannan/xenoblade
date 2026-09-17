@@ -265,7 +265,7 @@ struct CfImplEneField3F34 {
     u32 field_7A4;                           // 0x7A4
 };
 
-// Result of CBattleManager::func_800EA444: two id words compared against
+// Result of CBattleManager::CBattleMan_FetchVisionObj: two id words compared against
 // battleObj->field_3F10.
 struct CfImplEneTarget {
     u32 field_00;                            // 0x00
@@ -718,10 +718,10 @@ void func_802A0B8C(void* self, void* owner);
 void* lookupCA0By45C0(void* self);
 void* func_8016FE34(void* src);
 void* CPartsChange_GetSlotEntryAt(void* self, unsigned long idx);
-int func_800DA06C(void* self, unsigned int value);
+int CBattleMan_ListHasValue(void* self, unsigned int value);
 void func_800D9978(void* mgr, void* obj);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-void func_801BFE8C(u32 a, u32 b, u32 c);
+void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void func_804E3CCC(void* effect);
 void func_804E3D48(void* effect, void* parent);
 void func_800CA964(void* self);
@@ -734,7 +734,7 @@ void func_804E3B08(void* effect);
 float simGetLeafDist7B0(void* obj);
 void CfObjectMove_setMoveSpeed(void* player, float value);
 void CfObjectMove_setRegionAttached(void* obj, int flag);
-void func_800F3C6C(void* mgr, u32 key);
+void CBattleMan_BumpUnk94Key(void* mgr, u32 key);
 void func_800E9B54(void* mgr, void* obj, int a, int b);
 void func_800D9CA0(void* mgr, void* target);
 void CPartsChange_ResetBattleEntry(void* obj, int a, int b);

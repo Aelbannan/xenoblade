@@ -607,7 +607,7 @@ extern void* findObjectById(int);            // C++ linkage -> findObjectById__F
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" float func_800D81A8(void*, void*, void*);
 extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
-extern "C" void func_800EC8FC(void*, void*, void*, u32);
+extern "C" void CBattleMan_RunBattleEvent(void*, void*, void*, u32);
 // func_801A891C: extern "C" decl from kyoshin/cf/object/CfObjectActor.hpp.
 extern "C" u32 func_801B1DCC(u32);
 extern "C" void CTaskGame_enumListCtor(void*);
@@ -699,7 +699,7 @@ void func_801765A4(cf::CActorParam* self, int arg, float f1) {
             st.unk10 = self->CActorParam_getGaugeMax();
             st.unk20 = self->CActorParam_getGaugeRateA();
             st.unk24 = lbl_eu_806677E4;
-            func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
+            CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
             if (!func_80148778(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                 self->CActorParam_clearGauge();
             }
@@ -726,7 +726,7 @@ void func_801765A4(cf::CActorParam* self, int arg, float f1) {
                 st.unk20 = self->CActorParam_getGaugeRateB();
                 st.unk24 = lbl_eu_806677E4;
                 st.unk30 |= 0x80;
-                func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
+                CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), self->CActorParam_getActor(), &st, 0);
                 if (!func_80148778(reinterpret_cast<cf::CBattleState*>(self), 0x10)) {
                     self->CActorParam_clearSecondGauge();
                 }
@@ -1219,7 +1219,7 @@ unk28_done:
                     void* actor = func_8016FE34(func_800F6EAC(CTaskGame_enumListGet(&holder), i2));
                     if (self->CActorParam_getActor() != actor) {
                         if (!func_80148778((u8*)actor + 8, st.unk0C)) {
-                            func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
+                            CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
                         }
                     }
                     i2++;
@@ -1279,7 +1279,7 @@ unk28_done:
                         }
                     } else {
                         if (func_801B1DCC(r19)) {
-                            func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
+                            CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &st, 0);
                         }
                     }
                     i2++;

@@ -20,7 +20,7 @@ class Unk80EE4Data;
 
 namespace cf {
 class CHelpManager;
-// Party-slot list object returned by func_8009ECB0 (arr1[3] + arr2[6] @ +4);
+// Party-slot list object returned by CtrlObjectParam_GetSlotTableBase (arr1[3] + arr2[6] @ +4);
 // layout defined in src/kyoshin/cf/CtrlObjectParam.hpp - only pointers are
 // passed around here.
 struct CtrlObjectParamSlots;
@@ -484,7 +484,7 @@ extern "C" void func_8016EEB0(u32 object);
 extern "C" void func_800754C0(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);
-// func_8009D790 is declared TU-locally where it is called (CfGameManager.cpp
+// CtrlObjectParam_ResolveEquipItem is declared TU-locally where it is called (CfGameManager.cpp
 // thunk passes 1 arg + r4 passthrough; pluginCfs.cpp declares the full
 // 2-arg retail signature). Kept out of this header to avoid conflicting
 // C-linkage redeclarations across TUs.
@@ -530,11 +530,11 @@ extern "C" u32 func_8006A3BC();
 extern "C" void func_8006A3FC();
 extern "C" void func_8006A404();
 extern "C" void func_80141C6C(void*, void*);
-// func_8009DBF4 / func_8009E0C4 are also declared (extern "C") in
+// func_8009DBF4 / CtrlObjectParam_WriteU16RowEntry are also declared (extern "C") in
 // include/kyoshin/cf/CItem.hpp; the CfGameManager unity TU does not include
 // that header, so they are re-declared here for the func_8007DCB8 bdat writer.
 extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
-extern "C" void func_8009E0C4(void* table, u16 index, u16 value);
+extern "C" void CtrlObjectParam_WriteU16RowEntry(void* table, u16 index, u16 value);
 extern "C" void func_8009EF9C(void* data, u32 value);
 extern "C" void func_80158420(u32 value, void* result, s32 mode, void* other);
 // func_8007DCB8 bdat-table scratch globals (.sbss /.data).
@@ -658,7 +658,7 @@ extern "C" void func_80164CFC();
 extern "C" void CCharVoiceMan_ClearFieldFlag();
 extern "C" int func_8023C1C0();
 extern "C" void* func_8023C1B4();
-extern "C" void func_8009F6D4(void* object);
+extern "C" void CtrlObjectParam_ActivateCharRow(void* object);
 extern "C" void __dt__8023E448();
 extern "C" void CItem_rerankAllKinds();
 void CItem_rerankAllKinds();
@@ -703,13 +703,13 @@ extern "C" void flushEventQueue__Q22cf13CfGameManagerFv();
 
 // --- func_8007F1FC imports (CtrlObjectParam / cfsys CTaskParty units) ---
 extern "C" void func_8009E3C0();
-extern "C" int func_8009E740(cf::CtrlObjectParamSlots* self, int value);
-extern "C" int func_8009E56C(cf::CtrlObjectParamSlots* self, int value, int type);
+extern "C" int CtrlObjectParam_ClearSlotValue(cf::CtrlObjectParamSlots* self, int value);
+extern "C" int CtrlObjectParam_InsertSlotValue(cf::CtrlObjectParamSlots* self, int value, int type);
 extern "C" int func_8009E574(cf::CtrlObjectParamSlots* self, int value, int type, int index);
 extern "C" void func_8009E838(u8* self);
 extern "C" s32 countCollepedia();
 extern "C" void func_8015720C(s32 value, s32 mode);
-extern "C" u32 func_800A082C(void* data);
+extern "C" u32 CtrlObjectParam_GetArtsDataWord(void* data);
 extern "C" void func_800A0860(void* data, u16 value);
 extern "C" void func_800A21F8(void* data, u32 a, u32 b, u32 c);
 extern "C" void func_800A2974(void* data, u16 value);

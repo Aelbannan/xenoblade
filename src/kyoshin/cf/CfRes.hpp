@@ -252,7 +252,7 @@ extern "C" long __ptmf_test(void* ptmf);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" int CfRes_reloadLoadedEntries(int);
 extern "C" int CfRes_updateFlaggedGrid(int);
-extern "C" int func_801BFA64(int);
+extern "C" int CfSoundMan_CloseRecord(int);
 extern "C" int KyoshinHeap_HasActive54();
 extern "C" int func_800A9134();
 extern "C" void func_800676F8(u8* self);

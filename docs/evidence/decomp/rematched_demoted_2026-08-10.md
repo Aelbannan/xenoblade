@@ -38,7 +38,7 @@ Of 299 demoted FULL_MATCH rows, 107 were re-matched to byte-identical by source 
 | us-80277e34 | kyoshin/code_8027513C | `func_802759B0` |
 | us-80277e3c | kyoshin/code_8027513C | `func_802759B8` |
 | us-80277e44 | kyoshin/code_8027513C | `func_802759C0` |
-| us-8029acd4 | kyoshin/makecrystal/CMCGetItemBox | `func_8029860C` |
+| us-8029acd4 | kyoshin/makecrystal/CMCGetItemBox | `forwardMCSubObj88` |
 | us-802149c0 | kyoshin/makecrystal/CMakeCrystalWin | `func_80212B68` |
 | us-8021434c | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124F4` |
 | us-80214354 | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124FC` |

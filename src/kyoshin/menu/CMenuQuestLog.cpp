@@ -296,7 +296,7 @@ void CMenuQuestLog::Term() {
     reinterpret_cast<CScn*>(mScene)->removeRenderCB(render);
     func_801C3D9C(&mBgTex);
     func_801C40A0(&mTitleAHelp);
-    QstLogList_Unload(&mQstLogList);
+    func_80227BD8(&mQstLogList);
     func_80229620(&mQstLogInfo);
     lbl_eu_80663FC0 = 0;
     DecMenuCounter64080();

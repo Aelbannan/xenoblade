@@ -835,7 +835,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
     if (d == 4) {
         // Vision exclusion sweep + arts-slot lottery with power gates.
         CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = func_800EA444(bm);
+        void* vision = CBattleMan_FetchVisionObj(bm);
         if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
             && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
             return 0;
@@ -977,7 +977,7 @@ extern "C" int func_8014CE78(cf::CAIAction* self, const u8* e, cf::CAIActionSlot
 
         // Vision exclusion, relaxed when either flag bit is set.
         CBattleMgrAIView* bm = (CBattleMgrAIView*)getInstance__Q22cf14CBattleManagerFv();
-        void* vision = func_800EA444(bm);
+        void* vision = CBattleMan_FetchVisionObj(bm);
         if (vision != 0 && !(*(u32*)((u8*)party + 0x3F00) & 2)
             && !(param->field78 & 0x8000)
             && *(u32*)vision != party->unk3F10 && !(bm->field824 & 0x20000))
@@ -1395,7 +1395,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     }
 
     case 12: {
-        void* b = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        void* b = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x00);
             if (val != 0)
@@ -1405,7 +1405,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     }
 
     case 13: {
-        void* b = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        void* b = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (b != 0) {
             u32 val = *(u32*)((u8*)b + 0x04);
             if (val != 0)
@@ -2049,7 +2049,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
         }
     } else if (b6 == 13) {
         // +0x61D0 : battle vision object's field +4
-        void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (vision != 0 && *(u32*)((u8*)vision + 4) != 0) {
             func_800F6D50(CTaskGame_enumListGet(&it), *(u32*)((u8*)vision + 4));
         }
@@ -2181,7 +2181,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
             case 12: {
                 // +0x6680
-                void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+                void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
                 if (vision != 0 && *(u32*)((u8*)vision + 0) != 0) {
                     func_800F6D50(CTaskGame_enumListGet(&it), *(u32*)((u8*)vision + 0));
                 }
@@ -2502,7 +2502,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
     // ---- common tail (+0x7470) --------------------------------------------
     {
-        void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        void* vision = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (vision != 0 && *(u32*)((u8*)vision + 0) != ((CfObjBase*)self->unkB14)->unk3F10) {
             // Retail packs the four q bytes into two u32 word-pairs in a
             // stack array {q9,q11} / {q10,q12} and iterates the pair twice:

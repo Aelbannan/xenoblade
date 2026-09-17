@@ -390,7 +390,7 @@ void notifyBattleSystem__Q22cf13CfGameManagerFv(u32, u32, u32, u32, u32);  // Cf
 void notifyCameraManager__Q22cf13CfGameManagerFv();                         // CfGameManager.cpp
 int isCameraReady__Q22cf13CfGameManagerFv();                          // CfGameManager.cpp
 void lookupEffectForResource__Q22cf13CfGameManagerFv(u32, u32, u32);           // CfGameManager.cpp
-void* func_801BFAE4(u16 handle);                                      // CfSoundMan.cpp
+void* CfSoundMan_TouchSlotById(u16 handle);                                      // CfSoundMan.cpp
 void isEffectReady__Q22cf13CfGameManagerFv(u32, ml::CVec3*, ml::CVec3*, u32, f32); // CfGameManager.cpp
 UnkClass_80083298View* getGameSubManager__Q22cf13CfGameManagerFv();       // CfGameManager.cpp
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32); // CfSoundMan.cpp (returns sound handle)

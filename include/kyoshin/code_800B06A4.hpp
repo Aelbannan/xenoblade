@@ -1656,7 +1656,7 @@ extern "C" void unlinkMatchingNode(void* list, void* obj);
 
 // --- imports for func_800B83AC (us-800b8cc8) ---
 extern "C" int isTimerActive__Q22cf13CfGameManagerFv();
-extern "C" void* func_8009ECB0();
+extern "C" void* CtrlObjectParam_GetSlotTableBase();
 extern "C" void* func_8009EC9C(u32 index);
 // func_80174C98 is owned by kyoshin/cf/CfMapItemManager.hpp.
 extern "C" int func_80148778(void* obj, int arg);
@@ -1833,7 +1833,7 @@ public:
     virtual void* unk0C();
 };
 
-// Party member record walked by func_800B83AC (base from func_8009ECB0;
+// Party member record walked by func_800B83AC (base from CtrlObjectParam_GetSlotTableBase;
 // the walker starts at base+4 and reads slots at +0xc from there).
 struct B83ACPartyBase {
     u8 _pad00[0x10];

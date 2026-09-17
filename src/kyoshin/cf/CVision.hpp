@@ -604,7 +604,7 @@ extern "C" bool func_8009E344(int* a, u32 b, int* outA, int* outB);
 extern "C" u8 CtrlObjectParam_GetRowColumnByte(void* row);
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
 extern "C" void CTaskGame_enumListCtor(void* list);
 extern "C" void* CTaskGame_enumListGet(void* list);
@@ -630,7 +630,7 @@ extern "C" bool func_801AC09C(u32 flags);
 extern "C" int func_800F4730(void);
 extern "C" void* func_800F4648(void* self);
 extern "C" int func_800F46C0(void* a, void* b);
-extern "C" void* func_800EA444(void* self);
+extern "C" void* CBattleMan_FetchVisionObj(void* self);
 extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int func_8026178C(void* data, u32 mode);
 extern "C" void func_80170AB0(void* self, void* dst);
@@ -697,8 +697,8 @@ extern "C" void func_8009D018(u32 a, u32 b);
 // UIWin_BuildFlagBuf is owned by kyoshin/CUIWindowManager.hpp.
 
 extern "C" void func_8016FF14(void* obj, void* dst);
-extern "C" void func_801C01A8(u32 a, u32 b, f32 c);
-extern "C" void func_801C028C(u32 a, u32 b);
+extern "C" void CfSoundMan_ApplyFxSendAll(u32 a, u32 b, f32 c);
+extern "C" void CfSoundMan_ClearFxEffect(u32 a, u32 b);
 
 extern "C" long __ptmf_test(void* ptmf);
 extern "C" int __ptmf_cmpr(void* a, void* b);

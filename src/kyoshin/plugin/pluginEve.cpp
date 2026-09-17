@@ -136,7 +136,7 @@ int setAwardFlagF1(VMThread* pThread) {
 // Start a realtime event. If the request yields while syncing with the UI,
 // suspend the script; otherwise fire the event and battle-camera reset.
 extern "C" void processFieldLoad__Q22cf13CfGameManagerFv();
-extern "C" void func_800F4004(cf::CBattleManager* bm);
+extern "C" void CBattleMan_MarkList48Flag40(cf::CBattleManager* bm);
 int realtimeEventStart(VMThread* pThread) {
     // Arg 1: skip-if-busy flag (default TRUE).
     int skipIfBusy;
@@ -152,7 +152,7 @@ int realtimeEventStart(VMThread* pThread) {
     }
     if (proceeding != 0) {
         processFieldLoad__Q22cf13CfGameManagerFv();
-        func_800F4004(cf::CBattleManager::getInstance());
+        CBattleMan_MarkList48Flag40(cf::CBattleManager::getInstance());
     }
     return 0;
 }

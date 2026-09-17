@@ -103,7 +103,7 @@ public:
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
-    u8 CSkipTimerGetActive() { return mActive; }
+    u8 func_8029FF1C() { return mActive; }
 
     // --- member fields ---
     /* 0x00 */ void* mVtbl;                       // vtable pointer, set at construction
@@ -180,7 +180,7 @@ extern "C" void CSkipTimer2MarkActive(u8* self);
 // Retail strips mangling for these func_ names in US, hence extern "C".
 extern "C" void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg);
 extern "C" void func_8029F6EC(CSkipTimer2* self);
-extern "C" void CSkipTimer2OnFwdReady(CSkipTimer2* self);
+extern "C" void func_8029F73C(CSkipTimer2* self);
 // func_8029FBE0: System.arc load kickoff (retail strips mangling on US func_
 // names), so the definition binds to the literal retail symbol.
 extern "C" void func_8029FBE0(CSkipTimer* self);

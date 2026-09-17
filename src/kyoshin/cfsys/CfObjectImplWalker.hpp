@@ -21,7 +21,7 @@ struct CfWalkMoveSubDeep {
     class CfWalkSubC4_3B4* field_C4;           // 0xC4 (alias of battle object +0x3F60)
 };
 
-// func_800EA444 result (battle-target record): ids at +0x0/+0x4.
+// CBattleMan_FetchVisionObj result (battle-target record): ids at +0x0/+0x4.
 struct CfWalkEA444 {
     u32 field_0;                               // 0x00
     u32 field_4;                               // 0x04
@@ -1002,14 +1002,14 @@ int rand(void);
 
 // Battle-manager effect/party helpers.
 void CCharVoiceMan_EnqueueBattleBeginVoice(void* obj);
-void func_800EA9A8(void* mgr, void* item, void* rec, u32 id, u32 flag);
+void CBattleMan_FireActorEvent918(void* mgr, void* item, void* rec, u32 id, u32 flag);
 int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
 int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
 int func_80260264(void* obj, u32 id, u32* outA);
 void UIWin_CreateItemMulti(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
 u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
 int getNullPtrC__Q22cf13CfGameManagerFv(u32 mask);
-void* func_800EA444(void* mgr);
+void* CBattleMan_FetchVisionObj(void* mgr);
 // NOTE: real decl below returns cf::CfWalkEA444* via overload-free rename.
 
 // Action/art play + system helpers.
@@ -1033,7 +1033,7 @@ void CtrlObjectParam_SetWorkTailValue(u32 id);
 void* func_80140AFC(u32 id);
 void* func_80140CA4(u32 id);
 void UIWin_FlagBufCommit(void* obj);
-void UIWin_FlagBufResetAlias(void* obj);
+void UIWin_ThunkFlagBufReset(void* obj);
 void UIWin_FlagBufReset(void* obj);
 int UIWin_GetTimer(void);
 void UIWin_ClearTimer(void);

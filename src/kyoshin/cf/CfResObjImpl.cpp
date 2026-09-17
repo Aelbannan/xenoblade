@@ -48,13 +48,13 @@ int func_8016C880(CfResObjImpl* /*self*/) { return 128; }
 // us-8016dbe4 - resource sound-notify: when the +0x14 in-use test passes,
 // fetch the sound id from the +0x60 slot and, when the resolved sound slot
 // holds a live sound object and arg4 is nonzero, set its player priority to
-// arg4. f1/f2 pass through to func_801BFE20; arg3 (r5) is an unused
+// arg4. f1/f2 pass through to CfSoundMan_PlayActorParam; arg3 (r5) is an unused
 // register-slot parameter (retail never reads it).
 void func_8016C888(cf::CfResObjImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
     if (self->func_8016C860() != 0) {
         int id = self->func_8016C950();
         cf::SoundSlotEntry* slot =
-            func_801BFAE4((u16)func_801BFE20(id, arg2, self->field_00->field_74, f1, f2));
+            CfSoundMan_TouchSlotById((u16)CfSoundMan_PlayActorParam(id, arg2, self->field_00->field_74, f1, f2));
         if (slot != 0 && arg4 != 0 && slot->field_00 != 0) {
             slot->field_00->SetPlayerPriority(arg4);
         }

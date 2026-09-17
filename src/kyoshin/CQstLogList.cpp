@@ -718,7 +718,7 @@ extern "C" void QstLogList_Draw(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo
 
 // Unload the quest-log screen: close the arc file handle, delete the layout,
 // release the resource accessor and tear down cursor/scroll bar/sort menu.
-extern "C" void QstLogList_Unload(CQstLogList* self) {
+extern "C" void func_80227BD8(CQstLogList* self) {
     func_801390E0(&self->mFileHandle);
     self->field_0x170 = 0;
     if (self->mpLayout != 0) {

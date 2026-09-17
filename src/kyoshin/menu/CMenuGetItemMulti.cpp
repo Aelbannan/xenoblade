@@ -689,23 +689,13 @@ void CMenuGetItemMulti::Init() {
                         mHasSpecialItem = 1;
                     }
                 }
-                // Retail: rlwinm. r4=tmp; extrwi itemKey; beq e4; b join.
-                // Wii/1.1 merges the goto-pair to bne when e4 falls into join
-                // (MWCC_CASES 10378). CMenuPTGauge: keep beq via fallthrough
-                // single-insn `b` (PLAN.md §17.6 / DECOMP_ASM_INSN).
                 {
                     u32 packed = entry->packed;
                     u32 tmp = (packed >> 16) & 0xf;
                     u16 itemKey = (u16)(packed >> 20);
-                    if (tmp == 0) {
-                        goto do_cat2_e4;
+                    if (tmp != 0) {
+                        goto cat2_join;
                     }
-                    DECOMP_ASM_INSN_BEGIN
-                    asm {
-                        b cat2_join
-                    }
-                    DECOMP_ASM_INSN_END
-                do_cat2_e4:
                     tmp = (u16)BdatGetItemType(itemKey);
                 cat2_join:
                     {

@@ -80,7 +80,7 @@ void ItemBoxLine_RefreshTabSelect(void* self) {
     if (p[0x3a0]) return;
     *(short*)(p + 0x38c) = -1;
     *(short*)(p + 0x38e) = 0;
-    func_801F071C(self);
+    ItemBoxLine_RefreshLineRows(self);
     func_801F0030(self);
     func_801F0488(self);
     func_801F3850(p + 0x310, *(unsigned short*)(p + 0x38e));
@@ -597,7 +597,7 @@ void ItemBoxLine_LoadFiles(CItemBoxLine* self) {
         (u32)KyoshinHeap_GetField44(), &lbl_eu_805071B0[0x1a2], self, 0, 0);
     self->field30 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x1bf], self, 0, 0);
-    func_801E12E0(&self->mInfo2D0[0]);
+    loadItemBox2Files(&self->mInfo2D0[0]);
     func_801EAE8C(&self->mNumSel);
     func_801F34F4(&self->mScrollBar310[0]);
     reinterpret_cast<CSysWin*>(&self->mSysWin)->loadSystemArc();
@@ -636,7 +636,7 @@ void ItemBoxLine_UpdateStates(CItemBoxLine* self) {
     func_801D202C(&self->mCur88);
     func_801D202C(&self->mCurA0);
     func_801D202C(&self->mCurB8);
-    func_801E1348(&self->mInfo2D0[0]);
+    updateItemBox2Anims(&self->mInfo2D0[0]);
     func_801EAED4(&self->mNumSel);
     func_801F3540(&self->mScrollBar310[0]);
     func_8022B748(&self->mSysWin);
@@ -737,15 +737,15 @@ void func_801ED864(CItemBoxLine* self) {
     self->field4C = 1;
     self->unk59 = 0;
     self->unk39E = 0;
-    func_801E1498(&self->mInfo2D0[0]);
+    startItemBox2Open(&self->mInfo2D0[0]);
     // Four values stay live across the calls below (self / tabs / idx / f9):
     // retail keeps them in r28..r31 behind a _savegpr_28 prologue.
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
     int f9 = ItemBoxLine_GetTabEntryReady((void*)tabs, idx);
     func_801E14DC(&self->mInfo2D0[0], (u16)ItemBoxLine_GetTabEntryItem(tabs, idx), 0, self->field39F, f9);
-    func_801E16F0(&self->mInfo2D0[0], 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
-    func_801F08B4(self, (u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
+    setItemBox2NamedText(&self->mInfo2D0[0], 0, (char*)ItemBoxLine_FormatTabEntryName(tabs, idx));
+    ItemBoxLine_SetInfo2Item(self, (u16)ItemBoxLine_GetTabEntryItem(tabs, idx));
     float vec[3];
     func_801F3670(&self->mScrollBar310[0],
                   (const float*)code80135FDC_setVec3(vec, lbl_eu_8066811C, lbl_eu_80668120, lbl_eu_806680F8));
@@ -783,9 +783,9 @@ void ItemBoxLine_TabNext(CItemBoxLine* self) {
         }
     }
     self->unk38E = 0;
-    func_801F061C((void*)self, 0);
+    ItemBoxLine_RefreshTabLabels((void*)self, 0);
     func_801EFFC4((void*)self);
-    func_801F071C((void*)self);
+    ItemBoxLine_RefreshLineRows((void*)self);
     playUISound__FUl(0x70);
     func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
@@ -814,9 +814,9 @@ void func_801EDB80(CItemBoxLine* self) {
         }
     }
     self->unk38E = 0;
-    func_801F061C((void*)self, 1);
+    ItemBoxLine_RefreshTabLabels((void*)self, 1);
     func_801EFFC4((void*)self);
-    func_801F071C((void*)self);
+    ItemBoxLine_RefreshLineRows((void*)self);
     playUISound__FUl(0x70);
     func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
 }
@@ -898,7 +898,7 @@ void func_801EDC94(CItemBoxLine* self) {
                 }
             }
         }
-        func_801F071C(self);
+        ItemBoxLine_RefreshLineRows(self);
         func_801F0030(self);
         func_801F0488(self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
@@ -986,7 +986,7 @@ void ItemBoxLine_CursorPageDown(CItemBoxLine* self) {
                 }
             }
         }
-        func_801F071C(self);
+        ItemBoxLine_RefreshLineRows(self);
         func_801F0030(self);
         func_801F0488(self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
@@ -1049,7 +1049,7 @@ void ItemBoxLine_CursorPageUp(CItemBoxLine* self) {
             self->unk38C = 0;
             self->unk38E = 0;
         }
-        func_801F071C((void*)self);
+        ItemBoxLine_RefreshLineRows((void*)self);
         func_801F0030((void*)self);
         func_801F0488((void*)self);
         func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
@@ -1118,7 +1118,7 @@ void ItemBoxLine_CursorPageDownRow(CItemBoxLine* self) {
         self->unk38E = 0;
         if ((s16)(count - 1) < 0) self->unk38C = 0;
     }
-    func_801F071C((void*)self);
+    ItemBoxLine_RefreshLineRows((void*)self);
     func_801F0030((void*)self);
     func_801F0488((void*)self);
     func_801F3850(&self->mScrollBar310[0], (u16)self->unk38E);
@@ -1137,7 +1137,7 @@ void ItemBoxLine_ConfirmOverlayOrHint(CItemBoxLine* self) {
             if (self->field50 >= 9) {
                 self->field50 = 0xb;
                 self->field3A3 = 1;
-                func_801F071C(self);
+                ItemBoxLine_RefreshLineRows(self);
             }
         }
     } else {
@@ -1179,7 +1179,7 @@ void func_801EE788(CItemBoxLine* self) {
             func_8022B8E4(&self->mSysWin);
             if (self->field50 < 9) return;
             self->field50 = 0xb;
-            func_801F071C(self);
+            ItemBoxLine_RefreshLineRows(self);
         }
         return;
     }
@@ -1369,7 +1369,7 @@ void ItemBoxLine_Info2SelectPrev(CItemBoxLine* self) {
         self->field39F = b - 1;
     }
     u8 tmp[16];
-    func_801E174C(tmp, self->mInfo2D0, self->field39F);
+    calcItemBox2PaneVec(tmp, self->mInfo2D0, self->field39F);
     ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     func_801EFFC4(static_cast<void*>(self));
     playUISound__FUl(0xa);
@@ -1389,7 +1389,7 @@ void ItemBoxLine_Info2SelectNext(void* self) {
         p[0x39f] = 0;
     }
     unsigned char tmp[16];
-    func_801E174C(tmp, p + 0xd0, p[0x39f]);
+    calcItemBox2PaneVec(tmp, p + 0xd0, p[0x39f]);
     ((CBaseCur*)(p + 0xb8))->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
     func_801EFFC4(self);
     playUISound__FUl(0xa);
@@ -1510,9 +1510,9 @@ void ItemBoxLine_EnterState1(CItemBoxLine* self) {
     func_801D216C(&self->mCur70, 1);
     func_801D216C(&self->mCurB8, 1);
     u8 tmp[16];
-    func_801E174C(tmp, &self->mInfo2D0[0], self->field39F);
+    calcItemBox2PaneVec(tmp, &self->mInfo2D0[0], self->field39F);
     ((CBaseCur*)&self->mCurB8)->setRootPaneTranslate((const nw4r::math::VEC3*)(tmp));
-    func_801F071C(self);
+    ItemBoxLine_RefreshLineRows(self);
 }
 
 // ============================================================================
@@ -1732,7 +1732,7 @@ void func_801EFDF4(CItemBoxLine* self, const char* str, bool visible) {
 
 // ============================================================================
 // ItemBoxLine_RebuildTabList: refresh the seven tab-slot panes (same shape as
-// func_801F061C), then, when the slot is unoccupied, bind a texture resource
+// ItemBoxLine_RefreshTabLabels), then, when the slot is unoccupied, bind a texture resource
 // (object A fallback path) onto the slot's pane name; finally dispatch the
 // slot entry through func_801EFB24. r25 keeps tabEntries[i] across the calls.
 // ============================================================================
@@ -1863,8 +1863,8 @@ void func_801F0488(CItemBoxLine* self) {
                       self->field39F, f9);
         char* tabName = reinterpret_cast<char*>(
             ItemBoxLine_FormatTabEntryName(reinterpret_cast<u8*>(tabs), idx));
-        func_801E16F0(reinterpret_cast<u8*>(&self->mInfo2D0[0]), 0, tabName);
-        func_801F08B4(reinterpret_cast<u8*>(self),
+        setItemBox2NamedText(reinterpret_cast<u8*>(&self->mInfo2D0[0]), 0, tabName);
+        ItemBoxLine_SetInfo2Item(reinterpret_cast<u8*>(self),
                       ItemBoxLine_GetTabEntryItem(tabs, idx));
         CIBLPageData* page = reinterpret_cast<CIBLPageData*>(&self->mInfo2D0[0xB0]);
         u16 i = 0;
@@ -1894,11 +1894,11 @@ void func_801F0488(CItemBoxLine* self) {
 }
 #pragma pop
 // ============================================================================
-// func_801F061C: refresh the seven tab-slot panes - format each slot's two
+// ItemBoxLine_RefreshTabLabels: refresh the seven tab-slot panes - format each slot's two
 // pane names, then show/hide them: the slot matching the current tab position
 // is lit when its entry is active, otherwise the paired pane is lit instead.
 // ============================================================================
-void func_801F061C(CItemBoxLine* self) {
+void ItemBoxLine_RefreshTabLabels(CItemBoxLine* self) {
     for (u8 i = 0; i < 7; i++) {
         char nameA[0x20];
         char nameB[0x20];
@@ -1921,14 +1921,14 @@ void func_801F061C(CItemBoxLine* self) {
 }
 
 // ============================================================================
-// func_801F071C: move the active cursor onto its pane. When no tab entry is
+// ItemBoxLine_RefreshLineRows: move the active cursor onto its pane. When no tab entry is
 // selected (unk38C == -1) the tab cursor (mCurA0) tracks the pane named from
 // the current tab position and the line cursor (mCur70) is hidden; otherwise
 // the line cursor tracks the slot pane and the tab cursor is hidden. The
 // cursor Move virtual receives the pane's accumulated translate with x scaled
 // by the fixed reference pane's +0x44 scale.
 // ============================================================================
-extern "C" void func_801F071C(void* selfPtr) {
+extern "C" void ItemBoxLine_RefreshLineRows(void* selfPtr) {
     CItemBoxLine* self = (CItemBoxLine*)selfPtr;
     s16 sel = self->unk38C;
     if (sel == -1) {
@@ -1961,11 +1961,11 @@ extern "C" void func_801F071C(void* selfPtr) {
 }
 
 // ============================================================================
-// func_801F0A58: reset the page word/vector tables and hide every line pane.
+// ItemBoxLine_ResetPageTables: reset the page word/vector tables and hide every line pane.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F0A58(CItemBoxLine* self, u32 itemData) {
+void ItemBoxLine_ResetPageTables(CItemBoxLine* self, u32 itemData) {
     for (u8 i = 0; i < 12; i++) {
         self->pageWords4E0[i] = 0;
         CIBLVec3 vec;
@@ -2213,13 +2213,13 @@ selDone:
 
 
 // ============================================================================
-// func_801F08B4: dispatch on the active tab (tab entry type) and the item pick
+// ItemBoxLine_SetInfo2Item: dispatch on the active tab (tab entry type) and the item pick
 // kind to route to a tab-specific layout refresh / page-navigation helper.
 // ============================================================================
 #pragma push
 #pragma optimize_for_size on
-void func_801F08B4(CItemBoxLine* self, u32 itemData) {
-    func_801F0A58((void*)self, itemData);
+void ItemBoxLine_SetInfo2Item(CItemBoxLine* self, u32 itemData) {
+    ItemBoxLine_ResetPageTables((void*)self, itemData);
     setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc(self->field40, &lbl_eu_805071B0[0x3e6], CItem_sumFamilyByte6(itemData));
     switch ((int)self->tabEntries[(s8)self->field6D]) {
     case 2:

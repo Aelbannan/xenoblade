@@ -33,9 +33,9 @@ extern "C" {
     void CfObjectMove_setModelDisplayFlag(void* obj, int flag);
     void* func_800BBC0C();
     void CfObjectMove_setFlag6C9Bit0(void* obj, int flag);
-    void func_800F38E0(void* battleMgr, void* actor, int flag);
-    void func_800F3958(void* battleMgr, void* actor, int index);
-    void func_800EC8FC(void* battleMgr, void* actor, void* data, int flag);
+    void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
+    void CBattleMan_ClearActorStatus(void* battleMgr, void* actor, int index);
+    void CBattleMan_RunBattleEvent(void* battleMgr, void* actor, void* data, int flag);
     u32 func_800FE68C();
     void setChildB59__(void* obj, s8 val);
     void bindPartnerO_(void* obj, void* target, void* child);
@@ -1277,9 +1277,9 @@ extern "C" int invin(VMThread* pThread, int handle) {
     void* actor = (void*)__dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&lbl_eu_806618F0, 0);
     if (actor) {
         if (enable) {
-            func_800F38E0(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
+            CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
         } else {
-            func_800F3958(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
+            CBattleMan_ClearActorStatus(getInstance__Q22cf14CBattleManagerFv(), actor, 1);
         }
     }
     return 0;
@@ -1350,7 +1350,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
         data.field_14 = (u16)arg4;
         data.field_20 = arg2;
         data.field_24 = arg5;
-        func_800EC8FC(getInstance__Q22cf14CBattleManagerFv(), actor, &data, 0);
+        CBattleMan_RunBattleEvent(getInstance__Q22cf14CBattleManagerFv(), actor, &data, 0);
     }
     return 0;
 }
@@ -1367,7 +1367,7 @@ extern "C" int delBuff(VMThread* pThread, int handle) {
                                         (void*)&lbl_eu_806618F0, 0);
     if (actor) {
         void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
-        func_800F3958(battleMgr, actor, index);
+        CBattleMan_ClearActorStatus(battleMgr, actor, index);
     }
     return 0;
 }

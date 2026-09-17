@@ -90,9 +90,9 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-800d95cc | kyoshin/cf/CBattleManager | `__dt__29reslist<PQ22cf12IBattleEvent>Fv` | reslist<PQ22cf12IBattleEvent>::~reslist<PQ22cf12IBattleEvent>() | 0x800D95CC |
 | us-800d99d8 | kyoshin/cf/CBattleManager | `__dt__Q22cf14CBattleManagerFv` | cf::CBattleManager::~CBattleManager() | 0x800D99D8 |
 | us-800d9d00 | kyoshin/cf/CBattleManager | `func_800D9218__Q22cf14CBattleManagerFv` | cf::CBattleManager::func_800D9218() | 0x800D9D00 |
-| us-800ead8c | kyoshin/cf/CBattleManager | `func_800EA2A4` | func_800EA2A4 | 0x800EAD8C |
-| us-800f4440 | kyoshin/cf/CBattleManager | `func_800F3958` | func_800F3958 | 0x800F4440 |
-| us-800f4754 | kyoshin/cf/CBattleManager | `func_800F3C6C` | func_800F3C6C | 0x800F4754 |
+| us-800ead8c | kyoshin/cf/CBattleManager | `CBattleMan_SendActorEvent` | CBattleMan_SendActorEvent | 0x800EAD8C |
+| us-800f4440 | kyoshin/cf/CBattleManager | `CBattleMan_ClearActorStatus` | CBattleMan_ClearActorStatus | 0x800F4440 |
+| us-800f4754 | kyoshin/cf/CBattleManager | `CBattleMan_BumpUnk94Key` | CBattleMan_BumpUnk94Key | 0x800F4754 |
 | us-80194d8c | kyoshin/cf/CPartsChange | `CPartsChange_GetActorTable` | CPartsChange_GetActorTable | 0x80194D8C |
 | us-80194f20 | kyoshin/cf/CPartsChange | `CPartsChange_GetLandmarkTable` | CPartsChange_GetLandmarkTable | 0x80194F20 |
 | us-801b3e20 | kyoshin/cf/CPcEffect07 | `func_801B255C` | func_801B255C | 0x801B3E20 |
@@ -135,7 +135,7 @@ Demoted 299 rows from FULL_MATCH -> NOT_STARTED (non-byte-identical bodies).
 | us-802ba65c | kyoshin/help/CHelp | `CHelp_UnkVirtualFunc2__Q22cf5CHelpFv` | cf::CHelp::CHelp_UnkVirtualFunc2() | 0x802BA65C |
 | us-80217260 | kyoshin/makecrystal/CMCCrystalBox | `confirmCrystalSelect` | confirmCrystalSelect | 0x80217260 |
 | us-80218a94 | kyoshin/makecrystal/CMCCrystalBox | `onCrystalAnimToState5` | onCrystalAnimToState5 | 0x80218A94 |
-| us-8029acd4 | kyoshin/makecrystal/CMCGetItemBox | `func_8029860C` | func_8029860C | 0x8029ACD4 |
+| us-8029acd4 | kyoshin/makecrystal/CMCGetItemBox | `forwardMCSubObj88` | forwardMCSubObj88 | 0x8029ACD4 |
 | us-802149c0 | kyoshin/makecrystal/CMakeCrystalWin | `func_80212B68` | func_80212B68 | 0x802149C0 |
 | us-8021434c | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124F4` | func_802124F4 | 0x8021434C |
 | us-80214354 | kyoshin/makecrystal/CMenuMakeCrystal | `func_802124FC` | func_802124FC | 0x80214354 |

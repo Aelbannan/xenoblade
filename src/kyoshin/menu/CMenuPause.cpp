@@ -366,8 +366,8 @@ extern "C" void func_80252564(CMenuPause* p) {
     if (first) {
         MenuStateClear64064();
         func_800853C8__Q22cf13CfGameManagerFv();
-        func_801BFB34(lbl_eu_806687DC, 0, 3, 0);
-        func_801BFB34(lbl_eu_806687DC, 0, 0xe, 0);
+        CfSoundMan_PlayRequest(lbl_eu_806687DC, 0, 3, 0);
+        CfSoundMan_PlayRequest(lbl_eu_806687DC, 0, 0xe, 0);
         p->mState = 3;
     } else if (second) {
         playUISound__FUl(6);

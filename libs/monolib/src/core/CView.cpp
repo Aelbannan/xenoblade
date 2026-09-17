@@ -42,7 +42,7 @@ void invalidCurrent__9CViewRootFP5CView(CView* view);
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern "C" CView* getView1__11CSplitFrameFv(void* splitFrame);
 extern "C" CView* getView2__11CSplitFrameFv(void* splitFrame);
-s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
+extern "C" s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
 void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
 extern "C" bool isActive__11CSplitFrameFv(void* splitFrame);
 void apply__11CSplitFrameFv(void* splitFrame);
@@ -2360,50 +2360,31 @@ done:
     return result;
 }
 
-// PLAN.md 17.6: whole-function asm. MWCC C++ spills then lwz unk45C; retail
-// interleaves lwz/cmpwi into the callee-save prologue (89.2% C++ cap).
-asm s16 CView::getSplitLine() {
-    stwu r1, -0x20(r1)
-    mflr r0
-    stw r0, 0x24(r1)
-    lwz r0, 0x45c(r3)
-    stw r31, 0x1c(r1)
-    li r31, 0
-    cmpwi r0, 0
-    stw r30, 0x18(r1)
-    li r30, 0
-    stw r29, 0x14(r1)
-    mr r29, r3
-    beq getSplitLine_no_view1
-    mr r3, r0
-    bl getView1__11CSplitFrameFv
-    cmpwi r3, 0
-    beq getSplitLine_no_view1
-    li r30, 1
-getSplitLine_no_view1:
-    cmpwi r30, 0
-    beq getSplitLine_no_view2
-    lwz r3, 0x45c(r29)
-    bl getView2__11CSplitFrameFv
-    cmpwi r3, 0
-    beq getSplitLine_no_view2
-    li r31, 1
-getSplitLine_no_view2:
-    cmpwi r31, 0
-    beq getSplitLine_zero
-    lwz r3, 0x45c(r29)
-    bl getSplitLine__11CSplitFrameFv
-    b getSplitLine_epilogue
-getSplitLine_zero:
-    li r3, 0
-getSplitLine_epilogue:
-    lwz r0, 0x24(r1)
-    lwz r31, 0x1c(r1)
-    lwz r30, 0x18(r1)
-    lwz r29, 0x14(r1)
-    mtlr r0
-    addi r1, r1, 0x20
-    blr
+// High-level C++ gate (mirrors setSplitLine's logic: line is returned only
+// when both child views exist). The former whole-function asm was removed
+// 2026-09-17 - PLAN.md §17.6 has no whole-function carve-out (goto gates only).
+// Residual: 78.4% due to the retail prologue interleave (lwz unk45C hoisted
+// before the callee-save stores), a known high-level-C++ cap.
+s16 CView::getSplitLine() {
+    u32 hasView2;
+    u32 hasView1;
+
+    hasView2 = 0;
+    hasView1 = 0;
+    if (unk45C != nullptr) {
+        if (getView1__11CSplitFrameFv(unk45C) != nullptr) {
+            hasView1 = 1;
+        }
+    }
+    if (hasView1 != 0) {
+        if (getView2__11CSplitFrameFv(unk45C) != nullptr) {
+            hasView2 = 1;
+        }
+    }
+    if (hasView2 != 0) {
+        return getSplitLine__11CSplitFrameFv(unk45C);
+    }
+    return 0;
 }
 
 void CView::setSplitLine(s16 line) {

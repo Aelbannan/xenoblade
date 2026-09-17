@@ -310,8 +310,8 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
     if (Scn_GetFrameDelta(lbl_eu_80663E14) > lbl_eu_80666A50) {
         Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_80666A3C);
     }
-    func_801C028C(0, 0);
-    func_801C028C(1, 0);
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
 done:
     ;
 }

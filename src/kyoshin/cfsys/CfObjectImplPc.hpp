@@ -1005,7 +1005,7 @@ void CfObjectMove_relaySubB0Slot58(void* sub, u32 a, u32 b);
 // distinct overload here (MWCC 10197), and only this TU uses it.
 void setAnimCount(void* obj, u32 val); // canonical u32 form (CActParamAnimGame.hpp/ImplMove.hpp)
 void CCharVoiceMan_EnqueuePcStateVoice(void* obj);
-void func_800EC8FC(void* mgr, void* obj, void* evtCopy, s32 flag);
+void CBattleMan_RunBattleEvent(void* mgr, void* obj, void* evtCopy, s32 flag);
 void func_800CB454(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 void func_8018C820(void* obj, int value);
 void func_8014B2DC(void* blk);
@@ -1016,7 +1016,7 @@ void func_800CD5DC(void* self, u32 a, u32 b, u32 c, u32 d, u32 e);
 int getAnimChain(void* obj);
 // func_8004B9D4 is TU-local in CfObjectImplPc.cpp (same 5-arg form as below):
 // the shared CfObjectMove.hpp decl is a 4-arg overload (MWCC 10197).
-void func_801BFE8C(u32 a, u32 b, u32 c);
+void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 void CCharVoiceMan_EnqueuePcActionVoice(void* obj);
 void func_800CC964(void);
 void func_800983B8(void* a, int b);
@@ -1024,13 +1024,13 @@ unsigned int addTableValueWithClamp__Q22cf13CfGameManagerFv(unsigned int a,
                                                     unsigned int b,
                                                     unsigned int c);
 int func_80260518(void* obj, int id, u32* outW, f32* outF);
-void func_800EA9A8(void* mgr, void* obj, void* arg, int a, int b);
+void CBattleMan_FireActorEvent918(void* mgr, void* obj, void* arg, int a, int b);
 void func_800D81A8(int a, void* obj, int c);
 void CCharVoiceMan_EnqueueGaugeResultVoice(void* a, void* b);
 void func_802809C8(void);
 void* func_80149154(void* obj, int id);
 void CUICfManager_queueFactoryMenu(int a, float b);
-int func_800DA06C(void* mgr, void* obj);
+int CBattleMan_ListHasValue(void* mgr, void* obj);
 void func_800451D8(u32 entry, void* sub);
 void* func_8009EC9C(u32 index); // canonical owner-form (void*, u32): CtrlObjectParam.cpp / CfObjectPc.hpp; matches CVS_THREAD.hpp (MWCC 10197)
 u8* CtrlObjectParam_GetArtsStatsRow(u8* info, int a);
@@ -1076,11 +1076,11 @@ extern "C" int func_8026178C(void* obj, u32 idx);
 extern "C" int func_8025FB10(void* obj, u32 idx); // canonical int form (owner decl: chain/CChainActorList.hpp)
 extern "C" void func_800CAB2C(void* self);
 extern "C" void func_8014AC38(void* blk, void* rec);
-extern "C" void func_800F38E0(void* mgr, void* obj, s32 id);
-extern "C" void func_800F3958(void* mgr, void* obj, s32 id);
+extern "C" void CBattleMan_ClearEventNotify(void* mgr, void* obj, s32 id);
+extern "C" void CBattleMan_ClearActorStatus(void* mgr, void* obj, s32 id);
 extern "C" void func_800E9B54(void* mgr, void* obj, u32 a, u32 b);
 extern "C" void func_800D9CA0(void* mgr, void* obj);
-extern "C" void* func_800EA444(void* mgr);
+extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int func_801B1CCC(int idx);
 extern "C" int findObjB48ById(int id);
 extern "C" void func_80084654__Q22cf13CfGameManagerFv(int flag);

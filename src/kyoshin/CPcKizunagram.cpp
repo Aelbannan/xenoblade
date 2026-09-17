@@ -88,7 +88,7 @@ extern "C" void KizunagramUpdateMainState(CPcKizunagram* self) {
 
 // Destroy the cursor's layout: delete it through its vtable (deleting dtor,
 // slot 2) and null out the pointer. The double null-check is MWCC's `delete`
-// lowering for this class (same shape as KizunagramTeardown's mLayout delete).
+// lowering for this class (same shape as func_8025D9C4's mLayout delete).
 extern "C" void __declspec(noinline) KizunaCurDestroyLayout(CPcKizunaCur* self) {
     if (self->mpLayout != 0) {
         delete self->mpLayout;
@@ -107,7 +107,7 @@ void KizunagramDraw(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-extern "C" void KizunagramTeardown(CPcKizunagram* self) {
+extern "C" void func_8025D9C4(CPcKizunagram* self) {
     func_801390E0(&self->mFileHandle);
     self->mStateByte1 = 0;
     KizunaCurDestroyLayout((CPcKizunaCur*)self->mKizunaCur);

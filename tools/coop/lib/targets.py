@@ -604,7 +604,11 @@ def sync_results_from_attempts(config: CoopConfig, attempts: Iterable[Dict[str, 
             status = str(attempt.get("status", row.get("status", "NOT_STARTED")))
             row["status"] = status
             if attempt.get("instruction_match") is not None:
-                row["instruction_match"] = round(float(attempt["instruction_match"]), 3)
+                raw_match = attempt["instruction_match"]
+                if isinstance(raw_match, str):
+                    match = re.search(r"-?\d+(?:\.\d+)?", raw_match)
+                    raw_match = match.group(0) if match else 0.0
+                row["instruction_match"] = round(float(raw_match), 3)
             if attempt.get("equivalence_status"):
                 row["equivalence_status"] = attempt["equivalence_status"]
             if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:

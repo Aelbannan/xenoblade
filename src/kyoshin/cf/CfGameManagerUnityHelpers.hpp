@@ -652,7 +652,7 @@ extern "C" UnkClass_800817BC* createBattleActor__Q22cf13CfGameManagerFv(u32 valu
                                                                       u32 index);
 extern "C" void bindPartnerO_(void* object, void* player,
                                 u32 value);
-extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first,
+extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, float first,
                                 float second);
 extern "C" void CfObjectMove_setMoveSpeed(cf::CfObjectMove* player, float value);
 extern const float lbl_eu_80666564;
@@ -674,7 +674,7 @@ extern "C" void triggerPlayerEffects__Q22cf13CfGameManagerFv(u32 objectValue,
             }
             if (triggerFirstPlayer && i == 0) {
                 const ml::CVec3* playerValue = player->CfObject_getPosVector();
-                func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
+                CfSoundMan_PlayLinkedParam(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
             CfObjectMove_resetMoveSpeed(player);
@@ -699,7 +699,7 @@ extern "C" void resetPlayerEffectsB__Q22cf13CfGameManagerFv(u32 objectValue,
             }
             if (triggerFirstPlayer && i == 0) {
                 const ml::CVec3* playerValue = player->CfObject_getPosVector();
-                func_801BFDE8(1, triggerFirstPlayer, (u32)playerValue,
+                CfSoundMan_PlayLinkedParam(1, triggerFirstPlayer, (u32)playerValue,
                               lbl_eu_8066649C, lbl_eu_806664A0);
             }
             player->CfObject_syncModelRate(lbl_eu_80666498);
@@ -1988,7 +1988,7 @@ extern "C" void clearQueuedEvents__Q22cf13CfGameManagerFv(u32 value, bool makeCu
 
 extern "C" void enableGameFlag__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" void Scn_SetTimeScale(CScn* scene, float value);
-extern "C" void func_801C011C(u32 value, u32 frames);
+extern "C" void CfSoundMan_PauseAllRecords(u32 value, u32 frames);
 extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
     cf::CfGameManager::getInstance();
     if (enable) {
@@ -1998,7 +1998,7 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
         clearGameFlagMask__Q22cf13CfGameManagerFv(0x40000000);
         Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066649C);
     }
-    func_801C011C(enable, 10);
+    CfSoundMan_PauseAllRecords(enable, 10);
 }
 
 extern "C" BdatTextEntry lbl_eu_80571628;

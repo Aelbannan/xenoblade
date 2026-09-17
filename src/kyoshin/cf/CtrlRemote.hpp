@@ -548,7 +548,7 @@ extern "C" int func_80190940(void* res, void* actor, int mode, void* filter);
 extern "C" unsigned long func_801BA2C8(void* self);
 extern "C" void func_80280ADC();
 extern "C" void func_8017FEF0(void* obj, int arg);
-extern "C" void* func_800EA444(void* bm);
+extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" u32 getAnimModelId(void* obj);
 extern "C" void CfObjectMove_setAnimModeArgs(u8* obj, int a, int b, int c, int d);
 extern "C" void CCharVoiceMan_PushChainVoiceNode(void* a, void* b);
@@ -646,7 +646,7 @@ public:
     CtrlRemoteSub374View* mField374;  // 0x374
 };
 
-// Object reached through func_800EA444 whose +0x824 flag word gains bit
+// Object reached through CBattleMan_FetchVisionObj whose +0x824 flag word gains bit
 // 0x00080000 in func_8009C1BC.
 struct CtrlRemoteEaView {
     u8 _00[0x824];

@@ -90,7 +90,7 @@ extern "C" float func_800D81A8(void* obj, void* target, void* source);
 
 extern "C" void func_8018C820(void* obj, int value);   // party-gauge add
 
-extern "C" void func_800F38E0(void* battleMgr, void* actor, int flag);
+extern "C" void CBattleMan_ClearEventNotify(void* battleMgr, void* actor, int flag);
 
 extern "C" void func_80277A7C(void* battleSub, void* actor, float value);
 

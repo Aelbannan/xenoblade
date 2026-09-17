@@ -568,7 +568,7 @@ extern "C" void CActorParam_applyDamage__Q22cf13CfObjectActorFv(cf::CfObjectActo
                     self->CActorParam_addHp(f);
                     static_cast<cf::CBattleState*>((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId(0x100);
                     self->CActorParam_addArtsGauge(lbl_eu_80667768);
-                    func_800F38E0(getInstance__Q22cf14CBattleManagerFv(), self, 0x93);
+                    CBattleMan_ClearEventNotify(getInstance__Q22cf14CBattleManagerFv(), self, 0x93);
                 }
             }
         }

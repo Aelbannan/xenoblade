@@ -785,12 +785,12 @@ struct CfMoveEnumList {
     u32 field_620;                             // 0x620
 };
 
-// First word of the CBattleManager::func_800EA444 result (func_800CEA34).
+// First word of the CBattleManager::CBattleMan_FetchVisionObj result (func_800CEA34).
 struct CfMoveBMId {
     u32 field_0;                               // 0x00
 };
 
-// CBattleManager::func_800EA444 result view reading the flag word at +0x824
+// CBattleManager::CBattleMan_FetchVisionObj result view reading the flag word at +0x824
 // (func_800CD5DC probes bit 11).
 struct CfMoveBM824 {
     u8 _00_823[0x824];                         // 0x00-0x823
@@ -839,7 +839,7 @@ extern "C" {
 void* func_8016FE34(void* source);
 void func_8014B2DC(void* buf); // canonical void* form (CtrlAct.hpp/ImplPc.hpp)
 void simPushWordToBuf(u32 id, void* source);
-void* func_800EA444(void* bm);
+void* CBattleMan_FetchVisionObj(void* bm);
 #include "kyoshin/cf/CfMapItemManager.hpp" // func_80174C98 (owner decl)
 void* getInstance__Q22cf13CfGameManagerFv();
 void func_802A0E08(void* self);
@@ -876,7 +876,7 @@ extern "C" void func_800CB21C(CfObjectImplMoveObj* self, u32 id);
 
 // Battle-manager helpers dispatched by func_800CD5DC (retail symbols are
 // unmangled; owners: CfObjectImplEne.cpp / CBattleManager.cpp).
-extern "C" int func_800DA06C(void* mgr, void* obj);
+extern "C" int CBattleMan_ListHasValue(void* mgr, void* obj);
 extern "C" void func_800D9978(void* mgr, void* obj);
 extern "C" void func_800D9CA0(void* mgr, void* target);
 extern "C" void func_800DA0A4(void* mgr, void* actor, u32 param);
@@ -1004,11 +1004,11 @@ extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
     u32 soundMan, u32 a, u32 b, u32 c, f32 e);
 // Same form as CfResPcImpl/CfResReloadImpl/CfResObjImpl (single shared
 // signature; retail function returns the sound id).
-extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
+extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 extern "C" void setChildV40__(void* a, void* b);
-extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, f32 first,
+extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, f32 first,
     f32 second); // single shared uint form (CfGimmick.hpp / UnityHelpers)
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" void* simGetLeafActData(void);
 // func_800CF810 shape: ground/screen probe writing the adjusted position and
 // taking the source vector plus a float constant.

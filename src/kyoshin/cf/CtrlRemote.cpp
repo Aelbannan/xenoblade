@@ -1362,7 +1362,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         }
         if (sel == 5) {
             ea =
-                (CtrlRemoteEaView*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+                (CtrlRemoteEaView*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
             if (ea != NULL) {
                 page = func_8017FD4C(fd);
                 if ((u32)(page - 1) <= 1) {
@@ -1454,7 +1454,7 @@ void func_8009C1BC(CtrlPcVf38State* self)
         {
             u8* gaugeBase =
                 (u8*)getInstance__Q22cf14CBattleManagerFv() + 0x219c;
-            u32 chainId = *(u32*)func_800EA444(
+            u32 chainId = *(u32*)CBattleMan_FetchVisionObj(
                 getInstance__Q22cf14CBattleManagerFv());
             cf::CChainState* chain =
                 (cf::CChainState*)((u8*)getInstance__Q22cf14CBattleManagerFv() +

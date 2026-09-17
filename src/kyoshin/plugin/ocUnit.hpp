@@ -74,7 +74,7 @@ struct Vec3f {
 // object bone-target word (+0xC4): raw offsets now, no view structs.
 // The actor word at +0x3F10 is likewise read raw at the use site.
 
-// Battle-event work buffer passed to func_800EC8FC (0x34 bytes, memset to 0
+// Battle-event work buffer passed to CBattleMan_RunBattleEvent (0x34 bytes, memset to 0
 // then partially filled by the plugin).
 struct BattleEventWork {
     u32 field_00;     // copied from actor +0x3F10

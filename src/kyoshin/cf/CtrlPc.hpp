@@ -275,7 +275,7 @@ extern "C" void func_8027936C(void* a, int b);
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 extern "C" void* func_800FEDF8(void);
-extern "C" int func_800DA06C(void* bm, void* obj);
+extern "C" int CBattleMan_ListHasValue(void* bm, void* obj);
 extern "C" void cfCam_andcUnk04(void* obj, u32 mask);
 extern "C" void cfCam_setClear04(void* obj, u32 mask, int flag);
 extern "C" CfObj90E4* func_800FE68C(void);

@@ -66,7 +66,7 @@ namespace cf {
         /* 0x08 */ u32 field_0x08; // aligned data size
         /* 0x0C */ u32 field_0x0C; // work-buffer size
         /* 0x10 */ u32 field_0x10;
-        /* 0x14 */ void* field_0x14; // sound-data buffer; freed by func_801C0A14
+        /* 0x14 */ void* field_0x14; // sound-data buffer; freed by CfSoundMan_ReleaseRecord
         /* 0x18 */ u32 field_0x18;
         /* 0x1C */ u32 field_0x1C;
         /* 0x20 */ u32 field_0x20;
@@ -79,7 +79,7 @@ namespace cf {
 
     // Sound manager singleton (retail lbl_eu_80664430, .sbss). Layout:
     // 0x00 header word, 0x04 the two FX slots (2 x 0x4FC = 0x9F8), 0x9FC the
-    // record array (func_801C028C hands the FX-slot array to func_801C34B0).
+    // record array (CfSoundMan_ClearFxEffect hands the FX-slot array to func_801C34B0).
     struct CfSoundManGlobal {
         /* 0x00 */ u16 field_0x00;
         u8 field_0x02[0x02];
@@ -88,8 +88,8 @@ namespace cf {
     };
 
     // 0x30-byte sound-slot record: 64 entries in the global table
-    // (lbl_eu_80575928). Initialized by func_801C02F8, looked up by id
-    // (func_801C087C), torn down by func_eu_801C22F0.
+    // (lbl_eu_80575928). Initialized by CfSoundMan_InitSlotState, looked up by id
+    // (CfSoundMan_FindSlotById), torn down by CfSoundMan_StopSlotsOfSound.
     struct CfSoundSlot {
         /* 0x00 */ nw4r::snd::detail::BasicSound* mSound;
         /* 0x04 */ u16 mId;
@@ -109,7 +109,7 @@ namespace cf {
     };
 
     // 12-byte parameter block copied into a sound-slot record at +0x08
-    // (see func_801BFAE8).
+    // (see CfSoundMan_WriteSlotParam).
     struct CfSoundSlotParam {
         /* 0x00 */ u32 field_0x00;
         /* 0x04 */ u32 field_0x04;
@@ -124,14 +124,14 @@ namespace cf {
 
     // 12-byte position block returned by CfSoundActorSrc::getPosition
     // (vtable +0xAC). Copied word-wise into CfSoundSlot::field_0x08..0x10 by
-    // the sound-slot starters (func_801C10C0 / func_801C03C8).
+    // the sound-slot starters (func_801C10C0 / CfSoundMan_ReadSlotPosition).
     struct CfSoundActorPos {
         /* 0x00 */ u32 field_0x00;
         /* 0x04 */ u32 field_0x04;
         /* 0x08 */ u32 field_0x08;
     };
 
-    // 3-float staging block used by func_801C03C8: the struct member layout
+    // 3-float staging block used by CfSoundMan_ReadSlotPosition: the struct member layout
     // pins the frame slots (x lowest) while the assignment statement order
     // controls the retail lfs load sequence.
     struct CfSoundPos3f {
@@ -178,7 +178,7 @@ namespace cf {
     };
 
     // vf73 (vtable +0x12C) result view: floats at +0x0C/+0x1C/+0x2C read by
-    // func_801C03C8 (position block).
+    // CfSoundMan_ReadSlotPosition (position block).
     struct CfSoundActorPos3 {
         u8 field_0x00[0x0C];
         /* 0x0C */ f32 field_0x0C;
@@ -189,7 +189,7 @@ namespace cf {
     };
 
     // obj->field_0x98 sub-object: floats at +0x2DC/+0x2E0/+0x2E4 read by
-    // func_801C03C8 (position block).
+    // CfSoundMan_ReadSlotPosition (position block).
     struct CfSoundActorSub98 {
         u8 field_0x00[0x2DC];
         /* 0x2DC */ f32 field_0x2DC;
@@ -197,7 +197,7 @@ namespace cf {
         /* 0x2E4 */ f32 field_0x2E4;
     };
 
-    // Sound-pause request parameters read by func_801C15C0 (retail .bss,
+    // Sound-pause request parameters read by CfSoundMan_PauseMatchingSlot (retail .bss,
     // 0x10 bytes). field_0x00 is the target sound id (-1 = all sounds),
     // field_0x04 the fade frames, field_0x08 the pause flag.
     struct CfSoundPauseParam {
@@ -272,7 +272,7 @@ extern const float lbl_eu_80667E8C;
 extern cf::CfSoundManGlobal* lbl_eu_80664430;
 
 // Global event/presentation flag words (.sbss). lbl_eu_80663E24 bit 9 / bit 11
-// and lbl_eu_80663E28 bit 7 gate the func_801BFB34 sound-start dispatch.
+// and lbl_eu_80663E28 bit 7 gate the CfSoundMan_PlayRequest sound-start dispatch.
 extern u32 lbl_eu_80663E28;
 
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs
@@ -294,7 +294,7 @@ extern u8 lbl_eu_8066443A;
 // No-op notification handler. Called from func_801C0DC4 when
 // nw4r::snd::detail::SoundStartable::detail_StartSound succeeds.
 // Left intentionally empty in the retail binary (single blr).
-extern "C" void func_801C0DC0();
+extern "C" void CfSoundMan_PlayFailHook();
 
 // nw4r member dtors called directly by __dt__801BF80C (retail symbols).
 // extern "C" keeps the call relocs bound to the retail-unmangled names (a
@@ -304,7 +304,7 @@ extern "C" void func_801C0DC0();
 extern "C" void __dt__Q34nw4r3snd18SoundArchivePlayerFv(nw4r::snd::SoundArchivePlayer* self, int flag);
 extern "C" void __dt__Q34nw4r3snd18MemorySoundArchiveFv(nw4r::snd::MemorySoundArchive* self, int flag);
 
-// nw4r archive ctors called directly by func_801C09BC (retail symbols):
+// nw4r archive ctors called directly by CfSoundMan_CtorRecord (retail symbols):
 // placement new would add MWCC's exceptions-on NULL check around the call,
 // which the retail binary does not have (whole TU compiled without it).
 extern "C" void __ct__Q34nw4r3snd18MemorySoundArchiveFv(nw4r::snd::MemorySoundArchive* self);

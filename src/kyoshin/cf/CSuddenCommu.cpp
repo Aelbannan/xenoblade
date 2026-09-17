@@ -165,7 +165,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
                 if (spot2 != 0) other = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                 if (other == 0) continue;
                 if (((cf::CActorParam*)other)->CActorParam_isBattleLocked() == 0) {
-                    func_800EA9A8(getInstance__Q22cf14CBattleManagerFv(), other, &cmd, 0x34, 0);
+                    CBattleMan_FireActorEvent918(getInstance__Q22cf14CBattleManagerFv(), other, &cmd, 0x34, 0);
                 }
             }
         }

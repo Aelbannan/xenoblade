@@ -1028,10 +1028,14 @@ stop:
     }
 
     // Defined below its callers so the inliner cannot fold the empty body
-    // into the handleViBeginFrame thunk.
+    // into the handleViBeginFrame thunk; dont_inline keeps the retail tail
+    // branch (`subi r3,r3,0x1C4; b onMovieViBegin`) from being folded away.
+#pragma push
+#pragma dont_inline on
     void onMovieViBegin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Empty
     }
+#pragma pop
 
 }
 
@@ -1048,27 +1052,21 @@ extern "C" const char lbl_eu_8052301C[0x34] = {
     0x00, 0x00, 0x00, 0x00,
 };
 
-// CDeviceVICb deleting-dtor vtable slot (retail .text @0x8045F414): a bare
-// tail branch to the complete destructor. The retail symbol spells
-// "@452@__dt__16CLibCriMoviePlayFv", which C++ cannot declare; UNIT_RULES
-// exact_renames renames this thunk to the retail name (CDeviceVI.cpp
-// thunk_456 pattern).
-extern "C" void __dt__16CLibCriMoviePlayFv();
-asm void thunk_452_dt(void) {
-    nofralloc
-    b __dt__16CLibCriMoviePlayFv
+// CDeviceVICb adjustor thunks (retail .text @0x8045F410 / @0x8045F400):
+// recover the full object from the +0x1C4 CDeviceVICb subobject and tail-call
+// the real body. High-level adjustor form (CLibCri.cpp precedent): the
+// "@N@"-prefixed retail symbols cannot be spelled in C++, so the placeholder
+// name is renamed by UNIT_RULES exact_renames (tools/postprocess_reloc_names.py).
+extern "C" void __dt__16CLibCriMoviePlayFv(void* self, int flag);
+extern "C" void thunk_452_dt(void* self, int flag) {
+    __dt__16CLibCriMoviePlayFv((char*)self - 0x1C4, flag);
 }
 
-// CDeviceVICb viBeginFrame thunk (retail .text @0x8045F400): adjust this by
-// -0x1C4 and tail-branch to onMovieViBegin. Written as an asm thunk (same
-// isolated-tail exception as thunk_452_dt / CDeviceVI thunk_456): any C++
-// body is optimized away since tail-calling the empty onMovieViBegin equals
-// returning. Named literally so the symbol carries the retail mangled name.
-asm void handleViBeginFrame__16CLibCriMoviePlayFv(void) {
-    nofralloc
-    subi r3, r3, 0x1C4
-    b onMovieViBegin__16CLibCriMoviePlayFv
+#pragma auto_inline off
+extern "C" void handleViBeginFrame__16CLibCriMoviePlayFv(void* self) {
+    onMovieViBegin__16CLibCriMoviePlayFv((CLibCriMoviePlay*)((char*)self - 0x1C4));
 }
+#pragma auto_inline on
 
 // ===== Vtable + RTTI + locator (dissolved monolibdata2) =====
 // Foreign function words (retail-named; C-linkage decls emit the mangled

@@ -103,7 +103,7 @@ extern "C" {
     void playUISound__FUl(u32);
     void func_80188890(u32);
     int isClassicController__Q22cf13CfGameManagerFv(int arg);
-    void func_801BFB34(f32, int, int, int);
+    void CfSoundMan_PlayRequest(f32, int, int, int);
     void MenuStateClear64064();
     void func_800853C8__Q22cf13CfGameManagerFv();
     void setPresentationFlag__Q22cf13CfGameManagerFv(bool);

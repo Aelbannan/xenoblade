@@ -106,7 +106,7 @@ void CfGimmick_SetGlobalFlagD0000();
 void CfGimmick_SetGlobalFlag40000();
 void CfGimmick_ApplyPartyMoveSpeed(f32);
 void CfGimmick_ApplyPartyMoveSpeedGated(u32 flags);
-void func_801BFED0(int, u16, int);
+void CfSoundMan_ApplySlotStop(int, u16, int);
 extern "C" void* createBattleActor__Q22cf13CfGameManagerFv(u32 value, u32 unused);
 void cfCam_syncFollowD();
 void setChildB59__(WarpObject*, int);
@@ -351,7 +351,7 @@ extern "C" void func_8020D998(WarpData* self) {
                     self->object104 = 0;
                 }
                 if (self->soundHandle != 0) {
-                    func_801BFED0(1, self->soundHandle, 0xa);
+                    CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
                     self->soundHandle = 0;
                 }
                 self->flags &= ~1u;
@@ -432,7 +432,7 @@ extern "C" void func_8020D998(WarpData* self) {
                     self->object104 = 0;
                 }
                 if (self->soundHandle != 0) {
-                    func_801BFED0(1, self->soundHandle, 0xa);
+                    CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
                     self->soundHandle = 0;
                 }
                 self->flags &= ~1u;
@@ -544,7 +544,7 @@ extern "C" void func_8020DF04(WarpData* self) {
             self->object104 = 0;
         }
         if (self->soundHandle != 0) {
-            func_801BFED0(1, self->soundHandle, 0xa);
+            CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
             self->soundHandle = 0;
         }
         self->flags &= ~1u;
@@ -606,7 +606,7 @@ extern "C" void func_8020E27C(WarpData* self) {
 
     clearWarpObjects(self);
     if (self->soundHandle != 0) {
-        func_801BFED0(1, self->soundHandle, 0xa);
+        CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
         self->soundHandle = 0;
     }
     u32 flags = self->flags;
@@ -657,7 +657,7 @@ extern "C" void func_8020E3F0(WarpData* self) {
                 self->object104 = 0;
             }
             if (self->soundHandle != 0) {
-                func_801BFED0(1, self->soundHandle, 0xa);
+                CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
                 self->soundHandle = 0;
             }
             self->flags &= ~1u;
@@ -814,7 +814,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
                     clearObject(self->object100);
                     clearObject(self->object104);
                     if (self->soundHandle != 0) {
-                        func_801BFED0(1, self->soundHandle, 0xa);
+                        CfSoundMan_ApplySlotStop(1, self->soundHandle, 0xa);
                         self->soundHandle = 0;
                     }
                     self->flags = flags & ~1u;

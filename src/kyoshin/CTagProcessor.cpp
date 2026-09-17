@@ -339,6 +339,11 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation TagProcDispatchCalcRect(
 
 extern "C" int defaultProcess(void* self) { return 0; }
 
+// Flat 8-byte stub (retail li r3,0; blr): default-operation sentinel shared
+// by the tag dispatch tables. Kept as its own symbol (not folded into
+// defaultProcess) so the retail TagProcDefaultOp label has a decomp body.
+extern "C" int TagProcDefaultOp(void) { return 0; }
+
 // Message pre-processor: copy the raw message into the buffer, then walk it
 // in place - a CRLF at the head is stripped (the tail is copied down over
 // it), and a '<name=value>' tag is split on '=' by the tokenizer helpers,

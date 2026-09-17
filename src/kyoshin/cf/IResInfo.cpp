@@ -61,7 +61,7 @@ extern "C" {
     void KyoshinHeap_Free78(void*, int);
     void walkReslistBE8vt(void*);
     void triggerObjsByType(void);
-    void func_801BFE8C(u32, u32, u32);
+    void CfSoundMan_StopSlotByMode(u32, u32, u32);
     void func_804CC1BC(void*, void*);
     void func_804CC1D8(void*, void*);
     s32 gflagGateMask8();
@@ -118,7 +118,7 @@ extern "C" int CfRes_getResKindMask() { return 0x10004; }
 // leaving r3 free for the return value.
 extern "C" void CfRes_releaseVoiceSlot(int, ResInfoEntry* self) {
     u8 b = self->field_0x32;
-    if (b < 8) func_801BFA64(b + 5);
+    if (b < 8) CfSoundMan_CloseRecord(b + 5);
 }
 
 extern "C" u32 CfRes_getField18IfType10(int, ResInfoEntry* self) {
@@ -140,7 +140,7 @@ extern "C" u32 CfRes_getField18IfType0(int, ResInfoEntry* self) {
 extern "C" int CfRes_getVoiceSlotType9(int, ResInfoEntry* self) {
     u8 t = self->field_0x33;
     int v = self->field_0x34;
-    if (t == 9 && v >= 0) return func_801BFA64(v + 2);
+    if (t == 9 && v >= 0) return CfSoundMan_CloseRecord(v + 2);
     return v;
 }
 
@@ -338,8 +338,8 @@ extern "C" void CfRes_cacheOrPublishSound(int unused, ResInfoEntry* self) {
     } else if (type == 9 && idx >= 0) {
         int slot = idx + 2;
         void* r = self->field_0x2C->getResourceBase(self, 0);
-        func_801BFA08(slot, r, self->field_0x18, 0x62800);
-        func_801BFA88(slot, 3, 0, 0);
+        CfSoundMan_BindRecordBuffer(slot, r, self->field_0x18, 0x62800);
+        CfSoundMan_OpenRecordPlayer(slot, 3, 0, 0);
     }
 }
 
@@ -360,10 +360,10 @@ extern "C" void CfRes_acquireSoundEntry(int unused, ResInfoEntry* self) {
     void* entry = CfRes_findKypEntryB(self, &out);
     if (!(self->field_0x00 & 0x800) && entry != 0 && self->field_0x32 < 8) {
         int idx = self->field_0x32 + 5;
-        func_801BFA64(idx);
-        func_801BFA08(idx, entry, out, out);
+        CfSoundMan_CloseRecord(idx);
+        CfSoundMan_BindRecordBuffer(idx, entry, out, out);
         void* base = self->field_0x2C->getResourceBase(self, 0);
-        func_801BFA88(idx, 5, (int)((char*)base + self->field_0x18),
+        CfSoundMan_OpenRecordPlayer(idx, 5, (int)((char*)base + self->field_0x18),
                       self->field_0x1C - self->field_0x18);
         self->field_0x00 |= 0x800;
     }
@@ -621,13 +621,13 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                                 triggerObjsByType();
                             }
                             if (self->field_0x00 & 0x800) {
-                                func_801BFE8C(self->field_0x32 + 5, -1, 0);
+                                CfSoundMan_StopSlotByMode(self->field_0x32 + 5, -1, 0);
                             }
                         } else if (v <= 0) {
                             // Fade finished: release the sound voice and buffer.
                             CDeviceVI::waitForDrawDone();
                             if (self->field_0x00 & 0x800) {
-                                func_801BFA64(self->field_0x32 + 5);
+                                CfSoundMan_CloseRecord(self->field_0x32 + 5);
                                 self->field_0x00 &= ~0x800;
                             }
                             KyoshinHeap_Free38((void*)self->field_0x0C);
@@ -637,7 +637,7 @@ bool func_80066788(ResInfoEntry* self, bool paramLoad, bool paramFade, bool para
                 } else {
                     CDeviceVI::waitForDrawDone();
                     if (self->field_0x00 & 0x800) {
-                        func_801BFA64(self->field_0x32 + 5);
+                        CfSoundMan_CloseRecord(self->field_0x32 + 5);
                         self->field_0x00 &= ~0x800;
                     }
                     KyoshinHeap_Free38((void*)self->data);

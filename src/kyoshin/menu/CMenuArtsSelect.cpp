@@ -262,7 +262,7 @@ extern "C" int func_802795D4(u8* self, int param);
 extern "C" void func_80137F88(void* pane, void* tex);   // pane texture setter
 
 extern s16 lbl_eu_804FD11C[];  // rodata selTab (s16[5]) - same table as lbl_eu_804FD0D0+0x4c
-extern "C" int func_800DA06C(void*, void*);
+extern "C" int CBattleMan_ListHasValue(void*, void*);
 extern "C" void func_8010EDDC(void*, u8);
 extern "C" void func_8010ED18(void*);
 extern "C" void func_8010A848(void*, u8);
@@ -826,17 +826,9 @@ void CMenuArtsSelect::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }
@@ -863,16 +855,9 @@ after_bit21:
     if (func_80110A70() == NULL) {
         goto done;
     }
-    // Same beq+8; b done shape as bit21 (PLAN.md section 17.6).
-    if (func_8010CE48() != NULL) {
-        goto after_ce48;
+    if (func_8010CE48() == NULL) {
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_ce48:
 
     ::func_801080F8(this);
 
@@ -1238,17 +1223,9 @@ void CMenuArtsSelect::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) {
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }
@@ -1656,7 +1633,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 // Retail funnels both guard failures into one shared
                 // playUISound(5) tail (no early sound calls here).
                 if (func_80174C98(actor, &v11, 11) != 0 &&
-                    (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                      ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), func_80174C98(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
@@ -1675,7 +1652,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     self->unk328 = 2;
                     void* sub4 = actor->mSecondaryVtable;
                     int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
-                    if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 3;
                     }
@@ -1778,7 +1755,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 int v18;
                 // Same shared-tail funnel as the b1 block.
                 if (func_80174C98(actor, &v11, 11) != 0 &&
-                    (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                      ((v18 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(actor->mSecondaryVtable)->CObjectState_getStateData())), func_80174C98(actor, &v18, 18) != 0))) {
                     switch (self->unk328) {
                 case 0:
@@ -1797,7 +1774,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                     self->unk328 = 0;
                     void* sub4 = actor->mSecondaryVtable;
                     int v29 = *static_cast<int*>(reinterpret_cast<cf::CObjectState*>(sub4)->CObjectState_getStateData());
-                    if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                    if (CBattleMan_ListHasValue(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 1;
                     }

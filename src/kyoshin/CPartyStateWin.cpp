@@ -447,11 +447,11 @@ void PartyStateWin_TeardownWindow(CPartyStateWin* self) {
 // declared above.
 // Forward decls for the per-state handlers (defined later in this TU). The
 // retail symbols are unmangled (global C-linkage), so the handlers are
-// extern "C" (same scheme as PartyStateWin_ApplyRowStyle); noinline keeps the retail
+// extern "C" (same scheme as func_801FBC7C); noinline keeps the retail
 // `bl func_801FAxxx` calls in the dispatch below real branches.
 extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* self);
 extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin* self);
-extern "C" __declspec(noinline) void PartyStateWin_StatePadInput(CPartyStateWin* self);
+extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self);
 extern "C" __declspec(noinline) void PartyStateWin_StateSettle(CPartyStateWin* self);
 extern "C" __declspec(noinline) void PartyStateWin_StateRefresh(CPartyStateWin* self);
 extern "C" __declspec(noinline) void PartyStateWin_StateGateEquip(CPartyStateWin* self);
@@ -481,7 +481,7 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     switch (self->field_6BE4) {
     case 0x0: PartyStateWin_StateOpen(self); break;
     case 0x1: PartyStateWin_StateGateOpen(self); break;
-    case 0x2: PartyStateWin_StatePadInput(self); break;
+    case 0x2: func_801FA674(self); break;
     case 0x3: PartyStateWin_StateSettle(self); break;
     case 0x4: PartyStateWin_StateRefresh(self); break;
     case 0x5:
@@ -522,7 +522,7 @@ extern "C" void PartyStateWin_FrameStep(CPartyStateWin* self) {
     func_801FCFF4(reinterpret_cast<CPartyState*>(&self->_pad3038));
     ModelDispEquip_StepStateDispatch(&self->mModelDispEquip);
     if (self->field_6BE4 != 0x12) {
-        EquipChange_UpdateDispatch(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+        func_80202110(reinterpret_cast<CEquipChange*>(&self->_pad4150));
     }
     func_8022B748(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
     if (self->mWork14 != 0) {
@@ -578,7 +578,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateOpen(CPartyStateWin* sel
         func_801FD194(reinterpret_cast<CPartyState*>(&self->_pad3038));
         func_801FC11C(reinterpret_cast<CModelDisp*>(&self->_pad50));
         self->field_6BE4 = 0x1;
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
         playUISound(0x6D);
     }
 }
@@ -594,7 +594,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin*
     }
 }
 
-// us-801fc330 | PartyStateWin_StatePadInput
+// us-801fc330 | func_801FA674
 // Party-menu pad input step: map the turbo/pressed flags to the A/B/Y
 // buttons (classic vs Wii layout) and the four directions, then run the
 // party-state sub-step for whichever input is active. A/B act on the
@@ -605,7 +605,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateGateOpen(CPartyStateWin*
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape;
 // plain -O4,p emits two stw's - same fix as PartyStateWin_PickAllocHandle).
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_StatePadInput(CPartyStateWin* self) {
+extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self) {
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     bool up, down, left, right;
     u32 a, b, y;
@@ -628,7 +628,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePadInput(CPartyStateWin*
     }
     if (a) {
         func_801FD48C(reinterpret_cast<CPartyState*>(&self->_pad3038));
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
         if (func_801FD5F4(reinterpret_cast<CPartyState*>(&self->_pad3038)) != 0) {
             func_80139198(0);
             func_801C4198(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
@@ -639,7 +639,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePadInput(CPartyStateWin*
     } else if (b) {
         if (func_801FD580(reinterpret_cast<CPartyState*>(&self->_pad3038)) != 0) {
             func_801FD594(reinterpret_cast<CPartyState*>(&self->_pad3038));
-            PartyStateWin_ApplyRowStyle(self);
+            func_801FBC7C(self);
         } else if (isPlayerReadyForEvent__Q22cf13CfGameManagerFv(0, 1)) {
             func_801C414C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
             func_801FD1BC(reinterpret_cast<CPartyState*>(&self->_pad3038));
@@ -648,25 +648,25 @@ extern "C" __declspec(noinline) void PartyStateWin_StatePadInput(CPartyStateWin*
         }
     } else if (up) {
         func_801FD220(reinterpret_cast<CPartyState*>(&self->_pad3038));
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
     } else if (down) {
         func_801FD290(reinterpret_cast<CPartyState*>(&self->_pad3038));
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
     } else if (left) {
         func_801FD304(reinterpret_cast<CPartyState*>(&self->_pad3038));
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
     } else if (right) {
         func_801FD3D4(reinterpret_cast<CPartyState*>(&self->_pad3038));
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
     } else if (y) {
         // Sort dialog opens only in the non-default party config with more
-        // than one member. Same cfgIsZero idiom as PartyStateWin_ApplyRowStyle: the
+        // than one member. Same cfgIsZero idiom as func_801FBC7C: the
         // == 0 normalization's srwi. flag feeds the branch directly.
         u32 cfgIsZero = (func_8009CF8C(0x3358) == 0);
         if (cfgIsZero || code80135FDC_getByte_64077() <= 1) {
         } else {
             func_801FD604(reinterpret_cast<CPartyState*>(&self->_pad3038));
-            PartyStateWin_ApplyRowStyle(self);
+            func_801FBC7C(self);
         }
     }
 }
@@ -745,7 +745,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
     if (isClassicController__Q22cf13CfGameManagerFv(-1) != 0) {
         // -- classic-controller chain --
-        EquipChange_HideSubCursor(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
         if ((cfPad->mTurboPressButtonFlags & 0x02000000) != 0 &&
             code80135FDC_getByte_64077() > 1 &&
             EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
@@ -838,11 +838,11 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
-            EquipChange_CursorUpRemap(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_802028E4(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
-            EquipChange_CursorDownRemap(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_80202A70(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x01000000) != 0) {
@@ -888,7 +888,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
             if (EquipChange_IsMenuBusy(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
                 EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_CloseEquipRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                func_80203984(reinterpret_cast<CEquipChange*>(&self->_pad4150));
                 goto tail;
             }
             goto tail;
@@ -903,14 +903,14 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 goto tail;
             }
             if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_TryCloseRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                func_8020398C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
                 goto tail;
             }
         }
         goto tail;
     } else {
         // -- Wii-layout chain --
-        EquipChange_HideSubCursor(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
         if ((cfPad->mPad.mHeldButtonFlags & 0x00001000) != 0 &&
             code80135FDC_getByte_64077() > 1 &&
             EquipChange_IsSortOrSubPage(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
@@ -919,7 +919,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 playUISound(0x2);
             }
             self->field_6BE8 = lbl_eu_806681D8;
-            EquipChange_HideSubCursor(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+            func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
             if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
                 if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
                     (u8)EquipChange_MapCursorToCat(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
@@ -1008,11 +1008,11 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
-            EquipChange_CursorUpRemap(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_802028E4(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             goto tail;
         }
         if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
-            EquipChange_CursorDownRemap(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_80202A70(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             goto tail;
         }
         if ((cfPad->mPad.mPressedButtonFlags & 0x800) != 0) {
@@ -1058,7 +1058,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
         if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
             if (EquipChange_IsMenuBusy(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
                 EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_CloseEquipRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                func_80203984(reinterpret_cast<CEquipChange*>(&self->_pad4150));
                 goto tail;
             }
             goto tail;
@@ -1073,7 +1073,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipInput(CPartyStateWi
                 goto tail;
             }
             if (EquipChange_CheckBoxOpen(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
-                EquipChange_TryCloseRow(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                func_8020398C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
             }
         }
     }
@@ -1100,7 +1100,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateRebuild(CPartyStateWin* 
         ModelDispEquip_ResetDisplay(&self->mModelDispEquip);
         char* name = BdatTouchStringCell(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
         func_801C41C0(reinterpret_cast<CTitleAHelp*>(&self->_pad18), name);
-        PartyStateWin_ApplyRowStyle(self);
+        func_801FBC7C(self);
         func_801C416C(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
         func_801FD194(reinterpret_cast<CPartyState*>(&self->_pad3038));
         func_801FC11C(reinterpret_cast<CModelDisp*>(&self->_pad50));
@@ -1341,7 +1341,7 @@ extern "C" __declspec(noinline) void PartyStateWin_StateEquipMenuOpen(CPartyStat
 // cases the selection is forced to 3.
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape).
 #pragma optimize_for_size on
-extern "C" __declspec(noinline) void PartyStateWin_ApplyRowStyle(CPartyStateWin* self) {
+extern "C" __declspec(noinline) void func_801FBC7C(CPartyStateWin* self) {
     CPartyStateWinWord local;
     local.word = lbl_eu_806681E4;
     u8 val = func_801FD5C4(reinterpret_cast<CPartyState*>(&self->_pad3038));

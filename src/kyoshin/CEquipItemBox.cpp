@@ -2751,7 +2751,7 @@ extern "C" __declspec(noinline) void rebuildEIBPage(CEquipItemBox* self, int a) 
     u8 idx2 = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
     void* item2 = getEIBItemObj(grid, idx2);
     func_801D47D4((CItemBoxInfo*)self->unk_20c, self->unk_1fc, item2, 1);
-    func_801D4AE0((CItemBoxInfo*)self->unk_20c, 1, fmtEIBItemName(grid, idx2));
+    setItemBoxNamedText((CItemBoxInfo*)self->unk_20c, 1, fmtEIBItemName(grid, idx2));
     u32 x = countEIBPages(grid);
     setLayoutTextBoxNumber(self->field_38, &lbl_eu_8050EFDC[0x27c], (u8)x);
     func_80289754(self);
@@ -2848,7 +2848,7 @@ __declspec(noinline) void CEquipItemBox::func_80289AA4() {
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
     func_801D47D4((CItemBoxInfo*)unk_20c, unk_1fc, item, getEIBByte6(grid, idx));
-    func_801D4AE0((CItemBoxInfo*)unk_20c, 1, fmtEIBItemName(grid, idx));
+    setItemBoxNamedText((CItemBoxInfo*)unk_20c, 1, fmtEIBItemName(grid, idx));
     if ((s8)unk_1f5 == -1) item = 0;
     else item = getEIBItemObj(grid, idx);
     u16 kind;

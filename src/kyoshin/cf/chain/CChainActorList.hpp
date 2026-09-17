@@ -161,7 +161,7 @@ extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void func_8027EEF4(int);
 extern "C" u32 func_8027EE88(int, int);
 // Chain-activation dice roll (defined in this TU). Retail callers emit a
-// real bl to the unmangled label func_8027C1A8 (MWCC_CASES func_800F41A0
+// real bl to the unmangled label func_8027C1A8 (MWCC_CASES CBattleMan_OnActorsEmpty
 // record), so it keeps C linkage here like the other imports above; the
 // definition in the .cpp inherits it from this declaration.
 extern "C" int func_8027C1A8(cf::CChainChanceS* self,

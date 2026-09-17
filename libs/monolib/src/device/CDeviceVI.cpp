@@ -42,7 +42,7 @@ extern "C" {
     extern u32 __RTTI__10IWorkEvent[];
     extern u32 __RTTI__11CWorkThread[];
     // IWorkEvent / CWorkThread virtuals
-    extern void __dt__9CDeviceVIFv();
+    extern void __dt__9CDeviceVIFv(void* self, int flag);
     extern void WorkEvent1__10IWorkEventFPvPCc();
     extern void OnFileEvent__10IWorkEventFP10CEventFile();
     extern void WorkEvent3__10IWorkEventFPv();
@@ -80,11 +80,11 @@ extern "C" {
     extern void wkStandbyLogin__9CDeviceVIFv();
     extern void wkStandbyLogout__9CDeviceVIFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
-    extern void errorWiiCB__9CDeviceVIFv();
+    extern void errorWiiCB__9CDeviceVIFv(void* self);
     extern void __dt__23reslist_P11CDeviceVICbFv();
     extern void __dt__29_reslist_base_P11CDeviceVICbFv();
-    extern void thunk_456_dt();
-    extern void thunk_456_error();
+    extern void thunk_456_dt(void* self, int flag);
+    extern void thunk_456_error(void* self);
     // rodata strings (retail .rodata)
     extern const char lbl_eu_80522A08[];
     extern const char lbl_eu_80522A14[];
@@ -741,7 +741,7 @@ extern "C" {
     extern GXRenderModeObj GXMpal480Int;
     extern GXRenderModeObj GXMpal480Prog;
     extern GXRenderModeObj GXMpal480ProgSoft;
-    extern void __dt__9CDeviceVIFv();
+    extern void __dt__9CDeviceVIFv(void* self, int flag);
     extern void WorkEvent1__10IWorkEventFPvPCc();
     extern void OnFileEvent__10IWorkEventFP10CEventFile();
     extern void WorkEvent3__10IWorkEventFPv();
@@ -779,9 +779,9 @@ extern "C" {
     extern void wkStandbyLogin__9CDeviceVIFv();
     extern void wkStandbyLogout__9CDeviceVIFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
-    extern void errorWiiCB__9CDeviceVIFv();
-    extern void thunk_456_dt();
-    extern void thunk_456_error();
+    extern void errorWiiCB__9CDeviceVIFv(void* self);
+    extern void thunk_456_dt(void* self, int flag);
+    extern void thunk_456_error(void* self);
     extern u32 __RTTI__10IWorkEvent[];
     extern u32 __RTTI__11CWorkThread[];
     extern u32 lbl_eu_806635F0[];
@@ -790,19 +790,16 @@ extern "C" {
     extern const char lbl_eu_80522A2C[];
 }
 
-// Thunk definitions for IErrorWii secondary base (retail @456@ symbols)
-// Retail .text at 0x8044B9A0/0x8044B9A8: subi r3, r3, 0x1C8; b target
-// MWCC Wii/1.1 does not support __declspec(naked); use asm void bodies
-// (§17.6-adjacent: isolated thunk tails, logged as policy_exception).
-asm void thunk_456_dt(void) {
-    nofralloc
-    subi r3, r3, 0x1C8
-    b __dt__9CDeviceVIFv
+// Thunks for the IErrorWii secondary base (retail @456@ symbols at
+// .text 0x8044B9A0/0x8044B9A8): recover the full object from the +0x1C8
+// IErrorWii subobject and tail-call the real body. High-level adjustor form
+// (CLibCri.cpp precedent); the @N@ names are unspellable in C++ and are
+// renamed onto the retail symbols by UNIT_RULES exact_renames.
+void thunk_456_dt(void* self, int flag) {
+    __dt__9CDeviceVIFv((char*)self - 0x1C8, flag);
 }
-asm void thunk_456_error(void) {
-    nofralloc
-    subi r3, r3, 0x1C8
-    b errorWiiCB__9CDeviceVIFv
+void thunk_456_error(void* self) {
+    errorWiiCB__9CDeviceVIFv((char*)self - 0x1C8);
 }
 
 // lbl_eu_8056BE38 moved to top .data block for retail order (0x40) - original location removed

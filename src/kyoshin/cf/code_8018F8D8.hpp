@@ -511,7 +511,7 @@ extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 
 // --- imports used by the Move / dispatcher functions ---------------------
 
-// Colour-unpack scale/magic pair (CfCmd_SetSceneColor's u8->float ladder).
+// Colour-unpack scale/magic pair (func_801901A4's u8->float ladder).
 extern const float lbl_eu_80667A78;
 extern const f64 lbl_eu_80667A80;
 
@@ -585,7 +585,7 @@ typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32, u32*, u32);
 // 0x29-entry handler table indexed by the popped command byte (lbl_eu_80532838).
 extern MenuCmdHandler lbl_eu_80532838[];
 
-// CfRes ring-buffer pump used by CfCmd_SetSceneColor-era dispatchers (defined in
+// CfRes ring-buffer pump used by func_801901A4-era dispatchers (defined in
 // CfRes.cpp); this TU uses a minimal layout view of the ring object.
 struct MenuCmdRingView {
     u8 ring[0x400];

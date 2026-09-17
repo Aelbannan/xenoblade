@@ -1479,7 +1479,7 @@ body:
 
     case 0xf:
         // Sound done: fade out and move the camera to the stored position.
-        if (func_801BFAE4(mFieldA2) != 0) break;
+        if (CfSoundMan_TouchSlotById(mFieldA2) != 0) break;
         mFieldA4 = 0x10;
         CUICfManager_queueFadeMenu(2, 0, lbl_eu_80667578, lbl_eu_80667578,
                       lbl_eu_80667578);

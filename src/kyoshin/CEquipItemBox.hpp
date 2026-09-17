@@ -634,7 +634,7 @@ struct CEquipItemBoxKind3View {
     u8 field_2cc;               // 0x2cc item vf08 byte
 };
 // Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
-extern "C" void func_801D4AE0(CItemBoxInfo* info, int arg2, void* arg3);
+extern "C" void setItemBoxNamedText(CItemBoxInfo* info, int arg2, void* arg3);
 extern "C" u8 func_801EF034(const u8*, unsigned int);
 extern "C" u32 func_801D4260(CItemBoxInfo* info, u8 arg2);
 // Layout text/visibility bind (retail mangled setLayoutTextBoxNumber__FPQ34nw4r3lyt6LayoutPcUc).

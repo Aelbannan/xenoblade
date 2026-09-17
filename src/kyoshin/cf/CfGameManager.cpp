@@ -140,7 +140,7 @@ extern "C" void func_80189390(const void* text);
 extern "C" void func_8006A03C(u32 first, u32 second, u32 third);
 extern "C" void dispatchLODArgs__8CTaskLODFv(u16 first, u16 second, u16 third);
 extern "C" void func_80068AA4();
-extern "C" void func_801BF9A4();
+extern "C" void CfSoundMan_UpdateAllRecords();
 extern "C" int isFlag01Set__9CTaskGameFv();
 extern "C" void func_800C1EB8();
 extern "C" void clrAnimGate();
@@ -148,7 +148,7 @@ extern "C" void func_8007BAFC(CfCamEventManager* manager);
 extern "C" void func_80189450();
 extern "C" void func_8018986C(int value, float first);
 extern "C" void func_80189318(int value, float first);
-extern "C" void func_801C0118(u32 first, u32 second);
+extern "C" void CfSoundMan_StopMaskedSlots(u32 first, u32 second);
 extern "C" void func_8013D26C(u32 value);
 extern "C" void func_80068C38();
 extern "C" void func_80164DB8();
@@ -211,11 +211,11 @@ extern "C" void func_8007B0A0(s32 value);
 extern "C" void func_801AAD08();
 extern u8 lbl_eu_8066443A;
 extern "C" void cfCam_setClear04(void* manager, u32 mask, s32 flag);
-extern "C" void* func_800EA444(void* bm);
+extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" void func_800B06C8();
 extern "C" void func_800B6800(float value, u32 a, u32 b);
 extern "C" void cfCam_copyBlock16(void* dst, void* src);
-extern "C" void func_801C0094(s32 value);
+extern "C" void CfSoundMan_StopAllModes(s32 value);
 extern "C" void disableFlag20__Q22cf13CfGameManagerFv();
 extern "C" void cfCam_syncFollowD();
 extern "C" void func_80068E9C(char* dest, const char* src1, const char* src2,
@@ -360,7 +360,7 @@ extern const float lbl_eu_80666548;
 
 // func_80085978 imports.
 // func_8011C2FC: declared (s32()) by CfGameManager.hpp - local void form conflicts (10505)
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);
 // bindPadSubobjects: declared (s32) by CfGameManager.hpp - local u32 form conflicts (10197)
 extern "C" void func_8012F860();
 extern "C" void setInputDisableTime__Q22cf9CfPadTaskFf(float value);
@@ -520,7 +520,7 @@ extern "C" void setPresentationFlag__Q22cf13CfGameManagerFv(bool enable) {
         clearGameFlagMask__Q22cf13CfGameManagerFv(0x40000000);
         Scn_SetTimeScale(lbl_eu_80663E14, lbl_eu_8066649C);
     }
-    func_801C011C(enable, 10);
+    CfSoundMan_PauseAllRecords(enable, 10);
 }
 
 extern "C" __declspec(noinline) void queueSceneEventA__Q22cf13CfGameManagerFv(
@@ -1355,7 +1355,7 @@ void* cf::CfGameManager::getResetDataPtr() { return lbl_eu_8065FC18; }
 // cf::CfGameManager::func_8007D84C - battle-exit / scene reset. Tears down
 // the mode subsystems, wipes the manager's per-mode state block, clears the
 // presentation globals and the E24/E28 flag masks.
-extern "C" void func_801C028C(u32 first, u32 second);
+extern "C" void CfSoundMan_ClearFxEffect(u32 first, u32 second);
 extern "C" void gmCallInit1954();
 extern "C" void func_8016FE2C(float value);
 extern "C" void func_800D9218__Q22cf14CBattleManagerFv(void* battle);
@@ -1369,9 +1369,9 @@ void cf::CfGameManager::func_8007D84C() {
     func_801AAD08();
     lbl_eu_8066443A = 0;
     func_801862E0(func_801862C0());
-    func_801C0094(1);
-    func_801C028C(0, 0);
-    func_801C028C(1, 0);
+    CfSoundMan_StopAllModes(1);
+    CfSoundMan_ClearFxEffect(0, 0);
+    CfSoundMan_ClearFxEffect(1, 0);
     func_8012F87C(0);
     CUICfManager_setFlagState(0);
     if ((lbl_eu_80663EE0 & 0x40) != 0) {
@@ -2374,7 +2374,7 @@ extern "C" void func_800853C8__Q22cf13CfGameManagerFv() {
         func_8018986C(0, lbl_eu_80666498);
         func_80189318(1, lbl_eu_80666498);
         func_80189424(lbl_eu_80666498);
-        func_801C0118(0x20, 0xf);
+        CfSoundMan_StopMaskedSlots(0x20, 0xf);
         func_8013D26C(0);
         func_80068C38();
         if (lbl_eu_80571758.field_0x88 != -1) {
@@ -2582,7 +2582,7 @@ extern "C" void func_80085978__Q22cf13CfGameManagerFv(int param) {
             node = node->next;
         }
         lbl_eu_80663ED8 = lbl_eu_806669C8;
-        func_801BFE8C(0, 0x1bb, 0xf);
+        CfSoundMan_StopSlotByMode(0, 0x1bb, 0xf);
     }
 
     // Shared tail: on E24 bit 0x80000 notify the manager, with different
@@ -2901,7 +2901,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
     }
     func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
     if (getInstance__Q22cf14CBattleManagerFv() != nullptr) {
-        if (func_800EA444(nullptr) != nullptr) {
+        if (CBattleMan_FetchVisionObj(nullptr) != nullptr) {
             // Slot owner: cf::CVision owns 0x20 (vt_20(u32)) - CVision.hpp;
             // battle+0x219C is CBattleManager::mVision (CBattleManager.hpp).
             cf::CVision* sub = reinterpret_cast<cf::CVision*>(
@@ -2932,7 +2932,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
                           lbl_eu_80666498, lbl_eu_80666498, lbl_eu_8066649C);
             func_8008566C__Q22cf13CfGameManagerFv(0, &miss, 1);
         }
-        func_801C0094(0);
+        CfSoundMan_StopAllModes(0);
     } else if (mode == 1) {
         UnkFloat4 bufA;
         UnkFloat4 cand;
@@ -2951,7 +2951,7 @@ extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first,
                           lbl_eu_80666498, lbl_eu_80666498, lbl_eu_8066649C);
             func_8008566C__Q22cf13CfGameManagerFv(0x1e, &miss, 1);
         }
-        func_801C0094(0x1c);
+        CfSoundMan_StopAllModes(0x1c);
         queueCameraRequest__Q22cf13CfGameManagerFv(0x18, 0, 0, 0, 0);
     } else if (mode == 2) {
         UnkFloat4 tint;

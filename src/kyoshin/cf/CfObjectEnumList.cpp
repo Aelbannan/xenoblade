@@ -414,9 +414,9 @@ int func_80148778(void*, int);
 int isSpeedAbove(CfEnumActorAux*);
 int func_8009CF8C(int);
 CfEnumKind* func_800AB3D0(CfEnumObject*);
-int func_800DA06C(void*, CfEnumActor*);
-CfEnumActor* func_800EA384(void*);
-CfEnumActor* func_800EA3AC(void*, CfEnumObject*);
+int CBattleMan_ListHasValue(void*, CfEnumActor*);
+CfEnumActor* CBattleMan_NextListItem(void*);
+CfEnumActor* CBattleMan_FindNextActorRef(void*, CfEnumObject*);
 CfEnumObject* func_800FE68C();
 CfEnumObject* findObjectById__Fi(int);
 CfEnumObject* getPlayer__Q22cf13CfGameManagerFi(int);
@@ -515,7 +515,7 @@ int func_804B1BDC(void* self, void* a, void* b); // aux cone probe (two vecs)
             (rejected_) = true;                                               \
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x2000) &&                          \
-            !func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), actor_)) { \
+            !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor_)) { \
             (rejected_) = true;                                               \
         }                                                                     \
     } while (false)
@@ -724,7 +724,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), actor)) {
+                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -762,7 +762,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
-                !func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), actor)) {
+                !CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor)) {
                 rejected = true;
             }
             if (rejected) {
@@ -933,7 +933,7 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x1000u;
     } else if (flags & 0x4000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = func_800EA384(manager);
+        CfEnumActor* source = CBattleMan_NextListItem(manager);
         object = source;
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
@@ -943,19 +943,19 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = func_800EA3AC(manager, object);
+                source = CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info15, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = func_800EA3AC(manager, object);
+            source = CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x4000u;
     } else if (flags & 0x8000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = func_800EA384(manager);
+        CfEnumActor* source = CBattleMan_NextListItem(manager);
         object = source;
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
@@ -968,19 +968,19 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = func_800EA3AC(manager, object);
+                source = CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info16, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = func_800EA3AC(manager, object);
+            source = CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x8000u;
     } else if (flags & 0x10000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = func_800EA384(manager);
+        CfEnumActor* source = CBattleMan_NextListItem(manager);
         object = source;
         float zero = lbl_eu_80666EB8;
         float one = lbl_eu_80666EBC;
@@ -993,19 +993,19 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = func_800EA3AC(manager, object);
+                source = CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info17, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = func_800EA3AC(manager, object);
+            source = CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x10000u;
     } else if (flags & 0x20000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
-        CfEnumActor* source = func_800EA384(manager);
+        CfEnumActor* source = CBattleMan_NextListItem(manager);
         object = source;
         while (object != 0) {
             rejected = false;
@@ -1018,13 +1018,13 @@ extern "C" void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
-                source = func_800EA3AC(manager, object);
+                source = CBattleMan_FindNextActorRef(manager, object);
                 object = source;
                 continue;
             }
             ENUM_ADD_OBJECT_ALT(info18, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
-            source = func_800EA3AC(manager, object);
+            source = CBattleMan_FindNextActorRef(manager, object);
             object = source;
         }
         flags &= ~0x20000u;
@@ -2428,7 +2428,7 @@ void __ct__800FC8DC(cf::CfObjEnumList* self, u32 flags, float threshold) {
 
 // __ct__800FCA24: rebuild the object list keeping only entries whose actor's
 // embedded move sub-object (vtable 0x4C) does NOT reference the given spot
-// AND that the battle manager rejects (func_800DA06C == 0).
+// AND that the battle manager rejects (CBattleMan_ListHasValue == 0).
 void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
     if (list->mPtrCount == 0) {
         return;
@@ -2463,7 +2463,7 @@ void __ct__800FCA24(cf::CfObjEnumList* list, u32 spotId, u32 options) {
         bool rejected = false;
         u32 subId = actorView->sub.vfn13();
         if (subId != spotId ||
-            func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), actor) == 0) {
+            CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), actor) == 0) {
             rejected = true;
         }
         if (options & 2) {
@@ -2547,8 +2547,8 @@ void __ct__800FCB80(cf::CfObjEnumList* list, u32 spotId, u32 options) {
 // has a partner in the battle-manager actor list: a candidate whose
 // field_3F10 differs from arg1, whose embedded sub-object (vtable 0x4C) does
 // not reference the actor's field_3F10, and who is accepted by
-// func_800DA06C.  The list walk starts at func_800EA384(manager) (+0x3E9C)
-// and advances via func_800EA3AC.
+// CBattleMan_ListHasValue.  The list walk starts at CBattleMan_NextListItem(manager) (+0x3E9C)
+// and advances via CBattleMan_FindNextActorRef.
 void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
     if (list->mPtrCount == 0) {
         return;
@@ -2586,7 +2586,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         bool found = false;
         // Adjust the call result in place (stays in r3 through the null
         // check), then copy to cur once: retail cmpwi/beq/addi/mr order.
-        CfEnumActor* t = func_800EA384(getInstance__Q22cf14CBattleManagerFv());
+        CfEnumActor* t = CBattleMan_NextListItem(getInstance__Q22cf14CBattleManagerFv());
         if (t != 0) {
             t = reinterpret_cast<CfEnumActor*>(reinterpret_cast<u8*>(t) + 0x3E9C);
         }
@@ -2594,7 +2594,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
         while (cur != 0) {
             CfEnumActor* cand = func_8016FE34(cur);
             if (cand == 0 || cand == actor) {
-                CfEnumActor* t2 = func_800EA3AC(
+                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
@@ -2602,7 +2602,7 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 }
                 cur = reinterpret_cast<CfEnumObject*>(t2);
             } else if (reinterpret_cast<CfEnumActorView*>(cand)->field_3F10 == arg1) {
-                CfEnumActor* t2 = func_800EA3AC(
+                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(
@@ -2613,11 +2613,11 @@ void __ct__800FCD10(cf::CfObjEnumList* list, u32 arg1, u32 options) {
                 actorId = reinterpret_cast<CfEnumActorView*>(actor)->field_3F10;
                 if (actorId ==
                         reinterpret_cast<CfEnumActorView*>(cand)->sub.vfn13() &&
-                    func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), cand) != 0) {
+                    CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), cand) != 0) {
                     found = true;
                     break;
                 }
-                CfEnumActor* t2 = func_800EA3AC(
+                CfEnumActor* t2 = CBattleMan_FindNextActorRef(
                     getInstance__Q22cf14CBattleManagerFv(), cur);
                 if (t2 != 0) {
                     t2 = reinterpret_cast<CfEnumActor*>(

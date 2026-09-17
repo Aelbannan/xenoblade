@@ -130,7 +130,7 @@ u32 func_8016CFBC(cf::CfResReloadImpl* self, int index) {
 // Resolves the current state's attribute id (field_0A) and, when valid,
 // looks up the sound slot; if a live sound object exists, forwards arg3 to
 // nw4r BasicSound::SetPlayerPriority. f1/f2 are passed through to
-// func_801BFE20.
+// CfSoundMan_PlayActorParam.
 void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, float f2, int priority) {
     s16 v = self->field_0A;
     int id = -1;
@@ -144,7 +144,7 @@ void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, floa
     }
     if (id != -1) {
         cf::SoundSlotEntry* s =
-            func_801BFAE4((u16)func_801BFE20(id, arg2, self->field_00->field_74, f1, f2));
+            CfSoundMan_TouchSlotById((u16)CfSoundMan_PlayActorParam(id, arg2, self->field_00->field_74, f1, f2));
         if (s != 0 && priority != 0 && s->field_00 != 0) {
             s->field_00->SetPlayerPriority(priority);
         }
@@ -152,7 +152,7 @@ void func_8016CFDC(cf::CfResReloadImpl* self, int arg2, int arg3, float f1, floa
 }
 
 // Resolves the current state's attribute id (field_0A) and, when valid,
-// forwards it with two caller args to func_801BFE8C. Void return - retail
+// forwards it with two caller args to CfSoundMan_StopSlotByMode. Void return - retail
 // sets up no return value at the epilogue.
 void func_8016D0C0(cf::CfResReloadImpl* self, int arg2, int arg3) {
     s16 v = self->field_0A;
@@ -166,12 +166,12 @@ void func_8016D0C0(cf::CfResReloadImpl* self, int arg2, int arg3) {
         }
     }
     if (r != -1) {
-        func_801BFE8C(r, arg2, arg3);
+        CfSoundMan_StopSlotByMode(r, arg2, arg3);
     }
 }
 
 // Same attribute-id resolution as func_8016D0C0, forwarding the id with
-// three caller args to func_801BFF04. Void return.
+// three caller args to CfSoundMan_PauseSlotByMode. Void return.
 void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
     s16 v = self->field_0A;
     int r = -1;
@@ -184,7 +184,7 @@ void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
         }
     }
     if (r != -1) {
-        func_801BFF04(r, arg2, arg3, arg4);
+        CfSoundMan_PauseSlotByMode(r, arg2, arg3, arg4);
     }
 }
 

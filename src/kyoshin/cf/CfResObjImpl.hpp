@@ -28,7 +28,7 @@ class CfObjectMove;      // fwd; func_800BCFA0 operand (real def in object/CfObj
 class CScn;              // fwd; shared scene (CfObjectMove.hpp declares lbl_eu_80663E14 as CScn*)
 struct CfResObjImpl;     // fwd
 
-// Slot entry returned by func_801BFAE4 (CfSoundMan slot lookup); +0x00 holds
+// Slot entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); +0x00 holds
 // the active sound object, which func_8016C888 calls SetPlayerPriority on.
 struct SoundSlotEntry {
     /* 0x00 */ nw4r::snd::detail::BasicSound* field_00;
@@ -45,7 +45,7 @@ struct CfResObjParent {
     u8 field_3C[0x6C - 0x3C];
     /* 0x6C */ u32 field_6C;                 // flags (bits 0x10 / 0x20 tested)
     u8 field_70[0x74 - 0x70];
-    /* 0x74 */ u8* field_74;                 // sound-related pointer passed to func_801BFE20
+    /* 0x74 */ u8* field_74;                 // sound-related pointer passed to CfSoundMan_PlayActorParam
     u8 field_78[0x90 - 0x78];
     /* 0x90 */ u8* field_90;                 // resource handle (CfRes_findEntryById result)
     /* 0x94 */ u8* field_94;                 // resource handle
@@ -199,8 +199,8 @@ extern "C" int CfRes_getD80Flag();
 extern "C" void func_800BCFA0(cf::CfObjectMove* self);
 extern "C" void CfObjectMove_setRegionAttached(cf::CfResObjParent* parent, int flag);
 extern "C" void ColiNodeSetWord0Rebuild(u8* subObj, u8* handle);
-extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
-extern "C" cf::SoundSlotEntry* func_801BFAE4(u16 handle);
+extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
+extern "C" cf::SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 
 // Free-function vtable-slot targets owned by other TUs (retail .data
 // lbl_eu_80530F44 references these unmangled names; the same-named virtuals

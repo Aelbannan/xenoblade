@@ -383,7 +383,7 @@ extern "C" {
     int EvtSeqGetCounter100();
     int CTaskGame_isStreamPaused();
     void Scn_SetStopFlag(u8* self, u32 flag);
-    u32 func_800EA444(u32 battle);
+    u32 CBattleMan_FetchVisionObj(u32 battle);
     extern f32 lbl_eu_80667638;
     extern f32 lbl_eu_8066763C;
     extern f32 lbl_eu_80667640;

@@ -147,7 +147,7 @@ int CSysWin_isActive(void* self);
 int CSysWin_isReady(void* self);
 int CScrollBar_isVisible(void* self);
 extern "C" void closeFileHandle__FPP11CFileHandle(void*);
-int func_80297CC0(void* self);
+int isMCGetItemBoxActive(void* self);
 int func_80222A50(void* self);
 void func_80222AF0(void* self);
 void func_801F369C(void* self);
@@ -158,9 +158,9 @@ void func_8022EA04(void* self);
 void func_8022E9E4(void*, void*);
 void func_801D20B0(void*, void*);
 void func_801F35B0(void*, void*);
-void func_80297AAC(void*, void*);
+void drawMCGetItemBox(void*, void*);
 void func_8022B7C8(void*, void*);
-void func_802979E4(void* self);
+void updateMCGetItemBox(void* self);
 void func_801D202C(void* self);
 void func_801F3540(void* self);
 void func_801F35DC(void* self);
@@ -168,11 +168,11 @@ void func_8022B748(void* self);
 void func_801D216C(void*, u8);
 void func_8022C1B4(void* out, void* csyswin, u8);
 void func_80297B68(void*);
-void func_80297E18(void*);
+void confirmMCGetItemBox(void*);
 void func_8022B7F4(void*);
 int func_80222A58(void*);
 void tickAnimFrame(void*);
-void MakeCrystal_DispatchState(void*);
+void func_8021FEDC(void*);
 int isClassicController__Q22cf13CfGameManagerFv(int arg);
 void releaseAnimObj(void*, void*);
 void Scn_IsAnimActiveOrNull(void*);
@@ -205,10 +205,10 @@ void deleteRegion__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void func_804E3D48(void*, void*);
 int CSysWin_getUnk34(void*);
-int func_80298850(void*);
+int getMCGetItemBoxKeyCode(void*);
 void func_8004B9D4(void*, int, int, int, int);
 void func_80220954(void*, int, u8);
-void func_80297D2C(void*, int, void*, u8);
+void openMCGetItemBox(void*, int, void*, u8);
 void func_80222F64(void*, void*, u8);
 void func_80223334(void*);
 void func_80222848(void*);
@@ -222,18 +222,18 @@ void func_801F34F4(void*);
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 int isFinished__FPv(void*);
-int func_80297D1C(void*);
-int func_80297D24(void*);
-void func_80297E18(void*);
-void func_80297E90(void*);
-void func_80298450(void*);
-void func_802984E4(void*);
-int func_80298540(void*);
-void func_802985B4(void*);
-void func_80298228(void*);
-void func_802980DC(void*);
-void func_80297FB4(void*);
-void func_8029860C(void*, int);
+int isMCGetItemBoxReady(void*);
+int isMCGetItemBoxGridMode(void*);
+void confirmMCGetItemBox(void*);
+void moveMCGetItemBoxLeft(void*);
+void toggleMCGetItemBoxSysWin(void*);
+void openMCGetItemBoxSysWin(void*);
+int getMCGetItemBoxPageState(void*);
+void cacheMCGetItemBoxEntries(void*);
+void moveMCGetItemBoxDown(void*);
+void moveMCGetItemBoxUp(void*);
+void moveMCGetItemBoxRight(void*);
+void forwardMCSubObj88(void*, int);
 void func_80298614(void*);
 char lbl_eu_805090FC[];
 int sprintf(char*, const char*, ...);
@@ -301,7 +301,7 @@ void func_80222ACC(void*);
 // halfword as the u8 param (callee reads only the low byte), so declaring the
 // param as u16 here avoids MWCC's truncation mask at the call site.
 void setNumber__11CMCEffUpPrmFUlUc(CMCEffUpPrm*, u32, u16);
-void func_80297928(void*);
+void loadMCGetItemBoxFiles(void*);
 void* Scn_FindCamItem(void*, int);
 void func_8049EFF8(void*, void*, void*);
 void func_801F3670(void*, void*);
@@ -986,7 +986,7 @@ void MakeCrystal_TickAll(CModelDispMakeCrystal* self)
     func_801F3540(base + 0xe38);
     func_8022B748(base + 0xe78);
     func_801D202C(base + 0xeb4);
-    func_802979E4(base + 0xecc);
+    updateMCGetItemBox(base + 0xecc);
 }
 
 void MakeCrystal_CleanupFiles(CModelDispMakeCrystal* self) {
@@ -1025,7 +1025,7 @@ void MakeCrystal_DrawAll(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawI
     reinterpret_cast<CMCEffCylinder*>(base + 0xdfc)->draw(drawInfo);
     func_801D20B0(base + 0xe20, drawInfo);
     func_801F35B0(base + 0xe38, drawInfo);
-    func_80297AAC(base + 0xecc, drawInfo);
+    drawMCGetItemBox(base + 0xecc, drawInfo);
     func_8022B7C8(base + 0xe78, drawInfo);
     func_801D20B0(base + 0xeb4, drawInfo);
 }
@@ -1049,7 +1049,7 @@ int func_8021CA3C(CModelDispMakeCrystal* self)
     if (func_80222A50(base + 0xc18) == 0) return 0;
     if (CScrollBar_isVisible(base + 0xe38) == 0) return 0;
     if (CSysWin_isReady(base + 0xe78) == 0) return 0;
-    return func_80297CC0(base + 0xecc);
+    return isMCGetItemBoxActive(base + 0xecc);
 }
 #pragma optimize_for_size off
 
@@ -1161,7 +1161,7 @@ void MakeCrystal_StateChargeWait(CModelDispMakeCrystal* self)
         *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684D4;
         base[0x2dd5] = 1;
     }
-    MakeCrystal_DispatchState(self);
+    func_8021FEDC(self);
 }
 
 // -O4,s frame: retail saves r30/r31 with stmw/lmw.
@@ -2240,10 +2240,10 @@ void func_8021EC04(CModelDispMakeCrystal* self)
     }
     if (found) {
         base[0xbdd] = 0x17;
-        func_80297D2C(base + 0xecc, 0x9, base + 0x13c0, base[0x2dc0]);
+        openMCGetItemBox(base + 0xecc, 0x9, base + 0x13c0, base[0x2dc0]);
     } else {
         base[0xbdd] = 0x1e;
-        func_80297D2C(base + 0xecc, 0x3, base + 0x13c0, base[0x2dc0]);
+        openMCGetItemBox(base + 0xecc, 0x3, base + 0x13c0, base[0x2dc0]);
     }
 }
 
@@ -2277,13 +2277,13 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         // Confirm/advance trigger: drive the makecrystal file-state machine.
-        if (!func_80297D24(base + 0xecc)) {
-            int r = func_80298540(base + 0xecc);
+        if (!isMCGetItemBoxGridMode(base + 0xecc)) {
+            int r = getMCGetItemBoxPageState(base + 0xecc);
             if (r == 1) {
                 // Proceed to the pass/fail tuning state.
                 base[0xbdd] = 0x19;
-                func_802985B4(base + 0xecc);
-                func_80297E18(base + 0xecc);
+                cacheMCGetItemBoxEntries(base + 0xecc);
+                confirmMCGetItemBox(base + 0xecc);
                 playUISound__FUl(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
@@ -2297,22 +2297,22 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
                 func_8022BF6C(base + 0xe78, b, c);
                 func_8022BFC8(base + 0xe78, 0);
                 func_8022B8B8(base + 0xe78);
-                func_8029860C(base + 0xecc, 0);
+                forwardMCSubObj88(base + 0xecc, 0);
                 playUISound__FUl(5);
             }
         } else {
-            func_802984E4(base + 0xecc);
+            openMCGetItemBoxSysWin(base + 0xecc);
         }
     } else if (trigger2) {
-        func_80298450(base + 0xecc);
+        toggleMCGetItemBoxSysWin(base + 0xecc);
     } else if (cancel) {
-        func_80297E90(base + 0xecc);
+        moveMCGetItemBoxLeft(base + 0xecc);
     } else if (dir) {
-        func_80297FB4(base + 0xecc);
+        moveMCGetItemBoxRight(base + 0xecc);
     } else if (confirm) {
-        func_802980DC(base + 0xecc);
+        moveMCGetItemBoxUp(base + 0xecc);
     } else if (menu) {
-        func_80298228(base + 0xecc);
+        moveMCGetItemBoxDown(base + 0xecc);
     } else if (trigger3) {
         func_80298614(base + 0xecc);
     }
@@ -2321,7 +2321,7 @@ void __declspec(noinline) func_8021ECD4(CModelDispMakeCrystal* self)
 void __declspec(noinline) func_8021EF30(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    if (!func_80297D1C(base + 0xecc)) return;
+    if (!isMCGetItemBoxReady(base + 0xecc)) return;
     u8 count = base[0x2dc0];
     int found = 0;
     // While-form loop: retail jumps to the condition before the first body
@@ -2336,7 +2336,7 @@ void __declspec(noinline) func_8021EF30(CModelDispMakeCrystal* self)
     }
     if (found) {
         base[0xbdd] = 0x1e;
-        func_80297D2C(base + 0xecc, 3, base + 0x13c0, base[0x2dc0]);
+        openMCGetItemBox(base + 0xecc, 3, base + 0x13c0, base[0x2dc0]);
     } else {
         base[0xbdd] = 0x25;
     }
@@ -2430,7 +2430,7 @@ void __declspec(noinline) MakeCrystal_StateConfirmStep(CModelDispMakeCrystal* se
             CUICfManager_queuePauseItemMenu(0x9, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x19;
-            func_80297E18(base + 0xecc);
+            confirmMCGetItemBox(base + 0xecc);
         }
     }
 }
@@ -2442,7 +2442,7 @@ void __declspec(noinline) MakeCrystal_StateItemMenuWait(CModelDispMakeCrystal* s
     // and reset the crystal box file state machine.
     if (func_80167A18() == 0) {
         base[0xbdd] = 0x18;
-        func_8029860C(base + 0xecc, 1);
+        forwardMCSubObj88(base + 0xecc, 1);
     }
 }
 
@@ -2483,15 +2483,15 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
 
     if (trigger1) {
         // Confirm/advance trigger: drive the makecrystal file-state machine.
-        if (func_80297D24((u8*)self + 0xecc) != 0) {
-            func_802984E4((u8*)self + 0xecc);
+        if (isMCGetItemBoxGridMode((u8*)self + 0xecc) != 0) {
+            openMCGetItemBoxSysWin((u8*)self + 0xecc);
         } else {
-            u8 r = (u8)func_80298540((u8*)self + 0xecc);
+            u8 r = (u8)getMCGetItemBoxPageState((u8*)self + 0xecc);
             if (r == 1) {
                 // Proceed to the pass/fail tuning state.
                 ((u8*)self)[0xbdd] = 0x20;
-                func_802985B4((u8*)self + 0xecc);
-                func_80297E18((u8*)self + 0xecc);
+                cacheMCGetItemBoxEntries((u8*)self + 0xecc);
+                confirmMCGetItemBox((u8*)self + 0xecc);
                 playUISound__FUl(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
@@ -2505,20 +2505,20 @@ void __declspec(noinline) func_8021F2D8(CModelDispMakeCrystal* self)
                 func_8022BF6C((u8*)self + 0xe78, b, c);
                 func_8022BFC8((u8*)self + 0xe78, 0);
                 func_8022B8B8((u8*)self + 0xe78);
-                func_8029860C((u8*)self + 0xecc, 0);
+                forwardMCSubObj88((u8*)self + 0xecc, 0);
                 playUISound__FUl(5);
             }
         }
     } else if (trigger2) {
-        func_80298450((u8*)self + 0xecc);
+        toggleMCGetItemBoxSysWin((u8*)self + 0xecc);
     } else if (cancel) {
-        func_80297E90((u8*)self + 0xecc);
+        moveMCGetItemBoxLeft((u8*)self + 0xecc);
     } else if (dir) {
-        func_80297FB4((u8*)self + 0xecc);
+        moveMCGetItemBoxRight((u8*)self + 0xecc);
     } else if (confirm) {
-        func_802980DC((u8*)self + 0xecc);
+        moveMCGetItemBoxUp((u8*)self + 0xecc);
     } else if (menu) {
-        func_80298228((u8*)self + 0xecc);
+        moveMCGetItemBoxDown((u8*)self + 0xecc);
     } else if (trigger3) {
         func_80298614((u8*)self + 0xecc);
     }
@@ -2605,7 +2605,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessMenu(CModelDispMakeCrystal* se
             CUICfManager_queuePauseItemMenu(0x3, *reinterpret_cast<u32*>(base + 0xc), 0x0);
         } else {
             base[0xbdd] = 0x20;
-            func_80297E18(base + 0xecc);
+            confirmMCGetItemBox(base + 0xecc);
         }
     }
 }
@@ -2616,7 +2616,7 @@ void __declspec(noinline) MakeCrystal_StateSuccessWait(CModelDispMakeCrystal* se
     // Same item-menu gate as MakeCrystal_StateItemMenuWait, but for the success state (0x1f).
     if (func_80167A18() == 0) {
         base[0xbdd] = 0x1f;
-        func_8029860C(base + 0xecc, 1);
+        forwardMCSubObj88(base + 0xecc, 1);
     }
 }
 
@@ -2811,9 +2811,9 @@ extern "C" void func_8021FD44(CModelDispMakeCrystal* self)
 
 // Retail 0x80221D34: makecrystal state-machine dispatcher - dispatch the
 // crystal-charge state byte (+0xbdd) through a dense jump table. States
-// 0x16/0x1e/0x20 inline the file-state check (func_80297D1C) and advance
+// 0x16/0x1e/0x20 inline the file-state check (isMCGetItemBoxReady) and advance
 // the state on success; every other state delegates to a state-runner.
-void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
+void func_8021FEDC(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     switch (base[0xbdd]) {
@@ -2843,7 +2843,7 @@ void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
     case 0x17:
         // Charged state: wait for the crystal-box file state machine to be
         // ready, then move to the pass/fail tuning state (0x18).
-        if (func_80297D1C(base + 0xecc)) base[0xbdd] = 0x18;
+        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x18;
         break;
     case 0x18: func_8021ECD4(self); break;
     case 0x19: func_8021EF30(self); break;
@@ -2854,13 +2854,13 @@ void MakeCrystal_DispatchState(CModelDispMakeCrystal* self)
     case 0x1e:
         // Tuning-cancel path: wait for the file state machine, then jump to
         // the item-menu-open state (0x1f).
-        if (func_80297D1C(base + 0xecc)) base[0xbdd] = 0x1f;
+        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x1f;
         break;
     case 0x1f: func_8021F2D8(self); break;
     case 0x20:
         // Success confirm path: wait for the file state machine, then jump to
         // the success state (0x25).
-        if (func_80297D1C(base + 0xecc)) base[0xbdd] = 0x25;
+        if (isMCGetItemBoxReady(base + 0xecc)) base[0xbdd] = 0x25;
         break;
     case 0x21: MakeCrystal_StateConfirmPrompt(self); break;
     case 0x22: func_8021F5A8(self); break;
@@ -3789,7 +3789,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
 void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    func_80297928(base + 0xecc);
+    loadMCGetItemBoxFiles(base + 0xecc);
     void* m = Scn_FindCamItem(*reinterpret_cast<void**>(base + 0xc), -1);
     nw4r::math::VEC3 v1;
     writeVec3f(&v1, lbl_eu_806684A4, lbl_eu_806684A0, lbl_eu_806684A4);
@@ -3825,7 +3825,7 @@ int MakeCrystal_GetPromptState(CModelDispMakeCrystal* self)
     u8 state = base[0xbdd];
     if ((u8)(state + 0xee) <= 1) return 0x38;
     if (state == 0x18 || state == 0x1f)
-        return func_80298850(base + 0xecc);
+        return getMCGetItemBoxKeyCode(base + 0xecc);
     return (state < 0x12) ? 0x3b : 0;
 }
 
@@ -3867,7 +3867,7 @@ void sinit_80221DDC() {
 
 
 // Typified wave7: retail .data tail as typed tables. The TU's two
-// switches (MakeCrystal_DispatchState/func_80220954) already lower to same-size
+// switches (func_8021FEDC/func_80220954) already lower to same-size
 // native jumptables (0xA4/0x20, same order), so these objects + the
 // compiler jts + MWCC's 8-align pad ARE the 0x1B8 section. Own-TU
 // member slots use their MWCC-mangled spellings (same definitions).

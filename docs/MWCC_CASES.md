@@ -1775,7 +1775,7 @@ US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize”
 
 **Flags:** `-O4,s` + `-func_align 4` — size opt yields `stmw`/`lmw` for r30/r31; without explicit `-func_align 4`, `-O4,s` pads thin wrappers to 16 and blows the split.
 
-**Locals / entryTable soft-cap:** keep `char* dataBase = (char*)&sGameMainIcon` for r30-relative `+0x10/+0x30/+0x50`. MWCC peeps C `dataBase+0` **and** asm `addi r3,r30,0` to `mr r3,r30`. Close with §17.6 inline asm that emits `opword 0x387E0000` (`addi r3,r30,0`) then `li r4,1` / `bl entryTable__…` (declare the mangled symbol in `extern "C"`). Do **not** keep a live `int clear` next to that asm — it reshuffles r30/r31; use literal `0` for the early stores. Do **not** post-process `.text` (`insn_patches` forbidden).
+**Locals / entryTable soft-cap:** keep `char* dataBase = (char*)&sGameMainIcon` for r30-relative `+0x10/+0x30/+0x50`. MWCC peeps C `dataBase+0` **and** asm `addi r3,r30,0` to `mr r3,r30`. The former opword asm was removed 2026-09-17 (PLAN.md §17.6 has no single-instruction carve-out); current honest state is CODE_MATCH 98.6% (1 insn: `mr` vs retail `addi`). Do **not** keep a live `int clear` local next to the call site — it reshuffles r30/r31; use literal `0` for the early stores. Do **not** post-process `.text` (`insn_patches` forbidden).
 
 ## CAIAction UnkVirtualFunc1/2 — `stwx` vs `stwux` (US)
 
@@ -2183,8 +2183,8 @@ sizes; orphan setting/HTML strings live inside the menu pool) and
   OSReset_file` and `HotResetPanicMenu(strBase)` (`strBase+0xC` / `+0x38`,
   file in **r31**). Only residual vs prior FULL: MWCC peeps `addi r3,r31,0` →
   `mr r3,r31` at both `OSPanic` file args (`strBase+0` / asm `addi` also peep).
-  §17.6 whole-call asm blocks regressed (~90%); needs a tighter opword-only
-  carve-out or a C shape that keeps `addi` (historical orphan-pool FULL).
+  Whole-call asm blocks are not sanctioned by §17.6 (the historical orphan-pool
+  FULL used now-removed asm); keep high-level C++ and record the near-miss.
 - `__OSReturnToMenu` (~95.1% soft-cap): needs **three** `OSStateFlags` locals
   (retail frame `-0x90` at `0x58`/`0x38`/`0x18`; one shared local → `-0x50`)
   **and** Chaitin coloring `strBase=r30`, disc/ticket scratch=`r31`,
@@ -8245,7 +8245,7 @@ The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x
 - **Stat objects:** `charObj = func_8009EC9C(member)`; `stats = charObj + 0x17C` (embedded vtable object). vtable slots (word offsets): `0x4A`/`0x4B` = HP floats (fctiwz, clamp 9999), `0x42`/`0x79` = name-string bytes, `0x8A`/`0x83`/`0x8B` = stat blocks (statA: s16 @0x1C/0x1E/0x20/0x2E/0x32/0x38 + f32 @0x10 + byte @0x55; statB: f32 @0x10; statC: s16 @0x06/0x0C/0x0E/0x10/0x18/0x1C/0x22).
 - **Bar formula** (repeated ~20×, reproduces MWCC's xoris/0x4330 s32→double path): `(s16)(s32)(0.01f * ((100.0f + (f32)s16A) * (f32)(s16B + count)))` where count = `func_801E9310(info, member, cat, item)`. The `(f32)(s16A)` and `(f32)(s16B + count)` casts must be written explicitly — MWCC needs the s32→f32 conversion (xoris) which the u32 path omits. Variant: `RoundHalfAway0(0.01f * statB->f10 * (f32)(s16 + count))` (round-to-nearest helper: `s32 RoundHalfAway0(float)`).
 - **Delta-color rows:** per row compute `pb` (4th arg of 9310 = NULL), `nb` (4th arg = arg3), `d = (s16)(nb - pb)`, display `LayoutSetTextBoxInt(pane, nb)`, then 4 local `GXColorS10` quads loaded from `.sbss` (`80664518/20` = q1/q2, `80664558/60` = q3/q4 — note the interleaving), conditional `__as__11_GXColorS10FRC11_GXColorS10` overwrites (d<0 → 80664538/40/78/80, d>0 → 80664528/30/68/70), then `PaneMatSetTevColors(pane, &q3, &q4)` + `PaneMatSetTevColors(pane+4, &q1, &q2)`. The quads MUST be declared as 8-byte local objects copied via `*(CItemBoxQuadColor*)&lbl_eu_806645XX` (memberwise 2×lwz/stw) with the __as__ calls direct.
-- **Call-count inventory** (0x4DA8 body): 120× __as__GXColorS10, 87× PaneMatSetTevColors, 49× func_801E9310, 31× func_801E9690, 24× LayoutSetTextBoxInt, 20× func_80136D74, 16× setItemBoxCopy, 13× copyItemBoxCopy.
+- **Call-count inventory** (0x4DA8 body): 120× __as__GXColorS10, 87× PaneMatSetTevColors, 49× func_801E9310, 31× getItemBoxCondStatById, 24× LayoutSetTextBoxInt, 20× func_80136D74, 16× setItemBoxCopy, 13× copyItemBoxCopy.
 - **Helper signatures (retail-verified):** `func_80157C4C(u32 index, s16 value)` (2-arg); `func_801E98E4(void*, u16, void*) -> bool`; `func_801E197C(void* out, void* info, void* item)` / `func_801E1E0C` same (3rd arg is a POINTER, checked `cmpwi r5,0`; entry is 0x34 bytes, callers copy 7 words); `func_801E9310(void*, void*, u32, void*) -> u32`; `LayoutSetTextBoxInt(void*, u32)`; `func_80136D74(void*, const char*, u32)`; `PaneMatSetTevColors(void*, void*, void*)`; `CtrlObjectParam_GetSlotTableBase() -> void*`; `RoundHalfAway0(float) -> s32`.
 - **Open item:** the prologue's 48-byte party-struct copy loop (`li r0,6; mtctr; lwz r4,4(r3); lwzu r0,8(r3); stw r4,4(r5); stwu r0,8(r5); bdnz`) is NOT reproducible from ~12 tested source forms at -O4,p (48-byte struct copy, u64[6], E8[6], memcpy, pointer sentinels all unroll or call). Only a 96-byte struct copy emits this counted-loop shape (`li r0,0xc`). The exact source form remains open — try a larger PartyData struct (≥96B) with the loop covering the first 48, or a pragma'd helper.
 
@@ -8331,7 +8331,7 @@ decoded several reusable MWCC facts:
 
 After transcribing all ~5000 instructions, two systematic codegen problems blocked matching:
 
-1. **`-ipa file` inlines tiny helper STUBS into the target function.** The unit's `-ipa file` flag inlines not-yet-matched stub bodies (func_801E9690/9310/9774/98E4/9190/9224/96F0/197C/1E0C, 0x60-0xDC bytes) into func_801E43BC, exploding size from 0x4D04 to 0x6314 and adding ~90 spurious `func_8009EC9C`/`BdatGetItemId` calls (reloc counts: EC9C 96 vs retail 1). **Fix: wrap the stub DEFINITIONS in `#pragma push / #pragma auto_inline off / #pragma pop`** — reloc counts return to retail parity (EC9C 1, 9310 47 vs 49, 9690 30 vs 31). Without this, any large function calling small unmatched stubs in this TU will bloat.
+1. **`-ipa file` inlines tiny helper STUBS into the target function.** The unit's `-ipa file` flag inlines not-yet-matched stub bodies (getItemBoxCondStatById/9310/9774/98E4/9190/9224/96F0/197C/1E0C, 0x60-0xDC bytes) into func_801E43BC, exploding size from 0x4D04 to 0x6314 and adding ~90 spurious `func_8009EC9C`/`BdatGetItemId` calls (reloc counts: EC9C 96 vs retail 1). **Fix: wrap the stub DEFINITIONS in `#pragma push / #pragma auto_inline off / #pragma pop`** — reloc counts return to retail parity (EC9C 1, 9310 47 vs 49, 9690 30 vs 31). Without this, any large function calling small unmatched stubs in this TU will bloat.
 
 2. **User-constructed quad types make copy-init a ctor call.** `CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;` emits `bl __ct__17CItemBoxQuadColorFRC17CItemBoxQuadColor` (the hpp's type has user ctors). **Fix: TU-local POD `struct E43Quad { s16 r,g,b,a; };`** — copy-init becomes 2×lwz+2×stw (retail's GXColorS10 memberwise copy). Note: with the stub-inlining bug present, the POD change caused register-spill bloat (0x6314); with pragmas fixed it is net-neutral and matches retail's inline quad loads.
 
@@ -9473,7 +9473,7 @@ that sharpen the collision). Resolving for CDeviceFontLoader needs either a
 scope) or a header refactor isolating the free-function decls from the class members.
 Mark CDeviceFontLoader as a BLOCKER for the data gate.
 
-## func_800F41A0 (CBattleManager) — mangled local-struct helper relocs → file-scope extern "C" (FULL_MATCH 100%)
+## CBattleMan_OnActorsEmpty (CBattleManager) — mangled local-struct helper relocs → file-scope extern "C" (FULL_MATCH 100%)
 - Symptom:   hexdiff clean at instruction level (100%, 0 struct, 0 regsw) but 10x R_PPC_REL24 name drift: decomp emitted `CTaskGame_enumListCtor__FP38EnumListHolder$19481CBattleManager_cpp` / `CfRes_checkFlags_48000__Fv` / `CItem_clearSharedBox__Fv` etc. where retail uses plain linker names
 - Cause:     helpers declared as block-scope `extern void f(...)` inside the function get C++ linkage; MWCC mangles them, and params typed on a function-local struct bake the `$NNN<TU>_cpp` suffix into the symbol name
 - Fix:       hoist `extern "C"` declarations to FILE scope (MWCC Wii/1.1 C++ rejects a linkage-specification inside a function body with error 10134 "declarator expected"); for CTaskGame_enumListCtor/CTaskGame_enumListGet/__dt__80043E88 delete the local re-decls entirely and use the existing extern "C" void* forms from CVision.hpp
@@ -9481,7 +9481,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Confidence: repo_proven
 
 ## Wii/1.1 flag vocabulary correction + scheduler tie-break walls (CBattleManager near-miss trio)
-- Symptom:   functions with identical instruction sets and identical register assignments differing only in the ORDER of 2-4 independent head/setup instructions (func_800F3970 4 insns, func_800D9218 stfs/stw pair, func_800EA470 lfs/lwz pair): retail interleaves loads with setup; MWCC groups them
+- Symptom:   functions with identical instruction sets and identical register assignments differing only in the ORDER of 2-4 independent head/setup instructions (func_800F3970 4 insns, func_800D9218 stfs/stw pair, CBattleMan_ResetTimer lfs/lwz pair): retail interleaves loads with setup; MWCC groups them
 - Cause:     O4,p per-block list-scheduler tie-break on the ready list; the input PCode order (hence the tie-break) is not reachable from any tried src shape. `-aggressive_ls_scheduling off` as listed in docs/scheduling.md does NOT exist in Wii/1.1 (Usage Error); only `-schedule off` exists, which regresses whole units (CBattleManager: fixes 1 fn, breaks 31). GC/3.0a5.2 also ruled out for this TU by whole-unit A/B (31/78 vs 46/78)
 - Fix:       none found from src after exhaustive levers (statement reorder, named locals, volatile barriers, inline globals, decl-order swaps incl. byteVal-first). These are recorded near-misses under the no-SMT policy unless a new angle emerges
 - Result:    recorded near-misses: us-800f4a54 (97.6%), us-800e9d78 (94.9%), us-800eaa64 (60%)
@@ -9515,7 +9515,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Symptom:   small functions stuck at 60-98% with pure instruction-ORDER residuals (identical instructions + registers, different sequence): loads grouped vs interleaved with setup, store pairs swapped
 - Cause:     retail source used `#pragma schedule off` around those functions; our build schedules them at O4,p
 - Fix:       bracket the function: `#pragma schedule off` before the definition, `#pragma schedule on` after its closing brace. The pragma leaks to end-of-file unless re-enabled — ALWAYS pair them. Unknown pragmas are silently ignored by Wii/1.1 (verify with a fake-pragma control). Found via `strings mwcceppc.exe | grep schedule` ("no instruction scheduling" = `-schedule off` CLI; `aggressive_ls_scheduling` exists in strings but NOT as a CLI flag)
-- Result:    func_800EA470 60% -> FULL_MATCH (100%, byte-exact incl. relocs). Whole-file-off A/B also showed F3C6C +9.2 / preCalcTotalDamage +7.7 / EA484 +4.0 / DB0FC +3.5 / E9FE4 +3.4 — retail used targeted off-regions whose exact layout is still unknown
+- Result:    CBattleMan_ResetTimer 60% -> FULL_MATCH (100%, byte-exact incl. relocs). Whole-file-off A/B also showed F3C6C +9.2 / preCalcTotalDamage +7.7 / EA484 +4.0 / DB0FC +3.5 / E9FE4 +3.4 — retail used targeted off-regions whose exact layout is still unknown
 - Confidence: repo_proven
 - Applies to/a.k.a.: sweep every order-residual function with single-function brackets; combine with late-init and sentinel-reload patterns. CAUTION: brackets around functions that inline shared static helpers change helper bodies TU-wide (IPA) and can regress matched neighbors — verify with hexdiff --all after each bracket
 
@@ -9585,7 +9585,7 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Symptom:   small leaf helpers stuck at 14-85%: (a) stmw/lmw vs individual stw saves; (b) cmpi vs cmpli loop guards; (c) hoisted layout/pointer loads where retail reloads per call; (d) fsub+frsp double-rounding vs retail lone fsubs in the 0x43300000 int->float magic; (e) neg/or/rlwinm bool tail vs addic/subfe setnz
 - Cause:     retail compiled these leaves under size optimization; source-shape details (declaration order of saved locals, named SDA locals, inline nested casts) shift MWCC idiom selection
 - Fix:       (1) wrap with pragma optimize_for_size for stmw/lmw frames AND the addic/subfe bool tail; (2) u32 loop counters for cmpli; (3) remove hoisted pointer locals so each use reloads (retail never CSEs member loads across calls); (4) replace manual 0x43300000 unions with plain (float)(int_expr) builtin cast (single-rounded fsubs); (5) declare pointer locals before counter locals (Rule A birth order), splitting 'T x = init;' into decl+assign when the init store must sink but the color must not
-- Result:    FULL_MATCH 100%: func_801D885C, func_801E3DE4, func_801E96F0, func_801DFD60, func_801D4BDC, func_801D4AE0, func_801E16F0, func_801E4090, func_801DFDC0
+- Result:    FULL_MATCH 100%: clearItemBoxTripleRows, clearItemBox2TripleRows, testItemBox2BdatFlag, getItemBoxCondStat, func_801D4BDC, setItemBoxNamedText, setItemBox2NamedText, clearItemBox2PairTexts, testItemBoxBdatFlag
 - Confidence: repo_proven
 - Applies to/a.k.a.: any -O4,p TU with size-optimized retail leaves; complements ref:bc80cd6fac (builtin cast) and ref:092060b7a9 (-O4,s setnz) — here achieved per-function via pragma instead of unit flags
 
@@ -10539,7 +10539,7 @@ us-80115a2c (r6→r7).
 - Result:    FULL_MATCH
 - Confidence: repo_proven
 
-## func_800F4034 (CBattleManager.cpp) — r4 vtable loads / loop-var colors / null-check shape → three source shapes (Wii/1.1, FULL_MATCH)
+## CBattleMan_RefreshChainEnum (CBattleManager.cpp) — r4 vtable loads / loop-var colors / null-check shape → three source shapes (Wii/1.1, FULL_MATCH)
 - Symptom:   manual `vtbl = *(void***)obj; ((fn)vtbl[k])(obj)` dispatch compiles to `lwz r4` not retail's canonical `lwz r12`; loop counter got r31 instead of retail's r30; `if (p != nullptr) f(p+off)` skips the whole call where retail only branches over the `addi` (adjusted-this).
 - Cause:     MWCC emits canonical r12 virtual dispatch only for real virtual calls through a class type; saved-reg colors follow declaration birth order even for values assigned inside loops; the ternary `(cond) ? p+off : p` reproduces the branch-over-addi-only adjusted-this pattern.
 - Fix:       cast to an existing abstract slot proxy (`CSuddenCommuActorVt`, slots 0xB0/0xB8/0x314 = declared indices 42/44/195 via (slot/4-2)) and call real virtuals; declare the element pointer before the counter; use a conditional-expression pointer argument.
@@ -10685,11 +10685,11 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Applies to/a.k.a.: any TU whose only liveness anchor is a fake emitter; pairs with MWCC_PATTERNS "pragma force_active does NOT stop -ipa file" negative result.
 
 ## Shield-clearing batch: CPartsChange / CtrlMoveBase / CActParamData — `#define func_XXX shield` removals via cross-header decl unification (Wii/1.1, unblock)
-- Symptom:   Removing a TU-local `#define func_801BFE20 partsChangeSndQueryDeclUnused`-style shield re-surfaces MWCC 10197 ("illegal function overloading") / 10505 ("illegal overloading … was declared … now declared as extern \"C\"") one error at a time (`-maxerrors 1` hides the rest of the cascade).
+- Symptom:   Removing a TU-local `#define CfSoundMan_PlayActorParam partsChangeSndQueryDeclUnused`-style shield re-surfaces MWCC 10197 ("illegal function overloading") / 10505 ("illegal overloading … was declared … now declared as extern \"C\"") one error at a time (`-maxerrors 1` hides the rest of the cascade).
 - Cause:     Duplicate `extern "C"` declarations of the same unmangled retail symbol across headers with *textually different* signatures. MWCC requires IDENTICAL parameter types for duplicate extern "C" decls — `u32` vs `int`, `void*` vs `u8*`, 6th-arg `void*` vs `f32` are all distinct types; return type and C-vs-C++ linkage must match too.
 - Fix:       Peel one build error at a time with `hexdiff --all --brief`; for each clash pick ONE winner signature (the one backed by the definition in CfSoundMan.cpp / by FULL_MATCH callers / by retail asm) and edit the outlier header to match exactly. Variant call ABIs survive via local fn-pointer cast typedefs (CfCam `BE398Fn` convention) — verify the variant is genuinely retail-correct first (`hexdiff --asm`: retail passed `r7`=ptr + `f1` float at those sites). Plain-C++ decls of pre-mangled names (e.g. `getPlayer__Q22cf13CfGameManagerFi`) become `extern "C"` so MWCC doesn't re-mangle them.
 - Result:    All three shields removed; CPartsChange/CtrlMoveBase/CActParamData build with zero accepted-target regressions (registry cross-check: every FULL_MATCH target still ✓); consumer TUs (CtrlMoveEne, CtrlRemote, CSaveLoad, CQstLogList, CMenuBattlePlayerState, CTaskGameEff, code_8027513C, CfObjectImplObj) verified building.
-- Applies to/a.k.a.: any `cfgGameMgr9354Unused`/`DeclUnused`-style macro shield; func_801BFE20 / func_800D9354 / func_801BFC38__ / func_804BE398 / getPlayer__Q22cf13CfGameManagerFi decl families; prefer root-fixing the header over adding another shield.
+- Applies to/a.k.a.: any `cfgGameMgr9354Unused`/`DeclUnused`-style macro shield; CfSoundMan_PlayActorParam / func_800D9354 / func_801BFC38__ / func_804BE398 / getPlayer__Q22cf13CfGameManagerFi decl families; prefer root-fixing the header over adding another shield.
 ## RVL_SDK dvd/dvd_broadway — both DECOMP_FORCEACTIVE emitters retired by restoring the real GC'd functions (US, Wii/1.1 `-O4,p`, FULL_MATCH)
 - Symptom:   unit carried two retail-absent `DECOMP_FORCEACTIVE` fakes kept alive only for compile-time side effects: c155 (`&dvdContexts`) pinned `.bss` first-reference order, c495 (two `(%s) tmd ...` literals + `&coverStatus/&coverRegister`) pooled strings at `.data 0x458` and kept two unused `.bss` symbols; three fake `UnusedStr_*` byte arrays hand-pinned other GC'd functions' literals.
 - Cause:     the retail source defined real functions there (`DVDLowOpenPartitionWithTmdAndTicket`, `DVDLowGetCoverStatus`, `DVDLowGetCoverReg`) that the retail linker GC'd from the image; their literal-pooling/.bss-pin side effects are still visible in the DOL-extracted retail .o. The static early helper `initDvdContexts` references `dvdContexts` but is fully inlined into `DVDLowInit`, so under first-reference bss allocation it pins nothing (diRegValCache/registerBuf from the earlier-outlined `doPrepareCoverRegisterCallback` win slots 0/0x20 and `dvdContexts` drifts to 0x40 → `addi r12,r9,64` vs retail `0`).
@@ -10732,7 +10732,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 ## UPDATE — shield-clear batch follow-up: BFC38/BFDE8/800817BC/800822F4 family unification + two type-system gotchas
 - Symptom:   After the first wave, sweeping gimmick/plugin/menu units surfaced more masked 10197/10505s: `unsigned int` vs `u32` decl pairs, plain-C++-linkage u16 forms of flat retail names (double-mangled reloc hazard), `const void*` vs `void*` params, and return-type-only divergences (`CfGimmickObjectMgr*` vs `void*`).
 - Cause:     (1) Under the MWCC matching build `u32`=unsigned long and `s32`=signed long (types.h), so `int`, `unsigned int`, `s32`, `u32` are FOUR distinct types for extern "C" compatibility — spelling matters, not width. (2) `-maxerrors 1` means fixing one clash unmasks the next; a unit that "built fine last week" can hide a stack of them behind the first error.
-- Fix:       Unified func_801BFC38__ on `extern "C" u16(u32,u32,u32,u32,f32)` across all 9 file-scope decls (+4 .cpp locals); func_801BFDE8 on the uint form with `(u32)(uintptr_t)` casts at pointer-passing sites; setChildV40__/func_800822F4/func_80082354/func_8016FE34 outliers aligned to their canonical spellings. Dropped CVision's getPlayer/BFC38/BFE8C shields once their causes were unified.
+- Fix:       Unified func_801BFC38__ on `extern "C" u16(u32,u32,u32,u32,f32)` across all 9 file-scope decls (+4 .cpp locals); CfSoundMan_PlayLinkedParam on the uint form with `(u32)(uintptr_t)` casts at pointer-passing sites; setChildV40__/func_800822F4/func_80082354/func_8016FE34 outliers aligned to their canonical spellings. Dropped CVision's getPlayer/BFC38/BFE8C shields once their causes were unified.
 - Result:    20+ units verified building (CVision, CPartsChange, CtrlMoveBase, CActParamData, CfObjectImplMove, CfMapItemManager, pluginSnd, code_8027513C, CfGimmick*, CCol6System, chain/*, CfMapMineManager, CSuddenCommu, code_8018C5FC, code_80135FDC, CfGameManager, CBattleManager); no accepted-target regressions.
 - Applies to/a.k.a.: any multi-header retail-flat-name family; ALWAYS copy the winning header's parameter SPELLING verbatim (`u32`, not `unsigned int`), and prefer block-scope→file-scope decl alignment before inventing new shields.
 
@@ -11093,7 +11093,7 @@ emits `add r3,r3,r0; addi r29,r3,16880`. Cycle `equivalence: full_match`.
 - Result:    FULL_MATCH (cycle `equivalence: full_match`). Unit still OVER(156).
 - Evidence:  us-80265ea4 / src/kyoshin/menu/CMenuPassiveSkill.cpp
 
-## func_801C03C8 — named z/y/x temps pin lfs order vs x/y/z stores (US, Wii/1.1 -O4,p, FULL_MATCH)
+## CfSoundMan_ReadSlotPosition — named z/y/x temps pin lfs order vs x/y/z stores (US, Wii/1.1 -O4,p, FULL_MATCH)
 - Symptom:   Live 98.0% 0 structural 2 reg_swap: retail `lfs f0,44; lfs f1,28; lfs f2,12` then `stfs` x/y/z at sp+20/24/28; decomp loaded x then z (`lfs f2,12` / `lfs f0,44`). Size 0x194/0x194.
 - Cause:     Member-assign `t.x/t.y/t.z` births loads in struct order. `t.z` first flipped load order but also store slots (94.1%). Volatile FPRs color low→high, so first-created short-lived temp is f0.
 - Fix:       `f32 z = res->z; f32 y = res->y; f32 x = res->x;` then `t.x=x; t.y=y; t.z=z`. Named temps birth f0/f1/f2 as z/y/x; struct stores keep frame slots. Incomplete z/x-only locals (prior) dropped to 95%.

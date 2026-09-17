@@ -395,7 +395,7 @@ def cmd_build(project: Project, hint: str) -> int:
 def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
     # Matching compares raw MWCC output. Copy .note.split so objdiff does not
     # report empty data. Reloc-name reshape is link-only (ninja *.reloc.o);
-    # data diff may still apply UNIT_RULES to a temp copy.
+    # data diff compares raw objects unless --postprocess is passed.
     _postprocess_notesplit_object(project, obj)
 
 

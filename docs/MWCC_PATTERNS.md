@@ -1021,9 +1021,9 @@ and inventing a differently-named virtual that appends instead of overriding.
 
 **`func_8043CAFC` / `func_8043FD10` / `func_8043E58C`:** CAFC is the dual-view
   probe shared with `getSplitLine`/`setSplitLine` (return hasView2); high-level C
-  soft-caps ~87.5% on the same prologue interleave — use `extern "C" asm` like
-  `getSplitLine` (not C++-mangled `asm int name(CView*)`, which emits
-  `name__FP5CView`). FD10 is the render() client-rect + border expand helper —
+  soft-caps on the same prologue interleave. The former `getSplitLine`
+  whole-function asm was removed 2026-09-17 (not sanctioned by PLAN.md §17.6);
+  keep high-level C++ and record the near-miss. FD10 is the render() client-rect + border expand helper —
   peak ~99.5% + SMT `EQUIVALENT` (plain field stores; `volatile` lha regresses).
   Cycle may label that `CODE_MATCH` even when `equivalence=equivalent`; promote
   to `EQUIVALENT_MATCH` when the cert is issued. E58C walks `mParent` via
@@ -1031,7 +1031,7 @@ and inventing a differently-named virtual that appends instead of overriding.
   for size (~87% schedule); avoid long `cycle` SMT on it.
 
 **`getSplitFrameFlag` / frame draw / GX scissor ring:** CE90 is `lbz` of
-  `unk45C[8]` (FULL via tiny `extern "C" asm`). `func_804409D0` draws border
+  `unk45C[8]` (FULL via high-level `extern "C"` C++). `func_804409D0` draws border
   quads (`begin(9,1)`/`add`/`end`) with `mFrameColor`×`lbl_eu_8066A318` then
   ×`lbl_eu_8066A2F4` (~54% first pass). `func_8044B298` copies optional
   `{u32,u32}` pairs into cache+0x4A8/0x4B0 (fix `C1FCCacheLayout` pad so
@@ -4238,7 +4238,7 @@ reordering among uninitialized decls alone had no effect (birth follows first us
 - Symptom:   dispatcher function explodes to many times retail size; hexdiff shows hundreds of structural diffs and decomp-side relocs vanish (case bodies present inline instead of `bl` per case)
 - Cause:     `-ipa file` inlines every same-TU callee into the switch, destroying the jump-table form
 - Fix:       add `__declspec(noinline)` to each case-target DEFINITION (bodies unchanged), plus an `extern "C"` declaration block BEFORE the definitions so call sites resolve to the unmangled retail symbols. Verify the state->function mapping against the retail asm table entry-by-entry (a one-slot shift cascades through all subsequent relocs). Existing postprocess `data_pool_patterns` rules name the auto-emitted jumptable once the shape matches
-- Result:    MakeCrystal_DispatchState (CModelDispMakeCrystal) 0.7% -> 100.0% FULL_MATCH; unit .text overage 3640B -> 324B
+- Result:    func_8021FEDC (CModelDispMakeCrystal) 0.7% -> 100.0% FULL_MATCH; unit .text overage 3640B -> 324B
 - Confidence: repo_proven
 - Applies to/a.k.a.: any state-machine/opcode dispatcher over same-TU runners; also check the cmpli bounds constant (table size) and inline-case bodies against retail before assuming deeper problems
 

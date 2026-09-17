@@ -133,7 +133,7 @@ struct CfResPcParent {
     /* 0x68 */ u32 field_68;       // flags (bit 21 = 0x200000 tested by CfResPcImpl_notifyReloadEvent/CF90)
     /* 0x6C */ u32 field_6C;       // flags (bit 17 = 0x20000 set by CfResPcImpl_probeAndCapHandler on query success)
     u8 field_70[0x74 - 0x70];      // 0x70..0x73
-    /* 0x74 */ u8* field_74;       // sound-related pointer passed to func_801BFE20 (same offset as CfResReloadParent)
+    /* 0x74 */ u8* field_74;       // sound-related pointer passed to CfSoundMan_PlayActorParam (same offset as CfResReloadParent)
     u8 field_78[0x8C - 0x78];      // 0x78..0x8B
     /* 0x8C */ u16 field_8C;       // slot id read by CfResPcImpl_lookupPackedToken
     /* 0x8E */ u16 field_8E;       // cleared by the ctor when a parent is present
@@ -379,7 +379,7 @@ namespace nw4r { namespace math { struct VEC3; } }
 
 namespace cf {
 
-// Slot entry returned by func_801BFAE4 (CfSoundMan slot lookup); +0x00 holds
+// Slot entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); +0x00 holds
 // the active sound object, which CfResPcImpl_notifySound calls SetPlayerPriority on.
 struct CfResPcSoundSlotEntry {
     /* 0x00 */ nw4r::snd::detail::BasicSound* field_00;
@@ -452,10 +452,10 @@ extern "C" void func_80068AEC(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);
 extern "C" void processMapChange__Q22cf13CfGameManagerFv(u32 mask);
 extern "C" bool loadBdatTableCache__Q22cf13CfGameManagerFv(u8* manager, u32 first, u32 second);
-extern "C" void func_801BFF04(int a, int b, int c, int d);
+extern "C" void CfSoundMan_PauseSlotByMode(int a, int b, int c, int d);
 extern "C" int CfRes_tryResolveByBits(int destination, int source, int size);
 extern "C" int CfRes_tryResolveType0(int first, int second, int third);
-extern "C" int func_801BFA64(int index);
+extern "C" int CfSoundMan_CloseRecord(int index);
 extern "C" int KyoshinHeap_GetField34();
 extern "C" void KyoshinHeap_AllocFld34(int index);
 extern "C" void CfRes_tryRefreshSlot16C(u8* obj, int arg);
@@ -465,7 +465,7 @@ extern "C" void func_800BBB50(cf::CfResPcParent* parent);
 extern "C" void CfObjectMove_resetAnimModeArgs(cf::CfResPcParent* parent);
 extern "C" void CfResPcImpl_refreshMapAreaEvents(void* self);
 extern "C" cf::CfResPcEntry38* CfRes_getEntryPtrCol0(int index);
-extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);
+extern "C" int CfSoundMan_PlayActorParam(int a, int b, u8* c, float f1, float f2);
 
 // C-ABI imports used by CfResPcImpl_cleanupMgrSlotTable2 (slot reset) and CfResPcImpl_setResourceOpen /
 // CfResPcImpl_detachResources (resource lookup / notify helpers, defined in CfRes.cpp).
@@ -478,7 +478,7 @@ extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem19Idx(int state);
 extern "C" cf::CfResPcLookupEntry* CfRes_getArrayElem20Idx(int state);
 extern "C" void CfRes_decTblRefByIdx(int state);
 extern "C" void CfRes_setTblHandle(int a, int b);
-extern "C" cf::CfResPcSoundSlotEntry* func_801BFAE4(u16 handle);
+extern "C" cf::CfResPcSoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);
 extern "C" void func_800BAB64(cf::CfResPcParent* parent);
 extern "C" void* CfRes_getInstPtr170();
 
@@ -488,7 +488,7 @@ extern "C" void* CfRes_getInstPtr170();
 // the plain retail names.
 extern "C" u8* CfRes_getInstanceField();
 extern "C" void CfRes_tryReregisterSlot(int a, u8* b);
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
+extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c); // canonical u32 form (CVision/CfResReload/ImplPc/ImplEne)
 extern "C" int CfRes_resolveSelfPacked(int a, int b);
 extern "C" int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
 extern "C" void loadPlayerResources__Q22cf13CfGameManagerFv(u32 first, u32 second);

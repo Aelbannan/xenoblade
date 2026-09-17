@@ -126,7 +126,7 @@ extern "C" void __dt__11CQstLogInfoFv(CQstLogInfo* self, int flags);
 // Widget teardown helpers called by Term (retail unmangled names).
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
-extern "C" void QstLogList_Unload(CQstLogList* self);
+extern "C" void func_80227BD8(CQstLogList* self);
 extern "C" void func_80229620(CQstLogInfo* self);
 
 // Term tail helpers.

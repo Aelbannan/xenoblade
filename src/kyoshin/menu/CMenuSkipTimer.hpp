@@ -102,7 +102,7 @@ extern "C" void CSkipTimerEngageSkip(CSkipTimer* self);
 extern "C" void CSkipTimerNextKey(CSkipTimer* self);
 extern "C" void CSkipTimerPrevKey(CSkipTimer* self);
 extern "C" void CSkipTimerLeaveSkip(CSkipTimer* self);
-extern "C" int CSkipTimerGetActive(CSkipTimer* self);
+extern "C" int func_8029FF1C(CSkipTimer* self);
 extern "C" void func_801C414C(CTitleAHelp* self);
 extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo);

@@ -20,13 +20,13 @@ struct BtlRingNode {
 };
 
 // Battle manager (real prefix: IFactoryEvent handlers at +0x08..+0x18, see
-// retail table lbl_eu_8052BCE0; setPartyMaskFlag/func_800E2584 at +0x1C/+0x20).
+// retail table lbl_eu_8052BCE0; setPartyMaskFlag/CBattleMan_ClearStateMask at +0x1C/+0x20).
 // Local decl (never constructed here, so no vtable is emitted).
 class CBattleManager : public IFactoryEvent {
 public:
     static CBattleManager* getInstance();
     virtual void setPartyMaskFlag(u32 r4, u32 r5); // +0x1C
-    virtual void func_800E2584(u32 mask);          // +0x20
+    virtual void CBattleMan_ClearStateMask(u32 mask);          // +0x20
 };
 }
 
@@ -37,17 +37,17 @@ public:
 // cf::CfObject::CfObject_getPosVector.)
 
 // --- C-linkage retail helpers ---
-// (Declarations already provided by included headers: func_800F3C08,
-// func_800EA444, func_800D9978 and the CfMoveEnumHolder/CfMoveEnumList
+// (Declarations already provided by included headers: CBattleMan_SetPartyFlagReset,
+// CBattleMan_FetchVisionObj, func_800D9978 and the CfMoveEnumHolder/CfMoveEnumList
 // family live in cfsys/CfObjectImplMove.hpp / cf/CfGameManager.hpp;
 // func_801862C0/func_801864DC/func_8003AA34/func_8003B1EC in
 // kyoshin/code_801862C0.hpp.)
 extern "C" {
     // CBattleManager helpers
-    int func_800F3DC8(cf::CBattleManager*, int);
-    void func_800F4034(cf::CBattleManager*);
-    void func_800F3F8C(cf::CBattleManager*);
-    void func_800F3FC8(cf::CBattleManager*);
+    int CBattleMan_GetUnk94Count(cf::CBattleManager*, int);
+    void CBattleMan_RefreshChainEnum(cf::CBattleManager*);
+    void CBattleMan_RaiseBattleFlag10(cf::CBattleManager*);
+    void CBattleMan_DropBattleFlag10(cf::CBattleManager*);
 
     // Enum list holder ctor (dtor/accessors come from CfObjectImplMove.hpp)
     void CTaskGame_enumListFill(void* holder, int type, int subtype);
@@ -102,13 +102,13 @@ extern "C" {
 
 int startObserve(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800F3C08(bm, 1);
+    CBattleMan_SetPartyFlagReset(bm, 1);
     return 0;
 }
 
 int endObserve(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800F3C08(bm, 0);
+    CBattleMan_SetPartyFlagReset(bm, 0);
     return 0;
 }
 
@@ -118,7 +118,7 @@ int defeatingCount(VMThread* pThread) {
     VMArg arg;
     arg.type = 3;
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    arg.value.uintVal = func_800F3DC8(bm, key);
+    arg.value.uintVal = CBattleMan_GetUnk94Count(bm, key);
     vmRetValSet(pThread, &arg);
     return 1;
 }
@@ -158,7 +158,7 @@ int isEnd(VMThread* pThread) {
 
 int end(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800F4034(bm);
+    CBattleMan_RefreshChainEnum(bm);
     return 0;
 }
 
@@ -261,7 +261,7 @@ int vision(VMThread* pThread) {
     }
     if (enable) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        bm->func_800E2584(0x200);
+        bm->CBattleMan_ClearStateMask(0x200);
     } else {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         bm->setPartyMaskFlag(0x200, 1);
@@ -274,10 +274,10 @@ int voiceEvent(VMThread* pThread) {
     // matching retail's register allocation.
     if (vmArgOmitChk(pThread, 1) ? 1 : vmArgBoolGet(2, vmArgPtrGet(pThread, 1))) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        func_800F3F8C(bm);
+        CBattleMan_RaiseBattleFlag10(bm);
     } else {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        func_800F3FC8(bm);
+        CBattleMan_DropBattleFlag10(bm);
     }
     return 0;
 }
@@ -375,7 +375,7 @@ int breakVision(VMThread* pThread) {
         vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     }
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    void* visionList = func_800EA444(bm);
+    void* visionList = CBattleMan_FetchVisionObj(bm);
     if (visionList != 0) {
         void* actor = findObjectById__Fi(*(u32*)((u8*)visionList + 0));
         void* voiceAction = func_8016FE34(actor);

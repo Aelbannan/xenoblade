@@ -57,6 +57,7 @@ extern "C" {
     extern u16 lbl_eu_80663E3C;
     extern u8  lbl_eu_8066476D;
     int*  CtrlObjectParam_GetSlotTableBase();
+    void CfSoundMan_StopAllModes(int mode);
     void* func_8023C1B4();
     void CfRes_tryRefreshSlot298(u32 a, u32 b);
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
@@ -101,7 +102,7 @@ extern "C" {
 
     long func_8017FD44();
     // getAnimModelId: canonical u32(void*) decl comes from CfObjectMove.hpp.
-    int func_800EA444();
+    int CBattleMan_FetchVisionObj();
     long __ptmf_cmpr(u32* slot, u32* pmf1, u32* pmf2);
     void CTaskGame_enumListFill(CfEnumListHolder90940* holder, int cap, int mode);
     // CTaskGame_enumListGet: canonical void*(void*) decl comes from CPartyStateWin.hpp
@@ -382,7 +383,7 @@ int CfCmd_Call86778(CFuncHost* self) {
 // floats (byte * scale) and hand them to the scene vec4 setter when bit 7 of
 // the mode word is clear. Retail leaves arg2 (r4) unset at the call site, so
 // the local is intentionally uninitialized.
-int CfCmd_SetSceneColor(u32 p0, u32 p1, u32 color) {
+int func_801901A4(u32 p0, u32 p1, u32 color) {
     const float scale = lbl_eu_80667A78;
     u8* c = reinterpret_cast<u8*>(&color);
     float cr = c[0] * scale;
@@ -398,7 +399,7 @@ int CfCmd_SetSceneColor(u32 p0, u32 p1, u32 color) {
     return 0;
 }
 
-int CfCmd_CallC0094(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
+int CfCmd_CallC0094(int a, int b) { CfSoundMan_StopAllModes(b); return 0; }
 
 int CfCmd_Stub027C(void* self) { return 0; }
 
@@ -532,7 +533,7 @@ extern "C" unsigned long CfCmd_Clear80000() {
     return 0;
 }
 
-int CfCmd_RefreshUI2() {
+int CfCmd_FlushUI() {
     func_8012F860();
     func_801338C8();
     CUICfManager_prepareMenus();
@@ -811,7 +812,7 @@ int func_80190940(FuncResultRef* self, FuncActorRef* actor, int mode,
         // Mode 0/4: revive-target scan gated on the battle manager's
         // revive-handler registration (member-function-pointer compare).
         int gate = 0;
-        if (func_800EA444() != 0 &&
+        if (CBattleMan_FetchVisionObj() != 0 &&
             reinterpret_cast<BmByte261A4*>(bm)->field_0x261a4 == 0) {
             gate = 1;
         }

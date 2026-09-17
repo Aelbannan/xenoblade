@@ -21,7 +21,7 @@ inline void playUISound(u32 cue) { playUISound__FUl(cue); }
 // CScn (with removeRenderCB) comes from the minimal declaration in
 // CTaskGameEff.hpp via harness_catalog.hpp -- CScn.hpp redefines it.
 
-void func_801390E0(CFileHandle**);
+void closeFileHandle(CFileHandle**);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 
 // Retail constructor symbol (unmangled global in US). Kept out-of-line so the
@@ -693,8 +693,8 @@ void PlayAward_DrawList(CPlayAwardList* self, nw4r::lyt::DrawInfo* drawInfo) {
 // layout + 0x2C object, release the arc resource accessor, then run the
 // cursor/scrollbar/region teardown helpers.
 void PlayAward_ReleaseList(CPlayAwardList* self) {
-    func_801390E0(&self->mFileHandle);
-    func_801390E0(&self->mFileHandle2);
+    closeFileHandle(&self->mFileHandle);
+    closeFileHandle(&self->mFileHandle2);
     self->field_0x88 = 0;
     if (self->mLayout20 != 0) {
         delete self->mLayout20;
@@ -707,10 +707,10 @@ void PlayAward_ReleaseList(CPlayAwardList* self) {
     releaseArcResourceAccessor(self->mArcAccessor1C);
     reinterpret_cast<CCursor18*>(&self->mCursor)->vf3();
     func_801F35DC(self->mScrollBar);
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
-bool CScrollBar_isVisible(void*);
+extern "C" bool CScrollBar_isVisible(void*);
 
 // Award list "ready to show" query: visible when the embedded scroll bar is
 // visible AND the flag byte at 0x8A is set. Int return so callers compare

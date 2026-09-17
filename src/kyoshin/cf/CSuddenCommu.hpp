@@ -150,7 +150,7 @@ struct CSuddenCommuActBody {
     int field_48;                   // 0x48
 };
 
-// 0x34-byte command payload built for func_800EA9A8 (voice/battle cue); only
+// 0x34-byte command payload built for CBattleMan_FireActorEvent918 (voice/battle cue); only
 // the fields the retail writes are declared.
 struct CSuddenCommuCmd {
     u8 pad_00[0xC];
@@ -260,7 +260,7 @@ extern "C" {
     int func_80260518(void* self, int id, u32* outVal, f32* outF);
     int func_80260264(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
-    void func_800EA9A8(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
+    void CBattleMan_FireActorEvent918(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
     float func_800D81A8(void* obj, void* target, void* source);
     void func_8018C820(void* obj, int value);
     // Voice/battle-manager helpers.

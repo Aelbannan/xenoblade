@@ -660,7 +660,7 @@ CBattleManager* CBattleManager::getInstance() {
         // Bit 0x20 = dynamic_cast / interface dispatch path.
         if(listFlags & 0x20){
             void* castResult = __dynamic_cast(this, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
-            this->func_800EA998(castResult);
+            this->CBattleMan_EmitVisionEvent(castResult);
             return;
         }
 
@@ -681,7 +681,7 @@ CBattleManager* CBattleManager::getInstance() {
             }
 
             if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
-            func_800F41A0(this);
+            CBattleMan_OnActorsEmpty(this);
             if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
 
             for(int i = 0; i < 3; i++){
@@ -718,12 +718,12 @@ CBattleManager* CBattleManager::getInstance() {
 }
 #pragma schedule on
 
-bool func_800DA06C(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
-void cf::CBattleManager::func_800E2584(u32 mask) {
+bool CBattleMan_ListHasValue(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
+void cf::CBattleManager::CBattleMan_ClearStateMask(u32 mask) {
     unk84 &= ~mask;
 }
-void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
-void* func_800EA3AC(void* self, void* val) {
+void* CBattleMan_NextListItem(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
+void* CBattleMan_FindNextActorRef(void* self, void* val) {
     if (val == nullptr) return nullptr;
     
     SimpleListNode* sentinel = *(SimpleListNode**)((u8*)self + 0x08);
@@ -754,18 +754,18 @@ void* func_800EA3AC(void* self, void* val) {
     notfound:
     return nullptr;
 }
-extern "C" void func_800EA410(u8* self) { ((cf::CBattleManager*)self)->mVision.func_801A6BCC(); }
-void* cf::CBattleManager::func_800EA420() {
+extern "C" void CBattleMan_TickVision(u8* self) { ((cf::CBattleManager*)self)->mVision.func_801A6BCC(); }
+void* cf::CBattleManager::CBattleMan_QueryVision() {
     if (lbl_eu_80663F00 != nullptr) {
         return ((cf::CVision*)&this->mVision)->func_801A70DC();
     }
     return nullptr;
 }
 extern "C" void* func_801A8070(void*);
-void* cf::CBattleManager::func_800EA444() {
+void* cf::CBattleManager::CBattleMan_FetchVisionObj() {
     return lbl_eu_80663F00 ? func_801A8070(&mVision) : 0;
 }
-void cf::CBattleManager::func_800EA460(float a, float b, unsigned long c) {
+void cf::CBattleManager::CBattleMan_SetTimers(float a, float b, unsigned long c) {
     extern void func_800EA484(cf::CBattleManager*);
     unk88 = b;
     unk8C = c;
@@ -781,12 +781,12 @@ void cf::CBattleManager::func_800EA460(float a, float b, unsigned long c) {
 extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
 
 #pragma schedule off
-void cf::CBattleManager::func_800EA470() {
+void cf::CBattleManager::CBattleMan_ResetTimer() {
     unk88 = lbl_eu_80666DDC;
     func_800EA484(this, lbl_eu_80666DD4, unk8C);
 }
 #pragma schedule on
-extern "C" void func_800EA998(u8* self, void*) { ((cf::CBattleManager*)self)->mVision.func_801A81FC(); }
+extern "C" void CBattleMan_EmitVisionEvent(u8* self, void*) { ((cf::CBattleManager*)self)->mVision.func_801A81FC(); }
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
 // The callers below pass ABI-compatible args; the typed definition follows.
 // (unmangled), so they must be declared extern "C" for reloc-name matching.
@@ -879,9 +879,9 @@ extern "C" int func_80260A6C(void*, int, u32*, u32*);
 extern "C" int func_80260FB0(void*, int, u32*, u32*, u32*);
 extern "C" int* CtrlObjectParam_GetSlotTableBase();
 extern "C" void func_800E9FE4(void*, void*, s32, s32, s32, s32, void*);
-extern "C" s32 func_800F3734(void*, BattleObjAccessor*, void*, void*);
-extern "C" s32 func_800F37F8(void*, BattleObjAccessor*, void*, void*);
-extern "C" void func_800EA2A4(cf::CBattleManager*, BattleObjAccessor*);
+extern "C" s32 CBattleMan_ApplyHitStop9(void*, BattleObjAccessor*, void*, void*);
+extern "C" s32 CBattleMan_ApplyHitStop10(void*, BattleObjAccessor*, void*, void*);
+extern "C" void CBattleMan_SendActorEvent(cf::CBattleManager*, BattleObjAccessor*);
 extern "C" void func_80109784(void*, u32, int);
 extern "C" void func_8010989C(u8);
 extern "C" void func_80109888(u8);
@@ -897,7 +897,7 @@ extern "C" void func_800E9B54(void*, void*, void*, void*);
 extern "C" void func_800E08E8(void*, void*, void*, void*);
 extern "C" s32 func_800EAA2C(void*, void*, void*, void*, void*);
 extern "C" void func_800D9CA0(void*, void*);   // canonical (void*,void*) form
-extern "C" f32 func_800D7EA0(u8*, void*);
+extern "C" f32 CBattleMan_ApplyStatusRate(u8*, void*);
 // Arts-data auxiliary dispatch (vtable pointer at sub+0x84, this = sub);
 // defined later in this file (owner: CAttackParam-compatible count slot).
 static inline s32 artsSubGetMax(void* sub);
@@ -996,7 +996,7 @@ extern "C" s32 func_800EC918(
     BattleTargetData* target
 );
 
-void func_800EC8FC(u32 a, u32 b, void* c, u32 d) {
+void CBattleMan_RunBattleEvent(u32 a, u32 b, void* c, u32 d) {
     func_800EC918(
         (void*)a,
         0,
@@ -1299,7 +1299,7 @@ extern "C" s32 func_800EC918(
 
     // ---- Counter-attack block ----
     if (artsData != nullptr && tgt != nullptr && pc != nullptr) {
-        f28 = func_800D7EA0((u8*)pc, tgt);
+        f28 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);
 
         if (evt->prevEventType == 0 || (evt->field_30 & 0x2)) {
             if (func_80145DBC(evt->eventType)) {
@@ -1347,7 +1347,7 @@ extern "C" s32 func_800EC918(
     // ---- subAccessor vfunc 0x80 ----
     {
         if (((cf::CBattleState*)&acc->subObject)->CBattleState_getEventMask(evt->eventType)) {
-            return func_800F3734(
+            return CBattleMan_ApplyHitStop9(
                 self, (BattleObjAccessor*)acc, evt, tgt);
         }
     }
@@ -1393,7 +1393,7 @@ extern "C" s32 func_800EC918(
             }
 
             if (resisted) {
-                return func_800F37F8(
+                return CBattleMan_ApplyHitStop10(
                     self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
@@ -1413,7 +1413,7 @@ extern "C" s32 func_800EC918(
                     }
                     s32 rate = *(s32*)((u8*)entry27 + 0x10);
                     if (rollVal2 < rate) {
-                        return func_800F37F8(
+                        return CBattleMan_ApplyHitStop10(
                             self, (BattleObjAccessor*)acc, evt, tgt);
                     }
                 }
@@ -1431,7 +1431,7 @@ extern "C" s32 func_800EC918(
                     s32 entryVal = *(s32*)((u8*)entryCE + 0x10);
                     if (entryVal >= artsVal) {
                         tgt->field_74 |= 0x80002000;
-                        return func_800F37F8(
+                        return CBattleMan_ApplyHitStop10(
                             self, (BattleObjAccessor*)acc, evt, tgt);
                     }
                 }
@@ -1481,7 +1481,7 @@ extern "C" s32 func_800EC918(
                 ? mod100((s32)tgt->field_AC)
                 : mtRand__Q22ml4mathFi(100);
             if (roll < 0x32) {
-                return func_800F37F8(
+                return CBattleMan_ApplyHitStop10(
                     self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
@@ -1510,12 +1510,12 @@ extern "C" s32 func_800EC918(
                 if (func_80260264(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x7C, (s32*)&stackVal2)) {
                     if (tgt != nullptr) {
                         if ((s32)tgt->field_B4 < (s32)stackVal2) {
-                            return func_800F37F8(
+                            return CBattleMan_ApplyHitStop10(
                                 self, (BattleObjAccessor*)acc, evt, tgt);
                         }
                     } else {
                         if (mtRand__Q22ml4mathFi(100) < (s32)stackVal2) {
-                            return func_800F37F8(
+                            return CBattleMan_ApplyHitStop10(
                                 self, (BattleObjAccessor*)acc, evt, tgt);
                         }
                     }
@@ -1546,7 +1546,7 @@ extern "C" s32 func_800EC918(
                 else rollVal = mtRand__Q22ml4mathFi(100);
                 s32 rate = *(s32*)((u8*)entry22 + 0x10);
                 if (rollVal < rate) {
-                    return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                    return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
                 }
             }
         }
@@ -1571,7 +1571,7 @@ extern "C" s32 func_800EC918(
 
         s32 subResult = func_800EC918(self, pc, acc, evt, tgt);
         if (!subResult) {                       // beq 0x800EE0B4
-            return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+            return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
         }
 
         // acc->3ED4 holder slot 0x70 (CfObject UVF8; retail passes the
@@ -1620,7 +1620,7 @@ extern "C" s32 func_800EC918(
             else rollVal = mtRand__Q22ml4mathFi(100);
             s32 rate = *(s32*)((u8*)entry15 + 0x10);
             if (rollVal < rate) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         // .L_800EE200
@@ -1638,7 +1638,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry1A + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1651,7 +1651,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry17 + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1664,7 +1664,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry18 + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1677,7 +1677,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry24 + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1690,7 +1690,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry1C + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1703,7 +1703,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry1D + 0x10)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                  // b .L_800F4000
@@ -1852,7 +1852,7 @@ extern "C" s32 func_800EC918(
                 if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
                 if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r15,0; beq .L_800EE950
-                    return func_800F3734(
+                    return CBattleMan_ApplyHitStop9(
                         self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);
                 }
             }
@@ -1879,7 +1879,7 @@ extern "C" s32 func_800EC918(
                 }
             }
             if (rollFlag) {                             // cmpwi r15,0; beq .L_800EEA2C
-                return func_800F37F8(
+                return CBattleMan_ApplyHitStop10(
                     self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);
             }
 
@@ -1899,7 +1899,7 @@ extern "C" s32 func_800EC918(
                 if (func_80148778((&acc->subObject), 0x3A)) menuFlag = 1;
                 if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                 if (menuFlag) {                         // cmpwi r14,0; beq .L_800EEB68
-                    return func_800F3734(self, (BattleObjAccessor*)acc, evt, tgt);
+                    return CBattleMan_ApplyHitStop9(self, (BattleObjAccessor*)acc, evt, tgt);
                 }
             }
 
@@ -1921,7 +1921,7 @@ extern "C" s32 func_800EC918(
                 }
             }
             if (rollFlag) {                             // cmpwi r15,0; beq .L_800EEC28
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -1977,7 +1977,7 @@ extern "C" s32 func_800EC918(
                     if (func_80148778((&acc->subObject), 0x3B)) menuFlag = 1;
                     if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                     if (menuFlag) {                     // cmpwi r15,0; beq .L_800EEDA4
-                        return func_800F3734(
+                        return CBattleMan_ApplyHitStop9(
                             self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);
                     }
                 }
@@ -2004,7 +2004,7 @@ extern "C" s32 func_800EC918(
                 }
                 if (rollFlag) {                         // cmpwi r15,0; beq .L_800EEE7C
                     *(u32*)((u8*)r14 + 0x74) |= 0x80000010;  // oris 0x8000; ori 0x10
-                    return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                    return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
                 }
 
                 // .L_800EEE7C -- pc skills 0x9A (multiply) / 0x9B (divide)
@@ -2028,7 +2028,7 @@ extern "C" s32 func_800EC918(
                     if (func_80148778((&acc->subObject), 0x3B)) menuFlag = 1;
                     if (func_80148778((&acc->subObject), 0x32)) menuFlag = 1;
                     if (menuFlag) {                     // cmpwi r14,0; beq .L_800EEFD8
-                        return func_800F3734(self, (BattleObjAccessor*)acc, evt, tgt);
+                        return CBattleMan_ApplyHitStop9(self, (BattleObjAccessor*)acc, evt, tgt);
                     }
                 }
 
@@ -2052,7 +2052,7 @@ extern "C" s32 func_800EC918(
                     if (tgt != nullptr) {            // cmpwi r26,0; beq .L_800EF084
                         tgt->field_74 |= 0x80000010;  // oris 0x8000; ori 0x10; stw
                     }
-                    return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                    return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
                 }
             }
         }
@@ -2067,7 +2067,7 @@ extern "C" s32 func_800EC918(
         if (func_80148778((&acc->subObject), 0x86)) {
             void* entry86 = func_80149154((&acc->subObject), 0x86);
             if (*(s32*)((u8*)entry86 + 0x10) >= 0x64) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -2100,7 +2100,7 @@ extern "C" s32 func_800EC918(
         if (func_80148778((&acc->subObject), 0x88)) {
             void* entry88 = func_80149154((&acc->subObject), 0x88);
             if (*(s32*)((u8*)entry88 + 0x10) >= 0x64) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -2137,7 +2137,7 @@ extern "C" s32 func_800EC918(
         if (func_80148778((&acc->subObject), 0x8A)) {
             void* entry8A = func_80149154((&acc->subObject), 0x8A);
             if (*(s32*)((u8*)entry8A + 0x10) >= 0x64) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -2174,7 +2174,7 @@ extern "C" s32 func_800EC918(
         if (func_80148778((&acc->subObject), 0x8C)) {
             void* entry8C = func_80149154((&acc->subObject), 0x8C);
             if (*(s32*)((u8*)entry8C + 0x10) >= 0x64) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -2257,10 +2257,10 @@ extern "C" s32 func_800EC918(
     case 82: {
         if (((cf::CActorParam*)acc)->CActorParam_getStatusTable() != nullptr) {  // beq .L_800F4000
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x7B)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x66)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                      // b .L_800F4000
@@ -2269,10 +2269,10 @@ extern "C" s32 func_800EC918(
     case 84: {
         if (((cf::CActorParam*)acc)->CActorParam_getStatusTable() != nullptr) {  // beq .L_800F4000
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x7D)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x66)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                      // b .L_800F4000
@@ -2282,7 +2282,7 @@ extern "C" s32 func_800EC918(
     case 87: {
         if (((cf::CActorParam*)acc)->CActorParam_getStatusTable() != nullptr) {  // beq .L_800F4000
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x66)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                      // b .L_800F4000
@@ -2293,7 +2293,7 @@ extern "C" s32 func_800EC918(
     case 61: {
         if (((cf::CActorParam*)acc)->CActorParam_getStatusTable() != nullptr) {  // beq .L_800F4000
             if (func_8026178C(((cf::CActorParam*)acc)->CActorParam_getStatusTable(), 0x66)) {
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
         break;                                      // b .L_800F4000
@@ -2302,7 +2302,7 @@ extern "C" s32 func_800EC918(
     case 197: {
         if (acc != nullptr &&                  // cmpwi r24,0; beq tail
             ((cf::CActorParam*)acc)->CActorParam_isBattleLocked() == 0) {        // bne tail
-            f32 factor = lbl_eu_80666E00 * func_800D7EA0((u8*)pc, tgt);  // fmuls f4, f0(100), f1
+            f32 factor = lbl_eu_80666E00 * CBattleMan_ApplyStatusRate((u8*)pc, tgt);  // fmuls f4, f0(100), f1
             // fctiwz((f64)(s32)field * factor) for each field
             evt->field_10 = (s32)((f32)(s32)evt->field_10 * factor);  // stw
             evt->field_14 = (s16)((f32)(s32)evt->field_14 * factor);  // sth
@@ -2312,7 +2312,7 @@ extern "C" s32 func_800EC918(
     }
 
     case 198: {
-        f32 factor = lbl_eu_80666E00 * func_800D7EA0((u8*)pc, tgt);
+        f32 factor = lbl_eu_80666E00 * CBattleMan_ApplyStatusRate((u8*)pc, tgt);
         evt->field_10 = (s32)((f32)(s32)evt->field_10 * factor);
         evt->field_14 = (s16)((f32)(s32)evt->field_14 * factor);
         evt->field_16 = (s16)((f32)(s32)evt->field_16 * factor);
@@ -2342,7 +2342,7 @@ extern "C" s32 func_800EC918(
             __dt__80043E88(&holder, -1);            // li r4,-1; bl __dt__80043E88
         } else {
             // .L_800EFD60: field_10 == 0 path
-            func_800EA2A4((cf::CBattleManager*)self, (BattleObjAccessor*)pc);                // mr r3,r22; mr r4,r23; bl
+            CBattleMan_SendActorEvent((cf::CBattleManager*)self, (BattleObjAccessor*)pc);                // mr r3,r22; mr r4,r23; bl
         }
         break;                                      // b .L_800F4000
     }
@@ -2358,7 +2358,7 @@ extern "C" s32 func_800EC918(
             r17 = (s32)((f32)(s32)evt->field_10 * func_800D81A8(pc, acc, tgt));
         }
 
-        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // .L_800EFDE4: fmr f28, f1
+        f32 f28 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);        // .L_800EFDE4: fmr f28, f1
         if (pc != nullptr) {                        // cmpwi r23,0; beq .L_800EFE98
             u32 r14 = acc->field_3F10;         // lwz r14, 0x3f10(r24)
             f32 prod = lbl_eu_80666DDC;
@@ -2481,7 +2481,7 @@ extern "C" s32 func_800EC918(
 
     case 218: {
         void* r14 = func_8016FE34(findObjectById(evt->field_00));  // bl 800B708C; bl 8016FE34
-        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1
+        f32 f28 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);        // fmr f28, f1
         s32 level = ((cf::CActorParam*)pc)->CActorParam_getActorLevel();             // addi r4, r3, 0xe
         s32 product = evt->field_10 * (level + 14);  // mullw
         // ((cf::CActorParam*)acc)->CActorParam_addHate(r14, 0.0f, f28 * (f32)(s32)product, 0.0f)
@@ -2495,7 +2495,7 @@ extern "C" s32 func_800EC918(
         // r17 = field_10 * 100 + (level - 1) * 120   (mulli 0x64 / mulli 0x78)
         s32 r17 = evt->field_10 * 100 + (level - 1) * 120;
 
-        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1
+        f32 f28 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);        // fmr f28, f1
         if (pc != nullptr) {                        // cmpwi r23,0; beq .L_800F051C
             if (((cf::CActorParam*)pc)->CActorParam_getStatusTable() != nullptr) {    // beq .L_800F051C
                 s32 sv;
@@ -2556,7 +2556,7 @@ extern "C" s32 func_800EC918(
             if (tgt != nullptr) rollVal = (s32)tgt->field_B4;  // cmpwi r26,0
             else rollVal = mtRand__Q22ml4mathFi(100);
             if (rollVal < *(s32*)((u8*)entry26 + 0x10)) {  // cmpw; bge skip
-                return func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return CBattleMan_ApplyHitStop10(self, (BattleObjAccessor*)acc, evt, tgt);
             }
         }
 
@@ -2627,7 +2627,7 @@ extern "C" s32 func_800EC918(
         ((cf::CActorParam*)acc)->CActorParam_addHp((f32)(s32)r17);   // slot 0x11C on acc
         ((cf::CActorParam*)pc)->CActorParam_addHp((f32)(s32)(-r14));      // neg r0,r14 on pc
 
-        f32 dmg = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1 (overwrites f28)
+        f32 dmg = CBattleMan_ApplyStatusRate((u8*)pc, tgt);        // fmr f28, f1 (overwrites f28)
         if (pc != nullptr) {                        // cmpwi r23,0; beq tail
             u32 r14b = acc->field_3F10;        // lwz r14, 0x3f10(r24)
             f32 prod = lbl_eu_80666DDC;
@@ -2895,8 +2895,8 @@ extern "C" s32 func_800EC918(
             }
         }
 
-        // Damage factor: f29 = func_800D7EA0((u8*)pc, tgt).
-        f32 f29 = func_800D7EA0((u8*)pc, tgt);
+        // Damage factor: f29 = CBattleMan_ApplyStatusRate((u8*)pc, tgt).
+        f32 f29 = CBattleMan_ApplyStatusRate((u8*)pc, tgt);
 
         // Pass 3 (0x800F1624-0x800F1714): refilter (0x100, 0) then
         // __ct__800FB044(list, f28, pc->subIdent->vfAC(), 8);
@@ -4016,12 +4016,12 @@ __declspec(section ".data") __attribute__((used)) const void* lbl_eu_8052B790[3]
 
 // Thunk: dispatch through secondary vtable at +0x8, calling vtable[0x20] on
 // the sub-object, passing (subobj, arg).
-void func_800F3958(void* ignored, void* self, void* arg) {
+void CBattleMan_ClearActorStatus(void* ignored, void* self, void* arg) {
     ((cf::CBattleState*)((u8*)self + 8))->CBattleState_clearStatusId((u32)(uintptr_t)arg);
 }
-unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
-void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
-void cf::CBattleManager::func_800F42A0() {
+unsigned char CBattleMan_GetUnk94Count(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
+void CBattleMan_MarkList48Flag40(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
+void cf::CBattleManager::CBattleMan_ZeroStateMask() {
     unk84 = 0;
 }
 
@@ -4110,7 +4110,7 @@ extern f32 lbl_80666DD8; // 0.001f
 
 // Calculates accumulated damage/healing value from various status effects.
 // Returns a float clamped to >= 0.
-extern "C" f32 func_800D7EA0(u8* obj, void* target) {
+extern "C" f32 CBattleMan_ApplyStatusRate(u8* obj, void* target) {
     if (obj == nullptr || target == nullptr) return 1.0f;
 
     f32 result = 1.0f;
@@ -4252,7 +4252,7 @@ extern "C" void func_800D9354(cf::CBattleManager* self) {
     f32 delta = Scn_GetFrameDelta(lbl_eu_80663E14) * lbl_eu_80666DEC;
 
     if (!self->CheckUnk84Flag(0x10)) {
-        self->func_800E2584(0x10);
+        self->CBattleMan_ClearStateMask(0x10);
         lbl_eu_80663E24 |= 0x10000000;
     }
 
@@ -4269,7 +4269,7 @@ extern "C" void func_800D9354(cf::CBattleManager* self) {
         f32 v = self->unk88 - delta;
         self->unk88 = v;
         if (v < lbl_eu_80666DDC) {
-            self->func_800EA470();
+            self->CBattleMan_ResetTimer();
         } else {
             func_800EA484(self, self->unk90, self->unk8C);
         }
@@ -4429,9 +4429,9 @@ void func_800D9CA0(void* mgrV, void* targetV){
             while(cur != head) cur = cur->mNext;
         }
 
-        // Global list state gates (sequential, with func_800F41A0 between)
+        // Global list state gates (sequential, with CBattleMan_OnActorsEmpty between)
         if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
-        func_800F41A0(mgr);
+        CBattleMan_OnActorsEmpty(mgr);
         if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
 
         if(!(target->field_3f00 & 0x04)){
@@ -4913,7 +4913,7 @@ f31 = f30 - ((cf::CfObjectActor*)enemy)->CfObjectActor_getAdjustedFacing();
     // Dispatch by the linked sub-object's move type.
     u16 type = ((BattleSubObjAccessor*)sub)->type_3c;
     if((u32)(type - 4) <= 2){
-        func_800DBA2C(self, obj, enemy, arg4);
+        CBattleMan_HandleMoveType45(self, obj, enemy, arg4);
     }else if((u32)(type - 1) <= 1){
         func_800DB4FC(self, obj, enemy, arg4);
     }else if(type == 3){
@@ -5102,7 +5102,7 @@ tailcall:
 extern int func_801B1FA4();
 extern void func_801B19F0(u16 r3, int r4);
 
-void func_800DBA2C(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObjAccessor* arg2) {
+void CBattleMan_HandleMoveType45(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObjAccessor* arg2) {
     BattleSubObjAccessor* subObj = static_cast<BattleSubObjAccessor*>(*(void**)((u8*)arg2 + 0x50));
     if (subObj == nullptr) return;
     
@@ -8413,7 +8413,7 @@ skipScan:
 
     if (av->field_3F00 & 0x2) {
         if (((cf::CBattleManager*)(mgr))->CheckUnk84Flag(1)) {
-            ((cf::CBattleManager*)(mgr))->func_800E2584(1);
+            ((cf::CBattleManager*)(mgr))->CBattleMan_ClearStateMask(1);
         }
     }
 
@@ -9449,7 +9449,7 @@ extern "C" void func_800E2A9C(cf::CBattleManager* self, cf::CfObjectActor* attac
         }
     }
 
-    f32 f25 = func_800D7EA0((u8*)attacker, &localMove);
+    f32 f25 = CBattleMan_ApplyStatusRate((u8*)attacker, &localMove);
     f32 f26 = lbl_eu_80666DD4;
     if ((void*)((cf::CActorParam*)(target))->CActorParam_getStatusTable()) {
         u32 tmp;
@@ -11092,7 +11092,7 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
 // called - only the 0x2C8 slot is used, against the actor's real vtable.
 // Iterates through a list of actors based on flags in arg1.
 // For each actor not matching arg1, calls vtable[0x2C8] with arg1->+0x3f10.
-extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) {
+extern "C" void CBattleMan_SendActorEvent(cf::CBattleManager* mgr, BattleObjAccessor* arg1) {
     if (arg1 == nullptr) return;
 
     cf::CfGameManager::getInstance();
@@ -11259,7 +11259,7 @@ extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
     __dt__80043E88(&h1, -1);
 }
 extern void func_80109784(void* ptr, u32 id, int arg);
-// Struct for the third arg of func_800EA9A8: fields at +0x00, +0x04, +0x08, +0x30
+// Struct for the third arg of CBattleMan_FireActorEvent918: fields at +0x00, +0x04, +0x08, +0x30
 struct Func800EA9A8_Arg5 {
     u32 field_00;
     u32 field_04;
@@ -11268,7 +11268,7 @@ struct Func800EA9A8_Arg5 {
     u32 field_30;
 };
 
-void func_800EA9A8(void* self, BattleObjAccessor* arg4, Func800EA9A8_Arg5* arg5, void* arg6) {
+void CBattleMan_FireActorEvent918(void* self, BattleObjAccessor* arg4, Func800EA9A8_Arg5* arg5, void* arg6) {
     arg5->field_00 = (u32)arg4->field_3f10;
     arg5->field_04 = (u32)arg6;
     arg5->field_08 = 0x1000;
@@ -12090,7 +12090,7 @@ extern void func_80109734(void* ptr, u32 val);
 // Handles battle event. Sets flags on arg4, checks arg3 conditions,
 // and updates the battle damage display.
 // Returns 0 always (retail: li r3, 0 before blr).
-extern "C" s32 func_800F3734(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
+extern "C" s32 CBattleMan_ApplyHitStop9(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     // arg1 (r3) is unused by the logic but was stored in r31 per retail
 
     if (arg4 != nullptr) {
@@ -12114,10 +12114,10 @@ extern "C" s32 func_800F3734(void* arg1, BattleObjAccessor* accessor, void* arg3
     return 0;
 }
 
-// Similar to func_800F3734 but with additional checks on arg3->+0x2e and arg3->+0x30.
+// Similar to CBattleMan_ApplyHitStop9 but with additional checks on arg3->+0x2e and arg3->+0x30.
 // Sets flags on arg4, checks conditions, and updates the battle damage display.
 // Returns 0 always.
-extern "C" s32 func_800F37F8(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
+extern "C" s32 CBattleMan_ApplyHitStop10(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     if (arg4 != nullptr) {
         u32* flags = (u32*)((u8*)arg4 + 0x74);
         *flags = *flags | 0x80000000 | 0x10;
@@ -12148,7 +12148,7 @@ extern "C" s32 func_800F37F8(void* arg1, BattleObjAccessor* accessor, void* arg3
 
     return 0;
 }
-// Stack buffer for func_800F38E0: 0x34 bytes, accessed as:
+// Stack buffer for CBattleMan_ClearEventNotify: 0x34 bytes, accessed as:
 // +0x00: padding
 // +0x0C: u16 (stores arg3)
 // +0x30: u32 (bit 0 set)
@@ -12159,7 +12159,7 @@ struct Func800F38E0_StackBuf {
     u32 field_30;
 };
 
-void func_800F38E0(void* self, u32 arg2, u16 arg3) {
+void CBattleMan_ClearEventNotify(void* self, u32 arg2, u16 arg3) {
     Func800F38E0_StackBuf buf;
     std::memset(&buf, 0, sizeof(buf));
     buf.field_0C = arg3;
@@ -12254,7 +12254,7 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
         }
     }
 }
-void func_800F3C08(cf::CBattleManager* mgr, u32 arg) {
+void CBattleMan_SetPartyFlagReset(cf::CBattleManager* mgr, u32 arg) {
     mgr->setPartyMaskFlag(2, arg);
     if (arg != 0) {
         std::memset(&mgr->unk94, 0, sizeof(cf::CBattleManager_Struct2));
@@ -12262,7 +12262,7 @@ void func_800F3C08(cf::CBattleManager* mgr, u32 arg) {
 }
 // Searches through unk94 slot array for a matching key. If found, increments count.
 // If not found, inserts into the first empty slot (key==0) with count=1.
-void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
+void CBattleMan_BumpUnk94Key(cf::CBattleManager* mgr, s32 key) {
     // Gate: vtable slot 0x28 (CheckUnk84Flag) with mask 2.
     if (!mgr->CheckUnk84Flag(2)) return;
 
@@ -12294,7 +12294,7 @@ void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
 // falls through); pass 3 scans mActorList1, resolving each actor's move
 // sub-object probe through findObjectById/func_8016FE34.
 // Returns 1 if found, 0 otherwise.
-s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
+s32 CBattleMan_FindActorByKind(cf::CBattleManager* mgr, s32 arg1) {
     // Pass 1: search mActorList3 for a direct type-id match.
     _reslist_node<cf::CfObjectActor*>* end = mgr->mActorList3.mStartNodePtr;
     _reslist_node<cf::CfObjectActor*>* cur = end->mNext;
@@ -12338,25 +12338,25 @@ s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
 }
 
 
-void func_800F3F8C(cf::CBattleManager* mgr) {
-    mgr->func_800E2584(0x10);
+void CBattleMan_RaiseBattleFlag10(cf::CBattleManager* mgr) {
+    mgr->CBattleMan_ClearStateMask(0x10);
     lbl_eu_80663E24 |= 0x10000000;
 }
 
-void func_800F3FC8(cf::CBattleManager* mgr) {
-    mgr->func_800E2584(0x10);
+void CBattleMan_DropBattleFlag10(cf::CBattleManager* mgr) {
+    mgr->CBattleMan_ClearStateMask(0x10);
     lbl_eu_80663E24 &= ~0x10000000;
 }
 // Performs battle cleanup: chain maintenance, enum list iteration with virtual calls,
 // actor list flag updates, and action cleanup.
-// Retail linker names for helpers called from func_800F4034 / func_800F41A0.
+// Retail linker names for helpers called from CBattleMan_RefreshChainEnum / CBattleMan_OnActorsEmpty.
 extern "C" void CPartsChange_ResetBattleEntry(void*, u32, u32);
 extern "C" void CItem_clearSharedBox();
 extern "C" s32 CfRes_checkFlags_48000();
 extern "C" void UIWin_CreateB4790Win(void*, int);
 extern "C" void CCharVoiceMan_EnqueueItemVoice(void*);
 
-void func_800F4034(cf::CBattleManager* mgr) {
+void CBattleMan_RefreshChainEnum(cf::CBattleManager* mgr) {
     // Chain maintenance
     extern void func_80277B34(cf::CChain*);
     func_80277B34(&mgr->mChain);
@@ -12428,7 +12428,7 @@ check:
 }
 // Handles battle finish / state transition logic.
 // Checks various battle state flags and performs cleanup.
-void func_800F41A0(cf::CBattleManager* mgr) {
+void CBattleMan_OnActorsEmpty(cf::CBattleManager* mgr) {
     extern u8 lbl_eu_80573EEC[];
     if (*(u32*)(lbl_eu_80573EEC + 0xd0) == 0) return;
 

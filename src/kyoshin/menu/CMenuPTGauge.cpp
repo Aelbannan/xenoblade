@@ -152,17 +152,9 @@ void CMenuPTGauge::Move() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) { // IBM bit 10 = realtime event busy
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) { // IBM bit 10 = realtime event busy
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }
@@ -320,17 +312,9 @@ void CMenuPTGauge::cbRenderBefore() {
     if (CTaskGame::isFlag01Set()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) { // IBM bit 10 = realtime event busy
-        goto after_bit21;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) { // IBM bit 10 = realtime event busy
+        goto done;
     }
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        b done
-    }
-    DECOMP_ASM_INSN_END
-after_bit21:
     if (!IsMenuState621F0()) {
         goto done;
     }

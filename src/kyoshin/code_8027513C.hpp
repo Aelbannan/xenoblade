@@ -97,7 +97,7 @@ extern UnkCode8027513CStateFn lbl_eu_80537F98[2];
 // Child-effect state notifier (retail symbol is unmangled C-linkage).
 extern "C" void setChildB59__(void* obj, s8 val);
 
-// setChildV40__/bindPartnerO_/func_801BFDE8: retail-unmangled C-linkage
+// setChildV40__/bindPartnerO_/CfSoundMan_PlayLinkedParam: retail-unmangled C-linkage
 // imports already declared by CfObjectImplMove.hpp.
 // Retail calls createNpcActor through the cf::CfGameManager member declaration
 // (mangled createNpcActor__Q22cf13CfGameManagerFv) even though the callee

@@ -541,7 +541,7 @@ __declspec(noinline) void func_801F5C2C(cf::CfGimmickObject* self, int a, int b)
             self->field_192 = 0;
     } else if (sndStop != 0) {
         if (self->field_80 != 0) {
-            func_801BFED0(1, self->field_80, 0xa);
+            CfSoundMan_ApplySlotStop(1, self->field_80, 0xa);
             self->field_80 = 0;
         }
         self->field_74 &= ~0x100000u;
@@ -760,8 +760,8 @@ int func_801F634C(cf::CfGimmickObject* self) {
 // camera events (func_8007B0C8), per-LOD frame updates (func_801F6B98), the
 // +0x68 map-object status (CfObjectMove_setAnimModeArgs), a player-control reset (getPlayer
 // slot 0x110 -> func_80199678), the area-manager attach (createBattleActor with
-// vtable slots 0x9C/0xC4) and the step sound (func_801BFED0 / playActorSound /
-// CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos, plus the func_801BFAE4 volume slot).
+// vtable slots 0x9C/0xC4) and the step sound (CfSoundMan_ApplySlotStop / playActorSound /
+// CfGimmick_PlaySoundAtPosScaled / CfGimmick_PlaySoundAtPos, plus the CfSoundMan_TouchSlotById volume slot).
 #endif
 
 void func_801F6780(cf::CfGimmickObject* self) {
@@ -1119,7 +1119,7 @@ int func_801F75CC(cf::CfGimmickObject* self) {
 // remaining time into setChildV40__'s position vector), and plays / refreshes
 // the step sound selected by field_192 (playActorSound for kind 3,
 // CfGimmick_PlaySoundAtPosScaled for kinds 2/1, CfGimmick_PlaySoundAtPos otherwise). The sound-slot
-// volume (func_801BFAE4 +0x1C) is forced to 0/1 by the global 0x8 flag.
+// volume (CfSoundMan_TouchSlotById +0x1C) is forced to 0/1 by the global 0x8 flag.
 void func_801F76A8(cf::CfGimmickObject* self) {
     return;
 }

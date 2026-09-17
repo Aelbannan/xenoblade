@@ -132,7 +132,7 @@ extern "C" {
     u32 func_800AA2BC(u32 a, u32 b);
     int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
     void CfRes_delegateOp2(void* r3, void* r4, void* r5);
-    void func_801C028C(u32 r3, u32 r4);
+    void CfSoundMan_ClearFxEffect(u32 r3, u32 r4);
     // getBdatStringColumnValue: canonical decl in plugin/ocBdat.hpp.
     UnkGimmickGlobalView* getUnk80664658();
 

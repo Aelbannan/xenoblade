@@ -151,7 +151,7 @@ struct CfPlayerIdView {
 
 // Cross-TU callees (resolved via the retail symbol map).
 extern "C" void func_800B3A88(void* self, void* target);
-extern "C" void func_801BFED0(int a, u16 b, int c);
+extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
 // Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
@@ -207,9 +207,9 @@ extern "C" const char lbl_eu_80508634[];
 // schedules it at retail's position (CfObjectMove.hpp pattern).
 extern "C" const float lbl_eu_80668350;
 
-// func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first, float second)
+// CfSoundMan_PlayLinkedParam(u32 mode, u32 value, u32 playerValue, float first, float second)
 // u32 spellings (not unsigned int): must match CfObjectImplMove.hpp/UnityHelpers exactly
-extern "C" void func_801BFDE8(u32 mode, u32 value,
+extern "C" void CfSoundMan_PlayLinkedParam(u32 mode, u32 value,
                                u32 playerValue, float first, float second);
 // Sound constants loaded in CfGimmick_PlaySoundAtPos / CfGimmick_PlaySoundAtPosScaled (retail .sda21 loads)
 extern "C" const float lbl_eu_80668358;

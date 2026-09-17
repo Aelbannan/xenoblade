@@ -218,12 +218,12 @@ u8 BdatGetU8ByTableKey(const void*, const void*, u32);
 u32 CtrlObjectParam_GetCurrentRowKey();
 u32 CtrlObjectParam_GetArtsDataWord(void*);
 extern "C" f32 GetFloatTableEntry(u32);
-void func_801D885C(CItemBoxInfo*);
+void clearItemBoxTripleRows(CItemBoxInfo*);
 extern "C" void func_801D5564(void*, void*, void*, void*);
 void func_801D8318(CItemBoxInfo*);
 extern "C" void func_801D4E2C(void*, void*, void*);
 extern "C" void func_801D69FC(CItemBoxInfo*, u32, void*);
-void func_801D8A88(CItemBoxInfo*);
+void clearItemBoxQuadTexts(CItemBoxInfo*);
 void func_801D77A4(void*, u32, u16);
 extern "C" void func_801D8E34(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801E197C(void*, void*, void*);
@@ -236,23 +236,23 @@ extern "C" void func_80136D74(void*, const char*, u32);
 extern "C" void CtrlObjectParam_GetArtsStatsRow(void*, u32);
 extern "C" s32 RoundHalfAway0(float);
 extern "C" void PaneMatSetTevColors(void*, void*, void*);
-extern "C" u32 func_801E9774(void*, u16, void*);
-extern "C" u32 func_801E9690(void*, u32, u32);
+extern "C" u32 sumItemBox2TypeCounts(void*, u16, void*);
+extern "C" u32 getItemBoxCondStatById(void*, u32, u32);
 extern "C" u32 func_801E9310(void*, void*, u32, void*);
 extern "C" s32 func_801E9190(void*, void*, s32, void*);
 extern "C" s32 func_801E9224(void*, void*, s32, void*);
-extern "C" u32 func_801E96F0(void*, u32, u32);
+extern "C" u32 testItemBox2BdatFlag(void*, u32, u32);
 char* func_801394D4(u32);
-u32 func_801E9774(void*, u16, void*);
+u32 sumItemBox2TypeCounts(void*, u16, void*);
 bool func_801E98E4(void*, u16, void*);
-extern "C" u32 func_801DFD60(void*, void*, u32);
-extern "C" u32 func_801DFDC0(void*, u32, void*);
+extern "C" u32 getItemBoxCondStat(void*, void*, u32);
+extern "C" u32 testItemBoxBdatFlag(void*, u32, void*);
 extern "C" u32 func_801DF610(void*, void*, u32, void*);
-extern "C" u32 func_801DFE48(void*, u16, void*);
-extern "C" u32 func_801DFFB8(void*, u16, void*, void*);
+extern "C" u32 sumItemBoxTypeCounts(void*, u16, void*);
+extern "C" u32 checkItemBoxGemChain(void*, u16, void*, void*);
 extern "C" s32 func_801DF4E0(void*, void*, s32, void*);
 extern "C" s32 func_801DF578(void*, void*, s32, void*);
-u32 func_801E92B8(void*, void*);
+u32 getItemBoxCondStat2D(void*, void*);
 u32 func_801E9310(void*, void*, u32, void*);
 void func_801DF4B4(void*, void*);
 void func_801DF4D0(void*, u16, u32, u8);
@@ -326,7 +326,7 @@ u32 isItemBoxType9Flagged(void* arg) {
 
 #pragma push
 #pragma optimize_for_size on
-void func_801D4AE0(CItemBoxInfo* info, char* arg1, char* arg2) {
+void setItemBoxNamedText(CItemBoxInfo* info, char* arg1, char* arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x151], arg1);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
@@ -348,7 +348,7 @@ void func_801D4BDC(CItemBoxInfo* info, u8 arg2, u8 arg3) {
 extern "C" void func_801D8C0C(CItemBoxInfo*);
 extern "C" void func_801E4194(CItemBoxInfo2*);
 
-void func_801D421C(CItemBoxInfo* info) {
+void startItemBoxOpen(CItemBoxInfo* info) {
     if (info->state.state != 0) return;
     info->state.state = 1;
     info->state.visible = 0;
@@ -356,7 +356,7 @@ void func_801D421C(CItemBoxInfo* info) {
     func_801D8C0C(info);
 }
 
-void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
+void renderItemBox(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
     if (info->state.active != 0) {
         drawLayout((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
     }
@@ -367,7 +367,7 @@ void func_80127BD8(void*, float*);
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void func_801D4A2C(void* sub) {
+void initItemBoxVecTable(void* sub) {
     float f = lbl_eu_8066800C;
     for (u8 i = 0; i < 12; i++) {
         ((s16*)sub)[i] = 0;
@@ -378,11 +378,11 @@ void func_801D4A2C(void* sub) {
 #pragma pop
 
 
-// Retail func_801D4054 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail loadItemBoxFiles uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge). The setHandleFlag1 call reuses the readFile result in r3.
 #pragma push
 #pragma optimize_for_size on
-void func_801D4054(CItemBoxInfo* info) {
+void loadItemBoxFiles(CItemBoxInfo* info) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     CFileHandle* fh1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
     info->state.fileHandle1 = fh1;
@@ -425,11 +425,11 @@ void func_801D4174(CItemBoxInfo* info) {
 
 
 
-// Retail func_801D4B3C uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail calcItemBoxPaneVec uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge) for arg0/child/first-result in r29/r30/r31.
 #pragma push
 #pragma optimize_for_size on
-void func_801D4B3C(u8* arg0, CItemBoxInfo* info, u32 arg2) {
+void calcItemBoxPaneVec(u8* arg0, CItemBoxInfo* info, u32 arg2) {
     char buf[0x20];
     // Declare `first` before `child`: low-degree webs color in reverse birth
     // order, so child (declared later) colors first into info's dead r30 and
@@ -446,7 +446,7 @@ void func_801D4B3C(u8* arg0, CItemBoxInfo* info, u32 arg2) {
 }
 #pragma pop
 
-void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
+void setItemBoxResultPane(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
     nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
@@ -479,7 +479,7 @@ extern "C" void func_801D4D64(CItemBoxInfo* info) {
     }
 }
 
-extern "C" void func_801D4DE0(CItemBoxInfo* info) {
+extern "C" void closeItemBoxPhase2(CItemBoxInfo* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;
@@ -1099,25 +1099,25 @@ void __declspec(noinline) func_801D62F8(void* arr, u32 index, const void* color)
 }
 void func_801D3FF0(void*);
 
-void func_801D40C4(CItemBoxInfo* info) {
+void updateItemBoxAnims(CItemBoxInfo* info) {
     if (info->state.active != 0) {
         switch (info->state.state) {
             case 1: func_801D4C9C(info); break;
             case 2: func_801D4D18(info); break;
             case 4: func_801D4D64(info); break;
-            case 5: func_801D4DE0(info); break;
+            case 5: closeItemBoxPhase2(info); break;
         }
         ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
     }
 }
 
-void func_801E1348(CItemBoxInfo2* info) {
+void updateItemBox2Anims(CItemBoxInfo2* info) {
     if (info->state.active != 0) {
         switch (info->state.state) {
             case 1: func_801E17EC(info); break;
-            case 2: func_801E1868(info); break;
+            case 2: openItemBox2Phase2(info); break;
             case 4: func_801E18B4(info); break;
-            case 5: func_801E1930(info); break;
+            case 5: closeItemBox2Phase2(info); break;
         }
         ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
     }
@@ -1280,7 +1280,7 @@ void func_801D6394(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
 #pragma dont_inline on
 void func_801D69FC(CItemBoxInfo* info, u32 itemId, void* record) {
     ml::FixStr<32> text(true);
-    func_801D885C(info);
+    clearItemBoxTripleRows(info);
     char* base = lbl_eu_805063BC;
     char buf[0x20];
     char buf2[0x20];
@@ -1601,7 +1601,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
     // table handles come straight off .sdata2); a plain local gets them DCE'd.
     volatile CItemBoxTagStage stage;
 
-    func_801D8A88(info);
+    clearItemBoxQuadTexts(info);
     func_801D85D8(info);
     func_801D5564(&rec, info, (void*)(u32)arg2, arg3);
     CItemBoxDetailBody body = rec.body;
@@ -1744,7 +1744,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u32 arg4) {
 struct CItemBoxLabelArgs { u32 v[4]; };
 
 void func_801D8058(CItemBoxInfo* info, u32 arg2) {
-    func_801D8B08(info);
+    clearItemBoxPairTexts(info);
     func_801D85D8(info);
     // vals first → higher frame slot (sp+24); out second → sp+8.
     // A struct `vals = out` lowers to `__as__` (0x84). Retail reloads all
@@ -1768,7 +1768,7 @@ void func_801D8058(CItemBoxInfo* info, u32 arg2) {
 }
 #pragma pop
 void func_801D5C38(void*, void*, void*, void*);
-void __declspec(noinline) func_801D8B60(CItemBoxInfo*);
+void __declspec(noinline) clearItemBoxSlotTexts(CItemBoxInfo*);
 // Retail func_801D80EC: item-box slot-list renderer. Rebuilds the per-slot
 // record (func_801D5C38), stamps the header pane with the formatted item
 // string, then per filled pair sets the row-name pane text and (unless mode
@@ -1785,7 +1785,7 @@ void func_801D80EC(CItemBoxInfo* info, u16 arg2, void* arg3) {
     char buf[0x20];
     nw4r::math::_VEC3 pos;
     nw4r::math::_VEC3 tmp;
-    func_801D8B60(info);
+    clearItemBoxSlotTexts(info);
     func_801D85D8(info);
     func_801D5C38(&out.rec, info, (void*)(u32)arg2, arg3);
     // 0x2C-byte copy: retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
@@ -1942,12 +1942,12 @@ void func_801D85D8(CItemBoxInfo* info) {
     }
 }
 #pragma pop
-// Retail func_801D885C uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail clearItemBoxTripleRows uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): info in r28, loop counter in r29, index in r30,
 // string-pool base in r31.
 #pragma push
 #pragma optimize_for_size on
-void func_801D885C(CItemBoxInfo* info) {
+void clearItemBoxTripleRows(CItemBoxInfo* info) {
     char buf[0x20];
     // Declaration order fixes the r29/r30 coloring: retail claims index (r30)
     // before the loop counter i (r29) - saved regs go high->low by birth order.
@@ -2008,11 +2008,11 @@ void func_801D8930(CItemBoxInfo* info) {
     }
 }
 #pragma pop
-// Retail func_801D8A88 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail clearItemBoxQuadTexts uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge); the first call's arg4 zero is hoisted into the prologue.
 #pragma push
 #pragma optimize_for_size on
-void func_801D8A88(CItemBoxInfo* info) {
+void clearItemBoxQuadTexts(CItemBoxInfo* info) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -2028,11 +2028,11 @@ void func_801D8A88(CItemBoxInfo* info) {
 }
 #pragma pop
 
-// Retail func_801D8B60 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail clearItemBoxSlotTexts uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): info in r29, loop counter in r30, string-pool base in r31.
 #pragma push
 #pragma optimize_for_size on
-void func_801D8B60(CItemBoxInfo* info) {
+void clearItemBoxSlotTexts(CItemBoxInfo* info) {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
@@ -2051,7 +2051,7 @@ void func_801D8B60(CItemBoxInfo* info) {
 #pragma push
 #pragma dont_inline on
 #pragma optimize_for_size on
-extern "C" void func_801D8B08(CItemBoxInfo* info) {
+extern "C" void clearItemBoxPairTexts(CItemBoxInfo* info) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -2171,21 +2171,21 @@ static inline void applyArmorEffects(void* info, u16 member,
                                      D8EArmorEntry& entry, u8 armorType) {
     switch (armorType) {
         case 3: {
-            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0D);
+            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
             if (effect != 0) scaleArmorDefense(entry, effect);
-            effect = func_801DFD60(info, (void*)(u32)member, 0x24);
+            effect = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
             if (effect != 0) {
                 entry.etherDefense = (s16)(entry.etherDefense + (s16)effect);
             }
             break;
         }
         case 2: {
-            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0C);
+            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
             if (effect != 0) scaleArmorDefense(entry, effect);
             break;
         }
         case 1: {
-            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0B);
+            s32 effect = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
             if (effect != 0) scaleArmorDefense(entry, effect);
             break;
         }
@@ -2293,7 +2293,7 @@ void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
 extern const u32 lbl_eu_8066806C;
 extern const u8 lbl_eu_80668070;
 extern const u32 lbl_eu_80506368[6];
-extern "C" u32 func_801DF988(void*, void*, u32, void*, s32);
+extern "C" u32 sumItemBoxGemBonus(void*, void*, u32, void*, s32);
 
 // Named views keep the item-stat calculations readable while leaving the
 // backing entry as a plain 13-word record, which is how MWCC copies it.
@@ -2401,8 +2401,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
-    s32 artsSum = (s32)func_801DFE48(info, member, NULL);
-    u32 w = func_801DFD60(info, (void*)(u32)member, 0x97);
+    s32 artsSum = (s32)sumItemBoxTypeCounts(info, member, NULL);
+    u32 w = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
     if (w != 0) {
         artsSum = artsSum - (s32)w;
         if (artsSum < 0) artsSum = 0;
@@ -2430,8 +2430,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     if (hpStat > 9999) hpStat = 9999;
 
     // ---- equip-mode gate: recompute bars with the equipped stat (0x30) ----
-    if (func_801DFFB8(info, member, NULL, NULL)) {
-        s32 eq = func_801DFD60(info, (void*)(u32)member, 0x30);
+    if (checkItemBoxGemChain(info, member, NULL, NULL)) {
+        s32 eq = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
         if (eq != 0) {
             s16 barA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
             s16 barB = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
@@ -2505,9 +2505,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
     // ---- stat panel (arg4 != 0, type in {2,4,5,6,7,8}) ----
     if (arg4 != 0 && (type == 2 || (type >= 4 && type <= 8))) {
         s32 e1 = 0;
-        if (func_801DFFB8(info, member, NULL, NULL)) e1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+        if (checkItemBoxGemChain(info, member, NULL, NULL)) e1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
         s32 e2 = 0;
-        if (func_801DFFB8(info, member, arg3, NULL)) e2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+        if (checkItemBoxGemChain(info, member, arg3, NULL)) e2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
 
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
@@ -2560,8 +2560,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             PaneMatSetTevColors(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
         }
 
-        s32 comparisonArtsSum = (s32)func_801DFE48(info, member, NULL);
-        u32 comparisonWeight = func_801DFD60(info, (void*)(u32)member, 0x97);
+        s32 comparisonArtsSum = (s32)sumItemBoxTypeCounts(info, member, NULL);
+        u32 comparisonWeight = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
         if (comparisonWeight != 0) {
             comparisonArtsSum -= (s32)comparisonWeight;
             if (comparisonArtsSum < 0) comparisonArtsSum = 0;
@@ -2654,9 +2654,9 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             comparisonStorage.weapon[3] = e_new;
             D8EEntry& c_new = comparisonStorage.weapon[3];
             s32 eq1 = 0;
-            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s16 pb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
             s16 nb = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
             s32 atkA = (s32)pb + func_801DF4E0(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
@@ -2815,16 +2815,16 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             func_801D5274(&e_new, (void*)(u32)member, arg3);
             comparisonStorage.armor[3] = e_new;
             D8EArmorEntry& c_new = comparisonStorage.armor[3];
-            volatile s16 v484 = (s16)func_801DFE48(
+            volatile s16 v484 = (s16)sumItemBoxTypeCounts(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            volatile s16 v468 = (s16)func_801DFE48(info, member, arg3);
+            volatile s16 v468 = (s16)sumItemBoxTypeCounts(info, member, arg3);
             s32 eq1 = 0;
-            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             // arm-type scaling of the entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct(
                 (u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
@@ -2834,20 +2834,20 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             {
                     switch (arm1) {
                         case 3: {
-                            s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
-                            s32 effect_24 = func_801DFD60(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_cur.etherDefense = (s16)(c_cur.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
@@ -2856,7 +2856,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
@@ -2870,20 +2870,20 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             {
                     switch (arm2) {
                         case 3: {
-                            s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
-                            s32 effect_24 = func_801DFD60(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_new.etherDefense = (s16)(c_new.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
@@ -2892,7 +2892,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
@@ -2903,7 +2903,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                     }
                 }
             // weight
-            s32 wv = func_801DFD60(info, (void*)(u32)member, 0x97);
+            s32 wv = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
             if (wv != 0) {
                 v484 = (s16)(v484 - (s16)wv);
                 v468 = (s16)(v468 - (s16)wv);
@@ -2913,7 +2913,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                func_801DFD60(info, (void*)(u32)member, 0x1A);
+                getItemBoxCondStat(info, (void*)(u32)member, 0x1A);
             }
             // Recalculate the two armor values in candidate/current pairs.  Keeping
             // each result adjacent to its query mirrors the original UI pipeline
@@ -3100,11 +3100,11 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         // item and selected slot in its lookup.
         {
         s32 currentEquipBonus = 0;
-        if (func_801DFFB8(info, member, NULL, NULL)) {
-            currentEquipBonus = func_801DFD60(info, (void*)(u32)member, 0x30);
+        if (checkItemBoxGemChain(info, member, NULL, NULL)) {
+            currentEquipBonus = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
         }
         s16 oldStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF610(info, (void*)(u32)member, 0x21, NULL)))));
-        s16 newStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (func_801DF988(info, (void*)(u32)member, 0x21, arg3, slot)))));
+        s16 newStrength = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s10 + currentEquipBonus)) * (f32)((stA->s20) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x21, arg3, slot)))));
         s16 strengthDelta = (s16)(newStrength - oldStrength);
         LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], newStrength);
         {
@@ -3129,7 +3129,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 }
 
         s16 oldPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF610(info, (void*)(u32)member, 0x01, NULL)))));
-        s16 newPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (func_801DF988(info, (void*)(u32)member, 0x01, arg3, slot)))));
+        s16 newPhysical = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x01, arg3, slot)))));
         s16 physicalDelta = (s16)(newPhysical - oldPhysical);
         LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], newPhysical);
         {
@@ -3158,7 +3158,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
         s16 newHp = (s16)(s32)(stA->f10 + (f32)RoundHalfAway0(
             lbl_eu_80668040 * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
-                func_801DF988(info, (void*)(u32)member, 0x11, arg3, slot))));
+                sumItemBoxGemBonus(info, (void*)(u32)member, 0x11, arg3, slot))));
         if (oldHp > 9999) oldHp = 9999;
         if (newHp > 9999) newHp = 9999;
         s16 hpDelta = (s16)(newHp - oldHp);
@@ -3193,7 +3193,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         }
 
         s16 oldEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF610(info, (void*)(u32)member, 0x31, NULL)))));
-        s16 newEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (func_801DF988(info, (void*)(u32)member, 0x31, arg3, slot)))));
+        s16 newEther = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s1C)) * (f32)((stA->s32) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x31, arg3, slot)))));
         s16 etherDelta = (s16)(newEther - oldEther);
         LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], newEther);
         {
@@ -3217,8 +3217,8 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
         PaneMatSetTevColors(panes[(13)], &labelTop, &labelBottom);
 }
 
-        s32 oldArtsTotal = (s32)func_801DFE48(info, member, NULL);
-        s32 weightPenalty = (s32)func_801DFD60(info, (void*)(u32)member, 0x97);
+        s32 oldArtsTotal = (s32)sumItemBoxTypeCounts(info, member, NULL);
+        s32 weightPenalty = (s32)getItemBoxCondStat(info, (void*)(u32)member, 0x97);
         if (weightPenalty != 0) {
             oldArtsTotal -= weightPenalty;
             if (oldArtsTotal < 0) oldArtsTotal = 0;
@@ -3231,7 +3231,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             ((lbl_eu_80668044 + (f32)stC->s0E + (f32)currentEquipBonus) *
              (f32)(oldAgilityBase + oldAgilityEffect)));
 
-        s16 newAgility = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (func_801DF988(info, (void*)(u32)member, 0x41, arg3, slot)))));
+        s16 newAgility = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0E)) * (f32)((oldAgilityBase) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x41, arg3, slot)))));
         s16 agilityDelta = (s16)(newAgility - oldAgility);
         LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], newAgility);
         {
@@ -3256,7 +3256,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 }
 
         s16 oldDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF610(info, (void*)(u32)member, 0x51, NULL)))));
-        s16 newDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (func_801DF988(info, (void*)(u32)member, 0x51, arg3, slot)))));
+        s16 newDefense = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s18)) * (f32)((stA->s2E) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x51, arg3, slot)))));
         s16 defenseDelta = (s16)(newDefense - oldDefense);
         LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], newDefense);
         {
@@ -3281,7 +3281,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 }
 
         s16 oldResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF610(info, (void*)(u32)member, 0x54, NULL)))));
-        s16 newResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (func_801DF988(info, (void*)(u32)member, 0x54, arg3, slot)))));
+        s16 newResistance = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s22)) * (f32)((stA->s38) + (sumItemBoxGemBonus(info, (void*)(u32)member, 0x54, arg3, slot)))));
         char* percentSuffix = BdatTouchStringCell(
             &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
         ((ml::FixStr<32>*)&textBuffer)->format(&lbl_eu_805063BC[0x13E], newResistance,
@@ -3319,7 +3319,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             s32 oldBaseEffect = func_801DF610(
                 info, (void*)(u32)member, 0x01, NULL);
             s16 oldAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C + currentEquipBonus)) * (f32)((stA->s1C) + (oldBaseEffect))));
-            s32 newBaseEffect = func_801DF988(
+            s32 newBaseEffect = sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x01, arg3, slot);
             s16 newAttackBase = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)(stC->s0C)) * (f32)((stA->s1C) + (newBaseEffect))));
 
@@ -3331,16 +3331,16 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                 info, (void*)(u32)member,
                 (u16)(weaponStats.w04 >> 16), NULL);
 
-            s32 lowScale = (s32)func_801DFD60(
+            s32 lowScale = (s32)getItemBoxCondStat(
                 info, (void*)(u32)member, 0x2D);
-            lowScale += (s32)func_801DF988(
+            lowScale += (s32)sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x52, arg3, slot);
             s32 newAttackLow = newAttackBase + (s32)(lbl_eu_80668040 *
                 (f32)((u16)weaponStats.w04 * (100 + lowScale)));
 
-            s32 highScale = (s32)func_801DFD60(
+            s32 highScale = (s32)getItemBoxCondStat(
                 info, (void*)(u32)member, 0x2D);
-            highScale += (s32)func_801DF988(
+            highScale += (s32)sumItemBoxGemBonus(
                 info, (void*)(u32)member, 0x53, arg3, slot);
             s32 newAttackHigh = newAttackBase + (s32)(lbl_eu_80668040 *
                 (f32)((u16)(weaponStats.w04 >> 16) * (100 + highScale)));
@@ -3381,7 +3381,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
 
     // ---- equip-detail / simple path (arg4 == 0, type in {2,4,5,6,7,8}) ----
     if (arg4 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
-        if (type != 2 && func_801DFDC0(info, member, arg3)) {
+        if (type != 2 && testItemBoxBdatFlag(info, member, arg3)) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             // (was switch: retail compiles this dispatch as compares)
@@ -3399,16 +3399,16 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             D8EArmorEntry e_new;
             func_801D5274(&e_new, (void*)(u32)member, arg3);
             D8EArmorEntry c_new = e_new;
-            volatile s16 v44C = (s16)func_801DFE48(
+            volatile s16 v44C = (s16)sumItemBoxTypeCounts(
                 info, member,
                 (item != NULL && *(u32*)item != 0)
                     ? (void*)(u32)(u16)(*(u32*)item >> 20)
                     : NULL);
-            volatile s16 v430 = (s16)func_801DFE48(info, member, arg3);
+            volatile s16 v430 = (s16)sumItemBoxTypeCounts(info, member, arg3);
             s32 eq1 = 0;
-            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, NULL, NULL)) eq1 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             s32 eq2 = 0;
-            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            if (checkItemBoxGemChain(info, member, arg3, NULL)) eq2 = getItemBoxCondStat(info, (void*)(u32)member, 0x30);
             func_801DF610(info, (void*)(u32)member, 0x21, NULL);
             s16 bA = (s16)(s32)(lbl_eu_80668040 * ((lbl_eu_80668044 + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
             LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
@@ -3432,20 +3432,20 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             {
                     switch (arm1) {
                         case 3: {
-                            s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_3);
                                 c_cur.etherDefense = (s16)(s32)((f32)c_cur.etherDefense * scale_3);
                             }
-                            s32 effect_24 = func_801DFD60(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_cur.etherDefense = (s16)(c_cur.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_2);
@@ -3454,7 +3454,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_cur.physicalDefense = (s16)(s32)((f32)c_cur.physicalDefense * scale_1);
@@ -3468,20 +3468,20 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             {
                     switch (arm2) {
                         case 3: {
-                            s32 effect_3 = func_801DFD60(info, (void*)(u32)member, 0x0D);
+                            s32 effect_3 = getItemBoxCondStat(info, (void*)(u32)member, 0x0D);
                             if (effect_3 != 0) {
                                 f32 scale_3 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_3);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_3);
                                 c_new.etherDefense = (s16)(s32)((f32)c_new.etherDefense * scale_3);
                             }
-                            s32 effect_24 = func_801DFD60(info, (void*)(u32)member, 0x24);
+                            s32 effect_24 = getItemBoxCondStat(info, (void*)(u32)member, 0x24);
                             if (effect_24 != 0) {
                                 c_new.etherDefense = (s16)(c_new.etherDefense + (s16)effect_24);
                             }
                             break;
                         }
                         case 2: {
-                            s32 effect_2 = func_801DFD60(info, (void*)(u32)member, 0x0C);
+                            s32 effect_2 = getItemBoxCondStat(info, (void*)(u32)member, 0x0C);
                             if (effect_2 != 0) {
                                 f32 scale_2 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_2);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_2);
@@ -3490,7 +3490,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                             break;
                         }
                         case 1: {
-                            s32 effect_1 = func_801DFD60(info, (void*)(u32)member, 0x0B);
+                            s32 effect_1 = getItemBoxCondStat(info, (void*)(u32)member, 0x0B);
                             if (effect_1 != 0) {
                                 f32 scale_1 = lbl_eu_80668040 * (lbl_eu_80668044 + (f32)effect_1);
                                 c_new.physicalDefense = (s16)(s32)((f32)c_new.physicalDefense * scale_1);
@@ -3501,7 +3501,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
                     }
                 }
             // weight
-            s32 wv = func_801DFD60(info, (void*)(u32)member, 0x97);
+            s32 wv = getItemBoxCondStat(info, (void*)(u32)member, 0x97);
             if (wv != 0) {
                 v44C = (s16)(v44C - (s16)wv);
                 v430 = (s16)(v430 - (s16)wv);
@@ -3511,7 +3511,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                func_801DFD60(info, (void*)(u32)member, 0x1A);
+                getItemBoxCondStat(info, (void*)(u32)member, 0x1A);
             }
             // Recalculate candidate and current armor values in matched pairs.
             s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
@@ -4086,7 +4086,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
                           buf2, textBuffer.mString, 0);
             if (arg3 != NULL && arg4 == 0 &&
-                (cf != 0 || type == 2 || !func_801DFDC0(info, member, arg3))) {
+                (cf != 0 || type == 2 || !testItemBoxBdatFlag(info, member, arg3))) {
                 cf = 0;
                 LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
                               buf2, &lbl_eu_805063BC[0x2AA], 0);
@@ -4152,7 +4152,7 @@ s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
     // (f32) cast on Broadway (no fcfid); keep it as a simple cast.
     // Same shape as func_801DF578: statement-ordered calls, builtin
     // s32->f32 cast emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = func_801DFD60(a, b, 0x2d);
+    u32 t1 = getItemBoxCondStat(a, b, 0x2d);
     u32 t2 = func_801DF610(a, b, 0x52, d);
     return (s32)(lbl_eu_80668040 * (f32)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
@@ -4161,7 +4161,7 @@ s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
     // Statement-ordered calls keep the retail bl order; single-expression sum
     // keeps the values in registers like retail. The builtin s32->f32 cast
     // emits MWCC's 0x4330/xoris double-trick.
-    u32 t1 = func_801DFD60(a, b, 0x2d);
+    u32 t1 = getItemBoxCondStat(a, b, 0x2d);
     u32 t2 = func_801DF610(a, b, 0x53, d);
     return (s32)(lbl_eu_80668040 * (float)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
@@ -4269,13 +4269,13 @@ u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
     return result;
 }
 
-// Retail func_801DF988 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail sumItemBoxGemBonus uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge). The slot argument maps 1..3 to type 2 with a sub-index,
 // and 4..8 to direct types; the candidate pointer is nulled out by the first
 // pass when one of its gems matches, so the sum pass treats it as unequipped.
 #pragma push
 #pragma optimize_for_size on
-u32 func_801DF988(void* info, void* member, u32 category, void* candidate, s32 slot) {
+u32 sumItemBoxGemBonus(void* info, void* member, u32 category, void* candidate, s32 slot) {
     (void)info;
     u32 type = 0;
     u32 index = 0;
@@ -4384,7 +4384,7 @@ u32 func_801DF988(void* info, void* member, u32 category, void* candidate, s32 s
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-u32 func_801DFD60(void* a, void* b, u32 arg2) {
+u32 getItemBoxCondStat(void* a, void* b, u32 arg2) {
     // Retail keeps obj in r31 and result in r30 (obj declared first gets the
     // highest saved register); stmw/lmw frame from optimize_for_size.
     void* obj;
@@ -4399,7 +4399,7 @@ u32 func_801DFD60(void* a, void* b, u32 arg2) {
 
 #pragma push
 #pragma optimize_for_size on
-u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
+u32 getItemBoxCondStatById(void* dummy, u32 arg1, u32 arg2) {
     // Retail keeps obj in r31 and result in r30 (obj declared first gets the
     // highest saved register); the result=0 init lands before the call.
     void* obj;
@@ -4412,7 +4412,7 @@ u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
 }
 #pragma pop
 
-u32 func_801E92B8(void* dummy, void* arg1) {
+u32 getItemBoxCondStat2D(void* dummy, void* arg1) {
     void* obj = (u8*)func_8009EC9C((u8)(u32)arg1) + 0x3534;
     if (func_8026178C(obj, 0x2d) != 0) {
         return func_8025FB10(obj, 0x2d);
@@ -4423,7 +4423,7 @@ u32 func_801E92B8(void* dummy, void* arg1) {
 
 #pragma push
 #pragma optimize_for_size on
-u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
+u32 testItemBoxBdatFlag(void* dummy, u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -4432,7 +4432,7 @@ u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
     return result != 0;
 }
 #pragma pop
-u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
+u32 sumItemBoxTypeCounts(void* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : 0;
@@ -4463,7 +4463,7 @@ u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
     }
     return result;
 }
-u32 func_801DFFB8(void* unused, u16 lookup_key, void* arg3, void* unused2) {
+u32 checkItemBoxGemChain(void* unused, u16 lookup_key, void* arg3, void* unused2) {
     void* lookup = func_8009EC9C(lookup_key);
     CItemBoxSlotBytes bytes;
     s16 ids[6];
@@ -4927,11 +4927,11 @@ CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, s32 flags) {
 }
 #pragma pop
 
-// Retail func_801E12E0 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail loadItemBox2Files uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge) like the sibling ItemBox1/2 dtors.
 #pragma push
 #pragma optimize_for_size on
-void func_801E12E0(CItemBoxInfo2* info) {
+void loadItemBox2Files(CItemBoxInfo2* info) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     info->state.fileHandle1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
     handle = mtl::MemManager::getHandleMEM2();
@@ -4971,7 +4971,7 @@ void func_801E13F8(CItemBoxInfo2* info) {
 
 #pragma push
 #pragma auto_inline off
-void func_801E1498(CItemBoxInfo2* info) {
+void startItemBox2Open(CItemBoxInfo2* info) {
     if (info->state.state != 0) return;
     info->state.state = 1;
     info->state.visible = 0;
@@ -4995,7 +4995,7 @@ void advanceItemBox2State(CItemBoxInfo2* info) {
 #pragma optimize_for_size on
 #pragma auto_inline off
 extern "C" void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5) {
-    func_801D4A2C((u8*)info + 0xB0);
+    initItemBoxVecTable((u8*)info + 0xB0);
     func_801E43BC(info, arg2, arg3, arg4, arg5);
     u16 id = arg3 ? (u16)(*(u32*)arg3 >> 20) : 0;
     u16 idFinal = arg2;
@@ -5017,11 +5017,11 @@ extern "C" void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     } else {
         func_801E3918(info);
         func_801E3B9C(info);
-        func_801E3DE4(info);
+        clearItemBox2TripleRows(info);
         func_801E3EB8(info);
-        func_801E4010(info);
-        func_801E4090(info);
-        func_801E40E8(info);
+        clearItemBox2QuadTexts(info);
+        clearItemBox2PairTexts(info);
+        clearItemBox2SlotTexts(info);
     }
     char* s = BdatTouchStringCell((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 3);
     // Not named textBuffer: the textBuffer raw-storage macro from
@@ -5033,19 +5033,19 @@ extern "C" void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-void func_801E16F0(CItemBoxInfo2* info, char* arg1, char* arg2) {
+void setItemBox2NamedText(CItemBoxInfo2* info, char* arg1, char* arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x151], arg1);
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
 }
 #pragma pop
 
-// Retail func_801E174C (CItemBoxInfo2 variant) uses the same stmw/lmw frame.
+// Retail calcItemBox2PaneVec (CItemBoxInfo2 variant) uses the same stmw/lmw frame.
 #pragma push
 #pragma optimize_for_size on
-void func_801E174C(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
+void calcItemBox2PaneVec(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
     char buf[0x20];
-    // Same declaration-order trick as func_801D4B3C: `first` before `child`
+    // Same declaration-order trick as calcItemBoxPaneVec: `first` before `child`
     // so child colors into dead info's r30 and first reuses base's r31.
     nw4r::lyt::Pane* first;
     nw4r::lyt::Pane* second;
@@ -5068,7 +5068,7 @@ extern "C" void func_801E17EC(CItemBoxInfo2* info) {
     }
 }
 
-extern "C" void func_801E1868(CItemBoxInfo2* info) {
+extern "C" void openItemBox2Phase2(CItemBoxInfo2* info) {
     if (advanceAnimTransform((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
@@ -5083,7 +5083,7 @@ extern "C" void func_801E18B4(CItemBoxInfo2* info) {
     }
 }
 
-extern "C" void func_801E1930(CItemBoxInfo2* info) {
+extern "C" void closeItemBox2Phase2(CItemBoxInfo2* info) {
     if (AnimRewindFrame((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
         info->state.visible = 1;
         info->state.state = 0;
@@ -5907,7 +5907,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     CItemBoxSlotEntry entry;
     CItemBoxTagStage stage;
 
-    func_801E4010(info);
+    clearItemBox2QuadTexts(info);
     func_801E3B9C(info);
     func_801E20FC(&out, info, (void*)(u32)arg2, arg3);
     // 0xA0-byte record copy: pair-copy reproduces the retail mtctr lwzu/stwu
@@ -6034,7 +6034,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
 #pragma push
 #pragma optimize_for_size on
 void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
-    func_801E4090(info);
+    clearItemBox2PairTexts(info);
     func_801E3B9C(info);
     volatile CItemBoxLabelArgs vals;
     CItemBoxLabelArgs out;
@@ -6071,7 +6071,7 @@ void func_801E37C4(CItemBoxInfo2* info, void* arg1, void* arg2) {
     CItemBoxSlotRecAny cur;
     CItemBoxSlotRecAny out;
     char paneName[0x20];
-    func_801E40E8(info);
+    clearItemBox2SlotTexts(info);
     func_801E3B9C(info);
     func_801E27D0((u8*)&out.rec, info, arg1, arg2);
     cur = out;
@@ -6217,7 +6217,7 @@ void func_801E3B9C(CItemBoxInfo2* info) {
 #pragma pop
 #pragma push
 #pragma optimize_for_size on
-void func_801E3DE4(CItemBoxInfo2* info) {
+void clearItemBox2TripleRows(CItemBoxInfo2* info) {
     char buf[0x20];
     // Declaration order fixes r29/r30: retail claims index (r30) before i (r29).
     u32 index;
@@ -6276,7 +6276,7 @@ void func_801E3EB8(CItemBoxInfo2* info) {
 // the first call's arg4 zero and the string base are hoisted into the prologue.
 #pragma push
 #pragma optimize_for_size on
-void func_801E4010(CItemBoxInfo2* info) {
+void clearItemBox2QuadTexts(CItemBoxInfo2* info) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x45a],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -6296,7 +6296,7 @@ void func_801E4010(CItemBoxInfo2* info) {
 #pragma optimize_for_size on
 #pragma push
 #pragma dont_inline on
-void func_801E4090(CItemBoxInfo2* info) {
+void clearItemBox2PairTexts(CItemBoxInfo2* info) {
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x48f],
                   &lbl_eu_805063BC[0x2aa], 0);
@@ -6306,14 +6306,14 @@ void func_801E4090(CItemBoxInfo2* info) {
 }
 #pragma pop
 #pragma pop
-// Retail func_801E40E8 uses the stmw/lmw frame (MWCC optimize_for_size
+// Retail clearItemBox2SlotTexts uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): info in r29, loop counter in r30, string-pool base in r31.
 // dont_inline keeps IPA from folding this body into its callers
 // (func_801E37C4 etc.) - retail always calls it.
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
-void func_801E40E8(CItemBoxInfo2* info) {
+void clearItemBox2SlotTexts(CItemBoxInfo2* info) {
     char buf[0x20];
     LayoutSetTextBoxFmtValue((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
@@ -6393,7 +6393,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
 // accessor (+0x30) are present, set the current/active bytes. Goto-gate
 // layout matches retail's branch-over-branch shape (bne over a blr with
 // the body placed after the return - see CTitle CTitleLogo_draw family).
-void func_801E4390(CItemBoxInfo2* info) {
+void activateItemBox2(CItemBoxInfo2* info) {
     if (info->state.layout != 0 && info->state.resource != 0) {
         goto body;
     }
@@ -6522,8 +6522,8 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
     CtrlObjectParam_GetArtsStatsRow((u8*)charObj + 0x1C, 5);
 
     // ---- arts sum ----
-    s32 artsSum = (s32)func_801E9774(info, member, NULL);
-    u32 w = func_801E9690(info, member, 0x97);
+    s32 artsSum = (s32)sumItemBox2TypeCounts(info, member, NULL);
+    u32 w = getItemBoxCondStatById(info, member, 0x97);
     if (w != 0) {
         artsSum = artsSum - (s32)w;
         if (artsSum < 0) artsSum = 0;
@@ -6540,7 +6540,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
 
     // ---- equip-mode gate: recompute bars with the equipped stat (0x30) ----
     if (func_801E98E4(info, member, NULL)) {
-        s32 eq = func_801E9690(info, member, 0x30);
+        s32 eq = getItemBoxCondStatById(info, member, 0x30);
         if (eq != 0) {
             s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + func_801E9310(info, (void*)(u32)member, 0x21, NULL))));
             s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
@@ -6608,9 +6608,9 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
     // ---- stat panel (arg5 != 0, type in {2,4,5,6,7,8}) ----
     if (arg5 != 0 && (type == 2 || (type >= 4 && type <= 8))) {
         s32 e1 = 0;
-        if (func_801E98E4(info, member, NULL)) e1 = func_801E9690(info, member, 0x30);
+        if (func_801E98E4(info, member, NULL)) e1 = getItemBoxCondStatById(info, member, 0x30);
         s32 e2 = 0;
-        if (func_801E98E4(info, member, arg3)) e2 = func_801E9690(info, member, 0x30);
+        if (func_801E98E4(info, member, arg3)) e2 = getItemBoxCondStatById(info, member, 0x30);
 
         // row A: 0x21 -> panes 0x60/0x64
         s16 dB = 0;
@@ -6739,9 +6739,9 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             func_801E197C(&e_new, info, arg3);
             E43Entry c_new = e_new;
             s32 eq1 = 0;
-            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            if (func_801E98E4(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
             s32 eq2 = 0;
-            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
+            if (func_801E98E4(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
             s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
             s32 atkA = (s32)pb + func_801E9190(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
@@ -6900,31 +6900,31 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             func_801E1E0C((CItemBoxSlotFlags*)&e_new, info, arg3);
             E43Entry c_new = e_new;
             s32 eq1 = 0;
-            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            if (func_801E98E4(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
             s32 eq2 = 0;
-            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
-            u16 v484 = (u16)func_801E9774(info, member, (void*)(u32)w0);
-            u16 v468 = (u16)func_801E9774(info, member, arg3);
+            if (func_801E98E4(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
+            u16 v484 = (u16)sumItemBox2TypeCounts(info, member, (void*)(u32)w0);
+            u16 v468 = (u16)sumItemBox2TypeCounts(info, member, arg3);
             // arm-type scaling of the entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
             if (arm1 == 3) {
-                s32 v = func_801E9690(info, member, 0xD);
+                s32 v = getItemBoxCondStatById(info, member, 0xD);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = func_801E9690(info, member, 0x24);
+                v = getItemBoxCondStatById(info, member, 0x24);
                 if (v != 0) {
                     c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
                 }
             } else if (arm1 == 2) {
-                s32 v = func_801E9690(info, member, 0xC);
+                s32 v = getItemBoxCondStatById(info, member, 0xC);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm1 == 1) {
-                s32 v = func_801E9690(info, member, 0xB);
+                s32 v = getItemBoxCondStatById(info, member, 0xB);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
@@ -6932,30 +6932,30 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             }
             u8 arm2 = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
-                s32 v = func_801E9690(info, member, 0xD);
+                s32 v = getItemBoxCondStatById(info, member, 0xD);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = func_801E9690(info, member, 0x24);
+                v = getItemBoxCondStatById(info, member, 0x24);
                 if (v != 0) {
                     c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
                 }
             } else if (arm2 == 2) {
-                s32 v = func_801E9690(info, member, 0xC);
+                s32 v = getItemBoxCondStatById(info, member, 0xC);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm2 == 1) {
-                s32 v = func_801E9690(info, member, 0xB);
+                s32 v = getItemBoxCondStatById(info, member, 0xB);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
             // weight
-            s32 wv = func_801E9690(info, member, 0x97);
+            s32 wv = getItemBoxCondStatById(info, member, 0x97);
             if (wv != 0) {
                 s32 t1 = (s32)v484 - wv;
                 if (t1 < 0) t1 = 0;
@@ -6967,7 +6967,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                func_801E9690(info, member, 0x1A);
+                getItemBoxCondStatById(info, member, 0x1A);
             }
             // bars (armor stat pair updates)
             s32 c1 = func_801E9310(info, (void*)(u32)member, 0x31, arg3);
@@ -7092,7 +7092,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
 
     // ---- equip-detail / simple path (arg5 == 0, type in {2,4,5,6,7,8}) ----
     if (arg5 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
-        if (type != 2 && func_801E96F0(info, member, (u32)arg3)) {
+        if (type != 2 && testItemBox2BdatFlag(info, member, (u32)arg3)) {
             // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             switch (type) {
@@ -7110,12 +7110,12 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             E43Entry e_new;
             func_801E1E0C((CItemBoxSlotFlags*)&e_new, info, arg3);
             E43Entry c_new = e_new;
-            u16 v44C = (u16)func_801E9774(info, member, (void*)(u32)w0);
-            u16 v430 = (u16)func_801E9774(info, member, arg3);
+            u16 v44C = (u16)sumItemBox2TypeCounts(info, member, (void*)(u32)w0);
+            u16 v430 = (u16)sumItemBox2TypeCounts(info, member, arg3);
             s32 eq1 = 0;
-            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            if (func_801E98E4(info, member, NULL)) eq1 = getItemBoxCondStatById(info, member, 0x30);
             s32 eq2 = 0;
-            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
+            if (func_801E98E4(info, member, arg3)) eq2 = getItemBoxCondStatById(info, member, 0x30);
             func_801E9310(info, (void*)(u32)member, 0x21, NULL);
             s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801E9310(info, (void*)(u32)member, 0x21, arg3))));
             LayoutSetTextBoxInt(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
@@ -7133,23 +7133,23 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             // arm-type scaling of entry value pairs
             u8 arm1 = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)w0));
             if (arm1 == 3) {
-                s32 v = func_801E9690(info, member, 0xD);
+                s32 v = getItemBoxCondStatById(info, member, 0xD);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = func_801E9690(info, member, 0x24);
+                v = getItemBoxCondStatById(info, member, 0x24);
                 if (v != 0) {
                     c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
                 }
             } else if (arm1 == 2) {
-                s32 v = func_801E9690(info, member, 0xC);
+                s32 v = getItemBoxCondStatById(info, member, 0xC);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm1 == 1) {
-                s32 v = func_801E9690(info, member, 0xB);
+                s32 v = getItemBoxCondStatById(info, member, 0xB);
                 if (v != 0) {
                     c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
                     c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
@@ -7157,30 +7157,30 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             }
             u8 arm2 = (u8)BdatGetU8Direct((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], BdatGetItemId((u32)(*(u32*)arg3 >> 20)));
             if (arm2 == 3) {
-                s32 v = func_801E9690(info, member, 0xD);
+                s32 v = getItemBoxCondStatById(info, member, 0xD);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
-                v = func_801E9690(info, member, 0x24);
+                v = getItemBoxCondStatById(info, member, 0x24);
                 if (v != 0) {
                     c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
                 }
             } else if (arm2 == 2) {
-                s32 v = func_801E9690(info, member, 0xC);
+                s32 v = getItemBoxCondStatById(info, member, 0xC);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             } else if (arm2 == 1) {
-                s32 v = func_801E9690(info, member, 0xB);
+                s32 v = getItemBoxCondStatById(info, member, 0xB);
                 if (v != 0) {
                     c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
                     c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
                 }
             }
             // weight
-            s32 wv = func_801E9690(info, member, 0x97);
+            s32 wv = getItemBoxCondStatById(info, member, 0x97);
             if (wv != 0) {
                 s32 t1 = (s32)v44C - wv;
                 if (t1 < 0) t1 = 0;
@@ -7192,7 +7192,7 @@ setLayoutTextBoxNumber((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_
             // slot sum
             s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
             if (ssum <= -5) {
-                func_801E9690(info, member, 0x1A);
+                getItemBoxCondStatById(info, member, 0x1A);
             }
             // bars (armor stat pair updates)
             s32 c1 = func_801E9310(info, (void*)(u32)member, 0x31, arg3);
@@ -7664,7 +7664,7 @@ s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
     // Single-expression sum; builtin s32->f32 cast emits MWCC's
     // 0x4330/xoris double-trick.
     // NOTE: param-save copy pair order residual (see attempts.jsonl).
-    s32 prod = arg2 * (s32)(func_801E9310(a, b, 0x52, d) + func_801E92B8(a, b) + 0x64);
+    s32 prod = arg2 * (s32)(func_801E9310(a, b, 0x52, d) + getItemBoxCondStat2D(a, b) + 0x64);
     return (s32)(lbl_eu_80668040 * (f32)prod);
 }
 #pragma pop
@@ -7677,7 +7677,7 @@ extern "C" const f32 lbl_eu_80668040;
 s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
     // Standalone SDA (not sdata2_ItemBox members) so lfd/lfs use r0@sda21
     // instead of li r3,0 / lfs 56(r3). Residual: or r28,r4 / or r27,r3 order.
-    s32 prod = (s32)(func_801E9310(a, b, 0x53, d) + func_801E92B8(a, b) + 0x64) * arg2;
+    s32 prod = (s32)(func_801E9310(a, b, 0x53, d) + getItemBoxCondStat2D(a, b) + 0x64) * arg2;
     return (s32)(lbl_eu_80668040 * (f32)prod);
 }
 #define lbl_eu_80668028 sdata2_ItemBox.d8028
@@ -7786,7 +7786,7 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
 #pragma push
 #pragma auto_inline off
 #pragma optimize_for_size on
-u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
+u32 testItemBox2BdatFlag(void* dummy, u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
@@ -7796,7 +7796,7 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
-u32 func_801E9774(void* global, u16 arg2, void* arg3) {
+u32 sumItemBox2TypeCounts(void* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
     u16 v1 = arg3 ? (u16)BdatGetItemType((u32)arg3) : (u16)0;
@@ -7842,7 +7842,7 @@ bool func_801E98E4(void*, u16 b, void* c) {
     u16 nameId = BdatGetItemId((u32)c);
     u8 slotId = (u8)BdatGetItemType((u32)c);
     // 6-byte slot table from two .sdata2 constants (different pair from
-    // func_801DFFB8).
+    // checkItemBoxGemChain).
     CItemBoxSlotBytes tbl;
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the
@@ -7901,7 +7901,7 @@ bool func_801E98E4(void*, u16 b, void* c) {
 // Retail CItemBoxInfo2::OnFileEvent: two file-load branches. The line-arc
 // branch (fileHandle1) builds the whole layout in a 0x18000 scratch region;
 // the common-arc branch (fileHandle2) only re-attaches its accessor into a
-// 0x100 scratch region and refreshes via func_801E4390.
+// 0x100 scratch region and refreshes via activateItemBox2.
 #pragma push
 #pragma optimize_for_size on
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
@@ -8129,7 +8129,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         state.slotPanes[18] = root->FindPaneByName(base + 0x651, true);
         state.slotPanes[19] = root->FindPaneByName(base + 0x796, true);
 
-        func_801E4390(this);
+        activateItemBox2(this);
         state.fileHandle1 = 0;
         state.memRegion1.func_8045F810();
         return true;
@@ -8143,7 +8143,7 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
         nw4r::lyt::ArcResourceAccessor* acc2 = createArcResourceAccessor__10CLibLayoutFv();
         state.resource = acc2;
         acc2->Attach(data, &lbl_eu_805063BC[0x531]);
-        func_801E4390(this);
+        activateItemBox2(this);
         state.fileHandle2 = 0;
         state.memRegion2.func_8045F810();
         return true;
@@ -8368,7 +8368,7 @@ void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
 #pragma pop
 
 void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    func_801D4A2C((u8*)info + 0xB0);
+    initItemBoxVecTable((u8*)info + 0xB0);
     if (*(u8*)((u8*)info + 0x9A) == 4) {
         func_801D8E34(info, arg2, arg3, arg4);
     }
@@ -8402,11 +8402,11 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     } else {
         func_801D8318(info);
         func_801D85D8(info);
-        func_801D885C(info);
+        clearItemBoxTripleRows(info);
         func_801D8930(info);
-        func_801D8A88(info);
-        func_801D8B08(info);
-        func_801D8B60(info);
+        clearItemBoxQuadTexts(info);
+        clearItemBoxPairTexts(info);
+        clearItemBoxSlotTexts(info);
     }
     char* label = BdatTouchStringCell(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
     // The bool ctor clears inline (mString[0]=0 / mLength=0) exactly like the

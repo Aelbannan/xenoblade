@@ -2591,10 +2591,10 @@ extern "C" void* CfRes_dispatchTypeA(void* unused, const void* obj) {
 extern "C" int CfRes_dispatchTypeB(u8* self, void* param) {
     u8 val = *(u8*)((char*)param + 0x32);
     if (val == 10) {
-        return func_801BFA64(0);
+        return CfSoundMan_CloseRecord(0);
     }
     if (val == 7) {
-        return func_801BFA64(1);
+        return CfSoundMan_CloseRecord(1);
     }
     return (int)self;
 }
@@ -2609,11 +2609,11 @@ void CfRes_cacheSoundBase(int unused, ResInfoEntry* self) {
             u8 type = self->field_0x32;
             *(u32*)self->field_0x14 = (u32)(uintptr_t)result;
             if (type == 10) {
-                func_801BFA08(0, result, self->field_0x18, 0x106000);
-                func_801BFA88(0, 7, 0, 0);
+                CfSoundMan_BindRecordBuffer(0, result, self->field_0x18, 0x106000);
+                CfSoundMan_OpenRecordPlayer(0, 7, 0, 0);
             } else if (type == 7) {
-                func_801BFA08(1, result, self->field_0x18, 0x1A0000);
-                func_801BFA88(1, 8, 0, 0);
+                CfSoundMan_BindRecordBuffer(1, result, self->field_0x18, 0x1A0000);
+                CfSoundMan_OpenRecordPlayer(1, 8, 0, 0);
             }
         }
     }

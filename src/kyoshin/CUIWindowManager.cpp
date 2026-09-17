@@ -436,7 +436,7 @@ extern "C" void* UIWin_ThunkCBB4(void* self) {
     typedef void* (*ThunkFn)(u32);
     return ((ThunkFn)&func_8013CBB4)((u32)((char*)self - 0x54));
 }
-void __dt__16CUIWindowManagerFv(CUIWindowManager*);
+extern "C" void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void UIWin_DtorAdaptor(CUIWindowManager* p) {
     __dt__16CUIWindowManagerFv((CUIWindowManager*)((char*)p - 0x54));
 }
@@ -450,8 +450,8 @@ namespace cf {
 IFlagEvent::~IFlagEvent() {}
 }
 CUIWindowManager::~CUIWindowManager() {}
-extern "C" void UIWin_FlagBufReset(CUIWindowManager* self);
-extern "C" void UIWin_FlagBufResetAlias(CUIWindowManager* self) { UIWin_FlagBufReset(self); }
+extern "C" void UIWin_FlagBufReset(CFlagBuffer* self);
+extern "C" void UIWin_ThunkFlagBufReset(CUIWindowManager* self) { UIWin_FlagBufReset((CFlagBuffer*)self); }
 extern "C" int UIWin_PackHiLo(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 
 // Singleton ctor: CProcess base first, then the complete-object vtable, the

@@ -1028,7 +1028,7 @@ emit:
 // ---------------------------------------------------------------------------
 void func_802807A0(CScenarioLogOwner* self) {
     if ((self->field_0x3F00 & 4) != 0) {
-        if (func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), self) != 0) {
+        if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), self) != 0) {
             func_8027FC80(csysWinCall28C(self), 0);
         }
     }

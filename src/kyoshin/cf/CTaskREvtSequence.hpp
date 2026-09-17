@@ -77,7 +77,7 @@ extern u32 lbl_eu_80530A4C[3];
 // ptmf table copied into field_0x3C by EvtSeqBootSequence (retail .data:0x80530A40)
 extern u32 lbl_eu_80530A40[6];
 
-// ptmf table copied into field_0x3C by EvtSeqLoadSequenceFile (retail .data:0x80530A58)
+// ptmf table copied into field_0x3C by func_8016872C (retail .data:0x80530A58)
 extern u32 lbl_eu_80530A58[6];
 
 // String pool used by EvtSeqCheckRegionStatus: name string at +0x5D passed to
@@ -107,7 +107,7 @@ extern "C" void func_8016DF4C(u32 type);
 extern "C" u32 func_801644B4();
 extern "C" void func_80164CFC();
 // func_80168028: realtime-event arena slot lookup (CREvtMem.cpp) - returns an
-// arena address used as a plain integer by EvtSeqAdvanceWalkIndex.
+// arena address used as a plain integer by func_80169DD0.
 extern "C" u32 func_80168028(u32 idx);
 // func_802A1500: voice-event manager reset (CCharVoiceMan.cpp).
 extern "C" void func_802A1500();
@@ -295,7 +295,7 @@ public:
 
 // Pointer at CTaskREvtSequence::field_0x120: walk header of the loaded
 // sequence buffer. The word offsets at +0x14..+0x28 locate the entry table
-// and the four id lists inside the buffer (func_80169F28); EvtSeqAdvanceWalkIndex
+// and the four id lists inside the buffer (func_80169F28); func_80169DD0
 // advances the cursor by the +0x28 offset.
 struct UnkSeq120 {
     u8 gap00[0x14];   // 0x00
@@ -304,7 +304,7 @@ struct UnkSeq120 {
     u32 field_0x1C;   // 0x1C: offset to id-list B (+0xC data start)
     u32 field_0x20;   // 0x20: offset to id-list C (+0xC data start)
     u32 field_0x24;   // 0x24: offset to id-list D (+0xC data start)
-    u32 field_0x28;   // 0x28: walk cursor advance (EvtSeqAdvanceWalkIndex)
+    u32 field_0x28;   // 0x28: walk cursor advance (func_80169DD0)
 };
 
 // Object behind the container +0x4594/+0x4598 pointers (EvtSeqResolvePackedResId): the
@@ -356,8 +356,8 @@ struct UnkStateTable_D0 {
     u32 field_0x4;    // 0x04: byte stride between entries
     u8 gap08[0x04];   // 0x08
     u32 field_0xC;    // 0x0C: count word read by EvtSeqGetEntryLimit
-    u32 field_0x10;   // 0x10: size word read by EvtSeqAdvanceWalkIndex
-    u32 field_0x14;   // 0x14: size word read by EvtSeqAdvanceWalkIndex
+    u32 field_0x10;   // 0x10: size word read by func_80169DD0
+    u32 field_0x14;   // 0x14: size word read by func_80169DD0
     u8 gap18[0x20];   // 0x18-0x37
     u32 field_0x38;   // 0x38: flag word (bits 0/1/3 read by func_80169F28)
     f32 field_0x3C;   // 0x3C: fade volume compared by func_80169F28
@@ -496,7 +496,7 @@ public:
     virtual void* vf_0x20();   // user 6
     virtual void* vf_0x24();   // user 7 -> vtable+0x24 (EvtSeqUpdateRealtimeEvents walk call)
     virtual void* vf_0x28();   // user 8
-    virtual void* vf_0x2C();   // user 9 -> vtable+0x2C (EvtSeqAdvanceWalkIndex match call)
+    virtual void* vf_0x2C();   // user 9 -> vtable+0x2C (func_80169DD0 match call)
     virtual void* vf_0x30();            // user 10 -> vtable+0x30
     virtual void* vf_0x34(void* arg, void* elem);  // user 11 -> vtable+0x34 (func_80169F28 loop 2 call)
     virtual void* vf_0x38();   // user 12 -> vtable+0x38
@@ -562,7 +562,7 @@ public:
 };
 
 // File-header object at CTaskREvtSequence::field_0xC0: size word at +0x18,
-// flags halfword at +0x46 (both read by EvtSeqLoadSequenceFile).
+// flags halfword at +0x46 (both read by func_8016872C).
 struct UnkFileHeader {
     u8 gap00[0x18];   // 0x00
     u32 field_0x18;   // 0x18
@@ -769,7 +769,7 @@ public:
     u32 field_0x4C;  // 0x4C (mDrawFunc ptmf slot 1)
     u32 field_0x50;  // 0x50 (mDrawFunc ptmf slot 2)
     u32 mEvt54[2];    // 0x54-0x5B (IWorkEvent sub-object head; readFile target)
-    u32 field_0x5C;   // 0x5C (flag word; bits 2/4 handled by EvtSeqAdvanceWalkIndex)
+    u32 field_0x5C;   // 0x5C (flag word; bits 2/4 handled by func_80169DD0)
     char mPath[0x40]; // 0x60-0xA0 (sequence name buffer, FixStr<64> head)
     u32 field_0xA0;   // 0xA0 (name length stored by the ctor)
     // Embedded memory block (UnkBlock801682AC layout) cleaned up by the dtor.
@@ -780,11 +780,11 @@ public:
     u32 field_0xB4;   // 0xB4
     u32 field_0xB8;   // 0xB8 (CFileHandle* stored by EvtSeqBeginFileRead)
     u32 field_0xBC;   // 0xBC (CFileHandle* from readCommonArchiveFile)
-    u32 field_0xC0;   // 0xC0 (file-header object; freed by EvtSeqLoadSequenceFile)
-    u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by EvtSeqLoadSequenceFile)
+    u32 field_0xC0;   // 0xC0 (file-header object; freed by func_8016872C)
+    u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by func_8016872C)
     u32 field_0xC8;   // 0xC8
     u32 field_0xCC;   // 0xCC
-    UnkStateTable_D0* field_0xD0; // 0xD0 (event table walked by EvtSeqAdvanceWalkIndex)
+    UnkStateTable_D0* field_0xD0; // 0xD0 (event table walked by func_80169DD0)
     u32 field_0xD4;   // 0xD4
     u32 field_0xD8;   // 0xD8
     u32 field_0xDC;   // 0xDC
@@ -794,7 +794,7 @@ public:
     u32 field_0xEC;   // 0xEC
     UnkBB38Table* field_0xF0;  // 0xF0 (event table walked by EvtSeqRefreshEventLod)
     u32 field_0xF4;   // 0xF4
-    u32 field_0xF8;            // 0xF8 (event index passed to EvtSeqAdvanceWalkIndex)
+    u32 field_0xF8;            // 0xF8 (event index passed to func_80169DD0)
     u32 field_0xFC;            // 0xFC (readCommonArchiveFile handle / busy gate)
     u32 field_0x100;           // 0x100
     u32 field_0x104;           // 0x104
@@ -808,11 +808,11 @@ public:
     u16 field_0x118;  // 0x118
     u8 gap11A[0x02];  // 0x11A-0x11B
     u32 field_0x11C;  // 0x11C (func_80168028 arena pointer)
-    UnkSeq120* field_0x120;    // 0x120 (walk cursor advanced by EvtSeqAdvanceWalkIndex)
+    UnkSeq120* field_0x120;    // 0x120 (walk cursor advanced by func_80169DD0)
     u32 field_0x124;  // 0x124 (CX stream position written by EvtSeqOnFileEvent)
     u32 field_0x128;  // 0x128 (arena chunk size from func_80167D40)
     f32 field_0x12C;  // 0x12C (Init stores func_8048EA40() here)
-    u32 field_0x130;  // 0x130 (zero-check by EvtSeqAdvanceWalkIndex)
+    u32 field_0x130;  // 0x130 (zero-check by func_80169DD0)
     u16 field_0x134;  // 0x134 (sequence id halfword from func_8016E08C)
     u8 gap136[0x02];  // 0x136-0x137
     u32 field_0x138;  // 0x138 (frame counter incremented by EvtSeqUpdateRealtimeEvents)
@@ -864,7 +864,7 @@ extern "C" int getLODData__8CTaskLODFv(s16 taskId);
 extern "C" void func_80168800(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqFinishSequence(cf::CTaskREvtSequence* self);
 extern "C" void EvtSeqUpdateRealtimeEvents(cf::CTaskREvtSequence* self);
-extern "C" void EvtSeqAdvanceWalkIndex(cf::CTaskREvtSequence* self, u32 idx);
+extern "C" void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx);
 extern "C" void func_8016BC1C(UnkEvtListEntry* self);
 extern "C" u32 EvtSeqResolvePackedResId(u32 resId);
 extern "C" int EvtSeqCheckRegionStatus(u8* data);

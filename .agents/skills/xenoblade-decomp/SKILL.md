@@ -27,6 +27,12 @@ Read only the routing doc for the residual you're chasing (see **Routing**).
   plain `run.py diff`. The only equivalence path is the **register-renaming witness** inside
   `cycle`/`batch-cycle` (runs by default, no flag). A target the witness can't certify must reach
   `FULL_MATCH` or stay a recorded near-miss.
+- **UNIT_RULES freeze (hard):** the §17.6 object-rewrite table
+  (`tools/postprocess_reloc_names.py`) is **shrink-only** — `tools/check_unit_rules_frozen.py`
+  and CI `unit-rules.yml` fail on new keys, new fields, or changed values, and lint blocks added
+  entries. Never add a rule: fix source or record a near-miss. `run.py data diff` compares **raw**
+  objects; `--postprocess` is a diagnostic and never counts for promotion. The linked-bytes proof
+  fallback refuses units with `UNIT_RULES`. Burn-down handoffs live in `docs/handoff/unit_rules/`.
 - **Matching is always possible.** A plateau = the current angle is exhausted, not impossible.
   Angles in order: source/declaration/expression shape → `mw_version`/unit flags → reloc naming
   (`extern "C" lbl_eu_*`) → register witness → tooling → §17.6 exception. Mark `BLOCKED` only for a

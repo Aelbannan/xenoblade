@@ -2,7 +2,7 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/CSkipTimer.hpp"
-extern "C" { void func_801390E0(void*); void func_80139124(void*); }
+extern "C" { void closeFileHandle__FPP11CFileHandle(void*); void func_80139124(void*); }
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -73,7 +73,7 @@ void CSkipTimer2Reset(CSkipTimer2* self) {
         }
         self->mField18 = 0;
     }
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 #pragma pop
 
@@ -149,7 +149,7 @@ __declspec(noinline) void CSkipTimer2SelectSlotPane(CSkipTimer2* self, u8 arg) {
 }
 #pragma pop
 
-// CSkipTimer2OnFwdReady: check forward-anim reached end -> ready state (retail body).
+// func_8029F73C: check forward-anim reached end -> ready state (retail body).
 // CSkipTimer2OnRewindDone likewise lives in retail (mirror pane alpha);
 // all three are extern here so CSkipTimer2DriveState calls them with a `bl`, matching
 // the retail dispatch (defined-in-TU copies would be inlined).
@@ -327,7 +327,7 @@ extern "C" void CSkipTimer2DriveState(CSkipTimer2* self) {
     case 1: CSkipTimer2OnFwdDone(self); break;
     case 3: CSkipTimer2OnRewindDone(self); break;
     case 4: func_8029F6EC(self); break;
-    case 5: CSkipTimer2OnFwdReady(self); break;
+    case 5: func_8029F73C(self); break;
     }
     reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->Animate(0);
 }
@@ -548,7 +548,7 @@ void CSkipTimerDraw(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 // CSkipTimerTeardown (CSkipTimer): tear down the whole widget (dtor-style cleanup).
 void CSkipTimerTeardown(CSkipTimer* self) {
-    func_801390E0(&self->mFileHandle);
+    closeFileHandle__FPP11CFileHandle(&self->mFileHandle);
     nw4r::lyt::Layout* layout = self->mLayout2;
     self->mField28 = 0;
     if (layout != 0) {
@@ -559,7 +559,7 @@ void CSkipTimerTeardown(CSkipTimer* self) {
     releaseArcResourceAccessor(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
     self->mLayout = 0;
     func_8022B7F4(&self->mSysWinData[0]);
-    self->mMemRegion.func_8045F778();
+    self->mMemRegion.deleteRegion();
 }
 
 // CSkipTimerIsReady: return the syswin panel's ready flag when ready, else 0.

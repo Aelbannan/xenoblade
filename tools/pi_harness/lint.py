@@ -77,6 +77,10 @@ _RE_UNK_GEN = re.compile(r"Unk(?:Class_[0-9A-Fa-f]+|VirtualFunc[0-9]+|Struct[0-9
 _RE_BINPATCH = re.compile(
     r"insn_patches|insert_insns|reloc_offset_moves|postprocess_reloc_names"
 )
+# UNIT_RULES freeze: the §17.6 object-reshape table is shrink-only
+# (tools/check_unit_rules_frozen.py). Flag added dict keys like
+#   "OS.o": UnitRules(
+_RE_NEW_UNIT_RULE = re.compile(r'^\s*"[^"]+\.o(?:#[^"]*)?":\s*UnitRules\(')
 # Fakematch-candidate patterns (source reproduces retail codegen, not retail
 # source): single-instruction asm shims and the init-list side-effect trick
 # (assignment inside a cast used as a value, e.g.
@@ -171,6 +175,10 @@ def lint_delta(path: str, old_text: str | None,
                 "binary-patching escapes (insn_patches / insert_insns / "
                 "reloc_offset_moves / postprocess_reloc_names) are forbidden — "
                 "chase EQUIVALENT_MATCH, not byte-identity patches")
+        if _RE_NEW_UNIT_RULE.match(raw):
+            add("unit_rules_frozen", line_no, raw,
+                "new UNIT_RULES entries are forbidden (the §17.6 reshape table "
+                "is shrink-only; see tools/check_unit_rules_frozen.py)")
         if _RE_EXTERN_C.search(raw) and "lbl_" not in raw:
             add("no_extern_c", line_no, raw,
                 'extern "C" is only allowed for lbl_* reloc names')

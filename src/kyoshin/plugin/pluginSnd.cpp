@@ -18,7 +18,7 @@ extern "C" {
 
     extern s32 func_80189A04(s32 index);                        // sound-slot busy check
     extern s32 func_801897A0(const char* name, float vol, s32 flag);  // play archive voice
-    extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
+    extern "C" void CfSoundMan_StopSlotByMode(u32 a, u32 b, u32 c);        // CfSoundMan stop helper (matches CfObjectImplMove.hpp)
     extern void func_80189318(s32 clearName, float fadeTime);   // stop BGM slot (menu sound system)
     extern void func_8018986C(const char* name, float fadeTime); // stop voice by name
     extern void func_80188D34(const char* name, bool enable, float value, float fadeTime); // play BGM
@@ -26,7 +26,7 @@ extern "C" {
     extern void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second, float value, u8 enabled); // town BGM state
 }
 
-// Entry returned by func_801BFAE4 (CfSoundMan slot lookup); only the +0x2A
+// Entry returned by CfSoundMan_TouchSlotById (CfSoundMan slot lookup); only the +0x2A
 // u16 flag word is touched by playSeCommon.
 struct SoundSlotEntry {
     u8 field_0x00[0x2A];
@@ -44,7 +44,7 @@ extern "C" {
     extern void func_801896A8(s32 index, float f1, float f2);              // master SE volume (menu sound system)
     extern void func_801AAC70(u32 id, u32 vol, float fade);                // map SE volume (tail-call stub)
     extern u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 r3, u32 r4, u32 r5, u32 r6, float f1); // play SE
-    extern SoundSlotEntry* func_801BFAE4(u16 handle);                      // SE slot lookup (tail-call stub)
+    extern SoundSlotEntry* CfSoundMan_TouchSlotById(u16 handle);                      // SE slot lookup (tail-call stub)
     extern void func_801AACBC(SndVec3* pos, SndVec3* target);              // set map camera position
 }
 
@@ -312,7 +312,7 @@ int playSeCommon(VMThread* pThread) {
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
         u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             0, id, volScaled, 1, fadeF);
-        SoundSlotEntry* entry = func_801BFAE4(handle);
+        SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
             entry->field_0x2A |= 0x20;
         }
@@ -353,7 +353,7 @@ int playSeMap(VMThread* pThread) {
         int volScaled = (int)((float)volInt / lbl_eu_80667D90);
         u16 handle = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(
             1, id, volScaled, 1, fadeF);
-        SoundSlotEntry* entry = func_801BFAE4(handle);
+        SoundSlotEntry* entry = CfSoundMan_TouchSlotById(handle);
         if (entry != nullptr) {
             entry->field_0x2A |= 0x20;
         }
@@ -397,7 +397,7 @@ int stopSeCommon(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int vol = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     float f = (float)(s32)vol;
-    func_801BFE8C(0, id, (int)(f / lbl_eu_80667D90));
+    CfSoundMan_StopSlotByMode(0, id, (int)(f / lbl_eu_80667D90));
     return 0;
 }
 
@@ -406,7 +406,7 @@ int stopSeMap(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int vol = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     float f = (float)(s32)vol;
-    func_801BFE8C(1, id, (int)(f / lbl_eu_80667D90));
+    CfSoundMan_StopSlotByMode(1, id, (int)(f / lbl_eu_80667D90));
     return 0;
 }
 

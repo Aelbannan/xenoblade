@@ -121,7 +121,7 @@ extern "C" {
     int  CItem_thunkAllocRecord(int, int);
     void CItem_consumeFamilyCnt(int, int);
     int  CItem_sumFamilyByte6(int);
-    void func_800F4004(void*);
+    void CBattleMan_MarkList48Flag40(void*);
     void activateLOD__8CTaskLODFv(int);
     void deactivateLOD__8CTaskLODFv(int);
     void* getScnHandle__Fv();
@@ -900,7 +900,7 @@ int eventStart(VMThread* pThread) {
         vmArgOmitChk(pThread, idx)
             ? 0
             : vmArgIntGet(idx, vmArgPtrGet(pThread, idx++)));
-    func_800F4004(getInstance__Q22cf14CBattleManagerFv());
+    CBattleMan_MarkList48Flag40(getInstance__Q22cf14CBattleManagerFv());
     return 0;
 }
 

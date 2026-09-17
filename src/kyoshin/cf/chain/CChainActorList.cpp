@@ -584,7 +584,7 @@ void func_8027C0B0(cf::CChainChanceS* self) {
 // 0x14-byte record when the step flag at +0xC is consumed, and scaled by the
 // pair value capped at 5000. Succeeds when mtRand(100) exceeds the score.
 // C linkage comes from the func_8027C1A8 declaration in the TU header
-// (retail callers bl the unmangled label; MWCC_CASES func_800F41A0 record).
+// (retail callers bl the unmangled label; MWCC_CASES CBattleMan_OnActorsEmpty record).
 int func_8027C1A8(cf::CChainChanceS* self,
                   cf::CChainBattleObj* objA,
                   cf::CChainBattleObj* objB) {

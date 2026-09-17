@@ -5868,9 +5868,8 @@ UNIT_RULES: dict[str, UnitRules] = {
     # are align 8; MWCC emits 4 for these arrays.
     "CLibCriMoviePlay.o": UnitRules(
         exact_renames=(
-            # asm void thunk mangles its () params onto the name
-            ("thunk_452_dt__Fv", "@452@__dt__16CLibCriMoviePlayFv"),
-            ("handleViBeginFrame__16CLibCriMoviePlayFv__Fv", "handleViBeginFrame__16CLibCriMoviePlayFv"),
+            # extern "C" adjustor-thunk placeholders (C++ cannot spell @N@)
+            ("thunk_452_dt", "@452@__dt__16CLibCriMoviePlayFv"),
         ),
         # The TU compiles -RTTI on (8 functions already matched under these
         # flags), so __RTTI__10IWorkEvent / __RTTI__11CWorkThread cannot be
@@ -6068,6 +6067,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         repack_after_drop=4,
     ),
     "CScn.o": UnitRules(
+    ),
+    "CSysWinBuff.o": UnitRules(
+        # MWCC-1.1 10322 blocks spelling the CBdat / CfGameManager
+        # member-encoded callee names in source; the plain placeholder
+        # relocations are renamed onto the retail symbols here.
+        exact_renames=(
+            ("cbdatSetBdatEntry", "setBdatEntry__5CBdatFUlPv"),
+            ("cbdatGetEntry", "getEntry__5CBdatFUl"),
+            ("cfGameManagerSetPresentationFlag", "setPresentationFlag__Q22cf13CfGameManagerFv"),
+        ),
     ),
     "CDeviceVI.o": UnitRules(
         # NEW angle (weak-dtor kill, CDeviceSC pattern): MWCC emits a weak local

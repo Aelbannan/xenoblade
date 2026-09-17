@@ -190,7 +190,7 @@ public:
 } // namespace snd
 } // namespace nw4r
 
-// Sound-slot record returned by func_801BFAE4 (+0x00 active sound object).
+// Sound-slot record returned by CfSoundMan_TouchSlotById (+0x00 active sound object).
 struct SndSlotRef {
     nw4r::snd::detail::BasicSound* mSound;
 };
@@ -205,12 +205,12 @@ int CfRes_getD80Flag();
 D80VolObj* Scn_QueryUnk80State();
 extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b,
                                const ml::CVec3& c, float* outT, ml::CVec3* out);
-SndSlotRef* func_801BFAE4(u16 handle);
-extern "C" void func_801BFED0(int a, u16 b, int c);
+SndSlotRef* CfSoundMan_TouchSlotById(u16 handle);
+extern "C" void CfSoundMan_ApplySlotStop(int a, u16 b, int c);
 // playActorSound__Q22cf10CfSoundManFUlUlUlUlf is declared by the catalog
 // (CCol6System.hpp): returns the sound handle.
-extern "C" void func_801BFE58(s32 idx, u32 handle, u32 ticks, float volume);
-extern "C" void func_801BFF44(s32 idx, u16 handle, float value);
+extern "C" void CfSoundMan_SetSlotVolume(s32 idx, u32 handle, u32 ticks, float volume);
+extern "C" void CfSoundMan_SetSlotPan(s32 idx, u16 handle, float value);
 extern const char lbl_eu_80526324[]; // nw4r::db::Warning source string
 extern const char lbl_eu_80526300[]; // nw4r::db::Warning format string
 extern char lbl_eu_80503FA0[];       // bdat column-name blob
@@ -312,7 +312,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
         // Close enough (or y-delta small): stop the entry sound and clear it.
         if (dist >= self->m18 || (f32)__fabs((f64)diff.y) < self->m18) {
             if (self->m2C != 0xFFFF) {
-                func_801BFED0(1, self->m2C, 0);
+                CfSoundMan_ApplySlotStop(1, self->m2C, 0);
             }
             self->m2C = 0xFFFF;
             return;
@@ -331,7 +331,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
         u16 h = playActorSound__Q22cf10CfSoundManFUlUlUlUlf(1, self->m2E, prio, 0,
                                                            self->m1C);
         self->m2C = h;
-        SndSlotRef* slot = (SndSlotRef*)func_801BFAE4((u16)h);
+        SndSlotRef* slot = (SndSlotRef*)CfSoundMan_TouchSlotById((u16)h);
         if (slot != NULL && slot->mSound != NULL) {
             slot->mSound->SetPlayerPriority(0x50);
         }
@@ -366,7 +366,7 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
                 vol *= lbl_eu_80667D68;
             }
         }
-        func_801BFE58(1, self->m2C, 0x1e, vol);
+        CfSoundMan_SetSlotVolume(1, self->m2C, 0x1e, vol);
         return;
     }
 
@@ -390,9 +390,9 @@ extern "C" void func_801A96A0(SndCtrlObj* self, ml::CVec3* unk4, int farArg,
         self->m32 = 0;
     }
     if (self->m32 == 0) {
-        func_801BFE58(1, self->m2C, 0, vol);
+        CfSoundMan_SetSlotVolume(1, self->m2C, 0, vol);
     }
-    func_801BFF44(1, self->m2C, self->m20);
+    CfSoundMan_SetSlotPan(1, self->m2C, self->m20);
 }
 
 // ----------------------------------------------------------------------------
@@ -701,7 +701,7 @@ public:
 // retail call passes an extra entry-base argument).
 extern "C" u32 func_8003B434(void* table, const char* col, u32 colHandle,
                               s32 row, void* entryBase);
-extern "C" int func_801BFABC(int a);
+extern "C" int CfSoundMan_IsRecordActive(int a);
 
 // Defined later in this TU (C linkage so call-site relocs bind to the
 // retail-unmangled names).
@@ -718,7 +718,7 @@ void func_801AA2A8(UpdWork* self) {
     if (player == NULL) {
         return;
     }
-    if (func_801BFABC(1) == 0) {
+    if (CfSoundMan_IsRecordActive(1) == 0) {
         return;
     }
     BdatTable* tbl = lbl_eu_806640B8;
@@ -939,7 +939,7 @@ void func_801AA2A8(UpdWork* self) {
         } else {
             // Not playing this frame: fade out and clear any active handle.
             if (entry->mHandle != 0xFFFF) {
-                func_801BFED0(1, entry->mHandle, 0x3c);
+                CfSoundMan_ApplySlotStop(1, entry->mHandle, 0x3c);
             }
             entry->mHandle = 0xFFFF;
         }
@@ -984,7 +984,7 @@ extern "C" u32 func_8003B1EC(void* bdat);   // bdat row count
 extern "C" u32 getEffectFlagState__Q22cf13CfGameManagerFv();
 // Sound-slot play entry (defined in CfSoundMan.cpp); C linkage so the call
 // reloc binds to the retail-unmangled name.
-extern "C" void func_801BFE58(s32 idx, u32 a, u32 b, float volume);
+extern "C" void CfSoundMan_SetSlotVolume(s32 idx, u32 a, u32 b, float volume);
 
 // Bdat table handle owning the ctrl-state row range (import from split1).
 struct BdatTable;
@@ -1046,7 +1046,7 @@ void func_801AAB64(u32 id, u32 kind, int store, float scale) {
             continue;
         }
         if ((*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C != -1) {
-            func_801BFE58(
+            CfSoundMan_SetSlotVolume(
                 1, (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m2C,
                 kind,
                 scale * (*(CtrlStateWork**)(&lbl_eu_80664330))->mEntries[row].m1C);

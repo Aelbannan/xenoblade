@@ -986,7 +986,7 @@ void cf::CTaskREvent::Move() {
     // allows it, then drive the fade virtuals in the matching direction.
     u32 battleFade = 0;
     if ((lbl_eu_80663E24 & 0x04000000) != 0) {
-        u32 bt = func_800EA444((u32)getInstance__Q22cf14CBattleManagerFv());
+        u32 bt = CBattleMan_FetchVisionObj((u32)getInstance__Q22cf14CBattleManagerFv());
         if (bt != 0 && (*(u32*)(bt + 0x824) & 0x00020000) != 0) {
             REvtMgrView* gf = getGimmickListHead__Q22cf13CfGameManagerFv();
             REvtListNode* n = gf->list->first;

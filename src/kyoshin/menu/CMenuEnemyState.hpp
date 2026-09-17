@@ -213,7 +213,7 @@ extern "C" char* MakeTplNameSysFile(u32 id);
 // (CtrlObjectParam_GetSlotTableBase is declared in include/functions.hpp as `extern "C" int*`.)
 extern "C" void* findObjB28ById(s32 a);
 // Unprototyped-style import shared by two callers in this TU.
-extern "C" void* func_800EA444(void* mgr);
+extern "C" void* CBattleMan_FetchVisionObj(void* mgr);
 extern "C" int func_800F4648(void* self);
 extern "C" void func_8049B59C(void* out, void* pose, const void* in);
 extern "C" void PaneSetVtxColorPairs(void* a, u32 b, u32 c);

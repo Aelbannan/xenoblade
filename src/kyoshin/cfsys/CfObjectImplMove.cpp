@@ -304,7 +304,7 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
         if (isGlobalCamFlagSet(0x04000000))
             break;
         CfMoveBMId* bmId =
-            (CfMoveBMId*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+            (CfMoveBMId*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
         if (bmId == nullptr ||
             self->field_0x18->sub.field_74 != bmId->field_0)
             break;
@@ -350,10 +350,10 @@ void func_800CB454(CfObjectImplMoveObj* self, CfMoveEvtParam* param) {
     }
     case 0xf: {
         self->field_0x18->f43();
-        func_801BFE8C(0, 0x194, 0);
+        CfSoundMan_StopSlotByMode(0, 0x194, 0);
         getInstance__Q22cf13CfGameManagerFv();
         if (!isGlobalCamFlagSet(0x04000000)) {
-            CfMoveBMId* bmId = (CfMoveBMId*)func_800EA444(
+            CfMoveBMId* bmId = (CfMoveBMId*)CBattleMan_FetchVisionObj(
                 getInstance__Q22cf14CBattleManagerFv());
             if (bmId != nullptr &&
                 self->field_0x18->sub.field_74 == bmId->field_0) {
@@ -754,7 +754,7 @@ void func_800CC964(CfObjectImplMoveObj* self, u32 id, CfMoveReqParam* param) {
         }
         u32 handle = ((CfObjectImplMoveSubObj*)self->mSubObj)->field_0x74;
         f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-        func_801BFE20(0, snd, (u8*)(uintptr_t)handle,
+        CfSoundMan_PlayActorParam(0, snd, (u8*)(uintptr_t)handle,
             lbl_eu_80666C64 - vol, lbl_eu_80666C98);
         break;
     }
@@ -1089,9 +1089,9 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         }
     }
     if (kind == 0x31) {
-        if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) == nullptr) {
+        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) == nullptr) {
             actor->vf2B0();
-        } else if ((((CfMoveBM824*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+        } else if ((((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                         ->field_824 &
                        0x800) == 0) {
             actor->vf2B0();
@@ -1129,17 +1129,17 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
         // sweep over the bound event object's state word.
         self->field_0x18->sub.vfn204(0, 0, -1, 0, 0);
         CfActorObj* ac1 = self->field_0x18;
-        if (func_800EA444(getInstance__Q22cf14CBattleManagerFv()) != nullptr &&
-            ((CfMoveBMId*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+        if (CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()) != nullptr &&
+            ((CfMoveBMId*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                     ->field_0 == ac1->sub.field_74 &&
             func_80148778(ac1->field_08, 0xf) == 0 &&
             func_80148778(ac1->field_08, 9) == 0 &&
             func_80148778(ac1->field_08, 0xc) == 0 &&
             func_80148778(ac1->field_08, 0xb) == 0 &&
-            (((CfMoveBM824*)func_800EA444(getInstance__Q22cf14CBattleManagerFv()))
+            (((CfMoveBM824*)CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()))
                  ->field_824 &
                 0x800) == 0) {
-            func_800F449C(func_800EA444(getInstance__Q22cf14CBattleManagerFv()));
+            func_800F449C(CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv()));
         }
         CfActorObj* ac2 = self->field_0x18;
         CfMoveC4Obj* evt = (CfMoveC4Obj*)ac2->sub.field_C4;
@@ -1153,7 +1153,7 @@ void func_800CD5DC(CfObjectImplMoveObj* self, u32 id, u32 kind, u32,
                     func_80174B4C(ac2, 0x10);
                     goto tail;
                 }
-                if (func_800DA06C(getInstance__Q22cf14CBattleManagerFv(), ac2) == 0) {
+                if (CBattleMan_ListHasValue(getInstance__Q22cf14CBattleManagerFv(), ac2) == 0) {
                     CfActorObj* ac3 = self->field_0x18;
                     if ((ac3->field_3374 & 8) == 0) {
                         u32 v1d = ac3->field_04->b30()->field_0;
@@ -1532,7 +1532,7 @@ void func_800CEA34(CfObjectImplMoveObj* self) {
     if (findObjectById((int)self->field_0x18->sub.vfn13()) == 0) {
         return;
     }
-    void* bmRes = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+    void* bmRes = CBattleMan_FetchVisionObj(getInstance__Q22cf14CBattleManagerFv());
     if (bmRes == nullptr) {
         return;
     }
@@ -1717,7 +1717,7 @@ void func_800CEE80(CfObjectImplMoveObj* self) {
     setChildV40__(mgr, epos);
     if (flag == 0) {
         f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-        func_801BFDE8(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
+        CfSoundMan_PlayLinkedParam(0, sndId, (u32)(uintptr_t)&vec, lbl_eu_80666C64 - vol,
             lbl_eu_80666C98);
     }
     self->field_0x24 = lbl_eu_80666CA4;
@@ -1802,7 +1802,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
         }
         f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
-        func_801BFE20(0, 0xce, (u8*)(uintptr_t)handle,
+        CfSoundMan_PlayActorParam(0, 0xce, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
         return;
     }
@@ -1968,7 +1968,7 @@ void func_800CF064(CfObjectImplMoveObj* self, CfMoveContact* param) {
     if ((int)sndId >= 0 && lbl_eu_80663EF0 == 0) {
         f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
         u32 handle = self->mSubObj->field_0x74;
-        func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
+        CfSoundMan_PlayActorParam(0, sndId, (u8*)(uintptr_t)handle,
             lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol), lbl_eu_80666C98);
     }
 }
@@ -2200,7 +2200,7 @@ void func_800CF810(CfObjectImplMoveObj* self, CfMoveContact* param) {
         return;
     u32 handle = self->mSubObj->field_0x74;
     f32 vol = ((f32*)Scn_QueryUnk80State((CScn*)lbl_eu_80663E14))[3];
-    func_801BFE20(0, sndId, (u8*)(uintptr_t)handle,
+    CfSoundMan_PlayActorParam(0, sndId, (u8*)(uintptr_t)handle,
                   lbl_eu_80666CA8 * (lbl_eu_80666C64 - vol),
                   lbl_eu_80666C98);
 }

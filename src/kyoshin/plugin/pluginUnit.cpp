@@ -41,10 +41,10 @@ extern "C" {
     void func_800A18A4(cf::CfObjectActor*, int);
     cf::CfObjectActor* findObjB28ById(int);
     cf::CfObjectActor* findObjB48ById(int);
-    void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
-    void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
+    void CBattleMan_ClearActorStatus(cf::CBattleManager*, cf::CfObjectActor*, int);
+    void CBattleMan_RunBattleEvent(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
-    void* func_800EA444(cf::CBattleManager*);
+    void* CBattleMan_FetchVisionObj(cf::CBattleManager*);
     bool isGlobalCamFlagSet__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 
@@ -242,7 +242,7 @@ int onPcArtsAttack(VMThread* pThread) {
 /// Script command: set a battle-state entry on an enemy actor. Resolves the
 /// actor by id (arg 2) via findObjB48ById (ENE list lookup), then populates a
 /// CBattleStateEntry struct from the remaining optional arguments and
-/// dispatches it to CBattleManager::func_800EC8FC.
+/// dispatches it to CBattleManager::CBattleMan_RunBattleEvent.
 int setEneBtlState(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int state = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
@@ -285,7 +285,7 @@ int setEneBtlState(VMThread* pThread) {
     entry.unk20 = static_cast<f32>(arg7);
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800EC8FC(bm, actor, &entry, 0);
+    CBattleMan_RunBattleEvent(bm, actor, &entry, 0);
     return 0;
 }
 
@@ -352,7 +352,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 1: check if battle manager's current target sub-object
                     // matches unk50.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(func_800EA444(bm));
+                    u8* bmTarget = reinterpret_cast<u8*>(CBattleMan_FetchVisionObj(bm));
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
@@ -367,7 +367,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 2: same as mode 1 but also requires bit 17 of
                     // bmTarget+0x824 to be set.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(func_800EA444(bm));
+                    u8* bmTarget = reinterpret_cast<u8*>(CBattleMan_FetchVisionObj(bm));
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
@@ -395,7 +395,7 @@ int onEneArtsAttack(VMThread* pThread) {
 /// Script command: set a battle-state entry on a player character actor.
 /// Resolves the actor by id (arg 2) via findObjB28ById (PC list lookup),
 /// then populates a CBattleStateEntry struct and dispatches it to
-/// CBattleManager::func_800EC8FC. When state == 0xce, the unk18 field is
+/// CBattleManager::CBattleMan_RunBattleEvent. When state == 0xce, the unk18 field is
 /// forced to 0xa.
 int setPcBtlState(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -449,13 +449,13 @@ int setPcBtlState(VMThread* pThread) {
     }
 
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    func_800EC8FC(bm, actor, &entry, 0);
+    CBattleMan_RunBattleEvent(bm, actor, &entry, 0);
     return 0;
 }
 
 // Script command: clear a battle-state flag on an enemy actor. Resolves the
 // actor by id (arg 2) and, if the actor exists, dispatches the clear to the
-// battle manager's virtual at +0x20 via func_800F3958 with a second id (arg 3).
+// battle manager's virtual at +0x20 via CBattleMan_ClearActorStatus with a second id (arg 3).
 // Mirror of clearPcBtlState but uses findObjB48ById (ene list lookup) instead
 // of findObjB28ById (pc list lookup).
 extern "C" int clearEneBtlState(VMThread* pThread) {
@@ -464,7 +464,7 @@ extern "C" int clearEneBtlState(VMThread* pThread) {
     cf::CfObjectActor* actor = findObjB48ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        func_800F3958(bm, actor, id2);
+        CBattleMan_ClearActorStatus(bm, actor, id2);
     }
     return 0;
 }
@@ -511,14 +511,14 @@ extern "C" int learnArts(VMThread* pThread) {
 
 // Script command: clear a battle-state flag on a player actor. Resolves the
 // actor by id (arg 2) and, if the actor exists, dispatches the clear to the
-// battle manager's virtual at +0x20 via func_800F3958 with a second id (arg 3).
+// battle manager's virtual at +0x20 via CBattleMan_ClearActorStatus with a second id (arg 3).
 extern "C" int clearPcBtlState(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     cf::CfObjectActor* actor = findObjB28ById(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        func_800F3958(bm, actor, id2);
+        CBattleMan_ClearActorStatus(bm, actor, id2);
     }
     return 0;
 }

@@ -77,7 +77,7 @@ struct CfGimmickObjectMgr {
     void* field_B0;             // +0xB0: owning gimmick
 };
 
-// Sound-slot entry returned by func_801BFAE4; +0x1C holds the volume scale.
+// Sound-slot entry returned by CfSoundMan_TouchSlotById; +0x1C holds the volume scale.
 struct CfGimmickSoundSlot {
     u8 gap[0x1C];
     f32 field_1C;   // +0x1C
@@ -235,7 +235,7 @@ void func_801F76A8(cf::CfGimmickObject* self);
 void func_801F61B0(cf::CfGimmickObject* self, int mode);
 void func_801F6E60(cf::CfGimmickObject* self, u8 arg);
 void func_801F5C2C(cf::CfGimmickObject* self, int a, int b);
-// Sound-stop helper (func_801BFED0) is declared in CfGimmick.hpp.
+// Sound-stop helper (CfSoundMan_ApplySlotStop) is declared in CfGimmick.hpp.
 void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
                    const CfGimmickLodFrame* frame);
 // Same-TU per-frame updates (raw retail names).
@@ -285,14 +285,14 @@ void CItem_createBoxContents(u16 id);
 void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
                   int e, int g);
 extern "C" void setChildV40__(void* obj, void* src);  // matches CfObjectImplMove.hpp (const void* is a distinct type)
-int func_801BFABC(int a);
+int CfSoundMan_IsRecordActive(int a);
 // Single shared flat-name form (extern "C" keeps MWCC from re-mangling;
 // see CfObjectImplMove.hpp).
 extern "C" u16 playActorSound__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
                                                          u32 d, f32 f);
 u16 CfGimmick_PlaySoundAtPosScaled(u16 id, f32* pos, f32 d);
-void func_801BFF78(int a, u16 b, int c);
-CfGimmickSoundSlot* func_801BFAE4(u16 handle);
+void CfSoundMan_WriteSlotGain(int a, u16 b, int c);
+CfGimmickSoundSlot* CfSoundMan_TouchSlotById(u16 handle);
 int CPartsChange_SpawnById(int id);
 void func_8007B0C8(int idx);
 void CfGimmick_SetGlobalFlag400000();

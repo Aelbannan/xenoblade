@@ -50,7 +50,7 @@ struct CPartyStateWinMem {
 };
 
 // Byte view of the u32 window-state word (lbl_eu_806681E4) used by
-// PartyStateWin_ApplyRowStyle: the word is copied to a stack local and indexed by the
+// func_801FBC7C: the word is copied to a stack local and indexed by the
 // party-state selection value (retail: lwz/stw copy + lbzx index).
 union CPartyStateWinWord {
     u32 word;     // 0x00
@@ -207,7 +207,7 @@ extern "C" void func_801FC11C(CModelDisp*);
 extern "C" void func_80202EB4(CEquipChange*, u8);
 extern "C" int EquipChange_IsSubcurBusy(CEquipChange*);
 
-// Per-frame party-state input handlers used by PartyStateWin_StatePadInput's pad chain
+// Per-frame party-state input handlers used by func_801FA674's pad chain
 // (retail unmangled; CPartyState.hpp cannot be included here). int returns
 // where the retail cmpwi's the call result directly.
 extern "C" void func_801FD48C(CPartyState*);
@@ -261,7 +261,7 @@ void playUISound(u32);
 
 // Sibling in this TU (retail unmangled name; extern "C" so the call site in
 // PartyStateWin_StateOpen binds to the retail symbol).
-extern "C" void PartyStateWin_ApplyRowStyle(CPartyStateWin*);
+extern "C" void func_801FBC7C(CPartyStateWin*);
 
 // Sibling copy helper in this TU (retail unmangled name; copies a 0xFF0-byte
 // block and returns dst, matching retail's mr r3,r30; extern "C" so the call
@@ -274,7 +274,7 @@ extern "C" u8* func_801F9998(u8* dst, u8* src);
 extern "C" void func_80191C88(u8* dst, const u8* src);
 
 // C-linkage imports for the embedded CPartyState sub-object used by
-// PartyStateWin_StateSettle / PartyStateWin_ApplyRowStyle. func_801FD5C4 returns u8 here (the caller
+// PartyStateWin_StateSettle / func_801FBC7C. func_801FD5C4 returns u8 here (the caller
 // masks at use sites, retail has no post-call rlwinm); func_801FD18C returns
 // int (retail cmpwi's the call result directly).
 extern "C" int func_801FD18C(CPartyState*);
@@ -302,7 +302,7 @@ extern "C" u32 func_8009CF8C(u32);
 // getter (retail unmangled, same declarations as CPartyState.hpp).
 extern "C" u32 Scn_CallUnk8C_V9(CScn*);
 
-// Window-state word read by PartyStateWin_ApplyRowStyle (.sdata, retail unmangled). const
+// Window-state word read by func_801FBC7C (.sdata, retail unmangled). const
 // lets MWCC hoist the sda21 load above the frame stores (retail shape -
 // MWCC_CASES "extern const float" pattern).
 extern const u32 lbl_eu_806681E4;
@@ -443,7 +443,7 @@ extern "C" void func_801C3FF0(CTitleAHelp*);
 extern "C" void func_801FC060(CModelDisp*);
 extern "C" void func_801FCFF4(CPartyState*);
 extern "C" void ModelDispEquip_StepStateDispatch(CModelDispEquipView*);
-extern "C" void EquipChange_UpdateDispatch(CEquipChange*);
+extern "C" void func_80202110(CEquipChange*);
 extern "C" void func_8022B748(CSysWin*);
 extern "C" void func_802024CC(CEquipChange*);
 extern "C" int CSysWin_isActive(CSysWin*);
@@ -453,7 +453,7 @@ extern "C" int CSysWin_isActive(CSysWin*);
 // unmangled; the embedded sub-object headers cannot be included here).
 // u8/u16 returns where the retail masks the call result (clrlwi) before
 // comparing; int returns where the retail cmpwi's the call result directly.
-extern "C" void EquipChange_HideSubCursor(CEquipChange*, u32);
+extern "C" void func_8020397C(CEquipChange*, u32);
 extern "C" int EquipChange_IsSortOrSubPage(CEquipChange*);
 extern "C" int EquipChange_IsWeaponRow(CEquipChange*);
 extern "C" int EquipChange_CheckBoxOpen(CEquipChange*);
@@ -468,12 +468,12 @@ extern "C" void EquipChange_OpenSubPage(CEquipChange*);
 extern "C" void EquipChange_CloseScreen(CEquipChange*);
 extern "C" void EquipChange_CursorPrev(CEquipChange*);
 extern "C" void EquipChange_CursorNext(CEquipChange*);
-extern "C" void EquipChange_CursorUpRemap(CEquipChange*);
-extern "C" void EquipChange_CursorDownRemap(CEquipChange*);
+extern "C" void func_802028E4(CEquipChange*);
+extern "C" void func_80202A70(CEquipChange*);
 extern "C" void EquipChange_ConfirmSort(CEquipChange*);
 extern "C" int EquipChange_IsMenuBusy(CEquipChange*);
-extern "C" void EquipChange_CloseEquipRow(CEquipChange*);
-extern "C" void EquipChange_TryCloseRow(CEquipChange*);
+extern "C" void func_80203984(CEquipChange*);
+extern "C" void func_8020398C(CEquipChange*);
 extern "C" u32 EquipChange_GetMenuId(CEquipChange*);
 extern "C" void func_8022B9B4(CSysWin*, char*, u32);
 extern "C" void func_8022BFC8(CSysWin*, u32);

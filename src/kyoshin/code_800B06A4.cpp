@@ -1042,7 +1042,7 @@ extern const float lbl_eu_806669D8;
 extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     // Battle-state gate: returns 0 when the slot-0xAF callback reports set or
     // the +0x3F08 bit-4 flag is on; otherwise requires the battle manager,
-    // membership via func_800DA06C, and the sub-record's bit 18 before firing
+    // membership via CBattleMan_ListHasValue, and the sub-record's bit 18 before firing
     // the slot-0x46 float callback and returning 1.
     s32 flag;
     void* mgr = getInstance__Q22cf14CBattleManagerFv();
@@ -1053,7 +1053,7 @@ extern "C" s32 hudCtrlSlot46(Func4CA0Obj* self) {
     if (flag == 0) {
         if ((self->field_3F00 & 0x08000000) == 0) {
             if (mgr != 0) {
-                if (func_800DA06C(mgr, self) != 0) {
+                if (CBattleMan_ListHasValue(mgr, self) != 0) {
                     Func4CA0Sub* sub = (Func4CA0Sub*)self->field_3F60;
                     s32 bit = 0;
                     if (sub != 0) {
@@ -3792,7 +3792,7 @@ extern "C" void func_800B3A88(UnkClass_805764CC* self, void* objv) {
         } else {
             if (CfObjectMove_relaySubB0Slot60((u8*)obj) >= 0) {
                 u32 key = (u32)getObjIdAt74((u8*)obj);
-                func_eu_801C17FC(key, (u32)CfObjectMove_relaySubB0Slot60((u8*)obj), 0xa);
+                CfSoundMan_StopSoundSlots(key, (u32)CfObjectMove_relaySubB0Slot60((u8*)obj), 0xa);
             }
             void* voice = lookupCA0By45C0(container);
             if (voice != 0 && CPartsChange_FindVoiceIndex(voice, (u32)getObjIdAt74((u8*)obj)) >= 0) {

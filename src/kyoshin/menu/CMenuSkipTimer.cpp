@@ -368,7 +368,7 @@ extern "C" void func_8029EF30(CMenuSkipTimer* self) {
         CSkipTimerPrevKey(&self->mTimerData);
     }
 
-    if (CSkipTimerGetActive(&self->mTimerData) != 0) {
+    if (func_8029FF1C(&self->mTimerData) != 0) {
         func_801C414C(&self->mTitleAHelp);
         CSkipTimerLeaveSkip(&self->mTimerData);
         self->mFlag3 = 3;

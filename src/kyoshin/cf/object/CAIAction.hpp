@@ -321,8 +321,8 @@ extern "C" void* findObjB28ById(s32);
 extern void* getInstance();   // C++ linkage -> getInstance__Fv
 extern "C" int func_80148778(void*, int);
 extern "C" void* func_80149154(void*, u32);
-extern "C" void* func_800EA444_CAIAction(void*);
-#define func_800EA444 func_800EA444_CAIAction
+extern "C" void* CBattleMan_FetchVisionObj_CAIAction(void*);
+#define CBattleMan_FetchVisionObj CBattleMan_FetchVisionObj_CAIAction
 
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
 #include "kyoshin/cf/CBattleManagerApi.hpp"

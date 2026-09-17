@@ -18,7 +18,7 @@ class Pane;
 } }
 
 /* 52-byte entry referenced by the item-box index table.
-   Only the first word is known (read by func_80296D54). */
+   Only the first word is known (read by getMCItemSubItemId). */
 struct CMCItemBoxEntry {
     u32 field_00;                   // 0x00
     u8 bytes[0x34 - 0x04];          // 0x04-0x33
@@ -189,8 +189,8 @@ public:
     // store the retail table label (same idiom as CSysWin / CBaseCur).
     void*& vtbl() { return *reinterpret_cast<void**>(this); }
 
-    u8 func_80297D1C();
-    u8 func_80297D24();
+    u8 isMCGetItemBoxReady();
+    u8 isMCGetItemBoxGridMode();
 
     UnkClass_8045F564 memRegion1;    // 0x04-0x13
     UnkClass_8045F564 memRegion2;    // 0x14-0x23
@@ -257,13 +257,13 @@ extern "C" void func_80124270(void*, u32);
 extern "C" void func_801D4174(void*);
 extern "C" void func_801D4260(void*, u16);
 extern "C" void func_801D47D4(void*, u32, u32, u32);
-extern "C" void func_801D4AE0(void*, int, void*);
-extern "C" u32 func_801D421C(void*);
+extern "C" void setItemBoxNamedText(void*, int, void*);
+extern "C" u32 startItemBoxOpen(void*);
 extern "C" void LayoutSetTextBoxFmtValue(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80296FC0(CMCItemBoxSub*, u16);
 extern "C" char* func_80296E98(CMCItemBoxSub*, u16);
-extern "C" __declspec(noinline) u32 func_80296D54(CMCItemBoxSub*, u32);
-extern "C" __declspec(noinline) s8 func_80296E00(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) u32 getMCItemSubItemId(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) s8 getMCItemSubKind(CMCItemBoxSub*, u32);
 extern "C" void func_8022B7F4(void*);
 extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 AnimRewindFrame(nw4r::lyt::AnimTransform*, float);
@@ -291,12 +291,12 @@ extern const double lbl_eu_80668BD8;
 // lbl_eu_80668BE0 (double) is MWCC's signed int->f64 2^52 conversion magic.
 extern const double lbl_eu_80668BE0;
 extern const float lbl_eu_80668BF4;
-extern "C" void func_802999B0(CMCGetItemBox*);
-extern "C" void func_80299530(CMCGetItemBox*, u16, void*, u8);
-extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-__declspec(noinline) void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+extern "C" void moveMCGetItemBoxCursor(CMCGetItemBox*);
+extern "C" void initMCGetItemBoxList(CMCGetItemBox*, u16, void*, u8);
+extern "C" void setMCSlotIconTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+__declspec(noinline) void setMCSlotNameTex(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void __dl__FPv(void*);
-extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) CMCItemBoxEntry* getMCItemSubEntry(CMCItemBoxSub*, u32);
 
 // ---------------------------------------------------------------------------
 // Constructor imports (retail symbol names verbatim)

@@ -2681,7 +2681,7 @@ extern "C" void LoadItemBoxFiles(void* self, int r4) {
     }
 
     func_801D3064(p + 0xe8);
-    func_801D4054(p + 0x1d8);
+    loadItemBoxFiles(p + 0x1d8);
     func_801EAE8C(p + 0x3e4);
 
     if (p[0x527] == 2) {
@@ -2784,7 +2784,7 @@ extern "C" void UpdateItemBox(void* self, int r4) {
     func_801D202C(p + 0xb8);
     func_801D202C(p + 0xd0);
     func_801D3160(p + 0xe8);
-    func_801D40C4(p + 0x1d8);
+    updateItemBoxAnims(p + 0x1d8);
     func_801EAED4(p + 0x3e4);
     func_80208260(p + 0x418);
     func_8022CF7C(p + 0x440);
@@ -2802,7 +2802,7 @@ extern "C" void DrawItemBoxGrid(void* self, int r4) {
     if (!p[0x54]) return;
     if (!*(u32*)(p + 0x58)) return;
 
-    func_801D4154(p + 0x1d8);
+    renderItemBox(p + 0x1d8);
     drawLayout__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii((nw4r::lyt::Layout*)*(void**)(p + 0x44), (nw4r::lyt::DrawInfo*)r4, 0, 1);
 
     u8 r = p[0x2d4f];
@@ -2944,7 +2944,7 @@ void func_801CB28C(void* self) {
     p[0x61] = 0;
     func_801CFD2C(self);
     func_801D0BD8(self);
-    func_801D421C(p + 0x1D8);
+    startItemBoxOpen(p + 0x1D8);
     func_801D4260(p + 0x1D8, (p + (s8)p[0x6F])[0x62]);
     u8 idx0 = p[0x525];
     u8 idx1 = p[0x524];
@@ -2954,10 +2954,10 @@ void func_801CB28C(void* self) {
     u32 r2 = GetCellKind((CItemBoxGridFull*)sub, (u16)entry_idx);
     func_801D47D4(p + 0x1D8, r2 & 0xFFFF, item, 1);
     u32 v = FormatCellName(sub, entry_idx);
-    func_801D4AE0((void*)(p + 0x1D8), 1, (void*)v);
+    setItemBoxNamedText((void*)(p + 0x1D8), 1, (void*)v);
     func_801D216C(p + 0xB8, 0);
     p[0x549] = 0;
-    if (p[0x527] == 4) func_801D4C3C(p + 0x1D8, 1);
+    if (p[0x527] == 4) setItemBoxResultPane(p + 0x1D8, 1);
 }
 
 // Advance item box state.
@@ -4078,7 +4078,7 @@ void func_801CCAF0(void* self) {
 void SetInfoMsgId(void* self, u32 val) {
     *(u16*)((u8*)self + 0x52e) = (u16)val;
     void* res = func_801394D4(val & 0xFFFF);
-    func_801D4AE0((void*)((u8*)self + 0x1d8), 0, res);
+    setItemBoxNamedText((void*)((u8*)self + 0x1d8), 0, res);
     RebuildGridCat(self);
 }
 
@@ -5136,7 +5136,7 @@ __declspec(noinline) void func_801D0328(void* self) {
             val2 = FormatCellName(sub, (u16)(u8)idx);
         else
             val2 = 0;
-        func_801D4AE0(p + 0x1d8, 1, (void*)val2);
+        setItemBoxNamedText(p + 0x1d8, 1, (void*)val2);
         // Right-to-left evaluation: retail calls C6840 first.
         func_801D4BDC(p + 0x1d8, CountMarkedCells(sub) & 0xFF, GetCategoryCap(sub) & 0xFF);
     }

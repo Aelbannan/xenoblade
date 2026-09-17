@@ -91,9 +91,9 @@ extern void CfGimmick_SetGlobalFlagC0002();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern CfGimmickWork* createBattleActor__Q22cf13CfGameManagerFv(u16 id, int mode);
-extern int func_801BFAE4(u16 handle);
-extern void func_801BFAE8(u16 handle, void* position);
-extern void func_801BFED0(int kind, u16 handle, int mode);
+extern int CfSoundMan_TouchSlotById(u16 handle);
+extern void CfSoundMan_WriteSlotParam(u16 handle, void* position);
+extern void CfSoundMan_ApplySlotStop(int kind, u16 handle, int mode);
 extern u16 CfGimmick_PlaySoundAtPosScaled(u16 effectId, void* position, f32 distance);
 extern void setAnimHeight(void* target, f32 amount);
 extern f32 FrSqrt__Q24nw4r4mathFf(f32 value);
@@ -370,7 +370,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     }
 
     if (self->soundHandle != 0) {
-        func_801BFED0(1, self->soundHandle, 10);
+        CfSoundMan_ApplySlotStop(1, self->soundHandle, 10);
     }
 
     if (self->effectId != 0) {
@@ -401,7 +401,7 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
 extern "C" void func_8020FC14(CfGimmickJump* self) {
     CfGimmickJumpVec3 position;
     if (self->soundHandle != 0) {
-        if (func_801BFAE4(self->soundHandle) != 0) {
+        if (CfSoundMan_TouchSlotById(self->soundHandle) != 0) {
             position.x = self->position.x;
             position.y = self->position.y;
             position.z = self->position.z;
@@ -418,7 +418,7 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
             } else if (position.y < self->position.y) {
                 position.y = self->position.y;
             }
-            func_801BFAE8(self->soundHandle, &position);
+            CfSoundMan_WriteSlotParam(self->soundHandle, &position);
         } else {
             self->soundHandle = 0;
         }
@@ -432,7 +432,7 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
 extern "C" void func_8020FD2C(CfGimmickJump* self) {
     bool finished = false;
     if (self->soundHandle != 0) {
-        if (func_801BFAE4(self->soundHandle) != 0) {
+        if (CfSoundMan_TouchSlotById(self->soundHandle) != 0) {
             CfGimmickJumpVec3 position = self->position;
             void* player = getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0) {
@@ -447,7 +447,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             } else if (position.y < self->position.y) {
                 position.y = self->position.y;
             }
-            func_801BFAE8(self->soundHandle, &position);
+            CfSoundMan_WriteSlotParam(self->soundHandle, &position);
         } else {
             self->soundHandle = 0;
         }
@@ -586,7 +586,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
     if (finished) {
         self->motionState = 1;
         if (self->soundHandle != 0) {
-            func_801BFED0(1, self->soundHandle, 10);
+            CfSoundMan_ApplySlotStop(1, self->soundHandle, 10);
             self->soundHandle = 0;
         }
         for (int index = 0; index < 3; ++index) {

@@ -53,7 +53,7 @@ cf::CfResPcImpl* __ct__cf_CfResPcImpl(cf::CfResPcImpl* self, cf::CfResPcParent* 
 // Retail dtor: re-installs the secondary vtable at +0x10, and when the
 // state at field_0E is valid and the parent's +0x68 flag bit 21 is set and
 // its vtable slot +0x74 reports the resource live, notifies the resource
-// (func_801BFA64(state + 2)). The delete-flag path (__dl__FPv) is emitted
+// (CfSoundMan_CloseRecord(state + 2)). The delete-flag path (__dl__FPv) is emitted
 // by MWCC for a non-trivial dtor automatically.
 cf::CfResPcImpl::~CfResPcImpl() {
     int ok;
@@ -67,7 +67,7 @@ cf::CfResPcImpl::~CfResPcImpl() {
             }
         }
         if (ok != 0) {
-            func_801BFA64(state + 2);
+            CfSoundMan_CloseRecord(state + 2);
         }
     }
 }
@@ -159,7 +159,7 @@ void CfResPcImpl_loadPcState(cf::CfResPcImpl* self, u16 arg2) {
 // CfResPcImpl_notifySound - PC sound-notify: when the state at field_0E is valid and
 // the parent's +0x68 flag bit 21 is set and its vtable slot +0x74 reports
 // the resource live, sends (state+2, arg2, parent->field_74, f1, f2) to
-// func_801BFE20 and, when the resulting sound slot holds a live sound object
+// CfSoundMan_PlayActorParam and, when the resulting sound slot holds a live sound object
 // and arg4 is nonzero, sets its player priority to arg4. arg3 (r5) is an
 // unused register-slot parameter (retail never reads it).
 void CfResPcImpl_notifySound(cf::CfResPcImpl* self, int arg2, int arg3, int arg4, f32 f1, f32 f2) {
@@ -175,7 +175,7 @@ void CfResPcImpl_notifySound(cf::CfResPcImpl* self, int arg2, int arg3, int arg4
         }
     }
     if (ok != 0) {
-        cf::CfResPcSoundSlotEntry* slot = func_801BFAE4((u16)func_801BFE20(state + 2, arg2, self->field_00->field_74, f1, f2));
+        cf::CfResPcSoundSlotEntry* slot = CfSoundMan_TouchSlotById((u16)CfSoundMan_PlayActorParam(state + 2, arg2, self->field_00->field_74, f1, f2));
         if (slot != 0 && arg4 != 0 && slot->field_00 != 0) {
             slot->field_00->SetPlayerPriority(arg4);
         }
@@ -183,7 +183,7 @@ void CfResPcImpl_notifySound(cf::CfResPcImpl* self, int arg2, int arg3, int arg4
 }
 
 // CfResPcImpl_notifyReloadSimple - same dispatch shape as CfResPcImpl_notifyReloadEvent but forwards state+2
-// with only two caller args to func_801BFE8C.
+// with only two caller args to CfSoundMan_StopSlotByMode.
 void CfResPcImpl_notifyReloadSimple(cf::CfResPcImpl* self, int arg2, int arg3) {
     s16 state = self->field_0E;
     if (state < 0) {
@@ -197,14 +197,14 @@ void CfResPcImpl_notifyReloadSimple(cf::CfResPcImpl* self, int arg2, int arg3) {
         }
     }
     if (ok != 0) {
-        func_801BFE8C(state + 2, arg2, arg3);
+        CfSoundMan_StopSlotByMode(state + 2, arg2, arg3);
     }
 }
 
 // CfResPcImpl_notifyReloadEvent - dispatch a reload-type message when the state at field_0E
 // is valid and the parent's +0x68 flag bit 21 (0x200000) is set and its
 // vtable slot +0x74 reports the resource live; forwards state+2 with the
-// three caller args to func_801BFF04.
+// three caller args to CfSoundMan_PauseSlotByMode.
 void CfResPcImpl_notifyReloadEvent(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
     // ok declared first so MWCC assigns it r31 (retail keeps state in r30);
     // the zero-init stays after the parent load to match retail ordering.
@@ -221,7 +221,7 @@ void CfResPcImpl_notifyReloadEvent(cf::CfResPcImpl* self, int arg2, int arg3, in
         }
     }
     if (ok != 0) {
-        func_801BFF04(state + 2, arg2, arg3, arg4);
+        CfSoundMan_PauseSlotByMode(state + 2, arg2, arg3, arg4);
     }
 }
 
@@ -1369,11 +1369,11 @@ __declspec(noinline) void CfResPcImpl_refreshMapAreaEvents(void* self) {
     func_8007B0A0(0);
     func_800B06C8();
     if (lbl_eu_80663E24 & 0x80000) {
-CfRes_tryRefreshByBits((int)(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000)), 4);
+CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)4);
         func_80061870((u32)self, 0x1b, 0,
                       ((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), 0, 0);
     } else {
-CfRes_tryRefreshByBits((int)(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000)), 5);
+CfRes_tryRefreshByBits(((u32)lbl_eu_80663E44 << 10) | (((u32)lbl_eu_80663E42 << 20) | 0x98000000), (u32)5);
     }
     if (!(lbl_eu_80663E28 & 0x2000000)) {
         func_80068B9C();

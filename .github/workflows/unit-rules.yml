@@ -1,0 +1,43 @@
+# Unit Rules Freeze
+#
+# The link-time §17.6 object-reshape table (tools/postprocess_reloc_names.py
+# UNIT_RULES) is legacy debt and may only shrink. This gate fails on new rule
+# keys, changed payloads, or count growth. Pure stdlib Python over committed
+# files — no build, no retail image.
+#
+# Burn-down agents: `--report` for the class/owner summary, `--claim` to
+# annotate in-scope entries, `--ratchet` after a removal batch to lower the
+# frozen baseline.
+
+name: Unit Rules Freeze
+
+on:
+  push:
+    paths:
+      - "tools/postprocess_reloc_names.py"
+      - "tools/postprocess_reloc_names.frozen.json"
+      - "tools/check_unit_rules_frozen.py"
+      - ".github/workflows/unit-rules.yml"
+  pull_request:
+    paths:
+      - "tools/postprocess_reloc_names.py"
+      - "tools/postprocess_reloc_names.frozen.json"
+      - "tools/check_unit_rules_frozen.py"
+      - ".github/workflows/unit-rules.yml"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify UNIT_RULES frozen baseline (shrink-only)
+        run: python tools/check_unit_rules_frozen.py --check
+
+      - name: Rule table summary (informational)
+        run: python tools/check_unit_rules_frozen.py --report

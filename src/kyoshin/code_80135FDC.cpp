@@ -1123,8 +1123,8 @@ void func_80138078__FUl(u32 arg) {
 }
 
 void code80135FDC_thunk_BFE8C(u8* arg) {
-    extern void func_801BFE8C(unsigned long, void*, unsigned long);
-    func_801BFE8C(0, arg, 0);
+    extern void CfSoundMan_StopSlotByMode(unsigned long, void*, unsigned long);
+    CfSoundMan_StopSlotByMode(0, arg, 0);
 }
 
 struct Table_80500188 {

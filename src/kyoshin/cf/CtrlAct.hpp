@@ -802,7 +802,7 @@ struct CtrlActEntryObj {
 };
 
 // Effect-request block built on the stack (0x34 bytes incl. tail) and passed
-// to func_800EC8FC.
+// to CBattleMan_RunBattleEvent.
 struct CtrlActFxReq {
     u32 mField0;             // 0x00
     u32 mField4;             // 0x04
@@ -857,7 +857,7 @@ extern "C" int func_804B54D4(void* a, void* b, void* c, int d, int e);
 // kyoshin/cf/CBattleManagerApi.hpp.)
 extern "C" void* func_80153CAC(void* base, int index);
 extern "C" void* getArtsParamByIdx(void* base, int index);
-extern "C" void* func_800EA444(void* bm);
+extern "C" void* CBattleMan_FetchVisionObj(void* bm);
 extern "C" int func_801A6A7C(void* a, void* b);
 extern "C" int func_80145C00(int val);
 // func_800D1F0C imports: status-block timers, battle-entry fetch, effect
@@ -865,7 +865,7 @@ extern "C" int func_80145C00(int val);
 extern "C" void func_8014B2EC(void* obj, f32 val);
 extern "C" void func_8014B2DC(void* obj);
 extern "C" int func_8014B8BC(void* obj, void* out);
-extern "C" void func_800EC8FC(void* bm, void* player, void* req, int flag);
+extern "C" void CBattleMan_RunBattleEvent(void* bm, void* player, void* req, int flag);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceA(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceB(void* a, void* b);
 extern "C" void CCharVoiceMan_EnqueueCtrlActVoiceC(void* a, void* b);
